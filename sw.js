@@ -3,9 +3,9 @@
 const CACHE = 'atlas-atoms-__BUILD__';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'css/style.css',
-  'packages/core/vendor/three.min.js',
-  'packages/core/js/data.js', 'packages/core/js/chem.js', 'js/lessons.js', 'js/quizzes.js', 'packages/core/js/model.js',
-  'packages/core/js/render3d.js', 'packages/core/js/realdata.js', 'js/real.js', 'js/progress.js', 'js/profiles.js', 'js/profileui.js', 'packages/core/js/molinfo.js', 'packages/core/js/orbitals.js', 'packages/core/js/reactionsim.js', 'js/lab.js', 'js/game.js'
+  'vendor/three.min.js',
+  'js/data.js', 'js/chem.js', 'js/lessons.js', 'js/quizzes.js', 'js/model.js',
+  'js/render3d.js', 'js/realdata.js', 'js/real.js', 'js/progress.js', 'js/profiles.js', 'js/profileui.js', 'js/molinfo.js', 'js/orbitals.js', 'js/reactionsim.js', 'js/lab.js', 'js/game.js'
 ];
 
 self.addEventListener('install', e => {

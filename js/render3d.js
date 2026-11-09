@@ -79,9 +79,8 @@ class Viewer {
     this.key = key; this.rim = rim;
     this.root = new T.Group(); this.scene.add(this.root);
     if (this.interactive) {
-      const gt = opts.grid || {};
-      const grid = new T.GridHelper(26, 26, gt.main !== undefined ? gt.main : 0x2f6aa0, gt.sub !== undefined ? gt.sub : 0x1d3d63);
-      grid.position.y = -4.6; grid.material.transparent = true; grid.material.opacity = gt.opacity !== undefined ? gt.opacity : 0.4;
+      const grid = new T.GridHelper(26, 26, 0x2f6aa0, 0x1d3d63);
+      grid.position.y = -4.6; grid.material.transparent = true; grid.material.opacity = 0.4;
       this.scene.add(grid);
     }
     this.ring = new T.Mesh(new T.TorusGeometry(1, 0.06, 8, 40), new T.MeshBasicMaterial({ color: col('#7dffb0') }));
