@@ -27,6 +27,7 @@ b { font-weight: 700; }
 .hoodNow { position: absolute; left: 14px; bottom: 10px; font-size: 23px; font-weight: 700; color: #fff; pointer-events: none; }
 .hoodStep { position: absolute; right: 14px; bottom: 10px; font-size: 16px; color: #e4e4de; pointer-events: none; }
 .hoodStep b { font-size: 30px; color: #ffcd00; margin-right: 4px; }
+.hoodChain { position: absolute; left: 14px; top: 10px; background: #ffcd00; color: #111; border: 2px solid #000; font-size: 22px; font-weight: 700; padding: 2px 12px 0; pointer-events: none; }
 
 .under { display: flex; flex-direction: column; gap: 6px; }
 .gear { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
@@ -123,6 +124,9 @@ b { font-weight: 700; }
 .bBottom { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px 4px 5px; border-top: 2px solid #000; min-height: 40px; }
 .bGhs { display: flex; } .ghs { display: block; width: 31px; height: 31px; margin-right: -3px; }
 .bFoot { font-size: 16px; white-space: pre; text-align: right; } .bFoot b { font-size: 18px; }
+.bLink { display: block; white-space: normal; font-size: 14px; font-weight: 700; line-height: 1.15; }
+.bottle.link { box-shadow: 0 5px 0 #000, 0 0 0 4px #d81e1e; }
+.bottle.link .bBottom { background: #ffcd00; }
 
 /* order result and reward choice */
 .ov { position: fixed; inset: 0; background: rgba(0, 0, 0, .74); display: none; align-items: center; justify-content: center; z-index: 20; padding: 20px; }
@@ -160,7 +164,13 @@ b { font-weight: 700; }
 /* supply room */
 .shopHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .cash { background: #12894a; color: #fff; border: 2px solid #000; font-size: 40px; font-weight: 700; line-height: 1; padding: 5px 14px 3px; font-variant-numeric: tabular-nums; }
-.shopRow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.shopRow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.panel.shop { width: min(1240px, 96vw); }
+.panel.routes { width: min(820px, 94vw); }
+.rts { list-style: none; margin: 10px 0 0; padding: 0; }
+.rts li { display: grid; grid-template-columns: 250px minmax(0, 1fr) 90px 70px; gap: 12px; align-items: baseline; border-bottom: 1px solid #111; padding: 6px 0 4px; font-size: 16px; }
+.rts li b { font-size: 19px; } .rts li i { font-style: normal; font-weight: 700; color: #d81e1e; text-align: right; } .rts li em { font-style: normal; text-align: right; }
+.rts li.off { color: #8a8474; } .rts li.off i { color: #8a8474; }
 .shopItem { position: relative; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: transform .1s; }
 .shopItem:hover { transform: translateY(-6px); }
 .shopItem > .bottle, .shopItem > .gearPick { flex: 1; pointer-events: none; }

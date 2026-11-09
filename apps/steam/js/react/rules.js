@@ -254,12 +254,14 @@ function nameOf(m) {
 const label = m => nameOf(m) || describe(m).formula;
 
 // ---------- headless use: the same rules without the animation ----------
-function cloneModel(m) {
+// cloneMap also returns the map from each atom of m to its copy
+function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
   m.atoms.forEach(a => { if (!a.fly) map.set(a, n.addAtom(a.el, a.x, a.y, a.z)); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
-  return n;
+  return { model: n, map };
 }
+const cloneModel = m => cloneMap(m).model;
 // applies a bottle to every site of m in place and returns how many sites reacted
 function runCard(m, card) {
   let hits = 0;
@@ -268,5 +270,5 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
-AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, runCard, fromSmiles };
+AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

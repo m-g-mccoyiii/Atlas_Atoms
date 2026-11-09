@@ -27,8 +27,8 @@ function start(app) {
   const runEl = h('span', { class: 'tbRun' }), cashEl = h('span', { class: 'tbCash' }), bestEl = h('span', { class: 'tbBest' });
   const bar = document.getElementById('runinfo'); if (bar) bar.append(cashEl, runEl, bestEl);
   const benchCv = h('canvas', { class: 'hoodCv' }), bloomCv = h('canvas', { class: 'hoodBloom' }), fxCv = h('canvas', { class: 'hoodFx' });
-  const nowEl = h('div', { class: 'hoodNow' }), stepEl = h('div', { class: 'hoodStep' });
-  const hood = h('div', { class: 'hood' }, benchCv, bloomCv, fxCv, nowEl, stepEl);
+  const nowEl = h('div', { class: 'hoodNow' }), stepEl = h('div', { class: 'hoodStep' }), chainEl = h('div', { class: 'hoodChain' });
+  const hood = h('div', { class: 'hood' }, benchCv, bloomCv, fxCv, nowEl, stepEl, chainEl);
   const fx = AA.rxFx.make(fxCv, hood);
   const gearEl = h('div', { class: 'gear' });
   const bloomCx = bloomCv.getContext('2d');
@@ -63,8 +63,8 @@ function start(app) {
 
   const cardsEl = h('div', { class: 'cards' });
   const swapBtn = h('button', { class: 'btn', onclick: () => swap() }), deliverBtn = h('button', { class: 'btn go', onclick: () => deliver() }, 'Deliver  [Enter]');
-  const rackEl = h('div', { class: 'rackInfo' });
-  const shelf = h('div', { class: 'shelf' }, cardsEl, h('div', { class: 'side' }, deliverBtn, swapBtn, rackEl));
+  const rackEl = h('div', { class: 'rackInfo' }), routesBtn = h('button', { class: 'btn', onclick: () => showRoutes() }, 'Routes  [R]');
+  const shelf = h('div', { class: 'shelf' }, cardsEl, h('div', { class: 'side' }, deliverBtn, swapBtn, routesBtn, rackEl));
   const overlay = h('div', { class: 'ov' });
   app.append(h('div', { class: 'game' },
     h('div', { class: 'main' },
@@ -89,11 +89,12 @@ function start(app) {
   function renderHand() {
     let any = false;
     const els = cur.hand.map((hc, i) => {
-      const card = RX.CARDS[hc.id], n = sitesOf(hc.id), b = bottle(card, String(i + 1));
+      const card = RX.CARDS[hc.id], lk = st.mode === 'play' && model ? RUN.look(run, model, hc.id) : { n: 0 }, n = lk.n, b = bottle(card, String(i + 1));
       if (n) any = true;
-      b.el.className += (n ? '' : ' none') + (st.seen.has(hc.uid) ? '' : ' deal');
+      b.el.className += (n ? '' : ' none') + (lk.cont ? ' link' : '') + (st.seen.has(hc.uid) ? '' : ' deal');
       b.el.disabled = !n || st.busy;
-      b.foot.append(n ? h('span', null, h('b', null, plural(n, 'site')), '  +' + fmt(RUN.preview(run, hc.id, n) - RUN.scoreOf(cur))) : h('span', null, 'no site'));
+      if (lk.cont) b.foot.append(h('span', { class: 'bLink' }, lk.route ? lk.route.name : 'Chain of ' + lk.len));
+      b.foot.append(n ? h('span', null, h('b', null, plural(n, 'site')), '  +' + fmt(lk.score - RUN.scoreOf(cur))) : h('span', null, 'no site'));
       b.el.addEventListener('click', () => play(i));
       ['mouseenter', 'focus'].forEach(ev => b.el.addEventListener(ev, () => setHover(i)));
       ['mouseleave', 'blur'].forEach(ev => b.el.addEventListener(ev, () => setHover(-1)));
@@ -118,6 +119,9 @@ function start(app) {
     const left = cur.stepsMax - cur.step;
     stepEl.replaceChildren(h('b', null, String(left)), (left === 1 ? 'step' : 'steps') + ' left');
     nowEl.textContent = RX.label(model);
+    chainEl.textContent = cur.path.length >= 2 ? 'Chain of ' + cur.path.length : '';
+    chainEl.style.display = cur.path.length >= 2 ? '' : 'none';
+    routesBtn.disabled = st.mode !== 'play';
     swapBtn.textContent = 'Swap hand  [S]  (' + cur.redraws + ' left)';
     swapBtn.disabled = st.busy || st.mode !== 'play' || cur.redraws <= 0;
     deliverBtn.disabled = st.busy || st.mode !== 'play';
@@ -246,6 +250,7 @@ function start(app) {
     const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: () => { m.level = i; saveMeta(); sfx.click(); showStart(); } }, h('b', null, 'Level ' + (i + 1)), h('span', null, i > maxLv ? 'Locked' : i ? 'Quotas times ' + x : 'Standard quotas')));
     const list = RUN.UNLOCKS.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.name), h('span', null, got(u.id) ? 'Unlocked' : u.how)));
     overlay.replaceChildren(h('div', { class: 'panel start' }, h('h2', null, 'New run'),
+      h('p', null, 'React at the atoms your last bottle changed to build a chain. Each link multiplies batch, and a chain that follows a named route multiplies it again.'),
       h('h3', null, 'Rack'), h('div', { class: 'opts' }, racks), h('h3', null, 'Level'), h('div', { class: 'opts' }, levels),
       h('h3', null, 'Unlocks, ' + st.meta.got.length + ' of ' + RUN.UNLOCKS.length), h('ul', { class: 'unl' }, list),
       h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
@@ -274,8 +279,12 @@ function start(app) {
     if (e.src === 'bottle' && e.kind === 'b') return;
     const txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val), hot = heat();
     if (RUN.GEARS[e.src]) fireTag(e.src, txt);
+    if (e.gear) fireTag(e.gear, txt);
+    if (e.src === 'route') { fx.banner(RUN.ROUTE[e.route].name.toUpperCase(), 'Route complete, batch ' + txt, YELLOW, 1.9); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); }
     if (e.kind === 'x') {
-      bump(scoreEl); fx.floatText(at.x, at.y - 30, 'batch ' + txt, HOT, 30 + 3 * hot);
+      bump(scoreEl);
+      // the route banner already states its multiplier, so a second floating number would only cover the chain one
+      if (e.src !== 'route') fx.floatText(at.x, at.y - 30, (e.src === 'chain' ? 'chain of ' + e.len + ', batch ' : 'batch ') + txt, HOT, 30 + 3 * hot);
       fx.flash(0.16 + 0.03 * hot, RED); fx.shake(5 + 2 * hot); fx.ring(at.x, at.y, RED, 120 + 20 * hot, 0.45);
       slow(0.2, 160 + 20 * hot); fx.punch(0.03 + 0.008 * hot);
     } else if (e.src === 'bottle') fx.floatText(at.x, at.y - 28, (e.again ? 'again ' : '') + txt, YELLOW, 26 + 3 * hot);
@@ -285,8 +294,10 @@ function start(app) {
   function play(i) {
     const hc = cur && cur.hand[i];
     if (!hc || st.busy || st.mode !== 'play' || !v) return;
-    const card = RX.CARDS[hc.id], sites = card.find(model);
+    const card = RX.CARDS[hc.id], sites = card.find(model), made = [];
     if (!sites.length) { sfx.bad(); return; }
+    // the play is hot when it reacts at an atom the last play made or changed, which is what continues a chain
+    const wasHot = cur.path.length > 0 && sites.some(s => s.atoms.some(a => cur.fresh.has(a)));
     st.busy = true; st.hover = -1; st.hoverAtoms = [];
     const tok = st.tok, col = bright(card.rgb), t = performance.now();
     const mid = () => ({ x: benchCv.clientWidth / 2, y: benchCv.clientHeight * 0.45 });
@@ -303,7 +314,7 @@ function start(app) {
       setProbe(); sfx.pen(500);
       const up = res.ev.find(e => e.kind === 'grade'), hot = heat();
       if (up) { fx.banner(card.verb.toUpperCase() + ' GRADE ' + up.val, RUN.YIELD * up.val + ' yield for each site', col, 2.0); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); fx.punch(0.08); }
-      else if (hits >= 2) fx.banner(hits + ' SITES', fmt(res.score), col, 1.5);
+      else if (hits >= 2 && !res.ev.some(e => e.src === 'route')) fx.banner(hits + ' SITES', fmt(res.score), col, 1.5);
       if (hits >= 3) { fx.flash(0.45, WHITE); fx.shake(10 + 2 * hot); slow(0.2, 260); fx.punch(0.06); if (!up) sfx.good(); }
       st.busy = false;
       const any = renderHand(), now = checksFor(cur.spec).n, long = up || hits >= 2;
@@ -317,7 +328,7 @@ function start(app) {
     const steps = sites.map((site, k) => ({ wait: k ? 230 : 380, fn: () => {
       if (!card.ok(model, site)) return null;
       const c0 = centroid(), r = card.apply(model, site), ev = RUN.scoreSite(run, hc.id, false), hot = heat();
-      hits++;
+      hits++; r.focus.concat(r.incoming).forEach(a => made.push(a));
       const p = scr(r.focus), now = performance.now();
       fx.ring(p.x, p.y, col, 90 + 24 * hits + 14 * hot, 0.55); fx.ring(p.x, p.y, WHITE, 50, 0.3);
       fx.burst(p.x, p.y, col, 26 + 10 * hot, 240 + 50 * hot); fx.burst(p.x, p.y, YELLOW, 10 + 4 * hot, 160);
@@ -338,11 +349,23 @@ function start(app) {
       return ev.filter(e => e.src !== 'bottle').map(e => beat(e, p));
     } }));
     steps.push({ wait: 320, fn: () => {
-      const res = RUN.commit(run, i, hits);
+      const res = RUN.commit(run, i, hits, { hot: wasHot, made, sig: RX.sigOf(model) });
       return res.ev.map(e => beat(e, mid())).concat([{ wait: 340, fn: () => wrapUp(res) }]);
     } });
     seq(steps, tok);
   }
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  // the list of named routes, with the ones this rack cannot perform dimmed
+  function showRoutes() {
+    if (st.mode !== 'play' || st.routesOpen) return;
+    st.routesOpen = true; sfx.click();
+    const rows = RUN.ROUTES.map(rt => h('li', { class: RUN.routeFits(run, rt) ? '' : 'off' }, h('b', null, rt.name), h('span', null, cap(RUN.routeSteps(rt))), h('i', null, 'times ' + RUN.routeMult(run, rt.id)), h('em', null, 'Level ' + RUN.routeLevel(run, rt.id))));
+    overlay.replaceChildren(h('div', { class: 'panel routes' }, h('h2', null, 'Routes'),
+      h('p', null, 'Play the steps in order, each one at the atoms the step before it changed. Greyed routes need a bottle this rack does not hold.'),
+      h('ul', { class: 'rts' }, rows), h('button', { class: 'btn go', onclick: () => hideRoutes() }, 'Back  [R]')));
+    overlay.className = 'ov on';
+  }
+  function hideRoutes() { if (!st.routesOpen) return; st.routesOpen = false; overlay.className = 'ov'; }
   function swap() {
     if (st.busy || st.mode !== 'play' || !RUN.redraw(run)) return;
     sfx.feed(); renderAll();
@@ -441,7 +464,10 @@ function start(app) {
       const ok = RUN.canBuy(run, it), price = h('div', { class: 'price' }, it.sold ? 'Sold' : '$' + it.cost);
       let body;
       if (it.kind === 'gear') { const g = RUN.GEARS[it.id]; body = h('div', { class: 'gearPick k-' + g.kind }, h('div', { class: 'gpKind' }, kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text)); }
-      else {
+      else if (it.kind === 'route') {
+        const rt = RUN.ROUTE[it.id], lv = RUN.routeLevel(run, it.id) - (it.sold ? 1 : 0), m = rt.x + rt.up * (lv - 1);
+        body = h('div', { class: 'gearPick k-x' }, h('div', { class: 'gpKind' }, 'Route, level ' + lv + ' to ' + (lv + 1)), h('div', { class: 'gpName' }, rt.name), h('div', { class: 'gpText' }, cap(RUN.routeSteps(rt)) + '. Batch times ' + m + ' becomes times ' + (m + rt.up) + '.'));
+      } else {
         const card = RX.CARDS[it.id], b = bottle(card, null), have = run.deck.filter(id => id === it.id).length;
         b.foot.append(h('span', null, it.kind === 'grade' ? 'Purify to grade ' + (RUN.gradeOf(run, it.id) + (it.sold ? 0 : 1)) : have ? 'You have ' + have : 'New to the rack'));
         arts.push([b.art, card]); body = b.el; body.tabIndex = -1;
@@ -466,7 +492,7 @@ function start(app) {
     if (st.mode !== 'shop') return;
     const it = run.shop.items[i];
     if (!RUN.buy(run, i)) { sfx.bad(); return; }
-    if (it.kind === 'grade') sfx.good(); else sfx.stamp();
+    if (it.kind === 'grade' || it.kind === 'route') sfx.good(); else sfx.stamp();
     checkUnlocks(); renderGear(); showShop();
   }
   function shopReroll() { if (st.mode === 'shop' && RUN.reroll(run)) { sfx.feed(); showShop(); } else sfx.bad(); }
@@ -498,6 +524,8 @@ function start(app) {
     if (!v.rot) { v.zoom += (Math.max(26, Math.min(70, 640 / (rad * 2.35))) - v.zoom) * 0.05; v.yaw += dt * 0.16; }
     // glows: the hovered bottle's sites, reacting atoms, and a filled order
     v.glow.clear();
+    // the atoms the last play made or changed stay lit: reacting there continues the chain
+    if (st.mode === 'play' && !st.busy && cur && cur.path.length) cur.fresh.forEach(a => { if (a.el !== 'H' && !a.fly) v.glow.set(a, 0x8a6f00); });
     st.hoverAtoms.forEach(a => v.glow.set(a, st.hoverHex));
     st.flashes = st.flashes.filter(f => f.until > now); st.flashes.forEach(f => v.glow.set(f.atom, f.hex));
     if (st.party > now) model.atoms.forEach((a, i) => v.glow.set(a, new T.Color().setHSL((now / 900 + i * 0.07) % 1, 1, 0.45).getHex()));
@@ -538,7 +566,7 @@ function start(app) {
     const k = e.key;
     if (st.mode === 'start') { if (k === 'Enter') { newRun(); e.preventDefault(); } return; }
     if (st.mode === 'shop') {
-      if (k >= '1' && k <= '5') { shopBuy(+k - 1); e.preventDefault(); } else if (k === 'r' || k === 'R') shopReroll(); else if (k === 'Enter') { leaveShop(); e.preventDefault(); }
+      if (k >= '1' && k <= '6') { shopBuy(+k - 1); e.preventDefault(); } else if (k === 'r' || k === 'R') shopReroll(); else if (k === 'Enter') { leaveShop(); e.preventDefault(); }
       return;
     }
     if (st.mode === 'offer') { if (k === '1' || k === '2') { pickFeed(+k - 1); e.preventDefault(); } return; }
@@ -547,7 +575,9 @@ function start(app) {
       else if (st.end && k === 'Enter' && overlay.className === 'ov on') { showStart(); e.preventDefault(); }
       return;
     }
+    if (st.routesOpen) { if (k === 'r' || k === 'R' || k === 'Escape' || k === 'Enter') { hideRoutes(); e.preventDefault(); } return; }
     if (k >= '1' && k <= '9') { play(+k - 1); e.preventDefault(); }
+    else if (k === 'r' || k === 'R') showRoutes();
     else if (k === 's' || k === 'S') swap();
     else if (k === 'Enter') { deliver(); e.preventDefault(); }
   });

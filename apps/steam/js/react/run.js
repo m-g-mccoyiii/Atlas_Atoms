@@ -12,7 +12,7 @@ const AA = root.AA, RX = AA.rx;
 const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20, SCHLENK = 1.5;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
 const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
-const QUOTA = [100, 250, 1200, 2000, 6000, 12000, 30000, 45000];
+const QUOTA = [200, 1000, 10000, 18000, 50000, 100000, 220000, 300000];
 // money: paid for a filled order, more for a large one, for each check passed and for twice the quota
 const PAY = 4, PAY_LARGE = 3, PAY_CHECK = 1, PAY_DOUBLE = 3, START_CASH = 3, REROLL = 2, REMOVE = 3, SELL = 2, MIN_RACK = 6;
 const COST = { y: 5, b: 5, x: 8, grow: 7, tool: 6 };
@@ -55,6 +55,7 @@ const GEAR = [
   { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch doubled.' },
   { id: 'column', kind: 'x', name: 'Chromatography column', text: 'Passing all three checks multiplies batch by 4 instead of 2.', bonus: 4 },
   { id: 'syringe', kind: 'x', name: 'Syringe pump', text: 'The last site of every bottle counts twice.' },
+  { id: 'cannula', kind: 'x', name: 'Cannula', text: 'Every chain link multiplies batch by 0.25 more.' },
   { id: 'coldtrap', kind: 'grow', name: 'Cold trap', text: 'Catches every group that leaves a molecule. Each order starts with +1 batch for every 2 caught.' },
   { id: 'seed', kind: 'grow', name: 'Seed crystal', text: 'At delivery: batch times 1, plus 0.5 for every order that has passed all three checks this run.' },
   { id: 'stock', kind: 'grow', name: 'Stock solution', text: 'Every site: +5 yield for each grade your bottles have gained this run.' },
@@ -65,6 +66,40 @@ const GEAR = [
 ];
 const GEARS = {};
 GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
+
+// Chains. A play continues the chain when it reacts at an atom the previous play made or changed and the product
+// is a structure this order has not held before, so oxidising and reducing the same carbon back and forth does not count.
+// Link L of a chain multiplies batch by 1 + CHAIN * (L - 1).
+// Routes are named chains. Each step lists the bottles that can do it. A route fires when the end of the chain
+// matches it, and only the longest match fires. Its multiplier is x at level 1 and rises by up for each level bought.
+const CHAIN = 0.25;
+const ROUTES = [
+  { id: 'ketone', name: 'Alkene to ketone', seq: [['hydrate', 'bh3'], ['pcc']], x: 2, up: 1 },
+  { id: 'deoxy', name: 'Deoxygenation', seq: [['dehydrate'], ['h2']], x: 2, up: 1 },
+  { id: 'dehalo', name: 'Dehalogenation', seq: [['koh'], ['h2']], x: 2, up: 1 },
+  { id: 'isomer', name: 'Alkene isomerisation', seq: [['hcl', 'hydrate'], ['koh', 'dehydrate']], x: 2, up: 1 },
+  { id: 'shift', name: 'Alcohol transposition', seq: [['dehydrate'], ['hydrate', 'bh3']], x: 2, up: 1 },
+  { id: 'chloro', name: 'Ketone to chloride', seq: [['nabh4', 'bh3'], ['socl2']], x: 2, up: 1 },
+  { id: 'viacl', name: 'Chloride elimination', seq: [['socl2'], ['koh']], x: 2, up: 1 },
+  { id: 'hydrolysis', name: 'Chloride to ketone', seq: [['naoh'], ['pcc']], x: 2, up: 1 },
+  { id: 'removal', name: 'Carbonyl removal', seq: [['nabh4', 'bh3'], ['dehydrate'], ['h2']], x: 4, up: 2 },
+  { id: 'carbshift', name: 'Carbonyl transposition', seq: [['nabh4', 'bh3'], ['dehydrate'], ['hydrate', 'bh3'], ['pcc']], x: 8, up: 4 }
+];
+const ROUTE = {};
+ROUTES.forEach(r => { ROUTE[r.id] = r; });
+const routeLevel = (run, id) => run.routeLv[id] || 1;
+const routeMult = (run, id) => ROUTE[id].x + ROUTE[id].up * (routeLevel(run, id) - 1);
+const routeSteps = r => r.seq.map(alts => alts.map(id => RX.CARDS[id].verb).join(' or ')).join(', then ');
+const routeFits = (run, r) => r.seq.every(alts => alts.some(id => run.deck.includes(id)));
+function matchRoute(path) {
+  let best = null;
+  ROUTES.forEach(r => {
+    const n = r.seq.length, off = path.length - n;
+    if (off < 0 || (best && best.seq.length >= n)) return;
+    if (r.seq.every((alts, k) => alts.includes(path[off + k]))) best = r;
+  });
+  return best;
+}
 
 // Things that stay unlocked between runs. `how` is shown to the player; achieved() below tests each one.
 const UNLOCKS = [
@@ -120,7 +155,7 @@ function newRun(seed, opts) {
   const o = opts || {}, rack = RACKS[o.rack] ? o.rack : 'standard';
   return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: RACKS[rack].deck.slice(), gear: [], grade: {},
     rack, level: Math.max(0, Math.min(LEVELS.length - 1, o.level | 0)), locked: new Set(o.locked || []), money: START_CASH, shop: null,
-    stats: { triple: 0, maxMoney: START_CASH },
+    stats: { triple: 0, maxMoney: START_CASH, chain: 0 }, routeLv: {}, routeDone: {},
     grow: { caught: 0, bonus: 0, grades: 0 }, fed: [], cur: null, over: false, won: false, history: [] };
 }
 // the number a growing piece of equipment currently stands at, for its tag
@@ -186,7 +221,8 @@ function chooseFeed(run, i) {
     redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
     handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
     yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
-    used: [], log: [], kept: false, done: false, spec: o.spec
+    used: [], log: [], kept: false, done: false, spec: o.spec,
+    path: [], fresh: new Set(), seen: new Set([o.feedSig])
   };
   run.offers = null;
   fill(run);
@@ -216,32 +252,73 @@ function scoreSite(run, id, dry) {
   if (!dry && LEAVES[id] && has(run, 'coldtrap')) { run.grow.caught++; ev.push({ src: 'coldtrap', kind: 'catch', val: run.grow.caught, yield: cur.yield, batch: cur.batch }); }
   return ev;
 }
-// the bottle has finished reacting at `hits` sites: equipment that works once per bottle, then the grade check
-function playEnd(run, id, hits, dry) {
+// info describes a play: hot is true when one of its sites holds an atom the previous play made or changed,
+// sig is the structure the play leaves behind, made lists the atoms it made or changed.
+function linkOf(run, id, info) {
+  const cur = run.cur, cont = !!(info && info.hot && info.sig && cur.path.length && !cur.seen.has(info.sig));
+  const path = cont ? cur.path.concat(id) : [id];
+  return { cont, len: path.length, path, route: cont ? matchRoute(path) : null };
+}
+const chainMult = (run, len) => 1 + (CHAIN + (has(run, 'cannula') ? 0.25 : 0)) * (len - 1);
+// the bottle has finished reacting at `hits` sites: equipment that works once per bottle, the chain and any route
+// it completes, then the grade check
+function playEnd(run, id, hits, dry, info) {
   const cur = run.cur, ev = [], add = adder(cur, ev);
   if (!hits) return ev;
+  const link = linkOf(run, id, info);
+  cur.path = link.path;
   if (has(run, 'syringe')) scoreSite(run, id, dry).forEach((e, k) => { if (!k) e.again = true; ev.push(e); });
   run.gear.forEach(g => {
     if (g === 'stirrer') add(g, 'b', 2);
     else if (g === 'schlenk' && hits >= 3) add(g, 'x', SCHLENK);
     else if (g === 'rotovap' && cur.step + 1 >= cur.stepsMax) add(g, 'x', 2);
   });
+  if (link.cont) {
+    add('chain', 'x', chainMult(run, link.len)); ev[ev.length - 1].len = link.len;
+    if (has(run, 'cannula')) ev[ev.length - 1].gear = 'cannula';
+    if (link.route) { add('route', 'x', routeMult(run, link.route.id)); ev[ev.length - 1].route = link.route.id; }
+    if (!dry) { run.stats.chain = Math.max(run.stats.chain, link.len); if (link.route) run.routeDone[link.route.id] = (run.routeDone[link.route.id] || 0) + 1; }
+  }
   if (!dry && hits > gradeOf(run, id)) { run.grade[id] = gradeOf(run, id) + 1; run.grow.grades++; ev.push({ src: 'bottle', kind: 'grade', val: run.grade[id], yield: cur.yield, batch: cur.batch }); }
   return ev;
 }
 // what the order would score after playing this bottle at n sites, without changing anything
-function preview(run, id, n) {
-  const cur = run.cur, y = cur.yield, b = cur.batch;
+function preview(run, id, n, info) {
+  const cur = run.cur, y = cur.yield, b = cur.batch, path = cur.path;
   for (let i = 0; i < n; i++) scoreSite(run, id, true);
-  playEnd(run, id, n, true);
+  playEnd(run, id, n, true, info);
   const s = scoreOf(cur);
-  cur.yield = y; cur.batch = b;
+  cur.yield = y; cur.batch = b; cur.path = path;
   return s;
 }
+const isHot = (cur, sites) => cur.path.length > 0 && sites.some(s => s.atoms.some(a => cur.fresh.has(a)));
+// what playing this bottle on model m would do, without changing anything: sites, chain link, route and score
+function look(run, m, id) {
+  const cur = run.cur, card = RX.CARDS[id], sites = card.find(m), n = sites.length;
+  if (!n) return { n: 0, cont: false, len: 0, route: null, score: scoreOf(cur) };
+  const info = { hot: isHot(cur, sites), sig: null };
+  if (info.hot) { const c = RX.cloneModel(m); RX.runCard(c, card); info.sig = RX.sigOf(c); }
+  const link = linkOf(run, id, info);
+  return { n, info, cont: link.cont, len: link.len, route: link.route, score: preview(run, id, n, info) };
+}
+// applies a bottle to every site of m in place, without animation, and returns the info that commit needs
+function react(run, m, id) {
+  const card = RX.CARDS[id], sites = card.find(m), hot = isHot(run.cur, sites), made = [];
+  let hits = 0;
+  sites.forEach(s => {
+    if (!card.ok(m, s)) return;
+    const r = card.apply(m, s);
+    r.focus.concat(r.incoming).forEach(a => made.push(a));
+    r.leaving.flat().forEach(a => m.removeAtom(a));
+    hits++;
+  });
+  return { hits, hot, made, sig: RX.sigOf(m) };
+}
 // records a played bottle after its sites have been scored
-function commit(run, handIdx, hits) {
+function commit(run, handIdx, hits, info) {
   const cur = run.cur, hc = cur.hand[handIdx], before = cur.log.length ? cur.log[cur.log.length - 1].score : 0;
-  const ev = playEnd(run, hc.id, hits, false), score = scoreOf(cur);
+  const ev = playEnd(run, hc.id, hits, false, info), score = scoreOf(cur);
+  cur.fresh = new Set((info && info.made) || []); if (info && info.sig) cur.seen.add(info.sig);
   cur.step++; cur.used.push(hc.id); cur.log.push({ id: hc.id, hits, score, pts: score - before });
   if (has(run, 'winchester') && !cur.kept) cur.kept = true;            // the bottle stays in the hand
   else { cur.hand.splice(handIdx, 1); cur.discard.push(hc.id); }
@@ -304,6 +381,10 @@ function stock(run) {
   shuffle(run.r, GEAR.filter(g => !has(run, g.id) && !run.locked.has(g.id))).slice(0, 2).forEach(g => items.push({ kind: 'gear', id: g.id, cost: g.cost }));
   const own = pick(run.r, Array.from(new Set(run.deck)));
   items.push({ kind: 'grade', id: own, cost: 4 + gradeOf(run, own) });
+  // one route to level up: one this run has already completed if there is one, otherwise one the rack can perform
+  const fits = ROUTES.filter(r => routeFits(run, r)), done = fits.filter(r => run.routeDone[r.id]);
+  const rt = done.length && run.r() < 0.7 ? pick(run.r, done) : fits.length ? pick(run.r, fits) : null;
+  if (rt) items.push({ kind: 'route', id: rt.id, cost: 3 + routeLevel(run, rt.id) });
   run.shop = { items, reroll: run.shop && run.shop.open ? run.shop.reroll : REROLL, open: true };
   return run.shop;
 }
@@ -312,7 +393,9 @@ function buy(run, i) {
   const it = run.shop && run.shop.items[i];
   if (!canBuy(run, it)) return false;
   run.money -= it.cost; it.sold = true;
-  if (it.kind === 'grade') { run.grade[it.id] = gradeOf(run, it.id) + 1; run.grow.grades++; } else take(run, it);
+  if (it.kind === 'grade') { run.grade[it.id] = gradeOf(run, it.id) + 1; run.grow.grades++; }
+  else if (it.kind === 'route') run.routeLv[it.id] = routeLevel(run, it.id) + 1;
+  else take(run, it);
   return true;
 }
 function reroll(run) {
@@ -336,6 +419,7 @@ function sellGear(run, id) {
 function closeShop(run) { if (run.shop) run.shop.open = false; }
 
 AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_CHECK, PAY_DOUBLE,
+  ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd,
   newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
