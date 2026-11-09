@@ -1,4 +1,4 @@
-# Atlas' Atoms: 26 Lesson Plans
+# Atlas' Atoms: 31 Lesson Plans
 
 Written for a very advanced 7-year-old working with a grown-up. A path from "what is an atom?" to burning fuel, acids and the chemistry of your body. Each lesson takes 10 to 20 minutes and is built around the game. The same lessons appear in the game under **Lessons**, and the game ticks a lesson off automatically when the child finishes its activity.
 
@@ -32,6 +32,11 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 | 24 | The π bond: why double bonds stay flat | Deep dive | 15 min |
 | 25 | Molecular orbitals: two become two | Deep dive | 20 min |
 | 26 | Why helium stays alone | Deep dive | 15 min |
+| 27 | Reactions start with a crash | Advanced | 20 min |
+| 28 | Breaking and making bonds | Advanced | 20 min |
+| 29 | The energy hill | Advanced | 20 min |
+| 30 | Making reactions faster | Advanced | 20 min |
+| 31 | Balancing equations | Advanced | 20 min |
 
 ## Lesson 1: Everything is made of atoms
 
@@ -811,3 +816,157 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 **Away from the screen.** Tug-of-war with two equal teams goes nowhere. Bonding and antibonding electrons are like two equal teams.
 
 **Grown-up question.** Why do you think hydrogen forms H₂ but helium does not form He₂?
+
+## Lesson 27: Reactions start with a crash
+
+*Advanced · about 20 minutes*
+
+**Big idea.** For molecules to react, they have to bump into each other. A gentle bump does nothing. The bump has to be hard enough, and the molecules have to hit the right way around. Only then do old bonds break and new bonds form.
+
+**Words**
+
+- **collision**: Two molecules bumping into each other.
+- **collision theory**: The idea that a reaction needs a hard enough bump, the right way around.
+
+**Try it in the game**
+
+1. Open the Molecule Lab and choose How reactions happen.
+2. Watch the red pairs and green pairs zoom around the box.
+3. Look at the numbers under the box. How many bumps were too gentle? How many were the wrong way round?
+4. Wait for a reaction. A red pair and a green pair swap partners and flash gold.
+
+**Check yourself**
+
+- What has to happen for molecules to react?  
+  *Answer: They bump hard enough, the right way around.*
+- What happens in a bump that is too gentle?  
+  *Answer: The molecules bounce off and stay the same.*
+
+**In real life.** Wood does not burn just because it sits in air full of oxygen. The molecules need hard enough bumps, which is why you have to light it. Real reactions can have extra steps, and this lab is a simplified model.
+
+**Away from the screen.** Roll two toy cars into each other slowly, then fast. A slow bump just bounces. Only a hard bump does something.
+
+**Grown-up question.** Why do you think most bumps do not make a reaction?
+
+## Lesson 28: Breaking and making bonds
+
+*Advanced · about 20 minutes*
+
+**Big idea.** In a reaction, old bonds break and new bonds form. Breaking bonds takes energy in. Making bonds gives energy out. If more energy comes out than went in, the reaction gives off heat. That is exothermic. If more goes in than comes out, it takes in heat. That is endothermic.
+
+**Words**
+
+- **exothermic**: A reaction that gives off heat.
+- **endothermic**: A reaction that takes in heat.
+
+**Try it in the game**
+
+1. In the Lab, How reactions happen, find the energy hill picture.
+2. Slide Energy change toward 'gives off heat'. The products end lower than the reactants.
+3. Slide it the other way. Now the products end higher.
+4. Watch the box. When a reaction gives off heat, the new molecules zoom away faster.
+
+**Check yourself**
+
+- What does exothermic mean?  
+  *Answer: The reaction gives off heat.*
+- What happens when bonds break?  
+  *Answer: Energy goes in.*
+
+**In real life.** A campfire gives off heat and light. Plants take in light energy to make sugar, so that reaction takes in energy.
+
+**Away from the screen.** Feel a warm hand warmer or a cold pack with a grown-up. One gives out heat, and one takes it in.
+
+**Grown-up question.** For a grown-up: in H₂ + Cl₂ → 2 HCl, breaking H–H (about 436 kJ/mol) and Cl–Cl (about 243) costs about 679. Making two H–Cl bonds (about 431 each) returns about 862. The net is about 183 kJ/mol released. Ask: which side was bigger, breaking or making?
+
+## Lesson 29: The energy hill
+
+*Advanced · about 20 minutes*
+
+**Big idea.** Even reactions that give off lots of heat need a push to start. The push is called activation energy, and we draw it as a hill. Molecules need enough energy to get over the top. A spark gives hydrogen and oxygen enough energy to get over the hill, and then they react all at once.
+
+**Words**
+
+- **activation energy**: The energy push needed to start a reaction.
+
+**Try it in the game**
+
+1. In the Lab, How reactions happen, slide Hill height up and down.
+2. Set the hill high. How many bumps are hard enough now?
+3. Set it low. What happens in the box?
+4. Find a hill height where the reaction is slow, and one where it is fast.
+
+**Check yourself**
+
+- What is activation energy?  
+  *Answer: The push needed to start a reaction.*
+- What does a higher hill do to a reaction?  
+  *Answer: Fewer bumps are hard enough, so it is slower.*
+
+**In real life.** Hydrogen and oxygen can sit together in a tank without reacting. Add a spark and they react at once.
+
+**Away from the screen.** Roll a ball toward a small hill and a big hill. It needs a bigger push for the big one.
+
+**Grown-up question.** Why is a spark needed even though the reaction gives off lots of heat?
+
+## Lesson 30: Making reactions faster
+
+*Advanced · about 20 minutes*
+
+**Big idea.** Three things speed up reactions. Heat makes molecules move faster, so more bumps are hard enough. Crowding puts more molecules in the same space, so there are more bumps. A catalyst is a helper that makes the hill lower. A catalyst is not used up.
+
+**Words**
+
+- **catalyst**: A helper that speeds up a reaction and is not used up.
+- **concentration**: How crowded the molecules are.
+
+**Try it in the game**
+
+1. In the Lab, How reactions happen, press Start again and turn Heat up. Watch the reaction speed.
+2. Turn Heat down, then tick Add a catalyst. Does it still react?
+3. Try more Crowding.
+4. Which one helped the most?
+
+**Check yourself**
+
+- What does a catalyst do?  
+  *Answer: It lowers the hill so reactions are faster.*
+- Why does heat speed up a reaction?  
+  *Answer: Molecules move faster, so more bumps are hard enough.*
+
+**In real life.** Enzymes in your body are catalysts that help break down food. A car has a catalytic converter that helps clean its exhaust. A fridge slows down the reactions that spoil food.
+
+**Away from the screen.** With a grown-up, drop the same amount of sugar into warm and cold water. Which dissolves faster? Heat speeds up many changes.
+
+**Grown-up question.** Why does food spoil more slowly in the fridge?
+
+## Lesson 31: Balancing equations
+
+*Advanced · about 20 minutes*
+
+**Big idea.** A chemical equation is a recipe. The molecules you start with are on the left and the molecules you make are on the right. Atoms never disappear, so each kind of atom must have the same count on both sides. Balancing means adding numbers in front of molecules until the counts match, like 2 H₂ + O₂ → 2 H₂O.
+
+**Words**
+
+- **equation**: A recipe for a reaction, written with formulas.
+- **coefficient**: The big number in front of a molecule.
+
+**Try it in the game**
+
+1. Open the Reactions box on the bench and read each equation.
+2. Pick CH₄ + 2 O₂ → CO₂ + 2 H₂O. Count the C, H and O on each side.
+3. Put the molecules on the bench from My Atlas and press Spark.
+4. Run at least four different reactions.
+
+**Check yourself**
+
+- How many hydrogen atoms are in 2 H₂O?  
+  *Answer: Four.*
+- Why must an equation balance?  
+  *Answer: Atoms never disappear or appear.*
+
+**In real life.** Chemists balance equations to know exactly how much of each ingredient a factory needs.
+
+**Away from the screen.** Count the wheels on 3 bikes and 2 cars. Balancing is counting parts on both sides.
+
+**Grown-up question.** If you start with 6 oxygen atoms, how many must you end with?

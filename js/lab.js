@@ -12,7 +12,7 @@ const SPECIES = {
 AA.openLab = function (tab) {
   const U = AA.ui, h = U.h;
   const body = h('div', { class: 'lab' }), content = h('div', { class: 'labContent' });
-  const tabs = [['explore', '🔍 Explore molecules'], ['orbitals', '🧪 Orbitals'], ['mo', '⚛ Molecular orbitals']];
+  const tabs = [['explore', '🔍 Explore molecules'], ['orbitals', '🧪 Orbitals'], ['mo', '⚛ Molecular orbitals'], ['rxn', '⚗ How reactions happen']];
   const bar = h('div', { class: 'seg labTabs' });
   tabs.forEach(t => bar.append(h('button', { 'data-t': t[0], onclick: () => go(t[0]) }, t[1])));
   body.append(bar, content);
@@ -23,7 +23,7 @@ AA.openLab = function (tab) {
   function go(t) {
     bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
     mark(t); setView(null); content.innerHTML = '';
-    if (t === 'explore') explore(); else if (t === 'orbitals') orbitals(); else mo();
+    if (t === 'explore') explore(); else if (t === 'orbitals') orbitals(); else if (t === 'rxn') reactions(); else mo();
   }
   const seg = (items, cur, cb) => {
     const s = h('div', { class: 'seg' });
@@ -59,7 +59,7 @@ AA.openLab = function (tab) {
         seg([['ball', 'Ball & Stick'], ['space', 'Space-filling'], ['lewis', 'Electrons'], ['orbital', 'Orbitals']], U.state.mode, k => { const d = U.getDetail(); if (d) d.mode = k; }),
         h('h3', { style: 'margin:6px 0' }, m.icon + ' ' + m.name),
         h('table', { class: 'facts' }, rows.map(r => h('tr', null, h('th', null, r[0]), h('td', null, r[1])))),
-        h('p', null, h('b', null, 'In real life: '), m.real), h('p', null, h('b', null, 'The chemistry: '), m.learn),
+        h('p', null, h('b', null, 'In real life: '), m.real), h('p', null, h('b', null, 'The chemistry: '), m.learn), AA.real.block(m),
         U.speakBtn(() => m.name + '. ' + m.real + ' ' + m.learn), ' ',
         h('button', { class: 'btn', onclick: () => { U.putOnBench(m); document.querySelector('#modal').click(); } }, 'Put on bench')));
       setTimeout(() => { setView(new AA.Viewer(cv, AA.Model.fromSmilesRelaxed(m.smiles, 5), { autoRotate: true, autoFit: true, mode: U.state.mode, faces: U.state.faces })); }, 0);
@@ -143,6 +143,59 @@ AA.openLab = function (tab) {
       seg([['dots', 'Dots'], ['both', 'Shape + dots'], ['shape', 'Shape']], 'dots', v => { view = v; refresh(); }), txt, legend(),
       h('p', { class: 'labText' }, 'When two atomic orbitals meet they make two molecular orbitals. Adding them (same phase) makes the bonding orbital, with electrons piled up between the nuclei. Subtracting them (opposite phase) makes the antibonding orbital, which has a node in the middle. Bond order = (bonding electrons − antibonding electrons) ÷ 2.'))));
     setTimeout(() => { scene = new AA.OrbitalScene(cv); setView(scene); refresh(); }, 0);
+  }
+
+  // ---------- How reactions happen (collision theory + the energy hill) ----------
+  function reactions() {
+    const cv = h('canvas', { class: 'simCanvas' }), hill = h('canvas', { width: 640, height: 440, class: 'diagram', style: 'max-width:440px' });
+    const stat = h('div', { class: 'labText' }), dhText = h('span', { style: 'color:var(--dim);font-size:14px' });
+    const range = (min, max, step, val) => h('input', { type: 'range', min, max, step, value: val, class: 'wide' });
+    const heat = range(0, 1, 0.01, 0.4), crowd = range(4, 20, 1, 10), ea = range(1, 8, 0.5, 4), dh = range(-6, 4, 0.5, -4);
+    const cat = h('input', { type: 'checkbox' });
+    let sim = null, iv = null;
+    function redraw() {
+      const d = parseFloat(dh.value);
+      AA.drawHill(hill, parseFloat(ea.value), d, cat.checked);
+      dhText.textContent = d < -0.25 ? 'gives off heat (exothermic)' : d > 0.25 ? 'takes in heat (endothermic)' : 'about the same energy';
+    }
+    function showStats() {
+      if (!sim) return;
+      const s = sim.stats, c = sim.counts();
+      stat.innerHTML = '';
+      stat.append(
+        h('div', null, h('b', null, 'Bumps between a red pair and a green pair: '), String(s.coll)),
+        h('div', null, '\uD83D\uDFE1 too gentle: ' + s.soft + '   \u00B7   \uD83D\uDD04 wrong way round: ' + s.wrong + '   \u00B7   \u2705 reacted: ' + s.react),
+        h('div', null, 'Left to react: ' + c.a + ' red pairs, ' + c.b + ' green pairs. New molecules made: ' + c.ab + '.'),
+        h('div', null, 'Reaction speed: ' + sim.rate() + ' reactions in the last 4 seconds.'));
+    }
+    heat.addEventListener('input', () => { if (sim) sim.setTemp(parseFloat(heat.value)); });
+    crowd.addEventListener('input', () => { if (sim) sim.reset(parseInt(crowd.value, 10)); });
+    cat.addEventListener('change', () => { if (sim) sim.catalyst = cat.checked; redraw(); });
+    ea.addEventListener('input', () => { if (sim) sim.Ea = parseFloat(ea.value); mark('rxn_ea'); redraw(); });
+    dh.addEventListener('input', () => { if (sim) sim.dH = parseFloat(dh.value); mark('rxn_dh'); redraw(); });
+    const reset = h('button', { class: 'btn', onclick: () => { if (sim) sim.reset(); } }, 'Start again');
+    const note = h('p', { class: 'labText' }, 'Red pairs and green pairs zoom around. When a red pair and a green pair bump hard enough and the right way round, they swap partners and make two red-green molecules (A\u2082 + B\u2082 \u2192 2 AB). A water bath keeps the box at one temperature. This is a simplified model: real reactions can have extra steps.');
+    content.append(h('div', { class: 'labGrid' },
+      h('div', null, cv, stat),
+      h('div', null,
+        h('div', null, h('label', null, '\uD83C\uDF21 Heat ', heat)), h('div', null, h('label', null, '\uD83D\uDC65 Crowding ', crowd)),
+        h('div', null, h('label', null, cat, ' \uD83E\uDDEA Add a catalyst (a helper that lowers the hill)')), h('div', null, reset),
+        hill,
+        h('div', null, h('label', null, '\u26F0 Hill height ', ea)),
+        h('div', null, h('label', null, '\uD83D\uDD25 Energy change ', dh), ' ', dhText),
+        note, legendReact())));
+    function legendReact() { return h('p', { class: 'legend' }, h('span', { class: 'chip' }, h('i', { style: 'background:#ff4d4d' }), 'A atom'), h('span', { class: 'chip' }, h('i', { style: 'background:#37d67a' }), 'B atom')); }
+    redraw();
+    setTimeout(() => {
+      sim = new AA.ReactionSim(cv, (type, info) => {
+        if (type !== 'react') return;
+        mark('rxn_react'); if (info.temp >= 0.7) mark('rxn_hot'); if (info.catalyst) mark('rxn_cat');
+      });
+      const od = sim.dispose.bind(sim);
+      sim.dispose = () => { clearInterval(iv); od(); };
+      iv = setInterval(showStats, 300);
+      setView(sim);
+    }, 0);
   }
 
   go(tab || 'explore');

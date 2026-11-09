@@ -461,6 +461,200 @@ AA.LESSONS = [
     "done": {
       "lab": "he2"
     }
+  },
+  {
+    "n": 27,
+    "title": "Reactions start with a crash",
+    "level": "Advanced",
+    "minutes": 20,
+    "bigIdea": "For molecules to react, they have to bump into each other. A gentle bump does nothing. The bump has to be hard enough, and the molecules have to hit the right way around. Only then do old bonds break and new bonds form.",
+    "words": [
+      [
+        "collision",
+        "Two molecules bumping into each other."
+      ],
+      [
+        "collision theory",
+        "The idea that a reaction needs a hard enough bump, the right way around."
+      ]
+    ],
+    "tryIt": [
+      "Open the Molecule Lab and choose How reactions happen.",
+      "Watch the red pairs and green pairs zoom around the box.",
+      "Look at the numbers under the box. How many bumps were too gentle? How many were the wrong way round?",
+      "Wait for a reaction. A red pair and a green pair swap partners and flash gold."
+    ],
+    "check": [
+      {
+        "q": "What has to happen for molecules to react?",
+        "a": "They bump hard enough, the right way around."
+      },
+      {
+        "q": "What happens in a bump that is too gentle?",
+        "a": "The molecules bounce off and stay the same."
+      }
+    ],
+    "realLife": "Wood does not burn just because it sits in air full of oxygen. The molecules need hard enough bumps, which is why you have to light it. Real reactions can have extra steps, and this lab is a simplified model.",
+    "offScreen": "Roll two toy cars into each other slowly, then fast. A slow bump just bounces. Only a hard bump does something.",
+    "grownup": "Ask: Why do you think most bumps do not make a reaction?",
+    "done": {
+      "lab": "rxn_react"
+    }
+  },
+  {
+    "n": 28,
+    "title": "Breaking and making bonds",
+    "level": "Advanced",
+    "minutes": 20,
+    "bigIdea": "In a reaction, old bonds break and new bonds form. Breaking bonds takes energy in. Making bonds gives energy out. If more energy comes out than went in, the reaction gives off heat. That is exothermic. If more goes in than comes out, it takes in heat. That is endothermic.",
+    "words": [
+      [
+        "exothermic",
+        "A reaction that gives off heat."
+      ],
+      [
+        "endothermic",
+        "A reaction that takes in heat."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, How reactions happen, find the energy hill picture.",
+      "Slide Energy change toward 'gives off heat'. The products end lower than the reactants.",
+      "Slide it the other way. Now the products end higher.",
+      "Watch the box. When a reaction gives off heat, the new molecules zoom away faster."
+    ],
+    "check": [
+      {
+        "q": "What does exothermic mean?",
+        "a": "The reaction gives off heat."
+      },
+      {
+        "q": "What happens when bonds break?",
+        "a": "Energy goes in."
+      }
+    ],
+    "realLife": "A campfire gives off heat and light. Plants take in light energy to make sugar, so that reaction takes in energy.",
+    "offScreen": "Feel a warm hand warmer or a cold pack with a grown-up. One gives out heat, and one takes it in.",
+    "grownup": "For a grown-up: in H₂ + Cl₂ → 2 HCl, breaking H–H (about 436 kJ/mol) and Cl–Cl (about 243) costs about 679. Making two H–Cl bonds (about 431 each) returns about 862. The net is about 183 kJ/mol released. Ask: which side was bigger, breaking or making?",
+    "done": {
+      "lab": "rxn_dh"
+    }
+  },
+  {
+    "n": 29,
+    "title": "The energy hill",
+    "level": "Advanced",
+    "minutes": 20,
+    "bigIdea": "Even reactions that give off lots of heat need a push to start. The push is called activation energy, and we draw it as a hill. Molecules need enough energy to get over the top. A spark gives hydrogen and oxygen enough energy to get over the hill, and then they react all at once.",
+    "words": [
+      [
+        "activation energy",
+        "The energy push needed to start a reaction."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, How reactions happen, slide Hill height up and down.",
+      "Set the hill high. How many bumps are hard enough now?",
+      "Set it low. What happens in the box?",
+      "Find a hill height where the reaction is slow, and one where it is fast."
+    ],
+    "check": [
+      {
+        "q": "What is activation energy?",
+        "a": "The push needed to start a reaction."
+      },
+      {
+        "q": "What does a higher hill do to a reaction?",
+        "a": "Fewer bumps are hard enough, so it is slower."
+      }
+    ],
+    "realLife": "Hydrogen and oxygen can sit together in a tank without reacting. Add a spark and they react at once.",
+    "offScreen": "Roll a ball toward a small hill and a big hill. It needs a bigger push for the big one.",
+    "grownup": "Ask: Why is a spark needed even though the reaction gives off lots of heat?",
+    "done": {
+      "lab": "rxn_ea"
+    }
+  },
+  {
+    "n": 30,
+    "title": "Making reactions faster",
+    "level": "Advanced",
+    "minutes": 20,
+    "bigIdea": "Three things speed up reactions. Heat makes molecules move faster, so more bumps are hard enough. Crowding puts more molecules in the same space, so there are more bumps. A catalyst is a helper that makes the hill lower. A catalyst is not used up.",
+    "words": [
+      [
+        "catalyst",
+        "A helper that speeds up a reaction and is not used up."
+      ],
+      [
+        "concentration",
+        "How crowded the molecules are."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, How reactions happen, press Start again and turn Heat up. Watch the reaction speed.",
+      "Turn Heat down, then tick Add a catalyst. Does it still react?",
+      "Try more Crowding.",
+      "Which one helped the most?"
+    ],
+    "check": [
+      {
+        "q": "What does a catalyst do?",
+        "a": "It lowers the hill so reactions are faster."
+      },
+      {
+        "q": "Why does heat speed up a reaction?",
+        "a": "Molecules move faster, so more bumps are hard enough."
+      }
+    ],
+    "realLife": "Enzymes in your body are catalysts that help break down food. A car has a catalytic converter that helps clean its exhaust. A fridge slows down the reactions that spoil food.",
+    "offScreen": "With a grown-up, drop the same amount of sugar into warm and cold water. Which dissolves faster? Heat speeds up many changes.",
+    "grownup": "Ask: Why does food spoil more slowly in the fridge?",
+    "done": {
+      "labAll": [
+        "rxn_hot",
+        "rxn_cat"
+      ]
+    }
+  },
+  {
+    "n": 31,
+    "title": "Balancing equations",
+    "level": "Advanced",
+    "minutes": 20,
+    "bigIdea": "A chemical equation is a recipe. The molecules you start with are on the left and the molecules you make are on the right. Atoms never disappear, so each kind of atom must have the same count on both sides. Balancing means adding numbers in front of molecules until the counts match, like 2 H₂ + O₂ → 2 H₂O.",
+    "words": [
+      [
+        "equation",
+        "A recipe for a reaction, written with formulas."
+      ],
+      [
+        "coefficient",
+        "The big number in front of a molecule."
+      ]
+    ],
+    "tryIt": [
+      "Open the Reactions box on the bench and read each equation.",
+      "Pick CH₄ + 2 O₂ → CO₂ + 2 H₂O. Count the C, H and O on each side.",
+      "Put the molecules on the bench from My Atlas and press Spark.",
+      "Run at least four different reactions."
+    ],
+    "check": [
+      {
+        "q": "How many hydrogen atoms are in 2 H₂O?",
+        "a": "Four."
+      },
+      {
+        "q": "Why must an equation balance?",
+        "a": "Atoms never disappear or appear."
+      }
+    ],
+    "realLife": "Chemists balance equations to know exactly how much of each ingredient a factory needs.",
+    "offScreen": "Count the wheels on 3 bikes and 2 cars. Balancing is counting parts on both sides.",
+    "grownup": "Ask: If you start with 6 oxygen atoms, how many must you end with?",
+    "done": {
+      "reactedCount": 4
+    }
   }
 ];
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -215,6 +215,7 @@ function showBanner(m, more) {
   const b = $('#banner'); b.innerHTML = '';
   b.append(h('h2', null, m.icon + ' You made ' + m.name + '!  ' + C.sub(m.formula)),
     h('p', null, m.real), h('p', null, m.learn),
+    AA.real.block(m),
     more > 0 ? h('p', null, '...and ' + more + ' more molecule' + (more > 1 ? 's' : '') + ' on the bench.') : '',
     speakBtn(() => 'You made ' + m.name + '! ' + m.real + ' ' + m.learn), ' ',
     h('button', { class: 'btn', onclick: () => b.classList.add('hidden') }, 'Nice!'),
@@ -238,7 +239,9 @@ function renderBenchList() {
       status = h('span', { style: 'color:var(--gold)' }, 'Still has open hands (' + names + ').');
     } else if (c.sameFormula) status = h('span', { style: 'color:var(--gold)' }, 'Right atoms, different arrangement. Try connecting them another way.');
     else status = h('span', { style: 'color:var(--dim)' }, 'All hands are used, but this one is not in the Atlas yet.');
-    box.append(h('div', { class: 'benchrow' }, h('b', null, C.sub(c.formula)), ' ', status));
+    const row = h('div', { class: 'benchrow' }, h('b', null, C.sub(c.formula)), ' ', status);
+    if (!c.mol && !c.unhappy.length && c.atoms.length > 1) row.append(' ', AA.real.lookupButton(c));
+    box.append(row);
   }
 }
 
@@ -376,6 +379,7 @@ function detailPane(m, opts) {
   if (opts.preview) wrap.append(h('p', { style: 'color:var(--dim)' }, 'This is a preview of the shape. Build it yourself to add it to your Atlas.'));
   else {
     wrap.append(h('p', null, h('b', null, 'In real life: '), m.real), h('p', null, h('b', null, 'The chemistry: '), m.learn), speakBtn(() => m.name + '. ' + m.real + ' ' + m.learn), ' ');
+    wrap.append(AA.real.block(m));
     wrap.append(h('button', { class: 'btn', onclick: () => { putOnBench(m); $('#modal').click(); } }, 'Put on bench'));
   }
   return wrap;

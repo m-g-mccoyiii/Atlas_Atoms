@@ -1,6 +1,6 @@
 # Atlas’ Atoms
 
-A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 26 lesson plans that start from “what is an atom?”, written for a very advanced 7-year-old working with a grown-up. A Read aloud switch uses the browser's built-in voice.
+A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 31 lesson plans that start from “what is an atom?”, written for a very advanced 7-year-old working with a grown-up. A Read aloud switch uses the browser's built-in voice.
 
 ## Play
 
@@ -22,8 +22,10 @@ Then visit http://localhost:8765.
 - **Missions.** Each mission gives a formula to build. Same atoms, wrong arrangement? The game says so (isomers).
 - **My Atlas.** 33 molecules to find, from water and CO₂ to glucose, vanillin, aspirin and vitamin C. Found molecules spin in 3D and can be put back on the bench.
 - **Reactions.** Put the right molecules on the bench and press Spark: rocket fuel, a gas stove, fertilizer, fizzy water, “elephant toothpaste”. Atoms visibly rearrange and are never created or destroyed.
-- **Lessons.** 26 lessons with vocabulary, game activities, check-yourself questions and safe off-screen activities. The game ticks a lesson off when the activity is done. A printable version is in [docs/LESSON_PLANS.md](docs/LESSON_PLANS.md).
+- **Lessons.** 31 lessons with vocabulary, game activities, check-yourself questions and safe off-screen activities. The game ticks a lesson off when the activity is done. A printable version is in [docs/LESSON_PLANS.md](docs/LESSON_PLANS.md).
 - **Molecule Lab.** Three tabs. *Explore* lists every molecule you have found with its weight, atom and bond counts, shape and state at room temperature. *Orbitals* shows 1s, 2s and p orbitals as shapes and as clouds of electron dots (each dot is one possible position of the electron, sampled from the real wave function), plus sp³ hybridisation (watch the s and p orbitals blend into four) and the π bond in ethene. *Molecular orbitals* builds the bonding (σ) and antibonding (σ*) orbitals of H₂, with an energy diagram, a nuclei-distance slider with an overlap readout, and an electron counter that takes you from H₂⁺ and H₂ to He₂⁺ and He₂ (bond order zero, so helium does not bond).
+- **How reactions happen.** A fourth Lab tab: red and green molecules collide in a box. Turn up the heat, crowd them together or add a catalyst and watch reactions speed up, with a linked energy-hill diagram (activation energy, exothermic and endothermic). A simplified collision-theory model of A₂ + B₂ → 2 AB. Five advanced lessons use it.
+- **Real compounds.** Every molecule in the Atlas is verified against PubChem (formula must match exactly) and linked to its Wikipedia article, behind an "ask a grown-up" screen. For molecules a kid invents that are not in the Atlas, an 🔎 Is it real? button asks PubChem and shows the real name if it exists. `python tools/verify_compounds.py` re-checks the data.
 - **Layout toggle.** The 📱 button in the header cycles Auto, iPhone and iPad layouts, so either can be forced on any screen. iPad has a left tray, a big touch-friendly bench, and a side panel that slides over in portrait.
 - **Phones.** The bench fills the screen, atoms sit in a scrollable strip (swipe up from an atom to pull it out, tap it for its card), info lives in a slide-up sheet, and the Lab and lessons go full-screen. Pinch to zoom, one finger to orbit. Works in portrait and landscape. The page has a web-app manifest, so it can be added to a home screen.
 - **Offline.** After the first visit the game is cached by a service worker (`sw.js`) and works with no connection. When online it fetches fresh files, so updates still arrive.
@@ -40,6 +42,9 @@ Then visit http://localhost:8765.
 | `js/quizzes.js` | Multiple-choice questions for each lesson |
 | `js/molinfo.js` | Shape and state facts, molar mass and bond counts for the Lab |
 | `js/orbitals.js` | 3D orbital scenes (wave-function sampling, hybrids, molecular orbitals) |
+| `js/reactionsim.js` | The collision-theory reaction box and energy-hill drawing |
+| `js/realdata.js` | Generated: PubChem IDs and Wikipedia links for every molecule |
+| `js/real.js` | Real-compound box, leave-the-game confirmation, "Is it real?" lookup |
 | `js/lab.js` | The Molecule Lab screens |
 | `js/chem.js` | SMILES parser, formulas, valence rules, molecule fingerprinting |
 | `js/model.js` | Atoms/bonds and a small 3D physics relaxer (bond lengths, VSEPR-style angles) |

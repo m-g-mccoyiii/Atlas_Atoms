@@ -96,7 +96,7 @@ test('benzene ring is flat', () => {
 });
 
 test('every lesson has a quiz with 2 sensible questions', () => {
-  eq(AA.LESSONS.length, 26, 'lessons');
+  eq(AA.LESSONS.length, 31, 'lessons');
   for (const L of AA.LESSONS) {
     const q = AA.QUIZZES[L.n];
     if (!q || q.length < 2) throw new Error('lesson ' + L.n + ' has no quiz');
@@ -112,7 +112,7 @@ test('lesson completion rules point at real molecules and reactions', () => {
   for (const L of AA.LESSONS) {
     const d = L.done || {};
     [].concat(d.found || [], d.foundAll || []).forEach(id => { if (!ids.has(id)) throw new Error('lesson ' + L.n + ' needs missing molecule ' + id); });
-    [].concat(d.lab || [], d.labAll || []).forEach(k => { if (!['1s', '2s', '2p', '2p3', 'sp3', 'pi', 'mo', 'sigmastar', 'he2', 'explore', 'orbitals'].includes(k)) throw new Error('lesson ' + L.n + ' needs unknown lab step ' + k); });
+    [].concat(d.lab || [], d.labAll || []).forEach(k => { if (!['1s', '2s', '2p', '2p3', 'sp3', 'pi', 'mo', 'sigmastar', 'he2', 'explore', 'orbitals', 'rxn', 'rxn_react', 'rxn_hot', 'rxn_cat', 'rxn_dh', 'rxn_ea'].includes(k)) throw new Error('lesson ' + L.n + ' needs unknown lab step ' + k); });
     [].concat(d.reacted || [], d.reactedAny || []).forEach(id => { if (!rx.has(id)) throw new Error('lesson ' + L.n + ' needs missing reaction ' + id); });
   }
 });
@@ -127,6 +127,23 @@ test('every molecule has Molecule Lab info and sensible facts', () => {
   const b = AA.bondTally(AA.MOLECULES.find(x => x.id === 'co2').smiles);
   eq(b.double, 2, 'CO2 double bonds'); eq(b.single, 0, 'CO2 single bonds');
   eq(AA.bondTally(AA.MOLECULES.find(x => x.id === 'salt').smiles).ionic, 1, 'salt ionic');
+});
+
+test('every molecule is linked to a verified PubChem compound and Wikipedia article', () => {
+  for (const m of lib.list) {
+    const r = AA.REAL && AA.REAL[m.id];
+    if (!r || !r.pubchem || !r.pubchem.cid) throw new Error(m.id + ' has no PubChem link');
+    const f = {}; (r.pubchem.formula.match(/[A-Z][a-z]?\d*/g) || []).forEach(t => { const el = t.match(/[A-Z][a-z]?/)[0], n = parseInt(t.slice(el.length) || '1', 10); f[el] = (f[el] || 0) + n; });
+    eq(JSON.stringify(Object.keys(f).sort().map(k => [k, f[k]])), JSON.stringify(Object.keys(m.counts).sort().map(k => [k, m.counts[k]])), m.id + ' formula vs PubChem');
+    if (!r.wikipedia || !/^https:\/\/en\.wikipedia\.org\/wiki\//.test(r.wikipedia.url)) throw new Error(m.id + ' has no Wikipedia link');
+  }
+});
+test('toSmiles round-trips every molecule (so PubChem lookups send the right structure)', () => {
+  for (const m of lib.list) {
+    const comp = Model.fromSmiles(m.smiles, 3).analyze()[0];
+    const smi = AA.real.toSmiles(comp.atoms, comp.bonds), g = C.parseSmiles(smi);
+    eq(C.signature(g.atoms.map(a => a.el), g.bonds), m.sig, m.id + ' via ' + smi);
+  }
 });
 
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';

@@ -56,7 +56,17 @@ const RAW = {
   25: [["What do you get when two atomic orbitals overlap?", "Two molecular orbitals", "One atom", "Nothing", "Two orbitals in, two orbitals out."],
       ["Where are the electrons in a bonding orbital?", "Between the two nuclei", "Far from both", "Inside one nucleus only", "They pile up between the nuclei and hold them together."]],
   26: [["What is the bond order of H₂?", "1", "0", "2", "Two bonding electrons: (2 − 0) ÷ 2 = 1."],
-      ["Why doesn't helium make He₂?", "Bonding and antibonding electrons cancel", "Helium is too heavy", "Helium has no electrons", "Four electrons fill both orbitals, so the bond order is zero."]]
+      ["Why doesn't helium make He₂?", "Bonding and antibonding electrons cancel", "Helium is too heavy", "Helium has no electrons", "Four electrons fill both orbitals, so the bond order is zero."]],
+  27: [["What has to happen for molecules to react?", "They bump hard enough, the right way around", "They just sit next to each other", "They get bigger", "A reaction needs a hard enough bump in the right direction."],
+      ["What happens in a bump that is too gentle?", "The molecules bounce off and stay the same", "They always react", "They disappear", "Not enough energy, so nothing changes."]],
+  28: [["What does exothermic mean?", "The reaction gives off heat", "The reaction takes in heat", "The reaction stops", "Exo means out: heat comes out."],
+      ["What happens when bonds break?", "Energy goes in", "Energy comes out", "Nothing happens", "It takes energy to pull atoms apart."]],
+  29: [["What is activation energy?", "The push needed to start a reaction", "The heat a reaction gives off", "The size of a molecule", "It is the height of the energy hill."],
+      ["What does a higher hill do to a reaction?", "Fewer bumps are hard enough, so it is slower", "It makes it faster", "It makes more molecules", "A taller hill is harder to climb."]],
+  30: [["What does a catalyst do?", "It lowers the hill so reactions are faster", "It gets used up making new molecules", "It makes the hill higher", "A catalyst is a helper and is not used up."],
+      ["Why does heat speed up a reaction?", "Molecules move faster, so more bumps are hard enough", "Molecules get bigger", "Molecules stop moving", "Faster molecules bump harder."]],
+  31: [["How many hydrogen atoms are in 2 H₂O?", "4", "2", "3", "Each water has 2, and there are 2 waters."],
+      ["Why must an equation balance?", "Atoms never disappear or appear", "It looks nicer", "Molecules get bigger", "The same atoms are on both sides."]]
 };
 
 AA.QUIZZES = {};
