@@ -17,6 +17,28 @@ Loop:
 
 Budget is 5 plus the file's tier in days. Rating: 3 stars for 3 days or fewer, 2 for 5 or fewer, 1 otherwise, minus one star for 5 or more misreads.
 
+## The game: forensic chemist, then the rules break
+
+Entry point: `apps/steam/noir.html`. You run an independent lab. Detectives and inspectors send samples. You identify each one on the bench, read what it means, and say who or what is responsible. Chemistry is the means. The game is the cases, the reputation and the money.
+
+Systems that exist:
+- Lab hours per case (8, plus upgrades). Each assay costs one hour, so feedback is a decision, not a free hint.
+- Scan tokens per sample. The mass spectrum is free, and one token reads a second instrument.
+- Assays reveal peak by peak with rising chimes. Explanations and the 3D atom highlight unlock only for peaks you have earned.
+- Evidence board, suspects, accusation with supporting findings, three outcomes (solved, thin evidence, wrong person) with real cost.
+- Cash, reputation, upgrades, casebook, endings.
+- Five cases. Act I (cases 1 to 4) teaches real chemistry. Act II starts with case 5.
+
+The arc, written so each act changes what the player is allowed to believe:
+1. Act I, grounded. Everything obeys the tables. The player learns the instruments and trusts them.
+2. Act II, anomalies. A sample matches a known compound except for one signal no structure can make. Case 5 does this with a hydrogen NMR line at -3.2 ppm. The player can only report it. Nothing explains it yet.
+3. Act III, the pattern. Anomalies recur across unrelated cases. The player starts building a model of what they have in common, and the bench gains tools that break the rules (bonds above the normal limit, an entry in the periodic table that is not there).
+4. Act IV, new laws. The player deduces the rules of the new chemistry the way they learned the old ones, from evidence, and uses them.
+
+Writing rule for every act: state plain facts. The impossible parts are impossible numbers, for example "no organic hydrogen resonates below 0 ppm", not hints or mood.
+
+Why this can sell: one-sentence hook ("a forensic chemist whose lab results start to break chemistry"); a shareable first-anomaly moment; mastery that compounds (every rule learned is used again); a clear store pitch for detective, puzzle and mystery players who have no chemistry background.
+
 ## Direction after design review
 
 The labelling-and-notebook loop above plays like a worksheet. The new core loop, prototyped in `apps/steam/proto.html`, is live tuning:
