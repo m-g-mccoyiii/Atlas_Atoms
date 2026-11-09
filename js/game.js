@@ -40,7 +40,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, layout: 'auto', voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, badges: {}, tries: {}, lookups: 0, layout: 'auto', voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -416,19 +416,7 @@ function putOnBench(m) {
 
 
 // ---------- lessons ----------
-function lessonDone(L) {
-  if (state.lessons[L.n]) return true;
-  const d = L.done;
-  if (!d) return false;
-  if (d.found) return !!state.found[d.found];
-  if (d.foundAll) return d.foundAll.every(id => state.found[id]);
-  if (d.reacted) return !!state.reacted[d.reacted];
-  if (d.reactedAny) return d.reactedAny.some(id => state.reacted[id]);
-  if (d.reactedCount) return Object.keys(state.reacted).length >= d.reactedCount;
-  if (d.lab) return !!state.labSeen[d.lab];
-  if (d.labAll) return d.labAll.every(k => state.labSeen[k]);
-  return false;
-}
+function lessonDone(L) { return AA.lessonDoneFor(state, L); }
 function nextLesson() { return AA.LESSONS.find(L => !lessonDone(L)) || null; }
 function lessonCount() { return AA.LESSONS.filter(lessonDone).length; }
 function checkLessons() {
@@ -439,6 +427,7 @@ function checkLessons() {
   }
   if (changed) save();
   const el = $('#lcount'); if (el) el.textContent = '(' + lessonCount() + '/' + AA.LESSONS.length + ')';
+  if (AA.checkBadges) AA.checkBadges();
 }
 function openLessons(focus) {
   const list = h('div', { class: 'lessonList' }), side = h('div', { class: 'lessonBody' });
@@ -515,6 +504,7 @@ function openQuiz(L) {
   }
   function finish() {
     const perfect = score === Q.length;
+    state.tries[L.n] = (state.tries[L.n] || 0) + 1;
     if (state.quiz[L.n] === undefined || score > state.quiz[L.n]) state.quiz[L.n] = score;
     if (perfect && !state.lessons[L.n]) state.lessons[L.n] = Date.now();
     save(); checkLessons(); renderMission();
@@ -564,6 +554,7 @@ $('#chkFaces').checked = state.faces;
 $('#chkFaces').addEventListener('change', e => { state.faces = e.target.checked; bench.faces = state.faces; save(); });
 $('#btnAtlas').addEventListener('click', () => openAtlas());
 $('#btnLessons').addEventListener('click', () => openLessons());
+$('#btnBadges').addEventListener('click', () => AA.openBadges());
 $('#btnLab').addEventListener('click', () => AA.openLab());
 $('#btnLayout').addEventListener('click', () => {
   state.layout = LAYOUTS[(LAYOUTS.indexOf(state.layout) + 1) % LAYOUTS.length] || 'auto';
@@ -631,6 +622,6 @@ applyLayout(); buildTray(); setMode(state.mode); soundBtn(); analyze();
 tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
 if (!state.seenHelp) openHelp();
 requestAnimationFrame(frame);
-AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, save, checkLessons, getDetail: () => detail, setDetail: v => { detail = v; } };
+AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, save, checkLessons, bench, sfx, tip, speak, lessonDone, getDetail: () => detail, setDetail: v => { detail = v; } };
 window.AA_debug = { bench, model, state, analyze };
 })();

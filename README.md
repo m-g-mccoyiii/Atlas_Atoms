@@ -28,6 +28,8 @@ Then visit http://localhost:8765.
 - **Real compounds.** Every molecule in the Atlas is verified against PubChem (formula must match exactly) and linked to its Wikipedia article, behind an "ask a grown-up" screen. For molecules a kid invents that are not in the Atlas, an 🔎 Is it real? button asks PubChem and shows the real name if it exists. `python tools/verify_compounds.py` re-checks the data.
 - **Layout toggle.** The 📱 button in the header cycles Auto, iPhone and iPad layouts, so either can be forced on any screen. iPad has a left tray, a big touch-friendly bench, and a side panel that slides over in portrait.
 - **Phones.** The bench fills the screen, atoms sit in a scrollable strip (swipe up from an atom to pull it out, tap it for its card), info lives in a slide-up sheet, and the Lab and lessons go full-screen. Pinch to zoom, one finger to orbit. Works in portrait and landscape. The page has a web-app manifest, so it can be added to a home screen.
+- **Badges.** 29 badges: one for each of the ten lesson units, plus milestones for molecules found, reactions, lessons finished, perfect quizzes, exploring the Lab, asking PubChem, and a Certified Chemist trophy for all 100 lessons. A pop-up celebrates each new one.
+- **Progress page for grown-ups.** Open Badges, then "Progress page for grown-ups": totals, progress by unit, the next lesson with a talking point, quizzes worth another look, recent activity, copy-to-clipboard and print. Everything stays on the device.
 - **Offline.** After the first visit the game is cached by a service worker (`sw.js`) and works with no connection. When online it fetches fresh files, so updates still arrive.
 - **Quizzes.** Every lesson has a 2-question multiple-choice quiz made from its check-yourself questions. Each answer is explained, a perfect score gives three stars and completes the lesson.
 - **Element cards.** Click an element in the tray for a Bohr diagram and a fact. New elements unlock as you find molecules.
@@ -45,6 +47,7 @@ Then visit http://localhost:8765.
 | `js/reactionsim.js` | The collision-theory reaction box and energy-hill drawing |
 | `js/realdata.js` | Generated: PubChem IDs and Wikipedia links for every molecule |
 | `js/real.js` | Real-compound box, leave-the-game confirmation, "Is it real?" lookup |
+| `js/progress.js` | Lesson-completion rule, badges, and the grown-up progress page |
 | `js/lab.js` | The Molecule Lab screens |
 | `js/chem.js` | SMILES parser, formulas, valence rules, molecule fingerprinting |
 | `js/model.js` | Atoms/bonds and a small 3D physics relaxer (bond lengths, VSEPR-style angles) |

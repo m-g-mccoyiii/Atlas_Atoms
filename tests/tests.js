@@ -147,6 +147,19 @@ test('toSmiles round-trips every molecule (so PubChem lookups send the right str
   }
 });
 
+test('badges: unique, none for a new player, all for a finished one', () => {
+  eq(new Set(AA.BADGES.map(b => b.id)).size, AA.BADGES.length, 'unique badge ids');
+  AA.LESSON_UNITS.forEach((u, i) => { if (!AA.BADGES.some(b => b.id === 'unit-' + (i + 1))) throw new Error('no badge for unit ' + (i + 1)); });
+  eq(AA.earnedBadges({ found: {}, lessons: {}, quiz: {}, reacted: {}, labSeen: {} }).length, 0, 'new player');
+  const full = { found: {}, lessons: {}, quiz: {}, reacted: {}, labSeen: { explore: 1, orbitals: 1, mo: 1, rxn: 1 }, lookups: 1 };
+  AA.MOLECULES.forEach(m => { full.found[m.id] = 1; }); AA.REACTIONS.forEach(r => { full.reacted[r.id] = 1; });
+  AA.LESSONS.forEach(l => { full.lessons[l.n] = 1; full.quiz[l.n] = AA.QUIZZES[l.n].length; });
+  eq(AA.earnedBadges(full).length, AA.BADGES.length, 'finished player earns every badge');
+  const half = JSON.parse(JSON.stringify(full)); half.lessons = {}; AA.LESSONS.filter(l => l.n <= 10).forEach(l => { half.lessons[l.n] = 1; });
+  const st = AA.progressStats({ found: {}, lessons: half.lessons, quiz: {}, reacted: {}, labSeen: {} });
+  eq(st.lessonsDone >= 10, true, 'ten lessons counted'); eq(st.units[0].done, 10, 'unit 1 done'); eq(st.units[1].done, 0, 'unit 2 untouched');
+});
+
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';
 document.title = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + (pass + fail);
 })();

@@ -59,6 +59,7 @@
   <nav>
     <label class="chk" title="Read tips and lessons out loud"><input type="checkbox" id="chkVoice"> 🗣<span class="lbl"> Read aloud</span></label>
     <button id="btnLab" class="pill" aria-label="Molecule Lab">🔬<span class="lbl"> Molecule Lab</span></button>
+    <button id="btnBadges" class="pill" aria-label="Badges">🏅<span class="lbl"> Badges</span> <span id="bcount"></span></button>
     <button id="btnLessons" class="pill" aria-label="Lessons">🎓<span class="lbl"> Lessons</span> <span id="lcount"></span></button>
     <button id="btnAtlas" class="pill" aria-label="My Atlas">📖<span class="lbl"> My Atlas</span> <span id="count"></span></button>
     <button id="btnLayout" class="pill" aria-label="Screen layout"></button>
@@ -120,6 +121,7 @@
 <script src="js/lab.js?v=__BUILD__"></script>
 <script src="js/realdata.js?v=__BUILD__"></script>
 <script src="js/real.js?v=__BUILD__"></script>
+<script src="js/progress.js?v=__BUILD__"></script>
 <script src="js/game.js?v=__BUILD__"></script>
 <script>
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

@@ -89,6 +89,7 @@ function lookupButton(c) {
     out.textContent = ' Looking it up...';
     try {
       const res = await lookup(toSmiles(c.atoms, c.bonds));
+      const st = AA.ui.state; st.lookups = (st.lookups || 0) + 1; AA.ui.save(); AA.ui.checkLessons();
       out.textContent = '';
       if (res.found) out.append(' ✅ Real! PubChem knows it as ', h('b', null, res.title), ' (#' + res.cid + '). ',
         h('button', { class: 'pill', style: 'padding:2px 10px;font-size:13px;min-height:0', onclick: () => openLink('https://pubchem.ncbi.nlm.nih.gov/compound/' + res.cid, 'PubChem') }, 'See it'));
@@ -98,6 +99,6 @@ function lookupButton(c) {
   return h('span', null, btn, out);
 }
 
-AA.real = { toSmiles, block, lookupButton, openLink, lookup };
+AA.real = { toSmiles, block, lookupButton, openLink, lookup, ask };
 if (typeof module !== 'undefined') module.exports = AA.real;
 })(typeof globalThis !== 'undefined' ? globalThis : window);
