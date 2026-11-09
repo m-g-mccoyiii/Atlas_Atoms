@@ -84,3 +84,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .canvasbox { min-height: 55vh; }
   .atlasWrap { grid-template-columns: 1fr; }
 }
+
+.lessonWrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 14px; }
+.lessonList { display: flex; flex-direction: column; gap: 4px; max-height: 70vh; overflow-y: auto; }
+.lrow { display: flex; gap: 8px; align-items: center; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; cursor: pointer; font-size: 14px; }
+.lrow.sel { border-color: var(--gold); }
+.lnum { width: 26px; height: 26px; border-radius: 50%; background: var(--panel); display: grid; place-items: center; font-weight: bold; flex: none; color: var(--green); }
+.lessonBody { max-height: 70vh; overflow-y: auto; padding-right: 6px; }
+.lessonBody h4 { margin: 12px 0 4px; color: var(--teal); }
+.lessonBody li { margin: 4px 0; }
+.ans { background: var(--panel2); border-left: 3px solid var(--green); padding: 4px 8px; margin-top: 4px; border-radius: 4px; }
+.ok { color: var(--green); font-weight: bold; }
+@media (max-width: 900px) { .lessonWrap { grid-template-columns: 1fr; } .lessonList { max-height: 25vh; } }

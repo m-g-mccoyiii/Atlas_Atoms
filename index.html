@@ -10,6 +10,7 @@
 <header class="top">
   <h1><span class="logo">⚛</span> Atlas’ Atoms</h1>
   <nav>
+    <button id="btnLessons" class="pill">🎓 Lessons <span id="lcount"></span></button>
     <button id="btnAtlas" class="pill">📖 My Atlas <span id="count"></span></button>
     <button id="btnSound" class="pill" title="Sound on/off">🔊</button>
     <button id="btnHelp" class="pill" title="How to play">?</button>
@@ -26,6 +27,7 @@
       <div class="seg" id="modes">
         <button data-mode="ball" class="on">Ball &amp; Stick</button>
         <button data-mode="space">Space-filling</button>
+        <button data-mode="lewis">Electrons</button>
         <button data-mode="orbital">Orbitals</button>
       </div>
       <div class="seg" id="tools">
@@ -33,6 +35,8 @@
         <button data-tool="cut">✂ Cut bond</button>
       </div>
       <button id="btnRecenter" class="pill">🎯 Reset view</button>
+      <button id="btnShake" class="pill" title="Shake everything">🌀 Shake</button>
+      <label class="chk" title="How fast the atoms jiggle">🌡 Heat <input type="range" id="heat" min="0" max="1" step="0.05" value="0.15"></label>
       <button id="btnClear" class="pill">🧹 Clear</button>
       <label class="chk"><input type="checkbox" id="chkFaces" checked> Faces</label>
     </div>
@@ -53,8 +57,10 @@
 <div id="modal" class="modal hidden"></div>
 <script src="js/data.js"></script>
 <script src="js/chem.js"></script>
+<script src="js/lessons.js"></script>
 <script src="js/model.js"></script>
-<script src="js/render.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="js/render3d.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

@@ -19,7 +19,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -47,12 +47,13 @@ const sfx = {
 };
 
 // ---------- bench ----------
-const bench = new Viewer($('#bench'), new Model(), { interactive: true, mode: state.mode, faces: state.faces });
+const bench = new Viewer($('#bench'), new Model(), { interactive: true, mode: state.mode, faces: state.faces, zoom: 42 });
 const model = bench.model;
 
 const CAPTIONS = {
   ball: 'Balls are atoms and sticks are bonds. Dots under an atom are its bonding hands: green dots are used, gold rings are open. Drag empty space to turn the view.',
   space: 'Space-filling: each atom is drawn at its true size, so you see how much room a molecule takes up.',
+  lewis: 'Electron dot picture. A line is a shared pair of electrons (two lines make a double bond). Gold dots are lone pairs. Chemists draw molecules this way.',
   orbital: 'Cyan clouds are shared electrons in bonds. Gold lobes are lone pairs. A lone atom shows its s sphere and its three p orbitals.'
 };
 function setMode(m) {
@@ -103,7 +104,8 @@ bench.cb.onDrop = function (a, target, e) {
     if (model.canBond(a, target)) {
       model.bond(a, target);
       a.z += (Math.random() - 0.5) * 0.3;
-      sfx.bond();
+      sfx.bond(); bench.pop(a); bench.pop(target);
+      bench.burstAtoms([a, target], 14);
       tipOnce('bond', 'Bond made. The dots under each atom count its hands. When every hand is used, the atom smiles.');
     } else {
       sfx.bad();
@@ -114,6 +116,13 @@ bench.cb.onDrop = function (a, target, e) {
     }
   }
   analyze();
+};
+bench.cb.onPoke = function (a) {
+  bench.pop(a);
+  const d = E[a.el], sum = model.bondSum(a), eff = C.effValence(a.el, sum) || sum;
+  a.vx += (Math.random() - 0.5) * 4; a.vy += (Math.random() - 0.5) * 4; a.vz += (Math.random() - 0.5) * 4;
+  tone(380 + d.z * 18, 0.14, 'sine', 0.07);
+  tip(d.name + ': ' + sum + ' of ' + eff + ' bonds used. ' + d.fact, 9000);
 };
 bench.cb.onCut = function (b) {
   model.unbond(b);
@@ -138,6 +147,7 @@ function analyze() {
     if (opened.length) setTimeout(() => tip('New atoms unlocked: ' + opened.map(el => E[el].name).join(', ') + '.', 9000), 600);
     buildTray();
   }
+  checkLessons();
   renderBenchList(); renderMission(); renderReactions(); updateCount();
   return comps;
 }
@@ -187,6 +197,8 @@ function renderMission() {
       h('p', { style: 'color:var(--dim)' }, 'Every atom has to use all of its hands.'),
       h('button', { class: 'btn alt', onclick: () => openPreview(m) }, 'Show me the shape'));
   }
+  const nl = nextLesson();
+  if (nl) box.append(h('p', null, h('button', { class: 'btn alt', onclick: () => openLessons(nl.n) }, '\uD83C\uDF93 Next lesson: ' + nl.n + '. ' + nl.title)));
   box.append(h('div', { class: 'bar' }, h('div', { style: 'width:' + (foundCount() / lib.list.length * 100) + '%' })),
     h('small', { style: 'color:var(--dim)' }, foundCount() + ' of ' + lib.list.length + ' molecules found'));
 }
@@ -266,6 +278,7 @@ function spark(rx) {
     tpl.bonds.forEach(k => model.bonds.push({ a: map[tpl.atoms.indexOf(k.a)], b: map[tpl.atoms.indexOf(k.b)], order: k.order }));
   });
   sfx.spark();
+  state.reacted[rx.id] = Date.now(); save(); checkLessons();
   bench.burstAtoms(atoms, 60);
   tip('Spark! ' + rxText(rx.reactants) + ' → ' + rxText(rx.products) + '. Every atom is still here. Reactions only rearrange atoms, they never make or destroy them.', 12000);
   setTimeout(analyze, 900);
@@ -275,7 +288,7 @@ function spark(rx) {
 // ---------- modals ----------
 function modalShell(title, body, onClose) {
   const m = $('#modal'); m.innerHTML = ''; m.classList.remove('hidden');
-  const close = () => { m.classList.add('hidden'); m.innerHTML = ''; if (detail) detail = null; if (onClose) onClose(); };
+  const close = () => { m.classList.add('hidden'); m.innerHTML = ''; if (detail) { detail.dispose(); detail = null; } if (onClose) onClose(); };
   const sheet = h('div', { class: 'sheet' }, h('button', { class: 'x', onclick: close }, '✕'), h('h2', null, title), body);
   m.append(sheet);
   m.onclick = e => { if (e.target === m) close(); };
@@ -288,10 +301,11 @@ function detailPane(m, opts) {
   const wrap = h('div', { class: 'detail' }, cv);
   const tpl = Model.fromSmilesRelaxed(m.smiles, 5);
   setTimeout(() => {
+    if (detail) detail.dispose();
     detail = new Viewer(cv, tpl, { autoRotate: true, autoFit: true, mode: state.mode, faces: state.faces });
   }, 0);
   const seg = h('div', { class: 'seg' });
-  [['ball', 'Ball & Stick'], ['space', 'Space-filling'], ['orbital', 'Orbitals']].forEach(([k, label]) => {
+  [['ball', 'Ball & Stick'], ['space', 'Space-filling'], ['lewis', 'Electrons'], ['orbital', 'Orbitals']].forEach(([k, label]) => {
     const b = h('button', { class: state.mode === k ? 'on' : '', onclick: () => { if (detail) detail.mode = k; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); } }, label);
     seg.append(b);
   });
@@ -328,11 +342,69 @@ function openAtlas(focusId) {
 
 function putOnBench(m) {
   const tpl = Model.fromSmilesRelaxed(m.smiles, 3);
-  const c = bench.uncam([(Math.random() - 0.5) * 6, (Math.random() - 0.5) * 3, 0]);
+  const c = bench.randomSpot();
   const map = tpl.atoms.map(a => model.addAtom(a.el, a.x + c[0], a.y + c[1], a.z + c[2]));
   tpl.bonds.forEach(k => model.bonds.push({ a: map[tpl.atoms.indexOf(k.a)], b: map[tpl.atoms.indexOf(k.b)], order: k.order }));
   tip('Added ' + m.name + ' to the bench.');
   analyze();
+}
+
+
+// ---------- lessons ----------
+function lessonDone(L) {
+  if (state.lessons[L.n]) return true;
+  const d = L.done;
+  if (!d) return false;
+  if (d.found) return !!state.found[d.found];
+  if (d.foundAll) return d.foundAll.every(id => state.found[id]);
+  if (d.reacted) return !!state.reacted[d.reacted];
+  if (d.reactedAny) return d.reactedAny.some(id => state.reacted[id]);
+  if (d.reactedCount) return Object.keys(state.reacted).length >= d.reactedCount;
+  return false;
+}
+function nextLesson() { return AA.LESSONS.find(L => !lessonDone(L)) || null; }
+function lessonCount() { return AA.LESSONS.filter(lessonDone).length; }
+function checkLessons() {
+  let changed = false;
+  for (const L of AA.LESSONS) if (!state.lessons[L.n] && L.done && lessonDone(L)) {
+    state.lessons[L.n] = Date.now(); changed = true;
+    setTimeout(() => tip('Lesson ' + L.n + ' complete: ' + L.title + '.', 8000), 1400);
+  }
+  if (changed) save();
+  const el = $('#lcount'); if (el) el.textContent = '(' + lessonCount() + '/' + AA.LESSONS.length + ')';
+}
+function openLessons(focus) {
+  const list = h('div', { class: 'lessonList' }), side = h('div', { class: 'lessonBody' });
+  function show(L, row) {
+    list.querySelectorAll('.lrow').forEach(r => r.classList.remove('sel')); row.classList.add('sel');
+    side.innerHTML = '';
+    side.append(
+      h('h3', { style: 'margin:0 0 4px;font-size:20px;color:var(--gold);text-transform:none;letter-spacing:0' }, 'Lesson ' + L.n + ': ' + L.title),
+      h('small', { style: 'color:var(--dim)' }, L.level + ' \u00B7 about ' + L.minutes + ' minutes'),
+      h('p', null, h('b', null, 'Big idea: '), L.bigIdea),
+      h('p', null, h('b', null, 'Words: '), L.words.map(w => h('span', { class: 'chip' }, h('b', null, w[0]), ' = ' + w[1]))),
+      h('h4', null, 'Try it in the game'), h('ol', null, L.tryIt.map(s => h('li', null, s))),
+      h('h4', null, 'Check yourself'),
+      h('ul', null, L.check.map(c => { const ans = h('div', { class: 'ans hidden' }, c.a); return h('li', null, c.q, ' ', h('button', { class: 'pill', style: 'padding:0 8px;font-size:12px', onclick: () => ans.classList.toggle('hidden') }, 'Show answer'), ans); })),
+      h('p', null, h('b', null, 'In real life: '), L.realLife),
+      h('p', null, h('b', null, 'Away from the screen: '), L.offScreen, h('i', { style: 'color:var(--dim)' }, ' (Ask an adult before trying anything with real chemicals or fire.)')),
+      h('p', null,
+        h('button', { class: 'btn', onclick: () => $('#modal').click() }, 'Go to the bench'), ' ',
+        lessonDone(L) ? h('span', { class: 'ok' }, '\u2713 Complete')
+          : L.done ? h('span', { style: 'color:var(--dim)' }, 'Completes automatically when you do the activity.')
+          : h('button', { class: 'btn alt', onclick: () => { state.lessons[L.n] = Date.now(); save(); checkLessons(); renderMission(); openLessons(L.n); } }, 'Mark done')));
+  }
+  let sel = null;
+  AA.LESSONS.forEach(L => {
+    const row = h('div', { class: 'lrow' }, h('span', { class: 'lnum' }, lessonDone(L) ? '\u2713' : L.n), h('span', null, L.title));
+    row.addEventListener('click', () => show(L, row));
+    if (L.n === focus) sel = [L, row];
+    list.append(row);
+  });
+  modalShell('Lessons \u2014 ' + lessonCount() + ' of ' + AA.LESSONS.length + ' complete', h('div', { class: 'lessonWrap' }, list, side));
+  const first = sel ? sel[0] : (AA.LESSONS.find(L => !lessonDone(L)) || AA.LESSONS[0]);
+  const row = sel ? sel[1] : list.children[first.n - 1];
+  show(first, row);
 }
 
 function openHelp() {
@@ -355,11 +427,18 @@ document.querySelectorAll('#tools button').forEach(b => b.addEventListener('clic
   $('#bench').classList.toggle('cut', bench.tool === 'cut');
   if (bench.tool === 'cut') tip('Click a bond to cut it. A double or triple bond loses one line at a time.');
 }));
-$('#btnRecenter').addEventListener('click', () => { bench.yaw = 0.45; bench.pitch = 0.25; bench.zoom = 60; });
+$('#btnRecenter').addEventListener('click', () => { bench.yaw = 0.45; bench.pitch = 0.25; bench.zoom = 42; bench.pan.set(0, 0, 0); bench.yawVel = 0; });
+$('#btnShake').addEventListener('click', () => {
+  model.atoms.forEach(a => { a.vx += (Math.random() - 0.5) * 8; a.vy += (Math.random() - 0.5) * 8; a.vz += (Math.random() - 0.5) * 8; });
+  tone(200, 0.2, 'sawtooth', 0.04);
+});
+let heat = 0.15;
+$('#heat').addEventListener('input', e => { heat = parseFloat(e.target.value); });
 $('#btnClear').addEventListener('click', () => { model.clear(); analyze(); });
 $('#chkFaces').checked = state.faces;
 $('#chkFaces').addEventListener('change', e => { state.faces = e.target.checked; bench.faces = state.faces; save(); });
 $('#btnAtlas').addEventListener('click', () => openAtlas());
+$('#btnLessons').addEventListener('click', () => openLessons());
 $('#btnHelp').addEventListener('click', openHelp);
 function soundBtn() { $('#btnSound').textContent = state.mute ? '🔇' : '🔊'; }
 $('#btnSound').addEventListener('click', () => { state.mute = !state.mute; save(); soundBtn(); });
@@ -376,6 +455,7 @@ function frame(t) {
     a.z = a.tween.from[2] + (a.tween.to[2] - a.tween.from[2]) * e;
     if (a.tween.t >= 1) { a.tween = null; a.pinned = false; }
   }
+  if (heat > 0) for (const a of model.atoms) if (!a.pinned) { const k = heat * 0.9; a.vx += (Math.random() - 0.5) * k; a.vy += (Math.random() - 0.5) * k; a.vz += (Math.random() - 0.5) * k; }
   for (let i = 0; i < 4; i++) model.step(0.012);
   bench.render(dt);
   if (detail) detail.render(dt);
