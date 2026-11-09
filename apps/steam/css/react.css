@@ -20,7 +20,7 @@ b { font-weight: 700; }
 .left, .right { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 
 /* fume hood */
-.hood { position: relative; height: clamp(320px, calc(100vh - 446px), 780px); background: #131312; border: 3px solid #3d3d39; overflow: hidden; }
+.hood { position: relative; height: clamp(320px, calc(100vh - 544px), 780px); background: #131312; border: 3px solid #3d3d39; overflow: hidden; }
 .hood canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .hoodFx { pointer-events: none; }
 .hood .hoodBloom { pointer-events: none; mix-blend-mode: screen; filter: blur(14px) brightness(1.5) saturate(1.4); opacity: 0; }
@@ -103,30 +103,34 @@ b { font-weight: 700; }
 @keyframes ready { 50% { transform: scale(1.045); } }
 .btn:disabled { opacity: .4; cursor: default; animation: none; }
 
-.bottle { --cc: #888; position: relative; text-align: left; padding: 0; background: #fff; color: #111; border: 2px solid #000; border-radius: 4px; box-shadow: 0 5px 0 #000; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; transition: transform .1s; }
-.bottle:hover:not(:disabled):not(.none), .bottle:focus-visible:not(:disabled):not(.none) { transform: translateY(-10px); outline: none; }
+.bottle { --cc: #888; --cd: #555; position: relative; padding: 0; background: none; border: 0; color: #111; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: transform .1s; }
+.bottle:hover:not(:disabled):not(.none), .bottle:focus-visible:not(:disabled):not(.none) { transform: translateY(-12px); outline: none; }
 .bottle:disabled { cursor: default; }
-.bottle.none { cursor: default; box-shadow: 0 5px 0 #5c4a00; border-color: #5c4a00; background: #efe6c4; }
-.bottle.none > * { opacity: .5; }
+.bottle.none .bGlass { filter: grayscale(1) brightness(.62); }
+.bGlass { position: relative; width: min(100%, 190px); aspect-ratio: 200 / 320; container-type: inline-size; }
+.bSvg, .bSvg svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bGlass > .bKey { position: absolute; left: 50%; top: 3.6cqw; transform: translateX(-50%); background: #000; font-size: 9cqw; min-width: 12cqw; padding: .4cqw 2cqw 0; line-height: 1.15; }
+.bTag { position: absolute; right: 0; top: 16cqw; min-width: 23cqw; height: 23cqw; line-height: 21cqw; background: #ffcd00; color: #111; border: 3px solid #000; border-radius: 50%; font-size: 14cqw; font-weight: 700; text-align: center; }
+.bLabel { position: absolute; left: 11cqw; right: 8cqw; top: 60cqw; background: #f4eedd; border: 3px solid #000; transform: rotate(-1.5deg); }
+.bottle:nth-child(2n) .bLabel { transform: rotate(1.8deg); } .bottle:nth-child(3n) .bLabel { transform: rotate(-.6deg); top: 62cqw; }
+.bBand { background: var(--cc); color: #fff; display: flex; align-items: center; padding: 1.4cqw 3.5cqw .6cqw; font-size: 9.5cqw; font-weight: 700; border-bottom: 3px solid #000; }
+.bPips { margin-left: auto; display: flex; gap: 2px; }
+.bPips i { width: 3.6cqw; height: 6.4cqw; background: #fff; border: 1px solid #000; }
+.bFormula { padding: 2.4cqw 3.5cqw 0; font-size: 12cqw; font-weight: 700; line-height: 1; white-space: nowrap; }
+.bArt { display: block; width: 100%; height: 29cqw; }
+.bBottom { display: flex; align-items: center; justify-content: space-between; gap: 1cqw; padding: 0 2cqw 1cqw 1.5cqw; min-height: 15cqw; }
+.bGhs { display: flex; } .ghs { display: block; width: 14.5cqw; height: 14.5cqw; margin-right: -1.5cqw; }
+.bFoot { font-size: 6.6cqw; font-weight: 700; line-height: 1.1; text-align: right; }
+.bLink { display: block; background: #d81e1e; color: #fff; padding: .8cqw 2cqw .2cqw; }
+.bottle.g2 .bLabel { box-shadow: 0 0 0 4px #ffcd00, 0 0 0 7px #000; }
+.bottle.g3 .bLabel { box-shadow: 0 0 0 4px #d81e1e, 0 0 0 7px #000; }
+.bottle.link .bGlass { filter: drop-shadow(0 0 0 #d81e1e) drop-shadow(4px 0 0 #d81e1e) drop-shadow(-4px 0 0 #d81e1e) drop-shadow(0 -4px 0 #d81e1e); }
+.bRule { padding: 8px 4px 0; font-size: 14px; line-height: 1.25; text-align: center; }
+.cards:has(.bottle) { background: #1a1a18; border: 3px solid #000; border-bottom: 14px solid #8a8a82; box-shadow: 0 7px 0 #3a3a36; padding: 14px 10px 0; align-items: end; margin-bottom: 7px; }
 .bottle.deal { animation: deal .28s ease-out; }
 @keyframes deal { from { transform: translateY(70px); opacity: 0; } }
-.bottle.played { transform: translateY(-22px) scale(1.03); z-index: 2; }
-.bBand { background: var(--cc); color: #fff; display: flex; align-items: center; gap: 8px; padding: 5px 10px 4px; font-size: 21px; font-weight: 700; border-bottom: 2px solid #000; }
-.bPips { margin-left: auto; display: flex; gap: 3px; }
-.bPips i { width: 9px; height: 15px; background: #fff; border: 1px solid #000; }
-.bottle.g2 { box-shadow: 0 5px 0 #000, inset 0 0 0 3px #ffcd00; }
-.bottle.g3 { box-shadow: 0 5px 0 #000, inset 0 0 0 3px #d81e1e; }
-.bottle.g3 .bBottom { background: repeating-linear-gradient(135deg, #ffcd00 0 10px, #fff 10px 20px); }
 .bKey { flex: none; background: #000; color: #fff; font-size: 15px; font-weight: 700; min-width: 22px; text-align: center; padding: 1px 5px 0; }
-.bFormula { padding: 6px 10px 0; font-size: 27px; font-weight: 700; line-height: 1.05; }
-.bArt { display: block; width: 100%; height: 66px; border-top: 1px solid #c9c9c9; border-bottom: 1px solid #c9c9c9; background: #fafafa; }
-.bRule { padding: 6px 10px; font-size: 14px; line-height: 1.25; min-height: 4.6em; }
-.bBottom { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px 4px 5px; border-top: 2px solid #000; min-height: 40px; }
-.bGhs { display: flex; } .ghs { display: block; width: 31px; height: 31px; margin-right: -3px; }
-.bFoot { font-size: 16px; white-space: pre; text-align: right; } .bFoot b { font-size: 18px; }
-.bLink { display: block; white-space: normal; font-size: 14px; font-weight: 700; line-height: 1.15; }
-.bottle.link { box-shadow: 0 5px 0 #000, 0 0 0 4px #d81e1e; }
-.bottle.link .bBottom { background: #ffcd00; }
+.bottle.played { transform: translateY(-26px) scale(1.04); z-index: 2; }
 
 /* order result and reward choice */
 .ov { position: fixed; inset: 0; background: rgba(0, 0, 0, .74); display: none; align-items: center; justify-content: center; z-index: 20; padding: 20px; }
@@ -177,7 +181,7 @@ b { font-weight: 700; }
 .shopItem > .bottle, .shopItem > .gearPick { flex: 1; pointer-events: none; }
 .shopItem > .bKey { position: absolute; left: -6px; top: -8px; z-index: 2; background: #ffcd00; color: #111; border: 2px solid #000; }
 .shopItem .gpName { font-size: 22px; margin-top: 4px; } .shopItem .gpText { font-size: 15px; } .shopItem .gpKind { margin-left: 0; }
-.shopItem .bRule { font-size: 13px; } .shopItem .bFormula { font-size: 21px; }
+.shopItem .bRule { font-size: 13px; }
 .price { text-align: center; background: #111; color: #ffcd00; font-size: 24px; font-weight: 700; border: 2px solid #000; padding: 2px 0 0; }
 .shopItem.cant { cursor: default; } .shopItem.cant:hover { transform: none; } .shopItem.cant .price { background: #d8d1bc; color: #6a6557; }
 .shopItem.sold { opacity: .3; pointer-events: none; }
@@ -192,7 +196,7 @@ b { font-weight: 700; }
 .tkKeep i, .ofKeep i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #19c3ff; border: 2px solid #111; margin-right: 6px; vertical-align: -2px; }
 .tkKeep.lost { color: #d81e1e; }
 .ofKeep { font-size: 15px; font-weight: 700; margin: 4px 0; }
-.bWarn { display: block; white-space: normal; font-size: 14px; font-weight: 700; line-height: 1.15; color: #d81e1e; }
+.bWarn { display: block; color: #d81e1e; }
 .ticket.met .tkScore { color: #12894a; }
 .ticket.dbl .tkFill { background: #d81e1e; }
 .ticket.dbl .tkScore { color: #fff; background: #d81e1e; padding: 2px 8px 0; }

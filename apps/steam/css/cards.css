@@ -1,0 +1,125 @@
+.cardsPage { background: #0c0c0b; overflow: auto; }
+#rows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 24px; padding: 6px 30px 30px; }
+.cCell { padding: 14px 0 22px; border-bottom: 2px solid #2c2c29; }
+.cName { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+.cName b { display: inline-block; background: #ffcd00; color: #111; width: 34px; text-align: center; margin-right: 10px; font-size: 24px; }
+.cHand { display: flex; gap: 22px; align-items: flex-end; zoom: .72; min-height: 330px; }
+.cArt { display: block; width: 100%; height: 62px; }
+.cGhs { display: flex; } .cGhs .ghs { width: 30px; height: 30px; margin-right: -4px; }
+.fill { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dot { position: absolute; min-width: 46px; height: 46px; background: #ffcd00; color: #111; border: 3px solid #000; border-radius: 50%; font-size: 28px; font-weight: 700; text-align: center; line-height: 42px; }
+
+/* A: bottles on a shelf */
+.cellA .cHand { gap: 10px; padding: 0 10px; border-bottom: 14px solid #8a8a82; box-shadow: 0 8px 0 #3a3a36; }
+.cA { position: relative; width: 200px; height: 320px; }
+.aLabel { position: absolute; left: 22px; right: 16px; top: 122px; background: #f4eedd; border: 3px solid #000; transform: rotate(var(--t)); padding-bottom: 4px; color: #111; }
+.aVerb { background: var(--cc); color: #fff; font-size: 19px; font-weight: 700; padding: 3px 8px 1px; border-bottom: 3px solid #000; }
+.aForm { font-size: 25px; font-weight: 700; padding: 5px 8px 0; line-height: 1; white-space: nowrap; }
+.aLabel .cGhs { padding: 0 4px; }
+.aTag { right: 2px; top: 34px; }
+
+/* B: hazard placards */
+.cB { position: relative; width: 200px; height: 300px; background: #111; border: 3px solid #fff; overflow: hidden; clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); color: #fff; }
+.bSide { position: absolute; left: 0; top: 0; bottom: 0; width: 44px; background: var(--cc); }
+.bSide span { position: absolute; left: 40px; bottom: 8px; transform-origin: 0 100%; transform: rotate(-90deg); font-size: 34px; font-weight: 700; white-space: nowrap; line-height: 1; }
+.bDia { position: absolute; left: 62px; top: 46px; width: 118px; height: 118px; background: #fff; border: 7px solid var(--cc); transform: rotate(45deg); }
+.bDia > div { transform: rotate(-45deg) scale(1.15); margin-top: 24px; }
+.bNum { position: absolute; right: 30px; top: 0; font-size: 44px; font-weight: 700; color: #ffcd00; line-height: 1; }
+.bForm { position: absolute; left: 54px; right: 6px; bottom: 44px; font-size: 24px; font-weight: 700; white-space: nowrap; }
+.cB .cGhs { position: absolute; left: 50px; bottom: 6px; }
+
+/* C: playing cards, fanned */
+.cellC .cHand { gap: 0; padding-left: 24px; }
+.cC { position: relative; width: 200px; height: 290px; margin-left: -18px; background: #f4eedd; border: 3px solid #000; border-radius: 14px; box-shadow: -5px 6px 0 #000; transform: translateY(var(--y)) rotate(var(--r)); color: #111; }
+.pIdx { position: absolute; left: 8px; top: 6px; width: 34px; text-align: center; }
+.pIdx b { display: block; font-size: 34px; line-height: 1; color: var(--cd); }
+.pIdx .ghs { width: 34px; height: 34px; }
+.pIdx.flip { left: auto; top: auto; right: 8px; bottom: 6px; transform: rotate(180deg); }
+.pWin { position: absolute; left: 46px; right: 46px; top: 16px; bottom: 16px; border: 4px solid var(--cc); border-radius: 6px; background-color: #fff; background-image: radial-gradient(var(--cc) 1.6px, transparent 2px); background-size: 9px 9px; display: flex; flex-direction: column; align-items: center; gap: 34px; }
+.pVerb { background: var(--cc); color: #fff; font-weight: 700; font-size: 17px; align-self: stretch; text-align: center; padding: 3px 0 1px; }
+.pWin .cArt { background: #fff; width: 150px; height: 70px; border: 3px solid #000; transform: rotate(-4deg); }
+.pForm { position: absolute; left: -8px; right: -8px; bottom: 60px; background: #111; color: #fff; font-size: 23px; font-weight: 700; text-align: center; padding: 4px 0 2px; white-space: nowrap; transform: rotate(-4deg); }
+
+/* D: flasks */
+.cD { position: relative; width: 200px; height: 300px; color: #fff; }
+.dArt { position: absolute; left: 42px; top: 150px; width: 116px; background: #fff; border: 3px solid #000; border-radius: 30px; overflow: hidden; }
+.dArt .cArt { height: 52px; }
+.dVerb { position: absolute; left: 0; right: 0; top: 214px; text-align: center; font-size: 22px; font-weight: 700; }
+.dForm { position: absolute; left: 0; right: 0; top: 242px; text-align: center; font-size: 20px; font-weight: 700; white-space: nowrap; }
+.dTag { right: 26px; top: 20px; }
+
+/* E: chips */
+.cE { position: relative; width: 220px; height: 220px; margin-bottom: 40px; filter: drop-shadow(0 9px 0 #000); }
+.eArt { position: absolute; left: 50px; top: 80px; width: 120px; }
+.eArt .cArt { height: 54px; }
+.eTag { right: -4px; top: -4px; }
+
+/* F: pixel bottles */
+.cF { position: relative; width: 200px; height: 280px; color: #111; }
+.pix { image-rendering: pixelated; }
+.fVerb { position: absolute; left: 30px; width: 160px; top: 110px; height: 20px; line-height: 21px; color: #fff; font-size: 17px; font-weight: 700; padding-left: 6px; }
+.fForm { position: absolute; left: 36px; top: 136px; font-size: 22px; font-weight: 700; white-space: nowrap; }
+.cF .cArt { position: absolute; left: 32px; top: 164px; width: 146px; height: 60px; image-rendering: pixelated; }
+.fTag { position: absolute; right: 0; top: 20px; width: 40px; height: 40px; background: #ffcd00; border: 5px solid #000; font-size: 26px; font-weight: 700; text-align: center; line-height: 32px; }
+
+/* G: tiles */
+.cellG .cHand { gap: 16px; }
+.cG { position: relative; width: 180px; height: 250px; margin-bottom: 22px; background: #f4eedd; border: 3px solid #000; border-radius: 16px; box-shadow: inset 0 0 0 7px #f4eedd, inset 0 0 0 9px var(--cc), 0 9px 0 #cfc39d, 0 9px 0 3px #000, 0 20px 0 var(--cc), 0 20px 0 3px #000; color: #111; text-align: center; }
+.gNum { position: absolute; left: 20px; top: 14px; font-size: 40px; font-weight: 700; line-height: 1; color: #d81e1e; }
+.gHaz { position: absolute; right: 16px; top: 14px; } .gHaz .ghs { width: 38px; height: 38px; }
+.cG .cArt { margin-top: 66px; height: 84px; }
+.gVerb { font-size: 24px; font-weight: 700; color: var(--cd); margin-top: 6px; }
+.gForm { font-size: 19px; font-weight: 700; white-space: nowrap; }
+
+/* H: hexes */
+.cellH .cHand { gap: 0; align-items: flex-start; }
+.cH { position: relative; width: 216px; height: 248px; margin-right: -6px; color: #111; text-align: center; filter: drop-shadow(0 7px 0 #000); }
+.cH.low { margin-top: 62px; }
+.hOut, .hIn { position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.hOut { background: var(--cc); } .hIn { inset: 10px; background: #f4eedd; }
+.hVerb { margin-top: 36px; font-size: 21px; font-weight: 700; color: var(--cd); }
+.hIn .cArt { height: 64px; }
+.hForm { font-size: 20px; font-weight: 700; white-space: nowrap; }
+.hIn .cGhs { justify-content: center; }
+.hNum { position: absolute; right: 4px; top: 22px; width: 46px; height: 52px; line-height: 54px; background: #ffcd00; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); font-size: 28px; font-weight: 700; }
+
+/* I: drums */
+.cI { position: relative; width: 200px; height: 290px; color: #fff; }
+.iVerb { position: absolute; left: 20px; right: 20px; top: 56px; text-align: center; font-size: 23px; font-weight: 700; }
+.iLabel { position: absolute; left: 28px; right: 28px; top: 124px; background: #fff; border: 3px solid #000; color: #111; }
+.iLabel .cArt { height: 54px; }
+.iForm { font-size: 20px; font-weight: 700; text-align: center; white-space: nowrap; border-top: 3px solid #000; padding-top: 2px; }
+.iTag { left: 34px; top: 4px; }
+.cI .cGhs { position: absolute; left: 0; right: 0; top: 246px; justify-content: center; }
+
+/* J: tags */
+.cJ { position: relative; width: 180px; height: 310px; transform: rotate(var(--t)); transform-origin: 50% 0; color: #111; }
+.jString { position: absolute; left: 89px; top: 0; width: 3px; height: 52px; background: #d8d1bc; }
+.jBody { position: absolute; inset: 30px 0 0; background: #f4eedd; clip-path: polygon(24% 0, 76% 0, 100% 15%, 100% 100%, 0 100%, 0 15%); text-align: center; }
+.cJ { filter: drop-shadow(5px 6px 0 #000); }
+.jHole { width: 18px; height: 18px; margin: 10px auto 4px; border-radius: 50%; background: #0c0c0b; border: 6px solid #b08d57; }
+.jVerb { font-size: 24px; font-weight: 700; color: #fff; background: var(--cc); padding: 3px 0 1px; }
+.jBody .cArt { height: 70px; }
+.jForm { font-size: 22px; font-weight: 700; white-space: nowrap; }
+.jBody .cGhs { justify-content: center; }
+.jStripe { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: repeating-linear-gradient(135deg, #ffcd00 0 14px, #111 14px 28px); }
+.jStripe b { display: inline-block; background: #111; color: #ffcd00; font-size: 28px; line-height: 1; padding: 6px 12px 2px; margin-top: 2px; }
+
+/* K: framed cards */
+.cK { position: relative; width: 200px; height: 290px; margin-left: 10px; background: #2f2a25; border: 3px solid #000; border-radius: 12px; box-shadow: inset 0 0 0 5px #57504a, 0 6px 0 #000; color: #111; }
+.kBanner { position: absolute; left: -12px; right: -12px; top: 18px; height: 38px; line-height: 40px; background: var(--cc); color: #fff; font-size: 22px; font-weight: 700; text-align: center; clip-path: polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%); }
+.kWin { position: absolute; left: 20px; right: 20px; top: 68px; height: 122px; background: #fff; border: 5px solid var(--cd); border-radius: 80px 80px 6px 6px; display: flex; align-items: center; outline: 3px solid #000; }
+.kPlate { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 70px; background: #f4eedd; border: 3px solid #000; text-align: center; }
+.kForm { font-size: 22px; font-weight: 700; white-space: nowrap; padding-top: 4px; }
+.kPlate .cGhs { justify-content: center; }
+.kGem { position: absolute; left: -14px; top: -14px; width: 44px; height: 44px; background: #ffcd00; border: 3px solid #000; transform: rotate(45deg); }
+.kGem b { display: block; transform: rotate(-45deg); font-size: 28px; text-align: center; line-height: 46px; }
+
+/* L: notebook slips */
+.cL { position: relative; width: 190px; height: 280px; transform: rotate(var(--t)); background-color: #fdfdf8; background-image: linear-gradient(90deg, transparent 27px, #e06a6a 27px, #e06a6a 29px, transparent 29px), linear-gradient(#b9d7ea 1px, transparent 1px), linear-gradient(90deg, #b9d7ea 1px, transparent 1px); background-size: auto, 14px 14px, 14px 14px; box-shadow: 5px 6px 0 #000; color: #111; }
+.cL::before { content: ''; position: absolute; left: 7px; top: 34px; width: 13px; height: 13px; border-radius: 50%; background: #0c0c0b; box-shadow: 0 100px 0 #0c0c0b, 0 200px 0 #0c0c0b; }
+.lStamp { position: absolute; left: 40px; top: 20px; border: 3px solid var(--cc); color: var(--cc); font-size: 23px; font-weight: 700; padding: 2px 9px 0; border-radius: 4px; transform: rotate(-7deg); }
+.lNum { position: absolute; right: 8px; top: 62px; width: 42px; height: 40px; border: 3px solid #d81e1e; border-radius: 48% 55% 50% 44%; color: #d81e1e; font-size: 26px; font-weight: 700; text-align: center; line-height: 38px; transform: rotate(8deg); }
+.cL .cArt { position: absolute; left: 32px; top: 106px; width: 150px; height: 74px; }
+.lForm { position: absolute; left: 38px; top: 190px; font-size: 25px; font-weight: 700; white-space: nowrap; }
+.cL .cGhs { position: absolute; left: 34px; bottom: 12px; }

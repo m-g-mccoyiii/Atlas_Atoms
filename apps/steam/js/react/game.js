@@ -80,15 +80,25 @@ function start(app) {
     shelf), overlay);
 
   // one reagent bottle label
+  const GLASS = '<svg viewBox="0 0 200 320" preserveAspectRatio="none" aria-hidden="true">' +
+    '<rect x="68" y="4" width="64" height="38" rx="4" fill="var(--cc)" stroke="#000" stroke-width="4"/>' +
+    '<path d="M78 8v30M90 8v30M102 8v30M114 8v30M126 8v30" stroke="var(--cd)" stroke-width="4"/>' +
+    '<path d="M76 42h48v20c0 14 62 20 62 56v176c0 12-8 20-20 20H34c-12 0-20-8-20-20V118c0-36 62-42 62-56z" fill="#7a4313" stroke="#000" stroke-width="4"/>' +
+    '<path d="M150 96c14 8 28 14 28 30v164c0 10-6 16-16 16h-12z" fill="#57300d"/>' +
+    '<path d="M30 122c0-14 14-22 30-30v214h-18c-8 0-12-6-12-12z" fill="#a9652a"/>' +
+    '<path d="M38 128c0-8 6-14 12-18v60h-12z" fill="#e2b27a"/></svg>';
   function bottle(card, key) {
     const art = h('canvas', { class: 'bArt' }), foot = h('div', { class: 'bFoot' }), grade = RUN.gradeOf(run, card.id);
     const pips = []; for (let k = 0; k < Math.min(5, grade); k++) pips.push(h('i'));
-    const el = h('button', { class: 'bottle g' + Math.min(3, grade), style: '--cc:' + css(card.rgb), title: card.rule },
-      h('div', { class: 'bBand' }, key ? h('span', { class: 'bKey' }, key) : null, h('span', { class: 'bVerb' }, card.verb), h('span', { class: 'bPips', title: 'Grade ' + grade + ': ' + RUN.YIELD * grade + ' yield for each site' }, pips)),
-      h('div', { class: 'bFormula' }, card.formula),
-      art, h('div', { class: 'bRule' }, card.rule),
-      h('div', { class: 'bBottom' }, h('div', { class: 'bGhs' }, card.ghs.map(g => ghs(g))), foot));
-    return { el, art, foot };
+    const svg = h('div', { class: 'bSvg' }); svg.innerHTML = GLASS;
+    const dark = 'rgb(' + card.rgb.map(q => Math.round(q * 0.62)).join(',') + ')';
+    const glass = h('div', { class: 'bGlass' }, svg, key ? h('span', { class: 'bKey' }, key) : null,
+      h('div', { class: 'bLabel' },
+        h('div', { class: 'bBand' }, h('span', { class: 'bVerb' }, card.verb), h('span', { class: 'bPips' }, pips)),
+        h('div', { class: 'bFormula' }, card.formula), art,
+        h('div', { class: 'bBottom' }, h('div', { class: 'bGhs' }, card.ghs.map(q => ghs(q))), foot)));
+    const el = h('button', { class: 'bottle g' + Math.min(3, grade), style: '--cc:' + css(card.rgb) + ';--cd:' + dark, title: card.rule }, glass, h('div', { class: 'bRule' }, card.rule));
+    return { el, art, foot, glass };
   }
 
   // ---------- rendering ----------
@@ -103,7 +113,7 @@ function start(app) {
       b.el.disabled = !live || st.busy;
       if (lk.cont) b.foot.append(h('span', { class: 'bLink' }, lk.route ? lk.route.name : 'Chain of ' + lk.len));
       if (lk.spoils) b.foot.append(h('span', { class: 'bWarn' }, 'Reacts at the kept group'));
-      b.foot.append(h('span', null, n ? h('b', null, plural(n, 'site')) : lk.spoils ? '' : 'no site'));
+      if (n) b.glass.append(h('span', { class: 'bTag' }, String(n)));
       b.el.addEventListener('click', () => play(i));
       ['mouseenter', 'focus'].forEach(ev => b.el.addEventListener(ev, () => setHover(i)));
       ['mouseleave', 'blur'].forEach(ev => b.el.addEventListener(ev, () => setHover(-1)));
