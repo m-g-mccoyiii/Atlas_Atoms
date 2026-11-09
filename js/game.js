@@ -3,6 +3,7 @@
 const AA = window.AA, E = AA.ELEMENTS, C = AA.chem, Model = AA.Model, Viewer = AA.Viewer;
 const $ = s => document.querySelector(s);
 const SAVE = 'atlas-atoms-v1';
+const isMobile = () => window.matchMedia('(max-width: 760px), (max-height: 520px)').matches;
 
 function h(tag, attrs) {
   const el = document.createElement(tag);
@@ -94,12 +95,30 @@ function buildTray() {
     const b = h('div', { class: 'elbtn' + (open ? '' : ' locked'), 'data-el': el },
       h('div', { class: 'dot', style: 'background:' + d.color + ';color:' + (el === 'H' || el === 'S' || el === 'F' || el === 'Cl' ? '#14202e' : '#fff') }, el),
       h('div', { class: 'nm' }, d.name, h('small', null, open ? 'makes ' + d.valences.join(' or ') + (d.valences[0] === 1 && d.valences.length === 1 ? ' bond' : ' bonds') : 'find ' + d.unlock + ' molecules')));
-    if (open) b.addEventListener('pointerdown', e => spawnFromTray(el, e));
+    if (open) b.addEventListener('pointerdown', e => trayDown(el, e));
     list.append(b);
   }
 }
+// On touch screens the tray also scrolls sideways, so an atom only leaves the tray
+// when the finger moves upward; a plain tap opens the element card.
+function trayDown(el, e) {
+  if (e.pointerType !== 'touch') { spawnFromTray(el, e); return; }
+  const sx = e.clientX, sy = e.clientY;
+  let started = false;
+  const clean = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); };
+  const mv = ev => {
+    if (started) return;
+    const dx = ev.clientX - sx, dy = ev.clientY - sy;
+    const landscape = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches;
+    const out = landscape ? dx > 10 && Math.abs(dx) > Math.abs(dy) : dy < -10 && Math.abs(dy) > Math.abs(dx);
+    if (out) { started = true; clean(); spawnFromTray(el, ev); }
+  };
+  const up = ev => { clean(); if (!started && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) showElement(el); };
+  const cancel = () => clean();
+  window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', cancel);
+}
 function spawnFromTray(el, e) {
-  e.preventDefault();
+  if (e.preventDefault) e.preventDefault();
   const a = model.addAtom(el, 0, 0, 0);
   a.fromTray = { x: e.clientX, y: e.clientY, el };
   bench.startDrag(a, e);
@@ -224,6 +243,7 @@ function renderMission() {
 
 // ---------- element card ----------
 function showElement(el) {
+  if (isMobile()) document.body.classList.add('showSide');
   const d = E[el], box = $('#elementCard'); box.innerHTML = ''; box.classList.remove('hidden');
   const cv = h('canvas', { width: 180, height: 180, style: 'display:block;margin:6px auto' });
   box.append(h('button', { class: 'pill', style: 'float:right;padding:2px 8px', onclick: () => box.classList.add('hidden') }, '✕'),
@@ -479,7 +499,7 @@ function openQuiz(L) {
 function openHelp() {
   state.seenHelp = true; save();
   modalShell('Welcome to the lab, ' + AA.PLAYER_NAME + '!', h('div', null,
-    h('p', null, '1. Drag atoms from the left onto the bench.'),
+    h('p', null, '1. Drag atoms from the atom tray onto the bench. On a phone, swipe up from an atom in the bottom strip.'),
     h('p', null, '2. Drop one atom on top of another to bond them. Drop them together again to make a double or triple bond.'),
     h('p', null, '3. Each atom has a number of hands (bonds it wants). Fill every hand and the atom smiles.'),
     h('p', null, '4. When a molecule is real and in the Atlas, you discover it and learn where it shows up in real life.'),
@@ -510,6 +530,9 @@ $('#chkFaces').checked = state.faces;
 $('#chkFaces').addEventListener('change', e => { state.faces = e.target.checked; bench.faces = state.faces; save(); });
 $('#btnAtlas').addEventListener('click', () => openAtlas());
 $('#btnLessons').addEventListener('click', () => openLessons());
+$('#btnLab').addEventListener('click', () => AA.openLab());
+$('#btnInfo').addEventListener('click', () => document.body.classList.toggle('showSide'));
+$('#btnSideClose').addEventListener('click', () => document.body.classList.remove('showSide'));
 $('#btnHelp').addEventListener('click', openHelp);
 function soundBtn() { $('#btnSound').textContent = state.mute ? '🔇' : '🔊'; }
 $('#btnSound').addEventListener('click', () => { state.mute = !state.mute; save(); soundBtn(); });
@@ -537,5 +560,6 @@ buildTray(); setMode(state.mode); soundBtn(); analyze();
 tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
 if (!state.seenHelp) openHelp();
 requestAnimationFrame(frame);
+AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, getDetail: () => detail, setDetail: v => { detail = v; } };
 window.AA_debug = { bench, model, state, analyze };
 })();

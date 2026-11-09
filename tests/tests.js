@@ -116,6 +116,18 @@ test('lesson completion rules point at real molecules and reactions', () => {
   }
 });
 
+test('every molecule has Molecule Lab info and sensible facts', () => {
+  for (const m of lib.list) {
+    const i = AA.MOLINFO[m.id];
+    if (!i || !i.shape || !i.state) throw new Error(m.id + ' missing shape/state');
+  }
+  near(AA.molarMass(lib.byId.get('water').counts), 18.015, 0.02, 'water mass');
+  near(AA.molarMass(lib.byId.get('glucose').counts), 180.16, 0.05, 'glucose mass');
+  const b = AA.bondTally(AA.MOLECULES.find(x => x.id === 'co2').smiles);
+  eq(b.double, 2, 'CO2 double bonds'); eq(b.single, 0, 'CO2 single bonds');
+  eq(AA.bondTally(AA.MOLECULES.find(x => x.id === 'salt').smiles).ionic, 1, 'salt ionic');
+});
+
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';
 document.title = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + (pass + fail);
 })();

@@ -115,3 +115,90 @@ body { font-size: 16px; }
 .choice.wrong { border-color: #ff6b6b; background: rgba(255,107,107,.15); }
 .why { background: var(--panel2); border-left: 3px solid var(--teal); padding: 8px 12px; border-radius: 6px; font-size: 16px; }
 .score { font-size: 56px; text-align: center; color: var(--gold); letter-spacing: 8px; }
+
+.lab { min-width: 0; }
+.labTabs { margin-bottom: 10px; flex-wrap: wrap; }
+.labGrid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.labCanvas { width: 100%; height: 420px; display: block; border-radius: 12px; background: radial-gradient(ellipse at 50% 40%, #1b3556 0%, #0b1626 75%); touch-action: none; cursor: grab; }
+.diagram { width: 100%; max-width: 340px; display: block; background: var(--panel2); border-radius: 12px; margin: 6px 0; }
+.labText { font-size: 15px; line-height: 1.45; margin: 8px 0; }
+.legend { margin: 6px 0; }
+.wide { width: min(260px, 70%); vertical-align: middle; }
+.search { width: 100%; padding: 8px 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font-size: 16px; }
+.facts { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.facts th { text-align: left; color: var(--dim); font-weight: normal; padding: 3px 8px 3px 0; white-space: nowrap; vertical-align: top; }
+.facts td { padding: 3px 0; }
+.lab label { font-size: 14px; color: var(--dim); display: inline-flex; gap: 6px; align-items: center; margin: 4px 0; }
+@media (max-width: 900px) { .labGrid { grid-template-columns: 1fr; } .labCanvas { height: 300px; } }
+
+/* ===== phones and small screens ===== */
+html { -webkit-text-size-adjust: 100%; }
+button, .elbtn, .lrow, .mcard, .choice, label { touch-action: manipulation; }
+.sideclose, .mobileOnly { display: none; }
+@media (pointer: coarse) {
+  .pill, .btn, .seg button { min-height: 44px; }
+  .choice { min-height: 52px; }
+  input[type=range] { height: 32px; }
+}
+@media (max-width: 760px), (max-height: 520px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { min-height: 0; height: 100vh; height: 100dvh; }
+  .top { padding: 4px 8px; padding-top: calc(4px + env(safe-area-inset-top)); }
+  .top h1 { font-size: 16px; white-space: nowrap; }
+  .lbl, #count, #lcount { display: none; }
+  .top nav { gap: 4px; }
+  .top .pill { padding: 4px 10px; font-size: 18px; }
+  .top .chk { font-size: 18px; }
+  .mobileOnly { display: inline-flex; align-items: center; }
+  .layout { display: flex; flex-direction: column; height: calc(100vh - 46px); height: calc(100dvh - 46px); padding: 6px; gap: 6px; min-height: 0; }
+  .benchwrap { flex: 1; min-height: 0; border-radius: 12px; }
+  .toolbar { flex-wrap: nowrap; overflow-x: auto; padding: 6px; gap: 6px; scrollbar-width: none; }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .toolbar > * { flex: none; }
+  .seg button { padding: 6px 10px; white-space: nowrap; }
+  .caption { display: none; }
+  .canvasbox { min-height: 0; flex: 1; }
+  #tray { order: 2; flex: none; display: flex; align-items: center; padding: 6px; overflow-x: auto; overflow-y: hidden; border-radius: 12px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); scrollbar-width: none; }
+  #tray::-webkit-scrollbar { display: none; }
+  #tray h2, .trayHint { display: none; }
+  #trayList { flex-direction: row; gap: 6px; }
+  .elbtn { flex: none; padding: 4px 8px; touch-action: pan-x; }
+  .elbtn .nm small { display: none; }
+  .elbtn .dot { width: 40px; height: 40px; font-size: 16px; }
+  .elbtn .nm { font-size: 12px; }
+  #side { display: none; }
+  body.showSide #side { display: block; position: fixed; inset: 46px 0 0 0; z-index: 9; border-radius: 0; border: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  body.showSide .sideclose { display: inline-flex; position: sticky; top: 0; z-index: 2; margin-bottom: 8px; }
+  .tip { font-size: 15px; bottom: 6px; left: 6px; right: 6px; }
+  .banner { top: 6px; width: 96%; padding: 10px 12px; }
+  .banner h2 { font-size: 17px; }
+  .banner p { font-size: 13px; margin: 3px 0; }
+  .modal { padding: 0; }
+  .sheet { width: 100%; max-height: 100vh; max-height: 100dvh; height: 100vh; height: 100dvh; border-radius: 0; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .sheet h2 { font-size: 18px; padding-right: 40px; }
+  .sheet .x { width: 40px; height: 40px; top: 6px; right: 8px; }
+  .lessonWrap, .atlasWrap, .labGrid { grid-template-columns: 1fr; }
+  .lessonList { max-height: 22vh; flex-direction: row; flex-wrap: wrap; }
+  .lrow { font-size: 13px; }
+  .lessonBody { max-height: none; overflow: visible; }
+  .detail canvas { height: 220px; }
+  .labCanvas { height: 280px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .qtext { font-size: 19px; }
+  .choice { font-size: 16px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .layout { flex-direction: row; }
+  #tray { order: 0; flex-direction: column; width: 96px; overflow-x: hidden; overflow-y: auto; padding-bottom: 6px; }
+  #tray #trayList { flex-direction: column; flex: none; }
+  .elbtn { touch-action: pan-y; }
+  .labCanvas { height: 220px; }
+  .top h1 { font-size: 15px; }
+}
+@media (max-width: 760px), (max-height: 520px) {
+  #tray #trayList { flex-wrap: nowrap; }
+  .banner { max-height: 55%; overflow-y: auto; }
+}
+@media (max-width: 760px) {
+  .labCanvas { position: sticky; top: 0; z-index: 3; height: 230px; box-shadow: 0 6px 12px rgba(0,0,0,.4); }
+}

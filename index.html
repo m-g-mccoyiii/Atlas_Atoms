@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1a2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Atlas Atoms">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>Atlas’ Atoms</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -10,9 +17,11 @@
 <header class="top">
   <h1><span class="logo">⚛</span> Atlas’ Atoms</h1>
   <nav>
-    <label class="chk" title="Read tips and lessons out loud"><input type="checkbox" id="chkVoice"> 🗣 Read aloud</label>
-    <button id="btnLessons" class="pill">🎓 Lessons <span id="lcount"></span></button>
-    <button id="btnAtlas" class="pill">📖 My Atlas <span id="count"></span></button>
+    <label class="chk" title="Read tips and lessons out loud"><input type="checkbox" id="chkVoice"> 🗣<span class="lbl"> Read aloud</span></label>
+    <button id="btnLab" class="pill" aria-label="Molecule Lab">🔬<span class="lbl"> Molecule Lab</span></button>
+    <button id="btnLessons" class="pill" aria-label="Lessons">🎓<span class="lbl"> Lessons</span> <span id="lcount"></span></button>
+    <button id="btnAtlas" class="pill" aria-label="My Atlas">📖<span class="lbl"> My Atlas</span> <span id="count"></span></button>
+    <button id="btnInfo" class="pill mobileOnly" aria-label="Mission and info">📋</button>
     <button id="btnSound" class="pill" title="Sound on/off">🔊</button>
     <button id="btnHelp" class="pill" title="How to play">?</button>
   </nav>
@@ -49,6 +58,7 @@
     </div>
   </section>
   <aside id="side">
+    <button id="btnSideClose" class="pill sideclose">✕ Close</button>
     <section class="card" id="mission"></section>
     <section class="card hidden" id="elementCard"></section>
     <section class="card"><h3>On your bench</h3><div id="benchList"></div></section>
@@ -63,6 +73,9 @@
 <script src="js/model.js"></script>
 <script src="vendor/three.min.js"></script>
 <script src="js/render3d.js"></script>
+<script src="js/molinfo.js"></script>
+<script src="js/orbitals.js"></script>
+<script src="js/lab.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

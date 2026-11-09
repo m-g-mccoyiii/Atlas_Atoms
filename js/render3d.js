@@ -65,7 +65,7 @@ class Viewer {
     this.w = 300; this.h = 300;
 
     this.renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, (window.matchMedia && matchMedia('(pointer: coarse)').matches) ? 1.5 : 2));
     this.renderer.outputEncoding = T.sRGBEncoding;
     this.scene = new T.Scene();
     this.camera = new T.PerspectiveCamera(40, 1, 0.1, 300);
