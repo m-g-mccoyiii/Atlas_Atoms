@@ -187,12 +187,18 @@ function mount(host, o) {
     el.addEventListener('click', e => { if (e.target === el) el.remove(); }); document.body.append(el);
   }
   tokenEl.textContent = String(st.tokens); hoursEl.textContent = String(o.hours());
+  assayBtn.textContent = 'Submit for the official check (1 hour)';
   host.append(h('div', { class: 'tuneHead' }, h('div', null, h('b', null, 'Lab hours left '), hoursEl, '   ', h('b', null, 'Scan tokens '), tokenEl), meterEl), h('div', { class: 'pr' }, left, bench));
   paintVeils();
 
   requestAnimationFrame(() => {
     if (box.dead) return;
     const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 52, pitch: 0.55, faces: true, grid: { main: 0x6f8cff, sub: 0x6f8cff, opacity: 0.16 } }); box.v = v;
+    v.findTarget = a => {   // pieces snap: any atom you can bond to within ~70px is the target, no precise aiming
+      const pa = v._screen(a); let best = null, bd = 1e9;
+      for (const b of model.atoms) { if (b === a || !model.canBond(a, b)) continue; const pb = v._screen(b), d = Math.hypot(pa.x - pb.x, pa.y - pb.y); if (d < 70 && d < bd) { bd = d; best = b; } }
+      return best;
+    };
     v.cb.onDrop = (a, t, e) => {
       const over = document.elementFromPoint(e.clientX, e.clientY);
       if (over && over.closest('.fragrow')) { model.components().find(c => c.includes(a)).forEach(x => model.removeAtom(x)); sfx.click(); refresh(); return; }
@@ -210,7 +216,7 @@ function mount(host, o) {
       const s = st.snap;
       INSTR.forEach(i => {
         if (!st.scanned[i.k]) return; const cv = panels[i.k].cv;
-        AA.paper.draw(cv, i.k, truth, { quality: 'hires', progress: Math.min(1, (now - (st.t0[i.k] || 0)) / 1100), seed: 7, overlay: s ? s.mine : null, overlayColor: '#1f4fd8', t: now,
+        AA.paper.draw(cv, i.k, truth, { quality: 'hires', progress: Math.min(1, (now - (st.t0[i.k] || 0)) / 1100), seed: 7, overlay: st.mine, overlayColor: '#1f4fd8', t: now,
           status: (k, pk) => { if (!s) return undefined; const idx = s.order.findIndex(x => x.pk === pk); if (idx < 0 || idx >= s.shown) return undefined; return s.order[idx].lock ? 'lock' : 'open'; } });
         const x = cv.getContext('2d'), ch = cv.clientHeight;
         if (st.hover && st.hover.k === i.k) { x.fillStyle = 'rgba(31,79,216,.12)'; x.fillRect(st.hover.hit.x0, 0, st.hover.hit.x1 - st.hover.hit.x0, ch); }
@@ -221,7 +227,7 @@ function mount(host, o) {
     box.raf = requestAnimationFrame(loop); refresh();
   });
   return {
-    model, st, refresh, assay, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
+    model, st, refresh, assay, viewer: () => box.v, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
     destroy() { box.dead = true; cancelAnimationFrame(box.raf); if (box.v) box.v.dispose(); banner.remove(); host.innerHTML = ''; }
   };
 }
