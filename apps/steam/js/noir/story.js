@@ -125,12 +125,82 @@ AA.NOIR = {
       ],
       win: 'Varga logs ampoule 14 as unexplained and orders the other 30 ampoules opened. Two more show the same signal.',
       lose: 'You named the wrong explanation. Varga finds the shelf dust and the NMR both clean and logs the signal as unexplained anyway. The other 30 ampoules are opened a month later than they should have been.'
+    },
+    {
+      id: 'drumb', title: 'Drum B', client: 'Luca Brandt, Port Customs', place: 'Pier 9 bonded warehouse', pay: 900, act: 2,
+      brief: [
+        ['Brandt', 'Three drums arrived on the freighter Alma Ferro, all declared as acetone. Acetone carries no excise duty. Ethanol does. One drum weighs wrong for acetone. I need to know which drum is not what the label says, and who is responsible.'],
+        ['Lab', 'Ledger: if a sample shows a signal your structure cannot explain, report it. Every reported anomaly goes into your anomaly ledger from the office.']
+      ],
+      suspects: [
+        { id: 'carrier', name: 'Ferro Freight', role: 'Carrier', says: '"We carry sealed drums. We never open them. The seals were intact at the port."' },
+        { id: 'supplier', name: 'Dray Chemicals', role: 'Supplier', says: '"Our invoice says three drums of acetone, 200 litres each. We filled what we invoiced."' },
+        { id: 'broker', name: 'Nora Quill', role: 'Customs broker', says: '"I file the declaration from the invoice. I took a retained sample at the supplier\'s dock and signed it."' }
+      ],
+      culprit: 'broker',
+      samples: [
+        { id: 's1', label: 'Drum A', where: 'Pier 9, drum A', compound: 'acetone', family: 'A ketone with three carbons.',
+          clue: 'Drum A is acetone, exactly as invoiced. The supplier filled the drums it invoiced correctly.', against: [], clears: ['supplier'] },
+        { id: 's2', label: 'Drum B', where: 'Pier 9, drum B', compound: 'ethanol', anomaly: { shift: -2.4, hs: 2 }, family: 'An alcohol with two carbons.', resultLabel: 'Ethanol, plus one unexplained hydrogen signal at -2.4 ppm',
+          clue: 'Drum B is ethanol, not acetone. Ethanol carries excise duty, so declaring it as acetone avoids the duty. The seal was intact, so the carrier did not open it. There is also an unexplained signal at -2.4 ppm that fits no structure.', against: ['broker'], clears: ['carrier'] },
+        { id: 's3', label: "Broker's retained sample", where: "Nora Quill's sample bottle from the dock", compound: 'ethanol', family: 'An alcohol with two carbons.',
+          clue: 'The sample Nora Quill took at the dock and signed as acetone is ethanol. She had ethanol in her hand and filed acetone.', against: ['broker'], clears: [] }
+      ],
+      win: 'Brandt fines Nora Quill and refers her to prosecutors for declaring ethanol as acetone to avoid excise duty. Drum B is seized.',
+      lose: 'Brandt acts against the person you named. A week later the retained sample is tested and Nora Quill, the broker, is charged instead. The person you named has already lost the contract.'
+    },
+    {
+      id: 'ointment', title: 'Batch 41', client: 'Dr. Nuru Adeyemi, Hospital Pharmacy', place: 'Compounding room, third floor', pay: 1000, act: 2,
+      brief: [
+        ['Adeyemi', 'Eleven patients developed a skin rash after we used ointment batch 41. The base is urea cream. The formula is correct on paper. I need to know what got into the batch.'],
+        ['Adeyemi', 'Three people were in the compounding room that night.']
+      ],
+      suspects: [
+        { id: 'hal', name: 'Hal Reyes', role: 'Pharmacist', says: '"I weighed the urea and the base to the formula. I checked it twice."' },
+        { id: 'mina', name: 'Mina Ode', role: 'Technician', says: '"I mixed the batch. I wiped my gloves with hand sanitizer between steps."' },
+        { id: 'joel', name: 'Joel Pak', role: 'Night cleaner', says: '"I cleaned the mixing bowl before and after. I used the spray bottle on the trolley."' }
+      ],
+      culprit: 'joel',
+      samples: [
+        { id: 's1', label: 'Ointment from batch 41', where: 'Sealed jar from the batch', compound: 'urea', family: 'A carbonyl with two nitrogens.',
+          clue: 'The batch contains urea at the intended strength. Hal Reyes weighed the formula correctly, so the formula is not the cause.', against: [], clears: ['hal'] },
+        { id: 's2', label: 'Residue in the mixing bowl', where: 'Bottom of the mixing bowl', compound: 'ammonia', anomaly: { shift: -1.6, hs: 3 }, family: 'A gas of nitrogen and hydrogen.', resultLabel: 'Ammonia, plus one unexplained hydrogen signal at -1.6 ppm',
+          clue: 'The bowl residue is ammonia, an irritant and not part of the formula. It is the main ingredient of the spray cleaner on the trolley, which Joel Pak used. There is also an unexplained signal at -1.6 ppm that fits no structure.', against: ['joel'], clears: [] },
+        { id: 's3', label: "Wipe from Mina's gloves", where: "Mina Ode's gloves", compound: 'ethanol', family: 'An alcohol with two carbons.',
+          clue: 'The glove wipe is ethanol, which is hand sanitizer. It is not an irritant at this level and it is what Mina Ode said she used.', against: [], clears: ['mina'] }
+      ],
+      win: 'Adeyemi confirms that ammonia cleaner was left in the mixing bowl and carried into batch 41. Joel Pak is retrained, the trolley bottles are labelled, and batch 41 is recalled.',
+      lose: 'The person you named is disciplined. A week later the bowl residue is traced to the ammonia spray Joel Pak used. Batch 41 is recalled anyway.'
+    },
+    {
+      id: 'fourth', title: 'The Fourth Line', client: 'Dr. Ines Varga, University Archive', place: 'Your lab', pay: 1400, kind: 'mystery', act: 2, accuseTitle: 'Name the explanation',
+      brief: [
+        ['Varga', 'You have reported three anomalies: -3.2 ppm with 1 hydrogen, -2.4 ppm with 2 hydrogens, -1.6 ppm with 3 hydrogens. Three unrelated cases. The same kind of line each time.'],
+        ['Varga', 'Before I send you the fourth package, I want your prediction. Open the anomaly ledger, work out the rule that fits all three, and enter the shift and the number of hydrogens you expect next. You cannot analyze the package until you have entered it.'],
+        ['Lab', 'Three explanations are on the table: someone is adding a tracer (taggant) to products, the instrument or its reference is drifting, or a source is producing lines on its own sequence. Test each one.']
+      ],
+      suspects: [
+        { id: 'taggant', name: 'A tracer additive', role: 'Hypothesis', says: '"Manufacturers add metal hydride tracers to track their products. A negative shift is what a tracer would give."' },
+        { id: 'drift', name: 'Instrument drift', role: 'Hypothesis', says: '"The reference line is slipping a little each week. Every case looks shifted by the same instrument."' },
+        { id: 'source', name: 'A source on its own sequence', role: 'Hypothesis', says: '"The lines follow a rule of their own. A tracer or a faulty instrument would not count up by one hydrogen each time."' }
+      ],
+      culprit: 'source',
+      samples: [
+        { id: 's1', label: 'Commercial tracer additive', where: 'Reference vial from a tracer supplier', compound: 'ethanol', anomaly: { shift: -6.0, hs: 1 }, noLedger: true, family: 'An alcohol with two carbons.', resultLabel: 'Ethanol with a tracer: one hydrogen signal at -6.0 ppm',
+          clue: 'A real commercial tracer in ethanol gives a negative line at -6.0 ppm with 1 hydrogen. It does not move from sample to sample and it does not count up. A tracer does not explain your sequence.', against: [], clears: ['taggant'] },
+        { id: 's2', label: 'Fresh ethanol, run again today', where: 'Your own shelf, same instrument', compound: 'ethanol', family: 'An alcohol with two carbons.',
+          clue: 'Fresh ethanol run on the same instrument shows no extra line. The reference is not drifting.', against: [], clears: ['drift'] },
+        { id: 's3', label: 'Package 4', where: 'The new package from the archive', compound: 'ethanol', anomaly: { shift: -0.8, hs: 4 }, family: 'An alcohol with two carbons.', resultLabel: 'Ethanol, plus one unexplained hydrogen signal at -0.8 ppm', needsPrediction: true,
+          clue: 'Package 4 is ethanol with an unexplained signal at -0.8 ppm and 4 hydrogens. That is the next entry in the sequence: each line is 0.8 ppm closer to zero and has one more hydrogen than the last.', against: ['source'], clears: [] }
+      ],
+      win: 'Varga records the sequence: -3.2 ppm with 1 hydrogen, -2.4 with 2, -1.6 with 3, -0.8 with 4. The next line should sit at 0.0 ppm with 5 hydrogens. That is where the instrument\'s own reference line is.',
+      lose: 'You named the wrong explanation. The tracer and the instrument are both ruled out, and the next sample follows the same sequence. Varga asks you to review the ledger again.'
     }
   ],
   upgrades: [
-    { id: 'hours', name: 'Extra lab hours', desc: '+2 instrument hours in every case.', cost: 250, max: 2 },
-    { id: 'tokens', name: 'Spare reagent', desc: '+1 scan token on every sample, so you can read a second instrument.', cost: 300, max: 1 },
-    { id: 'opinion', name: 'Second opinion', desc: 'Once per case, ask a colleague what family a sample belongs to.', cost: 200, max: 1 }
+    { id: 'hours', name: 'Extra lab hours', desc: '+2 instrument hours in every case.', costs: [250, 700, 1600, 3000], max: 4 },
+    { id: 'tokens', name: 'Spare reagent', desc: '+1 scan token on every sample, so you can read more than one extra instrument.', costs: [300, 1500], max: 2 },
+    { id: 'opinion', name: 'Second opinion', desc: 'Once per case, ask a colleague what family a sample belongs to.', costs: [200], max: 1 }
   ],
   endings: [
     { min: 130, text: 'The lab has a waiting list. Detectives ask for you by name.' },

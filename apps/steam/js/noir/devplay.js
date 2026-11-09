@@ -4,8 +4,10 @@ window.PLAY = async function (culpritName, pickIdx, opts) {
   const w = ms => new Promise(r => setTimeout(r, ms));
   const click = t => { const b = [...document.querySelectorAll('button')].find(b => new RegExp(t).test(b.textContent) && !b.disabled); if (!b) throw new Error('no button ' + t + ' on ' + document.body.innerText.slice(0, 100)); b.click(); };
   const lib = AA.chem.library(), out = [];
-  click('Open case|Continue case'); await w(250);
-  if (/Take the case/.test(document.body.innerText)) { click('Take the case'); await w(300); }
+  if (!document.querySelector('.cols')) {
+    click('Open case|Continue case'); await w(250);
+    if (/Take the case/.test(document.body.innerText)) { click('Take the case'); await w(300); }
+  }
   const c = AA.NOIR.cases.find(x => x.title === document.querySelector('.labTop h2').textContent);
   for (const s of c.samples) {
     if (opts.skip && opts.skip.includes(s.id)) continue;
@@ -24,7 +26,7 @@ window.PLAY = async function (culpritName, pickIdx, opts) {
     out.push(s.compound + ':' + (document.querySelector('.cover') ? 'identified' : 'FAILED') + ' hrs' + NOIR_DBG.S.cur.hours);
     click('Back to case'); await w(300);
   }
-  click('Name the culprit'); await w(300);
+  click('Name the (culprit|explanation)'); await w(300);
   const os = [...document.querySelectorAll('.sheet .opt')], sus = os.find(b => b.textContent.includes(culpritName));
   if (!sus) throw new Error('no suspect; opts=' + os.length);
   sus.click(); const clues = os.filter(b => !b.textContent.includes(' — ')); pickIdx.forEach(i => clues[i].click()); await w(200);

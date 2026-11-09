@@ -35,6 +35,12 @@ The arc, written so each act changes what the player is allowed to believe:
 3. Act III, the pattern. Anomalies recur across unrelated cases. The player starts building a model of what they have in common, and the bench gains tools that break the rules (bonds above the normal limit, an entry in the periodic table that is not there).
 4. Act IV, new laws. The player deduces the rules of the new chemistry the way they learned the old ones, from evidence, and uses them.
 
+Act II as built (cases 5 to 8): the scientific method is the plot. Each act offers a rational explanation and the player's own tests refute it.
+- Case 5, one hydrogen line at -3.2 ppm in an archive ampoule. Hypotheses: contamination, instrument fault, something not in the tables. Two are refuted by samples.
+- Cases 6 and 7 are ordinary customs and hospital cases. Each also contains an unexplained line, at -2.4 ppm (2 H) and -1.6 ppm (3 H). Reporting it puts it in the anomaly ledger.
+- Case 8 requires a prediction. The ledger plots the entries. The player must find the rule (the shift rises by 0.8 and the hydrogen count by 1 each time), enter the next shift and count, and cannot open the next package until they do. A correct prediction pays cash and reputation, and a miss costs reputation. The hypotheses (tracer, drift, own sequence) are tested with a real commercial tracer control (-6.0 ppm, not on the sequence) and a fresh-ethanol run (no line).
+- Act II ends on a plain fact: the next line is predicted at 0.0 ppm with 5 hydrogens, which is where the instrument's own reference sits.
+
 Writing rule for every act: state plain facts. The impossible parts are impossible numbers, for example "no organic hydrogen resonates below 0 ppm", not hints or mood.
 
 Why this can sell: one-sentence hook ("a forensic chemist whose lab results start to break chemistry"); a shareable first-anomaly moment; mastery that compounds (every rule learned is used again); a clear store pitch for detective, puzzle and mystery players who have no chemistry background.

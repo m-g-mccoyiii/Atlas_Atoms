@@ -12,7 +12,7 @@ $('#mute').addEventListener('click', e => { sfx.setMuted(!sfx.isMuted()); e.targ
 
 // ---------- save ----------
 const KEY = 'noir-save-v1';
-const fresh = () => ({ cash: 300, rep: 50, caseIdx: 0, log: [], upg: { hours: 0, tokens: 0, opinion: 0 }, cur: null });
+const fresh = () => ({ cash: 300, rep: 50, caseIdx: 0, log: [], upg: { hours: 0, tokens: 0, opinion: 0 }, cur: null, ledger: [], pred: null });
 let S = (() => { try { return Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch (e) { return fresh(); } })();
 const hasSave = () => { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } };
 const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } };
@@ -40,7 +40,7 @@ function hub() {
   const done = S.caseIdx >= N.cases.length, wrap = h('div', { class: 'hub' });
   if (done) {
     const solved = S.log.filter(l => l.outcome === 'solved').length, end = N.endings.find(e => S.rep >= e.min);
-    wrap.append(h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, 'The end of the file')), h('h2', null, N.cases.length + ' cases closed'), h('p', null, 'You solved ' + solved + ' of ' + N.cases.length + ' cleanly. Final cash ' + money(S.cash) + ', reputation ' + S.rep + '.'), h('p', null, end.text),
+    wrap.append(h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, 'End of Act II')), h('h2', null, N.cases.length + ' cases closed'), h('p', { class: 'dim' }, 'The ledger predicts the next anomaly at 0.0 ppm with 5 hydrogens, which is where the instrument\'s own reference line sits. Act III has not been built yet.'), h('p', null, 'You solved ' + solved + ' of ' + N.cases.length + ' cleanly. Final cash ' + money(S.cash) + ', reputation ' + S.rep + '.'), h('p', null, end.text),
       h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { S = fresh(); persist(); hub(); } }, 'Play again'))));
   } else {
     const c = N.cases[S.caseIdx], open = S.cur && S.cur.id === c.id;
@@ -48,9 +48,10 @@ function hub() {
       h('h2', null, c.title), h('p', { class: 'dim' }, (c.act === 2 ? 'Act II  ·  ' : '') + c.client + '  ·  ' + c.place + '  ·  pays ' + money(c.pay)),
       h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { sfx.click(); open ? caseScreen() : briefing(c); } }, open ? 'Continue case' : 'Open case'))));
   }
+  if (S.ledger.length) wrap.append(h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, 'Anomaly ledger')), h('p', null, S.ledger.length + ' anomal' + (S.ledger.length === 1 ? 'y' : 'ies') + ' reported. ' + (S.pred ? 'Your prediction: ' + S.pred.shift + ' ppm, ' + S.pred.hs + ' H.' : 'No prediction entered.')), h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); ledgerScreen(hub); } }, 'Open ledger'))));
   wrap.append(h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, 'Lab upgrades')),
-    N.upgrades.map(u => { const own = S.upg[u.id], max = own >= u.max; return h('div', { class: 'upg' }, h('div', null, h('b', null, u.name + '  ' + own + '/' + u.max), h('div', { class: 'dim' }, u.desc)),
-      h('button', { class: 'btn ghost', disabled: max || S.cash < u.cost ? 'disabled' : null, onclick: () => { S.cash -= u.cost; S.upg[u.id]++; persist(); sfx.stamp(); hub(); } }, max ? 'Owned' : 'Buy ' + money(u.cost))); })));
+    N.upgrades.map(u => { const own = S.upg[u.id], max = own >= u.max, cost = u.costs[own]; return h('div', { class: 'upg' }, h('div', null, h('b', null, u.name + '  ' + own + '/' + u.max), h('div', { class: 'dim' }, u.desc)),
+      h('button', { class: 'btn ghost', disabled: max || S.cash < cost ? 'disabled' : null, onclick: () => { S.cash -= cost; S.upg[u.id]++; persist(); sfx.stamp(); hub(); } }, max ? 'Maxed' : 'Buy ' + money(cost))); })));
   wrap.append(h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, 'Casebook')),
     S.log.length ? S.log.map(l => h('div', { class: 'logrow' }, h('span', null, l.title), h('span', { class: 'o ' + l.outcome }, l.outcome === 'solved' ? 'Solved' : l.outcome === 'partial' ? 'Right person, thin evidence' : 'Named the wrong person'), h('span', null, (l.cash >= 0 ? '+' : '') + money(l.cash)))) : h('p', { class: 'dim' }, 'No cases closed yet.')));
   show(wrap);
@@ -84,7 +85,7 @@ function caseScreen() {
   const suspectCard = sp => { const t = suspectState(c, sp); return h('div', { class: 'card' + (t.cleared ? ' cleared' : '') }, h('div', { class: 'ct' }, sp.name), h('div', { class: 'dim' }, sp.role), h('p', { class: 'say' }, sp.says),
     h('div', { class: 'tags' }, t.cleared ? h('span', { class: 'tag good' }, 'Cleared by evidence') : '', t.pointed ? h('span', { class: 'tag bad' }, t.pointed + ' clue' + (t.pointed > 1 ? 's' : '') + ' point here') : '')); };
   show(h('div', null,
-    h('div', { class: 'labTop' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); hub(); } }, 'Office'), h('h2', null, c.title), h('div', { class: 'hours' }, h('b', null, S.cur.hours), ' lab hours left'),
+    h('div', { class: 'labTop' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); hub(); } }, 'Office'), h('h2', null, c.title), S.ledger.length ? h('button', { class: 'btn ghost', onclick: () => { sfx.click(); ledgerScreen(caseScreen); } }, 'Anomaly ledger (' + S.ledger.length + ')') : '', h('div', { class: 'hours' }, h('b', null, S.cur.hours), ' lab hours left'),
       h('button', { class: 'btn red', disabled: nIdent ? null : 'disabled', title: nIdent ? '' : 'Identify a sample first', onclick: () => { sfx.click(); accuse(c); } }, c.accuseTitle || 'Name the culprit')),
     h('p', { class: 'dim' }, c.client + '  ·  ' + c.place),
     h('div', { class: 'cols' },
@@ -96,14 +97,24 @@ function caseScreen() {
 
 // ============================== analysis ==============================
 function analyze(s) {
+  if (s.needsPrediction && !S.pred) { sheet([h('h2', null, 'Enter your prediction first'), h('p', null, 'Dr. Varga will not release this package until you have entered the shift and the number of hydrogens you expect. Open the anomaly ledger and work out the rule.'), h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { ledgerScreen(caseScreen); } }, 'Open the ledger'), h('button', { class: 'btn ghost', onclick: () => document.querySelector('.cover').remove() }, 'Not yet'))]); return; }
   const c = caseOf(); head('Analysis: ' + s.label); const host = h('div');
   show(h('div', null, h('div', { class: 'labTop' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); caseScreen(); } }, 'Back to case'), h('h2', null, s.label), h('div', { class: 'dim' }, s.where)), host));
   tuner = AA.tuner.mount(host, {
     target: s.compound, anomaly: s.anomaly, tokens: 1 + S.upg.tokens, hours: () => S.cur.hours,
     spend: () => { if (S.cur.hours < 1) return false; S.cur.hours--; persist(); return true; },
     onSolved: info => {
-      S.cur.ident[s.id] = true; persist(); sfx.stamp(); const m = lib.byId.get(s.compound);
-      const el = sheet([h('span', { class: 'verdict good' }, info.anomaly ? 'Anomaly reported' : 'Identified'), h('h2', null, s.resultLabel && info.anomaly ? s.resultLabel : m.name + '   ' + C.sub(m.formula)), h('p', null, info.anomaly ? 'Your structure explains every signal but one. That one signal fits no structure you can build.' : m.real), h('table', null, h('tr', null, h('th', null, 'Assays used'), h('td', null, String(info.assays))), h('tr', null, h('th', null, 'Hours left'), h('td', null, String(S.cur.hours)))),
+      S.cur.ident[s.id] = true; sfx.stamp(); const m = lib.byId.get(s.compound); let predRow = null;
+      if (info.anomaly && s.anomaly) {
+        if (!s.noLedger && !S.ledger.some(e => e.sample === s.label && e.case === c.title)) S.ledger.push({ case: c.title, sample: s.label, shift: s.anomaly.shift, hs: s.anomaly.hs });
+        if (s.needsPrediction && S.pred) {
+          const hit = Math.abs(S.pred.shift - s.anomaly.shift) <= 0.2 && S.pred.hs === s.anomaly.hs;
+          if (hit) { S.cash += 200; S.rep += 10; } else S.rep = Math.max(0, S.rep - 5);
+          predRow = h('tr', null, h('th', null, 'Your prediction'), h('td', null, S.pred.shift + ' ppm, ' + S.pred.hs + ' H: ' + (hit ? 'correct. +$200, reputation +10' : 'missed. Reputation -5')));
+        }
+      }
+      persist();
+      const el = sheet([h('span', { class: 'verdict good' }, info.anomaly ? 'Anomaly reported' : 'Identified'), h('h2', null, s.resultLabel && info.anomaly ? s.resultLabel : m.name + '   ' + C.sub(m.formula)), h('p', null, info.anomaly ? 'Your structure explains every signal but one. That one signal fits no structure you can build.' : m.real), h('table', null, h('tr', null, h('th', null, 'Assays used'), h('td', null, String(info.assays))), h('tr', null, h('th', null, 'Hours left'), h('td', null, String(S.cur.hours))), predRow),
         h('p', null, h('b', null, 'What it means: '), s.clue), h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { el.remove(); caseScreen(); } }, 'Back to case'))]);
     }
   });
@@ -133,6 +144,27 @@ function verdict(c, who, clueIds) {
     h('h1', null, c.title), h('p', null, text),
     h('table', { class: 'tbl' }, h('tr', null, h('th', null, 'Cash'), h('td', null, (cash >= 0 ? '+' : '') + money(cash))), h('tr', null, h('th', null, 'Reputation'), h('td', null, (rep >= 0 ? '+' : '') + rep))),
     h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { sfx.click(); hub(); } }, 'Back to the office'))));
+}
+
+// ============================== anomaly ledger ==============================
+function ledgerScreen(back) {
+  head('Anomaly ledger'); document.querySelectorAll('.cover').forEach(e => e.remove());
+  const L = S.ledger, cv = h('canvas', { class: 'ledgerCv' }), si = h('input', { type: 'number', step: '0.1', value: S.pred ? S.pred.shift : '', placeholder: 'shift, ppm' }), hi = h('input', { type: 'number', step: '1', value: S.pred ? S.pred.hs : '', placeholder: 'hydrogens' }), msg = h('div', { class: 'dim' }, S.pred ? 'Prediction on file: ' + S.pred.shift + ' ppm, ' + S.pred.hs + ' H.' : 'No prediction on file.');
+  const draw = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth || 560, hgt = 240; cv.width = w * dpr; cv.height = hgt * dpr; const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, hgt);
+    const n = L.length + 1, lo = Math.min(-7, ...L.map(e => e.shift)) - 0.5, hi2 = 1, X = i => 50 + i * ((w - 130) / Math.max(1, n)), Y = v => 20 + (hi2 - v) / (hi2 - lo) * (hgt - 50);
+    x.strokeStyle = '#3a3f4b'; x.fillStyle = '#8e94a1'; x.font = '11px "Plex Mono", monospace'; x.textAlign = 'right';
+    for (let v = 0; v >= lo; v -= 2) { x.beginPath(); x.moveTo(44, Y(v)); x.lineTo(w - 10, Y(v)); x.stroke(); x.fillText(String(v), 40, Y(v) + 4); }
+    x.textAlign = 'center'; x.fillText('entries in order reported', w / 2, hgt - 4);
+    L.forEach((e, i) => { const px = X(i + 1), py = Y(e.shift); x.fillStyle = '#6b8cff'; x.beginPath(); x.arc(px, py, 4 + e.hs * 2.2, 0, 6.3); x.fill(); x.fillStyle = '#ebe7da'; x.fillText(e.hs + ' H', px, py - 10 - e.hs * 2.2); });
+    if (S.pred) { const px = X(L.length + 1), py = Y(S.pred.shift); x.strokeStyle = '#e0533d'; x.setLineDash([4, 3]); x.beginPath(); x.arc(px, py, 4 + S.pred.hs * 2.2, 0, 6.3); x.stroke(); x.setLineDash([]); x.fillStyle = '#e0533d'; x.fillText('prediction', px, py - 10 - S.pred.hs * 2.2); }
+  };
+  show(h('div', { class: 'brief', style: 'max-width:760px' }, h('div', { class: 'kicker' }, 'Anomaly ledger'), h('h1', null, 'What the unexplained signals have in common'),
+    L.length ? h('table', { class: 'tbl' }, h('tr', null, h('th', null, 'Case'), h('th', null, 'Sample'), h('th', null, 'Shift'), h('th', null, 'Hydrogens')), L.map(e => h('tr', null, h('td', null, e.case), h('td', null, e.sample), h('td', null, e.shift + ' ppm'), h('td', null, String(e.hs))))) : h('p', { class: 'dim' }, 'No anomalies reported yet.'),
+    cv, h('h3', { style: 'margin-top:18px' }, 'Predict the next signal'), h('p', { class: 'dim' }, 'Find what changes from one entry to the next. Enter the shift (ppm) and the number of hydrogens you expect in the next anomaly. You are scored when the next one is measured.'),
+    h('div', { class: 'row' }, si, hi, h('button', { class: 'btn red', onclick: () => { const sh = parseFloat(si.value), hs = parseInt(hi.value, 10); if (isNaN(sh) || isNaN(hs) || hs < 1) { msg.textContent = 'Enter a shift and a whole number of hydrogens.'; sfx.bad(); return; } S.pred = { shift: Math.round(sh * 10) / 10, hs }; persist(); sfx.stamp(); msg.textContent = 'Prediction on file: ' + S.pred.shift + ' ppm, ' + S.pred.hs + ' H.'; draw(); } }, 'Record prediction')), msg,
+    h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); back(); } }, 'Back'))));
+  requestAnimationFrame(draw);
 }
 
 title();

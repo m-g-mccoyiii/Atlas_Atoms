@@ -91,9 +91,9 @@ function drawIR(cv, d, o) {
 const PASCAL = { s: [1], d: [1, 1], t: [1, 2, 1], q: [1, 3, 3, 1] };
 function drawNMR(cv, d, o) {
   const { x, w, h, p } = setup(cv, o.progress), m = { l: 14, r: 14, t: 30, b: 40 };
-  const lo = d.nmr.peaks.some(q => q.shift < 0) ? -5 : 0, span = 12 - lo;   // the axis only grows past 0 ppm when something sits there
+  const minS = Math.min(0, ...d.nmr.peaks.map(q => q.shift)), lo = minS < -4.5 ? -9 : minS < 0 ? -5 : 0, span = 12 - lo;   // the axis only grows past 0 ppm when something sits there
   const mapX = v => m.l + ((12 - v) / span) * (w - m.l - m.r), base = h - m.b, top = m.t;
-  axis(x, w, h, m, lo < 0 ? [12, 10, 8, 6, 4, 2, 0, -2, -4] : [12, 10, 8, 6, 4, 2, 0], 'δ / ppm   (¹H, integral and multiplicity)', mapX);
+  axis(x, w, h, m, lo === -9 ? [12, 8, 4, 0, -4, -8] : lo < 0 ? [12, 10, 8, 6, 4, 2, 0, -2, -4] : [12, 10, 8, 6, 4, 2, 0], 'δ / ppm   (¹H, integral and multiplicity)', mapX);
   clip(x, w, h, p);
   const peaks = d.nmr.peaks, maxHs = Math.max(1, ...peaks.map(q => q.hs)), pxPerPpm = (w - m.l - m.r) / span;
   const draw = (q, col, wd, dash, yoff) => {
