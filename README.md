@@ -23,6 +23,7 @@ Then visit http://localhost:8765.
 - **My Atlas.** 33 molecules to find, from water and CO₂ to glucose, vanillin, aspirin and vitamin C. Found molecules spin in 3D and can be put back on the bench.
 - **Reactions.** Put the right molecules on the bench and press Spark: rocket fuel, a gas stove, fertilizer, fizzy water, “elephant toothpaste”. Atoms visibly rearrange and are never created or destroyed.
 - **Lessons.** 20 lessons with vocabulary, game activities, check-yourself questions and safe off-screen activities. The game ticks a lesson off when the activity is done. A printable version is in [docs/LESSON_PLANS.md](docs/LESSON_PLANS.md).
+- **Quizzes.** Every lesson has a 2-question multiple-choice quiz made from its check-yourself questions. Each answer is explained, a perfect score gives three stars and completes the lesson.
 - **Element cards.** Click an element in the tray for a Bohr diagram and a fact. New elements unlock as you find molecules.
 - Progress is saved in the browser (`localStorage`).
 
@@ -32,6 +33,7 @@ Then visit http://localhost:8765.
 | --- | --- |
 | `js/data.js` | Elements, molecules (as SMILES), reactions, and the kid-facing text |
 | `js/lessons.js` | The 20 lessons (valid JSON inside a JS wrapper) |
+| `js/quizzes.js` | Multiple-choice questions for each lesson |
 | `js/chem.js` | SMILES parser, formulas, valence rules, molecule fingerprinting |
 | `js/model.js` | Atoms/bonds and a small 3D physics relaxer (bond lengths, VSEPR-style angles) |
 | `js/render3d.js` | Three.js renderer and 3D drag/orbit input |

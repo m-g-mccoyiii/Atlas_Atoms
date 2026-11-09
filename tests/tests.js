@@ -95,6 +95,27 @@ test('benzene ring is flat', () => {
   cs.forEach(a => { const d = Math.abs((a.x - p0.x) * n[0] + (a.y - p0.y) * n[1] + (a.z - p0.z) * n[2]); if (d > 0.25) throw new Error('out of plane by ' + d.toFixed(2)); });
 });
 
+test('every lesson has a quiz with 2 sensible questions', () => {
+  eq(AA.LESSONS.length, 20, 'lessons');
+  for (const L of AA.LESSONS) {
+    const q = AA.QUIZZES[L.n];
+    if (!q || q.length < 2) throw new Error('lesson ' + L.n + ' has no quiz');
+    q.forEach(x => {
+      if (x.wrong.includes(x.right)) throw new Error('lesson ' + L.n + ': right answer also listed as wrong');
+      if (new Set(x.wrong.concat(x.right)).size !== 3) throw new Error('lesson ' + L.n + ': duplicate choices');
+      if (!x.why) throw new Error('lesson ' + L.n + ': missing explanation');
+    });
+  }
+});
+test('lesson completion rules point at real molecules and reactions', () => {
+  const ids = new Set(AA.MOLECULES.map(m => m.id)), rx = new Set(AA.REACTIONS.map(r => r.id));
+  for (const L of AA.LESSONS) {
+    const d = L.done || {};
+    [].concat(d.found || [], d.foundAll || []).forEach(id => { if (!ids.has(id)) throw new Error('lesson ' + L.n + ' needs missing molecule ' + id); });
+    [].concat(d.reacted || [], d.reactedAny || []).forEach(id => { if (!rx.has(id)) throw new Error('lesson ' + L.n + ' needs missing reaction ' + id); });
+  }
+});
+
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';
 document.title = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + (pass + fail);
 })();

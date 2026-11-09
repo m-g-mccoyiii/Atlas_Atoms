@@ -19,7 +19,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -411,13 +411,14 @@ function openLessons(focus) {
       L.grownup ? h('p', { class: 'grownup' }, h('b', null, 'Grown-up question: '), L.grownup.replace(/^Ask:\s*/, '')) : '',
       h('p', null,
         h('button', { class: 'btn', onclick: () => $('#modal').click() }, 'Go to the bench'), ' ',
+        h('button', { class: 'btn', onclick: () => openQuiz(L) }, '\uD83D\uDCDD Take the quiz' + (state.quiz[L.n] !== undefined ? ' (best ' + state.quiz[L.n] + '/' + AA.QUIZZES[L.n].length + ')' : '')), ' ',
         lessonDone(L) ? h('span', { class: 'ok' }, '\u2713 Complete')
           : L.done ? h('span', { style: 'color:var(--dim)' }, 'Completes automatically when you do the activity.')
           : h('button', { class: 'btn alt', onclick: () => { state.lessons[L.n] = Date.now(); save(); checkLessons(); renderMission(); openLessons(L.n); } }, 'Mark done')));
   }
   let sel = null;
   AA.LESSONS.forEach(L => {
-    const row = h('div', { class: 'lrow' }, h('span', { class: 'lnum' }, lessonDone(L) ? '\u2713' : L.n), h('span', null, L.title));
+    const row = h('div', { class: 'lrow' }, h('span', { class: 'lnum' }, lessonDone(L) ? '\u2713' : L.n), h('span', null, L.title + (state.quiz[L.n] === AA.QUIZZES[L.n].length ? ' \u2605' : '')));
     row.addEventListener('click', () => show(L, row));
     if (L.n === focus) sel = [L, row];
     list.append(row);
@@ -426,6 +427,53 @@ function openLessons(focus) {
   const first = sel ? sel[0] : (AA.LESSONS.find(L => !lessonDone(L)) || AA.LESSONS[0]);
   const row = sel ? sel[1] : list.children[first.n - 1];
   show(first, row);
+}
+
+// ---------- quizzes ----------
+function shuffled(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function openQuiz(L) {
+  const Q = shuffled(AA.QUIZZES[L.n]);
+  let i = 0, score = 0;
+  const box = h('div', { class: 'quiz' });
+  modalShell('Quiz: ' + L.title, box);
+  function ask() {
+    box.innerHTML = '';
+    if (i >= Q.length) { finish(); return; }
+    const q = Q[i], opts = shuffled([q.right].concat(q.wrong));
+    const why = h('div', { class: 'why hidden' });
+    const buttons = opts.map(o => h('button', { class: 'choice', onclick: () => pick(o, q, buttons, why) }, o));
+    box.append(h('small', { style: 'color:var(--dim)' }, 'Question ' + (i + 1) + ' of ' + Q.length),
+      h('p', { class: 'qtext' }, q.q),
+      speakBtn(() => q.q + ' ' + opts.join('. Or. ')),
+      h('div', { class: 'choices' }, buttons), why);
+    if (state.voice) speak(q.q + ' ' + opts.join('. Or. '));
+  }
+  function pick(o, q, buttons, why) {
+    if (why.dataset.done) return;
+    why.dataset.done = '1';
+    const ok = o === q.right;
+    if (ok) { score++; sfx.found(); } else sfx.bad();
+    buttons.forEach(b => { b.disabled = true; if (b.textContent === q.right) b.classList.add('right'); else if (b.textContent === o) b.classList.add('wrong'); });
+    why.classList.remove('hidden');
+    why.append(h('b', null, ok ? 'Yes! ' : 'Not quite. '), q.why, ' ',
+      h('button', { class: 'btn', onclick: () => { i++; ask(); } }, i + 1 >= Q.length ? 'See my score' : 'Next question'));
+    if (state.voice) speak((ok ? 'Yes! ' : 'Not quite. ') + q.why);
+  }
+  function finish() {
+    const perfect = score === Q.length;
+    if (state.quiz[L.n] === undefined || score > state.quiz[L.n]) state.quiz[L.n] = score;
+    if (perfect && !state.lessons[L.n]) state.lessons[L.n] = Date.now();
+    save(); checkLessons(); renderMission();
+    const stars = perfect ? '\u2605\u2605\u2605' : score > 0 ? '\u2605' : '';
+    box.append(h('div', { class: 'score' }, stars || '\u2606'), h('h3', { style: 'text-align:center' }, 'You got ' + score + ' of ' + Q.length + (perfect ? '! Lesson complete.' : '.')),
+      h('p', { style: 'text-align:center;color:var(--dim)' }, perfect ? 'Great work. Pick the next lesson or build something.' : 'Read the lesson again and try once more. You can do it.'),
+      h('p', { style: 'text-align:center' },
+        h('button', { class: 'btn', onclick: () => { i = 0; score = 0; ask(); } }, 'Try again'), ' ',
+        h('button', { class: 'btn alt', onclick: () => openLessons(L.n) }, 'Back to lessons')));
+    if (perfect) { bench.burst(new THREE.Vector3(0, 0, 0), 60); sfx.found(); }
+    if (state.voice) speak('You got ' + score + ' of ' + Q.length + '.');
+  }
+  ask();
 }
 
 function openHelp() {

@@ -105,3 +105,13 @@ body { font-size: 16px; }
 .grownup { background: rgba(255,210,63,.1); border-left: 3px solid var(--gold); padding: 6px 10px; border-radius: 6px; }
 .speakbtn { margin: 6px 6px 6px 0; }
 .lessonBody { font-size: 16px; line-height: 1.45; }
+
+.quiz { max-width: 640px; margin: 0 auto; }
+.qtext { font-size: 22px; margin: 6px 0; }
+.choices { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.choice { text-align: left; font-size: 18px; padding: 12px 14px; border-radius: 12px; background: var(--panel2); border: 2px solid var(--line); }
+.choice:hover:not(:disabled) { border-color: var(--teal); }
+.choice.right { border-color: var(--green); background: rgba(125,255,176,.15); }
+.choice.wrong { border-color: #ff6b6b; background: rgba(255,107,107,.15); }
+.why { background: var(--panel2); border-left: 3px solid var(--teal); padding: 8px 12px; border-radius: 6px; font-size: 16px; }
+.score { font-size: 56px; text-align: center; color: var(--gold); letter-spacing: 8px; }
