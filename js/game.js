@@ -3,7 +3,26 @@
 const AA = window.AA, E = AA.ELEMENTS, C = AA.chem, Model = AA.Model, Viewer = AA.Viewer;
 const $ = s => document.querySelector(s);
 const SAVE = 'atlas-atoms-v1';
-const isMobile = () => window.matchMedia('(max-width: 760px), (max-height: 520px)').matches;
+const root = document.documentElement;
+// Layout: 'auto' picks phone / tablet / desktop from the screen; 'phone' and 'tablet' force it.
+const LAYOUTS = ['auto', 'phone', 'tablet'];
+const LAYOUT_NAME = { auto: 'Auto', phone: 'iPhone', tablet: 'iPad' };
+const LAYOUT_ICON = { auto: '\uD83D\uDDA5', phone: '\uD83D\uDCF1', tablet: '\uD83D\uDD33' };
+function applyLayout() {
+  const pref = LAYOUTS.includes(state.layout) ? state.layout : 'auto', w = window.innerWidth, h = window.innerHeight;
+  let mode = 'desktop';
+  if (pref === 'phone' || pref === 'tablet') mode = pref;
+  else if (w <= 760 || h <= 520) mode = 'phone';
+  else if (window.matchMedia('(pointer: coarse)').matches) mode = 'tablet';
+  root.classList.toggle('m-phone', mode === 'phone');
+  root.classList.toggle('m-tablet', mode === 'tablet');
+  root.classList.toggle('m-land', w > h);
+  root.classList.toggle('m-narrow', w < 1000);
+  const b = document.querySelector('#btnLayout');
+  if (b) { b.innerHTML = LAYOUT_ICON[pref] + '<span class="lbl"> ' + LAYOUT_NAME[pref] + '</span>'; b.title = 'Layout: ' + LAYOUT_NAME[pref] + (pref === 'auto' ? ' (' + mode + ')' : '') + '. Tap to change.'; }
+}
+// the info panel is a slide-over sheet on phones and on narrow tablets
+const isMobile = () => root.classList.contains('m-phone') || (root.classList.contains('m-tablet') && root.classList.contains('m-narrow'));
 
 function h(tag, attrs) {
   const el = document.createElement(tag);
@@ -20,7 +39,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, layout: 'auto', voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -109,8 +128,8 @@ function trayDown(el, e) {
   const mv = ev => {
     if (started) return;
     const dx = ev.clientX - sx, dy = ev.clientY - sy;
-    const landscape = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches;
-    const out = landscape ? dx > 10 && Math.abs(dx) > Math.abs(dy) : dy < -10 && Math.abs(dy) > Math.abs(dx);
+    const sideTray = !(root.classList.contains('m-phone') && !root.classList.contains('m-land'));
+    const out = sideTray ? dx > 10 && Math.abs(dx) > Math.abs(dy) : dy < -10 && Math.abs(dy) > Math.abs(dx);
     if (out) { started = true; clean(); spawnFromTray(el, ev); }
   };
   const up = ev => { clean(); if (!started && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) showElement(el); };
@@ -501,7 +520,7 @@ function openQuiz(L) {
 function openHelp() {
   state.seenHelp = true; save();
   modalShell('Welcome to the lab, ' + AA.PLAYER_NAME + '!', h('div', null,
-    h('p', null, '1. Drag atoms from the atom tray onto the bench. On a phone, swipe up from an atom in the bottom strip.'),
+    h('p', null, '1. Drag atoms from the atom tray onto the bench. On a phone, swipe up from an atom in the bottom strip. On an iPad, swipe right from an atom in the left tray.'),
     h('p', null, '2. Drop one atom on top of another to bond them. Drop them together again to make a double or triple bond.'),
     h('p', null, '3. Each atom has a number of hands (bonds it wants). Fill every hand and the atom smiles.'),
     h('p', null, '4. When a molecule is real and in the Atlas, you discover it and learn where it shows up in real life.'),
@@ -533,6 +552,13 @@ $('#chkFaces').addEventListener('change', e => { state.faces = e.target.checked;
 $('#btnAtlas').addEventListener('click', () => openAtlas());
 $('#btnLessons').addEventListener('click', () => openLessons());
 $('#btnLab').addEventListener('click', () => AA.openLab());
+$('#btnLayout').addEventListener('click', () => {
+  state.layout = LAYOUTS[(LAYOUTS.indexOf(state.layout) + 1) % LAYOUTS.length] || 'auto';
+  save(); applyLayout(); document.body.classList.remove('showSide');
+  tip('Layout: ' + LAYOUT_NAME[state.layout] + (state.layout === 'auto' ? ' (picks the best layout for your screen).' : '.'), 4000);
+});
+window.addEventListener('resize', applyLayout);
+window.addEventListener('orientationchange', applyLayout);
 $('#btnInfo').addEventListener('click', () => document.body.classList.toggle('showSide'));
 $('#btnSideClose').addEventListener('click', () => document.body.classList.remove('showSide'));
 $('#btnHelp').addEventListener('click', openHelp);
@@ -558,7 +584,7 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
-buildTray(); setMode(state.mode); soundBtn(); analyze();
+applyLayout(); buildTray(); setMode(state.mode); soundBtn(); analyze();
 tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
 if (!state.seenHelp) openHelp();
 requestAnimationFrame(frame);

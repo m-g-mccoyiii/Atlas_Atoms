@@ -1,6 +1,6 @@
 // Offline support: pre-cache the game, then answer from the network when possible
 // (so updates arrive) and from the cache when offline.
-const CACHE = 'atlas-atoms-v2';
+const CACHE = 'atlas-atoms-v3';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'css/style.css',
   'vendor/three.min.js',
