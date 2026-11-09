@@ -43,9 +43,11 @@ AA.CASES = [
     notes: ['Weakly acidic.', 'Mass 180.', 'Has a ring.'] },
   { id: 'glucose', tier: 4, title: 'Sweet crystals', client: 'Pike Candy Works',
     story: 'White crystals that dissolve in water and taste very sweet. Mass 180, like the tablet.',
-    notes: ['Very sweet.', 'Dissolves easily in water.', 'Mass 180.'] },
+    notes: ['Very sweet.', 'Dissolves easily in water.', 'Mass 180.'],
+    decide: 'The sugar is an aldose: the ring carbon bonded to two oxygens still carries a hydrogen. A ketose such as fructose has a CH₂OH on that carbon instead.' },
   { id: 'vanillin', tier: 4, title: 'Bakery complaint', client: 'Hollis Bakery',
     story: 'A baker wants to know which molecule makes vanilla smell like vanilla.',
-    notes: ['Smells of vanilla.', 'Has a ring.', 'Oxygen sits in three different groups.'] }
+    notes: ['Smells of vanilla.', 'Has a ring.', 'Oxygen sits in three different groups.'],
+    decide: 'The ring carries the aldehyde and a hydroxyl group on opposite sides (positions 1 and 4), with the methoxy group next to the hydroxyl, as in vanilla bean extract.' }
 ];
 })(typeof globalThis !== 'undefined' ? globalThis : window);

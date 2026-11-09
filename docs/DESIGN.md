@@ -17,7 +17,16 @@ Loop:
 
 Budget is 5 plus the file's tier in days. Rating: 3 stars for 3 days or fewer, 2 for 5 or fewer, 1 otherwise, minus one star for 5 or more misreads.
 
-Tuning status: budgets and the 3-day par come from a computed check, not human playtests. They need real players.
+## Playtest results (automated, files 3 to 12)
+
+A bot labelled every signal correctly for each combination of instrument runs, then listed which of 69 compounds (the 33 in the library plus 36 decoy isomers and look-alikes) could still explain all its findings.
+
+- Choices for each signal are picked by closeness (wavenumber, shift, or mass arithmetic) and merged where chemists would call two labels the same. 294 option sets were checked: always five choices, one right answer, no duplicates, no wrong choice that also fits the mass arithmetic.
+- After one quick MS, one IR and one quick NMR, files 3 to 10 leave no rival among the 69 compounds.
+- Two files cannot be settled by the instruments. Vanillin and isovanillin give identical spectra on all three instruments. Glucose and fructose are identical on MS and IR, and NMR scores 0.88. The simulator uses textbook rules and does not model these differences. Both files carry a `decide` note from the client. A structure that fits every instrument but is not the sample costs no day and shows the note.
+- This measures whether the data identify the answer. It does not measure how hard the puzzle is for a person: the bottleneck is building a structure from the evidence, and a bot cannot judge that. Budgets (5 plus tier) and the 3-day par stay as set until real players try the files.
+
+Known gaps: the simulator cannot separate ring positional isomers or sugar ring forms; the decoy list is hand-picked; no human has played files 3 to 12.
 
 Why it works: the player forms a hypothesis, tests it against evidence, and decides when to spend a limited resource. Cases are built so that mass alone is not enough (for example aspirin and glucose both weigh 180).
 

@@ -10,8 +10,7 @@ function h(tag, attrs) {
   for (const kid of [].slice.call(arguments, 2).flat()) { if (kid == null || kid === false) continue; el.append(kid.nodeType ? kid : document.createTextNode(kid)); }
   return el;
 }
-function hash(s) { let a = 2166136261; for (const ch of String(s)) a = Math.imul(a ^ ch.charCodeAt(0), 16777619); return a >>> 0; }
-function rng(seed) { let a = seed | 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = AA.rules, hash = R.hash;
 
 // ---------- save ----------
 const SAVE = 'meitner-save-v3';
@@ -26,27 +25,8 @@ const stars = n => h('span', { class: 'stars' }, [0, 1, 2].map(i => h('span', { 
 let cleanup = null;
 function show(node) { if (cleanup) { cleanup(); cleanup = null; } app.innerHTML = ''; app.append(node); window.scrollTo(0, 0); }
 
-// ---------- reading signals: the answers the player picks from ----------
-const POOL = { ms: new Set(), ir: new Set(), nmr: new Set() };
-lib.list.forEach(m => { const d = S.describe(m.smiles); d.ms.peaks.forEach(p => POOL.ms.add(p.label)); d.ir.peaks.forEach(p => POOL.ir.add(p.name)); d.nmr.peaks.forEach(p => POOL.nmr.add(p.label)); });
-const nameOf = (k, p) => k === 'ir' ? p.name : p.label;
-const posOf = (k, p) => k === 'ms' ? p.mz : k === 'ir' ? p.centre : p.shift;
-const keyOf = (k, p) => k + '|' + posOf(k, p) + '|' + nameOf(k, p);
-function optionsFor(k, truth, key) {
-  const r = rng(hash(key)), pool = [...POOL[k]].filter(x => x !== truth);
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  const out = pool.slice(0, 4); out.splice(Math.floor(r() * 5), 0, truth); return out;
-}
-function dou(formula) {
-  const n = {}; formula.replace(/([A-Z][a-z]?)(\d*)/g, (m, e, c) => { if (e) n[e] = (n[e] || 0) + (+c || 1); return ''; });
-  if (!n.C) return null; return (2 * n.C + 2 + (n.N || 0) + (n.P || 0) - (n.H || 0) - (n.F || 0) - (n.Cl || 0)) / 2;
-}
-// does a structure's own spectrum explain a finding the player has written down?
-function explains(f, d) {
-  if (f.k === 'ms') return f.kind === 'M' ? d.ms.M === f.pos : d.ms.peaks.some(p => Math.abs(p.mz - f.pos) < 1);
-  if (f.k === 'ir') return !d.ir.silent && d.ir.peaks.some(p => Math.abs(p.centre - f.pos) <= 40);
-  return d.nmr.peaks.some(p => Math.abs(p.shift - f.pos) <= 0.5 && p.hs === f.hs);
-}
+// ---------- reading signals (the rules live in rules.js) ----------
+const { nameOf, posOf, keyOf, canon, dou, explains } = R;
 
 // ============================== case board ==============================
 function board() {
@@ -72,7 +52,7 @@ const INSTR = [
 const REF = {
   ir: [['O–H, alcohol', 'broad, 3200–3550'], ['O–H, carboxylic acid', 'very broad, 2500–3300'], ['N–H', '3300–3500'], ['C–H (sp³)', 'just under 3000'], ['≡C–H', 'sharp, 3300'], ['C≡C', '2100–2260, weak'], ['C=O', 'sharp, strong, 1670–1780'], ['C=C', '1620–1680'], ['C–O', '1000–1300'], ['No peaks', 'symmetrical molecule or ionic solid']],
   nmr: [['CH₃ on carbon', '0.9'], ['CH₂ in a chain', '1.3'], ['next to C=O', '2.1–2.7'], ['next to O', '3.3–4.0'], ['alkene H', '5–6'], ['aromatic H', '6.5–8'], ['aldehyde H', '9–10'], ['acid O–H', '10–12'], ['splitting', 'n neighbours give n+1 lines']],
-  ms: [['M⁺', 'highest-mass strong peak: the intact molecule'], ['M+1', '¹³C: about 1.1% of M⁺ per carbon'], ['M−15', 'loss of CH₃'], ['M−18', 'loss of H₂O'], ['M+2', 'chlorine or sulfur present'], ['77', 'phenyl ring']]
+  ms: [['M⁺', 'highest-mass strong peak: the intact molecule'], ['M+1', '¹³C: about 1.1% of M⁺ per carbon'], ['M−15', 'loss of CH₃'], ['M−18', 'loss of H₂O'], ['M+2', 'chlorine or sulfur present'], ['77', 'phenyl ring'], ['Lost mass 15 / 17 / 18', 'CH₃ / OH / H₂O'], ['Lost mass 29 / 31', 'C₂H₅ or CHO / OCH₃ or CH₂OH'], ['Lost mass 43 / 45', 'C₃H₇ or CH₃CO / COOH or OC₂H₅'], ['Label arithmetic', 'peak m/z = M minus the mass lost']]
 };
 
 function lab(c) {
@@ -134,11 +114,11 @@ function lab(c) {
     const r = rec.cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
     const hit = (rec.cv._hits || []).filter(t => x >= t.x0 && x <= t.x1 && y >= t.y0 && y <= t.y1).sort((a, b) => Math.abs(a.cx - x) - Math.abs(b.cx - x))[0];
     closePop(); if (!hit) return;
-    const key = keyOf(hit.k, hit.peak), truthName = nameOf(hit.k, hit.peak);
+    const key = keyOf(hit.k, hit.peak), truthName = canon(hit.k, nameOf(hit.k, hit.peak));
     if (st.found.has(key)) { log('Already in your notebook.'); return; }
     const wrong = new Set(), title = hit.k === 'ms' ? 'm/z ' + hit.peak.mz : hit.k === 'ir' ? hit.peak.centre + ' cm⁻¹' : 'δ ' + hit.peak.shift.toFixed(1) + ' ppm, ' + hit.peak.hs + 'H';
     pop = h('div', { class: 'pop' }, h('h4', null, title + '  —  what is this signal?'));
-    optionsFor(hit.k, truthName, key).forEach(o => pop.append(h('button', { class: 'opt', onclick: e => {
+    R.optionsFor(hit.k, hit.peak, key, truth.ms.M).forEach(o => pop.append(h('button', { class: 'opt', onclick: e => {
       e.stopPropagation(); if (wrong.has(o)) return;
       if (o === truthName) { closePop(); found(hit); }
       else { wrong.add(o); e.currentTarget.classList.add('wrong'); st.mis++; sfx.bad(); renderDays(); }
@@ -148,11 +128,11 @@ function lab(c) {
     document.body.append(pop);
   }
   function found(hit) {
-    const p = hit.peak, k = hit.k, f = { k, pos: posOf(k, p), name: nameOf(k, p), hs: p.hs, kind: '' };
+    const p = hit.peak, k = hit.k, f = { k, pos: posOf(k, p), name: nameOf(k, p), hs: p.hs, mult: p.mult, kind: '' };
     if (k === 'ms') {
       const dd = dataFor(st.runs.ms.quality).ms, mp = dd.peaks.find(q => q.mz === dd.M);
       if (/^M⁺/.test(f.name)) { f.kind = 'M'; st.M = p.mz; f.text = 'M⁺ = ' + p.mz + '  (molecular mass ' + p.mz + ')'; }
-      else if (/^M\+1/.test(f.name) && mp) { const n = Math.round((p.rel / mp.rel) / 0.011); f.text = 'M+1 is ' + (p.rel / mp.rel * 100).toFixed(1) + '% of M⁺: about ' + n + ' carbon' + (n === 1 ? '' : 's'); f.n = n; }
+      else if (/^M\+1/.test(f.name) && mp) { const n = Math.round((p.rel / mp.rel) / 0.011); f.kind = 'M1'; f.text = 'M+1 is ' + (p.rel / mp.rel * 100).toFixed(1) + '% of M⁺: about ' + n + ' carbon' + (n === 1 ? '' : 's'); f.n = n; }
       else f.text = 'm/z ' + p.mz + ': ' + f.name;
     } else if (k === 'ir') f.text = f.pos + ' cm⁻¹: ' + f.name;
     else f.text = 'δ ' + f.pos.toFixed(1) + ': ' + f.name + ', ' + p.hs + 'H, ' + p.mult;
@@ -220,6 +200,10 @@ function lab(c) {
     if (st.solved || st.over) return;
     if (!st.fit.ready) { sfx.bad(); log('Cannot declare: ' + (st.fit.text || 'nothing on the bench.')); return; }
     if (st.fit.mol && st.fit.mol.id === mol.id) { win(); return; }
+    const near = S.compare(truth, st.fit.desc);
+    if (c.decide && INSTR.every(i => near[i.k] >= 0.85)) {   // an isomer these instruments cannot tell apart: no day is lost
+      sfx.bad(); log('Peer review: that structure fits every signal this lab can measure, and so could another. The client notes decide it. ' + c.decide); return;
+    }
     sfx.bad();
     const fails = [...st.found.values()].filter(f => !explains(f, st.fit.desc)), sc = S.compare(truth, st.fit.desc), ran = INSTR.filter(i => st.runs[i.k]);
     const worst = (ran.length ? ran : INSTR).slice().sort((a, b) => sc[a.k] - sc[b.k])[0];
