@@ -40,29 +40,29 @@ Then visit http://localhost:8765.
 
 | File | Purpose |
 | --- | --- |
-| `js/data.js` | Elements, molecules (as SMILES), reactions, and the kid-facing text |
+| `packages/core/js/data.js` | Elements, molecules (as SMILES), reactions, and the kid-facing text |
 | `js/lessons.js` | The 20 lessons (valid JSON inside a JS wrapper) |
 | `js/quizzes.js` | Multiple-choice questions for each lesson |
-| `js/molinfo.js` | Shape and state facts, molar mass and bond counts for the Lab |
-| `js/orbitals.js` | 3D orbital scenes (wave-function sampling, hybrids, molecular orbitals) |
-| `js/reactionsim.js` | The collision-theory reaction box and energy-hill drawing |
-| `js/realdata.js` | Generated: PubChem IDs and Wikipedia links for every molecule |
+| `packages/core/js/molinfo.js` | Shape and state facts, molar mass and bond counts for the Lab |
+| `packages/core/js/orbitals.js` | 3D orbital scenes (wave-function sampling, hybrids, molecular orbitals) |
+| `packages/core/js/reactionsim.js` | The collision-theory reaction box and energy-hill drawing |
+| `packages/core/js/realdata.js` | Generated: PubChem IDs and Wikipedia links for every molecule |
 | `js/real.js` | Real-compound box, leave-the-game confirmation, "Is it real?" lookup |
 | `js/profiles.js` | Profiles, saving, migration of old saves, backup and restore (with checking of backup files) |
 | `js/profileui.js` | First-run name screen and the profile screen |
 | `js/progress.js` | Lesson-completion rule, badges, and the grown-up progress page |
 | `js/lab.js` | The Molecule Lab screens |
-| `js/chem.js` | SMILES parser, formulas, valence rules, molecule fingerprinting |
-| `js/model.js` | Atoms/bonds and a small 3D physics relaxer (bond lengths, VSEPR-style angles) |
-| `js/render3d.js` | Three.js renderer and 3D drag/orbit input |
+| `packages/core/js/chem.js` | SMILES parser, formulas, valence rules, molecule fingerprinting |
+| `packages/core/js/model.js` | Atoms/bonds and a small 3D physics relaxer (bond lengths, VSEPR-style angles) |
+| `packages/core/js/render3d.js` | Three.js renderer and 3D drag/orbit input |
 | `js/game.js` | UI, missions, discoveries, reactions, Atlas, lessons |
-| `vendor/three.min.js` | Three.js r128 (MIT), bundled so the game works offline |
+| `packages/core/vendor/three.min.js` | Three.js r128 (MIT), bundled so the game works offline |
 | `tests/index.html` | Open in a browser to run the tests (no Node needed) |
 | `tools/make_lesson_doc.py` | Rebuilds `docs/LESSON_PLANS.md` from `js/lessons.js` |
 
 ## Add a molecule
 
-Add an entry to `AA.MOLECULES` in `js/data.js`. `smiles` supports `C N O S P F Cl`, bracket atoms like `[Na]` and `[H]`, `-` `=` `#`, branches `( )` and ring digits. Hydrogens on unbracketed atoms are implied. Then open `tests/index.html`: it checks that the molecule has valid valences, a unique fingerprint, and a sensible 3D shape.
+Add an entry to `AA.MOLECULES` in `packages/core/js/data.js`. `smiles` supports `C N O S P F Cl`, bracket atoms like `[Na]` and `[H]`, `-` `=` `#`, branches `( )` and ring digits. Hydrogens on unbracketed atoms are implied. Then open `tests/index.html`: it checks that the molecule has valid valences, a unique fingerprint, and a sensible 3D shape.
 
 ## Edit the lessons
 
@@ -70,7 +70,7 @@ Change `js/lessons.js`, then run `python tools/make_lesson_doc.py` to refresh th
 
 ## Assets and licensing
 
-Everything except Three.js is drawn in code: no images, fonts or audio files. Sounds are synthesized with the Web Audio API. Emoji on the molecule cards use the viewer’s operating-system emoji font. [Three.js](https://threejs.org) is MIT licensed, which allows commercial use. Its licence text is kept at the top of `vendor/three.min.js` and in `vendor/LICENSE-three.txt`. The rest of the repo is proprietary: see `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+Everything except Three.js is drawn in code: no images, fonts or audio files. Sounds are synthesized with the Web Audio API. Emoji on the molecule cards use the viewer’s operating-system emoji font. [Three.js](https://threejs.org) is MIT licensed, which allows commercial use. Its licence text is kept at the top of `packages/core/vendor/three.min.js` and in `packages/core/vendor/LICENSE-three.txt`. The rest of the repo is proprietary: see `LICENSE` and `THIRD_PARTY_NOTICES.md`.
 
 ## Ideas for later
 

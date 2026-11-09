@@ -184,6 +184,49 @@ test('profiles: first run, old saves, switching, backup and restore', () => {
   eq(P.remove(b.profile.id), false, 'the last profile cannot be deleted');
 });
 
+test('spectra: textbook cases come out right', () => {
+  const S = AA.spectra, by = id => S.describe(AA.MOLECULES.find(m => m.id === id).smiles);
+  const sig = (d, shift) => d.nmr.peaks.find(p => Math.abs(p.shift - shift) < 0.15);
+  let d = by('ethanol'); eq(d.ms.M, 46, 'ethanol M');
+  eq(d.nmr.peaks.length, 3, 'ethanol has 3 signals');
+  let p = sig(d, 3.7); eq(p && p.hs + p.mult, '2q', 'CH2 quartet'); p = sig(d, 1.2); eq(p && p.hs + p.mult, '3t', 'CH3 triplet'); p = sig(d, 2.6); eq(p && p.hs + p.mult, '1s', 'OH singlet');
+  eq(d.ir.peaks.some(x => x.centre === 3350 && x.shape === 'broad'), true, 'ethanol broad O-H');
+  d = by('acetone'); eq(d.nmr.peaks.length, 1, 'acetone one signal'); eq(d.nmr.peaks[0].hs + d.nmr.peaks[0].mult, '6s', 'acetone 6H singlet');
+  eq(d.ms.peaks.find(x => x.mz === 43).rel, 100, 'acetone base peak 43'); eq(d.ir.peaks.some(x => x.centre === 1715), true, 'ketone C=O');
+  d = by('acetic'); eq(d.ms.M, 60); p = sig(d, 11.5); eq(p && p.hs, 1, 'acid H near 11.5'); eq(d.ir.peaks.some(x => x.shape === 'vbroad'), true, 'very broad acid O-H');
+  d = by('benzene'); eq(d.ms.M, 78); eq(d.nmr.peaks.length, 1, 'benzene one signal'); eq(d.nmr.peaks[0].hs, 6);
+  d = by('co2'); eq(d.ms.M, 44); eq(d.ir.peaks.some(x => x.centre === 2349), true, 'CO2 asymmetric stretch');
+  d = by('nitrogen'); eq(d.ir.silent, true, 'N2 has no IR');
+  d = by('ethyne'); eq(d.ir.peaks.some(x => x.centre === 2120), false, 'symmetric alkyne C-C triple bond is IR-quiet');
+});
+test('spectra: aspirin and glucose weigh the same but their spectra tell them apart', () => {
+  const S = AA.spectra, a = S.describe(AA.MOLECULES.find(m => m.id === 'aspirin').smiles), g = S.describe(AA.MOLECULES.find(m => m.id === 'glucose').smiles);
+  eq(a.ms.M, 180); eq(g.ms.M, 180, 'same nominal mass');
+  eq(a.nmr.total, 8); eq(g.nmr.total, 12, 'different hydrogen counts');
+  eq(a.groups.alcohol, 0); eq(g.groups.alcohol >= 4, true, 'glucose is covered in alcohols');
+  eq(a.groups.acid, 1); eq(a.groups.ester, 1); eq(a.groups.aromaticRings, 1);
+});
+test('spectra: every molecule gets a sane spectrum', () => {
+  const S = AA.spectra;
+  for (const m of AA.MOLECULES) {
+    const d = S.describe(m.smiles), g = AA.chem.parseSmiles(m.smiles), nH = g.atoms.filter(a => a.el === 'H').length;
+    eq(d.nmr.total, nH, m.id + ' NMR integrals add up to the hydrogens');
+    if (d.ms.peaks.length < 1 || !d.ms.peaks.some(x => x.rel === 100)) throw new Error(m.id + ' MS has no base peak');
+    d.ms.peaks.forEach(x => { if (x.rel < 1 || x.rel > 100 || x.mz < 1) throw new Error(m.id + ' bad MS peak ' + x.mz); });
+    let M = 0; g.atoms.forEach(a => { M += S.NOMINAL[a.el]; }); eq(d.ms.M, M, m.id + ' molecular ion');
+    if (!d.ir.silent && d.ir.peaks.length === 0) throw new Error(m.id + ' has no IR peaks and is not marked silent');
+    d.nmr.peaks.forEach(p => { if (!(p.shift > -1 && p.shift < 13)) throw new Error(m.id + ' shift out of range ' + p.shift); });
+  }
+});
+
+test('spectra: comparison separates real answers from near misses', () => {
+  const S = AA.spectra, d = id => S.describe(AA.MOLECULES.find(m => m.id === id).smiles), eth = d('ethanol'), dme = S.describe('COC');
+  const same = S.compare(eth, eth); eq(same.ms > 0.999 && same.ir > 0.999 && same.nmr > 0.999, true, 'a spectrum matches itself');
+  const near = S.compare(eth, dme); eq(near.ms > 0.3, true, 'same mass gives some MS overlap'); eq(near.nmr < 0.7 && near.ir < 0.8, true, 'isomers differ in NMR and IR');
+  for (const m of AA.MOLECULES) { const x = S.describe(m.smiles), q = S.degrade(x), c = S.compare(q, x); eq(c.nmr > 0.9, true, m.id + ' quick scan still matches its own NMR'); }
+  const g = AA.chem.parseSmiles('CCO'); const viaGraph = S.describeGraph(g.atoms, g.bonds); eq(viaGraph.ms.M, 46, 'describeGraph agrees with describe');
+});
+
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';
 document.title = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + (pass + fail);
 })();
