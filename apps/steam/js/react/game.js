@@ -90,9 +90,9 @@ function start(app) {
   }
   function renderTicket() {
     const proj = cur.done ? cur.final : RUN.projected(run, st.sig), onBonus = !!cur.bonus && st.sig === cur.bonus.sig, met = proj >= cur.quota, dbl = proj >= cur.quota * 2;
-    tkHead.textContent = 'Order ' + (cur.n + 1) + ' of ' + RUN.ORDERS;
+    tkHead.textContent = 'Order ' + (cur.n + 1) + ' of ' + RUN.ORDERS + (cur.large ? '  ·  large order' : '');
     tkFeed.replaceChildren('Feedstock: ', h('b', null, cur.feedName));
-    quotaEl.replaceChildren('of ', h('b', null, fmt(cur.quota)), ' needed  ·  ', h('b', null, fmt(cur.quota * 2)), ' earns two picks');
+    quotaEl.replaceChildren('of ', h('b', null, fmt(cur.quota)), ' needed  ·  ', h('b', null, fmt(cur.quota * 2)), ' earns one more pick');
     // the bar runs to twice the quota; the mark in the middle is the quota itself
     barFill.style.width = Math.min(100, proj / (cur.quota * 2) * 100).toFixed(1) + '%';
     ticket.className = 'ticket' + (met ? ' met' : '') + (dbl ? ' dbl' : '');
@@ -150,20 +150,72 @@ function start(app) {
   }
 
   // ---------- run flow ----------
-  function loadOrder() {
+  function loadOrder(m) {
     cur = run.cur; st.tok++; st.busy = false; st.mode = 'play'; st.shown = 0; st.opts = null; st.end = false;
     yEl.textContent = ''; bEl.textContent = ''; setCalc(cur.yield, cur.batch);
     st.flashes = []; st.fliers = []; st.party = 0; st.hover = -1; st.hoverAtoms = [];
     fx.clear();
-    model = AA.Model.fromSmilesRelaxed(cur.feed, 6);
+    model = m || AA.Model.fromSmilesRelaxed(cur.feed, 6);
     if (v) { v.model = model; v.glow.clear(); }
     st.desc = RX.describe(model); st.sig = RX.sigOf(model); st.t0 = performance.now();
     overlay.className = 'ov'; overlay.replaceChildren();
     scoreEl.textContent = '0';
     renderAll();
-    fx.banner('ORDER ' + (cur.n + 1) + ' OF ' + RUN.ORDERS, cur.feedName + '  ·  ' + fmt(cur.quota) + ' needed', YELLOW, 1.9);
+    fx.banner((cur.large ? 'LARGE ORDER ' : 'ORDER ') + (cur.n + 1) + ' OF ' + RUN.ORDERS, cur.feedName + '  ·  ' + fmt(cur.quota) + ' needed', YELLOW, 1.9);
   }
-  function newRun(seed) { run = RUN.newRun(seed); st.seen.clear(); RUN.beginOrder(run); loadOrder(); }
+
+  // ---------- the two feedstocks on offer ----------
+  // looking at an offer puts its molecule in the hood and its spectra, with its bonus compound, on the printouts
+  function lookAt(i) {
+    const o = run.offers[i];
+    st.pv = i; model = st.offerModels[i];
+    if (v) { v.model = model; v.glow.clear(); }
+    st.desc = RX.describe(model); st.sig = RX.sigOf(model); st.t0 = performance.now();
+    st.offerEls.forEach((el, k) => el.classList.toggle('look', k === i));
+    tkHead.textContent = 'Order ' + (run.n + 1) + ' of ' + RUN.ORDERS + '  ·  choose a feedstock';
+    tkFeed.replaceChildren('Looking at: ', h('b', null, o.feedName));
+    quotaEl.replaceChildren('of ', h('b', null, fmt(o.quota)), ' needed');
+    bonusEl.replaceChildren(...(o.bonus ? [h('span', { class: 'tkTag' }, '×' + Math.max(2, run.gear.includes('column') ? 4 : 2)), h('span', null, 'Bonus compound: ', h('b', null, o.bonus.name), '.')] : [h('span', null, 'No bonus compound on this order.')]));
+    tkCond.textContent = run.cond ? 'Condition: ' + run.cond.text + '.' : ''; tkCond.style.display = run.cond ? '' : 'none';
+    nowEl.textContent = RX.label(model);
+    legend.replaceChildren(h('span', { class: 'ink' }), 'this feedstock', ...(o.bonus ? [h('span', { class: 'dash' }), 'its bonus compound'] : []));
+    prints.forEach(p => { p.pct.textContent = ''; });
+  }
+  function showOffers() {
+    st.tok++; st.busy = false; st.mode = 'offer'; st.opts = null; st.end = false; st.shown = 0;
+    st.flashes = []; st.fliers = []; st.party = 0; st.hover = -1; st.hoverAtoms = [];
+    fx.clear(); overlay.className = 'ov'; overlay.replaceChildren();
+    yEl.textContent = ''; bEl.textContent = ''; setCalc(0, 1); scoreEl.textContent = '0'; barFill.style.width = '0%'; ticket.className = 'ticket';
+    st.offerModels = run.offers.map(o => AA.Model.fromSmilesRelaxed(o.feed, 6));
+    st.offerEls = run.offers.map((o, i) => {
+      const cov = RUN.coverage(run, o.feed);
+      const el = h('button', { class: 'offer' + (o.large ? ' large' : ''), onclick: () => pickFeed(i) },
+        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, o.large ? 'Pays 2 picks' : 'Pays 1 pick')),
+        h('div', { class: 'ofBody' },
+          h('div', { class: 'ofName' }, o.feedName),
+          h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups')), h('div', null, h('b', null, fmt(o.quota * 2)), h('span', null, 'earns one more pick'))),
+          h('div', { class: 'ofLine' }, o.bonus ? ['Bonus compound: ', h('b', null, o.bonus.name)] : 'No bonus compound'),
+          h('div', { class: 'ofCov' }, cov.length ? cov.map(c => { const card = RX.CARDS[c.id]; return h('span', { style: '--cc:' + css(card.rgb) }, card.verb + ' ' + c.n); }) : 'No bottle in your rack reacts with it as it stands')));
+      ['mouseenter', 'focus'].forEach(ev => el.addEventListener(ev, () => { if (st.mode === 'offer' && st.pv !== i) lookAt(i); }));
+      return el;
+    });
+    cardsEl.style.setProperty('--n', 2);
+    cardsEl.replaceChildren(...st.offerEls);
+    logEl.replaceChildren(); renderGear();
+    stepEl.replaceChildren();
+    swapBtn.textContent = 'Swap hand  [S]'; swapBtn.disabled = deliverBtn.disabled = true; deliverBtn.className = 'btn go';
+    rackEl.textContent = plural(run.deck.length, 'bottle') + ' in the rack';
+    runEl.textContent = 'Run total ' + fmt(run.total);
+    bestEl.textContent = st.best.total ? 'Best run: ' + plural(st.best.orders, 'order') + ', ' + fmt(st.best.total) : '';
+    lookAt(0);
+    fx.banner('ORDER ' + (run.n + 1) + ' OF ' + RUN.ORDERS, 'Choose a feedstock' + (run.cond ? '  ·  ' + run.cond.text : ''), YELLOW, 1.9);
+  }
+  function pickFeed(i) {
+    if (st.mode !== 'offer' || !run.offers || !run.offers[i]) return;
+    const m = st.offerModels[i];
+    sfx.stamp(); RUN.chooseFeed(run, i); st.offerModels = null; loadOrder(m);
+  }
+  function newRun(seed) { run = RUN.newRun(seed); st.seen.clear(); RUN.beginOrder(run); showOffers(); }
 
   const scr = atoms => { let x = 0, y = 0; atoms.forEach(a => { const p = v._screen(a); x += p.x; y += p.y; }); return { x: x / atoms.length, y: y / atoms.length }; };
   function centroid() { let x = 0, y = 0, z = 0, n = 0; model.atoms.forEach(a => { if (a.fly) return; x += a.x; y += a.y; z += a.z; n++; }); return n ? [x / n, y / n, z / n] : [0, 0, 0]; }
@@ -287,7 +339,7 @@ function start(app) {
           fx.ring(x, y, c, 240 + 40 * k, 0.8); fx.burst(x, y, c, 70 + 12 * k, 440 + 40 * k); fx.shake(7 + k); sfx.lock(6 + k * 2);
         }, 240 * (k + 1));
         model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
-        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed' + (res.picks === 2 ? '  ·  two picks' : ''), YELLOW, 2.3);
+        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed' + (res.picks > 1 ? '  ·  ' + res.picks + ' picks' : ''), YELLOW, 2.3);
       } else {
         sfx.stamp(); fx.shake(6);
         fx.banner('QUOTA MISSED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed', RED, 2.3);
@@ -320,9 +372,9 @@ function start(app) {
         return b;
       });
       st.pickEls = opts.map(o => o.el || o);
-      st.pickHead = h('h3', null, res.picks === 2 ? 'More than double the quota: take two for the rest of the run' : 'Take one for the rest of the run');
+      st.pickHead = h('h3', null, (res.picks > 1 ? 'Take ' + res.picks : 'Take one') + ' for the rest of the run' + (cur.large ? '  ·  large order' : '') + (res.total >= cur.quota * 2 ? '  ·  more than double the quota' : ''));
       kids.push(h('h2', null, 'Order ' + n + ' filled'),
-        h('p', null, sum + ', against ' + fmt(cur.quota) + ' needed.' + (res.hit ? ' The bonus compound multiplied batch by ' + res.mult + '.' : '') + ' Next order needs ' + fmt(RUN.QUOTA[cur.n + 1]) + '.'),
+        h('p', null, sum + ', against ' + fmt(cur.quota) + ' needed.' + (res.hit ? ' The bonus compound multiplied batch by ' + res.mult + '.' : '') + ' Next order needs ' + fmt(RUN.QUOTA[cur.n + 1]) + ', or ' + fmt(RUN.QUOTA[cur.n + 1] * RUN.LARGE) + ' as a large order.'),
         st.pickHead, h('div', { class: 'picks' }, st.pickEls),
         h('button', { class: 'btn', onclick: () => choose(-1) }, 'Take nothing  [0]'));
       overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';
@@ -337,9 +389,9 @@ function start(app) {
       if (!st.opts[i]) return;
       RUN.take(run, st.opts[i]); sfx.stamp(); st.opts[i] = null; st.picksLeft--;
       if (st.pickEls && st.pickEls[i]) st.pickEls[i].classList.add('taken');
-      if (st.picksLeft > 0 && st.opts.some(o => o)) { st.pickHead.textContent = 'Take one more'; return; }
+      if (st.picksLeft > 0 && st.opts.some(o => o)) { st.pickHead.textContent = st.picksLeft > 1 ? 'Take ' + st.picksLeft + ' more' : 'Take one more'; return; }
     } else sfx.click();
-    st.opts = null; RUN.nextOrder(run); loadOrder();
+    st.opts = null; RUN.nextOrder(run); showOffers();
   }
 
   // ---------- frame loop ----------
@@ -376,7 +428,8 @@ function start(app) {
     const prog = Math.min(1, (now - st.t0) / 900);
     if (prog < 1 || tick % 20 === 0 || st.t0 !== st.drawn) {
       const o = { quality: 'hires', progress: prog, seed: 7, t: now };
-      if (cur.bonus) { o.overlay = cur.bonus.desc; o.overlayColor = '#c8261c'; }
+      const bonus = st.mode === 'offer' ? run.offers[st.pv].bonus : cur.bonus;
+      if (bonus) { o.overlay = bonus.desc; o.overlayColor = '#c8261c'; }
       prints.forEach(p => AA.paper.draw(p.cv, p.k, st.desc, o));
       if (prog >= 1) st.drawn = st.t0;
     }
@@ -387,13 +440,14 @@ function start(app) {
   requestAnimationFrame(() => {
     v = new AA.Viewer(benchCv, model, { interactive: false, zoom: 40, pitch: 0.32, yaw: 0.5, faces: false });
     const grid = new T.GridHelper(44, 22, 0x9a9a9a, 0x9a9a9a); grid.position.y = -5.4; grid.material.transparent = true; grid.material.opacity = 0.16; v.scene.add(grid);
-    renderHand();
+    if (st.mode === 'play') renderHand();
     requestAnimationFrame(frame);
   });
   root.addEventListener('resize', () => { if (cur && st.mode === 'play') renderHand(); });
   root.addEventListener('keydown', e => {
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
+    if (st.mode === 'offer') { if (k === '1' || k === '2') { pickFeed(+k - 1); e.preventDefault(); } return; }
     if (st.mode === 'result') {
       if (st.opts) { if (k >= '1' && k <= '3') { choose(+k - 1); e.preventDefault(); } else if (k === '0') { choose(-1); e.preventDefault(); } }
       else if (st.end && k === 'Enter' && overlay.className === 'ov on') { newRun(); e.preventDefault(); }
@@ -408,7 +462,7 @@ function start(app) {
   const fresh = document.getElementById('newrun');
   if (fresh) fresh.addEventListener('click', () => newRun());
 
-  AA.rxGame = { state: st, run: () => run, model: () => model, play, swap, deliver, choose, newRun };
+  AA.rxGame = { state: st, run: () => run, model: () => model, play, swap, deliver, choose, pickFeed, newRun };
 }
 
 document.addEventListener('DOMContentLoaded', () => start(document.getElementById('app')));

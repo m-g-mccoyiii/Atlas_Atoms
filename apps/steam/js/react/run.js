@@ -7,15 +7,20 @@ const AA = root.AA, RX = AA.rx;
 // batch; equipment adds to either or multiplies batch; bottles gain grades that last for the run.
 // Nothing in this file touches the page, so the same code drives the game and the headless bot.
 
-const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20;
+const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20, SCHLENK = 1.5;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
 const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
-const QUOTA = [100, 300, 1200, 2500, 6000, 12000, 30000, 60000];
+const QUOTA = [100, 250, 1200, 2000, 6000, 12000, 30000, 45000];
+// Every order offers two feedstocks. The standard one has LEAN[n] reactive groups. The large one has one more,
+// needs LARGE times the quota and pays one more pick.
+const LEAN = [2, 2, 3, 3, 4, 4, 5, 5], LARGE = 3.5;
+// feedstocks by number of reactive groups: FEED[0] has two, FEED[4] has six
 const FEED = [
-  ['C=CCCCC', 'CC(O)CCC=C', 'C=CCCC=C', 'CC(=O)CCC=C', 'OCCCCC=C', 'CC(O)CCC(O)C'],
+  ['CC(O)CCC=C', 'C=CCCC=C', 'CC(=O)CCC=C', 'OCCCCC=C', 'CC(O)CCC(O)C', 'CC(Cl)CCC=C'],
   ['C=CCC(O)CC=C', 'CC(O)CCC(O)CC=C', 'C=CCC(=O)CCC=C', 'C=CCC(O)CC(Cl)C', 'CC(=O)CCC(O)CC=C', 'C=CCCC(O)CCC=C'],
-  ['C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'C=CCC(O)CC(O)CC(O)CC=C', 'C=CCCC(O)CCC(=O)CCC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C'],
-  ['C=CCC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(O)CCC(=O)CCC(O)CCC=C', 'C=CCC(Cl)CC(O)CC(O)CC(Cl)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)C', 'C=CCC(=O)CC(=O)CC(=O)CC=C']
+  ['C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'C=CCCC(O)CCC(=O)CCC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C', 'CC(O)CC(O)CC(O)CCC=C', 'C=CCC(Cl)CCC(O)CC=C'],
+  ['C=CCC(O)CC(O)CC(O)CC=C', 'C=CCC(O)CCC(=O)CCC(O)CCC=C', 'C=CCC(=O)CC(=O)CC(=O)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)C', 'C=CCC(Cl)CC(O)CC(=O)CCC=C', 'C=CCC(O)CC(=O)CCC(O)CC=C'],
+  ['C=CCC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(Cl)CC(O)CC(O)CC(Cl)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(=O)CC(O)CC(O)CC(=O)CC=C', 'C=CCC(O)CC(=O)CC(O)CC(=O)CC=C']
 ];
 // bottles whose reaction makes a group leave the molecule
 const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
@@ -32,7 +37,7 @@ const GEAR = [
   { id: 'stirrer', kind: 'b', name: 'Stir plate', text: 'Every bottle played: +2 batch.' },
   { id: 'deanstark', kind: 'x', name: 'Dean–Stark trap', text: 'Dehydrate sites: batch ×1.5.', ids: ['dehydrate'], x: 1.5 },
   { id: 'mantle', kind: 'x', name: 'Heating mantle', text: 'Eliminate and Substitute sites: batch ×1.5.', ids: ['koh', 'naoh'], x: 1.5 },
-  { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch ×2.' },
+  { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch ×' + SCHLENK + '.' },
   { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch ×2.' },
   { id: 'column', kind: 'x', name: 'Chromatography column', text: 'The bonus compound multiplies batch by 4 instead of 2.', bonus: 4 },
   { id: 'syringe', kind: 'x', name: 'Syringe pump', text: 'The last site of every bottle counts twice.' },
@@ -106,19 +111,38 @@ function fill(run) {
   }
 }
 
-function beginOrder(run) {
-  const n = run.n, tier = TIER[n], cond = (n === 3 || n === 7) ? pick(run.r, CONDS) : null;
-  const pool = FEED[tier].filter(s => !run.fed.includes(s)), feed = pick(run.r, pool.length ? pool : FEED[tier]);
+// how many sites each different bottle in the rack would react at on this feedstock
+function coverage(run, feed) {
+  const m = RX.fromSmiles(feed), out = [];
+  Array.from(new Set(run.deck)).forEach(id => { const n = RX.CARDS[id].find(m).length; if (n) out.push({ id, n }); });
+  return out.sort((x, y) => y.n - x.n);
+}
+function offer(run, n, groups, large) {
+  const all = FEED[groups - 2], pool = all.filter(f => !run.fed.includes(f)), feed = pick(run.r, pool.length ? pool : all);
   run.fed.push(feed);
   const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m);
+  return { feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * (large ? LARGE : 1)), extra: large ? 1 : 0,
+    bonus: makeBonus(run, feed, feedSig, TIER[n]) };
+}
+// an order starts as two offers; chooseFeed turns one of them into the order being worked
+function beginOrder(run) {
+  const n = run.n;
+  run.cur = null;
+  run.cond = (n === 3 || n === 7) ? pick(run.r, CONDS) : null;
+  run.offers = [offer(run, n, LEAN[n], false), offer(run, n, LEAN[n] + 1, true)];
+  return run.offers;
+}
+function chooseFeed(run, i) {
+  const o = run.offers[i], n = run.n, cond = run.cond;
   run.cur = {
-    n, feed, feedSig, feedName: RX.label(m), quota: QUOTA[n], cond,
+    n, feed: o.feed, feedSig: o.feedSig, feedName: o.feedName, quota: o.quota, large: o.large, extra: o.extra, cond,
     stepsMax: STEPS + gearSum(run, 'steps') + ((cond && cond.steps) || 0), step: 0,
     redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
     handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
     yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
-    used: [], log: [], kept: false, done: false, bonus: makeBonus(run, feed, feedSig, tier), bonusMult: Math.max(2, gearSum(run, 'bonus'))
+    used: [], log: [], kept: false, done: false, bonus: o.bonus, bonusMult: Math.max(2, gearSum(run, 'bonus'))
   };
+  run.offers = null;
   fill(run);
   return run.cur;
 }
@@ -153,7 +177,7 @@ function playEnd(run, id, hits, dry) {
   if (has(run, 'syringe')) scoreSite(run, id, dry).forEach((e, k) => { if (!k) e.again = true; ev.push(e); });
   run.gear.forEach(g => {
     if (g === 'stirrer') add(g, 'b', 2);
-    else if (g === 'schlenk' && hits >= 3) add(g, 'x', 2);
+    else if (g === 'schlenk' && hits >= 3) add(g, 'x', SCHLENK);
     else if (g === 'rotovap' && cur.step + 1 >= cur.stepsMax) add(g, 'x', 2);
   });
   if (!dry && hits > gradeOf(run, id)) { run.grade[id] = gradeOf(run, id) + 1; run.grow.grades++; ev.push({ src: 'bottle', kind: 'grade', val: run.grade[id], yield: cur.yield, batch: cur.batch }); }
@@ -193,9 +217,9 @@ function endOrder(run, sig) {
   const cur = run.cur, hit = !!cur.bonus && sig === cur.bonus.sig, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
   if (hit) { add('bonus', 'x', cur.bonusMult); run.grow.bonus++; }
   if (has(run, 'seed') && seedMult(run) > 1) add('seed', 'x', seedMult(run));
-  const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? (total >= cur.quota * 2 ? 2 : 1) : 0;
+  const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra + (total >= cur.quota * 2 ? 1 : 0) : 0;
   cur.done = true; cur.final = total; cur.hit = hit; cur.pass = pass;
-  run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass });
+  run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass, large: cur.large });
   if (!pass) run.over = true; else if (cur.n === ORDERS - 1) { run.over = true; run.won = true; }
   return { yield: y0, batch: b0, ev, mult: hit ? cur.bonusMult : 1, total, pass, hit, picks };
 }
@@ -216,6 +240,6 @@ function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_
 // moves a piece of equipment one place to the left on the bench, so it fires earlier
 function moveGear(run, i) { if (i > 0 && i < run.gear.length) { const g = run.gear; [g[i - 1], g[i]] = [g[i], g[i - 1]]; } }
 
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, FEED, YIELD, newRun, beginOrder, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
+AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   projected, endMult, endOrder, rewards, take, moveGear, has, pick };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

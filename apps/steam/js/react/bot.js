@@ -11,13 +11,16 @@ function choose(run, opts, policy) {
   const count = id => run.deck.filter(d => d === id).length + 2 * (RUN.gradeOf(run, id) - 1);
   return opts.slice().sort((a, b) => count(b.id) - count(a.id))[0];
 }
-function bot(runs, seed, policy, noFail) {
+// feed: 'standard', 'large', or 'fit' (the large order when the rack's bottles react at two more sites than it has groups)
+function bot(runs, seed, policy, noFail, feed) {
   const totals = Array.from({ length: RUN.ORDERS }, () => []), reached = new Array(RUN.ORDERS + 1).fill(0);
-  let bonusHits = 0, orders = 0, doubles = 0;
+  let bonusHits = 0, orders = 0, doubles = 0, larges = 0;
   for (let i = 0; i < runs; i++) {
     const run = RUN.newRun((seed || 1) + i * 7919);
     RUN.beginOrder(run);
     for (;;) {
+      const fit = RUN.coverage(run, run.offers[1].feed).reduce((t, c) => t + c.n, 0) >= run.offers[1].groups + 2;
+      RUN.chooseFeed(run, feed === 'large' || (feed === 'fit' && fit) ? 1 : 0);
       const cur = run.cur, m = RX.fromSmiles(cur.feed);
       while (cur.step < cur.stepsMax) {
         let best = -1, bs = RUN.scoreOf(cur);
@@ -28,16 +31,16 @@ function bot(runs, seed, policy, noFail) {
         RUN.commit(run, best, hits);
       }
       const res = RUN.endOrder(run, RX.sigOf(m));
-      totals[cur.n].push(res.total); orders++; if (res.hit) bonusHits++; if (res.picks > 1) doubles++;
+      totals[cur.n].push(res.total / (cur.large ? RUN.LARGE : 1)); if (cur.large) larges++; orders++; if (res.hit) bonusHits++; if (res.total >= cur.quota * 2) doubles++;
       if (noFail) run.over = cur.n === RUN.ORDERS - 1;
       if (run.over) { reached[res.pass || noFail ? cur.n + 1 : cur.n]++; break; }
       const opts = RUN.rewards(run);
-      for (let p = 0; p < Math.max(1, res.picks) && opts.length; p++) { const o = choose(run, opts, policy); RUN.take(run, o); opts.splice(opts.indexOf(o), 1); }
+      for (let p = 0; p < Math.max(1 + cur.extra, res.picks) && opts.length; p++) { const o = choose(run, opts, policy); RUN.take(run, o); opts.splice(opts.indexOf(o), 1); }
       RUN.nextOrder(run);
     }
   }
   const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; };
-  return { runs, policy: policy || 'random', filled: reached, bonusRate: orders ? bonusHits / orders : 0, doubleRate: orders ? doubles / orders : 0,
+  return { runs, policy: policy || 'random', filled: reached, bonusRate: orders ? bonusHits / orders : 0, doubleRate: orders ? doubles / orders : 0, largeRate: orders ? larges / orders : 0,
     perOrder: totals.map((a, n) => ({ order: n + 1, n: a.length, quota: RUN.QUOTA[n], p10: q(a, 0.1), p25: q(a, 0.25), p50: q(a, 0.5), p75: q(a, 0.75), p90: q(a, 0.9), max: q(a, 1) })) };
 }
 RUN.bot = bot;

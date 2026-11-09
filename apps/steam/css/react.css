@@ -78,6 +78,20 @@ b { font-weight: 700; }
 .shelf { background: #ffcd00; border-top: 4px solid #000; border-bottom: 4px solid #000; margin: 0 -14px; padding: 12px 14px 12px; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 14px; }
 .cards { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 12px; }
 .side { display: flex; flex-direction: column; gap: 8px; }
+.offer { position: relative; text-align: left; padding: 0; background: #fff; color: #111; border: 2px solid #000; border-radius: 4px; box-shadow: 0 5px 0 #000; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; transition: transform .1s; font: inherit; animation: deal .28s ease-out; min-height: 292px; }
+.offer:hover, .offer:focus-visible { transform: translateY(-8px); outline: none; }
+.offer.look { box-shadow: 0 5px 0 #000, 0 0 0 4px #000; }
+.ofBand { background: #111; color: #fff; display: flex; align-items: center; gap: 10px; padding: 6px 12px 5px; font-size: 22px; font-weight: 700; }
+.offer.large .ofBand { background: #d81e1e; }
+.ofBand .bKey { background: #ffcd00; color: #111; }
+.ofPay { margin-left: auto; background: #ffcd00; color: #111; font-size: 17px; padding: 1px 9px 0; }
+.ofBody { padding: 14px 18px 14px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.ofName { font-size: 34px; font-weight: 700; line-height: 1.05; }
+.ofNums { display: flex; gap: 36px; }
+.ofNums div { display: flex; flex-direction: column; } .ofNums b { font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; } .ofNums span { font-size: 14px; }
+.ofLine { font-size: 19px; }
+.ofCov { display: flex; flex-wrap: wrap; gap: 6px; font-size: 17px; margin-top: auto; }
+.ofCov span { background: var(--cc); color: #fff; font-weight: 700; padding: 2px 8px 1px; border: 1px solid #000; }
 .rackInfo { font-size: 14px; color: #111; line-height: 1.25; margin-top: auto; }
 .btn { background: #111; color: #fff; border: 2px solid #000; font-size: 17px; font-weight: 700; padding: 11px 12px; cursor: pointer; white-space: pre; }
 .btn:hover:not(:disabled) { background: #2d2d2a; }
