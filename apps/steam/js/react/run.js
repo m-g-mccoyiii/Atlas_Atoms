@@ -3,44 +3,54 @@
 const AA = root.AA, RX = AA.rx;
 
 // The run: eight orders. Each order gives a feedstock, a quota and a bonus compound. Bottles come from a
-// rack (the deck) into a hand. Meeting a quota lets the player take a bottle or a piece of equipment
-// into the next order. Missing a quota ends the run. Nothing in this file touches the page, so the same
-// code drives the game and the headless bot that the quotas were tuned with.
+// rack (the deck) into a hand. The score of an order is YIELD × BATCH. Every site that reacts adds yield and
+// batch; equipment adds to either or multiplies batch; bottles gain grades that last for the run.
+// Nothing in this file touches the page, so the same code drives the game and the headless bot.
 
-const ORDERS = 8, BASE = 100, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5;
+const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
-const TIER = [0, 0, 1, 1, 1, 2, 2, 2];
-const QUOTA = [200, 400, 1100, 1500, 2000, 3400, 4400, 5500];
+const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
+const QUOTA = [100, 300, 1200, 2500, 6000, 12000, 30000, 60000];
 const FEED = [
   ['C=CCCCC', 'CC(O)CCC=C', 'C=CCCC=C', 'CC(=O)CCC=C', 'OCCCCC=C', 'CC(O)CCC(O)C'],
   ['C=CCC(O)CC=C', 'CC(O)CCC(O)CC=C', 'C=CCC(=O)CCC=C', 'C=CCC(O)CC(Cl)C', 'CC(=O)CCC(O)CC=C', 'C=CCCC(O)CCC=C'],
-  ['C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'C=CCC(O)CC(O)CC(O)CC=C', 'C=CCCC(O)CCC(=O)CCC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C']
+  ['C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'C=CCC(O)CC(O)CC(O)CC=C', 'C=CCCC(O)CCC(=O)CCC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C'],
+  ['C=CCC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(O)CCC(=O)CCC(O)CCC=C', 'C=CCC(Cl)CC(O)CC(O)CC(Cl)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)C', 'C=CCC(=O)CC(=O)CC(=O)CC=C']
 ];
+// bottles whose reaction makes a group leave the molecule
+const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
 
-// Equipment. One rule each. card: pay multiplier for named bottles.
+// Equipment fires left to right along the bench, once for every site that reacts.
+// kind: y adds yield, b adds batch, x multiplies batch, grow gets stronger during the run, tool changes a rule.
 const GEAR = [
-  { id: 'deanstark', name: 'Dean–Stark trap', text: 'Dehydrate pays double.', card: { dehydrate: 2 } },
-  { id: 'icebath', name: 'Ice bath', text: 'Reduce and Hydroborate pay double.', card: { nabh4: 2, bh3: 2 } },
-  { id: 'dryingtube', name: 'Drying tube', text: 'Oxidise pays double.', card: { pcc: 2 } },
-  { id: 'parr', name: 'Parr shaker', text: 'Hydrogenate pays triple.', card: { h2: 3 } },
-  { id: 'scrubber', name: 'Gas scrubber', text: 'Add HCl and Chlorinate pay double.', card: { hcl: 2, socl2: 2 } },
-  { id: 'mantle', name: 'Heating mantle', text: 'Eliminate and Substitute pay double.', card: { koh: 2, naoh: 2 } },
-  { id: 'reflux', name: 'Reflux condenser', text: 'One more step on every order.', steps: 1 },
-  { id: 'rack', name: 'Bottle carrier', text: 'Hold one more bottle in your hand.', hand: 1 },
-  { id: 'funnel', name: 'Separating funnel', text: 'One more hand swap on every order.', redraws: 1 },
-  { id: 'winchester', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' },
-  { id: 'column', name: 'Chromatography column', text: 'The bonus compound pays ×3 instead of ×2.', bonus: 3 },
-  { id: 'balance', name: 'Analytical balance', text: 'Every site pays 25 more.', site: 25 },
-  { id: 'rotovap', name: 'Rotary evaporator', text: 'From step 4 on, each step counts one higher.' },
-  { id: 'notebook', name: 'Lab notebook', text: 'Every site pays 50 more for each different bottle already used on this order.' }
+  { id: 'balance', kind: 'y', name: 'Analytical balance', text: 'Every site: +15 yield.', y: 15 },
+  { id: 'notebook', kind: 'y', name: 'Lab notebook', text: 'Every site: +10 yield for each different bottle already used on this order.' },
+  { id: 'icebath', kind: 'b', name: 'Ice bath', text: 'Reduce and Hydroborate sites: +3 batch.', ids: ['nabh4', 'bh3'], b: 3 },
+  { id: 'dryingtube', kind: 'b', name: 'Drying tube', text: 'Oxidise sites: +3 batch.', ids: ['pcc'], b: 3 },
+  { id: 'parr', kind: 'b', name: 'Parr shaker', text: 'Hydrogenate sites: +6 batch.', ids: ['h2'], b: 6 },
+  { id: 'scrubber', kind: 'b', name: 'Gas scrubber', text: 'Add HCl and Chlorinate sites: +3 batch.', ids: ['hcl', 'socl2'], b: 3 },
+  { id: 'stirrer', kind: 'b', name: 'Stir plate', text: 'Every bottle played: +2 batch.' },
+  { id: 'deanstark', kind: 'x', name: 'Dean–Stark trap', text: 'Dehydrate sites: batch ×1.5.', ids: ['dehydrate'], x: 1.5 },
+  { id: 'mantle', kind: 'x', name: 'Heating mantle', text: 'Eliminate and Substitute sites: batch ×1.5.', ids: ['koh', 'naoh'], x: 1.5 },
+  { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch ×2.' },
+  { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch ×2.' },
+  { id: 'column', kind: 'x', name: 'Chromatography column', text: 'The bonus compound multiplies batch by 4 instead of 2.', bonus: 4 },
+  { id: 'syringe', kind: 'x', name: 'Syringe pump', text: 'The last site of every bottle counts twice.' },
+  { id: 'coldtrap', kind: 'grow', name: 'Cold trap', text: 'Catches every group that leaves a molecule. Each order starts with +1 batch for every 2 caught.' },
+  { id: 'seed', kind: 'grow', name: 'Seed crystal', text: 'At delivery: batch ×1, plus 0.5 for every bonus compound delivered this run.' },
+  { id: 'stock', kind: 'grow', name: 'Stock solution', text: 'Every site: +5 yield for each grade your bottles have gained this run.' },
+  { id: 'reflux', kind: 'tool', name: 'Reflux condenser', text: 'One more step on every order.', steps: 1 },
+  { id: 'rack', kind: 'tool', name: 'Bottle carrier', text: 'Hold one more bottle in your hand.', hand: 1 },
+  { id: 'funnel', kind: 'tool', name: 'Separating funnel', text: 'One more hand swap on every order.', redraws: 1 },
+  { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' }
 ];
 const GEARS = {};
 GEAR.forEach(g => { GEARS[g.id] = g; });
 
 // Conditions attached to orders 4 and 8.
 const CONDS = [
-  { id: 'acid', text: 'Acid bottles pay half', half: ['acid'] },
-  { id: 'redox', text: 'Oxidants and hydrides pay half', half: ['oxidant', 'hydride'] },
+  { id: 'acid', text: 'Acid bottles give half yield and no batch', half: ['acid'] },
+  { id: 'redox', text: 'Oxidants and hydrides give half yield and no batch', half: ['oxidant', 'hydride'] },
   { id: 'short', text: 'One step fewer', steps: -1 },
   { id: 'noswap', text: 'No hand swaps', redraws: -99 }
 ];
@@ -53,10 +63,21 @@ const pick = (r, a) => a[Math.floor(r() * a.length)];
 const shuffle = (r, a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
 const has = (run, id) => run.gear.includes(id);
 const gearSum = (run, key) => run.gear.reduce((s, id) => s + (GEARS[id][key] || 0), 0);
+const gradeOf = (run, id) => run.grade[id] || 1;
+const seedMult = run => 1 + 0.5 * run.grow.bonus;
+const scoreOf = cur => Math.round(cur.yield * cur.batch);
 let uid = 0;
 
 function newRun(seed) {
-  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: STARTER.slice(), gear: [], fed: [], cur: null, over: false, won: false, history: [] };
+  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: STARTER.slice(), gear: [], grade: {},
+    grow: { caught: 0, bonus: 0, grades: 0 }, fed: [], cur: null, over: false, won: false, history: [] };
+}
+// the number a growing piece of equipment currently stands at, for its tag
+function live(run, id) {
+  if (id === 'coldtrap') return '+' + Math.floor(run.grow.caught / 2) + ' batch (' + run.grow.caught + ' caught)';
+  if (id === 'seed') return '×' + seedMult(run);
+  if (id === 'stock') return '+' + 5 * run.grow.grades + ' yield';
+  return '';
 }
 
 // the bonus compound: two or three bottles from the rack applied to the feedstock
@@ -95,30 +116,67 @@ function beginOrder(run) {
     stepsMax: STEPS + gearSum(run, 'steps') + ((cond && cond.steps) || 0), step: 0,
     redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
     handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
-    score: 0, used: [], log: [], kept: false, done: false, bonus: makeBonus(run, feed, feedSig, tier), bonusMult: Math.max(2, gearSum(run, 'bonus'))
+    yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
+    used: [], log: [], kept: false, done: false, bonus: makeBonus(run, feed, feedSig, tier), bonusMult: Math.max(2, gearSum(run, 'bonus'))
   };
   fill(run);
   return run.cur;
 }
 
-// which step the next bottle counts as, and what one site pays for a given bottle on that step
-function stepIndex(run) { const s = run.cur.step + 1; return s + (has(run, 'rotovap') && s >= 4 ? 1 : 0); }
-function sitePoints(run, id) {
-  const c = RX.CARDS[id], cur = run.cur;
-  let per = BASE + gearSum(run, 'site'), mult = 1;
-  if (has(run, 'notebook')) per += 50 * new Set(cur.used).size;
-  run.gear.forEach(g => { const k = GEARS[g].card; if (k && k[id]) mult *= k[id]; });
-  if (cur.cond && cur.cond.half && cur.cond.half.includes(c.cls)) mult *= 0.5;
-  return Math.round(per * stepIndex(run) * mult);
+// ---------- scoring. Every change to yield or batch is recorded as a trigger so the screen can replay it. ----------
+function adder(cur, ev) {
+  return (src, kind, val) => {
+    if (kind === 'y') cur.yield += val; else if (kind === 'b') cur.batch += val; else cur.batch *= val;
+    ev.push({ src, kind, val, yield: cur.yield, batch: cur.batch });
+  };
 }
-// records a played bottle after its sites have reacted
+// one site has reacted: the bottle scores, then each piece of equipment in bench order
+function scoreSite(run, id, dry) {
+  const cur = run.cur, ev = [], add = adder(cur, ev), halved = !!(cur.cond && cur.cond.half && cur.cond.half.includes(RX.CARDS[id].cls));
+  add('bottle', 'y', Math.round(YIELD * gradeOf(run, id) * (halved ? 0.5 : 1)));
+  if (!halved) add('bottle', 'b', 1);
+  run.gear.forEach(g => {
+    const G = GEARS[g];
+    if (G.ids && !G.ids.includes(id)) return;
+    const y = g === 'notebook' ? 10 * new Set(cur.used).size : g === 'stock' ? 5 * run.grow.grades : (G.y || 0);
+    if (y) add(g, 'y', y);
+    if (G.b) add(g, 'b', G.b);
+    if (G.x) add(g, 'x', G.x);
+  });
+  if (!dry && LEAVES[id] && has(run, 'coldtrap')) { run.grow.caught++; ev.push({ src: 'coldtrap', kind: 'catch', val: run.grow.caught, yield: cur.yield, batch: cur.batch }); }
+  return ev;
+}
+// the bottle has finished reacting at `hits` sites: equipment that works once per bottle, then the grade check
+function playEnd(run, id, hits, dry) {
+  const cur = run.cur, ev = [], add = adder(cur, ev);
+  if (!hits) return ev;
+  if (has(run, 'syringe')) scoreSite(run, id, dry).forEach((e, k) => { if (!k) e.again = true; ev.push(e); });
+  run.gear.forEach(g => {
+    if (g === 'stirrer') add(g, 'b', 2);
+    else if (g === 'schlenk' && hits >= 3) add(g, 'x', 2);
+    else if (g === 'rotovap' && cur.step + 1 >= cur.stepsMax) add(g, 'x', 2);
+  });
+  if (!dry && hits > gradeOf(run, id)) { run.grade[id] = gradeOf(run, id) + 1; run.grow.grades++; ev.push({ src: 'bottle', kind: 'grade', val: run.grade[id], yield: cur.yield, batch: cur.batch }); }
+  return ev;
+}
+// what the order would score after playing this bottle at n sites, without changing anything
+function preview(run, id, n) {
+  const cur = run.cur, y = cur.yield, b = cur.batch;
+  for (let i = 0; i < n; i++) scoreSite(run, id, true);
+  playEnd(run, id, n, true);
+  const s = scoreOf(cur);
+  cur.yield = y; cur.batch = b;
+  return s;
+}
+// records a played bottle after its sites have been scored
 function commit(run, handIdx, hits) {
-  const cur = run.cur, hc = cur.hand[handIdx], per = sitePoints(run, hc.id), gained = per * hits;
-  cur.score += gained; cur.step++; cur.used.push(hc.id); cur.log.push({ id: hc.id, hits, pts: gained });
+  const cur = run.cur, hc = cur.hand[handIdx], before = cur.log.length ? cur.log[cur.log.length - 1].score : 0;
+  const ev = playEnd(run, hc.id, hits, false), score = scoreOf(cur);
+  cur.step++; cur.used.push(hc.id); cur.log.push({ id: hc.id, hits, score, pts: score - before });
   if (has(run, 'winchester') && !cur.kept) cur.kept = true;            // the bottle stays in the hand
   else { cur.hand.splice(handIdx, 1); cur.discard.push(hc.id); }
   fill(run);
-  return { per, gained };
+  return { ev, score, gained: score - before };
 }
 function redraw(run) {
   const cur = run.cur;
@@ -128,14 +186,18 @@ function redraw(run) {
   fill(run);
   return true;
 }
-const projected = (run, sig) => { const c = run.cur; return c.score * (c.bonus && sig === c.bonus.sig ? c.bonusMult : 1); };
+const endMult = (run, sig) => { const c = run.cur, on = !!c.bonus && sig === c.bonus.sig; return (on ? c.bonusMult : 1) * (has(run, 'seed') ? seedMult(run) + (on ? 0.5 : 0) : 1); };
+const projected = (run, sig) => Math.round(run.cur.yield * run.cur.batch * endMult(run, sig));
 
 function endOrder(run, sig) {
-  const cur = run.cur, hit = !!cur.bonus && sig === cur.bonus.sig, mult = hit ? cur.bonusMult : 1, total = cur.score * mult, pass = total >= cur.quota;
+  const cur = run.cur, hit = !!cur.bonus && sig === cur.bonus.sig, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
+  if (hit) { add('bonus', 'x', cur.bonusMult); run.grow.bonus++; }
+  if (has(run, 'seed') && seedMult(run) > 1) add('seed', 'x', seedMult(run));
+  const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? (total >= cur.quota * 2 ? 2 : 1) : 0;
   cur.done = true; cur.final = total; cur.hit = hit; cur.pass = pass;
   run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass });
   if (!pass) run.over = true; else if (cur.n === ORDERS - 1) { run.over = true; run.won = true; }
-  return { base: cur.score, mult, total, pass, hit };
+  return { yield: y0, batch: b0, ev, mult: hit ? cur.bonusMult : 1, total, pass, hit, picks };
 }
 function nextOrder(run) { run.n++; return beginOrder(run); }
 
@@ -150,35 +212,10 @@ function rewards(run) {
   else out.push({ kind: 'bottle', id: ids.find(id => id !== first && id !== out[1].id) });
   return out;
 }
-function take(run, opt) { if (opt.kind === 'gear') run.gear.push(opt.id); else run.deck.push(opt.id); }
+function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_SLOTS && !has(run, opt.id)) run.gear.push(opt.id); } else run.deck.push(opt.id); }
+// moves a piece of equipment one place to the left on the bench, so it fires earlier
+function moveGear(run, i) { if (i > 0 && i < run.gear.length) { const g = run.gear; [g[i - 1], g[i]] = [g[i], g[i - 1]]; } }
 
-// ---------- headless bot: plays the bottle that pays most right now, takes rewards at random ----------
-function bot(runs, seed, noFail) {
-  const totals = Array.from({ length: ORDERS }, () => []), reached = new Array(ORDERS + 1).fill(0);
-  let bonusHits = 0, orders = 0;
-  for (let i = 0; i < runs; i++) {
-    const run = newRun((seed || 1) + i * 7919);
-    beginOrder(run);
-    for (;;) {
-      const cur = run.cur, m = RX.fromSmiles(cur.feed);
-      while (cur.step < cur.stepsMax) {
-        let best = -1, bp = 0;
-        cur.hand.forEach((c, k) => { const p = RX.CARDS[c.id].find(m).length * sitePoints(run, c.id); if (p > bp) { bp = p; best = k; } });
-        if (best < 0) { if (redraw(run)) continue; break; }
-        const hits = RX.runCard(m, RX.CARDS[cur.hand[best].id]);
-        commit(run, best, hits);
-      }
-      const res = endOrder(run, RX.sigOf(m));
-      totals[cur.n].push(res.total); orders++; if (res.hit) bonusHits++;
-      if (noFail) { run.over = cur.n === ORDERS - 1; }
-      if (run.over) { reached[res.pass || noFail ? cur.n + 1 : cur.n]++; break; }
-      take(run, pick(run.r, rewards(run)));
-      nextOrder(run);
-    }
-  }
-  const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; };
-  return { runs, filled: reached, bonusRate: orders ? bonusHits / orders : 0, perOrder: totals.map((a, n) => ({ order: n + 1, n: a.length, quota: QUOTA[n], p10: q(a, 0.1), p25: q(a, 0.25), p50: q(a, 0.5), p75: q(a, 0.75), p90: q(a, 0.9) })) };
-}
-
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, FEED, newRun, beginOrder, nextOrder, stepIndex, sitePoints, commit, redraw, projected, endOrder, rewards, take, has, bot };
+AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, FEED, YIELD, newRun, beginOrder, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
+  projected, endMult, endOrder, rewards, take, moveGear, has, pick };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

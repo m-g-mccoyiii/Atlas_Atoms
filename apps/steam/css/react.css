@@ -19,7 +19,7 @@ b { font-weight: 700; }
 .left, .right { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 
 /* fume hood */
-.hood { position: relative; height: clamp(320px, calc(100vh - 452px), 780px); background: #131312; border: 3px solid #3d3d39; overflow: hidden; }
+.hood { position: relative; height: clamp(320px, calc(100vh - 522px), 780px); background: #131312; border: 3px solid #3d3d39; overflow: hidden; }
 .hood canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .hoodFx { pointer-events: none; }
 .hoodNow { position: absolute; left: 14px; bottom: 10px; font-size: 23px; font-weight: 700; color: #fff; pointer-events: none; }
@@ -28,9 +28,17 @@ b { font-weight: 700; }
 
 .under { display: flex; flex-direction: column; gap: 6px; }
 .gear { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.tag { background: #0c0c0c; border: 1px solid #5a5a55; padding: 5px 9px 6px; min-height: 50px; display: flex; flex-direction: column; }
-.tag b { font-size: 15px; color: #fff; } .tag span { font-size: 13px; color: #cfcfc8; line-height: 1.2; }
-.tag.empty { background: none; border-style: dashed; color: #77776f; font-size: 13px; justify-content: center; align-items: center; }
+.tag { position: relative; text-align: left; background: #0c0c0c; border: 1px solid #5a5a55; border-top: 5px solid #8a8a84; padding: 4px 9px 6px; min-height: 66px; display: flex; flex-direction: column; cursor: pointer; }
+.tag:hover { background: #1c1c1a; }
+.tag i { font-style: normal; font-size: 12px; color: #a9a9a2; }
+.tag b { font-size: 16px; color: #fff; } .tag span { font-size: 13px; color: #cfcfc8; line-height: 1.2; }
+.tag.k-y { border-top-color: #fff; } .tag.k-b { border-top-color: #ffcd00; } .tag.k-x { border-top-color: #d81e1e; } .tag.k-grow { border-top-color: #12894a; }
+.tag.empty { background: none; border: 1px dashed #5a5a55; color: #77776f; font-size: 13px; justify-content: center; align-items: center; cursor: default; min-height: 66px; }
+.tagHit { position: absolute; right: -2px; top: -16px; font-style: normal; font-weight: 700; font-size: 22px; background: #ffcd00; color: #111; padding: 0 8px; border: 2px solid #000; opacity: 0; pointer-events: none; z-index: 3; }
+.tag.k-x .tagHit { background: #d81e1e; color: #fff; }
+.tag.fire { animation: tagFire .42s ease-out; } .tag.fire .tagHit { animation: tagHit .95s ease-out; }
+@keyframes tagFire { 0% { transform: translateY(-9px) scale(1.07); background: #4a4a44; } 100% { transform: none; } }
+@keyframes tagHit { 0% { opacity: 1; transform: translateY(8px) scale(.7); } 14% { opacity: 1; transform: translateY(-4px) scale(1.18); } 75% { opacity: 1; transform: translateY(-8px); } 100% { opacity: 0; transform: translateY(-14px); } }
 .log { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; }
 .step { font-size: 14px; padding: 2px 9px 3px; background: #33332f; border-left: 6px solid var(--cc); white-space: pre; }
 
@@ -38,10 +46,19 @@ b { font-weight: 700; }
 .ticket { background: #f4eedd; color: #111; border: 2px solid #000; }
 .tkHead { background: #111; color: #fff; font-weight: 700; font-size: 18px; padding: 4px 12px; }
 .tkFeed { padding: 6px 12px 0; font-size: 16px; }
+.tkCalc { display: flex; align-items: stretch; gap: 8px; padding: 8px 12px 2px; }
+.tkCalc > i { font-style: normal; font-size: 30px; font-weight: 700; align-self: center; }
+.tkY, .tkB { flex: 1 1 0; min-width: 0; color: #fff; padding: 2px 10px 3px; display: flex; flex-direction: column; border: 2px solid #000; }
+.tkY { background: #111; } .tkB { background: #d81e1e; }
+.tkY span, .tkB span { font-size: 13px; } .tkY b, .tkB b { font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.bump { animation: bump .22s ease-out; }
+@keyframes bump { 0% { transform: scale(1.16) rotate(-1.5deg); } 100% { transform: none; } }
 .tkRow { display: flex; align-items: baseline; gap: 12px; padding: 0 12px; }
 .tkScore { font-size: 62px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .tkQuota { font-size: 17px; }
-.tkBar { margin: 6px 12px 0; height: 14px; border: 2px solid #111; background: #d8d1bc; }
+.tkBar { position: relative; margin: 6px 12px 0; height: 14px; border: 2px solid #111; background: #d8d1bc; }
+.tkBar::after { content: ""; position: absolute; left: 50%; top: -5px; bottom: -5px; border-left: 3px solid #111; }
+.ticket.dbl .tkFill { background: #d81e1e; }
 .tkFill { height: 100%; width: 0; background: #111; transition: width .35s; }
 .ticket.met .tkFill { background: #12894a; }
 .tkBonus { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 15.500px; line-height: 1.25; }
@@ -78,6 +95,9 @@ b { font-weight: 700; }
 @keyframes deal { from { transform: translateY(70px); opacity: 0; } }
 .bottle.played { transform: translateY(-22px) scale(1.03); z-index: 2; }
 .bBand { background: var(--cc); color: #fff; display: flex; align-items: center; gap: 8px; padding: 5px 10px 4px; font-size: 21px; font-weight: 700; border-bottom: 2px solid #000; }
+.bGrade { position: absolute; right: 6px; top: 43px; background: #000; color: #fff; padding: 2px 7px 3px; display: flex; flex-direction: column; text-align: right; line-height: 1.12; }
+.bGrade b { font-size: 15px; } .bGrade span { font-size: 12px; }
+.bGrade.up b { color: #ffcd00; }
 .bKey { flex: none; background: #000; color: #fff; font-size: 15px; font-weight: 700; min-width: 22px; text-align: center; padding: 1px 5px 0; }
 .bFormula { padding: 6px 10px 0; font-size: 27px; font-weight: 700; line-height: 1.05; }
 .bChem { padding: 0 10px 4px; font-size: 13px; color: #3c3c3c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -96,6 +116,8 @@ b { font-weight: 700; }
 .pBig { font-size: 76px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
 .panel > .btn { margin-top: 12px; }
+.pick.taken { opacity: .3; pointer-events: none; transform: none; }
+.gearPick.k-y { border-top: 8px solid #fff; } .gearPick.k-b { border-top: 8px solid #ffcd00; } .gearPick.k-x { border-top: 8px solid #d81e1e; } .gearPick.k-grow { border-top: 8px solid #12894a; } .gearPick.k-tool { border-top: 8px solid #8a8a84; }
 .gearPick { position: relative; text-align: left; background: #111; color: #fff; border: 2px solid #000; border-radius: 4px; box-shadow: 0 5px 0 #000; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: transform .1s; }
 .gearPick:hover { transform: translateY(-10px); }
 .gearPick .bKey { position: absolute; left: 10px; top: 10px; background: #ffcd00; color: #111; }
