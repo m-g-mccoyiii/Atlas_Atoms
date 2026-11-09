@@ -37,6 +37,8 @@ AA.sfx = {
   bond() { tone({ freq: 330, freqEnd: 440, dur: 0.07, gain: 0.07, type: 'triangle' }); hiss({ freq: 1800, q: 2, dur: 0.03, gain: 0.07 }); },
   stamp() { tone({ freq: 110, freqEnd: 48, dur: 0.22, gain: 0.35 }); hiss({ freq: 500, q: 0.7, dur: 0.14, gain: 0.25 }); hiss({ freq: 3000, q: 1, dur: 0.04, gain: 0.12 }); },
   good() { [392, 494, 587].forEach((f, i) => tone({ freq: f, dur: 0.22, gain: 0.07, delay: 0.1 + i * 0.09, type: 'triangle' })); },
+  lock(i) { const f = 330 * Math.pow(2, Math.min(i, 12) / 6); tone({ freq: f, dur: 0.2, gain: 0.06, type: 'triangle' }); tone({ freq: f * 2, dur: 0.12, gain: 0.025, delay: 0.02 }); },
+  fanfare() { tone({ freq: 90, freqEnd: 38, dur: 0.55, gain: 0.4 }); [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.55, gain: 0.07, delay: 0.1 + i * 0.07, type: 'triangle' })); hiss({ freq: 5000, q: 0.6, dur: 0.7, gain: 0.08, delay: 0.1, attack: 0.3 }); },
   bad() { tone({ freq: 140, freqEnd: 90, dur: 0.22, gain: 0.1, type: 'sawtooth' }); }
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

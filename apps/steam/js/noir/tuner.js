@@ -82,9 +82,10 @@ function mount(host, o) {
     const order = []; INSTR.forEach(i => { if (st.scanned[i.k]) peaksOf(i.k).forEach(pk => order.push({ k: i.k, pk, pos: pk.mz || pk.centre || pk.shift, lock: R.locked(i.k, pk, st.mine) })); });
     const snap = { mine: st.mine, info: st.info, sig: C.signature(st.info.els, st.info.bonds), t0: performance.now(), order, shown: 0 }; st.snap = snap; st.busy = true; sfx.feed();
     meterEl.textContent = 'Assay ' + st.assays + ' running';
+    let nLock = 0;
     order.forEach((it, i) => setTimeout(() => {   // timers, not the render loop, so a background tab still finishes
       if (box.dead || st.snap !== snap) return; snap.shown = i + 1;
-      if (it.lock) { sfx.good(); st.flash.push({ k: it.k, pos: it.pos, t0: performance.now() }); } else sfx.click();
+      if (it.lock) { st.flash.push({ k: it.k, pos: it.pos, t0: performance.now() }); lightUp(it, nLock++); } else sfx.click();
       if (snap.shown === order.length) finishAssay();
     }, 350 + i * 170));
   }
@@ -98,7 +99,7 @@ function mount(host, o) {
     if (o.anomaly) {   // the sample matches your structure except for one signal no structure can make: that is a finding of its own
       if (open.length === 1 && open[0].pk.anomaly) { reportBtn.style.display = ''; say('One signal is still unexplained. Report it.'); }
       else { reportBtn.style.display = 'none'; say(got + ' of ' + total + ' peaks explained'); }
-    } else if (sigOk || close) { st.fired = true; setTimeout(() => o.onSolved({ assays: st.assays }), 900); }
+    } else if (sigOk || close) { st.fired = true; celebrate(() => o.onSolved({ assays: st.assays })); }
     else say(got + ' of ' + total + ' peaks explained'); refresh();
   }
 
@@ -170,7 +171,50 @@ function mount(host, o) {
     INSTR.forEach(i => { const p = panels[i.k]; p.veil.style.display = st.scanned[i.k] ? 'none' : 'grid'; if (st.scanned[i.k]) return; p.veil.innerHTML = '';
       p.veil.append(h('div', null, h('span', null, 'Not scanned'), h('button', { class: 'btn', disabled: st.tokens < 1 ? 'disabled' : null, onclick: () => { if (st.tokens < 1) return; st.tokens--; st.scanned[i.k] = true; tokenEl.textContent = String(st.tokens); sfx.feed(); sfx.pen(900); st.t0[i.k] = performance.now(); paintVeils(); } }, st.tokens < 1 ? 'No tokens left' : 'Scan (1 token)'))); });
   }
-  const benchCv = h('canvas', { class: 'benchCanvas' }), frags = h('div', { class: 'fragrow' });
+  const benchCv = h('canvas', { class: 'benchCanvas' }), fxCv = h('canvas', { class: 'fxCv' }), benchWrap = h('div', { class: 'benchWrap' }, benchCv, fxCv), frags = h('div', { class: 'fragrow' });
+
+  // ----- effects: sparks, shockwaves, drifting motes, flash, big title -----
+  const GREEN = [125, 255, 176], GOLD = [255, 210, 63], BLUE = [107, 140, 255], rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + Math.max(0, a).toFixed(3) + ')';
+  const fx = { parts: [], rings: [], flash: 0, title: null, titleT: 0, motes: Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), v: 0.01 + Math.random() * 0.03, r: 0.6 + Math.random() * 1.4, a: 0.12 + Math.random() * 0.25 })) };
+  const burst = (x, y, c, n, spd) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = spd * (0.3 + Math.random()); fx.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, life: 1, decay: 0.9 + Math.random() * 0.9, r: 1.5 + Math.random() * 2.5, c }); } };
+  const ring = (x, y, c, r1, dur) => fx.rings.push({ x, y, c, r0: 6, r1, t: 0, dur });
+  function drawFx(dt) {
+    const w = benchCv.clientWidth, hg = benchCv.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (fxCv.width !== Math.round(w * dpr) || fxCv.height !== Math.round(hg * dpr)) { fxCv.width = Math.round(w * dpr); fxCv.height = Math.round(hg * dpr); }
+    const x = fxCv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, hg); x.globalCompositeOperation = 'lighter';
+    fx.motes.forEach(m => { m.y -= m.v * dt; if (m.y < 0) { m.y = 1; m.x = Math.random(); } x.fillStyle = rgba(BLUE, m.a); x.beginPath(); x.arc(m.x * w, m.y * hg, m.r, 0, 6.3); x.fill(); });
+    fx.rings = fx.rings.filter(r => { r.t += dt; const k = r.t / r.dur; if (k >= 1) return false; x.strokeStyle = rgba(r.c, (1 - k) * 0.85); x.lineWidth = 4 * (1 - k) + 1; x.beginPath(); x.arc(r.x, r.y, r.r0 + k * r.r1, 0, 6.3); x.stroke(); return true; });
+    fx.parts = fx.parts.filter(p => { p.life -= dt * p.decay; if (p.life <= 0) return false; p.vy += 80 * dt; p.x += p.vx * dt; p.y += p.vy * dt; x.fillStyle = rgba(p.c, p.life); x.beginPath(); x.arc(p.x, p.y, p.r * p.life + 0.4, 0, 6.3); x.fill(); return true; });
+    x.globalCompositeOperation = 'source-over';
+    if (fx.flash > 0) { x.fillStyle = 'rgba(255,255,255,' + fx.flash.toFixed(3) + ')'; x.fillRect(0, 0, w, hg); fx.flash = Math.max(0, fx.flash - dt * 2.2); }
+    if (fx.title) {
+      fx.titleT += dt; const k = Math.min(1, fx.titleT / 0.35), a = fx.titleT > 1.9 ? Math.max(0, 1 - (fx.titleT - 1.9) / 0.4) : 1;
+      x.save(); x.globalAlpha = a; x.textAlign = 'center'; x.fillStyle = '#fff'; x.shadowColor = fx.title.col; x.shadowBlur = 30; x.font = '600 ' + Math.round(26 + 18 * k) + 'px "Plex Serif", Georgia, serif'; x.fillText(fx.title.text, w / 2, hg * 0.18);
+      x.shadowBlur = 0; x.font = '500 14px "Plex Mono", monospace'; x.fillStyle = '#cfd3dc'; x.fillText(fx.title.sub, w / 2, hg * 0.18 + 28); x.restore(); if (fx.titleT > 2.4) fx.title = null;
+    }
+  }
+  const centre = atoms => { const ps = atoms.map(a => box.v._screen(a)); return ps.length ? { x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length } : { x: 100, y: 100 }; };
+  function involvedAtoms(k, peak) {   // which atoms of the assayed structure make this peak
+    const comp = st.snap && st.snap.info && st.snap.info.comp, mine = st.snap && st.snap.mine; if (!comp || !mine) return [];
+    if (k === 'ms') return comp.slice();
+    const out = [];
+    if (k === 'nmr') { const mp = mine.nmr.peaks.find(p => Math.abs(p.shift - peak.shift) <= 0.5 && p.hs === peak.hs); ((mp && mp.atoms) || []).forEach(i => { const a = comp[i]; if (!a) return; out.push(a); model.neighbors(a).forEach(n => { if (n.atom.el === 'H') out.push(n.atom); }); }); return out; }
+    const t = bondType(peak.name); if (t) model.bonds.forEach(b => { if (comp.includes(b.a) && b.order === t.order && ((b.a.el === t.a && b.b.el === t.b) || (b.a.el === t.b && b.b.el === t.a))) out.push(b.a, b.b); });
+    return out;
+  }
+  function lightUp(item, idx) {   // a peak locked: the atoms behind it flash on the bench
+    const v = box.v; if (!v) return; const atoms = involvedAtoms(item.k, item.pk); sfx.lock(idx);
+    atoms.forEach(a => { v.glow.set(a, 0x2fe08a); const p = v._screen(a); burst(p.x, p.y, GREEN, 7, 90); });
+    if (atoms.length) { const c = centre(atoms); ring(c.x, c.y, GREEN, 60, 0.5); }
+    setTimeout(() => { if (!st.hover && !st.party) atoms.forEach(a => v.glow.delete(a)); }, 520);
+  }
+  function celebrate(done) {
+    const v = box.v; if (!v) { done(); return; }
+    v.mode = 'orbital'; modeBtns.forEach(b => b.classList.toggle('on', /Orbitals/.test(b.textContent)));
+    const c = centre(model.atoms); fx.flash = 0.8; sfx.fanfare(); st.party = performance.now(); v.yawVel = 2.4;
+    ring(c.x, c.y, GOLD, 220, 1.0); ring(c.x, c.y, GREEN, 150, 0.8); ring(c.x, c.y, BLUE, 280, 1.3); burst(c.x, c.y, GOLD, 100, 280); burst(c.x, c.y, GREEN, 70, 220); burst(c.x, c.y, BLUE, 70, 320);
+    fx.title = { text: 'IDENTIFIED', sub: mol.name + '   ' + C.sub(mol.formula), col: '#ffd23f' }; fx.titleT = 0; setTimeout(done, 2600);
+  }
   FRAGS.forEach(f => frags.append(h('div', { class: 'frag' + (f.atom ? ' atom' : ''), title: f.atom ? E[f.atom].name : 'Drag onto the bench', onpointerdown: ev => {
     ev.preventDefault(); sfx.click(); let first; const n = st.spawn++, ox = (n % 3 - 1) * 2.2, oy = (Math.floor(n / 3) % 2 - 0.5) * 2;
     if (f.atom) first = model.addAtom(f.atom, ox, oy, 0);
@@ -180,8 +224,8 @@ function mount(host, o) {
   const assayBtn = h('button', { class: 'btn red', onclick: assay }, 'Run assay (1 hour)');
   const reportBtn = h('button', { class: 'btn', style: 'display:none;border-color:#e0b04a;color:#e0b04a', onclick: () => { if (st.fired) return; st.fired = true; sfx.stamp(); o.onSolved({ assays: st.assays, anomaly: true }); } }, 'Report anomaly');
   const modeBtns = [['ball', 'Ball and stick'], ['space', 'Space-filling'], ['orbital', 'Orbitals'], ['lewis', 'Electrons']].map(([m, t]) => h('button', { class: 'modebtn' + (m === 'ball' ? ' on' : ''), onclick: e => { if (box.v) box.v.mode = m; modeBtns.forEach(b => b.classList.remove('on')); e.currentTarget.classList.add('on'); sfx.click(); } }, t));
-  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), h('div', { class: 'modes' }, modeBtns), benchCv, frags,
-    h('div', { class: 'row' }, assayBtn, reportBtn, h('button', { class: 'btn', onclick: () => { model.clear(); st.spawn = 0; refresh(); } }, 'Clear'), h('button', { class: 'btn', onclick: () => { const v = box.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 52; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn', onclick: reference }, 'Tables')),
+  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), h('div', { class: 'modes' }, modeBtns), benchWrap, frags,
+    h('div', { class: 'row' }, assayBtn, reportBtn, h('button', { class: 'btn', onclick: () => { model.clear(); st.spawn = 0; refresh(); } }, 'Clear'), h('button', { class: 'btn', onclick: () => { const v = box.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 58; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn', onclick: reference }, 'Tables')),
     readout, spotEl);
   function reference() {
     sfx.click(); const el = h('div', { class: 'cover' }, h('div', { class: 'sheet' }, h('h2', null, 'Reference tables'), Object.entries(REF).map(([t, rows]) => [h('h3', null, t), h('table', null, rows.map(r => h('tr', null, h('th', null, r[0]), h('td', null, r[1]))))]), h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => el.remove() }, 'Close'))));
@@ -194,7 +238,7 @@ function mount(host, o) {
 
   requestAnimationFrame(() => {
     if (box.dead) return;
-    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 52, pitch: 0.55, faces: false, grid: { main: 0x6f8cff, sub: 0x6f8cff, opacity: 0.16 } }); box.v = v;
+    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 58, pitch: 0.55, faces: false, grid: { main: 0x6f8cff, sub: 0x6f8cff, opacity: 0.16 } }); box.v = v;
     v.findTarget = a => {   // pieces snap: any atom you can bond to within ~70px is the target, no precise aiming
       const pa = v._screen(a); let best = null, bd = 1e9;
       for (const b of model.atoms) { if (b === a || !model.canBond(a, b)) continue; const pb = v._screen(b), d = Math.hypot(pa.x - pb.x, pa.y - pb.y); if (d < 70 && d < bd) { bd = d; best = b; } }
@@ -203,7 +247,7 @@ function mount(host, o) {
     v.cb.onDrop = (a, t, e) => {
       const over = document.elementFromPoint(e.clientX, e.clientY);
       if (over && over.closest('.fragrow')) { model.components().find(c => c.includes(a)).forEach(x => model.removeAtom(x)); sfx.click(); refresh(); return; }
-      if (t && model.canBond(a, t)) { model.bond(a, t); sfx.bond(); v.pop(a); v.pop(t); } else if (t) { sfx.bad(); say('No free bond there'); }
+      if (t && model.canBond(a, t)) { model.bond(a, t); sfx.bond(); v.pop(a); v.pop(t); const pa = v._screen(a), pt = v._screen(t); burst((pa.x + pt.x) / 2, (pa.y + pt.y) / 2, GREEN, 26, 170); ring((pa.x + pt.x) / 2, (pa.y + pt.y) / 2, GREEN, 55, 0.45); } else if (t) { sfx.bad(); say('No free bond there'); }
       refresh();
     };
     let last = performance.now();
@@ -213,7 +257,9 @@ function mount(host, o) {
         for (let i = 0; i < 4; i++) model.step(0.012);
         model.atoms.forEach(a => { if (a.pinned) return; const cl = (u, m) => Math.max(-m, Math.min(m, u)), x = cl(a.x, 3.2), y = cl(a.y, 2.1), z = cl(a.z, 2); if (x !== a.x) a.vx = 0; if (y !== a.y) a.vy = 0; if (z !== a.z) a.vz = 0; a.x = x; a.y = y; a.z = z; });
       }
-      v.render(dt);
+      v.render(dt); drawFx(dt);
+      if (st.party) { if (now - st.party < 2500) model.atoms.forEach((a, i) => v.glow.set(a, new THREE.Color().setHSL(((now / 1000) * 0.6 + i * 0.07) % 1, 0.9, 0.5).getHex())); else { v.glow.clear(); st.party = 0; } }
+      else if (!v.drag && !v.rot && Math.abs(v.yawVel) < 0.05 && !st.vib) v.yaw += dt * 0.18;   // the molecule never sits still
       const s = st.snap;
       INSTR.forEach(i => {
         if (!st.scanned[i.k]) return; const cv = panels[i.k].cv;
@@ -228,7 +274,7 @@ function mount(host, o) {
     box.raf = requestAnimationFrame(loop); refresh();
   });
   return {
-    model, st, refresh, assay, viewer: () => box.v, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
+    model, st, refresh, assay, celebrate, viewer: () => box.v, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
     destroy() { box.dead = true; cancelAnimationFrame(box.raf); if (box.v) box.v.dispose(); banner.remove(); host.innerHTML = ''; }
   };
 }
