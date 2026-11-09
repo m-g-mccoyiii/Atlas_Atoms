@@ -9,13 +9,15 @@ You run a small analytical lab. Each case file gives an unknown sample and a cli
 Loop:
 
 1. Read the file.
-2. Run an instrument: mass spectrometer, infrared, hydrogen NMR. A quick scan is noisy and loses weak peaks and splitting. A high-resolution run costs another day.
-3. Build a candidate on the 3D bench from atoms in the tins.
-4. Your structure's predicted spectrum is drawn in red pencil over each printout, with a match meter per instrument.
-5. Optionally search the spectral library (one day) for the closest known compounds.
-6. Declare. A wrong declaration costs a day and a reviewer says which instrument disagrees. A right one closes the file.
+2. Run an instrument (one day each): mass spectrometer, infrared, hydrogen NMR. Quick scans hide information. High-res mass spec adds the M+1 isotope peak (about 1.1% of M per carbon, so it counts carbons). High-res NMR resolves splitting (n neighbours give n+1 lines). IR has one setting.
+3. Click a signal on a printout and say what it is, from five choices. Right answers go in the notebook. Wrong answers count as misreads.
+4. Build a candidate on the 3D bench. Its predicted spectrum is drawn in red over the printouts. Each notebook entry gets a tick or cross for whether the structure explains it. Formula, nominal mass and unsaturation are shown, and mass is checked against the measured M.
+5. Optionally search the lab's library (one day). It holds only some known compounds and, after the first file, never the answer. It returns a ranked list, not a structure.
+6. Declare. A wrong declaration costs a day, and peer review names a notebook entry the structure fails to explain. A right one closes the file.
 
-Rating: 3 stars for few days used, 2 for a few more, 1 otherwise. Standing is the running score.
+Budget is 5 plus the file's tier in days. Rating: 3 stars for 3 days or fewer, 2 for 5 or fewer, 1 otherwise, minus one star for 5 or more misreads.
+
+Tuning status: budgets and the 3-day par come from a computed check, not human playtests. They need real players.
 
 Why it works: the player forms a hypothesis, tests it against evidence, and decides when to spend a limited resource. Cases are built so that mass alone is not enough (for example aspirin and glucose both weigh 180).
 
