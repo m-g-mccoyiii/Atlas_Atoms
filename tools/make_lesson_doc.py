@@ -11,8 +11,8 @@ start = src.index('AA.LESSONS = [') + len('AA.LESSONS = ')
 lessons = json.loads(src[start:src.rindex(']') + 1])
 
 out = ["# Atlas' Atoms: 20 Lesson Plans", "",
-       "A path from \"what is an atom?\" to burning fuel, acids and the chemistry of your body. "
-       "Each lesson takes 15 to 30 minutes and is built around the game. The same lessons appear in the game under **Lessons**, "
+       "Written for a very advanced 7-year-old working with a grown-up. A path from \"what is an atom?\" to burning fuel, acids and the chemistry of your body. "
+       "Each lesson takes 10 to 20 minutes and is built around the game. The same lessons appear in the game under **Lessons**, "
        "and the game ticks a lesson off automatically when the child finishes its activity.", "",
        "**For the adult:** let the child do the building. Ask \"what do you think will happen?\" before each step. "
        "The off-screen activities use ordinary household items. Do them with an adult nearby, and never taste or sniff unknown chemicals.", ""]
@@ -31,6 +31,8 @@ for L in lessons:
     out += ["", "**Check yourself**", ""]
     out += [f"- {c['q']}  \n  *Answer: {c['a']}*" for c in L['check']]
     out += ["", f"**In real life.** {L['realLife']}", "", f"**Away from the screen.** {L['offScreen']}", ""]
+    if L.get('grownup'):
+        out += [f"**Grown-up question.** {L['grownup'].removeprefix('Ask: ')}", ""]
 
 os.makedirs(os.path.join(root, 'docs'), exist_ok=True)
 path = os.path.join(root, 'docs', 'LESSON_PLANS.md')

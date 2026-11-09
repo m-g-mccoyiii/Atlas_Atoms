@@ -19,7 +19,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -46,6 +46,22 @@ const sfx = {
   spark() { [300, 600, 900, 1200].forEach((f, i) => tone(f, 0.15, 'sawtooth', 0.04, i * 0.05)); }
 };
 
+
+// ---------- read aloud (browser voice, no audio files) ----------
+const SUBS = { '\u2080': '0', '\u2081': '1', '\u2082': '2', '\u2083': '3', '\u2084': '4', '\u2085': '5', '\u2086': '6', '\u2087': '7', '\u2088': '8', '\u2089': '9' };
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const clean = String(text).replace(/[\u2080-\u2089]/g, c => ' ' + SUBS[c] + ' ').replace(/\u2013|\u2212/g, ' ').replace(/\u2192/g, ' makes ').replace(/\s+/g, ' ');
+    const u = new SpeechSynthesisUtterance(clean); u.rate = 0.9; u.pitch = 1.05; u.lang = 'en-US';
+    speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
+function speakBtn(getText, label) {
+  return h('button', { class: 'pill speakbtn', title: 'Read this out loud', onclick: () => speak(getText()) }, label || '\uD83D\uDD0A Read to me');
+}
+
 // ---------- bench ----------
 const bench = new Viewer($('#bench'), new Model(), { interactive: true, mode: state.mode, faces: state.faces, zoom: 42 });
 const model = bench.model;
@@ -65,6 +81,7 @@ function setMode(m) {
 let tipTimer = null; const tipSeen = {};
 function tip(text, ms) {
   const t = $('#tip'); t.textContent = text; t.classList.add('show');
+  if (state.voice) speak(text);
   clearTimeout(tipTimer); tipTimer = setTimeout(() => t.classList.remove('show'), ms || 7000);
 }
 function tipOnce(key, text) { if (tipSeen[key]) return; tipSeen[key] = 1; tip(text); }
@@ -158,9 +175,11 @@ function showBanner(m, more) {
   b.append(h('h2', null, m.icon + ' You made ' + m.name + '!  ' + C.sub(m.formula)),
     h('p', null, m.real), h('p', null, m.learn),
     more > 0 ? h('p', null, '...and ' + more + ' more molecule' + (more > 1 ? 's' : '') + ' on the bench.') : '',
+    speakBtn(() => 'You made ' + m.name + '! ' + m.real + ' ' + m.learn), ' ',
     h('button', { class: 'btn', onclick: () => b.classList.add('hidden') }, 'Nice!'),
     h('button', { class: 'btn alt', style: 'margin-left:6px', onclick: () => { b.classList.add('hidden'); openAtlas(m.id); } }, 'See in my Atlas'));
   b.classList.remove('hidden');
+  if (state.voice) speak('You made ' + m.name + '! ' + m.real + ' ' + m.learn);
 }
 
 function countChips(counts) {
@@ -314,7 +333,7 @@ function detailPane(m, opts) {
   wrap.append(h('div', null, countChips(m.counts)));
   if (opts.preview) wrap.append(h('p', { style: 'color:var(--dim)' }, 'This is a preview of the shape. Build it yourself to add it to your Atlas.'));
   else {
-    wrap.append(h('p', null, h('b', null, 'In real life: '), m.real), h('p', null, h('b', null, 'The chemistry: '), m.learn));
+    wrap.append(h('p', null, h('b', null, 'In real life: '), m.real), h('p', null, h('b', null, 'The chemistry: '), m.learn), speakBtn(() => m.name + '. ' + m.real + ' ' + m.learn), ' ');
     wrap.append(h('button', { class: 'btn', onclick: () => { putOnBench(m); $('#modal').click(); } }, 'Put on bench'));
   }
   return wrap;
@@ -381,6 +400,7 @@ function openLessons(focus) {
     side.append(
       h('h3', { style: 'margin:0 0 4px;font-size:20px;color:var(--gold);text-transform:none;letter-spacing:0' }, 'Lesson ' + L.n + ': ' + L.title),
       h('small', { style: 'color:var(--dim)' }, L.level + ' \u00B7 about ' + L.minutes + ' minutes'),
+      speakBtn(() => 'Lesson ' + L.n + '. ' + L.title + '. ' + L.bigIdea + ' Try it in the game. ' + L.tryIt.join(' ')),
       h('p', null, h('b', null, 'Big idea: '), L.bigIdea),
       h('p', null, h('b', null, 'Words: '), L.words.map(w => h('span', { class: 'chip' }, h('b', null, w[0]), ' = ' + w[1]))),
       h('h4', null, 'Try it in the game'), h('ol', null, L.tryIt.map(s => h('li', null, s))),
@@ -388,6 +408,7 @@ function openLessons(focus) {
       h('ul', null, L.check.map(c => { const ans = h('div', { class: 'ans hidden' }, c.a); return h('li', null, c.q, ' ', h('button', { class: 'pill', style: 'padding:0 8px;font-size:12px', onclick: () => ans.classList.toggle('hidden') }, 'Show answer'), ans); })),
       h('p', null, h('b', null, 'In real life: '), L.realLife),
       h('p', null, h('b', null, 'Away from the screen: '), L.offScreen, h('i', { style: 'color:var(--dim)' }, ' (Ask an adult before trying anything with real chemicals or fire.)')),
+      L.grownup ? h('p', { class: 'grownup' }, h('b', null, 'Grown-up question: '), L.grownup.replace(/^Ask:\s*/, '')) : '',
       h('p', null,
         h('button', { class: 'btn', onclick: () => $('#modal').click() }, 'Go to the bench'), ' ',
         lessonDone(L) ? h('span', { class: 'ok' }, '\u2713 Complete')
@@ -435,6 +456,8 @@ $('#btnShake').addEventListener('click', () => {
 let heat = 0.15;
 $('#heat').addEventListener('input', e => { heat = parseFloat(e.target.value); });
 $('#btnClear').addEventListener('click', () => { model.clear(); analyze(); });
+$('#chkVoice').checked = state.voice;
+$('#chkVoice').addEventListener('change', e => { state.voice = e.target.checked; save(); if (state.voice) speak('Reading out loud is on.'); else if ('speechSynthesis' in window) speechSynthesis.cancel(); });
 $('#chkFaces').checked = state.faces;
 $('#chkFaces').addEventListener('change', e => { state.faces = e.target.checked; bench.faces = state.faces; save(); });
 $('#btnAtlas').addEventListener('click', () => openAtlas());
@@ -463,7 +486,7 @@ function frame(t) {
 }
 
 buildTray(); setMode(state.mode); soundBtn(); analyze();
-tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench to start.', 9000);
+tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
 if (!state.seenHelp) openHelp();
 requestAnimationFrame(frame);
 window.AA_debug = { bench, model, state, analyze };

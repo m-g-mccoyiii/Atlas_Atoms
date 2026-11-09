@@ -96,3 +96,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ans { background: var(--panel2); border-left: 3px solid var(--green); padding: 4px 8px; margin-top: 4px; border-radius: 4px; }
 .ok { color: var(--green); font-weight: bold; }
 @media (max-width: 900px) { .lessonWrap { grid-template-columns: 1fr; } .lessonList { max-height: 25vh; } }
+
+body { font-size: 16px; }
+.tip { font-size: 17px; }
+.card { font-size: 15px; }
+.pill, .btn, .seg button { min-height: 36px; }
+.top nav { align-items: center; }
+.grownup { background: rgba(255,210,63,.1); border-left: 3px solid var(--gold); padding: 6px 10px; border-radius: 6px; }
+.speakbtn { margin: 6px 6px 6px 0; }
+.lessonBody { font-size: 16px; line-height: 1.45; }

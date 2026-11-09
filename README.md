@@ -1,6 +1,6 @@
 # Atlas’ Atoms
 
-A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 20 lesson plans that start from “what is an atom?”.
+A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 20 lesson plans that start from “what is an atom?”, written for a very advanced 7-year-old working with a grown-up. A Read aloud switch uses the browser's built-in voice.
 
 ## Play
 
