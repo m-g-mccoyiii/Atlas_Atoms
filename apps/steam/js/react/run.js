@@ -8,12 +8,14 @@ const AA = root.AA, RX = AA.rx;
 // At delivery three instruments check the product against the spec, and each check passed raises batch.
 // A filled order leaves surplus product, counted in kg, which is traded in the supply room between orders.
 // Surplus exists only inside a run: every run starts with the same amount and nothing carries over.
+// From order 3 every feedstock has one marked group to keep. A site that reacts there scores nothing and halves
+// batch at delivery. Capping the marked group costs one step and stops every bottle reacting there.
 // Nothing in this file touches the page, so the same code drives the game and the headless bot.
 
 const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20, SCHLENK = 1.5;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
 const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
-const QUOTA = [200, 1000, 10000, 18000, 50000, 100000, 220000, 300000];
+const QUOTA = [200, 1000, 6000, 10000, 30000, 60000, 130000, 180000];
 // surplus (run.money): a filled order leaves PAY, a large one PAY_LARGE more, each step not used PAY_STEP, and each
 // time the score doubles the quota PAY_DOUBLE, up to DOUBLE_CAP doublings. Surplus already held earns 1 for every
 // HOLD_PER at the end of an order, up to HOLD_CAP. Equipment sells for SELL plus 1 for each order it has been held.
@@ -21,6 +23,8 @@ const PAY = 4, PAY_LARGE = 3, PAY_STEP = 1, PAY_DOUBLE = 1, DOUBLE_CAP = 4, HOLD
 const COST = { y: 5, b: 5, x: 8, grow: 7, tool: 6 };
 // batch multiplier for 0, 1, 2 or 3 checks passed
 const CHECK_MULT = [1, 1.25, 1.5, 2];
+// the first order (counted from 0) whose feedstock has a group to keep
+const KEEP_FROM = 2;
 // starting racks and difficulty levels; all but the first of each are unlocked by play
 const RACKS = {
   standard: { name: 'General rack', deck: STARTER },
@@ -46,7 +50,7 @@ const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
 // kind: y adds yield, b adds batch, x multiplies batch, grow gets stronger during the run, tool changes a rule.
 const GEAR = [
   { id: 'balance', kind: 'y', name: 'Analytical balance', text: 'Every site: +15 yield.', y: 15 },
-  { id: 'desiccator', kind: 'y', name: 'Desiccator', text: 'Every site: +2 yield for each kg of surplus you hold.' },
+  { id: 'desiccator', kind: 'y', name: 'Desiccator', text: 'Every site: +2 yield for each kg of surplus held.' },
   { id: 'notebook', kind: 'y', name: 'Lab notebook', text: 'Every site: +10 yield for each different bottle already used on this order.' },
   { id: 'icebath', kind: 'b', name: 'Ice bath', text: 'Reduce and Hydroborate sites: +3 batch.', ids: ['nabh4', 'bh3'], b: 3 },
   { id: 'dryingtube', kind: 'b', name: 'Drying tube', text: 'Oxidise sites: +3 batch.', ids: ['pcc'], b: 3 },
@@ -58,17 +62,18 @@ const GEAR = [
   { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch times ' + SCHLENK + '.' },
   { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch doubled.' },
   { id: 'column', kind: 'x', name: 'Chromatography column', text: 'Passing all three checks multiplies batch by 4 instead of 2.', bonus: 4 },
+  { id: 'glovebox', kind: 'x', name: 'Glove box', text: 'Delivering with the kept group untouched: batch times 2.' },
   { id: 'syringe', kind: 'x', name: 'Syringe pump', text: 'The last site of every bottle counts twice.' },
   { id: 'cannula', kind: 'x', name: 'Cannula', text: 'Every chain link multiplies batch by 0.25 more.' },
   { id: 'coldtrap', kind: 'grow', name: 'Cold trap', text: 'Catches every group that leaves a molecule. Each order starts with +1 batch for every 2 caught.' },
   { id: 'seed', kind: 'grow', name: 'Seed crystal', text: 'At delivery: batch times 1, plus 0.5 for every order that has passed all three checks this run.' },
-  { id: 'stock', kind: 'grow', name: 'Stock solution', text: 'Every site: +5 yield for each grade your bottles have gained this run.' },
+  { id: 'stock', kind: 'grow', name: 'Stock solution', text: 'Every site: +5 yield for each grade gained by any bottle this run.' },
   { id: 'reflux', kind: 'tool', name: 'Reflux condenser', text: 'One more step on every order.', steps: 1 },
-  { id: 'rack', kind: 'tool', name: 'Bottle carrier', text: 'Hold one more bottle in your hand.', hand: 1 },
+  { id: 'rack', kind: 'tool', name: 'Bottle carrier', text: 'One more bottle in the hand.', hand: 1 },
   { id: 'funnel', kind: 'tool', name: 'Separating funnel', text: 'One more hand swap on every order.', redraws: 1 },
-  { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' },
+  { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle played on each order returns to the hand.' },
   { id: 'fraction', kind: 'tool', name: 'Fraction collector', text: 'Every filled order leaves 3 kg more surplus.', pay: 3 },
-  { id: 'drum', kind: 'tool', name: 'Storage drum', text: 'Surplus you hold can earn up to 10 kg an order instead of 5.', hold: 5 }
+  { id: 'drum', kind: 'tool', name: 'Storage drum', text: 'Held surplus can earn up to 10 kg an order instead of 5.', hold: 5 }
 ];
 const GEARS = {};
 GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
@@ -173,9 +178,10 @@ function live(run, id) {
 }
 
 // the bonus compound: two or three bottles from the rack applied to the feedstock
-function makeSpec(run, feed, feedSig, tier) {
+function makeSpec(run, feed, feedSig, tier, keep) {
   for (let t = 0; t < 60; t++) {
     const m = RX.fromSmiles(feed), left = {}, route = [], len = tier === 0 ? 2 : 2 + (run.r() < 0.6 ? 1 : 0);
+    if (keep) m.atoms[keep.i].prot = true;                 // the spec never needs the kept group to react
     run.deck.forEach(id => { left[id] = (left[id] || 0) + 1; });
     for (let k = 0; k < len; k++) {
       const opts = Object.keys(left).filter(id => left[id] > 0 && id !== route[route.length - 1] && RX.CARDS[id].find(m).length);
@@ -207,10 +213,13 @@ function coverage(run, feed) {
 function offer(run, n, groups, large) {
   const all = FEED[groups - 2], pool = all.filter(f => !run.fed.includes(f)), feed = pick(run.r, pool.length ? pool : all);
   run.fed.push(feed);
-  const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m);
-  return { feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * LEVELS[run.level] * (large ? LARGE : 1)), extra: large ? 1 : 0,
-    pay: PAY + (large ? PAY_LARGE : 0), spec: makeSpec(run, feed, feedSig, TIER[n]) };
+  const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m), ks = n >= KEEP_FROM ? RX.keepable(m) : [], keep = ks.length ? pick(run.r, ks) : null;
+  return { keep, feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * LEVELS[run.level] * (large ? LARGE : 1)), extra: large ? 1 : 0,
+    pay: PAY + (large ? PAY_LARGE : 0), spec: makeSpec(run, feed, feedSig, TIER[n], keep) };
 }
+// puts the kept-group mark on a model built from the offer's feedstock
+function mark(m, keep) { if (keep && m.atoms[keep.i] && m.atoms[keep.i].el === 'O') m.atoms[keep.i].keep = true; return m; }
+const touchesKeep = s => s.atoms.some(a => a.keep);
 // an order starts as two offers; chooseFeed turns one of them into the order being worked
 function beginOrder(run) {
   const n = run.n;
@@ -227,7 +236,7 @@ function chooseFeed(run, i) {
     redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
     handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
     yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
-    used: [], log: [], kept: false, done: false, spec: o.spec,
+    used: [], log: [], back: false, keep: o.keep, spoiled: false, done: false, spec: o.spec,
     path: [], fresh: new Set(), seen: new Set([o.feedSig])
   };
   run.offers = null;
@@ -300,37 +309,43 @@ function preview(run, id, n, info) {
 const isHot = (cur, sites) => cur.path.length > 0 && sites.some(s => s.atoms.some(a => cur.fresh.has(a)));
 // what playing this bottle on model m would do, without changing anything: sites, chain link, route and score
 function look(run, m, id) {
-  const cur = run.cur, card = RX.CARDS[id], sites = card.find(m), n = sites.length;
-  if (!n) return { n: 0, cont: false, len: 0, route: null, score: scoreOf(cur) };
-  const info = { hot: isHot(cur, sites), sig: null };
+  const cur = run.cur, card = RX.CARDS[id], all = card.find(m), none = { n: 0, spoils: 0, cont: false, len: 0, route: null, score: scoreOf(cur) };
+  const n = all.filter(s => !touchesKeep(s)).length;
+  none.spoils = all.length - n;
+  if (!n) return none;
+  const info = { hot: isHot(cur, all), sig: null };
   if (info.hot) { const c = RX.cloneModel(m); RX.runCard(c, card); info.sig = RX.sigOf(c); }
   const link = linkOf(run, id, info);
-  return { n, info, cont: link.cont, len: link.len, route: link.route, score: preview(run, id, n, info) };
+  return { n, spoils: all.length - n, info, cont: link.cont, len: link.len, route: link.route, score: preview(run, id, n, info) };
 }
 // applies a bottle to every site of m in place, without animation, and returns the info that commit needs
 function react(run, m, id) {
   const card = RX.CARDS[id], sites = card.find(m), hot = isHot(run.cur, sites), made = [];
-  let hits = 0;
+  let hits = 0, spoiled = 0;
   sites.forEach(s => {
     if (!card.ok(m, s)) return;
-    const r = card.apply(m, s);
+    const sp = touchesKeep(s), r = card.apply(m, s);
+    if (sp) { s.atoms.forEach(a => { a.keep = false; }); spoiled++; } else hits++;
     r.focus.concat(r.incoming).forEach(a => made.push(a));
     r.leaving.flat().forEach(a => m.removeAtom(a));
-    hits++;
   });
-  return { hits, hot, made, sig: RX.sigOf(m) };
+  return { hits, spoiled, hot, made, sig: RX.sigOf(m) };
 }
 // records a played bottle after its sites have been scored
 function commit(run, handIdx, hits, info) {
   const cur = run.cur, hc = cur.hand[handIdx], before = cur.log.length ? cur.log[cur.log.length - 1].score : 0;
   const ev = playEnd(run, hc.id, hits, false, info), score = scoreOf(cur);
   cur.fresh = new Set((info && info.made) || []); if (info && info.sig) cur.seen.add(info.sig);
+  if (info && info.spoiled) cur.spoiled = true;
   cur.step++; cur.used.push(hc.id); cur.log.push({ id: hc.id, hits, score, pts: score - before });
-  if (has(run, 'winchester') && !cur.kept) cur.kept = true;            // the bottle stays in the hand
+  if (has(run, 'winchester') && !cur.back) cur.back = true;            // the bottle stays in the hand
   else { cur.hand.splice(handIdx, 1); cur.discard.push(hc.id); }
   fill(run);
   return { ev, score, gained: score - before };
 }
+// capping the marked group costs one step and nothing else: the chain and the lit atoms stay as they were
+function canCap(run, m) { const cur = run.cur; return !!cur.keep && !cur.spoiled && cur.step < cur.stepsMax && m.atoms.some(a => a.keep && !a.prot); }
+function cap(run, m) { if (!canCap(run, m)) return null; const a = m.atoms.find(x => x.keep && !x.prot); a.prot = true; run.cur.step++; return a; }
 function redraw(run) {
   const cur = run.cur;
   if (cur.redraws <= 0) return false;
@@ -346,7 +361,8 @@ function checks(run, p) {
   return { ms, ir, nmr, n: (ms ? 1 : 0) + (ir ? 1 : 0) + (nmr ? 1 : 0) };
 }
 const checkMult = (run, k) => (k === 3 ? Math.max(CHECK_MULT[3], gearSum(run, 'bonus')) : CHECK_MULT[k]);
-const endMult = (run, p) => { const k = checks(run, p).n; return checkMult(run, k) * (has(run, 'seed') ? seedMult(run) + (k === 3 ? 0.5 : 0) : 1); };
+const keepMult = run => (run.cur.spoiled ? 0.5 : run.cur.keep && has(run, 'glovebox') ? 2 : 1);
+const endMult = (run, p) => { const k = checks(run, p).n; return keepMult(run) * checkMult(run, k) * (has(run, 'seed') ? seedMult(run) + (k === 3 ? 0.5 : 0) : 1); };
 const projected = (run, p) => Math.round(run.cur.yield * run.cur.batch * endMult(run, p));
 
 // what the surplus now held will earn at the end of this order
@@ -355,8 +371,10 @@ const sellValue = (run, id) => Math.min(SELL_CAP, SELL + Math.max(0, run.n - (ru
 function endOrder(run, p) {
   const cur = run.cur, ck = checks(run, p), hit = ck.n === 3, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
   if (hit) { run.grow.bonus++; run.stats.triple++; }
+  if (cur.spoiled) add('kept', 'x', 0.5);
   if (ck.n) add('checks', 'x', checkMult(run, ck.n));
   if (has(run, 'seed') && seedMult(run) > 1) add('seed', 'x', seedMult(run));
+  if (cur.keep && !cur.spoiled && has(run, 'glovebox')) add('glovebox', 'x', 2);
   const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra : 0;
   const paid = { order: 0, steps: 0, stepsLeft: 0, doubles: 0, doubled: 0, held: 0 };
   if (pass) {
@@ -390,7 +408,7 @@ function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_
 function moveGear(run, i) { if (i > 0 && i < run.gear.length) { const g = run.gear; [g[i - 1], g[i]] = [g[i], g[i - 1]]; } }
 
 // ---------- the supply room between orders ----------
-// two bottles, two pieces of equipment and one purification, which raises a bottle you own by one grade
+// two bottles, two pieces of equipment and one purification, which raises a bottle in the rack by one grade
 function stock(run) {
   const ids = shuffle(run.r, RX.LIST.map(c => c.id)), items = [];
   items.push({ kind: 'bottle', id: ids[0], cost: 3 }, { kind: 'bottle', id: ids[1], cost: 3 });
@@ -435,7 +453,7 @@ function sellGear(run, id) {
 function closeShop(run) { if (run.shop) run.shop.open = false; }
 
 AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
-  ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd,
+  ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd, mark, cap, canCap, KEEP_FROM,
   newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

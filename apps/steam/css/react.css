@@ -188,3 +188,12 @@ b { font-weight: 700; }
 .shopFoot { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
 
 @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } .shelf { grid-template-columns: 1fr; } .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } .gear { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tkKeep { margin: 4px 12px 0; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.tkKeep i, .ofKeep i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #19c3ff; border: 2px solid #111; margin-right: 6px; vertical-align: -2px; }
+.tkKeep.lost { color: #d81e1e; }
+.ofKeep { font-size: 15px; font-weight: 700; margin: 4px 0; }
+.bWarn { display: block; white-space: normal; font-size: 14px; font-weight: 700; line-height: 1.15; color: #d81e1e; }
+.ticket.met .tkScore { color: #12894a; }
+.ticket.dbl .tkFill { background: #d81e1e; }
+.ticket.dbl .tkScore { color: #fff; background: #d81e1e; padding: 2px 8px 0; }
+.tkKeep i.cap { background: #9aa3ad; }

@@ -20,7 +20,9 @@ function start(app) {
   const saveMeta = () => { try { localStorage.setItem('aa_rx_meta', JSON.stringify(st.meta)); } catch (e) { /* storage unavailable */ } };
   const got = id => st.meta.got.includes(id);
   // time runs slowly for a moment after a big hit
-  const slow = (by, ms) => { st.slowBy = by; st.slowUntil = performance.now() + ms; };
+  const slow = (by, ms) => { const u = performance.now() + ms; if (u >= st.slowUntil) { st.slowBy = by; st.slowUntil = u; } };
+  // the camera closes in on the atom that last reacted, or on the whole molecule
+  const zoomTo = ms => { st.zoomUntil = performance.now() + ms; };
   const setProbe = () => { st.desc = RX.describe(model); st.probe = RX.probe(model); st.sig = st.probe.sig; st.t0 = performance.now(); };
 
   // ---------- DOM ----------
@@ -35,12 +37,12 @@ function start(app) {
 
   const tkHead = h('div', { class: 'tkHead' }), tkCond = h('div', { class: 'tkCond' });
   const scoreEl = h('div', { class: 'tkScore' }, '0'), quotaEl = h('div', { class: 'tkQuota' }), barFill = h('div', { class: 'tkFill' });
-  const specEl = h('div', { class: 'tkSpec' });
+  const specEl = h('div', { class: 'tkSpec' }), keepEl = h('div', { class: 'tkKeep' });
   const yEl = h('b', null, '0'), bEl = h('b', null, '1');
   const yBox = h('div', { class: 'tkY' }, h('span', null, 'Yield'), yEl), bBox = h('div', { class: 'tkB' }, h('span', null, 'Batch'), bEl);
   const ticket = h('div', { class: 'ticket' }, tkHead,
     h('div', { class: 'tkRow' }, scoreEl, quotaEl), h('div', { class: 'tkBar' }, barFill),
-    h('div', { class: 'tkCalc' }, yBox, h('i', null, 'times'), bBox), specEl, tkCond);
+    h('div', { class: 'tkCalc' }, yBox, h('i', null, 'times'), bBox), specEl, keepEl, tkCond);
   const CHK = [['ms', 'Mass'], ['ir', 'Infrared'], ['nmr', 'NMR']];
   const checksFor = spec => { const p = st.probe, ms = !!spec && !!p && p.mass === spec.mass, ir = !!spec && !!p && p.grp === spec.grp, nmr = !!spec && !!p && p.sig === spec.sig; return { ms, ir, nmr, n: (ms ? 1 : 0) + (ir ? 1 : 0) + (nmr ? 1 : 0) }; };
   // the spec compound and its three checks, on the ticket and on the printout headers
@@ -58,13 +60,18 @@ function start(app) {
     if (bEl.textContent !== bs) { bEl.textContent = bs; bump(bBox); }
     st.target = Math.round(y * b);
   }
+  // the line on the ticket about the group that must be kept
+  function setKeep(keep, lost, capped) {
+    keepEl.style.display = keep ? '' : 'none'; keepEl.className = 'tkKeep' + (lost ? ' lost' : '');
+    keepEl.replaceChildren(...(!keep ? [] : lost ? ['Kept group lost. Batch is halved at delivery.'] : capped ? [h('i', { class: 'cap' }), 'Marked ' + keep.kind + ' is capped. No bottle reacts there.'] : [h('i'), 'Keep the marked ' + keep.kind + '. Reacting it halves the batch.']));
+  }
   const KINDS = [['ms', 'Mass spectrum'], ['ir', 'Infrared'], ['nmr', 'Proton NMR']];
   const prints = KINDS.map(([k, label]) => { const cv = h('canvas'), pct = h('span', { class: 'prPct' }); return { k, cv, pct, el: h('div', { class: 'print' }, h('header', null, h('span', null, label), pct), cv) }; });
 
   const cardsEl = h('div', { class: 'cards' });
-  const swapBtn = h('button', { class: 'btn', onclick: () => swap() }), deliverBtn = h('button', { class: 'btn go', onclick: () => deliver() }, 'Deliver  [Enter]');
+  const swapBtn = h('button', { class: 'btn', onclick: () => swap() }), deliverBtn = h('button', { class: 'btn go', onclick: () => deliver() }, 'Deliver  [Enter]'), capBtn = h('button', { class: 'btn', onclick: () => capKeep() });
   const rackEl = h('div', { class: 'rackInfo' }), routesBtn = h('button', { class: 'btn', onclick: () => showRoutes() }, 'Routes  [R]');
-  const shelf = h('div', { class: 'shelf' }, cardsEl, h('div', { class: 'side' }, deliverBtn, swapBtn, routesBtn, rackEl));
+  const shelf = h('div', { class: 'shelf' }, cardsEl, h('div', { class: 'side' }, deliverBtn, capBtn, swapBtn, routesBtn, rackEl));
   const overlay = h('div', { class: 'ov' });
   app.append(h('div', { class: 'game' },
     h('div', { class: 'main' },
@@ -90,15 +97,17 @@ function start(app) {
     let any = false;
     const els = cur.hand.map((hc, i) => {
       const card = RX.CARDS[hc.id], lk = st.mode === 'play' && model ? RUN.look(run, model, hc.id) : { n: 0 }, n = lk.n, b = bottle(card, String(i + 1));
-      if (n) any = true;
-      b.el.className += (n ? '' : ' none') + (lk.cont ? ' link' : '') + (st.seen.has(hc.uid) ? '' : ' deal');
-      b.el.disabled = !n || st.busy;
+      const live = n || lk.spoils;
+      if (live) any = true;
+      b.el.className += (live ? '' : ' none') + (lk.cont ? ' link' : '') + (st.seen.has(hc.uid) ? '' : ' deal');
+      b.el.disabled = !live || st.busy;
       if (lk.cont) b.foot.append(h('span', { class: 'bLink' }, lk.route ? lk.route.name : 'Chain of ' + lk.len));
-      b.foot.append(n ? h('span', null, h('b', null, plural(n, 'site')), '  +' + fmt(lk.score - RUN.scoreOf(cur))) : h('span', null, 'no site'));
+      if (lk.spoils) b.foot.append(h('span', { class: 'bWarn' }, 'Reacts at the kept group'));
+      b.foot.append(h('span', null, n ? h('b', null, plural(n, 'site')) : lk.spoils ? '' : 'no site'));
       b.el.addEventListener('click', () => play(i));
       ['mouseenter', 'focus'].forEach(ev => b.el.addEventListener(ev, () => setHover(i)));
       ['mouseleave', 'blur'].forEach(ev => b.el.addEventListener(ev, () => setHover(-1)));
-      b.dim = !n; b.card = card; st.seen.add(hc.uid);
+      b.dim = !live; b.card = card; st.seen.add(hc.uid);
       return b;
     });
     cardsEl.style.setProperty('--n', Math.max(5, cur.hand.length));
@@ -116,6 +125,10 @@ function start(app) {
     renderSpec(cur.spec, k => fmtB(RUN.checkMult(run, k)));
     tkCond.textContent = cur.cond ? 'Condition: ' + cur.cond.text + '.' : '';
     tkCond.style.display = cur.cond ? '' : 'none';
+    setKeep(cur.keep, cur.spoiled, model.atoms.some(a => a.prot));
+    capBtn.style.display = cur.keep ? '' : 'none';
+    capBtn.textContent = cur.keep ? 'Cap the marked ' + cur.keep.kind + '  [C]  (1 step)' : '';
+    capBtn.disabled = st.busy || st.mode !== 'play' || !RUN.canCap(run, model);
     const left = cur.stepsMax - cur.step;
     stepEl.replaceChildren(h('b', null, String(left)), (left === 1 ? 'step' : 'steps') + ' left');
     nowEl.textContent = RX.label(model);
@@ -172,8 +185,9 @@ function start(app) {
     cur = run.cur; st.tok++; st.busy = false; st.mode = 'play'; st.shown = 0; st.opts = null; st.end = false;
     yEl.textContent = ''; bEl.textContent = ''; setCalc(cur.yield, cur.batch);
     st.flashes = []; st.fliers = []; st.party = 0; st.hover = -1; st.hoverAtoms = [];
+    st.met = st.dbl = false; st.zoomUntil = 0; st.zoomAtom = null; st.crossT = 0;
     fx.clear();
-    model = m || AA.Model.fromSmilesRelaxed(cur.feed, 6);
+    model = m || RUN.mark(AA.Model.fromSmilesRelaxed(cur.feed, 6), cur.keep);
     if (v) { v.model = model; v.glow.clear(); }
     setProbe();
     overlay.className = 'ov'; overlay.replaceChildren();
@@ -194,6 +208,7 @@ function start(app) {
     quotaEl.replaceChildren('of ', h('b', null, fmt(o.quota)), ' needed');
     renderSpec(o.spec, k => fmtB(RUN.checkMult(run, k)));
     tkCond.textContent = run.cond ? 'Condition: ' + run.cond.text + '.' : ''; tkCond.style.display = run.cond ? '' : 'none';
+    setKeep(o.keep, false);
     nowEl.textContent = RX.label(model);
   }
   function showOffers() {
@@ -201,7 +216,7 @@ function start(app) {
     st.flashes = []; st.fliers = []; st.party = 0; st.hover = -1; st.hoverAtoms = [];
     fx.clear(); overlay.className = 'ov'; overlay.replaceChildren();
     yEl.textContent = ''; bEl.textContent = ''; setCalc(0, 1); scoreEl.textContent = '0'; barFill.style.width = '0%'; ticket.className = 'ticket';
-    st.offerModels = run.offers.map(o => AA.Model.fromSmilesRelaxed(o.feed, 6));
+    st.offerModels = run.offers.map(o => RUN.mark(AA.Model.fromSmilesRelaxed(o.feed, 6), o.keep));
     st.offerEls = run.offers.map((o, i) => {
       const cov = RUN.coverage(run, o.feed);
       const el = h('button', { class: 'offer' + (o.large ? ' large' : ''), onclick: () => pickFeed(i) },
@@ -209,7 +224,8 @@ function start(app) {
         h('div', { class: 'ofBody' },
           h('div', { class: 'ofName' }, o.feedName),
           h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups'))),
-          h('div', { class: 'ofCov' }, cov.length ? cov.map(c => { const card = RX.CARDS[c.id]; return h('span', { style: '--cc:' + css(card.rgb) }, card.verb + ' ' + c.n); }) : 'No bottle in your rack reacts with it as it stands')));
+          o.keep ? h('div', { class: 'ofKeep' }, h('i'), 'Keep the marked ' + o.keep.kind) : null,
+          h('div', { class: 'ofCov' }, cov.length ? cov.map(c => { const card = RX.CARDS[c.id]; return h('span', { style: '--cc:' + css(card.rgb) }, card.verb + ' ' + c.n); }) : 'No bottle in the rack reacts with it as it stands')));
       ['mouseenter', 'focus'].forEach(ev => el.addEventListener(ev, () => { if (st.mode === 'offer' && st.pv !== i) lookAt(i); }));
       return el;
     });
@@ -217,6 +233,7 @@ function start(app) {
     cardsEl.replaceChildren(...st.offerEls);
     renderGear();
     stepEl.replaceChildren();
+    capBtn.style.display = 'none';
     swapBtn.textContent = 'Swap hand  [S]'; swapBtn.disabled = deliverBtn.disabled = true; deliverBtn.className = 'btn go';
     rackEl.textContent = plural(run.deck.length, 'bottle') + ' in the rack';
     renderTop(0);
@@ -250,7 +267,8 @@ function start(app) {
     const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: () => { m.level = i; saveMeta(); sfx.click(); showStart(); } }, h('b', null, 'Level ' + (i + 1)), h('span', null, i > maxLv ? 'Locked' : i ? 'Quotas times ' + x : 'Standard quotas')));
     const list = RUN.UNLOCKS.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.name), h('span', null, got(u.id) ? 'Unlocked' : u.how)));
     overlay.replaceChildren(h('div', { class: 'panel start' }, h('h2', null, 'New run'),
-      h('p', null, 'React at the atoms your last bottle changed to build a chain. Each link multiplies batch, and a chain that follows a named route multiplies it again.'),
+      h('p', null, 'React at the atoms the last bottle changed to build a chain. Each link multiplies batch, and a chain that follows a named route multiplies it again.'),
+      h('p', null, 'From order ' + (RUN.KEEP_FROM + 1) + ', each feedstock has one marked group to keep. A bottle reacts at every site it matches, and reacting at the marked group halves the batch. Capping the marked group costs one step and stops every bottle reacting there.'),
       h('h3', null, 'Rack'), h('div', { class: 'opts' }, racks), h('h3', null, 'Level'), h('div', { class: 'opts' }, levels),
       h('h3', null, 'Unlocks, ' + st.meta.got.length + ' of ' + RUN.UNLOCKS.length), h('ul', { class: 'unl' }, list),
       h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
@@ -271,16 +289,33 @@ function start(app) {
     };
     next();
   }
+  // the score has just changed: passing the quota, and passing twice the quota, are each an event of their own
+  function crossed(at) {
+    if (!cur || (st.mode !== 'play' && st.mode !== 'result')) return false;
+    const q = cur.quota, s = st.target, x = at ? at.x : benchCv.clientWidth / 2, y = at ? at.y : benchCv.clientHeight / 2;
+    if (s < q) { st.met = st.dbl = false; return false; }
+    if (st.met && (st.dbl || s < q * 2)) return false;
+    const twice = st.met, c = twice ? RED : GREEN;
+    if (twice) st.dbl = true; else st.met = true;
+    st.crossT = performance.now(); ticket.classList.add(twice ? 'dbl' : 'met'); bump(scoreEl);
+    fx.banner(twice ? 'TWICE THE QUOTA' : 'QUOTA MET', fmt(q * (twice ? 2 : 1)) + ' passed', c, 1.8);
+    if (twice) sfx.over(); else sfx.quota();
+    fx.flash(0.7, c); fx.shake(14); fx.punch(0.12);
+    fx.ring(x, y, c, 320, 0.9); fx.ring(x, y, WHITE, 200, 0.6); fx.burst(x, y, c, 90, 480); fx.burst(x, y, WHITE, 40, 300);
+    slow(0.08, 750); zoomTo(1000);
+    return true;
+  }
   // shows one change to yield or batch; `at` is the place in the hood the number rises from
   function showEv(e, at, pitch) {
     if (e.kind === 'catch') { fireTag('coldtrap', e.val + ' caught'); return; }
     if (e.kind === 'grade') return;
     setCalc(e.yield, e.batch);
+    const cr = crossed(at);
     if (e.src === 'bottle' && e.kind === 'b') return;
     const txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val), hot = heat();
     if (RUN.GEARS[e.src]) fireTag(e.src, txt);
     if (e.gear) fireTag(e.gear, txt);
-    if (e.src === 'route') { fx.banner(RUN.ROUTE[e.route].name.toUpperCase(), 'Route complete, batch ' + txt, YELLOW, 1.9); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); }
+    if (e.src === 'route') { if (!cr) fx.banner(RUN.ROUTE[e.route].name.toUpperCase(), 'Route complete, batch ' + txt, YELLOW, 1.9); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); }
     if (e.kind === 'x') {
       bump(scoreEl);
       // the route banner already states its multiplier, so a second floating number would only cover the chain one
@@ -301,7 +336,7 @@ function start(app) {
     st.busy = true; st.hover = -1; st.hoverAtoms = [];
     const tok = st.tok, col = bright(card.rgb), t = performance.now();
     const mid = () => ({ x: benchCv.clientWidth / 2, y: benchCv.clientHeight * 0.45 });
-    let hits = 0, pitch = cur.step, nEv = 0;
+    let hits = 0, spoiled = 0, pitch = cur.step, nEv = 0;
     const beat = (e, at) => ({ wait: Math.max(55, 120 - 6 * nEv), fn: () => { nEv++; showEv(e, at, pitch++); } });
     sfx.click();
     sites.forEach(s => s.atoms.forEach(a => st.flashes.push({ atom: a, hex: hex(col), until: t + 600 + sites.length * 420 })));
@@ -314,7 +349,8 @@ function start(app) {
       setProbe(); sfx.pen(500);
       const up = res.ev.find(e => e.kind === 'grade'), hot = heat();
       if (up) { fx.banner(card.verb.toUpperCase() + ' GRADE ' + up.val, RUN.YIELD * up.val + ' yield for each site', col, 2.0); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); fx.punch(0.08); }
-      else if (hits >= 2 && !res.ev.some(e => e.src === 'route')) fx.banner(hits + ' SITES', fmt(res.score), col, 1.5);
+      else if (hits >= 2 && !res.ev.some(e => e.src === 'route') && performance.now() - st.crossT > 1600) fx.banner(hits + ' SITES', fmt(res.score), col, 1.5);
+      if (spoiled) fx.banner('KEPT GROUP LOST', 'Batch is halved at delivery', RED, 2.0);
       if (hits >= 3) { fx.flash(0.45, WHITE); fx.shake(10 + 2 * hot); slow(0.2, 260); fx.punch(0.06); if (!up) sfx.good(); }
       st.busy = false;
       const any = renderHand(), now = checksFor(cur.spec).n, long = up || hits >= 2;
@@ -327,9 +363,13 @@ function start(app) {
 
     const steps = sites.map((site, k) => ({ wait: k ? 230 : 380, fn: () => {
       if (!card.ok(model, site)) return null;
-      const c0 = centroid(), r = card.apply(model, site), ev = RUN.scoreSite(run, hc.id, false), hot = heat();
-      hits++; r.focus.concat(r.incoming).forEach(a => made.push(a));
+      const c0 = centroid(), spoil = site.atoms.some(a => a.keep), r = card.apply(model, site), hot = heat();
       const p = scr(r.focus), now = performance.now();
+      st.zoomAtom = r.focus[0];
+      if (spoil) { site.atoms.forEach(a => { a.keep = false; }); spoiled++; } else hits++;
+      const ev = spoil ? [] : RUN.scoreSite(run, hc.id, false);
+      r.focus.concat(r.incoming).forEach(a => made.push(a));
+      if (spoil) { fx.floatText(p.x, p.y - 30, 'kept group lost', RED, 30); fx.ring(p.x, p.y, RED, 160, 0.6); fx.flash(0.3, RED); fx.shake(10); sfx.bad(); }
       fx.ring(p.x, p.y, col, 90 + 24 * hits + 14 * hot, 0.55); fx.ring(p.x, p.y, WHITE, 50, 0.3);
       fx.burst(p.x, p.y, col, 26 + 10 * hot, 240 + 50 * hot); fx.burst(p.x, p.y, YELLOW, 10 + 4 * hot, 160);
       fx.floatText(p.x + 4, p.y + 34, r.tag, col, 18);
@@ -349,7 +389,7 @@ function start(app) {
       return ev.filter(e => e.src !== 'bottle').map(e => beat(e, p));
     } }));
     steps.push({ wait: 320, fn: () => {
-      const res = RUN.commit(run, i, hits, { hot: wasHot, made, sig: RX.sigOf(model) });
+      const res = RUN.commit(run, i, hits, { hot: wasHot, made, sig: RX.sigOf(model), spoiled });
       return res.ev.map(e => beat(e, mid())).concat([{ wait: 340, fn: () => wrapUp(res) }]);
     } });
     seq(steps, tok);
@@ -370,6 +410,19 @@ function start(app) {
     if (st.busy || st.mode !== 'play' || !RUN.redraw(run)) return;
     sfx.feed(); renderAll();
   }
+  // caps the marked group: a silyl ether on an OH, an acetal on a C=O
+  function capKeep() {
+    if (st.busy || st.mode !== 'play' || !v) return;
+    const a = RUN.cap(run, model);
+    if (!a) { sfx.bad(); return; }
+    const p = scr([a]), oh = cur.keep.kind === 'OH', tok = st.tok;
+    fx.banner(oh ? 'SILYLATE' : 'ACETALISE', oh ? 'TBSCl with imidazole' : 'Ethylene glycol with TsOH', WHITE, 1.3);
+    fx.ring(p.x, p.y, WHITE, 120, 0.5); fx.floatText(p.x + 4, p.y + 36, cur.keep.kind + ' capped', WHITE, 22);
+    v.pop(a); st.flashes.push({ atom: a, hex: 0xffffff, until: performance.now() + 520 }); sfx.bond();
+    st.zoomAtom = a; zoomTo(600);
+    renderAll();
+    if (cur.step >= cur.stepsMax) setTimeout(() => { if (tok === st.tok && st.mode === 'play') finishOrder(); }, 900);
+  }
   function deliver() { if (!st.busy && st.mode === 'play') finishOrder(); }
 
   function finishOrder() {
@@ -378,13 +431,15 @@ function start(app) {
     const filled = run.history.filter(q => q.pass).length;
     checkUnlocks();
     if (filled > st.best.orders || (filled === st.best.orders && run.total > st.best.total)) { st.best = { orders: filled, total: run.total }; res.best = true; try { localStorage.setItem('aa_rx_best', JSON.stringify(st.best)); } catch (e) { /* storage unavailable */ } }
-    swapBtn.disabled = deliverBtn.disabled = true; deliverBtn.classList.remove('ready');
+    swapBtn.disabled = deliverBtn.disabled = capBtn.disabled = true; deliverBtn.classList.remove('ready');
+    st.zoomAtom = null;
+    const EVN = { checks: plural(res.checks.n, 'CHECK') + ' PASSED', seed: 'SEED CRYSTAL', glovebox: 'GLOVE BOX', kept: 'KEPT GROUP LOST' };
     renderHand(); setCalc(res.yield, res.batch);
     // the multipliers that only apply on delivery land one at a time before the result is called
     res.ev.forEach((e, k) => setTimeout(() => {
       if (tok !== st.tok) return;
+      fx.banner(EVN[e.src], 'batch times ' + fmtB(e.val), e.src === 'kept' ? RED : YELLOW, 0.6);
       showEv(e, { x: cx, y: cy - 40 }, 8 + 2 * k);
-      fx.banner(e.src === 'checks' ? plural(res.checks.n, 'CHECK') + ' PASSED' : 'SEED CRYSTAL', 'batch times ' + fmtB(e.val), YELLOW, 0.6);
       model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
     }, 150 + k * 650));
     setTimeout(() => {
@@ -404,10 +459,13 @@ function start(app) {
         model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
         fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed, ' + res.pay + ' kg of surplus kept', YELLOW, 2.3);
       } else {
-        sfx.stamp(); fx.shake(6);
-        fx.banner('QUOTA MISSED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed', RED, 2.3);
+        // a miss by less than a quarter of the quota is held on screen longer, close in
+        const near = ratio >= 0.75;
+        sfx.stamp(); fx.shake(near ? 12 : 6);
+        if (near) { zoomTo(1600); slow(0.1, 1000); fx.flash(0.5, RED); sfx.bad(); }
+        fx.banner('QUOTA MISSED', near ? fmt(cur.quota - res.total) + ' short of ' + fmt(cur.quota) : fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed', RED, near ? 2.9 : 2.3);
       }
-      setTimeout(() => { if (tok === st.tok) showPanel(res, filled); }, res.pass ? 1500 + 240 * big : 1200);
+      setTimeout(() => { if (tok === st.tok) showPanel(res, filled); }, res.pass ? 1500 + 240 * big : ratio >= 0.75 ? 2100 : 1200);
     }, res.ev.length ? 250 + res.ev.length * 650 : 0);
   }
 
@@ -429,13 +487,13 @@ function start(app) {
         if (o.kind === 'gear') { const g = RUN.GEARS[o.id]; return h('button', { class: 'pick gearPick k-' + g.kind, onclick: () => choose(i) }, h('span', { class: 'bKey' }, String(i + 1)), h('div', { class: 'gpKind' }, kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text)); }
         const b = bottle(RX.CARDS[o.id], String(i + 1)), have = run.deck.filter(id => id === o.id).length;
         b.el.className += ' pick'; b.el.addEventListener('click', () => choose(i));
-        b.foot.append(h('span', null, have ? 'You have ' + have : 'New to the rack'));
+        b.foot.append(h('span', null, have ? have + ' in the rack' : 'New to the rack'));
         b.card = RX.CARDS[o.id];
         return b;
       });
       st.pickEls = opts.map(o => o.el || o);
       st.pickHead = h('h3', null, res.picks > 1 ? 'Take ' + res.picks : 'Take one');
-      const pd = res.paid, why = [pd.order + ' for the order', pd.steps ? pd.steps + ' for ' + plural(pd.stepsLeft, 'unused step') : '', pd.doubles ? pd.doubles + ' for doubling the quota ' + (pd.doubled > 1 ? pd.doubled + ' times' : 'once') : '', pd.held ? pd.held + ' earned on what you held' : ''].filter(Boolean);
+      const pd = res.paid, why = [pd.order + ' for the order', pd.steps ? pd.steps + ' for ' + plural(pd.stepsLeft, 'unused step') : '', pd.doubles ? pd.doubles + ' for doubling the quota ' + (pd.doubled > 1 ? pd.doubled + ' times' : 'once') : '', pd.held ? pd.held + ' earned on surplus held' : ''].filter(Boolean);
       kids.push(h('h2', null, 'Order ' + n + ' filled'),
         h('p', null, fmt(res.total) + ' against ' + fmt(cur.quota) + ' needed. ' + plural(res.checks.n, 'check') + ' passed.'),
         h('p', { class: 'surplus' }, h('b', null, res.pay + ' kg of surplus kept: '), why.join(', ') + '.'), fresh,
@@ -471,7 +529,7 @@ function start(app) {
         body = h('div', { class: 'gearPick k-x' }, h('div', { class: 'gpKind' }, 'Route, level ' + lv + ' to ' + (lv + 1)), h('div', { class: 'gpName' }, rt.name), h('div', { class: 'gpText' }, cap(RUN.routeSteps(rt)) + '. Batch times ' + m + ' becomes times ' + (m + rt.up) + '.'));
       } else {
         const card = RX.CARDS[it.id], b = bottle(card, null), have = run.deck.filter(id => id === it.id).length;
-        b.foot.append(h('span', null, it.kind === 'grade' ? 'Purify to grade ' + (RUN.gradeOf(run, it.id) + (it.sold ? 0 : 1)) : have ? 'You have ' + have : 'New to the rack'));
+        b.foot.append(h('span', null, it.kind === 'grade' ? 'Purify to grade ' + (RUN.gradeOf(run, it.id) + (it.sold ? 0 : 1)) : have ? have + ' in the rack' : 'New to the rack'));
         arts.push([b.art, card]); body = b.el; body.tabIndex = -1;
       }
       return h('div', { class: 'shopItem' + (it.sold ? ' sold' : ok ? '' : ' cant'), onclick: () => shopBuy(i) }, h('span', { class: 'bKey' }, String(i + 1)), body, price);
@@ -482,10 +540,10 @@ function start(app) {
     const bench = run.gear.map(id => h('button', { class: 'chip', onclick: () => { if (RUN.sellGear(run, id)) { sfx.stamp(); renderGear(); showShop(); } } }, RUN.GEARS[id].name + '  ' + RUN.sellValue(run, id) + ' kg'));
     overlay.replaceChildren(h('div', { class: 'panel shop' },
       h('div', { class: 'shopHead' }, h('h2', null, 'Supply room'), h('div', { class: 'cash' }, run.money + ' kg')),
-      h('p', { class: 'surplus' }, 'Surplus you still hold when the next order is filled earns 1 kg for every ' + RUN.HOLD_PER + ' kg. At ' + run.money + ' kg that is ' + RUN.holdPay(run) + ' kg.'),
+      h('p', { class: 'surplus' }, 'Surplus still held when the next order is filled earns 1 kg for every ' + RUN.HOLD_PER + ' kg. At ' + run.money + ' kg that is ' + RUN.holdPay(run) + ' kg.'),
       h('div', { class: 'shopRow' }, items),
-      h('h3', null, 'Your rack, ' + plural(run.deck.length, 'bottle') + '. Click one to remove it for ' + RUN.REMOVE + ' kg.'), h('div', { class: 'chips' }, rack),
-      bench.length ? h('h3', null, 'Your bench. Click a piece to sell it. Each is worth 1 kg more for every order you have held it.') : null, bench.length ? h('div', { class: 'chips' }, bench) : null,
+      h('h3', null, 'Rack, ' + plural(run.deck.length, 'bottle') + '. Click one to remove it for ' + RUN.REMOVE + ' kg.'), h('div', { class: 'chips' }, rack),
+      bench.length ? h('h3', null, 'Bench. Click a piece to sell it. Each is worth 1 kg more for every order it has been on the bench.') : null, bench.length ? h('div', { class: 'chips' }, bench) : null,
       h('div', { class: 'shopFoot' }, h('button', { class: 'btn', disabled: run.money < sh.reroll, onclick: () => shopReroll() }, 'New stock  [R]  ' + sh.reroll + ' kg'), h('button', { class: 'btn go', onclick: () => leaveShop() }, 'Next order  [Enter]'))));
     overlay.className = 'ov on';
     arts.forEach(a => drawCardArt(a[0], a[1], false));
@@ -523,12 +581,16 @@ function start(app) {
     // keep the molecule framed
     const c = centroid(); let rad = 2;
     model.atoms.forEach(a => { if (!a.fly) rad = Math.max(rad, Math.hypot(a.x - c[0], a.y - c[1], a.z - c[2]) + 1); });
-    v.pan.x += (c[0] - v.pan.x) * 0.06; v.pan.y += (c[1] - v.pan.y) * 0.06; v.pan.z += (c[2] - v.pan.z) * 0.06;
-    if (!v.rot) { v.zoom += (Math.max(26, Math.min(70, 640 / (rad * 2.35))) - v.zoom) * 0.05; v.yaw += dt * 0.16; }
+    const zin = now < st.zoomUntil, za = zin && st.zoomAtom && !st.zoomAtom.fly && model.atoms.includes(st.zoomAtom) ? st.zoomAtom : null;
+    const tx = za ? [za.x, za.y, za.z] : c, kp = zin ? 0.2 : 0.06;
+    v.pan.x += (tx[0] - v.pan.x) * kp; v.pan.y += (tx[1] - v.pan.y) * kp; v.pan.z += (tx[2] - v.pan.z) * kp;
+    if (!v.rot) { v.zoom += (Math.max(26, Math.min(70, 640 / (rad * 2.35))) * (zin ? 1.7 : 1) - v.zoom) * (zin ? 0.2 : 0.05); v.yaw += dt * 0.16; }
     // glows: the hovered bottle's sites, reacting atoms, and a filled order
     v.glow.clear();
     // the atoms the last play made or changed stay lit: reacting there continues the chain
     if (st.mode === 'play' && !st.busy && cur && cur.path.length) cur.fresh.forEach(a => { if (a.el !== 'H' && !a.fly) v.glow.set(a, 0x8a6f00); });
+    // the group to keep is lit blue for the whole order; capped groups are lit grey
+    model.atoms.forEach(a => { if (a.prot) v.glow.set(a, 0x9aa3ad); else if (a.keep) v.glow.set(a, 0x19c3ff); });
     st.hoverAtoms.forEach(a => v.glow.set(a, st.hoverHex));
     st.flashes = st.flashes.filter(f => f.until > now); st.flashes.forEach(f => v.glow.set(f.atom, f.hex));
     if (st.party > now) model.atoms.forEach((a, i) => v.glow.set(a, new T.Color().setHSL((now / 900 + i * 0.07) % 1, 1, 0.45).getHex()));
@@ -582,6 +644,7 @@ function start(app) {
     if (k >= '1' && k <= '9') { play(+k - 1); e.preventDefault(); }
     else if (k === 'r' || k === 'R') showRoutes();
     else if (k === 's' || k === 'S') swap();
+    else if (k === 'c' || k === 'C') capKeep();
     else if (k === 'Enter') { deliver(); e.preventDefault(); }
   });
   const mute = document.getElementById('mute');

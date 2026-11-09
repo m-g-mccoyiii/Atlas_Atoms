@@ -77,6 +77,9 @@ AA.sfx = {
   good() { [392, 494, 587].forEach((f, i) => tone({ freq: f, dur: 0.22, gain: 0.07, delay: 0.1 + i * 0.09, type: 'triangle' })); },
   lock(i) { const f = 330 * Math.pow(2, Math.min(i, 12) / 6); tone({ freq: f, dur: 0.2, gain: 0.06, type: 'triangle' }); tone({ freq: f * 2, dur: 0.12, gain: 0.025, delay: 0.02 }); },
   fanfare() { tone({ freq: 90, freqEnd: 38, dur: 0.55, gain: 0.4 }); [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.55, gain: 0.07, delay: 0.1 + i * 0.07, type: 'triangle' })); hiss({ freq: 5000, q: 0.6, dur: 0.7, gain: 0.08, delay: 0.1, attack: 0.3 }); },
+  // the score has passed the quota; and passed twice the quota
+  quota() { tone({ freq: 80, freqEnd: 40, dur: 0.45, gain: 0.38 }); [523, 784, 1047].forEach((f, i) => { tone({ freq: f, dur: 0.6, gain: 0.045, delay: i * 0.07, type: 'square' }); tone({ freq: f * 1.006, dur: 0.6, gain: 0.06, delay: i * 0.07 }); }); },
+  over() { [784, 1047, 1319, 1568].forEach((f, i) => tone({ freq: f, dur: 0.4, gain: 0.04, delay: i * 0.05, type: 'square' })); hiss({ freq: 6000, q: 0.6, dur: 0.5, gain: 0.07, attack: 0.2 }); },
   bad() { tone({ freq: 140, freqEnd: 90, dur: 0.22, gain: 0.1, type: 'sawtooth' }); }
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

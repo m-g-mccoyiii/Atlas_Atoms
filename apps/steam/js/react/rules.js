@@ -188,7 +188,10 @@ const LIST = [
     apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } }
 ];
 const CARDS = {};
-LIST.forEach(c => { CARDS[c.id] = c; });
+// a capped oxygen carries prot, and no bottle finds a site there
+LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot)); });
+// the oxygens an order can ask to be kept: alcohol OH and aldehyde or ketone C=O, by index in the atom list
+const keepable = m => m.atoms.map((a, i) => (a.el !== 'O' ? null : hydroxyl(m, a) ? { i, kind: 'OH' } : carbonyls(m).some(s => s.o === a) ? { i, kind: 'C=O' } : null)).filter(Boolean);
 
 // ---------- graph -> fingerprint ----------
 function graphOf(m) {
@@ -257,7 +260,7 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (!a.fly) map.set(a, n.addAtom(a.el, a.x, a.y, a.z)); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
   return { model: n, map };
 }
@@ -270,5 +273,5 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
-AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles };
+AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

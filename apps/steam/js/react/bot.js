@@ -14,27 +14,39 @@ function choose(run, opts, policy) {
   return opts.slice().sort((a, b) => count(b.id) - count(a.id))[0];
 }
 // best score reachable by playing up to `depth` of the bottles in ids on model m. Nothing is changed.
+// the move that caps the marked group
+const CAP = -2;
+const val = cur => RUN.scoreOf(cur) * (cur.spoiled ? 0.5 : 1);
 function plan(run, m, ids, depth) {
-  const cur = run.cur, out = { score: RUN.scoreOf(cur), k: -1 };
+  const cur = run.cur, out = { score: val(cur), k: -1 };
   if (!depth || cur.step >= cur.stepsMax) return out;
+  if (RUN.canCap(run, m)) {
+    const s = { fresh: cur.fresh, step: cur.step }, cm = RX.cloneMap(m), fresh = new Set();
+    s.fresh.forEach(a => { const c = cm.map.get(a); if (c) fresh.add(c); });
+    cur.fresh = fresh; RUN.cap(run, cm.model);
+    const sub = plan(run, cm.model, ids, depth - 1);
+    if (sub.score > out.score) { out.score = sub.score; out.k = CAP; }
+    cur.fresh = s.fresh; cur.step = s.step;
+  }
   const tried = new Set();
   ids.forEach((id, k) => {
     if (tried.has(id)) return;
     tried.add(id);
     if (!RX.CARDS[id].find(m).length) return;
-    const s = { y: cur.yield, b: cur.batch, path: cur.path, fresh: cur.fresh, seen: cur.seen, step: cur.step, used: cur.used.length };
+    const s = { y: cur.yield, b: cur.batch, path: cur.path, fresh: cur.fresh, seen: cur.seen, step: cur.step, used: cur.used.length, spoiled: cur.spoiled };
     const cm = RX.cloneMap(m), fresh = new Set();
     s.fresh.forEach(a => { const c = cm.map.get(a); if (c) fresh.add(c); });
     cur.fresh = fresh;
     const r = RUN.react(run, cm.model, id);
-    if (r.hits) {
+    if (r.hits || r.spoiled) {
       for (let i = 0; i < r.hits; i++) RUN.scoreSite(run, id, true);
-      RUN.playEnd(run, id, r.hits, true, r);
-      cur.step++; cur.used.push(id); cur.fresh = new Set(r.made); cur.seen = new Set(s.seen).add(r.sig);
+      RUN.playEnd(run, id, r.hits, true, r); cur.fresh = new Set(r.made); cur.seen = new Set(s.seen).add(r.sig);
+      if (r.spoiled) cur.spoiled = true;
+      cur.step++; cur.used.push(id);
       const sub = plan(run, cm.model, ids.filter((x, j) => j !== k), depth - 1);
       if (sub.score > out.score) { out.score = sub.score; out.k = k; }
     }
-    cur.yield = s.y; cur.batch = s.b; cur.path = s.path; cur.fresh = s.fresh; cur.seen = s.seen; cur.step = s.step; cur.used.length = s.used;
+    cur.yield = s.y; cur.batch = s.b; cur.path = s.path; cur.fresh = s.fresh; cur.seen = s.seen; cur.step = s.step; cur.used.length = s.used; cur.spoiled = s.spoiled;
   });
   return out;
 }
@@ -48,9 +60,10 @@ function bot(runs, seed, policy, noFail, feed, ropts, depth) {
     for (;;) {
       const fit = RUN.coverage(run, run.offers[1].feed).reduce((t, c) => t + c.n, 0) >= run.offers[1].groups + 2;
       RUN.chooseFeed(run, feed === 'large' || (feed === 'fit' && fit) ? 1 : 0);
-      const cur = run.cur, m = RX.fromSmiles(cur.feed);
+      const cur = run.cur, m = RUN.mark(RX.fromSmiles(cur.feed), cur.keep);
       while (cur.step < cur.stepsMax) {
         const best = plan(run, m, cur.hand.map(c => c.id), depth || 1).k;
+        if (best === CAP) { RUN.cap(run, m); continue; }
         if (best < 0) { if (RUN.redraw(run)) continue; break; }
         const id = cur.hand[best].id, r = RUN.react(run, m, id);
         for (let h = 0; h < r.hits; h++) RUN.scoreSite(run, id, false);
