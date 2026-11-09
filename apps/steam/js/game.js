@@ -203,7 +203,7 @@ function lab(c) {
   ['H', 'C', 'N', 'O', 'S', 'P', 'F', 'Cl', 'Na'].forEach(el => tins.append(h('div', { class: 'tin', style: 'background:' + E[el].color + ';color:' + (['H', 'S', 'F', 'Cl'].includes(el) ? '#1c2230' : '#fff'), title: E[el].name + ': makes ' + E[el].valences.join(' or ') + ' bond' + (E[el].valences[0] > 1 ? 's' : ''),
     onpointerdown: ev => { ev.preventDefault(); sfx.click(); const a = model.addAtom(el, 0, 0, 0); viewerBox.v.startDrag(a, ev); } }, el)));
   const benchBox = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'BENCH'), h('span', null, 'drop atoms on atoms to bond')), benchCv, tins,
-    h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { model.clear(); updateFit(); } }, 'Clear'), h('button', { class: 'btn red', onclick: declare }, 'Declare this structure')), fitEl, libEl);
+    h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { model.clear(); updateFit(); } }, 'Clear'), h('button', { class: 'btn', title: 'Put the camera back', onclick: () => { const v = viewerBox.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 75; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn red', onclick: declare }, 'Declare this structure')), fitEl, libEl);
 
   const file = h('div', { class: 'file' }, h('h3', null, c.title), h('div', { class: 'who' }, 'Client: ' + c.client), h('p', null, c.story), h('ul', null, c.notes.map(n => h('li', null, n))));
   labEl.append(rack, h('div', { class: 'desk' }, stickyHost, papers), h('div', { class: 'right' }, file, benchBox, logEl));
@@ -221,7 +221,7 @@ function lab(c) {
 
   requestAnimationFrame(() => {
     if (viewerBox.dead) return;
-    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 40, faces: true, grid: { main: 0xffffff, sub: 0xffffff, opacity: 0.2 } }); viewerBox.v = v;
+    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 75, pitch: 0.55, faces: true, grid: { main: 0xffffff, sub: 0xffffff, opacity: 0.2 } }); viewerBox.v = v;
     v.cb.onDrop = (a, t, e) => {
       const over = document.elementFromPoint(e.clientX, e.clientY);
       if (over && over.closest('.tins')) { model.removeAtom(a); updateFit(); return; }
