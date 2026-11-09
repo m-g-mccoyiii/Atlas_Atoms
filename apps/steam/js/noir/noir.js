@@ -82,8 +82,9 @@ function caseScreen() {
           h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { sfx.click(); analyze(s); } }, 'Analyze'),
             S.upg.opinion && !S.cur.opinionUsed && !S.cur.opinions[s.id] ? h('button', { class: 'btn ghost', onclick: () => { S.cur.opinionUsed = true; S.cur.opinions[s.id] = true; persist(); sfx.click(); caseScreen(); } }, 'Second opinion') : '')]);
   };
-  const suspectCard = sp => { const t = suspectState(c, sp); return h('div', { class: 'card' + (t.cleared ? ' cleared' : '') }, h('div', { class: 'ct' }, sp.name), h('div', { class: 'dim' }, sp.role), h('p', { class: 'say' }, sp.says),
-    h('div', { class: 'tags' }, t.cleared ? h('span', { class: 'tag good' }, 'Cleared by evidence') : '', t.pointed ? h('span', { class: 'tag bad' }, t.pointed + ' clue' + (t.pointed > 1 ? 's' : '') + ' point here') : '')); };
+  const ruled = S.cur.ruled || (S.cur.ruled = {});
+  const suspectCard = sp => h('div', { class: 'card' + (ruled[sp.id] ? ' cleared' : '') }, h('div', { class: 'ct' }, sp.name), h('div', { class: 'dim' }, sp.role), h('p', { class: 'say' }, sp.says),
+    h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => { ruled[sp.id] = !ruled[sp.id]; persist(); sfx.click(); caseScreen(); } }, ruled[sp.id] ? 'Ruled out (undo)' : 'Rule out')));
   show(h('div', null,
     h('div', { class: 'labTop' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); hub(); } }, 'Office'), h('h2', null, c.title), S.ledger.length ? h('button', { class: 'btn ghost', onclick: () => { sfx.click(); ledgerScreen(caseScreen); } }, 'Anomaly ledger (' + S.ledger.length + ')') : '', h('div', { class: 'hours' }, h('b', null, S.cur.hours), ' lab hours left'),
       h('button', { class: 'btn red', disabled: nIdent ? null : 'disabled', title: nIdent ? '' : 'Identify a sample first', onclick: () => { sfx.click(); accuse(c); } }, c.accuseTitle || 'Name the culprit')),
