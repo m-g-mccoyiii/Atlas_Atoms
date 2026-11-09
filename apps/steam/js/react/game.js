@@ -63,7 +63,7 @@ function start(app) {
   // the line on the ticket about the group that must be kept
   function setKeep(keep, lost, capped) {
     keepEl.style.display = keep ? '' : 'none'; keepEl.className = 'tkKeep' + (lost ? ' lost' : '');
-    keepEl.replaceChildren(...(!keep ? [] : lost ? ['Kept group lost. Batch is halved at delivery.'] : capped ? [h('i', { class: 'cap' }), 'Marked ' + keep.kind + ' is capped. No bottle reacts there.'] : [h('i'), 'Keep the marked ' + keep.kind + '. Reacting it halves the batch.']));
+    keepEl.replaceChildren(...(!keep ? [] : lost ? [keep.kind + ' lost. Batch halved'] : capped ? [h('i', { class: 'cap' }), keep.kind + ' capped'] : [h('i'), 'Keep the marked ' + keep.kind]));
   }
   const KINDS = [['ms', 'Mass spectrum'], ['ir', 'Infrared'], ['nmr', 'Proton NMR']];
   const prints = KINDS.map(([k, label]) => { const cv = h('canvas'), pct = h('span', { class: 'prPct' }); return { k, cv, pct, el: h('div', { class: 'print' }, h('header', null, h('span', null, label), pct), cv) }; });
@@ -83,7 +83,7 @@ function start(app) {
   function bottle(card, key) {
     const art = h('canvas', { class: 'bArt' }), foot = h('div', { class: 'bFoot' }), grade = RUN.gradeOf(run, card.id);
     const pips = []; for (let k = 0; k < Math.min(5, grade); k++) pips.push(h('i'));
-    const el = h('button', { class: 'bottle g' + Math.min(3, grade), style: '--cc:' + css(card.rgb) },
+    const el = h('button', { class: 'bottle g' + Math.min(3, grade), style: '--cc:' + css(card.rgb), title: card.rule },
       h('div', { class: 'bBand' }, key ? h('span', { class: 'bKey' }, key) : null, h('span', { class: 'bVerb' }, card.verb), h('span', { class: 'bPips', title: 'Grade ' + grade + ': ' + RUN.YIELD * grade + ' yield for each site' }, pips)),
       h('div', { class: 'bFormula' }, card.formula),
       art, h('div', { class: 'bRule' }, card.rule),
@@ -220,10 +220,10 @@ function start(app) {
     st.offerEls = run.offers.map((o, i) => {
       const cov = RUN.coverage(run, o.feed);
       const el = h('button', { class: 'offer' + (o.large ? ' large' : ''), onclick: () => pickFeed(i) },
-        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, o.pay + ' kg surplus' + (o.large ? ' and 2 picks' : ' and 1 pick'))),
+        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, o.pay + ' kg, ' + (o.large ? '2 picks' : '1 pick'))),
         h('div', { class: 'ofBody' },
           h('div', { class: 'ofName' }, o.feedName),
-          h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups'))),
+          h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'groups'))),
           o.keep ? h('div', { class: 'ofKeep' }, h('i'), 'Keep the marked ' + o.keep.kind) : null,
           h('div', { class: 'ofCov' }, cov.length ? cov.map(c => { const card = RX.CARDS[c.id]; return h('span', { style: '--cc:' + css(card.rgb) }, card.verb + ' ' + c.n); }) : 'No bottle in the rack reacts with it as it stands')));
       ['mouseenter', 'focus'].forEach(ev => el.addEventListener(ev, () => { if (st.mode === 'offer' && st.pv !== i) lookAt(i); }));
@@ -261,30 +261,31 @@ function start(app) {
     ids.forEach(id => { m.got.push(id); st.fresh.push(id); });
     saveMeta();
   }
-  // the panel before a run: which kit, which level, and the feats still open
+  // the screen before a run: kits drawn as racks of bottles, levels as hazard diamonds, feats as stamps
   function showStart() {
     st.tok++; st.mode = 'start'; st.busy = false; st.opts = null; st.end = false;
     const m = st.meta, maxLv = maxLevel(), U = RUN.UNLOCKS;
     if (!RUN.RACKS[m.rack] || (m.rack !== 'standard' && !got(m.rack))) m.rack = 'standard';
     m.level = Math.max(0, Math.min(maxLv, m.level));
-    const md = RUN.mods(m.rack, m.level);
     const again = fn => () => { fn(); saveMeta(); sfx.click(); showStart(); };
     const kits = Object.keys(RUN.RACKS).map(id => {
-      const k = RUN.RACKS[id], open = id === 'standard' || got(id), best = m.best[id] | 0;
-      return h('button', { class: 'opt kit' + (m.rack === id ? ' on' : ''), disabled: open ? null : '', onclick: again(() => { m.rack = id; }) },
-        h('b', null, k.name), h('span', null, open ? k.rule : 'Locked. ' + U.find(u => u.id === id).how + '.'), open && best ? h('i', null, 'Cleared level ' + best) : null);
+      const k = RUN.RACKS[id], open = id === 'standard' || got(id), best = m.best[id] | 0, u = U.find(x => x.id === id);
+      const pips = []; for (let i = 0; i < best; i++) pips.push(h('i'));
+      return h('button', { class: 'kit' + (m.rack === id ? ' on' : ''), disabled: open ? null : '', title: open ? k.rule : u.how, onclick: again(() => { m.rack = id; }) },
+        h('div', { class: 'kitRack' }, k.deck.map(c => { const card = RX.CARDS[c]; return h('i', { class: 'mb', style: '--cc:' + css(card.rgb), title: card.verb }, card.formula.split(' ')[0].replace(',', '')); })),
+        h('b', null, k.name, pips.length ? h('span', { class: 'kitBest', title: 'Cleared level ' + best }, pips) : null),
+        h('div', { class: 'tags' }, open ? k.tags.map(t => h('span', null, t)) : h('span', { class: 'lock' }, u.how)));
     });
-    const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: again(() => { m.level = i; }) }, h('b', null, String(i + 1))));
-    const rules = m.level ? RUN.LEVELS.slice(1, m.level + 1).filter((x, i, a) => !x.quota || !a.slice(i + 1).some(y => y.quota)).map(x => x.text).join('. ') + '.' : 'No handicap.';
-    const open = U.filter(u => !got(u.id)), shown = st.featsAll ? U : open.slice(0, 4);
-    const list = shown.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.feat), h('span', null, got(u.id) ? u.name + ' unlocked' : u.how + '. Unlocks ' + u.name + '.')));
-    overlay.replaceChildren(h('div', { class: 'panel start' }, h('h2', null, 'New run'),
-      h('p', null, 'React at the atoms the last bottle changed to build a chain. Each link multiplies batch, and a chain that follows a named route multiplies it again.'),
-      h('p', null, 'From order ' + (md.keepFrom + 1) + ', each feedstock has one marked group to keep. A bottle reacts at every site it matches, and reacting at the marked group halves the batch. Capping the marked group costs ' + (md.freeCap ? 'no step' : 'one step') + ' and stops every bottle reacting there.'),
-      h('h3', null, 'Kit'), h('div', { class: 'opts' }, kits),
-      h('h3', null, 'Level'), h('div', { class: 'opts lv' }, levels), h('p', { class: 'lvText' }, rules),
-      h('h3', null, 'Feats, ' + (U.length - open.length) + ' of ' + U.length, h('button', { class: 'linkbtn', onclick: () => { st.featsAll = !st.featsAll; sfx.click(); showStart(); } }, st.featsAll ? 'Show next 4' : 'Show all')),
-      h('ul', { class: 'unl' }, list),
+    const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'haz' + (i <= m.level ? ' on' : ''), disabled: i <= maxLv ? null : '', title: i ? x.text : 'Standard quotas', onclick: again(() => { m.level = i; }) }, h('b', null, String(i + 1))));
+    const lvTags = RUN.LEVELS.slice(1, m.level + 1).filter((x, i, arr) => !x.quota || !arr.slice(i + 1).some(y => y.quota)).map(x => h('span', null, x.tag));
+    const line = h('div', { class: 'featLine' }), next = U.find(u => !got(u.id));
+    const say = u => { line.replaceChildren(...(u ? [h('b', null, u.feat), u.how + '. Unlocks ' + u.name + '.'] : [])); };
+    const feats = U.map(u => { const el = h('button', { class: 'feat' + (got(u.id) ? ' got' : '') }, got(u.id) ? u.name : ''); el.onmouseenter = el.onfocus = el.onclick = () => say(u); return el; });
+    say(next);
+    overlay.replaceChildren(h('div', { class: 'panel start' },
+      h('div', { class: 'kits' }, kits),
+      h('div', { class: 'lvRow' }, levels, h('div', { class: 'tags' }, lvTags)),
+      h('div', { class: 'feats' }, feats), line,
       h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
     overlay.className = 'ov on';
   }
@@ -507,10 +508,10 @@ function start(app) {
       });
       st.pickEls = opts.map(o => o.el || o);
       st.pickHead = h('h3', null, res.picks > 1 ? 'Take ' + res.picks : 'Take one');
-      const pd = res.paid, why = [pd.order + ' for the order', pd.steps ? pd.steps + ' for ' + plural(pd.stepsLeft, 'unused step') : '', pd.doubles ? pd.doubles + ' for doubling the quota ' + (pd.doubled > 1 ? pd.doubled + ' times' : 'once') : '', pd.held ? pd.held + ' earned on surplus held' : ''].filter(Boolean);
+      const pd = res.paid, why = [['order', pd.order], ['steps left', pd.steps], ['quota doubled', pd.doubles], ['surplus held', pd.held]].filter(x => x[1]).map(x => h('span', null, h('b', null, '+' + x[1]), x[0]));
       kids.push(h('h2', null, 'Order ' + n + ' filled'),
-        h('p', null, fmt(res.total) + ' against ' + fmt(cur.quota) + ' needed. ' + plural(res.checks.n, 'check') + ' passed.'),
-        h('p', { class: 'surplus' }, h('b', null, res.pay + ' kg of surplus kept: '), why.join(', ') + '.'), fresh,
+        h('div', { class: 'pBig' }, fmt(res.total), h('small', null, ' of ' + fmt(cur.quota))),
+        h('div', { class: 'payRow' }, h('em', null, '+' + res.pay + ' kg'), why), fresh,
         st.pickHead, h('div', { class: 'picks' }, st.pickEls),
         h('button', { class: 'btn', onclick: () => choose(-1) }, 'Take nothing  [0]'));
       overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';

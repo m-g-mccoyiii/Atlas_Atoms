@@ -28,21 +28,21 @@ const KEEP_FROM = 2;
 // Kits: a starting rack and one rule change. Levels: each adds one handicap to all the levels below it.
 // All but the first of each are unlocked by play. The rule fields are read by mods() below.
 const RACKS = {
-  standard: { name: 'General kit', rule: 'One more hand swap on every order.', deck: STARTER, redraws: 1 },
-  halide: { name: 'Halide kit', rule: 'One more step on every order. One bottle fewer in the hand.', steps: 1, hand: -1,
+  standard: { name: 'General kit', rule: 'One more hand swap on every order.', tags: ['+1 swap'], deck: STARTER, redraws: 1 },
+  halide: { name: 'Halide kit', rule: 'One more step on every order. One bottle fewer in the hand.', tags: ['+1 step', '-1 hand'], steps: 1, hand: -1,
     deck: ['hcl', 'hcl', 'socl2', 'socl2', 'koh', 'koh', 'naoh', 'naoh', 'hydrate', 'h2'] },
-  redox: { name: 'Redox kit', rule: 'Starts with an Ice bath.', gear: ['icebath'],
+  redox: { name: 'Redox kit', rule: 'Starts with an Ice bath.', tags: ['Ice bath'], gear: ['icebath'],
     deck: ['pcc', 'pcc', 'pcc', 'nabh4', 'nabh4', 'nabh4', 'bh3', 'bh3', 'h2', 'hydrate'] },
-  protect: { name: 'Protecting kit', rule: 'Marked groups from order 1. Capping costs no step.', deck: STARTER, keepFrom: 0, freeCap: true },
-  pilot: { name: 'Pilot plant kit', rule: 'Starts with 12 kg of surplus. Filled orders leave 2 kg less.', deck: STARTER, cash: 8, pay: -2 }
+  protect: { name: 'Protecting kit', rule: 'Marked groups from order 1. Capping costs no step.', tags: ['Keep from order 1', 'Free cap'], deck: STARTER, keepFrom: 0, freeCap: true },
+  pilot: { name: 'Pilot plant kit', rule: 'Starts with 12 kg of surplus. Filled orders leave 2 kg less.', tags: ['12 kg', '-2 kg an order'], deck: STARTER, cash: 8, pay: -2 }
 };
 const LEVELS = [
   { text: 'Standard quotas' },
-  { text: 'Quotas times 1.5', quota: 1.5 },
-  { text: 'Orders 2 and 6 also carry a condition', conds: [1, 5] },
-  { text: 'One hand swap fewer on every order', redraws: -1 },
-  { text: 'Filled orders leave 2 kg less surplus', pay: -2 },
-  { text: 'Quotas times 2.5', quota: 2.5 }
+  { text: 'Quotas times 1.5', tag: 'Quota 1.5', quota: 1.5 },
+  { text: 'Orders 2 and 6 also carry a condition', tag: '+2 conditions', conds: [1, 5] },
+  { text: 'One hand swap fewer on every order', tag: '-1 swap', redraws: -1 },
+  { text: 'Filled orders leave 2 kg less surplus', tag: '-2 kg an order', pay: -2 },
+  { text: 'Quotas times 2.5', tag: 'Quota 2.5', quota: 2.5 }
 ];
 function mods(rack, level) {
   const m = { steps: 0, hand: 0, redraws: 0, pay: 0, quota: 1, conds: [3, 7], keepFrom: KEEP_FROM, freeCap: false };
