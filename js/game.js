@@ -1,7 +1,8 @@
 (function () {
 'use strict';
 const AA = window.AA, E = AA.ELEMENTS, C = AA.chem, Model = AA.Model, Viewer = AA.Viewer;
-const $ = s => document.querySelector(s);
+const NIL = document.createElement('div');   // stand-in so a missing element can never crash startup
+const $ = s => document.querySelector(s) || NIL;
 const SAVE = 'atlas-atoms-v1';
 const root = document.documentElement;
 // Layout: 'auto' picks phone / tablet / desktop from the screen; 'phone' and 'tablet' force it.

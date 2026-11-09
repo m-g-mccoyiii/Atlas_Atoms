@@ -11,7 +11,47 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <title>Atlas’ Atoms</title>
-<link rel="stylesheet" href="css/style.css">
+<script>
+// Runs before anything else: sets the right layout class immediately, and shows a
+// readable message (with a clean-reload button) if the game fails to start.
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('atlas-atoms-v1') || '{}'), pref = s.layout || 'auto';
+    var w = innerWidth, h = innerHeight, c = document.documentElement.classList, mode = 'desktop';
+    if (pref === 'phone' || pref === 'tablet') mode = pref;
+    else if (w <= 760 || h <= 520) mode = 'phone';
+    else if (matchMedia('(pointer: coarse)').matches) mode = 'tablet';
+    if (mode === 'phone') c.add('m-phone');
+    if (mode === 'tablet') c.add('m-tablet');
+    if (w > h) c.add('m-land');
+    if (w < 1000) c.add('m-narrow');
+  } catch (e) { /* ignore */ }
+  var shown = false;
+  function fatal(msg) {
+    if (shown) return; shown = true;
+    window.addEventListener('DOMContentLoaded', put); if (document.body) put();
+    function put() {
+      if (document.getElementById('fatal')) return;
+      var d = document.createElement('div'); d.id = 'fatal';
+      d.setAttribute('style', 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#3a1620;border:2px solid #ff6b6b;color:#fff;border-radius:12px;padding:12px;font:15px system-ui,sans-serif');
+      d.innerHTML = '<b>The game hit a problem while loading.</b><br><small style="opacity:.85"></small><br>' +
+        '<button style="margin-top:8px;padding:10px 14px;font-size:16px;border-radius:10px;border:0;background:#3dd6c6;color:#07302c;font-weight:bold">Reload fresh</button>';
+      d.querySelector('small').textContent = msg;
+      d.querySelector('button').onclick = function () {
+        var jobs = [];
+        if (window.caches) jobs.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+        if (navigator.serviceWorker) jobs.push(navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }));
+        Promise.all(jobs).catch(function () {}).then(function () { location.reload(); });
+      };
+      document.body.appendChild(d);
+    }
+  }
+  window.addEventListener('error', function (e) {
+    if (e && e.message && String(e.filename || '').indexOf(location.origin) === 0) fatal(e.message + ' (' + String(e.filename).split('/').pop().split('?')[0] + ':' + e.lineno + ')');
+  });
+})();
+</script>
+<link rel="stylesheet" href="css/style.css?v=__BUILD__">
 </head>
 <body>
 <header class="top">
@@ -67,20 +107,20 @@
   </aside>
 </main>
 <div id="modal" class="modal hidden"></div>
-<script src="js/data.js"></script>
-<script src="js/chem.js"></script>
-<script src="js/lessons.js"></script>
-<script src="js/quizzes.js"></script>
-<script src="js/model.js"></script>
-<script src="vendor/three.min.js"></script>
-<script src="js/render3d.js"></script>
-<script src="js/molinfo.js"></script>
-<script src="js/orbitals.js"></script>
-<script src="js/lab.js"></script>
-<script src="js/game.js"></script>
+<script src="js/data.js?v=__BUILD__"></script>
+<script src="js/chem.js?v=__BUILD__"></script>
+<script src="js/lessons.js?v=__BUILD__"></script>
+<script src="js/quizzes.js?v=__BUILD__"></script>
+<script src="js/model.js?v=__BUILD__"></script>
+<script src="vendor/three.min.js?v=__BUILD__"></script>
+<script src="js/render3d.js?v=__BUILD__"></script>
+<script src="js/molinfo.js?v=__BUILD__"></script>
+<script src="js/orbitals.js?v=__BUILD__"></script>
+<script src="js/lab.js?v=__BUILD__"></script>
+<script src="js/game.js?v=__BUILD__"></script>
 <script>
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
-  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js?v=__BUILD__").catch(function () {}); });
 }
 </script>
 </body>

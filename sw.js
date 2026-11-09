@@ -1,6 +1,6 @@
 // Offline support: pre-cache the game, then answer from the network when possible
 // (so updates arrive) and from the cache when offline.
-const CACHE = 'atlas-atoms-v3';
+const CACHE = 'atlas-atoms-__BUILD__';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'css/style.css',
   'vendor/three.min.js',
@@ -22,7 +22,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(req).then(res => {
+    fetch(req, { cache: 'no-cache' }).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || caches.match('index.html')))
