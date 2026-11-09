@@ -41,7 +41,7 @@ AA.LESSONS = [
     "n": 4, "title": "Sharing makes a bond", "level": "Start here", "minutes": 10,
     "bigIdea": "Atoms hold on to each other by sharing tiny bits called electrons. One shared pair is a single bond. Two shared pairs make a double bond. The oxygen you breathe has a double bond.",
     "words": [["electron", "A tiny bit that atoms share to make a bond."], ["double bond", "Two shared pairs between the same two atoms."]],
-    "tryIt": ["Drag two O atoms. Drop one on the other to make a bond.", "Drop it on again to make a double bond. Now both smile.", "Click Electrons in the view buttons. Count the lines between the O atoms."],
+    "tryIt": ["Drag two O atoms. Drop one on the other to make a bond.", "Tap the gold + on the bond (or drop one O on the other again) to make a double bond. Now both smile.", "Click Electrons in the view buttons. Count the lines between the O atoms."],
     "check": [{"q": "What do atoms share to make a bond?", "a": "Electrons."}, {"q": "How many lines are between the O atoms?", "a": "Two. That is a double bond."}],
     "realLife": "Every breath of oxygen you take is made of atoms joined by a double bond.",
     "offScreen": "Link two paper clips once. Then link them twice. Which is harder to pull apart?",

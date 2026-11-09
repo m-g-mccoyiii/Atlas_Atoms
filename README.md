@@ -16,7 +16,7 @@ Then visit http://localhost:8765.
 
 ## What you can do
 
-- **Build molecules in 3D.** Drag atoms from the tray and drop one on another to bond. Drop again for a double or triple bond. Each atom shows its bonding “hands” as dots, and smiles when all are used. Click an atom to poke it and read about it.
+- **Build molecules in 3D.** Drag atoms from the tray and drop one on another to bond. Tap the gold + on a bond (or drop again) for a double or triple bond. Each atom shows its bonding “hands” as dots, and smiles when all are used. Click an atom to poke it and read about it.
 - **Move everything.** Drag empty space to orbit (it keeps spinning when you let go), scroll or pinch to zoom, Shift-drag or right-drag to pan. The Heat slider makes atoms jiggle, and Shake kicks them all.
 - **Four ways to look at a molecule.** Ball & Stick, Space-filling, Electrons (Lewis dot diagrams), and Orbitals (shared-electron clouds, lone-pair lobes, and s/p orbitals on lone atoms).
 - **Missions.** Each mission gives a formula to build. Same atoms, wrong arrangement? The game says so (isomers).

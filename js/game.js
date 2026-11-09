@@ -162,7 +162,9 @@ bench.cb.onDrop = function (a, target, e) {
       a.z += (Math.random() - 0.5) * 0.3;
       sfx.bond(); bench.pop(a); bench.pop(target);
       bench.burstAtoms([a, target], 14);
+      const firstBond = !tipSeen.bond;
       tipOnce('bond', 'Bond made. The dots under each atom count its hands. When every hand is used, the atom smiles.');
+      if (!firstBond && model.canBond(a, target)) tipOnce('upgrade', 'Both atoms still have open hands. Tap the gold + on the bond, or drop one atom on the other again, to make a double bond.');
     } else {
       sfx.bad();
       const full = model.bondSum(a) >= C.maxValence(a.el) ? a : target;
@@ -522,7 +524,7 @@ function openHelp() {
   state.seenHelp = true; save();
   modalShell('Welcome to the lab, ' + AA.PLAYER_NAME + '!', h('div', null,
     h('p', null, '1. Drag atoms from the atom tray onto the bench. On a phone, swipe up from an atom in the bottom strip. On an iPad, swipe right from an atom in the left tray.'),
-    h('p', null, '2. Drop one atom on top of another to bond them. Drop them together again to make a double or triple bond.'),
+    h('p', null, '2. Drop one atom on top of another to bond them. Tap the gold + on a bond, or drop them together again, to make a double or triple bond.'),
     h('p', null, '3. Each atom has a number of hands (bonds it wants). Fill every hand and the atom smiles.'),
     h('p', null, '4. When a molecule is real and in the Atlas, you discover it and learn where it shows up in real life.'),
     h('p', null, '5. Switch to Orbitals to see shared electrons and lone pairs. Use Cut bond to take molecules apart.'),
@@ -566,6 +568,35 @@ $('#btnHelp').addEventListener('click', openHelp);
 function soundBtn() { $('#btnSound').textContent = state.mute ? '🔇' : '🔊'; }
 $('#btnSound').addEventListener('click', () => { state.mute = !state.mute; save(); soundBtn(); });
 
+
+// ---------- the gold "+" on bonds that can still become double / triple ----------
+const bondBtns = new Map();
+function updateBondButtons() {
+  const box = $('.canvasbox');
+  const show = !bench.drag && bench.tool === 'build' && (state.mode === 'ball' || state.mode === 'lewis');
+  const live = new Set();
+  if (show) for (const b of model.bonds) {
+    if (!model.canBond(b.a, b.b)) continue;
+    const A = bench._screen(b.a), B = bench._screen(b.b), dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
+    if (len < 34) continue;
+    live.add(b);
+    let el = bondBtns.get(b);
+    if (!el) {
+      el = h('button', { class: 'bondplus', title: 'Add another bond (double or triple)', 'aria-label': 'Add another bond' }, '+');
+      el.addEventListener('pointerdown', e => e.stopPropagation());
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!model.canBond(b.a, b.b)) return;
+        model.bond(b.a, b.b); bench.pop(b.a); bench.pop(b.b); bench.burstAtoms([b.a, b.b], 10); sfx.bond(); analyze();
+      });
+      box.append(el); bondBtns.set(b, el);
+    }
+    el.style.left = ((A.x + B.x) / 2 - dy / len * 22) + 'px';
+    el.style.top = ((A.y + B.y) / 2 + dx / len * 22) + 'px';
+  }
+  for (const [b, el] of bondBtns) if (!live.has(b)) { el.remove(); bondBtns.delete(b); }
+}
+
 // ---------- main loop ----------
 let last = performance.now();
 function frame(t) {
@@ -581,6 +612,7 @@ function frame(t) {
   if (heat > 0) for (const a of model.atoms) if (!a.pinned) { const k = heat * 0.9; a.vx += (Math.random() - 0.5) * k; a.vy += (Math.random() - 0.5) * k; a.vz += (Math.random() - 0.5) * k; }
   for (let i = 0; i < 4; i++) model.step(0.012);
   bench.render(dt);
+  updateBondButtons();
   if (detail) detail.render(dt);
   requestAnimationFrame(frame);
 }

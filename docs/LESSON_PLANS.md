@@ -137,7 +137,7 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 **Try it in the game**
 
 1. Drag two O atoms. Drop one on the other to make a bond.
-2. Drop it on again to make a double bond. Now both smile.
+2. Tap the gold + on the bond (or drop one O on the other again) to make a double bond. Now both smile.
 3. Click Electrons in the view buttons. Count the lines between the O atoms.
 
 **Check yourself**
