@@ -16,7 +16,7 @@
 // readable message (with a clean-reload button) if the game fails to start.
 (function () {
   try {
-    var s = JSON.parse(localStorage.getItem('atlas-atoms-v1') || '{}'), pref = s.layout || 'auto';
+    var s = JSON.parse(localStorage.getItem('atlas-atoms-device') || localStorage.getItem('atlas-atoms-v1') || '{}'), pref = s.layout || 'auto';
     var w = innerWidth, h = innerHeight, c = document.documentElement.classList, mode = 'desktop';
     if (pref === 'phone' || pref === 'tablet') mode = pref;
     else if (w <= 760 || h <= 520) mode = 'phone';
@@ -58,6 +58,7 @@
   <h1><span class="logo">⚛</span><span class="name"> Atlas’ Atoms</span></h1>
   <nav>
     <label class="chk" title="Read tips and lessons out loud"><input type="checkbox" id="chkVoice"> 🗣<span class="lbl"> Read aloud</span></label>
+    <button id="btnProfile" class="pill" aria-label="Profile"></button>
     <button id="btnLab" class="pill" aria-label="Molecule Lab">🔬<span class="lbl"> Molecule Lab</span></button>
     <button id="btnBadges" class="pill" aria-label="Badges">🏅<span class="lbl"> Badges</span> <span id="bcount"></span></button>
     <button id="btnLessons" class="pill" aria-label="Lessons">🎓<span class="lbl"> Lessons</span> <span id="lcount"></span></button>
@@ -122,6 +123,8 @@
 <script src="js/realdata.js?v=__BUILD__"></script>
 <script src="js/real.js?v=__BUILD__"></script>
 <script src="js/progress.js?v=__BUILD__"></script>
+<script src="js/profiles.js?v=__BUILD__"></script>
+<script src="js/profileui.js?v=__BUILD__"></script>
 <script src="js/game.js?v=__BUILD__"></script>
 <script>
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

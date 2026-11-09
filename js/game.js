@@ -40,10 +40,10 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, badges: {}, tries: {}, lookups: 0, layout: 'auto', voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
-  try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
-})());
-function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+const boot = AA.profiles.boot();          // loads (or creates) the active player's profile
+const state = boot.state;
+function save() { AA.profiles.save(state); }
+let remindedFor = 0;
 const lib = C.library();
 const foundCount = () => Object.keys(state.found).length;
 const isUnlocked = el => foundCount() >= E[el].unlock;
@@ -427,6 +427,11 @@ function checkLessons() {
   }
   if (changed) save();
   const el = $('#lcount'); if (el) el.textContent = '(' + lessonCount() + '/' + AA.LESSONS.length + ')';
+  const doneN = lessonCount();
+  if (doneN > 0 && doneN % 10 === 0 && doneN !== remindedFor && Date.now() - (state.lastBackup || 0) > 7 * 86400000) {
+    remindedFor = doneN;
+    setTimeout(() => tip('You have finished ' + doneN + ' lessons! Open your profile (top of the screen) and tap Back up so your progress is safe.', 11000), 5000);
+  }
   if (AA.checkBadges) AA.checkBadges();
 }
 function openLessons(focus) {
@@ -619,9 +624,14 @@ function frame(t) {
 }
 
 applyLayout(); buildTray(); setMode(state.mode); soundBtn(); analyze();
-tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
-if (!state.seenHelp) openHelp();
-requestAnimationFrame(frame);
 AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, save, checkLessons, bench, sfx, tip, speak, lessonDone, getDetail: () => detail, setDetail: v => { detail = v; } };
+AA.refreshProfileButton();
+AA.checkBadges();
+AA.profiles.requestPersist();
+$('#btnProfile').addEventListener('click', () => AA.openProfile());
+const afterSetup = () => { if (!state.seenHelp) openHelp(); };
+if (boot.needsSetup) AA.openSetup(afterSetup);
+else { tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000); afterSetup(); }
+requestAnimationFrame(frame);
 window.AA_debug = { bench, model, state, analyze };
 })();

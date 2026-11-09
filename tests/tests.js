@@ -160,6 +160,30 @@ test('badges: unique, none for a new player, all for a finished one', () => {
   eq(st.lessonsDone >= 10, true, 'ten lessons counted'); eq(st.units[0].done, 10, 'unit 1 done'); eq(st.units[1].done, 0, 'unit 2 untouched');
 });
 
+test('profiles: first run, old saves, switching, backup and restore', () => {
+  const mk = () => { const m = {}; return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; };
+  const P = AA.profiles;
+  let s = mk(); P._useStore(s); let b = P.boot();
+  eq(b.needsSetup, true, 'a brand new player is asked for a name'); eq(b.profile.name, 'Explorer');
+  b.state.found.water = 123; P.save(b.state);
+  b = P.boot(); eq(b.state.found.water, 123, 'progress survives a restart');
+  P.update(b.profile.id, { name: '  Mia<script>  ', avatar: P.AVATARS[3], named: true });
+  b = P.boot(); eq(b.profile.name, 'Miascript', 'name is cleaned'); eq(b.needsSetup, false);
+  const first = b.profile.id, p2 = P.create('Leo', P.AVATARS[1]); P.switchTo(p2.id); b = P.boot();
+  eq(b.profile.name, 'Leo'); eq(Object.keys(b.state.found).length, 0, 'new player starts empty');
+  b.state.lessons[5] = 1; P.save(b.state);
+  P.switchTo(first); b = P.boot();
+  eq(b.state.lessons[5], undefined, 'players do not share progress'); eq(b.state.found.water, 123);
+  const exp = JSON.stringify(P.exportProfile(b.profile.id, b.state)), imp = P.importText(exp);
+  eq(imp.name === b.profile.name, false, 'a restored copy never overwrites the original'); eq(P.progressOf(imp.id).found.water, 123, 'restore brings progress back');
+  ['', 'not json', '{}', JSON.stringify({ app: 'other', progress: {} })].forEach(x => { let threw = false; try { P.importText(x); } catch (e) { threw = true; } eq(threw, true, 'rejects: ' + x.slice(0, 14)); });
+  const evil = P.importText('{"app":"atlas-atoms","progress":{"found":{"__proto__":1,"water":5,"x y":2,"bad":"str"},"lessons":{"3":9}},"profile":{"name":"' + 'A'.repeat(100) + '"}}');
+  eq(Object.keys(P.progressOf(evil.id).found).join(','), 'water', 'junk keys and values are dropped'); eq(evil.name.length <= 20, true, 'long names are cut'); eq(({}).polluted, undefined);
+  s = mk(); s.setItem('atlas-atoms-v1', JSON.stringify({ found: { water: 99 }, layout: 'phone', mute: true })); P._useStore(s); AA.PLAYER_NAME = 'Atlas'; b = P.boot();
+  eq(b.state.found.water, 99, 'old single-slot progress moves into a profile'); eq(b.state.layout, 'phone'); eq(b.state.mute, true); eq(b.profile.name, 'Atlas'); eq(b.needsSetup, false);
+  eq(P.remove(b.profile.id), false, 'the last profile cannot be deleted');
+});
+
 document.getElementById('summary').innerHTML = '<h2 class="' + (fail ? 'fail' : 'pass') + '">' + pass + ' passed, ' + fail + ' failed</h2>';
 document.title = (fail ? 'FAIL ' : 'PASS ') + pass + '/' + (pass + fail);
 })();

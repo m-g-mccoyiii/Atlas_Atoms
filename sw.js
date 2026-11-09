@@ -5,7 +5,7 @@ const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'css/style.css',
   'vendor/three.min.js',
   'js/data.js', 'js/chem.js', 'js/lessons.js', 'js/quizzes.js', 'js/model.js',
-  'js/render3d.js', 'js/realdata.js', 'js/real.js', 'js/progress.js', 'js/molinfo.js', 'js/orbitals.js', 'js/reactionsim.js', 'js/lab.js', 'js/game.js'
+  'js/render3d.js', 'js/realdata.js', 'js/real.js', 'js/progress.js', 'js/profiles.js', 'js/profileui.js', 'js/molinfo.js', 'js/orbitals.js', 'js/reactionsim.js', 'js/lab.js', 'js/game.js'
 ];
 
 self.addEventListener('install', e => {

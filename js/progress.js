@@ -130,7 +130,7 @@ function fmt(ts) { return new Date(ts).toLocaleDateString(undefined, { month: 's
 
 AA.progressSummary = function (s) {
   const st = AA.progressStats(s), L = AA.LESSONS, lines = [];
-  lines.push("Atlas' Atoms progress report");
+  lines.push("Atlas' Atoms progress report" + (AA.profiles && AA.profiles.current() ? ' for ' + AA.profiles.current().name : ''));
   lines.push('Lessons complete: ' + st.lessonsDone + ' of ' + st.lessonsTotal);
   lines.push('Perfect quizzes: ' + st.perfect);
   lines.push('Molecules found: ' + st.found + ' of ' + st.foundTotal);
@@ -151,6 +151,8 @@ AA.openProgress = function () {
     [st.reacted + '/' + st.reactionsTotal, 'reactions tried'], [Object.keys(have).length + '/' + AA.BADGES.length, 'badges']];
   body.append(h('div', { class: 'repCards' }, cards.map(c => h('div', { class: 'repCard' }, h('b', null, String(c[0])), h('small', null, c[1])))));
 
+  const prof = AA.profiles && AA.profiles.current();
+  if (prof) body.append(h('p', { class: 'labText' }, prof.avatar + ' ' + prof.name + ' \u00B7 playing since ' + fmt(prof.created) + ' \u00B7 ' + (s.lastBackup ? 'last backup ' + fmt(s.lastBackup) : 'never backed up')));
   // days played: unique calendar days that have any recorded activity
   const stamps = [];
   [s.found, s.lessons, s.reacted, s.labSeen, s.badges].forEach(o => Object.values(o || {}).forEach(v => { if (typeof v === 'number' && v > 1e12) stamps.push(v); }));
@@ -195,9 +197,9 @@ AA.openProgress = function () {
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => window.prompt('Copy this summary:', text));
     else window.prompt('Copy this summary:', text);
   } }, 'Copy summary');
-  body.append(h('div', { class: 'repActions noprint' }, copyBtn, ' ', h('button', { class: 'btn alt', onclick: () => window.print() }, 'Print'), ' ',
+  body.append(h('div', { class: 'repActions noprint' }, copyBtn, ' ', h('button', { class: 'btn alt', onclick: () => window.print() }, 'Print'), ' ', h('button', { class: 'btn alt', onclick: () => AA.profileBackup() }, 'Back up'), ' ',
     h('button', { class: 'pill', style: 'margin-left:auto', onclick: () => AA.real.ask({ title: 'Erase all progress?', text: 'This removes every discovery, lesson, quiz score and badge on this device. It cannot be undone.', ok: 'Erase everything' },
-      () => { try { localStorage.removeItem('atlas-atoms-v1'); } catch (e) { /* ignore */ } location.reload(); }) }, 'Reset progress')));
+      () => { AA.profiles.resetProgress(); location.reload(); }) }, 'Reset progress')));
   U.modalShell('Progress report', body);
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
