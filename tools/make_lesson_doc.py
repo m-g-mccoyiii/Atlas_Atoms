@@ -10,7 +10,7 @@ src = open(os.path.join(root, 'js', 'lessons.js'), encoding='utf-8').read()
 start = src.index('AA.LESSONS = [') + len('AA.LESSONS = ')
 lessons = json.loads(src[start:src.rindex(']') + 1])
 
-out = ["# Atlas' Atoms: 20 Lesson Plans", "",
+out = [f"# Atlas' Atoms: {len(lessons)} Lesson Plans", "",
        "Written for a very advanced 7-year-old working with a grown-up. A path from \"what is an atom?\" to burning fuel, acids and the chemistry of your body. "
        "Each lesson takes 10 to 20 minutes and is built around the game. The same lessons appear in the game under **Lessons**, "
        "and the game ticks a lesson off automatically when the child finishes its activity.", "",

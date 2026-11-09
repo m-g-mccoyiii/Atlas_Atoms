@@ -20,7 +20,7 @@ function h(tag, attrs) {
 }
 
 // ---------- state ----------
-const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
+const state = Object.assign({ found: {}, lessons: {}, reacted: {}, quiz: {}, labSeen: {}, voice: false, mode: 'ball', faces: true, mute: false, seenHelp: false }, (() => {
   try { return JSON.parse(localStorage.getItem(SAVE) || '{}'); } catch (e) { return {}; }
 })());
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) { /* ignore */ } }
@@ -399,6 +399,8 @@ function lessonDone(L) {
   if (d.reacted) return !!state.reacted[d.reacted];
   if (d.reactedAny) return d.reactedAny.some(id => state.reacted[id]);
   if (d.reactedCount) return Object.keys(state.reacted).length >= d.reactedCount;
+  if (d.lab) return !!state.labSeen[d.lab];
+  if (d.labAll) return d.labAll.every(k => state.labSeen[k]);
   return false;
 }
 function nextLesson() { return AA.LESSONS.find(L => !lessonDone(L)) || null; }
@@ -560,6 +562,6 @@ buildTray(); setMode(state.mode); soundBtn(); analyze();
 tip('Welcome, ' + AA.PLAYER_NAME + '! Drag an atom from the left onto the bench.', 9000);
 if (!state.seenHelp) openHelp();
 requestAnimationFrame(frame);
-AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, getDetail: () => detail, setDetail: v => { detail = v; } };
+AA.ui = { h, modalShell, speakBtn, state, lib, putOnBench, save, checkLessons, getDetail: () => detail, setDetail: v => { detail = v; } };
 window.AA_debug = { bench, model, state, analyze };
 })();

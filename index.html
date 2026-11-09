@@ -77,5 +77,10 @@
 <script src="js/orbitals.js"></script>
 <script src="js/lab.js"></script>
 <script src="js/game.js"></script>
+<script>
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+}
+</script>
 </body>
 </html>

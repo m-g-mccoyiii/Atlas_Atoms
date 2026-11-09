@@ -18,10 +18,11 @@ AA.openLab = function (tab) {
   body.append(bar, content);
   U.modalShell('Molecule Lab', body);
 
+  const mark = k => { U.state.labSeen = U.state.labSeen || {}; if (!U.state.labSeen[k]) { U.state.labSeen[k] = Date.now(); U.save(); U.checkLessons(); } };
   function setView(v) { const d = U.getDetail(); if (d) d.dispose(); U.setDetail(v); }
   function go(t) {
     bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-    setView(null); content.innerHTML = '';
+    mark(t); setView(null); content.innerHTML = '';
     if (t === 'explore') explore(); else if (t === 'orbitals') orbitals(); else mo();
   }
   const seg = (items, cur, cb) => {
@@ -86,7 +87,7 @@ AA.openLab = function (tab) {
     mixRow.append(h('label', null, 'Mix s and p ', mix), ' ', play);
     const viewSeg = seg([['both', 'Shape + dots'], ['shape', 'Shape'], ['dots', 'Dots']], 'both', v => { view = v; if (scene) scene.setView(v); });
     function pick(k) {
-      kind = k; cap.textContent = TEXT[k];
+      kind = k; cap.textContent = TEXT[k]; mark(k);
       const atomic = ['1s', '2s', '2p', '2p3'].includes(k);
       viewSeg.classList.toggle('hidden', !atomic); mixRow.classList.toggle('hidden', k !== 'sp3');
       if (!scene) return;
@@ -97,7 +98,7 @@ AA.openLab = function (tab) {
     controls.append(kinds, viewSeg, mixRow, legend());
     content.append(h('div', { class: 'labGrid' }, cv, h('div', null, controls, cap, U.speakBtn(() => cap.textContent))));
     cap.textContent = TEXT['1s'];
-    setTimeout(() => { scene = new AA.OrbitalScene(cv); setView(scene); scene.view = 'both'; scene.showAtomic('1s'); }, 0);
+    setTimeout(() => { scene = new AA.OrbitalScene(cv); setView(scene); scene.view = 'both'; scene.showAtomic('1s'); mark('1s'); }, 0);
   }
 
   // ---------- Molecular orbitals (H2-like) ----------
@@ -113,7 +114,7 @@ AA.openLab = function (tab) {
       txt.textContent = sp.text;
       const S = AA.overlap1s(d);
       meter.textContent = 'Distance ' + (d * AA.A0).toFixed(2) + ' Å. The two 1s orbitals overlap by ' + Math.round(S * 100) + '%.' + (Math.abs(d - 1.4) < 0.1 ? ' This is the distance H₂ likes best.' : d < 1.0 ? ' Too close: the nuclei push apart.' : d > 3 ? ' Too far: hardly any overlap, so hardly any bond.' : '');
-      drawDiagram();
+      drawDiagram(); mark('mo'); if (sel === 'sigmastar') mark('sigmastar'); if (n === 4) mark('he2');
       if (scene) scene.showMO(sel, d, view);
     }
     function drawDiagram() {

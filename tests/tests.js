@@ -96,7 +96,7 @@ test('benzene ring is flat', () => {
 });
 
 test('every lesson has a quiz with 2 sensible questions', () => {
-  eq(AA.LESSONS.length, 20, 'lessons');
+  eq(AA.LESSONS.length, 26, 'lessons');
   for (const L of AA.LESSONS) {
     const q = AA.QUIZZES[L.n];
     if (!q || q.length < 2) throw new Error('lesson ' + L.n + ' has no quiz');
@@ -112,6 +112,7 @@ test('lesson completion rules point at real molecules and reactions', () => {
   for (const L of AA.LESSONS) {
     const d = L.done || {};
     [].concat(d.found || [], d.foundAll || []).forEach(id => { if (!ids.has(id)) throw new Error('lesson ' + L.n + ' needs missing molecule ' + id); });
+    [].concat(d.lab || [], d.labAll || []).forEach(k => { if (!['1s', '2s', '2p', '2p3', 'sp3', 'pi', 'mo', 'sigmastar', 'he2', 'explore', 'orbitals'].includes(k)) throw new Error('lesson ' + L.n + ' needs unknown lab step ' + k); });
     [].concat(d.reacted || [], d.reactedAny || []).forEach(id => { if (!rx.has(id)) throw new Error('lesson ' + L.n + ' needs missing reaction ' + id); });
   }
 });

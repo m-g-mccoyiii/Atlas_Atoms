@@ -222,6 +222,245 @@ AA.LESSONS = [
     "offScreen": "Sort buttons by color, then by size, then by holes. Different sorting shows different patterns.",
     "grownup": "Ask: What is another pattern you can find in the tray of atoms?",
     "done": {"foundAll": ["h2s", "naf"]}
+  },
+  {
+    "n": 21,
+    "title": "Electrons live in clouds",
+    "level": "Deep dive",
+    "minutes": 15,
+    "bigIdea": "An electron is not a tiny ball zooming around like a planet. It is better to picture a fuzzy cloud. The cloud is thick where the electron is likely to be. Chemists call each cloud shape an orbital. The simplest one, s, is a ball.",
+    "words": [
+      [
+        "orbital",
+        "A cloud shape that shows where an electron is likely to be."
+      ],
+      [
+        "node",
+        "A spot inside an orbital where the electron is never found."
+      ]
+    ],
+    "tryIt": [
+      "Open the Molecule Lab (the microscope button) and choose the Orbitals tab.",
+      "Look at the 1s orbital. Each dot is one place the electron might be.",
+      "Press Dots, then Shape, then both. Spin it around.",
+      "Now press 2s. Find the ball inside a bigger ball. The gap between them is a node."
+    ],
+    "check": [
+      {
+        "q": "What is an orbital?",
+        "a": "A cloud shape where an electron is likely to be."
+      },
+      {
+        "q": "What shape is an s orbital?",
+        "a": "A ball."
+      }
+    ],
+    "realLife": "Hydrogen, the atom in every water molecule, has one electron in a 1s cloud.",
+    "offScreen": "Spin a fan or a pencil very fast. It looks like a blurry shape instead of a single thing. An electron cloud is a little like that.",
+    "grownup": "Ask: Why do you think chemists draw clouds instead of tiny circles?",
+    "done": {
+      "labAll": [
+        "1s",
+        "2s"
+      ]
+    }
+  },
+  {
+    "n": 22,
+    "title": "Dumbbells: the p orbitals",
+    "level": "Deep dive",
+    "minutes": 15,
+    "bigIdea": "Bigger atoms also have p orbitals. A p orbital looks like a dumbbell with two lobes. There are three of them, pointing along x, y and z at right angles. The blue and orange colors show phase, like the up and down of a wave.",
+    "words": [
+      [
+        "lobe",
+        "One round part of an orbital."
+      ],
+      [
+        "phase",
+        "Whether the wave is up (blue) or down (orange)."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, Orbitals tab, press 2p (one).",
+      "Find the two lobes and the node in the middle.",
+      "Press 2p (all three) and spin it. Which way does each one point?"
+    ],
+    "check": [
+      {
+        "q": "What shape is a p orbital?",
+        "a": "A dumbbell with two lobes."
+      },
+      {
+        "q": "How many p orbitals are in a set?",
+        "a": "Three."
+      }
+    ],
+    "realLife": "Carbon, nitrogen and oxygen use p orbitals to make their bonds.",
+    "offScreen": "Hold three pencils at right angles, like the corner of a box. Those are x, y and z.",
+    "grownup": "Ask: What is the same about the three p orbitals? What is different?",
+    "done": {
+      "labAll": [
+        "2p",
+        "2p3"
+      ]
+    }
+  },
+  {
+    "n": 23,
+    "title": "Mixing orbitals: sp³",
+    "level": "Deep dive",
+    "minutes": 15,
+    "bigIdea": "A carbon atom mixes its s orbital and its three p orbitals into four new matching orbitals called sp³. They point to the corners of a tiny pyramid. This is why methane and so many carbon molecules have that pyramid shape.",
+    "words": [
+      [
+        "hybrid",
+        "A new orbital made by mixing others."
+      ],
+      [
+        "sp³",
+        "One s and three p orbitals mixed together."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, Orbitals tab, press sp³ hybrid.",
+      "Press Mix! and watch the ball and dumbbells turn into four lobes.",
+      "Spin it. The white balls are hydrogens. Where do the lobes point?"
+    ],
+    "check": [
+      {
+        "q": "What does carbon mix to make sp³ orbitals?",
+        "a": "One s and three p orbitals."
+      },
+      {
+        "q": "Where do the four sp³ orbitals point?",
+        "a": "To the corners of a tiny pyramid."
+      }
+    ],
+    "realLife": "Every carbon with four single bonds, in methane, propane and sugar, uses sp³ orbitals.",
+    "offScreen": "Mix blue and yellow paint to get green. Mixing makes something new, like mixing orbitals does.",
+    "grownup": "Ask: Why might four matching orbitals be better for making four bonds?",
+    "done": {
+      "lab": "sp3"
+    }
+  },
+  {
+    "n": 24,
+    "title": "The π bond: why double bonds stay flat",
+    "level": "Deep dive",
+    "minutes": 15,
+    "bigIdea": "In ethene, the sticks are σ bonds, made by orbitals meeting head to head. The leftover p orbitals meet side by side above and below. That cloud is a π bond. To twist the molecule you would have to pull the π cloud apart, so the double bond stays flat.",
+    "words": [
+      [
+        "σ bond (sigma)",
+        "A bond where orbitals meet head to head."
+      ],
+      [
+        "π bond (pi)",
+        "A bond where p orbitals meet side by side."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, Orbitals tab, press π bond.",
+      "Find the sticks (σ bonds) and the blue and orange clouds (π bond).",
+      "Spin it. Is the molecule flat?"
+    ],
+    "check": [
+      {
+        "q": "Where is the π bond cloud?",
+        "a": "Above and below the atoms."
+      },
+      {
+        "q": "Why is the C=C double bond in ethene flat?",
+        "a": "Twisting would pull the π cloud apart."
+      }
+    ],
+    "realLife": "The flat double bond in the molecule that gives ripe bananas their signal, ethene, comes from its π bond.",
+    "offScreen": "Hold two pencils side by side with a rubber band around them. You cannot twist one without the band resisting.",
+    "grownup": "Ask: What do you think happens to a molecule if the π bond breaks?",
+    "done": {
+      "lab": "pi"
+    }
+  },
+  {
+    "n": 25,
+    "title": "Molecular orbitals: two become two",
+    "level": "Deep dive",
+    "minutes": 20,
+    "bigIdea": "When two atoms come close, their orbitals overlap and make two molecular orbitals. Adding the waves makes the bonding orbital, with electrons piled up between the nuclei. Subtracting them makes the antibonding orbital, with a node in the middle. Bond order = (bonding electrons − antibonding electrons) ÷ 2.",
+    "words": [
+      [
+        "bonding orbital",
+        "A molecular orbital that holds atoms together."
+      ],
+      [
+        "antibonding orbital",
+        "A molecular orbital that pushes atoms apart."
+      ],
+      [
+        "bond order",
+        "How many bonds: (bonding − antibonding) ÷ 2."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, open Molecular orbitals.",
+      "Look at the σ bonding orbital. Where are most dots?",
+      "Press σ* antibonding. Find the empty plane in the middle.",
+      "Slide the distance. When do the orbitals overlap the most?"
+    ],
+    "check": [
+      {
+        "q": "What do you get when two atomic orbitals overlap?",
+        "a": "Two molecular orbitals."
+      },
+      {
+        "q": "Where are the electrons in a bonding orbital?",
+        "a": "Between the two nuclei."
+      }
+    ],
+    "realLife": "Chemists use molecular orbitals to design new materials, medicines and solar cells.",
+    "offScreen": "Drop two pebbles in a pond near each other. The ripples add up in some places and cancel in others, a bit like orbitals do.",
+    "grownup": "Ask: What do you think happens to the overlap when the atoms are very far apart?",
+    "done": {
+      "labAll": [
+        "mo",
+        "sigmastar"
+      ]
+    }
+  },
+  {
+    "n": 26,
+    "title": "Why helium stays alone",
+    "level": "Deep dive",
+    "minutes": 15,
+    "bigIdea": "Use the electron counter to fill the orbitals. Two electrons go in the bonding orbital: a strong bond, bond order 1. With four electrons, both orbitals are full. The bonding and antibonding electrons cancel, so the bond order is zero. That is why helium atoms do not stick together.",
+    "words": [
+      [
+        "noble gas",
+        "An element like helium that does not like to bond."
+      ]
+    ],
+    "tryIt": [
+      "In the Lab, Molecular orbitals tab, slide Electrons to 1, 2, 3 and 4.",
+      "Watch the arrows fill the diagram and the bond order change.",
+      "Which count gives bond order 0? What does that mean?"
+    ],
+    "check": [
+      {
+        "q": "What is the bond order of H₂?",
+        "a": "One."
+      },
+      {
+        "q": "Why doesn't helium make He₂?",
+        "a": "The bonding and antibonding electrons cancel."
+      }
+    ],
+    "realLife": "Helium floats in party balloons as single atoms, because it never joins up with itself.",
+    "offScreen": "Tug-of-war with two equal teams goes nowhere. Bonding and antibonding electrons are like two equal teams.",
+    "grownup": "Ask: Why do you think hydrogen forms H₂ but helium does not form He₂?",
+    "done": {
+      "lab": "he2"
+    }
   }
 ];
 })(typeof globalThis !== 'undefined' ? globalThis : window);

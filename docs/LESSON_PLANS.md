@@ -1,4 +1,4 @@
-# Atlas' Atoms: 20 Lesson Plans
+# Atlas' Atoms: 26 Lesson Plans
 
 Written for a very advanced 7-year-old working with a grown-up. A path from "what is an atom?" to burning fuel, acids and the chemistry of your body. Each lesson takes 10 to 20 minutes and is built around the game. The same lessons appear in the game under **Lessons**, and the game ticks a lesson off automatically when the child finishes its activity.
 
@@ -26,6 +26,12 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 | 18 | Smells and flavors | Challenge | 20 min |
 | 19 | Chemistry inside you | Challenge | 20 min |
 | 20 | Patterns in the elements | Challenge | 20 min |
+| 21 | Electrons live in clouds | Deep dive | 15 min |
+| 22 | Dumbbells: the p orbitals | Deep dive | 15 min |
+| 23 | Mixing orbitals: sp³ | Deep dive | 15 min |
+| 24 | The π bond: why double bonds stay flat | Deep dive | 15 min |
+| 25 | Molecular orbitals: two become two | Deep dive | 20 min |
+| 26 | Why helium stays alone | Deep dive | 15 min |
 
 ## Lesson 1: Everything is made of atoms
 
@@ -623,3 +629,185 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 **Away from the screen.** Sort buttons by color, then by size, then by holes. Different sorting shows different patterns.
 
 **Grown-up question.** What is another pattern you can find in the tray of atoms?
+
+## Lesson 21: Electrons live in clouds
+
+*Deep dive · about 15 minutes*
+
+**Big idea.** An electron is not a tiny ball zooming around like a planet. It is better to picture a fuzzy cloud. The cloud is thick where the electron is likely to be. Chemists call each cloud shape an orbital. The simplest one, s, is a ball.
+
+**Words**
+
+- **orbital**: A cloud shape that shows where an electron is likely to be.
+- **node**: A spot inside an orbital where the electron is never found.
+
+**Try it in the game**
+
+1. Open the Molecule Lab (the microscope button) and choose the Orbitals tab.
+2. Look at the 1s orbital. Each dot is one place the electron might be.
+3. Press Dots, then Shape, then both. Spin it around.
+4. Now press 2s. Find the ball inside a bigger ball. The gap between them is a node.
+
+**Check yourself**
+
+- What is an orbital?  
+  *Answer: A cloud shape where an electron is likely to be.*
+- What shape is an s orbital?  
+  *Answer: A ball.*
+
+**In real life.** Hydrogen, the atom in every water molecule, has one electron in a 1s cloud.
+
+**Away from the screen.** Spin a fan or a pencil very fast. It looks like a blurry shape instead of a single thing. An electron cloud is a little like that.
+
+**Grown-up question.** Why do you think chemists draw clouds instead of tiny circles?
+
+## Lesson 22: Dumbbells: the p orbitals
+
+*Deep dive · about 15 minutes*
+
+**Big idea.** Bigger atoms also have p orbitals. A p orbital looks like a dumbbell with two lobes. There are three of them, pointing along x, y and z at right angles. The blue and orange colors show phase, like the up and down of a wave.
+
+**Words**
+
+- **lobe**: One round part of an orbital.
+- **phase**: Whether the wave is up (blue) or down (orange).
+
+**Try it in the game**
+
+1. In the Lab, Orbitals tab, press 2p (one).
+2. Find the two lobes and the node in the middle.
+3. Press 2p (all three) and spin it. Which way does each one point?
+
+**Check yourself**
+
+- What shape is a p orbital?  
+  *Answer: A dumbbell with two lobes.*
+- How many p orbitals are in a set?  
+  *Answer: Three.*
+
+**In real life.** Carbon, nitrogen and oxygen use p orbitals to make their bonds.
+
+**Away from the screen.** Hold three pencils at right angles, like the corner of a box. Those are x, y and z.
+
+**Grown-up question.** What is the same about the three p orbitals? What is different?
+
+## Lesson 23: Mixing orbitals: sp³
+
+*Deep dive · about 15 minutes*
+
+**Big idea.** A carbon atom mixes its s orbital and its three p orbitals into four new matching orbitals called sp³. They point to the corners of a tiny pyramid. This is why methane and so many carbon molecules have that pyramid shape.
+
+**Words**
+
+- **hybrid**: A new orbital made by mixing others.
+- **sp³**: One s and three p orbitals mixed together.
+
+**Try it in the game**
+
+1. In the Lab, Orbitals tab, press sp³ hybrid.
+2. Press Mix! and watch the ball and dumbbells turn into four lobes.
+3. Spin it. The white balls are hydrogens. Where do the lobes point?
+
+**Check yourself**
+
+- What does carbon mix to make sp³ orbitals?  
+  *Answer: One s and three p orbitals.*
+- Where do the four sp³ orbitals point?  
+  *Answer: To the corners of a tiny pyramid.*
+
+**In real life.** Every carbon with four single bonds, in methane, propane and sugar, uses sp³ orbitals.
+
+**Away from the screen.** Mix blue and yellow paint to get green. Mixing makes something new, like mixing orbitals does.
+
+**Grown-up question.** Why might four matching orbitals be better for making four bonds?
+
+## Lesson 24: The π bond: why double bonds stay flat
+
+*Deep dive · about 15 minutes*
+
+**Big idea.** In ethene, the sticks are σ bonds, made by orbitals meeting head to head. The leftover p orbitals meet side by side above and below. That cloud is a π bond. To twist the molecule you would have to pull the π cloud apart, so the double bond stays flat.
+
+**Words**
+
+- **σ bond (sigma)**: A bond where orbitals meet head to head.
+- **π bond (pi)**: A bond where p orbitals meet side by side.
+
+**Try it in the game**
+
+1. In the Lab, Orbitals tab, press π bond.
+2. Find the sticks (σ bonds) and the blue and orange clouds (π bond).
+3. Spin it. Is the molecule flat?
+
+**Check yourself**
+
+- Where is the π bond cloud?  
+  *Answer: Above and below the atoms.*
+- Why is the C=C double bond in ethene flat?  
+  *Answer: Twisting would pull the π cloud apart.*
+
+**In real life.** The flat double bond in the molecule that gives ripe bananas their signal, ethene, comes from its π bond.
+
+**Away from the screen.** Hold two pencils side by side with a rubber band around them. You cannot twist one without the band resisting.
+
+**Grown-up question.** What do you think happens to a molecule if the π bond breaks?
+
+## Lesson 25: Molecular orbitals: two become two
+
+*Deep dive · about 20 minutes*
+
+**Big idea.** When two atoms come close, their orbitals overlap and make two molecular orbitals. Adding the waves makes the bonding orbital, with electrons piled up between the nuclei. Subtracting them makes the antibonding orbital, with a node in the middle. Bond order = (bonding electrons − antibonding electrons) ÷ 2.
+
+**Words**
+
+- **bonding orbital**: A molecular orbital that holds atoms together.
+- **antibonding orbital**: A molecular orbital that pushes atoms apart.
+- **bond order**: How many bonds: (bonding − antibonding) ÷ 2.
+
+**Try it in the game**
+
+1. In the Lab, open Molecular orbitals.
+2. Look at the σ bonding orbital. Where are most dots?
+3. Press σ* antibonding. Find the empty plane in the middle.
+4. Slide the distance. When do the orbitals overlap the most?
+
+**Check yourself**
+
+- What do you get when two atomic orbitals overlap?  
+  *Answer: Two molecular orbitals.*
+- Where are the electrons in a bonding orbital?  
+  *Answer: Between the two nuclei.*
+
+**In real life.** Chemists use molecular orbitals to design new materials, medicines and solar cells.
+
+**Away from the screen.** Drop two pebbles in a pond near each other. The ripples add up in some places and cancel in others, a bit like orbitals do.
+
+**Grown-up question.** What do you think happens to the overlap when the atoms are very far apart?
+
+## Lesson 26: Why helium stays alone
+
+*Deep dive · about 15 minutes*
+
+**Big idea.** Use the electron counter to fill the orbitals. Two electrons go in the bonding orbital: a strong bond, bond order 1. With four electrons, both orbitals are full. The bonding and antibonding electrons cancel, so the bond order is zero. That is why helium atoms do not stick together.
+
+**Words**
+
+- **noble gas**: An element like helium that does not like to bond.
+
+**Try it in the game**
+
+1. In the Lab, Molecular orbitals tab, slide Electrons to 1, 2, 3 and 4.
+2. Watch the arrows fill the diagram and the bond order change.
+3. Which count gives bond order 0? What does that mean?
+
+**Check yourself**
+
+- What is the bond order of H₂?  
+  *Answer: One.*
+- Why doesn't helium make He₂?  
+  *Answer: The bonding and antibonding electrons cancel.*
+
+**In real life.** Helium floats in party balloons as single atoms, because it never joins up with itself.
+
+**Away from the screen.** Tug-of-war with two equal teams goes nowhere. Bonding and antibonding electrons are like two equal teams.
+
+**Grown-up question.** Why do you think hydrogen forms H₂ but helium does not form He₂?

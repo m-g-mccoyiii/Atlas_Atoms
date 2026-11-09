@@ -44,7 +44,19 @@ const RAW = {
   19: [["What does your body use glucose for?", "Energy", "Making bones only", "Breathing out", "Glucose is a sugar your body uses for energy."],
        ["What do amino acids build?", "Proteins", "Salt", "Water", "Amino acids link into proteins."]],
   20: [["Why are H₂O and H₂S shaped alike?", "Oxygen and sulfur are in the same family", "They are both gases", "They both have carbon", "Same family, so both have 2 hands."],
-       ["Which element is in chlorine's family in the game?", "Fluorine", "Sodium", "Carbon", "Fluorine and chlorine both have 1 hand."]]
+       ["Which element is in chlorine's family in the game?", "Fluorine", "Sodium", "Carbon", "Fluorine and chlorine both have 1 hand."]],
+  21: [["What is an orbital?", "A cloud shape where an electron is likely to be", "A tiny planet", "A kind of bond", "Electrons are best pictured as clouds."],
+      ["What shape is an s orbital?", "A ball", "A dumbbell", "A cube", "s orbitals are round."]],
+  22: [["What shape is a p orbital?", "A dumbbell with two lobes", "A ball", "A ring", "A p orbital has two lobes."],
+      ["How many p orbitals are in a set?", "3", "1", "6", "One each along x, y and z."]],
+  23: [["What does carbon mix to make sp³ orbitals?", "One s and three p orbitals", "Two s orbitals", "Four d orbitals", "sp³ means one s and three p."],
+      ["Where do sp³ orbitals point?", "To the corners of a tiny pyramid", "In a flat circle", "Straight up", "They point to the corners of a tetrahedron."]],
+  24: [["Where is the π bond cloud?", "Above and below the atoms", "Inside the nucleus", "Far away from the molecule", "The π overlap is above and below the bond line."],
+      ["Why is the C=C double bond in ethene flat?", "Twisting would pull the π cloud apart", "Carbon is flat", "The H atoms are heavy", "The side-by-side overlap only works when the molecule is flat."]],
+  25: [["What do you get when two atomic orbitals overlap?", "Two molecular orbitals", "One atom", "Nothing", "Two orbitals in, two orbitals out."],
+      ["Where are the electrons in a bonding orbital?", "Between the two nuclei", "Far from both", "Inside one nucleus only", "They pile up between the nuclei and hold them together."]],
+  26: [["What is the bond order of H₂?", "1", "0", "2", "Two bonding electrons: (2 − 0) ÷ 2 = 1."],
+      ["Why doesn't helium make He₂?", "Bonding and antibonding electrons cancel", "Helium is too heavy", "Helium has no electrons", "Four electrons fill both orbitals, so the bond order is zero."]]
 };
 
 AA.QUIZZES = {};

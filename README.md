@@ -1,6 +1,6 @@
 # Atlas’ Atoms
 
-A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 20 lesson plans that start from “what is an atom?”, written for a very advanced 7-year-old working with a grown-up. A Read aloud switch uses the browser's built-in voice.
+A 3D chemistry playground for a kid who is getting curious about chemistry. Drag atoms onto a bench, bond them, and discover real molecules. Each discovery shows where the molecule shows up in real life and one thing about why it has its shape. There are 26 lesson plans that start from “what is an atom?”, written for a very advanced 7-year-old working with a grown-up. A Read aloud switch uses the browser's built-in voice.
 
 ## Play
 
@@ -22,9 +22,10 @@ Then visit http://localhost:8765.
 - **Missions.** Each mission gives a formula to build. Same atoms, wrong arrangement? The game says so (isomers).
 - **My Atlas.** 33 molecules to find, from water and CO₂ to glucose, vanillin, aspirin and vitamin C. Found molecules spin in 3D and can be put back on the bench.
 - **Reactions.** Put the right molecules on the bench and press Spark: rocket fuel, a gas stove, fertilizer, fizzy water, “elephant toothpaste”. Atoms visibly rearrange and are never created or destroyed.
-- **Lessons.** 20 lessons with vocabulary, game activities, check-yourself questions and safe off-screen activities. The game ticks a lesson off when the activity is done. A printable version is in [docs/LESSON_PLANS.md](docs/LESSON_PLANS.md).
+- **Lessons.** 26 lessons with vocabulary, game activities, check-yourself questions and safe off-screen activities. The game ticks a lesson off when the activity is done. A printable version is in [docs/LESSON_PLANS.md](docs/LESSON_PLANS.md).
 - **Molecule Lab.** Three tabs. *Explore* lists every molecule you have found with its weight, atom and bond counts, shape and state at room temperature. *Orbitals* shows 1s, 2s and p orbitals as shapes and as clouds of electron dots (each dot is one possible position of the electron, sampled from the real wave function), plus sp³ hybridisation (watch the s and p orbitals blend into four) and the π bond in ethene. *Molecular orbitals* builds the bonding (σ) and antibonding (σ*) orbitals of H₂, with an energy diagram, a nuclei-distance slider with an overlap readout, and an electron counter that takes you from H₂⁺ and H₂ to He₂⁺ and He₂ (bond order zero, so helium does not bond).
 - **Phones.** The bench fills the screen, atoms sit in a scrollable strip (swipe up from an atom to pull it out, tap it for its card), info lives in a slide-up sheet, and the Lab and lessons go full-screen. Pinch to zoom, one finger to orbit. Works in portrait and landscape. The page has a web-app manifest, so it can be added to a home screen.
+- **Offline.** After the first visit the game is cached by a service worker (`sw.js`) and works with no connection. When online it fetches fresh files, so updates still arrive.
 - **Quizzes.** Every lesson has a 2-question multiple-choice quiz made from its check-yourself questions. Each answer is explained, a perfect score gives three stars and completes the lesson.
 - **Element cards.** Click an element in the tray for a Bohr diagram and a fact. New elements unlock as you find molecules.
 - Progress is saved in the browser (`localStorage`).
@@ -65,5 +66,4 @@ Everything except Three.js is drawn in code: no images, fonts or audio files. So
 - More reactions (rusting, photosynthesis)
 - A “why does it smell?” gallery grouped by functional group
 - More lessons for the Lab (orbitals, hybridisation, bond order) and a parent progress page
-- Offline install (service worker)
 - A packaged app (Electron/Tauri) if it should be sold
