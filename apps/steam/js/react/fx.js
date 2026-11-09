@@ -8,12 +8,13 @@ const YELLOW = [255, 205, 0], WHITE = [255, 255, 255];
 const lum = c => (c[0] * 299 + c[1] * 587 + c[2] * 114) / 1000;
 
 function make(cv, wrap) {
-  const s = { parts: [], rings: [], floats: [], shake: 0, flash: 0, flashC: WHITE, banner: null };
+  const s = { parts: [], rings: [], floats: [], shake: 0, punch: 0, flash: 0, flashC: WHITE, banner: null };
   const api = {
     burst(x, y, c, n, spd) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = spd * (0.3 + Math.random()); s.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, life: 1, decay: 0.9 + Math.random() * 0.9, r: 1.5 + Math.random() * 3, c, sq: Math.random() < 0.35 }); } },
     ring(x, y, c, r1, dur) { s.rings.push({ x, y, c, r0: 6, r1, t: 0, dur }); },
     floatText(x, y, text, c, size) { s.floats.push({ x, y, text, c: c || YELLOW, size: size || 26, t: 0, dur: 1.2 }); },
     shake(mag) { s.shake = Math.max(s.shake, mag); },
+    punch(k) { s.punch = Math.min(0.16, Math.max(s.punch, k)); },
     flash(a, c) { s.flash = Math.max(s.flash, a); s.flashC = c || WHITE; },
     banner(text, sub, c, dur) { s.banner = { text, sub: sub || '', c: c || YELLOW, t: 0, dur: dur || 2.2 }; },
     clear() { s.parts.length = s.rings.length = s.floats.length = 0; s.banner = null; s.flash = 0; },
@@ -54,8 +55,11 @@ function make(cv, wrap) {
         if (b.sub) { x.font = '600 22px ' + FONT; x.fillText(b.sub, w / 2, by + size + 30); }
         x.restore();
       }
-      if (s.shake > 0.3) { wrap.style.transform = 'translate(' + ((Math.random() - 0.5) * s.shake).toFixed(1) + 'px,' + ((Math.random() - 0.5) * s.shake).toFixed(1) + 'px)'; s.shake *= Math.pow(0.004, dt); }
+      // shake moves the hood; punch pushes it toward the viewer and lets it settle back
+      const sh = s.shake > 0.3 ? s.shake : 0, pu = s.punch > 0.002 ? s.punch : 0;
+      if (sh || pu) wrap.style.transform = 'translate(' + ((Math.random() - 0.5) * sh).toFixed(1) + 'px,' + ((Math.random() - 0.5) * sh).toFixed(1) + 'px) scale(' + (1 + pu).toFixed(4) + ')';
       else if (wrap.style.transform) wrap.style.transform = '';
+      s.shake *= Math.pow(0.004, dt); s.punch *= Math.pow(0.01, dt);
     }
   };
   return api;

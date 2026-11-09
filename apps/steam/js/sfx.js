@@ -29,8 +29,46 @@ function tone(o) {
   osc.connect(g); g.connect(c.destination); osc.start(t); osc.stop(t + o.dur + 0.02);
 }
 
+// ---------- music: a sixteen-step loop scheduled a little ahead of the clock ----------
+// Four layers come in as the intensity rises: bass, kick, hat, then an arpeggio.
+const BPM = 112, STEP = 60 / BPM / 4, ROOTS = [55, 55, 65.41, 49], ARP = [0, 7, 12, 15, 12, 7, 19, 12];
+let music = true, started = false, level = 0.15, nextT = 0, stepN = 0, bus = null, timer = null;
+function mnote(type, freq, t, dur, gain, freqEnd) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t); if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03);
+}
+function mhat(t, gain) {
+  const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = noise(ctx); f.type = 'highpass'; f.frequency.value = 7000;
+  g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+  src.connect(f); f.connect(g); g.connect(bus); src.start(t, Math.random()); src.stop(t + 0.06);
+}
+function schedule() {
+  if (!ctx || !bus) return;
+  bus.gain.setTargetAtTime(music && !muted ? 0.5 : 0, ctx.currentTime, 0.08);
+  if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;
+  while (nextT < ctx.currentTime + 0.2) {
+    const s = stepN % 16, root = ROOTS[(stepN >> 4) % 4], t = nextT;
+    if (s % 4 === 0 || s === 10) mnote('triangle', root, t, 0.22, 0.2);
+    if (level > 0.3 && s % 4 === 0) mnote('sine', 130, t, 0.14, 0.34, 42);
+    if (level > 0.5 && s % 2 === 1) mhat(t, s % 4 === 3 ? 0.07 : 0.04);
+    if (level > 0.7) mnote('square', root * 4 * Math.pow(2, ARP[s % 8] / 12), t, 0.1, 0.035);
+    if (level > 0.9 && s % 4 === 2) mhat(t, 0.09);
+    nextT += STEP; stepN++;
+  }
+}
+function startMusic() {
+  if (started) return;
+  const c = ac(); if (!c) return;
+  started = true; bus = c.createGain(); bus.gain.value = 0; bus.connect(c.destination);
+  timer = setInterval(schedule, 60);
+}
+
 AA.sfx = {
   setMuted(v) { muted = !!v; }, isMuted() { return muted; },
+  startMusic, setMusic(v) { music = !!v; }, musicOn() { return music; }, setIntensity(x) { level = Math.max(0, Math.min(1, x)); },
   click() { hiss({ freq: 2600, q: 2, dur: 0.035, gain: 0.12 }); tone({ freq: 180, freqEnd: 90, dur: 0.05, gain: 0.07 }); },
   feed() { for (let i = 0; i < 7; i++) hiss({ freq: 700 + i * 80, q: 0.9, dur: 0.07, gain: 0.05, delay: i * 0.07 }); },
   pen(ms) { const n = Math.max(3, Math.round(ms / 70)); for (let i = 0; i < n; i++) hiss({ freq: 3400 + Math.random() * 1600, q: 3, dur: 0.06, gain: 0.03, delay: i * 0.07 }); },

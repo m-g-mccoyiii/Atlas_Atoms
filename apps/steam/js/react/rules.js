@@ -3,7 +3,7 @@
 const AA = root.AA, C = AA.chem, S = AA.spectra;
 
 // Reaction rules for the reagent bottles. Every rule is a textbook functional-group transformation applied
-// to the molecular graph. A bottle acts on every matching site at once. No rule makes or breaks a C–C bond,
+// to the molecular graph. A bottle acts on every matching site at once. No rule makes or breaks a C-C bond,
 // so the carbon skeleton of the feedstock is kept and every product can be named from its chain.
 
 // ---------- reading the graph ----------
@@ -17,7 +17,7 @@ const isCarbonylC = (m, a) => a.el === 'C' && nbs(m, a).some(n => n.atom.el === 
 const carbonsOf = (m, a) => nbs(m, a).filter(n => n.atom.el === 'C').map(n => n.atom);
 const cut = (m, a, b) => { m.bonds = m.bonds.filter(k => !((k.a === a && k.b === b) || (k.a === b && k.b === a))); };
 
-// number of C–C bonds from a carbon to the nearest end of the chain; used only to settle ties the same way every time
+// number of C-C bonds from a carbon to the nearest end of the chain; used only to settle ties the same way every time
 function endDist(m, c) {
   const seen = new Set([c]); let layer = [c], d = 0;
   while (layer.length) {
@@ -86,7 +86,7 @@ function oxidisable(m, o) {
   if (!s || !Hs(m, s.c).length || otherHetero(m, s.c, o)) return null;
   return { o, c: s.c, ho: s.ho, atoms: [s.c, o] };
 }
-function swappable(m, o) {                                  // C–OH that thionyl chloride turns into C–Cl
+function swappable(m, o) {                                  // C-OH that thionyl chloride turns into C-Cl
   const s = hydroxyl(m, o);
   if (!s || otherHetero(m, s.c, o)) return null;
   return { o, c: s.c, ho: s.ho, atoms: [s.c, o] };
@@ -146,17 +146,17 @@ const LIST = [
     find: alkenes, ok: alkeneOk,
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), o = attach(m, 'O', cx, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [cx, ch], incoming: [hh, o, ho], leaving: [], tag: '+H₂O' }; } },
   { id: 'pcc', verb: 'Oxidise', formula: 'PCC', chem: 'Pyridinium chlorochromate', rgb: [240, 132, 0], cls: 'oxidant', ghs: ['oxid', 'health'],
-    rule: 'Turns C–OH into C=O. The carbon must have an H to give up.', from: 'ol', to: 'one',
+    rule: 'Turns C-OH into C=O. The carbon must have an H to give up.', from: 'ol', to: 'one',
     find: m => m.atoms.map(a => oxidisable(m, a)).filter(Boolean), ok: (m, s) => !!oxidisable(m, s.o),
-    apply(m, s) { const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: '−2H' }; } },
+    apply(m, s) { const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },
   { id: 'nabh4', verb: 'Reduce', formula: 'NaBH₄', chem: 'Sodium borohydride', rgb: [214, 40, 40], cls: 'hydride', ghs: ['flame', 'corr', 'skull'],
-    rule: 'Turns C=O into C–OH. Leaves C=C alone.', from: 'one', to: 'ol',
+    rule: 'Turns C=O into C-OH. Leaves C=C alone.', from: 'one', to: 'ol',
     find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond), apply: reduceCO },
   { id: 'dehydrate', verb: 'Dehydrate', formula: 'H₂SO₄ conc.', chem: 'Sulfuric acid, 98 %, hot', rgb: [24, 24, 24], cls: 'acid', ghs: ['corr'],
     rule: 'Removes water from an alcohol and leaves C=C behind.', from: 'addO', to: 'ene',
     find: m => m.atoms.map(a => eliminable(m, a)).filter(Boolean), ok: (m, s) => !!eliminable(m, s.o),
-    apply(m, s0) { const s = eliminable(m, s0.o), hb = Hs(m, s.beta)[0]; cut(m, s.c, s.o); cut(m, s.beta, hb); m.bond(s.o, hb); m.bond(s.c, s.beta); return { focus: [s.c, s.beta], incoming: [], leaving: [[s.o, s.ho, hb]], tag: '−H₂O' }; } },
-  { id: 'h2', verb: 'Hydrogenate', formula: 'H₂ · Pd/C', chem: 'Hydrogen over palladium on carbon', rgb: [110, 122, 134], cls: 'metal', ghs: ['flame', 'cyl'],
+    apply(m, s0) { const s = eliminable(m, s0.o), hb = Hs(m, s.beta)[0]; cut(m, s.c, s.o); cut(m, s.beta, hb); m.bond(s.o, hb); m.bond(s.c, s.beta); return { focus: [s.c, s.beta], incoming: [], leaving: [[s.o, s.ho, hb]], tag: 'loses H₂O' }; } },
+  { id: 'h2', verb: 'Hydrogenate', formula: 'H₂, Pd/C', chem: 'Hydrogen over palladium on carbon', rgb: [110, 122, 134], cls: 'metal', ghs: ['flame', 'cyl'],
     rule: 'Adds H₂ across C=C. Leaves C=O alone.', from: 'ene', to: 'addH',
     find: alkenes, ok: alkeneOk,
     apply(m, s) { s.bond.order = 1; const h1 = attach(m, 'H', s.bond.a, 2.4), h2 = attach(m, 'H', s.bond.b, 2.4); return { focus: [s.bond.a, s.bond.b], incoming: [h1, h2], leaving: [], tag: '+H₂' }; } },
@@ -164,8 +164,8 @@ const LIST = [
     rule: 'Adds H and Cl across C=C. The Cl goes on the carbon with fewer H.', from: 'ene', to: 'addCl',
     find: alkenes, ok: alkeneOk,
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), cl = attach(m, 'Cl', cx, 3.0); return { focus: [cx, ch], incoming: [hh, cl], leaving: [], tag: '+HCl' }; } },
-  { id: 'bh3', verb: 'Hydroborate', formula: 'BH₃·THF', chem: 'Borane, then H₂O₂ and NaOH', rgb: [0, 140, 150], cls: 'hydride', ghs: ['flame', 'corr', 'excl'],
-    rule: 'Adds water across C=C with the OH on the carbon with more H. Also turns C=O into C–OH.', from: 'ene', to: 'addOanti',
+  { id: 'bh3', verb: 'Hydroborate', formula: 'BH₃ in THF', chem: 'Borane, then H₂O₂ and NaOH', rgb: [0, 140, 150], cls: 'hydride', ghs: ['flame', 'corr', 'excl'],
+    rule: 'Adds water across C=C with the OH on the carbon with more H. Also turns C=O into C-OH.', from: 'ene', to: 'addOanti',
     find: m => alkenes(m).concat(carbonyls(m)),
     ok: (m, s) => s.kind === 'ene' ? alkeneOk(m, s) : m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) {
@@ -177,15 +177,15 @@ const LIST = [
   { id: 'socl2', verb: 'Chlorinate', formula: 'SOCl₂', chem: 'Thionyl chloride', rgb: [150, 160, 0], cls: 'chloride', ghs: ['corr', 'skull'],
     rule: 'Swaps the OH of an alcohol for Cl.', from: 'ol', to: 'cl',
     find: m => m.atoms.map(a => swappable(m, a)).filter(Boolean), ok: (m, s) => !!swappable(m, s.o),
-    apply(m, s) { cut(m, s.c, s.o); const cl = attach(m, 'Cl', s.c, 3.0); return { focus: [s.c, cl], incoming: [cl], leaving: [[s.o, s.ho]], tag: 'OH → Cl' }; } },
+    apply(m, s) { cut(m, s.c, s.o); const cl = attach(m, 'Cl', s.c, 3.0); return { focus: [s.c, cl], incoming: [cl], leaving: [[s.o, s.ho]], tag: 'OH to Cl' }; } },
   { id: 'koh', verb: 'Eliminate', formula: 'KOH / EtOH', chem: 'Potassium hydroxide in ethanol, hot', rgb: [112, 62, 196], cls: 'base', ghs: ['corr', 'flame'],
     rule: 'Removes H and Cl from neighbouring carbons and leaves C=C behind.', from: 'addCl', to: 'ene',
     find: m => m.atoms.map(a => dehydrohalogenable(m, a)).filter(Boolean), ok: (m, s) => !!dehydrohalogenable(m, s.cl),
-    apply(m, s0) { const s = dehydrohalogenable(m, s0.cl), hb = Hs(m, s.beta)[0]; cut(m, s.c, s.cl); cut(m, s.beta, hb); m.bond(s.cl, hb); m.bond(s.c, s.beta); return { focus: [s.c, s.beta], incoming: [], leaving: [[s.cl, hb]], tag: '−HCl' }; } },
+    apply(m, s0) { const s = dehydrohalogenable(m, s0.cl), hb = Hs(m, s.beta)[0]; cut(m, s.c, s.cl); cut(m, s.beta, hb); m.bond(s.cl, hb); m.bond(s.c, s.beta); return { focus: [s.c, s.beta], incoming: [], leaving: [[s.cl, hb]], tag: 'loses HCl' }; } },
   { id: 'naoh', verb: 'Substitute', formula: 'NaOH (aq)', chem: 'Sodium hydroxide, 2 M, warm', rgb: [168, 92, 36], cls: 'base', ghs: ['corr'],
     rule: 'Swaps the Cl of a chloroalkane for OH.', from: 'cl', to: 'ol',
     find: m => m.atoms.map(a => substitutable(m, a)).filter(Boolean), ok: (m, s) => !!substitutable(m, s.cl),
-    apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl → OH' }; } }
+    apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } }
 ];
 const CARDS = {};
 LIST.forEach(c => { CARDS[c.id] = c; });
@@ -197,6 +197,14 @@ function graphOf(m) {
   return { els: atoms.map(a => a.el), bonds };
 }
 const sigOf = m => { const g = graphOf(m); return C.signature(g.els, g.bonds); };
+// what the three instruments can tell: the mass spectrum gives the molecular mass, the infrared gives the kinds of
+// functional group present, and the NMR settles the exact structure
+function probe(m) {
+  const g = graphOf(m), deg = g.els.map(() => []), kinds = {};
+  g.bonds.forEach(b => { deg[b.a].push(b.b); deg[b.b].push(b.a); const x = g.els[b.a], y = g.els[b.b]; if (b.order === 2) kinds[x === 'C' && y === 'C' ? 'ene' : 'one'] = 1; });
+  g.els.forEach((el, i) => { if (el === 'Cl') kinds.cl = 1; else if (el === 'O' && deg[i].some(j => g.els[j] === 'H')) kinds.ol = 1; });
+  return { sig: C.signature(g.els, g.bonds), mass: S.describeGraph(g.els.map(el => ({ el })), g.bonds).ms.M, grp: Object.keys(kinds).sort().join(' ') };
+}
 const describe = m => { const g = graphOf(m); return S.describeGraph(g.els.map(el => ({ el })), g.bonds); };
 
 // ---------- systematic names for unbranched chains carrying C=C, OH, C=O and Cl ----------
@@ -260,5 +268,5 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
-AA.rx = { LIST, CARDS, sigOf, describe, nameOf, label, cloneModel, runCard, fromSmiles };
+AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, runCard, fromSmiles };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

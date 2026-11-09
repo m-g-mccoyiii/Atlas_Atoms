@@ -13,26 +13,44 @@ const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classL
 
 function start(app) {
   let run = null, cur = null, model = null, v = null;
-  const st = { tok: 0, busy: false, mode: 'play', shown: 0, target: 0, tags: {}, picksLeft: 0, hover: -1, hoverAtoms: [], hoverHex: 0, flashes: [], fliers: [], party: 0, t0: 0, drawn: -1, desc: null, sig: '', seen: new Set(), best: { orders: 0, total: 0 } };
+  const st = { tok: 0, busy: false, mode: 'start', shown: 0, target: 0, tags: {}, picksLeft: 0, hover: -1, hoverAtoms: [], hoverHex: 0, flashes: [], fliers: [], party: 0, t0: 0, drawn: -1, desc: null, sig: '', probe: null, slowUntil: 0, slowBy: 1, seen: new Set(), best: { orders: 0, total: 0 },
+    meta: { got: [], rack: 'standard', level: 0 }, fresh: [] };
   try { const b = JSON.parse(localStorage.getItem('aa_rx_best') || 'null'); if (b) st.best = { orders: b.orders | 0, total: b.total | 0 }; } catch (e) { /* storage unavailable */ }
+  try { const m = JSON.parse(localStorage.getItem('aa_rx_meta') || 'null'); if (m && Array.isArray(m.got)) st.meta = { got: m.got.filter(x => typeof x === 'string'), rack: String(m.rack || 'standard'), level: m.level | 0 }; } catch (e) { /* storage unavailable */ }
+  const saveMeta = () => { try { localStorage.setItem('aa_rx_meta', JSON.stringify(st.meta)); } catch (e) { /* storage unavailable */ } };
+  const got = id => st.meta.got.includes(id);
+  // time runs slowly for a moment after a big hit
+  const slow = (by, ms) => { st.slowBy = by; st.slowUntil = performance.now() + ms; };
+  const setProbe = () => { st.desc = RX.describe(model); st.probe = RX.probe(model); st.sig = st.probe.sig; st.t0 = performance.now(); };
 
   // ---------- DOM ----------
-  const runEl = h('span', { class: 'tbRun' }), bestEl = h('span', { class: 'tbBest' });
-  const bar = document.getElementById('runinfo'); if (bar) bar.append(runEl, bestEl);
-  const benchCv = h('canvas', { class: 'hoodCv' }), fxCv = h('canvas', { class: 'hoodFx' });
+  const runEl = h('span', { class: 'tbRun' }), cashEl = h('span', { class: 'tbCash' }), bestEl = h('span', { class: 'tbBest' });
+  const bar = document.getElementById('runinfo'); if (bar) bar.append(cashEl, runEl, bestEl);
+  const benchCv = h('canvas', { class: 'hoodCv' }), bloomCv = h('canvas', { class: 'hoodBloom' }), fxCv = h('canvas', { class: 'hoodFx' });
   const nowEl = h('div', { class: 'hoodNow' }), stepEl = h('div', { class: 'hoodStep' });
-  const hood = h('div', { class: 'hood' }, benchCv, fxCv, nowEl, stepEl);
+  const hood = h('div', { class: 'hood' }, benchCv, bloomCv, fxCv, nowEl, stepEl);
   const fx = AA.rxFx.make(fxCv, hood);
-  const logEl = h('div', { class: 'log' }), gearEl = h('div', { class: 'gear' });
+  const gearEl = h('div', { class: 'gear' });
+  const bloomCx = bloomCv.getContext('2d');
 
-  const tkHead = h('div', { class: 'tkHead' }), tkFeed = h('div', { class: 'tkFeed' }), tkCond = h('div', { class: 'tkCond' });
+  const tkHead = h('div', { class: 'tkHead' }), tkCond = h('div', { class: 'tkCond' });
   const scoreEl = h('div', { class: 'tkScore' }, '0'), quotaEl = h('div', { class: 'tkQuota' }), barFill = h('div', { class: 'tkFill' });
-  const bonusEl = h('div', { class: 'tkBonus' });
+  const specEl = h('div', { class: 'tkSpec' });
   const yEl = h('b', null, '0'), bEl = h('b', null, '1');
   const yBox = h('div', { class: 'tkY' }, h('span', null, 'Yield'), yEl), bBox = h('div', { class: 'tkB' }, h('span', null, 'Batch'), bEl);
-  const ticket = h('div', { class: 'ticket' }, tkHead, tkFeed,
-    h('div', { class: 'tkCalc' }, yBox, h('i', null, '×'), bBox, h('i', null, '=')),
-    h('div', { class: 'tkRow' }, scoreEl, quotaEl), h('div', { class: 'tkBar' }, barFill), bonusEl, tkCond);
+  const ticket = h('div', { class: 'ticket' }, tkHead,
+    h('div', { class: 'tkRow' }, scoreEl, quotaEl), h('div', { class: 'tkBar' }, barFill),
+    h('div', { class: 'tkCalc' }, yBox, h('i', null, 'times'), bBox), specEl, tkCond);
+  const CHK = [['ms', 'Mass'], ['ir', 'Infrared'], ['nmr', 'NMR']];
+  const checksFor = spec => { const p = st.probe, ms = !!spec && !!p && p.mass === spec.mass, ir = !!spec && !!p && p.grp === spec.grp, nmr = !!spec && !!p && p.sig === spec.sig; return { ms, ir, nmr, n: (ms ? 1 : 0) + (ir ? 1 : 0) + (nmr ? 1 : 0) }; };
+  // the spec compound and its three checks, on the ticket and on the printout headers
+  function renderSpec(spec, mult) {
+    const c = checksFor(spec);
+    specEl.replaceChildren(...(spec ? [h('div', { class: 'tkSpecName' }, 'Spec: ', h('b', null, spec.name)),
+      h('div', { class: 'tkLamps' }, CHK.map(([k, l]) => h('span', { class: 'lamp' + (c[k] ? ' on' : '') }, l)), h('span', { class: 'tkMult' + (c.n ? ' on' : '') }, 'batch times ' + mult(c.n)))] : []));
+    prints.forEach(p => { p.pct.textContent = spec ? (c[p.k] ? 'matches spec' : 'off spec') : ''; p.pct.className = 'prPct' + (c[p.k] ? ' full' : ''); });
+    return c;
+  }
   // the two numbers the score is made of; a box jumps when its number changes
   function setCalc(y, b) {
     const ys = fmt(y), bs = fmtB(b);
@@ -42,7 +60,6 @@ function start(app) {
   }
   const KINDS = [['ms', 'Mass spectrum'], ['ir', 'Infrared'], ['nmr', 'Proton NMR']];
   const prints = KINDS.map(([k, label]) => { const cv = h('canvas'), pct = h('span', { class: 'prPct' }); return { k, cv, pct, el: h('div', { class: 'print' }, h('header', null, h('span', null, label), pct), cv) }; });
-  const legend = h('div', { class: 'legend' });
 
   const cardsEl = h('div', { class: 'cards' });
   const swapBtn = h('button', { class: 'btn', onclick: () => swap() }), deliverBtn = h('button', { class: 'btn go', onclick: () => deliver() }, 'Deliver  [Enter]');
@@ -51,17 +68,17 @@ function start(app) {
   const overlay = h('div', { class: 'ov' });
   app.append(h('div', { class: 'game' },
     h('div', { class: 'main' },
-      h('div', { class: 'left' }, hood, h('div', { class: 'under' }, gearEl, logEl)),
-      h('div', { class: 'right' }, ticket, legend, prints.map(p => p.el))),
+      h('div', { class: 'left' }, hood, h('div', { class: 'under' }, gearEl)),
+      h('div', { class: 'right' }, ticket, prints.map(p => p.el))),
     shelf), overlay);
 
   // one reagent bottle label
   function bottle(card, key) {
     const art = h('canvas', { class: 'bArt' }), foot = h('div', { class: 'bFoot' }), grade = RUN.gradeOf(run, card.id);
-    const el = h('button', { class: 'bottle', style: '--cc:' + css(card.rgb) },
-      h('div', { class: 'bBand' }, key ? h('span', { class: 'bKey' }, key) : null, h('span', { class: 'bVerb' }, card.verb)),
-      h('div', { class: 'bGrade' + (grade > 1 ? ' up' : '') }, h('b', null, 'Grade ' + grade), h('span', null, RUN.YIELD * grade + ' yield a site')),
-      h('div', { class: 'bFormula' }, card.formula), h('div', { class: 'bChem' }, card.chem),
+    const pips = []; for (let k = 0; k < Math.min(5, grade); k++) pips.push(h('i'));
+    const el = h('button', { class: 'bottle g' + Math.min(3, grade), style: '--cc:' + css(card.rgb) },
+      h('div', { class: 'bBand' }, key ? h('span', { class: 'bKey' }, key) : null, h('span', { class: 'bVerb' }, card.verb), h('span', { class: 'bPips', title: 'Grade ' + grade + ': ' + RUN.YIELD * grade + ' yield for each site' }, pips)),
+      h('div', { class: 'bFormula' }, card.formula),
       art, h('div', { class: 'bRule' }, card.rule),
       h('div', { class: 'bBottom' }, h('div', { class: 'bGhs' }, card.ghs.map(g => ghs(g))), foot));
     return { el, art, foot };
@@ -74,7 +91,7 @@ function start(app) {
     const els = cur.hand.map((hc, i) => {
       const card = RX.CARDS[hc.id], n = sitesOf(hc.id), b = bottle(card, String(i + 1));
       if (n) any = true;
-      b.el.className = 'bottle' + (n ? '' : ' none') + (st.seen.has(hc.uid) ? '' : ' deal');
+      b.el.className += (n ? '' : ' none') + (st.seen.has(hc.uid) ? '' : ' deal');
       b.el.disabled = !n || st.busy;
       b.foot.append(n ? h('span', null, h('b', null, plural(n, 'site')), '  +' + fmt(RUN.preview(run, hc.id, n) - RUN.scoreOf(cur))) : h('span', null, 'no site'));
       b.el.addEventListener('click', () => play(i));
@@ -89,46 +106,43 @@ function start(app) {
     return any;
   }
   function renderTicket() {
-    const proj = cur.done ? cur.final : RUN.projected(run, st.sig), onBonus = !!cur.bonus && st.sig === cur.bonus.sig, met = proj >= cur.quota, dbl = proj >= cur.quota * 2;
-    tkHead.textContent = 'Order ' + (cur.n + 1) + ' of ' + RUN.ORDERS + (cur.large ? '  ·  large order' : '');
-    tkFeed.replaceChildren('Feedstock: ', h('b', null, cur.feedName));
-    quotaEl.replaceChildren('of ', h('b', null, fmt(cur.quota)), ' needed  ·  ', h('b', null, fmt(cur.quota * 2)), ' earns one more pick');
+    const proj = cur.done ? cur.final : RUN.projected(run, st.probe), met = proj >= cur.quota, dbl = proj >= cur.quota * 2;
+    tkHead.textContent = 'Order ' + (cur.n + 1) + ' of ' + RUN.ORDERS + (cur.large ? ', large' : '');
+    quotaEl.replaceChildren('of ', h('b', null, fmt(cur.quota)), ' needed');
     // the bar runs to twice the quota; the mark in the middle is the quota itself
     barFill.style.width = Math.min(100, proj / (cur.quota * 2) * 100).toFixed(1) + '%';
     ticket.className = 'ticket' + (met ? ' met' : '') + (dbl ? ' dbl' : '');
-    bonusEl.replaceChildren(...(cur.bonus
-      ? [h('span', { class: 'tkTag' + (onBonus ? ' on' : '') }, '×' + cur.bonusMult), h('span', null, onBonus ? 'In the hood now: ' : 'Deliver ', h('b', null, cur.bonus.name), onBonus ? '. Deliver to multiply batch by ' + cur.bonusMult + '.' : ' to multiply batch by ' + cur.bonusMult + '.')]
-      : [h('span', null, 'No bonus compound on this order.')]));
+    renderSpec(cur.spec, k => fmtB(RUN.checkMult(run, k)));
     tkCond.textContent = cur.cond ? 'Condition: ' + cur.cond.text + '.' : '';
     tkCond.style.display = cur.cond ? '' : 'none';
     const left = cur.stepsMax - cur.step;
     stepEl.replaceChildren(h('b', null, String(left)), (left === 1 ? 'step' : 'steps') + ' left');
     nowEl.textContent = RX.label(model);
-    swapBtn.textContent = 'Swap hand  [S]  ·  ' + cur.redraws + ' left';
+    swapBtn.textContent = 'Swap hand  [S]  (' + cur.redraws + ' left)';
     swapBtn.disabled = st.busy || st.mode !== 'play' || cur.redraws <= 0;
     deliverBtn.disabled = st.busy || st.mode !== 'play';
     deliverBtn.className = 'btn go' + (met ? ' ready' : '');
-    rackEl.textContent = plural(run.deck.length, 'bottle') + ' in the rack  ·  ' + cur.draw.length + ' not yet drawn';
-    runEl.textContent = 'Run total ' + fmt(run.total + (cur.done ? 0 : proj));
-    bestEl.textContent = st.best.total ? 'Best run: ' + plural(st.best.orders, 'order') + ', ' + fmt(st.best.total) : '';
-    legend.replaceChildren(h('span', { class: 'ink' }), 'in the hood', ...(cur.bonus ? [h('span', { class: 'dash' }), 'bonus compound'] : []));
-    if (cur.bonus) { const cmp = S.compare(cur.bonus.desc, st.desc); prints.forEach(p => { const n = Math.round(cmp[p.k] * 100); p.pct.textContent = n + '% match'; p.pct.className = 'prPct' + (n >= 99 ? ' full' : ''); }); }
-    else prints.forEach(p => { p.pct.textContent = ''; });
-    logEl.replaceChildren(...cur.log.map((l, i) => { const c = RX.CARDS[l.id]; return h('span', { class: 'step', style: '--cc:' + css(c.rgb) }, h('b', null, (i + 1) + '. ' + c.verb), '  ' + plural(l.hits, 'site') + '  +' + fmt(l.pts)); }));
+    rackEl.textContent = cur.draw.length + ' of ' + plural(run.deck.length, 'bottle') + ' left to draw';
+    renderTop(cur.done ? 0 : proj);
   }
-  const tagInfo = (id, i) => { const lv = RUN.live(run, id); return (i + 1) + '  ·  ' + kindOf(RUN.GEARS[id]) + (lv ? '  ·  now ' + lv : ''); };
-  function refreshGear() { for (const id in st.tags) st.tags[id].info.textContent = tagInfo(id, st.tags[id].i); }
+  function renderTop(extra) {
+    if (!run) { cashEl.textContent = runEl.textContent = ''; return; }
+    cashEl.textContent = '$' + run.money;
+    runEl.textContent = 'Run total ' + fmt(run.total + (extra || 0));
+    bestEl.textContent = st.best.total ? 'Best ' + fmt(st.best.total) : '';
+  }
+  function refreshGear() { for (const id in st.tags) { const lv = RUN.live(run, id), t = st.tags[id]; if (t.live && t.live.textContent !== lv) { t.live.textContent = lv; bump(t.live); } } }
   function renderGear() {
     st.tags = {};
     const tags = run.gear.map((id, i) => {
       const g = RUN.GEARS[id], hit = h('em', { class: 'tagHit' });
-      const info = h('i', null, tagInfo(id, i));
-      const el = h('button', { class: 'tag k-' + g.kind, title: i ? 'Click to move it one place left. Equipment works from left to right.' : 'First on the bench. Equipment works from left to right.', onclick: () => moveTag(i) },
-        info, h('b', null, g.name), h('span', null, g.text), hit);
-      st.tags[id] = { el, hit, info, i };
+      const lv = RUN.live(run, id), live = lv ? h('strong', { class: 'tagLive' }, lv) : null;
+      const el = h('button', { class: 'tag k-' + g.kind, title: kindOf(g) + '. ' + (i ? 'Click to move it one place left. Equipment works from left to right.' : 'First on the bench. Equipment works from left to right.'), onclick: () => moveTag(i) },
+        h('b', null, g.name), h('span', null, g.text), live, hit);
+      st.tags[id] = { el, hit, live, i };
       return el;
     });
-    for (let i = run.gear.length; i < RUN.GEAR_SLOTS; i++) tags.push(h('div', { class: 'tag empty' }, 'Empty bench space'));
+    for (let i = run.gear.length; i < RUN.GEAR_SLOTS; i++) tags.push(h('div', { class: 'tag empty' }));
     gearEl.replaceChildren(...tags);
   }
   // a piece of equipment has just worked: it jumps and shows what it added
@@ -157,11 +171,11 @@ function start(app) {
     fx.clear();
     model = m || AA.Model.fromSmilesRelaxed(cur.feed, 6);
     if (v) { v.model = model; v.glow.clear(); }
-    st.desc = RX.describe(model); st.sig = RX.sigOf(model); st.t0 = performance.now();
+    setProbe();
     overlay.className = 'ov'; overlay.replaceChildren();
     scoreEl.textContent = '0';
     renderAll();
-    fx.banner((cur.large ? 'LARGE ORDER ' : 'ORDER ') + (cur.n + 1) + ' OF ' + RUN.ORDERS, cur.feedName + '  ·  ' + fmt(cur.quota) + ' needed', YELLOW, 1.9);
+    fx.banner((cur.large ? 'LARGE ORDER ' : 'ORDER ') + (cur.n + 1), fmt(cur.quota) + ' needed', YELLOW, 1.6);
   }
 
   // ---------- the two feedstocks on offer ----------
@@ -170,16 +184,13 @@ function start(app) {
     const o = run.offers[i];
     st.pv = i; model = st.offerModels[i];
     if (v) { v.model = model; v.glow.clear(); }
-    st.desc = RX.describe(model); st.sig = RX.sigOf(model); st.t0 = performance.now();
+    setProbe();
     st.offerEls.forEach((el, k) => el.classList.toggle('look', k === i));
-    tkHead.textContent = 'Order ' + (run.n + 1) + ' of ' + RUN.ORDERS + '  ·  choose a feedstock';
-    tkFeed.replaceChildren('Looking at: ', h('b', null, o.feedName));
+    tkHead.textContent = 'Order ' + (run.n + 1) + ' of ' + RUN.ORDERS + ', choose a feedstock';
     quotaEl.replaceChildren('of ', h('b', null, fmt(o.quota)), ' needed');
-    bonusEl.replaceChildren(...(o.bonus ? [h('span', { class: 'tkTag' }, '×' + Math.max(2, run.gear.includes('column') ? 4 : 2)), h('span', null, 'Bonus compound: ', h('b', null, o.bonus.name), '.')] : [h('span', null, 'No bonus compound on this order.')]));
+    renderSpec(o.spec, k => fmtB(RUN.checkMult(run, k)));
     tkCond.textContent = run.cond ? 'Condition: ' + run.cond.text + '.' : ''; tkCond.style.display = run.cond ? '' : 'none';
     nowEl.textContent = RX.label(model);
-    legend.replaceChildren(h('span', { class: 'ink' }), 'this feedstock', ...(o.bonus ? [h('span', { class: 'dash' }), 'its bonus compound'] : []));
-    prints.forEach(p => { p.pct.textContent = ''; });
   }
   function showOffers() {
     st.tok++; st.busy = false; st.mode = 'offer'; st.opts = null; st.end = false; st.shown = 0;
@@ -190,32 +201,56 @@ function start(app) {
     st.offerEls = run.offers.map((o, i) => {
       const cov = RUN.coverage(run, o.feed);
       const el = h('button', { class: 'offer' + (o.large ? ' large' : ''), onclick: () => pickFeed(i) },
-        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, o.large ? 'Pays 2 picks' : 'Pays 1 pick')),
+        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, 'Pays $' + o.pay + (o.large ? ' and 2 picks' : ' and 1 pick'))),
         h('div', { class: 'ofBody' },
           h('div', { class: 'ofName' }, o.feedName),
-          h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups')), h('div', null, h('b', null, fmt(o.quota * 2)), h('span', null, 'earns one more pick'))),
-          h('div', { class: 'ofLine' }, o.bonus ? ['Bonus compound: ', h('b', null, o.bonus.name)] : 'No bonus compound'),
+          h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups'))),
           h('div', { class: 'ofCov' }, cov.length ? cov.map(c => { const card = RX.CARDS[c.id]; return h('span', { style: '--cc:' + css(card.rgb) }, card.verb + ' ' + c.n); }) : 'No bottle in your rack reacts with it as it stands')));
       ['mouseenter', 'focus'].forEach(ev => el.addEventListener(ev, () => { if (st.mode === 'offer' && st.pv !== i) lookAt(i); }));
       return el;
     });
     cardsEl.style.setProperty('--n', 2);
     cardsEl.replaceChildren(...st.offerEls);
-    logEl.replaceChildren(); renderGear();
+    renderGear();
     stepEl.replaceChildren();
     swapBtn.textContent = 'Swap hand  [S]'; swapBtn.disabled = deliverBtn.disabled = true; deliverBtn.className = 'btn go';
     rackEl.textContent = plural(run.deck.length, 'bottle') + ' in the rack';
-    runEl.textContent = 'Run total ' + fmt(run.total);
-    bestEl.textContent = st.best.total ? 'Best run: ' + plural(st.best.orders, 'order') + ', ' + fmt(st.best.total) : '';
+    renderTop(0);
     lookAt(0);
-    fx.banner('ORDER ' + (run.n + 1) + ' OF ' + RUN.ORDERS, 'Choose a feedstock' + (run.cond ? '  ·  ' + run.cond.text : ''), YELLOW, 1.9);
+    fx.banner('ORDER ' + (run.n + 1) + ' OF ' + RUN.ORDERS, 'Choose a feedstock', YELLOW, 1.6);
   }
   function pickFeed(i) {
     if (st.mode !== 'offer' || !run.offers || !run.offers[i]) return;
     const m = st.offerModels[i];
     sfx.stamp(); RUN.chooseFeed(run, i); st.offerModels = null; loadOrder(m);
   }
-  function newRun(seed) { run = RUN.newRun(seed); st.seen.clear(); RUN.beginOrder(run); showOffers(); }
+  function newRun(seed) {
+    const m = st.meta, rack = m.rack !== 'standard' && !got(m.rack) ? 'standard' : m.rack, level = Math.min(m.level, got('level3') ? 2 : got('level2') ? 1 : 0);
+    const locked = RUN.UNLOCKS.filter(u => u.kind === 'gear' && !got(u.id)).map(u => u.id);
+    run = RUN.newRun(seed, { rack, level, locked }); st.seen.clear(); st.fresh = []; RUN.beginOrder(run); showOffers();
+  }
+  // records anything this run has just earned for later runs
+  function checkUnlocks() {
+    const ids = RUN.achieved(run).filter(id => !got(id));
+    if (!ids.length) return;
+    ids.forEach(id => { st.meta.got.push(id); st.fresh.push(id); });
+    saveMeta();
+  }
+  // the panel before a run: which rack, which level, and what is still locked
+  function showStart() {
+    st.tok++; st.mode = 'start'; st.busy = false; st.opts = null; st.end = false;
+    const m = st.meta, maxLv = got('level3') ? 2 : got('level2') ? 1 : 0;
+    if (m.rack !== 'standard' && !got(m.rack)) m.rack = 'standard';
+    m.level = Math.max(0, Math.min(maxLv, m.level));
+    const racks = Object.keys(RUN.RACKS).map(id => { const open = id === 'standard' || got(id); return h('button', { class: 'opt' + (m.rack === id ? ' on' : ''), disabled: open ? null : '', onclick: () => { m.rack = id; saveMeta(); sfx.click(); showStart(); } }, h('b', null, RUN.RACKS[id].name), h('span', null, open ? plural(RUN.RACKS[id].deck.length, 'bottle') : 'Locked')); });
+    const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: () => { m.level = i; saveMeta(); sfx.click(); showStart(); } }, h('b', null, 'Level ' + (i + 1)), h('span', null, i > maxLv ? 'Locked' : i ? 'Quotas times ' + x : 'Standard quotas')));
+    const list = RUN.UNLOCKS.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.name), h('span', null, got(u.id) ? 'Unlocked' : u.how)));
+    overlay.replaceChildren(h('div', { class: 'panel start' }, h('h2', null, 'New run'),
+      h('h3', null, 'Rack'), h('div', { class: 'opts' }, racks), h('h3', null, 'Level'), h('div', { class: 'opts' }, levels),
+      h('h3', null, 'Unlocks, ' + st.meta.got.length + ' of ' + RUN.UNLOCKS.length), h('ul', { class: 'unl' }, list),
+      h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
+    overlay.className = 'ov on';
+  }
 
   const scr = atoms => { let x = 0, y = 0; atoms.forEach(a => { const p = v._screen(a); x += p.x; y += p.y; }); return { x: x / atoms.length, y: y / atoms.length }; };
   function centroid() { let x = 0, y = 0, z = 0, n = 0; model.atoms.forEach(a => { if (a.fly) return; x += a.x; y += a.y; z += a.z; n++; }); return n ? [x / n, y / n, z / n] : [0, 0, 0]; }
@@ -237,11 +272,12 @@ function start(app) {
     if (e.kind === 'grade') return;
     setCalc(e.yield, e.batch);
     if (e.src === 'bottle' && e.kind === 'b') return;
-    const txt = (e.kind === 'x' ? '×' : '+') + fmtB(e.val), hot = heat();
+    const txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val), hot = heat();
     if (RUN.GEARS[e.src]) fireTag(e.src, txt);
     if (e.kind === 'x') {
-      bump(scoreEl); fx.floatText(at.x, at.y - 30, txt + ' batch', HOT, 30 + 3 * hot);
+      bump(scoreEl); fx.floatText(at.x, at.y - 30, 'batch ' + txt, HOT, 30 + 3 * hot);
       fx.flash(0.16 + 0.03 * hot, RED); fx.shake(5 + 2 * hot); fx.ring(at.x, at.y, RED, 120 + 20 * hot, 0.45);
+      slow(0.2, 160 + 20 * hot); fx.punch(0.03 + 0.008 * hot);
     } else if (e.src === 'bottle') fx.floatText(at.x, at.y - 28, (e.again ? 'again ' : '') + txt, YELLOW, 26 + 3 * hot);
     sfx.lock(pitch);
   }
@@ -258,22 +294,24 @@ function start(app) {
     const beat = (e, at) => ({ wait: Math.max(55, 120 - 6 * nEv), fn: () => { nEv++; showEv(e, at, pitch++); } });
     sfx.click();
     sites.forEach(s => s.atoms.forEach(a => st.flashes.push({ atom: a, hex: hex(col), until: t + 600 + sites.length * 420 })));
-    fx.banner(card.verb.toUpperCase(), card.formula + '  ·  ' + card.chem, col, 1.25);
+    fx.banner(card.verb.toUpperCase(), card.formula, col, 1.25);
     renderHand(); renderTicket();
     if (cardsEl.children[i]) cardsEl.children[i].classList.add('played');
 
     const wrapUp = res => {
-      st.desc = RX.describe(model); st.sig = RX.sigOf(model); st.t0 = performance.now(); sfx.pen(500);
+      const before = checksFor(cur.spec).n;
+      setProbe(); sfx.pen(500);
       const up = res.ev.find(e => e.kind === 'grade'), hot = heat();
-      if (up) { fx.banner(card.verb.toUpperCase() + ' IS NOW GRADE ' + up.val, RUN.YIELD * up.val + ' yield a site for the rest of the run', col, 2.0); sfx.good(); fx.flash(0.4, WHITE); }
-      else if (hits >= 2) fx.banner(hits + ' SITES', fmt(cur.yield) + ' × ' + fmtB(cur.batch) + ' = ' + fmt(res.score), col, 1.7);
-      if (hits >= 3) { fx.flash(0.45, WHITE); fx.shake(10 + 2 * hot); if (!up) sfx.good(); }
+      if (up) { fx.banner(card.verb.toUpperCase() + ' GRADE ' + up.val, RUN.YIELD * up.val + ' yield for each site', col, 2.0); sfx.good(); fx.flash(0.4, WHITE); slow(0.15, 320); fx.punch(0.08); }
+      else if (hits >= 2) fx.banner(hits + ' SITES', fmt(res.score), col, 1.5);
+      if (hits >= 3) { fx.flash(0.45, WHITE); fx.shake(10 + 2 * hot); slow(0.2, 260); fx.punch(0.06); if (!up) sfx.good(); }
       st.busy = false;
-      const any = renderHand(), onBonus = cur.bonus && st.sig === cur.bonus.sig, slow = up || hits >= 2;
+      const any = renderHand(), now = checksFor(cur.spec).n, long = up || hits >= 2;
       renderTicket(); refreshGear();
-      if (onBonus) { model.atoms.forEach(a => { if (!a.fly) st.flashes.push({ atom: a, hex: hex(YELLOW), until: performance.now() + 900 }); }); sfx.good(); }
-      if (cur.step >= cur.stepsMax) setTimeout(() => { if (tok === st.tok && st.mode === 'play') finishOrder(); }, slow ? 1100 : 600);
-      else if (!any) setTimeout(() => { if (tok === st.tok && st.mode === 'play' && !st.busy) fx.banner('NO SITE IN THIS HAND', cur.redraws > 0 ? 'Swap the hand or deliver' : 'Deliver the order', WHITE, 2.4); }, slow ? 1600 : 300);
+      if (now > before) { bump(specEl); sfx.lock(8 + 2 * now); }
+      if (now === 3 && before < 3) { model.atoms.forEach(a => { if (!a.fly) st.flashes.push({ atom: a, hex: hex(YELLOW), until: performance.now() + 900 }); }); sfx.good(); fx.banner('ON SPEC', 'All three checks pass', YELLOW, 1.4); }
+      if (cur.step >= cur.stepsMax) setTimeout(() => { if (tok === st.tok && st.mode === 'play') finishOrder(); }, long ? 1100 : 600);
+      else if (!any) setTimeout(() => { if (tok === st.tok && st.mode === 'play' && !st.busy) fx.banner('NO SITE IN THIS HAND', cur.redraws > 0 ? 'Swap the hand or deliver' : 'Deliver the order', WHITE, 2.4); }, long ? 1600 : 300);
     };
 
     const steps = sites.map((site, k) => ({ wait: k ? 230 : 380, fn: () => {
@@ -313,8 +351,9 @@ function start(app) {
 
   function finishOrder() {
     st.mode = 'result';
-    const tok = st.tok, res = RUN.endOrder(run, st.sig), w = benchCv.clientWidth, hh = benchCv.clientHeight, cx = w / 2, cy = hh / 2;
+    const tok = st.tok, res = RUN.endOrder(run, st.probe), w = benchCv.clientWidth, hh = benchCv.clientHeight, cx = w / 2, cy = hh / 2;
     const filled = run.history.filter(q => q.pass).length;
+    checkUnlocks();
     if (filled > st.best.orders || (filled === st.best.orders && run.total > st.best.total)) { st.best = { orders: filled, total: run.total }; res.best = true; try { localStorage.setItem('aa_rx_best', JSON.stringify(st.best)); } catch (e) { /* storage unavailable */ } }
     swapBtn.disabled = deliverBtn.disabled = true; deliverBtn.classList.remove('ready');
     renderHand(); setCalc(res.yield, res.batch);
@@ -322,7 +361,7 @@ function start(app) {
     res.ev.forEach((e, k) => setTimeout(() => {
       if (tok !== st.tok) return;
       showEv(e, { x: cx, y: cy - 40 }, 8 + 2 * k);
-      fx.banner(e.src === 'bonus' ? 'BONUS COMPOUND' : 'SEED CRYSTAL', 'batch ×' + fmtB(e.val), YELLOW, 0.6);
+      fx.banner(e.src === 'checks' ? plural(res.checks.n, 'CHECK') + ' PASSED' : 'SEED CRYSTAL', 'batch times ' + fmtB(e.val), YELLOW, 0.6);
       model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
     }, 150 + k * 650));
     setTimeout(() => {
@@ -332,6 +371,7 @@ function start(app) {
       if (res.pass) {
         st.party = performance.now() + 1400 + 400 * big;
         fx.flash(Math.min(0.9, 0.4 + 0.1 * big), WHITE); sfx.fanfare(); v.yawVel = 1.4 + 0.45 * big; fx.shake(9 + 3 * big);
+        slow(0.15, 350); fx.punch(0.1 + 0.02 * big);
         fx.ring(cx, cy, YELLOW, 260, 0.9); fx.ring(cx, cy, GREEN, 170, 0.7); fx.burst(cx, cy, YELLOW, 110, 520); fx.burst(cx, cy, WHITE, 50, 300);
         for (let k = 0; k < big; k++) setTimeout(() => {
           if (tok !== st.tok) return;
@@ -339,7 +379,7 @@ function start(app) {
           fx.ring(x, y, c, 240 + 40 * k, 0.8); fx.burst(x, y, c, 70 + 12 * k, 440 + 40 * k); fx.shake(7 + k); sfx.lock(6 + k * 2);
         }, 240 * (k + 1));
         model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
-        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed' + (res.picks > 1 ? '  ·  ' + res.picks + ' picks' : ''), YELLOW, 2.3);
+        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed, paid $' + res.pay, YELLOW, 2.3);
       } else {
         sfx.stamp(); fx.shake(6);
         fx.banner('QUOTA MISSED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed', RED, 2.3);
@@ -350,31 +390,30 @@ function start(app) {
 
   function showPanel(res, filled) {
     const kids = [], product = RX.label(model), n = cur.n + 1;
-    const again = h('button', { class: 'btn go', onclick: () => newRun() }, 'New run  [Enter]');
-    const sum = fmt(cur.yield) + ' yield × ' + fmtB(cur.batch) + ' batch = ' + fmt(res.total);
+    const again = h('button', { class: 'btn go', onclick: () => showStart() }, 'New run  [Enter]');
+    const fresh = st.fresh.length ? h('div', { class: 'newUnl' }, h('b', null, 'Unlocked for later runs'), st.fresh.map(id => h('span', null, RUN.UNLOCKS.find(u => u.id === id).name))) : null;
     if (run.won) {
       kids.push(h('h2', null, 'Run complete'), h('div', { class: 'pBig' }, fmt(run.total)),
-        h('p', null, 'All ' + RUN.ORDERS + ' orders filled. The last order: ' + sum + '. ' + (res.best ? 'This is the best run on this machine.' : 'Best run: ' + fmt(st.best.total) + '.')), again);
+        h('p', null, 'All ' + RUN.ORDERS + ' orders filled.' + (res.best ? ' This is the best run on this machine.' : '')), fresh, again);
       st.opts = null; st.end = true;
     } else if (!res.pass) {
-      kids.push(h('h2', null, 'Run over at order ' + n), h('div', { class: 'pBig' }, fmt(res.total) + ' / ' + fmt(cur.quota)),
-        h('p', null, 'Delivered ' + product + '. ' + sum + '. The order needed ' + fmt(cur.quota) + '.' + (cur.bonus && !res.hit ? ' Delivering ' + cur.bonus.name + ' would have multiplied batch by ' + cur.bonusMult + '.' : '')),
-        h('p', null, plural(filled, 'order') + ' filled, run total ' + fmt(run.total) + '.' + (res.best ? ' This is the best run on this machine.' : '')), again);
+      kids.push(h('h2', null, 'Run over at order ' + n), h('div', { class: 'pBig' }, fmt(res.total) + ' of ' + fmt(cur.quota)),
+        h('p', null, 'Delivered ' + product + '. ' + plural(filled, 'order') + ' filled, run total ' + fmt(run.total) + '.' + (res.best ? ' This is the best run on this machine.' : '')), fresh, again);
       st.opts = null; st.end = true;
     } else {
       st.opts = RUN.rewards(run); st.end = false; st.picksLeft = res.picks;
       const opts = st.opts.map((o, i) => {
-        if (o.kind === 'gear') { const g = RUN.GEARS[o.id]; return h('button', { class: 'pick gearPick k-' + g.kind, onclick: () => choose(i) }, h('span', { class: 'bKey' }, String(i + 1)), h('div', { class: 'gpKind' }, 'Equipment  ·  ' + kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text), h('div', { class: 'gpSlot' }, 'Bench space ' + (run.gear.length + 1) + ' of ' + RUN.GEAR_SLOTS)); }
+        if (o.kind === 'gear') { const g = RUN.GEARS[o.id]; return h('button', { class: 'pick gearPick k-' + g.kind, onclick: () => choose(i) }, h('span', { class: 'bKey' }, String(i + 1)), h('div', { class: 'gpKind' }, kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text)); }
         const b = bottle(RX.CARDS[o.id], String(i + 1)), have = run.deck.filter(id => id === o.id).length;
-        b.el.className = 'bottle pick'; b.el.addEventListener('click', () => choose(i));
+        b.el.className += ' pick'; b.el.addEventListener('click', () => choose(i));
         b.foot.append(h('span', null, have ? 'You have ' + have : 'New to the rack'));
         b.card = RX.CARDS[o.id];
         return b;
       });
       st.pickEls = opts.map(o => o.el || o);
-      st.pickHead = h('h3', null, (res.picks > 1 ? 'Take ' + res.picks : 'Take one') + ' for the rest of the run' + (cur.large ? '  ·  large order' : '') + (res.total >= cur.quota * 2 ? '  ·  more than double the quota' : ''));
-      kids.push(h('h2', null, 'Order ' + n + ' filled'),
-        h('p', null, sum + ', against ' + fmt(cur.quota) + ' needed.' + (res.hit ? ' The bonus compound multiplied batch by ' + res.mult + '.' : '') + ' Next order needs ' + fmt(RUN.QUOTA[cur.n + 1]) + ', or ' + fmt(RUN.QUOTA[cur.n + 1] * RUN.LARGE) + ' as a large order.'),
+      st.pickHead = h('h3', null, res.picks > 1 ? 'Take ' + res.picks : 'Take one');
+      kids.push(h('h2', null, 'Order ' + n + ' filled, paid $' + res.pay),
+        h('p', null, fmt(res.total) + ' against ' + fmt(cur.quota) + ' needed. ' + plural(res.checks.n, 'check') + ' passed.'), fresh,
         st.pickHead, h('div', { class: 'picks' }, st.pickEls),
         h('button', { class: 'btn', onclick: () => choose(-1) }, 'Take nothing  [0]'));
       overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';
@@ -391,16 +430,58 @@ function start(app) {
       if (st.pickEls && st.pickEls[i]) st.pickEls[i].classList.add('taken');
       if (st.picksLeft > 0 && st.opts.some(o => o)) { st.pickHead.textContent = st.picksLeft > 1 ? 'Take ' + st.picksLeft + ' more' : 'Take one more'; return; }
     } else sfx.click();
-    st.opts = null; RUN.nextOrder(run); showOffers();
+    st.opts = null; st.fresh = []; RUN.stock(run); showShop();
+  }
+
+  // ---------- the supply room between orders ----------
+  function showShop() {
+    st.mode = 'shop';
+    const sh = run.shop, arts = [];
+    const items = sh.items.map((it, i) => {
+      const ok = RUN.canBuy(run, it), price = h('div', { class: 'price' }, it.sold ? 'Sold' : '$' + it.cost);
+      let body;
+      if (it.kind === 'gear') { const g = RUN.GEARS[it.id]; body = h('div', { class: 'gearPick k-' + g.kind }, h('div', { class: 'gpKind' }, kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text)); }
+      else {
+        const card = RX.CARDS[it.id], b = bottle(card, null), have = run.deck.filter(id => id === it.id).length;
+        b.foot.append(h('span', null, it.kind === 'grade' ? 'Purify to grade ' + (RUN.gradeOf(run, it.id) + (it.sold ? 0 : 1)) : have ? 'You have ' + have : 'New to the rack'));
+        arts.push([b.art, card]); body = b.el; body.tabIndex = -1;
+      }
+      return h('div', { class: 'shopItem' + (it.sold ? ' sold' : ok ? '' : ' cant'), onclick: () => shopBuy(i) }, h('span', { class: 'bKey' }, String(i + 1)), body, price);
+    });
+    const counts = {}; run.deck.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    const canCut = run.money >= RUN.REMOVE && run.deck.length > RUN.MIN_RACK;
+    const rack = Object.keys(counts).map(id => { const c = RX.CARDS[id]; return h('button', { class: 'chip', style: '--cc:' + css(c.rgb), disabled: !canCut, title: 'Remove one for $' + RUN.REMOVE, onclick: () => { if (RUN.removeBottle(run, id)) { sfx.stamp(); showShop(); } } }, c.verb + (counts[id] > 1 ? ' ' + counts[id] : '')); });
+    const bench = run.gear.map(id => h('button', { class: 'chip', title: 'Sell for $' + RUN.SELL, onclick: () => { if (RUN.sellGear(run, id)) { sfx.stamp(); renderGear(); showShop(); } } }, RUN.GEARS[id].name));
+    overlay.replaceChildren(h('div', { class: 'panel shop' },
+      h('div', { class: 'shopHead' }, h('h2', null, 'Supply room'), h('div', { class: 'cash' }, '$' + run.money)),
+      h('div', { class: 'shopRow' }, items),
+      h('h3', null, 'Your rack, ' + plural(run.deck.length, 'bottle') + '. Click one to remove it for $' + RUN.REMOVE + '.'), h('div', { class: 'chips' }, rack),
+      bench.length ? h('h3', null, 'Your bench. Click a piece to sell it for $' + RUN.SELL + '.') : null, bench.length ? h('div', { class: 'chips' }, bench) : null,
+      h('div', { class: 'shopFoot' }, h('button', { class: 'btn', disabled: run.money < sh.reroll, onclick: () => shopReroll() }, 'New stock  [R]  $' + sh.reroll), h('button', { class: 'btn go', onclick: () => leaveShop() }, 'Next order  [Enter]'))));
+    overlay.className = 'ov on';
+    arts.forEach(a => drawCardArt(a[0], a[1], false));
+    renderTop(0);
+  }
+  function shopBuy(i) {
+    if (st.mode !== 'shop') return;
+    const it = run.shop.items[i];
+    if (!RUN.buy(run, i)) { sfx.bad(); return; }
+    if (it.kind === 'grade') sfx.good(); else sfx.stamp();
+    checkUnlocks(); renderGear(); showShop();
+  }
+  function shopReroll() { if (st.mode === 'shop' && RUN.reroll(run)) { sfx.feed(); showShop(); } else sfx.bad(); }
+  function leaveShop() {
+    if (st.mode !== 'shop') return;
+    RUN.closeShop(run); RUN.nextOrder(run); showOffers();
   }
 
   // ---------- frame loop ----------
   let last = performance.now(), tick = 0;
   function frame(now) {
     requestAnimationFrame(frame);
-    const dt = Math.min(0.05, (now - last) / 1000); last = now; tick++;
+    const real = Math.min(0.05, (now - last) / 1000), dt = real * (now < st.slowUntil ? st.slowBy : 1); last = now; tick++;
     if (!v || !model) return;
-    for (let i = 0; i < 4; i++) model.step(0.012);
+    for (let i = 0; i < (now < st.slowUntil ? 1 : 4); i++) model.step(0.012);
     // leaving groups drift out and pop
     st.fliers = st.fliers.filter(f => {
       f.t += dt;
@@ -420,23 +501,31 @@ function start(app) {
     st.hoverAtoms.forEach(a => v.glow.set(a, st.hoverHex));
     st.flashes = st.flashes.filter(f => f.until > now); st.flashes.forEach(f => v.glow.set(f.atom, f.hex));
     if (st.party > now) model.atoms.forEach((a, i) => v.glow.set(a, new T.Color().setHSL((now / 900 + i * 0.07) % 1, 1, 0.45).getHex()));
-    v.render(dt); fx.draw(dt);
+    v.render(dt);
+    // bloom: the frame just drawn, copied small and laid back over itself blurred; stronger as the score grows
+    const bw = Math.max(2, benchCv.clientWidth >> 2), bh = Math.max(2, benchCv.clientHeight >> 2);
+    if (bloomCv.width !== bw || bloomCv.height !== bh) { bloomCv.width = bw; bloomCv.height = bh; }
+    bloomCx.clearRect(0, 0, bw, bh);
+    try { bloomCx.drawImage(benchCv, 0, 0, bw, bh); bloomCx.drawImage(fxCv, 0, 0, bw, bh); } catch (e) { /* canvas not ready */ }
+    bloomCv.style.opacity = Math.min(0.95, 0.4 + 0.08 * heat() + (now < st.slowUntil ? 0.25 : 0) + (st.party > now ? 0.2 : 0)).toFixed(2);
+    fx.draw(real);
+    sfx.setIntensity(st.mode === 'play' || st.mode === 'result' ? Math.min(1, 0.25 + heat() / 5) : 0.15);
     // score counts up
     const target = st.target;
-    if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 3 ? target : st.shown + d * Math.min(1, dt * 8); scoreEl.textContent = fmt(st.shown); }
+    if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 3 ? target : st.shown + d * Math.min(1, real * 8); scoreEl.textContent = fmt(st.shown); }
     // printouts: redraw while the pen is moving, then now and again
     const prog = Math.min(1, (now - st.t0) / 900);
     if (prog < 1 || tick % 20 === 0 || st.t0 !== st.drawn) {
       const o = { quality: 'hires', progress: prog, seed: 7, t: now };
-      const bonus = st.mode === 'offer' ? run.offers[st.pv].bonus : cur.bonus;
-      if (bonus) { o.overlay = bonus.desc; o.overlayColor = '#c8261c'; }
+      const spec = st.mode === 'offer' ? run.offers[st.pv].spec : cur && cur.spec;
+      if (spec) { o.overlay = spec.desc; o.overlayColor = '#c8261c'; }
       prints.forEach(p => AA.paper.draw(p.cv, p.k, st.desc, o));
       if (prog >= 1) st.drawn = st.t0;
     }
   }
 
   // ---------- start ----------
-  newRun();
+  newRun(); showStart();
   requestAnimationFrame(() => {
     v = new AA.Viewer(benchCv, model, { interactive: false, zoom: 40, pitch: 0.32, yaw: 0.5, faces: false });
     const grid = new T.GridHelper(44, 22, 0x9a9a9a, 0x9a9a9a); grid.position.y = -5.4; grid.material.transparent = true; grid.material.opacity = 0.16; v.scene.add(grid);
@@ -447,10 +536,15 @@ function start(app) {
   root.addEventListener('keydown', e => {
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
+    if (st.mode === 'start') { if (k === 'Enter') { newRun(); e.preventDefault(); } return; }
+    if (st.mode === 'shop') {
+      if (k >= '1' && k <= '5') { shopBuy(+k - 1); e.preventDefault(); } else if (k === 'r' || k === 'R') shopReroll(); else if (k === 'Enter') { leaveShop(); e.preventDefault(); }
+      return;
+    }
     if (st.mode === 'offer') { if (k === '1' || k === '2') { pickFeed(+k - 1); e.preventDefault(); } return; }
     if (st.mode === 'result') {
       if (st.opts) { if (k >= '1' && k <= '3') { choose(+k - 1); e.preventDefault(); } else if (k === '0') { choose(-1); e.preventDefault(); } }
-      else if (st.end && k === 'Enter' && overlay.className === 'ov on') { newRun(); e.preventDefault(); }
+      else if (st.end && k === 'Enter' && overlay.className === 'ov on') { showStart(); e.preventDefault(); }
       return;
     }
     if (k >= '1' && k <= '9') { play(+k - 1); e.preventDefault(); }
@@ -460,9 +554,13 @@ function start(app) {
   const mute = document.getElementById('mute');
   if (mute) mute.addEventListener('click', () => { sfx.setMuted(!sfx.isMuted()); mute.textContent = sfx.isMuted() ? 'Sound off' : 'Sound on'; });
   const fresh = document.getElementById('newrun');
-  if (fresh) fresh.addEventListener('click', () => newRun());
+  if (fresh) fresh.addEventListener('click', () => showStart());
+  const music = document.getElementById('music');
+  if (music) music.addEventListener('click', () => { sfx.setMusic(!sfx.musicOn()); music.textContent = sfx.musicOn() ? 'Music on' : 'Music off'; });
+  // audio may only start after a key or a click
+  ['pointerdown', 'keydown'].forEach(ev => root.addEventListener(ev, () => sfx.startMusic(), { once: true }));
 
-  AA.rxGame = { state: st, run: () => run, model: () => model, play, swap, deliver, choose, pickFeed, newRun };
+  AA.rxGame = { state: st, run: () => run, model: () => model, play, swap, deliver, choose, pickFeed, newRun, showStart, shopBuy, shopReroll, leaveShop };
 }
 
 document.addEventListener('DOMContentLoaded', () => start(document.getElementById('app')));

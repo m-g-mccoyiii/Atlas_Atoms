@@ -12,11 +12,11 @@ function choose(run, opts, policy) {
   return opts.slice().sort((a, b) => count(b.id) - count(a.id))[0];
 }
 // feed: 'standard', 'large', or 'fit' (the large order when the rack's bottles react at two more sites than it has groups)
-function bot(runs, seed, policy, noFail, feed) {
+function bot(runs, seed, policy, noFail, feed, ropts) {
   const totals = Array.from({ length: RUN.ORDERS }, () => []), reached = new Array(RUN.ORDERS + 1).fill(0);
   let bonusHits = 0, orders = 0, doubles = 0, larges = 0;
   for (let i = 0; i < runs; i++) {
-    const run = RUN.newRun((seed || 1) + i * 7919);
+    const run = RUN.newRun((seed || 1) + i * 7919, ropts);
     RUN.beginOrder(run);
     for (;;) {
       const fit = RUN.coverage(run, run.offers[1].feed).reduce((t, c) => t + c.n, 0) >= run.offers[1].groups + 2;
@@ -30,12 +30,14 @@ function bot(runs, seed, policy, noFail, feed) {
         for (let h = 0; h < hits; h++) RUN.scoreSite(run, id, false);
         RUN.commit(run, best, hits);
       }
-      const res = RUN.endOrder(run, RX.sigOf(m));
+      const res = RUN.endOrder(run, RX.probe(m));
       totals[cur.n].push(res.total / (cur.large ? RUN.LARGE : 1)); if (cur.large) larges++; orders++; if (res.hit) bonusHits++; if (res.total >= cur.quota * 2) doubles++;
       if (noFail) run.over = cur.n === RUN.ORDERS - 1;
       if (run.over) { reached[res.pass || noFail ? cur.n + 1 : cur.n]++; break; }
       const opts = RUN.rewards(run);
-      for (let p = 0; p < Math.max(1 + cur.extra, res.picks) && opts.length; p++) { const o = choose(run, opts, policy); RUN.take(run, o); opts.splice(opts.indexOf(o), 1); }
+      for (let p = 0; p < res.picks && opts.length; p++) { const o = choose(run, opts, policy); RUN.take(run, o); opts.splice(opts.indexOf(o), 1); }
+      // the supply room: equipment first, then a purification, then a bottle it already holds
+      if (policy === 'build') { const shop = RUN.stock(run); ['gear', 'grade', 'bottle'].forEach(kind => shop.items.forEach((it, k) => { if (it.kind === kind && (kind !== 'bottle' || run.deck.includes(it.id))) RUN.buy(run, k); })); RUN.closeShop(run); }
       RUN.nextOrder(run);
     }
   }

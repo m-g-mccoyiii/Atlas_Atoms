@@ -2,17 +2,31 @@
 'use strict';
 const AA = root.AA, RX = AA.rx;
 
-// The run: eight orders. Each order gives a feedstock, a quota and a bonus compound. Bottles come from a
-// rack (the deck) into a hand. The score of an order is YIELD × BATCH. Every site that reacts adds yield and
+// The run: eight orders. Each order gives a feedstock, a quota and a spec compound. Bottles come from a
+// rack (the deck) into a hand. The score of an order is yield times batch. Every site that reacts adds yield and
 // batch; equipment adds to either or multiplies batch; bottles gain grades that last for the run.
+// At delivery three instruments check the product against the spec, and each check passed raises batch.
+// A filled order pays money, which is spent in the supply room between orders.
 // Nothing in this file touches the page, so the same code drives the game and the headless bot.
 
 const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20, SCHLENK = 1.5;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
 const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
 const QUOTA = [100, 250, 1200, 2000, 6000, 12000, 30000, 45000];
+// money: paid for a filled order, more for a large one, for each check passed and for twice the quota
+const PAY = 4, PAY_LARGE = 3, PAY_CHECK = 1, PAY_DOUBLE = 3, START_CASH = 3, REROLL = 2, REMOVE = 3, SELL = 2, MIN_RACK = 6;
+const COST = { y: 5, b: 5, x: 8, grow: 7, tool: 6 };
+// batch multiplier for 0, 1, 2 or 3 checks passed
+const CHECK_MULT = [1, 1.25, 1.5, 2];
+// starting racks and difficulty levels; all but the first of each are unlocked by play
+const RACKS = {
+  standard: { name: 'General rack', deck: STARTER },
+  halide: { name: 'Halide rack', deck: ['hcl', 'hcl', 'socl2', 'socl2', 'koh', 'koh', 'naoh', 'naoh', 'hydrate', 'h2'] },
+  redox: { name: 'Redox rack', deck: ['pcc', 'pcc', 'pcc', 'nabh4', 'nabh4', 'nabh4', 'bh3', 'bh3', 'h2', 'hydrate'] }
+};
+const LEVELS = [1, 1.5, 2.5];
 // Every order offers two feedstocks. The standard one has LEAN[n] reactive groups. The large one has one more,
-// needs LARGE times the quota and pays one more pick.
+// needs LARGE times the quota and pays one more pick and more money.
 const LEAN = [2, 2, 3, 3, 4, 4, 5, 5], LARGE = 3.5;
 // feedstocks by number of reactive groups: FEED[0] has two, FEED[4] has six
 const FEED = [
@@ -35,14 +49,14 @@ const GEAR = [
   { id: 'parr', kind: 'b', name: 'Parr shaker', text: 'Hydrogenate sites: +6 batch.', ids: ['h2'], b: 6 },
   { id: 'scrubber', kind: 'b', name: 'Gas scrubber', text: 'Add HCl and Chlorinate sites: +3 batch.', ids: ['hcl', 'socl2'], b: 3 },
   { id: 'stirrer', kind: 'b', name: 'Stir plate', text: 'Every bottle played: +2 batch.' },
-  { id: 'deanstark', kind: 'x', name: 'Dean–Stark trap', text: 'Dehydrate sites: batch ×1.5.', ids: ['dehydrate'], x: 1.5 },
-  { id: 'mantle', kind: 'x', name: 'Heating mantle', text: 'Eliminate and Substitute sites: batch ×1.5.', ids: ['koh', 'naoh'], x: 1.5 },
-  { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch ×' + SCHLENK + '.' },
-  { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch ×2.' },
-  { id: 'column', kind: 'x', name: 'Chromatography column', text: 'The bonus compound multiplies batch by 4 instead of 2.', bonus: 4 },
+  { id: 'deanstark', kind: 'x', name: 'Dean-Stark trap', text: 'Dehydrate sites: batch times 1.5.', ids: ['dehydrate'], x: 1.5 },
+  { id: 'mantle', kind: 'x', name: 'Heating mantle', text: 'Eliminate and Substitute sites: batch times 1.5.', ids: ['koh', 'naoh'], x: 1.5 },
+  { id: 'schlenk', kind: 'x', name: 'Schlenk line', text: 'A bottle that reacts at 3 or more sites: batch times ' + SCHLENK + '.' },
+  { id: 'rotovap', kind: 'x', name: 'Rotary evaporator', text: 'The last step of an order: batch doubled.' },
+  { id: 'column', kind: 'x', name: 'Chromatography column', text: 'Passing all three checks multiplies batch by 4 instead of 2.', bonus: 4 },
   { id: 'syringe', kind: 'x', name: 'Syringe pump', text: 'The last site of every bottle counts twice.' },
   { id: 'coldtrap', kind: 'grow', name: 'Cold trap', text: 'Catches every group that leaves a molecule. Each order starts with +1 batch for every 2 caught.' },
-  { id: 'seed', kind: 'grow', name: 'Seed crystal', text: 'At delivery: batch ×1, plus 0.5 for every bonus compound delivered this run.' },
+  { id: 'seed', kind: 'grow', name: 'Seed crystal', text: 'At delivery: batch times 1, plus 0.5 for every order that has passed all three checks this run.' },
   { id: 'stock', kind: 'grow', name: 'Stock solution', text: 'Every site: +5 yield for each grade your bottles have gained this run.' },
   { id: 'reflux', kind: 'tool', name: 'Reflux condenser', text: 'One more step on every order.', steps: 1 },
   { id: 'rack', kind: 'tool', name: 'Bottle carrier', text: 'Hold one more bottle in your hand.', hand: 1 },
@@ -50,7 +64,35 @@ const GEAR = [
   { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' }
 ];
 const GEARS = {};
-GEAR.forEach(g => { GEARS[g.id] = g; });
+GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
+
+// Things that stay unlocked between runs. `how` is shown to the player; achieved() below tests each one.
+const UNLOCKS = [
+  { id: 'schlenk', kind: 'gear', name: 'Schlenk line', how: 'Fill 3 orders in one run' },
+  { id: 'syringe', kind: 'gear', name: 'Syringe pump', how: 'Fill a large order' },
+  { id: 'column', kind: 'gear', name: 'Chromatography column', how: 'Pass all three checks on one order' },
+  { id: 'seed', kind: 'gear', name: 'Seed crystal', how: 'Pass all three checks 3 times in one run' },
+  { id: 'rotovap', kind: 'gear', name: 'Rotary evaporator', how: 'Score 10,000 on one order' },
+  { id: 'winchester', kind: 'gear', name: 'Winchester bottle', how: 'Raise a bottle to grade 3' },
+  { id: 'halide', kind: 'rack', name: 'Halide rack', how: 'Fill 4 orders in one run' },
+  { id: 'redox', kind: 'rack', name: 'Redox rack', how: 'Hold $15 at once' },
+  { id: 'level2', kind: 'level', name: 'Level 2', how: 'Fill all 8 orders' },
+  { id: 'level3', kind: 'level', name: 'Level 3', how: 'Fill all 8 orders on level 2' }
+];
+function achieved(run) {
+  const filled = run.history.filter(q => q.pass), out = [];
+  if (filled.length >= 3) out.push('schlenk');
+  if (filled.some(q => q.large)) out.push('syringe');
+  if (run.stats.triple >= 1) out.push('column');
+  if (run.stats.triple >= 3) out.push('seed');
+  if (run.history.some(q => q.total >= 10000)) out.push('rotovap');
+  if (Object.keys(run.grade).some(id => run.grade[id] >= 3)) out.push('winchester');
+  if (filled.length >= 4) out.push('halide');
+  if (run.stats.maxMoney >= 15) out.push('redox');
+  if (run.won) out.push('level2');
+  if (run.won && run.level >= 1) out.push('level3');
+  return out;
+}
 
 // Conditions attached to orders 4 and 8.
 const CONDS = [
@@ -73,20 +115,24 @@ const seedMult = run => 1 + 0.5 * run.grow.bonus;
 const scoreOf = cur => Math.round(cur.yield * cur.batch);
 let uid = 0;
 
-function newRun(seed) {
-  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: STARTER.slice(), gear: [], grade: {},
+// opts: { rack, level, locked }. locked is a list of equipment ids that cannot turn up in this run.
+function newRun(seed, opts) {
+  const o = opts || {}, rack = RACKS[o.rack] ? o.rack : 'standard';
+  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: RACKS[rack].deck.slice(), gear: [], grade: {},
+    rack, level: Math.max(0, Math.min(LEVELS.length - 1, o.level | 0)), locked: new Set(o.locked || []), money: START_CASH, shop: null,
+    stats: { triple: 0, maxMoney: START_CASH },
     grow: { caught: 0, bonus: 0, grades: 0 }, fed: [], cur: null, over: false, won: false, history: [] };
 }
 // the number a growing piece of equipment currently stands at, for its tag
 function live(run, id) {
-  if (id === 'coldtrap') return '+' + Math.floor(run.grow.caught / 2) + ' batch (' + run.grow.caught + ' caught)';
-  if (id === 'seed') return '×' + seedMult(run);
-  if (id === 'stock') return '+' + 5 * run.grow.grades + ' yield';
+  if (id === 'coldtrap') return '+' + Math.floor(run.grow.caught / 2);
+  if (id === 'seed') return 'times ' + seedMult(run);
+  if (id === 'stock') return '+' + 5 * run.grow.grades;
   return '';
 }
 
 // the bonus compound: two or three bottles from the rack applied to the feedstock
-function makeBonus(run, feed, feedSig, tier) {
+function makeSpec(run, feed, feedSig, tier) {
   for (let t = 0; t < 60; t++) {
     const m = RX.fromSmiles(feed), left = {}, route = [], len = tier === 0 ? 2 : 2 + (run.r() < 0.6 ? 1 : 0);
     run.deck.forEach(id => { left[id] = (left[id] || 0) + 1; });
@@ -96,9 +142,9 @@ function makeBonus(run, feed, feedSig, tier) {
       const id = pick(run.r, opts);
       RX.runCard(m, RX.CARDS[id]); left[id]--; route.push(id);
     }
-    const sig = RX.sigOf(m), name = RX.nameOf(m);
-    if (route.length < 2 || sig === feedSig || !name) continue;
-    return { sig, name, desc: RX.describe(m), route };
+    const p = RX.probe(m), name = RX.nameOf(m);
+    if (route.length < 2 || p.sig === feedSig || !name) continue;
+    return { sig: p.sig, mass: p.mass, grp: p.grp, name, desc: RX.describe(m), route };
   }
   return null;
 }
@@ -121,8 +167,8 @@ function offer(run, n, groups, large) {
   const all = FEED[groups - 2], pool = all.filter(f => !run.fed.includes(f)), feed = pick(run.r, pool.length ? pool : all);
   run.fed.push(feed);
   const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m);
-  return { feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * (large ? LARGE : 1)), extra: large ? 1 : 0,
-    bonus: makeBonus(run, feed, feedSig, TIER[n]) };
+  return { feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * LEVELS[run.level] * (large ? LARGE : 1)), extra: large ? 1 : 0,
+    pay: PAY + (large ? PAY_LARGE : 0), spec: makeSpec(run, feed, feedSig, TIER[n]) };
 }
 // an order starts as two offers; chooseFeed turns one of them into the order being worked
 function beginOrder(run) {
@@ -140,7 +186,7 @@ function chooseFeed(run, i) {
     redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
     handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
     yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
-    used: [], log: [], kept: false, done: false, bonus: o.bonus, bonusMult: Math.max(2, gearSum(run, 'bonus'))
+    used: [], log: [], kept: false, done: false, spec: o.spec
   };
   run.offers = null;
   fill(run);
@@ -210,18 +256,28 @@ function redraw(run) {
   fill(run);
   return true;
 }
-const endMult = (run, sig) => { const c = run.cur, on = !!c.bonus && sig === c.bonus.sig; return (on ? c.bonusMult : 1) * (has(run, 'seed') ? seedMult(run) + (on ? 0.5 : 0) : 1); };
-const projected = (run, sig) => Math.round(run.cur.yield * run.cur.batch * endMult(run, sig));
+// The three checks. p is RX.probe of the product. The mass spectrum passes on the same molecular mass, the infrared
+// on the same kinds of functional group, and the NMR only on the same structure.
+function checks(run, p) {
+  const sp = run.cur && run.cur.spec, ms = !!sp && p.mass === sp.mass, ir = !!sp && p.grp === sp.grp, nmr = !!sp && p.sig === sp.sig;
+  return { ms, ir, nmr, n: (ms ? 1 : 0) + (ir ? 1 : 0) + (nmr ? 1 : 0) };
+}
+const checkMult = (run, k) => (k === 3 ? Math.max(CHECK_MULT[3], gearSum(run, 'bonus')) : CHECK_MULT[k]);
+const endMult = (run, p) => { const k = checks(run, p).n; return checkMult(run, k) * (has(run, 'seed') ? seedMult(run) + (k === 3 ? 0.5 : 0) : 1); };
+const projected = (run, p) => Math.round(run.cur.yield * run.cur.batch * endMult(run, p));
 
-function endOrder(run, sig) {
-  const cur = run.cur, hit = !!cur.bonus && sig === cur.bonus.sig, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
-  if (hit) { add('bonus', 'x', cur.bonusMult); run.grow.bonus++; }
+function endOrder(run, p) {
+  const cur = run.cur, ck = checks(run, p), hit = ck.n === 3, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
+  if (hit) { run.grow.bonus++; run.stats.triple++; }
+  if (ck.n) add('checks', 'x', checkMult(run, ck.n));
   if (has(run, 'seed') && seedMult(run) > 1) add('seed', 'x', seedMult(run));
-  const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra + (total >= cur.quota * 2 ? 1 : 0) : 0;
+  const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra : 0;
+  const pay = pass ? PAY + (cur.large ? PAY_LARGE : 0) + ck.n * PAY_CHECK + (total >= cur.quota * 2 ? PAY_DOUBLE : 0) : 0;
   cur.done = true; cur.final = total; cur.hit = hit; cur.pass = pass;
+  run.money += pay; run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
   run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass, large: cur.large });
   if (!pass) run.over = true; else if (cur.n === ORDERS - 1) { run.over = true; run.won = true; }
-  return { yield: y0, batch: b0, ev, mult: hit ? cur.bonusMult : 1, total, pass, hit, picks };
+  return { yield: y0, batch: b0, ev, checks: ck, mult: checkMult(run, ck.n), total, pass, hit, picks, pay };
 }
 function nextOrder(run) { run.n++; return beginOrder(run); }
 
@@ -231,7 +287,7 @@ function rewards(run) {
   const fresh = ids.filter(id => !owned.has(id)), first = fresh.length ? fresh[0] : ids[0];
   out.push({ kind: 'bottle', id: first });
   out.push({ kind: 'bottle', id: ids.find(id => id !== first) });
-  const gearLeft = GEAR.filter(g => !has(run, g.id));
+  const gearLeft = GEAR.filter(g => !has(run, g.id) && !run.locked.has(g.id));
   if (run.gear.length < GEAR_SLOTS && gearLeft.length) out.push({ kind: 'gear', id: pick(run.r, gearLeft).id });
   else out.push({ kind: 'bottle', id: ids.find(id => id !== first && id !== out[1].id) });
   return out;
@@ -240,6 +296,46 @@ function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_
 // moves a piece of equipment one place to the left on the bench, so it fires earlier
 function moveGear(run, i) { if (i > 0 && i < run.gear.length) { const g = run.gear; [g[i - 1], g[i]] = [g[i], g[i - 1]]; } }
 
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
-  projected, endMult, endOrder, rewards, take, moveGear, has, pick };
+// ---------- the supply room between orders ----------
+// two bottles, two pieces of equipment and one purification, which raises a bottle you own by one grade
+function stock(run) {
+  const ids = shuffle(run.r, RX.LIST.map(c => c.id)), items = [];
+  items.push({ kind: 'bottle', id: ids[0], cost: 3 }, { kind: 'bottle', id: ids[1], cost: 3 });
+  shuffle(run.r, GEAR.filter(g => !has(run, g.id) && !run.locked.has(g.id))).slice(0, 2).forEach(g => items.push({ kind: 'gear', id: g.id, cost: g.cost }));
+  const own = pick(run.r, Array.from(new Set(run.deck)));
+  items.push({ kind: 'grade', id: own, cost: 4 + gradeOf(run, own) });
+  run.shop = { items, reroll: run.shop && run.shop.open ? run.shop.reroll : REROLL, open: true };
+  return run.shop;
+}
+const canBuy = (run, it) => !!it && !it.sold && run.money >= it.cost && (it.kind !== 'gear' || run.gear.length < GEAR_SLOTS);
+function buy(run, i) {
+  const it = run.shop && run.shop.items[i];
+  if (!canBuy(run, it)) return false;
+  run.money -= it.cost; it.sold = true;
+  if (it.kind === 'grade') { run.grade[it.id] = gradeOf(run, it.id) + 1; run.grow.grades++; } else take(run, it);
+  return true;
+}
+function reroll(run) {
+  const c = run.shop.reroll;
+  if (run.money < c) return false;
+  run.money -= c; stock(run); run.shop.reroll = c + 1;
+  return true;
+}
+function removeBottle(run, id) {
+  const i = run.deck.indexOf(id);
+  if (i < 0 || run.money < REMOVE || run.deck.length <= MIN_RACK) return false;
+  run.deck.splice(i, 1); run.money -= REMOVE;
+  return true;
+}
+function sellGear(run, id) {
+  const i = run.gear.indexOf(id);
+  if (i < 0) return false;
+  run.gear.splice(i, 1); run.money += SELL; run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
+  return true;
+}
+function closeShop(run) { if (run.shop) run.shop.open = false; }
+
+AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_CHECK, PAY_DOUBLE,
+  newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
+  checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
