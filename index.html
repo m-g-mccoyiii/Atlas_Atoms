@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas’ Atoms</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <h1><span class="logo">⚛</span> Atlas’ Atoms</h1>
+  <nav>
+    <button id="btnAtlas" class="pill">📖 My Atlas <span id="count"></span></button>
+    <button id="btnSound" class="pill" title="Sound on/off">🔊</button>
+    <button id="btnHelp" class="pill" title="How to play">?</button>
+  </nav>
+</header>
+<main class="layout">
+  <aside id="tray">
+    <h2>Atoms</h2>
+    <div id="trayList"></div>
+    <p class="trayHint">Drag an atom onto the bench. Drop it back here to remove it. Click one to learn about it.</p>
+  </aside>
+  <section class="benchwrap">
+    <div class="toolbar">
+      <div class="seg" id="modes">
+        <button data-mode="ball" class="on">Ball &amp; Stick</button>
+        <button data-mode="space">Space-filling</button>
+        <button data-mode="orbital">Orbitals</button>
+      </div>
+      <div class="seg" id="tools">
+        <button data-tool="build" class="on">✋ Build</button>
+        <button data-tool="cut">✂ Cut bond</button>
+      </div>
+      <button id="btnRecenter" class="pill">🎯 Reset view</button>
+      <button id="btnClear" class="pill">🧹 Clear</button>
+      <label class="chk"><input type="checkbox" id="chkFaces" checked> Faces</label>
+    </div>
+    <div class="caption" id="caption"></div>
+    <div class="canvasbox">
+      <canvas id="bench"></canvas>
+      <div id="tip" class="tip"></div>
+      <div id="banner" class="banner hidden"></div>
+    </div>
+  </section>
+  <aside id="side">
+    <section class="card" id="mission"></section>
+    <section class="card hidden" id="elementCard"></section>
+    <section class="card"><h3>On your bench</h3><div id="benchList"></div></section>
+    <section class="card"><h3>⚡ Reactions</h3><div id="reactions"></div></section>
+  </aside>
+</main>
+<div id="modal" class="modal hidden"></div>
+<script src="js/data.js"></script>
+<script src="js/chem.js"></script>
+<script src="js/model.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
