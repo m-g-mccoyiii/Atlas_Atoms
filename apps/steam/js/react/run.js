@@ -6,15 +6,18 @@ const AA = root.AA, RX = AA.rx;
 // rack (the deck) into a hand. The score of an order is yield times batch. Every site that reacts adds yield and
 // batch; equipment adds to either or multiplies batch; bottles gain grades that last for the run.
 // At delivery three instruments check the product against the spec, and each check passed raises batch.
-// A filled order pays money, which is spent in the supply room between orders.
+// A filled order leaves surplus product, counted in kg, which is traded in the supply room between orders.
+// Surplus exists only inside a run: every run starts with the same amount and nothing carries over.
 // Nothing in this file touches the page, so the same code drives the game and the headless bot.
 
 const ORDERS = 8, STEPS = 5, HAND = 5, REDRAWS = 2, GEAR_SLOTS = 5, YIELD = 20, SCHLENK = 1.5;
 const STARTER = ['hydrate', 'hydrate', 'pcc', 'pcc', 'nabh4', 'nabh4', 'dehydrate', 'dehydrate', 'h2', 'hcl'];
 const TIER = [0, 0, 1, 1, 2, 2, 3, 3];
 const QUOTA = [200, 1000, 10000, 18000, 50000, 100000, 220000, 300000];
-// money: paid for a filled order, more for a large one, for each check passed and for twice the quota
-const PAY = 4, PAY_LARGE = 3, PAY_CHECK = 1, PAY_DOUBLE = 3, START_CASH = 3, REROLL = 2, REMOVE = 3, SELL = 2, MIN_RACK = 6;
+// surplus (run.money): a filled order leaves PAY, a large one PAY_LARGE more, each step not used PAY_STEP, and each
+// time the score doubles the quota PAY_DOUBLE, up to DOUBLE_CAP doublings. Surplus already held earns 1 for every
+// HOLD_PER at the end of an order, up to HOLD_CAP. Equipment sells for SELL plus 1 for each order it has been held.
+const PAY = 4, PAY_LARGE = 3, PAY_STEP = 1, PAY_DOUBLE = 1, DOUBLE_CAP = 4, HOLD_PER = 5, HOLD_CAP = 5, START_CASH = 4, REROLL = 2, REMOVE = 3, SELL = 2, SELL_CAP = 8, MIN_RACK = 6;
 const COST = { y: 5, b: 5, x: 8, grow: 7, tool: 6 };
 // batch multiplier for 0, 1, 2 or 3 checks passed
 const CHECK_MULT = [1, 1.25, 1.5, 2];
@@ -43,6 +46,7 @@ const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
 // kind: y adds yield, b adds batch, x multiplies batch, grow gets stronger during the run, tool changes a rule.
 const GEAR = [
   { id: 'balance', kind: 'y', name: 'Analytical balance', text: 'Every site: +15 yield.', y: 15 },
+  { id: 'desiccator', kind: 'y', name: 'Desiccator', text: 'Every site: +2 yield for each kg of surplus you hold.' },
   { id: 'notebook', kind: 'y', name: 'Lab notebook', text: 'Every site: +10 yield for each different bottle already used on this order.' },
   { id: 'icebath', kind: 'b', name: 'Ice bath', text: 'Reduce and Hydroborate sites: +3 batch.', ids: ['nabh4', 'bh3'], b: 3 },
   { id: 'dryingtube', kind: 'b', name: 'Drying tube', text: 'Oxidise sites: +3 batch.', ids: ['pcc'], b: 3 },
@@ -62,7 +66,9 @@ const GEAR = [
   { id: 'reflux', kind: 'tool', name: 'Reflux condenser', text: 'One more step on every order.', steps: 1 },
   { id: 'rack', kind: 'tool', name: 'Bottle carrier', text: 'Hold one more bottle in your hand.', hand: 1 },
   { id: 'funnel', kind: 'tool', name: 'Separating funnel', text: 'One more hand swap on every order.', redraws: 1 },
-  { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' }
+  { id: 'winchester', kind: 'tool', name: 'Winchester bottle', text: 'The first bottle you play on each order comes back to your hand.' },
+  { id: 'fraction', kind: 'tool', name: 'Fraction collector', text: 'Every filled order leaves 3 kg more surplus.', pay: 3 },
+  { id: 'drum', kind: 'tool', name: 'Storage drum', text: 'Surplus you hold can earn up to 10 kg an order instead of 5.', hold: 5 }
 ];
 const GEARS = {};
 GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
@@ -110,7 +116,7 @@ const UNLOCKS = [
   { id: 'rotovap', kind: 'gear', name: 'Rotary evaporator', how: 'Score 10,000 on one order' },
   { id: 'winchester', kind: 'gear', name: 'Winchester bottle', how: 'Raise a bottle to grade 3' },
   { id: 'halide', kind: 'rack', name: 'Halide rack', how: 'Fill 4 orders in one run' },
-  { id: 'redox', kind: 'rack', name: 'Redox rack', how: 'Hold $15 at once' },
+  { id: 'redox', kind: 'rack', name: 'Redox rack', how: 'Hold 25 kg of surplus at once' },
   { id: 'level2', kind: 'level', name: 'Level 2', how: 'Fill all 8 orders' },
   { id: 'level3', kind: 'level', name: 'Level 3', how: 'Fill all 8 orders on level 2' }
 ];
@@ -123,7 +129,7 @@ function achieved(run) {
   if (run.history.some(q => q.total >= 10000)) out.push('rotovap');
   if (Object.keys(run.grade).some(id => run.grade[id] >= 3)) out.push('winchester');
   if (filled.length >= 4) out.push('halide');
-  if (run.stats.maxMoney >= 15) out.push('redox');
+  if (run.stats.maxMoney >= 25) out.push('redox');
   if (run.won) out.push('level2');
   if (run.won && run.level >= 1) out.push('level3');
   return out;
@@ -155,7 +161,7 @@ function newRun(seed, opts) {
   const o = opts || {}, rack = RACKS[o.rack] ? o.rack : 'standard';
   return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: RACKS[rack].deck.slice(), gear: [], grade: {},
     rack, level: Math.max(0, Math.min(LEVELS.length - 1, o.level | 0)), locked: new Set(o.locked || []), money: START_CASH, shop: null,
-    stats: { triple: 0, maxMoney: START_CASH, chain: 0 }, routeLv: {}, routeDone: {},
+    stats: { triple: 0, maxMoney: START_CASH, chain: 0 }, routeLv: {}, routeDone: {}, got: {},
     grow: { caught: 0, bonus: 0, grades: 0 }, fed: [], cur: null, over: false, won: false, history: [] };
 }
 // the number a growing piece of equipment currently stands at, for its tag
@@ -244,7 +250,7 @@ function scoreSite(run, id, dry) {
   run.gear.forEach(g => {
     const G = GEARS[g];
     if (G.ids && !G.ids.includes(id)) return;
-    const y = g === 'notebook' ? 10 * new Set(cur.used).size : g === 'stock' ? 5 * run.grow.grades : (G.y || 0);
+    const y = g === 'desiccator' ? 2 * run.money : g === 'notebook' ? 10 * new Set(cur.used).size : g === 'stock' ? 5 * run.grow.grades : (G.y || 0);
     if (y) add(g, 'y', y);
     if (G.b) add(g, 'b', G.b);
     if (G.x) add(g, 'x', G.x);
@@ -343,18 +349,28 @@ const checkMult = (run, k) => (k === 3 ? Math.max(CHECK_MULT[3], gearSum(run, 'b
 const endMult = (run, p) => { const k = checks(run, p).n; return checkMult(run, k) * (has(run, 'seed') ? seedMult(run) + (k === 3 ? 0.5 : 0) : 1); };
 const projected = (run, p) => Math.round(run.cur.yield * run.cur.batch * endMult(run, p));
 
+// what the surplus now held will earn at the end of this order
+const holdPay = run => Math.min(HOLD_CAP + gearSum(run, 'hold'), Math.floor(run.money / HOLD_PER));
+const sellValue = (run, id) => Math.min(SELL_CAP, SELL + Math.max(0, run.n - (run.got[id] == null ? run.n : run.got[id])));
 function endOrder(run, p) {
   const cur = run.cur, ck = checks(run, p), hit = ck.n === 3, ev = [], add = adder(cur, ev), y0 = cur.yield, b0 = cur.batch;
   if (hit) { run.grow.bonus++; run.stats.triple++; }
   if (ck.n) add('checks', 'x', checkMult(run, ck.n));
   if (has(run, 'seed') && seedMult(run) > 1) add('seed', 'x', seedMult(run));
   const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra : 0;
-  const pay = pass ? PAY + (cur.large ? PAY_LARGE : 0) + ck.n * PAY_CHECK + (total >= cur.quota * 2 ? PAY_DOUBLE : 0) : 0;
+  const paid = { order: 0, steps: 0, stepsLeft: 0, doubles: 0, doubled: 0, held: 0 };
+  if (pass) {
+    paid.order = PAY + (cur.large ? PAY_LARGE : 0) + gearSum(run, 'pay');
+    paid.stepsLeft = Math.max(0, cur.stepsMax - cur.step); paid.steps = paid.stepsLeft * PAY_STEP;
+    paid.doubled = Math.min(DOUBLE_CAP, Math.floor(Math.log2(total / cur.quota))); paid.doubles = paid.doubled * PAY_DOUBLE;
+    paid.held = holdPay(run);
+  }
+  const pay = paid.order + paid.steps + paid.doubles + paid.held;
   cur.done = true; cur.final = total; cur.hit = hit; cur.pass = pass;
   run.money += pay; run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
   run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass, large: cur.large });
   if (!pass) run.over = true; else if (cur.n === ORDERS - 1) { run.over = true; run.won = true; }
-  return { yield: y0, batch: b0, ev, checks: ck, mult: checkMult(run, ck.n), total, pass, hit, picks, pay };
+  return { yield: y0, batch: b0, ev, checks: ck, mult: checkMult(run, ck.n), total, pass, hit, picks, pay, paid };
 }
 function nextOrder(run) { run.n++; return beginOrder(run); }
 
@@ -369,7 +385,7 @@ function rewards(run) {
   else out.push({ kind: 'bottle', id: ids.find(id => id !== first && id !== out[1].id) });
   return out;
 }
-function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_SLOTS && !has(run, opt.id)) run.gear.push(opt.id); } else run.deck.push(opt.id); }
+function take(run, opt) { if (opt.kind === 'gear') { if (run.gear.length < GEAR_SLOTS && !has(run, opt.id)) { run.gear.push(opt.id); run.got[opt.id] = run.n; } } else run.deck.push(opt.id); }
 // moves a piece of equipment one place to the left on the bench, so it fires earlier
 function moveGear(run, i) { if (i > 0 && i < run.gear.length) { const g = run.gear; [g[i - 1], g[i]] = [g[i], g[i - 1]]; } }
 
@@ -413,12 +429,12 @@ function removeBottle(run, id) {
 function sellGear(run, id) {
   const i = run.gear.indexOf(id);
   if (i < 0) return false;
-  run.gear.splice(i, 1); run.money += SELL; run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
+  run.money += sellValue(run, id); run.gear.splice(i, 1); run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
   return true;
 }
 function closeShop(run) { if (run.shop) run.shop.open = false; }
 
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_CHECK, PAY_DOUBLE,
+AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
   ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd,
   newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };

@@ -131,7 +131,7 @@ function start(app) {
   }
   function renderTop(extra) {
     if (!run) { cashEl.textContent = runEl.textContent = ''; return; }
-    cashEl.textContent = '$' + run.money;
+    cashEl.textContent = 'Surplus ' + run.money + ' kg';
     runEl.textContent = 'Run total ' + fmt(run.total + (extra || 0));
     bestEl.textContent = st.best.total ? 'Best ' + fmt(st.best.total) : '';
   }
@@ -205,7 +205,7 @@ function start(app) {
     st.offerEls = run.offers.map((o, i) => {
       const cov = RUN.coverage(run, o.feed);
       const el = h('button', { class: 'offer' + (o.large ? ' large' : ''), onclick: () => pickFeed(i) },
-        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, 'Pays $' + o.pay + (o.large ? ' and 2 picks' : ' and 1 pick'))),
+        h('div', { class: 'ofBand' }, h('span', { class: 'bKey' }, String(i + 1)), h('span', null, o.large ? 'Large order' : 'Standard order'), h('span', { class: 'ofPay' }, o.pay + ' kg surplus' + (o.large ? ' and 2 picks' : ' and 1 pick'))),
         h('div', { class: 'ofBody' },
           h('div', { class: 'ofName' }, o.feedName),
           h('div', { class: 'ofNums' }, h('div', null, h('b', null, fmt(o.quota)), h('span', null, 'needed')), h('div', null, h('b', null, String(o.groups)), h('span', null, 'reactive groups'))),
@@ -402,7 +402,7 @@ function start(app) {
           fx.ring(x, y, c, 240 + 40 * k, 0.8); fx.burst(x, y, c, 70 + 12 * k, 440 + 40 * k); fx.shake(7 + k); sfx.lock(6 + k * 2);
         }, 240 * (k + 1));
         model.atoms.forEach(a => { if (!a.fly) v.pop(a); });
-        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed, paid $' + res.pay, YELLOW, 2.3);
+        fx.banner(ratio >= 2 ? fmtB(ratio) + ' TIMES THE QUOTA' : 'ORDER FILLED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed, ' + res.pay + ' kg of surplus kept', YELLOW, 2.3);
       } else {
         sfx.stamp(); fx.shake(6);
         fx.banner('QUOTA MISSED', fmt(res.total) + ' of ' + fmt(cur.quota) + ' needed', RED, 2.3);
@@ -435,8 +435,10 @@ function start(app) {
       });
       st.pickEls = opts.map(o => o.el || o);
       st.pickHead = h('h3', null, res.picks > 1 ? 'Take ' + res.picks : 'Take one');
-      kids.push(h('h2', null, 'Order ' + n + ' filled, paid $' + res.pay),
-        h('p', null, fmt(res.total) + ' against ' + fmt(cur.quota) + ' needed. ' + plural(res.checks.n, 'check') + ' passed.'), fresh,
+      const pd = res.paid, why = [pd.order + ' for the order', pd.steps ? pd.steps + ' for ' + plural(pd.stepsLeft, 'unused step') : '', pd.doubles ? pd.doubles + ' for doubling the quota ' + (pd.doubled > 1 ? pd.doubled + ' times' : 'once') : '', pd.held ? pd.held + ' earned on what you held' : ''].filter(Boolean);
+      kids.push(h('h2', null, 'Order ' + n + ' filled'),
+        h('p', null, fmt(res.total) + ' against ' + fmt(cur.quota) + ' needed. ' + plural(res.checks.n, 'check') + ' passed.'),
+        h('p', { class: 'surplus' }, h('b', null, res.pay + ' kg of surplus kept: '), why.join(', ') + '.'), fresh,
         st.pickHead, h('div', { class: 'picks' }, st.pickEls),
         h('button', { class: 'btn', onclick: () => choose(-1) }, 'Take nothing  [0]'));
       overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';
@@ -461,7 +463,7 @@ function start(app) {
     st.mode = 'shop';
     const sh = run.shop, arts = [];
     const items = sh.items.map((it, i) => {
-      const ok = RUN.canBuy(run, it), price = h('div', { class: 'price' }, it.sold ? 'Sold' : '$' + it.cost);
+      const ok = RUN.canBuy(run, it), price = h('div', { class: 'price' }, it.sold ? 'Sold' : it.cost + ' kg');
       let body;
       if (it.kind === 'gear') { const g = RUN.GEARS[it.id]; body = h('div', { class: 'gearPick k-' + g.kind }, h('div', { class: 'gpKind' }, kindOf(g)), h('div', { class: 'gpName' }, g.name), h('div', { class: 'gpText' }, g.text)); }
       else if (it.kind === 'route') {
@@ -476,14 +478,15 @@ function start(app) {
     });
     const counts = {}; run.deck.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
     const canCut = run.money >= RUN.REMOVE && run.deck.length > RUN.MIN_RACK;
-    const rack = Object.keys(counts).map(id => { const c = RX.CARDS[id]; return h('button', { class: 'chip', style: '--cc:' + css(c.rgb), disabled: !canCut, title: 'Remove one for $' + RUN.REMOVE, onclick: () => { if (RUN.removeBottle(run, id)) { sfx.stamp(); showShop(); } } }, c.verb + (counts[id] > 1 ? ' ' + counts[id] : '')); });
-    const bench = run.gear.map(id => h('button', { class: 'chip', title: 'Sell for $' + RUN.SELL, onclick: () => { if (RUN.sellGear(run, id)) { sfx.stamp(); renderGear(); showShop(); } } }, RUN.GEARS[id].name));
+    const rack = Object.keys(counts).map(id => { const c = RX.CARDS[id]; return h('button', { class: 'chip', style: '--cc:' + css(c.rgb), disabled: !canCut, title: 'Remove one for ' + RUN.REMOVE + ' kg', onclick: () => { if (RUN.removeBottle(run, id)) { sfx.stamp(); showShop(); } } }, c.verb + (counts[id] > 1 ? ' ' + counts[id] : '')); });
+    const bench = run.gear.map(id => h('button', { class: 'chip', onclick: () => { if (RUN.sellGear(run, id)) { sfx.stamp(); renderGear(); showShop(); } } }, RUN.GEARS[id].name + '  ' + RUN.sellValue(run, id) + ' kg'));
     overlay.replaceChildren(h('div', { class: 'panel shop' },
-      h('div', { class: 'shopHead' }, h('h2', null, 'Supply room'), h('div', { class: 'cash' }, '$' + run.money)),
+      h('div', { class: 'shopHead' }, h('h2', null, 'Supply room'), h('div', { class: 'cash' }, run.money + ' kg')),
+      h('p', { class: 'surplus' }, 'Surplus you still hold when the next order is filled earns 1 kg for every ' + RUN.HOLD_PER + ' kg. At ' + run.money + ' kg that is ' + RUN.holdPay(run) + ' kg.'),
       h('div', { class: 'shopRow' }, items),
-      h('h3', null, 'Your rack, ' + plural(run.deck.length, 'bottle') + '. Click one to remove it for $' + RUN.REMOVE + '.'), h('div', { class: 'chips' }, rack),
-      bench.length ? h('h3', null, 'Your bench. Click a piece to sell it for $' + RUN.SELL + '.') : null, bench.length ? h('div', { class: 'chips' }, bench) : null,
-      h('div', { class: 'shopFoot' }, h('button', { class: 'btn', disabled: run.money < sh.reroll, onclick: () => shopReroll() }, 'New stock  [R]  $' + sh.reroll), h('button', { class: 'btn go', onclick: () => leaveShop() }, 'Next order  [Enter]'))));
+      h('h3', null, 'Your rack, ' + plural(run.deck.length, 'bottle') + '. Click one to remove it for ' + RUN.REMOVE + ' kg.'), h('div', { class: 'chips' }, rack),
+      bench.length ? h('h3', null, 'Your bench. Click a piece to sell it. Each is worth 1 kg more for every order you have held it.') : null, bench.length ? h('div', { class: 'chips' }, bench) : null,
+      h('div', { class: 'shopFoot' }, h('button', { class: 'btn', disabled: run.money < sh.reroll, onclick: () => shopReroll() }, 'New stock  [R]  ' + sh.reroll + ' kg'), h('button', { class: 'btn go', onclick: () => leaveShop() }, 'Next order  [Enter]'))));
     overlay.className = 'ov on';
     arts.forEach(a => drawCardArt(a[0], a[1], false));
     renderTop(0);

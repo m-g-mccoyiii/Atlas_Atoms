@@ -167,6 +167,7 @@ b { font-weight: 700; }
 .shopRow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .panel.shop { width: min(1240px, 96vw); }
 .panel.routes { width: min(820px, 94vw); }
+.surplus { font-size: 16px; margin: 6px 0 10px; }
 .rts { list-style: none; margin: 10px 0 0; padding: 0; }
 .rts li { display: grid; grid-template-columns: 250px minmax(0, 1fr) 90px 70px; gap: 12px; align-items: baseline; border-bottom: 1px solid #111; padding: 6px 0 4px; font-size: 16px; }
 .rts li b { font-size: 19px; } .rts li i { font-style: normal; font-weight: 700; color: #d81e1e; text-align: right; } .rts li em { font-style: normal; text-align: right; }
