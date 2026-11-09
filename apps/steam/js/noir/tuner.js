@@ -38,6 +38,7 @@ function mount(host, o) {
   const lib = C.library(), mol = lib.byId.get(o.target), truth = S.describe(mol.smiles);
   if (o.anomaly) { truth.nmr.peaks.push({ shift: o.anomaly.shift, hs: o.anomaly.hs, mult: 's', label: 'unassigned', exchangeable: false, neighbours: 0, atoms: [], anomaly: true }); truth.nmr.total += o.anomaly.hs; }   // a signal no structure can make
   const st = { scanned: { ms: true, ir: false, nmr: false }, tokens: o.tokens || 1, mine: null, info: null, snap: null, assays: 0, busy: false, fired: false, spawn: 0, hover: null, vib: null, vibBase: null, flash: [], t0: { ms: performance.now() } };
+  if (o.scanAll) { const now = performance.now(); st.scanned = { ms: true, ir: true, nmr: true }; st.tokens = 0; st.t0 = { ms: now, ir: now, nmr: now }; }
   const model = new AA.Model(), box = { v: null, raf: 0, dead: false };
   const panels = {}, tokenEl = h('b'), hoursEl = h('b'), meterEl = h('span', null, 'No assay yet'), readout = h('div', { class: 'readout' }), spotEl = h('div', { class: 'spot' }, 'Point at a peak on a printout.'), banner = h('div', { class: 'flashline' });
   host.append(banner);
@@ -65,7 +66,7 @@ function mount(host, o) {
       if (a.el === 'H') return; const sum = model.bondSum(a), tgt = E[a.el].valences.find(v => v >= sum); if (tgt === undefined) return;
       for (let k = 0; k < tgt - sum; k++) { const hh = model.addAtom('H', a.x + (Math.random() - 0.5) * 0.8, a.y + (Math.random() - 0.5) * 0.8, a.z + (Math.random() - 0.5) * 0.8); model.bonds.push({ a, b: hh, order: 1 }); n++; if (box.v) { const p = box.v._screen(a); burst(p.x, p.y, GREEN, 6, 80); } }
     });
-    if (n) { sfx.bond(); say(n + ' hydrogen' + (n > 1 ? 's' : '') + ' added'); } else say('No open bonds to fill');
+    if (n) { sfx.bond(); say(n + ' hydrogen' + (n > 1 ? 's' : '') + ' added'); if (o.onFill) o.onFill(n); } else say('No open bonds to fill');
     refresh();
   }
   function refresh() {
@@ -94,7 +95,7 @@ function mount(host, o) {
     let nLock = 0;
     order.forEach((it, i) => setTimeout(() => {   // timers, not the render loop, so a background tab still finishes
       if (box.dead || st.snap !== snap) return; snap.shown = i + 1;
-      if (it.lock) { st.flash.push({ k: it.k, pos: it.pos, t0: performance.now() }); lightUp(it, nLock++); } else sfx.click();
+      if (it.lock) { st.flash.push({ k: it.k, pos: it.pos, t0: performance.now() }); const li = lightUp(it, nLock++); if (o.onLock && li) o.onLock(nLock - 1, it, li); } else { sfx.click(); if (o.onMiss) o.onMiss(it); }
       if (snap.shown === order.length) finishAssay();
     }, 350 + i * 170));
   }
@@ -108,8 +109,8 @@ function mount(host, o) {
     if (o.anomaly) {   // the sample matches your structure except for one signal no structure can make: that is a finding of its own
       if (open.length === 1 && open[0].pk.anomaly) { reportBtn.style.display = ''; say('One signal is still unexplained. Report it.'); }
       else { reportBtn.style.display = 'none'; say(got + ' of ' + total + ' peaks explained'); }
-    } else if (sigOk || close) { st.fired = true; celebrate(() => o.onSolved({ assays: st.assays })); }
-    else say(got + ' of ' + total + ' peaks explained'); refresh();
+    } else if (sigOk || close) { st.fired = true; if (o.onCheck) o.onCheck({ got, total, solved: true }); celebrate(() => o.onSolved({ assays: st.assays }), o.power ? o.power() : 1); }
+    else { say(got + ' of ' + total + ' peaks explained'); if (o.onCheck) o.onCheck({ got, total, solved: false }); } refresh();
   }
 
   // ----- pointing at a peak -----
@@ -184,9 +185,11 @@ function mount(host, o) {
 
   // ----- effects: sparks, shockwaves, drifting motes, flash, big title -----
   const GREEN = [125, 255, 176], GOLD = [255, 210, 63], BLUE = [107, 140, 255], rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + Math.max(0, a).toFixed(3) + ')';
-  const fx = { parts: [], rings: [], flash: 0, title: null, titleT: 0, motes: Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), v: 0.01 + Math.random() * 0.03, r: 0.6 + Math.random() * 1.4, a: 0.12 + Math.random() * 0.25 })) };
+  const fx = { parts: [], rings: [], floats: [], shake: 0, flash: 0, title: null, titleT: 0, motes: Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), v: 0.01 + Math.random() * 0.03, r: 0.6 + Math.random() * 1.4, a: 0.12 + Math.random() * 0.25 })) };
   const burst = (x, y, c, n, spd) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = spd * (0.3 + Math.random()); fx.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, life: 1, decay: 0.9 + Math.random() * 0.9, r: 1.5 + Math.random() * 2.5, c }); } };
   const ring = (x, y, c, r1, dur) => fx.rings.push({ x, y, c, r0: 6, r1, t: 0, dur });
+  const floatText = (x, y, text, c, size) => fx.floats.push({ x, y, text, c: c || GOLD, size: size || 22, t: 0, dur: 1.15 });
+  const shakeScreen = mag => { fx.shake = Math.max(fx.shake, mag); };
   function drawFx(dt) {
     const w = benchCv.clientWidth, hg = benchCv.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
     if (fxCv.width !== Math.round(w * dpr) || fxCv.height !== Math.round(hg * dpr)) { fxCv.width = Math.round(w * dpr); fxCv.height = Math.round(hg * dpr); }
@@ -195,6 +198,11 @@ function mount(host, o) {
     fx.rings = fx.rings.filter(r => { r.t += dt; const k = r.t / r.dur; if (k >= 1) return false; x.strokeStyle = rgba(r.c, (1 - k) * 0.85); x.lineWidth = 4 * (1 - k) + 1; x.beginPath(); x.arc(r.x, r.y, r.r0 + k * r.r1, 0, 6.3); x.stroke(); return true; });
     fx.parts = fx.parts.filter(p => { p.life -= dt * p.decay; if (p.life <= 0) return false; p.vy += 80 * dt; p.x += p.vx * dt; p.y += p.vy * dt; x.fillStyle = rgba(p.c, p.life); x.beginPath(); x.arc(p.x, p.y, p.r * p.life + 0.4, 0, 6.3); x.fill(); return true; });
     x.globalCompositeOperation = 'source-over';
+    fx.floats = fx.floats.filter(f => {   // score pops: rise, grow, fade
+      f.t += dt; const k = f.t / f.dur; if (k >= 1) return false; const pop = k < 0.15 ? 0.6 + k / 0.15 * 0.8 : 1.4 - Math.min(0.4, (k - 0.15) * 0.5);
+      x.save(); x.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1; x.textAlign = 'center'; x.font = '700 ' + Math.round(f.size * pop) + 'px "Plex Serif", Georgia, serif'; x.lineWidth = 5; x.strokeStyle = 'rgba(8,10,16,.9)'; x.strokeText(f.text, f.x, f.y - k * 70); x.fillStyle = rgba(f.c, 1); x.fillText(f.text, f.x, f.y - k * 70); x.restore(); return true;
+    });
+    if (fx.shake > 0.3) { benchWrap.style.transform = 'translate(' + ((Math.random() - 0.5) * fx.shake).toFixed(1) + 'px,' + ((Math.random() - 0.5) * fx.shake).toFixed(1) + 'px)'; fx.shake *= Math.pow(0.02, dt); } else if (fx.shake) { fx.shake = 0; benchWrap.style.transform = ''; }
     if (fx.flash > 0) { x.fillStyle = 'rgba(255,255,255,' + fx.flash.toFixed(3) + ')'; x.fillRect(0, 0, w, hg); fx.flash = Math.max(0, fx.flash - dt * 2.2); }
     if (fx.title) {
       fx.titleT += dt; const k = Math.min(1, fx.titleT / 0.35), a = fx.titleT > 1.9 ? Math.max(0, 1 - (fx.titleT - 1.9) / 0.4) : 1;
@@ -202,7 +210,7 @@ function mount(host, o) {
       x.shadowBlur = 0; x.font = '500 14px "Plex Mono", monospace'; x.fillStyle = '#cfd3dc'; x.fillText(fx.title.sub, w / 2, hg * 0.18 + 28); x.restore(); if (fx.titleT > 2.4) fx.title = null;
     }
   }
-  const centre = atoms => { const ps = atoms.map(a => box.v._screen(a)); return ps.length ? { x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length } : { x: 100, y: 100 }; };
+  const centre = atoms => { if (!box.v) return { x: 200, y: 200 }; const ps = atoms.map(a => box.v._screen(a)); return ps.length ? { x: ps.reduce((s, p) => s + p.x, 0) / ps.length, y: ps.reduce((s, p) => s + p.y, 0) / ps.length } : { x: 100, y: 100 }; };
   function involvedAtoms(k, peak) {   // which atoms of the assayed structure make this peak
     const comp = st.snap && st.snap.info && st.snap.info.comp, mine = st.snap && st.snap.mine; if (!comp || !mine) return [];
     if (k === 'ms') return comp.slice();
@@ -212,15 +220,18 @@ function mount(host, o) {
     return out;
   }
   function lightUp(item, idx) {   // a peak locked: the atoms behind it flash on the bench
-    const v = box.v; if (!v) return; const atoms = involvedAtoms(item.k, item.pk); sfx.lock(idx);
+    const v = box.v; if (!v) return null; const atoms = involvedAtoms(item.k, item.pk); sfx.lock(idx);
     atoms.forEach(a => { v.glow.set(a, 0x2fe08a); const p = v._screen(a); burst(p.x, p.y, GREEN, 7, 90); });
     if (atoms.length) { const c = centre(atoms); ring(c.x, c.y, GREEN, 60, 0.5); }
     setTimeout(() => { if (!st.hover && !st.party) atoms.forEach(a => v.glow.delete(a)); }, 520);
+    return { atoms, pos: atoms.length ? centre(atoms) : { x: benchCv.clientWidth / 2, y: benchCv.clientHeight / 2 } };
   }
-  function celebrate(done) {
+  function celebrate(done, power) {
+    power = power || 1;
     const v = box.v; if (!v) { done(); return; }
     const c = centre(model.atoms); fx.flash = 0.8; sfx.fanfare(); st.party = performance.now(); v.yawVel = 2.4;
-    ring(c.x, c.y, GOLD, 220, 1.0); ring(c.x, c.y, GREEN, 150, 0.8); ring(c.x, c.y, BLUE, 280, 1.3); burst(c.x, c.y, GOLD, 100, 280); burst(c.x, c.y, GREEN, 70, 220); burst(c.x, c.y, BLUE, 70, 320);
+    ring(c.x, c.y, GOLD, 220, 1.0); ring(c.x, c.y, GREEN, 150, 0.8); ring(c.x, c.y, BLUE, 280, 1.3); burst(c.x, c.y, GOLD, Math.round(100 * power), 280 + 50 * power); burst(c.x, c.y, GREEN, Math.round(70 * power), 220 + 40 * power); burst(c.x, c.y, BLUE, Math.round(70 * power), 320 + 60 * power); shakeScreen(10 + 8 * power);
+    for (let i = 1; i < Math.min(5, power); i++) setTimeout(() => { ring(c.x, c.y, i % 2 ? GOLD : BLUE, 260 + i * 60, 1.0); burst(c.x, c.y, i % 2 ? GREEN : GOLD, 60, 300); shakeScreen(12); sfx.lock(8 + i * 2); }, i * 220);
     fx.title = { text: 'IDENTIFIED', sub: mol.name + '   ' + C.sub(mol.formula), col: '#ffd23f' }; fx.titleT = 0; setTimeout(done, 2600);
   }
   FRAGS.forEach(f => frags.append(h('div', { class: 'frag' + (f.atom ? ' atom' : ''), title: f.atom ? E[f.atom].name : 'Drag onto the bench', onpointerdown: ev => {
@@ -239,8 +250,8 @@ function mount(host, o) {
     el.addEventListener('click', e => { if (e.target === el) el.remove(); }); document.body.append(el);
   }
   tokenEl.textContent = String(st.tokens); hoursEl.textContent = String(o.hours());
-  assayBtn.textContent = 'Submit for the official check (1 hour)';
-  host.append(h('div', { class: 'tuneHead' }, h('div', null, h('b', null, 'Lab hours left '), hoursEl, '   ', h('b', null, 'Scan tokens '), tokenEl), meterEl), h('div', { class: 'pr' }, left, bench));
+  assayBtn.textContent = o.submitLabel || 'Submit for the official check (1 hour)';
+  host.append(o.head === false ? '' : h('div', { class: 'tuneHead' }, h('div', null, h('b', null, 'Lab hours left '), hoursEl, '   ', h('b', null, 'Scan tokens '), tokenEl), meterEl), h('div', { class: 'pr' }, left, bench));
   paintVeils();
 
   requestAnimationFrame(() => {
@@ -281,7 +292,8 @@ function mount(host, o) {
     box.raf = requestAnimationFrame(loop); refresh();
   });
   return {
-    model, st, refresh, assay, celebrate, viewer: () => box.v, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
+    model, st, refresh, assay, celebrate, viewer: () => box.v,
+    fx: { burst, ring, floatText, shake: shakeScreen, centre: () => centre(model.atoms), flash: v => { fx.flash = v; }, GREEN, GOLD, BLUE }, scan(k) { if (st.tokens > 0 && !st.scanned[k]) { st.tokens--; st.scanned[k] = true; tokenEl.textContent = String(st.tokens); st.t0[k] = performance.now(); paintVeils(); } },
     destroy() { box.dead = true; cancelAnimationFrame(box.raf); if (box.v) box.v.dispose(); banner.remove(); host.innerHTML = ''; }
   };
 }
