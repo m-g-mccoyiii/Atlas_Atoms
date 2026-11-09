@@ -4,11 +4,14 @@ Run from anywhere:  python tools/make_lesson_doc.py
 """
 import json
 import os
+import re
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = open(os.path.join(root, 'js', 'lessons.js'), encoding='utf-8').read()
 start = src.index('AA.LESSONS = [') + len('AA.LESSONS = ')
-lessons = json.loads(src[start:src.rindex(']') + 1])
+lessons, _ = json.JSONDecoder().raw_decode(src, start)
+units = json.loads(re.search(r'AA\.LESSON_UNITS = (\[.*?\]);', src, re.S).group(1)) if 'AA.LESSON_UNITS' in src else []
+unit_at = {u[0]: u[2] for u in units}
 
 out = [f"# Atlas' Atoms: {len(lessons)} Lesson Plans", "",
        "Written for a very advanced 7-year-old working with a grown-up. A path from \"what is an atom?\" to burning fuel, acids and the chemistry of your body. "
@@ -22,6 +25,8 @@ for L in lessons:
     out.append(f"| {L['n']} | {L['title']} | {L['level']} | {L['minutes']} min |")
 out.append("")
 for L in lessons:
+    if L['n'] in unit_at:
+        out += ["---", "", f"# Unit: {unit_at[L['n']]}", ""]
     out += [f"## Lesson {L['n']}: {L['title']}", "",
             f"*{L['level']} · about {L['minutes']} minutes*", "",
             f"**Big idea.** {L['bigIdea']}", "", "**Words**", ""]

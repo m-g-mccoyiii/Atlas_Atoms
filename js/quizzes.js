@@ -73,4 +73,8 @@ AA.QUIZZES = {};
 Object.keys(RAW).forEach(n => {
   AA.QUIZZES[n] = RAW[n].map(r => ({ q: r[0], right: r[1], wrong: [r[2], r[3]], why: r[4] }));
 });
+// lessons 32 and up keep their quiz inside the lesson
+(AA.LESSONS || []).forEach(L => {
+  if (L.quiz) AA.QUIZZES[L.n] = L.quiz.map(r => ({ q: r[0], right: r[1], wrong: [r[2], r[3]], why: r[4] }));
+});
 })(typeof globalThis !== 'undefined' ? globalThis : window);

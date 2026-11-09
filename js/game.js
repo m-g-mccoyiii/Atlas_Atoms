@@ -464,16 +464,22 @@ function openLessons(focus) {
           : L.done ? h('span', { style: 'color:var(--dim)' }, 'Completes automatically when you do the activity.')
           : h('button', { class: 'btn alt', onclick: () => { state.lessons[L.n] = Date.now(); save(); checkLessons(); renderMission(); openLessons(L.n); } }, 'Mark done')));
   }
-  let sel = null;
+  let sel = null; const rows = [];
   AA.LESSONS.forEach(L => {
+    const u = (AA.LESSON_UNITS || []).find(x => x[0] === L.n);
+    if (u) {
+      const inUnit = AA.LESSONS.filter(x => x.n >= u[0] && x.n <= u[1]), got = inUnit.filter(lessonDone).length;
+      list.append(h('div', { class: 'lunit' }, u[2], h('small', null, '  ' + got + '/' + inUnit.length)));
+    }
     const row = h('div', { class: 'lrow' }, h('span', { class: 'lnum' }, lessonDone(L) ? '\u2713' : L.n), h('span', null, L.title + (state.quiz[L.n] === AA.QUIZZES[L.n].length ? ' \u2605' : '')));
     row.addEventListener('click', () => show(L, row));
+    rows.push(row);
     if (L.n === focus) sel = [L, row];
     list.append(row);
   });
   modalShell('Lessons \u2014 ' + lessonCount() + ' of ' + AA.LESSONS.length + ' complete', h('div', { class: 'lessonWrap' }, list, side));
   const first = sel ? sel[0] : (AA.LESSONS.find(L => !lessonDone(L)) || AA.LESSONS[0]);
-  const row = sel ? sel[1] : list.children[first.n - 1];
+  const row = sel ? sel[1] : rows[first.n - 1];
   show(first, row);
 }
 

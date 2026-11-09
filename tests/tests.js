@@ -96,7 +96,8 @@ test('benzene ring is flat', () => {
 });
 
 test('every lesson has a quiz with 2 sensible questions', () => {
-  eq(AA.LESSONS.length, 31, 'lessons');
+  AA.LESSONS.forEach((L, i) => eq(L.n, i + 1, 'lesson numbering at position ' + i));
+  if (AA.LESSONS.length < 31) throw new Error('lessons went missing');
   for (const L of AA.LESSONS) {
     const q = AA.QUIZZES[L.n];
     if (!q || q.length < 2) throw new Error('lesson ' + L.n + ' has no quiz');
