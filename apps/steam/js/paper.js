@@ -6,7 +6,7 @@ const AA = root.AA = root.AA || {};
 //   draw(canvas, kind, data, { quality, progress, seed, overlay })
 // `data` is a spectrum from AA.spectra (already degraded for a quick scan). `overlay` is the player's own
 // structure's spectrum, drawn in red pencil on top.
-const INK = '#1c2230', FAINT = '#8a7f66', PENCIL = '#b03a2e', MARK = 'rgba(240,207,74,.55)';
+const INK = '#14161b', FAINT = '#767b86', PENCIL = '#d4402b', MARK = 'rgba(31,79,216,.10)', COBALT = '#1f4fd8';
 const FONT = '12px "Plex Mono", ui-monospace, monospace';
 
 function rng(seed) { let a = seed | 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -14,7 +14,7 @@ function rng(seed) { let a = seed | 0; return function () { a |= 0; a = a + 0x6D
 function setup(cv, progress) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth || 520, h = cv.clientHeight || 210;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-  const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.font = FONT;
+  const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.font = FONT; cv._hits = [];
   return { x, w, h, p: progress === undefined ? 1 : progress };
 }
 function axis(x, w, h, m, ticks, title, mapX) {
@@ -30,14 +30,17 @@ function drawMS(cv, d, o) {
   const { x, w, h, p } = setup(cv, o.progress), m = { l: 14, r: 12, t: 22, b: 36 }, ms = d.ms;
   const maxMz = Math.max(ms.M + 6, 20), mapX = v => m.l + (v / maxMz) * (w - m.l - m.r), mapY = r => h - m.b - (r / 100) * (h - m.t - m.b);
   const step = maxMz > 130 ? 20 : maxMz > 70 ? 10 : 5, ticks = []; for (let t = 0; t <= maxMz; t += step) ticks.push(t);
-  axis(x, w, h, m, ticks, 'm/z', mapX);
+  axis(x, w, h, m, ticks, 'm/z   (EI, relative abundance)', mapX);
   clip(x, w, h, p);
   if (o.quality === 'quick') { const r = rng(o.seed); for (let i = 0; i < 16; i++) { const mz = 2 + r() * (maxMz - 4), hh = 1 + r() * 3.5; x.strokeStyle = FAINT; x.lineWidth = 1.5; x.beginPath(); x.moveTo(mapX(mz), mapY(0)); x.lineTo(mapX(mz), mapY(hh)); x.stroke(); } }
   ms.peaks.forEach(pk => {
     const px = mapX(pk.mz);
     if (pk.mz === ms.M) { x.fillStyle = MARK; x.fillRect(px - 14, mapY(pk.rel) - 20, 28, 15); }
     x.strokeStyle = INK; x.lineWidth = 2.2; x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke();
-    if (pk.rel >= 12 || pk.mz === ms.M) { x.fillStyle = INK; x.textAlign = 'center'; x.fillText(String(pk.mz), px, mapY(pk.rel) - 7); }
+    const on = o.assigned && o.assigned('ms', pk);
+    if (on) { x.strokeStyle = COBALT; x.lineWidth = 3.2; x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke(); }
+    if (pk.rel >= 12 || pk.mz === ms.M || on) { x.fillStyle = on ? COBALT : INK; x.textAlign = 'center'; x.fillText(String(pk.mz), px, mapY(pk.rel) - 7); }
+    cv._hits.push({ k: 'ms', cx: px, x0: px - 12, x1: px + 12, y0: mapY(pk.rel) - 16, y1: h, peak: pk, pos: pk.mz });
   });
   if (o.overlay) o.overlay.ms.peaks.forEach(pk => { const px = mapX(pk.mz) + 3.5; x.strokeStyle = PENCIL; x.lineWidth = 1.6; x.setLineDash([3, 2]); x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke(); x.setLineDash([]); });
   x.restore();
@@ -52,13 +55,18 @@ function irCurve(ir, quality, seed) {
 function drawIR(cv, d, o) {
   const { x, w, h, p } = setup(cv, o.progress), m = { l: 14, r: 12, t: 16, b: 36 };
   const mapX = v => m.l + ((4000 - v) / 3500) * (w - m.l - m.r), mapY = t => m.t + ((100 - t) / 100) * (h - m.t - m.b);
-  axis(x, w, h, m, [4000, 3500, 3000, 2500, 2000, 1500, 1000, 500], 'wavenumber, cm-1', mapX);
+  axis(x, w, h, m, [4000, 3500, 3000, 2500, 2000, 1500, 1000, 500], 'ν̃ / cm⁻¹   (transmittance, %T)', mapX);
   clip(x, w, h, p);
   const line = (curve, col, wd, dash) => { x.strokeStyle = col; x.lineWidth = wd; x.setLineDash(dash || []); x.beginPath(); curve.forEach((q, i) => { const px = mapX(q[0]), py = mapY(q[1]); i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.stroke(); x.setLineDash([]); };
   if (d.ir.silent) {
     line([[4000, 97], [500, 97]], INK, 1.8); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('flat line: no absorption in this range', w / 2, h / 2);
   } else {
     const curve = irCurve(d.ir, o.quality, o.seed); line(curve, INK, 1.7);
+    d.ir.peaks.forEach(pk => {
+      const hw = Math.max(9, (pk.width / 3500) * (w - m.l - m.r) / 2 + 3), cx = mapX(pk.centre);
+      cv._hits.push({ k: 'ir', cx, x0: cx - hw, x1: cx + hw, y0: 0, y1: h, peak: pk, pos: pk.centre });
+      if (o.assigned && o.assigned('ir', pk)) { const t = curve.reduce((b, q) => Math.abs(q[0] - pk.centre) < Math.abs(b[0] - pk.centre) ? q : b)[1]; x.fillStyle = COBALT; x.beginPath(); x.arc(cx, mapY(t) - 10, 4, 0, 6.3); x.fill(); }
+    });
     const marked = [];
     d.ir.peaks.slice().sort((a, b) => b.amp - a.amp).forEach(pk => {
       if (marked.some(c => Math.abs(c - pk.centre) < 150)) return; marked.push(pk.centre);
@@ -75,7 +83,7 @@ const PASCAL = { s: [1], d: [1, 1], t: [1, 2, 1], q: [1, 3, 3, 1] };
 function drawNMR(cv, d, o) {
   const { x, w, h, p } = setup(cv, o.progress), m = { l: 14, r: 14, t: 30, b: 40 };
   const mapX = v => m.l + ((12 - v) / 12) * (w - m.l - m.r), base = h - m.b, top = m.t;
-  axis(x, w, h, m, [12, 10, 8, 6, 4, 2, 0], 'shift, ppm', mapX);
+  axis(x, w, h, m, [12, 10, 8, 6, 4, 2, 0], 'δ / ppm   (¹H, integral and multiplicity)', mapX);
   clip(x, w, h, p);
   const peaks = d.nmr.peaks, maxHs = Math.max(1, ...peaks.map(q => q.hs)), pxPerPpm = (w - m.l - m.r) / 12;
   const draw = (q, col, wd, dash, yoff) => {
@@ -93,6 +101,9 @@ function drawNMR(cv, d, o) {
     const r = draw(q, INK, 2, null, 0);
     x.fillStyle = INK; x.textAlign = 'center'; x.fillText(q.hs + 'H' + (o.quality === 'quick' ? '' : ' ' + (q.exchangeable ? 'br ' : '') + q.mult), r.cx, base - r.full - 8);
     x.fillStyle = FAINT; x.font = '10px "Plex Mono", monospace'; x.fillText(q.shift.toFixed(1), r.cx, base + 28); x.font = FONT;
+    const hw = (o.quality === 'quick' || q.mult === 'm') ? 30 : Math.max(16, (PASCAL[q.mult] || [1]).length * Math.max(7, 0.09 * pxPerPpm) / 2 + 8);
+    cv._hits.push({ k: 'nmr', cx: r.cx, x0: r.cx - hw, x1: r.cx + hw, y0: 0, y1: h, peak: q, pos: q.shift });
+    if (o.assigned && o.assigned('nmr', q)) { x.fillStyle = COBALT; x.beginPath(); x.arc(r.cx, base - r.full - 22, 4, 0, 6.3); x.fill(); }
   });
   if (o.overlay) o.overlay.nmr.peaks.forEach(q => draw(q, PENCIL, 1.5, [4, 3], 0));
   x.restore();

@@ -10,114 +10,174 @@ function h(tag, attrs) {
   for (const kid of [].slice.call(arguments, 2).flat()) { if (kid == null || kid === false) continue; el.append(kid.nodeType ? kid : document.createTextNode(kid)); }
   return el;
 }
+function hash(s) { let a = 2166136261; for (const ch of String(s)) a = Math.imul(a ^ ch.charCodeAt(0), 16777619); return a >>> 0; }
+function rng(seed) { let a = seed | 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // ---------- save ----------
-const SAVE = 'meitner-save-v2';
+const SAVE = 'meitner-save-v3';
 const save = (() => { try { return Object.assign({ cases: {}, tips: {} }, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { return { cases: {}, tips: {} }; } })();
 const persist = () => { try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) { /* ignore */ } };
 const closed = () => AA.CASES.filter(c => (save.cases[c.id] || {}).stars > 0).length;
 const standing = () => AA.CASES.reduce((s, c) => s + ((save.cases[c.id] || {}).score || 0), 0);
-function head(crumb) { $('#crumb').textContent = crumb; $('#stats').innerHTML = ''; $('#stats').append('Standing ', h('b', null, String(standing())), '   Files closed ', h('b', null, closed() + '/' + AA.CASES.length)); }
+function head(crumb) { $('#crumb').textContent = crumb; const s = $('#stats'); s.innerHTML = ''; s.append('Standing ', h('b', null, String(standing())), '   Files closed ', h('b', null, closed() + '/' + AA.CASES.length)); }
 $('#mute').addEventListener('click', e => { sfx.setMuted(!sfx.isMuted()); e.target.textContent = sfx.isMuted() ? 'Sound off' : 'Sound on'; if (!sfx.isMuted()) sfx.click(); });
-const stars = n => h('span', null, [0, 1, 2].map(i => h('i', { class: 'star' + (i < n ? '' : ' off') })));
+const stars = n => h('span', { class: 'stars' }, [0, 1, 2].map(i => h('span', { class: i < n ? '' : 'off' }, '★')));
 
 let cleanup = null;
 function show(node) { if (cleanup) { cleanup(); cleanup = null; } app.innerHTML = ''; app.append(node); window.scrollTo(0, 0); }
 
+// ---------- reading signals: the answers the player picks from ----------
+const POOL = { ms: new Set(), ir: new Set(), nmr: new Set() };
+lib.list.forEach(m => { const d = S.describe(m.smiles); d.ms.peaks.forEach(p => POOL.ms.add(p.label)); d.ir.peaks.forEach(p => POOL.ir.add(p.name)); d.nmr.peaks.forEach(p => POOL.nmr.add(p.label)); });
+const nameOf = (k, p) => k === 'ir' ? p.name : p.label;
+const posOf = (k, p) => k === 'ms' ? p.mz : k === 'ir' ? p.centre : p.shift;
+const keyOf = (k, p) => k + '|' + posOf(k, p) + '|' + nameOf(k, p);
+function optionsFor(k, truth, key) {
+  const r = rng(hash(key)), pool = [...POOL[k]].filter(x => x !== truth);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const out = pool.slice(0, 4); out.splice(Math.floor(r() * 5), 0, truth); return out;
+}
+function dou(formula) {
+  const n = {}; formula.replace(/([A-Z][a-z]?)(\d*)/g, (m, e, c) => { if (e) n[e] = (n[e] || 0) + (+c || 1); return ''; });
+  if (!n.C) return null; return (2 * n.C + 2 + (n.N || 0) + (n.P || 0) - (n.H || 0) - (n.F || 0) - (n.Cl || 0)) / 2;
+}
+// does a structure's own spectrum explain a finding the player has written down?
+function explains(f, d) {
+  if (f.k === 'ms') return f.kind === 'M' ? d.ms.M === f.pos : d.ms.peaks.some(p => Math.abs(p.mz - f.pos) < 1);
+  if (f.k === 'ir') return !d.ir.silent && d.ir.peaks.some(p => Math.abs(p.centre - f.pos) <= 40);
+  return d.nmr.peaks.some(p => Math.abs(p.shift - f.pos) <= 0.5 && p.hs === f.hs);
+}
+
 // ============================== case board ==============================
 function board() {
   head('Case board');
-  const done = closed(), grid = h('div', { class: 'folders' });
+  const done = closed(), grid = h('div', { class: 'cases' });
   AA.CASES.forEach((c, i) => {
     const rec = save.cases[c.id] || { stars: 0 }, open = i <= done + 1;
-    grid.append(h('button', { class: 'folder' + (open ? '' : ' locked'), 'data-no': 'FILE ' + String(i + 1).padStart(2, '0'), disabled: open ? null : 'disabled', onclick: () => { sfx.click(); lab(c); } },
-      h('h3', null, c.title), h('div', { class: 'who' }, c.client),
-      h('div', { class: 'diff' }, open ? 'Budget: ' + (6 + c.tier) + ' days' : 'Close the earlier files first'),
-      rec.stars ? h('div', { style: 'margin-top:6px' }, lib.byId.get(c.id).name + ' · ' + C.sub(lib.byId.get(c.id).formula)) : '',
-      rec.stars ? h('div', { class: 'stamp' }, 'Closed') : '', rec.stars ? h('div', { style: 'margin-top:4px' }, stars(rec.stars)) : ''));
+    grid.append(h('button', { class: 'case', disabled: open ? null : 'disabled', onclick: () => { sfx.click(); lab(c); } },
+      h('div', { class: 'no' }, 'FILE ' + String(i + 1).padStart(2, '0')), h('h3', null, c.title), h('div', { class: 'who' }, c.client),
+      h('div', { class: 'res' }, open ? (rec.stars ? [h('b', null, lib.byId.get(c.id).name), '  ', C.sub(lib.byId.get(c.id).formula), h('br'), stars(rec.stars)] : 'Budget ' + (5 + c.tier) + ' days') : 'Close earlier files first')));
   });
   show(h('div', null,
-    h('div', { class: 'boardHead' }, h('div', null, h('h1', null, 'Case board'), h('p', null, 'Each file is an unknown sample and a client waiting on an answer. You have a fixed number of days. Every instrument run costs one. Read the printouts, build a structure on the bench, and declare it before the rival lab does.'))),
-    grid,
-    h('p', { style: 'color:#8f8a78;font-size:12px;margin-top:26px' }, 'Spectra are simulated from textbook rules for teaching. They are not real instrument data.')));
+    h('div', { class: 'boardHead' }, h('h1', null, 'Case board'), h('p', null, 'Each file is an unknown sample. Run instruments (one day each), read the signals, and say what each one means. Then build the molecule that explains all of it.')),
+    grid, h('p', { class: 'fine' }, 'Spectra are simulated from textbook rules for teaching. They are not real instrument data.')));
 }
 
 // ============================== a case ==============================
 const INSTR = [
-  { k: 'ms', plate: 'MASS SPECTROMETER', short: 'MASS SPEC', blurb: 'Weighs the molecule and the pieces it breaks into.' },
-  { k: 'ir', plate: 'INFRARED SPECTROMETER', short: 'INFRARED', blurb: 'Finds which kinds of bond are present.' },
-  { k: 'nmr', plate: 'HYDROGEN NMR', short: 'H NMR', blurb: 'Counts the different kinds of hydrogen.' }
+  { k: 'ms', name: 'Mass spectrometer', short: 'MS', fig: 'Mass spectrum', blurb: 'Electron-impact MS. The mass of the molecule and of the pieces it breaks into.' },
+  { k: 'ir', name: 'IR spectrometer', short: 'IR', fig: 'Infrared spectrum', blurb: 'Which bonds are present, from how they vibrate.' },
+  { k: 'nmr', name: '¹H NMR', short: 'NMR', fig: '¹H NMR spectrum', blurb: 'Each distinct hydrogen environment, with integral and splitting.' }
 ];
 const REF = {
-  ir: [['O–H, alcohol', 'wide dip, 3200–3550'], ['O–H, carboxylic acid', 'very wide dip, 2500–3300'], ['N–H', '3300–3500'], ['C–H', 'just under 3000'], ['≡C–H', 'sharp, 3300'], ['C≡C', '2100–2260, weak'],
-       ['C=O', 'sharp and deep, 1670–1780'], ['C=C', '1620–1680'], ['C–O', '1000–1300'], ['No peaks at all', 'symmetrical molecule or an ionic solid']],
-  nmr: [['CH₃ on carbon', '0.9'], ['CH₂ in a chain', '1.3'], ['next to C=O', '2.1–2.7'], ['next to O', '3.3–4.0'], ['alkene H', '5–6'], ['aromatic H', '6.5–8'], ['aldehyde H', '9–10'], ['acid O–H', '10–12'], ['splitting', 'n neighbors give n+1 lines']],
-  ms: [['M⁺', 'the tall bar farthest right is usually the whole molecule'], ['M−15', 'lost a CH₃'], ['M−18', 'lost water, common for alcohols'], ['43', 'CH₃CO, common for methyl ketones'], ['77', 'a benzene ring'], ['M+2', 'chlorine or sulfur is present']]
+  ir: [['O–H, alcohol', 'broad, 3200–3550'], ['O–H, carboxylic acid', 'very broad, 2500–3300'], ['N–H', '3300–3500'], ['C–H (sp³)', 'just under 3000'], ['≡C–H', 'sharp, 3300'], ['C≡C', '2100–2260, weak'], ['C=O', 'sharp, strong, 1670–1780'], ['C=C', '1620–1680'], ['C–O', '1000–1300'], ['No peaks', 'symmetrical molecule or ionic solid']],
+  nmr: [['CH₃ on carbon', '0.9'], ['CH₂ in a chain', '1.3'], ['next to C=O', '2.1–2.7'], ['next to O', '3.3–4.0'], ['alkene H', '5–6'], ['aromatic H', '6.5–8'], ['aldehyde H', '9–10'], ['acid O–H', '10–12'], ['splitting', 'n neighbours give n+1 lines']],
+  ms: [['M⁺', 'highest-mass strong peak: the intact molecule'], ['M+1', '¹³C: about 1.1% of M⁺ per carbon'], ['M−15', 'loss of CH₃'], ['M−18', 'loss of H₂O'], ['M+2', 'chlorine or sulfur present'], ['77', 'phenyl ring']]
 };
 
 function lab(c) {
-  const mol = lib.byId.get(c.id), truth = S.describe(mol.smiles), idx = AA.CASES.indexOf(c);
-  const st = { days: 6 + c.tier, max: 6 + c.tier, used: 0, runs: {}, papers: [], solved: false, over: false, fit: { ready: false, text: '' }, tip: 0 };
+  const mol = lib.byId.get(c.id), truth = S.describe(mol.smiles), idx = AA.CASES.indexOf(c), max = 5 + c.tier;
+  // The lab's library holds only some known compounds. For files after the first, the answer is not in it.
+  const shelf = lib.list.filter(m => (c.tier === 1 ? true : m.id !== c.id) && hash(c.id + m.id) % 100 < 60);
+  const st = { days: max, max, used: 0, runs: {}, papers: [], found: new Map(), mis: 0, solved: false, over: false, fit: { ready: false, text: '' }, tip: 0, M: null };
   head('File ' + String(idx + 1).padStart(2, '0') + '  —  ' + c.title);
   const dataFor = quality => quality === 'quick' ? S.degrade(truth) : truth;
 
-  const daysEl = h('div', { class: 'days' }), rack = h('div', { class: 'rack' }), papers = h('div'), stickyHost = h('div'), logEl = h('div', { class: 'log' }), fitEl = h('div', { class: 'fit' }), libEl = h('div', { class: 'lib' });
+  const daysEl = h('div', { class: 'days' }), instrEl = h('div'), figs = h('div', { class: 'figs' }), nbEl = h('ul', { class: 'nb' }), logEl = h('div', { class: 'log' }), fitEl = h('div', { class: 'fit' }), chkEl = h('div'), libEl = h('div', { class: 'lib' }), tipHost = h('div'), labEl = h('div', { class: 'lab' });
   const log = msg => { logEl.append(h('div', null, msg)); logEl.scrollTop = logEl.scrollHeight; };
-  const labEl = h('div', { class: 'lab' });
 
-  function renderDays() { daysEl.innerHTML = ''; for (let i = 0; i < st.max; i++) daysEl.append(h('span', { class: i < st.used ? 'gone' : '' })); daysEl.append(h('small', null, st.days + ' day' + (st.days === 1 ? '' : 's') + ' left')); }
+  function renderDays() { daysEl.innerHTML = ''; for (let i = 0; i < st.max; i++) daysEl.append(h('span', { class: i < st.used ? 'gone' : '' })); daysEl.append(h('small', null, st.days + ' day' + (st.days === 1 ? '' : 's') + ' left · ' + st.mis + ' misread' + (st.mis === 1 ? '' : 's'))); }
 
   // ---------- instruments ----------
-  function renderRack() {
-    rack.innerHTML = '';
-    const lockedOut = st.solved || st.over;
+  function renderInstr() {
+    instrEl.innerHTML = ''; const out = st.solved || st.over;
     INSTR.forEach(ins => {
       const run = st.runs[ins.k];
-      rack.append(h('div', { class: 'unit' }, h('div', { class: 'plate' }, ins.plate),
-        h('div', { class: 'lcd' }, run ? (run.quality === 'quick' ? 'QUICK SCAN ON FILE' : 'HIGH-RES ON FILE') : 'READY', h('br'), ins.blurb),
-        h('div', { class: 'keys' },
-          !run ? h('button', { class: 'key red', disabled: lockedOut || st.days < 1 ? 'disabled' : null, onclick: () => runInstr(ins, 'quick') }, 'Quick scan', h('small', null, '1 day'))
-          : run.quality === 'quick' ? h('button', { class: 'key', disabled: lockedOut || st.days < 1 ? 'disabled' : null, onclick: () => runInstr(ins, 'hires') }, 'High resolution', h('small', null, '1 day'))
-          : h('button', { class: 'key', disabled: 'disabled' }, 'Best available'))));
+      instrEl.append(h('div', { class: 'instr' }, h('b', null, ins.name), h('div', { class: 'go' },
+        !run && ins.k === 'ir' ? h('button', { class: 'btn red', disabled: out || st.days < 1 ? 'disabled' : null, onclick: () => runInstr(ins, 'hires') }, 'Run', h('small', null, '1d'))
+        : !run ? h('button', { class: 'btn red', disabled: out || st.days < 1 ? 'disabled' : null, onclick: () => runInstr(ins, 'quick') }, 'Quick scan', h('small', null, '1d'))
+        : run.quality === 'quick' ? h('button', { class: 'btn', disabled: out || st.days < 1 ? 'disabled' : null, onclick: () => runInstr(ins, 'hires') }, 'High-res', h('small', null, '1d'))
+        : h('button', { class: 'btn ghost', disabled: 'disabled' }, 'Best on file')),
+        h('div', { class: 'd' }, run ? h('span', { class: 'st' }, run.quality === 'quick' ? 'Quick scan on file. ' : ins.k === 'ir' ? 'Run on file. ' : 'High resolution on file. ') : '', ins.k === 'ir' ? ins.blurb + ' One setting.' : ins.k === 'ms' ? ins.blurb + ' High-res adds the isotope peaks (M+1 counts carbons).' : ins.blurb + ' High-res resolves the splitting.')));
     });
-    rack.append(h('div', { class: 'unit' }, h('div', { class: 'plate' }, 'SPECTRAL LIBRARY'), h('div', { class: 'lcd' }, 'Ranks known compounds against the printouts you have.'),
-      h('div', { class: 'keys' }, h('button', { class: 'key', disabled: lockedOut || st.days < 1 ? 'disabled' : null, onclick: search }, 'Search library', h('small', null, '1 day')),
-        h('button', { class: 'key', onclick: reference }, 'Reference sheet', h('small', null, 'free')))));
+    instrEl.append(h('div', { class: 'instr' }, h('b', null, 'Spectral library'), h('div', { class: 'go' }, h('button', { class: 'btn', disabled: out || st.days < 1 ? 'disabled' : null, onclick: search }, 'Search', h('small', null, '1d'))),
+      h('div', { class: 'd' }, 'This lab holds ' + shelf.length + ' known compounds. The sample may not be one of them.')));
+    instrEl.append(h('div', { style: 'margin-top:10px' }, h('button', { class: 'btn ghost', onclick: reference }, 'Reference tables')));
   }
-
-  function spend(what) {
-    st.days--; st.used++; renderDays(); renderRack();
-    if (st.days <= 0 && !st.solved) setTimeout(lose, 500);
-  }
+  function spend() { st.days--; st.used++; renderDays(); renderInstr(); if (st.days <= 0 && !st.solved) setTimeout(lose, 600); }
   function runInstr(ins, quality) {
     if (st.solved || st.over || st.days < 1) return;
     sfx.click(); sfx.feed(); spend();
     const rec = { k: ins.k, quality, seed: (Math.random() * 1e9) | 0, cv: h('canvas') };
-    rec.el = h('figure', { class: 'paper' }, h('header', null, ins.short, h('span', null, (quality === 'quick' ? 'quick scan' : 'high resolution') + '  day ' + st.used)), rec.cv,
-      h('figcaption', null, quality === 'quick' ? 'Noisy. Weak peaks and fine splitting are lost.' : 'Clean trace.'));
+    rec.cv.addEventListener('click', ev => pick(rec, ev));
+    rec.el = h('figure', { class: 'fig' }, h('header', null, h('span', null, 'Fig. ' + (st.papers.length + 1) + '  ' + ins.fig), h('span', null, (quality === 'quick' ? 'quick scan' : 'high resolution') + ' · day ' + st.used)), rec.cv,
+      h('figcaption', null, quality === 'quick' ? 'Quick scan: noisy, weak peaks and fine splitting are lost. Click a signal to say what it is.' : 'Clean trace. Click a signal to say what it is.'));
     if (st.runs[ins.k]) st.runs[ins.k].el.classList.add('old');
     st.runs[ins.k] = rec; st.papers.push(rec);
-    if (papers.querySelector('.empty')) papers.innerHTML = '';
-    papers.prepend(rec.el);
-    log('Day ' + st.used + ': ' + ins.short.toLowerCase() + ', ' + (quality === 'quick' ? 'quick scan.' : 'high resolution.'));
+    const empty = figs.querySelector('.empty'); if (empty) empty.remove();
+    figs.prepend(rec.el);
+    log('Day ' + st.used + ': ' + ins.short + ', ' + (quality === 'quick' ? 'quick scan.' : 'high resolution.'));
     const t0 = performance.now(), dur = 1100; sfx.pen(dur);
     const frame = now => { const p = Math.min(1, (now - t0) / dur); drawPaper(rec, p); if (p < 1 && document.body.contains(rec.el)) requestAnimationFrame(frame); };
     requestAnimationFrame(frame);
     renderFit();
   }
-  function overlayFor(rec) { return st.fit.ready && st.runs[rec.k] === rec ? (rec.quality === 'quick' ? S.degrade(st.fit.desc) : st.fit.desc) : null; }
-  function drawPaper(rec, progress) { AA.paper.draw(rec.cv, rec.k, dataFor(rec.quality), { quality: rec.quality, seed: rec.seed, progress, overlay: overlayFor(rec) }); }
+  const overlayFor = rec => st.fit.ready && st.runs[rec.k] === rec ? (rec.quality === 'quick' ? S.degrade(st.fit.desc) : st.fit.desc) : null;
+  function drawPaper(rec, progress) { AA.paper.draw(rec.cv, rec.k, dataFor(rec.quality), { quality: rec.quality, seed: rec.seed, progress, overlay: overlayFor(rec), assigned: (k, p) => st.found.has(keyOf(k, p)) }); }
   const redrawAll = () => st.papers.forEach(r => drawPaper(r, 1));
 
-  // ---------- fit meter ----------
+  // ---------- say what a signal is ----------
+  let pop = null; const closePop = () => { if (pop) { pop.remove(); pop = null; } };
+  const onDown = e => { if (pop && !pop.contains(e.target)) closePop(); };
+  function pick(rec, ev) {
+    if (st.solved || st.over) return;
+    const r = rec.cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+    const hit = (rec.cv._hits || []).filter(t => x >= t.x0 && x <= t.x1 && y >= t.y0 && y <= t.y1).sort((a, b) => Math.abs(a.cx - x) - Math.abs(b.cx - x))[0];
+    closePop(); if (!hit) return;
+    const key = keyOf(hit.k, hit.peak), truthName = nameOf(hit.k, hit.peak);
+    if (st.found.has(key)) { log('Already in your notebook.'); return; }
+    const wrong = new Set(), title = hit.k === 'ms' ? 'm/z ' + hit.peak.mz : hit.k === 'ir' ? hit.peak.centre + ' cm⁻¹' : 'δ ' + hit.peak.shift.toFixed(1) + ' ppm, ' + hit.peak.hs + 'H';
+    pop = h('div', { class: 'pop' }, h('h4', null, title + '  —  what is this signal?'));
+    optionsFor(hit.k, truthName, key).forEach(o => pop.append(h('button', { class: 'opt', onclick: e => {
+      e.stopPropagation(); if (wrong.has(o)) return;
+      if (o === truthName) { closePop(); found(hit); }
+      else { wrong.add(o); e.currentTarget.classList.add('wrong'); st.mis++; sfx.bad(); renderDays(); }
+    } }, o)));
+    pop.append(h('button', { class: 'btn ghost', style: 'margin-top:4px', onclick: closePop }, 'Cancel'));
+    pop.style.left = Math.min(ev.clientX + 12, window.innerWidth - 320) + 'px'; pop.style.top = Math.max(8, Math.min(ev.clientY + 12, window.innerHeight - 330)) + 'px';
+    document.body.append(pop);
+  }
+  function found(hit) {
+    const p = hit.peak, k = hit.k, f = { k, pos: posOf(k, p), name: nameOf(k, p), hs: p.hs, kind: '' };
+    if (k === 'ms') {
+      const dd = dataFor(st.runs.ms.quality).ms, mp = dd.peaks.find(q => q.mz === dd.M);
+      if (/^M⁺/.test(f.name)) { f.kind = 'M'; st.M = p.mz; f.text = 'M⁺ = ' + p.mz + '  (molecular mass ' + p.mz + ')'; }
+      else if (/^M\+1/.test(f.name) && mp) { const n = Math.round((p.rel / mp.rel) / 0.011); f.text = 'M+1 is ' + (p.rel / mp.rel * 100).toFixed(1) + '% of M⁺: about ' + n + ' carbon' + (n === 1 ? '' : 's'); f.n = n; }
+      else f.text = 'm/z ' + p.mz + ': ' + f.name;
+    } else if (k === 'ir') f.text = f.pos + ' cm⁻¹: ' + f.name;
+    else f.text = 'δ ' + f.pos.toFixed(1) + ': ' + f.name + ', ' + p.hs + 'H, ' + p.mult;
+    st.found.set(keyOf(k, p), f); sfx.good(); log('Identified: ' + f.text);
+    renderNotebook(); renderFit(); redrawAll();
+  }
+  function renderNotebook() {
+    nbEl.innerHTML = '';
+    if (!st.found.size) { nbEl.append(h('li', { class: 'none' }, 'Empty. Run an instrument and click a signal.')); return; }
+    [...st.found.values()].forEach(f => nbEl.append(h('li', null, h('i', null, f.k.toUpperCase()), f.text, st.fit.ready ? (explains(f, st.fit.desc) ? h('span', { class: 'ok' }, '✓') : h('span', { class: 'no' }, '✗')) : '')));
+  }
+
+  // ---------- the bench and its checks ----------
   function renderFit() {
-    fitEl.innerHTML = '';
+    fitEl.innerHTML = ''; chkEl.innerHTML = '';
     fitEl.append(h('div', { class: 'note' }, st.fit.text || ''));
+    renderNotebook();
     if (!st.fit.ready) return;
+    const d = st.fit.desc, u = dou(d.formula);
+    chkEl.append(h('div', { class: 'chk' }, h('span', null, 'Formula'), h('span', null, C.sub(d.formula)), h('span', null, 'Nominal mass'), h('span', null, String(d.ms.M)),
+      u != null ? [h('span', null, 'Unsaturation'), h('span', null, String(u))] : '',
+      st.M != null ? [h('span', null, 'Measured M⁺ = ' + st.M), h('span', { class: d.ms.M === st.M ? 'ok' : 'no' }, d.ms.M === st.M ? 'match' : 'no match')] : ''));
     const ran = INSTR.filter(i => st.runs[i.k]);
-    if (!ran.length) { fitEl.append(h('div', { class: 'note' }, 'Run an instrument to see how this compares.')); return; }
     ran.forEach(i => {
-      const r = st.runs[i.k], sc = S.compare(dataFor(r.quality), r.quality === 'quick' ? S.degrade(st.fit.desc) : st.fit.desc)[i.k], pct = Math.round(sc * 100);
+      const r = st.runs[i.k], sc = S.compare(dataFor(r.quality), r.quality === 'quick' ? S.degrade(d) : d)[i.k], pct = Math.round(sc * 100);
       fitEl.append(h('div', { class: 'line' }, h('span', null, i.short), h('div', { class: 'track' }, h('div', { style: 'width:' + pct + '%' })), h('b', null, pct + '%')));
     });
   }
@@ -131,33 +191,28 @@ function lab(c) {
       else {
         const ix = new Map(k.atoms.map((a, i) => [a, i]));
         const desc = S.describeGraph(k.atoms.map(a => ({ el: a.el })), k.bonds.map(b => ({ a: ix.get(b.a), b: ix.get(b.b), order: b.order })));
-        st.fit = { ready: true, desc, mol: k.mol, text: 'Complete: ' + C.sub(k.formula) + (k.mol ? '' : '   (not in the library)') };
+        st.fit = { ready: true, desc, mol: k.mol, text: 'Structure complete. Its predicted spectrum is drawn in red over your printouts.' };
       }
     }
     renderFit(); redrawAll();
   }
 
-  // ---------- library search ----------
+  // ---------- library ----------
   function search() {
     if (st.solved || st.over || st.days < 1) return;
     const ran = INSTR.filter(i => st.runs[i.k]);
     if (!ran.length) { log('Library: nothing to match yet. Run an instrument first.'); sfx.bad(); return; }
     sfx.click(); spend();
-    const rows = lib.list.map(m => {
+    const rows = shelf.map(m => {
       const d = S.describe(m.smiles); let sum = 0;
       ran.forEach(i => { const r = st.runs[i.k]; sum += S.compare(dataFor(r.quality), r.quality === 'quick' ? S.degrade(d) : d)[i.k]; });
       return { m, score: sum / ran.length };
-    }).sort((a, b) => b.score - a.score).slice(0, 6);
+    }).sort((a, b) => b.score - a.score).slice(0, 5);
     libEl.innerHTML = '';
-    libEl.append(h('div', { class: 'note', style: 'color:#b9b29d;margin-bottom:4px' }, 'Library ranking from ' + ran.map(i => i.short).join(', ') + ':'));
-    rows.forEach(r => libEl.append(h('div', { class: 'item' }, h('span', null, r.m.name + '  ' + C.sub(r.m.formula)), h('b', null, Math.round(r.score * 100) + '%'), h('button', { class: 'btn', onclick: () => loadMol(r.m) }, 'To bench'))));
+    libEl.append(h('div', { class: 'note' }, 'Closest of ' + shelf.length + ' known compounds, by ' + ran.map(i => i.short).join(' + ') + ':'));
+    rows.forEach(r => libEl.append(h('div', { class: 'item' }, h('span', null, r.m.name + '  ' + C.sub(r.m.formula)), h('b', null, Math.round(r.score * 100) + '%'))));
+    libEl.append(h('div', { class: 'note', style: 'margin-top:6px' }, 'A high score is a lead, not an answer. Build it and check.'));
     log('Day ' + st.used + ': library search. Closest: ' + rows[0].m.name + ' at ' + Math.round(rows[0].score * 100) + '%.');
-  }
-  function loadMol(m) {
-    sfx.click(); const tpl = AA.Model.fromSmilesRelaxed(m.smiles, 3);
-    model.clear(); const map = tpl.atoms.map(a => model.addAtom(a.el, a.x, a.y, a.z));
-    tpl.bonds.forEach(b => model.bonds.push({ a: map[tpl.atoms.indexOf(b.a)], b: map[tpl.atoms.indexOf(b.b)], order: b.order }));
-    updateFit();
   }
 
   // ---------- declare ----------
@@ -165,36 +220,38 @@ function lab(c) {
     if (st.solved || st.over) return;
     if (!st.fit.ready) { sfx.bad(); log('Cannot declare: ' + (st.fit.text || 'nothing on the bench.')); return; }
     if (st.fit.mol && st.fit.mol.id === mol.id) { win(); return; }
-    sfx.bad(); const sc = S.compare(truth, st.fit.desc), worst = INSTR.slice().sort((a, b) => sc[a.k] - sc[b.k])[0];
-    log('Declared ' + (st.fit.mol ? st.fit.mol.name : 'an unlisted compound') + '. Peer review: the ' + worst.short.toLowerCase() + ' does not support it. One day lost.');
+    sfx.bad();
+    const fails = [...st.found.values()].filter(f => !explains(f, st.fit.desc)), sc = S.compare(truth, st.fit.desc), ran = INSTR.filter(i => st.runs[i.k]);
+    const worst = (ran.length ? ran : INSTR).slice().sort((a, b) => sc[a.k] - sc[b.k])[0];
+    log('Declared ' + (st.fit.mol ? st.fit.mol.name : 'an unlisted compound') + '. Peer review: ' + (fails.length ? 'it does not explain "' + fails[0].text + '".' : 'the ' + worst.short + ' trace does not agree with it.') + ' One day lost.');
     labEl.classList.remove('shake'); void labEl.offsetWidth; labEl.classList.add('shake'); spend();
   }
 
   // ---------- results ----------
   function cover(sheet) { const el = h('div', { class: 'cover' }, sheet); document.body.append(el); return el; }
   function win() {
-    st.solved = true; renderRack();
-    const par = 3 + (c.tier >= 3 ? 1 : 0), n = st.used <= par ? 3 : st.used <= par + 2 ? 2 : 1, score = n * 100 + st.days * 10;
-    const rec = save.cases[c.id] || { stars: 0, score: 0 }, gain = Math.max(0, score - rec.score);
+    st.solved = true; renderInstr(); closePop();
+    let n = st.used <= 3 ? 3 : st.used <= 5 ? 2 : 1; if (st.mis >= 5) n = Math.max(1, n - 1);
+    const score = n * 100 + st.days * 10 - st.mis * 5, rec = save.cases[c.id] || { stars: 0, score: 0 }, gain = Math.max(0, score - rec.score);
     save.cases[c.id] = { stars: Math.max(rec.stars, n), score: Math.max(rec.score, score) }; persist(); head('File ' + String(idx + 1).padStart(2, '0') + '  —  ' + c.title);
-    sfx.stamp(); sfx.good(); steam.achievement('FIRST_CASE'); if (n === 3) steam.achievement('THREE_STARS'); if (closed() >= AA.CASES.length) steam.achievement('ALL_CASES');
+    sfx.stamp(); sfx.good(); steam.achievement('FIRST_CASE'); if (n === 3) steam.achievement('THREE_STARS'); if (!st.mis) steam.achievement('CLEAN_READ'); if (closed() >= AA.CASES.length) steam.achievement('ALL_CASES');
     const next = AA.CASES[idx + 1];
-    const el = cover(h('div', { class: 'sheet' }, h('div', { class: 'stamp bigstamp' }, 'Case closed'), h('h2', { style: 'margin-top:14px' }, mol.name + '   ' + C.sub(mol.formula)), h('p', null, mol.real),
-      h('table', null, h('tr', null, h('th', null, 'Days used'), h('td', null, st.used + ' of ' + st.max)), h('tr', null, h('th', null, 'Rating'), h('td', null, stars(n))), h('tr', null, h('th', null, 'Standing'), h('td', null, '+' + gain))),
-      h('p', { style: 'display:flex;gap:10px;flex-wrap:wrap' }, next ? h('button', { class: 'btn red', onclick: () => { el.remove(); sfx.click(); lab(next); } }, 'Next file') : '', h('button', { class: 'btn paper', onclick: () => { el.remove(); board(); } }, 'Case board'))));
+    const el = cover(h('div', { class: 'sheet' }, h('span', { class: 'verdict good' }, 'Identified'), h('h2', null, mol.name + '   ' + C.sub(mol.formula)), h('p', null, mol.real),
+      h('table', null, h('tr', null, h('th', null, 'Days used'), h('td', null, st.used + ' of ' + st.max)), h('tr', null, h('th', null, 'Misread signals'), h('td', null, String(st.mis))), h('tr', null, h('th', null, 'Rating'), h('td', null, stars(n))), h('tr', null, h('th', null, 'Standing'), h('td', null, '+' + gain))),
+      h('div', { class: 'row' }, next ? h('button', { class: 'btn red', onclick: () => { el.remove(); sfx.click(); lab(next); } }, 'Next file') : '', h('button', { class: 'btn ghost', onclick: () => { el.remove(); board(); } }, 'Case board'))));
   }
   function lose() {
-    if (st.solved || st.over) return; st.over = true; renderRack(); sfx.stamp(); sfx.bad();
-    const el = cover(h('div', { class: 'sheet' }, h('div', { class: 'stamp bigstamp' }, 'Scooped'), h('h2', { style: 'margin-top:14px' }, 'The rival lab published first'),
-      h('p', null, 'Out of days. ' + c.client + ' went with their answer. The sample was ' + mol.name + '. Look at what the printouts were showing, then try the file again.'),
-      h('p', { style: 'display:flex;gap:10px' }, h('button', { class: 'btn red', onclick: () => { el.remove(); lab(c); } }, 'Try again'), h('button', { class: 'btn paper', onclick: () => { el.remove(); board(); } }, 'Case board'))));
+    if (st.solved || st.over) return; st.over = true; renderInstr(); closePop(); sfx.stamp(); sfx.bad();
+    const el = cover(h('div', { class: 'sheet' }, h('span', { class: 'verdict bad' }, 'Out of days'), h('h2', null, 'The rival lab published first'),
+      h('p', null, c.client + ' took their answer. The sample was ' + mol.name + ', ' + C.sub(mol.formula) + '. Go back over the printouts and see which signals pointed to it.'),
+      h('div', { class: 'row' }, h('button', { class: 'btn red', onclick: () => { el.remove(); lab(c); } }, 'Try again'), h('button', { class: 'btn ghost', onclick: () => { el.remove(); board(); } }, 'Case board'))));
   }
   function reference() {
     sfx.click();
-    const tbl = (rows) => h('table', null, rows.map(r => h('tr', null, h('th', null, r[0]), h('td', null, r[1]))));
-    const el = cover(h('div', { class: 'sheet' }, h('h2', null, 'Reference sheet'), h('p', { style: 'color:#8a7f66;margin-top:0' }, 'Standard textbook values. Real spectra vary.'),
-      h('h3', null, 'Infrared (cm-1)'), tbl(REF.ir), h('h3', { style: 'margin-top:10px' }, 'Hydrogen NMR (ppm)'), tbl(REF.nmr), h('h3', { style: 'margin-top:10px' }, 'Mass spectrum'), tbl(REF.ms),
-      h('p', null, h('button', { class: 'btn paper', onclick: () => el.remove() }, 'Close'))));
+    const tbl = rows => h('table', null, rows.map(r => h('tr', null, h('th', null, r[0]), h('td', null, r[1]))));
+    const el = cover(h('div', { class: 'sheet' }, h('h2', null, 'Reference tables'), h('p', { style: 'color:#6a6f7a;margin-top:0' }, 'Standard textbook values. Real spectra vary with solvent and conditions.'),
+      h('h3', null, 'Infrared (cm⁻¹)'), tbl(REF.ir), h('h3', null, '¹H NMR (ppm)'), tbl(REF.nmr), h('h3', null, 'Mass spectrum'), tbl(REF.ms),
+      h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => el.remove() }, 'Close'))));
     el.addEventListener('click', e => { if (e.target === el) el.remove(); });
   }
 
@@ -202,22 +259,26 @@ function lab(c) {
   const model = new AA.Model(), benchCv = h('canvas', { class: 'benchCanvas' }), tins = h('div', { class: 'tins' }), viewerBox = { v: null, raf: 0, dead: false };
   ['H', 'C', 'N', 'O', 'S', 'P', 'F', 'Cl', 'Na'].forEach(el => tins.append(h('div', { class: 'tin', style: 'background:' + E[el].color + ';color:' + (['H', 'S', 'F', 'Cl'].includes(el) ? '#1c2230' : '#fff'), title: E[el].name + ': makes ' + E[el].valences.join(' or ') + ' bond' + (E[el].valences[0] > 1 ? 's' : ''),
     onpointerdown: ev => { ev.preventDefault(); sfx.click(); const a = model.addAtom(el, 0, 0, 0); viewerBox.v.startDrag(a, ev); } }, el)));
-  const benchBox = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'BENCH'), h('span', null, 'drop atoms on atoms to bond')), benchCv, tins,
-    h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { model.clear(); updateFit(); } }, 'Clear'), h('button', { class: 'btn', title: 'Put the camera back', onclick: () => { const v = viewerBox.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 75; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn red', onclick: declare }, 'Declare this structure')), fitEl, libEl);
+  const benchBox = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drop an atom on an atom to bond')), benchCv, tins,
+    h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { model.clear(); updateFit(); } }, 'Clear'), h('button', { class: 'btn', title: 'Put the camera back', onclick: () => { const v = viewerBox.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 75; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn red', onclick: declare }, 'Declare this structure')), fitEl, chkEl, libEl);
 
-  const file = h('div', { class: 'file' }, h('h3', null, c.title), h('div', { class: 'who' }, 'Client: ' + c.client), h('p', null, c.story), h('ul', null, c.notes.map(n => h('li', null, n))));
-  labEl.append(rack, h('div', { class: 'desk' }, stickyHost, papers), h('div', { class: 'right' }, file, benchBox, logEl));
-  papers.append(h('div', { class: 'empty' }, 'Nothing on the desk yet. Run an instrument.'));
+  const sec = (t, ...kids) => h('section', { class: 'sec' }, h('div', { class: 't' }, h('span', null, t)), kids);
+  labEl.append(
+    h('div', { class: 'colA' }, sec('Case file', h('p', { class: 'client' }, 'Client: ' + c.client), h('p', { class: 'story' }, c.story), h('ul', { class: 'notes' }, c.notes.map(n => h('li', null, n)))),
+      tipHost, sec('Instruments', instrEl), sec('Notebook', nbEl), sec('Log', logEl)),
+    h('div', { class: 'colB' }, sec('Printouts', figs)),
+    h('div', { class: 'colC' }, benchBox));
+  figs.append(h('div', { class: 'empty' }, 'No printouts yet. Run an instrument.'));
 
   function renderTip() {
-    stickyHost.innerHTML = ''; const tips = c.tips || [];
+    tipHost.innerHTML = ''; const tips = c.tips || [];
     if (save.tips[c.id] || st.tip >= tips.length) return;
-    stickyHost.append(h('div', { class: 'sticky' }, h('b', null, 'Note from the technician'), tips[st.tip],
-      h('div', { style: 'margin-top:8px' }, h('button', { class: 'btn paper', onclick: () => { sfx.click(); st.tip++; if (st.tip >= tips.length) { save.tips[c.id] = true; persist(); } renderTip(); } }, st.tip + 1 < tips.length ? 'Next' : 'Got it'))));
+    tipHost.append(sec('Technician note', h('p', { style: 'margin:0 0 8px' }, tips[st.tip]), h('button', { class: 'btn ghost', onclick: () => { sfx.click(); st.tip++; if (st.tip >= tips.length) { save.tips[c.id] = true; persist(); } renderTip(); } }, st.tip + 1 < tips.length ? 'Next' : 'Got it')));
   }
 
-  show(h('div', null, h('div', { class: 'labTop' }, h('button', { class: 'btn paper', onclick: () => { sfx.click(); board(); } }, 'Case board'), h('h2', null, 'Case: ' + c.title), daysEl), labEl));
-  renderDays(); renderRack(); renderTip(); log('File opened. ' + st.max + ' days to answer.'); updateFit();
+  show(h('div', null, h('div', { class: 'labTop' }, h('button', { class: 'btn ghost', onclick: () => { sfx.click(); board(); } }, 'Case board'), h('h2', null, c.title), daysEl), labEl));
+  renderDays(); renderInstr(); renderNotebook(); renderTip(); log('File opened. ' + st.max + ' days to answer.'); updateFit();
+  document.addEventListener('pointerdown', onDown);
 
   requestAnimationFrame(() => {
     if (viewerBox.dead) return;
@@ -234,7 +295,7 @@ function lab(c) {
     viewerBox.raf = requestAnimationFrame(loop);
   });
   const onResize = () => redrawAll(); window.addEventListener('resize', onResize);
-  cleanup = () => { window.removeEventListener('resize', onResize); viewerBox.dead = true; cancelAnimationFrame(viewerBox.raf); if (viewerBox.v) viewerBox.v.dispose(); document.querySelectorAll('.cover').forEach(e => e.remove()); };
+  cleanup = () => { window.removeEventListener('resize', onResize); document.removeEventListener('pointerdown', onDown); closePop(); viewerBox.dead = true; cancelAnimationFrame(viewerBox.raf); if (viewerBox.v) viewerBox.v.dispose(); document.querySelectorAll('.cover').forEach(e => e.remove()); };
 }
 
 board();
