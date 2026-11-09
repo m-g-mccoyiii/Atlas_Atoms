@@ -59,6 +59,15 @@ function mount(host, o) {
     });
     return { els, bonds, caps, over, comp: best.atoms, pieces: model.components().filter(c => c.some(a => a.el !== 'H')).length };
   }
+  function fillH() {   // put a real hydrogen on every open bond
+    let n = 0;
+    model.atoms.slice().forEach(a => {
+      if (a.el === 'H') return; const sum = model.bondSum(a), tgt = E[a.el].valences.find(v => v >= sum); if (tgt === undefined) return;
+      for (let k = 0; k < tgt - sum; k++) { const hh = model.addAtom('H', a.x + (Math.random() - 0.5) * 0.8, a.y + (Math.random() - 0.5) * 0.8, a.z + (Math.random() - 0.5) * 0.8); model.bonds.push({ a, b: hh, order: 1 }); n++; if (box.v) { const p = box.v._screen(a); burst(p.x, p.y, GREEN, 6, 80); } }
+    });
+    if (n) { sfx.bond(); say(n + ' hydrogen' + (n > 1 ? 's' : '') + ' added'); } else say('No open bonds to fill');
+    refresh();
+  }
   function refresh() {
     const c = capped(); st.info = c; st.mine = null;
     if (c && !c.over) { try { st.mine = S.describeGraph(c.els.map(el => ({ el })), c.bonds); } catch (e) { st.mine = null; } }
@@ -210,7 +219,6 @@ function mount(host, o) {
   }
   function celebrate(done) {
     const v = box.v; if (!v) { done(); return; }
-    v.mode = 'orbital'; modeBtns.forEach(b => b.classList.toggle('on', /Orbitals/.test(b.textContent)));
     const c = centre(model.atoms); fx.flash = 0.8; sfx.fanfare(); st.party = performance.now(); v.yawVel = 2.4;
     ring(c.x, c.y, GOLD, 220, 1.0); ring(c.x, c.y, GREEN, 150, 0.8); ring(c.x, c.y, BLUE, 280, 1.3); burst(c.x, c.y, GOLD, 100, 280); burst(c.x, c.y, GREEN, 70, 220); burst(c.x, c.y, BLUE, 70, 320);
     fx.title = { text: 'IDENTIFIED', sub: mol.name + '   ' + C.sub(mol.formula), col: '#ffd23f' }; fx.titleT = 0; setTimeout(done, 2600);
@@ -223,9 +231,8 @@ function mount(host, o) {
   } }, f.label)));
   const assayBtn = h('button', { class: 'btn red', onclick: assay }, 'Run assay (1 hour)');
   const reportBtn = h('button', { class: 'btn', style: 'display:none;border-color:#e0b04a;color:#e0b04a', onclick: () => { if (st.fired) return; st.fired = true; sfx.stamp(); o.onSolved({ assays: st.assays, anomaly: true }); } }, 'Report anomaly');
-  const modeBtns = [['ball', 'Ball and stick'], ['space', 'Space-filling'], ['orbital', 'Orbitals'], ['lewis', 'Electrons']].map(([m, t]) => h('button', { class: 'modebtn' + (m === 'ball' ? ' on' : ''), onclick: e => { if (box.v) box.v.mode = m; modeBtns.forEach(b => b.classList.remove('on')); e.currentTarget.classList.add('on'); sfx.click(); } }, t));
-  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), h('div', { class: 'modes' }, modeBtns), benchWrap, frags,
-    h('div', { class: 'row' }, assayBtn, reportBtn, h('button', { class: 'btn', onclick: () => { model.clear(); st.spawn = 0; refresh(); } }, 'Clear'), h('button', { class: 'btn', onclick: () => { const v = box.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 58; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn', onclick: reference }, 'Tables')),
+  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), benchWrap, frags,
+    h('div', { class: 'row' }, assayBtn, reportBtn, h('button', { class: 'btn', title: 'Put a hydrogen on every open bond', onclick: fillH }, 'Fill with hydrogen'), h('button', { class: 'btn', onclick: () => { model.clear(); st.spawn = 0; refresh(); } }, 'Clear'), h('button', { class: 'btn', onclick: () => { const v = box.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 58; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn', onclick: reference }, 'Tables')),
     readout, spotEl);
   function reference() {
     sfx.click(); const el = h('div', { class: 'cover' }, h('div', { class: 'sheet' }, h('h2', null, 'Reference tables'), Object.entries(REF).map(([t, rows]) => [h('h3', null, t), h('table', null, rows.map(r => h('tr', null, h('th', null, r[0]), h('td', null, r[1]))))]), h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => el.remove() }, 'Close'))));
