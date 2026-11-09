@@ -179,7 +179,8 @@ function mount(host, o) {
   } }, f.label)));
   const assayBtn = h('button', { class: 'btn red', onclick: assay }, 'Run assay (1 hour)');
   const reportBtn = h('button', { class: 'btn', style: 'display:none;border-color:#e0b04a;color:#e0b04a', onclick: () => { if (st.fired) return; st.fired = true; sfx.stamp(); o.onSolved({ assays: st.assays, anomaly: true }); } }, 'Report anomaly');
-  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), benchCv, frags,
+  const modeBtns = [['ball', 'Ball and stick'], ['space', 'Space-filling'], ['orbital', 'Orbitals'], ['lewis', 'Electrons']].map(([m, t]) => h('button', { class: 'modebtn' + (m === 'ball' ? ' on' : ''), onclick: e => { if (box.v) box.v.mode = m; modeBtns.forEach(b => b.classList.remove('on')); e.currentTarget.classList.add('on'); sfx.click(); } }, t));
+  const bench = h('div', { class: 'benchBox' }, h('div', { class: 'benchTitle' }, h('span', null, 'Bench'), h('span', null, 'drag an open atom onto another to bond')), h('div', { class: 'modes' }, modeBtns), benchCv, frags,
     h('div', { class: 'row' }, assayBtn, reportBtn, h('button', { class: 'btn', onclick: () => { model.clear(); st.spawn = 0; refresh(); } }, 'Clear'), h('button', { class: 'btn', onclick: () => { const v = box.v; if (v) { v.yaw = 0.45; v.pitch = 0.55; v.zoom = 52; v.yawVel = v.pitchVel = 0; v.pan.set(0, 0, 0); } } }, 'Reset view'), h('button', { class: 'btn', onclick: reference }, 'Tables')),
     readout, spotEl);
   function reference() {
@@ -193,7 +194,7 @@ function mount(host, o) {
 
   requestAnimationFrame(() => {
     if (box.dead) return;
-    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 52, pitch: 0.55, faces: true, grid: { main: 0x6f8cff, sub: 0x6f8cff, opacity: 0.16 } }); box.v = v;
+    const v = new AA.Viewer(benchCv, model, { interactive: true, zoom: 52, pitch: 0.55, faces: false, grid: { main: 0x6f8cff, sub: 0x6f8cff, opacity: 0.16 } }); box.v = v;
     v.findTarget = a => {   // pieces snap: any atom you can bond to within ~70px is the target, no precise aiming
       const pa = v._screen(a); let best = null, bd = 1e9;
       for (const b of model.atoms) { if (b === a || !model.canBond(a, b)) continue; const pb = v._screen(b), d = Math.hypot(pa.x - pb.x, pa.y - pb.y); if (d < 70 && d < bd) { bd = d; best = b; } }
