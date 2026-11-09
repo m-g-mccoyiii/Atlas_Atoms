@@ -14,9 +14,9 @@ const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classL
 function start(app) {
   let run = null, cur = null, model = null, v = null;
   const st = { tok: 0, busy: false, mode: 'start', shown: 0, target: 0, tags: {}, picksLeft: 0, hover: -1, hoverAtoms: [], hoverHex: 0, flashes: [], fliers: [], party: 0, t0: 0, drawn: -1, desc: null, sig: '', probe: null, slowUntil: 0, slowBy: 1, seen: new Set(), best: { orders: 0, total: 0 },
-    meta: { got: [], rack: 'standard', level: 0 }, fresh: [] };
+    meta: { got: [], rack: 'standard', level: 0, best: {} }, fresh: [] };
   try { const b = JSON.parse(localStorage.getItem('aa_rx_best') || 'null'); if (b) st.best = { orders: b.orders | 0, total: b.total | 0 }; } catch (e) { /* storage unavailable */ }
-  try { const m = JSON.parse(localStorage.getItem('aa_rx_meta') || 'null'); if (m && Array.isArray(m.got)) st.meta = { got: m.got.filter(x => typeof x === 'string'), rack: String(m.rack || 'standard'), level: m.level | 0 }; } catch (e) { /* storage unavailable */ }
+  try { const m = JSON.parse(localStorage.getItem('aa_rx_meta') || 'null'); if (m && Array.isArray(m.got)) st.meta = { got: m.got.filter(x => typeof x === 'string'), rack: String(m.rack || 'standard'), level: m.level | 0, best: m.best && typeof m.best === 'object' ? m.best : {} }; } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_rx_meta', JSON.stringify(st.meta)); } catch (e) { /* storage unavailable */ } };
   const got = id => st.meta.got.includes(id);
   // time runs slowly for a moment after a big hit
@@ -127,7 +127,7 @@ function start(app) {
     tkCond.style.display = cur.cond ? '' : 'none';
     setKeep(cur.keep, cur.spoiled, model.atoms.some(a => a.prot));
     capBtn.style.display = cur.keep ? '' : 'none';
-    capBtn.textContent = cur.keep ? 'Cap the marked ' + cur.keep.kind + '  [C]  (1 step)' : '';
+    capBtn.textContent = cur.keep ? 'Cap the marked ' + cur.keep.kind + (run.mod.freeCap ? '  [C]' : '  [C]  (1 step)') : '';
     capBtn.disabled = st.busy || st.mode !== 'play' || !RUN.canCap(run, model);
     const left = cur.stepsMax - cur.step;
     stepEl.replaceChildren(h('b', null, String(left)), (left === 1 ? 'step' : 'steps') + ' left');
@@ -245,32 +245,46 @@ function start(app) {
     const m = st.offerModels[i];
     sfx.stamp(); RUN.chooseFeed(run, i); st.offerModels = null; loadOrder(m);
   }
+  // the highest level open so far, counted from 0
+  const maxLevel = () => { let n = 0; while (n + 1 < RUN.LEVELS.length && got('level' + (n + 2))) n++; return n; };
   function newRun(seed) {
-    const m = st.meta, rack = m.rack !== 'standard' && !got(m.rack) ? 'standard' : m.rack, level = Math.min(m.level, got('level3') ? 2 : got('level2') ? 1 : 0);
+    const m = st.meta, rack = m.rack !== 'standard' && !got(m.rack) ? 'standard' : m.rack, level = Math.min(m.level, maxLevel());
     const locked = RUN.UNLOCKS.filter(u => u.kind === 'gear' && !got(u.id)).map(u => u.id);
     run = RUN.newRun(seed, { rack, level, locked }); st.seen.clear(); st.fresh = []; RUN.beginOrder(run); showOffers();
   }
   // records anything this run has just earned for later runs
   function checkUnlocks() {
-    const ids = RUN.achieved(run).filter(id => !got(id));
-    if (!ids.length) return;
-    ids.forEach(id => { st.meta.got.push(id); st.fresh.push(id); });
+    const ids = RUN.achieved(run).filter(id => !got(id)), m = st.meta;
+    const won = run.won && (m.best[run.rack] | 0) < run.level + 1;
+    if (won) m.best[run.rack] = run.level + 1;
+    if (!ids.length && !won) return;
+    ids.forEach(id => { m.got.push(id); st.fresh.push(id); });
     saveMeta();
   }
-  // the panel before a run: which rack, which level, and what is still locked
+  // the panel before a run: which kit, which level, and the feats still open
   function showStart() {
     st.tok++; st.mode = 'start'; st.busy = false; st.opts = null; st.end = false;
-    const m = st.meta, maxLv = got('level3') ? 2 : got('level2') ? 1 : 0;
-    if (m.rack !== 'standard' && !got(m.rack)) m.rack = 'standard';
+    const m = st.meta, maxLv = maxLevel(), U = RUN.UNLOCKS;
+    if (!RUN.RACKS[m.rack] || (m.rack !== 'standard' && !got(m.rack))) m.rack = 'standard';
     m.level = Math.max(0, Math.min(maxLv, m.level));
-    const racks = Object.keys(RUN.RACKS).map(id => { const open = id === 'standard' || got(id); return h('button', { class: 'opt' + (m.rack === id ? ' on' : ''), disabled: open ? null : '', onclick: () => { m.rack = id; saveMeta(); sfx.click(); showStart(); } }, h('b', null, RUN.RACKS[id].name), h('span', null, open ? plural(RUN.RACKS[id].deck.length, 'bottle') : 'Locked')); });
-    const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: () => { m.level = i; saveMeta(); sfx.click(); showStart(); } }, h('b', null, 'Level ' + (i + 1)), h('span', null, i > maxLv ? 'Locked' : i ? 'Quotas times ' + x : 'Standard quotas')));
-    const list = RUN.UNLOCKS.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.name), h('span', null, got(u.id) ? 'Unlocked' : u.how)));
+    const md = RUN.mods(m.rack, m.level);
+    const again = fn => () => { fn(); saveMeta(); sfx.click(); showStart(); };
+    const kits = Object.keys(RUN.RACKS).map(id => {
+      const k = RUN.RACKS[id], open = id === 'standard' || got(id), best = m.best[id] | 0;
+      return h('button', { class: 'opt kit' + (m.rack === id ? ' on' : ''), disabled: open ? null : '', onclick: again(() => { m.rack = id; }) },
+        h('b', null, k.name), h('span', null, open ? k.rule : 'Locked. ' + U.find(u => u.id === id).how + '.'), open && best ? h('i', null, 'Cleared level ' + best) : null);
+    });
+    const levels = RUN.LEVELS.map((x, i) => h('button', { class: 'opt' + (m.level === i ? ' on' : ''), disabled: i <= maxLv ? null : '', onclick: again(() => { m.level = i; }) }, h('b', null, String(i + 1))));
+    const rules = m.level ? RUN.LEVELS.slice(1, m.level + 1).filter((x, i, a) => !x.quota || !a.slice(i + 1).some(y => y.quota)).map(x => x.text).join('. ') + '.' : 'No handicap.';
+    const open = U.filter(u => !got(u.id)), shown = st.featsAll ? U : open.slice(0, 4);
+    const list = shown.map(u => h('li', { class: got(u.id) ? 'got' : '' }, h('b', null, u.feat), h('span', null, got(u.id) ? u.name + ' unlocked' : u.how + '. Unlocks ' + u.name + '.')));
     overlay.replaceChildren(h('div', { class: 'panel start' }, h('h2', null, 'New run'),
       h('p', null, 'React at the atoms the last bottle changed to build a chain. Each link multiplies batch, and a chain that follows a named route multiplies it again.'),
-      h('p', null, 'From order ' + (RUN.KEEP_FROM + 1) + ', each feedstock has one marked group to keep. A bottle reacts at every site it matches, and reacting at the marked group halves the batch. Capping the marked group costs one step and stops every bottle reacting there.'),
-      h('h3', null, 'Rack'), h('div', { class: 'opts' }, racks), h('h3', null, 'Level'), h('div', { class: 'opts' }, levels),
-      h('h3', null, 'Unlocks, ' + st.meta.got.length + ' of ' + RUN.UNLOCKS.length), h('ul', { class: 'unl' }, list),
+      h('p', null, 'From order ' + (md.keepFrom + 1) + ', each feedstock has one marked group to keep. A bottle reacts at every site it matches, and reacting at the marked group halves the batch. Capping the marked group costs ' + (md.freeCap ? 'no step' : 'one step') + ' and stops every bottle reacting there.'),
+      h('h3', null, 'Kit'), h('div', { class: 'opts' }, kits),
+      h('h3', null, 'Level'), h('div', { class: 'opts lv' }, levels), h('p', { class: 'lvText' }, rules),
+      h('h3', null, 'Feats, ' + (U.length - open.length) + ' of ' + U.length, h('button', { class: 'linkbtn', onclick: () => { st.featsAll = !st.featsAll; sfx.click(); showStart(); } }, st.featsAll ? 'Show next 4' : 'Show all')),
+      h('ul', { class: 'unl' }, list),
       h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
     overlay.className = 'ov on';
   }
@@ -472,7 +486,7 @@ function start(app) {
   function showPanel(res, filled) {
     const kids = [], product = RX.label(model), n = cur.n + 1;
     const again = h('button', { class: 'btn go', onclick: () => showStart() }, 'New run  [Enter]');
-    const fresh = st.fresh.length ? h('div', { class: 'newUnl' }, h('b', null, 'Unlocked for later runs'), st.fresh.map(id => h('span', null, RUN.UNLOCKS.find(u => u.id === id).name))) : null;
+    const fresh = st.fresh.length ? h('div', { class: 'newUnl' }, h('b', null, 'Unlocked for later runs'), st.fresh.map(id => h('span', null, (u => u.feat + ': ' + u.name)(RUN.UNLOCKS.find(u => u.id === id))))) : null;
     if (run.won) {
       kids.push(h('h2', null, 'Run complete'), h('div', { class: 'pBig' }, fmt(run.total)),
         h('p', null, 'All ' + RUN.ORDERS + ' orders filled.' + (res.best ? ' This is the best run on this machine.' : '')), fresh, again);

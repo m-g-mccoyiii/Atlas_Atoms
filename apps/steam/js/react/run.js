@@ -25,13 +25,38 @@ const COST = { y: 5, b: 5, x: 8, grow: 7, tool: 6 };
 const CHECK_MULT = [1, 1.25, 1.5, 2];
 // the first order (counted from 0) whose feedstock has a group to keep
 const KEEP_FROM = 2;
-// starting racks and difficulty levels; all but the first of each are unlocked by play
+// Kits: a starting rack and one rule change. Levels: each adds one handicap to all the levels below it.
+// All but the first of each are unlocked by play. The rule fields are read by mods() below.
 const RACKS = {
-  standard: { name: 'General rack', deck: STARTER },
-  halide: { name: 'Halide rack', deck: ['hcl', 'hcl', 'socl2', 'socl2', 'koh', 'koh', 'naoh', 'naoh', 'hydrate', 'h2'] },
-  redox: { name: 'Redox rack', deck: ['pcc', 'pcc', 'pcc', 'nabh4', 'nabh4', 'nabh4', 'bh3', 'bh3', 'h2', 'hydrate'] }
+  standard: { name: 'General kit', rule: 'One more hand swap on every order.', deck: STARTER, redraws: 1 },
+  halide: { name: 'Halide kit', rule: 'One more step on every order. One bottle fewer in the hand.', steps: 1, hand: -1,
+    deck: ['hcl', 'hcl', 'socl2', 'socl2', 'koh', 'koh', 'naoh', 'naoh', 'hydrate', 'h2'] },
+  redox: { name: 'Redox kit', rule: 'Starts with an Ice bath.', gear: ['icebath'],
+    deck: ['pcc', 'pcc', 'pcc', 'nabh4', 'nabh4', 'nabh4', 'bh3', 'bh3', 'h2', 'hydrate'] },
+  protect: { name: 'Protecting kit', rule: 'Marked groups from order 1. Capping costs no step.', deck: STARTER, keepFrom: 0, freeCap: true },
+  pilot: { name: 'Pilot plant kit', rule: 'Starts with 12 kg of surplus. Filled orders leave 2 kg less.', deck: STARTER, cash: 8, pay: -2 }
 };
-const LEVELS = [1, 1.5, 2.5];
+const LEVELS = [
+  { text: 'Standard quotas' },
+  { text: 'Quotas times 1.5', quota: 1.5 },
+  { text: 'Orders 2 and 6 also carry a condition', conds: [1, 5] },
+  { text: 'One hand swap fewer on every order', redraws: -1 },
+  { text: 'Filled orders leave 2 kg less surplus', pay: -2 },
+  { text: 'Quotas times 2.5', quota: 2.5 }
+];
+function mods(rack, level) {
+  const m = { steps: 0, hand: 0, redraws: 0, pay: 0, quota: 1, conds: [3, 7], keepFrom: KEEP_FROM, freeCap: false };
+  const put = s => {
+    ['steps', 'hand', 'redraws', 'pay'].forEach(f => { m[f] += s[f] || 0; });
+    if (s.quota) m.quota = Math.max(m.quota, s.quota);
+    if (s.conds) m.conds = m.conds.concat(s.conds);
+    if (s.keepFrom != null) m.keepFrom = s.keepFrom;
+    if (s.freeCap) m.freeCap = true;
+  };
+  put(RACKS[rack]);
+  for (let i = 1; i <= level; i++) put(LEVELS[i]);
+  return m;
+}
 // Every order offers two feedstocks. The standard one has LEAN[n] reactive groups. The large one has one more,
 // needs LARGE times the quota and pays one more pick and more money.
 const LEAN = [2, 2, 3, 3, 4, 4, 5, 5], LARGE = 3.5;
@@ -112,31 +137,37 @@ function matchRoute(path) {
   return best;
 }
 
-// Things that stay unlocked between runs. `how` is shown to the player; achieved() below tests each one.
+// Feats. Each one is a named goal that unlocks one thing for later runs. `how` is shown to the player;
+// achieved() below tests each one.
 const UNLOCKS = [
-  { id: 'schlenk', kind: 'gear', name: 'Schlenk line', how: 'Fill 3 orders in one run' },
-  { id: 'syringe', kind: 'gear', name: 'Syringe pump', how: 'Fill a large order' },
-  { id: 'column', kind: 'gear', name: 'Chromatography column', how: 'Pass all three checks on one order' },
-  { id: 'seed', kind: 'gear', name: 'Seed crystal', how: 'Pass all three checks 3 times in one run' },
-  { id: 'rotovap', kind: 'gear', name: 'Rotary evaporator', how: 'Score 10,000 on one order' },
-  { id: 'winchester', kind: 'gear', name: 'Winchester bottle', how: 'Raise a bottle to grade 3' },
-  { id: 'halide', kind: 'rack', name: 'Halide rack', how: 'Fill 4 orders in one run' },
-  { id: 'redox', kind: 'rack', name: 'Redox rack', how: 'Hold 25 kg of surplus at once' },
-  { id: 'level2', kind: 'level', name: 'Level 2', how: 'Fill all 8 orders' },
-  { id: 'level3', kind: 'level', name: 'Level 3', how: 'Fill all 8 orders on level 2' }
-];
+  { id: 'schlenk', kind: 'gear', feat: 'Three orders', name: 'Schlenk line', how: 'Fill 3 orders in one run' },
+  { id: 'syringe', kind: 'gear', feat: 'Large order', name: 'Syringe pump', how: 'Fill a large order' },
+  { id: 'column', kind: 'gear', feat: 'Clean product', name: 'Chromatography column', how: 'Pass all three checks on one order' },
+  { id: 'halide', kind: 'rack', feat: 'Four orders', name: 'Halide kit', how: 'Fill 4 orders in one run' },
+  { id: 'rotovap', kind: 'gear', feat: 'Ten thousand', name: 'Rotary evaporator', how: 'Score 10,000 on one order' },
+  { id: 'cannula', kind: 'gear', feat: 'Four links', name: 'Cannula', how: 'Build a chain of 4 links' },
+  { id: 'redox', kind: 'rack', feat: 'Three routes', name: 'Redox kit', how: 'Complete 3 named routes in one run' },
+  { id: 'winchester', kind: 'gear', feat: 'Grade 3', name: 'Winchester bottle', how: 'Raise a bottle to grade 3' },
+  { id: 'seed', kind: 'gear', feat: 'Clean run', name: 'Seed crystal', how: 'Pass all three checks 3 times in one run' },
+  { id: 'glovebox', kind: 'gear', feat: 'Capped and doubled', name: 'Glove box', how: 'Deliver an order with the marked group capped and the quota doubled' },
+  { id: 'protect', kind: 'rack', feat: 'Three kept', name: 'Protecting kit', how: 'Fill 3 orders in one run with the marked group untouched' },
+  { id: 'pilot', kind: 'rack', feat: 'Full store', name: 'Pilot plant kit', how: 'Hold 25 kg of surplus at once' }
+].concat(LEVELS.slice(1).map((l, i) => ({ id: 'level' + (i + 2), kind: 'level', feat: 'Level ' + (i + 1) + ' cleared', name: 'Level ' + (i + 2), how: 'Fill all 8 orders on level ' + (i + 1) })));
 function achieved(run) {
   const filled = run.history.filter(q => q.pass), out = [];
   if (filled.length >= 3) out.push('schlenk');
   if (filled.some(q => q.large)) out.push('syringe');
   if (run.stats.triple >= 1) out.push('column');
-  if (run.stats.triple >= 3) out.push('seed');
-  if (run.history.some(q => q.total >= 10000)) out.push('rotovap');
-  if (Object.keys(run.grade).some(id => run.grade[id] >= 3)) out.push('winchester');
   if (filled.length >= 4) out.push('halide');
-  if (run.stats.maxMoney >= 25) out.push('redox');
-  if (run.won) out.push('level2');
-  if (run.won && run.level >= 1) out.push('level3');
+  if (run.history.some(q => q.total >= 10000)) out.push('rotovap');
+  if (run.stats.chain >= 4) out.push('cannula');
+  if (Object.keys(run.routeDone).reduce((t, id) => t + run.routeDone[id], 0) >= 3) out.push('redox');
+  if (Object.keys(run.grade).some(id => run.grade[id] >= 3)) out.push('winchester');
+  if (run.stats.triple >= 3) out.push('seed');
+  if (filled.some(q => q.capped && q.kept && q.total >= q.quota * 2)) out.push('glovebox');
+  if (filled.filter(q => q.kept).length >= 3) out.push('protect');
+  if (run.stats.maxMoney >= 25) out.push('pilot');
+  if (run.won && run.level + 1 < LEVELS.length) out.push('level' + (run.level + 2));
   return out;
 }
 
@@ -163,10 +194,11 @@ let uid = 0;
 
 // opts: { rack, level, locked }. locked is a list of equipment ids that cannot turn up in this run.
 function newRun(seed, opts) {
-  const o = opts || {}, rack = RACKS[o.rack] ? o.rack : 'standard';
-  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: RACKS[rack].deck.slice(), gear: [], grade: {},
-    rack, level: Math.max(0, Math.min(LEVELS.length - 1, o.level | 0)), locked: new Set(o.locked || []), money: START_CASH, shop: null,
-    stats: { triple: 0, maxMoney: START_CASH, chain: 0 }, routeLv: {}, routeDone: {}, got: {},
+  const o = opts || {}, rack = RACKS[o.rack] ? o.rack : 'standard', level = Math.max(0, Math.min(LEVELS.length - 1, o.level | 0));
+  const cash = START_CASH + (RACKS[rack].cash || 0);
+  return { r: rng(seed == null ? (Math.random() * 4294967296) >>> 0 : seed), n: 0, total: 0, deck: RACKS[rack].deck.slice(), gear: (RACKS[rack].gear || []).slice(), grade: {},
+    rack, level, mod: mods(rack, level), locked: new Set(o.locked || []), money: cash, shop: null,
+    stats: { triple: 0, maxMoney: cash, chain: 0 }, routeLv: {}, routeDone: {}, got: {},
     grow: { caught: 0, bonus: 0, grades: 0 }, fed: [], cur: null, over: false, won: false, history: [] };
 }
 // the number a growing piece of equipment currently stands at, for its tag
@@ -213,8 +245,8 @@ function coverage(run, feed) {
 function offer(run, n, groups, large) {
   const all = FEED[groups - 2], pool = all.filter(f => !run.fed.includes(f)), feed = pick(run.r, pool.length ? pool : all);
   run.fed.push(feed);
-  const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m), ks = n >= KEEP_FROM ? RX.keepable(m) : [], keep = ks.length ? pick(run.r, ks) : null;
-  return { keep, feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * LEVELS[run.level] * (large ? LARGE : 1)), extra: large ? 1 : 0,
+  const m = RX.fromSmiles(feed), feedSig = RX.sigOf(m), ks = n >= run.mod.keepFrom ? RX.keepable(m) : [], keep = ks.length ? pick(run.r, ks) : null;
+  return { keep, feed, feedSig, feedName: RX.label(m), groups, large, quota: Math.round(QUOTA[n] * run.mod.quota * (large ? LARGE : 1)), extra: large ? 1 : 0,
     pay: PAY + (large ? PAY_LARGE : 0), spec: makeSpec(run, feed, feedSig, TIER[n], keep) };
 }
 // puts the kept-group mark on a model built from the offer's feedstock
@@ -224,7 +256,7 @@ const touchesKeep = s => s.atoms.some(a => a.keep);
 function beginOrder(run) {
   const n = run.n;
   run.cur = null;
-  run.cond = (n === 3 || n === 7) ? pick(run.r, CONDS) : null;
+  run.cond = run.mod.conds.includes(n) ? pick(run.r, CONDS) : null;
   run.offers = [offer(run, n, LEAN[n], false), offer(run, n, LEAN[n] + 1, true)];
   return run.offers;
 }
@@ -232,9 +264,9 @@ function chooseFeed(run, i) {
   const o = run.offers[i], n = run.n, cond = run.cond;
   run.cur = {
     n, feed: o.feed, feedSig: o.feedSig, feedName: o.feedName, quota: o.quota, large: o.large, extra: o.extra, cond,
-    stepsMax: STEPS + gearSum(run, 'steps') + ((cond && cond.steps) || 0), step: 0,
-    redraws: Math.max(0, REDRAWS + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
-    handSize: HAND + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
+    stepsMax: STEPS + run.mod.steps + gearSum(run, 'steps') + ((cond && cond.steps) || 0), step: 0,
+    redraws: Math.max(0, REDRAWS + run.mod.redraws + gearSum(run, 'redraws') + ((cond && cond.redraws) || 0)),
+    handSize: HAND + run.mod.hand + gearSum(run, 'hand'), hand: [], draw: shuffle(run.r, run.deck.slice()), discard: [],
     yield: 0, batch: 1 + (has(run, 'coldtrap') ? Math.floor(run.grow.caught / 2) : 0),
     used: [], log: [], back: false, keep: o.keep, spoiled: false, done: false, spec: o.spec,
     path: [], fresh: new Set(), seen: new Set([o.feedSig])
@@ -343,9 +375,9 @@ function commit(run, handIdx, hits, info) {
   fill(run);
   return { ev, score, gained: score - before };
 }
-// capping the marked group costs one step and nothing else: the chain and the lit atoms stay as they were
+// capping the marked group costs one step (none with the Protecting kit) and nothing else: the chain and the lit atoms stay as they were
 function canCap(run, m) { const cur = run.cur; return !!cur.keep && !cur.spoiled && cur.step < cur.stepsMax && m.atoms.some(a => a.keep && !a.prot); }
-function cap(run, m) { if (!canCap(run, m)) return null; const a = m.atoms.find(x => x.keep && !x.prot); a.prot = true; run.cur.step++; return a; }
+function cap(run, m) { if (!canCap(run, m)) return null; const a = m.atoms.find(x => x.keep && !x.prot); a.prot = true; run.cur.capped = true; if (!run.mod.freeCap) run.cur.step++; return a; }
 function redraw(run) {
   const cur = run.cur;
   if (cur.redraws <= 0) return false;
@@ -378,7 +410,7 @@ function endOrder(run, p) {
   const total = scoreOf(cur), pass = total >= cur.quota, picks = pass ? 1 + cur.extra : 0;
   const paid = { order: 0, steps: 0, stepsLeft: 0, doubles: 0, doubled: 0, held: 0 };
   if (pass) {
-    paid.order = PAY + (cur.large ? PAY_LARGE : 0) + gearSum(run, 'pay');
+    paid.order = Math.max(0, PAY + run.mod.pay + (cur.large ? PAY_LARGE : 0) + gearSum(run, 'pay'));
     paid.stepsLeft = Math.max(0, cur.stepsMax - cur.step); paid.steps = paid.stepsLeft * PAY_STEP;
     paid.doubled = Math.min(DOUBLE_CAP, Math.floor(Math.log2(total / cur.quota))); paid.doubles = paid.doubled * PAY_DOUBLE;
     paid.held = holdPay(run);
@@ -386,7 +418,7 @@ function endOrder(run, p) {
   const pay = paid.order + paid.steps + paid.doubles + paid.held;
   cur.done = true; cur.final = total; cur.hit = hit; cur.pass = pass;
   run.money += pay; run.stats.maxMoney = Math.max(run.stats.maxMoney, run.money);
-  run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass, large: cur.large });
+  run.total += total; run.history.push({ n: cur.n, total, quota: cur.quota, hit, pass, large: cur.large, capped: !!cur.capped, kept: !!cur.keep && !cur.spoiled });
   if (!pass) run.over = true; else if (cur.n === ORDERS - 1) { run.over = true; run.won = true; }
   return { yield: y0, batch: b0, ev, checks: ck, mult: checkMult(run, ck.n), total, pass, hit, picks, pay, paid };
 }
@@ -452,7 +484,7 @@ function sellGear(run, id) {
 }
 function closeShop(run) { if (run.shop) run.shop.open = false; }
 
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
+AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, mods, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
   ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd, mark, cap, canCap, KEEP_FROM,
   newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };

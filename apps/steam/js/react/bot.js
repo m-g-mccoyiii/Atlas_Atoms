@@ -21,12 +21,12 @@ function plan(run, m, ids, depth) {
   const cur = run.cur, out = { score: val(cur), k: -1 };
   if (!depth || cur.step >= cur.stepsMax) return out;
   if (RUN.canCap(run, m)) {
-    const s = { fresh: cur.fresh, step: cur.step }, cm = RX.cloneMap(m), fresh = new Set();
+    const s = { fresh: cur.fresh, step: cur.step, capped: cur.capped }, cm = RX.cloneMap(m), fresh = new Set();
     s.fresh.forEach(a => { const c = cm.map.get(a); if (c) fresh.add(c); });
     cur.fresh = fresh; RUN.cap(run, cm.model);
     const sub = plan(run, cm.model, ids, depth - 1);
     if (sub.score > out.score) { out.score = sub.score; out.k = CAP; }
-    cur.fresh = s.fresh; cur.step = s.step;
+    cur.fresh = s.fresh; cur.step = s.step; cur.capped = s.capped;
   }
   const tried = new Set();
   ids.forEach((id, k) => {

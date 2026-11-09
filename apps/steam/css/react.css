@@ -197,3 +197,11 @@ b { font-weight: 700; }
 .ticket.dbl .tkFill { background: #d81e1e; }
 .ticket.dbl .tkScore { color: #fff; background: #d81e1e; padding: 2px 8px 0; }
 .tkKeep i.cap { background: #9aa3ad; }
+.opt.kit { flex: 1 1 220px; max-width: 258px; }
+.opt.kit i { font-style: normal; font-size: 13px; font-weight: 700; margin-top: 3px; color: #12894a; }
+.opt.kit.on i { color: #ffcd00; }
+.opts.lv .opt { min-width: 52px; align-items: center; }
+.lvText { margin: 8px 0 0; font-size: 15px; }
+.panel.start h3 .linkbtn { margin-left: 14px; font-size: 14px; color: #111; border-color: #111; vertical-align: middle; }
+.panel.start h3 .linkbtn:hover { background: #ffcd00; }
+.unl li span { flex: 1; }
