@@ -1,0 +1,31 @@
+.pr { display: grid; grid-template-columns: minmax(380px, 1fr) 480px; gap: 24px; align-items: start; }
+@media (max-width: 1000px) { .pr { grid-template-columns: 1fr; } }
+.picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.picker button { background: transparent; border: 1px solid var(--ink); padding: 6px 12px; font-size: 12px; letter-spacing: .04em; }
+.picker button.on { background: var(--ink); color: var(--bg); }
+.picker button.done::after { content: " \2713"; color: var(--ok); }
+.picker button.on.done::after { color: #7fe0b0; }
+.brief { margin: 0 0 14px; font-size: 13px; color: var(--dim); max-width: 760px; }
+.meter { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 14px; font-size: 12px; }
+.meter .bar { height: 10px; background: #e4e0d3; position: relative; }
+.meter .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); transition: width .3s; }
+.meter .bar.full i { animation: flash .6s; }
+@keyframes flash { 50% { background: #5fd49a; } }
+.panel { border-top: 2px solid var(--ink); padding-top: 8px; margin-bottom: 18px; position: relative; }
+.panel header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+.panel canvas { display: block; width: 100%; height: 190px; background: var(--panel); border: 1px solid var(--rule); }
+.panel .veil { position: absolute; left: 0; right: 0; top: 36px; height: 190px; display: grid; place-items: center; background: repeating-linear-gradient(135deg, #ece8dd 0 8px, #f3f0e7 8px 16px); border: 1px solid var(--rule); text-align: center; padding: 10px; }
+.panel .veil span { display: block; font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+.legend { display: flex; gap: 18px; font-size: 12px; color: var(--dim); margin: 2px 0 14px; flex-wrap: wrap; }
+.legend b { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.fragrow { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.frag { border: 1.5px solid #4a5060; background: #1b202a; color: #e8e6df; padding: 6px 10px; font-size: 13px; font-weight: 500; cursor: grab; user-select: none; touch-action: none; }
+.frag:hover { border-color: #e8e6df; }
+.frag.atom { border-radius: 50%; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+.readout { font-size: 12px; color: #aeb3be; margin-top: 8px; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
+.readout b { font-weight: 500; color: #e8e6df; }
+.benchBox .benchCanvas { height: 340px; background: radial-gradient(ellipse at 50% 40%, #151b2b 0%, #0b0d12 70%); }
+.spot { margin-top: 10px; padding: 8px 10px; font-size: 12px; line-height: 1.5; color: #cfd3dc; border-left: 3px solid #3a6bff; background: #161b27; min-height: 64px; }
+.hint { font-size: 12px; color: #8d93a0; margin-top: 8px; }
+.flashline { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; font-size: 13px; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.flashline.on { opacity: 1; }

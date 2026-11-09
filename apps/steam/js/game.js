@@ -40,7 +40,7 @@ function board() {
   });
   show(h('div', null,
     h('div', { class: 'boardHead' }, h('h1', null, 'Case board'), h('p', null, 'Each file is an unknown sample. Run instruments (one day each), read the signals, and say what each one means. Then build the molecule that explains all of it.')),
-    grid, h('p', { class: 'fine' }, 'Spectra are simulated from textbook rules for teaching. They are not real instrument data.')));
+    grid, h('p', { class: 'fine' }, h('a', { href: 'proto.html' }, 'Open the live-tuning prototype (new core loop)')), h('p', { class: 'fine' }, 'Spectra are simulated from textbook rules for teaching. They are not real instrument data.')));
 }
 
 // ============================== a case ==============================

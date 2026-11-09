@@ -282,7 +282,7 @@ function nmr(G, grp) {
     }
     let mult = exch ? 's' : nb === 0 ? 's' : nb === 1 ? 'd' : nb === 2 ? 't' : nb === 3 ? 'q' : 'm';
     if (sh[1] === 'aromatic H' && e.hs < grp.arom.size && nb > 0) mult = 'm';
-    peaks.push({ shift: sh[0], hs: e.hs, mult, label: sh[1], exchangeable: exch, neighbours: nb });
+    peaks.push({ shift: sh[0], hs: e.hs, mult, label: sh[1], exchangeable: exch, neighbours: nb, atoms: e.atoms });
   });
   peaks.sort((a, b) => b.shift - a.shift);
   return { peaks, total: peaks.reduce((s, p) => s + p.hs, 0) };

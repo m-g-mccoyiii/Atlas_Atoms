@@ -17,6 +17,17 @@ Loop:
 
 Budget is 5 plus the file's tier in days. Rating: 3 stars for 3 days or fewer, 2 for 5 or fewer, 1 otherwise, minus one star for 5 or more misreads.
 
+## Direction after design review
+
+The labelling-and-notebook loop above plays like a worksheet. The new core loop, prototyped in `apps/steam/proto.html`, is live tuning:
+
+- Build from fragments (CH3, OH, C=O, ring) with open bonds filled by implied hydrogen, like a skeletal drawing.
+- Your spectrum redraws on every change over the target. Explained peaks lock with a tick, a green flash and a chime. Unexplained peaks pulse.
+- Scans are a scarce choice: mass spectrum free, one token for a second instrument.
+- Point at a peak and the atoms that cause it glow on the 3D molecule, with a plain explanation (n + 1 splitting, deshielding, isotopes). IR peaks make the matching bond vibrate.
+
+Still to build: fragmentation animation for mass spec, orbital and electron-density views tied to peaks, mixtures and impurity peaks, hinted scans, daily puzzle, then the reaction lab.
+
 ## Playtest results (automated, files 3 to 12)
 
 A bot labelled every signal correctly for each combination of instrument runs, then listed which of 69 compounds (the 33 in the library plus 36 decoy isomers and look-alikes) could still explain all its findings.

@@ -23,6 +23,13 @@ function axis(x, w, h, m, ticks, title, mapX) {
   ticks.forEach(t => { const px = mapX(t); x.beginPath(); x.moveTo(px, h - m.b); x.lineTo(px, h - m.b + 5); x.stroke(); x.fillText(String(t), px, h - m.b + 17); });
   x.fillStyle = INK; x.font = '11px "Plex Mono", monospace'; x.fillText(title, (m.l + w - m.r) / 2, h - 5); x.font = FONT;
 }
+const GOOD = '#1d7a4d';
+// A target peak is either explained by the player's structure (green tick) or still open (pulsing ring).
+function mark(x, cx, cy, s, t) {
+  if (!s) return;
+  if (s === 'lock') { x.fillStyle = GOOD; x.beginPath(); x.arc(cx, cy, 6, 0, 6.3); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(cx - 3, cy); x.lineTo(cx - 0.8, cy + 2.4); x.lineTo(cx + 3.2, cy - 2.6); x.stroke(); }
+  else { const a = 0.45 + 0.55 * Math.abs(Math.sin((t || 0) / 280)); x.strokeStyle = PENCIL; x.globalAlpha = a; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, 6 + 2 * a, 0, 6.3); x.stroke(); x.globalAlpha = 1; }
+}
 function clip(x, w, h, p) { x.save(); x.beginPath(); x.rect(0, 0, Math.max(1, w * p), h); x.clip(); }
 
 // ---------- mass spectrum ----------
@@ -41,8 +48,9 @@ function drawMS(cv, d, o) {
     if (on) { x.strokeStyle = COBALT; x.lineWidth = 3.2; x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke(); }
     if (pk.rel >= 12 || pk.mz === ms.M || on) { x.fillStyle = on ? COBALT : INK; x.textAlign = 'center'; x.fillText(String(pk.mz), px, mapY(pk.rel) - 7); }
     cv._hits.push({ k: 'ms', cx: px, x0: px - 12, x1: px + 12, y0: mapY(pk.rel) - 16, y1: h, peak: pk, pos: pk.mz });
+    if (o.status) mark(x, px, Math.max(12, mapY(pk.rel) - 24), o.status('ms', pk), o.t);
   });
-  if (o.overlay) o.overlay.ms.peaks.forEach(pk => { const px = mapX(pk.mz) + 3.5; x.strokeStyle = PENCIL; x.lineWidth = 1.6; x.setLineDash([3, 2]); x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke(); x.setLineDash([]); });
+  if (o.overlay) o.overlay.ms.peaks.forEach(pk => { const px = mapX(pk.mz) + 3.5; x.strokeStyle = o.overlayColor || PENCIL; x.lineWidth = 1.6; x.setLineDash([3, 2]); x.beginPath(); x.moveTo(px, mapY(0)); x.lineTo(px, mapY(pk.rel)); x.stroke(); x.setLineDash([]); });
   x.restore();
 }
 
@@ -66,6 +74,7 @@ function drawIR(cv, d, o) {
       const hw = Math.max(9, (pk.width / 3500) * (w - m.l - m.r) / 2 + 3), cx = mapX(pk.centre);
       cv._hits.push({ k: 'ir', cx, x0: cx - hw, x1: cx + hw, y0: 0, y1: h, peak: pk, pos: pk.centre });
       if (o.assigned && o.assigned('ir', pk)) { const t = curve.reduce((b, q) => Math.abs(q[0] - pk.centre) < Math.abs(b[0] - pk.centre) ? q : b)[1]; x.fillStyle = COBALT; x.beginPath(); x.arc(cx, mapY(t) - 10, 4, 0, 6.3); x.fill(); }
+      if (o.status) { const t2 = curve.reduce((b, q) => Math.abs(q[0] - pk.centre) < Math.abs(b[0] - pk.centre) ? q : b)[1]; mark(x, cx, Math.max(12, mapY(t2) - 24), o.status('ir', pk), o.t); }
     });
     const marked = [];
     d.ir.peaks.slice().sort((a, b) => b.amp - a.amp).forEach(pk => {
@@ -74,7 +83,7 @@ function drawIR(cv, d, o) {
       x.fillStyle = INK; x.textAlign = 'center'; x.fillText(String(pk.centre), mapX(pk.centre), Math.min(h - m.b - 4, mapY(t) + 15));
     });
   }
-  if (o.overlay) { const mine = o.overlay; if (mine.ir.silent) line([[4000, 94], [500, 94]], PENCIL, 1.6, [4, 3]); else line(AA.spectra.irCurve(mine.ir.peaks, 520), PENCIL, 1.6, [4, 3]); }
+  if (o.overlay) { const mine = o.overlay; const oc = o.overlayColor || PENCIL; if (mine.ir.silent) line([[4000, 94], [500, 94]], oc, 1.6, [4, 3]); else line(AA.spectra.irCurve(mine.ir.peaks, 520), oc, 1.6, [4, 3]); }
   x.restore();
 }
 
@@ -104,8 +113,9 @@ function drawNMR(cv, d, o) {
     const hw = (o.quality === 'quick' || q.mult === 'm') ? 30 : Math.max(16, (PASCAL[q.mult] || [1]).length * Math.max(7, 0.09 * pxPerPpm) / 2 + 8);
     cv._hits.push({ k: 'nmr', cx: r.cx, x0: r.cx - hw, x1: r.cx + hw, y0: 0, y1: h, peak: q, pos: q.shift });
     if (o.assigned && o.assigned('nmr', q)) { x.fillStyle = COBALT; x.beginPath(); x.arc(r.cx, base - r.full - 22, 4, 0, 6.3); x.fill(); }
+    if (o.status) mark(x, r.cx, Math.max(12, base - r.full - 36), o.status('nmr', q), o.t);
   });
-  if (o.overlay) o.overlay.nmr.peaks.forEach(q => draw(q, PENCIL, 1.5, [4, 3], 0));
+  if (o.overlay) o.overlay.nmr.peaks.forEach(q => draw(q, o.overlayColor || PENCIL, 1.5, [4, 3], 0));
   x.restore();
 }
 

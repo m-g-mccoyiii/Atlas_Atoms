@@ -87,5 +87,13 @@ function explains(f, d) {
   return d.nmr.peaks.some(p => Math.abs(p.shift - f.pos) <= 0.5 && p.hs === f.hs && (!f.mult || f.mult === '?' || p.mult === f.mult));
 }
 
-AA.rules = { hash, rng, nameOf, posOf, keyOf, canon, optionsFor, explains, dou, carbons, impliedMz };
+// Is a peak of the target explained by the player's structure? (live tuning prototype)
+function locked(k, peak, mine) {
+  if (!mine) return false;
+  if (k === 'ms') return mine.ms.peaks.some(p => Math.abs(p.mz - peak.mz) < 0.5);
+  if (k === 'ir') return !mine.ir.silent && mine.ir.peaks.some(p => Math.abs(p.centre - peak.centre) <= 40);
+  return mine.nmr.peaks.some(p => Math.abs(p.shift - peak.shift) <= 0.5 && p.hs === peak.hs);
+}
+
+AA.rules = { hash, rng, nameOf, posOf, keyOf, canon, optionsFor, explains, dou, carbons, impliedMz, locked };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

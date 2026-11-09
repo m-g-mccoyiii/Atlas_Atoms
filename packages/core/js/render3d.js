@@ -60,6 +60,7 @@ class Viewer {
     this.zoom = opts.zoom || 60;
     this.tool = 'build'; this.cb = {}; this.time = 0;
     this.hover = null; this.hoverBond = null; this.drag = null; this.rot = null; this.target = null;
+    this.glow = new Map(); this.glowBonds = new Map();   // atom or bond -> emissive colour, pulsed; used to point at what a signal comes from
     this.yawVel = 0; this.pitchVel = 0; this.pan = new T.Vector3();
     this.touches = new Map(); this.pinch = null;
     this.w = 300; this.h = 300;
@@ -486,8 +487,8 @@ class Viewer {
       place(o.hit, A, B, 0.2, 0);
     }
     // cut-tool highlight
-    const hot = this.hoverBond === b && this.tool === 'cut';
-    if (o.kind === 'stick') o.parts.forEach(p => { p.ma.material.emissive.setHex(hot ? 0xaa2222 : 0); p.mb.material.emissive.setHex(hot ? 0xaa2222 : 0); });
+    const hot = this.hoverBond === b && this.tool === 'cut', gb = this.glowBonds.get(b), hx = gb !== undefined ? gb : hot ? 0xaa2222 : 0;
+    if (o.kind === 'stick') o.parts.forEach(p => { p.ma.material.emissive.setHex(hx); p.mb.material.emissive.setHex(hx); });
   }
 
   _sync(dt) {
@@ -521,8 +522,10 @@ class Viewer {
         const t = this.time - pt;
         if (t > 1.2) this.pops.delete(a); else s = 1 + 0.4 * Math.exp(-5 * t) * Math.cos(16 * t);
       }
+      const gl = this.glow.get(a);
+      if (gl !== undefined) s *= 1 + 0.09 * Math.sin(this.time * 7);
       o.group.scale.setScalar(s);
-      if (o.mat.emissive) o.mat.emissive.setHex(this.hover === a && !this.drag ? 0x2c3a55 : 0);
+      if (o.mat.emissive) o.mat.emissive.setHex(gl !== undefined ? gl : this.hover === a && !this.drag ? 0x2c3a55 : 0);
       // orbital lobes + lewis dots follow geometry
       if (this.mode === 'orbital') {
         const dirs = this.model.lonePairDirs(a);
