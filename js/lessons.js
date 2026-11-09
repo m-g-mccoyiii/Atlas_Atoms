@@ -510,9 +510,9 @@ AA.LESSONS = [
         ]
       ],
       "tryIt": [
-        "Build a molecule or two on the bench.",
-        "Slide the Heat slider all the way up.",
-        "Press Shake. Then turn Heat down."
+        "In the Lab, open How reactions happen.",
+        "Slide Heat all the way up and watch the molecules speed up.",
+        "Slide Heat down again. How does the motion change?"
       ],
       "check": [
         {
@@ -1807,7 +1807,7 @@ AA.LESSONS = [
       "tryIt": [
         "Build two water molecules on the bench.",
         "Imagine a dotted line from a hydrogen of one to the oxygen of the other.",
-        "Use Heat and Shake to see how motion can break these weak links."
+        "Think about what happens to these weak links when the molecules move faster, as in the reaction box in the Lab."
       ],
       "check": [
         {
@@ -2777,9 +2777,9 @@ AA.LESSONS = [
         ]
       ],
       "tryIt": [
-        "Put several molecules on the bench.",
-        "Slide Heat from low to high and watch how they move.",
-        "In the Lab, open How reactions happen. The box is like a gas, with molecules flying and bumping."
+        "In the Lab, open How reactions happen. The box is like a gas, with molecules flying and bumping.",
+        "Slide Heat from low to high and watch how the molecules move.",
+        "Imagine the same molecules packed close together in a liquid, and in a solid."
       ],
       "check": [
         {
@@ -2885,7 +2885,7 @@ AA.LESSONS = [
         ]
       ],
       "tryIt": [
-        "Use the Heat slider with molecules on the bench.",
+        "In the Lab, open How reactions happen and slide Heat up.",
         "Imagine the fast ones near the top escaping.",
         "Think about what happens when they cool down again."
       ],
@@ -3244,7 +3244,7 @@ AA.LESSONS = [
         ]
       ],
       "tryIt": [
-        "Slide Heat in the game. Imagine it as a temperature.",
+        "In the Lab, open How reactions happen and slide Heat. Imagine it as a temperature.",
         "Write the freezing and boiling points of water on the three scales.",
         "At what point would molecules stop moving almost completely?"
       ],

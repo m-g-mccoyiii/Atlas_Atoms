@@ -109,9 +109,15 @@ class Model {
     let b = v3.mul(s, -1);
     if (v3.len(b) < 0.2) b = v3.perp(nb[0]);
     b = v3.norm(b);
-    let p = nb.length >= 2 ? v3.cross(nb[0], nb[1]) : v3.perp(nb[0]);
-    if (v3.len(p) < 0.1) p = v3.perp(nb[0]);
+    // The sideways axis is remembered between frames so the lobes never flip when the atoms move a little.
+    const prev = a._lpFrame;
+    let p = nb.length >= 2 ? v3.cross(nb[0], nb[1]) : null;
+    if (!p || v3.len(p) < 0.15) {
+      if (prev) { const d = prev[0] * nb[0][0] + prev[1] * nb[0][1] + prev[2] * nb[0][2]; p = v3.sub(prev, v3.mul(nb[0], d)); }
+      if (!p || v3.len(p) < 0.1) p = v3.perp(nb[0]);
+    } else if (prev && (p[0] * prev[0] + p[1] * prev[1] + p[2] * prev[2]) < 0) p = v3.mul(p, -1);
     p = v3.norm(p);
+    a._lpFrame = p;
     if (lp === 1) return [b];
     if (lp === 2) {
       const c = nb.length >= 2 ? 0.58 : 0.5, sn = nb.length >= 2 ? 0.82 : 0.866;

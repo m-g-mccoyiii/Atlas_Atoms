@@ -9,18 +9,18 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // ---- shared geometry / textures (never disposed) ----
 const G = {
-  sphere: new T.SphereGeometry(1, 32, 20),
+  sphere: new T.SphereGeometry(1, 64, 44),
   cyl: new T.CylinderGeometry(1, 1, 1, 16, 1),
   plane: new T.PlaneGeometry(1, 1)
 };
 const labelCache = {};
-function labelMat(sym, color) {
-  const key = sym + color;
+function labelMat(sym, color, soft) {
+  const key = sym + color + (soft ? 's' : '');
   if (labelCache[key]) return labelCache[key];
   const c = document.createElement('canvas'); c.width = c.height = 128;
   const x = c.getContext('2d');
   x.font = 'bold 84px "Trebuchet MS", system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.lineWidth = 8; x.strokeStyle = 'rgba(0,0,0,.35)'; x.strokeText(sym, 64, 68);
+  if (!soft) { x.lineWidth = 8; x.strokeStyle = 'rgba(0,0,0,.35)'; x.strokeText(sym, 64, 68); }
   x.fillStyle = color; x.fillText(sym, 64, 68);
   const tex = new T.CanvasTexture(c); tex.encoding = T.sRGBEncoding; tex.anisotropy = 4;
   return (labelCache[key] = new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
@@ -67,12 +67,16 @@ class Viewer {
     this.renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, (window.matchMedia && matchMedia('(pointer: coarse)').matches) ? 1.5 : 2));
     this.renderer.outputEncoding = T.sRGBEncoding;
+    this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = T.PCFSoftShadowMap;   // soft shadows give space-filling models their depth
     this.scene = new T.Scene();
     this.camera = new T.PerspectiveCamera(40, 1, 0.1, 300);
     this.scene.add(this.camera);
-    this.scene.add(new T.HemisphereLight(0xffffff, 0x1b2c4a, 0.85));
-    const key = new T.DirectionalLight(0xffffff, 1.0); key.position.set(3, 5, 6); this.camera.add(key);
+    this.hemi = new T.HemisphereLight(0xffffff, 0x1b2c4a, 0.85); this.scene.add(this.hemi);
+    const key = new T.DirectionalLight(0xffffff, 1.0); key.position.set(3, 5, 6); this.camera.add(key); this.scene.add(key.target);
+    key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.03; key.shadow.radius = 4;
+    Object.assign(key.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 0.5, far: 60 });
     const rim = new T.DirectionalLight(0x6fd8ff, 0.4); rim.position.set(-4, -2, -3); this.camera.add(rim);
+    this.key = key; this.rim = rim;
     this.root = new T.Group(); this.scene.add(this.root);
     if (this.interactive) {
       const grid = new T.GridHelper(26, 26, 0x2f6aa0, 0x1d3d63);
@@ -125,7 +129,7 @@ class Viewer {
     return { x: (v.x * 0.5 + 0.5) * this.w, y: (-v.y * 0.5 + 0.5) * this.h };
   }
   _radius(a) {
-    if (this.mode === 'space') return E[a.el].vdw * 0.92;
+    if (this.mode === 'space') return E[a.el].vdw * 0.9;
     if (this.mode === 'orbital') return 0.2;
     if (this.mode === 'lewis') return 0.3;
     return BALL(a.el);
@@ -297,8 +301,11 @@ class Viewer {
     const o = { group, sig: '', deco: null, R, lobes: [], dots: [] };
     const mode = this.mode;
     if (mode === 'ball' || mode === 'space') {
-      o.mat = new T.MeshStandardMaterial({ color: col(el.color), roughness: 0.3, metalness: 0.08 });
+      if (mode === 'space') {      // matte, lighter carbon, casts and receives soft shadows
+        o.mat = new T.MeshStandardMaterial({ color: col(a.el === 'C' ? '#6f7b98' : el.color), roughness: 0.62, metalness: 0 });
+      } else o.mat = new T.MeshStandardMaterial({ color: col(el.color), roughness: 0.3, metalness: 0.08 });
       o.body = new T.Mesh(G.sphere, o.mat); o.body.scale.setScalar(R);
+      o.body.castShadow = o.body.receiveShadow = (mode === 'space');
     } else if (mode === 'orbital') {
       o.mat = new T.MeshStandardMaterial({ color: col(el.color), roughness: 0.4, metalness: 0 });
       o.body = new T.Mesh(G.sphere, o.mat); o.body.scale.setScalar(R);
@@ -326,7 +333,11 @@ class Viewer {
     const tc = textOn(el.color);
     const face = this.faces && mode === 'ball' && R >= 0.4;
 
-    if (mode === 'ball' || mode === 'space') {
+    if (mode === 'space') {          // space-filling: small, quiet labels, none on white hydrogen
+      if (a.el !== 'H') { const sl = new T.Mesh(G.plane, labelMat(a.el, tc, true)); sl.scale.set(R * 0.5, R * 0.5, 1); sl.position.set(0, 0, R * 1.0); d.add(sl); }
+      return;
+    }
+    if (mode === 'ball') {
       const lab = new T.Mesh(G.plane, labelMat(a.el, tc));
       const sz = R * (face ? 0.85 : 1.15);
       lab.scale.set(sz, sz, 1); lab.position.set(0, face ? -R * 0.3 : 0, R * 1.02);
@@ -481,6 +492,8 @@ class Viewer {
   _sync(dt) {
     if (this.builtMode !== this.mode || this.builtFaces !== this.faces) {
       this._clearObjs(); this.builtMode = this.mode; this.builtFaces = this.faces;
+      const sp = this.mode === 'space'; this.key.castShadow = sp; this.rim.intensity = sp ? 0.1 : 0.4;
+      this.hemi.intensity = sp ? 0.42 : 0.85; this.key.intensity = sp ? 1.35 : 1.0;   // more contrast in the crevices
     }
     const atoms = new Set(this.model.atoms), bonds = new Set(this.model.bonds);
     for (const [a, o] of this.atomObjs) if (!atoms.has(a)) { this.root.remove(o.group); this.atomObjs.delete(a); }
@@ -512,7 +525,11 @@ class Viewer {
       // orbital lobes + lewis dots follow geometry
       if (this.mode === 'orbital') {
         const dirs = this.model.lonePairDirs(a);
-        o.lobes.forEach(l => { if (!l.fixed && dirs[l.idx]) l.mesh.quaternion.setFromUnitVectors(Y, new T.Vector3(dirs[l.idx][0], dirs[l.idx][1], dirs[l.idx][2])); });
+        o.lobes.forEach(l => {
+          if (l.fixed || !dirs[l.idx]) return;
+          const q = new T.Quaternion().setFromUnitVectors(Y, new T.Vector3(dirs[l.idx][0], dirs[l.idx][1], dirs[l.idx][2]));
+          if (l.ready) l.mesh.quaternion.slerp(q, 0.25); else { l.mesh.quaternion.copy(q); l.ready = true; }
+        });
       } else if (this.mode === 'lewis') {
         const anion = this.model.neighbors(a).some(n => C.isIonic(a.el, n.atom.el)) && a.el !== 'Na';
         const dirs = anion

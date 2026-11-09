@@ -517,9 +517,9 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 
 **Try it in the game**
 
-1. Build a molecule or two on the bench.
-2. Slide the Heat slider all the way up.
-3. Press Shake. Then turn Heat down.
+1. In the Lab, open How reactions happen.
+2. Slide Heat all the way up and watch the molecules speed up.
+3. Slide Heat down again. How does the motion change?
 
 **Check yourself**
 
@@ -1432,7 +1432,7 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 
 1. Build two water molecules on the bench.
 2. Imagine a dotted line from a hydrogen of one to the oxygen of the other.
-3. Use Heat and Shake to see how motion can break these weak links.
+3. Think about what happens to these weak links when the molecules move faster, as in the reaction box in the Lab.
 
 **Check yourself**
 
@@ -1998,9 +1998,9 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 
 **Try it in the game**
 
-1. Put several molecules on the bench.
-2. Slide Heat from low to high and watch how they move.
-3. In the Lab, open How reactions happen. The box is like a gas, with molecules flying and bumping.
+1. In the Lab, open How reactions happen. The box is like a gas, with molecules flying and bumping.
+2. Slide Heat from low to high and watch how the molecules move.
+3. Imagine the same molecules packed close together in a liquid, and in a solid.
 
 **Check yourself**
 
@@ -2058,7 +2058,7 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 
 **Try it in the game**
 
-1. Use the Heat slider with molecules on the bench.
+1. In the Lab, open How reactions happen and slide Heat up.
 2. Imagine the fast ones near the top escaping.
 3. Think about what happens when they cool down again.
 
@@ -2267,7 +2267,7 @@ Written for a very advanced 7-year-old working with a grown-up. A path from "wha
 
 **Try it in the game**
 
-1. Slide Heat in the game. Imagine it as a temperature.
+1. In the Lab, open How reactions happen and slide Heat. Imagine it as a temperature.
 2. Write the freezing and boiling points of water on the three scales.
 3. At what point would molecules stop moving almost completely?
 

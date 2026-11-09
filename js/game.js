@@ -550,8 +550,6 @@ $('#btnShake').addEventListener('click', () => {
   model.atoms.forEach(a => { a.vx += (Math.random() - 0.5) * 8; a.vy += (Math.random() - 0.5) * 8; a.vz += (Math.random() - 0.5) * 8; });
   tone(200, 0.2, 'sawtooth', 0.04);
 });
-let heat = 0.15;
-$('#heat').addEventListener('input', e => { heat = parseFloat(e.target.value); });
 $('#btnClear').addEventListener('click', () => { model.clear(); analyze(); });
 $('#chkVoice').checked = state.voice;
 $('#chkVoice').addEventListener('change', e => { state.voice = e.target.checked; save(); if (state.voice) speak('Reading out loud is on.'); else if ('speechSynthesis' in window) speechSynthesis.cancel(); });
@@ -615,7 +613,6 @@ function frame(t) {
     a.z = a.tween.from[2] + (a.tween.to[2] - a.tween.from[2]) * e;
     if (a.tween.t >= 1) { a.tween = null; a.pinned = false; }
   }
-  if (heat > 0) for (const a of model.atoms) if (!a.pinned) { const k = heat * 0.9; a.vx += (Math.random() - 0.5) * k; a.vy += (Math.random() - 0.5) * k; a.vz += (Math.random() - 0.5) * k; }
   for (let i = 0; i < 4; i++) model.step(0.012);
   bench.render(dt);
   updateBondButtons();
