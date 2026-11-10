@@ -95,11 +95,11 @@ function start(app) {
     return beads;
   }
   // lays the atoms out flat with nothing on top of anything else: bonds keep their length, everything else is pushed apart
-  function flatten(md, at, skip, beads) {
-    const pts = md.atoms.filter(a => !skip.has(a)).concat(beads.map(b => b.pa)), bonds = md.bonds.filter(b => !skip.has(b.a) && !skip.has(b.b)).map(b => ({ a: at.get(b.a), b: at.get(b.b), len: at.get(b.a).distanceTo(at.get(b.b)) })).concat(beads.map(b => ({ a: at.get(b.anchor), b: at.get(b.pa), len: at.get(b.anchor).distanceTo(at.get(b.pa)) }))), P2 = pts.map(a => ({ p: at.get(a), h: a.el === 'H' }));
+  function flatten(md, at, skip, beads, iters) {
+    const pts = md.atoms.filter(a => !skip.has(a)).concat(beads.map(b => b.pa)), bonds = md.bonds.filter(b => !skip.has(b.a) && !skip.has(b.b)).map(b => ({ a: at.get(b.a), b: at.get(b.b), len: Math.hypot(b.a.x - b.b.x, b.a.y - b.b.y, b.a.z - b.b.z) })).concat(beads.map(b => ({ a: at.get(b.anchor), b: at.get(b.pa), len: Math.hypot(b.anchor.x - b.root.x, b.anchor.y - b.root.y, b.anchor.z - b.root.z) * 1.15 }))), P2 = pts.map(a => ({ p: at.get(a), h: a.el === 'H' }));
     const typ = bonds.filter(b => b.len > 0).map(b => b.len).sort((x, y) => x - y)[Math.floor(bonds.length * 0.7)] || 1.5;
     P2.forEach(q => { q.p.y = 0; });
-    for (let it = 0; it < 120; it++) {
+    for (let it = 0; it < (iters || 120); it++) {
       for (let i = 0; i < P2.length; i++) for (let j = i + 1; j < P2.length; j++) { const A = P2[i], B = P2[j], min = typ * (A.h || B.h ? (A.h && B.h ? 0.75 : 0.9) : 1.25); let dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, d = Math.hypot(dx, dz); if (d >= min) continue; if (d < 1e-3) { dx = Math.cos(i * 1.7 + j); dz = Math.sin(i * 1.7 + j); d = 1; } const k = (min - d) / d * 0.5; A.p.x -= dx * k; A.p.z -= dz * k; B.p.x += dx * k; B.p.z += dz * k; }
       bonds.forEach(b => { const dx = b.b.x - b.a.x, dz = b.b.z - b.a.z, d = Math.hypot(dx, dz) || 1, k = (d - b.len) / d * 0.5; b.a.x += dx * k; b.a.z += dz * k; b.b.x -= dx * k; b.b.z -= dz * k; });
     }
@@ -136,7 +136,8 @@ function start(app) {
   // lean: a product is drawn without the hydrogens on its carbons and without letters on carbon, so it reads at a
   // distance. The middle molecule is always drawn in full. Nothing is ringed in 3D: what changed is circled in ink
   // on the page under it, see marksOf.
-  function buildMol(model, rings, lean0) {
+  // seed: where atoms stood before a reaction, so that a flat layout carries on from the last one and does not start afresh
+  function buildMol(model, rings, lean0, seed, seedBead) {
     const lean = lean0 || MOLV !== 'full', grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = [], pale = new Set(); let low = 1e9, n = 0;
     const big = model.atoms.filter(a => a.el !== 'H' && !a.tail).length >= BIG, beads = (FOLD === 'bead' || FOLD === 'both') && big ? foldsOf(model) : [], flat = ((FOLD === 'flat' || FOLD === 'both') && big) || MOLV === 'flatlean' || MOLV === 'pads';
     if (lean || flat) model.atoms.forEach(a => { if (a.el === 'H' && model.neighbors(a).every(q => q.atom.el === 'C')) skip.add(a); });
@@ -145,8 +146,15 @@ function start(app) {
     model.atoms.forEach(a => { if (skip.has(a)) return; c.add(new T.Vector3(a.x, a.y, a.z)); n++; }); c.divideScalar(n || 1);
     model.atoms.forEach(a => { at.set(a, new T.Vector3(a.x, a.y, a.z).sub(c).applyQuaternion(align)); });
     // a bead stands where the first atom of its arm stood
-    beads.forEach(b => { b.pa = { el: 'R', bead: b.txt, root: b.root }; at.set(b.pa, at.get(b.root).clone()); });
-    if (flat) flatten(model, at, skip, beads);
+    beads.forEach(b => { b.pa = { el: 'R', bead: b.txt, root: b.root }; at.set(b.pa, ((seedBead && seedBead.get(b.root)) || at.get(b.root)).clone()); });
+    if (flat && seed) {
+      // atoms that were there keep their place; a new atom starts beside the atom it is bonded to, on the side away from the middle
+      let mx = 0, mz = 0, nn = 0; seed.forEach(q => { mx += q.x; mz += q.z; nn++; }); mx /= nn || 1; mz /= nn || 1;
+      model.atoms.forEach(a => { const q = seed.get(a); if (q && !skip.has(a)) at.get(a).set(q.x, 0, q.z); });
+      for (let pass = 0; pass < 3; pass++) model.atoms.forEach(a => { if (skip.has(a) || seed.has(a) || a.placed) return; const nb = model.neighbors(a).map(q => q.atom).find(q => !skip.has(q) && (seed.has(q) || q.placed)); if (!nb) return; const p = at.get(nb), dx = p.x - mx, dz = p.z - mz, d = Math.hypot(dx, dz) || 1, j = (hash(String(model.atoms.indexOf(a))) - 0.5) * 1.2; at.get(a).set(p.x + (dx / d) * 1.4 + j * (dz / d), 0, p.z + (dz / d) * 1.4 - j * (dx / d)); a.placed = true; });
+      model.atoms.forEach(a => { delete a.placed; });
+    }
+    if (flat) flatten(model, at, skip, beads, seed ? 50 : 120);
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
     const radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
@@ -476,8 +484,9 @@ function start(app) {
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
     // The molecule changes where it stands. Every atom that is still there moves from where it was to where it now
     // belongs, and atoms that are new grow in at the place the reagent reaches.
-    const nm = buildMol(g.m, null, false); place(nm, C0, st.sc);
-    if (o.map) o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && nm.balls.has(na)) from.set(na, p.clone()); });
+    const seed = new Map(), seedBead = new Map(); if (o.map) { o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && prev.balls.has(oa)) seed.set(na, p); }); prev.beads.forEach(q => { const nr = o.map.get(q.root); if (nr) seedBead.set(nr, prev.at.get(q.pa)); }); }
+    const nm = buildMol(g.m, null, false, seed.size ? seed : null, seedBead); place(nm, C0, st.sc);
+    if (o.map) o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && prev.balls.has(oa) && nm.balls.has(na)) from.set(na, p.clone()); });
     nm.beads.forEach(b => { const ob = prev.beads.find(q => o.map && o.map.get(q.root) === b.root); if (ob) from.set(b.pa, prev.at.get(ob.pa).clone()); });
     nm.marks = marksOf(nm, o.r.made || []);
     // group letters: one that is no longer there is struck through, one that is new is written when the reagent arrives
@@ -792,7 +801,7 @@ function start(app) {
     ended.forEach(f => f());
     if (morph) { const el = now - morph.t0, ease = k => 1 - Math.pow(1 - k, 3), back = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), kOf = (a, d) => Math.max(0, Math.min(1, (el - morph.start.get(a)) / d));
       if (el > morph.end) { layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
-      else layout(morph.m, a => { const fr = morph.from.get(a), to = morph.m.at.get(a); return fr ? morph.cur.get(a).copy(fr).lerp(to, ease(kOf(a, 380))) : to; }, a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.5 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; });
+      else layout(morph.m, a => { const fr = morph.from.get(a), to = morph.m.at.get(a); return fr ? morph.cur.get(a).copy(fr).lerp(to, ease(kOf(a, 380))) : to; }, a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; });
       dirty = true; }
     if (st.flyers.length) { st.flyers = st.flyers.filter(f => { const age = (now - f.t0) / 1000; if (!f.t0 || age < 0) return true; if (age > 1.1) { scene.remove(f.grp); return false; } const k = age / 1.1, e2 = k * k; f.grp.position.set(C0.x + f.vx * e2 * 2.2, Math.sin(Math.min(1, k * 1.3) * Math.PI) * 5 + k * 6, C0.z + f.vz * e2 * 2.2); f.grp.rotation.set(f.spin * k * 0.6, f.spin * k, 0); f.grp.scale.setScalar(st.sc * (1 + 0.5 * Math.sin(Math.min(1, k * 2) * Math.PI))); return true; }); dirty = true; }
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
