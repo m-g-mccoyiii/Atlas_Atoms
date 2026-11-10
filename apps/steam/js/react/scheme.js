@@ -22,7 +22,7 @@ const KITV = (() => { try { return new URLSearchParams(root.location.search).get
 // How big each piece really is, as its longest side in centimetres. Pieces are drawn in proportion, but gently: a
 // goat is not fifteen times a stopwatch on the page, or the stopwatch could not be seen.
 const CM = { balance: 35, spatula: 18, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 13, logbook: 25, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 18, litmus: 26, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
-  stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, candle: 28, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
+  stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 28, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
 const EDGE = -22.6 + SX, STEP = { x: -21.6 + SX, z: 0.9 }, PAGES = { x: -15.2 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
@@ -508,13 +508,14 @@ function start(app) {
   }
   function endRound() {
     st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; if (!meta.taught) { meta.taught = true; saveMeta(); }
-    if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
   }
   function nextPage() {
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
+    st.E = g.E; if (st.gear.includes('intern')) { const tk = st.tok; setTimeout(() => { if (tk === st.tok) internGo(); }, 700); }
     flush(); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center); freeMol(center); center = buildMol(g.m, null, false); SC_MAIN = fitMain(center); place(center, C0, st.sc); center.hot = g.cur.path.length ? marksOf(center, Array.from(g.cur.fresh), 0.01, 0.2) : []; center.groups = groupsOf(center); center.ghosts = []; st.pop = 1;
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh(); st.sq = 0.8; st.kvz += 10;
     // a page on which no reagent acts turns itself
@@ -617,7 +618,10 @@ function start(app) {
   const twistOpt = () => { if (!g || st.mode !== 'play' || P.SELFMODE.auto || g.twisted === g.page) return null; const key = g.page + ':' + g.trail.length; if (!st.twC || st.twC.key !== key) st.twC = { key, o: P.selfOptions(g)[0] || null }; return st.twC.o; };
   const twistAt = () => twistOpt() && Math.abs(hit.x - C0.x) < 8.5 && Math.abs(hit.z - C0.z) < 3.8;
   // the monkey's paw is its own control: a click on it makes a wish
-  const pawAt = () => kitObjs.find(k => k.id === 'paw' && Math.abs(hit.x - k.hx) < 1.8 && hit.z > k.hz - 3.6 && hit.z < k.hz + 1.4);
+  const kitAt = id => kitObjs.find(k => k.id === id && Math.abs(hit.x - k.hx) < 1.8 && hit.z > k.hz - 3.6 && hit.z < k.hz + 1.4);
+  const pawAt = () => kitAt('paw');
+  function doDouse() { const k = kitObjs.find(q => q.id === 'extinguisher'); if (!k || !P.douse(g)) return; st.motes.push({ txt: 'times 1.5', part: 'm', col: PART.e, a: { x: k.hx, z: k.hz + 2.6 }, t: performance.now() + 80, dur: 420 }); callout('doused', '', PENCIL); dirty = true; }
+  function internGo() { if (st.mode !== 'play' || g.over || g.chain) return; const o = P.options(g, true), ids = Object.keys(o).filter(id => o[id].r && o[id].r.hits > 0); if (!ids.length) return; const id = ids[Math.floor(Math.random() * ids.length)], k = kitObjs.find(q => q.id === 'intern'); callout('intern', RX.CARDS[id].verb.toLowerCase(), PENCIL); react(o[id], id, false, k ? { x: k.hx, z: k.hz + 2.6 } : { x: 17, z: -6 }, true); }
   function doWish() { if (st.mode !== 'play') return; const k = kitObjs.find(q => q.id === 'paw'), id = P.wish(g, run); if (id === null || !k) return; st.E = g.E; st.want = (g.bank + g.P * g.R) * g.E; st.motes.push({ txt: 'times 2', part: 'm', col: PART.e, a: { x: k.hx, z: k.hz + 2.6 }, t: performance.now() + 80, dur: 420 }); callout('wish', id ? 'no more ' + RX.CARDS[id].verb.toLowerCase() : '', PENCIL); buildKit(); kitObjs.forEach(q => { q.born = 0; }); dirty = true; }
   function doTwist() { const o = twistOpt(); if (!o) return; g.twisted = g.page; st.twC = null; st.chainN = 0; react(o, o.id, false, { x: C0.x, z: C0.z }, true); }
   // One reaction on the page, whether it was clicked or is a step of a chain that is running by itself
@@ -869,7 +873,8 @@ function start(app) {
     kitObjs.forEach((k, i) => {
       if (now - (k.born || 0) < 380) { dirty = true; return; }
       const q = P.GEARS[k.id], kp = KITP(i), sideK = KITV === 'side', c = px(sideK ? { x: kp.x + 2.3, z: kp.z + 0.9 } : { x: kp.x, z: kp.z + (KITV === 'back' ? 2.9 : 3.6) }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
-      const tw = inkLine(x, q.tok || '', c[0], c[1], sideK ? 28 : 23, INK, sideK ? 'left' : undefined); fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
+      const tokNow = k.id === 'paw' ? (3 - (run.wishes || 0)) + ' wishes' : k.id === 'orb' && g && g.fore ? (g.fore.filter(id => !g.kinds.includes(id)).map(id => '+' + RX.CARDS[id].verb.toLowerCase()).concat(g.kinds.filter(id => !g.fore.includes(id)).map(id => '-' + RX.CARDS[id].verb.toLowerCase())).slice(0, 3).join(' ') || 'same') : q.tok || '';
+      const tw = inkLine(x, tokNow, c[0], c[1], sideK ? 28 : 23, INK, sideK ? 'left' : undefined); fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
       if (st.kitHover === i) { const h0 = px(sideK ? { x: kp.x + 9, z: kp.z - 1.2 } : KITV === 'back' ? { x: kp.x, z: kp.z + 5 } : { x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
@@ -980,7 +985,7 @@ function start(app) {
   cv.addEventListener('pointerdown', () => { if (!twistAt()) return; st.drag = { x: hit.x, z: hit.z }; doTwist(); if (morph && morph.slow) { morph.scrub = true; morph.kDrag = 0; morph.kHeld = 0; } });
   cv.addEventListener('pointermove', () => { if (st.drag && morph && morph.scrub) morph.kDrag = Math.min(1, Math.hypot(hit.x - st.drag.x, hit.z - st.drag.z) / 5); });
   root.addEventListener('pointerup', () => { if (!st.drag) return; st.drag = null; if (morph && morph.scrub) { morph.scrub = false; morph.t0 = performance.now() - morph.s0 - (morph.K || 0) * 460; } });
-  cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else { const b = byAt(); if (b) spend(b); } });
+  cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else if (kitAt('extinguisher')) doDouse(); else { const b = byAt(); if (b) spend(b); } });
   root.addEventListener('keydown', e => {
     if (e.key >= '1' && e.key <= '6') { if (st.mode === 'pick') takePick(+e.key - 1); else if (st.mode === 'brief') chooseBrief(+e.key - 1); else pick(+e.key - 1); }
     else if (e.key === 'f' || e.key === 'F') pick(FIN);
@@ -1070,7 +1075,7 @@ function start(app) {
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers, frame, wish: () => doWish(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
+  AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
     setOff, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,

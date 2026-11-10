@@ -34,14 +34,14 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 
 ## To sixty
 
-Fifty-five exist. Five more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
+Sixty exist. None left to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
 1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
 2. Tarot card, the Tower (built): the first time a row would break each round, it holds and the row doubles. The page says "held". Measured about 1.7 to 2.4 alone. Blind check: named as the Tower card, with effort.
 3. Monkey's paw (built): three wishes a run, one a round. A click on the paw makes the wish: the round is doubled and one reagent is gone from the run for good. A finger curls for each wish spent. Not measured: the simulated player does not wish.
 4. Cursed idol (built): every other occult piece fires twice. Every number to beat times 1.5. Alone it measures 1.1; with the voodoo doll the pair measures 8.2 against 1.9 for the doll alone. Blind check: a totem or idol, with effort.
-5. Crystal ball: shows the next page's reagents now.
+5. Crystal ball (built): its token shows which reagents the next page adds and drops. It only matters once the rack is larger than a page.
 6. Black cat (built): a row that breaks leaves extra +0.13 for every reaction that was in it. The simulated player never breaks a row on purpose, so its measured worth (0.8) says nothing yet. Blind check: obvious.
 7. Grimoire (built): the last reaction on each page counts twice. Measured 1.7. Blind check: obvious.
 8. Raven (built): the last reagent used on a page comes back on the next. Measured 1.3. Blind check: obvious, the strongest drawing of its batch.
@@ -50,13 +50,13 @@ Occult
 
 Funny
 11. Rubber duck (built, first shelf): says nothing. Extra +0.01 for every reaction it has watched this round, so it grows through a round. Measured about 2.1 alone. Blind check: obvious.
-12. The intern: does one reaction of its own choosing each page. It is not always a good one.
+12. The intern (built): does one free reaction of its own choosing on every new page. Not modeled by the simulated player.
 13. Coffee (built): one more reaction on pages one and two, one fewer after. Measured 0.85, inside the noise. Blind check: obvious.
-14. Safety goggles, on forehead: no effect. Sells back for double.
-15. Grant proposal: pays out only if the round is beaten by ten times.
+14. Safety goggles, on forehead (built): protects nothing. Pays 1 credit for every round beaten.
+15. Grant proposal (built): pays 5 credit when a round is beaten ten times over.
 16. Unlabeled bottle (built): one reagent the run does not own, a different one on every page. Never a halide maker, which is a dead end without its base. Blind check: obvious.
 17. Lab coat with someone else's name (built): copies the piece to its left. With the stopwatch the pair measures 1.6 against 1.0. Blind check: obvious.
-18. Fire extinguisher: stops a chain where the player chooses and banks it at half again.
+18. Fire extinguisher (built): a click during a chain stops it and the round counts half again, once a round. The rule is checked directly; the click during a live chain is not recorded yet.
 19. Motivational poster (built): the first reaction of a round, row +0.5, nothing after. Measured 1.1. The first drawing read as a television; redrawn as a kitten hanging from a branch, not checked blind again.
 20. Expired milk (built): extra +0.1 at the start of a round for every round it has been kept. Measured 1.2 in its first round. The first drawing had stink lines and flies and was unclear; redrawn with green ooze, not checked blind again.
 
