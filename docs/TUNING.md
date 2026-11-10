@@ -67,3 +67,40 @@ Median made over the number to beat, tier 0, equipment first, rounds 1 to 11: 2.
 - Not caught: water and hydrogen are collected. Three water deal the page's reagents again. Three hydrogen give every reagent on the page one more use. Both carry over between rounds of a run.
 - Every by-product adds a stroke to a tally. The fifth pays 50 places for each reaction in the open row.
 - One scripted round with a cold trap and a black candle on a molecule with three alcohols made 20,591 against about 900, so the catch values are too high.
+
+## Second tuning pass, 2026-11-10
+
+Measured with a new simulated player ("greedy") that takes whatever would make the most right now. It is kept out of the numbers to beat. Each figure is a median over the six plain molecules, 7 to 9 plays each, and moves by about 0.2 between measurements.
+
+What adding one reagent to the starting four is worth:
+
+| Reagent | Rarity | Worth |
+| --- | --- | --- |
+| hydroborate | common | 1.8 |
+| HCl with KOH | uncommon | 1.7 |
+| thionyl chloride with NaOH | uncommon | 2.0 |
+| add methyl | uncommon | 1.4 |
+| methylenate | uncommon | 1.6 |
+| oxidize C=C (found) | rare | 1.3 |
+| strip C=O (found) | rare | 1.35 |
+| add allyl | rare | 4.0 |
+| polymerize | legendary | 6.6 |
+
+Changes that got there: rare reagents have one use on a page; add allyl adds 20 a place, not 45; polymerize keeps two uses and adds 20 times half the chain length a place; a found reagent counts its places three or four times and adds the row bonus of the name it stands for (before this, both made a round worse).
+
+What one piece of catching equipment is worth, with hydroborate and add methyl held: cold trap 1.7, aqua regia 1.95, drying tube 1.3, molecular sieves 1.5, fume hood 1.75, scrubber 1.25, burner 1.25, litmus paper 1.35, black candle 2.15.
+
+Number to beat: round 1 is now 1.1 of the plain player's lower quarter (was 0.8), then 1.58 times a round (was 1.62), because the greedy player beat early rounds four times over.
+
+Rounds beaten by the greedy player, 50 to 60 runs each (10th / 25th / median / 75th / 90th):
+
+| Supplier tier | Extras open | Picks | Rounds beaten |
+| --- | --- | --- | --- |
+| 0 | none | equipment first | 7 / 8 / 8 / 9 / 10 |
+| 0 | none | random | 2 / 3 / 5 / 7 / 9 |
+| 3 | all families, both found | equipment first | 5 / 7 / 8 / 9 / 10 |
+| 5 | all families, both found | equipment first | 6 / 7 / 8 / 9 / 11 |
+
+Median made over the number to beat, tier 0, equipment first, rounds 1 to 11: 2.4, 2.9, 2.9, 2.5, 2.2, 2.5, 1.9, 1.4, 1.1, 0.9, 0.7.
+
+Still open: add allyl is worth twice the target for a rare. Deeper suppliers and families raise how far a round is beaten early (3 to 6 times) but not how many rounds a run lasts: every setup ends near round 8 or 9, which means the last rounds are decided by the climb of the number and not by the build. Rounds with a rule, carrying a molecule on, and spending water or hydrogen are not in any simulated run.

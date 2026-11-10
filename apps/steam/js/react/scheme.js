@@ -17,7 +17,8 @@ const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // The page, near to far: a band along the bottom for the count, the molecule in the middle, and the molecules it
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
 const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
-const STEP = { x: -21.6, z: 5.2 }, PAGES = { x: -21.6, z: 1.6 }, HIST = { x: 6, z: 6.6 };
+// the left column reads down one edge: what is kept, the round and its pages, this page's reactions, the count, the three numbers
+const EDGE = -22.6, STEP = { x: -21.6, z: 0.9 }, PAGES = { x: -14.2, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -210,7 +211,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.6, 27 / spanOf(m), 13.5 / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, 22 / spanOf(m), 12.5 / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -239,7 +240,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: -22.6, z: BAND }, MADE = { x: -11.6, z: 9.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 12.9, MULT = { x: EDGE - 0.6, z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -5; GAIN.z = -11.6; CALL.x = 0; CALL.z = -10; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
@@ -272,7 +273,7 @@ function start(app) {
   //   tip: rocks from side to side.  spin: turns once.  butt: lunges at the molecule.  flare: swells and settles.
   //   drip: squashes, then stretches.  slam: lifts and comes down flat.  shake: rattles.
   const FIRE = { balance: 'tip', scalepan: 'tip', carousel: 'spin', magnet: 'spin', stopwatch: 'spin', ouroboros: 'spin', goat: 'butt', candle: 'flare', bunsen: 'flare', stone: 'flare', elixir: 'flare', crystal: 'flare',
-    burette: 'drip', dropper: 'drip', cannula: 'drip', reflux: 'drip', coldtrap: 'drip', schlenk: 'drip', logbook: 'slam', cards: 'slam', pact: 'slam', ouija: 'slam', mirror: 'slam', transmute: 'slam',
+    dryer: 'drip', scrubber: 'drip', sieves: 'shake', hood: 'flare', burette: 'drip', dropper: 'drip', cannula: 'drip', reflux: 'drip', coldtrap: 'drip', schlenk: 'drip', logbook: 'slam', cards: 'slam', pact: 'slam', ouija: 'slam', mirror: 'slam', transmute: 'slam',
     mortar: 'shake', stopper: 'shake', regia: 'shake', homunculus: 'shake', recycler: 'shake', timer: 'shake', loupe: 'shake', litmus: 'shake', thermometer: 'shake', clamp: 'shake', stirrer: 'shake' };
   function animKit(k, i, now, heat) {
     const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, t = now / 1000, G = k.grp, B = k.base || 1, style = FIRE[k.id] || 'hop', ready = st.willFire && st.willFire.has(k.id);
@@ -322,7 +323,7 @@ function start(app) {
   })();
   // What leaves a molecule and is not caught is kept at the top left: water in a beaker, hydrogen in a balloon, and
   // one stroke on a tally for every by-product. A full beaker or balloon is spent with a click.
-  const BEAK = { x: -23.2, z: -7.6 }, BALN = { x: -18.6, z: -7.6 }, TALLY = { x: -15.2, z: -8.6 };
+  const BEAK = { x: -21.6, z: -7.6 }, BALN = { x: -17.4, z: -7.6 }, TALLY = { x: -14.2, z: -8.6 };
   const keep = (() => {
     const KM = AA.rxKit.mat, bk = new T.Group(), bl = new T.Group(), waterM = KM(T, 0x3a6fd0, 0.3), red = KM(T, 0xd6453a, 0.5);
     add(new T.CylinderGeometry(0.85, 0.8, 1.5, 24), GLASS, 0, 0.75, 0, bk); const water = add(new T.CylinderGeometry(0.76, 0.74, 1, 20), waterM, 0, 0.1, 0, bk); water.userData.plain = true;
@@ -452,6 +453,7 @@ function start(app) {
         else if (e.src === 'brief') st.floats.push({ txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
         else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
         else if (e.src === 'collect') { st.bump.p = 0; }
+        else if (e.src === 'short' && big) ping({ x: last.x, z: last.z - 2.2 }, txt, PART.p, 64, PART.p);
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
         st.shake = Math.max(st.shake, (big ? 0.8 : e.src === 'iso' ? 0.6 : 0.25) * (1 + 2.2 * f));
@@ -724,7 +726,7 @@ function start(app) {
       });
       // what the reaction under the pointer would add to each number, and what it would make
       if (st.peek) { const pk = st.peek; [['p', pk.dP], ['r', pk.dR], ['e', pk.dE]].forEach((q, i) => { if (Math.abs(q[1]) < 0.005) return; marker(x, 34); x.textAlign = 'center'; x.fillStyle = q[1] < 0 ? PENCIL : PART[q[0]]; x.fillText((q[1] > 0 ? '+' : '') + fmtB(q[1]), mp[0] + 70 + i * 150, mp[1] - 120); });
-        const gq = px(MADE); marker(x, 46); x.textAlign = 'right'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0], gq[1] - 92); }
+        const gq = px(MADE); marker(x, 46); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0] + 6, gq[1] - 104); }
       // one small chevron for each reaction in the row that is open
       for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 220 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
     }
@@ -739,8 +741,8 @@ function start(app) {
       if (age < 0.7) { const up = px({ x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.2 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: PAGES.x + 2.2, z: -5.4 }); hand(x, 36); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0], b0[1] + 36, 28, PENCIL); }
+    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart);
@@ -748,7 +750,7 @@ function start(app) {
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = tr[k] ? rgb(colOf(tr[k].id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
     // how much has been made, and the number to beat
     const q = px(MADE), bq = px(BEAT), beaten = st.shown >= st.quota, done = st.mode === 'done';
-    { const txt = fmt(st.shown), size = fit(x, txt, 92 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), 300, marker), mw = x.measureText(txt).width; x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
+    { const txt = fmt(st.shown), size = fit(x, txt, 112 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), 400, marker), mw = x.measureText(txt).width; x.textAlign = 'left'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
     }
     marker(x, 46); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(bq[0] - 60, bq[1] - 46); x.lineTo(bq[0] + 60, bq[1] - 49); x.stroke();
     // what the last reaction made, at the right end of the band, with anything a rare reagent added above it
