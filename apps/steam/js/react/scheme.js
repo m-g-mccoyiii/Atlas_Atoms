@@ -142,9 +142,9 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: -21, z: BAND }, MADE = { x: 3.4, z: BAND }, BEAT = { x: 5.2, z: BAND }, GAIN = { x: 12.2, z: BAND }, CALL = { x: 0, z: -3.7 }, KITP = i => ({ x: 19.2, z: -2.6 + i * 3.9 });
+  const BAND = 12.9, MULT = { x: -21, z: BAND }, MADE = { x: 5.6, z: BAND }, BEAT = { x: 7.2, z: BAND }, GAIN = { x: 13, z: BAND }, CALL = { x: 0, z: -3.7 }, KITP = i => ({ x: 19.2, z: -2.6 + i * 3.9 });
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
@@ -196,7 +196,7 @@ function start(app) {
   function load() {
     st.feed = Math.floor(Math.random() * P.FEEDS.length); st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
     clearRound(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
-    st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; buildKit();
+    st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
     g = P.runBegin(run, P.FEEDS[st.feed], true); st.quota = P.runQuota(run, P.FEEDS[st.feed]);
     setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
@@ -229,36 +229,36 @@ function start(app) {
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh();
   }
-  // Everything the player sees and hears when a reaction lands. Each effect arrives on its own beat, in the order
-  // it was scored: the reagent at each site, then the run, then each piece of equipment. Returns how long it takes.
+  // Everything the player sees and hears when a reaction lands. Each change arrives on its own beat, in the order it
+  // was scored: the reagent at each place, then the row, then each piece of equipment. Returns how long it takes.
+  const PART = { p: '#1f5fbf', h: '#1f5fbf', r: '#a87a00', e: '#b0189a' };
   function land(o, before, wasOpen) {
-    const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev.filter(e => e.kind !== 'grade' && e.kind !== 'catch'), base = g.total, n = beats.length;
-    const gap = Math.max(34, Math.min(95, 620 / Math.max(1, n))), col = rgb(colOf(o.id));
-    sfx.bond(); spray(8 + 5 * o.r.hits, col, false); st.shake = Math.max(st.shake, 0.3);
+    const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev, n = beats.length;
+    const gap = Math.max(34, Math.min(95, 620 / Math.max(1, n)));
+    sfx.bond(); st.shake = Math.max(st.shake, 0.3);
     beats.forEach((e, k) => setTimeout(() => {
       if (tok !== st.tok) return;
-      st.want = base + Math.round(e.yield * e.batch); st.mult = e.batch; st.multBump = e.kind === 'x' ? 1 : Math.max(st.multBump, 0.4);
-      const piece = P.GEARS[e.src] ? e.src : null, txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val);
-      st.madeBump = 1;
-      if (piece) { st.fired[piece] = { t: performance.now(), txt }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, e.kind === 'x' ? 12 : 7, ko.col); } }
-      else if (e.src === 'rare') { st.floats.push({ txt: (t.rare === 'double' ? 'double ' : 'strong ') + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' }); spray(14, '#b0189a', false); }
-      if (e.kind === 'x') { st.shake = Math.max(st.shake, 0.8); spray(10, REDINK, false); }
-      else st.shake = Math.max(st.shake, 0.22);
+      const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
+      st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
+      const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
+      if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
+      else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
+      st.shake = Math.max(st.shake, big ? 0.8 : 0.22);
       sfx.lock(Math.min(12, k + g.cur.path.length));
     }, 60 + k * gap));
     const dur = 60 + n * gap + 80;
     setTimeout(() => {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
-      st.want = P.made(g); st.mult = g.cur.batch;
-      // a hot reaction leaves its mark on the paper for the rest of the round
-      if (g.cur.batch >= 4) for (let q = 0; q < Math.min(6, Math.floor(Math.log2(g.cur.batch))); q++) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 12, r: 30 + Math.random() * 90, a: 0.05 + Math.random() * 0.07, ring: Math.random() < 0.5 });
+      st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g);
       st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
       st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
-      if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'times ' + fmtB(route.val), '#8a6a00'); sfx.good(); st.shake = Math.max(st.shake, 1.6); spray(60, '#8a6a00', true); }
-      else if (o.finish) { callout('finished', 'times ' + fmtB(1 + P.SYN.finishMult * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
-      else if (t.cont && len >= 3) { callout(len + ' in a row', 'times ' + fmtB(g.cur.batch), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
-      else if (wasOpen && !t.cont) callout('run closed', '', PENCIL);
+      // a hot reaction leaves its mark on the paper for the rest of the round
+      if (st.mult >= 3) for (let q = 0; q < Math.min(6, Math.floor(Math.log2(st.mult))); q++) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 12, r: 30 + Math.random() * 90, a: 0.05 + Math.random() * 0.07, ring: Math.random() < 0.5 });
+      if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'row +' + fmtB(route.val), PART.r); sfx.good(); st.shake = Math.max(st.shake, 1.6); spray(60, PART.r, true); }
+      else if (o.finish) { callout('finished', 'extra +' + fmtB(P.SYN.finishExtra * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
+      else if (t.cont && len >= 3) { callout(len + ' in a row', 'row ' + fmtB(g.R), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
+      else if (wasOpen && !t.cont) callout('row broken', '', PENCIL);
       // passing the number to beat, and each doubling past it
       const m = P.made(g), times = Math.floor(m / st.quota);
       if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); callout(fmt(st.quota) + ' beaten', '', GREEN); spray(90, GREEN, true); }
@@ -394,21 +394,23 @@ function start(app) {
       tr.forEach((t, k) => { const cx = x0 + k * gap, w = RX.CARDS[t.id].verb.toLowerCase();
         if (k) { if (t.cont) swipe(x, [cx - gap + 70, h0[1] - 14], [cx - 70, h0[1] - 14], 30); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - gap / 2 - 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 8, h0[1] - 26); x.moveTo(cx - gap / 2 + 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 8, h0[1] - 2); x.stroke(); }
         hand(x, 42); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(w, cx, h0[1]); swipe(x, [cx - 60, h0[1] + 12], [cx + 60, h0[1] + 9], 8, rgb(colOf(t.id))); }); }
-    // the multiplier of the run that is open: bigger, redder and shakier the higher it goes
+    // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
     if (st.mode !== 'done') {
-      const mp = px(MULT), len = g.cur.path.length, b = st.mult, k = 1 + 0.25 * st.multBump, hot = len >= 2, heat = Math.min(6, Math.log2(Math.max(1, b)));
-      const jx = hot ? (Math.random() - 0.5) * heat * 2 : 0, jy = hot ? (Math.random() - 0.5) * heat * 2 : 0, txt = 'times ' + fmtB(b);
-      const size = fit(x, txt, (hot ? 66 + 8 * heat : 50) * k, 350, marker), tw = x.measureText(txt).width;
-      if (hot) swipe(x, [mp[0], mp[1] - size * 0.32], [mp[0] + tw, mp[1] - size * 0.4], size * 0.8);
-      x.textAlign = 'left'; x.fillStyle = hot ? (heat > 3.5 ? REDINK : INK) : FAINT; x.fillText(txt, mp[0] + jx, mp[1] + jy);
-      if (hot) { hand(x, 36); x.fillStyle = PENCIL; x.fillText(len + ' in a row', mp[0], mp[1] - size - 6); }
+      const mp = px(MULT), len = g.cur.path.length;
+      [['p', 'places', fmt(st.P)], ['r', len >= 2 ? len + ' in a row' : 'row', fmtB(st.R)], ['e', 'extra', fmtB(st.E)]].forEach((q, i) => {
+        const cx = mp[0] + 70 + i * 150, live = q[0] === 'p' ? st.P > 0 : q[0] === 'r' ? st.R > 1 : st.E > 1, k = 1 + 0.4 * st.bump[q[0]];
+        if (live && q[0] === 'r' && len >= 2) swipe(x, [cx - 52, mp[1] - 24], [cx + 52, mp[1] - 30], 62);
+        fit(x, q[2], 64 * k, 136, marker); x.textAlign = 'center'; x.fillStyle = live ? PART[q[0]] : FAINT; x.fillText(q[2], cx, mp[1]);
+        hand(x, 30); x.fillStyle = PENCIL; x.fillText(q[1], cx, mp[1] - 70);
+        if (i < 2) { hand(x, 30); x.fillStyle = FAINT; x.fillText('by', cx + 75, mp[1] - 14); }
+      });
     }
     // equipment: its name and what it does, written beside it, and what it just added lettered above it
     kitObjs.forEach((k, i) => {
       const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x - 3.1, z: kp.z + 0.1 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
       hand(x, 34); x.textAlign = 'right'; x.fillStyle = INK; x.fillText(q.name + ((run.lv[k.id] || 1) > 1 ? '  level ' + run.lv[k.id] : ''), c[0], c[1]);
       hand(x, 24); x.fillStyle = PENCIL; wrap(x, q.note, 270).slice(0, 3).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 27 + j * 24));
-      if (age < 0.7) { const up = px({ x: kp.x + 1.6, z: kp.z - 2.1 - 1.0 * age }); marker(x, 52 * (age < 0.08 ? 1.4 : 1)); x.textAlign = 'right'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
+      if (age < 0.7) { const up = px({ x: kp.x + 1.6, z: kp.z - 2.1 - 1.0 * age }); marker(x, 52 * (age < 0.08 ? 1.4 : 1)); x.textAlign = 'right'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.2 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
@@ -514,6 +516,7 @@ function start(app) {
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
     kitObjs.forEach((k, i) => { k.grp.rotation.z = (0.03 + 0.1 * heat) * Math.sin(tt * (3 + 9 * heat) + i * 2); });
     if (st.madeBump > 0) { st.madeBump = Math.max(0, st.madeBump - dt * 6); dirty = true; }
+    ['p', 'r', 'e'].forEach(q => { if (st.bump[q] > 0) { st.bump[q] = Math.max(0, st.bump[q] - dt * 4); dirty = true; } });
     if (heat > 0.2) dirty = true;
     stepParts(dt);
     if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; }
@@ -522,7 +525,7 @@ function start(app) {
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers, frame, debugKit: ids => { run.gear = ids.slice(); load(); },
     openSupplier, meta,
-    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' ? { mode: st.mode, round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' ? { mode: st.mode, round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
