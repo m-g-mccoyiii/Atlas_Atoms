@@ -61,8 +61,8 @@ function start(app) {
   //   flat: the molecule is laid out flat on the page with no overlaps, over an inked skeleton
   //   focus: what is far from anything that can react is drawn small and pale
   const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'none'; } catch (e) { return 'none'; } })(), BIG = 11;
-  const beadMat = std({ color: lin(0xcfd6e4), roughness: 0.6 }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
-  function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 46 : 60) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#1f2a55'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
+  const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x1f2a55), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
+  function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 50 : 66) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#1f2a55'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
   function liveAtoms(md, ar) {
     const live = new Set();
@@ -86,8 +86,8 @@ function start(app) {
     return beads;
   }
   // lays the atoms out flat with nothing on top of anything else: bonds keep their length, everything else is pushed apart
-  function flatten(md, at, skip) {
-    const pts = md.atoms.filter(a => !skip.has(a)), bonds = md.bonds.filter(b => !skip.has(b.a) && !skip.has(b.b)).map(b => ({ a: at.get(b.a), b: at.get(b.b), len: at.get(b.a).distanceTo(at.get(b.b)) })), P2 = pts.map(a => ({ p: at.get(a), h: a.el === 'H' }));
+  function flatten(md, at, skip, beads) {
+    const pts = md.atoms.filter(a => !skip.has(a)).concat(beads.map(b => b.pa)), bonds = md.bonds.filter(b => !skip.has(b.a) && !skip.has(b.b)).map(b => ({ a: at.get(b.a), b: at.get(b.b), len: at.get(b.a).distanceTo(at.get(b.b)) })).concat(beads.map(b => ({ a: at.get(b.anchor), b: at.get(b.pa), len: at.get(b.anchor).distanceTo(at.get(b.pa)) }))), P2 = pts.map(a => ({ p: at.get(a), h: a.el === 'H' }));
     const typ = bonds.filter(b => b.len > 0).map(b => b.len).sort((x, y) => x - y)[Math.floor(bonds.length * 0.7)] || 1.5;
     P2.forEach(q => { q.p.y = 0; });
     for (let it = 0; it < 120; it++) {
@@ -129,26 +129,26 @@ function start(app) {
   // on the page under it, see marksOf.
   function buildMol(model, rings, lean) {
     const grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = [], pale = new Set(); let low = 1e9, n = 0;
-    const big = model.atoms.filter(a => a.el !== 'H').length >= BIG, beads = FOLD === 'bead' && big ? foldsOf(model) : [];
-    if (lean) model.atoms.forEach(a => { if (a.el === 'H' && model.neighbors(a).every(q => q.atom.el === 'C')) skip.add(a); });
+    const big = model.atoms.filter(a => a.el !== 'H').length >= BIG, beads = (FOLD === 'bead' || FOLD === 'both') && big ? foldsOf(model) : [], flat = (FOLD === 'flat' || FOLD === 'both') && big;
+    if (lean || flat) model.atoms.forEach(a => { if (a.el === 'H' && model.neighbors(a).every(q => q.atom.el === 'C')) skip.add(a); });
     beads.forEach(b => b.atoms.forEach(a => { skip.add(a); model.neighbors(a).forEach(q => { if (q.atom.el === 'H') skip.add(q.atom); }); }));
     model.atoms.forEach(a => { if (skip.has(a)) return; c.add(new T.Vector3(a.x, a.y, a.z)); n++; }); c.divideScalar(n || 1);
     model.atoms.forEach(a => { at.set(a, new T.Vector3(a.x, a.y, a.z).sub(c).applyQuaternion(align)); });
     // a bead stands where the first atom of its arm stood
     beads.forEach(b => { b.pa = { el: 'R', bead: b.txt, root: b.root }; at.set(b.pa, at.get(b.root).clone()); });
-    const flat = FOLD === 'flat' && big; if (flat) flatten(model, at, skip);
+    if (flat) flatten(model, at, skip, beads);
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
-    const radius = a => (a.bead ? 0.78 : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
+    const radius = a => (a.bead ? 0.95 : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
     at.forEach(p => { p.y += 0.5 - low; });
     model.atoms.forEach(a => {
       if (skip.has(a)) return;
       const R = radius(a), b = { R, mesh: add(SPH, pale.has(a) ? paleMat : ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
       if (a.iso) b.collar = collar(grp, new T.Vector3(), R, ISOC[a.iso]);
-      if (!pale.has(a) && (!lean || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); }
+      if (!pale.has(a) && (!(lean || flat) || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); }
       balls.set(a, b);
     });
-    beads.forEach(b => { const e = { R: 0.78, mesh: add(SPH, beadMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat(b.txt)), collar: null }; grp.add(e.sprite); balls.set(b.pa, e); sticks.push({ a: b.anchor, b: b.pa, r: 0.09, parts: [0, 1].map(h => ({ f: 0, h, mesh: add(CYL, h ? beadMat : stickMat(b.anchor.el), 0, 0, 0, grp) })) }); });
+    beads.forEach(b => { const e = { R: 0.95, sk: 1.75, mesh: add(SPH, beadMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat(b.txt)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(b.pa, e); sticks.push({ a: b.anchor, b: b.pa, r: 0.09, parts: [0, 1].map(h => ({ f: 0, h, mesh: add(CYL, h ? beadMat : stickMat(b.anchor.el), 0, 0, 0, grp) })) }); });
     model.bonds.forEach(bd => {
       if (!balls.has(bd.a) || !balls.has(bd.b)) return;
       const far = pale.has(bd.a) && pale.has(bd.b), parts = []; (bd.order === 1 ? [0] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
@@ -164,7 +164,7 @@ function start(app) {
   // appearing, and a stick appears with the later of its two ends.
   const _u = new T.Vector3(), _q = new T.Quaternion(), _perp = new T.Vector3(), _mid = new T.Vector3();
   function layout(m, pos, grow) {
-    m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * 1.25 * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
+    m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * (b.sk || 1.25) * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
     m.sticks.forEach(s => {
       const A = pos(s.a), B = pos(s.b), k = grow ? Math.min(grow(s.a), grow(s.b)) : 1; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
       _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
@@ -182,8 +182,8 @@ function start(app) {
   }
   // The groups a reagent can act on, each with where it sits on the page under the molecule: C=C, C=O, OH and Cl.
   function groupsOf(m) {
-    const out = [], md = m.model, down = (a, b) => { const p = m.at.get(a), q = b ? m.at.get(b) : p; if (!p || !q) return null; const x = (p.x + q.x) / 2, y = (p.y + q.y) / 2, z = (p.z + q.z) / 2, t = -y / camDir.y; return { x: x + camDir.x * t, z: z + camDir.z * t }; };
-    md.bonds.forEach(b => { if (b.order !== 2) return; const cc = b.a.el === 'C' && b.b.el === 'C', co = (b.a.el === 'C' && b.b.el === 'O') || (b.a.el === 'O' && b.b.el === 'C'); if (!cc && !co) return; const p = down(b.a, b.b); if (p) out.push({ txt: cc ? 'C=C' : 'C=O', x: p.x, z: p.z }); });
+    const out = [], md = m.model, ar = RX.aromaticAtoms(md), down = (a, b) => { const p = m.at.get(a), q = b ? m.at.get(b) : p; if (!p || !q) return null; const x = (p.x + q.x) / 2, y = (p.y + q.y) / 2, z = (p.z + q.z) / 2, t = -y / camDir.y; return { x: x + camDir.x * t, z: z + camDir.z * t }; };
+    md.bonds.forEach(b => { if (b.order !== 2 || (ar.has(b.a) && ar.has(b.b))) return; const cc = b.a.el === 'C' && b.b.el === 'C', co = (b.a.el === 'C' && b.b.el === 'O') || (b.a.el === 'O' && b.b.el === 'C'); if (!cc && !co) return; const p = down(b.a, b.b); if (p) out.push({ txt: cc ? 'C=C' : 'C=O', x: p.x, z: p.z }); });
     md.atoms.forEach(a => { if (a.el === 'Cl') { const p = down(a); if (p) out.push({ txt: 'Cl', x: p.x, z: p.z }); } else if (a.el === 'O') { const nb = md.neighbors(a); if (nb.length === 2 && nb.every(q => q.bond.order === 1) && nb.some(q => q.atom.el === 'H') && nb.some(q => q.atom.el === 'C')) { const p = down(a); if (p) out.push({ txt: 'OH', x: p.x, z: p.z }); } } });
     return out;
   }

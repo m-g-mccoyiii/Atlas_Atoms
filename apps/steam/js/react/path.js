@@ -209,7 +209,7 @@ const RARE = ['double', 'strong', 'plenty'];
 // three numbers. They stay on the molecule for as long as the atom does, so they can be reacted at again.
 const ISO = { c13: { name: 'carbon-13', part: 'p', op: 'add', val: 60 }, o18: { name: 'oxygen-18', part: 'r', op: 'add', val: 1 }, c14: { name: 'carbon-14', part: 'e', op: 'mul', val: 1.25 } };
 const ISOP = { c13: 0.1, c14: 0.02, o18: 0.2 };
-function salt(m, rnd) { const R = rnd || Math.random; m.atoms.forEach(a => { if (a.el === 'C') { const x = R(); if (x < ISOP.c14) a.iso = 'c14'; else if (x < ISOP.c14 + ISOP.c13) a.iso = 'c13'; } else if (a.el === 'O' && R() < ISOP.o18) a.iso = 'o18'; }); return m; }
+function salt(m, rnd) { const R = rnd || Math.random, ar = RX.aromaticAtoms(m); m.atoms.forEach(a => { if (ar.has(a)) return; if (a.el === 'C') { const x = R(); if (x < ISOP.c14) a.iso = 'c14'; else if (x < ISOP.c14 + ISOP.c13) a.iso = 'c13'; } else if (a.el === 'O' && R() < ISOP.o18) a.iso = 'o18'; }); return m; }
 // A brief changes what one round pays for, so a different set of equipment suits it. Every brief but the plain one
 // asks for more and pays something when it is beaten.
 const BRIEFS = [
