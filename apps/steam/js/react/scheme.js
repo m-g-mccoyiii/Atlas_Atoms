@@ -18,7 +18,7 @@ const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
 const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
 // the left column reads down one edge: what is kept, the round and its pages, this page's reactions, the count, the three numbers
-const KITV = (() => { try { return new URLSearchParams(root.location.search).get('kit') || 'bottom'; } catch (e) { return 'bottom'; } })(), SX = KITV === 'side' ? 5 : 0;
+const KITV = (() => { try { return new URLSearchParams(root.location.search).get('kit') || 'back'; } catch (e) { return 'back'; } })(), SX = KITV === 'side' ? 5 : 0;
 // How big each piece really is, as its longest side in centimetres. Pieces are drawn in proportion, but gently: a
 // goat is not fifteen times a stopwatch on the page, or the stopwatch could not be seen.
 const CM = { balance: 35, spatula: 18, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 13, logbook: 25, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 18, litmus: 8, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
@@ -252,8 +252,8 @@ function start(app) {
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
-  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {} }, shop = { earned: 0 };
-  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; } } catch (e) { /* storage unavailable */ }
+  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, taught: false }, shop = { earned: 0 };
+  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier);
   const PICKX = [-15, 0, 15];
@@ -345,7 +345,7 @@ function start(app) {
   //   words: one or two pencil words by each thing, always.  hover: its name and a line under the pointer.
   //   fewer: no names, fewer things: no tally, no page numbers, beaker and balloon only once they hold something,
   //          and the three numbers small on one line under the count
-  const NAMEV = (() => { try { return new URLSearchParams(root.location.search).get('name') || 'none'; } catch (e) { return 'none'; } })(), FEWER = NAMEV === 'fewer';
+  const NAMEV = (() => { try { return new URLSearchParams(root.location.search).get('name') || 'both'; } catch (e) { return 'both'; } })(), FEWER = NAMEV === 'fewer';
   // each thing: where it is, how near the pointer must be, its name, one line, and where a word for it is written
   const zones = () => [
     { id: 'water', x: BEAK.x, z: BEAK.z - 0.8, r: 2.2, name: 'water', line: 'three deal this page again', lx: BEAK.x, lz: BEAK.z + 2.7 },
@@ -443,7 +443,7 @@ function start(app) {
     if (st.pending) { const pd = st.pending; st.pending = null; pd.ids.forEach(clearTimeout); pd.final(); }
   }
   function endRound() {
-    st.mode = 'done'; st.call = null; st.pass = g.total >= st.quota;
+    st.mode = 'done'; st.call = null; st.pass = g.total >= st.quota; if (!meta.taught) { meta.taught = true; saveMeta(); }
     if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
@@ -813,8 +813,8 @@ function start(app) {
     if (st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
       const zs = zones(), halo = (txt, cx, cy, size, col, font) => { (font || hand)(x, size); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#fbf8ee'; x.strokeText(txt, cx, cy); x.fillStyle = col; x.fillText(txt, cx, cy); };
       if (NAMEV === 'words') zs.forEach(q => { const c = px({ x: q.lx, z: q.lz }); halo(q.name, c[0], c[1], 28, PENCIL); });
-      if (NAMEV === 'hover' && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
-      if (NAMEV === 'point') { const T0 = st.teach; if (!T0.t) T0.t = now + 1700;
+      if ((NAMEV === 'hover' || NAMEV === 'both') && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
+      if (NAMEV === 'point' || (NAMEV === 'both' && !meta.taught)) { const T0 = st.teach; if (!T0.t) T0.t = now + 1700;
         const nx = TEACH[T0.i + 1]; if (nx && now - T0.t > 2600 && nx.when()) { T0.i++; T0.t = now; }
         const cur = TEACH[T0.i], q = cur && zs.find(k => k.id === cur.z), age = (now - T0.t) / 1000;
         if (q && age >= 0 && age < 7) { const tgt = px({ x: q.x, z: q.z }), right = q.x > 8, from = px({ x: q.x + (right ? -7.5 : 6.5), z: q.z - 3.2 }), k = Math.min(1, age / 0.3);
@@ -854,7 +854,7 @@ function start(app) {
     for (let i = 0; i < P.FAMILIES.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x >= 6.5) return 100 + i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
   cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else { const b = byAt(); if (b) spend(b); } });
   root.addEventListener('keydown', e => {
