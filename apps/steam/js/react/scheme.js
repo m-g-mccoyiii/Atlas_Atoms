@@ -496,7 +496,7 @@ function start(app) {
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
       const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x, z: kp.z + 3.6 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
-      const tw = inkLine(x, q.tok || '', c[0], c[1], 32, INK); fit(x, q.name, 26, 145, hand); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - 40);
+      const tw = inkLine(x, q.tok || '', c[0], c[1], 27, INK); fit(x, q.name, 26, 145, hand); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - 40);
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
       if (st.kitHover === i) { const h0 = px({ x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
