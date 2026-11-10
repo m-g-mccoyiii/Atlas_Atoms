@@ -11,7 +11,23 @@ const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)C
   // rings, and a benzene ring that nothing here acts on
   'O=C1CCC(CC=C)CC1', 'C=CCC(O)C1=CC=CC=C1', 'C=CC1CCC(O)CC1', 'CC(=O)CCC(O)C1=CC=CC=C1',
   // cages and a sugar: a cube with two handles, adamantanol, a bridged ring, glucose
-  'C=CC12C3C4C1C5C2C3C45CO', 'OC1C2CC3CC(C2)CC1C3', 'OC1CC2CC1C=C2', 'OCC1OC(O)C(O)C(O)C1O'];
+  'C=CC12C3C4C1C5C2C3C45CO', 'OC1C2CC3CC(C2)CC1C3', 'OC1CC2CC1C=C2', 'OCC1OC(O)C(O)C(O)C1O',
+  'OC1CCC(O)CC1', 'O=C1CCC(O)CC1C=C', 'OC(C=C)C1=CC=CC=C1', 'CC(O)CC(=O)C1=CC=CC=C1', 'OCC12C3C4C1C5C2C3C45CO', 'OC1CC2CCC1C=C2',
+  'OCC(O)C(O)C(O)C(O)C=O', 'OCC1OC(O)CC1O', 'OCC(O)CO'];
+// Families. Every starting molecule belongs to one, and each family scores by a rule of its own, so the molecule a
+// round is played on decides how it is best played. The rule is paid on every reaction it fits.
+//   chain: keeps a row going.  ring: comes back round to a form it has had.  arene: one exact change at a time.
+//   sugar: many places at once.  cage: reacts by itself.
+const KIN = {
+  chain: { name: 'chain', tier: 0, odds: 38, col: '#5a6475', tok: '{r} +0.15', note: 'in a row', fx: c => (c.cont ? { part: 'r', op: 'add', val: 0.15 } : null) },
+  ring: { name: 'ring', tier: 0, odds: 24, col: '#2f8f6a', tok: '{p} times 2', note: 'back to an earlier form', fx: c => (c.loop ? { part: 'h', op: 'mul', val: 2 } : null) },
+  arene: { name: 'arene', tier: 1, odds: 16, col: '#a8791a', tok: '{e} +0.2', note: 'one place changed', fx: c => (c.hits === 1 ? { part: 'e', op: 'add', val: 0.2 } : null) },
+  sugar: { name: 'sugar', tier: 2, odds: 13, col: '#c0489a', tok: '{r} +0.2', note: 'each place past the first', fx: c => (c.hits > 1 ? { part: 'r', op: 'add', val: 0.2 * (c.hits - 1) } : null) },
+  cage: { name: 'cage', tier: 3, odds: 9, col: '#c8261c', tok: '{e} +0.3', note: 'reacting by itself', fx: c => (c.free ? { part: 'e', op: 'add', val: 0.3 } : null) }
+};
+const KIN_OF = {};
+[['chain', 0, 6], ['ring', 6, 7], ['arene', 7, 8], ['ring', 8, 9], ['arene', 9, 10], ['cage', 10, 13], ['sugar', 13, 14], ['ring', 14, 16], ['arene', 16, 18], ['cage', 18, 20], ['sugar', 20, 23]].forEach(q => { for (let k = q[1]; k < q[2]; k++) KIN_OF[FEEDS[k]] = q[0]; });
+const kinOf = feed => (typeof feed === 'string' && KIN_OF[feed]) || 'chain';
 // keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
 const DIAL = { keep: 3, steps: 3 };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
@@ -282,6 +298,7 @@ function synDeal(g, rnd) {
 function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
   if (!(feed && feed.atoms)) salt(g.m, rnd);
+  g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
@@ -305,7 +322,7 @@ function namedRow(path) {
 }
 // Scores one reaction. Every change to places, row or extra is returned as an event, in the order it happened, so
 // the page can replay it: the reagent at each place, then the row, then each piece of equipment.
-function scoreRound(g, o) {
+function scoreRound(g, o, free) {
   const cur = g.cur, id = o.id, r = o.r, ev = [], loop = cur.seen.has(r.sig), first = !cur.used.includes(id); let h = 0;
   const emit = (src, fx, extra) => {
     if (!fx) return;
@@ -331,6 +348,7 @@ function scoreRound(g, o) {
     if (!caught && (kind === 'water' || kind === 'h2')) { g.by[kind]++; ev.push({ src: 'collect', kind, gone: gi, part: 'p', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) }); }
     g.by.gauge++; if (g.by.gauge >= BY.tally) { g.by.gauge -= BY.tally; emit('tally', A('p', BY.pay * Math.max(1, cur.path.length))); }
   });
+  { const K = KIN[g.kin]; if (K && r.hits) emit('family', K.fx(Object.assign({ free: !!free }, c)), { kin: g.kin }); }
   if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
   if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
@@ -367,7 +385,7 @@ function chainNext(g) {
 function synTake(g, o, free) {
   const cur = g.cur;
   if (breaks(g, o)) { close(g); g.tally.breaks++; }
-  const sc = scoreRound(g, o);
+  const sc = scoreRound(g, o, free);
   cur.fresh = new Set(o.r.made); cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
   g.left[o.id]--; g.m = o.model; if (!free) g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
   const set = false;
@@ -435,9 +453,9 @@ const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.9, ask: 1, s
 const PAIR = { hcl: 'koh', socl2: 'naoh' };
 const SUPPLY = [
   { name: 'corner chemist', cost: 0, reagents: ['bh3'], gear: ['balance', 'stirrer', 'cards', 'spatula', 'stopwatch', 'litmus', 'dryer'] },
-  { name: 'trade supplier', cost: 6, reagents: ['hcl', 'koh'], gear: ['cannula', 'coldtrap', 'schlenk', 'burette', 'logbook', 'scalepan', 'stopper', 'hood', 'scrubber'] },
-  { name: 'research supplier', cost: 16, reagents: ['socl2', 'naoh'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper', 'mirror', 'sieves'], rare: true },
-  { name: 'instrument maker', cost: 30, reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] },
+  { name: 'trade supplier', cost: 6, kin: ['arene'], reagents: ['hcl', 'koh'], gear: ['cannula', 'coldtrap', 'schlenk', 'burette', 'logbook', 'scalepan', 'stopper', 'hood', 'scrubber'] },
+  { name: 'research supplier', cost: 16, kin: ['sugar'], reagents: ['socl2', 'naoh'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper', 'mirror', 'sieves'], rare: true },
+  { name: 'instrument maker', cost: 30, kin: ['cage'], reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] },
   { name: 'an alchemist, by appointment', cost: 50, reagents: [], gear: ['stone', 'transmute', 'regia', 'ouroboros', 'homunculus', 'elixir'] },
   { name: 'Brenda (deceased)', cost: 80, reagents: [], gear: ['ouija', 'candle', 'goat', 'pact'] }
 ];
@@ -446,7 +464,7 @@ const modelOf = feed => { const m = feed.atoms ? RX.cloneMap(feed).model : AA.Mo
 // what a plain player makes from a molecule under a brief, with the starting reagents and the style that suits it best
 // Measured on 2026-11-10 with 12 plays for each style of play, chains included: the lower quarter of the best style. Measure again
 // after any change to the rules of a round, or delete the table and it is measured as needed.
-const BASE = {"C=CCC(O)CC=C|plain":85918,"C=CCC(O)CC=C|broad":75143,"C=CCC(O)CC=C|loose":53136,"C=CCC(O)CC=C|each":235773,"C=CCC(O)CC=C|back":825858,"C=CCC(O)CC=C|scarce":10784,"C=CCC(O)CC=C|short":29025,"CC(O)CCC=C|plain":58587,"CC(O)CCC=C|broad":56112,"CC(O)CCC=C|loose":30178,"CC(O)CCC=C|each":136041,"CC(O)CCC=C|back":630241,"CC(O)CCC=C|scarce":11682,"CC(O)CCC=C|short":22715,"CC(=O)CCC(O)CC=C|plain":96876,"CC(=O)CCC(O)CC=C|broad":71991,"CC(=O)CCC(O)CC=C|loose":50512,"CC(=O)CCC(O)CC=C|each":243984,"CC(=O)CCC(O)CC=C|back":952213,"CC(=O)CCC(O)CC=C|scarce":16282,"CC(=O)CCC(O)CC=C|short":36855,"C=CCC(O)CC(O)CC=C|plain":119691,"C=CCC(O)CC(O)CC=C|broad":103671,"C=CCC(O)CC(O)CC=C|loose":57646,"C=CCC(O)CC(O)CC=C|each":267117,"C=CCC(O)CC(O)CC=C|back":1185145,"C=CCC(O)CC(O)CC=C|scarce":21710,"C=CCC(O)CC(O)CC=C|short":44478,"C=CCC(=O)CCC(=O)CC=C|plain":107702,"C=CCC(=O)CCC(=O)CC=C|broad":59818,"C=CCC(=O)CCC(=O)CC=C|loose":42344,"C=CCC(=O)CCC(=O)CC=C|each":153000,"C=CCC(=O)CCC(=O)CC=C|back":405600,"C=CCC(=O)CCC(=O)CC=C|scarce":11473,"C=CCC(=O)CCC(=O)CC=C|short":11821,"CC(O)CC(=O)CCC(Cl)CCC=C|plain":88708,"CC(O)CC(=O)CCC(Cl)CCC=C|broad":82251,"CC(O)CC(=O)CCC(Cl)CCC=C|loose":43952,"CC(O)CC(=O)CCC(Cl)CCC=C|each":203193,"CC(O)CC(=O)CCC(Cl)CCC=C|back":858360,"CC(O)CC(=O)CCC(Cl)CCC=C|scarce":14836,"CC(O)CC(=O)CCC(Cl)CCC=C|short":38700,"O=C1CCC(CC=C)CC1|plain":30821,"O=C1CCC(CC=C)CC1|broad":22112,"O=C1CCC(CC=C)CC1|loose":30504,"O=C1CCC(CC=C)CC1|each":66885,"O=C1CCC(CC=C)CC1|back":219141,"O=C1CCC(CC=C)CC1|scarce":5379,"O=C1CCC(CC=C)CC1|short":15210,"C=CCC(O)C1=CC=CC=C1|plain":58157,"C=CCC(O)C1=CC=CC=C1|broad":52785,"C=CCC(O)C1=CC=CC=C1|loose":30668,"C=CCC(O)C1=CC=CC=C1|each":173628,"C=CCC(O)C1=CC=CC=C1|back":593245,"C=CCC(O)C1=CC=CC=C1|scarce":7947,"C=CCC(O)C1=CC=CC=C1|short":15745,"C=CC1CCC(O)CC1|plain":36571,"C=CC1CCC(O)CC1|broad":36934,"C=CC1CCC(O)CC1|loose":21730,"C=CC1CCC(O)CC1|each":80818,"C=CC1CCC(O)CC1|back":374125,"C=CC1CCC(O)CC1|scarce":9577,"C=CC1CCC(O)CC1|short":15075,"CC(=O)CCC(O)C1=CC=CC=C1|plain":55685,"CC(=O)CCC(O)C1=CC=CC=C1|broad":50715,"CC(=O)CCC(O)C1=CC=CC=C1|loose":43460,"CC(=O)CCC(O)C1=CC=CC=C1|each":135315,"CC(=O)CCC(O)C1=CC=CC=C1|back":577993,"CC(=O)CCC(O)C1=CC=CC=C1|scarce":11022,"CC(=O)CCC(O)C1=CC=CC=C1|short":22550,"C=CC12C3C4C1C5C2C3C45CO|plain":6838,"C=CC12C3C4C1C5C2C3C45CO|broad":6167,"C=CC12C3C4C1C5C2C3C45CO|loose":21484,"C=CC12C3C4C1C5C2C3C45CO|each":13548,"C=CC12C3C4C1C5C2C3C45CO|back":124506,"C=CC12C3C4C1C5C2C3C45CO|scarce":6171,"C=CC12C3C4C1C5C2C3C45CO|short":2837,"OC1C2CC3CC(C2)CC1C3|plain":9047,"OC1C2CC3CC(C2)CC1C3|broad":9946,"OC1C2CC3CC(C2)CC1C3|loose":4466,"OC1C2CC3CC(C2)CC1C3|each":18682,"OC1C2CC3CC(C2)CC1C3|back":66667,"OC1C2CC3CC(C2)CC1C3|scarce":952,"OC1C2CC3CC(C2)CC1C3|short":4448,"OC1CC2CC1C=C2|plain":15470,"OC1CC2CC1C=C2|broad":19528,"OC1CC2CC1C=C2|loose":8216,"OC1CC2CC1C=C2|each":38775,"OC1CC2CC1C=C2|back":107992,"OC1CC2CC1C=C2|scarce":3629,"OC1CC2CC1C=C2|short":6095,"OCC1OC(O)C(O)C(O)C1O|plain":36396,"OCC1OC(O)C(O)C(O)C1O|broad":46566,"OCC1OC(O)C(O)C(O)C1O|loose":129168,"OCC1OC(O)C(O)C(O)C1O|each":45832,"OCC1OC(O)C(O)C(O)C1O|back":236574,"OCC1OC(O)C(O)C(O)C1O|scarce":4400,"OCC1OC(O)C(O)C(O)C1O|short":15915};
+const BASE = {"C=CCC(O)CC=C|plain":98040,"C=CCC(O)CC=C|broad":97637,"C=CCC(O)CC=C|loose":188288,"C=CCC(O)CC=C|each":252000,"C=CCC(O)CC=C|back":737280,"C=CCC(O)CC=C|scarce":13140,"C=CCC(O)CC=C|short":43920,"CC(O)CCC=C|plain":70800,"CC(O)CCC=C|broad":67088,"CC(O)CCC=C|loose":155447,"CC(O)CCC=C|each":195390,"CC(O)CCC=C|back":778800,"CC(O)CCC=C|scarce":15750,"CC(O)CCC=C|short":27270,"CC(=O)CCC(O)CC=C|plain":107640,"CC(=O)CCC(O)CC=C|broad":123491,"CC(=O)CCC(O)CC=C|loose":289001,"CC(=O)CCC(O)CC=C|each":301860,"CC(=O)CCC(O)CC=C|back":1013040,"CC(=O)CCC(O)CC=C|scarce":17550,"CC(=O)CCC(O)CC=C|short":37440,"C=CCC(O)CC(O)CC=C|plain":136800,"C=CCC(O)CC(O)CC=C|broad":137066,"C=CCC(O)CC(O)CC=C|loose":280608,"C=CCC(O)CC(O)CC=C|each":349200,"C=CCC(O)CC(O)CC=C|back":1432200,"C=CCC(O)CC(O)CC=C|scarce":24640,"C=CCC(O)CC(O)CC=C|short":54730,"C=CCC(=O)CCC(=O)CC=C|plain":98560,"C=CCC(=O)CCC(=O)CC=C|broad":77425,"C=CCC(=O)CCC(=O)CC=C|loose":273501,"C=CCC(=O)CCC(=O)CC=C|each":330600,"C=CCC(=O)CCC(=O)CC=C|back":688160,"C=CCC(=O)CCC(=O)CC=C|scarce":13630,"C=CCC(=O)CCC(=O)CC=C|short":25110,"CC(O)CC(=O)CCC(Cl)CCC=C|plain":106020,"CC(O)CC(=O)CCC(Cl)CCC=C|broad":120771,"CC(O)CC(=O)CCC(Cl)CCC=C|loose":245943,"CC(O)CC(=O)CCC(Cl)CCC=C|each":274680,"CC(O)CC(=O)CCC(Cl)CCC=C|back":1181880,"CC(O)CC(=O)CCC(Cl)CCC=C|scarce":20235,"CC(O)CC(=O)CCC(Cl)CCC=C|short":37440,"O=C1CCC(CC=C)CC1|plain":32900,"O=C1CCC(CC=C)CC1|broad":40605,"O=C1CCC(CC=C)CC1|loose":20384,"O=C1CCC(CC=C)CC1|each":138075,"O=C1CCC(CC=C)CC1|back":197400,"O=C1CCC(CC=C)CC1|scarce":6327,"O=C1CCC(CC=C)CC1|short":9223,"C=CCC(O)C1=CC=CC=C1|plain":104009,"C=CCC(O)C1=CC=CC=C1|broad":149450,"C=CCC(O)C1=CC=CC=C1|loose":34752,"C=CCC(O)C1=CC=CC=C1|each":211310,"C=CCC(O)C1=CC=CC=C1|back":732716,"C=CCC(O)C1=CC=CC=C1|scarce":15323,"C=CCC(O)C1=CC=CC=C1|short":30150,"C=CC1CCC(O)CC1|plain":81804,"C=CC1CCC(O)CC1|broad":65489,"C=CC1CCC(O)CC1|loose":44172,"C=CC1CCC(O)CC1|each":179136,"C=CC1CCC(O)CC1|back":767550,"C=CC1CCC(O)CC1|scarce":12952,"C=CC1CCC(O)CC1|short":27450,"CC(=O)CCC(O)C1=CC=CC=C1|plain":70304,"CC(=O)CCC(O)C1=CC=CC=C1|broad":61958,"CC(=O)CCC(O)C1=CC=CC=C1|loose":35512,"CC(=O)CCC(O)C1=CC=CC=C1|each":116861,"CC(=O)CCC(O)C1=CC=CC=C1|back":607942,"CC(=O)CCC(O)C1=CC=CC=C1|scarce":13888,"CC(=O)CCC(O)C1=CC=CC=C1|short":24272,"C=CC12C3C4C1C5C2C3C45CO|plain":54196,"C=CC12C3C4C1C5C2C3C45CO|broad":9507,"C=CC12C3C4C1C5C2C3C45CO|loose":11352,"C=CC12C3C4C1C5C2C3C45CO|each":38443,"C=CC12C3C4C1C5C2C3C45CO|back":628996,"C=CC12C3C4C1C5C2C3C45CO|scarce":9443,"C=CC12C3C4C1C5C2C3C45CO|short":12958,"OC1C2CC3CC(C2)CC1C3|plain":20166,"OC1C2CC3CC(C2)CC1C3|broad":22157,"OC1C2CC3CC(C2)CC1C3|loose":6083,"OC1C2CC3CC(C2)CC1C3|each":31760,"OC1C2CC3CC(C2)CC1C3|back":64532,"OC1C2CC3CC(C2)CC1C3|scarce":1238,"OC1C2CC3CC(C2)CC1C3|short":10939,"OC1CC2CC1C=C2|plain":38937,"OC1CC2CC1C=C2|broad":45849,"OC1CC2CC1C=C2|loose":12166,"OC1CC2CC1C=C2|each":41042,"OC1CC2CC1C=C2|back":110662,"OC1CC2CC1C=C2|scarce":9470,"OC1CC2CC1C=C2|short":17067,"OCC1OC(O)C(O)C(O)C1O|plain":51948,"OCC1OC(O)C(O)C(O)C1O|broad":31590,"OCC1OC(O)C(O)C(O)C1O|loose":200707,"OCC1OC(O)C(O)C(O)C1O|each":50128,"OCC1OC(O)C(O)C(O)C1O|back":337662,"OCC1OC(O)C(O)C(O)C1O|scarce":7874,"OCC1OC(O)C(O)C(O)C1O|short":22587,"OC1CCC(O)CC1|plain":115830,"OC1CCC(O)CC1|broad":100048,"OC1CCC(O)CC1|loose":57974,"OC1CCC(O)CC1|each":233250,"OC1CCC(O)CC1|back":1266408,"OC1CCC(O)CC1|scarce":22064,"OC1CCC(O)CC1|short":43645,"O=C1CCC(O)CC1C=C|plain":88854,"O=C1CCC(O)CC1C=C|broad":78622,"O=C1CCC(O)CC1C=C|loose":49938,"O=C1CCC(O)CC1C=C|each":219721,"O=C1CCC(O)CC1C=C|back":704368,"O=C1CCC(O)CC1C=C|scarce":13777,"O=C1CCC(O)CC1C=C|short":27612,"OC(C=C)C1=CC=CC=C1|plain":21178,"OC(C=C)C1=CC=CC=C1|broad":11146,"OC(C=C)C1=CC=CC=C1|loose":6955,"OC(C=C)C1=CC=CC=C1|each":26787,"OC(C=C)C1=CC=CC=C1|back":49647,"OC(C=C)C1=CC=CC=C1|scarce":6451,"OC(C=C)C1=CC=CC=C1|short":3302,"CC(O)CC(=O)C1=CC=CC=C1|plain":129902,"CC(O)CC(=O)C1=CC=CC=C1|broad":75586,"CC(O)CC(=O)C1=CC=CC=C1|loose":35712,"CC(O)CC(=O)C1=CC=CC=C1|each":182532,"CC(O)CC(=O)C1=CC=CC=C1|back":522153,"CC(O)CC(=O)C1=CC=CC=C1|scarce":6880,"CC(O)CC(=O)C1=CC=CC=C1|short":15514,"OCC12C3C4C1C5C2C3C45CO|plain":10874,"OCC12C3C4C1C5C2C3C45CO|broad":9225,"OCC12C3C4C1C5C2C3C45CO|loose":6490,"OCC12C3C4C1C5C2C3C45CO|each":10971,"OCC12C3C4C1C5C2C3C45CO|back":68191,"OCC12C3C4C1C5C2C3C45CO|scarce":1348,"OCC12C3C4C1C5C2C3C45CO|short":3146,"OC1CC2CCC1C=C2|plain":38675,"OC1CC2CCC1C=C2|broad":46431,"OC1CC2CCC1C=C2|loose":10890,"OC1CC2CCC1C=C2|each":65917,"OC1CC2CCC1C=C2|back":146569,"OC1CC2CCC1C=C2|scarce":5182,"OC1CC2CCC1C=C2|short":8674,"OCC(O)C(O)C(O)C(O)C=O|plain":128639,"OCC(O)C(O)C(O)C(O)C=O|broad":138703,"OCC(O)C(O)C(O)C(O)C=O|loose":491565,"OCC(O)C(O)C(O)C(O)C=O|each":147261,"OCC(O)C(O)C(O)C(O)C=O|back":771831,"OCC(O)C(O)C(O)C(O)C=O|scarce":22483,"OCC(O)C(O)C(O)C(O)C=O|short":42735,"OCC1OC(O)CC1O|plain":22715,"OCC1OC(O)CC1O|broad":8839,"OCC1OC(O)CC1O|loose":18455,"OCC1OC(O)CC1O|each":11310,"OCC1OC(O)CC1O|back":55607,"OCC1OC(O)CC1O|scarce":1259,"OCC1OC(O)CC1O|short":2879,"OCC(O)CO|plain":23064,"OCC(O)CO|broad":47143,"OCC(O)CO|loose":136740,"OCC(O)CO|each":34547,"OCC(O)CO|back":104751,"OCC(O)CO|scarce":4480,"OCC(O)CO|short":9709};
 function briefBase(feed, brief) {
   const k = (feed.atoms ? RX.sigOf(feed) : feed) + '|' + brief; if (BASE[k]) return BASE[k];
   const run = { rack: RUNG.start, grade: {}, lv: {}, uses: {}, rare: false, brief }; let top = 0;
@@ -456,12 +474,15 @@ function briefBase(feed, brief) {
 // before each round: three rounds to choose from, each a molecule, a brief, a number to beat and what it pays
 function runBriefs(run, rnd) {
   const R = rnd || Math.random, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
-  const feeds = mix(FEEDS), sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
+  const open = Object.keys(KIN).filter(k => KIN[k].tier <= (run.tier || 0)), draw = () => { let t = 0; open.forEach(k => { t += KIN[k].odds; }); let v = R() * t, pick = 'chain'; for (const k of open) { v -= KIN[k].odds; if (v < 0) { pick = k; break; } } return pick; };
+  const feeds = []; for (let guard = 0; feeds.length < 3 && guard < 80; guard++) { const k = draw(), of = FEEDS.filter(f => KIN_OF[f] === k && !feeds.includes(f)); if (of.length && (open.length < 3 || !feeds.some(f => KIN_OF[f] === k))) feeds.push(of[Math.floor(R() * of.length)]); }
+  while (feeds.length < 3) feeds.push(FEEDS[feeds.length]);
+  const sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
   // the molecule left by the last round can be carried on with, while a reagent held still acts on it
   const carry = run.last && run.rack.filter(id => RX.CARDS[id].find(run.last).length).length >= 1;
-  return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { const own = o.brief === 'carry'; o.model = own ? run.last : salt(modelOf(feeds[i]), R); o.quota = runQuota(run, own ? run.last : feeds[i], o.brief); return o; });
+  return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { const own = o.brief === 'carry'; o.model = own ? run.last : salt(modelOf(feeds[i]), R); o.kin = own ? (run.kin || 'chain') : kinOf(feeds[i]); o.quota = runQuota(run, own ? run.last : feeds[i], o.brief); return o; });
 }
-function runChoose(run, o) { run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
+function runChoose(run, o) { run.kin = o.kin || 'chain'; run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
 // keeps the molecule and the extra a beaten round ended on, for carrying on
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much
@@ -503,6 +524,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { KIN, kinOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
