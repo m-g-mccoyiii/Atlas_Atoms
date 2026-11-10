@@ -384,7 +384,9 @@ function shapeOf(m) {
   const rings = Math.max(0, bonds - hv.length + comps), arene = Math.floor(aromaticAtoms(m).size / 6);
   const inRing = (a, b) => { const sn = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!sn.has(v)) { sn.add(v); st.push(v); } } } return false; };
   const cage = rings >= 2 && hv.some(a => nb(a).filter(b => inRing(a, b)).length >= 3);
-  return { ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };
+  // resonance: single bonds with a double bond on each side (C=C-C=C, C=C-C=O, and three in a benzene ring)
+  const dbl = a => nbs(m, a).some(n => n.bond.order === 2), conj = m.bonds.filter(b => b.order === 1 && set.has(b.a) && set.has(b.b) && dbl(b.a) && dbl(b.b)).length;
+  return { conj, ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };
 }
 AA.rx = { shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

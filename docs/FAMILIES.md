@@ -40,3 +40,13 @@ Ideas not built:
 - Runaway: a self-reaction that makes the groups it needs again (a polymer end, a radical), so it goes on until something stops it, with the gain growing each turn.
 - Catalyst: a piece of equipment that makes the last reaction happen again by itself, paying less each time until it is spent for the page.
 - Inhibitor: a piece that stops a chain early and banks what it has made at a premium, for when the chain would wreck the molecule.
+
+## Twist and resonance (later again)
+
+Twist. A molecule no longer reacts with itself unasked. When it could (two OH groups in reach, two C=C in reach, a ring ready to become aromatic), a twist stands under it: two red arrows chasing round, with what it would make. The player clicks it or presses T, once a page. It uses none of the page's reactions and carries the row on. The molecule winds up, spins once and folds, and lands with a ring of ink. The old behaviour, reacting with itself during a chain, is kept behind ?self=auto.
+
+Resonance. Not a family that is dealt: a state any molecule can be built into. Each single bond with a double bond on both sides is a link (C=C-C=C, C=C-C=O, three in a benzene ring). Every reaction multiplies extra by 1.05 per link, up to six links. It compounds, so a long chain on a molecule with resonance grows very fast. It is called out when a link is gained.
+
+The numbers to beat were measured again with resonance in (161 figures). Run length was not measured again.
+
+Not built: polymers that keep growing (runaway), catalyst, inhibitor.
