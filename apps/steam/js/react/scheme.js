@@ -99,13 +99,31 @@ function start(app) {
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
   // ---------- state ----------
-  const MADE = { x: 0.5, z: 13 }, MULT = { x: -9.5, z: 8.6 }, CALL = { x: 0, z: -2.4 };
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0 };
+  const MADE = { x: -2.5, z: 13 }, MULT = { x: -10.5, z: 8.6 }, CALL = { x: 0, z: -2.4 }, KIT = { x: 10.8, z: 9.2, dx: 5.6 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   const rowAt = k => ({ x: ROW.x + k * ROW.dx, z: ROW.z });
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
   const callout = (text, sub, col) => { st.call = { text, sub: sub || '', col: col || INK, t: performance.now() }; };
+  const spray = (n, col, wide) => { const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 22 : 7); st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 22 : 10), t: now, col }); } };
+
+  // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
+  let kitObjs = [];
+  const GLASS = std({ color: lin(0xdfe9ee), transparent: true, opacity: 0.42, roughness: 0.08 });
+  function buildKit() {
+    kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = [];
+    st.gear.forEach((id, i) => {
+      const q = P.GEARS[id], grp = new T.Group(), hue = hash(id + 'hue'), liq = new T.Color().setHSL(hue, 0.75, 0.5), lm = std({ color: liq.clone().convertSRGBToLinear(), roughness: 0.3 });
+      if (q.shape === 'box') { add(new T.BoxGeometry(2.6, 1.3, 1.9), std({ color: lin(0x3b3e42), roughness: 0.5, metalness: 0.3 }), 0, 0.65, 0, grp); add(new T.CylinderGeometry(0.42, 0.5, 0.3, 20), lm, 0.6, 1.45, 0, grp); add(new T.BoxGeometry(1.1, 0.5, 0.06), std({ color: lin(0x9be8b0), roughness: 0.4 }), -0.55, 0.8, 0.96, grp); }
+      else if (q.shape === 'column') { add(new T.CylinderGeometry(0.5, 0.5, 3.4, 20), GLASS, 0, 1.7, 0, grp); add(new T.CylinderGeometry(0.32, 0.32, 2.2, 16), lm, 0, 1.2, 0, grp); add(new T.CylinderGeometry(0.9, 1, 0.25, 24), std({ color: lin(0x2a2b2e), roughness: 0.6 }), 0, 0.12, 0, grp); }
+      else if (q.shape === 'flask') { add(new T.CylinderGeometry(0.35, 1.35, 2.2, 28), GLASS, 0, 1.1, 0, grp); add(new T.CylinderGeometry(0.75, 1.25, 0.9, 24), lm, 0, 0.5, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 0.7, 20), GLASS, 0, 2.5, 0, grp); }
+      else if (q.shape === 'round') { add(new T.SphereGeometry(1.25, 28, 20), GLASS, 0, 1.3, 0, grp); add(new T.SphereGeometry(1.0, 24, 16, 0, 6.3, Math.PI / 2, Math.PI / 2), lm, 0, 1.3, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 1, 20), GLASS, 0, 2.8, 0, grp); }
+      else { add(new T.CylinderGeometry(1.35, 0.25, 1.9, 28), GLASS, 0, 2.0, 0, grp); add(new T.CylinderGeometry(0.2, 0.2, 1.1, 14), GLASS, 0, 0.55, 0, grp); add(new T.CylinderGeometry(0.9, 0.3, 0.9, 20), lm, 0, 1.7, 0, grp); }
+      grp.position.set(KIT.x + i * KIT.dx, 0, KIT.z); grp.rotation.y = (hash(id + 'yaw') - 0.5) * 0.7; scene.add(grp);
+      kitObjs.push({ id, grp, col: '#' + liq.getHexString() });
+    });
+  }
 
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
   function refresh() {
@@ -124,7 +142,8 @@ function start(app) {
   function load(i) {
     st.feed = (i + P.FEEDS.length) % P.FEEDS.length; st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0; tweens = [];
     freeMol(center); rowMols.forEach(freeMol); rowMols = [];
-    g = P.synBegin(P.FEEDS[st.feed], true); st.quota = P.synQuota(P.FEEDS[st.feed], 30);
+    st.gear = P.kitRound(3); st.fired = {}; st.want = 0; st.mult = 1; buildKit();
+    g = P.synBegin(P.FEEDS[st.feed], true, null, st.gear); st.quota = P.synQuota(P.FEEDS[st.feed], 30, st.gear);
     setAlign(g.m); center = buildMol(g.m, null); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
     refresh(); sfx.feed();
   }
@@ -143,21 +162,40 @@ function start(app) {
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh();
   }
-  // everything the player sees and hears when a reaction lands
+  // Everything the player sees and hears when a reaction lands. Each effect arrives on its own beat, in the order
+  // it was scored: the reagent at each site, then the run, then each piece of equipment. Returns how long it takes.
   function land(o, before, wasOpen) {
-    const now = performance.now(), gain = P.made(g) - before, t = g.trail[g.trail.length - 1], route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
-    st.floats.push({ txt: '+' + fmt(gain), t: now, size: 70 + 26 * size, dx: (Math.random() - 0.5) * 3 });
-    for (let k = 0; k < 8 + 5 * o.r.hits; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (4 + size); st.blots.push({ x: C0.x + Math.cos(a) * d * 1.5, z: C0.z + Math.sin(a) * d * 0.8, r: 4 + Math.random() * (6 + 3 * size), t: now, col: rgb(colOf(o.id)) }); }
-    st.shake = Math.max(st.shake, 0.25 + 0.22 * size); st.multBump = 1;
-    sfx.bond(); sfx.lock(Math.min(12, len + g.trail.length));
-    if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'times ' + fmtB(route.val), '#8a6a00'); sfx.good(); st.shake = Math.max(st.shake, 1); }
-    else if (o.finish) { callout('finished', 'times ' + fmtB(1 + P.SYN.finishMult * o.r.hits), GREEN); sfx.good(); }
-    else if (t.cont && len >= 3) callout('run of ' + len, '', INK);
-    else if (wasOpen && !t.cont) callout('run closed', '', PENCIL);
-    // passing the number to beat, and each doubling past it
-    const m = P.made(g), times = Math.floor(m / st.quota);
-    if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 1.4; sfx.quota(); callout(fmt(st.quota) + ' beaten', '', GREEN); }
-    else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 0.8; st.flashC = '255,214,0'; st.shake = 1.4; sfx.over(); callout(times + ' times over', '', '#8a6a00'); }
+    const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev.filter(e => e.kind !== 'grade' && e.kind !== 'catch'), base = g.total, n = beats.length;
+    const gap = Math.max(34, Math.min(95, 620 / Math.max(1, n))), col = rgb(colOf(o.id));
+    sfx.bond(); spray(8 + 5 * o.r.hits, col, false); st.shake = Math.max(st.shake, 0.3);
+    beats.forEach((e, k) => setTimeout(() => {
+      if (tok !== st.tok) return;
+      st.want = base + Math.round(e.yield * e.batch); st.mult = e.batch; st.multBump = e.kind === 'x' ? 1 : Math.max(st.multBump, 0.4);
+      const piece = P.GEARS[e.src] ? e.src : null, txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val);
+      if (piece) st.fired[piece] = { t: performance.now(), txt };
+      else if (e.src === 'rare') { st.floats.push({ txt: (t.rare === 'double' ? 'double ' : 'strong ') + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' }); spray(14, '#b0189a', false); }
+      if (e.kind === 'x') { st.shake = Math.max(st.shake, 0.8); spray(10, REDINK, false); }
+      else st.shake = Math.max(st.shake, 0.22);
+      sfx.lock(Math.min(12, k + g.cur.path.length));
+    }, 60 + k * gap));
+    const dur = 60 + n * gap + 80;
+    setTimeout(() => {
+      if (tok !== st.tok) return;
+      const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
+      st.want = P.made(g); st.mult = g.cur.batch;
+      st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
+      st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
+      if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'times ' + fmtB(route.val), '#8a6a00'); sfx.good(); st.shake = Math.max(st.shake, 1.6); spray(60, '#8a6a00', true); }
+      else if (o.finish) { callout('finished', 'times ' + fmtB(1 + P.SYN.finishMult * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
+      else if (t.cont && len >= 3) { callout(len + ' in a row', 'times ' + fmtB(g.cur.batch), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
+      else if (wasOpen && !t.cont) callout('run closed', '', PENCIL);
+      // passing the number to beat, and each doubling past it
+      const m = P.made(g), times = Math.floor(m / st.quota);
+      if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); callout(fmt(st.quota) + ' beaten', '', GREEN); spray(90, GREEN, true); }
+      else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); callout(times + ' times over', '', '#8a6a00'); spray(120, '#e0b400', true); }
+      dirty = true;
+    }, dur);
+    return dur;
   }
   function pick(i) {
     const s = slots[i], o = s && s.o, chosen = prods[i];
@@ -165,7 +203,7 @@ function start(app) {
     setHover(-1); st.mode = 'move';
     const prev = center, k = g.pageSteps, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0;
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
-    land(o, before, wasOpen);
+    const dur = land(o, before, wasOpen);
     prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
     tween(prev, rowAt(Math.min(k, 3)), SC_ROW, 0.26); rowMols.push(prev); tween(chosen, C0, SC_MAIN, 0.26);
     // the rules move on by the clock, not by the drawing, so a stalled frame cannot leave the page stuck
@@ -177,7 +215,7 @@ function start(app) {
       refresh();
       // a page with nothing left to do turns itself
       if (!slots.some(q => q && q.o)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 520); }
-    }, 290);
+    }, Math.max(290, dur + 60));
     dirty = true;
   }
   const next = () => { if (st.mode === 'done') load(st.pass ? st.feed + 1 : st.feed); };
@@ -212,6 +250,8 @@ function start(app) {
       hand(x, 54); x.textAlign = 'center'; const tw = x.measureText(verb).width;
       if (o) { x.strokeStyle = rgb(colOf(s.id)); x.globalAlpha = hov ? 0.85 : 0.55; x.lineWidth = hov ? 22 : 15; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26 - tw / 2, 14); x.lineTo(-26 + tw / 2, 10); x.stroke(); x.globalAlpha = 1; }
       x.fillStyle = col; x.fillText(verb, -26, 0);
+      const rare = o && !s.fin && g.rare ? g.rare[s.id] : null;
+      if (rare) { x.strokeStyle = '#b0189a'; x.lineWidth = 5; x.lineCap = 'round'; for (let k = 0; k < 10; k++) { const a = k * 0.628 + 0.2, r0 = tw / 2 + 60, r1 = r0 + 16 + (k % 2) * 10; x.beginPath(); x.moveTo(-26 + Math.cos(a) * r0, -18 + Math.sin(a) * r0 * 0.42); x.lineTo(-26 + Math.cos(a) * r1, -18 + Math.sin(a) * r1 * 0.42); x.stroke(); } marker(x, 34); x.fillStyle = '#b0189a'; x.fillText(rare, -26, -48); hand(x, 54); }
       hand(x, 38); x.fillStyle = 'rgba(90,86,78,0.7)'; x.fillText(String(i + 1), -26 - tw / 2 - 24, -2);
       if (o) { hand(x, 52); x.fillStyle = col; x.fillText(String(o.r.hits), tw / 2 + 18, -2); ring(x, [tw / 2 + 19, -18], 27, 25, 4, col); if (s.fin) { hand(x, 34); x.fillStyle = PENCIL; x.fillText('last step', -26, 44); } }
       if (!s.fin) { x.strokeStyle = o ? PENCIL : FAINT; x.lineWidth = 4; for (let k = 0; k < (g.left[s.id] || 0); k++) { x.beginPath(); x.moveTo(-26 - tw / 2 + k * 13, 32); x.lineTo(-22 - tw / 2 + k * 13, 54); x.stroke(); } }
@@ -227,11 +267,19 @@ function start(app) {
     });
     // the multiplier of the run that is open
     if (st.mode !== 'done') {
-      const mp = px(MULT), len = g.cur.path.length, b = g.cur.batch, k = 1 + 0.35 * st.multBump, hot = len >= 2;
+      const mp = px(MULT), len = g.cur.path.length, b = st.mult, k = 1 + 0.35 * st.multBump, hot = len >= 2;
       if (hot) swipe(x, [mp[0] - 120, mp[1] - 22], [mp[0] + 120, mp[1] - 30], 70 * k);
       marker(x, (hot ? 78 : 54) * k); x.textAlign = 'center'; x.fillStyle = hot ? INK : FAINT; x.fillText('times ' + fmtB(b), mp[0], mp[1]);
       if (hot) { hand(x, 38); x.fillStyle = PENCIL; x.fillText(len + ' in a row', mp[0], mp[1] + 44); }
     }
+    // equipment: its name, what it does, and what it just added
+    kitObjs.forEach((k, i) => {
+      const q = P.GEARS[k.id], c = px({ x: KIT.x + i * KIT.dx, z: KIT.z + 2.9 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
+      const words = q.name.split(' '), l1 = words.length > 1 ? words.slice(0, -1).join(' ') : q.name, l2 = words.length > 1 ? words[words.length - 1] : '';
+      hand(x, 32); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(l1, c[0], c[1]); if (l2) x.fillText(l2, c[0], c[1] + 30);
+      hand(x, 25); x.fillStyle = PENCIL; q.note.split(': ').forEach((ln, j) => x.fillText(ln, c[0], c[1] + (l2 ? 58 : 30) + j * 24));
+      if (age < 0.6) { const up = px({ x: KIT.x + i * KIT.dx, z: KIT.z - 3.4 - 1.5 * age }); marker(x, 62 * (age < 0.08 ? 1.5 : 1)); x.globalAlpha = 1 - age / 0.6; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
+    });
     // pages, and a circle for each reaction on this one
     for (let k = 1; k <= P.SYN.pages; k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     for (let k = 0; k < P.DIAL.steps; k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
@@ -239,10 +287,10 @@ function start(app) {
     const q = px(MADE), beaten = st.shown >= st.quota, done = st.mode === 'done';
     marker(x, 110); x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(fmt(st.shown), q[0], q[1]);
     hand(x, 38); x.fillStyle = PENCIL; x.fillText('made', q[0], q[1] - 96);
-    hand(x, 60); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), q[0] + 60, q[1]); hand(x, 38); x.fillStyle = PENCIL; x.fillText('to beat', q[0] + 60, q[1] - 62);
-    if (beaten) { x.strokeStyle = GREEN; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(q[0] + 16, q[1] - 30); x.lineTo(q[0] + 30, q[1] - 8); x.lineTo(q[0] + 52, q[1] - 62); x.stroke(); }
+    hand(x, 60); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), q[0] + 84, q[1]); hand(x, 38); x.fillStyle = PENCIL; x.fillText('to beat', q[0] + 84, q[1] - 62);
+    if (beaten) { x.strokeStyle = GREEN; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(q[0] + 22, q[1] - 30); x.lineTo(q[0] + 36, q[1] - 8); x.lineTo(q[0] + 60, q[1] - 62); x.stroke(); }
     // numbers rising off the molecule
-    st.floats = st.floats.filter(f => now - f.t < 950); st.floats.forEach(f => { const k = (now - f.t) / 950, c = px({ x: C0.x + f.dx, z: C0.z - 2.5 - 5 * (1 - Math.pow(1 - k, 2)) }), pop = k < 0.12 ? 0.6 + k / 0.12 * 0.6 : 1.2 - Math.min(0.2, (k - 0.12)); x.globalAlpha = 1 - k * k; marker(x, f.size * pop); x.textAlign = 'center'; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
+    st.floats = st.floats.filter(f => now - f.t < 950); st.floats.forEach(f => { const k = (now - f.t) / 950, c = px({ x: C0.x + f.dx, z: C0.z - 2.5 - 5 * (1 - Math.pow(1 - k, 2)) }), pop = k < 0.12 ? 0.6 + k / 0.12 * 0.6 : 1.2 - Math.min(0.2, (k - 0.12)); x.globalAlpha = 1 - k * k; marker(x, f.size * pop); x.textAlign = 'center'; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens
     if (st.call && now - st.call.t < 1400) {
       const k = (now - st.call.t) / 1400, c = px(CALL), pop = k < 0.1 ? 1.5 - 5 * k : 1, al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
@@ -295,8 +343,9 @@ function start(app) {
     });
     ended.forEach(f => f());
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const want = st.hover === i ? 0.7 : 0; m.group.position.y += (want - m.group.position.y) * Math.min(1, dt * 14); });
-    const target = g ? P.made(g) : 0;
-    if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 10); dirty = true; }
+    const target = st.mode === 'done' && g ? g.total : st.want;
+    if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 16); dirty = true; }
+    kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 1.6 : 0; k.grp.scale.setScalar(age < 0.28 ? 1.18 : 1); if (age < 0.7) dirty = true; });
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
     if (st.floats.length || st.blots.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
@@ -307,7 +356,7 @@ function start(app) {
   }
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover,
-    state: () => ({ mode: st.mode, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
+    state: () => ({ mode: st.mode, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
   size(); load(0); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
