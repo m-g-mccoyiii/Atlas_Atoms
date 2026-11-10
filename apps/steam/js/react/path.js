@@ -17,7 +17,8 @@ const fmt = n => Math.round(n).toLocaleString('en-US');
 const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
 
 // ---------- rules, with nothing drawn ----------
-function begin(feed, relaxed) {
+// offer: the reagents on the ring for this order; the rest of the rack sits the order out
+function begin(feed, relaxed, offer) {
   const run = RUN.newRun(7, {}); run.gear = GEAR.slice();
   RUN.beginOrder(run); RUN.chooseFeed(run, 0);
   const cur = run.cur, m = relaxed ? AA.Model.fromSmilesRelaxed(feed, 4) : RX.fromSmiles(feed), left = {};
@@ -25,7 +26,7 @@ function begin(feed, relaxed) {
   cur.feed = feed; cur.feedSig = RX.sigOf(m); cur.seen = new Set([cur.feedSig]); cur.spec = null; cur.keep = null; cur.cond = null; cur.stepsMax = 99;
   cur.yield = 0; cur.batch = 1; cur.path = []; cur.fresh = new Set();
   run.deck.forEach(id => { left[id] = (left[id] || 0) + 1; });
-  return { run, cur, m, left, kinds: Object.keys(left), heat: 0, trail: [], dead: false };
+  return { run, cur, m, left, all: Object.keys(left), kinds: offer || Object.keys(left), heat: 0, trail: [], dead: false };
 }
 // runs one reagent on a copy of the molecule
 function tryOne(g, m, id) {
@@ -59,8 +60,8 @@ function take(g, o, rnd) {
   return extra;
 }
 // every path that stays under the heat limit when each risky point counts as half
-function survey(feed, depth) {
-  const g = begin(feed, false), cur = g.cur, res = []; let nodes = 0;
+function survey(feed, depth, offer) {
+  const g = begin(feed, false, offer), cur = g.cur, res = []; let nodes = 0;
   (function dfs(m, heat, path) {
     res.push({ path: path.join(' '), score: RUN.scoreOf(cur) });
     if (path.length >= (depth || 7) || nodes > 20000) return;
@@ -85,7 +86,17 @@ function survey(feed, depth) {
   return { feed, paths: res.length, best, bestPath: res[0].path, near: near.length, nearFirsts: Array.from(new Set(near.map(r => r.path.split(' ')[0]))),
     firsts: Object.keys(firsts).map(f => ({ id: f, pct: Math.round(100 * firsts[f] / best) })).sort((a, b) => b.pct - a.pct) };
 }
-AA.rxPath = { HEAT, FEEDS, begin, options, take, survey };
+// a random offer of n reagents, at least two of which react with the feedstock as it stands
+function deal(feed, n, rnd) {
+  const g = begin(feed, false), live = g.all.filter(id => RX.CARDS[id].find(g.m).length);
+  for (let t = 0; t < 40; t++) {
+    const pool = g.all.slice(), out = [];
+    while (out.length < n && pool.length) out.push(pool.splice(Math.floor((rnd || Math.random)() * pool.length), 1)[0]);
+    if (out.filter(id => live.includes(id)).length >= Math.min(2, live.length)) return g.all.filter(id => out.includes(id));
+  }
+  return g.all;
+}
+AA.rxPath = { HEAT, FEEDS, OFFER: 4, begin, options, take, survey, deal };
 
 // ---------- the screen ----------
 function start(app) {
@@ -119,13 +130,13 @@ function start(app) {
     });
     go.disabled = st.mode !== 'play' || !g.trail.length;
   }
-  function load(i) {
-    st.feed = (i + FEEDS.length) % FEEDS.length; st.tok++; st.mode = 'play'; st.shown = 0; st.y = 0; st.b = 1; st.beat = -1; st.hover = null; st.fired = {};
+  function load(i, keep) {
+    st.feed = (i + FEEDS.length) % FEEDS.length; if (!keep || !st.offer) st.offer = deal(FEEDS[st.feed], AA.rxPath.OFFER); st.tok++; st.mode = 'play'; st.shown = 0; st.y = 0; st.b = 1; st.beat = -1; st.hover = null; st.fired = {};
     fx.clear();
-    g = begin(FEEDS[st.feed], true);
-    const sv = survey(FEEDS[st.feed], 7), q = sv.best * 0.45, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+    g = begin(FEEDS[st.feed], true, st.offer);
+    const sv = survey(FEEDS[st.feed], 7, st.offer), q = sv.best * 0.45, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
     st.quota = Math.max(50, Math.round(q / mag) * mag);
-    if (!slots.length) g.kinds.forEach((id, k) => {
+    if (!slots.length) g.all.forEach((id, k) => {
       const el = h('div', 'prod'), cv = h('canvas'); el.append(cv); stage.append(el);
       const s = { id, card: RX.CARDS[id], el, cv, v: null, opt: null, pos: { x: 0, y: 0 } };
       el.addEventListener('click', () => pickSlot(k));
@@ -204,6 +215,7 @@ function start(app) {
     x.setTransform(L.dpr, 0, 0, L.dpr, 0, 0); x.clearRect(0, 0, W, H); x.lineCap = 'round'; x.textBaseline = 'alphabetic';
     const hv = play && st.hover && st.hover.opt ? st.hover : null;
     slots.forEach((s, i) => {
+      if (!g.kinds.includes(s.id)) return;
       const p = s.pos, o = play ? s.opt : null, col = css(bright(s.card.rgb)), dx = p.x - L.cx, dy = p.y - L.cy, d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d;
       const a = L.main * 0.4, b = d - L.d / 2 - 4, r = L.d / 2;
       x.strokeStyle = o ? col : 'rgba(239,234,219,0.08)'; x.lineWidth = o ? (hv === s ? 8 : 4) : 2; x.setLineDash([]);
@@ -297,16 +309,16 @@ function start(app) {
   }
 
   go.addEventListener('click', deliver);
-  again.addEventListener('click', () => load(st.feed));
+  again.addEventListener('click', () => load(st.feed, true));
   next.addEventListener('click', () => load(st.feed + 1));
   root.addEventListener('resize', () => { if (L) layout(); });
   root.addEventListener('keydown', e => {
     if (e.key >= '1' && e.key <= '9') pickSlot(+e.key - 1);
-    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (st.mode === 'play') deliver(); else load(st.mode === 'done' && st.pass ? st.feed + 1 : st.feed); }
-    else if (e.key === 'r' || e.key === 'R') load(st.feed);
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (st.mode === 'play') deliver(); else load(st.mode === 'done' && st.pass ? st.feed + 1 : st.feed, !(st.mode === 'done' && st.pass)); }
+    else if (e.key === 'r' || e.key === 'R') load(st.feed, true);
     else if (e.key === 'n' || e.key === 'N') load(st.feed + 1);
   });
-  AA.rxPath.ui = { st, load, pickSlot, deliver, state: () => ({ mode: st.mode, heat: g.heat, trail: g.trail.map(t => t.id), opts: Object.keys(opts), quota: st.quota, total: st.target, pass: st.pass }) };
+  AA.rxPath.ui = { st, load, pickSlot, deliver, state: () => ({ mode: st.mode, heat: g.heat, trail: g.trail.map(t => t.id), opts: Object.keys(opts), offer: st.offer, quota: st.quota, total: st.target, pass: st.pass }) };
   const boot = () => { load(0); requestAnimationFrame(frame); };
   if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('30px Marker'), document.fonts.load('30px Hand')]).then(boot, boot); else boot();
 }
