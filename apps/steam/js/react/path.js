@@ -113,7 +113,7 @@ const GEAR = [
   { id: 'cards', tok: '{e} +0.25', fam: 'extra', note: 'a reagent not yet used this round: extra +0.25', name: 'index cards', shape: 'box', at: 'step', fx: c => (c.first ? A('e', 0.25) : null) },
   { id: 'logbook', tok: '{e} +0.04', fam: 'extra', note: 'each reaction: extra +0.04 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.04 * c.distinct) },
   { id: 'crystal', tok: '{e} times 1.2', fam: 'extra', note: 'back to an earlier molecule: extra times 1.2', name: 'seed crystal', shape: 'round', at: 'step', fx: c => (c.loop ? M('e', 1.2) : null) },
-  { id: 'scalepan', tok: '{e} +0.5', fam: 'extra', note: 'a reaction that is not in a row: extra +0.5', name: 'scale pan', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.5) : null) },
+  { id: 'scalepan', tok: '{e} +0.5', fam: 'extra', note: 'a reaction that is not in a row: extra +0.5', name: 'brass weights', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.5) : null) },
   { id: 'coldtrap', tok: '{e} +0.12', fam: 'extra', note: 'catches water that leaves: extra +0.12', name: 'cold trap', shape: 'funnel' },
   { id: 'dryer', tok: '{p} +60', fam: 'places', note: 'catches water that leaves: +60 places', name: 'drying tube', shape: 'column' },
   { id: 'sieves', tok: '{r} +0.6', fam: 'row', note: 'catches water that leaves: row +0.6', name: 'molecular sieves', shape: 'round' },
@@ -130,7 +130,7 @@ const GEAR = [
   { id: 'timer', tok: '+1 reaction', fam: 'rule', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
   // From the alchemist. These do things chemistry does not allow.
   { id: 'stone', tok: '{e} times 1.12', kin: 'alchemy', fam: 'extra', note: 'every reaction: extra times 1.12', name: "philosopher's stone", shape: 'round', at: 'step', fx: () => M('e', 1.12) },
-  { id: 'transmute', tok: '{p} +40', kin: 'alchemy', fam: 'places', note: 'each place: +40 places', name: 'lead, allegedly gold', shape: 'box', at: 'site', fx: () => A('p', 40) },
+  { id: 'transmute', tok: '{p} +40', kin: 'alchemy', fam: 'places', note: 'each place: +40 places', name: 'lead into gold', shape: 'box', at: 'site', fx: () => A('p', 40) },
   { id: 'regia', tok: '{e} times 1.06', kin: 'alchemy', fam: 'extra', note: 'dissolves anything that leaves: extra times 1.06', name: 'aqua regia', shape: 'flask' },
   { id: 'ouroboros', tok: '{r} unbroken', kin: 'alchemy', fam: 'row', rule: true, note: 'the row never breaks', name: 'ouroboros', shape: 'round' },
   { id: 'homunculus', tok: '{p} again', kin: 'alchemy', fam: 'places', rule: true, note: 'the last reaction on a page counts three times', name: 'homunculus, in a jar', shape: 'column' },

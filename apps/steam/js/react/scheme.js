@@ -264,7 +264,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 15) / spanOf(m), (KITV === 'bottom' ? 10.5 : 10.5) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(4.4, (KITV === 'side' ? 17 : 18) / spanOf(m), (KITV === 'bottom' ? 10.5 : 12) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -300,9 +300,9 @@ function start(app) {
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
-  if (KITV === 'back') C0.x += 1.7;
+  if (KITV === 'back') { C0.x += 1.3; C0.z -= 0.7; }
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, taught: false }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
@@ -541,16 +541,16 @@ function start(app) {
     const whenOf = new Map();
     beats.forEach((e, k) => {
       const when = at; whenOf.set(e, when); at += e.src === 'bottle' ? Math.max(gap, 300 * Math.max(0.35, quick)) : gap; gap = Math.max(70, gap * 0.88);
-      if (e.src === 'bottle') { place++; placeAt.push(when); const kk = place; later(() => { if (tok === st.tok) st.strokes.push({ a: lab, b: spot(kk), col: rcol, t: performance.now(), dur: 150 }); }, Math.max(0, when - 150)); }
+      if (e.src === 'bottle') { place++; placeAt.push(when); const kk = place; later(() => { if (tok === st.tok && !PLAIN) st.strokes.push({ a: lab, b: spot(kk), col: rcol, t: performance.now(), dur: 150 }); }, Math.max(0, when - 150)); }
       const pl = place;
       later(() => {
         if (tok !== st.tok) return;
         const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
         st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
         const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
-        if (e.src === 'bottle') { last = spot(pl); st.focus = { x: last.x, z: last.z }; { const dx = last.x - lab.x, dz = last.z - lab.z, d = Math.hypot(dx, dz) || 1, imp = 7 + 9 * f; st.kvx += dx / d * imp; st.kvz += dz / d * imp; st.sq = Math.min(1, 0.55 + 0.4 * f); st.hold = performance.now() + 55 + 50 * f; } ping({ x: last.x, z: last.z - 1.7 - (pl % 2) * 1.1 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 10 * f), rcol); }
+        if (e.src === 'bottle') { last = spot(pl); st.focus = { x: last.x, z: last.z }; { const dx = last.x - lab.x, dz = last.z - lab.z, d = Math.hypot(dx, dz) || 1, imp = 7 + 9 * f; st.kvx += dx / d * imp; st.kvz += dz / d * imp; st.sq = Math.min(1, 0.55 + 0.4 * f); st.hold = performance.now() + 55 + 50 * f; } if (!PLAIN) ping({ x: last.x, z: last.z - 1.7 - (pl % 2) * 1.1 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 10 * f), rcol); }
         else if (e.src === 'iso') { const h = heavy(e.iso) || last; ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); }
-        else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); st.strokes.push({ a: last, b: { x: ko.grp.position.x, z: ko.grp.position.z - 2.4 }, col: PART[e.part], t: performance.now(), dur: 130 }); } }
+        else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); if (!PLAIN) st.strokes.push({ a: last, b: { x: ko.grp.position.x, z: ko.grp.position.z - 2.4 }, col: PART[e.part], t: performance.now(), dur: 130 }); } }
         else if (e.src === 'brief') st.floats.push({ txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
         else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
         else if (e.src === 'collect') { st.bump.p = 0; }
@@ -559,6 +559,7 @@ function start(app) {
         else if (e.src === 'family') { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, (K ? K.name + ' ' : '') + txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
+        if (PLAIN && e.val && (e.src === 'bottle' || piece || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: last.z - 1.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
         st.shake = Math.max(st.shake, (big ? 0.7 : e.src === 'iso' ? 0.5 : 0.2) * (1 + 1.0 * f));
         if (f >= 0.5 && k % 2 === 0) slash(PART[e.part]);
         sfx.lock(Math.min(12, k + g.cur.path.length));
@@ -921,6 +922,10 @@ function start(app) {
     { const o = twistOpt(); if (o && center && center.model === g.m) { const key = st.twC.key; if (!st.twM || st.twM.key !== key) st.twM = { key, marks: marksOf(center, o.atoms || [], 0.01, 0.2) };
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
+    // bonuses in flight: from where they were earned to the points or to the multiplier
+    if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 80, mp2[1] - 34], m: [mp2[0] + 335, mp2[1] - 34] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
+      st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const e = k * k * (3 - 2 * k), A = px(m.a), B = tgt[m.part], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 80 * Math.sin(Math.PI * e);
+        marker(x, 42 - 12 * e); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(m.txt, cx, cy); x.fillStyle = m.col; x.fillText(m.txt, cx, cy); }); dirty = true; }
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
