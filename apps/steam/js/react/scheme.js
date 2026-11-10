@@ -229,7 +229,10 @@ function start(app) {
   function layout(m, pos, grow) {
     m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * (b.sk || 1.25) * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
     m.sticks.forEach(s => {
-      const A = pos(s.a), B = pos(s.b), k = grow ? Math.min(grow(s.a), grow(s.b)) : 1; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
+      const A = pos(s.a), B = pos(s.b), k0 = grow ? Math.min(grow(s.a), grow(s.b)) : 1; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
+      // a bond between atoms that are still far apart is not drawn until they have come near: it grows in as a fold closes
+      if (!s.rest) { const fa = m.at.get(s.a), fb = m.at.get(s.b); s.rest = fa && fb ? Math.max(0.3, fa.distanceTo(fb)) : len; }
+      const k = k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.25) / 0.6));
       _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
       s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * 0.17); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, s.r * k), fr.distanceTo(to), Math.max(0.0001, s.r * k)); pt.mesh.visible = k > 0.01; });
     });
@@ -426,7 +429,7 @@ function start(app) {
       if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 23.4, z }; LAB[i] = { x: 16.6, z: z + 0.4 }; SCS[i] = 0.4; }); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
-      s.o.model.settle(160);
+      s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
       const rings = new Map(), c = rgb(colOf(s.id)); s.o.r.made.forEach(a => rings.set(a, c));
       const m = buildMol(s.o.model, rings, true); m.col = c; SCS[i] = SIDE ? Math.max(0.14, Math.min(0.3, 3.4 / spanOf(m))) : Math.max(0.3, Math.min(1.05, (SLOTW - 1.6) / spanOf(m))); place(m, SPOT[i], 0.01); tween(m, SPOT[i], SCS[i], 0.16 + (i % 7) * 0.03); prods[i] = m;
     });
@@ -550,11 +553,11 @@ function start(app) {
         sfx.lock(Math.min(12, k + g.cur.path.length));
       }, when);
     });
-    const dur = at + 60, lastPlace = placeAt.length ? placeAt[placeAt.length - 1] : 300;
+    const dur = at + 60 + (FOLDS[reagent] ? 800 : 0), lastPlace = placeAt.length ? placeAt[placeAt.length - 1] : 300;
     // every atom sets off for its new position when the reagent reaches the place nearest to it
     { const start = new Map(), cur = new Map(); let end = 0;
-      mol.balls.forEach((b, a) => { const q = mol.at.get(a), tt = -q.y / camDir.y, gx = q.x + camDir.x * tt, gz = q.z + camDir.z * tt; let bi = 0, bd = 1e9; marks.forEach((m, k) => { const d = Math.hypot(m.x - gx, m.z - gz); if (d < bd) { bd = d; bi = k; } }); const s0 = placeAt.length ? placeAt[Math.min(bi, placeAt.length - 1)] : 300; start.set(a, s0); cur.set(a, new T.Vector3()); end = Math.max(end, s0 + 480); });
-      morph = { m: mol, from: from || new Map(), start, cur, t0: performance.now(), end, made: new Set(o.r.made || []) }; }
+      mol.balls.forEach((b, a) => { const q = mol.at.get(a), tt = -q.y / camDir.y, gx = q.x + camDir.x * tt, gz = q.z + camDir.z * tt; let bi = 0, bd = 1e9; marks.forEach((m, k) => { const d = Math.hypot(m.x - gx, m.z - gz); if (d < bd) { bd = d; bi = k; } }); const s0 = placeAt.length ? placeAt[Math.min(bi, placeAt.length - 1)] : 300; start.set(a, s0); cur.set(a, new T.Vector3()); end = Math.max(end, s0 + (FOLDS[reagent] ? 1100 : 480)); });
+      morph = { slow: !!FOLDS[reagent], m: mol, from: from || new Map(), start, cur, t0: performance.now(), end, made: new Set(o.r.made || []) }; }
     st.zoomUntil = performance.now() + lastPlace + 330; st.focus = spot(0);
     // what leaves sets off when the reagent reaches the place nearest to it, and letters change at the same moment
     { const near = p => { let bi = 0, bd = 1e9; marks.forEach((m, k) => { const d = Math.hypot(m.x - p.x, m.z - p.z); if (d < bd) { bd = d; bi = k; } }); return performance.now() + (placeAt.length ? placeAt[Math.min(bi, placeAt.length - 1)] : 300); };
@@ -591,10 +594,12 @@ function start(app) {
     if (!o || !prods[i] || st.mode !== 'play') return;
     st.chainN = 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, false);
   }
+  // reactions that fold the molecule into a new shape: the model is settled fully first, and the move is slow enough to follow
+  const FOLDS = { cyclize: 1, snap: 1, aromatize: 1 };
   // One reaction on the page, whether it was clicked or is a step of a chain that is running by itself
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
-    if (free && o.model.settle) o.model.settle(160);
+    if (free && o.model.settle) o.model.settle(FOLDS[rid] ? 2200 : 160);
     if (free) { sfx.chain(st.chainN || 0); if (o.self) { callout(RX.CARDS[rid].verb.toLowerCase(), '', REDINK); st.shake = Math.max(st.shake, 1.2); st.flash = 0.5; st.flashC = '214,69,58'; } }
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
@@ -965,7 +970,7 @@ function start(app) {
     ended.forEach(f => f());
     if (morph) { const el = now - morph.t0, ease = k => 1 - Math.pow(1 - k, 3), back = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), kOf = (a, d) => Math.max(0, Math.min(1, (el - morph.start.get(a)) / d));
       if (el > morph.end) { layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
-      else layout(morph.m, a => { const fr = morph.from.get(a), to = morph.m.at.get(a); return fr ? morph.cur.get(a).copy(fr).lerp(to, ease(kOf(a, 380))) : to; }, a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; });
+      else layout(morph.m, a => { const fr = morph.from.get(a), to = morph.m.at.get(a); return fr ? morph.cur.get(a).copy(fr).lerp(to, morph.slow ? (k => k * k * (3 - 2 * k))(kOf(a, 1000)) : ease(kOf(a, 380))) : to; }, a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; });
       dirty = true; }
     if (st.flyers.length) { st.flyers = st.flyers.filter(f => {
       if (!f.t0 || !f.to) return true; const age = now - f.t0; if (age < 0) return true;
