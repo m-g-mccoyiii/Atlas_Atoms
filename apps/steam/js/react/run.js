@@ -69,7 +69,7 @@ const FEED = [
   ['C=CCC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(Cl)CC(O)CC(O)CC(Cl)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(=O)CC(O)CC(O)CC(=O)CC=C', 'C=CCC(O)CC(=O)CC(O)CC(=O)CC=C']
 ];
 // bottles whose reaction makes a group leave the molecule
-const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
+const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1 };
 
 // Equipment fires left to right along the bench, once for every site that reacts.
 // kind: y adds yield, b adds batch, x multiplies batch, grow gets stronger during the run, tool changes a rule.
@@ -356,16 +356,16 @@ function look(run, m, id) {
 }
 // applies a bottle to every site of m in place, without animation, and returns the info that commit needs
 function react(run, m, id) {
-  const card = RX.CARDS[id], sites = card.find(m), hot = isHot(run.cur, sites), made = [];
+  const card = RX.CARDS[id], sites = card.find(m), hot = isHot(run.cur, sites), made = [], gone = [];
   let hits = 0, spoiled = 0;
   sites.forEach(s => {
     if (!card.ok(m, s)) return;
     const sp = touchesKeep(s), r = card.apply(m, s);
     if (sp) { s.atoms.forEach(a => { a.keep = false; }); spoiled++; } else hits++;
     r.focus.concat(r.incoming).forEach(a => made.push(a));
-    r.leaving.flat().forEach(a => m.removeAtom(a));
+    r.leaving.forEach(grp => gone.push(grp.slice())); r.leaving.flat().forEach(a => m.removeAtom(a));
   });
-  return { hits, spoiled, hot, made, sig: RX.sigOf(m) };
+  return { hits, spoiled, hot, made, gone, sig: RX.sigOf(m) };
 }
 // records a played bottle after its sites have been scored
 function commit(run, handIdx, hits, info) {

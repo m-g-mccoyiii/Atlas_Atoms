@@ -185,7 +185,20 @@ const LIST = [
   { id: 'naoh', verb: 'Substitute', formula: 'NaOH (aq)', chem: 'Sodium hydroxide, 2 M, warm', rgb: [168, 92, 36], cls: 'base', ghs: ['corr'],
     rule: 'Swaps the Cl of a chloroalkane for OH.', from: 'cl', to: 'ol',
     find: m => m.atoms.map(a => substitutable(m, a)).filter(Boolean), ok: (m, s) => !!substitutable(m, s.cl),
-    apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } }
+    apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } },
+  // Reagents that build. Each adds carbon at a C=O, so the molecule grows as the round goes on.
+  { id: 'memgbr', verb: 'Add methyl', formula: 'CH₃MgBr', chem: 'Methylmagnesium bromide, then dilute acid', rgb: [196, 60, 150], cls: 'grignard', ghs: ['flame', 'corr'],
+    rule: 'Adds CH₃ to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
+    find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
+    apply(m, s) { s.bond.order = 1; const c = attach(m, 'C', s.c, 3.0), hs = [0, 1, 2].map(() => attach(m, 'H', c, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c, ho].concat(hs), leaving: [], tag: '+CH₃' }; } },
+  { id: 'wittig', verb: 'Methylenate', formula: 'Ph₃P=CH₂', chem: 'Methylenetriphenylphosphorane', rgb: [230, 100, 60], cls: 'ylide', ghs: ['excl'],
+    rule: 'Swaps the O of C=O for CH₂ and leaves C=C.', from: 'one', to: 'ene',
+    find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
+    apply(m, s) { cut(m, s.c, s.o); const c = attach(m, 'C', s.c, 3.0); m.bond(s.c, c); const hs = [0, 1].map(() => attach(m, 'H', c, 2.2)); return { focus: [s.c, c], incoming: [c].concat(hs), leaving: [[s.o]], tag: 'O to CH₂' }; } },
+  { id: 'allyl', verb: 'Add allyl', formula: 'C₃H₅MgBr', chem: 'Allylmagnesium bromide, then dilute acid', rgb: [110, 160, 30], cls: 'grignard', ghs: ['flame', 'corr'],
+    rule: 'Adds a three-carbon arm with its own C=C to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
+    find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
+    apply(m, s) { s.bond.order = 1; const c1 = attach(m, 'C', s.c, 3.0), h1 = [0, 1].map(() => attach(m, 'H', c1, 2.2)), c2 = attach(m, 'C', c1, 3.0), h2 = attach(m, 'H', c2, 2.2), c3 = attach(m, 'C', c2, 3.0); m.bond(c2, c3); const h3 = [0, 1].map(() => attach(m, 'H', c3, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c1, c2, c3, h2, ho].concat(h1, h3), leaving: [], tag: '+C₃H₅' }; } }
 ];
 const CARDS = {};
 // a capped oxygen carries prot, and no bottle finds a site there
