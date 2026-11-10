@@ -300,7 +300,7 @@ function start(app) {
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
-  if (KITV === 'back') { C0.x += 1.3; C0.z += 0.3; }
+  if (KITV === 'back') { C0.x += 0.3; C0.z += 0.3; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
@@ -855,7 +855,7 @@ function start(app) {
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
     if (st.mode !== 'done') {
       const mp = px(FEWER ? { x: MULT.x + 0.6, z: MADE.z + 2.9 } : MULT), len = g.cur.path.length; x.save(); if (FEWER) { x.translate(mp[0], mp[1]); x.scale(0.6, 0.6); x.translate(-mp[0], -mp[1]); }
-      { const mult = st.R * st.E, liveP = st.P > 0, liveM = mult > 1.0001, kp = 1 + 0.4 * st.bump.p, km = 1 + 0.4 * Math.max(st.bump.r, st.bump.e), c1 = mp[0] + 80, c2 = mp[0] + 205, c3 = mp[0] + 335;
+      { const mult = st.R * st.E, liveP = st.P > 0, liveM = mult > 1.0001, kp = 1 + 0.4 * st.bump.p, km = 1 + 0.4 * Math.max(st.bump.r, st.bump.e), c1 = mp[0] + 80, c2 = mp[0] + 228, c3 = mp[0] + 385;
         if (liveM && len >= 2) swipe(x, [c3 - 70, mp[1] - 24], [c3 + 70, mp[1] - 30], 66);
         fit(x, fmt(st.P), 64 * kp, 150, marker); x.textAlign = 'center'; x.fillStyle = liveP ? PART.p : FAINT; x.fillText(fmt(st.P), c1, mp[1]);
         marker(x, 38); x.fillStyle = liveP ? INK : FAINT; x.fillText('times', c2, mp[1] - 4);
@@ -866,7 +866,7 @@ function start(app) {
           if (Math.abs(dM) >= 0.005) { x.fillStyle = dM < 0 ? PENCIL : PART.r; x.fillText((dM > 0 ? '+' : '') + fmtB(dM), c3, mp[1] - 70); }
           const gq = px(MADE); marker(x, 46); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0] + 6, gq[1] - 104); } }
       // one small chevron for each reaction in the row that is open
-      for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 335 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
+      for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 385 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
       x.restore();
     }
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
@@ -933,7 +933,7 @@ function start(app) {
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // bonuses in flight: from where they were earned to the points or to the multiplier
-    if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 250, mp2[1] - 76], m: [mp2[0] + 500, mp2[1] - 76] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
+    if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 250, mp2[1] - 76], m: [mp2[0] + 550, mp2[1] - 76] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
       const lanes = { p: 0, m: 0 }; st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const lane = lanes[m.part]++ % 3; const e = k * k * (3 - 2 * k), A = px(m.a), B = [tgt[m.part][0] + lane * 70, tgt[m.part][1]], cx = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * e) * Math.max(0, mp2[0] + 600 - A[0]) * 0.9, cy = A[1] + (B[1] - A[1]) * (1 - Math.pow(1 - e, 3));
         marker(x, 42 - 12 * e); x.globalAlpha = Math.max(0, Math.min(1, (k - 0.2) / 0.15, (1 - k) / 0.3)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(m.txt, cx, cy); x.fillStyle = m.col; x.fillText(m.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
