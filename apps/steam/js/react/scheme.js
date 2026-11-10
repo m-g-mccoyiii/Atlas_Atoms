@@ -517,6 +517,7 @@ function start(app) {
     // the reaction is played out one beat at a time, quicker as it goes: each place, each heavy atom, the row, then
     // each piece of equipment in the order it stands
     const quick = PLAIN ? Math.max(0.62, Math.pow(0.93, st.chainN || 0)) : Math.pow(0.8, st.chainN || 0); let at = 300 * Math.max(0.35, quick), gap = Math.max(60, 210 * quick), place = -1, last = { x: C0.x, z: C0.z };
+    if (PLAIN && TILE[reagent] && lab) { const trav = 430 * Math.max(0.55, quick); st.fly = { a: lab, b: spot(0), tl: TILE[reagent], t: performance.now(), trav: at + trav - 120, hold: 1150 * Math.max(0.6, quick) }; at += trav; }
     const whenOf = new Map();
     beats.forEach((e, k) => {
       const when = at; whenOf.set(e, when); at += e.src === 'bottle' ? Math.max(gap, 300 * Math.max(0.35, quick)) : gap; gap = Math.max(70, gap * 0.88);
@@ -586,7 +587,7 @@ function start(app) {
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
     if (free && o.model.settle) o.model.settle(160);
-    if (free) { sfx.chain(st.chainN || 0); st.act = { id: rid, t: performance.now() }; }
+    if (free) sfx.chain(st.chainN || 0);
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o, free);
@@ -778,7 +779,7 @@ function start(app) {
       center.groups.forEach(q => { const age = q.born ? (now - q.t) / 1000 : 9; if (q.born && !(age >= 0)) return; const c = at2(q); if (MOLV === 'pads') { const c0 = px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }); x.fillStyle = 'rgba(' + PADC[q.txt] + ',0.3)'; x.beginPath(); x.ellipse(c0[0], c0[1], 30 * sc, 22 * sc, 0.1, 0, 6.3); x.fill(); } const pop = age < 0.25 ? 1.7 - 2.8 * age : 1; hand(x, 40 * pop); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(q.txt, c[0], c[1]); x.fillStyle = age < 1.2 ? REDINK : INK; x.fillText(q.txt, c[0], c[1]); if (age < 1.2) dirty = true; });
       (center.ghosts || []).forEach(q => { const age = (now - q.t) / 1000, c = at2(q); if (age > 1.3) return; hand(x, 40); x.textAlign = 'center'; x.globalAlpha = age < 0 ? 1 : Math.max(0, 1 - age / 1.3); x.fillStyle = age < 0 ? INK : PENCIL; x.fillText(q.txt, c[0], c[1]); if (age >= 0) { const w = x.measureText(q.txt).width / 2 + 8, k = Math.min(1, age / 0.12); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - w, c[1] - 6); x.lineTo(c[0] - w + 2 * w * k, c[1] - 14); x.stroke(); } x.globalAlpha = 1; dirty = true; }); }
     // under the beaker and the balloon: how many of three. A ring when it can be spent. Beside them, the tally
-    if (st.mode !== 'done') { [['water', BEAK, '#3a6fd0'], ['h2', BALN, '#d6453a']].forEach(q => { if (FEWER && !st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 1.5 }), n = Math.min(P.BY.need, st.by[q[0]]);
+    if (st.mode !== 'done') { [['water', BEAK, '#3a6fd0'], ['h2', BALN, '#d6453a']].forEach(q => { if (!st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 1.5 }), n = Math.min(P.BY.need, st.by[q[0]]);
         for (let k = 0; k < P.BY.need; k++) { x.beginPath(); x.arc(c[0] + (k - 1) * 26, c[1], 9, 0, 6.3); if (k < n) { x.fillStyle = q[2]; x.fill(); } else { x.strokeStyle = FAINT; x.lineWidth = 3; x.stroke(); } }
         if (st.by[q[0]] >= P.BY.need) { const c2 = px({ x: q[1].x, z: q[1].z - 0.9 }); ring(x, c2, 78 + 6 * Math.sin(now / 160), 92 + 6 * Math.sin(now / 160), 6, q[2], 0.05); dirty = true; } });
       const t0 = px(TALLY), n = FEWER ? 0 : st.by.gauge, sa = FEWER ? 9 : (now - st.struck) / 1000; x.strokeStyle = INK; x.lineCap = 'round';
@@ -880,11 +881,17 @@ function start(app) {
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
-    // a step of a chain: the reagent that is acting, as its tile, above the molecule
-    if (st.act && now - st.act.t < 1300 && TILE[st.act.id] && st.mode !== 'done') { const tl = TILE[st.act.id], k = (now - st.act.t) / 1300, c = px({ x: 18.6, z: -5.6 }), pop = k < 0.08 ? 0.5 + 8 * k : k < 0.16 ? 1.14 - 1.75 * (k - 0.08) : 1;
-      x.save(); x.translate(c[0], c[1]); x.scale(1.7 * pop, 1.7 * pop); x.globalAlpha = k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1;
-      chip(x, tl[0], -72, 0, true); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, tl[1], 62, 0, true);
-      x.restore(); x.globalAlpha = 1; dirty = true; }
+    // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
+    // and on landing shows that group and what it has become
+    if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
+      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: F.b.x, z: F.b.z - 4.1 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
+      const landed = u >= 1, k2 = landed ? (age - F.trav) / F.hold : 0, sc = 1.25 + (landed ? 0.4 * Math.max(0, 1 - k2 * 6) : 0);
+      x.save(); x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha = k2 > 0.75 ? 1 - (k2 - 0.75) / 0.25 : 1;
+      if (!landed) chip(x, F.tl[0], 0, 0, true);
+      else { chip(x, F.tl[0], -72, 0, false); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, F.tl[1], 62, 0, true); }
+      x.restore(); x.globalAlpha = 1; dirty = true; } }
+    // the beaker and the balloon are named while they hold something
+    if (g && st.mode !== 'done' && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') [['water', BEAK, 'water'], ['h2', BALN, 'hydrogen']].forEach(q => { if (!st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 3.1 }); hand(x, 27); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q[2], c[0], c[1]); });
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
@@ -960,7 +967,7 @@ function start(app) {
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
     ['water', 'h2', 'gauge'].forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'), tq = now / 1000, nw = Math.min(P.BY.need, st.by.water), nh = Math.min(P.BY.need, st.by.h2), fullW = st.by.water >= P.BY.need, fullH = st.by.h2 >= P.BY.need;
-      keep.bk.visible = on && !(FEWER && !st.by.water); keep.bl.visible = on && !(FEWER && !st.by.h2);
+      keep.bk.visible = on && (st.by.water > 0 || st.flyers.some(f => f.kind === 'water')); keep.bl.visible = on && (st.by.h2 > 0 || st.flyers.some(f => f.kind === 'h2'));
       if (on) { const lv = 0.08 + 1.25 * nw / P.BY.need; keep.water.scale.y = lv; keep.water.position.y = 0.06 + lv / 2; keep.water.visible = nw > 0;
         const bw = 1 + 0.25 * st.byBump.water, bh = 1 + 0.25 * st.byBump.h2; keep.bk.scale.set(1.5 * bw, 1.5 * (2 - bw), 1.5 * bw); keep.bk.position.y = fullW ? 0.25 + 0.2 * Math.sin(tq * 5) : 0;
         const sz = (0.45 + 0.22 * nh) * bh; keep.skin.scale.setScalar(sz); keep.skin.position.y = 1.24 + 0.9 * sz; keep.bl.rotation.z = 0.08 * Math.sin(tq * 1.6) + (fullH ? 0.1 * Math.sin(tq * 9) : 0); keep.bl.position.y = fullH ? 0.3 + 0.25 * Math.sin(tq * 4) : 0; } }
