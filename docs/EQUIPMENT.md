@@ -84,3 +84,70 @@ It fits the page: a sigil is ink on the paper under the molecule, which is where
 3. The sigil is drawn during the run. Each round beaten adds a stroke. A finished sigil sets off one large event and is wiped.
 
 1 and 2 work together: the circle picked before a run sets the terms, and its points are where equipment stands. 3 is a separate long build-up and could come later.
+
+## All sixty
+
+Generated from the rules in `apps/steam/js/react/path.js`.
+
+| # | Piece | Shelf | Sold by | Rule |
+|---|---|---|---|---|
+| 1 | balance | lab | corner chemist | each place: +15 places |
+| 2 | spatula | lab | corner chemist | only one place changed: +90 places |
+| 3 | schlenk line | lab | trade supplier | 2 or more places at once: that reaction counts double |
+| 4 | rubber duck | lab | corner chemist | says nothing. extra +0.01 for every reaction it has watched this round |
+| 5 | poster | lab | corner chemist | the first reaction of a round: row +0.5. nothing after |
+| 6 | coffee | lab | corner chemist | one more reaction on pages one and two. one fewer after |
+| 7 | lab coat | lab | trade supplier | copies the piece to its left |
+| 8 | expired milk | lab | corner chemist | expired. it grows: extra +0.1 at the start of a round for every round it has been kept |
+| 9 | unlabeled bottle | lab | trade supplier | a reagent from anywhere, a different one on every page |
+| 10 | goggles | lab | corner chemist | on forehead. protects nothing. pays 1 credit for every round beaten |
+| 11 | grant proposal | lab | trade supplier | funded only if a round is beaten ten times over: pays 5 credit |
+| 12 | extinguisher | lab | trade supplier | a click during a chain stops it and the round counts half again. once a round |
+| 13 | the intern | lab | corner chemist | does one reaction of its own choosing on every new page. it is not always a good one |
+| 14 | stopper | lab | trade supplier | the first reaction of a new row counts four times |
+| 15 | mirror | lab | research supplier | back to an earlier molecule: +200 places |
+| 16 | mortar | lab | research supplier | 3 or more places at once: that reaction counts two and a half times |
+| 17 | cannula | lab | trade supplier | each reaction in a row: row +1 |
+| 18 | reflux | lab | research supplier | 3 or more in a row: row times 1.06 |
+| 19 | burette | lab | trade supplier | first reaction on a page: row +1.5 |
+| 20 | clamp | lab | instrument maker | a broken row keeps three quarters |
+| 21 | magnet | lab | instrument maker | row never starts below 2.5 |
+| 22 | recycler | lab | instrument maker | back to an earlier molecule: row +0.5 |
+| 23 | stir plate | lab | corner chemist | each reaction: extra +0.1 |
+| 24 | index cards | lab | corner chemist | a reagent not yet used this round: extra +0.25 |
+| 25 | log book | lab | trade supplier | each reaction: extra +0.02 for every different reagent used |
+| 26 | seed crystal | lab | research supplier | back to an earlier molecule: extra times 1.2 |
+| 27 | brass weights | lab | trade supplier | a reaction that is not in a row: extra +0.5 |
+| 28 | cold trap | lab | trade supplier | catches water that leaves: extra +0.12 |
+| 29 | drying tube | lab | corner chemist | catches water that leaves: +60 places |
+| 30 | sieves | lab | research supplier | catches water that leaves: row +0.6 |
+| 31 | fume hood | lab | trade supplier | catches anything that leaves: extra +0.06 |
+| 32 | scrubber | lab | trade supplier | catches hydrogen that leaves: +50 places. an oxygen or a chloride: +80 |
+| 33 | burner | lab | research supplier | same reagent twice running: extra times 1.4. burns hydrogen that leaves: row +0.5 |
+| 34 | litmus paper | lab | corner chemist | an acid: extra +0.08. catches a chloride that leaves: extra +0.4 |
+| 35 | stopwatch | lab | corner chemist | last reaction on a page: extra +0.35 |
+| 36 | thermometer | lab | research supplier | on page 3 and later: extra +0.3 |
+| 37 | carousel | lab | instrument maker | one more reagent on every page |
+| 38 | dropper | lab | research supplier | one more use of every reagent |
+| 39 | loupe | lab | instrument maker | rare reagents twice as often |
+| 40 | timer | lab | instrument maker | a fourth reaction on every page |
+| 41 | philosopher's stone | alchemy | an alchemist, by appointment | every reaction: extra times 1.05 |
+| 42 | lead into gold | alchemy | an alchemist, by appointment | each place: +40 places |
+| 43 | aqua regia | alchemy | an alchemist, by appointment | dissolves anything that leaves: extra times 1.02 |
+| 44 | ouroboros | alchemy | an alchemist, by appointment | the row never breaks |
+| 45 | homunculus, in a jar | alchemy | an alchemist, by appointment | the last reaction on a page counts three times |
+| 46 | elixir of life | alchemy | an alchemist, by appointment | one more page in every round |
+| 47 | voodoo doll | occult | Brenda (deceased) | three pins: the first three places a reaction changes count twice. takes a reagent use each page |
+| 48 | the Tower | occult | Brenda (deceased) | the first time a row would break each round, it holds and doubles |
+| 49 | black cat | occult | Brenda (deceased) | crosses the path: a row that breaks leaves extra +0.13 for every reaction that was in it |
+| 50 | monkey's paw | occult | Brenda (deceased) | three wishes a run, one a round. a wish doubles the round and takes a reagent for good |
+| 51 | cursed idol | occult | Brenda (deceased) | every other occult piece fires twice. every number to beat: times 1.5 |
+| 52 | grimoire | occult | Brenda (deceased) | the last reaction on each page counts twice |
+| 53 | hourglass | occult | Brenda (deceased) | sand from a grave: one more page. every number to beat: times 1.25 |
+| 54 | raven | occult | Brenda (deceased) | nevermore: the last reagent used on a page comes back on the next |
+| 55 | hand of glory | occult | Brenda (deceased) | hand of glory: on a broken row, equipment still fires as if the row held |
+| 56 | crystal ball | occult | Brenda (deceased) | crystal ball: shows which reagents the next page adds and drops |
+| 57 | ouija board | occult | Brenda (deceased) | one reagent on every page does not run out |
+| 58 | black candle | occult | Brenda (deceased) | every 13th reaction of a round: extra times 2. lights hydrogen that leaves: extra +0.25 |
+| 59 | goat sacrifice | occult | Brenda (deceased) | every reaction: extra times 1.07. takes a reagent use each page |
+| 60 | a signed pact | occult | Brenda (deceased) | everything made: times 3. every number to beat: times 2 |
