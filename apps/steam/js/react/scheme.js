@@ -595,7 +595,7 @@ function start(app) {
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
     if (free && o.model.settle) o.model.settle(160);
-    if (free) { sfx.chain(st.chainN || 0); if (o.self) { callout(RX.CARDS[rid].verb.toLowerCase(), 'by itself', REDINK); st.shake = Math.max(st.shake, 1.2); st.flash = 0.5; st.flashC = '214,69,58'; } }
+    if (free) { sfx.chain(st.chainN || 0); if (o.self) { callout(RX.CARDS[rid].verb.toLowerCase(), '', REDINK); st.shake = Math.max(st.shake, 1.2); st.flash = 0.5; st.flashC = '214,69,58'; } }
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o, free);

@@ -206,13 +206,13 @@ const LIST = [
     apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } },
   // Ring closing: two OH groups four or five carbons apart join into a ring through one oxygen, and water leaves.
   // This is how a chain becomes a ring in the player's hands.
-  { id: 'cyclize', verb: 'Close ring', formula: 'H₂SO₄ dil., heat', chem: 'Dilute acid, heat', rgb: [47, 143, 106], cls: 'acid', ghs: ['corr'],
+  { id: 'cyclize', verb: 'Close', formula: 'H₂SO₄ dil., heat', chem: 'Dilute acid, heat', rgb: [47, 143, 106], cls: 'acid', ghs: ['corr'],
     rule: 'Joins two OH groups four or five carbons apart into a ring. Water leaves.', from: 'ol', to: 'ring',
     find: m => m.atoms.map(a => ringable(m, a)).filter(Boolean), ok: (m, s) => !!ringable(m, s.o),
     apply(m, s0) { const s = ringable(m, s0.o); cut(m, s.o, s.ho); cut(m, s.c2, s.o2); m.bond(s.o2, s.ho); m.bond(s.o, s.c2); return { focus: [s.c, s.o, s.c2], incoming: [], leaving: [[s.o2, s.ho2, s.ho]], tag: 'closes a ring' }; } },
   // Snap: two C=C in one molecule, a few carbons apart, close a four-ring between them under light. The chain folds
   // into fused rings, which is how a cage is built.
-  { id: 'snap', verb: 'Snap shut', formula: 'hν', chem: 'Ultraviolet light', rgb: [200, 38, 28], cls: 'light', ghs: [],
+  { id: 'snap', verb: 'Snap', formula: 'hν', chem: 'Ultraviolet light', rgb: [200, 38, 28], cls: 'light', ghs: [],
     rule: 'Two C=C a few carbons apart join into a four-ring. The chain folds into fused rings.', from: 'ene', to: 'cage',
     find: snappable, ok: m => snappable(m).length > 0,
     apply(m) { const s = snappable(m)[0]; s.A.order = 1; s.B.order = 1; m.bond(s.a1, s.b1); m.bond(s.a2, s.b2); return { focus: [s.a1, s.a2, s.b1, s.b2], incoming: [], leaving: [], tag: 'folds shut' }; } },

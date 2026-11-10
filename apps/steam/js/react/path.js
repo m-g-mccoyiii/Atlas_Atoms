@@ -19,11 +19,11 @@ const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)C
 //   chain: keeps a row going.  ring: comes back round to a form it has had.  arene: one exact change at a time.
 //   sugar: many places at once.  cage: reacts by itself.
 const KIN = {
-  chain: { name: 'chain', tier: 0, odds: 38, col: '#5a6475', tok: '{r} +0.15', note: 'in a row', fx: c => (c.cont ? { part: 'r', op: 'add', val: 0.15 } : null) },
-  ring: { name: 'ring', tier: 0, odds: 24, col: '#2f8f6a', tok: '{p} times 2', note: 'back to an earlier form', fx: c => (c.loop ? { part: 'h', op: 'mul', val: 2 } : null) },
-  arene: { name: 'arene', tier: 1, odds: 16, col: '#a8791a', tok: '{e} +0.2', note: 'one place changed', fx: c => (c.hits === 1 ? { part: 'e', op: 'add', val: 0.2 } : null) },
-  sugar: { name: 'sugar', tier: 2, odds: 13, col: '#c0489a', tok: '{r} +0.2', note: 'each place past the first', fx: c => (c.hits > 1 ? { part: 'r', op: 'add', val: 0.2 * (c.hits - 1) } : null) },
-  cage: { name: 'cage', tier: 3, odds: 9, col: '#c8261c', tok: '{e} +0.3', note: 'reacting by itself', fx: c => (c.free ? { part: 'e', op: 'add', val: 0.3 } : null) }
+  chain: { name: 'chain', tier: 0, odds: 38, col: '#5a6475', tok: '{r} +0.15', note: 'row', fx: c => (c.cont ? { part: 'r', op: 'add', val: 0.15 } : null) },
+  ring: { name: 'ring', tier: 0, odds: 24, col: '#2f8f6a', tok: '{p} times 2', note: 'loop', fx: c => (c.loop ? { part: 'h', op: 'mul', val: 2 } : null) },
+  arene: { name: 'arene', tier: 1, odds: 16, col: '#a8791a', tok: '{e} +0.2', note: 'one place', fx: c => (c.hits === 1 ? { part: 'e', op: 'add', val: 0.2 } : null) },
+  sugar: { name: 'sugar', tier: 2, odds: 13, col: '#c0489a', tok: '{r} +0.2', note: 'extra place', fx: c => (c.hits > 1 ? { part: 'r', op: 'add', val: 0.2 * (c.hits - 1) } : null) },
+  cage: { name: 'cage', tier: 3, odds: 9, col: '#c8261c', tok: '{e} +0.3', note: 'free', fx: c => (c.free ? { part: 'e', op: 'add', val: 0.3 } : null) }
 };
 const KIN_OF = {};
 [['chain', 0, 6], ['ring', 6, 7], ['arene', 7, 8], ['ring', 8, 9], ['arene', 9, 10], ['cage', 10, 13], ['sugar', 13, 14], ['ring', 14, 16], ['arene', 16, 18], ['cage', 18, 20], ['sugar', 20, 23]].forEach(q => { for (let k = q[1]; k < q[2]; k++) KIN_OF[FEEDS[k]] = q[0]; });
