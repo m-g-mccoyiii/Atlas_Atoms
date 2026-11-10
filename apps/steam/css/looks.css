@@ -1,0 +1,13 @@
+@font-face { font-family: Marker; src: url(../fonts/PermanentMarker-Regular.ttf); }
+@font-face { font-family: Hand; src: url(../fonts/PatrickHand-Regular.ttf); }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #111; }
+#looksapp { position: fixed; left: 0; top: 0; right: 0; bottom: 0; }
+#looksapp canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.veil { pointer-events: none; }
+body.look1 .veil { mix-blend-mode: normal; }
+body.look2 #looksapp canvas:first-child { filter: saturate(1.12) contrast(1.04); }
+/* look 2: the far and near edges fall out of focus, as a photo of a small model does */
+body.look2 #looksapp::before, body.look2 #looksapp::after { content: ""; position: absolute; left: 0; right: 0; height: 24%; z-index: 2; pointer-events: none; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+body.look2 #looksapp::before { top: 0; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); }
+body.look2 #looksapp::after { bottom: 0; -webkit-mask-image: linear-gradient(transparent, #000); mask-image: linear-gradient(transparent, #000); }
+body.look3 #looksapp canvas:first-child { filter: sepia(0.08); }
