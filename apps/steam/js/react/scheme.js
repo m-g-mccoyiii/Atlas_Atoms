@@ -102,6 +102,11 @@ function start(app) {
   const MADE = { x: -2.5, z: 13 }, MULT = { x: -10.5, z: 8.6 }, CALL = { x: 0, z: -2.4 }, KIT = { x: 10.8, z: 9.2, dx: 5.6 };
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
+  let run = null, picks = [], pickObjs = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
+  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
+  const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
+  run = P.runNew(meta.tier);
+  const PICKX = [-15, 0, 15];
   const rowAt = k => ({ x: ROW.x + k * ROW.dx, z: ROW.z });
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
@@ -111,19 +116,22 @@ function start(app) {
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
   let kitObjs = [];
   const GLASS = std({ color: lin(0xdfe9ee), transparent: true, opacity: 0.42, roughness: 0.08 });
+  function piece(id) {
+    const q = P.GEARS[id], grp = new T.Group(), hue = hash(id + 'hue'), liq = new T.Color().setHSL(hue, 0.75, 0.5), lm = std({ color: liq.clone().convertSRGBToLinear(), roughness: 0.3 });
+    if (q.shape === 'box') { add(new T.BoxGeometry(2.6, 1.3, 1.9), std({ color: lin(0x3b3e42), roughness: 0.5, metalness: 0.3 }), 0, 0.65, 0, grp); add(new T.CylinderGeometry(0.42, 0.5, 0.3, 20), lm, 0.6, 1.45, 0, grp); add(new T.BoxGeometry(1.1, 0.5, 0.06), std({ color: lin(0x9be8b0), roughness: 0.4 }), -0.55, 0.8, 0.96, grp); }
+    else if (q.shape === 'column') { add(new T.CylinderGeometry(0.5, 0.5, 3.4, 20), GLASS, 0, 1.7, 0, grp); add(new T.CylinderGeometry(0.32, 0.32, 2.2, 16), lm, 0, 1.2, 0, grp); add(new T.CylinderGeometry(0.9, 1, 0.25, 24), std({ color: lin(0x2a2b2e), roughness: 0.6 }), 0, 0.12, 0, grp); }
+    else if (q.shape === 'flask') { add(new T.CylinderGeometry(0.35, 1.35, 2.2, 28), GLASS, 0, 1.1, 0, grp); add(new T.CylinderGeometry(0.75, 1.25, 0.9, 24), lm, 0, 0.5, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 0.7, 20), GLASS, 0, 2.5, 0, grp); }
+    else if (q.shape === 'round') { add(new T.SphereGeometry(1.25, 28, 20), GLASS, 0, 1.3, 0, grp); add(new T.SphereGeometry(1.0, 24, 16, 0, 6.3, Math.PI / 2, Math.PI / 2), lm, 0, 1.3, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 1, 20), GLASS, 0, 2.8, 0, grp); }
+    else { add(new T.CylinderGeometry(1.35, 0.25, 1.9, 28), GLASS, 0, 2.0, 0, grp); add(new T.CylinderGeometry(0.2, 0.2, 1.1, 14), GLASS, 0, 0.55, 0, grp); add(new T.CylinderGeometry(0.9, 0.3, 0.9, 20), lm, 0, 1.7, 0, grp); }
+    grp.rotation.y = (hash(id + 'yaw') - 0.5) * 0.7; scene.add(grp);
+    return { id, grp, col: '#' + liq.getHexString() };
+  }
+  const kitX = i => (st.gear.length > 3 ? 9.2 + i * 4.6 : KIT.x + i * KIT.dx);
   function buildKit() {
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = [];
-    st.gear.forEach((id, i) => {
-      const q = P.GEARS[id], grp = new T.Group(), hue = hash(id + 'hue'), liq = new T.Color().setHSL(hue, 0.75, 0.5), lm = std({ color: liq.clone().convertSRGBToLinear(), roughness: 0.3 });
-      if (q.shape === 'box') { add(new T.BoxGeometry(2.6, 1.3, 1.9), std({ color: lin(0x3b3e42), roughness: 0.5, metalness: 0.3 }), 0, 0.65, 0, grp); add(new T.CylinderGeometry(0.42, 0.5, 0.3, 20), lm, 0.6, 1.45, 0, grp); add(new T.BoxGeometry(1.1, 0.5, 0.06), std({ color: lin(0x9be8b0), roughness: 0.4 }), -0.55, 0.8, 0.96, grp); }
-      else if (q.shape === 'column') { add(new T.CylinderGeometry(0.5, 0.5, 3.4, 20), GLASS, 0, 1.7, 0, grp); add(new T.CylinderGeometry(0.32, 0.32, 2.2, 16), lm, 0, 1.2, 0, grp); add(new T.CylinderGeometry(0.9, 1, 0.25, 24), std({ color: lin(0x2a2b2e), roughness: 0.6 }), 0, 0.12, 0, grp); }
-      else if (q.shape === 'flask') { add(new T.CylinderGeometry(0.35, 1.35, 2.2, 28), GLASS, 0, 1.1, 0, grp); add(new T.CylinderGeometry(0.75, 1.25, 0.9, 24), lm, 0, 0.5, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 0.7, 20), GLASS, 0, 2.5, 0, grp); }
-      else if (q.shape === 'round') { add(new T.SphereGeometry(1.25, 28, 20), GLASS, 0, 1.3, 0, grp); add(new T.SphereGeometry(1.0, 24, 16, 0, 6.3, Math.PI / 2, Math.PI / 2), lm, 0, 1.3, 0, grp); add(new T.CylinderGeometry(0.36, 0.36, 1, 20), GLASS, 0, 2.8, 0, grp); }
-      else { add(new T.CylinderGeometry(1.35, 0.25, 1.9, 28), GLASS, 0, 2.0, 0, grp); add(new T.CylinderGeometry(0.2, 0.2, 1.1, 14), GLASS, 0, 0.55, 0, grp); add(new T.CylinderGeometry(0.9, 0.3, 0.9, 20), lm, 0, 1.7, 0, grp); }
-      grp.position.set(KIT.x + i * KIT.dx, 0, KIT.z); grp.rotation.y = (hash(id + 'yaw') - 0.5) * 0.7; scene.add(grp);
-      kitObjs.push({ id, grp, col: '#' + liq.getHexString() });
-    });
+    st.gear.forEach((id, i) => { const k = piece(id); k.grp.position.set(kitX(i), 0, KIT.z); if (st.gear.length > 3) k.grp.scale.setScalar(0.85); kitObjs.push(k); });
   }
+  const clearKit = () => { kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; };
 
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
   function refresh() {
@@ -139,14 +147,32 @@ function start(app) {
     });
     st.hover = -1; setHover(-1); dirty = true;
   }
-  function load(i) {
-    st.feed = (i + P.FEEDS.length) % P.FEEDS.length; st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0; tweens = [];
-    freeMol(center); rowMols.forEach(freeMol); rowMols = [];
-    st.gear = P.kitRound(3); st.fired = {}; st.want = 0; st.mult = 1; buildKit();
-    g = P.synBegin(P.FEEDS[st.feed], true, null, st.gear); st.quota = P.synQuota(P.FEEDS[st.feed], 30, st.gear);
+  function clearRound() { tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
+  // the next round of the run: a molecule, the equipment held, and a number to beat
+  function load() {
+    st.feed = Math.floor(Math.random() * P.FEEDS.length); st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
+    clearRound(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; buildKit();
+    g = P.runBegin(run, P.FEEDS[st.feed], true); st.quota = P.runQuota(run, P.FEEDS[st.feed]);
     setAlign(g.m); center = buildMol(g.m, null); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
-    refresh(); sfx.feed();
+    refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
+  // between rounds: three things on the page, take one
+  function showPicks() {
+    st.tok++; st.mode = 'pick'; clearRound(); clearKit(); st.call = null; st.floats = []; st.blots = [];
+    pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    picks = P.runPicks(run);
+    picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') { const k = piece(o.id); k.grp.position.set(PICKX[i], 0, -2.2); k.grp.scale.setScalar(1.7); k.slot = i; pickObjs.push(k); } });
+    sfx.feed(); dirty = true;
+  }
+  function takePick(i) {
+    const o = picks[i]; if (st.mode !== 'pick' || !o) return;
+    P.runTake(run, o); sfx.stamp(); st.shake = 0.6; load();
+  }
+  function newRun() { run = P.runNew(meta.tier); showPicks(); }
+  // between runs: what the run paid, and the suppliers that can be opened with it
+  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten; meta.credit += run.beaten; saveMeta(); clearRound(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.hover = -1; sfx.feed(); dirty = true; }
+  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
   function setHover(i) {
     if (center) { center.hover.forEach(t => { center.group.remove(t); t.geometry.dispose(); t.material.dispose(); }); center.hover = []; }
     st.hover = i; const s = i >= 0 ? slots[i] : null, o = s && s.o;
@@ -155,7 +181,9 @@ function start(app) {
   }
   function endRound() {
     st.mode = 'done'; st.pass = g.total >= st.quota;
-    if (st.pass) { sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; } else { sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
+    if (st.pass) { run.beaten++; sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
+    if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
   }
   function nextPage() {
@@ -218,7 +246,7 @@ function start(app) {
     }, Math.max(290, dur + 60));
     dirty = true;
   }
-  const next = () => { if (st.mode === 'done') load(st.pass ? st.feed + 1 : st.feed); };
+  const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.pass) { run.round++; showPicks(); } else showSuppliers(); };
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
@@ -238,7 +266,42 @@ function start(app) {
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
   function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z - C0.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d, far = i === FIN ? 3.4 : 4.9; return { a: { x: C0.x + ux * 6.2, z: C0.z + uz * 3.2 }, b: { x: p.x - ux * far, z: p.z - uz * (far - 0.5) } }; }
   function drawInk(now) {
-    const x = ink.x, play = st.mode === 'play', open = g.cur.path.length > 0; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
+    const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
+    if (st.mode === 'shop') {
+      const h = px({ x: 0, z: -13 }); marker(x, 100); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('suppliers', h[0], h[1]);
+      hand(x, 46); x.fillStyle = PENCIL; x.fillText('that run beat ' + shop.earned + ' rounds and paid ' + shop.earned + ' credit.   credit: ' + meta.credit, h[0], h[1] + 64);
+      P.SUPPLY.forEach((sp, i) => {
+        const c = px({ x: -22, z: -6.5 + i * 5.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
+        if (open) swipe(x, [c[0] - 10, c[1] - 22], [c[0] + 420, c[1] - 28], 64);
+        marker(x, 62); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
+        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; x.fillText(open ? 'open' : nextUp ? (can ? 'click to open for ' + sp.cost + ' credit' : sp.cost + ' credit to open') : 'opens after the one above', c[0] + 560, c[1] - 6);
+        hand(x, 38); x.fillStyle = open || nextUp ? PENCIL : FAINT;
+        const things = sp.reagents.map(id => RX.CARDS[id].verb.toLowerCase()).concat(sp.gear.map(id => P.GEARS[id].name)).concat(sp.rare ? ['rare versions of reagents'] : []);
+        x.fillText('stocks: ' + things.join(',  '), c[0], c[1] + 48);
+        if (hov) ring(x, [c[0] + 520, c[1] + 6], 620, 86, 5, INK, 0.01);
+      });
+      const n0 = px({ x: 0, z: 12.4 }); marker(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('click here to start a run', n0[0], n0[1]);
+      hand(x, 40); x.fillStyle = PENCIL; x.fillText('best: ' + best + ' rounds', n0[0], n0[1] + 50);
+      if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 110); x.fillStyle = st.call.col; x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, c[0], c[1] + 500); x.fillText(st.call.text, c[0], c[1] + 500); }
+      ink.t.needsUpdate = true; return;
+    }
+    if (st.mode === 'pick') {
+      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 230, h[1] - 36], [h[0] + 230, h[1] - 46], 110); x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
+      hand(x, 50); x.fillStyle = PENCIL; x.fillText(run.round === 1 ? 'before round 1' : 'round ' + (run.round - 1) + ' beaten.  next: round ' + run.round, h[0], h[1] + 70);
+      picks.forEach((o, i) => {
+        const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase(), hov = st.hover === i;
+        const kind = o.kind === 'reagent' ? 'new reagent' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger reagent' : 'more of a reagent';
+        if (!isGear) { const t0 = px({ x: PICKX[i], z: -2 }); marker(x, 96); x.fillStyle = rgb(colOf(o.id)); x.fillText(title, t0[0], t0[1]); swipe(x, [t0[0] - 150, t0[1] + 22], [t0[0] + 150, t0[1] + 16], 20, rgb(colOf(o.id))); }
+        hand(x, 40); x.fillStyle = PENCIL; x.fillText((i + 1) + '   ' + kind, c[0], c[1] - 56);
+        if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
+        hand(x, 40); x.fillStyle = INK; const words = P.pickText(run, o).split(': '); words.forEach((w, j) => x.fillText(w, c[0], c[1] + 52 + j * 42));
+        if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
+      });
+      { const k0 = px({ x: 0, z: 11.4 }); hand(x, 38); x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
+      const b0 = px({ x: -24, z: 12.6 }); hand(x, 40); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText('best: ' + best + ' rounds', b0[0], b0[1]);
+      ink.t.needsUpdate = true; return;
+    }
+    const play = st.mode === 'play', open = g.cur.path.length > 0;
     // ink thrown off by the last reaction
     st.blots = st.blots.filter(b => now - b.t < 700); st.blots.forEach(b => { const k = (now - b.t) / 700, c = px(b); x.globalAlpha = 0.5 * (1 - k); x.fillStyle = b.col; x.beginPath(); x.arc(c[0], c[1], b.r * (0.6 + k), 0, 7); x.fill(); }); x.globalAlpha = 1;
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
@@ -274,13 +337,15 @@ function start(app) {
     }
     // equipment: its name, what it does, and what it just added
     kitObjs.forEach((k, i) => {
-      const q = P.GEARS[k.id], c = px({ x: KIT.x + i * KIT.dx, z: KIT.z + 2.9 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
+      const q = P.GEARS[k.id], c = px({ x: kitX(i), z: KIT.z + 2.9 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
       const words = q.name.split(' '), l1 = words.length > 1 ? words.slice(0, -1).join(' ') : q.name, l2 = words.length > 1 ? words[words.length - 1] : '';
       hand(x, 32); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(l1, c[0], c[1]); if (l2) x.fillText(l2, c[0], c[1] + 30);
       hand(x, 25); x.fillStyle = PENCIL; q.note.split(': ').forEach((ln, j) => x.fillText(ln, c[0], c[1] + (l2 ? 58 : 30) + j * 24));
-      if (age < 0.6) { const up = px({ x: KIT.x + i * KIT.dx, z: KIT.z - 3.4 - 1.5 * age }); marker(x, 62 * (age < 0.08 ? 1.5 : 1)); x.globalAlpha = 1 - age / 0.6; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
+      if ((run.lv[k.id] || 1) > 1) { hand(x, 28); x.fillStyle = REDINK; x.fillText('level ' + run.lv[k.id], c[0], c[1] - 34); }
+      if (age < 0.6) { const up = px({ x: kitX(i), z: KIT.z - 3.4 - 1.5 * age }); marker(x, 62 * (age < 0.08 ? 1.5 : 1)); x.globalAlpha = 1 - age / 0.6; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
-    // pages, and a circle for each reaction on this one
+    // the round of the run, the pages, and a circle for each reaction on this page
+    { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.4 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     for (let k = 1; k <= P.SYN.pages; k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     for (let k = 0; k < P.DIAL.steps; k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
     // how much has been made, and the number to beat
@@ -306,7 +371,7 @@ function start(app) {
       marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
       const txt = st.pass ? (ratio >= 2 ? fmtB(Math.floor(ratio * 10) / 10) + ' times over' : 'beaten') : fmt(st.quota - g.total) + ' short';
       x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
-      hand(x, 50); x.fillStyle = PENCIL; x.fillText('longest run ' + g.best + '      click for the next round', c[0], c[1] + 80);
+      hand(x, 50); x.fillStyle = PENCIL; x.fillText(st.pass ? g.best + ' in a row at best.   click to go on' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
     }
     ink.t.needsUpdate = true;
   }
@@ -319,14 +384,24 @@ function start(app) {
     let slot = -1; slots.forEach((s, i) => { if (!s || !s.o) return; const p = SPOT[i], l = LAB[i], rw = i === FIN ? 4.4 : 5.6; if ((Math.abs(hit.x - p.x) < rw && Math.abs(hit.z - p.z) < 3.6) || (Math.abs(hit.x - l.x) < 5 && Math.abs(hit.z - (l.z - 0.6)) < 1.8)) slot = i; });
     return slot;
   }
-  cv.addEventListener('pointermove', e => { const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  function pickAt(e) {
+    const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
+    if (!ray.ray.intersectPlane(ground, hit) || hit.z < -7 || hit.z > 9) return -1;
+    let best = -1; PICKX.forEach((px0, i) => { if (picks[i] && Math.abs(hit.x - px0) < 7) best = i; }); return best;
+  }
+  function shopAt(e) {
+    const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
+    if (!ray.ray.intersectPlane(ground, hit)) return -2;
+    for (let i = 0; i < P.SUPPLY.length; i++) { const z = -6.5 + i * 5.6; if (hit.z > z - 2.6 && hit.z < z + 2.6 && hit.x > -24 && hit.x < 20) return i; }
+    return hit.z > 9.5 ? -1 : -2;
+  }
+  cv.addEventListener('pointermove', e => { if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
-  cv.addEventListener('click', e => { if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
+  cv.addEventListener('click', e => { if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
   root.addEventListener('keydown', e => {
-    if (e.key >= '1' && e.key <= '6') pick(+e.key - 1);
+    if (e.key >= '1' && e.key <= '6') { if (st.mode === 'pick') takePick(+e.key - 1); else pick(+e.key - 1); }
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
-    else if (e.key === 'r' || e.key === 'R') load(st.feed);
-    else if (e.key === 'n' || e.key === 'N') load(st.feed + 1);
+    else if (e.key === 'r' || e.key === 'R') newRun();
   });
 
   function size() {
@@ -343,8 +418,10 @@ function start(app) {
     });
     ended.forEach(f => f());
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const want = st.hover === i ? 0.7 : 0; m.group.position.y += (want - m.group.position.y) * Math.min(1, dt * 14); });
+    if (st.mode === 'pick' || st.mode === 'shop') dirty = true;
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 16); dirty = true; }
+    pickObjs.forEach(k => { k.grp.rotation.y += dt * 0.6; k.grp.position.y = st.hover === k.slot ? 0.8 : 0; });
     kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 1.6 : 0; k.grp.scale.setScalar(age < 0.28 ? 1.18 : 1); if (age < 0.7) dirty = true; });
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
     if (st.floats.length || st.blots.length || st.call) dirty = true;
@@ -355,9 +432,10 @@ function start(app) {
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, next, setHover,
-    state: () => ({ mode: st.mode, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
-  size(); load(0); requestAnimationFrame(frame);
+  AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers,
+    openSupplier, meta,
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' ? { mode: st.mode, round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
+  size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
 if (el) { const boot = () => start(el); if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('40px Marker'), document.fonts.load('40px Hand')]).then(boot, boot); else boot(); }

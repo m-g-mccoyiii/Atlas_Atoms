@@ -145,7 +145,7 @@ const LIST = [
     rule: 'Adds water across C=C. The OH goes on the carbon with fewer H.', from: 'ene', to: 'addO',
     find: alkenes, ok: alkeneOk,
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), o = attach(m, 'O', cx, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [cx, ch], incoming: [hh, o, ho], leaving: [], tag: '+H₂O' }; } },
-  { id: 'pcc', verb: 'Oxidise', formula: 'PCC', chem: 'Pyridinium chlorochromate', rgb: [240, 132, 0], cls: 'oxidant', ghs: ['oxid', 'health'],
+  { id: 'pcc', verb: 'Oxidize', formula: 'PCC', chem: 'Pyridinium chlorochromate', rgb: [240, 132, 0], cls: 'oxidant', ghs: ['oxid', 'health'],
     rule: 'Turns C-OH into C=O. The carbon must have an H to give up.', from: 'ol', to: 'one',
     find: m => m.atoms.map(a => oxidisable(m, a)).filter(Boolean), ok: (m, s) => !!oxidisable(m, s.o),
     apply(m, s) { const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },

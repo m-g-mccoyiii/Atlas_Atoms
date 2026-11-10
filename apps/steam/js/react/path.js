@@ -69,18 +69,20 @@ function options(g) {
 }
 // scores one reaction: each site, then the chain, then the equipment that works once a step. Every change is
 // returned as an event so the page can replay it. The caller updates what the order has seen and used afterwards.
+// a piece of equipment at level n: what it adds is n times as much, and what it multiplies by stands n times as far above 1
+const lvl = (g, q, o) => { const n = (g.gearLv && g.gearLv[q]) || 1; return !o || n === 1 ? o : o[0] === 'x' ? ['x', 1 + (o[1] - 1) * n] : [o[0], o[1] * n]; };
 function scoreStep(g, id, r, dry) {
   const cur = g.cur, ev = [], loop = cur.seen.has(r.sig), first = !cur.used.includes(id);
   const put = (src, o) => { if (!o) return; if (o[0] === 'y') cur.yield += o[1]; else if (o[0] === 'b') cur.batch += o[1]; else cur.batch *= o[1]; ev.push({ src, kind: o[0], val: o[1], yield: cur.yield, batch: cur.batch }); };
   for (let i = 0; i < r.hits; i++) {
     RUN.scoreSite(g.run, id, dry).forEach(e => ev.push(e));
-    g.gear.forEach(q => { if (GEARS[q].site) put(q, GEARS[q].site({ hits: r.hits })); });
+    g.gear.forEach(q => { if (GEARS[q].site) put(q, lvl(g, q, GEARS[q].site({ hits: r.hits }))); });
   }
   if (!r.hits) return ev;
   put('step', ['b', 1]);
   const link = RUN.playEnd(g.run, id, r.hits, dry, r); link.forEach(e => ev.push(e));
   const cont = link.some(e => e.src === 'chain'), c = { hits: r.hits, cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first };
-  g.gear.forEach(q => { if (GEARS[q].step) put(q, GEARS[q].step(c)); });
+  g.gear.forEach(q => { if (GEARS[q].step) put(q, lvl(g, q, GEARS[q].step(c))); });
   return ev;
 }
 // what delivery adds: equipment that works at the end, then the marked group
@@ -161,18 +163,19 @@ const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish);
 const held = g => Math.round(g.cur.yield * g.cur.batch);
 const made = g => g.total + held(g);
 function synDeal(g, rnd) {
-  const R = rnd || Math.random, rack = synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length); let offer = [];
+  const R = rnd || Math.random, rack = g.rackIds || synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length); let offer = [];
   for (let t = 0; t < 40; t++) {
     const pool = rack.slice(); offer = [];
     while (offer.length < SYN.offer && pool.length) offer.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
     if (offer.filter(id => live.includes(id)).length >= Math.min(2, live.length)) break;
   }
-  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.kinds.forEach(id => { g.left[id] = SYN.uses; }); g.pageSteps = 0;
-  g.rare = {}; g.kinds.forEach(id => { if (R() < SYN.rare) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
+  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.kinds.forEach(id => { g.left[id] = SYN.uses + ((g.usesPlus && g.usesPlus[id]) || 0); }); g.pageSteps = 0;
+  g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
 }
-function synBegin(feed, relaxed, rnd, gear) {
+function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
   g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  if (run) { g.run.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
   synDeal(g, rnd);
   return g;
 }
@@ -203,8 +206,8 @@ function synFinish(g, o) {
 }
 function synEnd(g) { close(g); g.over = true; }
 // a plain player, used to set the number to beat: continues the run when it can, otherwise reacts at the most sites
-function synPlay(feed, rnd, gear) {
-  const g = synBegin(feed, false, rnd, gear), R = rnd || Math.random;
+function synPlay(feed, rnd, gear, run) {
+  const g = synBegin(feed, false, rnd, gear, run), R = rnd || Math.random;
   for (;;) {
     for (;;) {
       const o = options(g), ids = Object.keys(o); if (!ids.length) break;
@@ -217,11 +220,62 @@ function synPlay(feed, rnd, gear) {
   synEnd(g);
   return g.total;
 }
-function synQuota(feed, n, gear) {
-  const a = []; for (let i = 0; i < (n || 40); i++) a.push(synPlay(feed, null, gear)); a.sort((x, y) => x - y);
+function synQuota(feed, n, gear, run) {
+  const a = []; for (let i = 0; i < (n || 40); i++) a.push(synPlay(feed, null, gear, run)); a.sort((x, y) => x - y);
   const q = a[Math.floor(a.length * 0.25)], mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
   return Math.max(50, Math.round(q / mag) * mag);
 }
-AA.rxPath = { DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+
+// ---------- a run: rounds one after another until one is missed ----------
+// A run starts with four reagents and no equipment. Before the first round and after every round beaten the player
+// takes one of three: a new reagent, a new piece of equipment, a level for a piece they hold, a stronger reagent,
+// or one more use of a reagent on every page. What can turn up depends on the suppliers that have been opened.
+// Each round has a number to beat that is set by the round and not by what the player holds, so a better build
+// beats it by more.
+const RUNG = { slots: 4, growth: 1.85, first: 0.8, start: ['hydrate', 'pcc', 'nabh4', 'dehydrate'] };
+// Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
+// A run pays one credit for every round beaten.
+const SUPPLY = [
+  { name: 'corner chemist', cost: 0, reagents: ['hcl', 'bh3'], gear: ['balance', 'stirrer', 'cards'] },
+  { name: 'trade supplier', cost: 6, reagents: ['socl2', 'koh'], gear: ['cannula', 'coldtrap', 'schlenk'] },
+  { name: 'research supplier', cost: 16, reagents: ['naoh'], gear: ['reflux', 'crystal'], rare: true }
+];
+const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); return o; };
+function runNew(tier) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false }; }
+const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
+// the number to beat is measured against a plain player with the starting four reagents and nothing else
+function runQuota(run, feed) {
+  if (!run.base[feed]) run.base[feed] = synQuota(feed, 40, [], { rack: RUNG.start, grade: {}, lv: {}, uses: {}, rare: false });
+  const q = run.base[feed] * RUNG.first * Math.pow(RUNG.growth, run.round - 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+  return Math.max(50, Math.round(q / mag) * mag);
+}
+function runPicks(run, rnd) {
+  const R = rnd || Math.random, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
+  const newR = st.reagents.filter(id => !run.rack.includes(id)), newG = run.gear.length < RUNG.slots ? st.gear.filter(id => !run.gear.includes(id)) : [];
+  const from = { reagent: newR, gear: newG, level: run.gear, strong: run.rack, bottle: run.rack };
+  // one new thing where there is one, then whatever else, three different kinds where possible
+  let kinds = ['reagent', 'gear'].filter(k => from[k].length); for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t; }
+  const rest = ['strong', 'bottle', 'level'].filter(k => from[k].length); for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
+  kinds = kinds.concat(rest).slice(0, 3);
+  kinds.forEach(kind => out.push({ kind, id: any(from[kind]) }));
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = out[i]; out[i] = out[j]; out[j] = t; }
+  return out;
+}
+function runTake(run, o) {
+  if (o.kind === 'reagent') { if (!run.rack.includes(o.id)) run.rack.push(o.id); }
+  else if (o.kind === 'gear') { if (run.gear.length < RUNG.slots && !run.gear.includes(o.id)) run.gear.push(o.id); }
+  else if (o.kind === 'level') run.lv[o.id] = (run.lv[o.id] || 1) + 1;
+  else if (o.kind === 'strong') run.grade[o.id] = (run.grade[o.id] || 1) + 1;
+  else if (o.kind === 'bottle') run.uses[o.id] = (run.uses[o.id] || 0) + 1;
+}
+// one line saying what a pick does
+function pickText(run, o) {
+  if (o.kind === 'reagent') return 'a new reaction for this run';
+  if (o.kind === 'gear') return GEARS[o.id].note;
+  if (o.kind === 'level') return 'level ' + ((run.lv[o.id] || 1) + 1) + ': ' + GEARS[o.id].note;
+  if (o.kind === 'strong') return 'each place it changes: +' + RUN.YIELD;
+  return 'one more use on every page';
+}
+AA.rxPath = { SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

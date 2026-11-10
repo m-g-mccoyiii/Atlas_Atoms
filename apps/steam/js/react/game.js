@@ -447,7 +447,7 @@ function start(app) {
     const a = RUN.cap(run, model);
     if (!a) { sfx.bad(); return; }
     const p = scr([a]), oh = cur.keep.kind === 'OH', tok = st.tok;
-    fx.banner(oh ? 'SILYLATE' : 'ACETALISE', oh ? 'TBSCl with imidazole' : 'Ethylene glycol with TsOH', WHITE, 1.3);
+    fx.banner(oh ? 'SILYLATE' : 'ACETALIZE', oh ? 'TBSCl with imidazole' : 'Ethylene glycol with TsOH', WHITE, 1.3);
     fx.ring(p.x, p.y, WHITE, 120, 0.5); fx.floatText(p.x + 4, p.y + 36, cur.keep.kind + ' capped', WHITE, 22);
     v.pop(a); st.flashes.push({ atom: a, hex: 0xffffff, until: performance.now() + 520 }); sfx.bond();
     st.zoomAtom = a; zoomTo(600);
