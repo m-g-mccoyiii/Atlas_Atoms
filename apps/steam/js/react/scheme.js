@@ -243,7 +243,7 @@ function start(app) {
   const BAND = 12.9, MULT = { x: EDGE - 0.6, z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -12.6; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {} }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; } } catch (e) { /* storage unavailable */ }
@@ -333,6 +333,35 @@ function start(app) {
   })();
   function byAt() { if (st.mode !== 'play') return null; for (const k of ['water', 'h2']) { const p = k === 'water' ? BEAK : BALN; if (Math.abs(hit.x - p.x) < 2 && hit.z > p.z - 3.4 && hit.z < p.z + 1.8) return k; } return null; }
   function spend(kind) { if (st.mode !== 'play' || !P.spendBy(g, kind)) { sfx.bad(); return; } flush(); st.by[kind] = Math.max(0, st.by[kind] - P.BY.need); st.byBump[kind] = 1; const p = kind === 'water' ? BEAK : BALN; burst3(p.x, 0.5, p.z, 30, kind === 'water' ? '#3a6fd0' : '#d6453a'); st.shake = 1; sfx.good(); refresh(); }
+  // Ways of saying what the things on the page are, tried with ?name= on the page:
+  //   point: in a first round, an inked arrow and a few words point at one thing at a time as it first matters
+  //   words: one or two pencil words by each thing, always.  hover: its name and a line under the pointer.
+  //   fewer: no names, fewer things: no tally, no page numbers, beaker and balloon only once they hold something,
+  //          and the three numbers small on one line under the count
+  const NAMEV = (() => { try { return new URLSearchParams(root.location.search).get('name') || 'none'; } catch (e) { return 'none'; } })(), FEWER = NAMEV === 'fewer';
+  // each thing: where it is, how near the pointer must be, its name, one line, and where a word for it is written
+  const zones = () => [
+    { id: 'water', x: BEAK.x, z: BEAK.z - 0.8, r: 2.2, name: 'water', line: 'three deal this page again', lx: BEAK.x, lz: BEAK.z + 2.7 },
+    { id: 'h2', x: BALN.x, z: BALN.z - 1.2, r: 2.2, name: 'hydrogen', line: 'three give each reagent one more use', lx: BALN.x, lz: BALN.z + 2.7 },
+    { id: 'tally', x: TALLY.x + 1, z: TALLY.z - 0.9, r: 1.8, name: 'left the molecule', line: 'the fifth pays', lx: TALLY.x + 1, lz: TALLY.z + 1.1 },
+    { id: 'pages', x: PAGES.x + 1.8, z: PAGES.z, r: 2.4, name: 'page', line: 'three pages to a round', lx: PAGES.x + 1.8, lz: PAGES.z - 1.5 },
+    { id: 'steps', x: STEP.x + 2.5, z: STEP.z, r: 3, name: 'reactions', line: 'on this page', lx: STEP.x + 9.4, lz: STEP.z + 0.4 },
+    { id: 'made', x: EDGE + 3.4, z: MADE.z - 1.4, r: 3.4, name: 'made', line: 'this round', lx: EDGE + 12, lz: MADE.z - 0.4 },
+    { id: 'p', x: MULT.x + 2.2, z: BAND - 1, r: 2.1, name: 'places', line: 'each place a reaction changes', lx: MULT.x + 2.2, lz: BAND + 1.5 },
+    { id: 'r', x: MULT.x + 6.9, z: BAND - 1, r: 2.1, name: 'row', line: 'grows with reactions in a row', lx: MULT.x + 6.9, lz: BAND + 1.5 },
+    { id: 'e', x: MULT.x + 11.6, z: BAND - 1, r: 2.1, name: 'extra', line: 'added by equipment', lx: MULT.x + 11.6, lz: BAND + 1.5 },
+    { id: 'beat', x: FLASK.x, z: FLASK.z - 1, r: 2.6, name: 'to beat', line: 'fill past the red line', lx: FLASK.x - 3.6, lz: BEAT.z },
+    { id: 'choices', x: 16.8, z: -9.6, r: 0, name: 'reactions', line: 'pick one', lx: 16.8, lz: -12.3 }
+  ];
+  // the first round: what is pointed at, in order, each once the page has reached it
+  const TEACH = [
+    { z: 'choices', say: 'pick a reaction', when: () => true },
+    { z: 'made', say: 'what the round has made', when: () => g.trail.length >= 1 },
+    { z: 'beat', say: 'fill it past the red line', when: () => g.trail.length >= 1 },
+    { z: 'r', say: 'in a row: this one grows', when: () => g.cur.path.length >= 2 },
+    { z: 'water', say: 'what leaves is kept. three can be spent', when: () => st.by.water + st.by.h2 > 0 },
+    { z: 'pages', say: 'three pages to a round', when: () => g.page >= 2 }
+  ];
   const clearKit = () => { kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; };
 
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
@@ -683,10 +712,10 @@ function start(app) {
       center.groups.forEach(q => { const age = q.born ? (now - q.t) / 1000 : 9; if (q.born && !(age >= 0)) return; const c = at2(q); if (MOLV === 'pads') { const c0 = px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }); x.fillStyle = 'rgba(' + PADC[q.txt] + ',0.3)'; x.beginPath(); x.ellipse(c0[0], c0[1], 30 * sc, 22 * sc, 0.1, 0, 6.3); x.fill(); } const pop = age < 0.25 ? 1.7 - 2.8 * age : 1; hand(x, 40 * pop); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(q.txt, c[0], c[1]); x.fillStyle = age < 1.2 ? REDINK : INK; x.fillText(q.txt, c[0], c[1]); if (age < 1.2) dirty = true; });
       (center.ghosts || []).forEach(q => { const age = (now - q.t) / 1000, c = at2(q); if (age > 1.3) return; hand(x, 40); x.textAlign = 'center'; x.globalAlpha = age < 0 ? 1 : Math.max(0, 1 - age / 1.3); x.fillStyle = age < 0 ? INK : PENCIL; x.fillText(q.txt, c[0], c[1]); if (age >= 0) { const w = x.measureText(q.txt).width / 2 + 8, k = Math.min(1, age / 0.12); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - w, c[1] - 6); x.lineTo(c[0] - w + 2 * w * k, c[1] - 14); x.stroke(); } x.globalAlpha = 1; dirty = true; }); }
     // under the beaker and the balloon: how many of three. A ring when it can be spent. Beside them, the tally
-    if (st.mode !== 'done') { [['water', BEAK, '#3a6fd0'], ['h2', BALN, '#d6453a']].forEach(q => { const c = px({ x: q[1].x, z: q[1].z + 1.5 }), n = Math.min(P.BY.need, st.by[q[0]]);
+    if (st.mode !== 'done') { [['water', BEAK, '#3a6fd0'], ['h2', BALN, '#d6453a']].forEach(q => { if (FEWER && !st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 1.5 }), n = Math.min(P.BY.need, st.by[q[0]]);
         for (let k = 0; k < P.BY.need; k++) { x.beginPath(); x.arc(c[0] + (k - 1) * 26, c[1], 9, 0, 6.3); if (k < n) { x.fillStyle = q[2]; x.fill(); } else { x.strokeStyle = FAINT; x.lineWidth = 3; x.stroke(); } }
         if (st.by[q[0]] >= P.BY.need) { const c2 = px({ x: q[1].x, z: q[1].z - 0.9 }); ring(x, c2, 78 + 6 * Math.sin(now / 160), 92 + 6 * Math.sin(now / 160), 6, q[2], 0.05); dirty = true; } });
-      const t0 = px(TALLY), n = st.by.gauge, sa = (now - st.struck) / 1000; x.strokeStyle = INK; x.lineCap = 'round';
+      const t0 = px(TALLY), n = FEWER ? 0 : st.by.gauge, sa = FEWER ? 9 : (now - st.struck) / 1000; x.strokeStyle = INK; x.lineCap = 'round';
       const full = sa < 0.9, shown = full ? 4 : n; for (let k = 0; k < Math.min(4, shown); k++) { x.lineWidth = 6; x.beginPath(); x.moveTo(t0[0] + k * 20 + 3 * hash('ta' + k), t0[1]); x.lineTo(t0[0] + k * 20 - 4, t0[1] - 58 * (k === shown - 1 && !full ? 1 - 0.5 * st.byBump.gauge * 0 : 1)); x.stroke(); }
       if (full) { const k2 = Math.min(1, sa / 0.14); x.globalAlpha = sa > 0.6 ? 1 - (sa - 0.6) / 0.3 : 1; x.strokeStyle = REDINK; x.lineWidth = 8; x.beginPath(); x.moveTo(t0[0] - 16, t0[1] - 8); x.lineTo(t0[0] - 16 + 100 * k2, t0[1] - 8 - 42 * k2); x.stroke(); x.globalAlpha = 1; dirty = true; } }
     // pointing at a reaction rings the places it will change, in its color
@@ -717,7 +746,7 @@ function start(app) {
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
     if (st.mode !== 'done') {
-      const mp = px(MULT), len = g.cur.path.length;
+      const mp = px(FEWER ? { x: MULT.x + 0.6, z: MADE.z + 2.9 } : MULT), len = g.cur.path.length; x.save(); if (FEWER) { x.translate(mp[0], mp[1]); x.scale(0.6, 0.6); x.translate(-mp[0], -mp[1]); }
       [['p', fmt(st.P)], ['r', fmtB(st.R)], ['e', fmtB(st.E)]].forEach((q, i) => {
         const cx = mp[0] + 70 + i * 150, live = q[0] === 'p' ? st.P > 0 : q[0] === 'r' ? st.R > 1 : st.E > 1, k = 1 + 0.4 * st.bump[q[0]];
         if (live && q[0] === 'r' && len >= 2) swipe(x, [cx - 52, mp[1] - 24], [cx + 52, mp[1] - 30], 62);
@@ -729,6 +758,7 @@ function start(app) {
         const gq = px(MADE); marker(x, 46); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0] + 6, gq[1] - 104); }
       // one small chevron for each reaction in the row that is open
       for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 220 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
+      x.restore();
     }
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
@@ -743,7 +773,7 @@ function start(app) {
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
-    for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
+    if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart);
     for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); swipe(x, a0, b0, 34); }
@@ -773,6 +803,18 @@ function start(app) {
       }
       x.restore(); x.globalAlpha = 1;
     } else if (st.call) st.call = null;
+    if (st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
+      const zs = zones(), halo = (txt, cx, cy, size, col, font) => { (font || hand)(x, size); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#fbf8ee'; x.strokeText(txt, cx, cy); x.fillStyle = col; x.fillText(txt, cx, cy); };
+      if (NAMEV === 'words') zs.forEach(q => { const c = px({ x: q.lx, z: q.lz }); halo(q.name, c[0], c[1], 28, PENCIL); });
+      if (NAMEV === 'hover' && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
+      if (NAMEV === 'point') { const T0 = st.teach; if (!T0.t) T0.t = now;
+        const nx = TEACH[T0.i + 1]; if (nx && now - T0.t > 2600 && nx.when()) { T0.i++; T0.t = now; }
+        const cur = TEACH[T0.i], q = cur && zs.find(k => k.id === cur.z), age = (now - T0.t) / 1000;
+        if (q && age < 7) { const tgt = px({ x: q.x, z: q.z }), right = q.x > 8, from = px({ x: q.x + (right ? -7.5 : 6.5), z: q.z - 3.2 }), k = Math.min(1, age / 0.3);
+          x.globalAlpha = age > 6 ? 7 - age : 1; flick(x, from, [from[0] + (tgt[0] - from[0]) * 0.86, from[1] + (tgt[1] - from[1]) * 0.86], 0, k, 20, REDINK, right ? -0.18 : 0.18);
+          if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
+          halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
+    }
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
@@ -805,7 +847,7 @@ function start(app) {
     for (let i = 0; i < P.FAMILIES.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x >= 6.5) return 100 + i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
   cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else { const b = byAt(); if (b) spend(b); } });
   root.addEventListener('keydown', e => {
@@ -847,7 +889,7 @@ function start(app) {
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
     ['water', 'h2', 'gauge'].forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'), tq = now / 1000, nw = Math.min(P.BY.need, st.by.water), nh = Math.min(P.BY.need, st.by.h2), fullW = st.by.water >= P.BY.need, fullH = st.by.h2 >= P.BY.need;
-      keep.bk.visible = on; keep.bl.visible = on;
+      keep.bk.visible = on && !(FEWER && !st.by.water); keep.bl.visible = on && !(FEWER && !st.by.h2);
       if (on) { const lv = 0.08 + 1.25 * nw / P.BY.need; keep.water.scale.y = lv; keep.water.position.y = 0.06 + lv / 2; keep.water.visible = nw > 0;
         const bw = 1 + 0.25 * st.byBump.water, bh = 1 + 0.25 * st.byBump.h2; keep.bk.scale.set(1.5 * bw, 1.5 * (2 - bw), 1.5 * bw); keep.bk.position.y = fullW ? 0.25 + 0.2 * Math.sin(tq * 5) : 0;
         const sz = (0.45 + 0.22 * nh) * bh; keep.skin.scale.setScalar(sz); keep.skin.position.y = 1.24 + 0.9 * sz; keep.bl.rotation.z = 0.08 * Math.sin(tq * 1.6) + (fullH ? 0.1 * Math.sin(tq * 9) : 0); keep.bl.position.y = fullH ? 0.3 + 0.25 * Math.sin(tq * 4) : 0; } }
@@ -886,7 +928,7 @@ function start(app) {
   }
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers, frame, debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
-    debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.quota = 900; load(); },
+    debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.quota = 900; load(); },
     openSupplier, meta,
     chooseBrief,
     state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
