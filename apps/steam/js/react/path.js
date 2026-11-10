@@ -27,12 +27,23 @@ const KIN = {
 };
 const KIN_OF = {};
 [['chain', 0, 6], ['ring', 6, 7], ['arene', 7, 8], ['ring', 8, 9], ['arene', 9, 10], ['cage', 10, 13], ['sugar', 13, 14], ['ring', 14, 16], ['arene', 16, 18], ['cage', 18, 20], ['sugar', 20, 23]].forEach(q => { for (let k = q[1]; k < q[2]; k++) KIN_OF[FEEDS[k]] = q[0]; });
+// The families a molecule belongs to as it stands, each with a level. A molecule the player has built into a ring, or
+// into several things at once, is paid by every rule that fits, and a rule is paid more the more of that thing there is.
+function kinsOf(m) {
+  const s = RX.shapeOf(m), out = [], cap = n => Math.min(3, n);
+  if (s.cage) out.push({ id: 'cage', lv: 1 });
+  if (s.ring && !s.cage) out.push({ id: 'ring', lv: cap(s.ring) });
+  if (s.arene) out.push({ id: 'arene', lv: cap(s.arene) });
+  if (s.oh >= 3) out.push({ id: 'sugar', lv: cap(Math.floor(s.oh / 3)) });
+  if (!out.length) out.push({ id: 'chain', lv: 1 });
+  return out;
+}
 const kinOf = feed => (typeof feed === 'string' && KIN_OF[feed]) || 'chain';
 // keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
 const DIAL = { keep: 3, steps: 3 };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
-const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1 };
+const LEAVES = { cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1 };
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
 // Equipment that catches a by-product as it leaves, and what that adds. A by-product nothing catches is collected
@@ -53,7 +64,7 @@ function spendBy(g, kind, rnd) {
 // How rare a reagent is. A rarer one turns up less often among the three to take and adds more for each place.
 // odds: weight among the reagents on offer.  place: what each place it changes adds.  dots: how it is marked.
 const RARITY = { common: { odds: 60, place: 20, dots: 1, col: '#5a564e' }, uncommon: { odds: 28, place: 30, dots: 2, col: '#1f5fbf' }, rare: { odds: 10, place: 45, dots: 3, col: '#b0189a' }, legend: { odds: 2, place: 70, dots: 4, col: '#c8891a' } };
-const TIER = { hcl: 'uncommon', koh: 'uncommon', socl2: 'uncommon', naoh: 'uncommon', memgbr: 'uncommon', wittig: 'uncommon', allyl: 'rare', wacker: 'rare', wolff: 'rare', aibn: 'legend' };
+const TIER = { cyclize: 'uncommon', hcl: 'uncommon', koh: 'uncommon', socl2: 'uncommon', naoh: 'uncommon', memgbr: 'uncommon', wittig: 'uncommon', allyl: 'rare', wacker: 'rare', wolff: 'rare', aibn: 'legend' };
 const rarityOf = id => RARITY[TIER[id] || 'common'];
 // Kinds of chemistry opened between runs with credit. Each adds its reagents to what any run can turn up.
 const FAMILIES = [
@@ -348,7 +359,7 @@ function scoreRound(g, o, free) {
     if (!caught && (kind === 'water' || kind === 'h2')) { g.by[kind]++; ev.push({ src: 'collect', kind, gone: gi, part: 'p', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) }); }
     g.by.gauge++; if (g.by.gauge >= BY.tally) { g.by.gauge -= BY.tally; emit('tally', A('p', BY.pay * Math.max(1, cur.path.length))); }
   });
-  { const K = KIN[g.kin]; if (K && r.hits) emit('family', K.fx(Object.assign({ free: !!free }, c)), { kin: g.kin }); }
+  if (r.hits) kinsOf(o.model).forEach(q => { const fx = KIN[q.id].fx(Object.assign({ free: !!free }, c)); if (fx) emit('family', { part: fx.part, op: fx.op, val: fx.op === 'mul' ? 1 + (fx.val - 1) * q.lv : fx.val * q.lv }, { kin: q.id, lv: q.lv }); });
   if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
   if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
@@ -452,7 +463,7 @@ const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.9, ask: 1, s
 // A reagent that makes a halide is a dead end without a base to take the halide off again, so the two come as one pick.
 const PAIR = { hcl: 'koh', socl2: 'naoh' };
 const SUPPLY = [
-  { name: 'corner chemist', cost: 0, reagents: ['bh3'], gear: ['balance', 'stirrer', 'cards', 'spatula', 'stopwatch', 'litmus', 'dryer'] },
+  { name: 'corner chemist', cost: 0, reagents: ['bh3', 'cyclize'], gear: ['balance', 'stirrer', 'cards', 'spatula', 'stopwatch', 'litmus', 'dryer'] },
   { name: 'trade supplier', cost: 6, kin: ['arene'], reagents: ['hcl', 'koh'], gear: ['cannula', 'coldtrap', 'schlenk', 'burette', 'logbook', 'scalepan', 'stopper', 'hood', 'scrubber'] },
   { name: 'research supplier', cost: 16, kin: ['sugar'], reagents: ['socl2', 'naoh'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper', 'mirror', 'sieves'], rare: true },
   { name: 'instrument maker', cost: 30, kin: ['cage'], reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] },
@@ -464,7 +475,7 @@ const modelOf = feed => { const m = feed.atoms ? RX.cloneMap(feed).model : AA.Mo
 // what a plain player makes from a molecule under a brief, with the starting reagents and the style that suits it best
 // Measured on 2026-11-10 with 12 plays for each style of play, chains included: the lower quarter of the best style. Measure again
 // after any change to the rules of a round, or delete the table and it is measured as needed.
-const BASE = {"C=CCC(O)CC=C|plain":98040,"C=CCC(O)CC=C|broad":97637,"C=CCC(O)CC=C|loose":188288,"C=CCC(O)CC=C|each":252000,"C=CCC(O)CC=C|back":737280,"C=CCC(O)CC=C|scarce":13140,"C=CCC(O)CC=C|short":43920,"CC(O)CCC=C|plain":70800,"CC(O)CCC=C|broad":67088,"CC(O)CCC=C|loose":155447,"CC(O)CCC=C|each":195390,"CC(O)CCC=C|back":778800,"CC(O)CCC=C|scarce":15750,"CC(O)CCC=C|short":27270,"CC(=O)CCC(O)CC=C|plain":107640,"CC(=O)CCC(O)CC=C|broad":123491,"CC(=O)CCC(O)CC=C|loose":289001,"CC(=O)CCC(O)CC=C|each":301860,"CC(=O)CCC(O)CC=C|back":1013040,"CC(=O)CCC(O)CC=C|scarce":17550,"CC(=O)CCC(O)CC=C|short":37440,"C=CCC(O)CC(O)CC=C|plain":136800,"C=CCC(O)CC(O)CC=C|broad":137066,"C=CCC(O)CC(O)CC=C|loose":280608,"C=CCC(O)CC(O)CC=C|each":349200,"C=CCC(O)CC(O)CC=C|back":1432200,"C=CCC(O)CC(O)CC=C|scarce":24640,"C=CCC(O)CC(O)CC=C|short":54730,"C=CCC(=O)CCC(=O)CC=C|plain":98560,"C=CCC(=O)CCC(=O)CC=C|broad":77425,"C=CCC(=O)CCC(=O)CC=C|loose":273501,"C=CCC(=O)CCC(=O)CC=C|each":330600,"C=CCC(=O)CCC(=O)CC=C|back":688160,"C=CCC(=O)CCC(=O)CC=C|scarce":13630,"C=CCC(=O)CCC(=O)CC=C|short":25110,"CC(O)CC(=O)CCC(Cl)CCC=C|plain":106020,"CC(O)CC(=O)CCC(Cl)CCC=C|broad":120771,"CC(O)CC(=O)CCC(Cl)CCC=C|loose":245943,"CC(O)CC(=O)CCC(Cl)CCC=C|each":274680,"CC(O)CC(=O)CCC(Cl)CCC=C|back":1181880,"CC(O)CC(=O)CCC(Cl)CCC=C|scarce":20235,"CC(O)CC(=O)CCC(Cl)CCC=C|short":37440,"O=C1CCC(CC=C)CC1|plain":32900,"O=C1CCC(CC=C)CC1|broad":40605,"O=C1CCC(CC=C)CC1|loose":20384,"O=C1CCC(CC=C)CC1|each":138075,"O=C1CCC(CC=C)CC1|back":197400,"O=C1CCC(CC=C)CC1|scarce":6327,"O=C1CCC(CC=C)CC1|short":9223,"C=CCC(O)C1=CC=CC=C1|plain":104009,"C=CCC(O)C1=CC=CC=C1|broad":149450,"C=CCC(O)C1=CC=CC=C1|loose":34752,"C=CCC(O)C1=CC=CC=C1|each":211310,"C=CCC(O)C1=CC=CC=C1|back":732716,"C=CCC(O)C1=CC=CC=C1|scarce":15323,"C=CCC(O)C1=CC=CC=C1|short":30150,"C=CC1CCC(O)CC1|plain":81804,"C=CC1CCC(O)CC1|broad":65489,"C=CC1CCC(O)CC1|loose":44172,"C=CC1CCC(O)CC1|each":179136,"C=CC1CCC(O)CC1|back":767550,"C=CC1CCC(O)CC1|scarce":12952,"C=CC1CCC(O)CC1|short":27450,"CC(=O)CCC(O)C1=CC=CC=C1|plain":70304,"CC(=O)CCC(O)C1=CC=CC=C1|broad":61958,"CC(=O)CCC(O)C1=CC=CC=C1|loose":35512,"CC(=O)CCC(O)C1=CC=CC=C1|each":116861,"CC(=O)CCC(O)C1=CC=CC=C1|back":607942,"CC(=O)CCC(O)C1=CC=CC=C1|scarce":13888,"CC(=O)CCC(O)C1=CC=CC=C1|short":24272,"C=CC12C3C4C1C5C2C3C45CO|plain":54196,"C=CC12C3C4C1C5C2C3C45CO|broad":9507,"C=CC12C3C4C1C5C2C3C45CO|loose":11352,"C=CC12C3C4C1C5C2C3C45CO|each":38443,"C=CC12C3C4C1C5C2C3C45CO|back":628996,"C=CC12C3C4C1C5C2C3C45CO|scarce":9443,"C=CC12C3C4C1C5C2C3C45CO|short":12958,"OC1C2CC3CC(C2)CC1C3|plain":20166,"OC1C2CC3CC(C2)CC1C3|broad":22157,"OC1C2CC3CC(C2)CC1C3|loose":6083,"OC1C2CC3CC(C2)CC1C3|each":31760,"OC1C2CC3CC(C2)CC1C3|back":64532,"OC1C2CC3CC(C2)CC1C3|scarce":1238,"OC1C2CC3CC(C2)CC1C3|short":10939,"OC1CC2CC1C=C2|plain":38937,"OC1CC2CC1C=C2|broad":45849,"OC1CC2CC1C=C2|loose":12166,"OC1CC2CC1C=C2|each":41042,"OC1CC2CC1C=C2|back":110662,"OC1CC2CC1C=C2|scarce":9470,"OC1CC2CC1C=C2|short":17067,"OCC1OC(O)C(O)C(O)C1O|plain":51948,"OCC1OC(O)C(O)C(O)C1O|broad":31590,"OCC1OC(O)C(O)C(O)C1O|loose":200707,"OCC1OC(O)C(O)C(O)C1O|each":50128,"OCC1OC(O)C(O)C(O)C1O|back":337662,"OCC1OC(O)C(O)C(O)C1O|scarce":7874,"OCC1OC(O)C(O)C(O)C1O|short":22587,"OC1CCC(O)CC1|plain":115830,"OC1CCC(O)CC1|broad":100048,"OC1CCC(O)CC1|loose":57974,"OC1CCC(O)CC1|each":233250,"OC1CCC(O)CC1|back":1266408,"OC1CCC(O)CC1|scarce":22064,"OC1CCC(O)CC1|short":43645,"O=C1CCC(O)CC1C=C|plain":88854,"O=C1CCC(O)CC1C=C|broad":78622,"O=C1CCC(O)CC1C=C|loose":49938,"O=C1CCC(O)CC1C=C|each":219721,"O=C1CCC(O)CC1C=C|back":704368,"O=C1CCC(O)CC1C=C|scarce":13777,"O=C1CCC(O)CC1C=C|short":27612,"OC(C=C)C1=CC=CC=C1|plain":21178,"OC(C=C)C1=CC=CC=C1|broad":11146,"OC(C=C)C1=CC=CC=C1|loose":6955,"OC(C=C)C1=CC=CC=C1|each":26787,"OC(C=C)C1=CC=CC=C1|back":49647,"OC(C=C)C1=CC=CC=C1|scarce":6451,"OC(C=C)C1=CC=CC=C1|short":3302,"CC(O)CC(=O)C1=CC=CC=C1|plain":129902,"CC(O)CC(=O)C1=CC=CC=C1|broad":75586,"CC(O)CC(=O)C1=CC=CC=C1|loose":35712,"CC(O)CC(=O)C1=CC=CC=C1|each":182532,"CC(O)CC(=O)C1=CC=CC=C1|back":522153,"CC(O)CC(=O)C1=CC=CC=C1|scarce":6880,"CC(O)CC(=O)C1=CC=CC=C1|short":15514,"OCC12C3C4C1C5C2C3C45CO|plain":10874,"OCC12C3C4C1C5C2C3C45CO|broad":9225,"OCC12C3C4C1C5C2C3C45CO|loose":6490,"OCC12C3C4C1C5C2C3C45CO|each":10971,"OCC12C3C4C1C5C2C3C45CO|back":68191,"OCC12C3C4C1C5C2C3C45CO|scarce":1348,"OCC12C3C4C1C5C2C3C45CO|short":3146,"OC1CC2CCC1C=C2|plain":38675,"OC1CC2CCC1C=C2|broad":46431,"OC1CC2CCC1C=C2|loose":10890,"OC1CC2CCC1C=C2|each":65917,"OC1CC2CCC1C=C2|back":146569,"OC1CC2CCC1C=C2|scarce":5182,"OC1CC2CCC1C=C2|short":8674,"OCC(O)C(O)C(O)C(O)C=O|plain":128639,"OCC(O)C(O)C(O)C(O)C=O|broad":138703,"OCC(O)C(O)C(O)C(O)C=O|loose":491565,"OCC(O)C(O)C(O)C(O)C=O|each":147261,"OCC(O)C(O)C(O)C(O)C=O|back":771831,"OCC(O)C(O)C(O)C(O)C=O|scarce":22483,"OCC(O)C(O)C(O)C(O)C=O|short":42735,"OCC1OC(O)CC1O|plain":22715,"OCC1OC(O)CC1O|broad":8839,"OCC1OC(O)CC1O|loose":18455,"OCC1OC(O)CC1O|each":11310,"OCC1OC(O)CC1O|back":55607,"OCC1OC(O)CC1O|scarce":1259,"OCC1OC(O)CC1O|short":2879,"OCC(O)CO|plain":23064,"OCC(O)CO|broad":47143,"OCC(O)CO|loose":136740,"OCC(O)CO|each":34547,"OCC(O)CO|back":104751,"OCC(O)CO|scarce":4480,"OCC(O)CO|short":9709};
+const BASE = {};
 function briefBase(feed, brief) {
   const k = (feed.atoms ? RX.sigOf(feed) : feed) + '|' + brief; if (BASE[k]) return BASE[k];
   const run = { rack: RUNG.start, grade: {}, lv: {}, uses: {}, rare: false, brief }; let top = 0;
@@ -524,6 +535,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { KIN, kinOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

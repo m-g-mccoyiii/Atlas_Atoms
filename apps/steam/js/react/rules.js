@@ -204,6 +204,12 @@ const LIST = [
     rule: 'Swaps the Cl of a chloroalkane for OH.', from: 'cl', to: 'ol',
     find: m => m.atoms.map(a => substitutable(m, a)).filter(Boolean), ok: (m, s) => !!substitutable(m, s.cl),
     apply(m, s) { cut(m, s.c, s.cl); const o = attach(m, 'O', s.c, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [s.c, o], incoming: [o, ho], leaving: [[s.cl]], tag: 'Cl to OH' }; } },
+  // Ring closing: two OH groups four or five carbons apart join into a ring through one oxygen, and water leaves.
+  // This is how a chain becomes a ring in the player's hands.
+  { id: 'cyclize', verb: 'Close ring', formula: 'H₂SO₄ dil., heat', chem: 'Dilute acid, heat', rgb: [47, 143, 106], cls: 'acid', ghs: ['corr'],
+    rule: 'Joins two OH groups four or five carbons apart into a ring. Water leaves.', from: 'ol', to: 'ring',
+    find: m => m.atoms.map(a => ringable(m, a)).filter(Boolean), ok: (m, s) => !!ringable(m, s.o),
+    apply(m, s0) { const s = ringable(m, s0.o); cut(m, s.o, s.ho); cut(m, s.c2, s.o2); m.bond(s.o2, s.ho); m.bond(s.o, s.c2); return { focus: [s.c, s.o, s.c2], incoming: [], leaving: [[s.o2, s.ho2, s.ho]], tag: 'closes a ring' }; } },
   // Reagents that build. Each adds carbon at a C=O, so the molecule grows as the round goes on.
   { id: 'memgbr', verb: 'Add methyl', formula: 'CH₃MgBr', chem: 'Methylmagnesium bromide, then dilute acid', rgb: [196, 60, 150], cls: 'grignard', ghs: ['flame', 'corr'],
     rule: 'Adds CH₃ to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
@@ -321,5 +327,25 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
-AA.rx = { aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+// the first OH of a pair that can close a ring: the carbons that carry them are three or four bonds apart along carbon
+function ringable(m, o) {
+  const s = hydroxyl(m, o); if (!s) return null;
+  const dist = new Map([[s.c, 0]]), q = [s.c];
+  while (q.length) { const a = q.shift(), d = dist.get(a); if (d >= 4) continue; carbonsOf(m, a).forEach(b => { if (!b.fly && !dist.has(b)) { dist.set(b, d + 1); q.push(b); } }); }
+  const io = m.atoms.indexOf(o);
+  for (const o2 of m.atoms) { if (o2 === o || o2.fly || m.atoms.indexOf(o2) < io) continue; const t = hydroxyl(m, o2); if (!t || t.c === s.c) continue; const d = dist.get(t.c); if (d === 3 || d === 4) return { o: s.o, c: s.c, ho: s.ho, o2: t.o, c2: t.c, ho2: t.ho, atoms: [s.o, s.c, t.c, t.o] }; }
+  return null;
+}
+// What the molecule is, read from its structure as it stands: rings that are not aromatic, aromatic rings, whether it is
+// a cage (an atom with three bonds that each lie in a ring), and how many OH groups it carries.
+function shapeOf(m) {
+  const hv = m.atoms.filter(a => a.el !== 'H' && !a.fly), set = new Set(hv), nb = a => nbs(m, a).map(n => n.atom).filter(b => set.has(b));
+  let bonds = 0; hv.forEach(a => { bonds += nb(a).length; }); bonds /= 2;
+  const seen = new Set(); let comps = 0; hv.forEach(a => { if (seen.has(a)) return; comps++; const st = [a]; seen.add(a); while (st.length) { const u = st.pop(); nb(u).forEach(v => { if (!seen.has(v)) { seen.add(v); st.push(v); } }); } });
+  const rings = Math.max(0, bonds - hv.length + comps), arene = Math.floor(aromaticAtoms(m).size / 6);
+  const inRing = (a, b) => { const sn = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!sn.has(v)) { sn.add(v); st.push(v); } } } return false; };
+  const cage = rings >= 2 && hv.some(a => nb(a).filter(b => inRing(a, b)).length >= 3);
+  return { ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };
+}
+AA.rx = { shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

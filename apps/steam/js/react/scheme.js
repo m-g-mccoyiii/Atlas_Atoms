@@ -678,7 +678,7 @@ function start(app) {
   // a splat where a flick lands: a blot with a few short spokes
   function splat(x, c, r, col, seed) { x.fillStyle = col; x.beginPath(); for (let i = 0; i <= 20; i++) { const a = i / 20 * 6.283, rr = r * (0.75 + 0.5 * hash(seed + 's' + (i % 20))); if (i) x.lineTo(c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr * 0.8); else x.moveTo(c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr * 0.8); } x.fill(); }
   // What each reagent takes and what it leaves, by group. A row carries on when the next tile takes what the last one left.
-  const TILE = { hydrate: ['C=C', 'OH'], pcc: ['OH', 'C=O'], nabh4: ['C=O', 'OH'], dehydrate: ['OH', 'C=C'], h2: ['C=C', 'CH'], hcl: ['C=C', 'Cl'], bh3: ['C=C', 'OH'], socl2: ['OH', 'Cl'], koh: ['Cl', 'C=C'], naoh: ['Cl', 'OH'],
+  const TILE = { cyclize: ['OH', 'ring'], hydrate: ['C=C', 'OH'], pcc: ['OH', 'C=O'], nabh4: ['C=O', 'OH'], dehydrate: ['OH', 'C=C'], h2: ['C=C', 'CH'], hcl: ['C=C', 'Cl'], bh3: ['C=C', 'OH'], socl2: ['OH', 'Cl'], koh: ['Cl', 'C=C'], naoh: ['Cl', 'OH'],
     memgbr: ['C=O', 'OH', '+C'], wittig: ['C=O', 'C=C', '+C'], allyl: ['C=O', 'OH', '+3C'], aibn: ['C=C', 'chain'], wacker: ['C=C', 'C=O'], wolff: ['C=O', 'CH'] };
   const GCOL = { 'C=C': '#3a6fd0', OH: '#d6453a', 'C=O': '#e07a00', Cl: '#3c9a5f', CH: '#8d949c', chain: '#e23c6e' };
   function chip(x, txt, cx, cy, on) { hand(x, 34); const w = Math.max(74, x.measureText(txt).width + 26); x.fillStyle = on ? GCOL[txt] || INK : 'rgba(141,148,156,0.35)'; x.beginPath(); x.ellipse(cx, cy - 11, w / 2, 25, 0, 0, 6.3); x.fill(); x.fillStyle = '#fbf8ee'; x.textAlign = 'center'; x.fillText(txt, cx, cy); return w; }
@@ -891,7 +891,7 @@ function start(app) {
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
     // the family of the round's molecule and its rule, above the round
-    if (g && P.KIN[g.kin] && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const K = P.KIN[g.kin], c = px({ x: EDGE + 0.2, z: PAGES.z - 2.3 }); marker(x, 50); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(K.name, c[0], c[1]); const w = x.measureText(K.name).width; inkLine(x, K.tok + '  ' + K.note, c[0] + w + 26, c[1] - 2, 32, INK, 'left'); }
+    if (g && g.m && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) P.kinsOf(g.m).forEach((q, n) => { const K = P.KIN[q.id], c = px({ x: EDGE + 0.2, z: PAGES.z - 2.3 - n * 1.35 }), nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 46); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0], c[1]); const w = x.measureText(nm).width; inkLine(x, K.tok + '  ' + K.note, c[0] + w + 24, c[1] - 2, 30, INK, 'left'); });
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
