@@ -21,3 +21,13 @@ One run of three rounds and three more first rounds, played by a script that tak
 ## What follows
 
 The first finding is the one that matters. Effects, pace and art sit on top of a round in which the player has nothing to choose. The next work is the rules of a page: each state of the molecule needs at least two reactions that carry the row on and lead to different places, with a reason to prefer each.
+
+## Independent evaluation, 2026-11-10
+
+A fresh sub-agent judged the art, the page and the plan without being told my conclusions.
+
+- Equipment, named blind: 21 of 40 pieces could not be named or only with effort; seven not at all (burette, stir bar, scale pan, sieves, litmus, dropper, philosopher's stone, transmuter). Of the five redraws, thermometer and dropper improved, litmus only slightly, mortar no change, and the stir bar got worse.
+- Page: the three numbers, the chevrons, the row banners and the coins have no meaning to a newcomer; the reagent list is small and at the edge; a molecule over about 12 atoms is an unreadable lump; the page has no frames or depth and reads as a casual mobile game.
+- Plan: "two continuing reactions per state" is not enough by itself. It ranked the lack of any score preview before a reagent is spent as the second most damaging problem, and proposed, in order: a preview of gain on every reagent, a hand of reagents with hold and discard, values that depend on the molecule's state, a twist with a shown cost, and a number to beat derived from the molecule.
+
+Done from its list: the gain each reagent would make is now written beside it before it is picked; the stir bar is now a horseshoe magnet and is named magnet.
