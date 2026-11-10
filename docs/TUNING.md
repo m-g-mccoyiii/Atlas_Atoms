@@ -59,3 +59,11 @@ Median made over the number to beat, tier 0, equipment first, rounds 1 to 11: 2.
 - A named row done for the first time adds its one-step reagent for good: alkene to ketone gives oxidize C=C, carbonyl removal gives strip C=O.
 - One scripted round with three polymerizations made 2,744 against 900. Before the one-use limit and with legendary place value, four polymerizations made 110,621.
 - None of this has been run through the simulated players. The stored numbers to beat still assume every place adds 20.
+
+## By-products, 2026-11-10 (not yet measured)
+
+- What leaves a molecule is sorted into water, hydrogen, oxide, chloride or other.
+- Caught by equipment: cold trap takes water (extra +0.3), burner burns hydrogen (row +0.5), black candle lights hydrogen (extra times 1.2), litmus paper takes a chloride (extra +0.4), aqua regia takes an oxide or a chloride (extra times 1.3).
+- Not caught: water and hydrogen are collected. Three water deal the page's reagents again. Three hydrogen give every reagent on the page one more use. Both carry over between rounds of a run.
+- Every by-product adds a stroke to a tally. The fifth pays 50 places for each reaction in the open row.
+- One scripted round with a cold trap and a black candle on a molecule with three alcohols made 20,591 against about 900, so the catch values are too high.

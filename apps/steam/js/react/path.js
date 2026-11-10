@@ -15,6 +15,20 @@ const DIAL = { keep: 3, steps: 3 };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
 const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1 };
+// What leaves a molecule in a reaction, by what it is made of.
+const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
+// Equipment that catches a by-product as it leaves, and what that adds. A by-product nothing catches is collected
+// if it is water or hydrogen: three of either can be spent. Every by-product also adds a stroke to the tally.
+const CATCH = (() => { const A = (part, val) => ({ part, op: 'add', val }), M = (part, val) => ({ part, op: 'mul', val }); return { coldtrap: { water: A('e', 0.3) }, bunsen: { h2: A('r', 0.5) }, candle: { h2: M('e', 1.2) }, litmus: { chloride: A('e', 0.4) }, regia: { oxide: M('e', 1.3), chloride: M('e', 1.3) } }; })();
+const BY = { need: 3, tally: 5, pay: 50 };
+// spends three of what has been collected. Water deals the page's reagents again. Hydrogen gives every reagent on the page one more use.
+function spendBy(g, kind, rnd) {
+  if (!g.by || g.by[kind] < BY.need || g.over) return false;
+  g.by[kind] -= BY.need;
+  if (kind === 'water') { const ps = g.pageSteps, more = g.more; synDeal(g, rnd); g.pageSteps = ps; g.more = more; }
+  else g.kinds.forEach(id => { g.left[id] = (g.left[id] || 0) + 1; });
+  return true;
+}
 // How rare a reagent is. A rarer one turns up less often among the three to take and adds more for each place.
 // odds: weight among the reagents on offer.  place: what each place it changes adds.  dots: how it is marked.
 const RARITY = { common: { odds: 60, place: 20, dots: 1, col: '#5a564e' }, uncommon: { odds: 28, place: 30, dots: 2, col: '#1f5fbf' }, rare: { odds: 10, place: 45, dots: 3, col: '#b0189a' }, legend: { odds: 2, place: 70, dots: 4, col: '#c8891a' } };
@@ -63,9 +77,9 @@ const GEAR = [
   { id: 'logbook', tok: '{e} +0.04', fam: 'extra', note: 'each reaction: extra +0.04 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.04 * c.distinct) },
   { id: 'crystal', tok: '{e} times 1.2', fam: 'extra', note: 'back to an earlier molecule: extra times 1.2', name: 'seed crystal', shape: 'round', at: 'step', fx: c => (c.loop ? M('e', 1.2) : null) },
   { id: 'scalepan', tok: '{e} +0.5', fam: 'extra', note: 'a reaction that is not in a row: extra +0.5', name: 'scale pan', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.5) : null) },
-  { id: 'coldtrap', tok: '{e} +0.18', fam: 'extra', note: 'something leaves the molecule: extra +0.18', name: 'cold trap', shape: 'funnel', at: 'step', fx: c => (c.leaves ? A('e', 0.18) : null) },
-  { id: 'bunsen', tok: '{e} times 1.4', fam: 'extra', note: 'same reagent twice running: extra times 1.4', name: 'burner', shape: 'funnel', at: 'step', fx: c => (c.same ? M('e', 1.4) : null) },
-  { id: 'litmus', tok: '{e} +0.2', fam: 'extra', note: 'an acid: extra +0.2', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.2) : null) },
+  { id: 'coldtrap', tok: '{e} +0.3', fam: 'extra', note: 'catches water that leaves: extra +0.3', name: 'cold trap', shape: 'funnel' },
+  { id: 'bunsen', tok: '{e} times 1.4', fam: 'extra', note: 'same reagent twice running: extra times 1.4. burns hydrogen that leaves: row +0.5', name: 'burner', shape: 'funnel', at: 'step', fx: c => (c.same ? M('e', 1.4) : null) },
+  { id: 'litmus', tok: '{e} +0.2', fam: 'extra', note: 'an acid: extra +0.2. catches a chloride that leaves: extra +0.4', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.2) : null) },
   { id: 'stopwatch', tok: '{e} +0.35', fam: 'extra', note: 'last reaction on a page: extra +0.35', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.35) : null) },
   { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
   // pieces that change a rule of the round
@@ -76,13 +90,13 @@ const GEAR = [
   // From the alchemist. These do things chemistry does not allow.
   { id: 'stone', tok: '{e} times 1.12', kin: 'alchemy', fam: 'extra', note: 'every reaction: extra times 1.12', name: "philosopher's stone", shape: 'round', at: 'step', fx: () => M('e', 1.12) },
   { id: 'transmute', tok: '{p} +40', kin: 'alchemy', fam: 'places', note: 'each place: +40 places', name: 'lead, allegedly gold', shape: 'box', at: 'site', fx: () => A('p', 40) },
-  { id: 'regia', tok: '{e} times 1.25', kin: 'alchemy', fam: 'extra', note: 'something leaves the molecule: extra times 1.25', name: 'aqua regia', shape: 'flask', at: 'step', fx: c => (c.leaves ? M('e', 1.25) : null) },
+  { id: 'regia', tok: '{e} times 1.3', kin: 'alchemy', fam: 'extra', note: 'dissolves an oxygen or a chloride that leaves: extra times 1.3', name: 'aqua regia', shape: 'flask' },
   { id: 'ouroboros', tok: '{r} unbroken', kin: 'alchemy', fam: 'row', rule: true, note: 'the row never breaks', name: 'ouroboros', shape: 'round' },
   { id: 'homunculus', tok: '{p} again', kin: 'alchemy', fam: 'places', rule: true, note: 'the last reaction on a page counts three times', name: 'homunculus, in a jar', shape: 'column' },
   { id: 'elixir', tok: '+1 page', kin: 'alchemy', fam: 'rule', rule: true, note: 'one more page in every round', name: 'elixir of life', shape: 'flask' },
   // From Brenda. Nobody asks.
   { id: 'ouija', tok: 'endless', kin: 'occult', fam: 'rule', rule: true, note: 'one reagent on every page does not run out', name: 'ouija board', shape: 'box' },
-  { id: 'candle', tok: '{e} times 13', kin: 'occult', fam: 'extra', note: 'the 13th reaction of a round: extra times 13', name: 'black candle', shape: 'column', at: 'step', fx: c => (c.nth === 13 ? M('e', 13) : null) },
+  { id: 'candle', tok: '{e} times 13', kin: 'occult', fam: 'extra', note: 'the 13th reaction of a round: extra times 13. lights hydrogen that leaves: extra times 1.2', name: 'black candle', shape: 'column', at: 'step', fx: c => (c.nth === 13 ? M('e', 13) : null) },
   { id: 'goat', tok: '{e} times 1.15', kin: 'occult', fam: 'extra', note: 'every reaction: extra times 1.15. eats a reagent use each page', name: 'a goat', shape: 'round', at: 'step', fx: () => M('e', 1.15) },
   { id: 'pact', tok: 'times 3', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' }
 ];
@@ -259,7 +273,7 @@ function synDeal(g, rnd) {
 function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
   if (!(feed && feed.atoms)) salt(g.m, rnd);
-  g.brief = (run && run.brief) || 'plain'; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
@@ -300,6 +314,13 @@ function scoreRound(g, o) {
   const b = g.brief, polyLen = id === 'aibn' ? Math.max(2, o.model.atoms.reduce((t, a) => t + (a.poly || 0), 0)) / 2 : 1, per = (id === 'aibn' ? SYN.place * polyLen : rarityOf(id).place) * (1 + SYN.strong * ((g.grade[id] || 1) - 1)) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first ? 0 : 1);
   for (let i = 0; i < r.hits; i++) { if (per) emit('bottle', A('p', per)); pieces('site'); }
   new Set(o.atoms || []).forEach(a => { const I = a.iso && ISO[a.iso]; if (I) emit('iso', { part: I.part, op: I.op, val: I.val }, { iso: a.iso }); });
+  // what leaves: caught by equipment, or collected, and always a stroke on the tally. Five strokes pay places, more the longer the row
+  (r.gone || []).forEach((grp, gi) => {
+    const kind = byKind(grp); let caught = false;
+    g.gear.forEach(q => { const fx = CATCH[q] && CATCH[q][kind]; if (fx) { emit(q, fx, { gone: gi, kind }); caught = true; } });
+    if (!caught && (kind === 'water' || kind === 'h2')) { g.by[kind]++; ev.push({ src: 'collect', kind, gone: gi, part: 'p', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) }); }
+    g.by.gauge++; if (g.by.gauge >= BY.tally) { g.by.gauge -= BY.tally; emit('tally', A('p', BY.pay * Math.max(1, cur.path.length))); }
+  });
   if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
   if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
@@ -313,11 +334,11 @@ function scoreRound(g, o) {
 // What a reaction would do if it were taken now, without taking it: what it adds to each number, what it makes,
 // whether it breaks the row and which pieces of equipment it sets off.
 function peek(g, o) {
-  const cur = g.cur, sv = { P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally) }, before = made(g), brk = breaks(g, o);
+  const cur = g.cur, sv = { P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
   if (brk) close(g);
   const sc = scoreRound(g, o); if (o.finish) g.E += SYN.finishExtra * o.r.hits;
   const out = { gain: made(g) - before, dP: g.P - (brk ? 0 : sv.P), dR: g.R - sv.R, dE: g.E - sv.E, breaks: brk, fires: sc.ev.filter(e => GEARS[e.src]).map(e => e.src) };
-  g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally;
+  g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally; Object.assign(g.by, sv.by);
   return out;
 }
 function synTake(g, o) {
@@ -490,7 +511,7 @@ function runChoose(run, o) { run.brief = o.brief; run.feed = o.model; run.quota 
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much
 function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (run.bonus || 0) + n; return n; }
-function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0 }; }
+function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, by: { water: 0, h2: 0, gauge: 0 } }; }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 function runQuota(run, feed, brief) {
@@ -527,6 +548,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
