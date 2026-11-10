@@ -61,6 +61,10 @@ function start(app) {
   //   flat: the molecule is laid out flat on the page with no overlaps, over an inked skeleton
   //   focus: what is far from anything that can react is drawn small and pale
   const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'bead'; } catch (e) { return 'bead'; } })(), BIG = 11;
+  // Ways of drawing every molecule, being tried side by side with ?mol= on the page.
+  //   full: every atom, standing as it settles.  lean: no H on carbon, no letter on carbon.
+  //   flatlean: lean, and laid flat over an inked skeleton.  pads: flatlean, with a colored pad under each group.
+  const MOLV = (() => { try { return new URLSearchParams(root.location.search).get('mol') || 'full'; } catch (e) { return 'full'; } })(), PADC = { 'C=C': '58,111,208', 'C=O': '240,132,0', OH: '214,69,58', Cl: '60,154,95' };
   const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x1f2a55), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
   function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 50 : 66) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#1f2a55'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
@@ -82,7 +86,7 @@ function start(app) {
     if (gone.size >= heavy.length) return [];
     const beads = [], done = new Set();
     gone.forEach(a => { if (done.has(a)) return; const comp = [], st0 = [a]; let anchor = null, rootA = null; while (st0.length) { const q = st0.pop(); if (done.has(q)) continue; done.add(q); comp.push(q); md.neighbors(q).forEach(n => { if (n.atom.el === 'H') return; if (gone.has(n.atom)) st0.push(n.atom); else { anchor = n.atom; rootA = q; } }); }
-      if (!anchor) return; const nC = comp.filter(q => q.el === 'C').length, ring = comp.some(q => ar.has(q)); beads.push({ atoms: comp, anchor, root: rootA, txt: ring ? (nC === 6 ? 'Ph' : 'Ar') : ({ 1: 'Me', 2: 'Et', 3: 'Pr', 4: 'Bu' })[nC] || 'C' + nC }); });
+      if (!anchor || comp.length < 2) return; const nC = comp.filter(q => q.el === 'C').length, ring = comp.some(q => ar.has(q)); beads.push({ atoms: comp, anchor, root: rootA, txt: ring ? (nC === 6 ? 'Ph' : 'Ar') : ({ 1: 'Me', 2: 'Et', 3: 'Pr', 4: 'Bu' })[nC] || 'C' + nC }); });
     return beads;
   }
   // lays the atoms out flat with nothing on top of anything else: bonds keep their length, everything else is pushed apart
@@ -127,9 +131,9 @@ function start(app) {
   // lean: a product is drawn without the hydrogens on its carbons and without letters on carbon, so it reads at a
   // distance. The middle molecule is always drawn in full. Nothing is ringed in 3D: what changed is circled in ink
   // on the page under it, see marksOf.
-  function buildMol(model, rings, lean) {
-    const grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = [], pale = new Set(); let low = 1e9, n = 0;
-    const big = model.atoms.filter(a => a.el !== 'H').length >= BIG, beads = (FOLD === 'bead' || FOLD === 'both') && big ? foldsOf(model) : [], flat = (FOLD === 'flat' || FOLD === 'both') && big;
+  function buildMol(model, rings, lean0) {
+    const lean = lean0 || MOLV !== 'full', grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = [], pale = new Set(); let low = 1e9, n = 0;
+    const big = model.atoms.filter(a => a.el !== 'H').length >= BIG, beads = (FOLD === 'bead' || FOLD === 'both') && big ? foldsOf(model) : [], flat = ((FOLD === 'flat' || FOLD === 'both') && big) || MOLV === 'flatlean' || MOLV === 'pads';
     if (lean || flat) model.atoms.forEach(a => { if (a.el === 'H' && model.neighbors(a).every(q => q.atom.el === 'C')) skip.add(a); });
     beads.forEach(b => b.atoms.forEach(a => { skip.add(a); model.neighbors(a).forEach(q => { if (q.atom.el === 'H') skip.add(q.atom); }); }));
     model.atoms.forEach(a => { if (skip.has(a)) return; c.add(new T.Vector3(a.x, a.y, a.z)); n++; }); c.divideScalar(n || 1);
@@ -138,7 +142,7 @@ function start(app) {
     beads.forEach(b => { b.pa = { el: 'R', bead: b.txt, root: b.root }; at.set(b.pa, at.get(b.root).clone()); });
     if (flat) flatten(model, at, skip, beads);
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
-    const radius = a => (a.bead ? 0.95 : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
+    const radius = a => (a.bead ? 0.82 : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
     at.forEach(p => { p.y += 0.5 - low; });
     model.atoms.forEach(a => {
@@ -148,7 +152,7 @@ function start(app) {
       if (!pale.has(a) && (!(lean || flat) || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); }
       balls.set(a, b);
     });
-    beads.forEach(b => { const e = { R: 0.95, sk: 1.75, mesh: add(SPH, beadMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat(b.txt)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(b.pa, e); sticks.push({ a: b.anchor, b: b.pa, r: 0.09, parts: [0, 1].map(h => ({ f: 0, h, mesh: add(CYL, h ? beadMat : stickMat(b.anchor.el), 0, 0, 0, grp) })) }); });
+    beads.forEach(b => { const e = { R: 0.82, sk: 1.75, mesh: add(SPH, beadMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat(b.txt)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(b.pa, e); sticks.push({ a: b.anchor, b: b.pa, r: 0.09, parts: [0, 1].map(h => ({ f: 0, h, mesh: add(CYL, h ? beadMat : stickMat(b.anchor.el), 0, 0, 0, grp) })) }); });
     model.bonds.forEach(bd => {
       if (!balls.has(bd.a) || !balls.has(bd.b)) return;
       const far = pale.has(bd.a) && pale.has(bd.b), parts = []; (bd.order === 1 ? [0] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
@@ -191,7 +195,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, Math.min(2.7, 21 / spanOf(m), 8.5 / deepOf(m)));
+  const fitMain = m => Math.max(0.7, Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m)));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -599,11 +603,11 @@ function start(app) {
     if (play) prods.forEach(m => { if (m && m.group.scale.x > 0.3) m.marks.forEach(k => circle(m, k, m.col, 6)); });
     // the atoms the last reaction changed stay marked in yellow while the row is open: react there and the row goes on
     if (center && center.hot.length && g.cur.path.length && st.mode !== 'done') { const pk = st.peek, sc = center.group.scale.x, pulse = 0.45 + 0.2 * Math.sin(now / 220);
-      center.hot.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = k.r * sc * U; x.globalAlpha = pk && pk.breaks ? 0.3 : pk ? 0.95 : pulse; x.fillStyle = pk && pk.breaks ? 'rgb(160,160,160)' : 'rgb(255,214,0)'; x.beginPath(); x.ellipse(c[0], c[1], r * 1.05, r * 0.8, 0.1, 0, 6.3); x.fill(); x.globalAlpha = 1; }); dirty = true; }
+      center.hot.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = k.r * sc * U; x.globalAlpha = pk && pk.breaks ? 0.3 : pk ? 0.95 : pulse; x.fillStyle = pk && pk.breaks ? 'rgb(160,160,160)' : 'rgb(255,214,0)'; x.beginPath(); x.ellipse(c[0], c[1], r * 1.05, r * 0.8, 0.1, 0, 6.3); if (MOLV === 'full') x.fill(); else { x.strokeStyle = x.fillStyle; x.lineWidth = 14; x.stroke(); } x.globalAlpha = 1; }); dirty = true; }
     if (center && center.flat) { const sc = center.group.scale.x, gp = a => { const p = center.at.get(a), t = -p.y / camDir.y; return px({ x: C0.x + (p.x + camDir.x * t) * sc, z: C0.z + (p.z + camDir.z * t) * sc }); }; x.strokeStyle = 'rgba(31,42,85,0.55)'; x.lineCap = 'round'; center.sticks.forEach(s => { if (s.a.el === 'H' || s.b.el === 'H') return; const a = gp(s.a), b = gp(s.b); x.lineWidth = s.parts.length > 2 ? 11 : 6; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); }); }
     // each group is lettered on the page under it. One that has gone is struck through, one that is new is written in
     if (center && center.groups && st.mode !== 'done') { const sc = center.group.scale.x, at2 = q => px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc + 1.25 });
-      center.groups.forEach(q => { const age = q.born ? (now - q.t) / 1000 : 9; if (q.born && !(age >= 0)) return; const c = at2(q), pop = age < 0.25 ? 1.7 - 2.8 * age : 1; hand(x, 40 * pop); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(q.txt, c[0], c[1]); x.fillStyle = age < 1.2 ? REDINK : INK; x.fillText(q.txt, c[0], c[1]); if (age < 1.2) dirty = true; });
+      center.groups.forEach(q => { const age = q.born ? (now - q.t) / 1000 : 9; if (q.born && !(age >= 0)) return; const c = at2(q); if (MOLV === 'pads') { const c0 = px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }); x.fillStyle = 'rgba(' + PADC[q.txt] + ',0.3)'; x.beginPath(); x.ellipse(c0[0], c0[1], 30 * sc, 22 * sc, 0.1, 0, 6.3); x.fill(); } const pop = age < 0.25 ? 1.7 - 2.8 * age : 1; hand(x, 40 * pop); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(q.txt, c[0], c[1]); x.fillStyle = age < 1.2 ? REDINK : INK; x.fillText(q.txt, c[0], c[1]); if (age < 1.2) dirty = true; });
       (center.ghosts || []).forEach(q => { const age = (now - q.t) / 1000, c = at2(q); if (age > 1.3) return; hand(x, 40); x.textAlign = 'center'; x.globalAlpha = age < 0 ? 1 : Math.max(0, 1 - age / 1.3); x.fillStyle = age < 0 ? INK : PENCIL; x.fillText(q.txt, c[0], c[1]); if (age >= 0) { const w = x.measureText(q.txt).width / 2 + 8, k = Math.min(1, age / 0.12); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - w, c[1] - 6); x.lineTo(c[0] - w + 2 * w * k, c[1] - 14); x.stroke(); } x.globalAlpha = 1; dirty = true; }); }
     // pointing at a reaction rings the places it will change, in its color
     if (st.peek && center) { x.setLineDash([18, 14]); st.peek.marks.forEach(k => circle(center, k, st.peek.col, 9)); x.setLineDash([]); }
