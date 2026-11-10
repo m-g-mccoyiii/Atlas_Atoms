@@ -15,3 +15,13 @@ Why there is a list of starting molecules: each one belongs to a family, and eac
 Each molecule has its own stored number to beat (161 figures, measured with the family rules in), so a family with a strong rule also has a higher number.
 
 Not built: a reaction special to each family, a loadout chosen before a run, peptides, fused flat rings such as steroids. Not measured: whether each rule changes what a simulated player does, and run length with families in.
+
+## Families are read from the molecule as it stands (later the same day)
+
+A family is no longer fixed by the starting molecule. After every reaction the molecule is looked at again: rings that are not aromatic, aromatic rings, whether it is a cage, how many OH groups it has. Every rule that fits is paid, and a rule is paid more the more of that thing there is (two rings: the ring rule at level 2, up to 3). A molecule with nothing else is a chain.
+
+So the player can build a family in the middle of a round. Hydrating a diene gives three OH groups and the molecule becomes a sugar. Close ring (new reagent, corner chemist, uncommon) joins two OH groups four or five carbons apart and the molecule becomes a ring. A molecule carried into the next round keeps what was built.
+
+The starting family still decides which molecules are offered and what a supplier opens.
+
+Not built: ways to build an arene or a cage, a loadout, reactions special to a family. Not measured: run length, and how strong stacked rules get.
