@@ -60,7 +60,7 @@ function start(app) {
   //   bead: an arm or ring that nothing can act on folds into one lettered bead (Me, Et, Ph)
   //   flat: the molecule is laid out flat on the page with no overlaps, over an inked skeleton
   //   focus: what is far from anything that can react is drawn small and pale
-  const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'none'; } catch (e) { return 'none'; } })(), BIG = 11;
+  const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'bead'; } catch (e) { return 'bead'; } })(), BIG = 11;
   const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x1f2a55), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
   function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 50 : 66) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#1f2a55'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
