@@ -278,7 +278,7 @@ function start(app) {
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 12.9, MULT = { x: EDGE - 0.6 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -6.2, z: 9.6 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
-  if (KITV === 'back') { GAIN.x = -4.4; GAIN.z = 9.9; CALL.x = 7; CALL.z = 12.6; }
+  if (KITV === 'back') { GAIN.x = -2.2; GAIN.z = 7.7; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
