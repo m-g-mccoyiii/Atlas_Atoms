@@ -17,7 +17,7 @@ const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // The page, near to far: a band along the bottom for the count, the molecule in the middle, and the molecules it
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
 const C0 = { x: -1.4, z: 3 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
-const STEP = { x: -21.6, z: 5.2 }, PAGES = { x: -21.6, z: 1.6 }, HIST = { x: 4.5, z: 6.6 };
+const STEP = { x: -21.6, z: 5.2 }, PAGES = { x: -21.6, z: 1.6 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -147,7 +147,7 @@ function start(app) {
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 12.9, MULT = { x: -21, z: BAND }, MADE = { x: -11.6, z: 9.6 }, BEAT = { x: -7.4, z: 9.6 }, GAIN = { x: 14, z: 3.2 }, CALL = { x: 0, z: -3.7 }, KITP = i => ({ x: 0.4 + i * 5.7, z: 11.0 });
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
@@ -196,7 +196,7 @@ function start(app) {
   function clearRound() { tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
-    st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
+    st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.call = null; st.over = 0;
     clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
     g = P.runBegin(run, run.feed, true); st.quota = run.quota; st.E = g.E; st.R = g.R;
@@ -205,7 +205,7 @@ function start(app) {
   }
   // between rounds: three things on the page, take one
   function showPicks() {
-    st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = [];
+    st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = []; st.pings = [];
     pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     picks = P.runPicks(run);
     picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') { const k = piece(o.id); k.grp.position.set(PICKX[i], 0, -2.2); k.grp.scale.setScalar(1.7); k.slot = i; pickObjs.push(k); } });
@@ -218,7 +218,7 @@ function start(app) {
   // before each round: three rounds stand on the page, each a molecule with what the round asks and what it pays
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; }
   function showBriefs() {
-    st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.hover = -1;
+    st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1;
     pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     briefs = P.runBriefs(run);
     briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: PICKX[i], z: -2.2 }, 0.01); tween(m, { x: PICKX[i], z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
@@ -230,7 +230,7 @@ function start(app) {
   }
   function newRun() { run = P.runNew(meta.tier); showPicks(); }
   // between runs: what the run paid, and the suppliers that can be opened with it
-  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten + (run.bonus || 0); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.hover = -1; sfx.feed(); dirty = true; }
+  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten + (run.bonus || 0); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
   function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
   function setHover(i) { st.hover = i; dirty = true; }
   function endRound() {
@@ -243,27 +243,42 @@ function start(app) {
   function nextPage() {
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh();
+    // a page on which no reagent acts turns itself
+    if (!slots.some(q => q && q.o)) { const tok = st.tok; st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 700); }
   }
   // Everything the player sees and hears when a reaction lands. Each change arrives on its own beat, in the order it
   // was scored: the reagent at each place, then the row, then each piece of equipment. Returns how long it takes.
   const PART = { p: '#1f5fbf', h: '#1f5fbf', r: '#a87a00', e: '#b0189a' };
-  function land(o, before, wasOpen) {
-    const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev, n = beats.length;
-    const gap = Math.max(34, Math.min(95, 620 / Math.max(1, n)));
+  function land(o, before, wasOpen, mol, reagent) {
+    const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev, n = beats.length, rcol = rgb(colOf(reagent));
+    // where on the page each place of the new molecule will be once it has landed in the middle
+    const sc = SC_MAIN, marks = (mol && mol.marks) || [], spot = k => { const m = marks.length ? marks[k % marks.length] : { x: 0, z: 0 }; return { x: C0.x + m.x * sc, z: C0.z + m.z * sc }; };
+    const heavy = id => { let best = null, bd = 1e9; if (mol) mol.model.atoms.forEach(a => { if (a.iso !== id) return; const q = mol.at.get(a); if (!q) return; const tt = -q.y / camDir.y, gx = q.x + camDir.x * tt, gz = q.z + camDir.z * tt; let d = 1e9; marks.forEach(m => { d = Math.min(d, Math.hypot(m.x - gx, m.z - gz)); }); if (d < bd) { bd = d; best = { x: C0.x + gx * sc, z: C0.z + gz * sc }; } }); return best; };
+    const ping = (at, txt, col, size, ring) => st.pings.push({ x: at.x, z: at.z, txt, col, size, ring, t: performance.now() });
     sfx.bond(); st.shake = Math.max(st.shake, 0.3);
-    beats.forEach((e, k) => setTimeout(() => {
-      if (tok !== st.tok) return;
-      const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
-      st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
-      const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
-      if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
-      else if (e.src === 'brief') st.floats.push({ txt: P.BRIEF[g.brief].name + ' ' + txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
-      else if (e.src === 'iso') st.floats.push({ txt: P.ISO[e.iso].name + ' ' + txt, t: performance.now(), size: 70, dx: 7, col: PART[e.part] });
-      else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
-      st.shake = Math.max(st.shake, big ? 0.8 : 0.22);
-      sfx.lock(Math.min(12, k + g.cur.path.length));
-    }, 60 + k * gap));
-    const dur = 60 + n * gap + 80;
+    // the reaction is played out one beat at a time, quicker as it goes: each place, each heavy atom, the row, then
+    // each piece of equipment in the order it stands
+    let at = 300, gap = 210, place = -1, last = { x: C0.x, z: C0.z };
+    beats.forEach((e, k) => {
+      const when = at; at += gap; gap = Math.max(70, gap * 0.88);
+      if (e.src === 'bottle') place++;
+      const pl = place;
+      setTimeout(() => {
+        if (tok !== st.tok) return;
+        const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
+        st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
+        const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
+        if (e.src === 'bottle') { last = spot(pl); ping(last, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, 8, rcol); }
+        else if (e.src === 'iso') { const h = heavy(e.iso) || last; ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); st.floats.push({ txt: P.ISO[e.iso].name, t: performance.now(), size: 60, dx: 7, col: PART[e.part] }); }
+        else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
+        else if (e.src === 'brief') st.floats.push({ txt: P.BRIEF[g.brief].name + ' ' + txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
+        else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
+        else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
+        st.shake = Math.max(st.shake, big ? 0.8 : e.src === 'iso' ? 0.6 : 0.25);
+        sfx.lock(Math.min(12, k + g.cur.path.length));
+      }, when);
+    });
+    const dur = at + 60;
     setTimeout(() => {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
@@ -291,7 +306,7 @@ function start(app) {
     setHover(-1); st.mode = 'move';
     const prev = center, k = g.pageSteps, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0;
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
-    const dur = land(o, before, wasOpen);
+    const dur = land(o, before, wasOpen, chosen, s.id);
     prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
     // the reaction: sparks and bits fly from every place it acts, and the view pushes in
     { const sc = prev.group.scale.x, col = rgb(colOf(s.id)); o.atoms.forEach(a => { const q = prev.at.get(a); if (!q || a.el === 'H') return; const wx = C0.x + q.x * sc, wy = q.y * sc, wz = C0.z + q.z * sc; burst3(wx, wy, wz, 12, col); }); }
@@ -440,7 +455,7 @@ function start(app) {
       x.restore();
     });
     // this page's reactions, in a line under the molecule. Yellow joins the ones in a row
-    { const tr = g.trail.slice(st.pageStart), gap = 200, h0 = px(HIST), x0 = h0[0] - (tr.length - 1) * gap / 2;
+    { const tr = g.trail.slice(st.pageStart), gap = 180, h0 = px(HIST), x0 = h0[0] - (tr.length - 1) * gap / 2;
       tr.forEach((t, k) => { const cx = x0 + k * gap, w = RX.CARDS[t.id].verb.toLowerCase();
         if (k) { if (t.cont) swipe(x, [cx - gap + 70, h0[1] - 14], [cx - 70, h0[1] - 14], 30); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - gap / 2 - 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 8, h0[1] - 26); x.moveTo(cx - gap / 2 + 22, h0[1] - 14); x.lineTo(cx - gap / 2 + 8, h0[1] - 2); x.stroke(); }
         hand(x, 42); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(w, cx, h0[1]); swipe(x, [cx - 60, h0[1] + 12], [cx + 60, h0[1] + 9], 8, rgb(colOf(t.id))); }); }
@@ -477,6 +492,10 @@ function start(app) {
       if (beaten) { x.strokeStyle = GREEN; x.lineWidth = 11; x.lineCap = 'round'; x.beginPath(); x.moveTo(q[0] - mw - 60, q[1] - 34); x.lineTo(q[0] - mw - 44, q[1] - 10); x.lineTo(q[0] - mw - 16, q[1] - 66); x.stroke(); } }
     hand(x, 58); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); hand(x, 34); x.fillStyle = PENCIL; x.fillText('to beat', bq[0], bq[1] - 60);
     // what the last reaction made, at the right end of the band, with anything a rare reagent added above it
+    st.pings = st.pings.filter(q => now - q.t < 800); st.pings.forEach(q => {
+      const k = (now - q.t) / 800, c = px(q), up = c[1] - 30 - 46 * (1 - Math.pow(1 - k, 2));
+      if (k < 0.6) { x.globalAlpha = 1 - k / 0.6; x.strokeStyle = q.ring; x.lineWidth = 7 * (1 - k / 0.6) + 2; x.beginPath(); x.ellipse(c[0], c[1], 14 + 90 * k, 11 + 70 * k, 0.1, 0, 6.3); x.stroke(); }
+      x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; marker(x, q.size * (k < 0.1 ? 1.5 - 5 * k : 1)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, c[0], up); x.fillStyle = q.col; x.fillText(q.txt, c[0], up); x.globalAlpha = 1; });
     st.floats = st.floats.filter(f => now - f.t < 1100); st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.col === '#b0189a', c = px({ x: GAIN.x, z: GAIN.z - (rare ? 2.5 : 0) - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     if (st.call && now - st.call.t < 1400) {
@@ -554,7 +573,7 @@ function start(app) {
     pickObjs.forEach(k => { k.grp.rotation.y += dt * 0.6; k.grp.position.y = st.hover === k.slot ? 0.8 : 0; });
     kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 2.4 : 0; k.grp.rotation.y = k.yaw + (age < 0.6 ? (1 - Math.pow(1 - age / 0.6, 3)) * 6.283 : 0); k.grp.scale.setScalar((k.base || 1) * (age < 0.28 ? 1.3 : 1)); if (age < 0.7) dirty = true; });
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
-    if (st.floats.length || st.blots.length || st.call) dirty = true;
+    if (st.floats.length || st.blots.length || st.pings.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
     // the view pushes in on the molecule for a moment when it reacts
     { const age = (now - st.zoomT) / 1000, want = age < 0.12 ? age / 0.12 : age < 0.5 ? 1 : age < 0.85 ? 1 - (age - 0.5) / 0.35 : 0; st.zoom += (want * 0.13 - st.zoom) * Math.min(1, dt * 18); }
