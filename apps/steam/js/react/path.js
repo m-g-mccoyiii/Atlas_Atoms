@@ -7,7 +7,9 @@
 (function (root) {
 'use strict';
 const AA = root.AA, RX = AA.rx, RUN = AA.rxRun;
-const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C'];
+const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C',
+  // rings, and a benzene ring that nothing here acts on
+  'O=C1CCC(CC=C)CC1', 'C=CCC(O)C1=CC=CC=C1', 'C=CC1CCC(O)CC1', 'CC(=O)CCC(O)C1=CC=CC=C1'];
 // keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
 const DIAL = { keep: 3, steps: 3 };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
@@ -425,7 +427,36 @@ const BASE = {
   'CC(=O)CCC(O)CC=C|short': 1014,
   'C=CCC(O)CC(O)CC=C|short': 1022,
   'C=CCC(=O)CCC(=O)CC=C|short': 1554,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|short': 1072
+  'CC(O)CC(=O)CCC(Cl)CCC=C|short': 1072,
+  // the four ring molecules, measured with 12 plays for each style
+  'O=C1CCC(CC=C)CC1|plain': 1114,
+  'O=C1CCC(CC=C)CC1|broad': 1401,
+  'O=C1CCC(CC=C)CC1|loose': 1440,
+  'O=C1CCC(CC=C)CC1|each': 1434,
+  'O=C1CCC(CC=C)CC1|back': 3732,
+  'O=C1CCC(CC=C)CC1|scarce': 994,
+  'O=C1CCC(CC=C)CC1|short': 874,
+  'C=CCC(O)C1=CC=CC=C1|plain': 550,
+  'C=CCC(O)C1=CC=CC=C1|broad': 1030,
+  'C=CCC(O)C1=CC=CC=C1|loose': 1520,
+  'C=CCC(O)C1=CC=CC=C1|each': 972,
+  'C=CCC(O)C1=CC=CC=C1|back': 2475,
+  'C=CCC(O)C1=CC=CC=C1|scarce': 491,
+  'C=CCC(O)C1=CC=CC=C1|short': 430,
+  'C=CC1CCC(O)CC1|plain': 918,
+  'C=CC1CCC(O)CC1|broad': 1653,
+  'C=CC1CCC(O)CC1|loose': 2236,
+  'C=CC1CCC(O)CC1|each': 1522,
+  'C=CC1CCC(O)CC1|back': 3213,
+  'C=CC1CCC(O)CC1|scarce': 978,
+  'C=CC1CCC(O)CC1|short': 798,
+  'CC(=O)CCC(O)C1=CC=CC=C1|plain': 889,
+  'CC(=O)CCC(O)C1=CC=CC=C1|broad': 1732,
+  'CC(=O)CCC(O)C1=CC=CC=C1|loose': 2080,
+  'CC(=O)CCC(O)C1=CC=CC=C1|each': 1320,
+  'CC(=O)CCC(O)C1=CC=CC=C1|back': 3112,
+  'CC(=O)CCC(O)C1=CC=CC=C1|scarce': 887,
+  'CC(=O)CCC(O)C1=CC=CC=C1|short': 687
 };
 function briefBase(feed, brief) {
   const k = (feed.atoms ? RX.sigOf(feed) : feed) + '|' + brief; if (BASE[k]) return BASE[k];

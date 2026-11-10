@@ -66,8 +66,26 @@ function markovnikov(m, a, b) {
   return da <= db ? [a, b] : [b, a];                      // a real reaction gives both; the game picks one, always the same
 }
 
+// The carbons of benzene rings: six carbons in a ring with three double bonds between them. No reagent here acts
+// on one. A molecule with no ring at all is answered at once.
+function aromaticAtoms(m) {
+  const out = new Set(), heavy = m.atoms.filter(a => a.el !== 'H' && !a.fly);
+  if (m.bonds.filter(b => b.a.el !== 'H' && b.b.el !== 'H').length < heavy.length) return out;
+  const nb = a => nbs(m, a).filter(n => n.atom.el === 'C');
+  heavy.forEach(a0 => {
+    if (a0.el !== 'C' || out.has(a0)) return;
+    const walk = (path, dbl) => {
+      const a = path[path.length - 1];
+      if (path.length === 6) { const cl = nb(a).find(n => n.atom === a0); if (cl && dbl + (cl.bond.order === 2 ? 1 : 0) === 3) path.forEach(x => out.add(x)); return; }
+      nb(a).forEach(n => { if (!path.includes(n.atom)) walk(path.concat(n.atom), dbl + (n.bond.order === 2 ? 1 : 0)); });
+    };
+    walk([a0], 0);
+  });
+  return out;
+}
 function alkenes(m) {
-  return m.bonds.filter(b => b.order === 2 && b.a.el === 'C' && b.b.el === 'C')
+  const ar = aromaticAtoms(m);
+  return m.bonds.filter(b => b.order === 2 && b.a.el === 'C' && b.b.el === 'C' && !(ar.has(b.a) && ar.has(b.b)))
     .map(b => ({ kind: 'ene', bond: b, atoms: [b.a, b.b], asym: Math.abs(Hs(m, b.a).length - Hs(m, b.b).length) }))
     .sort((p, q) => q.asym - p.asym);
 }
@@ -286,5 +304,5 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
-AA.rx = { LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+AA.rx = { aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
