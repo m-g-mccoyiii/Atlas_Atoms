@@ -138,7 +138,7 @@ function start(app) {
     prods.forEach(freeMol); prods = []; slots = [];
     const live = st.mode === 'play' && !g.over, o = live ? P.options(g) : {};
     g.kinds.forEach((id, i) => { slots[i] = { id, o: o[id] || null }; });
-    const fin = live && g.pageSteps < P.DIAL.steps ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
+    const fin = live && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(160);
@@ -262,6 +262,7 @@ function start(app) {
     wob(x, a, b, lw, col, dash);
     wob(x, { x: b.x - ux * hd - uz * hd * 0.55, z: b.z - uz * hd + ux * hd * 0.55 }, b, lw, col); wob(x, { x: b.x - ux * hd + uz * hd * 0.55, z: b.z - uz * hd - ux * hd * 0.55 }, b, lw, col);
   }
+  const wrap = (x, text, w) => { const out = []; let line = ''; String(text).split(' ').forEach(t => { const n = line ? line + ' ' + t : t; if (line && x.measureText(n).width > w) { out.push(line); line = t; } else line = n; }); if (line) out.push(line); return out; };
   const ring = (x, c, rx, ry, lw, col, rot) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.ellipse(c[0], c[1], rx, ry, rot || 0.15, 0.3, 6.6); x.stroke(); };
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
   function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z - C0.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d, far = i === FIN ? 3.4 : 4.9; return { a: { x: C0.x + ux * 6.2, z: C0.z + uz * 3.2 }, b: { x: p.x - ux * far, z: p.z - uz * (far - 0.5) } }; }
@@ -271,13 +272,13 @@ function start(app) {
       const h = px({ x: 0, z: -13 }); marker(x, 100); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('suppliers', h[0], h[1]);
       hand(x, 46); x.fillStyle = PENCIL; x.fillText('that run beat ' + shop.earned + ' rounds and paid ' + shop.earned + ' credit.   credit: ' + meta.credit, h[0], h[1] + 64);
       P.SUPPLY.forEach((sp, i) => {
-        const c = px({ x: -22, z: -6.5 + i * 5.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
+        const c = px({ x: -22, z: -8 + i * 4.9 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
         if (open) swipe(x, [c[0] - 10, c[1] - 22], [c[0] + 420, c[1] - 28], 64);
         marker(x, 62); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
         hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; x.fillText(open ? 'open' : nextUp ? (can ? 'click to open for ' + sp.cost + ' credit' : sp.cost + ' credit to open') : 'opens after the one above', c[0] + 560, c[1] - 6);
         hand(x, 38); x.fillStyle = open || nextUp ? PENCIL : FAINT;
         const things = sp.reagents.map(id => RX.CARDS[id].verb.toLowerCase()).concat(sp.gear.map(id => P.GEARS[id].name)).concat(sp.rare ? ['rare versions of reagents'] : []);
-        x.fillText('stocks: ' + things.join(',  '), c[0], c[1] + 48);
+        hand(x, 34); wrap(x, 'stocks: ' + things.join(',  '), 1500).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 44 + j * 34));
         if (hov) ring(x, [c[0] + 520, c[1] + 6], 620, 86, 5, INK, 0.01);
       });
       const n0 = px({ x: 0, z: 12.4 }); marker(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('click here to start a run', n0[0], n0[1]);
@@ -294,7 +295,7 @@ function start(app) {
         if (!isGear) { const t0 = px({ x: PICKX[i], z: -2 }); marker(x, 96); x.fillStyle = rgb(colOf(o.id)); x.fillText(title, t0[0], t0[1]); swipe(x, [t0[0] - 150, t0[1] + 22], [t0[0] + 150, t0[1] + 16], 20, rgb(colOf(o.id))); }
         hand(x, 40); x.fillStyle = PENCIL; x.fillText((i + 1) + '   ' + kind, c[0], c[1] - 56);
         if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
-        hand(x, 40); x.fillStyle = INK; const words = P.pickText(run, o).split(': '); words.forEach((w, j) => x.fillText(w, c[0], c[1] + 52 + j * 42));
+        hand(x, 40); x.fillStyle = INK; wrap(x, P.pickText(run, o), 430).forEach((w, j) => x.fillText(w, c[0], c[1] + 52 + j * 42));
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
       { const k0 = px({ x: 0, z: 11.4 }); hand(x, 38); x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
@@ -340,14 +341,14 @@ function start(app) {
       const q = P.GEARS[k.id], c = px({ x: kitX(i), z: KIT.z + 2.9 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
       const words = q.name.split(' '), l1 = words.length > 1 ? words.slice(0, -1).join(' ') : q.name, l2 = words.length > 1 ? words[words.length - 1] : '';
       hand(x, 32); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(l1, c[0], c[1]); if (l2) x.fillText(l2, c[0], c[1] + 30);
-      hand(x, 25); x.fillStyle = PENCIL; q.note.split(': ').forEach((ln, j) => x.fillText(ln, c[0], c[1] + (l2 ? 58 : 30) + j * 24));
+      hand(x, 25); x.fillStyle = PENCIL; wrap(x, q.note, 150).forEach((ln, j) => x.fillText(ln, c[0], c[1] + (l2 ? 58 : 30) + j * 24));
       if ((run.lv[k.id] || 1) > 1) { hand(x, 28); x.fillStyle = REDINK; x.fillText('level ' + run.lv[k.id], c[0], c[1] - 34); }
       if (age < 0.6) { const up = px({ x: kitX(i), z: KIT.z - 3.4 - 1.5 * age }); marker(x, 62 * (age < 0.08 ? 1.5 : 1)); x.globalAlpha = 1 - age / 0.6; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.4 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     for (let k = 1; k <= P.SYN.pages; k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
-    for (let k = 0; k < P.DIAL.steps; k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
+    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
     // how much has been made, and the number to beat
     const q = px(MADE), beaten = st.shown >= st.quota, done = st.mode === 'done';
     marker(x, 110); x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(fmt(st.shown), q[0], q[1]);
@@ -392,7 +393,7 @@ function start(app) {
   function shopAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     if (!ray.ray.intersectPlane(ground, hit)) return -2;
-    for (let i = 0; i < P.SUPPLY.length; i++) { const z = -6.5 + i * 5.6; if (hit.z > z - 2.6 && hit.z < z + 2.6 && hit.x > -24 && hit.x < 20) return i; }
+    for (let i = 0; i < P.SUPPLY.length; i++) { const z = -8 + i * 4.9; if (hit.z > z - 2.3 && hit.z < z + 2.3 && hit.x > -24 && hit.x < 20) return i; }
     return hit.z > 9.5 ? -1 : -2;
   }
   cv.addEventListener('pointermove', e => { if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
