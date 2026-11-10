@@ -122,3 +122,5 @@ Still open: add allyl is worth twice the target for a rare. Deeper suppliers and
 - Tier 0, 50 runs each, rounds beaten at the 10th / 25th / 50th / 75th / 90th run: keeps the row, equipment first 0 / 1 / 3 / 6 / 7. Keeps the row, random picks 0 / 1 / 1 / 2 / 2. Greedy 0 / 1 / 2 / 4 / 5. Never follows on 0 / 0 / 1 / 3 / 3.
 - Median made over the number to beat, row player, rounds 1 to 8: 2.3, 2.1, 1.7, 1.7, 1.3, 1.1, 1.0, 0.7.
 - Open: more than one run in ten fails round 1, which is too many. Random picks end by round 2. Most of a round's total comes from the last page, so the flask barely moves on page 1.
+
+- Later the same day: the "set it off" button was removed. A page used up on a row of three goes off by itself after half a second. The rules and the stored numbers are unchanged, since the simulated player always fired.
