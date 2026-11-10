@@ -1,8 +1,7 @@
-// One synthesis, played on pages of a lab notebook. The molecule stands in the middle of the page with an inked
-// arrow to each molecule it can become. Clicking a product reacts. The product of one page is the starting molecule
-// of the next. Everything scored and not yet stamped is at risk, and it rides on the chain: stamp to bank it, or
-// turn the page and carry it on. Every reading is ink or pencil on the page.
-// Rules come from path.js. This file draws and takes input only.
+// One round, played on pages of a lab notebook. The molecule stands in the middle of the page with an inked arrow
+// to each molecule it can become. Clicking a product reacts. After three reactions the page turns and the same
+// molecule carries on. Reactions that build on one another multiply what is made. Every reading is ink or pencil
+// on the page. Rules come from path.js. This file draws and takes input only.
 (function (root) {
 'use strict';
 const AA = root.AA, T = root.THREE, RX = AA.rx, E = AA.ELEMENTS, P = AA.rxPath, sfx = AA.sfx;
@@ -47,12 +46,7 @@ function start(app) {
   const inkMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: ink.t, transparent: true, depthWrite: false }), 0, 0.02, 0); inkMesh.castShadow = false; inkMesh.receiveShadow = false;
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
 
-  // the stamp and its pad, and a pencil
-  const stamp = new T.Group(); scene.add(stamp); stamp.position.set(GO.x, 0, GO.z);
-  add(new T.CylinderGeometry(2.5, 2.6, 0.5, 40), std({ color: lin(0x7b1f18), roughness: 0.7 }), GO.x, 0.25, GO.z);
-  add(new T.CylinderGeometry(1.6, 1.6, 0.5, 36), std({ color: lin(0x1d1b1a), roughness: 0.6 }), 0, 0.75, 0, stamp);
-  add(new T.CylinderGeometry(0.6, 0.95, 2.0, 28), std({ color: lin(0xb07a44), roughness: 0.5 }), 0, 2.0, 0, stamp);
-  add(new T.SphereGeometry(0.9, 28, 20), std({ color: lin(0xb07a44), roughness: 0.5 }), 0, 3.2, 0, stamp);
+  // a pencil lying across the margin
   add(new T.CylinderGeometry(0.2, 0.2, 9, 6), std({ color: lin(0xf0b21c), roughness: 0.5 }), -28, 0.2, 2).rotation.set(Math.PI / 2, 0, 0.12);
 
   // ---------- ball and stick, drawn as the viewer draws it ----------
@@ -105,31 +99,30 @@ function start(app) {
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
   // ---------- state ----------
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, press: 0, flashRed: 0, pageStart: 0, outs: 0, lost: null, pileBump: 0 };
+  const MADE = { x: 0.5, z: 13 }, MULT = { x: -9.5, z: 8.6 }, CALL = { x: 0, z: -2.4 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   const rowAt = k => ({ x: ROW.x + k * ROW.dx, z: ROW.z });
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
-  const canStamp = () => st.mode === 'play' && P.held(g) > 0 && !g.locked;
-  const canTurn = () => st.mode === 'play' && (g.pageSteps > 0 || !slots.some(s => s && s.o));
-  const loseShow = n => { if (!n) return; st.lost = { n, t: performance.now() }; st.flashRed = 1; st.shake = 1; sfx.bad(); };
+  const callout = (text, sub, col) => { st.call = { text, sub: sub || '', col: col || INK, t: performance.now() }; };
 
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
   function refresh() {
     prods.forEach(freeMol); prods = []; slots = [];
     const live = st.mode === 'play' && !g.over, o = live ? P.options(g) : {};
-    g.kinds.forEach((id, i) => { slots[i] = { id, o: o[id] || null, brk: !!o[id] && P.breaks(g, o[id]) }; });
-    const fin = live ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, brk: false, fin: true } : null;
+    g.kinds.forEach((id, i) => { slots[i] = { id, o: o[id] || null }; });
+    const fin = live && g.pageSteps < P.DIAL.steps ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(160);
       const rings = new Map(), c = rgb(colOf(s.id)); s.o.r.made.forEach(a => rings.set(a, c));
-      const m = buildMol(s.o.model, rings); place(m, SPOT[i], 0.01); tween(m, SPOT[i], i === FIN ? SC_FIN : SC_PROD, 0.2 + i * 0.04); prods[i] = m;
+      const m = buildMol(s.o.model, rings); place(m, SPOT[i], 0.01); tween(m, SPOT[i], i === FIN ? SC_FIN : SC_PROD, 0.16 + i * 0.03); prods[i] = m;
     });
-    st.outs = live ? P.outs(g) : 0; st.hover = -1; setHover(-1); dirty = true;
+    st.hover = -1; setHover(-1); dirty = true;
   }
   function load(i) {
-    st.feed = (i + P.FEEDS.length) % P.FEEDS.length; st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.lost = null; tweens = [];
+    st.feed = (i + P.FEEDS.length) % P.FEEDS.length; st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0; tweens = [];
     freeMol(center); rowMols.forEach(freeMol); rowMols = [];
     g = P.synBegin(P.FEEDS[st.feed], true); st.quota = P.synQuota(P.FEEDS[st.feed], 30);
     setAlign(g.m); center = buildMol(g.m, null); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
@@ -138,46 +131,61 @@ function start(app) {
   function setHover(i) {
     if (center) { center.hover.forEach(t => { center.group.remove(t); t.geometry.dispose(); t.material.dispose(); }); center.hover = []; }
     st.hover = i; const s = i >= 0 ? slots[i] : null, o = s && s.o;
-    if (o && center && st.mode === 'play') { const col = s.brk ? REDINK : rgb(colOf(s.id)); o.atoms.forEach(a => { const p = center.at.get(a); if (p && a.el !== 'H') center.hover.push(collar(center.group, p, BALL(a.el), col)); }); }
+    if (o && center && st.mode === 'play') { const col = rgb(colOf(s.id)); o.atoms.forEach(a => { const p = center.at.get(a); if (p && a.el !== 'H') center.hover.push(collar(center.group, p, BALL(a.el), col)); }); }
     dirty = true;
   }
-  function endSynthesis() { st.mode = 'done'; st.pass = g.total >= st.quota; st.press = 1; if (st.pass) { sfx.fanfare(); st.shake = 1; } else { sfx.stamp(); st.shake = 0.5; } refresh(); }
+  function endRound() {
+    st.mode = 'done'; st.pass = g.total >= st.quota;
+    if (st.pass) { sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; } else { sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
+    refresh();
+  }
+  function nextPage() {
+    if (!P.turn(g)) { P.synEnd(g); return endRound(); }
+    rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh();
+  }
+  // everything the player sees and hears when a reaction lands
+  function land(o, before, wasOpen) {
+    const now = performance.now(), gain = P.made(g) - before, t = g.trail[g.trail.length - 1], route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
+    st.floats.push({ txt: '+' + fmt(gain), t: now, size: 70 + 26 * size, dx: (Math.random() - 0.5) * 3 });
+    for (let k = 0; k < 8 + 5 * o.r.hits; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (4 + size); st.blots.push({ x: C0.x + Math.cos(a) * d * 1.5, z: C0.z + Math.sin(a) * d * 0.8, r: 4 + Math.random() * (6 + 3 * size), t: now, col: rgb(colOf(o.id)) }); }
+    st.shake = Math.max(st.shake, 0.25 + 0.22 * size); st.multBump = 1;
+    sfx.bond(); sfx.lock(Math.min(12, len + g.trail.length));
+    if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'times ' + fmtB(route.val), '#8a6a00'); sfx.good(); st.shake = Math.max(st.shake, 1); }
+    else if (o.finish) { callout('finished', 'times ' + fmtB(1 + P.SYN.finishMult * o.r.hits), GREEN); sfx.good(); }
+    else if (t.cont && len >= 3) callout('run of ' + len, '', INK);
+    else if (wasOpen && !t.cont) callout('run closed', '', PENCIL);
+    // passing the number to beat, and each doubling past it
+    const m = P.made(g), times = Math.floor(m / st.quota);
+    if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 1.4; sfx.quota(); callout(fmt(st.quota) + ' beaten', '', GREEN); }
+    else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 0.8; st.flashC = '255,214,0'; st.shake = 1.4; sfx.over(); callout(times + ' times over', '', '#8a6a00'); }
+  }
   function pick(i) {
     const s = slots[i], o = s && s.o, chosen = prods[i];
     if (!o || !chosen || st.mode !== 'play') return;
     setHover(-1); st.mode = 'move';
-    const prev = center, k = g.pageSteps, tok = st.tok;
-    if (s.fin) P.synFinish(g, o); else loseShow(P.synTake(g, o));
-    prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.16, () => freeMol(m)); }); prods = [];
-    tween(prev, rowAt(Math.min(k, 3)), SC_ROW, 0.34); rowMols.push(prev);
-    tween(chosen, C0, SC_MAIN, 0.34);
+    const prev = center, k = g.pageSteps, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0;
+    if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
+    land(o, before, wasOpen);
+    prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
+    tween(prev, rowAt(Math.min(k, 3)), SC_ROW, 0.26); rowMols.push(prev); tween(chosen, C0, SC_MAIN, 0.26);
     // the rules move on by the clock, not by the drawing, so a stalled frame cannot leave the page stuck
     setTimeout(() => {
       if (tok !== st.tok) return;
       tweens = tweens.filter(tw => tw.m !== chosen && tw.m !== prev); place(chosen, C0, SC_MAIN); place(prev, rowAt(Math.min(k, 3)), SC_ROW);
       center = chosen; st.mode = 'play';
-      if (g.over) return endSynthesis();
+      if (g.over) return endRound();
       refresh();
-      // the last page ends itself when nothing is left to do on it
-      if (g.page >= P.SYN.pages && !slots.some(q => q && q.o)) { P.synEnd(g); setTimeout(() => { if (tok === st.tok) endSynthesis(); }, 500); }
-    }, 360);
-    sfx.bond(); sfx.lock(Math.min(12, g.cur.path.length)); st.shake = Math.max(st.shake, 0.25 + 0.12 * o.r.hits); st.pileBump = 1; dirty = true;
+      // a page with nothing left to do turns itself
+      if (!slots.some(q => q && q.o)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 520); }
+    }, 290);
+    dirty = true;
   }
-  function doStamp() {
-    if (st.mode === 'done') return load(st.pass ? st.feed + 1 : st.feed);
-    if (!canStamp()) { if (st.mode === 'play') sfx.bad(); return; }
-    P.bank(g); st.press = 1; sfx.stamp(); st.shake = Math.max(st.shake, 0.5); refresh();
-  }
-  function doTurn() {
-    if (!canTurn()) { if (st.mode === 'play') sfx.bad(); return; }
-    if (g.page >= P.SYN.pages) { P.synEnd(g); return endSynthesis(); }
-    const lost = P.turn(g); rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length;
-    sfx.feed(); loseShow(lost); refresh();
-  }
+  const next = () => { if (st.mode === 'done') load(st.pass ? st.feed + 1 : st.feed); };
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
   const hand = (x, n) => { x.font = Math.round(n) + 'px Hand, "Segoe Print", sans-serif'; };
+  const marker = (x, n) => { x.font = Math.round(n) + 'px Marker, "Segoe Print", sans-serif'; };
   function wob(x, a, b, lw, col, dash) {
     const A = px(a), B = px(b), n = 14; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.setLineDash(dash || []); x.beginPath();
     for (let k = 0; k <= n; k++) { const t = k / n, j = Math.sin(t * 11 + A[0] * 0.013) * 2.2; const X = A[0] + (B[0] - A[0]) * t + j, Y = A[1] + (B[1] - A[1]) * t + j * 0.6; if (k) x.lineTo(X, Y); else x.moveTo(X, Y); }
@@ -189,85 +197,86 @@ function start(app) {
     wob(x, { x: b.x - ux * hd - uz * hd * 0.55, z: b.z - uz * hd + ux * hd * 0.55 }, b, lw, col); wob(x, { x: b.x - ux * hd + uz * hd * 0.55, z: b.z - uz * hd - ux * hd * 0.55 }, b, lw, col);
   }
   const ring = (x, c, rx, ry, lw, col, rot) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.ellipse(c[0], c[1], rx, ry, rot || 0.15, 0.3, 6.6); x.stroke(); };
-  const swipe = (x, a, b, w) => { x.strokeStyle = HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
+  const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
   function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z - C0.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d, far = i === FIN ? 3.4 : 4.9; return { a: { x: C0.x + ux * 6.2, z: C0.z + uz * 3.2 }, b: { x: p.x - ux * far, z: p.z - uz * (far - 0.5) } }; }
   function drawInk(now) {
-    const x = ink.x, play = st.mode === 'play', pile = P.held(g); x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
-    // the arrows out of the molecule, and what each one does
+    const x = ink.x, play = st.mode === 'play', open = g.cur.path.length > 0; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
+    // ink thrown off by the last reaction
+    st.blots = st.blots.filter(b => now - b.t < 700); st.blots.forEach(b => { const k = (now - b.t) / 700, c = px(b); x.globalAlpha = 0.5 * (1 - k); x.fillStyle = b.col; x.beginPath(); x.arc(c[0], c[1], b.r * (0.6 + k), 0, 7); x.fill(); }); x.globalAlpha = 1;
+    // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     if (play) slots.forEach((s, i) => {
       if (!s) return;
-      const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i);
-      const col = !o ? FAINT : s.brk ? REDINK : INK;
-      if (o) { if (o.cont && !s.fin) swipe(x, px(e.a), px(e.b), 26); arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
+      const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
+      if (o) { if (o.cont && open) swipe(x, px(e.a), px(e.b), 26); arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
       x.save(); x.translate(m[0], m[1]); x.rotate((hash(s.id) - 0.5) * 0.07);
       hand(x, 54); x.textAlign = 'center'; const tw = x.measureText(verb).width;
       if (o) { x.strokeStyle = rgb(colOf(s.id)); x.globalAlpha = hov ? 0.85 : 0.55; x.lineWidth = hov ? 22 : 15; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26 - tw / 2, 14); x.lineTo(-26 + tw / 2, 10); x.stroke(); x.globalAlpha = 1; }
       x.fillStyle = col; x.fillText(verb, -26, 0);
       hand(x, 38); x.fillStyle = 'rgba(90,86,78,0.7)'; x.fillText(String(i + 1), -26 - tw / 2 - 24, -2);
-      if (o) { hand(x, 52); x.fillStyle = col; x.fillText(String(o.r.hits), tw / 2 + 18, -2); ring(x, [tw / 2 + 19, -18], 27, 25, 4, col);
-        if (s.brk) { x.strokeStyle = REDINK; x.lineWidth = 8; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26 - tw / 2, 6); x.lineTo(-26 + tw / 2, -38); x.stroke(); }
-        if (s.fin) { hand(x, 36); x.fillStyle = PENCIL; x.fillText('finish', -26, 46); } }
-      // a pencil stroke for each bottle of it left for this page
+      if (o) { hand(x, 52); x.fillStyle = col; x.fillText(String(o.r.hits), tw / 2 + 18, -2); ring(x, [tw / 2 + 19, -18], 27, 25, 4, col); if (s.fin) { hand(x, 34); x.fillStyle = PENCIL; x.fillText('last step', -26, 44); } }
       if (!s.fin) { x.strokeStyle = o ? PENCIL : FAINT; x.lineWidth = 4; for (let k = 0; k < (g.left[s.id] || 0); k++) { x.beginPath(); x.moveTo(-26 - tw / 2 + k * 13, 32); x.lineTo(-22 - tw / 2 + k * 13, 54); x.stroke(); } }
       x.restore();
     });
-    // this page's steps, along the top, each with what it scored
+    // this page's reactions, along the top
     g.trail.slice(st.pageStart).forEach((t, k) => {
       const a = rowAt(k), c = RX.CARDS[t.id], A = { x: a.x + 3.3, z: a.z }, B = { x: a.x + ROW.dx - 3.5, z: a.z };
       if (t.cont) swipe(x, px(A), px(B), 24);
       arrow(x, A, B, 5, INK);
       const m = px({ x: (A.x + B.x) / 2, z: a.z }); hand(x, 48); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(c.verb.toLowerCase(), m[0], m[1] - 16);
-      x.strokeStyle = rgb(colOf(t.id)); x.globalAlpha = 0.6; x.lineWidth = 9; x.beginPath(); x.moveTo(m[0] - 50, m[1] - 8); x.lineTo(m[0] + 50, m[1] - 10); x.stroke(); x.globalAlpha = 1;
-      t.ev.filter(e => e.kind !== 'grade' && e.kind !== 'catch').forEach((e, j) => { const big = e.kind === 'x'; hand(x, 34); x.fillStyle = big ? REDINK : e.kind === 'y' ? '#8a6a00' : PENCIL; x.fillText((big ? 'times ' : '+') + fmtB(e.val), m[0] - 95 + (j % 3) * 95, m[1] + 36 + Math.floor(j / 3) * 34); });
+      swipe(x, [m[0] - 50, m[1] - 8], [m[0] + 50, m[1] - 10], 9, rgb(colOf(t.id)));
     });
-    // the pile: what is scored and not yet stamped, and the chain it rides on
-    const pp = px(PILE), len = g.cur.path.length, bump = 1 + 0.25 * st.pileBump;
+    // the multiplier of the run that is open
     if (st.mode !== 'done') {
-      hand(x, 40); x.textAlign = 'right'; x.fillStyle = PENCIL; x.fillText('at risk', pp[0] - 96, pp[1]);
-      hand(x, 84 * bump); x.textAlign = 'center'; x.fillStyle = pile ? INK : FAINT; x.fillText(fmt(pile), pp[0], pp[1] + 6);
-      if (len >= 2) { const cx = pp[0] + 10; pp[1] += 0; const cy = pp[1] + 62; swipe(x, [cx - 70, cy - 14], [cx + 70, cy - 18], 38); hand(x, 44); x.fillStyle = INK; x.fillText('chain ' + len, cx, cy); } if (false) { const cx = 0; swipe(x, [cx - 70, pp[1] - 14], [cx + 70, pp[1] - 18], 40); hand(x, 46); x.fillStyle = INK; x.fillText('chain ' + len, cx, pp[1]); }
-      if (g.locked) { hand(x, 36); x.textAlign = 'right'; x.fillStyle = REDINK; x.fillText('carried over', pp[0] - 96, pp[1] + 40); x.textAlign = 'center'; }
+      const mp = px(MULT), len = g.cur.path.length, b = g.cur.batch, k = 1 + 0.35 * st.multBump, hot = len >= 2;
+      if (hot) swipe(x, [mp[0] - 120, mp[1] - 22], [mp[0] + 120, mp[1] - 30], 70 * k);
+      marker(x, (hot ? 78 : 54) * k); x.textAlign = 'center'; x.fillStyle = hot ? INK : FAINT; x.fillText('times ' + fmtB(b), mp[0], mp[1]);
+      if (hot) { hand(x, 38); x.fillStyle = PENCIL; x.fillText(len + ' in a row', mp[0], mp[1] + 44); }
     }
-    if (st.lost && now - st.lost.t < 1800) { const lp = px({ x: PILE.x, z: PILE.z - 2.6 }), txt = 'lost ' + fmt(st.lost.n); hand(x, 70); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(txt, lp[0], lp[1]); const tw = x.measureText(txt).width; x.strokeStyle = REDINK; x.lineWidth = 7; x.beginPath(); x.moveTo(lp[0] - tw / 2 - 8, lp[1] - 20); x.lineTo(lp[0] + tw / 2 + 8, lp[1] - 28); x.stroke(); }
-    // turn the page, with a ring for each reagent in the rack, filled where it would continue the chain
-    if (play) {
-      const tp = px(TURN), ok = canTurn(), last = g.page >= P.SYN.pages, col = ok ? INK : FAINT;
-      hand(x, 54); x.textAlign = 'left'; x.fillStyle = col; x.fillText(last ? 'finish' : 'next page', tp[0], tp[1]);
-      arrow(x, { x: TURN.x + 6.6, z: TURN.z - 0.5 }, { x: TURN.x + 8.8, z: TURN.z - 0.5 }, 6, col);
-      if (!last && pile > 0) { const n = P.synRack().length; for (let k = 0; k < n; k++) { const c = [tp[0] + 12 + k * 24, tp[1] + 40]; if (k < st.outs) { x.fillStyle = INK; x.beginPath(); x.arc(c[0], c[1], 9, 0, 7); x.fill(); } else { x.strokeStyle = PENCIL; x.lineWidth = 3; x.beginPath(); x.arc(c[0], c[1], 8, 0, 7); x.stroke(); } } }
-    }
-    // pages, and a circle for each step on this one
+    // pages, and a circle for each reaction on this one
     for (let k = 1; k <= P.SYN.pages; k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     for (let k = 0; k < P.DIAL.steps; k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
-    // what has been stamped, and the quota
-    const q = px(TOTAL); hand(x, 96); x.textAlign = 'right'; x.fillStyle = st.mode === 'done' ? (st.pass ? GREEN : REDINK) : INK; x.fillText(fmt(st.shown), q[0], q[1]);
-    hand(x, 64); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText('/ ' + fmt(st.quota), q[0] + 20, q[1]);
-    if (st.mode === 'done') {   // the stamp's mark
-      const c = [q[0] + 330, q[1] - 40], col = st.pass ? GREEN : REDINK; x.save(); x.translate(c[0], c[1]); x.rotate(-0.2); x.globalAlpha = 0.85;
-      x.strokeStyle = col; x.lineWidth = 9; x.beginPath(); x.arc(0, 0, 70, 0, 7); x.stroke(); x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 57, 0, 7); x.stroke(); x.lineWidth = 14; x.lineCap = 'round'; x.beginPath();
-      if (st.pass) { x.moveTo(-30, 2); x.lineTo(-8, 26); x.lineTo(34, -28); } else { x.moveTo(-26, -26); x.lineTo(26, 26); x.moveTo(26, -26); x.lineTo(-26, 26); } x.stroke(); x.restore();
+    // how much has been made, and the number to beat
+    const q = px(MADE), beaten = st.shown >= st.quota, done = st.mode === 'done';
+    marker(x, 110); x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(fmt(st.shown), q[0], q[1]);
+    hand(x, 38); x.fillStyle = PENCIL; x.fillText('made', q[0], q[1] - 96);
+    hand(x, 60); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), q[0] + 60, q[1]); hand(x, 38); x.fillStyle = PENCIL; x.fillText('to beat', q[0] + 60, q[1] - 62);
+    if (beaten) { x.strokeStyle = GREEN; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(q[0] + 16, q[1] - 30); x.lineTo(q[0] + 30, q[1] - 8); x.lineTo(q[0] + 52, q[1] - 62); x.stroke(); }
+    // numbers rising off the molecule
+    st.floats = st.floats.filter(f => now - f.t < 950); st.floats.forEach(f => { const k = (now - f.t) / 950, c = px({ x: C0.x + f.dx, z: C0.z - 2.5 - 5 * (1 - Math.pow(1 - k, 2)) }), pop = k < 0.12 ? 0.6 + k / 0.12 * 0.6 : 1.2 - Math.min(0.2, (k - 0.12)); x.globalAlpha = 1 - k * k; marker(x, f.size * pop); x.textAlign = 'center'; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
+    // a line lettered across the page when something worth naming happens
+    if (st.call && now - st.call.t < 1400) {
+      const k = (now - st.call.t) / 1400, c = px(CALL), pop = k < 0.1 ? 1.5 - 5 * k : 1, al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
+      x.save(); x.translate(c[0], c[1]); x.rotate(-0.05); x.scale(pop, pop); x.globalAlpha = al; marker(x, 120); x.textAlign = 'center'; const tw = x.measureText(st.call.text).width;
+      swipe(x, [-tw / 2 - 20, -34], [tw / 2 + 20, -44], 110);
+      x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, 0, 0); x.fillStyle = st.call.col; x.fillText(st.call.text, 0, 0);
+      if (st.call.sub) { marker(x, 64); x.fillStyle = REDINK; x.strokeText(st.call.sub, 0, 80); x.fillText(st.call.sub, 0, 80); }
+      x.restore(); x.globalAlpha = 1;
+    } else if (st.call) st.call = null;
+    // the round is over: how it went, and where to click
+    if (done) {
+      const c = px({ x: 0, z: -3 }), ratio = g.total / st.quota;
+      marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
+      const txt = st.pass ? (ratio >= 2 ? fmtB(Math.floor(ratio * 10) / 10) + ' times over' : 'beaten') : fmt(st.quota - g.total) + ' short';
+      x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
+      hand(x, 50); x.fillStyle = PENCIL; x.fillText('longest run ' + g.best + '      click for the next round', c[0], c[1] + 80);
     }
     ink.t.needsUpdate = true;
   }
 
   // ---------- pointer and keys ----------
   const ray = new T.Raycaster(), ndc = new T.Vector2(), ground = new T.Plane(new T.Vector3(0, 1, 0), 0), hit = new T.Vector3();
-  function spotAt(e) {
+  function slotAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
-    const out = { slot: -1, go: false, turn: false };
-    if (!ray.ray.intersectPlane(ground, hit)) return out;
-    if (Math.hypot(hit.x - GO.x, hit.z - GO.z) < 3.6) { out.go = true; return out; }
-    if (hit.x > TURN.x - 0.8 && hit.x < TURN.x + 9.4 && hit.z > TURN.z - 2.4 && hit.z < TURN.z + 2.2) { out.turn = true; return out; }
-    if (st.mode === 'play') slots.forEach((s, i) => { if (!s || !s.o) return; const p = SPOT[i], l = LAB[i], rw = i === FIN ? 4.4 : 5.6; if ((Math.abs(hit.x - p.x) < rw && Math.abs(hit.z - p.z) < 3.6) || (Math.abs(hit.x - l.x) < 5 && Math.abs(hit.z - (l.z - 0.6)) < 1.8)) out.slot = i; });
-    return out;
+    if (!ray.ray.intersectPlane(ground, hit) || st.mode !== 'play') return -1;
+    let slot = -1; slots.forEach((s, i) => { if (!s || !s.o) return; const p = SPOT[i], l = LAB[i], rw = i === FIN ? 4.4 : 5.6; if ((Math.abs(hit.x - p.x) < rw && Math.abs(hit.z - p.z) < 3.6) || (Math.abs(hit.x - l.x) < 5 && Math.abs(hit.z - (l.z - 0.6)) < 1.8)) slot = i; });
+    return slot;
   }
-  cv.addEventListener('pointermove', e => { const s = spotAt(e); if (s.slot !== st.hover) setHover(s.slot); cv.style.cursor = s.slot >= 0 || (s.go && (canStamp() || st.mode === 'done')) || (s.turn && canTurn()) ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
-  cv.addEventListener('click', e => { const s = spotAt(e); if (s.go) doStamp(); else if (s.turn) doTurn(); else if (s.slot >= 0) pick(s.slot); });
+  cv.addEventListener('click', e => { if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
   root.addEventListener('keydown', e => {
     if (e.key >= '1' && e.key <= '6') pick(+e.key - 1);
-    else if (e.key === 'Enter') { e.preventDefault(); doStamp(); }
-    else if (e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); if (st.mode === 'done') doStamp(); else doTurn(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
     else if (e.key === 'r' || e.key === 'R') load(st.feed);
     else if (e.key === 'n' || e.key === 'N') load(st.feed + 1);
   });
@@ -281,25 +290,24 @@ function start(app) {
     const dt = Math.min(0.05, (now - last) / 1000), ended = []; last = now;
     tweens = tweens.filter(tw => {
       tw.t += dt; const k = Math.min(1, tw.t / tw.dur), e = 1 - Math.pow(1 - k, 3);
-      tw.m.group.position.set(tw.fx + (tw.to.x - tw.fx) * e, Math.sin(k * Math.PI) * 1.4 * (tw.dur > 0.3 ? 1 : 0), tw.fz + (tw.to.z - tw.fz) * e); tw.m.group.scale.setScalar(tw.fs + (tw.sc - tw.fs) * e);
+      tw.m.group.position.set(tw.fx + (tw.to.x - tw.fx) * e, Math.sin(k * Math.PI) * 1.4 * (tw.dur > 0.2 ? 1 : 0), tw.fz + (tw.to.z - tw.fz) * e); tw.m.group.scale.setScalar(tw.fs + (tw.sc - tw.fs) * e);
       if (k >= 1) { if (tw.done) ended.push(tw.done); return false; } return true;
     });
-    ended.forEach(f => f());   // a finished move may start new ones, so it runs after the list is settled
-    // products rise a little under the pointer
+    ended.forEach(f => f());
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const want = st.hover === i ? 0.7 : 0; m.group.position.y += (want - m.group.position.y) * Math.min(1, dt * 14); });
-    if (g && st.shown !== g.total) { const d = g.total - st.shown; st.shown = Math.abs(d) < 2 ? g.total : st.shown + d * Math.min(1, dt * 9); dirty = true; }
-    if (st.pileBump > 0) { st.pileBump = Math.max(0, st.pileBump - dt * 4); dirty = true; }
-    if (st.lost && now - st.lost.t < 1900) dirty = true;
-    st.press = Math.max(0, st.press - dt * 3); stamp.position.y = st.press > 0 ? Math.sin((1 - st.press) * Math.PI) * 2.2 : 0;
+    const target = g ? P.made(g) : 0;
+    if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 10); dirty = true; }
+    if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
+    if (st.floats.length || st.blots.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
-    cam.position.set(CAM.x + (Math.random() - 0.5) * sh * 0.5, CAM.y, CAM.z + (Math.random() - 0.5) * sh * 0.5); cam.lookAt(LOOKAT);
-    if (st.flashRed > 0) { st.flashRed = Math.max(0, st.flashRed - dt * 2.5); veil.style.backgroundColor = 'rgba(200,38,28,' + (st.flashRed * 0.35).toFixed(3) + ')'; } else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
-    if (dirty && now - lastInk > 30) { drawInk(now); dirty = false; lastInk = now; }
+    cam.position.set(CAM.x + (Math.random() - 0.5) * sh * 0.6, CAM.y, CAM.z + (Math.random() - 0.5) * sh * 0.6); cam.lookAt(LOOKAT);
+    if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; } else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
+    if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; }
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, stamp: doStamp, turn: doTurn, setHover,
-    state: () => ({ mode: st.mode, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont ? i : -1)).filter(i => i >= 0), breaks: slots.map((s, i) => (s && s.brk ? i : -1)).filter(i => i >= 0), pile: P.held(g), chain: g.cur.path.length, locked: g.locked, outs: st.outs, total: g.total, lost: g.lost, quota: st.quota, pass: st.pass, canStamp: canStamp(), canTurn: canTurn() }) };
+  AA.rxScheme = { st, load, pick, next, setHover,
+    state: () => ({ mode: st.mode, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), times: g.cur.batch, row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
   size(); load(0); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

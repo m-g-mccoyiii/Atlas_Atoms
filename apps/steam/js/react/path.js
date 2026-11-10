@@ -145,15 +145,16 @@ function deal(feed, n, rnd) {
 // n different pieces of equipment at random
 function kit(n, rnd) { const R = rnd || Math.random, pool = GEAR.map(q => q.id), out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; }
 
-// ---------- a synthesis: one molecule carried through several pages ----------
-// The product of a page is the starting molecule of the next. Everything scored and not yet stamped is the pile.
-// The pile rides on the chain: a step that does not continue the chain loses it. Stamping banks the pile and ends
-// the chain. Turning the page with a pile carries both into a new offer, and the stamp stays shut until the chain
-// has been continued once on the new page. If nothing on the new page continues the chain, the pile is lost.
-// The finishing reagent closes groups for good, so it is offered only on the last page and ends the synthesis.
+// ---------- a round: one molecule carried through several pages ----------
+// The molecule at the end of a page starts the next page. A reaction that acts on what the last reaction changed
+// continues the run, and a run multiplies everything scored on it. A reaction that does not continue the run
+// closes it: what the run made is kept and the multiplier starts again at 1. Nothing made is ever taken away.
+// The finishing reagent closes groups for good, so it is offered only on the last page and ends the round.
 const SYN = { pages: 3, offer: 5, uses: 2, finish: 'h2', finishMult: 0.5 };
 const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish);
+// what the open run is worth, and everything made so far
 const held = g => Math.round(g.cur.yield * g.cur.batch);
+const made = g => g.total + held(g);
 function synDeal(g, rnd) {
   const R = rnd || Math.random, rack = synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length); let offer = [];
   for (let t = 0; t < 40; t++) {
@@ -165,38 +166,19 @@ function synDeal(g, rnd) {
 }
 function synBegin(feed, relaxed, rnd) {
   const g = begin(feed, relaxed, [], null, []);
-  g.syn = true; g.page = 1; g.total = 0; g.locked = false; g.lost = 0; g.over = false; g.pageSteps = 0;
+  g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   synDeal(g, rnd);
   return g;
 }
-const wipe = g => { const n = held(g); g.cur.yield = 0; g.cur.batch = 1; g.cur.path = []; g.cur.fresh = new Set(); g.locked = false; return n; };
-// how many reagents of the whole rack would continue the chain from here
-function outs(g) {
-  if (!g.cur.path.length) return 0;
-  const k = g.kinds, l = g.left, ps = g.pageSteps; g.kinds = synRack(); g.left = {}; g.kinds.forEach(id => { g.left[id] = 1; }); g.pageSteps = 0;
-  const o = options(g), n = Object.keys(o).filter(id => o[id].cont).length;
-  g.kinds = k; g.left = l; g.pageSteps = ps;
-  return n;
-}
-// true when taking this option would lose the pile
-const breaks = (g, o) => held(g) > 0 && g.cur.path.length > 0 && !o.cont;
+// closes the open run: its amount is kept and the multiplier starts again
+const close = g => { g.total += held(g); g.cur.yield = 0; g.cur.batch = 1; g.cur.path = []; g.cur.fresh = new Set(); };
+// true when this option would not continue the run that is open
+const breaks = (g, o) => g.cur.path.length > 0 && !o.cont;
 function synTake(g, o) {
-  let lost = 0;
-  if (breaks(g, o)) { lost = wipe(g); g.lost += lost; }
-  take(g, o); g.pageSteps++;
-  if (o.cont) g.locked = false;
-  return lost;
+  if (breaks(g, o)) close(g);
+  take(g, o); g.pageSteps++; g.best = Math.max(g.best, g.cur.path.length);
 }
-function bank(g) { if (g.locked) return 0; const n = wipe(g); g.total += n; return n; }
-// turns to the next page. Returns what was lost, if the new offer cannot continue a carried chain
-function turn(g, rnd) {
-  if (g.page >= SYN.pages) return 0;
-  g.page++; g.locked = held(g) > 0; synDeal(g, rnd);
-  if (!g.locked) return 0;
-  const o = options(g);
-  if (Object.keys(o).some(id => o[id].cont)) return 0;
-  const lost = wipe(g); g.lost += lost; return lost;
-}
+function turn(g, rnd) { if (g.page >= SYN.pages) return false; g.page++; synDeal(g, rnd); return true; }
 // the finishing reagent, on the last page only
 function finishOpt(g) {
   if (g.page < SYN.pages || !RX.CARDS[SYN.finish].find(g.m).length) return null;
@@ -207,25 +189,22 @@ function synFinish(g, o) {
   g.left[SYN.finish] = 1; take(g, o);
   const m = 1 + SYN.finishMult * o.r.hits; g.cur.batch *= m;
   g.trail[g.trail.length - 1].ev.push({ src: 'finish', kind: 'x', val: m, yield: g.cur.yield, batch: g.cur.batch });
-  g.locked = false; g.over = true; return bank(g);
+  close(g); g.over = true;
 }
-function synEnd(g) { g.locked = false; g.over = true; return bank(g); }
-// a plain player, used to set the quota: continues the chain when it can, carries when two or more reagents would continue
+function synEnd(g) { close(g); g.over = true; }
+// a plain player, used to set the number to beat: continues the run when it can, otherwise reacts at the most sites
 function synPlay(feed, rnd) {
   const g = synBegin(feed, false, rnd), R = rnd || Math.random;
   for (;;) {
     for (;;) {
       const o = options(g), ids = Object.keys(o); if (!ids.length) break;
-      const cs = ids.filter(id => o[id].cont), safeIds = ids.filter(id => !breaks(g, o[id]));
-      if (!cs.length && !safeIds.length) { if (!g.locked) bank(g); }
-      const o2 = options(g), from = cs.length ? cs : Object.keys(o2);
-      let best = from[0]; from.forEach(id => { if (o2[id].r.hits > o2[best].r.hits || (o2[id].r.hits === o2[best].r.hits && R() < 0.5)) best = id; });
-      synTake(g, o2[best]);
+      const cs = ids.filter(id => o[id].cont), from = cs.length ? cs : ids;
+      let best = from[0]; from.forEach(id => { if (o[id].r.hits > o[best].r.hits || (o[id].r.hits === o[best].r.hits && R() < 0.5)) best = id; });
+      synTake(g, o[best]);
     }
-    if (g.page >= SYN.pages) { synEnd(g); break; }
-    if (outs(g) < 2) bank(g);
-    turn(g, rnd);
+    if (!turn(g, rnd)) break;
   }
+  synEnd(g);
   return g.total;
 }
 function synQuota(feed, n) {
@@ -234,5 +213,5 @@ function synQuota(feed, n) {
   return Math.max(50, Math.round(q / mag) * mag);
 }
 AA.rxPath = { DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
-  SYN, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, outs, breaks, bank, turn, finishOpt };
+  SYN, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
