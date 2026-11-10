@@ -247,7 +247,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 16.5) / spanOf(m), (KITV === 'bottom' ? 10.5 : 13) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 16.5) / spanOf(m), (KITV === 'bottom' ? 10.5 : 10.5) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -260,7 +260,7 @@ function start(app) {
   // A hit throws ink onto the paper under it: blots, and streaks running out from the spot. Nothing flies through the air.
   // ?show=plain plays a reaction with one thing to look at: no spray, slashes or bursts, little shake, a slower chain,
   // and no banner for every step of a chain. In both, each step of a chain shows the reagent that is acting.
-  const PLAIN = (() => { try { return new URLSearchParams(root.location.search).get('show') === 'plain'; } catch (e) { return false; } })();
+  const PLAIN = (() => { try { return new URLSearchParams(root.location.search).get('show') !== 'full'; } catch (e) { return true; } })();
   function burst3(x, y, z, n, col) { if (PLAIN) return;
     const t = -y / camDir.y, gx = x + camDir.x * t, gz = z + camDir.z * t, now = performance.now();
     for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, d = 0.6 + Math.random() * 3.2; st.blots.push({ x: gx + Math.cos(a) * d * 1.2, z: gz + Math.sin(a) * d * 0.75, r: 3 + Math.random() * 9, t: now, col }); }
@@ -279,9 +279,9 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: EDGE - 0.6 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -6.2, z: 9.6 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 12.9, MULT = { x: EDGE - 0.6 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -1.6, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
-  if (KITV === 'back') { GAIN.x = -2.2; GAIN.z = 7.7; CALL.x = 7; CALL.z = 12.6; }
+  if (KITV === 'back') { GAIN.x = -9.6; GAIN.z = 7.2; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   if (KITV === 'back') C0.x += 1.7;
   let SLOTW = 10, LABF = 50;
@@ -345,7 +345,7 @@ function start(app) {
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
-  const FLASK = KITV === 'back' ? { x: -10.2, z: 8.6 } : { x: -4.8 + SX, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
+  const FLASK = KITV === 'back' ? { x: -5.4, z: 11.5 } : { x: -4.8 + SX, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
   const flask = (() => {
     const grp = new T.Group(), rAt = y => FB.r0 - (FB.r0 - FB.r1) * (y / FB.h), liqM = std({ color: lin(0x3aa6c8), roughness: 0.3 });
     add(new T.CylinderGeometry(FB.r1, FB.r0, FB.h, 28), GLASS, 0, FB.h / 2, 0, grp); add(new T.CylinderGeometry(FB.r1, FB.r1, 0.8, 20), GLASS, 0, FB.h + 0.4, 0, grp);
@@ -511,7 +511,7 @@ function start(app) {
     const heavy = id => { let best = null, bd = 1e9; if (mol) mol.model.atoms.forEach(a => { if (a.iso !== id) return; const q = mol.at.get(a); if (!q) return; const tt = -q.y / camDir.y, gx = q.x + camDir.x * tt, gz = q.z + camDir.z * tt; let d = 1e9; marks.forEach(m => { d = Math.min(d, Math.hypot(m.x - gx, m.z - gz)); }); if (d < bd) { bd = d; best = { x: C0.x + gx * sc, z: C0.z + gz * sc }; } }); return best; };
     // the longer the row, the harder everything on the page hits: bigger lettering, more ink, slashes across the page
     const f = Math.min(1, Math.max(0, (g.cur.path.length - 1) / 5) + 0.12 * (st.chainN || 0)), FL = { p: '31,95,191', h: '31,95,191', r: '255,176,0', e: '200,24,160' }; st.fury = f;
-    const ping = (at, txt, col, size, ring) => st.pings.push({ x: at.x, z: at.z, txt, col, size: size * (1 + 0.3 * f), ring, f, t: performance.now() });
+    const ping = (at, txt, col, size, ring) => st.pings.push({ x: at.x, z: at.z, txt, col, size: size * (PLAIN ? 0.62 : 1 + 0.3 * f), ring, f, t: performance.now() });
     const slash = col => { if (PLAIN) return; for (let q = 0; q < Math.min(2, Math.floor(f * 2.4)); q++) { const a = (Math.random() - 0.5) * 1.1 + (Math.random() < 0.5 ? 0 : Math.PI), len = 6 + Math.random() * 9 * f; st.slashes.push({ x: C0.x + (Math.random() - 0.5) * 16, z: C0.z + (Math.random() - 0.5) * 7, dx: Math.cos(a) * len, dz: Math.sin(a) * len * 0.5, w: 10 + 14 * f * Math.random(), col, t: performance.now() }); } };
     sfx.bond(); st.shake = Math.max(st.shake, 0.3);
     // the reaction is played out one beat at a time, quicker as it goes: each place, each heavy atom, the row, then
@@ -857,7 +857,7 @@ function start(app) {
     st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.lane > 0, c = px({ x: GAIN.x, z: GAIN.z - f.lane * 2.6 - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
-      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x - 3, z: CALL.z - 0.9 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
+      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x + 3.5, z: CALL.z - 0.9 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
       x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al;
       if (st.call.ticks) { const n = st.call.ticks, w = (n > 10 ? 3 : n) * 110; swipe(x, [-w / 2 - 40, -20], [w / 2 + 40, -28], 120); tickRow(x, 0, -24, n, 92, st.call.col); }
       else {
@@ -881,7 +881,7 @@ function start(app) {
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
     // a step of a chain: the reagent that is acting, as its tile, above the molecule
-    if (st.act && now - st.act.t < 1300 && TILE[st.act.id] && st.mode !== 'done') { const tl = TILE[st.act.id], k = (now - st.act.t) / 1300, c = px({ x: C0.x, z: C0.z - 7.2 }), pop = k < 0.08 ? 0.5 + 8 * k : k < 0.16 ? 1.14 - 1.75 * (k - 0.08) : 1;
+    if (st.act && now - st.act.t < 1300 && TILE[st.act.id] && st.mode !== 'done') { const tl = TILE[st.act.id], k = (now - st.act.t) / 1300, c = px({ x: 18.6, z: -5.6 }), pop = k < 0.08 ? 0.5 + 8 * k : k < 0.16 ? 1.14 - 1.75 * (k - 0.08) : 1;
       x.save(); x.translate(c[0], c[1]); x.scale(1.7 * pop, 1.7 * pop); x.globalAlpha = k > 0.8 ? 1 - (k - 0.8) / 0.2 : 1;
       chip(x, tl[0], -72, 0, true); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, tl[1], 62, 0, true);
       x.restore(); x.globalAlpha = 1; dirty = true; }
