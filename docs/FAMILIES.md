@@ -25,3 +25,18 @@ So the player can build a family in the middle of a round. Hydrating a diene giv
 The starting family still decides which molecules are offered and what a supplier opens.
 
 Not built: ways to build an arene or a cage, a loadout, reactions special to a family. Not measured: run length, and how strong stacked rules get.
+
+## Building every family, and what a molecule does to itself (later again)
+
+Two more reagents, so all five families can be reached from a chain:
+- Snap shut (light, rare, research supplier): two C=C three to five carbons apart join into a four-ring. The chain folds into fused rings and counts as a cage.
+- Aromatize (rare, trade supplier): a six-ring of carbon with a C=C in it gives up hydrogen and becomes a benzene ring.
+
+Self-reaction. Once a page has been set off, the molecule may also react with itself, with no reagent held and none used up: close ring from the start, aromatize once the trade supplier is open, snap shut once the research supplier is open. A self-reaction always carries the row on. It is announced by name with "by itself". These run out by themselves, because each uses up the groups it needs.
+
+Number to beat: round 1 is now 0.6 of the stored figure (was 0.9). With families and self-reactions in, a player who keeps the row beat 2 / 3 / 5 / 6 / 6 rounds at tier 0 (11 runs) and 1 / 2 / 3 / 5 / 9 at tier 3 (13 runs); a greedy player 0 / 1 / 1 / 2 / 3 (21 runs). These samples are small.
+
+Ideas not built:
+- Runaway: a self-reaction that makes the groups it needs again (a polymer end, a radical), so it goes on until something stops it, with the gain growing each turn.
+- Catalyst: a piece of equipment that makes the last reaction happen again by itself, paying less each time until it is spent for the page.
+- Inhibitor: a piece that stops a chain early and banks what it has made at a premium, for when the chain would wreck the molecule.

@@ -595,7 +595,7 @@ function start(app) {
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
     if (free && o.model.settle) o.model.settle(160);
-    if (free) sfx.chain(st.chainN || 0);
+    if (free) { sfx.chain(st.chainN || 0); if (o.self) { callout(RX.CARDS[rid].verb.toLowerCase(), 'by itself', REDINK); st.shake = Math.max(st.shake, 1.2); st.flash = 0.5; st.flashC = '214,69,58'; } }
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o, free);
@@ -678,7 +678,7 @@ function start(app) {
   // a splat where a flick lands: a blot with a few short spokes
   function splat(x, c, r, col, seed) { x.fillStyle = col; x.beginPath(); for (let i = 0; i <= 20; i++) { const a = i / 20 * 6.283, rr = r * (0.75 + 0.5 * hash(seed + 's' + (i % 20))); if (i) x.lineTo(c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr * 0.8); else x.moveTo(c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr * 0.8); } x.fill(); }
   // What each reagent takes and what it leaves, by group. A row carries on when the next tile takes what the last one left.
-  const TILE = { cyclize: ['OH', 'ring'], hydrate: ['C=C', 'OH'], pcc: ['OH', 'C=O'], nabh4: ['C=O', 'OH'], dehydrate: ['OH', 'C=C'], h2: ['C=C', 'CH'], hcl: ['C=C', 'Cl'], bh3: ['C=C', 'OH'], socl2: ['OH', 'Cl'], koh: ['Cl', 'C=C'], naoh: ['Cl', 'OH'],
+  const TILE = { snap: ['C=C', 'cage'], aromatize: ['ring', 'arene'], cyclize: ['OH', 'ring'], hydrate: ['C=C', 'OH'], pcc: ['OH', 'C=O'], nabh4: ['C=O', 'OH'], dehydrate: ['OH', 'C=C'], h2: ['C=C', 'CH'], hcl: ['C=C', 'Cl'], bh3: ['C=C', 'OH'], socl2: ['OH', 'Cl'], koh: ['Cl', 'C=C'], naoh: ['Cl', 'OH'],
     memgbr: ['C=O', 'OH', '+C'], wittig: ['C=O', 'C=C', '+C'], allyl: ['C=O', 'OH', '+3C'], aibn: ['C=C', 'chain'], wacker: ['C=C', 'C=O'], wolff: ['C=O', 'CH'] };
   const GCOL = { 'C=C': '#3a6fd0', OH: '#d6453a', 'C=O': '#e07a00', Cl: '#3c9a5f', CH: '#8d949c', chain: '#e23c6e' };
   function chip(x, txt, cx, cy, on) { hand(x, 34); const w = Math.max(74, x.measureText(txt).width + 26); x.fillStyle = on ? GCOL[txt] || INK : 'rgba(141,148,156,0.35)'; x.beginPath(); x.ellipse(cx, cy - 11, w / 2, 25, 0, 0, 6.3); x.fill(); x.fillStyle = '#fbf8ee'; x.textAlign = 'center'; x.fillText(txt, cx, cy); return w; }

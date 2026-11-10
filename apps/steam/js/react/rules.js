@@ -210,6 +210,19 @@ const LIST = [
     rule: 'Joins two OH groups four or five carbons apart into a ring. Water leaves.', from: 'ol', to: 'ring',
     find: m => m.atoms.map(a => ringable(m, a)).filter(Boolean), ok: (m, s) => !!ringable(m, s.o),
     apply(m, s0) { const s = ringable(m, s0.o); cut(m, s.o, s.ho); cut(m, s.c2, s.o2); m.bond(s.o2, s.ho); m.bond(s.o, s.c2); return { focus: [s.c, s.o, s.c2], incoming: [], leaving: [[s.o2, s.ho2, s.ho]], tag: 'closes a ring' }; } },
+  // Snap: two C=C in one molecule, a few carbons apart, close a four-ring between them under light. The chain folds
+  // into fused rings, which is how a cage is built.
+  { id: 'snap', verb: 'Snap shut', formula: 'hν', chem: 'Ultraviolet light', rgb: [200, 38, 28], cls: 'light', ghs: [],
+    rule: 'Two C=C a few carbons apart join into a four-ring. The chain folds into fused rings.', from: 'ene', to: 'cage',
+    find: snappable, ok: m => snappable(m).length > 0,
+    apply(m) { const s = snappable(m)[0]; s.A.order = 1; s.B.order = 1; m.bond(s.a1, s.b1); m.bond(s.a2, s.b2); return { focus: [s.a1, s.a2, s.b1, s.b2], incoming: [], leaving: [], tag: 'folds shut' }; } },
+  // Aromatize: a six-ring of carbon that already has a C=C gives up hydrogen and becomes a benzene ring.
+  { id: 'aromatize', verb: 'Aromatize', formula: 'Pd/C, heat', chem: 'Palladium on carbon, heat', rgb: [168, 121, 26], cls: 'metal', ghs: ['flame'],
+    rule: 'A six-ring with a C=C in it gives up hydrogen and becomes a benzene ring.', from: 'ring', to: 'arene',
+    find: aromatizable, ok: m => aromatizable(m).length > 0,
+    apply(m) { const s = aromatizable(m)[0], R = s.ring, leaving = [];
+      for (let i = 0; i < 6; i++) { if (i % 2 !== s.par) continue; const a = R[i], b = R[(i + 1) % 6], k = bondOf(m, a, b); if (k.order === 2) continue; const ha = Hs(m, a)[0], hb = Hs(m, b)[0]; cut(m, a, ha); cut(m, b, hb); m.bond(ha, hb); k.order = 2; leaving.push([ha, hb]); }
+      return { focus: R.slice(), incoming: [], leaving, tag: 'becomes aromatic' }; } },
   // Reagents that build. Each adds carbon at a C=O, so the molecule grows as the round goes on.
   { id: 'memgbr', verb: 'Add methyl', formula: 'CH₃MgBr', chem: 'Methylmagnesium bromide, then dilute acid', rgb: [196, 60, 150], cls: 'grignard', ghs: ['flame', 'corr'],
     rule: 'Adds CH₃ to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
@@ -327,6 +340,32 @@ function runCard(m, card) {
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
+const bondOf = (m, a, b) => m.bonds.find(k => (k.a === a && k.b === b) || (k.a === b && k.b === a));
+function carbonDist(m, from, max) { const dist = new Map([[from, 0]]), q = [from]; while (q.length) { const a = q.shift(), d = dist.get(a); if (d >= max) continue; carbonsOf(m, a).forEach(b => { if (!b.fly && !dist.has(b)) { dist.set(b, d + 1); q.push(b); } }); } return dist; }
+// pairs of C=C whose nearest carbons are three to five bonds apart
+function snappable(m) {
+  const es = alkenes(m).map(q => q.bond), out = [], used = new Set();
+  for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) {
+    const A = es[i], B = es[j]; if (used.has(A) || used.has(B) || A.a === B.a || A.a === B.b || A.b === B.a || A.b === B.b) continue;
+    let best = null; [[A.a, A.b], [A.b, A.a]].forEach(pa => { const dist = carbonDist(m, pa[0], 5); [[B.a, B.b], [B.b, B.a]].forEach(pb => { const d = dist.get(pb[0]); if (d != null && (!best || d < best.d)) best = { d, a1: pa[0], a2: pa[1], b1: pb[0], b2: pb[1] }; }); });
+    if (!best || best.d < 3 || best.d > 5 || bondOf(m, best.a2, best.b2)) continue;
+    used.add(A); used.add(B); out.push({ A, B, a1: best.a1, a2: best.a2, b1: best.b1, b2: best.b2, atoms: [best.a1, best.a2, best.b1, best.b2] });
+  }
+  return out;
+}
+// six-rings of carbon that can become benzene: at least one C=C in the ring, the double bonds it has fit one
+// alternating pattern, nothing double-bonded outside the ring, and a hydrogen to give on every carbon that needs one
+function aromatizable(m) {
+  const ar = aromaticAtoms(m), cs = m.atoms.filter(a => a.el === 'C' && !a.fly), rings = [], seen = new Set(), out = [];
+  const walk = (start, path) => { const last = path[path.length - 1]; if (path.length === 6) { if (carbonsOf(m, last).includes(start)) { const key = path.map(a => m.atoms.indexOf(a)).sort((x, y) => x - y).join(','); if (!seen.has(key)) { seen.add(key); rings.push(path.slice()); } } return; } carbonsOf(m, last).forEach(n => { if (!n.fly && !path.includes(n)) { path.push(n); walk(start, path); path.pop(); } }); };
+  cs.forEach(c => walk(c, [c]));
+  rings.forEach(R => { if (R.some(a => ar.has(a))) return;
+    const dbl = R.map((a, i) => bondOf(m, a, R[(i + 1) % 6]).order === 2), first = dbl.findIndex(Boolean); if (first < 0) return;
+    const par = first % 2; if (dbl.some((d, i) => d && i % 2 !== par)) return;
+    const fits = R.every((a, i) => { if (nbs(m, a).some(n => n.bond.order === 2 && !R.includes(n.atom))) return false; const has = dbl[i] || dbl[(i + 5) % 6]; return has || Hs(m, a).length > 0; });
+    if (fits) out.push({ ring: R, par, atoms: R.slice() }); });
+  return out;
+}
 // the first OH of a pair that can close a ring: the carbons that carry them are three or four bonds apart along carbon
 function ringable(m, o) {
   const s = hydroxyl(m, o); if (!s) return null;
