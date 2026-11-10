@@ -9,7 +9,9 @@ const HEAT = { limit: 14, perSite: 1, riskSite: 1, riskFlat: 0, base: { hydrate:
 // heat of one step: a sure part and a number of points that each land half the time
 const heatOf = (id, hits) => ({ sure: HEAT.base[id] + HEAT.perSite * (hits - 1), risk: HEAT.riskFlat + HEAT.riskSite * hits });
 const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C'];
-const GEAR = ['balance', 'stirrer', 'schlenk'];
+// measured setting: weaker chain and route multipliers and no Schlenk line. The main game does not load this file.
+const GEAR = ['balance', 'stirrer'];
+AA.rxPathGear = GEAR; RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25;
 const PAPER = '#efeadb', YELLOW = [255, 205, 0], RED = [226, 48, 40], GREEN = [60, 220, 120], WHITE = [255, 255, 255];
 const css = c => 'rgb(' + c.join(',') + ')', hex = c => (c[0] << 16) | (c[1] << 8) | c[2];
 const bright = c => { const m = Math.max(c[0], c[1], c[2], 1), k = Math.max(1, 200 / m); return c.map(q => Math.min(255, Math.round(q * k + 30))); };

@@ -109,6 +109,8 @@ GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
 // Routes are named chains. Each step lists the bottles that can do it. A route fires when the end of the chain
 // matches it, and only the longest match fires. Its multiplier is x at level 1 and rises by up for each level bought.
 const CHAIN = 0.25;
+// test dials: chain replaces CHAIN when set, route scales how far a route multiplier stands above 1
+const TUNE = { chain: null, route: 1 };
 const ROUTES = [
   { id: 'ketone', name: 'Alkene to ketone', seq: [['hydrate', 'bh3'], ['pcc']], x: 2, up: 1 },
   { id: 'deoxy', name: 'Deoxygenation', seq: [['dehydrate'], ['h2']], x: 2, up: 1 },
@@ -124,7 +126,7 @@ const ROUTES = [
 const ROUTE = {};
 ROUTES.forEach(r => { ROUTE[r.id] = r; });
 const routeLevel = (run, id) => run.routeLv[id] || 1;
-const routeMult = (run, id) => ROUTE[id].x + ROUTE[id].up * (routeLevel(run, id) - 1);
+const routeMult = (run, id) => 1 + (ROUTE[id].x + ROUTE[id].up * (routeLevel(run, id) - 1) - 1) * TUNE.route;
 const routeSteps = r => r.seq.map(alts => alts.map(id => RX.CARDS[id].verb).join(' or ')).join(', then ');
 const routeFits = (run, r) => r.seq.every(alts => alts.some(id => run.deck.includes(id)));
 function matchRoute(path) {
@@ -306,7 +308,7 @@ function linkOf(run, id, info) {
   const path = cont ? cur.path.concat(id) : [id];
   return { cont, len: path.length, path, route: cont ? matchRoute(path) : null };
 }
-const chainMult = (run, len) => 1 + (CHAIN + (has(run, 'cannula') ? 0.25 : 0)) * (len - 1);
+const chainMult = (run, len) => 1 + ((TUNE.chain == null ? CHAIN : TUNE.chain) + (has(run, 'cannula') ? 0.25 : 0)) * (len - 1);
 // the bottle has finished reacting at `hits` sites: equipment that works once per bottle, the chain and any route
 // it completes, then the grade check
 function playEnd(run, id, hits, dry, info) {
@@ -484,7 +486,7 @@ function sellGear(run, id) {
 }
 function closeShop(run) { if (run.shop) run.shop.open = false; }
 
-AA.rxRun = { ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, mods, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
+AA.rxRun = { TUNE, ORDERS, GEAR, GEARS, GEAR_SLOTS, QUOTA, LARGE, FEED, YIELD, RACKS, LEVELS, mods, UNLOCKS, CHECK_MULT, REMOVE, SELL, MIN_RACK, PAY_STEP, HOLD_PER, holdPay, sellValue,
   ROUTES, ROUTE, routeLevel, routeMult, routeSteps, routeFits, chainMult, look, react, playEnd, mark, cap, canCap, KEEP_FROM,
   newRun, beginOrder, chooseFeed, coverage, nextOrder, gradeOf, live, scoreOf, scoreSite, preview, commit, redraw,
   checks, checkMult, projected, endMult, endOrder, rewards, take, moveGear, has, pick, achieved, stock, canBuy, buy, reroll, removeBottle, sellGear, closeShop };
