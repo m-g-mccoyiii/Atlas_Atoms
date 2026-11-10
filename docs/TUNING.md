@@ -50,3 +50,12 @@ Median made over the number to beat, tier 0, equipment first, rounds 1 to 11: 2.
 - Recycler measured at 3.4 times on its own and was not changed.
 - Rounds with a rule were measured only before the extra quarter was removed: a player who ignores the rule lasted 4 rounds against 8.
 - Single-piece figures are from 60 plays each and move by about 0.3 between measurements.
+
+## Rarity and new families, 2026-11-10 (not yet measured)
+
+- Reagents have a rarity: common (each place 20), uncommon (30), rare (45), legendary (70). Odds among the reagents on offer in take-one: 60, 28, 10, 2, with the three rarer weights raised by a quarter for each supplier opened.
+- Families opened with credit between runs: organometallics (5: add methyl, add allyl), ylides (8: methylenate), radicals (14: polymerize).
+- Polymerize starts a chain at each C=C and doubles every chain on each later use. Each place it acts on adds 20 times half the total chain length. It has one use on a page.
+- A named row done for the first time adds its one-step reagent for good: alkene to ketone gives oxidize C=C, carbonyl removal gives strip C=O.
+- One scripted round with three polymerizations made 2,744 against 900. Before the one-use limit and with legendary place value, four polymerizations made 110,621.
+- None of this has been run through the simulated players. The stored numbers to beat still assume every place adds 20.

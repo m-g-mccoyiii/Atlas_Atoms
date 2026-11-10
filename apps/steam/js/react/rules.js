@@ -216,7 +216,24 @@ const LIST = [
   { id: 'allyl', verb: 'Add allyl', formula: 'C₃H₅MgBr', chem: 'Allylmagnesium bromide, then dilute acid', rgb: [110, 160, 30], cls: 'grignard', ghs: ['flame', 'corr'],
     rule: 'Adds a three-carbon arm with its own C=C to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
     find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
-    apply(m, s) { s.bond.order = 1; const c1 = attach(m, 'C', s.c, 3.0), h1 = [0, 1].map(() => attach(m, 'H', c1, 2.2)), c2 = attach(m, 'C', c1, 3.0), h2 = attach(m, 'H', c2, 2.2), c3 = attach(m, 'C', c2, 3.0); m.bond(c2, c3); const h3 = [0, 1].map(() => attach(m, 'H', c3, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c1, c2, c3, h2, ho].concat(h1, h3), leaving: [], tag: '+C₃H₅' }; } }
+    apply(m, s) { s.bond.order = 1; const c1 = attach(m, 'C', s.c, 3.0), h1 = [0, 1].map(() => attach(m, 'H', c1, 2.2)), c2 = attach(m, 'C', c1, 3.0), h2 = attach(m, 'H', c2, 2.2), c3 = attach(m, 'C', c2, 3.0); m.bond(c2, c3); const h3 = [0, 1].map(() => attach(m, 'H', c3, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c1, c2, c3, h2, ho].concat(h1, h3), leaving: [], tag: '+C₃H₅' }; } },
+  // A radical starts a chain at a C=C. The chain is one carbon that carries its length, and every further use doubles
+  // it. An unseen carbon is added each time so that the molecule counts as a new one.
+  { id: 'aibn', verb: 'Polymerize', formula: 'AIBN, heat', chem: 'Azobisisobutyronitrile, a radical initiator', rgb: [226, 60, 110], cls: 'radical', ghs: ['flame', 'excl'],
+    rule: 'Starts a chain at C=C. Used again, it doubles every chain.', from: 'ene', to: 'poly',
+    find: m => alkenes(m).concat(m.atoms.filter(a => a.poly).map(a => ({ kind: 'poly', p: a, atoms: [a] }))), ok: (m, s) => (s.kind === 'poly' ? m.atoms.includes(s.p) : alkeneOk(m, s)),
+    apply(m, s) {
+      if (s.kind === 'poly') { s.p.poly *= 2; const t = attach(m, 'C', s.p, 1.2); t.tail = true; return { focus: [s.p], incoming: [], leaving: [], tag: 'doubles' }; }
+      const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), p = attach(m, 'C', cx, 3.0); p.poly = 2; return { focus: [cx, ch], incoming: [hh, p], leaving: [], tag: 'chain' }; } },
+  // Reactions found by doing the longer way round first. Each does a named sequence in one step.
+  { id: 'wacker', verb: 'Oxidize C=C', formula: 'PdCl₂, CuCl₂, O₂', chem: 'Wacker oxidation', rgb: [200, 150, 20], cls: 'oxidant', ghs: ['oxid', 'health'],
+    rule: 'Turns C=C straight into C=O on the carbon with fewer H.', from: 'ene', to: 'one',
+    find: m => alkenes(m).filter(s => { const cx = markovnikov(m, s.bond.a, s.bond.b)[0]; return Hs(m, cx).length > 0; }), ok: alkeneOk,
+    apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b), hx = Hs(m, cx)[0]; s.bond.order = 1; cut(m, cx, hx); m.bond(ch, hx); const o = attach(m, 'O', cx, 2.8); m.bond(cx, o); return { focus: [cx, ch], incoming: [o], leaving: [], tag: '+O' }; } },
+  { id: 'wolff', verb: 'Strip C=O', formula: 'N₂H₄, KOH, heat', chem: 'Wolff-Kishner reduction', rgb: [90, 110, 160], cls: 'base', ghs: ['skull', 'corr'],
+    rule: 'Takes the O off C=O and leaves CH₂.', from: 'one', to: 'ane',
+    find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
+    apply(m, s) { cut(m, s.c, s.o); const hs = [0, 1].map(() => attach(m, 'H', s.c, 2.4)); return { focus: [s.c], incoming: hs, leaving: [[s.o]], tag: 'loses O' }; } }
 ];
 const CARDS = {};
 // a capped oxygen carries prot, and no bottle finds a site there
@@ -291,7 +308,7 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.iso) c.iso = a.iso; map.set(a, c); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
   return { model: n, map };
 }

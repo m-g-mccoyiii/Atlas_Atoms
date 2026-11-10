@@ -69,7 +69,7 @@ const FEED = [
   ['C=CCC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(Cl)CC(O)CC(O)CC(Cl)CC=C', 'CC(O)CC(O)CC(O)CC(O)CC(O)CC=C', 'C=CCC(=O)CC(O)CC(O)CC(=O)CC=C', 'C=CCC(O)CC(=O)CC(O)CC(=O)CC=C']
 ];
 // bottles whose reaction makes a group leave the molecule
-const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1 };
+const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1 };
 
 // Equipment fires left to right along the bench, once for every site that reacts.
 // kind: y adds yield, b adds batch, x multiplies batch, grow gets stronger during the run, tool changes a rule.
