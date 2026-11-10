@@ -34,7 +34,7 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 
 ## To sixty
 
-Fifty-one exist. Nine more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
+Fifty-five exist. Five more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
 1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
@@ -44,8 +44,8 @@ Occult
 5. Crystal ball: shows the next page's reagents now.
 6. Black cat (built): a row that breaks leaves extra +0.13 for every reaction that was in it. The simulated player never breaks a row on purpose, so its measured worth (0.8) says nothing yet. Blind check: obvious.
 7. Grimoire (built): the last reaction on each page counts twice. Measured 1.7. Blind check: obvious.
-8. Raven: carries one unused reaction over to the next page.
-9. Hand of glory: equipment fires even on a broken row.
+8. Raven (built): the last reagent used on a page comes back on the next. Measured 1.3. Blind check: obvious, the strongest drawing of its batch.
+9. Hand of glory (built): on a broken row, equipment still fires as if the row held. Does nothing alone. Blind check: named as a hand of glory, with effort; recolored from white to a dead grey after that.
 10. Hourglass of sand from a grave (built): one more page. Every number to beat times 1.25. Measured 1.1 before the higher number to beat, so it is too weak. Blind check: obvious.
 
 Funny
@@ -54,11 +54,11 @@ Funny
 13. Coffee (built): one more reaction on pages one and two, one fewer after. Measured 0.85, inside the noise. Blind check: obvious.
 14. Safety goggles, on forehead: no effect. Sells back for double.
 15. Grant proposal: pays out only if the round is beaten by ten times.
-16. Unlabeled bottle: a different reagent every page.
+16. Unlabeled bottle (built): one reagent the run does not own, a different one on every page. Never a halide maker, which is a dead end without its base. Blind check: obvious.
 17. Lab coat with someone else's name (built): copies the piece to its left. With the stopwatch the pair measures 1.6 against 1.0. Blind check: obvious.
 18. Fire extinguisher: stops a chain where the player chooses and banks it at half again.
 19. Motivational poster (built): the first reaction of a round, row +0.5, nothing after. Measured 1.1. The first drawing read as a television; redrawn as a kitten hanging from a branch, not checked blind again.
-20. Expired milk: grows. Extra +0.1 more each round it is kept.
+20. Expired milk (built): extra +0.1 at the start of a round for every round it has been kept. Measured 1.2 in its first round. The first drawing had stink lines and flies and was unclear; redrawn with green ooze, not checked blind again.
 
 ## Terms set before a run
 
