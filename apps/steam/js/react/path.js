@@ -29,47 +29,47 @@ const LEAVES = { pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1 };
 const A = (part, val) => ({ part, op: 'add', val }), M = (part, val) => ({ part, op: 'mul', val });
 const GEAR = [
   // places
-  { id: 'balance', fam: 'places', note: 'each place: +15 places', name: 'balance', shape: 'box', at: 'site', fx: () => A('p', 15) },
-  { id: 'spatula', fam: 'places', note: 'only one place changed: +40 places', name: 'spatula', shape: 'column', at: 'step', fx: c => (c.hits === 1 ? A('p', 40) : null) },
-  { id: 'schlenk', fam: 'places', note: '2 or more places at once: that reaction counts double', name: 'schlenk line', shape: 'flask', at: 'step', fx: c => (c.hits >= 2 ? M('h', 2) : null) },
-  { id: 'stopper', fam: 'places', note: 'the first reaction of a new row counts three times', name: 'stopper', shape: 'funnel', at: 'step', fx: c => (!c.cont ? M('h', 3) : null) },
-  { id: 'mirror', fam: 'places', note: 'back to an earlier molecule: +80 places', name: 'mirror', shape: 'box', at: 'step', fx: c => (c.loop ? A('p', 80) : null) },
-  { id: 'mortar', fam: 'places', note: '3 or more places at once: that reaction counts four times', name: 'mortar', shape: 'round', at: 'step', fx: c => (c.hits >= 3 ? M('h', 4) : null) },
+  { id: 'balance', tok: '{p} +15', fam: 'places', note: 'each place: +15 places', name: 'balance', shape: 'box', at: 'site', fx: () => A('p', 15) },
+  { id: 'spatula', tok: '{p} +40', fam: 'places', note: 'only one place changed: +40 places', name: 'spatula', shape: 'column', at: 'step', fx: c => (c.hits === 1 ? A('p', 40) : null) },
+  { id: 'schlenk', tok: '{p} double', fam: 'places', note: '2 or more places at once: that reaction counts double', name: 'schlenk line', shape: 'flask', at: 'step', fx: c => (c.hits >= 2 ? M('h', 2) : null) },
+  { id: 'stopper', tok: '{p} triple', fam: 'places', note: 'the first reaction of a new row counts three times', name: 'stopper', shape: 'funnel', at: 'step', fx: c => (!c.cont ? M('h', 3) : null) },
+  { id: 'mirror', tok: '{p} +80', fam: 'places', note: 'back to an earlier molecule: +80 places', name: 'mirror', shape: 'box', at: 'step', fx: c => (c.loop ? A('p', 80) : null) },
+  { id: 'mortar', tok: '{p} times 4', fam: 'places', note: '3 or more places at once: that reaction counts four times', name: 'mortar', shape: 'round', at: 'step', fx: c => (c.hits >= 3 ? M('h', 4) : null) },
   // row
-  { id: 'cannula', fam: 'row', note: 'each reaction in a row: row +0.5', name: 'cannula', shape: 'column', at: 'step', fx: c => (c.cont ? A('r', 0.5) : null) },
-  { id: 'reflux', fam: 'row', note: '3 or more in a row: row times 1.5', name: 'reflux condenser', shape: 'column', at: 'step', fx: c => (c.cont && c.len >= 3 ? M('r', 1.5) : null) },
-  { id: 'burette', fam: 'row', note: 'first reaction on a page: row +1', name: 'burette', shape: 'column', at: 'step', fx: c => (c.pageStep === 0 ? A('r', 1) : null) },
-  { id: 'clamp', fam: 'row', rule: true, note: 'a broken row keeps half', name: 'clamp', shape: 'column' },
-  { id: 'magnet', fam: 'row', rule: true, note: 'row never starts below 2', name: 'stir bar', shape: 'round' },
-  { id: 'recycler', fam: 'row', rule: true, note: 'going back to an earlier molecule still counts as in a row', name: 'recycler', shape: 'flask' },
+  { id: 'cannula', tok: '{r} +0.5', fam: 'row', note: 'each reaction in a row: row +0.5', name: 'cannula', shape: 'column', at: 'step', fx: c => (c.cont ? A('r', 0.5) : null) },
+  { id: 'reflux', tok: '{r} times 1.5', fam: 'row', note: '3 or more in a row: row times 1.5', name: 'reflux condenser', shape: 'column', at: 'step', fx: c => (c.cont && c.len >= 3 ? M('r', 1.5) : null) },
+  { id: 'burette', tok: '{r} +1', fam: 'row', note: 'first reaction on a page: row +1', name: 'burette', shape: 'column', at: 'step', fx: c => (c.pageStep === 0 ? A('r', 1) : null) },
+  { id: 'clamp', tok: '{r} half kept', fam: 'row', rule: true, note: 'a broken row keeps half', name: 'clamp', shape: 'column' },
+  { id: 'magnet', tok: '{r} from 2', fam: 'row', rule: true, note: 'row never starts below 2', name: 'stir bar', shape: 'round' },
+  { id: 'recycler', tok: '{r} return', fam: 'row', rule: true, note: 'going back to an earlier molecule still counts as in a row', name: 'recycler', shape: 'flask' },
   // extra
-  { id: 'stirrer', fam: 'extra', note: 'each reaction: extra +0.1', name: 'stir plate', shape: 'box', at: 'step', fx: () => A('e', 0.1) },
-  { id: 'cards', fam: 'extra', note: 'a reagent not yet used this round: extra +0.5', name: 'index cards', shape: 'box', at: 'step', fx: c => (c.first ? A('e', 0.5) : null) },
-  { id: 'logbook', fam: 'extra', note: 'each reaction: extra +0.08 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.08 * c.distinct) },
-  { id: 'crystal', fam: 'extra', note: 'back to an earlier molecule: extra times 1.3', name: 'seed crystal', shape: 'round', at: 'step', fx: c => (c.loop ? M('e', 1.3) : null) },
-  { id: 'scalepan', fam: 'extra', note: 'a reaction that is not in a row: extra +0.8', name: 'scale pan', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.8) : null) },
-  { id: 'coldtrap', fam: 'extra', note: 'something leaves the molecule: extra +0.25', name: 'cold trap', shape: 'funnel', at: 'step', fx: c => (c.leaves ? A('e', 0.25) : null) },
-  { id: 'bunsen', fam: 'extra', note: 'same reagent twice running: extra times 1.4', name: 'burner', shape: 'funnel', at: 'step', fx: c => (c.same ? M('e', 1.4) : null) },
-  { id: 'litmus', fam: 'extra', note: 'an acid: extra +0.2', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.2) : null) },
-  { id: 'stopwatch', fam: 'extra', note: 'last reaction on a page: extra +0.5', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.5) : null) },
-  { id: 'thermometer', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
+  { id: 'stirrer', tok: '{e} +0.1', fam: 'extra', note: 'each reaction: extra +0.1', name: 'stir plate', shape: 'box', at: 'step', fx: () => A('e', 0.1) },
+  { id: 'cards', tok: '{e} +0.5', fam: 'extra', note: 'a reagent not yet used this round: extra +0.5', name: 'index cards', shape: 'box', at: 'step', fx: c => (c.first ? A('e', 0.5) : null) },
+  { id: 'logbook', tok: '{e} +0.08', fam: 'extra', note: 'each reaction: extra +0.08 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.08 * c.distinct) },
+  { id: 'crystal', tok: '{e} times 1.3', fam: 'extra', note: 'back to an earlier molecule: extra times 1.3', name: 'seed crystal', shape: 'round', at: 'step', fx: c => (c.loop ? M('e', 1.3) : null) },
+  { id: 'scalepan', tok: '{e} +0.8', fam: 'extra', note: 'a reaction that is not in a row: extra +0.8', name: 'scale pan', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.8) : null) },
+  { id: 'coldtrap', tok: '{e} +0.25', fam: 'extra', note: 'something leaves the molecule: extra +0.25', name: 'cold trap', shape: 'funnel', at: 'step', fx: c => (c.leaves ? A('e', 0.25) : null) },
+  { id: 'bunsen', tok: '{e} times 1.4', fam: 'extra', note: 'same reagent twice running: extra times 1.4', name: 'burner', shape: 'funnel', at: 'step', fx: c => (c.same ? M('e', 1.4) : null) },
+  { id: 'litmus', tok: '{e} +0.2', fam: 'extra', note: 'an acid: extra +0.2', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.2) : null) },
+  { id: 'stopwatch', tok: '{e} +0.5', fam: 'extra', note: 'last reaction on a page: extra +0.5', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.5) : null) },
+  { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
   // pieces that change a rule of the round
-  { id: 'carousel', fam: 'rule', rule: true, note: 'one more reagent on every page', name: 'carousel', shape: 'round' },
-  { id: 'dropper', fam: 'rule', rule: true, note: 'one more use of every reagent', name: 'dropper', shape: 'funnel' },
-  { id: 'loupe', fam: 'rule', rule: true, note: 'rare reagents twice as often', name: 'loupe', shape: 'flask' },
-  { id: 'timer', fam: 'rule', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
+  { id: 'carousel', tok: '+1 reagent', fam: 'rule', rule: true, note: 'one more reagent on every page', name: 'carousel', shape: 'round' },
+  { id: 'dropper', tok: '+1 use', fam: 'rule', rule: true, note: 'one more use of every reagent', name: 'dropper', shape: 'funnel' },
+  { id: 'loupe', tok: 'rare', fam: 'rule', rule: true, note: 'rare reagents twice as often', name: 'loupe', shape: 'flask' },
+  { id: 'timer', tok: '+1 reaction', fam: 'rule', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
   // From the alchemist. These do things chemistry does not allow.
-  { id: 'stone', kin: 'alchemy', fam: 'extra', note: 'every reaction: extra times 1.12', name: "philosopher's stone", shape: 'round', at: 'step', fx: () => M('e', 1.12) },
-  { id: 'transmute', kin: 'alchemy', fam: 'places', note: 'each place counts twice', name: 'lead, allegedly gold', shape: 'box', at: 'site', fx: () => A('p', 20) },
-  { id: 'regia', kin: 'alchemy', fam: 'extra', note: 'something leaves the molecule: extra times 1.25', name: 'aqua regia', shape: 'flask', at: 'step', fx: c => (c.leaves ? M('e', 1.25) : null) },
-  { id: 'ouroboros', kin: 'alchemy', fam: 'row', rule: true, note: 'the row never breaks', name: 'ouroboros', shape: 'round' },
-  { id: 'homunculus', kin: 'alchemy', fam: 'places', rule: true, note: 'the last reaction on a page happens twice', name: 'homunculus, in a jar', shape: 'column' },
-  { id: 'elixir', kin: 'alchemy', fam: 'rule', rule: true, note: 'one more page in every round', name: 'elixir of life', shape: 'flask' },
+  { id: 'stone', tok: '{e} times 1.12', kin: 'alchemy', fam: 'extra', note: 'every reaction: extra times 1.12', name: "philosopher's stone", shape: 'round', at: 'step', fx: () => M('e', 1.12) },
+  { id: 'transmute', tok: '{p} +20', kin: 'alchemy', fam: 'places', note: 'each place counts twice', name: 'lead, allegedly gold', shape: 'box', at: 'site', fx: () => A('p', 20) },
+  { id: 'regia', tok: '{e} times 1.25', kin: 'alchemy', fam: 'extra', note: 'something leaves the molecule: extra times 1.25', name: 'aqua regia', shape: 'flask', at: 'step', fx: c => (c.leaves ? M('e', 1.25) : null) },
+  { id: 'ouroboros', tok: '{r} unbroken', kin: 'alchemy', fam: 'row', rule: true, note: 'the row never breaks', name: 'ouroboros', shape: 'round' },
+  { id: 'homunculus', tok: '{p} again', kin: 'alchemy', fam: 'places', rule: true, note: 'the last reaction on a page happens twice', name: 'homunculus, in a jar', shape: 'column' },
+  { id: 'elixir', tok: '+1 page', kin: 'alchemy', fam: 'rule', rule: true, note: 'one more page in every round', name: 'elixir of life', shape: 'flask' },
   // From Brenda. Nobody asks.
-  { id: 'ouija', kin: 'occult', fam: 'rule', rule: true, note: 'one reagent on every page does not run out', name: 'ouija board', shape: 'box' },
-  { id: 'candle', kin: 'occult', fam: 'extra', note: 'the 13th reaction of a round: extra times 13', name: 'black candle', shape: 'column', at: 'step', fx: c => (c.nth === 13 ? M('e', 13) : null) },
-  { id: 'goat', kin: 'occult', fam: 'extra', note: 'every reaction: extra times 1.15. eats a reagent use each page', name: 'a goat', shape: 'round', at: 'step', fx: () => M('e', 1.15) },
-  { id: 'pact', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' }
+  { id: 'ouija', tok: 'endless', kin: 'occult', fam: 'rule', rule: true, note: 'one reagent on every page does not run out', name: 'ouija board', shape: 'box' },
+  { id: 'candle', tok: '{e} times 13', kin: 'occult', fam: 'extra', note: 'the 13th reaction of a round: extra times 13', name: 'black candle', shape: 'column', at: 'step', fx: c => (c.nth === 13 ? M('e', 13) : null) },
+  { id: 'goat', tok: '{e} times 1.15', kin: 'occult', fam: 'extra', note: 'every reaction: extra times 1.15. eats a reagent use each page', name: 'a goat', shape: 'round', at: 'step', fx: () => M('e', 1.15) },
+  { id: 'pact', tok: 'times 3', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' }
 ];
 const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 
@@ -203,17 +203,22 @@ const SYN = { streak: 3, pages: 3, offer: 5, uses: 2, finish: 'h2', finishExtra:
 // Now and then a reagent on offer is a rare version for that page: double counts its places twice, strong adds 1
 // to the row, plenty does not run out.
 const RARE = ['double', 'strong', 'plenty'];
+// Heavy atoms. Some atoms of a molecule that is dealt are a heavy isotope. A reaction at one adds to one of the
+// three numbers. They stay on the molecule for as long as the atom does, so they can be reacted at again.
+const ISO = { c13: { name: 'carbon-13', part: 'p', op: 'add', val: 60 }, o18: { name: 'oxygen-18', part: 'r', op: 'add', val: 1 }, c14: { name: 'carbon-14', part: 'e', op: 'mul', val: 1.5 } };
+const ISOP = { c13: 0.1, c14: 0.02, o18: 0.2 };
+function salt(m, rnd) { const R = rnd || Math.random; m.atoms.forEach(a => { if (a.el === 'C') { const x = R(); if (x < ISOP.c14) a.iso = 'c14'; else if (x < ISOP.c14 + ISOP.c13) a.iso = 'c13'; } else if (a.el === 'O' && R() < ISOP.o18) a.iso = 'o18'; }); return m; }
 // A brief changes what one round pays for, so a different set of equipment suits it. Every brief but the plain one
 // asks for more and pays something when it is beaten.
 const BRIEFS = [
   { id: 'plain', name: 'plain', note: '' },
-  { id: 'carry', name: 'carry on', note: 'the molecule left on the page. starts with half the extra it ended on' },
-  { id: 'broad', name: 'broad', note: 'places count twice. following on adds half as much' },
-  { id: 'loose', name: 'loose', note: 'following on adds nothing to the row. each reaction: extra +0.3' },
-  { id: 'each', name: 'one of each', note: 'first use of a reagent: extra +0.5. a repeat adds no places' },
-  { id: 'back', name: 'there and back', note: 'returning to an earlier molecule: extra +0.5' },
-  { id: 'scarce', name: 'scarce', note: 'one use of each reagent on a page' },
-  { id: 'short', name: 'short', note: 'two pages' }
+  { id: 'carry', name: 'carry on', note: '{e} half kept' },
+  { id: 'broad', name: 'broad', note: '{p} double   {r} half' },
+  { id: 'loose', name: 'loose', note: '{r} off   {e} +0.3' },
+  { id: 'each', name: 'one of each', note: 'new {e} +0.5   repeat {p} 0' },
+  { id: 'back', name: 'there and back', note: 'return {e} +0.5' },
+  { id: 'scarce', name: 'scarce', note: '1 use' },
+  { id: 'short', name: 'short', note: '2 pages' }
 ];
 const BRIEF = {}; BRIEFS.forEach(b => { BRIEF[b.id] = b; });
 const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish);
@@ -238,6 +243,7 @@ function synDeal(g, rnd) {
 }
 function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
+  if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.brief = (run && run.brief) || 'plain'; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
@@ -278,6 +284,7 @@ function scoreRound(g, o) {
   const c = { hits: r.hits, cont: o.cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first, nth: cur.step + 1, page: g.page, pageStep: g.pageSteps, pageMax: stepsOf(g), cls: RX.CARDS[id].cls, same: cur.used[cur.used.length - 1] === id, distinct: new Set(cur.used.concat(id)).size };
   const b = g.brief, per = SYN.place * (g.grade[id] || 1) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first ? 0 : 1);
   for (let i = 0; i < r.hits; i++) { if (per) emit('bottle', A('p', per)); pieces('site'); }
+  new Set(o.atoms || []).forEach(a => { const I = a.iso && ISO[a.iso]; if (I) emit('iso', { part: I.part, op: I.op, val: I.val }, { iso: a.iso }); });
   if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
   if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
@@ -371,24 +378,16 @@ function briefBase(feed, brief) {
 // before each round: three rounds to choose from, each a molecule, a brief, a number to beat and what it pays
 function runBriefs(run, rnd) {
   const R = rnd || Math.random, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
-  const feeds = mix(FEEDS), sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix(['credit', 'level']);
+  const feeds = mix(FEEDS), sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
   // the molecule left by the last round can be carried on with, while a reagent held still acts on it
   const carry = run.last && run.rack.filter(id => RX.CARDS[id].find(run.last).length).length >= 1;
-  return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { o.feed = o.brief === 'carry' ? run.last : feeds[i]; o.quota = runQuota(run, o.feed, o.brief); return o; });
+  return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { const own = o.brief === 'carry'; o.model = own ? run.last : salt(modelOf(feeds[i]), R); o.quota = runQuota(run, own ? run.last : feeds[i], o.brief); return o; });
 }
-function runChoose(run, o) { run.brief = o.brief; run.feed = o.feed; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
+function runChoose(run, o) { run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
 // keeps the molecule and the extra a beaten round ended on, for carrying on
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
-// pays what the brief promised. Returns a few words saying what was paid
-function runPay(run, rnd) {
-  const R = rnd || Math.random, any = a => a[Math.floor(R() * a.length)], what = run.pays; run.pays = null;
-  if (!what) return '';
-  if (what === 'credit') { run.bonus = (run.bonus || 0) + 1; return 'credit +1'; }
-  const lv = run.gear.filter(id => !GEARS[id].rule);
-  if (lv.length) { const id = any(lv); run.lv[id] = (run.lv[id] || 1) + 1; return GEARS[id].name + ' level ' + run.lv[id]; }
-  const id = any(run.rack); run.grade[id] = (run.grade[id] || 1) + 1; return RX.CARDS[id].verb.toLowerCase() + ' stronger';
-}
-const payText = o => (o.pays === 'credit' ? 'credit +1' : o.pays === 'level' ? 'a level' : '');
+// pays the credit the brief promised and returns how much
+function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (run.bonus || 0) + n; return n; }
 function runNew(tier) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0 }; }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
@@ -424,6 +423,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + SYN.place + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, payText, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -60,6 +60,8 @@ function start(app) {
     c.x.font = 'bold 84px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = dark ? '#14202e' : '#ffffff'; c.x.fillText(el, 64, 68); c.t.needsUpdate = true;
     return (mLetter[el] = new T.SpriteMaterial({ map: c.t, depthWrite: false }));
   }
+  // a heavy atom wears a collar in the color of the number it adds to
+  const ISOC = { c13: 0x1f5fbf, o18: 0xd9a400, c14: 0xb0189a };
   let align = new T.Quaternion();
   // the long axis lies left to right, then the molecule is rolled until it lies as flat as it can
   function setAlign(model) {
@@ -88,6 +90,7 @@ function start(app) {
       if (skip.has(a)) return;
       const p = at.get(a), R = BALL(a.el);
       add(SPH, ballMat(a.el), p.x, p.y, p.z, grp).scale.setScalar(R);
+      if (a.iso) collar(grp, p, R, ISOC[a.iso]);
       if (!lean || (a.el !== 'C' && a.el !== 'H')) { const sp = new T.Sprite(letterMat(a.el)); sp.position.copy(p).addScaledVector(camDir, -R * 1.04); sp.scale.setScalar(R * 1.25); grp.add(sp); }
     });
     model.bonds.forEach(b => {
@@ -197,7 +200,7 @@ function start(app) {
     st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
     clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
-    g = P.runBegin(run, run.feed, true); st.quota = P.runQuota(run, run.feed); st.E = g.E; st.R = g.R;
+    g = P.runBegin(run, run.feed, true); st.quota = run.quota; st.E = g.E; st.R = g.R;
     setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
@@ -219,7 +222,7 @@ function start(app) {
     st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.hover = -1;
     pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     briefs = P.runBriefs(run);
-    briefs.forEach((b, i) => { const mdl = P.modelOf(b.feed); setAlign(mdl); const m = buildMol(mdl, null, true), sc = Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: PICKX[i], z: -2.2 }, 0.01); tween(m, { x: PICKX[i], z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
+    briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: PICKX[i], z: -2.2 }, 0.01); tween(m, { x: PICKX[i], z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
     sfx.feed(); dirty = true;
   }
   function chooseBrief(i) {
@@ -256,6 +259,7 @@ function start(app) {
       const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
       if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
       else if (e.src === 'brief') st.floats.push({ txt: P.BRIEF[g.brief].name + ' ' + txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
+      else if (e.src === 'iso') st.floats.push({ txt: P.ISO[e.iso].name + ' ' + txt, t: performance.now(), size: 70, dx: 7, col: PART[e.part] });
       else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
       st.shake = Math.max(st.shake, big ? 0.8 : 0.22);
       sfx.lock(Math.min(12, k + g.cur.path.length));
@@ -335,6 +339,24 @@ function start(app) {
   }
   const wrap = (x, text, w) => { const out = []; let line = ''; String(text).split(' ').forEach(t => { const n = line ? line + ' ' + t : t; if (line && x.measureText(n).width > w) { out.push(line); line = t; } else line = n; }); if (line) out.push(line); return out; };
   const ring = (x, c, rx, ry, lw, col, rot) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.ellipse(c[0], c[1], rx, ry, rot || 0.15, 0.3, 6.6); x.stroke(); };
+  // a coin of credit, drawn in ink
+  function coin(x, cx, cy, r) { x.fillStyle = '#e9b93a'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); x.strokeStyle = '#8a6a00'; x.lineWidth = 4; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.stroke(); x.beginPath(); x.arc(cx, cy, r * 0.55, 0.4, 5.2); x.stroke(); }
+  // the marks of the three numbers: a ring for places, chevrons for the row, a star for extra
+  function glyph(x, k, cx, cy, s, col) {
+    x.strokeStyle = col || PART[k]; x.lineWidth = Math.max(3, s * 0.15); x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+    if (k === 'p') x.arc(cx, cy, s * 0.34, 0, 6.3);
+    else if (k === 'r') [-0.2, 0.18].forEach(d => { x.moveTo(cx + (d - 0.15) * s, cy - 0.3 * s); x.lineTo(cx + (d + 0.15) * s, cy); x.lineTo(cx + (d - 0.15) * s, cy + 0.3 * s); });
+    else for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3 + 0.26; x.moveTo(cx - Math.cos(a) * s * 0.38, cy - Math.sin(a) * s * 0.38); x.lineTo(cx + Math.cos(a) * s * 0.38, cy + Math.sin(a) * s * 0.38); }
+    x.stroke();
+  }
+  // lettering in which {p}, {r} and {e} are drawn as the marks. Words take the color of the mark before them
+  function inkLine(x, str, cx, y, size, col, align) {
+    const bits = String(str).split(/(\{[pre]\})/).filter(Boolean); hand(x, size);
+    const ws = bits.map(b => (b[0] === '{' ? size * 0.95 : x.measureText(b).width)), tot = ws.reduce((a, b) => a + b, 0);
+    let px0 = align === 'right' ? cx - tot : align === 'left' ? cx : cx - tot / 2, cur = col; x.textAlign = 'left';
+    bits.forEach((b, i) => { if (b[0] === '{') { glyph(x, b[1], px0 + ws[i] / 2, y - size * 0.3, size * 0.85); cur = PART[b[1]]; } else { x.fillStyle = cur || col; x.fillText(b, px0, y); } px0 += ws[i]; });
+    return tot;
+  }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
   function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z + 3 - C0.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d; return { a: { x: C0.x + ux * 8.6, z: C0.z + uz * 3.6 }, b: { x: p.x - ux * 0.6, z: p.z + 2.9 } }; }
   function drawInk(now) {
@@ -359,14 +381,13 @@ function start(app) {
     }
     if (st.mode === 'brief') {
       const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 300, h[1] - 36], [h[0] + 300, h[1] - 46], 110); x.fillStyle = INK; x.fillText('round ' + run.round, h[0], h[1]);
-      hand(x, 50); x.fillStyle = PENCIL; x.fillText('three to choose from', h[0], h[1] + 70);
       briefs.forEach((b, i) => {
-        const c = px({ x: PICKX[i], z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i, pay = P.payText(b);
+        const c = px({ x: PICKX[i], z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 205, c[1] - 6);
         fit(x, B.name, hov ? 76 : 68, 350, marker); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, c[0], c[1]);
-        hand(x, 32); x.fillStyle = INK; const ls = B.note ? wrap(x, B.note, 470) : []; ls.forEach((w, j) => x.fillText(w, c[0], c[1] + 50 + j * 35));
-        const y = c[1] + 184; hand(x, 34); x.fillStyle = PENCIL; x.textAlign = 'right'; x.fillText('to beat', c[0] - 14, y - 6); marker(x, 62); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 4, y);
-        if (pay) { hand(x, 38); x.textAlign = 'center'; x.fillStyle = GREEN; x.fillText('pays ' + pay, c[0], y + 46); }
+        if (B.note) inkLine(x, B.note, c[0], c[1] + 62, 40, INK);
+        const y = c[1] + 150; marker(x, 62); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0], y);
+        for (let n = 0; n < (b.pays || 0); n++) coin(x, c[0] - ((b.pays - 1) * 26) + n * 52, y + 52, 20);
         if (hov) swipe(x, [c[0] - 150, c[1] + 16], [c[0] + 150, c[1] + 10], 16);
       });
       { const k0 = px({ x: 0, z: 12.1 }); hand(x, 38); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
@@ -427,24 +448,28 @@ function start(app) {
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
     if (st.mode !== 'done') {
       const mp = px(MULT), len = g.cur.path.length;
-      [['p', 'places', fmt(st.P)], ['r', len >= 2 ? len + ' in a row' : 'row', fmtB(st.R)], ['e', 'extra', fmtB(st.E)]].forEach((q, i) => {
+      [['p', fmt(st.P)], ['r', fmtB(st.R)], ['e', fmtB(st.E)]].forEach((q, i) => {
         const cx = mp[0] + 70 + i * 150, live = q[0] === 'p' ? st.P > 0 : q[0] === 'r' ? st.R > 1 : st.E > 1, k = 1 + 0.4 * st.bump[q[0]];
         if (live && q[0] === 'r' && len >= 2) swipe(x, [cx - 52, mp[1] - 24], [cx + 52, mp[1] - 30], 62);
-        fit(x, q[2], 64 * k, 136, marker); x.textAlign = 'center'; x.fillStyle = live ? PART[q[0]] : FAINT; x.fillText(q[2], cx, mp[1]);
-        hand(x, 30); x.fillStyle = PENCIL; x.fillText(q[1], cx, mp[1] - 70);
-        if (i < 2) { hand(x, 30); x.fillStyle = FAINT; x.fillText('by', cx + 75, mp[1] - 14); }
+        fit(x, q[1], 64 * k, 136, marker); x.textAlign = 'center'; x.fillStyle = live ? PART[q[0]] : FAINT; x.fillText(q[1], cx, mp[1]);
+        glyph(x, q[0], cx, mp[1] - 84, 40, live ? PART[q[0]] : FAINT);
       });
+      // one small chevron for each reaction in the row that is open
+      for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 220 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
     }
-    // equipment: its name and what it does, written beside it, and what it just added lettered above it
+    // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
-      const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x - 3.1, z: kp.z + 0.1 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9;
-      hand(x, 34); x.textAlign = 'right'; x.fillStyle = INK; x.fillText(q.name + ((run.lv[k.id] || 1) > 1 ? '  level ' + run.lv[k.id] : ''), c[0], c[1]);
-      hand(x, 24); x.fillStyle = PENCIL; wrap(x, q.note, 270).slice(0, 3).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 27 + j * 24));
+      const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x - 2.6, z: kp.z + 0.5 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
+      inkLine(x, q.tok || '', c[0], c[1], 40, INK, 'right');
+      for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] - 10 - (n - 1) * 20, c[1] + 22, 6, 0, 6.3); x.fill(); }
+      if (st.kitHover === i) { const h0 = px({ x: kp.x - 2.6, z: kp.z - 1.5 }); x.lineJoin = 'round'; x.textAlign = 'right'; x.strokeStyle = '#f3eddc';
+        hand(x, 36); x.lineWidth = 12; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
+        hand(x, 26); wrap(x, q.note, 330).forEach((ln, j) => { x.lineWidth = 10; x.strokeText(ln, h0[0], h0[1] + 30 + j * 27); x.fillStyle = PENCIL; x.fillText(ln, h0[0], h0[1] + 30 + j * 27); }); }
       if (age < 0.7) { const up = px({ x: kp.x + 1.6, z: kp.z - 2.1 - 1.0 * age }); marker(x, 52 * (age < 0.08 ? 1.4 : 1)); x.textAlign = 'right'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.2 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: PAGES.x + 2.2, z: 7.5 }); hand(x, 36); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); hand(x, 25); x.fillStyle = PENCIL; wrap(x, B.note, 330).forEach((w, j) => x.fillText(w, b0[0], b0[1] + 30 + j * 27)); }
+    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: PAGES.x + 2.2, z: -4.3 }); hand(x, 36); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0], b0[1] + 36, 28, PENCIL); }
     for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
     // how much has been made, and the number to beat
@@ -475,7 +500,8 @@ function start(app) {
       const txt = st.pass ? 'beaten' : fmt(st.quota - g.total) + ' short', tw = x.measureText(txt).width, n = Math.floor(ratio);
       x.strokeText(txt, c[0] - (st.pass ? 200 : 0), c[1]); x.fillText(txt, c[0] - (st.pass ? 200 : 0), c[1]);
       if (st.pass) tickRow(x, c[0] - 200 + tw / 2 + (n > 10 ? 190 : 60 + Math.min(10, n) * 42), c[1] - 40, n, 68, GREEN);
-      hand(x, 50); x.fillStyle = PENCIL; x.fillText(st.pass ? (st.paid ? 'paid: ' + st.paid + '.   ' : g.best + ' in a row at best.   ') + 'click to go on' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
+      hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) coin(x, c[0] + 330 + n * 56, c[1] - 30, 22);
+      x.fillText(st.pass ? '' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
     }
     ink.t.needsUpdate = true;
   }
@@ -499,7 +525,7 @@ function start(app) {
     for (let i = 0; i < P.SUPPLY.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x > -24 && hit.x < 20) return i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.6 && Math.abs(hit.z - kp.z) < 1.9) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
   cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
   root.addEventListener('keydown', e => {

@@ -260,7 +260,7 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; map.set(a, c); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.iso) c.iso = a.iso; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
   return { model: n, map };
 }
