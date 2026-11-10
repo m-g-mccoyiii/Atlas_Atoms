@@ -104,3 +104,11 @@ Rounds beaten by the greedy player, 50 to 60 runs each (10th / 25th / median / 7
 Median made over the number to beat, tier 0, equipment first, rounds 1 to 11: 2.4, 2.9, 2.9, 2.5, 2.2, 2.5, 1.9, 1.4, 1.1, 0.9, 0.7.
 
 Still open: add allyl is worth twice the target for a rare. Deeper suppliers and families raise how far a round is beaten early (3 to 6 times) but not how many rounds a run lasts: every setup ends near round 8 or 9, which means the last rounds are decided by the climb of the number and not by the build. Rounds with a rule, carrying a molecule on, and spending water or hydrogen are not in any simulated run.
+
+## Chain reactions, 2026-11-10
+
+- When a row reaches three, the molecule is set off ("overreact"): every reaction that carries the row on then happens by itself, one after another and faster each time, without using the page's reactions, until nothing carries it on or the reagents run out. This replaces "every third reaction in a row gives one more reaction".
+- The numbers to beat were measured again with chains in (12 plays a style) for all ten starting molecules and stored. They rose by about half to double.
+- Number to beat: round 1 is 0.55 of the stored figure (was 1.1), then 1.6 times a round. Chains make a round swing more, so round 1 has to be forgiving: at 0.8 one greedy run in ten failed in round 1 or 2.
+- Greedy player, tier 0: equipment first 8 / 8 / 9 / 9 / 10 rounds beaten, random picks 3 / 5 / 6 / 7 / 8.
+- Not measured again after the change: single reagents, single pieces of equipment, tiers above 0.

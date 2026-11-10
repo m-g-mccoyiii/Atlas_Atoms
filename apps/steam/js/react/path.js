@@ -133,9 +133,9 @@ function tryOne(g, m, id) {
 }
 // reactions allowed on a page
 const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + (g.more || 0);
-function options(g) {
+function options(g, free) {
   const cur = g.cur, out = {};
-  if ((g.syn ? g.pageSteps : g.trail.length) >= stepsOf(g)) return out;
+  if (!free && (g.syn ? g.pageSteps : g.trail.length) >= stepsOf(g)) return out;
   g.kinds.forEach(id => {
     if (!g.left[id]) return;
     const sites = RX.CARDS[id].find(g.m); if (!sites.length) return;
@@ -271,7 +271,7 @@ function synDeal(g, rnd) {
     while (offer.length < n && pool.length) offer.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
     if (offer.filter(id => live.includes(id)).length >= Math.min(2, live.length)) break;
   }
-  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0; g.more = 0;
+  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0; g.more = 0; g.chain = false;
   g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 2 : 0); });
   g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
   if (g.gear.includes('ouija') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = 9; g.rare[id] = 'plenty'; }
@@ -289,7 +289,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
 }
 // closes the open row: what it made is kept, and the row starts again
 function close(g) {
-  g.bank += g.P * g.R; g.P = 0;
+  g.chain = false; g.bank += g.P * g.R; g.P = 0;
   g.R = Math.max(rowStart(g), g.gear.includes('clamp') ? g.R * 0.75 : 1);
   g.cur.path = []; g.cur.fresh = new Set();
 }
@@ -349,14 +349,24 @@ function peek(g, o) {
   g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally; Object.assign(g.by, sv.by);
   return out;
 }
-function synTake(g, o) {
+// A chain reaction. When a row reaches three, the molecule is set off: every reaction that carries the row on then
+// happens by itself, one after another, without using up the page's reactions, until nothing on the page carries
+// it on or the reagents run out. free marks a reaction that happened that way.
+function chainNext(g) {
+  if (!g.chain || g.over) return null;
+  const o = options(g, true); let best = null, top = -1;
+  Object.keys(o).forEach(id => { if (!o[id].cont) return; const v = peek(g, o[id]).gain; if (v > top) { top = v; best = o[id]; } });
+  if (!best) g.chain = false;
+  return best;
+}
+function synTake(g, o, free) {
   const cur = g.cur;
   if (breaks(g, o)) { close(g); g.tally.breaks++; }
   const sc = scoreRound(g, o);
   cur.fresh = new Set(o.r.made); cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
-  g.left[o.id]--; g.m = o.model; g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
-  const more = cur.path.length > 0 && cur.path.length % SYN.streak === 0; if (more) g.more++;
-  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev: sc.ev, rare: sc.rare, more });
+  g.left[o.id]--; g.m = o.model; if (!free) g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
+  const set = !g.chain && cur.path.length === SYN.streak; if (set) g.chain = true;
+  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev: sc.ev, rare: sc.rare, set, free: !!free });
 }
 function turn(g, rnd) { if (g.page >= pagesOf(g)) return false; g.page++; synDeal(g, rnd); return true; }
 // the finishing reagent, on the last page only
@@ -393,6 +403,7 @@ function synPlay(feed, rnd, gear, run, style) {
       const from = pick(o, ids, g); let best = from[0];
       from.forEach(id => { if (o[id].r.hits > o[best].r.hits || (o[id].r.hits === o[best].r.hits && R() < 0.5)) best = id; });
       synTake(g, o[best]);
+      for (let c = chainNext(g); c; c = chainNext(g)) synTake(g, c, true);
     }
     if (!turn(g, rnd)) break;
   }
@@ -412,7 +423,7 @@ function synQuota(feed, n, gear, run) {
 // Each round has a number to beat that is set by the round and not by what the player holds, so a better build
 // beats it by more.
 // the number to beat climbs by growth each round up to the knee, then by late
-const RUNG = { slots: 5, growth: 1.58, late: 1.58, knee: 6, first: 1.1, ask: 1, start: ['hydrate', 'pcc', 'nabh4', 'dehydrate'] };
+const RUNG = { slots: 5, growth: 1.6, late: 1.6, knee: 6, first: 0.55, ask: 1, start: ['hydrate', 'pcc', 'nabh4', 'dehydrate'] };
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
 // A reagent that makes a halide is a dead end without a base to take the halide off again, so the two come as one pick.
@@ -428,80 +439,79 @@ const SUPPLY = [
 const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); return o; };
 const modelOf = feed => { const m = feed.atoms ? RX.cloneMap(feed).model : AA.Model.fromSmilesRelaxed(feed, 4); m.center(); return m; };
 // what a plain player makes from a molecule under a brief, with the starting reagents and the style that suits it best
-// Measured on 2026-11-10 with 40 plays for each style of play: the lower quarter of the best style. Measure again
+// Measured on 2026-11-10 with 12 plays for each style of play, chains included: the lower quarter of the best style. Measure again
 // after any change to the rules of a round, or delete the table and it is measured as needed.
 const BASE = {
-  'C=CCC(O)CC=C|plain': 807,
-  'CC(O)CCC=C|plain': 618,
-  'CC(=O)CCC(O)CC=C|plain': 1633,
-  'C=CCC(O)CC(O)CC=C|plain': 1651,
-  'C=CCC(=O)CCC(=O)CC=C|plain': 1572,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|plain': 1488,
-  'C=CCC(O)CC=C|broad': 1538,
-  'CC(O)CCC=C|broad': 1058,
-  'CC(=O)CCC(O)CC=C|broad': 2243,
-  'C=CCC(O)CC(O)CC=C|broad': 2170,
-  'C=CCC(=O)CCC(=O)CC=C|broad': 2778,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|broad': 2228,
-  'C=CCC(O)CC=C|loose': 2368,
-  'CC(O)CCC=C|loose': 1520,
-  'CC(=O)CCC(O)CC=C|loose': 2240,
-  'C=CCC(O)CC(O)CC=C|loose': 3280,
-  'C=CCC(=O)CCC(=O)CC=C|loose': 4800,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|loose': 2738,
-  'C=CCC(O)CC=C|each': 1401,
-  'CC(O)CCC=C|each': 972,
-  'CC(=O)CCC(O)CC=C|each': 2352,
-  'C=CCC(O)CC(O)CC=C|each': 1944,
-  'C=CCC(=O)CCC(=O)CC=C|each': 3474,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|each': 2013,
-  'C=CCC(O)CC=C|back': 3228,
-  'CC(O)CCC=C|back': 2472,
-  'CC(=O)CCC(O)CC=C|back': 3981,
-  'C=CCC(O)CC(O)CC=C|back': 4950,
-  'C=CCC(=O)CCC(=O)CC=C|back': 6288,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|back': 3668,
-  'C=CCC(O)CC=C|scarce': 788,
-  'CC(O)CCC=C|scarce': 574,
-  'CC(=O)CCC(O)CC=C|scarce': 1296,
-  'C=CCC(O)CC(O)CC=C|scarce': 1271,
-  'C=CCC(=O)CCC(=O)CC=C|scarce': 1988,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|scarce': 1131,
-  'C=CCC(O)CC=C|short': 527,
-  'CC(O)CCC=C|short': 458,
-  'CC(=O)CCC(O)CC=C|short': 1014,
-  'C=CCC(O)CC(O)CC=C|short': 1022,
-  'C=CCC(=O)CCC(=O)CC=C|short': 1554,
-  'CC(O)CC(=O)CCC(Cl)CCC=C|short': 1072,
-  // the four ring molecules, measured with 12 plays for each style
-  'O=C1CCC(CC=C)CC1|plain': 1114,
-  'O=C1CCC(CC=C)CC1|broad': 1401,
-  'O=C1CCC(CC=C)CC1|loose': 1440,
-  'O=C1CCC(CC=C)CC1|each': 1434,
-  'O=C1CCC(CC=C)CC1|back': 3732,
-  'O=C1CCC(CC=C)CC1|scarce': 994,
-  'O=C1CCC(CC=C)CC1|short': 874,
-  'C=CCC(O)C1=CC=CC=C1|plain': 550,
-  'C=CCC(O)C1=CC=CC=C1|broad': 1030,
-  'C=CCC(O)C1=CC=CC=C1|loose': 1520,
-  'C=CCC(O)C1=CC=CC=C1|each': 972,
-  'C=CCC(O)C1=CC=CC=C1|back': 2475,
-  'C=CCC(O)C1=CC=CC=C1|scarce': 491,
-  'C=CCC(O)C1=CC=CC=C1|short': 430,
-  'C=CC1CCC(O)CC1|plain': 918,
-  'C=CC1CCC(O)CC1|broad': 1653,
-  'C=CC1CCC(O)CC1|loose': 2236,
-  'C=CC1CCC(O)CC1|each': 1522,
-  'C=CC1CCC(O)CC1|back': 3213,
-  'C=CC1CCC(O)CC1|scarce': 978,
-  'C=CC1CCC(O)CC1|short': 798,
-  'CC(=O)CCC(O)C1=CC=CC=C1|plain': 889,
-  'CC(=O)CCC(O)C1=CC=CC=C1|broad': 1732,
-  'CC(=O)CCC(O)C1=CC=CC=C1|loose': 2080,
-  'CC(=O)CCC(O)C1=CC=CC=C1|each': 1320,
-  'CC(=O)CCC(O)C1=CC=CC=C1|back': 3112,
-  'CC(=O)CCC(O)C1=CC=CC=C1|scarce': 887,
-  'CC(=O)CCC(O)C1=CC=CC=C1|short': 687
+  'C=CCC(O)CC=C|plain': 1189,
+  'C=CCC(O)CC=C|broad': 1876,
+  'C=CCC(O)CC=C|loose': 2923,
+  'C=CCC(O)CC=C|each': 2178,
+  'C=CCC(O)CC=C|back': 4372,
+  'C=CCC(O)CC=C|scarce': 1206,
+  'C=CCC(O)CC=C|short': 753,
+  'CC(O)CCC=C|plain': 869,
+  'CC(O)CCC=C|broad': 1286,
+  'CC(O)CCC=C|loose': 1813,
+  'CC(O)CCC=C|each': 1383,
+  'CC(O)CCC=C|back': 2744,
+  'CC(O)CCC=C|scarce': 673,
+  'CC(O)CCC=C|short': 553,
+  'CC(=O)CCC(O)CC=C|plain': 2840,
+  'CC(=O)CCC(O)CC=C|broad': 3415,
+  'CC(=O)CCC(O)CC=C|loose': 4880,
+  'CC(=O)CCC(O)CC=C|each': 8054,
+  'CC(=O)CCC(O)CC=C|back': 9919,
+  'CC(=O)CCC(O)CC=C|scarce': 1991,
+  'CC(=O)CCC(O)CC=C|short': 2546,
+  'C=CCC(O)CC(O)CC=C|plain': 1762,
+  'C=CCC(O)CC(O)CC=C|broad': 2985,
+  'C=CCC(O)CC(O)CC=C|loose': 4920,
+  'C=CCC(O)CC(O)CC=C|each': 4509,
+  'C=CCC(O)CC(O)CC=C|back': 6353,
+  'C=CCC(O)CC(O)CC=C|scarce': 1864,
+  'C=CCC(O)CC(O)CC=C|short': 1235,
+  'C=CCC(=O)CCC(=O)CC=C|plain': 3097,
+  'C=CCC(=O)CCC(=O)CC=C|broad': 3745,
+  'C=CCC(=O)CCC(=O)CC=C|loose': 4958,
+  'C=CCC(=O)CCC(=O)CC=C|each': 5901,
+  'C=CCC(=O)CCC(=O)CC=C|back': 10872,
+  'C=CCC(=O)CCC(=O)CC=C|scarce': 2503,
+  'C=CCC(=O)CCC(=O)CC=C|short': 2921,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|plain': 2058,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|broad': 2828,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|loose': 4160,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|each': 5712,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|back': 8232,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|scarce': 1948,
+  'CC(O)CC(=O)CCC(Cl)CCC=C|short': 1778,
+  'O=C1CCC(CC=C)CC1|plain': 1709,
+  'O=C1CCC(CC=C)CC1|broad': 1951,
+  'O=C1CCC(CC=C)CC1|loose': 3520,
+  'O=C1CCC(CC=C)CC1|each': 2583,
+  'O=C1CCC(CC=C)CC1|back': 4671,
+  'O=C1CCC(CC=C)CC1|scarce': 1129,
+  'O=C1CCC(CC=C)CC1|short': 769,
+  'C=CCC(O)C1=CC=CC=C1|plain': 660,
+  'C=CCC(O)C1=CC=CC=C1|broad': 1000,
+  'C=CCC(O)C1=CC=CC=C1|loose': 1665,
+  'C=CCC(O)C1=CC=CC=C1|each': 1122,
+  'C=CCC(O)C1=CC=CC=C1|back': 2240,
+  'C=CCC(O)C1=CC=CC=C1|scarce': 670,
+  'C=CCC(O)C1=CC=CC=C1|short': 515,
+  'C=CC1CCC(O)CC1|plain': 1463,
+  'C=CC1CCC(O)CC1|broad': 2306,
+  'C=CC1CCC(O)CC1|loose': 2279,
+  'C=CC1CCC(O)CC1|each': 3735,
+  'C=CC1CCC(O)CC1|back': 3732,
+  'C=CC1CCC(O)CC1|scarce': 1302,
+  'C=CC1CCC(O)CC1|short': 1365,
+  'CC(=O)CCC(O)C1=CC=CC=C1|plain': 1260,
+  'CC(=O)CCC(O)C1=CC=CC=C1|broad': 1882,
+  'CC(=O)CCC(O)C1=CC=CC=C1|loose': 2666,
+  'CC(=O)CCC(O)C1=CC=CC=C1|each': 2421,
+  'CC(=O)CCC(O)C1=CC=CC=C1|back': 4384,
+  'CC(=O)CCC(O)C1=CC=CC=C1|scarce': 826,
+  'CC(=O)CCC(O)C1=CC=CC=C1|short': 1889
 };
 function briefBase(feed, brief) {
   const k = (feed.atoms ? RX.sigOf(feed) : feed) + '|' + brief; if (BASE[k]) return BASE[k];
@@ -559,6 +569,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
