@@ -760,7 +760,7 @@ function start(app) {
   newRun(); showStart();
   requestAnimationFrame(() => {
     v = new AA.Viewer(benchCv, model, { interactive: false, zoom: 40, pitch: 0.32, yaw: 0.5, faces: false });
-    if (BENCH) bench = AA.rxBench.make(v, hood, { play: i => play(i), hover: i => setHover(i), prop: onProp, propHover: onPropHover, tip: tipFor, lift: () => sfx.click(),
+    if (BENCH) bench = AA.rxBench.make(v, hood, { play: i => play(i), hover: i => setHover(i), prop: onProp, propHover: onPropHover, tip: tipFor,
       left: () => { if (st.mode === 'play') swap(); else if (st.mode === 'result' && st.opts) choose(-1); else if (st.mode === 'shop') shopReroll(); },
       right: () => { if (st.mode === 'start') newRun(); else if (st.mode === 'play') deliver(); else if (st.mode === 'result' && st.end) showStart(); else if (st.mode === 'shop') leaveShop(); },
       mid: () => capKeep(), redraw: () => { if (cur && st.mode === 'play') renderHand(); scene(); },
