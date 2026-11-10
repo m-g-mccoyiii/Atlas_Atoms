@@ -113,9 +113,36 @@ function start(app) {
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
+  // ---------- sparks, bits and bubbles: one pool of small balls ----------
+  const PN = 700, pMesh = new T.InstancedMesh(new T.SphereGeometry(1, 8, 6), new T.MeshBasicMaterial(), PN), parts = [], pM = new T.Matrix4(), pQ = new T.Quaternion(), pV = new T.Vector3(), pS = new T.Vector3(), pC = new T.Color();
+  pMesh.instanceMatrix.setUsage(T.DynamicDrawUsage); pMesh.frustumCulled = false; scene.add(pMesh);
+  for (let i = 0; i < PN; i++) { parts.push({ life: 0 }); pMesh.setMatrixAt(i, pM.makeScale(0, 0, 0)); pMesh.setColorAt(i, pC.set(0xffffff)); }
+  let pNext = 0;
+  // g is gravity: positive falls and bounces on the page, negative rises
+  function burst3(x, y, z, n, col, spd, size, grav) {
+    for (let k = 0; k < n; k++) {
+      const i = pNext, q = parts[i]; pNext = (pNext + 1) % PN;
+      const a = Math.random() * 6.283, e = Math.random() * 1.2, v = spd * (0.35 + Math.random());
+      q.x = x; q.y = y; q.z = z; q.vx = Math.cos(a) * Math.cos(e) * v; q.vy = Math.sin(e) * v + spd * 0.35; q.vz = Math.sin(a) * Math.cos(e) * v;
+      q.life = q.max = 0.45 + Math.random() * 0.7; q.s = size * (0.5 + Math.random()); q.g = grav == null ? 30 : grav;
+      pMesh.setColorAt(i, pC.set(col).convertSRGBToLinear());
+    }
+    pMesh.instanceColor.needsUpdate = true;
+  }
+  function stepParts(dt) {
+    for (let i = 0; i < PN; i++) {
+      const q = parts[i]; if (q.life <= 0) continue;
+      q.life -= dt; q.vy -= q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+      if (q.g > 0 && q.y < q.s) { q.y = q.s; q.vy *= -0.45; q.vx *= 0.7; q.vz *= 0.7; }
+      const k = q.life <= 0 ? 0 : q.s * Math.sqrt(q.life / q.max);
+      pMesh.setMatrixAt(i, pM.compose(pV.set(q.x, q.y, q.z), pQ, pS.set(k, k, k)));
+    }
+    pMesh.instanceMatrix.needsUpdate = true;
+  }
+
   // ---------- state ----------
   const MADE = { x: -2.5, z: 13 }, MULT = { x: -10.5, z: 8.6 }, CALL = { x: 0, z: -2.4 }, KIT = { x: 10.8, z: 9.2, dx: 5.6 };
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
@@ -210,7 +237,8 @@ function start(app) {
       if (tok !== st.tok) return;
       st.want = base + Math.round(e.yield * e.batch); st.mult = e.batch; st.multBump = e.kind === 'x' ? 1 : Math.max(st.multBump, 0.4);
       const piece = P.GEARS[e.src] ? e.src : null, txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val);
-      if (piece) st.fired[piece] = { t: performance.now(), txt };
+      st.madeBump = 1;
+      if (piece) { st.fired[piece] = { t: performance.now(), txt }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 2.4, ko.grp.position.z, e.kind === 'x' ? 46 : 24, ko.col, e.kind === 'x' ? 13 : 9, 0.22); burst3(ko.grp.position.x, 2.4, ko.grp.position.z, 8, '#ffffff', 11, 0.12); } }
       else if (e.src === 'rare') { st.floats.push({ txt: (t.rare === 'double' ? 'double ' : 'strong ') + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' }); spray(14, '#b0189a', false); }
       if (e.kind === 'x') { st.shake = Math.max(st.shake, 0.8); spray(10, REDINK, false); }
       else st.shake = Math.max(st.shake, 0.22);
@@ -243,12 +271,17 @@ function start(app) {
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
     const dur = land(o, before, wasOpen);
     prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
+    // the reaction: sparks and bits fly from every place it acts, and the view pushes in
+    { const sc = prev.group.scale.x, col = rgb(colOf(s.id)); o.atoms.forEach(a => { const q = prev.at.get(a); if (!q || a.el === 'H') return; const wx = C0.x + q.x * sc, wy = q.y * sc, wz = C0.z + q.z * sc; burst3(wx, wy, wz, 26, col, 9, 0.2); burst3(wx, wy, wz, 10, '#ffffff', 12, 0.13); burst3(wx, wy, wz, 2, a.el === 'O' ? '#ff4d4d' : '#f1f5f9', 7, 0.5); }); }
+    st.zoomT = performance.now();
     tween(prev, rowAt(Math.min(k, 3)), SC_ROW, 0.26); rowMols.push(prev); tween(chosen, C0, SC_MAIN, 0.26);
     // the rules move on by the clock, not by the drawing, so a stalled frame cannot leave the page stuck
     setTimeout(() => {
       if (tok !== st.tok) return;
       tweens = tweens.filter(tw => tw.m !== chosen && tw.m !== prev); place(prev, rowAt(Math.min(k, 3)), SC_ROW);
       freeMol(chosen); center = buildMol(g.m, null, false); place(center, C0, SC_MAIN); st.mode = 'play';
+      // the new molecule lands with a bounce, and what changed throws off a second, smaller spray
+      st.pop = 1; { const col = rgb(colOf(s.id)); o.r.made.forEach(a => { const q = center.at.get(a); if (q && a.el !== 'H') burst3(C0.x + q.x * SC_MAIN, q.y * SC_MAIN, C0.z + q.z * SC_MAIN, 12, col, 6, 0.16); }); }
       if (g.over) return endRound();
       refresh();
       // a page with nothing left to do turns itself
@@ -347,7 +380,8 @@ function start(app) {
     if (st.mode !== 'done') {
       const mp = px(MULT), len = g.cur.path.length, b = st.mult, k = 1 + 0.35 * st.multBump, hot = len >= 2;
       if (hot) swipe(x, [mp[0] - 120, mp[1] - 22], [mp[0] + 120, mp[1] - 30], 70 * k);
-      marker(x, (hot ? 78 : 54) * k); x.textAlign = 'center'; x.fillStyle = hot ? INK : FAINT; x.fillText('times ' + fmtB(b), mp[0], mp[1]);
+      const heat = Math.min(6, Math.log2(Math.max(1, b))), jx = hot ? (Math.random() - 0.5) * heat * 2.2 : 0, jy = hot ? (Math.random() - 0.5) * heat * 2.2 : 0;
+      marker(x, (hot ? 78 + 12 * heat : 54) * k); x.textAlign = 'center'; x.fillStyle = hot ? (heat > 3.5 ? REDINK : INK) : FAINT; x.fillText('times ' + fmtB(b), mp[0] + jx, mp[1] + jy);
       if (hot) { hand(x, 38); x.fillStyle = PENCIL; x.fillText(len + ' in a row', mp[0], mp[1] + 44); }
     }
     // equipment: its name, what it does, and what it just added
@@ -365,7 +399,7 @@ function start(app) {
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
     // how much has been made, and the number to beat
     const q = px(MADE), beaten = st.shown >= st.quota, done = st.mode === 'done';
-    marker(x, 110); x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(fmt(st.shown), q[0], q[1]);
+    marker(x, 110 * (1 + 0.22 * st.madeBump)); x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(fmt(st.shown), q[0], q[1]);
     hand(x, 38); x.fillStyle = PENCIL; x.fillText('made', q[0], q[1] - 96);
     hand(x, 60); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), q[0] + 84, q[1]); hand(x, 38); x.fillStyle = PENCIL; x.fillText('to beat', q[0] + 84, q[1] - 62);
     if (beaten) { x.strokeStyle = GREEN; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(q[0] + 22, q[1] - 30); x.lineTo(q[0] + 36, q[1] - 8); x.lineTo(q[0] + 60, q[1] - 62); x.stroke(); }
@@ -441,8 +475,25 @@ function start(app) {
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
     if (st.floats.length || st.blots.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
-    cam.position.set(CAM.x + (Math.random() - 0.5) * sh * 0.6, CAM.y, CAM.z + (Math.random() - 0.5) * sh * 0.6); cam.lookAt(LOOKAT);
-    if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; } else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
+    // the view pushes in on the molecule for a moment when it reacts
+    { const age = (now - st.zoomT) / 1000, want = age < 0.12 ? age / 0.12 : age < 0.5 ? 1 : age < 0.85 ? 1 - (age - 0.5) / 0.35 : 0; st.zoom += (want * 0.42 - st.zoom) * Math.min(1, dt * 18); }
+    const zk = st.zoom, hx = (Math.random() - 0.5) * sh * 0.6, hz = (Math.random() - 0.5) * sh * 0.6;
+    cam.position.set(CAM.x + (C0.x - CAM.x) * zk + hx, CAM.y + (20 - CAM.y) * zk, CAM.z + (C0.z + 16 - CAM.z) * zk + hz);
+    cam.lookAt(LOOKAT.x + (C0.x - LOOKAT.x) * zk, 0.8 * zk, LOOKAT.z + (C0.z - LOOKAT.z) * zk);
+    // the hotter the run, the warmer the page
+    const playing = g && (st.mode === 'play' || st.mode === 'move'), heat = playing ? Math.min(1, Math.log2(Math.max(1, st.mult)) / 6) : 0;
+    if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; }
+    else if (heat > 0.05) veil.style.backgroundColor = 'rgba(255,110,30,' + (heat * 0.2).toFixed(3) + ')';
+    else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
+    // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
+    const tt = now / 1000;
+    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.3 * st.pop * Math.cos(st.pop * 9); center.group.scale.setScalar(SC_MAIN * sp); center.group.position.y = 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * 0.03 * heat; }
+    prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
+    kitObjs.forEach((k, i) => { k.grp.rotation.z = (0.03 + 0.1 * heat) * Math.sin(tt * (3 + 9 * heat) + i * 2); });
+    if (playing && heat > 0.15 && center) { st.bubble += dt * (4 + 46 * heat); while (st.bubble > 1) { st.bubble -= 1; burst3(C0.x + (Math.random() - 0.5) * 9, 0.4, C0.z + (Math.random() - 0.5) * 3.5, 1, heat > 0.6 ? '#ff8a3c' : '#ffd23f', 1.2, 0.2 + 0.25 * heat, -7); } }
+    if (st.madeBump > 0) { st.madeBump = Math.max(0, st.madeBump - dt * 6); dirty = true; }
+    if (heat > 0.2) dirty = true;
+    stepParts(dt);
     if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; }
     ren.render(scene, cam);
   }
