@@ -34,12 +34,12 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 
 ## To sixty
 
-Forty-four exist. Sixteen more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
+Forty-five exist. Fifteen more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
 1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
 2. Tarot card, the Tower (built): the first time a row would break each round, it holds and the row doubles. The page says "held". Measured about 1.7 to 2.4 alone. Blind check: named as the Tower card, with effort.
-3. Monkey's paw: three wishes a run. A wish doubles a round's total and removes a reagent for good.
+3. Monkey's paw (built): three wishes a run, one a round. A click on the paw makes the wish: the round is doubled and one reagent is gone from the run for good. A finger curls for each wish spent. Not measured: the simulated player does not wish.
 4. Cursed idol: every number is doubled, the number to beat as well. Cannot be put down.
 5. Crystal ball: shows the next page's reagents now.
 6. Black cat (built): a row that breaks leaves extra +0.13 for every reaction that was in it. The simulated player never breaks a row on purpose, so its measured worth (0.8) says nothing yet. Blind check: obvious.
