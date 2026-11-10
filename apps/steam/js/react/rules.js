@@ -232,7 +232,7 @@ const LIST = [
     rule: 'Swaps the O of C=O for CH₂ and leaves C=C.', from: 'one', to: 'ene',
     find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) { cut(m, s.c, s.o); const c = attach(m, 'C', s.c, 3.0); m.bond(s.c, c); const hs = [0, 1].map(() => attach(m, 'H', c, 2.2)); return { focus: [s.c, c], incoming: [c].concat(hs), leaving: [[s.o]], tag: 'O to CH₂' }; } },
-  { id: 'allyl', verb: 'Add allyl', formula: 'C₃H₅MgBr', chem: 'Allylmagnesium bromide, then dilute acid', rgb: [110, 160, 30], cls: 'grignard', ghs: ['flame', 'corr'],
+  { id: 'allyl', verb: 'Grow', formula: 'C₃H₅MgBr', chem: 'Allylmagnesium bromide, then dilute acid', rgb: [110, 160, 30], cls: 'grignard', ghs: ['flame', 'corr'],
     rule: 'Adds a three-carbon arm with its own C=C to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
     find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) { s.bond.order = 1; const c1 = attach(m, 'C', s.c, 3.0), h1 = [0, 1].map(() => attach(m, 'H', c1, 2.2)), c2 = attach(m, 'C', c1, 3.0), h2 = attach(m, 'H', c2, 2.2), c3 = attach(m, 'C', c2, 3.0); m.bond(c2, c3); const h3 = [0, 1].map(() => attach(m, 'H', c3, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c1, c2, c3, h2, ho].concat(h1, h3), leaving: [], tag: '+C₃H₅' }; } },

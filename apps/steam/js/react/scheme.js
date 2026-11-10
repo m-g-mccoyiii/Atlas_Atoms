@@ -574,7 +574,7 @@ function start(app) {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
       st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g);
-      st.floats.push({ txt: '+' + fmt(gain), t: now, size: PLAIN ? 44 + 12 * size : 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
+      if (!PLAIN) st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
       st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
       // a hot reaction leaves its mark on the paper for the rest of the round
       if (false) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 10, r: 30 + Math.random() * 70, a: 0.03 + Math.random() * 0.04, ring: Math.random() < 0.6 });
@@ -883,7 +883,7 @@ function start(app) {
     st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.lane > 0, c = px({ x: GAIN.x, z: GAIN.z - f.lane * 2.6 - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
-      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x + 3.5, z: CALL.z - 0.9 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
+      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x - 1, z: CALL.z - 3.4 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
       x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al;
       if (st.call.ticks) { const n = st.call.ticks, w = (n > 10 ? 3 : n) * 110; swipe(x, [-w / 2 - 40, -20], [w / 2 + 40, -28], 120); tickRow(x, 0, -24, n, 92, st.call.col); }
       else {
