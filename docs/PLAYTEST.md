@@ -31,3 +31,11 @@ A fresh sub-agent judged the art, the page and the plan without being told my co
 - Plan: "two continuing reactions per state" is not enough by itself. It ranked the lack of any score preview before a reagent is spent as the second most damaging problem, and proposed, in order: a preview of gain on every reagent, a hand of reagents with hold and discard, values that depend on the molecule's state, a twist with a shown cost, and a number to beat derived from the molecule.
 
 Done from its list: the gain each reagent would make is now written beside it before it is picked; the stir bar is now a horseshoe magnet and is named magnet.
+
+## Second evaluation: the score readout, 2026-11-10
+
+The evaluator was given docs/EVALUATOR_BRIEF.md and four whole frames. It read the total and "points times multiplier" correctly, but said the two factors were small, pale and below the result, and that nothing travels from what earned a bonus to the number it raised. It called that the single biggest gap against Balatro. It also flagged: equipment effects running together, round rules worded clumsily ("times off", "double times half"), a seven-fold gap between targets offered on one screen, coins reading as rewards placed oddly, the chain frame as an unreadable pile, and two stray streaks it could not identify.
+
+Done: the two factors now sit directly under the total at the same size with "times" in ink between them; round rules are plain words; equipment effects are written smaller.
+
+Not done: bonuses travelling from their source to the number they raise; the targets offered on one screen; the dense chain frame; the stray streaks.

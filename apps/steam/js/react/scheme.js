@@ -289,7 +289,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -0.4, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: 1.0, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
@@ -355,7 +355,7 @@ function start(app) {
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
-  const FLASK = KITV === 'back' ? { x: -5.4, z: 11.5 } : { x: -4.8 + SX, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
+  const FLASK = KITV === 'back' ? { x: -4.0, z: 11.5 } : { x: -4.8 + SX, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
   const flask = (() => {
     const grp = new T.Group(), rAt = y => FB.r0 - (FB.r0 - FB.r1) * (y / FB.h), liqM = std({ color: lin(0x3aa6c8), roughness: 0.3 });
     add(new T.CylinderGeometry(FB.r1, FB.r0, FB.h, 28), GLASS, 0, FB.h / 2, 0, grp); add(new T.CylinderGeometry(FB.r1, FB.r1, 0.8, 20), GLASS, 0, FB.h + 0.4, 0, grp);
@@ -515,7 +515,7 @@ function start(app) {
   }
   // Everything the player sees and hears when a reaction lands. Each change arrives on its own beat, in the order it
   // was scored: the reagent at each place, then the row, then each piece of equipment. Returns how long it takes.
-  const PART = { p: '#1f5fbf', h: '#1f5fbf', r: '#a87a00', e: '#b0189a' };
+  const PART = { p: '#1f5fbf', h: '#1f5fbf', r: '#a87a00', e: '#a87a00' };
   function land(o, before, wasOpen, mol, reagent, lab, from) {
     const ids = [], later = (fn, ms) => ids.push(setTimeout(fn, ms)), placeAt = [];
     const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev, n = beats.length, rcol = rgb(colOf(reagent));
@@ -711,9 +711,9 @@ function start(app) {
   // lettering in which {p}, {r} and {e} are drawn as the marks. Words take the color of the mark before them
   function inkLine(x, str, cx, y, size, col, align) {
     const bits = String(str).split(/(\{[pre]\})/).filter(Boolean); hand(x, size);
-    const ws = bits.map(b => (b[0] === '{' ? size * 0.95 : x.measureText(b).width)), tot = ws.reduce((a, b) => a + b, 0);
+    const word = (b, i) => (b[1] === 'p' || /^\s*times/.test(bits[i + 1] || '') ? '' : 'times'), ws = bits.map((b, i) => (b[0] === '{' ? x.measureText(word(b, i)).width : x.measureText(b).width)), tot = ws.reduce((a, b) => a + b, 0);
     let px0 = align === 'right' ? cx - tot : align === 'left' ? cx : cx - tot / 2, cur = col; x.textAlign = 'left';
-    bits.forEach((b, i) => { if (b[0] === '{') { glyph(x, b[1], px0 + ws[i] / 2, y - size * 0.3, size * 0.85); cur = PART[b[1]]; } else { x.fillStyle = cur || col; x.fillText(b, px0, y); } px0 += ws[i]; });
+    bits.forEach((b, i) => { if (b[0] === '{') { cur = PART[b[1]]; const w = word(b, i); if (w) { x.fillStyle = cur; x.fillText(w, px0, y); } } else { x.fillStyle = cur || col; x.fillText(b, px0, y); } px0 += ws[i]; });
     return tot;
   }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -838,24 +838,25 @@ function start(app) {
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
     if (st.mode !== 'done') {
       const mp = px(FEWER ? { x: MULT.x + 0.6, z: MADE.z + 2.9 } : MULT), len = g.cur.path.length; x.save(); if (FEWER) { x.translate(mp[0], mp[1]); x.scale(0.6, 0.6); x.translate(-mp[0], -mp[1]); }
-      [['p', fmt(st.P)], ['r', fmtB(st.R)], ['e', fmtB(st.E)]].forEach((q, i) => {
-        const cx = mp[0] + 70 + i * 150, live = q[0] === 'p' ? st.P > 0 : q[0] === 'r' ? st.R > 1 : st.E > 1, k = 1 + 0.4 * st.bump[q[0]];
-        if (live && q[0] === 'r' && len >= 2) swipe(x, [cx - 52, mp[1] - 24], [cx + 52, mp[1] - 30], 62);
-        fit(x, q[1], 64 * k, 136, marker); x.textAlign = 'center'; x.fillStyle = live ? PART[q[0]] : FAINT; x.fillText(q[1], cx, mp[1]);
-        glyph(x, q[0], cx, mp[1] - 84, 40, live ? PART[q[0]] : FAINT);
-      });
-      // what the reaction under the pointer would add to each number, and what it would make
-      if (st.peek) { const pk = st.peek; [['p', pk.dP], ['r', pk.dR], ['e', pk.dE]].forEach((q, i) => { if (Math.abs(q[1]) < 0.005) return; marker(x, 34); x.textAlign = 'center'; x.fillStyle = q[1] < 0 ? PENCIL : PART[q[0]]; x.fillText((q[1] > 0 ? '+' : '') + fmtB(q[1]), mp[0] + 70 + i * 150, mp[1] - 120); });
-        const gq = px(MADE); marker(x, 46); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0] + 6, gq[1] - 104); }
+      { const mult = st.R * st.E, liveP = st.P > 0, liveM = mult > 1.0001, kp = 1 + 0.4 * st.bump.p, km = 1 + 0.4 * Math.max(st.bump.r, st.bump.e), c1 = mp[0] + 80, c2 = mp[0] + 205, c3 = mp[0] + 335;
+        if (liveM && len >= 2) swipe(x, [c3 - 70, mp[1] - 24], [c3 + 70, mp[1] - 30], 66);
+        fit(x, fmt(st.P), 64 * kp, 150, marker); x.textAlign = 'center'; x.fillStyle = liveP ? PART.p : FAINT; x.fillText(fmt(st.P), c1, mp[1]);
+        marker(x, 38); x.fillStyle = liveP ? INK : FAINT; x.fillText('times', c2, mp[1] - 4);
+        fit(x, fmtB(mult), 64 * km, 160, marker); x.textAlign = 'center'; x.fillStyle = liveM ? PART.r : FAINT; x.fillText(fmtB(mult), c3, mp[1]);
+        // what the reaction under the pointer would add to each, and what it would make
+        if (st.peek) { const pk = st.peek, dM = (st.R + pk.dR) * (st.E + pk.dE) - mult; marker(x, 34); x.textAlign = 'center';
+          if (Math.abs(pk.dP) >= 0.5) { x.fillStyle = PART.p; x.fillText((pk.dP > 0 ? '+' : '') + fmt(pk.dP), c1, mp[1] - 70); }
+          if (Math.abs(dM) >= 0.005) { x.fillStyle = dM < 0 ? PENCIL : PART.r; x.fillText((dM > 0 ? '+' : '') + fmtB(dM), c3, mp[1] - 70); }
+          const gq = px(MADE); marker(x, 46); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0] + 6, gq[1] - 104); } }
       // one small chevron for each reaction in the row that is open
-      for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 220 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
+      for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 335 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
       x.restore();
     }
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
       if (now - (k.born || 0) < 380) { dirty = true; return; }
       const q = P.GEARS[k.id], kp = KITP(i), sideK = KITV === 'side', c = px(sideK ? { x: kp.x + 2.3, z: kp.z + 0.9 } : { x: kp.x, z: kp.z + (KITV === 'back' ? 2.9 : 3.6) }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
-      const tw = inkLine(x, q.tok || '', c[0], c[1], sideK ? 28 : 30, INK, sideK ? 'left' : undefined); fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
+      const tw = inkLine(x, q.tok || '', c[0], c[1], sideK ? 28 : 23, INK, sideK ? 'left' : undefined); fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
       if (st.kitHover === i) { const h0 = px(sideK ? { x: kp.x + 9, z: kp.z - 1.2 } : KITV === 'back' ? { x: kp.x, z: kp.z + 5 } : { x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);

@@ -290,11 +290,11 @@ function salt(m, rnd) { const R = rnd || Math.random, ar = RX.aromaticAtoms(m); 
 // asks for more and pays something when it is beaten.
 const BRIEFS = [
   { id: 'plain', name: 'plain', note: '' },
-  { id: 'carry', name: 'carry on', note: '{e} half kept' },
-  { id: 'broad', name: 'broad', note: '{p} double   {r} half' },
-  { id: 'loose', name: 'loose', note: '{r} off   {e} +0.3' },
-  { id: 'each', name: 'one of each', note: 'new {e} +0.5   repeat {p} 0' },
-  { id: 'back', name: 'there and back', note: 'return {e} +0.5' },
+  { id: 'carry', name: 'carry on', note: 'half the multiplier kept' },
+  { id: 'broad', name: 'broad', note: 'points double, rows half' },
+  { id: 'loose', name: 'loose', note: 'no rows' },
+  { id: 'each', name: 'one of each', note: 'repeats make nothing' },
+  { id: 'back', name: 'there and back', note: 'going back pays' },
   { id: 'scarce', name: 'scarce', note: '1 use' },
   { id: 'short', name: 'short', note: '2 pages' }
 ];
