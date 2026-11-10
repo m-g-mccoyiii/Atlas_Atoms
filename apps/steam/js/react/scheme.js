@@ -18,7 +18,13 @@ const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
 const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
 // the left column reads down one edge: what is kept, the round and its pages, this page's reactions, the count, the three numbers
-const EDGE = -22.6, STEP = { x: -21.6, z: 0.9 }, PAGES = { x: -15.2, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const KITV = (() => { try { return new URLSearchParams(root.location.search).get('kit') || 'bottom'; } catch (e) { return 'bottom'; } })(), SX = KITV === 'side' ? 5 : 0;
+// How big each piece really is, as its longest side in centimetres. Pieces are drawn in proportion, but gently: a
+// goat is not fifteen times a stopwatch on the page, or the stopwatch could not be seen.
+const CM = { balance: 35, spatula: 18, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 13, logbook: 25, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 18, litmus: 8, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
+  stone: 8, transmute: 18, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, candle: 28, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 90, scrubber: 35 };
+const sizeOf = id => Math.max(0.6, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
+const EDGE = -22.6 + SX, STEP = { x: -21.6 + SX, z: 0.9 }, PAGES = { x: -15.2 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -211,7 +217,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.2, 19 / spanOf(m), 10.5 / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 19) / spanOf(m), (KITV === 'bottom' ? 10.5 : 13) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -240,8 +246,9 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: EDGE - 0.6, z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
-  if (SIDE) { GAIN.x = -12.6; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
+  const BAND = 12.9, MULT = { x: EDGE - 0.6 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -6.2, z: 9.6 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = KITV === 'back' ? -5.6 : -12.3; }
+  if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
@@ -297,11 +304,11 @@ function start(app) {
   }
   function buildKit() {
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = [];
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = 1.4; k.grp.scale.setScalar(1.4); kitObjs.push(k); });
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.05) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
-  const FLASK = { x: -4.8, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
+  const FLASK = KITV === 'back' ? { x: -10.2, z: 8.6 } : { x: -4.8 + SX, z: 10.4 }, FB = { h: 2.3, r0: 1.3, r1: 0.36, line: 0.7 };
   const flask = (() => {
     const grp = new T.Group(), rAt = y => FB.r0 - (FB.r0 - FB.r1) * (y / FB.h), liqM = std({ color: lin(0x3aa6c8), roughness: 0.3 });
     add(new T.CylinderGeometry(FB.r1, FB.r0, FB.h, 28), GLASS, 0, FB.h / 2, 0, grp); add(new T.CylinderGeometry(FB.r1, FB.r1, 0.8, 20), GLASS, 0, FB.h + 0.4, 0, grp);
@@ -323,7 +330,7 @@ function start(app) {
   })();
   // What leaves a molecule and is not caught is kept at the top left: water in a beaker, hydrogen in a balloon, and
   // one stroke on a tally for every by-product. A full beaker or balloon is spent with a click.
-  const BEAK = { x: -21.6, z: -7.6 }, BALN = { x: -17.4, z: -7.6 }, TALLY = { x: -13.4, z: -6.4 };
+  const BEAK = { x: -21.6 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, BALN = { x: -17.4 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, TALLY = { x: -13.4 + SX, z: KITV === 'back' ? -8.6 : -6.4 };
   const keep = (() => {
     const KM = AA.rxKit.mat, bk = new T.Group(), bl = new T.Group(), waterM = KM(T, 0x3a6fd0, 0.3), red = KM(T, 0xd6453a, 0.5);
     add(new T.CylinderGeometry(0.85, 0.8, 1.5, 24), GLASS, 0, 0.75, 0, bk); const water = add(new T.CylinderGeometry(0.76, 0.74, 1, 20), waterM, 0, 0.1, 0, bk); water.userData.plain = true;
@@ -357,7 +364,7 @@ function start(app) {
   const TEACH = [
     { z: 'choices', say: 'pick a reaction', when: () => true },
     { z: 'made', say: 'what the round has made', when: () => g.trail.length >= 1 },
-    { z: 'beat', say: 'fill it past the red line', when: () => g.trail.length >= 1 },
+    { z: 'beat', say: 'fill it past the red line', when: () => g.trail.length >= 1 && st.shown < st.quota },
     { z: 'r', say: 'in a row: this one grows', when: () => g.cur.path.length >= 2 },
     { z: 'water', say: 'what leaves is kept. three can be spent', when: () => st.by.water + st.by.h2 > 0 },
     { z: 'pages', say: 'three pages to a round', when: () => g.page >= 2 }
@@ -372,7 +379,7 @@ function start(app) {
     const fin = live && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(4.2, 17 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -10.4 + k * gap + gap / 2; SPOT[i] = { x: 22.4, z }; LAB[i] = { x: 16.8, z: z + 0.4 }; SCS[i] = 0.4; }); } }
+      if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 22.4, z }; LAB[i] = { x: 16.8, z: z + 0.4 }; SCS[i] = 0.4; }); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(160);
@@ -501,7 +508,7 @@ function start(app) {
       const t00 = performance.now();
       st.flyers.forEach(f => { if (f.t0) return; f.t0 = near(f.at);
         const ev = beats.find(e => e.gone === f.gi && (P.GEARS[e.src] || e.src === 'collect')), ko = ev && P.GEARS[ev.src] ? kitObjs.find(q => q.id === ev.src) : null;
-        if (ko) { f.to = new T.Vector3(ko.grp.position.x, 1.6, ko.grp.position.z - 0.6); f.dur = Math.max(320, t00 + whenOf.get(ev) - f.t0); }
+        if (ko) { f.to = new T.Vector3(ko.grp.position.x, 1.6, ko.grp.position.z - 0.6); f.dur = 420; f.t0 = Math.max(f.t0, t00 + whenOf.get(ev) - 420); }
         else { const q = f.kind === 'water' ? BEAK : f.kind === 'h2' ? BALN : TALLY; f.to = new T.Vector3(q.x, f.kind === 'h2' ? 2.4 : 1.2, q.z - (f.kind === 'h2' ? 1.6 : 0.6)); f.keep = ev ? f.kind : null; } }); (mol.groups || []).forEach(q => { if (q.born) q.t = near(q); }); (mol.ghosts || []).forEach(q => { q.t = near(q); }); }
     const final = () => {
       if (tok !== st.tok) return;
@@ -549,7 +556,7 @@ function start(app) {
         els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
         const srcA = grp0.map(a => rev.get(a)).find(a => a && prev.balls.has(a)), p = srcA ? prev.at.get(srcA) : nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 };
         grp.position.set(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc); grp.scale.setScalar(st.sc); scene.add(grp);
-        st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: null, t0: 0, dur: 600, spin: (Math.random() - 0.5) * 9 });
+        st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: null, t0: 0, dur: 520, spin: (Math.random() - 0.5) * 9 });
       }); }
     prods.forEach(m => { if (m) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.14, () => freeMol(m)); }); prods = [];
     tweens = tweens.filter(tw => tw.m !== prev); freeMol(prev); center = nm; SC_MAIN = fitMain(nm);
@@ -762,13 +769,13 @@ function start(app) {
     }
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
-      const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x, z: kp.z + 3.6 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
-      const tw = inkLine(x, q.tok || '', c[0], c[1], 30, INK); fit(x, q.name, 28, 148, hand); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - 40);
+      const q = P.GEARS[k.id], kp = KITP(i), sideK = KITV === 'side', c = px(sideK ? { x: kp.x + 2.3, z: kp.z + 0.9 } : { x: kp.x, z: kp.z + (KITV === 'back' ? 2.9 : 3.6) }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
+      const tw = inkLine(x, q.tok || '', c[0], c[1], sideK ? 28 : 30, INK, sideK ? 'left' : undefined); fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
-      if (st.kitHover === i) { const h0 = px({ x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
+      if (st.kitHover === i) { const h0 = px(sideK ? { x: kp.x + 9, z: kp.z - 1.2 } : KITV === 'back' ? { x: kp.x, z: kp.z + 5 } : { x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
         hand(x, 28); wrap(x, q.note, 380).forEach((ln, j) => { x.lineWidth = 12; x.strokeText(ln, h0[0], h0[1] + 34 + j * 30); x.fillStyle = PENCIL; x.fillText(ln, h0[0], h0[1] + 34 + j * 30); }); }
-      if (age < 0.7) { const up = px({ x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
+      if (age < 0.7) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
@@ -807,10 +814,10 @@ function start(app) {
       const zs = zones(), halo = (txt, cx, cy, size, col, font) => { (font || hand)(x, size); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#fbf8ee'; x.strokeText(txt, cx, cy); x.fillStyle = col; x.fillText(txt, cx, cy); };
       if (NAMEV === 'words') zs.forEach(q => { const c = px({ x: q.lx, z: q.lz }); halo(q.name, c[0], c[1], 28, PENCIL); });
       if (NAMEV === 'hover' && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
-      if (NAMEV === 'point') { const T0 = st.teach; if (!T0.t) T0.t = now;
+      if (NAMEV === 'point') { const T0 = st.teach; if (!T0.t) T0.t = now + 1700;
         const nx = TEACH[T0.i + 1]; if (nx && now - T0.t > 2600 && nx.when()) { T0.i++; T0.t = now; }
         const cur = TEACH[T0.i], q = cur && zs.find(k => k.id === cur.z), age = (now - T0.t) / 1000;
-        if (q && age < 7) { const tgt = px({ x: q.x, z: q.z }), right = q.x > 8, from = px({ x: q.x + (right ? -7.5 : 6.5), z: q.z - 3.2 }), k = Math.min(1, age / 0.3);
+        if (q && age >= 0 && age < 7) { const tgt = px({ x: q.x, z: q.z }), right = q.x > 8, from = px({ x: q.x + (right ? -7.5 : 6.5), z: q.z - 3.2 }), k = Math.min(1, age / 0.3);
           x.globalAlpha = age > 6 ? 7 - age : 1; flick(x, from, [from[0] + (tgt[0] - from[0]) * 0.86, from[1] + (tgt[1] - from[1]) * 0.86], 0, k, 20, REDINK, right ? -0.18 : 0.18);
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
@@ -882,7 +889,7 @@ function start(app) {
       if (!f.t0 || !f.to) return true; const age = now - f.t0; if (age < 0) return true;
       const k = Math.min(1, age / f.dur), e = k * k * (3 - 2 * k), d = f.from.distanceTo(f.to);
       f.grp.position.set(f.from.x + (f.to.x - f.from.x) * e, f.from.y + (f.to.y - f.from.y) * e + Math.sin(k * Math.PI) * (2.5 + 0.16 * d), f.from.z + (f.to.z - f.from.z) * e);
-      f.grp.rotation.set(f.spin * k * 0.7, f.spin * k, 0); f.grp.scale.setScalar(st.sc * (1 + 0.7 * Math.sin(Math.min(1, k * 2.2) * Math.PI)) * (k > 0.8 ? 1 - (k - 0.8) / 0.2 * 0.55 : 1));
+      f.grp.rotation.set(f.spin * k * 0.7, f.spin * k, 0); f.grp.scale.setScalar(st.sc * (1 + 0.22 * Math.sin(Math.min(1, k * 2.2) * Math.PI)) * (k > 0.75 ? 1 - (k - 0.75) / 0.25 * 0.6 : 1));
       if (k < 1) return true;
       scene.remove(f.grp); burst3(f.to.x, 0.2, f.to.z + 0.6, 8, f.kind === 'water' ? '#3a6fd0' : f.kind === 'h2' ? '#d6453a' : '#5a564e');
       if (f.keep) { st.by[f.keep] = Math.min(g ? g.by[f.keep] : 9, st.by[f.keep] + 1); st.byBump[f.keep] = 1; }
@@ -904,7 +911,7 @@ function start(app) {
     if (st.floats.length || st.blots.length || st.pings.length || st.slashes.length || st.strokes.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
     // the view pushes in on the molecule for a moment when it reacts
-    { const want = now < st.zoomUntil ? 1 : 0; st.zoom += (want * (0.15 + 0.06 * st.fury) - st.zoom) * Math.min(1, dt * (want ? 9 : 5)); const fk = Math.min(1, dt * 8); st.fx += (st.focus.x - st.fx) * fk; st.fz += (st.focus.z - st.fz) * fk; }
+    { const want = now < st.zoomUntil ? 1 : 0; st.zoom += (want * (0.035 + 0.03 * st.fury) - st.zoom) * Math.min(1, dt * (want ? 9 : 5)); const fk = Math.min(1, dt * 8); st.fx += (st.focus.x - st.fx) * fk; st.fz += (st.focus.z - st.fz) * fk; }
     const zk = st.zoom, hx = (Math.random() - 0.5) * sh * 0.6, hz = (Math.random() - 0.5) * sh * 0.6;
     cam.position.set(CAM.x + (st.fx - CAM.x) * zk + hx, CAM.y + (16 - CAM.y) * zk, CAM.z + (st.fz + 12 - CAM.z) * zk + hz);
     cam.lookAt(LOOKAT.x + (st.fx - LOOKAT.x) * zk, 0.8 * zk, LOOKAT.z + (st.fz - LOOKAT.z) * zk);
