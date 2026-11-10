@@ -559,7 +559,7 @@ function start(app) {
         else if (e.src === 'family') { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, (K ? K.name + ' ' : '') + txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
-        if (PLAIN && e.val && (e.src === 'bottle' || piece || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: last.z - 1.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
+        if (PLAIN && e.val && (e.src === 'bottle' || piece || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: under() + 0.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
         st.shake = Math.max(st.shake, (big ? 0.7 : e.src === 'iso' ? 0.5 : 0.2) * (1 + 1.0 * f));
         if (f >= 0.5 && k % 2 === 0) slash(PART[e.part]);
         sfx.lock(Math.min(12, k + g.cur.path.length));
@@ -608,6 +608,8 @@ function start(app) {
   }
   // reactions that fold the molecule into a new shape: the model is settled fully first, and the move is slow enough to follow
   const FOLDS = { cyclize: 1, snap: 1, aromatize: 1 };
+  // the clear lane just below the molecule as it stands
+  const under = () => { let d = 6; try { if (center) d = deepOf(center) * center.group.scale.x; } catch (e) { d = 6; } return Math.min(7.4, C0.z + d / 2 + 0.9); };
   // ?self=auto: a molecule that has been set off also reacts with itself. Otherwise the player does it: when the
   // molecule could react with itself, a twist stands under it, once a page. It uses none of the page's reactions.
   try { P.SELFMODE.auto = new URLSearchParams(root.location.search).get('self') === 'auto'; } catch (e) { /* default */ }
@@ -869,7 +871,7 @@ function start(app) {
       if (st.kitHover === i) { const h0 = px(sideK ? { x: kp.x + 9, z: kp.z - 1.2 } : KITV === 'back' ? { x: kp.x, z: kp.z + 5 } : { x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
         hand(x, 28); wrap(x, q.note, 380).forEach((ln, j) => { x.lineWidth = 12; x.strokeText(ln, h0[0], h0[1] + 34 + j * 30); x.fillStyle = PENCIL; x.fillText(ln, h0[0], h0[1] + 34 + j * 30); }); }
-      if (age < 0.7) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
+      if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
@@ -893,7 +895,7 @@ function start(app) {
     st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.lane > 0, c = px({ x: GAIN.x, z: GAIN.z - f.lane * 2.6 - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
-      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x + 2.2, z: CALL.z - 0.6 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
+      const k = (now - st.call.t) / 1400, c = px({ x: CALL.x + 4.6, z: CALL.z - 0.4 }), pop = (k < 0.07 ? 0.3 + 14 * k : k < 0.14 ? 1.28 - 4 * (k - 0.07) : 1) * Math.min(1.5, 1 + 0.07 * (st.chainN || 0)), al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
       x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al;
       if (st.call.ticks) { const n = st.call.ticks, w = (n > 10 ? 3 : n) * 110; swipe(x, [-w / 2 - 40, -20], [w / 2 + 40, -28], 120); tickRow(x, 0, -24, n, 92, st.call.col); }
       else {
@@ -924,12 +926,12 @@ function start(app) {
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // bonuses in flight: from where they were earned to the points or to the multiplier
     if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 80, mp2[1] - 34], m: [mp2[0] + 335, mp2[1] - 34] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
-      st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const e = k * k * (3 - 2 * k), A = px(m.a), B = tgt[m.part], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 80 * Math.sin(Math.PI * e);
+      st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const e = k * k * (3 - 2 * k), A = px(m.a), B = tgt[m.part], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e + 26 * Math.sin(Math.PI * e);
         marker(x, 42 - 12 * e); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(m.txt, cx, cy); x.fillStyle = m.col; x.fillText(m.txt, cx, cy); }); dirty = true; }
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
-      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: F.b.x, z: F.b.z - 4.1 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
+      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: F.b.x, z: under() + 1.9 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
       const landed = u >= 1, k2 = landed ? (age - F.trav) / F.hold : 0, sc = 1.25 + (landed ? 0.4 * Math.max(0, 1 - k2 * 6) : 0);
       x.save(); x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha = k2 > 0.75 ? 1 - (k2 - 0.75) / 0.25 : 1;
       if (!landed) chip(x, F.tl[0], 0, 0, true);
@@ -945,6 +947,7 @@ function start(app) {
       x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
       hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) coin(x, c[0] + tw / 2 + 60 + n * 56, c[1] - 36, 22);
       x.fillText(st.pass ? '' : run.beaten + ' beaten    best ' + best, c[0], c[1] + 80);
+      { const nx = px({ x: 12, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; marker(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
     ink.t.needsUpdate = true;
   }
