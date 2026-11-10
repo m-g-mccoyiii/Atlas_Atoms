@@ -26,7 +26,7 @@ function start(app) {
   ren.setPixelRatio(Math.min(2, root.devicePixelRatio || 1)); ren.outputEncoding = T.sRGBEncoding;
   ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
   // a look being tried, see kitart.js
-  const LOOK = (() => { try { return new URLSearchParams(root.location.search).get('look') || 'now'; } catch (e) { return 'now'; } })(); AA.rxKit.K.look = LOOK;
+  const LOOK = (() => { try { return new URLSearchParams(root.location.search).get('look') || 'toy'; } catch (e) { return 'toy'; } })(); AA.rxKit.K.look = LOOK;
   const scene = new T.Scene(); scene.background = lin('#e9e2d0');
   const cam = new T.PerspectiveCamera(34, 1, 0.5, 200), CAM = new T.Vector3(0, 43, 22.6), LOOKAT = new T.Vector3(0, 0, 0.6);
   const camDir = LOOKAT.clone().sub(CAM).normalize();
@@ -87,29 +87,39 @@ function start(app) {
   // distance. The middle molecule is always drawn in full. Nothing is ringed in 3D: what changed is circled in ink
   // on the page under it, see marksOf.
   function buildMol(model, rings, lean) {
-    const grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(); let low = 1e9, n = 0;
+    const grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = []; let low = 1e9, n = 0;
     if (lean) model.atoms.forEach(a => { if (a.el === 'H' && model.neighbors(a).every(q => q.atom.el === 'C')) skip.add(a); });
     model.atoms.forEach(a => { if (skip.has(a)) return; c.add(new T.Vector3(a.x, a.y, a.z)); n++; }); c.divideScalar(n || 1);
     model.atoms.forEach(a => { const p = new T.Vector3(a.x, a.y, a.z).sub(c).applyQuaternion(align); at.set(a, p); if (!skip.has(a)) low = Math.min(low, p.y - BALL(a.el)); });
     at.forEach(p => { p.y += 0.5 - low; });
     model.atoms.forEach(a => {
       if (skip.has(a)) return;
-      const p = at.get(a), R = BALL(a.el);
-      add(SPH, ballMat(a.el), p.x, p.y, p.z, grp).scale.setScalar(R);
-      if (a.iso) collar(grp, p, R, ISOC[a.iso]);
-      if (!lean || (a.el !== 'C' && a.el !== 'H')) { const sp = new T.Sprite(letterMat(a.el)); sp.position.copy(p).addScaledVector(camDir, -R * 1.04); sp.scale.setScalar(R * 1.25); grp.add(sp); }
+      const R = BALL(a.el), b = { R, mesh: add(SPH, ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
+      if (a.iso) b.collar = collar(grp, new T.Vector3(), R, ISOC[a.iso]);
+      if (!lean || (a.el !== 'C' && a.el !== 'H')) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); }
+      balls.set(a, b);
     });
-    model.bonds.forEach(b => {
-      const A = at.get(b.a), B = at.get(b.b); if (!A || !B || skip.has(b.a) || skip.has(b.b)) return;
-      const u = B.clone().sub(A), len = u.length(); if (len < 1e-4) return; u.divideScalar(len);
-      const q = new T.Quaternion().setFromUnitVectors(UP, u), perp = new T.Vector3().crossVectors(u, camDir).normalize(), mid = A.clone().add(B).multiplyScalar(0.5);
-      const offs = b.order === 1 ? [0] : [-0.5, 0.5], r = b.order > 1 ? 0.06 : 0.09;
-      offs.forEach(f => [[A, mid, b.a], [mid, B, b.b]].forEach(h => { const m = add(CYL, stickMat(h[2].el), 0, 0, 0, grp); m.position.copy(h[0]).add(h[1]).multiplyScalar(0.5).addScaledVector(perp, f * 0.17); m.quaternion.copy(q); m.scale.set(r, h[0].distanceTo(h[1]), r); }));
+    model.bonds.forEach(bd => {
+      if (!balls.has(bd.a) || !balls.has(bd.b)) return;
+      const parts = []; (bd.order === 1 ? [0] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
+      sticks.push({ a: bd.a, b: bd.b, r: bd.order > 1 ? 0.06 : 0.09, parts });
     });
     scene.add(grp);
-    const m = { group: grp, at, model, hover: [], marks: [] };
+    const m = { group: grp, at, model, balls, sticks, hover: [], marks: [], hot: [] };
+    layout(m, a => at.get(a), null);
     if (rings) m.marks = marksOf(m, Array.from(rings.keys()));
     return m;
+  }
+  // Puts every ball and stick of a molecule where pos says its atoms are. grow(atom) runs 0 to 1 for an atom that is
+  // appearing, and a stick appears with the later of its two ends.
+  const _u = new T.Vector3(), _q = new T.Quaternion(), _perp = new T.Vector3(), _mid = new T.Vector3();
+  function layout(m, pos, grow) {
+    m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * 1.25 * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
+    m.sticks.forEach(s => {
+      const A = pos(s.a), B = pos(s.b), k = grow ? Math.min(grow(s.a), grow(s.b)) : 1; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
+      _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
+      s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * 0.17); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, s.r * k), fr.distanceTo(to), Math.max(0.0001, s.r * k)); pt.mesh.visible = k > 0.01; });
+    });
   }
   // Where to circle a set of atoms on the page. Each atom is carried down to the page along the line of sight, so
   // the circle sits behind it on screen. Atoms close together share one circle. Lengths are in the molecule's own units.
@@ -153,13 +163,15 @@ function start(app) {
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 12.9, MULT = { x: -22.6, z: BAND }, MADE = { x: -11.6, z: 9.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 14, z: 3.2 }, CALL = { x: 0, z: -3.7 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier);
   const PICKX = [-15, 0, 15];
+  // the molecule in the middle while it is changing from what it was to what it is
+  let morph = null;
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
   const callout = (text, sub, col, ticks) => { st.call = { text, sub: sub || '', col: col || INK, ticks: ticks || 0, t: performance.now() }; };
@@ -221,14 +233,14 @@ function start(app) {
     });
     st.hover = -1; setHover(-1); dirty = true;
   }
-  function clearRound() { tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
+  function clearRound() { morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
     st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
     clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
     g = P.runBegin(run, run.feed, true); st.quota = run.quota; st.E = g.E; st.R = g.R;
-    setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
+    setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3); st.sc = SC_MAIN;
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
   // between rounds: three things on the page, take one
@@ -260,7 +272,18 @@ function start(app) {
   // between runs: what the run paid, and the suppliers that can be opened with it
   function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten + (run.bonus || 0); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
   function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
-  function setHover(i) { st.hover = i; dirty = true; }
+  // Pointing at a reaction works out what it would do, so the page can show it before the click
+  function setHover(i) {
+    st.hover = i; st.peek = null; st.willFire = null;
+    const s = st.mode === 'play' && g && slots[i], o = s && s.o;
+    if (o && center && center.model === g.m) { const pk = P.peek(g, o); pk.marks = marksOf(center, o.atoms || []); pk.col = rgb(colOf(s.id)); st.peek = pk; st.willFire = new Set(pk.fires); }
+    dirty = true;
+  }
+  // finishes at once whatever the last reaction was still playing, so that the next one can start
+  function flush() {
+    if (morph) { layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
+    if (st.pending) { const pd = st.pending; st.pending = null; pd.ids.forEach(clearTimeout); pd.final(); }
+  }
   function endRound() {
     st.mode = 'done'; st.call = null; st.pass = g.total >= st.quota;
     if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
@@ -270,6 +293,7 @@ function start(app) {
   }
   function nextPage() {
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
+    flush(); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center); freeMol(center); center = buildMol(g.m, null, false); SC_MAIN = fitMain(center); place(center, C0, st.sc); center.hot = g.cur.path.length ? marksOf(center, Array.from(g.cur.fresh)) : []; st.pop = 1;
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh();
     // a page on which no reagent acts turns itself
     if (!slots.some(q => q && q.o)) { const tok = st.tok; st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 700); }
@@ -277,7 +301,8 @@ function start(app) {
   // Everything the player sees and hears when a reaction lands. Each change arrives on its own beat, in the order it
   // was scored: the reagent at each place, then the row, then each piece of equipment. Returns how long it takes.
   const PART = { p: '#1f5fbf', h: '#1f5fbf', r: '#a87a00', e: '#b0189a' };
-  function land(o, before, wasOpen, mol, reagent) {
+  function land(o, before, wasOpen, mol, reagent, lab, from) {
+    const ids = [], later = (fn, ms) => ids.push(setTimeout(fn, ms)), placeAt = [];
     const tok = st.tok, t = g.trail[g.trail.length - 1], beats = t.ev, n = beats.length, rcol = rgb(colOf(reagent));
     // where on the page each place of the new molecule will be once it has landed in the middle
     const sc = SC_MAIN, marks = (mol && mol.marks) || [], spot = k => { const m = marks.length ? marks[k % marks.length] : { x: 0, z: 0 }; return { x: C0.x + m.x * sc, z: C0.z + m.z * sc }; };
@@ -292,16 +317,16 @@ function start(app) {
     let at = 300, gap = 210, place = -1, last = { x: C0.x, z: C0.z };
     beats.forEach((e, k) => {
       const when = at; at += gap; gap = Math.max(70, gap * 0.88);
-      if (e.src === 'bottle') place++;
+      if (e.src === 'bottle') { place++; placeAt.push(when); const kk = place; later(() => { if (tok === st.tok) st.strokes.push({ a: lab, b: spot(kk), col: rcol, t: performance.now(), dur: 150 }); }, Math.max(0, when - 150)); }
       const pl = place;
-      setTimeout(() => {
+      later(() => {
         if (tok !== st.tok) return;
         const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
         st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
         const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
         if (e.src === 'bottle') { last = spot(pl); ping({ x: last.x, z: last.z - (pl % 2) * 1.3 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 30 * f), rcol); }
         else if (e.src === 'iso') { const h = heavy(e.iso) || last; ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); }
-        else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
+        else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); st.strokes.push({ a: last, b: { x: ko.grp.position.x, z: ko.grp.position.z - 2.4 }, col: PART[e.part], t: performance.now(), dur: 130 }); } }
         else if (e.src === 'brief') st.floats.push({ txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
         else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
@@ -310,8 +335,12 @@ function start(app) {
         sfx.lock(Math.min(12, k + g.cur.path.length));
       }, when);
     });
-    const dur = at + 60;
-    setTimeout(() => {
+    const dur = at + 60, lastPlace = placeAt.length ? placeAt[placeAt.length - 1] : 300;
+    // every atom sets off for its new position when the reagent reaches the place nearest to it
+    { const start = new Map(), cur = new Map(); let end = 0;
+      mol.balls.forEach((b, a) => { const q = mol.at.get(a), tt = -q.y / camDir.y, gx = q.x + camDir.x * tt, gz = q.z + camDir.z * tt; let bi = 0, bd = 1e9; marks.forEach((m, k) => { const d = Math.hypot(m.x - gx, m.z - gz); if (d < bd) { bd = d; bi = k; } }); const s0 = placeAt.length ? placeAt[Math.min(bi, placeAt.length - 1)] : 300; start.set(a, s0); cur.set(a, new T.Vector3()); end = Math.max(end, s0 + 480); });
+      morph = { m: mol, from: from || new Map(), start, cur, t0: performance.now(), end }; }
+    const final = () => {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
       st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g);
@@ -329,33 +358,35 @@ function start(app) {
       if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); spray(90, GREEN, true); burst3(FLASK.x, 0.2, FLASK.z, 30, flask.hex); }
       else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); spray(120, flask.hex, true); burst3(FLASK.x, 0.2, FLASK.z, 50, flask.hex); }
       dirty = true;
-    }, dur);
-    return dur;
+    };
+    ids.push(setTimeout(() => { st.pending = null; final(); }, dur)); st.pending = { ids, final };
+    return { dur, unlock: Math.min(dur, lastPlace + 430) };
   }
   function pick(i) {
-    const s = slots[i], o = s && s.o, chosen = prods[i];
-    if (!o || !chosen || st.mode !== 'play') return;
-    setHover(-1); st.mode = 'move';
-    const prev = center, k = g.pageSteps, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0;
+    const s = slots[i], o = s && s.o;
+    if (!o || !prods[i] || st.mode !== 'play') return;
+    flush(); setHover(-1); st.mode = 'move';
+    const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map(), lab = LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 };
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o);
-    const dur = land(o, before, wasOpen, chosen, s.id);
-    prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
-    // the reaction: sparks and bits fly from every place it acts, and the view pushes in
-    { const sc = prev.group.scale.x, col = rgb(colOf(s.id)); o.atoms.forEach(a => { const q = prev.at.get(a); if (!q || a.el === 'H') return; const wx = C0.x + q.x * sc, wy = q.y * sc, wz = C0.z + q.z * sc; burst3(wx, wy, wz, 12, col); }); }
+    // The molecule changes where it stands. Every atom that is still there moves from where it was to where it now
+    // belongs, and atoms that are new grow in at the place the reagent reaches.
+    const nm = buildMol(g.m, null, false); place(nm, C0, st.sc);
+    if (o.map) o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && nm.balls.has(na)) from.set(na, p.clone()); });
+    nm.marks = marksOf(nm, o.r.made || []);
+    prods.forEach(m => { if (m) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.14, () => freeMol(m)); }); prods = [];
+    tweens = tweens.filter(tw => tw.m !== prev); freeMol(prev); center = nm; SC_MAIN = fitMain(nm);
+    const L = land(o, before, wasOpen, nm, s.id, lab, from);
     st.zoomT = performance.now();
-    tween(prev, HIST, 0.02, 0.24, () => freeMol(prev)); tween(chosen, C0, SC_MAIN, 0.26);
-    // the rules move on by the clock, not by the drawing, so a stalled frame cannot leave the page stuck
+    // the next choice opens as soon as the places have changed. Equipment goes on firing while the player looks
     setTimeout(() => {
-      if (tok !== st.tok) return;
-      tweens = tweens.filter(tw => tw.m !== chosen && tw.m !== prev); freeMol(prev);
-      freeMol(chosen); setAlign(g.m); center = buildMol(g.m, null, false); SC_MAIN = fitMain(center); place(center, C0, SC_MAIN); st.mode = 'play';
-      // the new molecule lands with a bounce, and what changed throws off a second, smaller spray
-      st.pop = 1; { const col = rgb(colOf(s.id)); o.r.made.forEach(a => { const q = center.at.get(a); if (q && a.el !== 'H') burst3(C0.x + q.x * SC_MAIN, q.y * SC_MAIN, C0.z + q.z * SC_MAIN, 5, col); }); }
-      if (g.over) return endRound();
-      refresh();
+      if (tok !== st.tok || center !== nm) return;
+      nm.hot = g.cur.path.length ? marksOf(nm, Array.from(g.cur.fresh)) : [];
+      if (g.over) return;
+      st.mode = 'play'; refresh();
       // a page with nothing left to do turns itself
-      if (!slots.some(q => q && q.o)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 520); }
-    }, Math.max(290, dur + 60));
+      if (!slots.some(q => q && q.o)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, Math.max(520, L.dur - L.unlock + 300)); }
+    }, L.unlock);
+    if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
     dirty = true;
   }
   const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.pass) { run.round++; showPicks(); } else showSuppliers(); };
@@ -471,6 +502,13 @@ function start(app) {
     // circled in ink on the page: what each product changed, and on the middle molecule where the reagent under the pointer acts
     const circle = (m, k, col, lw) => { const sc = m.group.scale.x, c = px({ x: m.group.position.x + k.x * sc, z: m.group.position.z + k.z * sc }), r = k.r * sc * U; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.beginPath(); x.ellipse(c[0], c[1], r * 1.05, r, 0.1, 0.25, 6.7); x.stroke(); };
     if (play) prods.forEach(m => { if (m && m.group.scale.x > 0.3) m.marks.forEach(k => circle(m, k, m.col, 6)); });
+    // the atoms the last reaction changed stay marked in yellow while the row is open: react there and the row goes on
+    if (center && center.hot.length && g.cur.path.length && st.mode !== 'done') { const pk = st.peek, sc = center.group.scale.x, pulse = 0.45 + 0.2 * Math.sin(now / 220);
+      center.hot.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = k.r * sc * U; x.globalAlpha = pk && pk.breaks ? 0.3 : pk ? 0.95 : pulse; x.fillStyle = pk && pk.breaks ? 'rgb(160,160,160)' : 'rgb(255,214,0)'; x.beginPath(); x.ellipse(c[0], c[1], r * 1.05, r * 0.8, 0.1, 0, 6.3); x.fill(); x.globalAlpha = 1; }); dirty = true; }
+    // pointing at a reaction rings the places it will change, in its color
+    if (st.peek && center) { x.setLineDash([18, 14]); st.peek.marks.forEach(k => circle(center, k, st.peek.col, 9)); x.setLineDash([]); }
+    // ink that runs from a reagent to a place, and from a place to the equipment it sets off
+    st.strokes = st.strokes.filter(q => now - q.t < q.dur + 320); st.strokes.forEach(q => { const k = Math.min(1, (now - q.t) / q.dur), a = px(q.a), b = px(q.b); x.globalAlpha = k < 1 ? 0.9 : 0.9 * (1 - (now - q.t - q.dur) / 320); swipe(x, a, [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], 8, q.col); x.globalAlpha = 1; });
     if (play && st.hover >= 0 && slots[st.hover] && slots[st.hover].o && center) marksOf(center, slots[st.hover].o.atoms).forEach(k => circle(center, k, rgb(colOf(slots[st.hover].id)), 9));
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     if (play) slots.forEach((s, i) => {
@@ -497,6 +535,9 @@ function start(app) {
         fit(x, q[1], 64 * k, 136, marker); x.textAlign = 'center'; x.fillStyle = live ? PART[q[0]] : FAINT; x.fillText(q[1], cx, mp[1]);
         glyph(x, q[0], cx, mp[1] - 84, 40, live ? PART[q[0]] : FAINT);
       });
+      // what the reaction under the pointer would add to each number, and what it would make
+      if (st.peek) { const pk = st.peek; [['p', pk.dP], ['r', pk.dR], ['e', pk.dE]].forEach((q, i) => { if (Math.abs(q[1]) < 0.005) return; marker(x, 34); x.textAlign = 'center'; x.fillStyle = q[1] < 0 ? PENCIL : PART[q[0]]; x.fillText((q[1] > 0 ? '+' : '') + fmtB(q[1]), mp[0] + 70 + i * 150, mp[1] - 120); });
+        const gq = px(MADE); marker(x, 46); x.textAlign = 'right'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(pk.gain), gq[0], gq[1] - 92); }
       // one small chevron for each reaction in the row that is open
       for (let k = 0; k < Math.min(9, len); k++) glyph(x, 'r', mp[0] + 220 - (Math.min(9, len) - 1) * 9 + k * 18, mp[1] + 34, 16, PART.r);
     }
@@ -597,15 +638,19 @@ function start(app) {
       if (k >= 1) { if (tw.done) ended.push(tw.done); return false; } return true;
     });
     ended.forEach(f => f());
+    if (morph) { const el = now - morph.t0, ease = k => 1 - Math.pow(1 - k, 3), back = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), kOf = (a, d) => Math.max(0, Math.min(1, (el - morph.start.get(a)) / d));
+      if (el > morph.end) { layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
+      else layout(morph.m, a => { const fr = morph.from.get(a), to = morph.m.at.get(a); return fr ? morph.cur.get(a).copy(fr).lerp(to, ease(kOf(a, 380))) : to; }, a => (morph.from.has(a) ? 1 : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300))));
+      dirty = true; }
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
     if (st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief') dirty = true;
     if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0.05 * Math.sin(now / 1000 * 1.3 + i * 1.7); } });
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 16); dirty = true; }
     pickObjs.forEach(k => { k.grp.rotation.y += dt * 0.6; k.grp.position.y = st.hover === k.slot ? 0.8 : 0; });
-    kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 2.4 : 0; k.grp.rotation.y = k.yaw + (age < 0.6 ? (1 - Math.pow(1 - age / 0.6, 3)) * 6.283 : 0); k.grp.scale.setScalar((k.base || 1) * (age < 0.28 ? 1.3 : 1)); if (age < 0.7) dirty = true; });
+    kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = (age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 2.4 : 0) + (st.willFire && st.willFire.has(k.id) ? 0.35 + 0.25 * Math.sin(now / 90) : 0); if (st.willFire && st.willFire.size) dirty = true; k.grp.rotation.y = k.yaw + (age < 0.6 ? (1 - Math.pow(1 - age / 0.6, 3)) * 6.283 : 0); k.grp.scale.setScalar((k.base || 1) * (age < 0.28 ? 1.3 : 1)); if (age < 0.7) dirty = true; });
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
-    if (st.floats.length || st.blots.length || st.pings.length || st.slashes.length || st.call) dirty = true;
+    if (st.floats.length || st.blots.length || st.pings.length || st.slashes.length || st.strokes.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
     // the view pushes in on the molecule for a moment when it reacts
     { const age = (now - st.zoomT) / 1000, want = age < 0.12 ? age / 0.12 : age < 0.5 ? 1 : age < 0.85 ? 1 - (age - 0.5) / 0.35 : 0; st.zoom += (want * (0.1 + 0.08 * st.fury) - st.zoom) * Math.min(1, dt * 18); }
@@ -619,7 +664,7 @@ function start(app) {
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); center.group.scale.setScalar(SC_MAIN * sp); center.group.position.y = 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); }
+    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 5); center.group.scale.setScalar(st.sc * sp); center.group.position.y = 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); }
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'); flask.grp.visible = on; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5); flask.grp.rotation.z = boil ? (Math.random() - 0.5) * 0.09 * boil : 0; flask.grp.position.y = boil ? Math.random() * 0.25 * boil : 0; if (boil) dirty = true; } }
     kitObjs.forEach((k, i) => { k.grp.rotation.z = (0.03 + 0.1 * heat) * Math.sin(tt * (3 + 9 * heat) + i * 2); });

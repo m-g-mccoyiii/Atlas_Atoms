@@ -93,7 +93,7 @@ function tryOne(g, m, id) {
   cur.fresh = fresh;
   const r = RUN.react(g.run, cm.model, id);
   cur.fresh = keep;
-  return { model: cm.model, r };
+  return { model: cm.model, r, map: cm.map };
 }
 // reactions allowed on a page
 const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + (g.more || 0);
@@ -105,7 +105,7 @@ function options(g) {
     const sites = RX.CARDS[id].find(g.m); if (!sites.length) return;
     const t = tryOne(g, g.m, id), r = t.r; if (!r.hits && !r.spoiled) return;
     const loop = cur.seen.has(r.sig), spoil = r.spoiled > 0;
-    out[id] = { id, model: t.model, r, loop, spoil, cont: r.hits > 0 && r.hot && cur.path.length > 0 && (!loop || g.gear.includes('recycler')), atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
+    out[id] = { id, model: t.model, map: t.map, r, loop, spoil, cont: r.hits > 0 && r.hot && cur.path.length > 0 && (!loop || g.gear.includes('recycler')), atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
   });
   return out;
 }
@@ -295,6 +295,16 @@ function scoreRound(g, o) {
   g.tally.places += r.hits; if (loop) g.tally.loops++; if (first) g.tally.kinds++;
   return { ev, rare };
 }
+// What a reaction would do if it were taken now, without taking it: what it adds to each number, what it makes,
+// whether it breaks the row and which pieces of equipment it sets off.
+function peek(g, o) {
+  const cur = g.cur, sv = { P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally) }, before = made(g), brk = breaks(g, o);
+  if (brk) close(g);
+  const sc = scoreRound(g, o); if (o.finish) g.E += SYN.finishExtra * o.r.hits;
+  const out = { gain: made(g) - before, dP: g.P - (brk ? 0 : sv.P), dR: g.R - sv.R, dE: g.E - sv.E, breaks: brk, fires: sc.ev.filter(e => GEARS[e.src]).map(e => e.src) };
+  g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally;
+  return out;
+}
 function synTake(g, o) {
   const cur = g.cur;
   if (breaks(g, o)) { close(g); g.tally.breaks++; }
@@ -309,7 +319,7 @@ function turn(g, rnd) { if (g.page >= pagesOf(g)) return false; g.page++; synDea
 function finishOpt(g) {
   if (g.page < pagesOf(g) || !RX.CARDS[SYN.finish].find(g.m).length) return null;
   const t = tryOne(g, g.m, SYN.finish), r = t.r; if (!r.hits) return null;
-  return { id: SYN.finish, model: t.model, r, finish: true, loop: false, spoil: false, cont: true, atoms: RX.CARDS[SYN.finish].find(g.m).reduce((a, x) => a.concat(x.atoms), []) };
+  return { id: SYN.finish, model: t.model, map: t.map, r, finish: true, loop: false, spoil: false, cont: true, atoms: RX.CARDS[SYN.finish].find(g.m).reduce((a, x) => a.concat(x.atoms), []) };
 }
 function synEnd(g) { close(g); if (g.gear.includes('pact')) g.E *= 3; g.total = made(g); g.over = true; }
 function synFinish(g, o) {
@@ -471,6 +481,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + SYN.place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
