@@ -72,3 +72,15 @@ The player chooses how a run is weighted before it starts, the way Balatro has d
 - Reagents: start with five reagents and one use each, or three and three uses.
 
 None of these are built.
+
+## Sigils on the ground (idea, not decided)
+
+Owner's note, 2026-11-10: alchemy should eventually put sigils on the ground. It belongs to the run, not to a piece of equipment. What it does is open.
+
+It fits the page: a sigil is ink on the paper under the molecule, which is where every reading already lives. Three ways it could work:
+
+1. The sigil is the term set before a run. One circle is chosen at the start and stays drawn under the molecule for the whole run. It carries the odds and stakes, the way a deck does in Balatro.
+2. The sigil is a set of places. The circle has points, and a piece of equipment standing on a point is changed: it fires twice, or is stronger at a price. Where a piece stands starts to matter, as joker order does in Balatro.
+3. The sigil is drawn during the run. Each round beaten adds a stroke. A finished sigil sets off one large event and is wiped.
+
+1 and 2 work together: the circle picked before a run sets the terms, and its points are where equipment stands. 3 is a separate long build-up and could come later.
