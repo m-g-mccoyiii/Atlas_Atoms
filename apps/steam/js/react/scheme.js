@@ -140,6 +140,11 @@ function start(app) {
       const start = bfs(bfs(nodes[0])); pos.set(start, { x: 0, y: 0 }); grow(start, -Math.PI / 6, 1);
     }
     nodes.forEach(a => { if (!pos.has(a)) pos.set(a, { x: 0, y: 0 }); });
+    // atoms that landed on top of each other are pushed apart, while every bond is pulled back toward its length
+    for (let it = 0; it < 160; it++) { let moved = false;
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const p = pos.get(nodes[i]), q = pos.get(nodes[j]); let dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy); const min = adj.get(nodes[i]).includes(nodes[j]) ? L * 0.8 : L * 1.08; if (d >= min) continue; if (d < 1e-3) { dx = Math.cos(i * 2.4 + j); dy = Math.sin(i * 2.4 + j); d = 1; } const push = (min - d) / 2 + 0.01; p.x -= dx / d * push; p.y -= dy / d * push; q.x += dx / d * push; q.y += dy / d * push; moved = true; }
+      if (!moved) break;
+      nodes.forEach(n => adj.get(n).forEach(m => { const p = pos.get(n), q = pos.get(m), dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1e-3, df = (d - L) / d * 0.2; p.x += dx * df; p.y += dy * df; q.x -= dx * df; q.y -= dy * df; })); }
     // hydrogens that are drawn: out from their atom, away from its neighbours
     md.atoms.forEach(a => { if (skip.has(a) || a.el !== 'H') return; const par = md.neighbors(a).map(q => q.atom).find(q => pos.has(q)); if (!par) { pos.set(a, { x: 0, y: 0 }); return; } const p = pos.get(par); let ax = 0, ay = 0; adj.get(par).forEach(n => { const q = pos.get(n); ax += q.x - p.x; ay += q.y - p.y; }); const d = Math.hypot(ax, ay); const ux = d > 0.01 ? -ax / d : 0.87, uy = d > 0.01 ? -ay / d : 0.5; pos.set(a, { x: p.x + ux * L * 0.62, y: p.y + uy * L * 0.62 }); });
     // long way lies left to right; then whichever mirror image is nearest to how it stood before
