@@ -18,7 +18,7 @@ const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
 const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
 // the left column reads down one edge: what is kept, the round and its pages, this page's reactions, the count, the three numbers
-const EDGE = -22.6, STEP = { x: -21.6, z: 0.9 }, PAGES = { x: -14.2, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const EDGE = -22.6, STEP = { x: -21.6, z: 0.9 }, PAGES = { x: -15.2, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -69,7 +69,7 @@ function start(app) {
   // Cuts to what is drawn on top of the molecule, tried with ?cut= and any of the letters:
   //   a: one kind of mark at a time.  b: no group letters.  c: heavy atoms are tinted, no collar.  d: choices in a column at the side.
   const CUT = (() => { try { const v = new URLSearchParams(root.location.search).get('cut'); return v == null ? 'abcd' : v; } catch (e) { return 'abcd'; } })(), SIDE = CUT.includes('d'), mIso = {};
-  if (SIDE) { C0.x = 0.5; C0.z = 0.6; }
+  if (SIDE) { C0.x = -0.6; C0.z = 0.2; }
   const isoMat = a => { const k = a.el + a.iso; return mIso[k] || (mIso[k] = std({ color: new T.Color(E[a.el].color).lerp(new T.Color(ISOC[a.iso]), 0.55).convertSRGBToLinear(), emissive: lin(ISOC[a.iso]), emissiveIntensity: 0.45, roughness: 0.3 })); };
   const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x1f2a55), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
   function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 50 : 66) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#1f2a55'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
@@ -193,11 +193,11 @@ function start(app) {
   }
   // Where to circle a set of atoms on the page. Each atom is carried down to the page along the line of sight, so
   // the circle sits behind it on screen. Atoms close together share one circle. Lengths are in the molecule's own units.
-  function marksOf(m, atoms) {
+  function marksOf(m, atoms, join, pad) {
     const pts = []; atoms.forEach(a => { const p = m.at.get(a); if (!p || a.el === 'H') return; const t = -p.y / camDir.y; pts.push({ x: p.x + camDir.x * t, z: p.z + camDir.z * t }); });
     const out = [];
-    pts.forEach(p => { const o = out.find(q => q.pts.some(t => Math.hypot(t.x - p.x, t.z - p.z) < 2.3)); if (o) o.pts.push(p); else out.push({ pts: [p] }); });
-    out.forEach(o => { o.x = o.pts.reduce((t, q) => t + q.x, 0) / o.pts.length; o.z = o.pts.reduce((t, q) => t + q.z, 0) / o.pts.length; o.r = Math.max(...o.pts.map(q => Math.hypot(q.x - o.x, q.z - o.z))) + 0.7; });
+    pts.forEach(p => { const o = out.find(q => q.pts.some(t => Math.hypot(t.x - p.x, t.z - p.z) < (join || 2.3))); if (o) o.pts.push(p); else out.push({ pts: [p] }); });
+    out.forEach(o => { o.x = o.pts.reduce((t, q) => t + q.x, 0) / o.pts.length; o.z = o.pts.reduce((t, q) => t + q.z, 0) / o.pts.length; o.r = Math.max(...o.pts.map(q => Math.hypot(q.x - o.x, q.z - o.z))) + (pad || 0.7); });
     return out;
   }
   // The groups a reagent can act on, each with where it sits on the page under the molecule: C=C, C=O, OH and Cl.
@@ -211,7 +211,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, 22 / spanOf(m), 12.5 / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.2, 19 / spanOf(m), 10.5 / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -241,7 +241,7 @@ function start(app) {
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 12.9, MULT = { x: EDGE - 0.6, z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
-  if (SIDE) { GAIN.x = -5; GAIN.z = -11.6; CALL.x = 0; CALL.z = -10; }
+  if (SIDE) { GAIN.x = -12.6; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
@@ -255,7 +255,7 @@ function start(app) {
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
   const callout = (text, sub, col, ticks) => { st.call = { text, sub: sub || '', col: col || INK, ticks: ticks || 0, t: performance.now() }; };
-  const spray = (n, col, wide) => { const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 22 : 7); st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 22 : 10), t: now, col }); } };
+  const spray = (n, col, wide) => { const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 12 : 6); if (k % 3) continue; st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 12 : 8), t: now, col }); } };
 
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
   let kitObjs = [];
@@ -323,7 +323,7 @@ function start(app) {
   })();
   // What leaves a molecule and is not caught is kept at the top left: water in a beaker, hydrogen in a balloon, and
   // one stroke on a tally for every by-product. A full beaker or balloon is spent with a click.
-  const BEAK = { x: -21.6, z: -7.6 }, BALN = { x: -17.4, z: -7.6 }, TALLY = { x: -14.2, z: -8.6 };
+  const BEAK = { x: -21.6, z: -7.6 }, BALN = { x: -17.4, z: -7.6 }, TALLY = { x: -13.4, z: -6.4 };
   const keep = (() => {
     const KM = AA.rxKit.mat, bk = new T.Group(), bl = new T.Group(), waterM = KM(T, 0x3a6fd0, 0.3), red = KM(T, 0xd6453a, 0.5);
     add(new T.CylinderGeometry(0.85, 0.8, 1.5, 24), GLASS, 0, 0.75, 0, bk); const water = add(new T.CylinderGeometry(0.76, 0.74, 1, 20), waterM, 0, 0.1, 0, bk); water.userData.plain = true;
@@ -343,12 +343,12 @@ function start(app) {
     const fin = live && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(4.2, 18 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -12 + k * gap + gap / 2; SPOT[i] = { x: 21.6, z }; LAB[i] = { x: 15.6, z: z + 0.4 }; SCS[i] = 0.4; }); } }
+      if (SIDE) { const gap = Math.min(4.2, 17 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -10.4 + k * gap + gap / 2; SPOT[i] = { x: 22.4, z }; LAB[i] = { x: 16.8, z: z + 0.4 }; SCS[i] = 0.4; }); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(160);
       const rings = new Map(), c = rgb(colOf(s.id)); s.o.r.made.forEach(a => rings.set(a, c));
-      const m = buildMol(s.o.model, rings, true); m.col = c; SCS[i] = SIDE ? Math.max(0.2, Math.min(0.55, 6.5 / spanOf(m))) : Math.max(0.3, Math.min(1.05, (SLOTW - 1.6) / spanOf(m))); place(m, SPOT[i], 0.01); tween(m, SPOT[i], SCS[i], 0.16 + (i % 7) * 0.03); prods[i] = m;
+      const m = buildMol(s.o.model, rings, true); m.col = c; SCS[i] = SIDE ? Math.max(0.14, Math.min(0.3, 3.4 / spanOf(m))) : Math.max(0.3, Math.min(1.05, (SLOTW - 1.6) / spanOf(m))); place(m, SPOT[i], 0.01); tween(m, SPOT[i], SCS[i], 0.16 + (i % 7) * 0.03); prods[i] = m;
     });
     st.hover = -1; setHover(-1); dirty = true;
   }
@@ -398,7 +398,7 @@ function start(app) {
   function setHover(i) {
     st.hover = i; st.peek = null; st.willFire = null;
     const s = st.mode === 'play' && g && slots[i], o = s && s.o;
-    if (o && center && center.model === g.m) { const pk = P.peek(g, o); pk.marks = marksOf(center, o.atoms || []); pk.col = rgb(colOf(s.id)); st.peek = pk; st.willFire = new Set(pk.fires); }
+    if (o && center && center.model === g.m) { const pk = P.peek(g, o); pk.marks = marksOf(center, o.atoms || [], 1.7, 0.55); pk.col = rgb(colOf(s.id)); st.peek = pk; st.willFire = new Set(pk.fires); }
     dirty = true;
   }
   // finishes at once whatever the last reaction was still playing, so that the next one can start
@@ -481,7 +481,7 @@ function start(app) {
       st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
       st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
       // a hot reaction leaves its mark on the paper for the rest of the round
-      if (st.mult >= 3) if (st.stains.length < 7) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 10, r: 30 + Math.random() * 70, a: 0.03 + Math.random() * 0.04, ring: Math.random() < 0.6 });
+      if (false) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 10, r: 30 + Math.random() * 70, a: 0.03 + Math.random() * 0.04, ring: Math.random() < 0.6 });
       if (route && P.FOUND[route.route] && !meta.found[P.FOUND[route.route]]) { const nid = P.FOUND[route.route]; meta.found[nid] = true; saveMeta(); if (run.extra && !run.extra.includes(nid)) run.extra.push(nid); st.floats.push({ txt: 'found ' + RX.CARDS[nid].verb.toLowerCase(), t: now, size: 70, dx: 0, col: P.RARITY.rare.col }); sfx.fanfare(); }
       if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'row +' + fmtB(route.val), PART.r); sfx.good(); st.shake = Math.max(st.shake, 1.6); spray(60, PART.r, true); }
       else if (o.finish) { callout('finished', 'extra +' + fmtB(P.SYN.finishExtra * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
@@ -707,12 +707,12 @@ function start(app) {
       x.save(); x.translate(m[0], m[1]); x.rotate((hash(s.id) - 0.5) * 0.07);
       hand(x, LABF); x.textAlign = 'center'; const tw = x.measureText(verb).width;
       if (o) { x.strokeStyle = rgb(colOf(s.id)); x.globalAlpha = hov ? 0.85 : 0.55; x.lineWidth = hov ? 22 : 15; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26 - tw / 2, 14); x.lineTo(-26 + tw / 2, 10); x.stroke(); x.globalAlpha = 1; }
-      x.fillStyle = col; x.fillText(verb, -26, 0); if (o && P.rarityOf(s.id).dots > 1) dots(x, s.id, -26, 26, 5);
+      x.fillStyle = col; x.fillText(verb, -26, 0);
       const rare = o && !s.fin && g.rare ? g.rare[s.id] : null;
       if (rare) { x.strokeStyle = '#b0189a'; x.lineWidth = 5; x.lineCap = 'round'; for (let k = 0; k < 10; k++) { const a = k * 0.628 + 0.2, r0 = tw / 2 + 60, r1 = r0 + 16 + (k % 2) * 10; x.beginPath(); x.moveTo(-26 + Math.cos(a) * r0, -18 + Math.sin(a) * r0 * 0.42); x.lineTo(-26 + Math.cos(a) * r1, -18 + Math.sin(a) * r1 * 0.42); x.stroke(); } marker(x, 34); x.fillStyle = '#b0189a'; x.fillText(rare, -26, -46); hand(x, LABF); }
       hand(x, 34); x.fillStyle = 'rgba(90,86,78,0.7)'; x.fillText(s.fin ? 'F' : String(i + 1), -26 - tw / 2 - 22, -2);
-      if (o) { hand(x, 52); x.fillStyle = col; x.fillText(String(o.r.hits), tw / 2 + 18, -2); ring(x, [tw / 2 + 19, -18], 27, 25, 4, col); if (s.fin) { hand(x, 34); x.fillStyle = PENCIL; x.fillText('last step', -26, 44); } }
-      if (!s.fin) { x.strokeStyle = o ? PENCIL : FAINT; x.lineWidth = 4; for (let k = 0; k < (g.left[s.id] || 0); k++) { x.beginPath(); x.moveTo(-26 - tw / 2 + k * 13, 32); x.lineTo(-22 - tw / 2 + k * 13, 54); x.stroke(); } }
+      if (o) { if (s.fin) { hand(x, 34); x.fillStyle = PENCIL; x.fillText('last step', -26, 44); } }
+      if (!s.fin && o) { x.fillStyle = rgb(colOf(s.id)); for (let k = 0; k < Math.min(6, g.left[s.id] || 0); k++) { x.beginPath(); x.arc(-26 - tw / 2 + 8 + k * 20, 40, 6.5, 0, 6.3); x.fill(); } }
       x.restore();
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
@@ -733,7 +733,7 @@ function start(app) {
     // equipment: a short token beside it. Its name and what it does are written out only under the pointer
     kitObjs.forEach((k, i) => {
       const q = P.GEARS[k.id], kp = KITP(i), c = px({ x: kp.x, z: kp.z + 3.6 }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
-      const tw = inkLine(x, q.tok || '', c[0], c[1], 27, INK); fit(x, q.name, 26, 145, hand); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - 40);
+      const tw = inkLine(x, q.tok || '', c[0], c[1], 30, INK); fit(x, q.name, 28, 148, hand); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - 40);
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
       if (st.kitHover === i) { const h0 = px({ x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
@@ -743,7 +743,7 @@ function start(app) {
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
-    for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
+    for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart);
     for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); swipe(x, a0, b0, 34); }
@@ -766,7 +766,7 @@ function start(app) {
       x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al;
       if (st.call.ticks) { const n = st.call.ticks, w = (n > 10 ? 3 : n) * 110; swipe(x, [-w / 2 - 40, -20], [w / 2 + 40, -28], 120); tickRow(x, 0, -24, n, 92, st.call.col); }
       else {
-        fit(x, st.call.text, 104, 900, marker); x.textAlign = 'center'; const tw = x.measureText(st.call.text).width;
+        fit(x, st.call.text, 80, 700, marker); x.textAlign = 'center'; const tw = x.measureText(st.call.text).width;
         swipe(x, [-tw / 2 - 20, -30], [tw / 2 + 20, -38], 96);
         x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, 0, 0); x.fillStyle = st.call.col; x.fillText(st.call.text, 0, 0);
         if (st.call.sub) { marker(x, 50); x.fillStyle = REDINK; x.strokeText(st.call.sub, tw / 2 + 150, -8); x.fillText(st.call.sub, tw / 2 + 150, -8); }
