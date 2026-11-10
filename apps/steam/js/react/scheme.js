@@ -146,7 +146,7 @@ function start(app) {
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
-  let run = null, picks = [], pickObjs = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
+  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier);
@@ -194,16 +194,16 @@ function start(app) {
   function clearRound() { tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
-    st.feed = Math.floor(Math.random() * P.FEEDS.length); st.tok++; st.mode = 'play'; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
-    clearRound(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
+    clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
-    g = P.runBegin(run, P.FEEDS[st.feed], true); st.quota = P.runQuota(run, P.FEEDS[st.feed]);
+    g = P.runBegin(run, run.feed, true); st.quota = P.runQuota(run, run.feed);
     setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
   // between rounds: three things on the page, take one
   function showPicks() {
-    st.tok++; st.mode = 'pick'; clearRound(); clearKit(); st.call = null; st.floats = []; st.blots = [];
+    st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = [];
     pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     picks = P.runPicks(run);
     picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') { const k = piece(o.id); k.grp.position.set(PICKX[i], 0, -2.2); k.grp.scale.setScalar(1.7); k.slot = i; pickObjs.push(k); } });
@@ -211,16 +211,29 @@ function start(app) {
   }
   function takePick(i) {
     const o = picks[i]; if (st.mode !== 'pick' || !o) return;
-    P.runTake(run, o); sfx.stamp(); st.shake = 0.6; load();
+    P.runTake(run, o); sfx.stamp(); st.shake = 0.6; showBriefs();
+  }
+  // before each round: three rounds stand on the page, each a molecule with what the round asks and what it pays
+  function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; }
+  function showBriefs() {
+    st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.hover = -1;
+    pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    briefs = P.runBriefs(run);
+    briefs.forEach((b, i) => { const mdl = P.modelOf(b.feed); setAlign(mdl); const m = buildMol(mdl, null, true), sc = Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: PICKX[i], z: -2.2 }, 0.01); tween(m, { x: PICKX[i], z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
+    sfx.feed(); dirty = true;
+  }
+  function chooseBrief(i) {
+    const b = briefs[i]; if (st.mode !== 'brief' || !b) return;
+    P.runChoose(run, b); sfx.stamp(); st.shake = 0.6; load();
   }
   function newRun() { run = P.runNew(meta.tier); showPicks(); }
   // between runs: what the run paid, and the suppliers that can be opened with it
-  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten; meta.credit += run.beaten; saveMeta(); clearRound(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.hover = -1; sfx.feed(); dirty = true; }
+  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = run.beaten + (run.bonus || 0); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.hover = -1; sfx.feed(); dirty = true; }
   function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
   function setHover(i) { st.hover = i; dirty = true; }
   function endRound() {
     st.mode = 'done'; st.pass = g.total >= st.quota;
-    if (st.pass) { run.beaten++; sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    if (st.pass) { run.beaten++; st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
@@ -242,6 +255,7 @@ function start(app) {
       st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
       const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
       if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); }
+      else if (e.src === 'brief') st.floats.push({ txt: P.BRIEF[g.brief].name + ' ' + txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
       else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
       st.shake = Math.max(st.shake, big ? 0.8 : 0.22);
       sfx.lock(Math.min(12, k + g.cur.path.length));
@@ -342,6 +356,21 @@ function start(app) {
       if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 110); x.fillStyle = st.call.col; x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, c[0], c[1] + 500); x.fillText(st.call.text, c[0], c[1] + 500); }
       ink.t.needsUpdate = true; return;
     }
+    if (st.mode === 'brief') {
+      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 300, h[1] - 36], [h[0] + 300, h[1] - 46], 110); x.fillStyle = INK; x.fillText('round ' + run.round, h[0], h[1]);
+      hand(x, 50); x.fillStyle = PENCIL; x.fillText('three to choose from', h[0], h[1] + 70);
+      briefs.forEach((b, i) => {
+        const c = px({ x: PICKX[i], z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i, pay = P.payText(b);
+        hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 205, c[1] - 6);
+        fit(x, B.name, hov ? 76 : 68, 350, marker); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, c[0], c[1]);
+        hand(x, 32); x.fillStyle = INK; const ls = B.note ? wrap(x, B.note, 470) : []; ls.forEach((w, j) => x.fillText(w, c[0], c[1] + 50 + j * 35));
+        const y = c[1] + 184; hand(x, 34); x.fillStyle = PENCIL; x.textAlign = 'right'; x.fillText('to beat', c[0] - 14, y - 6); marker(x, 62); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 4, y);
+        if (pay) { hand(x, 38); x.textAlign = 'center'; x.fillStyle = GREEN; x.fillText('pays ' + pay, c[0], y + 46); }
+        if (hov) swipe(x, [c[0] - 150, c[1] + 16], [c[0] + 150, c[1] + 10], 16);
+      });
+      { const k0 = px({ x: 0, z: 12.1 }); hand(x, 38); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
+      ink.t.needsUpdate = true; return;
+    }
     if (st.mode === 'pick') {
       const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 230, h[1] - 36], [h[0] + 230, h[1] - 46], 110); x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
       hand(x, 50); x.fillStyle = PENCIL; x.fillText(run.round === 1 ? 'before round 1' : 'round ' + (run.round - 1) + ' beaten.  next: round ' + run.round, h[0], h[1] + 70);
@@ -414,6 +443,7 @@ function start(app) {
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: PAGES.x + 2.2, z: PAGES.z - 3.2 }); marker(x, 50); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: PAGES.x + 2.2, z: 7.5 }); hand(x, 36); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); hand(x, 25); x.fillStyle = PENCIL; wrap(x, B.note, 330).forEach((w, j) => x.fillText(w, b0[0], b0[1] + 30 + j * 27)); }
     for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 2.2, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 16, c[1] - 2); x.lineTo(c[0] - 4, c[1] + 14); x.lineTo(c[0] + 24, c[1] - 26); x.stroke(); } }
     // how much has been made, and the number to beat
@@ -444,7 +474,7 @@ function start(app) {
       const txt = st.pass ? 'beaten' : fmt(st.quota - g.total) + ' short', tw = x.measureText(txt).width, n = Math.floor(ratio);
       x.strokeText(txt, c[0] - (st.pass ? 200 : 0), c[1]); x.fillText(txt, c[0] - (st.pass ? 200 : 0), c[1]);
       if (st.pass) tickRow(x, c[0] - 200 + tw / 2 + (n > 10 ? 190 : 60 + Math.min(10, n) * 42), c[1] - 40, n, 68, GREEN);
-      hand(x, 50); x.fillStyle = PENCIL; x.fillText(st.pass ? g.best + ' in a row at best.   click to go on' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
+      hand(x, 50); x.fillStyle = PENCIL; x.fillText(st.pass ? (st.paid ? 'paid: ' + st.paid + '.   ' : g.best + ' in a row at best.   ') + 'click to go on' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
     }
     ink.t.needsUpdate = true;
   }
@@ -457,10 +487,10 @@ function start(app) {
     let slot = -1; slots.forEach((s, i) => { if (!s || !s.o) return; const p = SPOT[i]; if (p && Math.abs(hit.x - p.x) < SLOTW / 2 && hit.z > -14.5 && hit.z < p.z + 3) slot = i; });
     return slot;
   }
-  function pickAt(e) {
+  function pickAt(e, arr) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     if (!ray.ray.intersectPlane(ground, hit) || hit.z < -7 || hit.z > 9) return -1;
-    let best = -1; PICKX.forEach((px0, i) => { if (picks[i] && Math.abs(hit.x - px0) < 7) best = i; }); return best;
+    let best = -1; PICKX.forEach((px0, i) => { if ((arr || picks)[i] && Math.abs(hit.x - px0) < 7) best = i; }); return best;
   }
   function shopAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
@@ -468,11 +498,11 @@ function start(app) {
     for (let i = 0; i < P.SUPPLY.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x > -24 && hit.x < 20) return i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
-  cv.addEventListener('click', e => { if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
+  cv.addEventListener('click', e => { if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); });
   root.addEventListener('keydown', e => {
-    if (e.key >= '1' && e.key <= '6') { if (st.mode === 'pick') takePick(+e.key - 1); else pick(+e.key - 1); }
+    if (e.key >= '1' && e.key <= '6') { if (st.mode === 'pick') takePick(+e.key - 1); else if (st.mode === 'brief') chooseBrief(+e.key - 1); else pick(+e.key - 1); }
     else if (e.key === 'f' || e.key === 'F') pick(FIN);
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
     else if (e.key === 'r' || e.key === 'R') newRun();
@@ -492,7 +522,8 @@ function start(app) {
     });
     ended.forEach(f => f());
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
-    if (st.mode === 'pick' || st.mode === 'shop') dirty = true;
+    if (st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief') dirty = true;
+    if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0.05 * Math.sin(now / 1000 * 1.3 + i * 1.7); } });
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 16); dirty = true; }
     pickObjs.forEach(k => { k.grp.rotation.y += dt * 0.6; k.grp.position.y = st.hover === k.slot ? 0.8 : 0; });
@@ -525,7 +556,8 @@ function start(app) {
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, newRun, showSuppliers, frame, debugKit: ids => { run.gear = ids.slice(); load(); },
     openSupplier, meta,
-    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' ? { mode: st.mode, round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
+    chooseBrief,
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

@@ -232,3 +232,32 @@ Each is a complete shape. None keeps a number because Balatro has it.
 
 ### Recommendation
 Survey Structure 2 first. It is the only one built on what this game has that the others do not, and it puts chaining at the centre. If molecules cannot sustain long syntheses, fall back to Structure 1 and take the summed quota from Structure 3 to soften bad deals.
+
+## Part 3: Raccoin (coin pusher roguelike, Doraccoon and Playstack, March 2026)
+
+Sources are two reviews and search summaries of others. Nothing here was played. Treat numbers as reported, not checked.
+
+What it is. The base action is dropping coins from the left or the right onto a pusher shelf. Reviewers call that action dull on its own. Everything that holds attention is layered on top of it.
+
+Loop inside a round. Coins that fall off the edge score. Falls in quick succession raise a combo, and a full combo meter fires a bonus wheel, a shower of coins or a coin tower. Special coins sit in the machine and act on touch, while they stay in the machine, or at the start or end of a round. The machine keeps its contents from round to round, so a round also sets up the next one.
+
+Loop of a run. 15 rounds, each with a higher score to reach. A shop after every round. Four kinds of thing to hold: special coins (over 150), chips fitted to a card with a limit (passives), prizes (used once) and stickers on the table. Bad coins are added every few rounds and are cleared by pushing them out.
+
+Before a run. Five choices: cabinet, character (6), ticket (8 levels of difficulty), card (one large passive) and bonus wheel.
+
+Between runs. Unlocks come in chains tied to a goal with a named character: round 9 with the Biologist opens the Chemist, elemental coins and a kind of prize; round 10 with the Chemist opens the Trader, chaos coins and the editable wheel.
+
+Complaints. A wall at rounds 9 and 10. Luck over skill. Waiting for the shelf to move. A bonus wheel that pays little unless the meter is full. A base action too simple to carry interest.
+
+What Overreact can take, and what it should not.
+
+| Raccoin | Overreact now | Gap |
+| --- | --- | --- |
+| The machine keeps its coins between rounds | Each round starts from a new molecule | Nothing made in one round shapes the next |
+| A combo meter that fires an event mid-round | The row raises a number | No event fires inside a round |
+| Coins, chips, prizes, stickers | Reagents and equipment | Nothing used once, nothing fixed to the page |
+| Bad coins added on a schedule, cleared by play | None | Nothing unwanted to deal with |
+| Five choices before a run | None | Starting notebooks, workers and habits are planned |
+| Unlock chains tied to a goal with a character | Credit buys the next supplier | Contracts are planned |
+| Wall at rounds 9 and 10 | Number to beat grows 1.85 times a round | Same risk, untested past round 5 |
+| Waiting for the shelf | No waiting | Keep it that way |
