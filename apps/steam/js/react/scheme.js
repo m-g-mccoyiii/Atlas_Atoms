@@ -142,7 +142,7 @@ function start(app) {
     nodes.forEach(a => { if (!pos.has(a)) pos.set(a, { x: 0, y: 0 }); });
     // atoms that landed on top of each other are pushed apart, while every bond is pulled back toward its length
     for (let it = 0; it < 160; it++) { let moved = false;
-      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const p = pos.get(nodes[i]), q = pos.get(nodes[j]); let dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy); const min = adj.get(nodes[i]).includes(nodes[j]) ? L * 0.8 : L * 1.08; if (d >= min) continue; if (d < 1e-3) { dx = Math.cos(i * 2.4 + j); dy = Math.sin(i * 2.4 + j); d = 1; } const push = (min - d) / 2 + 0.01; p.x -= dx / d * push; p.y -= dy / d * push; q.x += dx / d * push; q.y += dy / d * push; moved = true; }
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const p = pos.get(nodes[i]), q = pos.get(nodes[j]); let dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy); const min = adj.get(nodes[i]).includes(nodes[j]) ? L * 0.8 : nodes[i].bead || nodes[j].bead ? L * 1.6 : L * 1.08; if (d >= min) continue; if (d < 1e-3) { dx = Math.cos(i * 2.4 + j); dy = Math.sin(i * 2.4 + j); d = 1; } const push = (min - d) / 2 + 0.01; p.x -= dx / d * push; p.y -= dy / d * push; q.x += dx / d * push; q.y += dy / d * push; moved = true; }
       if (!moved) break;
       nodes.forEach(n => adj.get(n).forEach(m => { const p = pos.get(n), q = pos.get(m), dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || 1e-3, df = (d - L) / d * 0.2; p.x += dx * df; p.y += dy * df; q.x -= dx * df; q.y -= dy * df; })); }
     // hydrogens that are drawn: out from their atom, away from its neighbours
@@ -241,7 +241,7 @@ function start(app) {
       if (!s.rest) { const fa = m.at.get(s.a), fb = m.at.get(s.b); s.rest = fa && fb ? Math.max(0.3, fa.distanceTo(fb)) : len; }
       const k = k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.25) / 0.6));
       _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
-      s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; const many = s.parts.length > 2, rr = s.r * k * (many ? 0.7 : 1); pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * (s.parts.length > 4 ? 0.27 : 0.36)); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, rr), fr.distanceTo(to), Math.max(0.0001, rr)); pt.mesh.visible = k > 0.01; });
+      s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; const many = s.parts.length > 2, rr = s.r * k * (many ? 0.7 : 1); pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * (s.parts.length > 4 ? 0.34 : 0.36)); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, rr), fr.distanceTo(to), Math.max(0.0001, rr)); pt.mesh.visible = k > 0.01; });
     });
   }
   // Where to circle a set of atoms on the page. Each atom is carried down to the page along the line of sight, so
@@ -264,7 +264,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 16.5) / spanOf(m), (KITV === 'bottom' ? 10.5 : 10.5) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(3.4, (KITV === 'side' ? 17 : 15) / spanOf(m), (KITV === 'bottom' ? 10.5 : 10.5) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
