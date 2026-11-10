@@ -264,7 +264,7 @@ function start(app) {
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
   // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(4.4, (KITV === 'side' ? 17 : 18) / spanOf(m), (KITV === 'bottom' ? 10.5 : 12) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(4.4, (KITV === 'side' ? 17 : 16) / spanOf(m), (KITV === 'bottom' ? 10.5 : 10) / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -300,7 +300,7 @@ function start(app) {
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 7; CALL.z = 12.6; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
-  if (KITV === 'back') { C0.x += 1.3; C0.z -= 0.7; }
+  if (KITV === 'back') { C0.x += 1.3; C0.z += 0.3; }
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
@@ -405,7 +405,7 @@ function start(app) {
   const NAMEV = (() => { try { return new URLSearchParams(root.location.search).get('name') || 'both'; } catch (e) { return 'both'; } })(), FEWER = NAMEV === 'fewer';
   // each thing: where it is, how near the pointer must be, its name, one line, and where a word for it is written
   const zones = () => [
-    { id: 'water', x: BEAK.x, z: BEAK.z - 0.8, r: 2.2, name: 'water', line: 'three deal this page again', lx: BEAK.x, lz: BEAK.z + 2.7 },
+    { id: 'water', x: BEAK.x, z: BEAK.z - 0.8, r: 2.2, name: 'water', line: 'three give one more reaction on this page', lx: BEAK.x, lz: BEAK.z + 2.7 },
     { id: 'h2', x: BALN.x, z: BALN.z - 1.2, r: 2.2, name: 'hydrogen', line: 'three give each reagent one more use', lx: BALN.x, lz: BALN.z + 2.7 },
     { id: 'tally', x: TALLY.x + 1, z: TALLY.z - 0.9, r: 1.8, name: 'left the molecule', line: 'the fifth pays', lx: TALLY.x + 1, lz: TALLY.z + 1.1 },
     { id: 'pages', x: PAGES.x + 1.8, z: PAGES.z, r: 2.4, name: 'page', line: 'three pages to a round', lx: PAGES.x + 1.8, lz: PAGES.z - 1.5 },
@@ -550,17 +550,17 @@ function start(app) {
         st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
         const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
         if (e.src === 'bottle') { last = spot(pl); st.focus = { x: last.x, z: last.z }; { const dx = last.x - lab.x, dz = last.z - lab.z, d = Math.hypot(dx, dz) || 1, imp = 7 + 9 * f; st.kvx += dx / d * imp; st.kvz += dz / d * imp; st.sq = Math.min(1, 0.55 + 0.4 * f); st.hold = performance.now() + 55 + 50 * f; } if (!PLAIN) ping({ x: last.x, z: last.z - 1.7 - (pl % 2) * 1.1 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 10 * f), rcol); }
-        else if (e.src === 'iso') { const h = heavy(e.iso) || last; ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); }
+        else if (e.src === 'iso') { const h = heavy(e.iso) || last; if (!PLAIN) ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); }
         else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); if (!PLAIN) st.strokes.push({ a: last, b: { x: ko.grp.position.x, z: ko.grp.position.z - 2.4 }, col: PART[e.part], t: performance.now(), dur: 130 }); } }
         else if (e.src === 'brief') st.floats.push({ txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
         else if (e.src === 'rare') st.floats.push({ txt: t.rare + ' ' + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' });
         else if (e.src === 'collect') { st.bump.p = 0; }
         else if (e.src === 'short' && big) ping({ x: last.x, z: last.z - 2.2 }, txt, PART.p, 64, PART.p);
         else if (e.src === 'family' && e.kin === 'resonance') { /* shown by the extra number and the label */ }
-        else if (e.src === 'family') { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, (K ? K.name + ' ' : '') + txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
+        else if (e.src === 'family' && !PLAIN) { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, (K ? K.name + ' ' : '') + txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
-        if (PLAIN && e.val && (e.src === 'bottle' || piece || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: under() + 0.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
+        if (PLAIN && e.val && (e.src === 'bottle' || piece || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: under() + 0.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: e.src === 'family' && P.KIN[e.kin] ? P.KIN[e.kin].col : PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
         st.shake = Math.max(st.shake, (big ? 0.7 : e.src === 'iso' ? 0.5 : 0.2) * (1 + 1.0 * f));
         if (f >= 0.5 && k % 2 === 0) slash(PART[e.part]);
         sfx.lock(Math.min(12, k + g.cur.path.length));
@@ -847,7 +847,7 @@ function start(app) {
         chip(x, tl[0], -72, 0, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, tl[1], 62, 0, on);
         if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 108, -2); }
         hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? (hov ? INK : PENCIL) : FAINT; x.fillText(verb, -4, 34);
-        if (o && g && st.mode === 'play') { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -150, 6); } }
+        if (o && g && st.mode === 'play') { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); } }
         if (!s.fin && o) { x.fillStyle = rgb(colOf(s.id)); for (let k = 0; k < Math.min(6, g.left[s.id] || 0); k++) { x.beginPath(); x.arc(-112 + k * 17, 27, 5.5, 0, 6.3); x.fill(); } }
         if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-120, 46); x.lineTo(112, 44); x.stroke(); } }
       x.restore();
@@ -933,20 +933,20 @@ function start(app) {
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // bonuses in flight: from where they were earned to the points or to the multiplier
-    if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 80, mp2[1] - 34], m: [mp2[0] + 335, mp2[1] - 34] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
-      st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const e = k * k * (3 - 2 * k), A = px(m.a), B = tgt[m.part], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e + 26 * Math.sin(Math.PI * e);
-        marker(x, 42 - 12 * e); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(m.txt, cx, cy); x.fillStyle = m.col; x.fillText(m.txt, cx, cy); }); dirty = true; }
+    if (st.motes.length) { const mp2 = px(MULT), tgt = { p: [mp2[0] + 250, mp2[1] - 76], m: [mp2[0] + 500, mp2[1] - 76] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
+      const lanes = { p: 0, m: 0 }; st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const lane = lanes[m.part]++ % 3; const e = k * k * (3 - 2 * k), A = px(m.a), B = [tgt[m.part][0] + lane * 70, tgt[m.part][1]], cx = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * e) * Math.max(0, mp2[0] + 600 - A[0]) * 0.9, cy = A[1] + (B[1] - A[1]) * (1 - Math.pow(1 - e, 3));
+        marker(x, 42 - 12 * e); x.globalAlpha = Math.max(0, Math.min(1, (k - 0.2) / 0.15, (1 - k) / 0.3)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 8; x.strokeStyle = '#fbf8ee'; x.strokeText(m.txt, cx, cy); x.fillStyle = m.col; x.fillText(m.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
-      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: F.b.x, z: under() + 1.9 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
+      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: Math.max(F.b.x, FLASK.x + 6.5), z: under() + 1.9 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
       const landed = u >= 1, k2 = landed ? (age - F.trav) / F.hold : 0, sc = 1.25 + (landed ? 0.4 * Math.max(0, 1 - k2 * 6) : 0);
       x.save(); x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha = k2 > 0.75 ? 1 - (k2 - 0.75) / 0.25 : 1;
       if (!landed) chip(x, F.tl[0], 0, 0, true);
       else { chip(x, F.tl[0], -72, 0, false); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, F.tl[1], 62, 0, true); }
       x.restore(); x.globalAlpha = 1; dirty = true; } }
     // the beaker and the balloon are named while they hold something
-    if (g && st.mode !== 'done' && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') [['water', BEAK, 'water'], ['h2', BALN, 'hydrogen']].forEach(q => { if (!st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 3.1 }); hand(x, 27); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(q[2], c[0], c[1]); });
+    if (g && st.mode !== 'done' && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') [['water', BEAK, '+1 reaction'], ['h2', BALN, '+1 use']].forEach(q => { if (!st.by[q[0]]) return; const c = px({ x: q[1].x, z: q[1].z + 3.1 }); hand(x, 27); x.textAlign = 'center'; x.fillStyle = st.by[q[0]] >= P.BY.need ? INK : PENCIL; x.fillText(q[2], c[0], c[1]); });
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
