@@ -25,11 +25,17 @@ function start(app) {
   const ren = new T.WebGLRenderer({ canvas: cv, antialias: true });
   ren.setPixelRatio(Math.min(2, root.devicePixelRatio || 1)); ren.outputEncoding = T.sRGBEncoding;
   ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
+  // a look being tried, see kitart.js
+  const LOOK = (() => { try { return new URLSearchParams(root.location.search).get('look') || 'now'; } catch (e) { return 'now'; } })(); AA.rxKit.K.look = LOOK;
   const scene = new T.Scene(); scene.background = lin('#e9e2d0');
   const cam = new T.PerspectiveCamera(34, 1, 0.5, 200), CAM = new T.Vector3(0, 43, 22.6), LOOKAT = new T.Vector3(0, 0, 0.6);
   const camDir = LOOKAT.clone().sub(CAM).normalize();
-  scene.add(new T.HemisphereLight(0xfff6e6, 0xcabf9f, 0.8));
-  const sun = new T.DirectionalLight(0xfff0d6, 0.85); sun.position.set(-16, 18, 4); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.radius = 7;
+  scene.add(new T.HemisphereLight(0xfff6e6, 0xcabf9f, LOOK === 'clay' ? 1.0 : LOOK === 'desk' ? 0.55 : 0.8));
+  const sun = new T.DirectionalLight(0xfff0d6, LOOK === 'clay' ? 0.6 : LOOK === 'desk' ? 1.1 : 0.85); sun.position.set(-16, 18, 4); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.radius = LOOK === 'toy' ? 1.5 : LOOK === 'now' ? 7 : 11;
+  if (LOOK === 'desk') { // a room for glass and metal to reflect: a warm ceiling, a bright window, a dark floor
+    const room = new T.Scene(), bm = c => new T.MeshBasicMaterial({ color: c, side: T.BackSide }); room.add(new T.Mesh(new T.SphereGeometry(50, 24, 16), bm(0x8a7f70)));
+    const pane = (w, h, x, y, z, c) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: c, side: T.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); room.add(m); }; pane(30, 22, -30, 26, 6, 0xffffff); pane(40, 14, 14, 34, -18, 0xfff0d0); pane(60, 60, 0, -30, 0, 0x2a2420);
+    const pm = new T.PMREMGenerator(ren); scene.environment = pm.fromScene(room, 0.03).texture; ren.toneMapping = T.ACESFilmicToneMapping; ren.toneMappingExposure = 1.15; }
   Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 22, bottom: -22, near: 1, far: 90 }); scene.add(sun); scene.add(sun.target);
   const maxAn = ren.capabilities.getMaxAnisotropy();
   const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = maxAn; return { c, x: c.getContext('2d'), t }; };
@@ -161,7 +167,7 @@ function start(app) {
 
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
   let kitObjs = [];
-  const GLASS = std({ color: lin(0xdfe9ee), transparent: true, opacity: 0.42, roughness: 0.08 });
+  const GLASS = AA.rxKit.mat(T, 0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
     if (!AA.rxKit.build(id, T, inner, liq)) add(new T.BoxGeometry(2, 1.2, 2), std({ color: lin(0x3b3e42), roughness: 0.5 }), 0, 0.6, 0, inner);
@@ -185,6 +191,7 @@ function start(app) {
     add(new T.TorusGeometry(rAt(FB.h * FB.line) + 0.02, 0.05, 8, 28), std({ color: lin(0xc8261c), roughness: 0.5 }), 0, FB.h * FB.line, 0, grp).rotation.x = Math.PI / 2;
     const liq = add(new T.CylinderGeometry(1, 1, 1, 24), liqM, 0, 0, 0, grp), neck = add(new T.CylinderGeometry(FB.r1 * 0.85, FB.r1 * 0.85, 0.8, 16), liqM, 0, FB.h + 0.4, 0, grp), dome = add(new T.SphereGeometry(0.5, 20, 14), liqM, 0, FB.h + 0.85, 0, grp);
     const runs = [0, 1, 2, 3].map(k => { const a = k * 1.571 + 0.5, m = add(new T.CylinderGeometry(0.09, 0.12, 1, 8), liqM, Math.cos(a) * 0.55, FB.h, Math.sin(a) * 0.55, grp); m.rotation.set(Math.sin(a) * 0.42, 0, -Math.cos(a) * 0.42); return m; });
+    [liq, neck, dome].concat(runs).forEach(m => { m.userData.plain = true; }); AA.rxKit.finish(T, grp);
     grp.rotation.x = -0.8; grp.scale.setScalar(1.45); grp.position.set(FLASK.x, 0, FLASK.z); grp.visible = false; scene.add(grp);
     let last = -1;
     // level 0 to 1 is empty to the red line; over is how many doublings past it
@@ -608,7 +615,7 @@ function start(app) {
     // the hotter the run, the warmer the page
     const playing = g && (st.mode === 'play' || st.mode === 'move'), heat = playing ? Math.min(1, Math.log2(Math.max(1, st.mult)) / 6) : 0;
     if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; }
-    else if (heat > 0.05) veil.style.backgroundColor = 'rgba(255,110,30,' + (heat * 0.3).toFixed(3) + ')';
+    else if (heat > 0.05 && LOOK === 'now') veil.style.backgroundColor = 'rgba(255,110,30,' + (heat * 0.3).toFixed(3) + ')';
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;

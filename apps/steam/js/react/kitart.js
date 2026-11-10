@@ -4,14 +4,43 @@
 (function (root) {
 'use strict';
 const AA = root.AA = root.AA || {};
+// Three looks being tried side by side, chosen with ?look= on the page. 'now' is the look before any of them.
+//   toy: flat color in a few steps of shade, colors from one small set, a dark ink line round every part
+//   desk: glass that refracts, metal that reflects the room, as if on a real table
+//   clay: everything matte and a little uneven, no glass, colors from the same small set
+const K = { look: 'now' };
+const PAL = [0x1f2a55, 0xf4efe0, 0xd6453a, 0xf0b93a, 0x3a6fd0, 0x3c9a5f, 0x8a5a2b, 0x8d949c, 0xb0189a, 0x2c2f34];
+let ramp = null;
+function snap(T, hex) { const c = new T.Color(hex); let best = PAL[0], bd = 9; PAL.forEach(p => { const q = new T.Color(p), d = (q.r - c.r) * (q.r - c.r) + (q.g - c.g) * (q.g - c.g) + (q.b - c.b) * (q.b - c.b); if (d < bd) { bd = d; best = p; } }); return best; }
+function mat(T, color, rough, metal, more) {
+  const lin = h => new T.Color(h).convertSRGBToLinear(), m = more || {}, glassy = m.transparent && (m.opacity || 1) < 0.6;
+  if (K.look === 'toy') {
+    if (!ramp) { ramp = new T.DataTexture(new Uint8Array([120, 200, 255]), 3, 1, T.LuminanceFormat); ramp.minFilter = ramp.magFilter = T.NearestFilter; ramp.needsUpdate = true; }
+    const o = { color: lin(glassy ? 0xcfe3ee : snap(T, color)), gradientMap: ramp }; if (glassy) { o.transparent = true; o.opacity = 0.5; } if (m.emissive) { o.emissive = m.emissive; o.emissiveIntensity = 0.6; }
+    return new T.MeshToonMaterial(o);
+  }
+  if (K.look === 'clay') return new T.MeshStandardMaterial({ color: lin(glassy ? 0xbfd6e2 : snap(T, color)), roughness: 1, metalness: 0, emissive: m.emissive || new T.Color(0), emissiveIntensity: m.emissive ? 0.5 : 0 });
+  if (K.look === 'desk' && glassy) return new T.MeshPhysicalMaterial({ color: lin(0xffffff), roughness: 0.04, metalness: 0, transmission: 0.92, transparent: true, opacity: 1, envMapIntensity: 1.4, clearcoat: 1 });
+  return new T.MeshStandardMaterial(Object.assign({ color: lin(color), roughness: rough == null ? 0.6 : rough, metalness: metal || 0 }, m));
+}
+// what a look does to a finished object: an ink line round each part, or the unevenness of clay
+function finish(T, grp) {
+  if (K.look !== 'toy' && K.look !== 'clay') return;
+  const parts = []; grp.traverse(o => { if (o.isMesh && !o.userData.plain) parts.push(o); });
+  parts.forEach(m => {
+    if (K.look === 'clay') { const p = m.geometry.attributes.position, a = 0.035; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x + a * Math.sin(y * 6.1 + z * 4.3 + 1), y + a * Math.sin(z * 5.7 + x * 4.9 + 2), z + a * Math.sin(x * 6.7 + y * 5.3 + 3)); } p.needsUpdate = true; m.geometry.computeVertexNormals(); return; }
+    m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new T.Vector3()), t = 0.05, o = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x1f2a55).convertSRGBToLinear(), side: T.BackSide }));
+    o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.set(m.scale.x * (1 + 2 * t / Math.max(0.05, sz.x * m.scale.x)), m.scale.y * (1 + 2 * t / Math.max(0.05, sz.y * m.scale.y)), m.scale.z * (1 + 2 * t / Math.max(0.05, sz.z * m.scale.z))); o.userData.plain = true; m.parent.add(o);
+  });
+}
 function build(id, T, grp, tint) {
   const lin = h => new T.Color(h).convertSRGBToLinear();
-  const M = (color, rough, metal, more) => new T.MeshStandardMaterial(Object.assign({ color: lin(color), roughness: rough == null ? 0.6 : rough, metalness: metal || 0 }, more || {}));
+  const M = (color, rough, metal, more) => mat(T, color, rough, metal, more);
   const steel = M(0x9aa3ad, 0.3, 0.8), dark = M(0x2c2f34, 0.55, 0.3), brass = M(0xc9a23a, 0.35, 0.8), wood = M(0x8a5a2b, 0.7), paper = M(0xf4efe0, 0.9), white = M(0xf2f2ee, 0.4);
   const red = M(0xc8261c, 0.5), black = M(0x16161a, 0.6), rubber = M(0x7a3b2e, 0.8), gold = M(0xe2b23a, 0.25, 0.9), lead = M(0x6b7078, 0.5, 0.6);
   const glass = M(0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
-  const liq = new T.MeshStandardMaterial({ color: tint.clone().convertSRGBToLinear(), roughness: 0.3 });
-  const glow = c => new T.MeshStandardMaterial({ color: lin(c), emissive: lin(c), emissiveIntensity: 0.8, roughness: 0.4 });
+  const liq = mat(T, tint.getHex(), 0.3);
+  const glow = c => mat(T, c, 0.4, 0, { emissive: lin(c), emissiveIntensity: 0.8 });
   const put = (geo, mat, x, y, z, rot, scl) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0], rot[1], rot[2]); if (scl) m.scale.set(scl[0], scl[1], scl[2]); m.castShadow = true; m.receiveShadow = true; grp.add(m); return m; };
   const box = (w, h, d, mat, x, y, z, rot) => put(new T.BoxGeometry(w, h, d), mat, x, y, z, rot);
   const cyl = (rt, rb, h, mat, x, y, z, rot, seg) => put(new T.CylinderGeometry(rt, rb, h, seg || 20), mat, x, y, z, rot);
@@ -61,9 +90,9 @@ function build(id, T, grp, tint) {
     pact() { const paper = M(0xe0c88c, 0.9); box(1.6, 0.03, 2.0, paper, 0, 0.1, 0, [0, 0.12, 0]); [-1.05, 1.05].forEach(z => cyl(0.16, 0.16, 1.75, paper, z * 0.12, 0.16, z, [0, 0.12, H])); cyl(0.26, 0.26, 0.08, red, 0.45, 0.15, 0.5); for (let k = 0; k < 3; k++) box(1.0, 0.012, 0.05, black, -0.1, 0.125, -0.6 + k * 0.28, [0, 0.12, 0]); box(0.7, 0.012, 0.04, black, -0.3, 0.125, 0.45, [0, 0.12, 0]); bones(-0.75, 0.3, 0.75); rod([-0.6, 0.25, 0.5], [-0.25, 1.5, -0.2], 0.03, black); box(0.3, 0.8, 0.02, white, -0.33, 1.25, -0.06, [0.5, 0, -0.27]); },
   };
   if (!B[id]) return false;
-  B[id](); return true;
+  B[id](); finish(T, grp); return true;
 }
 // pieces that lie flat on the page and are seen from on top
 const FLAT = { spatula: 1, litmus: 1, loupe: 1, ouija: 1, logbook: 1, pact: 1, stopwatch: 1, cards: 1, magnet: 1, transmute: 1, ouroboros: 1 };
-AA.rxKit = { build, FLAT };
+AA.rxKit = { build, FLAT, K, mat, finish, snap, PAL };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
