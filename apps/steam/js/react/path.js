@@ -1,18 +1,18 @@
-// One-screen test of a round played by clicking the product. The molecule stands in the middle. Each reagent in the
-// rack has a fixed place around it and shows the molecule it would make. Clicking a product reacts. Every step adds
-// heat: a sure part and a part that may or may not land. Past the limit the batch is lost. The score is not shown
-// until Deliver, when every step replays and scores in turn.
+// One-screen test of a round played by clicking the product. The molecule stands in the middle. Each reagent on
+// offer has a fixed place around it and shows the molecule it would make. Clicking a product reacts, and each bottle
+// in the rack is one use. One group on the molecule is marked: a reagent reacts at every matching site, and a
+// batch delivered with the marked group intact is multiplied. The score is not shown until Deliver, when every
+// step replays and scores in turn.
 (function (root) {
 'use strict';
 const AA = root.AA, RX = AA.rx, RUN = AA.rxRun, sfx = AA.sfx;
-const HEAT = { limit: 14, perSite: 1, riskSite: 1, riskFlat: 0, base: { hydrate: 1, h2: 1, hcl: 1, naoh: 1, nabh4: 2, bh3: 2, pcc: 2, socl2: 2, koh: 2, dehydrate: 3 } };
-// heat of one step: a sure part and a number of points that each land half the time
-const heatOf = (id, hits) => ({ sure: HEAT.base[id] + HEAT.perSite * (hits - 1), risk: HEAT.riskFlat + HEAT.riskSite * hits });
 const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C'];
-// measured setting: weaker chain and route multipliers and no Schlenk line. The main game does not load this file.
+// measured setting for this test. The main game does not load this file, so its numbers stay as they are.
 const GEAR = ['balance', 'stirrer'];
-AA.rxPathGear = GEAR; RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25;
-const PAPER = '#efeadb', YELLOW = [255, 205, 0], RED = [226, 48, 40], GREEN = [60, 220, 120], WHITE = [255, 255, 255];
+// keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
+const DIAL = { keep: 3, steps: 3 };
+AA.rxPathGear = GEAR; RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
+const PAPER = '#efeadb', YELLOW = [255, 205, 0], RED = [226, 48, 40], GREEN = [60, 220, 120], WHITE = [255, 255, 255], KEEP = 0x19c3ff;
 const css = c => 'rgb(' + c.join(',') + ')', hex = c => (c[0] << 16) | (c[1] << 8) | c[2];
 const bright = c => { const m = Math.max(c[0], c[1], c[2], 1), k = Math.max(1, 200 / m); return c.map(q => Math.min(255, Math.round(q * k + 30))); };
 const fmt = n => Math.round(n).toLocaleString('en-US');
@@ -20,15 +20,17 @@ const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
 
 // ---------- rules, with nothing drawn ----------
 // offer: the reagents on the ring for this order; the rest of the rack sits the order out
-function begin(feed, relaxed, offer) {
+// keep: index of the oxygen that must survive, or null
+function begin(feed, relaxed, offer, keep) {
   const run = RUN.newRun(7, {}); run.gear = GEAR.slice();
   RUN.beginOrder(run); RUN.chooseFeed(run, 0);
   const cur = run.cur, m = relaxed ? AA.Model.fromSmilesRelaxed(feed, 4) : RX.fromSmiles(feed), left = {};
   m.center();
+  if (keep != null && m.atoms[keep] && m.atoms[keep].el === 'O') m.atoms[keep].keep = true;
   cur.feed = feed; cur.feedSig = RX.sigOf(m); cur.seen = new Set([cur.feedSig]); cur.spec = null; cur.keep = null; cur.cond = null; cur.stepsMax = 99;
   cur.yield = 0; cur.batch = 1; cur.path = []; cur.fresh = new Set();
   run.deck.forEach(id => { left[id] = (left[id] || 0) + 1; });
-  return { run, cur, m, left, all: Object.keys(left), kinds: offer || Object.keys(left), heat: 0, trail: [], dead: false };
+  return { run, cur, m, left, all: Object.keys(left), kinds: offer || Object.keys(left), keep: keep == null ? null : keep, spoiled: false, trail: [], dead: false };
 }
 // runs one reagent on a copy of the molecule
 function tryOne(g, m, id) {
@@ -41,64 +43,69 @@ function tryOne(g, m, id) {
 }
 function options(g) {
   const cur = g.cur, out = {};
+  if (g.trail.length >= DIAL.steps) return out;
   g.kinds.forEach(id => {
     if (!g.left[id]) return;
     const sites = RX.CARDS[id].find(g.m); if (!sites.length) return;
-    const t = tryOne(g, g.m, id), r = t.r; if (!r.hits) return;
-    const loop = cur.seen.has(r.sig);
-    out[id] = { id, model: t.model, r, loop, cont: r.hot && cur.path.length > 0 && !loop, sure: heatOf(id, r.hits).sure, risk: heatOf(id, r.hits).risk, atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
+    const t = tryOne(g, g.m, id), r = t.r; if (!r.hits && !r.spoiled) return;
+    const loop = cur.seen.has(r.sig), spoil = r.spoiled > 0;
+    out[id] = { id, model: t.model, r, loop, spoil, cont: r.hits > 0 && r.hot && cur.path.length > 0 && !loop, atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
   });
   return out;
 }
-function take(g, o, rnd) {
+function take(g, o) {
   const cur = g.cur, ev = [];
+  g.left[o.id]--; g.m = o.model;
+  if (o.spoil) g.spoiled = true;
   for (let i = 0; i < o.r.hits; i++) RUN.scoreSite(g.run, o.id, false).forEach(e => ev.push(e));
   RUN.playEnd(g.run, o.id, o.r.hits, false, o.r).forEach(e => ev.push(e));
   cur.fresh = new Set(o.r.made); cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
-  let extra = 0; for (let i = 0; i < o.risk; i++) if ((rnd || Math.random)() < 0.5) extra++;
-  g.left[o.id]--; g.m = o.model; g.heat += o.sure + extra;
-  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev, heat: o.sure + extra, extra });
-  if (g.heat > HEAT.limit) g.dead = true;
-  return extra;
+  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev, spoil: o.spoil });
 }
-// every path that stays under the heat limit when each risky point counts as half
-function survey(feed, depth, offer) {
-  const g = begin(feed, false, offer), cur = g.cur, res = []; let nodes = 0;
-  (function dfs(m, heat, path) {
-    res.push({ path: path.join(' '), score: RUN.scoreOf(cur) });
-    if (path.length >= (depth || 7) || nodes > 20000) return;
+const keepMult = g => (g.keep != null && !g.spoiled ? DIAL.keep : 1);
+// every path, scored with the multiplier for an intact marked group
+function survey(feed, depth, offer, keep) {
+  const g = begin(feed, false, offer, keep), cur = g.cur, res = []; let nodes = 0;
+  (function dfs(m, path, spoiled) {
+    res.push({ path: path.join(' '), spoiled, score: Math.round(RUN.scoreOf(cur) * (g.keep != null && !spoiled ? DIAL.keep : 1)) });
+    if (path.length >= (depth || DIAL.steps) || nodes > 30000) return;
     g.kinds.forEach(id => {
       if (!g.left[id] || !RX.CARDS[id].find(m).length) return;
       const s = { y: cur.yield, b: cur.batch, path: cur.path, fresh: cur.fresh, seen: cur.seen, step: cur.step, used: cur.used.length };
-      const t = tryOne(g, m, id), r = t.r, ho = heatOf(id, Math.max(1, r.hits)), h = heat + ho.sure + ho.risk * 0.5;
-      if (r.hits && h <= HEAT.limit) {
+      const t = tryOne(g, m, id), r = t.r;
+      if (r.hits || r.spoiled) {
         nodes++;
         for (let i = 0; i < r.hits; i++) RUN.scoreSite(g.run, id, true);
         RUN.playEnd(g.run, id, r.hits, true, r);
         cur.fresh = new Set(r.made); cur.seen = new Set(s.seen).add(r.sig); cur.step++; cur.used.push(id); g.left[id]--; path.push(id);
-        dfs(t.model, h, path);
+        dfs(t.model, path, spoiled || r.spoiled > 0);
         path.pop(); g.left[id]++;
       }
       cur.yield = s.y; cur.batch = s.b; cur.path = s.path; cur.fresh = s.fresh; cur.seen = s.seen; cur.step = s.step; cur.used.length = s.used;
     });
-  })(g.m, 0, []);
+  })(g.m, [], false);
   res.sort((a, b) => b.score - a.score);
   const best = res[0].score, near = res.filter(r => r.score >= best * 0.9), firsts = {};
   res.forEach(r => { const f = r.path.split(' ')[0]; if (f && !(firsts[f] >= r.score)) firsts[f] = r.score; });
-  return { feed, paths: res.length, best, bestPath: res[0].path, near: near.length, nearFirsts: Array.from(new Set(near.map(r => r.path.split(' ')[0]))),
+  const alt = res.find(r => r.spoiled !== res[0].spoiled);
+  return { feed, paths: res.length, best, bestPath: res[0].path, bestSpoils: res[0].spoiled, otherPct: alt ? Math.round(100 * alt.score / best) : 0, near: near.length, nearFirsts: Array.from(new Set(near.map(r => r.path.split(' ')[0]))),
     firsts: Object.keys(firsts).map(f => ({ id: f, pct: Math.round(100 * firsts[f] / best) })).sort((a, b) => b.pct - a.pct) };
 }
-// a random offer of n reagents, at least two of which react with the feedstock as it stands
+// the oxygens of a feedstock that an order can mark
+const keeps = feed => RX.keepable(RX.fromSmiles(feed)).map(k => k.i);
+// the reagents that can open on this feedstock without losing the marked group
+function safe(feed, keep) { const g = begin(feed, false, null, keep); return g.all.filter(id => { if (!RX.CARDS[id].find(g.m).length) return false; const r = tryOne(g, g.m, id).r; return r.hits && !r.spoiled; }); }
+// a random order: a marked group and n reagents, at least two of which can open safely
 function deal(feed, n, rnd) {
-  const g = begin(feed, false), live = g.all.filter(id => RX.CARDS[id].find(g.m).length);
-  for (let t = 0; t < 40; t++) {
-    const pool = g.all.slice(), out = [];
-    while (out.length < n && pool.length) out.push(pool.splice(Math.floor((rnd || Math.random)() * pool.length), 1)[0]);
-    if (out.filter(id => live.includes(id)).length >= Math.min(2, live.length)) return g.all.filter(id => out.includes(id));
+  const R = rnd || Math.random, ks = keeps(feed), g = begin(feed, false);
+  for (let t = 0; t < 60; t++) {
+    const keep = ks.length ? ks[Math.floor(R() * ks.length)] : null, ok = safe(feed, keep), pool = g.all.slice(), out = [];
+    while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
+    if (out.filter(id => ok.includes(id)).length >= 2) return { offer: g.all.filter(id => out.includes(id)), keep };
   }
-  return g.all;
+  return { offer: g.all, keep: null };
 }
-AA.rxPath = { HEAT, FEEDS, OFFER: 4, begin, options, take, survey, deal };
+AA.rxPath = { DIAL, FEEDS, OFFER: 4, begin, options, take, survey, deal, keeps, safe };
 
 // ---------- the screen ----------
 function start(app) {
@@ -133,10 +140,10 @@ function start(app) {
     go.disabled = st.mode !== 'play' || !g.trail.length;
   }
   function load(i, keep) {
-    st.feed = (i + FEEDS.length) % FEEDS.length; if (!keep || !st.offer) st.offer = deal(FEEDS[st.feed], AA.rxPath.OFFER); st.tok++; st.mode = 'play'; st.shown = 0; st.y = 0; st.b = 1; st.beat = -1; st.hover = null; st.fired = {};
+    st.feed = (i + FEEDS.length) % FEEDS.length; if (!keep || !st.deal) st.deal = deal(FEEDS[st.feed], AA.rxPath.OFFER); st.tok++; st.mode = 'play'; st.shown = 0; st.y = 0; st.b = 1; st.beat = -1; st.hover = null; st.fired = {}; st.kept = false; st.target = 0; st.pass = false;
     fx.clear();
-    g = begin(FEEDS[st.feed], true, st.offer);
-    const sv = survey(FEEDS[st.feed], 7, st.offer), q = sv.best * 0.45, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+    g = begin(FEEDS[st.feed], true, st.deal.offer, st.deal.keep);
+    const sv = survey(FEEDS[st.feed], 0, st.deal.offer, st.deal.keep), q = sv.best * 0.45, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
     st.quota = Math.max(50, Math.round(q / mag) * mag);
     if (!slots.length) g.all.forEach((id, k) => {
       const el = h('div', 'prod'), cv = h('canvas'); el.append(cv); stage.append(el);
@@ -156,13 +163,12 @@ function start(app) {
   function pickSlot(k) {
     const s = slots[k], o = s && s.opt;
     if (!o || st.mode !== 'play' || g.dead) return;
-    const col = bright(s.card.rgb), extra = take(g, o), now = performance.now();
+    const col = bright(s.card.rgb), now = performance.now(); take(g, o);
     v.model = g.m; v.glow.clear(); st.hover = null;
     o.r.made.forEach(a => { v.pop(a); st.flash.push({ a, hex: hex(col), until: now + 700 }); });
     const a0 = o.r.made[0]; if (a0) v.burst({ x: a0.x, y: a0.y, z: a0.z }, 30 + 10 * o.r.hits, [css(col), '#ffffff']);
     fx.ring(L.cx, L.cy, col, L.main * 0.55, 0.45); fx.shake(3 + 2 * o.r.hits); sfx.bond(); sfx.lock(g.trail.length);
-    if (extra) { fx.flash(0.12 + 0.08 * extra, RED); fx.floatText(L.W - 70, L.H * 0.3, '+' + extra, RED, 30); }
-    if (g.dead) return blow();
+    if (o.spoil) { fx.flash(0.5, RED); fx.shake(14); fx.ring(L.cx, L.cy, RED, L.main * 0.7, 0.6); sfx.bad(); }
     refresh();
   }
   function blow() {
@@ -182,7 +188,15 @@ function start(app) {
     let i = 0, met = false;
     const step = () => {
       if (tok !== st.tok) return;
-      if (i >= beats.length) return finish();
+      if (i >= beats.length) {
+        if (keepMult(g) > 1 && !st.kept) {   // the marked group is intact: the last multiplier
+          st.kept = true; st.b *= keepMult(g); st.target = Math.round(st.y * st.b);
+          fx.floatText(L.cx, L.cy - L.main * 0.2, 'times ' + keepMult(g), [25, 195, 255], 48); fx.flash(0.5, [25, 195, 255]); fx.shake(14); fx.punch(0.08); fx.ring(L.cx, L.cy, [25, 195, 255], L.main * 0.9, 0.7); sfx.good();
+          if (!met && st.target >= st.quota) { met = true; fx.burst(L.cx, L.cy, GREEN, 80, 460); sfx.quota(); }
+          return setTimeout(step, 700);
+        }
+        return finish();
+      }
       const b = beats[i], e = b.e, big = e.kind === 'x';
       st.beat = b.k; st.y = e.yield; st.b = e.batch; st.target = Math.round(e.yield * e.batch);
       const src = RUN.GEARS[e.src] ? e.src : e.gear;
@@ -223,17 +237,14 @@ function start(app) {
       x.strokeStyle = o ? col : 'rgba(239,234,219,0.08)'; x.lineWidth = o ? (hv === s ? 8 : 4) : 2; x.setLineDash([]);
       x.beginPath(); x.moveTo(L.cx + ux * a, L.cy + uy * a); x.lineTo(L.cx + ux * b, L.cy + uy * b); x.stroke();
       if (o) {
-        const over = g.heat + o.sure > HEAT.limit;
+        const over = o.spoil;
         x.strokeStyle = over ? css(RED) : o.cont ? css(YELLOW) : o.loop ? 'rgba(239,234,219,0.45)' : 'rgba(239,234,219,0.2)';
         x.lineWidth = o.cont || over ? 5 : 2; x.setLineDash(o.loop ? [7, 9] : []);
         x.beginPath(); x.arc(p.x, p.y, r + 2 + (hv === s ? 4 : 0), 0, 6.3); x.stroke(); x.setLineDash([]);
         // the number of sites, on a round sticker where the line meets the product
         const sx = L.cx + ux * (b - 20), sy = L.cy + uy * (b - 20);
-        x.fillStyle = col; x.beginPath(); x.arc(sx, sy, 15, 0, 6.3); x.fill();
+        x.fillStyle = over ? css(RED) : col; x.beginPath(); x.arc(sx, sy, 15, 0, 6.3); x.fill();
         x.fillStyle = '#16161a'; x.textAlign = 'center'; x.font = '22px Marker, "Segoe Print", sans-serif'; x.fillText(String(o.r.hits), sx, sy + 8);
-        // heat: filled marks are sure, open marks may or may not land
-        const nH = o.sure + o.risk, hx0 = p.x - (nH - 1) * 8;
-        for (let k = 0; k < nH; k++) diamond(hx0 + k * 16, p.y + r + 46, 6, k < o.sure, css(RED));
       }
       x.textAlign = 'center'; x.fillStyle = o ? PAPER : 'rgba(239,234,219,0.22)'; x.font = '23px Marker, "Segoe Print", sans-serif';
       x.fillText(s.card.verb, p.x, p.y + r + 30);
@@ -242,22 +253,8 @@ function start(app) {
       x.fillStyle = 'rgba(239,234,219,' + (o ? 0.55 : 0.18) + ')'; x.font = '20px Hand, "Segoe Print", sans-serif'; x.fillText(String(i + 1), p.x - tw / 2 - 14, p.y + r + 30);
     });
 
-    // thermometer: the red line is the limit
-    const tx = W - 62, t0 = H * 0.2, t1 = H * 0.72, seg = (t1 - t0) / HEAT.limit, hot = Math.min(g.heat, HEAT.limit + 2);
-    x.strokeStyle = 'rgba(239,234,219,0.5)'; x.lineWidth = 3;
-    x.beginPath(); x.moveTo(tx - 11, t1); x.lineTo(tx - 11, t0 - seg * 1.5); x.arc(tx, t0 - seg * 1.5, 11, Math.PI, 0); x.lineTo(tx + 11, t1); x.stroke();
-    x.beginPath(); x.arc(tx, t1 + 16, 20, 0, 6.3); x.fillStyle = css(RED); x.fill(); x.stroke();
-    x.fillStyle = css(RED); x.fillRect(tx - 7, t1 - hot * seg, 14, hot * seg + 4);
-    if (hv) {
-      const o = hv.opt;
-      x.fillStyle = 'rgba(255,150,120,0.95)'; x.fillRect(tx - 7, t1 - (g.heat + o.sure) * seg, 14, o.sure * seg);
-      x.strokeStyle = 'rgba(255,150,120,0.95)'; x.lineWidth = 2; x.setLineDash([4, 4]); x.strokeRect(tx - 6, t1 - (g.heat + o.sure + o.risk) * seg, 12, o.risk * seg); x.setLineDash([]);
-    }
-    x.strokeStyle = css(RED); x.lineWidth = 4; x.beginPath(); x.moveTo(tx - 24, t0); x.lineTo(tx + 24, t0); x.stroke();
-    x.strokeStyle = 'rgba(239,234,219,0.35)'; x.lineWidth = 1.5;
-    for (let k = 1; k < HEAT.limit; k++) { x.beginPath(); x.moveTo(tx + 13, t1 - k * seg); x.lineTo(tx + 20, t1 - k * seg); x.stroke(); }
-
-    // the steps taken so far, joined in yellow where the chain held
+    // the steps taken so far, joined in yellow where the chain held, and a ring for each step still to take
+    for (let k = g.trail.length; k < DIAL.steps; k++) { x.strokeStyle = 'rgba(239,234,219,0.3)'; x.lineWidth = 2; x.beginPath(); x.arc(44 + k * 44, 46, 13, 0, 6.3); x.stroke(); }
     g.trail.forEach((t, k) => {
       const px = 44 + k * 44, py = 46, c = bright(RX.CARDS[t.id].rgb);
       if (k) { x.strokeStyle = t.cont ? css(YELLOW) : 'rgba(239,234,219,0.25)'; x.lineWidth = t.cont ? 5 : 2; x.beginPath(); x.moveTo(px - 28, py); x.lineTo(px - 16, py); x.stroke(); }
@@ -265,6 +262,12 @@ function start(app) {
       x.fillStyle = '#16161a'; x.textAlign = 'center'; x.font = '21px Marker, "Segoe Print", sans-serif'; x.fillText(String(t.hits), px, py + 7);
     });
 
+    // the marked group: its multiplier while it stands, struck through once it is gone
+    if (g.keep != null) {
+      const ky = 44 + GEAR.length * 30 + 8, txt = 'kept  times ' + DIAL.keep;
+      x.textAlign = 'right'; x.font = '24px Hand, "Segoe Print", sans-serif'; x.fillStyle = g.spoiled ? 'rgba(239,234,219,0.3)' : '#19c3ff'; x.fillText(txt, W - 120, ky);
+      if (g.spoiled) { const tw = x.measureText(txt).width; x.strokeStyle = css(RED); x.lineWidth = 3; x.beginPath(); x.moveTo(W - 124 - tw, ky - 8); x.lineTo(W - 116, ky - 8); x.stroke(); }
+    }
     // equipment: each name lights when it fires
     GEAR.forEach((id, k) => {
       const f = st.fired[id], age = f ? (now - f.t) / 1000 : 9, lit = Math.max(0, 1 - age * 2.5);
@@ -295,6 +298,7 @@ function start(app) {
     else for (let i = 0; i < 3; i++) g.m.step(0.012);
     if (st.mode === 'lost') v.autoFit = false; else v.autoFit = true;
     v.yaw += dt * 0.16; v.glow.clear();
+    g.m.atoms.forEach(a => { if (a.keep) v.glow.set(a, KEEP); });
     const hv = st.mode === 'play' && st.hover && st.hover.opt ? st.hover : null;
     if (hv) hv.opt.atoms.forEach(a => v.glow.set(a, hex(bright(hv.card.rgb))));
     else if (st.mode === 'play' && g.cur.path.length) g.cur.fresh.forEach(a => { if (a.el !== 'H') v.glow.set(a, 0x8a6f00); });
@@ -303,6 +307,7 @@ function start(app) {
     slots.forEach(s => {
       if (!s.opt || !s.v) return;
       s.v.yaw = v.yaw; s.v.pitch = v.pitch; s.v.glow.clear();
+      s.opt.model.atoms.forEach(a => { if (a.keep) s.v.glow.set(a, KEEP); });
       const c = hex(bright(s.card.rgb)); s.opt.r.made.forEach(a => { if (a.el !== 'H') s.v.glow.set(a, c); });
       s.v.render(dt);
     });
@@ -320,7 +325,7 @@ function start(app) {
     else if (e.key === 'r' || e.key === 'R') load(st.feed, true);
     else if (e.key === 'n' || e.key === 'N') load(st.feed + 1);
   });
-  AA.rxPath.ui = { st, load, pickSlot, deliver, state: () => ({ mode: st.mode, heat: g.heat, trail: g.trail.map(t => t.id), opts: Object.keys(opts), offer: st.offer, quota: st.quota, total: st.target, pass: st.pass }) };
+  AA.rxPath.ui = { st, load, pickSlot, deliver, state: () => ({ mode: st.mode, keep: g.keep, spoiled: g.spoiled, spoils: Object.keys(opts).filter(k => opts[k].spoil), trail: g.trail.map(t => t.id), opts: Object.keys(opts), offer: st.deal.offer, quota: st.quota, total: st.target, pass: st.pass }) };
   const boot = () => { load(0); requestAnimationFrame(frame); };
   if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('30px Marker'), document.fonts.load('30px Hand')]).then(boot, boot); else boot();
 }

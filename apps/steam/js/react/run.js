@@ -109,8 +109,9 @@ GEAR.forEach(g => { GEARS[g.id] = g; g.cost = COST[g.kind] || 6; });
 // Routes are named chains. Each step lists the bottles that can do it. A route fires when the end of the chain
 // matches it, and only the longest match fires. Its multiplier is x at level 1 and rises by up for each level bought.
 const CHAIN = 0.25;
-// test dials: chain replaces CHAIN when set, route scales how far a route multiplier stands above 1
-const TUNE = { chain: null, route: 1 };
+// test dials: chain replaces CHAIN when set, route scales how far a route multiplier stands above 1, siteBatch is the batch a site adds,
+// chainAdd, when set, makes link L of a chain add chainAdd * (L - 1) batch in place of multiplying
+const TUNE = { chain: null, route: 1, siteBatch: 1, chainAdd: null };
 const ROUTES = [
   { id: 'ketone', name: 'Alkene to ketone', seq: [['hydrate', 'bh3'], ['pcc']], x: 2, up: 1 },
   { id: 'deoxy', name: 'Deoxygenation', seq: [['dehydrate'], ['h2']], x: 2, up: 1 },
@@ -289,7 +290,7 @@ function adder(cur, ev) {
 function scoreSite(run, id, dry) {
   const cur = run.cur, ev = [], add = adder(cur, ev), halved = !!(cur.cond && cur.cond.half && cur.cond.half.includes(RX.CARDS[id].cls));
   add('bottle', 'y', Math.round(YIELD * gradeOf(run, id) * (halved ? 0.5 : 1)));
-  if (!halved) add('bottle', 'b', 1);
+  if (!halved && TUNE.siteBatch) add('bottle', 'b', TUNE.siteBatch);
   run.gear.forEach(g => {
     const G = GEARS[g];
     if (G.ids && !G.ids.includes(id)) return;
@@ -323,7 +324,8 @@ function playEnd(run, id, hits, dry, info) {
     else if (g === 'rotovap' && cur.step + 1 >= cur.stepsMax) add(g, 'x', 2);
   });
   if (link.cont) {
-    add('chain', 'x', chainMult(run, link.len)); ev[ev.length - 1].len = link.len;
+    if (TUNE.chainAdd != null) add('chain', 'b', TUNE.chainAdd * (link.len - 1)); else add('chain', 'x', chainMult(run, link.len));
+    ev[ev.length - 1].len = link.len;
     if (has(run, 'cannula')) ev[ev.length - 1].gear = 'cannula';
     if (link.route) { add('route', 'x', routeMult(run, link.route.id)); ev[ev.length - 1].route = link.route.id; }
     if (!dry) { run.stats.chain = Math.max(run.stats.chain, link.len); if (link.route) run.routeDone[link.route.id] = (run.routeDone[link.route.id] || 0) + 1; }
