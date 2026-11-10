@@ -21,7 +21,7 @@ const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
 const KITV = (() => { try { return new URLSearchParams(root.location.search).get('kit') || 'back'; } catch (e) { return 'back'; } })(), SX = KITV === 'side' ? 5 : 0;
 // How big each piece really is, as its longest side in centimetres. Pieces are drawn in proportion, but gently: a
 // goat is not fifteen times a stopwatch on the page, or the stopwatch could not be seen.
-const CM = { balance: 35, spatula: 18, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 13, logbook: 25, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 18, litmus: 8, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
+const CM = { balance: 35, spatula: 18, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 13, logbook: 25, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 18, litmus: 18, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
   stone: 8, transmute: 18, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, candle: 28, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 90, scrubber: 35 };
 const sizeOf = id => Math.max(0.6, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
 const EDGE = -22.6 + SX, STEP = { x: -21.6 + SX, z: 0.9 }, PAGES = { x: -15.2 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
