@@ -51,6 +51,18 @@ const GEAR = [
   { id: 'dropper', rule: true, note: 'one more use of every reagent', name: 'dropper', shape: 'funnel' },
   { id: 'loupe', rule: true, note: 'rare reagents twice as often', name: 'loupe', shape: 'flask' },
   { id: 'timer', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
+  // From the alchemist. These do things chemistry does not allow.
+  { id: 'stone', kin: 'alchemy', note: 'every reaction: times 1.5', name: "philosopher's stone", shape: 'round', step: () => ['x', 1.5] },
+  { id: 'transmute', kin: 'alchemy', note: 'each place counts twice', name: 'lead, allegedly gold', shape: 'box', site: () => ['y', 20] },
+  { id: 'regia', kin: 'alchemy', note: 'something leaves: times 3', name: 'aqua regia', shape: 'flask', step: c => (c.leaves ? ['x', 3] : null) },
+  { id: 'ouroboros', kin: 'alchemy', rule: true, note: 'a run never closes', name: 'ouroboros', shape: 'round' },
+  { id: 'homunculus', kin: 'alchemy', rule: true, note: 'the last reaction on a page happens twice', name: 'homunculus, in a jar', shape: 'column' },
+  { id: 'elixir', kin: 'alchemy', rule: true, note: 'one more page in every round', name: 'elixir of life', shape: 'flask' },
+  // From Brenda. Nobody asks.
+  { id: 'ouija', kin: 'occult', rule: true, note: 'one reagent on every page does not run out', name: 'ouija board', shape: 'box' },
+  { id: 'candle', kin: 'occult', note: 'the 13th reaction of a round: times 13', name: 'black candle', shape: 'column', step: c => (c.nth === 13 ? ['x', 13] : null) },
+  { id: 'goat', kin: 'occult', note: 'every reaction: times 2. eats a reagent use each page', name: 'a goat', shape: 'round', step: () => ['x', 2] },
+  { id: 'pact', kin: 'occult', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' },
   // pieces for the old single-page test: they work at delivery
   { id: 'rotovap', note: 'spare step times 1.75', name: 'rotary evaporator', shape: 'round', end: c => (c.unused ? ['x', 1 + 0.75 * c.unused] : null) },
   { id: 'hood', note: 'mark lost times 2.5', name: 'fume hood', shape: 'funnel', end: c => (c.lost ? ['x', 2.5] : null) },
@@ -110,7 +122,7 @@ function scoreStep(g, id, r, dry) {
   // with the recycler a molecule seen before still continues the run
   const info = loop && g.gear.includes('recycler') ? Object.assign({}, r, { sig: r.sig + '#' + cur.step }) : r;
   const link = RUN.playEnd(g.run, id, r.hits, dry, info); link.forEach(e => ev.push(e));
-  const cont = link.some(e => e.src === 'chain'), c = { hits: r.hits, cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first, page: g.page || 1, pageStep: g.pageSteps || 0, pageMax: stepsOf(g), cls: RX.CARDS[id].cls, same: cur.used[cur.used.length - 1] === id, distinct: new Set(cur.used.concat(id)).size };
+  const cont = link.some(e => e.src === 'chain'), c = { hits: r.hits, cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first, nth: cur.step + 1, page: g.page || 1, pageStep: g.pageSteps || 0, pageMax: stepsOf(g), cls: RX.CARDS[id].cls, same: cur.used[cur.used.length - 1] === id, distinct: new Set(cur.used.concat(id)).size };
   g.gear.forEach(q => { if (GEARS[q].step) put(q, lvl(g, q, GEARS[q].step(c))); });
   return ev;
 }
@@ -200,6 +212,8 @@ function synDeal(g, rnd) {
   }
   g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.kinds.forEach(id => { g.left[id] = SYN.uses + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0); }); g.pageSteps = 0;
   g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
+  if (g.gear.includes('ouija') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = 9; g.rare[id] = 'plenty'; }
+  if (g.gear.includes('goat') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = Math.max(1, g.left[id] - 1); }
 }
 function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
@@ -212,7 +226,9 @@ function synBegin(feed, relaxed, rnd, gear, run) {
 // closes the open run: its amount is kept and the multiplier starts again
 const close = g => { g.total += held(g); const keep = g.gear.includes('clamp') ? g.cur.batch * 0.5 : 1; g.cur.yield = 0; g.cur.batch = Math.max(1, keep, g.gear.includes('magnet') ? 3 : 1); g.cur.path = []; g.cur.fresh = new Set(); };
 // true when this option would not continue the run that is open
-const breaks = (g, o) => g.cur.path.length > 0 && !o.cont;
+const breaks = (g, o) => g.cur.path.length > 0 && !o.cont && !g.gear.includes('ouroboros');
+// pages in a round
+const pagesOf = g => SYN.pages + (g.gear.includes('elixir') ? 1 : 0);
 function synTake(g, o) {
   if (breaks(g, o)) close(g);
   const y0 = g.cur.yield, rare = (g.rare && g.rare[o.id]) || null;
@@ -220,11 +236,13 @@ function synTake(g, o) {
   const t = g.trail[g.trail.length - 1]; t.rare = rare;
   if (rare === 'double') { const dy = g.cur.yield - y0; g.cur.yield += dy; t.ev.push({ src: 'rare', kind: 'y', val: dy, yield: g.cur.yield, batch: g.cur.batch }); }
   else if (rare === 'strong') { g.cur.batch *= 1.5; t.ev.push({ src: 'rare', kind: 'x', val: 1.5, yield: g.cur.yield, batch: g.cur.batch }); }
+  // the homunculus does the last reaction of the page a second time
+  if (g.gear.includes('homunculus') && g.pageSteps === stepsOf(g)) { const dy = g.cur.yield - y0; g.cur.yield += dy; t.ev.push({ src: 'homunculus', kind: 'y', val: dy, yield: g.cur.yield, batch: g.cur.batch }); }
 }
-function turn(g, rnd) { if (g.page >= SYN.pages) return false; g.page++; synDeal(g, rnd); return true; }
+function turn(g, rnd) { if (g.page >= pagesOf(g)) return false; g.page++; synDeal(g, rnd); return true; }
 // the finishing reagent, on the last page only
 function finishOpt(g) {
-  if (g.page < SYN.pages || !RX.CARDS[SYN.finish].find(g.m).length) return null;
+  if (g.page < pagesOf(g) || !RX.CARDS[SYN.finish].find(g.m).length) return null;
   const t = tryOne(g, g.m, SYN.finish), r = t.r; if (!r.hits) return null;
   return { id: SYN.finish, model: t.model, r, finish: true, loop: false, spoil: false, cont: true, atoms: RX.CARDS[SYN.finish].find(g.m).reduce((a, x) => a.concat(x.atoms), []) };
 }
@@ -232,9 +250,9 @@ function synFinish(g, o) {
   g.left[SYN.finish] = 1; take(g, o);
   const m = 1 + SYN.finishMult * o.r.hits; g.cur.batch *= m;
   g.trail[g.trail.length - 1].ev.push({ src: 'finish', kind: 'x', val: m, yield: g.cur.yield, batch: g.cur.batch });
-  close(g); g.over = true;
+  close(g); if (g.gear.includes('pact')) g.total *= 3; g.over = true;
 }
-function synEnd(g) { close(g); g.over = true; }
+function synEnd(g) { close(g); if (g.gear.includes('pact')) g.total *= 3; g.over = true; }
 // a plain player, used to set the number to beat: continues the run when it can, otherwise reacts at the most sites
 function synPlay(feed, rnd, gear, run) {
   const g = synBegin(feed, false, rnd, gear, run), R = rnd || Math.random;
@@ -269,7 +287,9 @@ const SUPPLY = [
   { name: 'corner chemist', cost: 0, reagents: ['hcl', 'bh3'], gear: ['balance', 'stirrer', 'cards', 'spatula', 'stopwatch', 'litmus'] },
   { name: 'trade supplier', cost: 6, reagents: ['socl2', 'koh'], gear: ['cannula', 'coldtrap', 'schlenk', 'burette', 'logbook', 'scalepan'] },
   { name: 'research supplier', cost: 16, reagents: ['naoh'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper'], rare: true },
-  { name: 'instrument maker', cost: 30, reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] }
+  { name: 'instrument maker', cost: 30, reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] },
+  { name: 'an alchemist, by appointment', cost: 50, reagents: [], gear: ['stone', 'transmute', 'regia', 'ouroboros', 'homunculus', 'elixir'] },
+  { name: 'Brenda (deceased)', cost: 80, reagents: [], gear: ['ouija', 'candle', 'goat', 'pact'] }
 ];
 const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); return o; };
 function runNew(tier) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false }; }
@@ -277,7 +297,7 @@ const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear,
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 function runQuota(run, feed) {
   if (!run.base[feed]) run.base[feed] = synQuota(feed, 40, [], { rack: RUNG.start, grade: {}, lv: {}, uses: {}, rare: false });
-  const q = run.base[feed] * RUNG.first * Math.pow(RUNG.growth, run.round - 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+  const q = run.base[feed] * RUNG.first * Math.pow(RUNG.growth, run.round - 1) * (run.gear.includes('pact') ? 2 : 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
   return Math.max(50, Math.round(q / mag) * mag);
 }
 function runPicks(run, rnd) {
@@ -307,6 +327,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + RUN.YIELD;
   return 'one more use on every page';
 }
-AA.rxPath = { stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
