@@ -181,6 +181,13 @@ function start(app) {
   // distance. The middle molecule is always drawn in full. Nothing is ringed in 3D: what changed is circled in ink
   // on the page under it, see marksOf.
   // seed: where atoms stood before a reaction, so that a flat layout carries on from the last one and does not start afresh
+  // A cage or fused rings: some atom has three or more bonds that are each part of a ring. These cannot be laid flat
+  // without bonds crossing, so they keep their shape in space.
+  function caged(model) {
+    const hv = model.atoms.filter(a => a.el !== 'H'), nb = a => model.neighbors(a).map(q => q.atom).filter(b => b.el !== 'H');
+    const inRing = (a, b) => { const seen = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!seen.has(v)) { seen.add(v); st.push(v); } } } return false; };
+    return hv.some(a => nb(a).filter(b => inRing(a, b)).length >= 3);
+  }
   function buildMol(model, rings, lean0, seed, seedBead) {
     const lean = lean0 || MOLV !== 'full', grp = new T.Group(), c = new T.Vector3(), at = new Map(), skip = new Set(), balls = new Map(), sticks = [], pale = new Set(); let low = 1e9, n = 0;
     const big = model.atoms.filter(a => a.el !== 'H' && !a.tail).length >= BIG, beads = (FOLD === 'bead' || FOLD === 'both') && big ? foldsOf(model) : [], flat = ((FOLD === 'flat' || FOLD === 'both') && big) || MOLV === 'flatlean' || MOLV === 'pads';
@@ -191,7 +198,7 @@ function start(app) {
     model.atoms.forEach(a => { at.set(a, new T.Vector3(a.x, a.y, a.z).sub(c).applyQuaternion(align)); });
     // a bead stands where the first atom of its arm stood
     beads.forEach(b => { b.pa = { el: 'R', bead: b.txt, root: b.root }; at.set(b.pa, ((seedBead && seedBead.get(b.root)) || at.get(b.root)).clone()); });
-    if (flat) tidy(model, at, skip, beads, seed);
+    if (flat && !caged(model)) tidy(model, at, skip, beads, seed);
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
     const radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1));
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
