@@ -37,7 +37,7 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 Forty exist. Twenty more, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
-1. Voodoo doll: the first place a reaction changes is changed twice.
+1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
 2. Tarot card, the Tower: the first time a row breaks each round, it does not.
 3. Monkey's paw: three wishes a run. A wish doubles a round's total and removes a reagent for good.
 4. Cursed idol: every number is doubled, the number to beat as well. Cannot be put down.
