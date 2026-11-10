@@ -33,7 +33,8 @@ function segText(x, text, right, top, hh, on, off) {
 
 function make(v, hood, hooks) {
   const cam = v.camera, picks = [], bottles = new Map();
-  let s = 640 / v.zoom, state = { proj: 0, quota: 1, left: 0, max: 0, redraws: 0, met: false }, hover = null, level = 0, press = { deliver: 0, swap: 0 }, tick = 0, fontsOk = false;
+  let s = 640 / v.zoom, state = { proj: 0, quota: 1, left: 0, max: 0, redraws: 0, met: false }, hover = null, level = 0, press = { deliver: 0, swap: 0 }, tick = 0, fontsOk = false, drag = null, busy = false, skipClick = false;
+  const order = [];   // shelf order, left to right, set by hand
   cam.setViewOffset(1, 1, 0, P.shift, 1, 1);
   const rig = new T.Group(), bench = new T.Group(); cam.add(rig); rig.add(bench);
   const maxAniso = v.renderer.capabilities.getMaxAnisotropy();
@@ -117,11 +118,14 @@ function make(v, hood, hooks) {
   }
   function setHand(items) {
     const seen = new Set(), n = items.length, sp = Math.min(P.sp, P.span / Math.max(1, n - 1)), k = sp / P.sp;
+    const ids = items.map(it => it.uid);
+    for (let j = order.length - 1; j >= 0; j--) if (!ids.includes(order[j])) order.splice(j, 1);
+    ids.forEach(u => { if (!order.includes(u)) order.push(u); });
     items.forEach((it, i) => {
       let b = bottles.get(it.uid);
-      const tx = (i - (n - 1) / 2) * sp;
+      const tx = (order.indexOf(it.uid) - (n - 1) / 2) * sp;
       if (!b) { b = mkBottle(it); bottles.set(it.uid, b); b.g.position.set(tx, 0.42, P.bz); b.g.scale.setScalar(P.bh * k); }
-      b.it = it; b.i = i; b.tx = tx; b.k = k; seen.add(it.uid);
+      b.it = it; b.i = i; b.tx = tx; b.k = k; b.sp = sp; b.n = n; seen.add(it.uid);
       const sig = [it.n, it.live, it.spoils, fontsOk].join();
       if (b.sig !== sig) { b.sig = sig; drawLabel(b); }
       const d = it.live ? 1 : 0.34;
@@ -346,8 +350,50 @@ function make(v, hood, hooks) {
     const hit = ray.intersectObjects(picks.filter(p => !p.userData.off), false)[0];
     return hit ? hit.object.userData : null;
   }
+  // where the pointer meets a level plane just above the bench top, in the bench's own space
+  const inv = new T.Matrix4(), ro = new T.Vector3(), rd = new T.Vector3();
+  function benchPoint(e) {
+    const r = hood.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, cam); bench.updateMatrixWorld(); inv.copy(bench.matrixWorld).invert();
+    ro.copy(ray.ray.origin).applyMatrix4(inv); rd.copy(ray.ray.direction).transformDirection(inv);
+    if (rd.y > -0.03) return { x: ro.x + rd.x * 1.2, z: -1 };
+    const t = (0.05 - ro.y) / rd.y; return { x: ro.x + rd.x * t, z: ro.z + rd.z * t };
+  }
+  // a bottle is picked up, carried, slid along the shelf to reorder, or held over the molecule and let go to pour
+  hood.addEventListener('pointerdown', e => {
+    skipClick = false;
+    if (e.button !== 0 || busy || drag) return;
+    const u = pickAt(e); if (!u || u.kind !== 'bottle' || u.b.gone) return;
+    e.stopPropagation(); skipClick = true;
+    const p = benchPoint(e), g = u.b.g;
+    drag = { b: u.b, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, armed: false, x: g.position.x, z: P.bz, ox: g.position.x - p.x, oz: P.bz - p.z };
+    try { hood.setPointerCapture(e.pointerId); } catch (err) { /* no capture */ }
+  }, true);
+  function drop(cancel) {
+    if (!drag) return; const d = drag; drag = null; hood.style.cursor = '';
+    try { hood.releasePointerCapture(d.id); } catch (err) { /* not held */ }
+    if (cancel || d.b.gone) return;
+    d.b.px = d.moved && d.armed ? d.x : null; if (d.moved && !d.armed) { d.b.land = 0.22; if (hooks.lift) hooks.lift(); }
+    if (!d.moved || d.armed) hooks.play(d.b.i);
+  }
+  hood.addEventListener('pointerup', () => drop(false));
+  hood.addEventListener('pointercancel', () => drop(true));
   const same = (a, b) => (a && a.kind) === (b && b.kind) && (a && (a.b || a.pr)) === (b && (b.b || b.pr));
   hood.addEventListener('pointermove', e => {
+    if (drag) {
+      const b = drag.b;
+      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 7) { drag.moved = true; setTip(null); hood.style.cursor = 'grabbing'; if (hooks.lift) hooks.lift(); }
+      if (!drag.moved) return;
+      const p = benchPoint(e);
+      drag.x = Math.max(-0.62, Math.min(0.62, p.x + drag.ox)); drag.z = Math.max(b.it.live ? -0.06 : P.bz - 0.09, Math.min(P.bz + 0.04, p.z + drag.oz));
+      const armed = b.it.live && drag.z < P.bz - 0.11; if (armed !== drag.armed) { drag.armed = armed; if (hooks.lift) hooks.lift(); }
+      if (!armed) {
+        const uid = b.it.uid, at = order.indexOf(uid), to = Math.max(0, Math.min(b.n - 1, Math.round(drag.x / b.sp + (b.n - 1) / 2)));
+        if (at >= 0 && to !== at) { order.splice(at, 1); order.splice(to, 0, uid); bottles.forEach(q => { const nx = (order.indexOf(q.it.uid) - (q.n - 1) / 2) * q.sp; if (q !== b && Math.abs(nx - q.tx) > 1e-4) q.land = 0.14; q.tx = nx; }); if (hooks.lift) hooks.lift(); }
+      }
+      return;
+    }
     const u = pickAt(e), was = hover; hover = u;
     hood.style.cursor = u ? 'pointer' : '';
     const wi = was && was.kind === 'bottle' ? was.b.i : -1, ni = u && u.kind === 'bottle' && !u.b.gone ? u.b.i : -1;
@@ -356,6 +402,7 @@ function make(v, hood, hooks) {
   });
   hood.addEventListener('pointerleave', () => { if (hover && hover.kind === 'bottle') hooks.hover(-1); hover = null; setTip(null); });
   hood.addEventListener('click', e => {
+    if (skipClick) { skipClick = false; return; }
     const u = pickAt(e); if (!u) return;
     if (u.kind === 'bottle') { if (!u.b.gone) hooks.play(u.b.i); }
     else if (u.kind === 'prop') { u.pr.hop = 0.25; hooks.prop(u.pr.uid); setTip(null); }
@@ -367,7 +414,7 @@ function make(v, hood, hooks) {
   function setState(o) { state = o; cyl.visible = o.cyl !== false; stand.visible = o.stand !== false; meter.visible = o.meter !== false; }
 
   function update(dt, o) {
-    tick++;
+    tick++; busy = !!o.busy; if (busy && drag) drop(true);
     // hold the bench at the molecule's distance, without following the short push in after a hit
     s = ease(s, Math.max(640 / 70, Math.min(640 / 14, o.rad * P.dist)), 0.05);
     const p = v.pitch, c = Math.cos(p), sn = Math.sin(p);
@@ -382,7 +429,17 @@ function make(v, hood, hooks) {
     bottles.forEach((b, uid) => {
       const g = b.g, it = b.it, hov = hover && hover.b === b && it.live && !o.busy;
       let tx = b.tx, ty = hov ? 0.018 : 0, tz = P.bz - (it.live ? 0 : 0.085), rz = 0, sc2 = P.bh * b.k * (it.live ? 1 : 0.9);
-      if (b.pour > 0) { b.pour -= dt; tx = b.tx * 0.55; ty = 0.3; tz = -0.02; rz = (b.tx >= 0 ? 1 : -1) * 1.9; }
+      if (b.pour > 0) { b.pour -= dt; tx = b.px != null ? b.px : b.tx * 0.55; ty = 0.3; tz = -0.02; rz = (b.tx >= 0 ? 1 : -1) * 1.9; }
+      if (drag && drag.b === b && drag.moved && !b.gone && b.pour <= 0) {   // in the hand: it trails the pointer and swings with the lag
+        const kd = 1 - Math.exp(-dt * 26), lag = drag.x - g.position.x, lean = drag.armed ? (drag.x >= 0 ? 0.55 : -0.55) : 0;
+        g.position.x = ease(g.position.x, drag.x, kd); g.position.z = ease(g.position.z, drag.z, kd);
+        g.position.y = ease(g.position.y, 0.05 + Math.max(0, Math.min(0.3, (P.bz - drag.z) * 1.3)), kd);
+        g.rotation.z = ease(g.rotation.z, Math.max(-0.6, Math.min(0.6, lag * 14)) + lean, k);
+        g.scale.setScalar(ease(g.scale.x, P.bh * b.k * 1.12, k));
+        b.ring.position.set(b.tx, 0.003, P.bz); b.ring.scale.setScalar(P.bh * b.k); b.ring.material.color.setHex(0xffffff); b.ring.material.opacity = ease(b.ring.material.opacity, drag.armed ? 0 : 0.5, k);
+        return;
+      }
+      if (b.land > 0) { b.land -= dt; const q = b.land / 0.22; ty += Math.abs(Math.sin(q * Math.PI * 2)) * 0.03 * q; rz += Math.sin(q * Math.PI * 3) * 0.12 * q; }
       if (b.gone) { b.gone += dt; ty = Math.max(ty, 0.36); sc2 = 0.0001; if (b.gone > 0.5) { dropBottle(uid, b); return; } }
       g.position.x = ease(g.position.x, tx, k); g.position.y = ease(g.position.y, ty, k * 1.2); g.position.z = ease(g.position.z, tz, k);
       g.rotation.z = ease(g.rotation.z, rz, k * 0.8); g.scale.setScalar(ease(g.scale.x, sc2, b.gone ? k * 0.6 : k));
