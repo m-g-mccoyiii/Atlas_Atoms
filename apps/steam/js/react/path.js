@@ -57,7 +57,7 @@ const CATCH = (() => { const A = (part, val) => ({ part, op: 'add', val }), M = 
   dryer: { water: A('p', 60) }, sieves: { water: A('r', 0.6) }, hood: { any: A('e', 0.06) }, scrubber: { h2: A('p', 50), chloride: A('p', 80), oxide: A('p', 80) } }; })();
 // a reagent found by doing counts for the whole row it stands for: its places count this many times and the row gets the name's bonus
 const SHORT = { wacker: 3, wolff: 4 };
-const BY = { need: 3, tally: 5, pay: 50 };
+const BY = { need: 3, tally: 1e9, pay: 50 };
 // spends three of what has been collected. Water deals the page's reagents again. Hydrogen gives every reagent on the page one more use.
 function spendBy(g, kind, rnd) {
   if (!g.by || g.by[kind] < BY.need || g.over) return false;
