@@ -16,7 +16,7 @@ const INK = '#1f2a55', PENCIL = '#5a564e', FAINT = 'rgba(90,86,78,0.35)', REDINK
 const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // The page, near to far: a band along the bottom for the count, the molecule in the middle, and the molecules it
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
-const C0 = { x: -1.4, z: 3 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
+const C0 = { x: 3.5, z: 2.6 }, SPOT = [], LAB = [], SCS = [], FIN = 7;
 const STEP = { x: -21.6, z: 5.2 }, PAGES = { x: -21.6, z: 1.6 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
@@ -189,7 +189,9 @@ function start(app) {
   }
   // how wide a molecule is, left to right, counting what is drawn
   const spanOf = m => { let lo = 1e9, hi = -1e9; m.at.forEach((q, a) => { if (a.el === 'H') return; lo = Math.min(lo, q.x); hi = Math.max(hi, q.x); }); return Math.max(3, hi - lo + 1.2); };
-  const fitMain = m => Math.max(0.6, Math.min(1.75, 10.5 / spanOf(m)));
+  // the molecule in the middle is the largest thing on the page: as big as the room between the choices and the equipment allows
+  const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
+  const fitMain = m => Math.max(0.7, Math.min(2.7, 21 / spanOf(m), 8.5 / deepOf(m)));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -218,9 +220,9 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 12.9, MULT = { x: -22.6, z: BAND }, MADE = { x: -11.6, z: 9.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 14, z: 3.2 }, CALL = { x: 0, z: -3.7 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 12.9, MULT = { x: -22.6, z: BAND }, MADE = { x: -11.6, z: 9.6 }, BEAT = { x: -4.8, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => ({ x: 0.2 + i * 4.75, z: 11.0 });
   let SLOTW = 10, LABF = 50;
-  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], zoomUntil: 0, fx: -1.4, fz: 3, focus: { x: -1.4, z: 3 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
+  const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0 }, shop = { earned: 0 };
   try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); } } catch (e) { /* storage unavailable */ }
@@ -246,9 +248,33 @@ function start(app) {
     grp.add(inner); grp.rotation.x = AA.rxKit.FLAT[id] ? 0 : -0.8; grp.rotation.y = yaw; scene.add(grp);
     return { id, grp, yaw, col: '#' + liq.getHexString() };
   }
+  // How each piece moves when it fires. Anything not named hops.
+  //   tip: rocks from side to side.  spin: turns once.  butt: lunges at the molecule.  flare: swells and settles.
+  //   drip: squashes, then stretches.  slam: lifts and comes down flat.  shake: rattles.
+  const FIRE = { balance: 'tip', scalepan: 'tip', carousel: 'spin', magnet: 'spin', stopwatch: 'spin', ouroboros: 'spin', goat: 'butt', candle: 'flare', bunsen: 'flare', stone: 'flare', elixir: 'flare', crystal: 'flare',
+    burette: 'drip', dropper: 'drip', cannula: 'drip', reflux: 'drip', coldtrap: 'drip', schlenk: 'drip', logbook: 'slam', cards: 'slam', pact: 'slam', ouija: 'slam', mirror: 'slam', transmute: 'slam',
+    mortar: 'shake', stopper: 'shake', regia: 'shake', homunculus: 'shake', recycler: 'shake', timer: 'shake', loupe: 'shake', litmus: 'shake', thermometer: 'shake', clamp: 'shake', stirrer: 'shake' };
+  function animKit(k, i, now, heat) {
+    const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, t = now / 1000, G = k.grp, B = k.base || 1, style = FIRE[k.id] || 'hop', ready = st.willFire && st.willFire.has(k.id);
+    // idle: a slow breath, a sway, a small hop now and then, each out of step with its neighbours
+    const beat = (t + i * 1.9 + hash(k.id) * 5) % 7, hop = beat < 0.34 ? Math.sin(beat / 0.34 * Math.PI) * 0.35 : 0, look = (k.id === 'goat' || k.id === 'homunculus' ? 0.4 : 0.1) * Math.sin(t * 0.55 + i * 3);
+    let y = hop + (ready ? 0.35 + 0.25 * Math.sin(now / 90) : 0), x = 0, z = 0, yaw = k.yaw + look, rz = (0.025 + 0.1 * heat) * Math.sin(t * (1.3 + 9 * heat) + i * 2), sx = 1, sy = 1 + 0.02 * Math.sin(t * 1.7 + i);
+    if (age < 0.7) {
+      const u = age / 0.7, out = 1 - u, snap = age < 0.07 ? age / 0.07 : 1;
+      if (style === 'tip') rz += 0.5 * Math.sin(age * 26) * out * out;
+      else if (style === 'spin') { yaw += (1 - Math.pow(out, 3)) * 6.283; y += Math.sin(Math.min(1, u * 2) * Math.PI) * 0.8; }
+      else if (style === 'butt') { const g2 = age < 0.12 ? -age / 0.12 * 0.5 : age < 0.26 ? -0.5 + (age - 0.12) / 0.14 * 2.9 : 2.4 * Math.pow(1 - (age - 0.26) / 0.44, 2); z -= g2 * 1.1; x -= g2 * 0.5; sx = 1 + 0.12 * Math.max(0, g2 / 2.4); sy *= 1 - 0.1 * Math.max(0, g2 / 2.4); }
+      else if (style === 'flare') { const w = Math.sin(Math.min(1, u * 1.6) * Math.PI); sx = 1 + 0.3 * w; sy *= 1 + 0.42 * w; y += 0.3 * w; }
+      else if (style === 'drip') { const w = age < 0.12 ? -(age / 0.12) * 0.25 : 0.3 * Math.cos((age - 0.12) * 24) * out * out; sy *= 1 + w; sx = 1 - w * 0.5; }
+      else if (style === 'slam') { const up = age < 0.2 ? Math.sin(age / 0.2 * Math.PI / 2) * 1.7 : age < 0.3 ? 1.7 * (1 - (age - 0.2) / 0.1) : 0; y += up; if (age >= 0.3) { const w = Math.pow(1 - (age - 0.3) / 0.4, 2); sy *= 1 - 0.25 * w * Math.cos((age - 0.3) * 30); sx = 1 + 0.14 * w; } rz += age < 0.3 ? 0.15 * Math.sin(age * 20) : 0; }
+      else if (style === 'shake') { x += Math.sin(age * 70) * 0.28 * out * out; rz += Math.sin(age * 55) * 0.2 * out * out; y += 0.25 * out * snap; }
+      else { const w = Math.sin(Math.min(1, u * 1.5) * Math.PI); y += 1.8 * w; sy *= 1 + 0.18 * w - (u > 0.66 ? 0.2 * Math.sin((u - 0.66) / 0.34 * Math.PI) : 0); sx = 1 - 0.08 * w + (u > 0.66 ? 0.12 * Math.sin((u - 0.66) / 0.34 * Math.PI) : 0); }
+    }
+    G.position.set(k.hx + x, y, k.hz + z); G.rotation.y = yaw; G.rotation.z = rz; G.scale.set(B * sx, B * sy, B * sx);
+  }
   function buildKit() {
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = [];
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.base = 1.4; k.grp.scale.setScalar(1.4); kitObjs.push(k); });
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.base = 1.4; k.grp.scale.setScalar(1.4); kitObjs.push(k); });
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
@@ -381,7 +407,7 @@ function start(app) {
         const key = e.part === 'h' ? 'p' : e.part, big = e.op === 'mul';
         st.want = e.made; st.P = e.P; st.R = e.R; st.E = e.E; st.mult = e.R * e.E; st.bump[key] = 1; st.madeBump = 1;
         const piece = P.GEARS[e.src] ? e.src : null, txt = (big ? 'times ' : '+') + fmtB(e.val);
-        if (e.src === 'bottle') { last = spot(pl); st.focus = { x: last.x, z: last.z }; ping({ x: last.x, z: last.z - (pl % 2) * 1.3 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 30 * f), rcol); }
+        if (e.src === 'bottle') { last = spot(pl); st.focus = { x: last.x, z: last.z }; { const dx = last.x - lab.x, dz = last.z - lab.z, d = Math.hypot(dx, dz) || 1, imp = 7 + 9 * f; st.kvx += dx / d * imp; st.kvz += dz / d * imp; st.sq = Math.min(1, 0.55 + 0.4 * f); st.hold = performance.now() + 55 + 50 * f; } ping({ x: last.x, z: last.z - (pl % 2) * 1.3 }, txt, PART.p, 50, rcol); burst3(last.x, 0, last.z, Math.round(8 + 30 * f), rcol); }
         else if (e.src === 'iso') { const h = heavy(e.iso) || last; ping({ x: h.x, z: h.z - 2.8 }, txt, PART[e.part], 62, PART[e.part]); burst3(h.x, 0, h.z, 14, PART[e.part]); }
         else if (piece) { st.fired[piece] = { t: performance.now(), txt, col: PART[e.part] }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 0.2, ko.grp.position.z, big ? 12 : 7, PART[e.part]); st.strokes.push({ a: last, b: { x: ko.grp.position.x, z: ko.grp.position.z - 2.4 }, col: PART[e.part], t: performance.now(), dur: 130 }); } }
         else if (e.src === 'brief') st.floats.push({ txt, t: performance.now(), size: 66, dx: -6, col: PART[e.part] });
@@ -416,8 +442,8 @@ function start(app) {
       else if (wasOpen && !t.cont && !st.gear.includes('ouroboros')) callout('row broken', '', PENCIL);
       // passing the number to beat, and each doubling past it
       const m = P.made(g), times = Math.floor(m / st.quota);
-      if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); spray(90, GREEN, true); burst3(FLASK.x, 0.2, FLASK.z, 30, flask.hex); }
-      else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); spray(120, flask.hex, true); burst3(FLASK.x, 0.2, FLASK.z, 50, flask.hex); }
+      if (times >= 1 && st.over === 0) { st.hold = performance.now() + 200; st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); spray(90, GREEN, true); burst3(FLASK.x, 0.2, FLASK.z, 30, flask.hex); }
+      else if (times >= 2 && times >= st.over * 2) { st.hold = performance.now() + 140; st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); spray(120, flask.hex, true); burst3(FLASK.x, 0.2, FLASK.z, 50, flask.hex); }
       dirty = true;
     };
     ids.push(setTimeout(() => { st.pending = null; final(); }, dur)); st.pending = { ids, final };
@@ -504,7 +530,7 @@ function start(app) {
     return tot;
   }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
-  function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z + 3 - C0.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d; return { a: { x: C0.x + ux * 8.6, z: C0.z + uz * 3.6 }, b: { x: p.x - ux * 0.6, z: p.z + 2.9 } }; }
+  function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z + 3 - C0.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d; return { a: { x: p.x - ux * 3.2, z: p.z + 2.9 - uz * 2.6 }, b: { x: p.x - ux * 0.6, z: p.z + 2.9 } }; }
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode === 'shop') {
@@ -582,7 +608,7 @@ function start(app) {
     // pointing at a reaction rings the places it will change, in its color
     if (st.peek && center) { x.setLineDash([18, 14]); st.peek.marks.forEach(k => circle(center, k, st.peek.col, 9)); x.setLineDash([]); }
     // ink that runs from a reagent to a place, and from a place to the equipment it sets off
-    st.strokes = st.strokes.filter(q => now - q.t < q.dur + 320); st.strokes.forEach(q => { const k = Math.min(1, (now - q.t) / q.dur), a = px(q.a), b = px(q.b); x.globalAlpha = k < 1 ? 0.9 : 0.9 * (1 - (now - q.t - q.dur) / 320); swipe(x, a, [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], 8, q.col); x.globalAlpha = 1; });
+    st.strokes = st.strokes.filter(q => now - q.t < q.dur + 320); st.strokes.forEach(q => { const k0 = Math.min(1, (now - q.t) / q.dur), k = k0 * k0 * k0, a = px(q.a), b = px(q.b); x.globalAlpha = k < 1 ? 0.9 : 0.9 * (1 - (now - q.t - q.dur) / 320); swipe(x, a, [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], 8 + 6 * k, q.col); if (k0 >= 1 && now - q.t - q.dur < 90) { x.fillStyle = q.col; x.beginPath(); x.arc(b[0], b[1], 16, 0, 6.3); x.fill(); } x.globalAlpha = 1; });
     if (play && st.hover >= 0 && slots[st.hover] && slots[st.hover].o && center) marksOf(center, slots[st.hover].o.atoms).forEach(k => circle(center, k, rgb(colOf(slots[st.hover].id)), 9));
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     if (play) slots.forEach((s, i) => {
@@ -635,14 +661,14 @@ function start(app) {
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = tr[k] ? rgb(colOf(tr[k].id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
     // how much has been made, and the number to beat
     const q = px(MADE), bq = px(BEAT), beaten = st.shown >= st.quota, done = st.mode === 'done';
-    { const txt = fmt(st.shown), size = fit(x, txt, 92 * (1 + 0.12 * st.madeBump), 270, marker), mw = x.measureText(txt).width; x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
+    { const txt = fmt(st.shown), size = fit(x, txt, 92 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), 300, marker), mw = x.measureText(txt).width; x.textAlign = 'right'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
     }
     marker(x, 46); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(bq[0] - 60, bq[1] - 46); x.lineTo(bq[0] + 60, bq[1] - 49); x.stroke();
     // what the last reaction made, at the right end of the band, with anything a rare reagent added above it
     st.pings = st.pings.filter(q => now - q.t < 800); st.pings.forEach(q => {
       const k = (now - q.t) / 800, c = px(q), up = c[1] - 30 - 46 * (1 - Math.pow(1 - k, 2));
       if (k < 0.6) { x.globalAlpha = 1 - k / 0.6; x.strokeStyle = q.ring; x.lineWidth = 7 * (1 - k / 0.6) + 2; x.beginPath(); x.ellipse(c[0], c[1], 14 + (90 + 140 * q.f) * k, 11 + (70 + 110 * q.f) * k, 0.1, 0, 6.3); x.stroke(); if (q.f > 0.4) { x.beginPath(); x.ellipse(c[0], c[1], 8 + (50 + 80 * q.f) * k, 6 + (40 + 60 * q.f) * k, 0.1, 0, 6.3); x.stroke(); } }
-      x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; marker(x, q.size * (k < 0.1 ? 1.5 - 5 * k : 1)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, c[0], up); x.fillStyle = q.col; x.fillText(q.txt, c[0], up); x.globalAlpha = 1; });
+      x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; { const slam = k < 0.08 ? 2.3 - 17 * k : k < 0.16 ? 0.94 + 0.75 * (k - 0.08) : 1; marker(x, q.size * slam); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#f3eddc'; x.save(); x.translate(c[0], up); x.rotate((hash(q.txt + Math.round(q.t)) - 0.5) * 0.16); x.strokeText(q.txt, 0, 0); x.fillStyle = q.col; x.fillText(q.txt, 0, 0); x.restore(); } x.globalAlpha = 1; });
     st.floats = st.floats.filter(f => now - f.t < 1100); { let lane = 0; st.floats.forEach(f => { f.lane = f.col === '#8a6a00' ? 0 : ++lane; }); }
     st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.lane > 0, c = px({ x: GAIN.x, z: GAIN.z - f.lane * 2.6 - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
@@ -705,7 +731,11 @@ function start(app) {
   }
   function frame(now) {
     requestAnimationFrame(frame);
-    const dt = Math.min(0.05, (now - last) / 1000), ended = []; last = now;
+    const raw = now - last, dt = Math.min(0.05, raw / 1000), ended = []; last = now;
+    // a held moment: while it lasts, the molecule and anything flying off it stand still
+    if (now < st.hold) { if (morph) morph.t0 += raw; st.flyers.forEach(f => { if (f.t0) f.t0 += raw; }); }
+    // the recoil of the molecule from a strike: a spring that pulls it back to where it stands
+    { const k = 220, c = 14; st.kvx += (-k * st.kx - c * st.kvx) * dt; st.kvz += (-k * st.kz - c * st.kvz) * dt; st.kx += st.kvx * dt; st.kz += st.kvz * dt; st.sq = Math.max(0, st.sq - dt * 4.5); }
     tweens = tweens.filter(tw => {
       tw.t += dt; const k = Math.min(1, tw.t / tw.dur), e = 1 - Math.pow(1 - k, 3);
       tw.m.group.position.set(tw.fx + (tw.to.x - tw.fx) * e, Math.sin(k * Math.PI) * 1.4 * (tw.dur > 0.2 ? 1 : 0), tw.fz + (tw.to.z - tw.fz) * e); tw.m.group.scale.setScalar(tw.fs + (tw.sc - tw.fs) * e);
@@ -723,12 +753,12 @@ function start(app) {
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * 16); dirty = true; }
     pickObjs.forEach(k => { k.grp.rotation.y += dt * 0.6; k.grp.position.y = st.hover === k.slot ? 0.8 : 0; });
-    kitObjs.forEach(k => { const f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9; k.grp.position.y = (age < 0.28 ? Math.sin(age / 0.28 * Math.PI) * 2.4 : 0) + (st.willFire && st.willFire.has(k.id) ? 0.35 + 0.25 * Math.sin(now / 90) : 0); if (st.willFire && st.willFire.size) dirty = true; k.grp.rotation.y = k.yaw + (age < 0.6 ? (1 - Math.pow(1 - age / 0.6, 3)) * 6.283 : 0); k.grp.scale.setScalar((k.base || 1) * (age < 0.28 ? 1.3 : 1)); if (age < 0.7) dirty = true; });
+    // equipment is moved further down, once the heat of the round is known
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
     if (st.floats.length || st.blots.length || st.pings.length || st.slashes.length || st.strokes.length || st.call) dirty = true;
     st.shake *= Math.pow(0.002, dt); const sh = st.shake > 0.02 ? st.shake : 0;
     // the view pushes in on the molecule for a moment when it reacts
-    { const want = now < st.zoomUntil ? 1 : 0; st.zoom += (want * (0.3 + 0.08 * st.fury) - st.zoom) * Math.min(1, dt * (want ? 9 : 5)); const fk = Math.min(1, dt * 8); st.fx += (st.focus.x - st.fx) * fk; st.fz += (st.focus.z - st.fz) * fk; }
+    { const want = now < st.zoomUntil ? 1 : 0; st.zoom += (want * (0.15 + 0.06 * st.fury) - st.zoom) * Math.min(1, dt * (want ? 9 : 5)); const fk = Math.min(1, dt * 8); st.fx += (st.focus.x - st.fx) * fk; st.fz += (st.focus.z - st.fz) * fk; }
     const zk = st.zoom, hx = (Math.random() - 0.5) * sh * 0.6, hz = (Math.random() - 0.5) * sh * 0.6;
     cam.position.set(CAM.x + (st.fx - CAM.x) * zk + hx, CAM.y + (16 - CAM.y) * zk, CAM.z + (st.fz + 12 - CAM.z) * zk + hz);
     cam.lookAt(LOOKAT.x + (st.fx - LOOKAT.x) * zk, 0.8 * zk, LOOKAT.z + (st.fz - LOOKAT.z) * zk);
@@ -739,10 +769,10 @@ function start(app) {
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 5); center.group.scale.setScalar(st.sc * sp); center.group.position.y = 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); }
+    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 5); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } center.group.position.set(C0.x + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), C0.z + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); }
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
-    { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'); flask.grp.visible = on; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5); flask.grp.rotation.z = boil ? (Math.random() - 0.5) * 0.09 * boil : 0; flask.grp.position.y = boil ? Math.random() * 0.25 * boil : 0; if (boil) dirty = true; } }
-    kitObjs.forEach((k, i) => { k.grp.rotation.z = (0.03 + 0.1 * heat) * Math.sin(tt * (3 + 9 * heat) + i * 2); });
+    { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'); flask.grp.visible = on; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.45 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.45 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.45); if (boil) dirty = true; } }
+    kitObjs.forEach((k, i) => animKit(k, i, now, heat));
     if (st.madeBump > 0) { st.madeBump = Math.max(0, st.madeBump - dt * 6); dirty = true; }
     ['p', 'r', 'e'].forEach(q => { if (st.bump[q] > 0) { st.bump[q] = Math.max(0, st.bump[q] - dt * 4); dirty = true; } });
     if (heat > 0.2) dirty = true;
