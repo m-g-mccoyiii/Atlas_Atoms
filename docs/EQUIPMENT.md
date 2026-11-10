@@ -34,30 +34,30 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 
 ## To sixty
 
-Forty-five exist. Fifteen more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
+Fifty-one exist. Nine more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
 1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
 2. Tarot card, the Tower (built): the first time a row would break each round, it holds and the row doubles. The page says "held". Measured about 1.7 to 2.4 alone. Blind check: named as the Tower card, with effort.
 3. Monkey's paw (built): three wishes a run, one a round. A click on the paw makes the wish: the round is doubled and one reagent is gone from the run for good. A finger curls for each wish spent. Not measured: the simulated player does not wish.
-4. Cursed idol: every number is doubled, the number to beat as well. Cannot be put down.
+4. Cursed idol (built): every other occult piece fires twice. Every number to beat times 1.5. Alone it measures 1.1; with the voodoo doll the pair measures 8.2 against 1.9 for the doll alone. Blind check: a totem or idol, with effort.
 5. Crystal ball: shows the next page's reagents now.
 6. Black cat (built): a row that breaks leaves extra +0.13 for every reaction that was in it. The simulated player never breaks a row on purpose, so its measured worth (0.8) says nothing yet. Blind check: obvious.
-7. Grimoire: the last reagent on each page is used twice.
+7. Grimoire (built): the last reaction on each page counts twice. Measured 1.7. Blind check: obvious.
 8. Raven: carries one unused reaction over to the next page.
 9. Hand of glory: equipment fires even on a broken row.
-10. Hourglass of sand from a grave: one more page, and the number to beat grows by a tenth each page.
+10. Hourglass of sand from a grave (built): one more page. Every number to beat times 1.25. Measured 1.1 before the higher number to beat, so it is too weak. Blind check: obvious.
 
 Funny
 11. Rubber duck (built, first shelf): says nothing. Extra +0.01 for every reaction it has watched this round, so it grows through a round. Measured about 2.1 alone. Blind check: obvious.
 12. The intern: does one reaction of its own choosing each page. It is not always a good one.
-13. Coffee: one more reaction a page for two pages, then one fewer for the rest of the round.
+13. Coffee (built): one more reaction on pages one and two, one fewer after. Measured 0.85, inside the noise. Blind check: obvious.
 14. Safety goggles, on forehead: no effect. Sells back for double.
 15. Grant proposal: pays out only if the round is beaten by ten times.
 16. Unlabeled bottle: a different reagent every page.
-17. Lab coat with someone else's name: copies the piece to its left.
+17. Lab coat with someone else's name (built): copies the piece to its left. With the stopwatch the pair measures 1.6 against 1.0. Blind check: obvious.
 18. Fire extinguisher: stops a chain where the player chooses and banks it at half again.
-19. Motivational poster: row +0.5 on page one, nothing after.
+19. Motivational poster (built): the first reaction of a round, row +0.5, nothing after. Measured 1.1. The first drawing read as a television; redrawn as a kitten hanging from a branch, not checked blind again.
 20. Expired milk: grows. Extra +0.1 more each round it is kept.
 
 ## Terms set before a run
