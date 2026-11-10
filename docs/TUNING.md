@@ -112,3 +112,13 @@ Still open: add allyl is worth twice the target for a rare. Deeper suppliers and
 - Number to beat: round 1 is 0.55 of the stored figure (was 1.1), then 1.6 times a round. Chains make a round swing more, so round 1 has to be forgiving: at 0.8 one greedy run in ten failed in round 1 or 2.
 - Greedy player, tier 0: equipment first 8 / 8 / 9 / 9 / 10 rounds beaten, random picks 3 / 5 / 6 / 7 / 8.
 - Not measured again after the change: single reagents, single pieces of equipment, tiers above 0.
+
+## The chain is fired by the player, 2026-11-10
+
+- A page that is used up with a row of three or more on it waits. The player sets it off ("set it off", click or Space), once a page. The molecule then reacts by itself until nothing carries the row on or the reagents run out.
+- The chain may go back to a molecule it has already been (before, this needed the recycler). The recycler now adds row +0.5 on such a step. With this a chain runs 5 to 10 steps and one page can multiply what the round has made by ten or more.
+- The numbers to beat were measured again for all ten starting molecules and seven rules (70 figures). They are now in the tens of thousands in round 1.
+- Number to beat: round 1 is 0.9 of the stored figure, 1.75 times a round to round 3, then 1.5.
+- Tier 0, 50 runs each, rounds beaten at the 10th / 25th / 50th / 75th / 90th run: keeps the row, equipment first 0 / 1 / 3 / 6 / 7. Keeps the row, random picks 0 / 1 / 1 / 2 / 2. Greedy 0 / 1 / 2 / 4 / 5. Never follows on 0 / 0 / 1 / 3 / 3.
+- Median made over the number to beat, row player, rounds 1 to 8: 2.3, 2.1, 1.7, 1.7, 1.3, 1.1, 1.0, 0.7.
+- Open: more than one run in ten fails round 1, which is too many. Random picks end by round 2. Most of a round's total comes from the last page, so the flask barely moves on page 1.

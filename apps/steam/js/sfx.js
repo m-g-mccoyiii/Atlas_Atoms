@@ -80,6 +80,9 @@ AA.sfx = {
   // the score has passed the quota; and passed twice the quota
   quota() { tone({ freq: 80, freqEnd: 40, dur: 0.45, gain: 0.38 }); [523, 784, 1047].forEach((f, i) => { tone({ freq: f, dur: 0.6, gain: 0.045, delay: i * 0.07, type: 'square' }); tone({ freq: f * 1.006, dur: 0.6, gain: 0.06, delay: i * 0.07 }); }); },
   over() { [784, 1047, 1319, 1568].forEach((f, i) => tone({ freq: f, dur: 0.4, gain: 0.04, delay: i * 0.05, type: 'square' })); hiss({ freq: 6000, q: 0.6, dur: 0.5, gain: 0.07, attack: 0.2 }); },
+  // the fuse being lit, and each step of a chain: higher and tighter the further it runs
+  fuse() { tone({ freq: 180, freqEnd: 720, dur: 0.28, gain: 0.09, type: 'sawtooth' }); hiss({ freq: 3200, q: 1.5, dur: 0.3, gain: 0.05 }); },
+  chain(i) { const f = 440 * Math.pow(2, Math.min(i, 14) / 7); tone({ freq: f, dur: 0.09, gain: 0.07, type: 'square' }); tone({ freq: f * 1.5, dur: 0.07, gain: 0.03, delay: 0.03 }); },
   bad() { tone({ freq: 140, freqEnd: 90, dur: 0.22, gain: 0.1, type: 'sawtooth' }); }
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

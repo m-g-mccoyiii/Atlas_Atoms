@@ -113,16 +113,16 @@ const CHAIN = 0.25;
 // chainAdd, when set, makes link L of a chain add chainAdd * (L - 1) batch in place of multiplying
 const TUNE = { chain: null, route: 1, siteBatch: 1, chainAdd: null };
 const ROUTES = [
-  { id: 'ketone', name: 'Alkene to ketone', seq: [['hydrate', 'bh3'], ['pcc']], x: 2, up: 1 },
-  { id: 'deoxy', name: 'Deoxygenation', seq: [['dehydrate'], ['h2']], x: 2, up: 1 },
-  { id: 'dehalo', name: 'Dehalogenation', seq: [['koh'], ['h2']], x: 2, up: 1 },
-  { id: 'isomer', name: 'Alkene isomerization', seq: [['hcl', 'hydrate'], ['koh', 'dehydrate']], x: 2, up: 1 },
-  { id: 'shift', name: 'Alcohol transposition', seq: [['dehydrate'], ['hydrate', 'bh3']], x: 2, up: 1 },
-  { id: 'chloro', name: 'Ketone to chloride', seq: [['nabh4', 'bh3'], ['socl2']], x: 2, up: 1 },
-  { id: 'viacl', name: 'Chloride elimination', seq: [['socl2'], ['koh']], x: 2, up: 1 },
-  { id: 'hydrolysis', name: 'Chloride to ketone', seq: [['naoh'], ['pcc']], x: 2, up: 1 },
-  { id: 'removal', name: 'Carbonyl removal', seq: [['nabh4', 'bh3'], ['dehydrate'], ['h2']], x: 4, up: 2 },
-  { id: 'carbshift', name: 'Carbonyl transposition', seq: [['nabh4', 'bh3'], ['dehydrate'], ['hydrate', 'bh3'], ['pcc']], x: 8, up: 4 }
+  { id: 'ketone', tag: 'Ketone', name: 'Alkene to ketone', seq: [['hydrate', 'bh3'], ['pcc']], x: 2, up: 1 },
+  { id: 'deoxy', tag: 'Strip', name: 'Deoxygenation', seq: [['dehydrate'], ['h2']], x: 2, up: 1 },
+  { id: 'dehalo', tag: 'Scrub', name: 'Dehalogenation', seq: [['koh'], ['h2']], x: 2, up: 1 },
+  { id: 'isomer', tag: 'Slide', name: 'Alkene isomerization', seq: [['hcl', 'hydrate'], ['koh', 'dehydrate']], x: 2, up: 1 },
+  { id: 'shift', tag: 'Hop', name: 'Alcohol transposition', seq: [['dehydrate'], ['hydrate', 'bh3']], x: 2, up: 1 },
+  { id: 'chloro', tag: 'Salt', name: 'Ketone to chloride', seq: [['nabh4', 'bh3'], ['socl2']], x: 2, up: 1 },
+  { id: 'viacl', tag: 'Knockout', name: 'Chloride elimination', seq: [['socl2'], ['koh']], x: 2, up: 1 },
+  { id: 'hydrolysis', tag: 'Swap', name: 'Chloride to ketone', seq: [['naoh'], ['pcc']], x: 2, up: 1 },
+  { id: 'removal', tag: 'Wipe', name: 'Carbonyl removal', seq: [['nabh4', 'bh3'], ['dehydrate'], ['h2']], x: 4, up: 2 },
+  { id: 'carbshift', tag: 'Long hop', name: 'Carbonyl transposition', seq: [['nabh4', 'bh3'], ['dehydrate'], ['hydrate', 'bh3'], ['pcc']], x: 8, up: 4 }
 ];
 const ROUTE = {};
 ROUTES.forEach(r => { ROUTE[r.id] = r; });
