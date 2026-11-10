@@ -128,7 +128,7 @@ function start(app) {
       const i = pNext, q = parts[i]; pNext = (pNext + 1) % PN;
       const a = Math.random() * 6.283, e = Math.random() * 1.2, v = spd * (0.35 + Math.random());
       q.x = x; q.y = y; q.z = z; q.vx = Math.cos(a) * Math.cos(e) * v; q.vy = Math.sin(e) * v + spd * 0.35; q.vz = Math.sin(a) * Math.cos(e) * v;
-      q.life = q.max = 0.45 + Math.random() * 0.7; q.s = size * (0.5 + Math.random()); q.g = grav == null ? 30 : grav;
+      q.life = q.max = 0.16 + Math.random() * 0.22; q.s = size * (0.5 + Math.random()); q.g = grav == null ? 30 : grav;
       pMesh.setColorAt(i, pC.set(col).convertSRGBToLinear());
     }
     pMesh.instanceColor.needsUpdate = true;
@@ -157,7 +157,7 @@ function start(app) {
   const PICKX = [-15, 0, 15];
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
-  const callout = (text, sub, col) => { st.call = { text, sub: sub || '', col: col || INK, t: performance.now() }; };
+  const callout = (text, sub, col, ticks) => { st.call = { text, sub: sub || '', col: col || INK, ticks: ticks || 0, t: performance.now() }; };
   const spray = (n, col, wide) => { const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 22 : 7); st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 22 : 10), t: now, col }); } };
 
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
@@ -244,7 +244,7 @@ function start(app) {
       st.want = base + Math.round(e.yield * e.batch); st.mult = e.batch; st.multBump = e.kind === 'x' ? 1 : Math.max(st.multBump, 0.4);
       const piece = P.GEARS[e.src] ? e.src : null, txt = (e.kind === 'x' ? 'times ' : '+') + fmtB(e.val);
       st.madeBump = 1;
-      if (piece) { st.fired[piece] = { t: performance.now(), txt }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 2.4, ko.grp.position.z, e.kind === 'x' ? 46 : 24, ko.col, e.kind === 'x' ? 13 : 9, 0.22); burst3(ko.grp.position.x, 2.4, ko.grp.position.z, 8, '#ffffff', 11, 0.12); } }
+      if (piece) { st.fired[piece] = { t: performance.now(), txt }; const ko = kitObjs.find(q => q.id === piece); if (ko) { burst3(ko.grp.position.x, 2.4, ko.grp.position.z, e.kind === 'x' ? 10 : 6, ko.col, 10, 0.09); } }
       else if (e.src === 'rare') { st.floats.push({ txt: (t.rare === 'double' ? 'double ' : 'strong ') + txt, t: performance.now(), size: 74, dx: 6, col: '#b0189a' }); spray(14, '#b0189a', false); }
       if (e.kind === 'x') { st.shake = Math.max(st.shake, 0.8); spray(10, REDINK, false); }
       else st.shake = Math.max(st.shake, 0.22);
@@ -266,7 +266,7 @@ function start(app) {
       // passing the number to beat, and each doubling past it
       const m = P.made(g), times = Math.floor(m / st.quota);
       if (times >= 1 && st.over === 0) { st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); callout(fmt(st.quota) + ' beaten', '', GREEN); spray(90, GREEN, true); }
-      else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); callout(times + ' times over', '', '#8a6a00'); spray(120, '#e0b400', true); }
+      else if (times >= 2 && times >= st.over * 2) { st.over = times; st.flash = 1; st.flashC = '255,214,0'; st.shake = 2.2; sfx.over(); callout('', '', GREEN, times); spray(120, '#e0b400', true); }
       dirty = true;
     }, dur);
     return dur;
@@ -280,7 +280,7 @@ function start(app) {
     const dur = land(o, before, wasOpen);
     prods.forEach((m, j) => { if (m && j !== i) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.12, () => freeMol(m)); }); prods = [];
     // the reaction: sparks and bits fly from every place it acts, and the view pushes in
-    { const sc = prev.group.scale.x, col = rgb(colOf(s.id)); o.atoms.forEach(a => { const q = prev.at.get(a); if (!q || a.el === 'H') return; const wx = C0.x + q.x * sc, wy = q.y * sc, wz = C0.z + q.z * sc; burst3(wx, wy, wz, 26, col, 9, 0.2); burst3(wx, wy, wz, 10, '#ffffff', 12, 0.13); burst3(wx, wy, wz, 5, a.el === 'O' ? '#ff4d4d' : a.el === 'Cl' ? '#37d67a' : '#f1f5f9', 11, 0.55); }); }
+    { const sc = prev.group.scale.x, col = rgb(colOf(s.id)); o.atoms.forEach(a => { const q = prev.at.get(a); if (!q || a.el === 'H') return; const wx = C0.x + q.x * sc, wy = q.y * sc, wz = C0.z + q.z * sc; burst3(wx, wy, wz, 9, col, 10, 0.09); }); }
     st.zoomT = performance.now();
     tween(prev, HIST, 0.02, 0.24, () => freeMol(prev)); tween(chosen, C0, SC_MAIN, 0.26);
     // the rules move on by the clock, not by the drawing, so a stalled frame cannot leave the page stuck
@@ -289,7 +289,7 @@ function start(app) {
       tweens = tweens.filter(tw => tw.m !== chosen && tw.m !== prev); freeMol(prev);
       freeMol(chosen); setAlign(g.m); center = buildMol(g.m, null, false); SC_MAIN = fitMain(center); place(center, C0, SC_MAIN); st.mode = 'play';
       // the new molecule lands with a bounce, and what changed throws off a second, smaller spray
-      st.pop = 1; { const col = rgb(colOf(s.id)); o.r.made.forEach(a => { const q = center.at.get(a); if (q && a.el !== 'H') burst3(C0.x + q.x * SC_MAIN, q.y * SC_MAIN, C0.z + q.z * SC_MAIN, 12, col, 6, 0.16); }); }
+      st.pop = 1; { const col = rgb(colOf(s.id)); o.r.made.forEach(a => { const q = center.at.get(a); if (q && a.el !== 'H') burst3(C0.x + q.x * SC_MAIN, q.y * SC_MAIN, C0.z + q.z * SC_MAIN, 4, col, 7, 0.08); }); }
       if (g.over) return endRound();
       refresh();
       // a page with nothing left to do turns itself
@@ -315,6 +315,13 @@ function start(app) {
   }
   // letters text no wider than w, shrinking it if it has to. Returns the size used
   const fit = (x, text, size, w, font) => { let n = size; font(x, n); while (n > 14 && x.measureText(text).width > w) { n -= 4; font(x, n); } return n; };
+  // one tick for each time the number to beat has been reached. Past ten, the count and a single tick
+  function tickRow(x, cx, cy, n, size, col) {
+    const one = (px0, py0) => { x.beginPath(); x.moveTo(px0 - size * 0.42, py0 - size * 0.05); x.lineTo(px0 - size * 0.12, py0 + size * 0.32); x.lineTo(px0 + size * 0.48, py0 - size * 0.5); x.stroke(); };
+    x.strokeStyle = col; x.lineWidth = size * 0.2; x.lineCap = 'round'; x.lineJoin = 'round';
+    if (n > 10) { marker(x, size * 1.5); x.textAlign = 'right'; x.fillStyle = col; x.fillText(String(n), cx - size * 0.2, cy + size * 0.4); one(cx + size * 0.7, cy); return; }
+    for (let k = 0; k < n; k++) one(cx + (k - (n - 1) / 2) * size * 1.15, cy);
+  }
   const wrap = (x, text, w) => { const out = []; let line = ''; String(text).split(' ').forEach(t => { const n = line ? line + ' ' + t : t; if (line && x.measureText(n).width > w) { out.push(line); line = t; } else line = n; }); if (line) out.push(line); return out; };
   const ring = (x, c, rx, ry, lw, col, rot) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.ellipse(c[0], c[1], rx, ry, rot || 0.15, 0.3, 6.6); x.stroke(); };
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -412,21 +419,26 @@ function start(app) {
     hand(x, 58); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); hand(x, 34); x.fillStyle = PENCIL; x.fillText('to beat', bq[0], bq[1] - 60);
     // what the last reaction made, at the right end of the band, with anything a rare reagent added above it
     st.floats = st.floats.filter(f => now - f.t < 1100); st.floats.forEach(f => { const k = (now - f.t) / 1100, rare = f.col === '#b0189a', c = px({ x: GAIN.x, z: GAIN.z - (rare ? 2.5 : 0) - 0.5 * k }), pop = k < 0.1 ? 1.4 - 4 * k : 1; x.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; fit(x, f.txt, Math.min(rare ? 54 : 96, f.size) * pop, 250, marker); x.textAlign = 'left'; x.lineWidth = 10; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, c[0], c[1]); x.fillStyle = f.col || '#8a6a00'; x.fillText(f.txt, c[0], c[1]); }); x.globalAlpha = 1;
-    // a line lettered across the page when something worth naming happens
+    // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     if (st.call && now - st.call.t < 1400) {
       const k = (now - st.call.t) / 1400, c = px(CALL), pop = k < 0.1 ? 1.5 - 5 * k : 1, al = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
-      x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al; fit(x, st.call.text, 104, 900, marker); x.textAlign = 'center'; const tw = x.measureText(st.call.text).width;
-      swipe(x, [-tw / 2 - 20, -30], [tw / 2 + 20, -38], 96);
-      x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, 0, 0); x.fillStyle = st.call.col; x.fillText(st.call.text, 0, 0);
-      if (st.call.sub) { marker(x, 50); x.fillStyle = REDINK; x.strokeText(st.call.sub, tw / 2 + 150, -8); x.fillText(st.call.sub, tw / 2 + 150, -8); }
+      x.save(); x.translate(c[0], c[1]); x.rotate(-0.03); x.scale(pop, pop); x.globalAlpha = al;
+      if (st.call.ticks) { const n = st.call.ticks, w = (n > 10 ? 3 : n) * 110; swipe(x, [-w / 2 - 40, -20], [w / 2 + 40, -28], 120); tickRow(x, 0, -24, n, 92, st.call.col); }
+      else {
+        fit(x, st.call.text, 104, 900, marker); x.textAlign = 'center'; const tw = x.measureText(st.call.text).width;
+        swipe(x, [-tw / 2 - 20, -30], [tw / 2 + 20, -38], 96);
+        x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, 0, 0); x.fillStyle = st.call.col; x.fillText(st.call.text, 0, 0);
+        if (st.call.sub) { marker(x, 50); x.fillStyle = REDINK; x.strokeText(st.call.sub, tw / 2 + 150, -8); x.fillText(st.call.sub, tw / 2 + 150, -8); }
+      }
       x.restore(); x.globalAlpha = 1;
     } else if (st.call) st.call = null;
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
       marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
-      const txt = st.pass ? (ratio >= 2 ? fmtB(Math.floor(ratio * 10) / 10) + ' times over' : 'beaten') : fmt(st.quota - g.total) + ' short';
-      x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
+      const txt = st.pass ? 'beaten' : fmt(st.quota - g.total) + ' short', tw = x.measureText(txt).width, n = Math.floor(ratio);
+      x.strokeText(txt, c[0] - (st.pass ? 200 : 0), c[1]); x.fillText(txt, c[0] - (st.pass ? 200 : 0), c[1]);
+      if (st.pass) tickRow(x, c[0] - 200 + tw / 2 + (n > 10 ? 190 : 60 + Math.min(10, n) * 42), c[1] - 40, n, 68, GREEN);
       hand(x, 50); x.fillStyle = PENCIL; x.fillText(st.pass ? g.best + ' in a row at best.   click to go on' : 'run over.  ' + run.beaten + ' rounds beaten, best ' + best + '.   click to see the suppliers', c[0], c[1] + 80);
     }
     ink.t.needsUpdate = true;
@@ -498,7 +510,6 @@ function start(app) {
     if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); center.group.scale.setScalar(SC_MAIN * sp); center.group.position.y = 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * 0.03 * heat; }
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
     kitObjs.forEach((k, i) => { k.grp.rotation.z = (0.03 + 0.1 * heat) * Math.sin(tt * (3 + 9 * heat) + i * 2); });
-    if (playing && heat > 0.15 && center) { st.bubble += dt * (4 + 46 * heat); while (st.bubble > 1) { st.bubble -= 1; burst3(C0.x + (Math.random() - 0.5) * 9, 0.4, C0.z + (Math.random() - 0.5) * 3.5, 1, heat > 0.6 ? '#ff8a3c' : '#ffd23f', 1.2, 0.2 + 0.25 * heat, -7); } }
     if (st.madeBump > 0) { st.madeBump = Math.max(0, st.madeBump - dt * 6); dirty = true; }
     if (heat > 0.2) dirty = true;
     stepParts(dt);
