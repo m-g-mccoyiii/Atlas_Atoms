@@ -9,10 +9,12 @@ const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 const KIND = { y: 'Adds yield', b: 'Adds batch', x: 'Multiplies batch', grow: 'Grows during the run', tool: 'Changes a rule' };
 const kindOf = g => (g.id === 'syringe' ? 'Repeats a site' : KIND[g.kind]);
+const BENCH = true;
+if (BENCH) document.body.classList.add('bench');
 const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
 
 function start(app) {
-  let run = null, cur = null, model = null, v = null;
+  let run = null, cur = null, model = null, v = null, bench = null;
   const st = { tok: 0, busy: false, mode: 'start', shown: 0, target: 0, tags: {}, picksLeft: 0, hover: -1, hoverAtoms: [], hoverHex: 0, flashes: [], fliers: [], party: 0, t0: 0, drawn: -1, desc: null, sig: '', probe: null, slowUntil: 0, slowBy: 1, seen: new Set(), best: { orders: 0, total: 0 },
     meta: { got: [], rack: 'standard', level: 0, best: {} }, fresh: [] };
   try { const b = JSON.parse(localStorage.getItem('aa_rx_best') || 'null'); if (b) st.best = { orders: b.orders | 0, total: b.total | 0 }; } catch (e) { /* storage unavailable */ }
@@ -55,7 +57,7 @@ function start(app) {
   }
   // the two numbers the score is made of; a box jumps when its number changes
   function setCalc(y, b) {
-    const ys = fmt(y), bs = fmtB(b);
+    const ys = fmt(y), bs = fmtB(b); st.y = y; st.b = b;
     if (yEl.textContent !== ys) { yEl.textContent = ys; bump(yBox); }
     if (bEl.textContent !== bs) { bEl.textContent = bs; bump(bBox); }
     st.target = Math.round(y * b);
@@ -104,11 +106,12 @@ function start(app) {
   // ---------- rendering ----------
   const sitesOf = id => (st.mode === 'play' && model ? RX.CARDS[id].find(model).length : 0);
   function renderHand() {
-    let any = false;
+    let any = false; const items = [];
     const els = cur.hand.map((hc, i) => {
       const card = RX.CARDS[hc.id], lk = st.mode === 'play' && model ? RUN.look(run, model, hc.id) : { n: 0 }, n = lk.n, b = bottle(card, String(i + 1));
       const live = n || lk.spoils;
       if (live) any = true;
+      items.push({ uid: hc.uid, card, n, live: !!live, cont: !!lk.cont, spoils: !!lk.spoils, grade: RUN.gradeOf(run, card.id) });
       b.el.className += (live ? '' : ' none') + (lk.cont ? ' link' : '') + (st.seen.has(hc.uid) ? '' : ' deal');
       b.el.disabled = !live || st.busy;
       if (lk.cont) b.foot.append(h('span', { class: 'bLink' }, lk.route ? lk.route.name : 'Chain of ' + lk.len));
@@ -123,6 +126,7 @@ function start(app) {
     cardsEl.style.setProperty('--n', Math.max(5, cur.hand.length));
     cardsEl.replaceChildren(...els.map(b => b.el));
     els.forEach(b => drawCardArt(b.art, b.card, b.dim));
+    if (bench) bench.setHand(items);
     return any;
   }
   function renderTicket() {
@@ -151,9 +155,10 @@ function start(app) {
     deliverBtn.className = 'btn go' + (met ? ' ready' : '');
     rackEl.textContent = cur.draw.length + ' of ' + plural(run.deck.length, 'bottle') + ' left to draw';
     renderTop(cur.done ? 0 : proj);
+    scene();
   }
   function renderTop(extra) {
-    if (!run) { cashEl.textContent = runEl.textContent = ''; return; }
+    if (!run || st.mode === 'start') { cashEl.textContent = runEl.textContent = ''; return; }
     cashEl.textContent = 'Surplus ' + run.money + ' kg';
     runEl.textContent = 'Run total ' + fmt(run.total + (extra || 0));
     bestEl.textContent = st.best.total ? 'Best ' + fmt(st.best.total) : '';
@@ -175,11 +180,12 @@ function start(app) {
   // a piece of equipment has just worked: it jumps and shows what it added
   function fireTag(id, text) {
     const t = st.tags[id]; if (!t) return;
+    if (bench) bench.fire('g:' + id);
     t.hit.textContent = text; t.el.classList.remove('fire'); void t.el.offsetWidth; t.el.classList.add('fire');
   }
   function moveTag(i) {
     if (st.busy || st.mode !== 'play' || i < 1) return;
-    RUN.moveGear(run, i); sfx.click(); renderGear(); renderHand();
+    RUN.moveGear(run, i); sfx.click(); renderGear(); renderHand(); scene();
   }
   function renderAll() { const any = renderHand(); renderTicket(); renderGear(); return any; }
   function setHover(i) {
@@ -219,7 +225,7 @@ function start(app) {
     renderSpec(o.spec, k => fmtB(RUN.checkMult(run, k)));
     tkCond.textContent = run.cond ? 'Condition: ' + run.cond.text + '.' : ''; tkCond.style.display = run.cond ? '' : 'none';
     setKeep(o.keep, false);
-    nowEl.textContent = RX.label(model);
+    nowEl.textContent = RX.label(model); scene();
   }
   function showOffers() {
     st.tok++; st.busy = false; st.mode = 'offer'; st.opts = null; st.end = false; st.shown = 0;
@@ -273,7 +279,7 @@ function start(app) {
   }
   // the screen before a run: kits drawn as racks of bottles, levels as hazard diamonds, feats as stamps
   function showStart() {
-    st.tok++; st.mode = 'start'; st.busy = false; st.opts = null; st.end = false;
+    st.tok++; st.mode = 'start'; st.busy = false; st.opts = null; st.end = false; fx.clear();
     const m = st.meta, maxLv = maxLevel(), U = RUN.UNLOCKS;
     if (!RUN.RACKS[m.rack] || (m.rack !== 'standard' && !got(m.rack))) m.rack = 'standard';
     m.level = Math.max(0, Math.min(maxLv, m.level));
@@ -297,7 +303,7 @@ function start(app) {
       h('div', { class: 'lvRow' }, levels, h('div', { class: 'tags' }, lvTags)),
       h('div', { class: 'feats' }, feats), line,
       h('button', { class: 'btn go', onclick: () => newRun() }, 'Start  [Enter]')));
-    overlay.className = 'ov on';
+    overlay.className = 'ov on'; nowEl.textContent = ''; chainEl.style.display = 'none'; scene();
   }
 
   const scr = atoms => { let x = 0, y = 0; atoms.forEach(a => { const p = v._screen(a); x += p.x; y += p.y; }); return { x: x / atoms.length, y: y / atoms.length }; };
@@ -363,7 +369,7 @@ function start(app) {
     const mid = () => ({ x: benchCv.clientWidth / 2, y: benchCv.clientHeight * 0.45 });
     let hits = 0, spoiled = 0, pitch = cur.step, nEv = 0;
     const beat = (e, at) => ({ wait: Math.max(55, 120 - 6 * nEv), fn: () => { nEv++; showEv(e, at, pitch++); } });
-    sfx.click();
+    sfx.click(); if (bench) bench.pour(hc.uid);
     sites.forEach(s => s.atoms.forEach(a => st.flashes.push({ atom: a, hex: hex(col), until: t + 600 + sites.length * 420 })));
     fx.banner(card.verb.toUpperCase(), card.formula, col, 1.25);
     renderHand(); renderTicket();
@@ -422,7 +428,7 @@ function start(app) {
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   // the list of named routes, with the ones this rack cannot perform dimmed
   function showRoutes() {
-    if (st.mode !== 'play' || st.routesOpen) return;
+    return;
     st.routesOpen = true; sfx.click();
     const rows = RUN.ROUTES.map(rt => h('li', { class: RUN.routeFits(run, rt) ? '' : 'off' }, h('b', null, rt.name), h('span', null, cap(RUN.routeSteps(rt))), h('i', null, 'times ' + RUN.routeMult(run, rt.id)), h('em', null, 'Level ' + RUN.routeLevel(run, rt.id))));
     overlay.replaceChildren(h('div', { class: 'panel routes' }, h('h2', null, 'Routes'),
@@ -451,7 +457,7 @@ function start(app) {
   function deliver() { if (!st.busy && st.mode === 'play') finishOrder(); }
 
   function finishOrder() {
-    st.mode = 'result';
+    st.mode = 'result'; st.panel = null;
     const tok = st.tok, res = RUN.endOrder(run, st.probe), w = benchCv.clientWidth, hh = benchCv.clientHeight, cx = w / 2, cy = hh / 2;
     const filled = run.history.filter(q => q.pass).length;
     checkUnlocks();
@@ -495,7 +501,7 @@ function start(app) {
   }
 
   function showPanel(res, filled) {
-    const kids = [], product = RX.label(model), n = cur.n + 1;
+    const kids = [], product = RX.label(model), n = cur.n + 1; st.panel = { res, filled };
     const again = h('button', { class: 'btn go', onclick: () => showStart() }, 'New run  [Enter]');
     const fresh = st.fresh.length ? h('div', { class: 'newUnl' }, h('b', null, 'Unlocked for later runs'), st.fresh.map(id => h('span', null, (u => u.feat + ': ' + u.name)(RUN.UNLOCKS.find(u => u.id === id))))) : null;
     if (run.won) {
@@ -526,9 +532,9 @@ function start(app) {
         h('button', { class: 'btn', onclick: () => choose(-1) }, 'Take nothing  [0]'));
       overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';
       opts.forEach(o => { if (o.art) drawCardArt(o.art, o.card, false); });
-      return;
+      scene(); return;
     }
-    overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on';
+    overlay.replaceChildren(h('div', { class: 'panel' }, kids)); overlay.className = 'ov on'; scene();
   }
   function choose(i) {
     if (st.mode !== 'result' || !st.opts || run.over) return;
@@ -536,7 +542,7 @@ function start(app) {
       if (!st.opts[i]) return;
       RUN.take(run, st.opts[i]); sfx.stamp(); st.opts[i] = null; st.picksLeft--;
       if (st.pickEls && st.pickEls[i]) st.pickEls[i].classList.add('taken');
-      if (st.picksLeft > 0 && st.opts.some(o => o)) { st.pickHead.textContent = st.picksLeft > 1 ? 'Take ' + st.picksLeft + ' more' : 'Take one more'; return; }
+      if (st.picksLeft > 0 && st.opts.some(o => o)) { st.pickHead.textContent = st.picksLeft > 1 ? 'Take ' + st.picksLeft + ' more' : 'Take one more'; scene(); return; }
     } else sfx.click();
     st.opts = null; st.fresh = []; RUN.stock(run); showShop();
   }
@@ -572,7 +578,7 @@ function start(app) {
       h('div', { class: 'shopFoot' }, h('button', { class: 'btn', disabled: run.money < sh.reroll, onclick: () => shopReroll() }, 'New stock  [R]  ' + sh.reroll + ' kg'), h('button', { class: 'btn go', onclick: () => leaveShop() }, 'Next order  [Enter]'))));
     overlay.className = 'ov on';
     arts.forEach(a => drawCardArt(a[0], a[1], false));
-    renderTop(0);
+    renderTop(0); nowEl.textContent = ''; chainEl.style.display = 'none'; scene();
   }
   function shopBuy(i) {
     if (st.mode !== 'shop') return;
@@ -585,6 +591,113 @@ function start(app) {
   function leaveShop() {
     if (st.mode !== 'shop') return;
     RUN.closeShop(run); RUN.nextOrder(run); showOffers();
+  }
+
+  // ---------- what stands on the bench in each mode ----------
+  const CONDTOK = ['Acid half', 'Redox half', '1 step fewer', 'No swaps'];
+  const condTok = c => { const i = (RUN.CONDS || []).findIndex(x => x.text === c.text); return i >= 0 ? CONDTOK[i] : c.text.split(' ').slice(0, 2).join(' '); };
+  const rowX = (i, n, sp) => (i - (n - 1) / 2) * sp;
+  const uniq = a => a.filter((x, i) => a.indexOf(x) === i);
+  function scene() {
+    if (!bench || !run) return;
+    const P = [], B = {}, mode = st.mode, m = st.meta;
+    let S = { proj: 0, quota: 1, left: 0, max: 0, met: false };
+    const gear = sell => run.gear.forEach((id, i) => { const g = RUN.GEARS[id], lv = RUN.live(run, id); P.push({ uid: 'g:' + id, kind: 'gear', shape: g.kind, x: -0.27 + i * 0.135, z: -0.5, s: 0.13, title: g.name, lines: lv ? [lv] : null, tag: sell ? '+' + RUN.sellValue(run, id) + ' kg' : null }); });
+    const notes = (spec, keep, lost, capped, cond) => {
+      if (spec) { const c = checksFor(spec); P.push({ uid: 'spec', kind: 'slip', x: 0.66, z: -0.2, s: 0.17, title: spec.name, lines: ['batch times ' + fmtB(RUN.checkMult(run, c.n))].concat(keep ? [lost ? keep.kind + ' lost' : capped ? keep.kind + ' capped' : 'keep ' + keep.kind] : []), note: c.n === 3 }); }
+      if (cond) P.push({ uid: 'cond', kind: 'slip', x: -0.33, z: -0.2, s: 0.13, title: condTok(cond), note: true });
+      P.push({ uid: 'book', kind: 'book', x: -0.17, z: -0.3, s: 0.15 });
+    };
+    if (mode === 'start') {
+      const ids = Object.keys(RUN.RACKS);
+      ids.forEach((id, i) => { const k = RUN.RACKS[id], open = id === 'standard' || got(id), best = m.best[id] | 0; P.push({ uid: 'kit:' + id, kind: 'kit', cols: uniq(k.deck).map(c => RX.CARDS[c].rgb), x: rowX(i, ids.length, 0.19), z: 0.08, s: 0.2, title: k.name, lines: open ? k.tags.concat(best ? ['cleared ' + best] : []) : null, dim: !open, note: m.rack === id }); });
+      P.push({ uid: 'level', kind: 'knob', x: -0.22, z: -0.22, s: 0.2, value: m.level, title: 'Level ' + (m.level + 1), lines: m.level ? [RUN.LEVELS[m.level].tag] : null });
+      RUN.UNLOCKS.forEach((u, i) => P.push({ uid: 'ft:' + u.id, kind: 'token', on: got(u.id), x: rowX(i, RUN.UNLOCKS.length, 0.05), z: -0.42, s: 0.085 }));
+      B.right = { label: 'Start', lit: true };
+      S = Object.assign(S, { cyl: false, stand: false, alt: { big: st.best.total, label: 'best run' } });
+    } else if (mode === 'offer') {
+      run.offers.forEach((o, i) => P.push({ uid: 'of:' + run.n + ':' + i, kind: 'flask', rgb: o.large ? [226, 48, 40] : [255, 205, 0], x: rowX(i, run.offers.length, 0.36), z: 0.07, s: 0.25, title: o.feedName, lines: [fmt(o.quota) + ' needed', o.pay + ' kg, ' + (o.large ? '2 picks' : '1 pick')].concat(o.keep ? ['keep ' + o.keep.kind] : []), note: st.pv === i }));
+      const o = run.offers[st.pv || 0]; gear(false); notes(o.spec, null, false, false, run.cond);
+      S = Object.assign(S, { quota: o.quota, cyl: false });
+    } else if (mode === 'play' || (mode === 'result' && !st.panel)) {
+      const proj = cur.done ? cur.final : RUN.projected(run, st.probe), met = proj >= cur.quota;
+      gear(false); notes(cur.spec, cur.keep, cur.spoiled, model.atoms.some(a => a.prot), cur.cond);
+      if (mode === 'play') {
+        B.left = { label: 'Swap', pips: cur.redraws }; B.right = { label: 'Deliver', lit: met };
+        if (cur.keep && RUN.canCap(run, model)) B.mid = { label: 'Cap ' + cur.keep.kind };
+      }
+      S = { proj, quota: cur.quota, left: cur.stepsMax - cur.step, max: cur.stepsMax, met };
+    } else if (mode === 'result') {
+      const res = st.panel.res;
+      if (st.end) {
+        P.push({ uid: 'end', kind: 'slip', x: 0, z: 0.06, s: 0.34, title: run.won ? 'Run complete' : 'Order ' + (cur.n + 1) + ' missed', lines: [plural(st.panel.filled, 'order') + ' filled'].concat(res.best ? ['best run'] : []), note: run.won });
+        B.right = { label: 'New run', lit: true };
+      } else {
+        const opts = st.opts || [], n = opts.length;
+        opts.forEach((o, i) => {
+          if (!o) return;
+          if (o.kind === 'gear') { const g = RUN.GEARS[o.id]; P.push({ uid: 'rw:' + cur.n + ':' + i, kind: 'gear', shape: g.kind, x: rowX(i, n, 0.24), z: 0.08, s: 0.22, title: g.name, lines: [kindOf(g)] }); }
+          else { const have = run.deck.filter(id => id === o.id).length; P.push({ uid: 'rw:' + cur.n + ':' + i, kind: 'bottle', card: RX.CARDS[o.id], grade: RUN.gradeOf(run, o.id), x: rowX(i, n, 0.24), z: 0.08, s: 0.22, title: have ? have + ' held' : 'new' }); }
+        });
+        const pd = res.paid, why = [['order', pd.order], ['steps', pd.steps], ['doubled', pd.doubles], ['held', pd.held]].filter(x => x[1]).map(x => '+' + x[1] + ' ' + x[0]);
+        P.push({ uid: 'pay', kind: 'slip', x: 0.64, z: -0.16, s: 0.2, title: '+' + res.pay + ' kg', lines: [why.join(', '), 'take ' + st.picksLeft], note: true, inert: true });
+        B.left = { label: 'Skip' };
+      }
+      st.fresh.forEach((id, i) => P.push({ uid: 'ft:' + id, kind: 'token', on: true, spin: true, x: -0.5 + i * 0.09, z: -0.2, s: 0.16 }));
+      gear(false);
+      S = Object.assign(S, { cyl: false, stand: false, alt: { big: run.total, label: 'run total' } });
+    } else if (mode === 'shop') {
+      const sh = run.shop, n = sh.items.length;
+      sh.items.forEach((it, i) => {
+        const base = { uid: 'sh:' + run.n + ':' + sh.reroll + ':' + i + ':' + it.kind + it.id, x: rowX(i, n, 0.165), z: 0.08, s: 0.2, dim: it.sold || !RUN.canBuy(run, it) }, cost = it.sold ? 'Sold' : it.cost + ' kg';
+        if (it.kind === 'gear') { const g = RUN.GEARS[it.id]; P.push(Object.assign(base, { kind: 'gear', shape: g.kind, title: g.name, lines: [kindOf(g)], tag: cost })); }
+        else if (it.kind === 'route') { const rt = RUN.ROUTE[it.id], lv = RUN.routeLevel(run, it.id) - (it.sold ? 1 : 0), mu = rt.x + rt.up * (lv - 1); P.push(Object.assign(base, { kind: 'slip', title: rt.name, lines: ['times ' + mu + ' to ' + (mu + rt.up)], tag: cost, col: [200, 38, 28] })); }
+        else P.push(Object.assign(base, { kind: 'bottle', card: RX.CARDS[it.id], grade: RUN.gradeOf(run, it.id), title: cost, lines: it.kind === 'grade' ? ['to grade ' + (RUN.gradeOf(run, it.id) + (it.sold ? 0 : 1))] : null }));
+      });
+      const counts = {}; run.deck.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+      const ids = Object.keys(counts);
+      ids.forEach((id, i) => P.push({ uid: 'rm:' + id, kind: 'bottle', card: RX.CARDS[id], grade: RUN.gradeOf(run, id), x: rowX(i, ids.length, 0.085) + 0.02, z: -0.2, s: 0.1, title: String(counts[id]) }));
+      gear(true);
+      B.left = { label: 'Restock ' + sh.reroll + ' kg' }; B.right = { label: 'Next', lit: true };
+      S = Object.assign(S, { cyl: false, stand: false, alt: { big: run.money, label: 'surplus kg', right: '+' + RUN.holdPay(run) + ' held' } });
+    }
+    bench.setProps(P); bench.setButtons(B); bench.setState(S);
+    if (mode !== 'play' && !(mode === 'result' && !st.panel)) bench.setHand([]);
+  }
+  function onProp(uid) {
+    const p = uid.split(':'), k = p[0], m = st.meta;
+    if (k === 'kit') { if (p[1] === 'standard' || got(p[1])) { m.rack = p[1]; saveMeta(); sfx.click(); scene(); } else sfx.bad(); }
+    else if (k === 'level') { m.level = (m.level + 1) % (maxLevel() + 1); saveMeta(); sfx.click(); scene(); }
+    else if (k === 'of') pickFeed(+p[2]);
+    else if (k === 'rw') choose(+p[2]);
+    else if (k === 'sh') shopBuy(+p[3]);
+    else if (k === 'rm') { if (st.mode === 'shop' && RUN.removeBottle(run, p[1])) { sfx.stamp(); showShop(); } else sfx.bad(); }
+    else if (k === 'g') {
+      if (st.mode === 'shop') { if (RUN.sellGear(run, p[1])) { sfx.stamp(); showShop(); } }
+      else if (st.mode === 'play') moveTag(run.gear.indexOf(p[1]));
+    }
+  }
+  function onPropHover(uid) { const p = uid.split(':'); if (p[0] === 'of' && st.mode === 'offer' && st.pv !== +p[2]) lookAt(+p[2]); }
+  const gearTip = g => ({ title: g.name, lines: [kindOf(g), g.text] });
+  const cardTip = (card, extra) => ({ title: card.verb, lines: [card.formula, card.rule].concat(extra || []) });
+  function tipFor(u) {
+    if (u.kind === 'bottle') { const lk = st.mode === 'play' && model ? RUN.look(run, model, u.b.it.card.id) : {}; return cardTip(u.b.it.card, lk.spoils ? ['Reacts at the kept group'] : lk.cont ? [lk.route ? lk.route.name : 'Chain of ' + lk.len] : []); }
+    if (u.kind === 'left') return st.mode === 'play' ? { title: 'Swap', lines: [cur.draw.length + ' of ' + plural(run.deck.length, 'bottle') + ' left to draw'] } : null;
+    if (u.kind === 'mid') return { title: 'Cap', lines: [run.mod.freeCap ? 'No step used' : 'Uses 1 step'] };
+    if (u.kind !== 'prop') return null;
+    const p = u.pr.uid.split(':'), k = p[0];
+    if (k === 'kit') { const r = RUN.RACKS[p[1]], un = RUN.UNLOCKS.find(x => x.id === p[1]); return { title: r.name, lines: [p[1] === 'standard' || got(p[1]) ? r.rule : un.how] }; }
+    if (k === 'level') return { title: 'Level ' + (st.meta.level + 1), lines: RUN.LEVELS.slice(0, st.meta.level + 1).map(x => x.text) };
+    if (k === 'ft') { const un = RUN.UNLOCKS.find(x => x.id === p[1]); return { title: un.feat, lines: [un.how, 'Unlocks ' + un.name] }; }
+    if (k === 'of') { const o = run.offers[+p[2]], cov = RUN.coverage(run, o.feed); return { title: o.feedName, lines: [plural(o.groups, 'group')].concat(cov.length ? cov.map(c => RX.CARDS[c.id].verb + ' ' + c.n) : ['No bottle reacts with it yet']) }; }
+    if (k === 'g') return gearTip(RUN.GEARS[p[1]]);
+    if (k === 'rw') { const o = st.opts && st.opts[+p[2]]; return o ? (o.kind === 'gear' ? gearTip(RUN.GEARS[o.id]) : cardTip(RX.CARDS[o.id])) : null; }
+    if (k === 'sh') { const it = run.shop.items[+p[3]]; if (!it) return null; if (it.kind === 'gear') return gearTip(RUN.GEARS[it.id]); if (it.kind === 'route') { const rt = RUN.ROUTE[it.id]; return { title: rt.name, lines: [cap(RUN.routeSteps(rt))] }; } return cardTip(RX.CARDS[it.id]); }
+    if (k === 'rm') return cardTip(RX.CARDS[p[1]], ['Remove one for ' + RUN.REMOVE + ' kg']);
+    if (k === 'spec') { const sp = st.mode === 'offer' ? run.offers[st.pv || 0].spec : cur.spec, c = checksFor(sp); return { title: sp.name, lines: CHK.map(q => q[1] + (c[q[0]] ? ' matches' : ' off')) }; }
+    if (k === 'cond') { const c = st.mode === 'offer' ? run.cond : cur.cond; return c ? { title: 'Condition', lines: [c.text] } : null; }
+    if (k === 'book') return { title: 'Routes', lines: RUN.ROUTES.filter(rt => RUN.routeFits(run, rt)).map(rt => rt.name + ': ' + RUN.routeSteps(rt) + ', times ' + RUN.routeMult(run, rt.id)) };
+    return null;
   }
 
   // ---------- frame loop ----------
@@ -609,7 +722,7 @@ function start(app) {
     const zin = now < st.zoomUntil, za = zin && st.zoomAtom && !st.zoomAtom.fly && model.atoms.includes(st.zoomAtom) ? st.zoomAtom : null;
     const tx = za ? [za.x, za.y, za.z] : c, kp = zin ? 0.2 : 0.06;
     v.pan.x += (tx[0] - v.pan.x) * kp; v.pan.y += (tx[1] - v.pan.y) * kp; v.pan.z += (tx[2] - v.pan.z) * kp;
-    if (!v.rot) { v.zoom += (Math.max(26, Math.min(70, 640 / (rad * 2.35))) * (zin ? 1.7 : 1) - v.zoom) * (zin ? 0.2 : 0.05); v.yaw += dt * 0.16; }
+    if (!v.rot) { v.zoom += (Math.max(BENCH ? 14 : 26, Math.min(70, 640 / (rad * (BENCH ? AA.rxBench.P.dist : 2.35)))) * (zin ? (BENCH ? 1.3 : 1.7) : 1) - v.zoom) * (zin ? 0.2 : 0.05); v.yaw += dt * 0.16; }
     // glows: the hovered bottle's sites, reacting atoms, and a filled order
     v.glow.clear();
     // the atoms the last play made or changed stay lit: reacting there continues the chain
@@ -619,13 +732,14 @@ function start(app) {
     st.hoverAtoms.forEach(a => v.glow.set(a, st.hoverHex));
     st.flashes = st.flashes.filter(f => f.until > now); st.flashes.forEach(f => v.glow.set(f.atom, f.hex));
     if (st.party > now) model.atoms.forEach((a, i) => v.glow.set(a, new T.Color().setHSL((now / 900 + i * 0.07) % 1, 1, 0.45).getHex()));
+    if (bench) bench.update(real, { shown: st.shown, y: st.y, b: st.b, busy: st.busy || st.mode !== 'play', rad });
     v.render(dt);
     // bloom: the frame just drawn, copied small and laid back over itself blurred; stronger as the score grows
     const bw = Math.max(2, benchCv.clientWidth >> 2), bh = Math.max(2, benchCv.clientHeight >> 2);
     if (bloomCv.width !== bw || bloomCv.height !== bh) { bloomCv.width = bw; bloomCv.height = bh; }
     bloomCx.clearRect(0, 0, bw, bh);
     try { bloomCx.drawImage(benchCv, 0, 0, bw, bh); bloomCx.drawImage(fxCv, 0, 0, bw, bh); } catch (e) { /* canvas not ready */ }
-    bloomCv.style.opacity = Math.min(0.95, 0.4 + 0.08 * heat() + (now < st.slowUntil ? 0.25 : 0) + (st.party > now ? 0.2 : 0)).toFixed(2);
+    bloomCv.style.opacity = (BENCH ? 0.55 : 1) * Math.min(0.95, 0.4 + 0.08 * heat() + (now < st.slowUntil ? 0.25 : 0) + (st.party > now ? 0.2 : 0)).toFixed(2);
     fx.draw(real);
     sfx.setIntensity(st.mode === 'play' || st.mode === 'result' ? Math.min(1, 0.25 + heat() / 5) : 0.15);
     // score counts up
@@ -646,9 +760,14 @@ function start(app) {
   newRun(); showStart();
   requestAnimationFrame(() => {
     v = new AA.Viewer(benchCv, model, { interactive: false, zoom: 40, pitch: 0.32, yaw: 0.5, faces: false });
-    const grid = new T.GridHelper(44, 22, 0x9a9a9a, 0x9a9a9a); grid.position.y = -5.4; grid.material.transparent = true; grid.material.opacity = 0.16; v.scene.add(grid);
+    if (BENCH) bench = AA.rxBench.make(v, hood, { play: i => play(i), hover: i => setHover(i), prop: onProp, propHover: onPropHover, tip: tipFor,
+      left: () => { if (st.mode === 'play') swap(); else if (st.mode === 'result' && st.opts) choose(-1); else if (st.mode === 'shop') shopReroll(); },
+      right: () => { if (st.mode === 'start') newRun(); else if (st.mode === 'play') deliver(); else if (st.mode === 'result' && st.end) showStart(); else if (st.mode === 'shop') leaveShop(); },
+      mid: () => capKeep(), redraw: () => { if (cur && st.mode === 'play') renderHand(); scene(); },
+      prints: prints.map((q, i) => ({ cv: q.cv, name: KINDS[i][1], get ok() { return q.pct.textContent ? q.pct.className.includes('full') : null; } })) });
+    else { const grid = new T.GridHelper(44, 22, 0x9a9a9a, 0x9a9a9a); grid.position.y = -5.4; grid.material.transparent = true; grid.material.opacity = 0.16; v.scene.add(grid); }
     if (st.mode === 'play') renderHand();
-    requestAnimationFrame(frame);
+    scene(); requestAnimationFrame(frame);
   });
   root.addEventListener('resize', () => { if (cur && st.mode === 'play') renderHand(); });
   root.addEventListener('keydown', e => {

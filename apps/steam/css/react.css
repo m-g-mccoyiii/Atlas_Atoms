@@ -1,18 +1,19 @@
 /* Reaction game. Look: lab signage and reagent labels. Flat colour, black rules, large condensed type. */
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: #232321; color: #f2f2ee; font: 500 16px/1.3 Bahnschrift, "DIN Alternate", "Arial Narrow", Arial, sans-serif; font-stretch: 87%; }
+html, body { margin: 0; height: 100%; background: #232321; color: #f2f2ee; font: 18px/1.3 Hand, "Comic Sans MS", cursive; }
 body { overflow-x: hidden; }
 button { font: inherit; color: inherit; }
 b { font-weight: 700; }
 
-.topbar { height: 44px; background: #0c0c0c; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 3px solid #000; }
-.brand { background: #ffcd00; color: #111; font-weight: 700; font-size: 21px; padding: 1px 10px 0; }
-#runinfo { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 16px; }
-.tbRun { font-weight: 700; } .tbBest { color: #bdbdb6; }
-.tbCash { background: #12894a; color: #fff; font-weight: 700; font-size: 18px; padding: 1px 10px 0; }
+.topbar { position: fixed; left: 0; right: 0; top: 0; height: 47px; z-index: 5; background: none; display: flex; align-items: center; gap: 18px; padding: 0 22px; pointer-events: none; }
+.topbar > * { pointer-events: auto; }
+.brand { font: 26px Marker, cursive; color: #ffcd00; transform: rotate(-2deg); }
+#runinfo { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 21px; color: #e9e6dc; }
+.tbBest { color: #a9a69c; }
+.tbCash { color: #6fdc8f; font-size: 23px; }
 .tbCash:empty { display: none; }
-.linkbtn { background: none; border: 1px solid #6a6a64; color: #f2f2ee; font-size: 14px; padding: 4px 10px; cursor: pointer; }
-.linkbtn:hover { background: #2c2c29; }
+.linkbtn { background: none; border: 0; color: #a9a69c; font-size: 19px; padding: 2px 0; cursor: pointer; }
+.linkbtn:hover { color: #fff; }
 
 #app { padding: 10px 14px 0; max-width: 1900px; margin: 0 auto; }
 .game { display: flex; flex-direction: column; gap: 10px; }
@@ -257,3 +258,15 @@ b { font-weight: 700; }
 .tags span.lock, .kit:not(.on) .tags span.lock { background: none; color: #8a8a82; padding: 0; font-size: 15px; font-weight: 400; text-shadow: none; }
 .feat { min-width: 44px; min-height: 34px; }
 .panel.start > .btn { align-self: flex-start; }
+
+/* bench mockup: one lit scene, readings on the objects */
+@font-face { font-family: Marker; src: url(../fonts/PermanentMarker-Regular.ttf); }
+@font-face { font-family: Hand; src: url(../fonts/PatrickHand-Regular.ttf); }
+@font-face { font-family: PlexMono; src: url(../fonts/IBMPlexMono-Medium.ttf); font-weight: 500; }
+body.bench { overflow: hidden; background: #131312; }
+body.bench .hood { position: fixed; left: 0; right: 0; top: 0; bottom: 0; height: auto; border: 0; z-index: 1; }
+body.bench .right { position: fixed; left: -3000px; top: 0; width: 460px; }
+body.bench .shelf, body.bench .under, body.bench .ov { display: none !important; }
+body.bench .hoodNow { left: 26px; top: 58px; bottom: auto; font: 34px Hand, sans-serif; font-stretch: normal; color: #e9e6dc; }
+body.bench .hoodStep { display: none; }
+body.bench .hoodChain { left: 26px; top: 104px; background: none; border: 0; padding: 0; color: #ffcd00; font: 30px Hand, sans-serif; }

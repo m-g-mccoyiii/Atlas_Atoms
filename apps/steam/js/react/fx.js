@@ -1,9 +1,9 @@
-// 2D effects drawn over the fume hood: rings, sparks, score numbers, screen shake, flash, slab banners.
+// 2D effects drawn over the bench: rings, sparks, score numbers, screen shake, flash, marker callouts.
 (function (root) {
 'use strict';
 const AA = root.AA = root.AA || {};
 const { rgba } = AA.rxArt;
-const FONT = 'Bahnschrift, "DIN Alternate", "Arial Narrow", Arial, sans-serif';
+const FONT = 'Marker, "Comic Sans MS", cursive', HAND = 'Hand, "Comic Sans MS", cursive';
 const YELLOW = [255, 205, 0], WHITE = [255, 255, 255];
 const lum = c => (c[0] * 299 + c[1] * 587 + c[2] * 114) / 1000;
 
@@ -36,23 +36,28 @@ function make(cv, wrap) {
       s.floats = s.floats.filter(f => (f.t += dt) < f.dur);
       s.floats.forEach(f => {
         const k = f.t / f.dur, pop = k < 0.1 ? 0.6 + k / 0.1 * 0.7 : 1.3 - Math.min(0.3, (k - 0.1) * 1.6), y = f.y - 80 * (1 - Math.pow(1 - k, 2));
-        x.font = '700 ' + Math.round(f.size * pop) + 'px ' + FONT; x.textAlign = 'center'; x.lineJoin = 'round';
+        x.font = Math.round(f.size * pop) + 'px ' + FONT; x.textAlign = 'center'; x.lineJoin = 'round';
         x.lineWidth = 6; x.strokeStyle = rgba([0, 0, 0], 1 - k * k); x.fillStyle = rgba(f.c, 1 - k * k);
         x.strokeText(f.text, f.x, y); x.fillText(f.text, f.x, y);
       });
       const b = s.banner;
       if (b && (b.t += dt) < b.dur) {
-        // a solid slab that slides in from the left, holds, and slides out to the right
-        const k = b.t / b.dur, inn = Math.min(1, b.t / 0.14), out = k > 0.82 ? (k - 0.82) / 0.18 : 0;
-        const size = Math.round(Math.min(58, w / 13)), bh = size + (b.sub ? 44 : 22), by = 28;
-        const off = (1 - (1 - Math.pow(1 - inn, 3))) * -w + out * out * w;
-        x.save(); x.translate(off, 0);
-        x.fillStyle = rgba(b.c, 0.96); x.beginPath(); x.moveTo(0, by); x.lineTo(w, by); x.lineTo(w, by + bh); x.lineTo(0, by + bh); x.closePath(); x.fill();
-        x.fillStyle = '#000'; x.fillRect(0, by - 5, w, 5); x.fillRect(0, by + bh, w, 5);
-        const ink = lum(b.c) > 140 ? '#000' : '#fff';
-        x.fillStyle = ink; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-        x.font = '700 ' + size + 'px ' + FONT; x.fillText(b.text, w / 2, by + size * 0.9 + 4);
-        if (b.sub) { x.font = '600 22px ' + FONT; x.fillText(b.sub, w / 2, by + size + 30); }
+        // marker lettering with an ink outline: pops in oversize, settles, lifts away. No backing shape.
+        const k = b.t / b.dur, inn = Math.min(1, b.t / 0.16), out = k > 0.8 ? (k - 0.8) / 0.2 : 0;
+        const size = Math.round(Math.min(84, w / 10));
+        const pop = inn < 1 ? 1.7 - 0.7 * (1 - Math.pow(1 - inn, 3)) : 1 + 0.03 * Math.sin(b.t * 5);
+        const al = Math.min(1, inn * 2) * (1 - out * out);
+        const ink = lum(b.c) > 70 ? [18, 14, 10] : [250, 246, 236];
+        x.save(); x.translate(w / 2, hh * 0.2 - out * out * 40); x.rotate(-0.045); x.scale(pop, pop);
+        x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round';
+        x.font = size + 'px ' + FONT;
+        x.lineWidth = size * 0.2; x.strokeStyle = rgba(ink, al); x.strokeText(b.text, 0, 0);
+        x.fillStyle = rgba(b.c, al); x.fillText(b.text, 0, 0);
+        if (b.sub) {
+          x.font = Math.round(size * 0.36) + 'px ' + HAND;
+          x.lineWidth = size * 0.09; x.strokeText(b.sub, 0, size * 0.52);
+          x.fillStyle = rgba([250, 246, 236], al); x.fillText(b.sub, 0, size * 0.52);
+        }
         x.restore();
       }
       // shake moves the hood; punch pushes it toward the viewer and lets it settle back
