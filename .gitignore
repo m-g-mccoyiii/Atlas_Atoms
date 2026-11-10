@@ -6,3 +6,5 @@ Thumbs.db
 apps/steam/node_modules/
 apps/steam/stage/
 apps/steam/dist/
+
+.claude/
