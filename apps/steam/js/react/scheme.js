@@ -292,6 +292,11 @@ function start(app) {
   let morph = null;
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
+  // How a page shows that it is building toward being set off, tried with ?fuse= on the page:
+  //   button: nothing until the page is used up, then a red button.  burn: a cord to the molecule burns down.
+  //   swell: the molecule grows and shakes over a spreading red blot.  flask: the flask shakes, steams and grows.
+  const FUSEV = (() => { try { return new URLSearchParams(root.location.search).get('fuse') || 'button'; } catch (e) { return 'button'; } })();
+  const chargeOf = () => (!g || g.fired || g.chain || st.mode === 'done' || st.mode === 'pick' || st.mode === 'brief' || st.mode === 'shop') ? 0 : st.mode === 'fuse' ? 1 : Math.min(0.94, Math.min(g.cur.path.length, 3) / 6 + Math.min(1, g.pageSteps / P.stepsOf(g)) / 2);
   const callout = (text, sub, col, ticks) => { st.call = { text, sub: sub || '', col: col || INK, ticks: ticks || 0, t: performance.now() }; };
   const spray = (n, col, wide) => { const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 12 : 6); if (k % 3) continue; st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 12 : 8), t: now, col }); } };
 
@@ -874,11 +879,27 @@ function start(app) {
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
+    if (FUSEV === 'button') {
     if (st.mode === 'fuse') { const c = px({ x: C0.x, z: 10.6 }), age = (now - st.fuseT) / 1000, pop = age < 0.25 ? 0.4 + 2.4 * age : 1 + 0.05 * Math.sin(now / 110), w = 520 * pop;
-      x.fillStyle = 'rgba(214,69,58,0.92)'; x.beginPath(); x.ellipse(c[0], c[1] - 30, w / 2, 62 * pop, -0.02, 0, 6.3); x.fill();
-      marker(x, 84 * pop); x.textAlign = 'center'; x.fillStyle = '#fbf8ee'; x.fillText('set it off', c[0], c[1]);
-      for (let k = 0; k < Math.min(9, g.cur.path.length); k++) glyph(x, 'r', c[0] - (Math.min(9, g.cur.path.length) - 1) * 16 + k * 32, c[1] - 118, 30, PART.r);
-      dirty = true; }
+        x.fillStyle = 'rgba(214,69,58,0.92)'; x.beginPath(); x.ellipse(c[0], c[1] - 30, w / 2, 62 * pop, -0.02, 0, 6.3); x.fill();
+        marker(x, 84 * pop); x.textAlign = 'center'; x.fillStyle = '#fbf8ee'; x.fillText('set it off', c[0], c[1]);
+        for (let k = 0; k < Math.min(9, g.cur.path.length); k++) glyph(x, 'r', c[0] - (Math.min(9, g.cur.path.length) - 1) * 16 + k * 32, c[1] - 118, 30, PART.r);
+        dirty = true; }
+    } else if (g && st.mode !== 'done') { const ch = st.ch || 0, fz = st.mode === 'fuse', wob = fz ? 1 + 0.06 * Math.sin(now / 80) : 1;
+      if (FUSEV === 'burn' && !g.fired && !g.chain) {
+        const A = px({ x: 8.4, z: -7.6 }), B = px({ x: C0.x + 0.6, z: -3.2 }), pt = t => { const u = 1 - t, cx = (A[0] + B[0]) / 2, cy = Math.min(A[1], B[1]) - 150; return [u * u * A[0] + 2 * u * t * cx + t * t * B[0] + 10 * Math.sin(t * 21), u * u * A[1] + 2 * u * t * cy + t * t * B[1] + 8 * Math.cos(t * 17)]; };
+        x.lineCap = 'round'; x.lineJoin = 'round'; x.setLineDash([3, 18]); x.strokeStyle = 'rgba(90,84,70,0.5)'; x.lineWidth = 7; x.beginPath(); for (let i = 0; i <= 30; i++) { const q = pt(ch * i / 30); if (i) x.lineTo(q[0], q[1]); else x.moveTo(q[0], q[1]); } x.stroke(); x.setLineDash([]);
+        x.strokeStyle = INK; x.lineWidth = 10; x.beginPath(); for (let i = 0; i <= 30; i++) { const q = pt(ch + (1 - ch) * i / 30); if (i) x.lineTo(q[0], q[1]); else x.moveTo(q[0], q[1]); } x.stroke();
+        if (ch > 0.02) { const sp = pt(ch), fl = 0.7 + 0.3 * Math.sin(now / 43) * Math.sin(now / 17), R = (30 + 34 * ch) * (0.8 + 0.3 * fl) * (fz ? 1.7 * wob : 1);
+        for (let k = 0; k < 10; k++) { const an = k * 0.628 + now / 300, r = R * (k % 2 ? 1 : 0.5); x.strokeStyle = k % 2 ? '#ffb000' : REDINK; x.lineWidth = 8; x.beginPath(); x.moveTo(sp[0] + Math.cos(an) * 8, sp[1] + Math.sin(an) * 8); x.lineTo(sp[0] + Math.cos(an) * r, sp[1] + Math.sin(an) * r); x.stroke(); }
+        x.fillStyle = '#ffd24a'; x.beginPath(); x.arc(sp[0], sp[1], 12 + 5 * fl, 0, 6.3); x.fill(); dirty = true; } }
+      if (FUSEV === 'swell' && ch > 0.02) { const c0 = px(C0), R = 120 + 190 * ch; x.fillStyle = 'rgba(214,69,58,' + (0.07 + 0.13 * ch).toFixed(3) + ')'; x.beginPath();
+        for (let k = 0; k <= 90; k++) { const an = k / 90 * 6.2832, r = R * (1 + 0.07 * Math.sin(an * 3 + now / 300) + 0.04 * Math.sin(an * 5 - now / 190)) * wob; const X = c0[0] + Math.cos(an) * r * 1.45, Y = c0[1] + Math.sin(an) * r * 0.66; if (k) x.lineTo(X, Y); else x.moveTo(X, Y); } x.fill(); dirty = true; }
+      if (FUSEV === 'flask' && ch > 0.02) { const n = Math.ceil(ch * 3 - 0.01) + (fz ? 2 : 0); x.lineCap = 'round'; x.strokeStyle = REDINK; x.lineWidth = 8;
+        for (let k = 0; k < n; k++) { const f0 = px({ x: FLASK.x + (k - (n - 1) / 2) * 1.1, z: FLASK.z - 4.6 - (fz ? 2.4 : 0) }), len = (80 + 90 * ch) * (0.7 + 0.3 * Math.sin(now / 210 + k * 2)); x.globalAlpha = 0.75; x.beginPath(); for (let i = 0; i <= 12; i++) { const u = i / 12, X = f0[0] + 16 * Math.sin(u * 7 + now / 130 + k * 1.7) * u, Y = f0[1] - len * u; if (i) x.lineTo(X, Y); else x.moveTo(X, Y); } x.stroke(); } x.globalAlpha = 1; dirty = true; }
+      if (fz) { const c = px({ x: C0.x + 4.5, z: 10.8 }), age = (now - st.fuseT) / 1000, pop = (age < 0.25 ? 0.4 + 2.4 * age : 1) * wob;
+        marker(x, 96 * pop); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 18; x.strokeStyle = '#fbf8ee'; x.strokeText('set it off', c[0], c[1]); x.fillStyle = REDINK; x.fillText('set it off', c[0], c[1]); dirty = true; }
+    }
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
@@ -980,9 +1001,10 @@ function start(app) {
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 5); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } center.group.position.set(C0.x + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), C0.z + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); }
+    if (center && !tweens.some(tw => tw.m === center)) { st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 5); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } center.group.position.set(C0.x + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), C0.z + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); if (FUSEV === 'swell' && st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
-    { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'); flask.grp.visible = on; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.45 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.45 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.45); if (boil) dirty = true; } }
+    { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
+    { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || (st.mode === 'fuse' && FUSEV !== 'button')); flask.grp.visible = on; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.45 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.45 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.45); if (FUSEV === 'flask' && st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; flask.grp.scale.multiplyScalar(1 + 0.22 * c + (fz ? 0.12 + 0.06 * Math.sin(now / 70) : 0)); flask.grp.rotation.z += (Math.random() - 0.5) * (0.06 + 0.22 * c * c) * (fz ? 1.6 : 1); flask.grp.position.y = Math.random() * 0.3 * c; dirty = true; } if (boil) dirty = true; } }
     kitObjs.forEach((k, i) => animKit(k, i, now, heat));
     if (st.madeBump > 0) { st.madeBump = Math.max(0, st.madeBump - dt * 6); dirty = true; }
     ['p', 'r', 'e'].forEach(q => { if (st.bump[q] > 0) { st.bump[q] = Math.max(0, st.bump[q] - dt * 4); dirty = true; } });
