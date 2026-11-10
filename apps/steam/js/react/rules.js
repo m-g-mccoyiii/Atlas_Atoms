@@ -208,7 +208,7 @@ const LIST = [
   // This is how a chain becomes a ring in the player's hands.
   { id: 'cyclize', verb: 'Close', formula: 'H₂SO₄ dil., heat', chem: 'Dilute acid, heat', rgb: [47, 143, 106], cls: 'acid', ghs: ['corr'],
     rule: 'Joins two OH groups four or five carbons apart into a ring. Water leaves.', from: 'ol', to: 'ring',
-    find: m => m.atoms.map(a => ringable(m, a)).filter(Boolean), ok: (m, s) => !!ringable(m, s.o),
+    find: m => m.atoms.map(a => ringable(m, a)).filter(Boolean).slice(0, 1), ok: (m, s) => !!ringable(m, s.o),
     apply(m, s0) { const s = ringable(m, s0.o); cut(m, s.o, s.ho); cut(m, s.c2, s.o2); m.bond(s.o2, s.ho); m.bond(s.o, s.c2); return { focus: [s.c, s.o, s.c2], incoming: [], leaving: [[s.o2, s.ho2, s.ho]], tag: 'closes a ring' }; } },
   // Snap: two C=C in one molecule, a few carbons apart, close a four-ring between them under light. The chain folds
   // into fused rings, which is how a cage is built.
@@ -367,12 +367,15 @@ function aromatizable(m) {
   return out;
 }
 // the first OH of a pair that can close a ring: the carbons that carry them are three or four bonds apart along carbon
+// whether a heavy atom is part of a ring
+function ringAtom(m, c) { const nb = a => nbs(m, a).map(n => n.atom).filter(b => b.el !== 'H' && !b.fly); for (const n1 of nb(c)) { const seen = new Set([n1]), st = [n1]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (v === c) { if (u !== n1) return true; continue; } if (!seen.has(v)) { seen.add(v); st.push(v); } } } } return false; }
+// one ring at a time, and never onto a carbon that is already in a ring: fused rings made this way do not draw well
 function ringable(m, o) {
-  const s = hydroxyl(m, o); if (!s) return null;
+  const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) return null;
   const dist = new Map([[s.c, 0]]), q = [s.c];
   while (q.length) { const a = q.shift(), d = dist.get(a); if (d >= 4) continue; carbonsOf(m, a).forEach(b => { if (!b.fly && !dist.has(b)) { dist.set(b, d + 1); q.push(b); } }); }
   const io = m.atoms.indexOf(o);
-  for (const o2 of m.atoms) { if (o2 === o || o2.fly || m.atoms.indexOf(o2) < io) continue; const t = hydroxyl(m, o2); if (!t || t.c === s.c) continue; const d = dist.get(t.c); if (d === 3 || d === 4) return { o: s.o, c: s.c, ho: s.ho, o2: t.o, c2: t.c, ho2: t.ho, atoms: [s.o, s.c, t.c, t.o] }; }
+  for (const o2 of m.atoms) { if (o2 === o || o2.fly || m.atoms.indexOf(o2) < io) continue; const t = hydroxyl(m, o2); if (!t || t.c === s.c || ringAtom(m, t.c)) continue; const d = dist.get(t.c); if (d === 3 || d === 4) return { o: s.o, c: s.c, ho: s.ho, o2: t.o, c2: t.c, ho2: t.ho, atoms: [s.o, s.c, t.c, t.o] }; }
   return null;
 }
 // What the molecule is, read from its structure as it stands: rings that are not aromatic, aromatic rings, whether it is
