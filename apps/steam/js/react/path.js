@@ -78,7 +78,7 @@ const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 function begin(feed, relaxed, offer, keep, gear) {
   const run = RUN.newRun(7, {}); run.gear = [];
   RUN.beginOrder(run); RUN.chooseFeed(run, 0);
-  const cur = run.cur, m = relaxed ? AA.Model.fromSmilesRelaxed(feed, 4) : RX.fromSmiles(feed), left = {};
+  const cur = run.cur, m = feed && feed.atoms ? RX.cloneMap(feed).model : relaxed ? AA.Model.fromSmilesRelaxed(feed, 4) : RX.fromSmiles(feed), left = {};
   m.center();
   if (keep != null && m.atoms[keep] && m.atoms[keep].el === 'O') m.atoms[keep].keep = true;
   cur.feed = feed; cur.feedSig = RX.sigOf(m); cur.seen = new Set([cur.feedSig]); cur.spec = null; cur.keep = null; cur.cond = null; cur.stepsMax = 99;
@@ -96,7 +96,7 @@ function tryOne(g, m, id) {
   return { model: cm.model, r };
 }
 // reactions allowed on a page
-const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0);
+const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + (g.more || 0);
 function options(g) {
   const cur = g.cur, out = {};
   if ((g.syn ? g.pageSteps : g.trail.length) >= stepsOf(g)) return out;
@@ -198,7 +198,8 @@ function kit(n, rnd) { const R = rnd || Math.random, pool = GEAR.map(q => q.id),
 // follows on, and the row goes up. A reaction that does not follow on breaks the row: what the row made is kept and
 // the row starts again. Nothing made is ever taken away.
 // The finishing reagent closes groups for good, so it is offered only on the last page and ends the round.
-const SYN = { pages: 3, offer: 5, uses: 2, finish: 'h2', finishExtra: 0.5, rare: 0.18, place: 20, row: 0.35 };
+// every third reaction in a row gives the page one more reaction
+const SYN = { streak: 3, pages: 3, offer: 5, uses: 2, finish: 'h2', finishExtra: 0.5, rare: 0.18, place: 20, row: 0.35 };
 // Now and then a reagent on offer is a rare version for that page: double counts its places twice, strong adds 1
 // to the row, plenty does not run out.
 const RARE = ['double', 'strong', 'plenty'];
@@ -206,10 +207,11 @@ const RARE = ['double', 'strong', 'plenty'];
 // asks for more and pays something when it is beaten.
 const BRIEFS = [
   { id: 'plain', name: 'plain', note: '' },
+  { id: 'carry', name: 'carry on', note: 'the molecule left on the page. starts with half the extra it ended on' },
   { id: 'broad', name: 'broad', note: 'places count twice. following on adds half as much' },
   { id: 'loose', name: 'loose', note: 'following on adds nothing to the row. each reaction: extra +0.3' },
   { id: 'each', name: 'one of each', note: 'first use of a reagent: extra +0.5. a repeat adds no places' },
-  { id: 'back', name: 'there and back', note: 'returning to an earlier molecule: extra times 1.25' },
+  { id: 'back', name: 'there and back', note: 'returning to an earlier molecule: extra +0.5' },
   { id: 'scarce', name: 'scarce', note: 'one use of each reagent on a page' },
   { id: 'short', name: 'short', note: 'two pages' }
 ];
@@ -228,7 +230,7 @@ function synDeal(g, rnd) {
     while (offer.length < n && pool.length) offer.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
     if (offer.filter(id => live.includes(id)).length >= Math.min(2, live.length)) break;
   }
-  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0;
+  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0; g.more = 0;
   g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0); });
   g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
   if (g.gear.includes('ouija') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = 9; g.rare[id] = 'plenty'; }
@@ -239,6 +241,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.brief = (run && run.brief) || 'plain'; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
+  if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   synDeal(g, rnd);
   return g;
 }
@@ -277,7 +280,7 @@ function scoreRound(g, o) {
   for (let i = 0; i < r.hits; i++) { if (per) emit('bottle', A('p', per)); pieces('site'); }
   if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
-  if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', M('e', 1.25));
+  if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
   const rare = (g.rare && g.rare[id]) || null;
   if (rare === 'double') emit('rare', M('h', 2)); else if (rare === 'strong') emit('rare', A('r', 1));
   // the homunculus does the last reaction of the page a second time
@@ -291,7 +294,8 @@ function synTake(g, o) {
   const sc = scoreRound(g, o);
   cur.fresh = new Set(o.r.made); cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
   g.left[o.id]--; g.m = o.model; g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
-  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev: sc.ev, rare: sc.rare });
+  const more = cur.path.length > 0 && cur.path.length % SYN.streak === 0; if (more) g.more++;
+  g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, ev: sc.ev, rare: sc.rare, more });
 }
 function turn(g, rnd) { if (g.page >= pagesOf(g)) return false; g.page++; synDeal(g, rnd); return true; }
 // the finishing reagent, on the last page only
@@ -355,11 +359,11 @@ const SUPPLY = [
   { name: 'Brenda (deceased)', cost: 80, reagents: [], gear: ['ouija', 'candle', 'goat', 'pact'] }
 ];
 const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); return o; };
-const modelOf = feed => { const m = AA.Model.fromSmilesRelaxed(feed, 4); m.center(); return m; };
+const modelOf = feed => { const m = feed.atoms ? RX.cloneMap(feed).model : AA.Model.fromSmilesRelaxed(feed, 4); m.center(); return m; };
 // what a plain player makes from a molecule under a brief, with the starting reagents and the style that suits it best
 const BASE = {};
 function briefBase(feed, brief) {
-  const k = feed + '|' + brief; if (BASE[k]) return BASE[k];
+  const k = (feed.atoms ? RX.sigOf(feed) : feed) + '|' + brief; if (BASE[k]) return BASE[k];
   const run = { rack: RUNG.start, grade: {}, lv: {}, uses: {}, rare: false, brief }; let top = 0;
   Object.keys(STYLES).forEach(sty => { const a = []; for (let i = 0; i < 20; i++) a.push(synPlay(feed, null, [], run, sty)); a.sort((x, y) => x - y); top = Math.max(top, a[5]); });
   return (BASE[k] = Math.max(20, top));
@@ -367,10 +371,14 @@ function briefBase(feed, brief) {
 // before each round: three rounds to choose from, each a molecule, a brief, a number to beat and what it pays
 function runBriefs(run, rnd) {
   const R = rnd || Math.random, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
-  const feeds = mix(FEEDS), sp = mix(BRIEFS.filter(b => b.id !== 'plain')), pay = mix(['credit', 'level']);
-  return [{ brief: 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { o.feed = feeds[i]; o.quota = runQuota(run, o.feed, o.brief); return o; });
+  const feeds = mix(FEEDS), sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix(['credit', 'level']);
+  // the molecule left by the last round can be carried on with, while a reagent held still acts on it
+  const carry = run.last && run.rack.filter(id => RX.CARDS[id].find(run.last).length).length >= 1;
+  return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { o.feed = o.brief === 'carry' ? run.last : feeds[i]; o.quota = runQuota(run, o.feed, o.brief); return o; });
 }
-function runChoose(run, o) { run.brief = o.brief; run.feed = o.feed; run.pays = o.pays; }
+function runChoose(run, o) { run.brief = o.brief; run.feed = o.feed; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
+// keeps the molecule and the extra a beaten round ended on, for carrying on
+function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays what the brief promised. Returns a few words saying what was paid
 function runPay(run, rnd) {
   const R = rnd || Math.random, any = a => a[Math.floor(R() * a.length)], what = run.pays; run.pays = null;
@@ -386,7 +394,7 @@ const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear,
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 function runQuota(run, feed, brief) {
   const br = brief || run.brief || 'plain';
-  const q = briefBase(feed, br) * RUNG.first * (br === 'plain' ? 1 : RUNG.ask) * Math.pow(RUNG.growth, run.round - 1) * (run.gear.includes('pact') ? 2 : 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+  const q = briefBase(feed, br) * RUNG.first * (br === 'plain' || br === 'carry' ? 1 : RUNG.ask) * Math.pow(RUNG.growth, run.round - 1) * (run.gear.includes('pact') ? 2 : 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
   return Math.max(50, Math.round(q / mag) * mag);
 }
 function runPicks(run, rnd) {
@@ -416,6 +424,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + SYN.place + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { BRIEFS, BRIEF, runBriefs, runChoose, runPay, payText, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, payText, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -197,7 +197,7 @@ function start(app) {
     st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.pageStart = 0; st.floats = []; st.blots = []; st.call = null; st.over = 0;
     clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
-    g = P.runBegin(run, run.feed, true); st.quota = P.runQuota(run, run.feed);
+    g = P.runBegin(run, run.feed, true); st.quota = P.runQuota(run, run.feed); st.E = g.E; st.R = g.R;
     setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3);
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
@@ -233,7 +233,7 @@ function start(app) {
   function setHover(i) { st.hover = i; dirty = true; }
   function endRound() {
     st.mode = 'done'; st.pass = g.total >= st.quota;
-    if (st.pass) { run.beaten++; st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
@@ -271,7 +271,8 @@ function start(app) {
       if (st.mult >= 3) for (let q = 0; q < Math.min(6, Math.floor(Math.log2(st.mult))); q++) st.stains.push({ x: C0.x + (Math.random() - 0.5) * 30, z: C0.z + (Math.random() - 0.5) * 12, r: 30 + Math.random() * 90, a: 0.05 + Math.random() * 0.07, ring: Math.random() < 0.5 });
       if (route) { callout(AA.rxRun.ROUTE[route.route].name, 'row +' + fmtB(route.val), PART.r); sfx.good(); st.shake = Math.max(st.shake, 1.6); spray(60, PART.r, true); }
       else if (o.finish) { callout('finished', 'extra +' + fmtB(P.SYN.finishExtra * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
-      else if (t.cont && len >= 3) { callout(len + ' in a row', 'row ' + fmtB(g.R), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
+      if (t.more) { st.floats.push({ txt: 'one more reaction', t: now, size: 70, dx: -8, col: '#1c8a4a' }); sfx.good(); }
+      if (route || o.finish) { /* named above */ } else if (t.cont && len >= 3) { callout(len + ' in a row', 'row ' + fmtB(g.R), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
       else if (wasOpen && !t.cont) callout('row broken', '', PENCIL);
       // passing the number to beat, and each doubling past it
       const m = P.made(g), times = Math.floor(m / st.quota);
