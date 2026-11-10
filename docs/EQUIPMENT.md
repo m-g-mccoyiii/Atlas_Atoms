@@ -34,22 +34,22 @@ It is a goat sacrifice: a goat on a stone altar between two black candles, a kni
 
 ## To sixty
 
-Forty exist. Twenty more, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
+Forty-four exist. Sixteen more to build of the twenty below, weighted toward the occult shelf and toward pieces that are funny. Each needs a rule that changes play, not a bigger number. Candidates, to be built one at a time, each drawn, blind-tested and measured:
 
 Occult
 1. Voodoo doll (built): three pins. The first three places a reaction changes count twice. Takes a reagent use each page. Measured about 2.5 alone; one place was 1.1, every place was 20. Blind check: obvious.
-2. Tarot card, the Tower: the first time a row breaks each round, it does not.
+2. Tarot card, the Tower (built): the first time a row would break each round, it holds and the row doubles. The page says "held". Measured about 1.7 to 2.4 alone. Blind check: named as the Tower card, with effort.
 3. Monkey's paw: three wishes a run. A wish doubles a round's total and removes a reagent for good.
 4. Cursed idol: every number is doubled, the number to beat as well. Cannot be put down.
 5. Crystal ball: shows the next page's reagents now.
-6. Black cat: a reaction that would make nothing makes 13.
+6. Black cat (built): a row that breaks leaves extra +0.13 for every reaction that was in it. The simulated player never breaks a row on purpose, so its measured worth (0.8) says nothing yet. Blind check: obvious.
 7. Grimoire: the last reagent on each page is used twice.
 8. Raven: carries one unused reaction over to the next page.
 9. Hand of glory: equipment fires even on a broken row.
 10. Hourglass of sand from a grave: one more page, and the number to beat grows by a tenth each page.
 
 Funny
-11. Rubber duck: says nothing. Extra +0.01 for every reaction it watches.
+11. Rubber duck (built, first shelf): says nothing. Extra +0.01 for every reaction it has watched this round, so it grows through a round. Measured about 2.1 alone. Blind check: obvious.
 12. The intern: does one reaction of its own choosing each page. It is not always a good one.
 13. Coffee: one more reaction a page for two pages, then one fewer for the rest of the round.
 14. Safety goggles, on forehead: no effect. Sells back for double.
