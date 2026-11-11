@@ -543,8 +543,9 @@ function shapeOf(m) {
 //   crystal, on a carbon that has a hydrogen and no oxygen: spot { c }: one hydrogen becomes an OH.
 //   magnet, on the whole molecule: spot { runs }: every stretch of four or more plain CH2 in a row loses all but its
 //     two end carbons, which are bonded. What stood on either side of the stretch is then three carbons apart.
-//   bunsen (the burner), on the whole molecule: spot { pairs }: every C=C outside a benzene ring becomes a C=O on the
-//     carbon with fewer hydrogens, and the other carbon takes that carbon's hydrogen.
+//   bunsen (the burner), on the whole molecule: spot { ohs }: every OH that can lose water does, all at once, and
+//     leaves a C=C where it stood (the same elimination as dehydrate). The waters are returned as `leaving`.
+// apply takes what leaves out of the model and returns it as groups of atoms, so the page can show it going.
 const heavyNb = (m, a) => nbs(m, a).map(n => n.atom).filter(b => b.el !== 'H' && !b.fly);
 const sideOf = (m, a, b) => { const S = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); nbs(m, u).forEach(n => { const v = n.atom; if (S.has(v) || (u === a && v === b)) return; S.add(v); st.push(v); }); } return S; };
 const plainCH2 = (m, c) => c.el === 'C' && !c.fly && !c.clamp && Hs(m, c).length === 2 && heavyNb(m, c).length === 2 && heavyNb(m, c).every(q => q.el === 'C') && isSp3(m, c);
@@ -558,12 +559,13 @@ const tools = {
     else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !o.clamp) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !k.a.clamp && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
     else if (id === 'crystal') m.atoms.forEach(c => { if (c.el === 'C' && !c.fly && !c.clamp && isSp3(m, c) && Hs(m, c).length && heavyNb(m, c).every(q => q.el === 'C')) out.push({ c }); });
     else if (id === 'magnet') { const runs = gapRuns(m); if (runs.length) out.push({ runs }); }
-    else if (id === 'bunsen') { const pairs = burnPairs(m); if (pairs.length) out.push({ pairs }); }
+    else if (id === 'bunsen') { const ohs = m.atoms.filter(o => o.el === 'O' && !o.fly && !o.clamp && eliminable(m, o)); if (ohs.length) out.push({ ohs }); }
     return out;
   },
   // the atoms a spot is drawn at, on the molecule as it stands; and those of them that will be gone
-  at(sp) { return sp.runs ? [].concat.apply([], sp.runs) : sp.pairs ? [].concat.apply([], sp.pairs) : sp.b ? [sp.a, sp.b] : sp.part || [sp.c]; },
-  apply(m, id, sp) {
+  at(sp) { return sp.ohs ? sp.ohs : sp.runs ? [].concat.apply([], sp.runs) : sp.pairs ? [].concat.apply([], sp.pairs) : sp.b ? [sp.a, sp.b] : sp.part || [sp.c]; },
+  apply(m, id, sp) { const res = tools.act(m, id, sp); if (res && res.leaving) res.leaving.forEach(grp => grp.forEach(a => m.removeAtom(a))); return res; },
+  act(m, id, sp) {
     if (id === 'mirror') {
       const a = sp.a, b = sp.b, gone = sideOf(m, b, a), keep = Array.from(sideOf(m, a, b)); gone.forEach(x => m.removeAtom(x));
       let ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z; const d = Math.hypot(ux, uy, uz) || 1; ux /= d; uy /= d; uz /= d;
@@ -574,7 +576,7 @@ const tools = {
     if (id === 'clamp') { sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }
     if (id === 'crystal') { const h = Hs(m, sp.c)[0]; if (!h) return null; cut(m, sp.c, h); const o = attach(m, 'O', sp.c, 2.8); m.bond(o, h); return { made: [o] }; }
     if (id === 'magnet') { const made = []; sp.runs.forEach(run => { run.slice(1, -1).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], run[run.length - 1]); made.push(run[0], run[run.length - 1]); }); return { made }; }
-    if (id === 'bunsen') { const made = []; sp.pairs.forEach(q => { const cx = q[0], ch = q[1], k = m.findBond(cx, ch); if (!k || k.order !== 2) return; const hx = Hs(m, cx)[0]; if (!hx) return; k.order = 1; cut(m, cx, hx); m.bond(ch, hx); const o = attach(m, 'O', cx, 2.8); m.bond(cx, o); made.push(o); }); return { made }; }
+    if (id === 'bunsen') { const made = [], leaving = []; sp.ohs.forEach(o => { const q = eliminable(m, o); if (!q) return; const hb = Hs(m, q.beta)[0]; cut(m, q.c, q.o); cut(m, q.beta, hb); m.bond(q.o, hb); m.bond(q.c, q.beta); made.push(q.c, q.beta); leaving.push([q.o, q.ho, hb]); }); return made.length ? { made, leaving } : null; }
     return null;
   }
 };

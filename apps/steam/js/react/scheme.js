@@ -786,6 +786,17 @@ function start(app) {
     const nm = buildMol(g.m, null, false, seed.size ? seed : null, new Map()); place(nm, C0, st.sc); const from = new Map(), start = new Map(), cur = new Map(); seed.forEach((q, na) => { if (nm.balls.has(na)) from.set(na, q.clone()); }); nm.balls.forEach((b, a) => { start.set(a, 0); cur.set(a, new T.Vector3()); });
     nm.sticks.forEach(q => { const fa = from.get(q.a), fb = from.get(q.b), ta = nm.at.get(q.a), tb = nm.at.get(q.b); q.old = !!(fa && fb && ta && tb && fa.distanceTo(fb) < 1.4 * ta.distanceTo(tb)); }); tweens = tweens.filter(tw => tw.m !== prev); freeMol(prev); center = nm; SC_MAIN = fitMain(nm); nm.hot = []; nm.groups = groupsOf(nm); nm.ghosts = []; nm.marks = [];
     morph = { s0: 0, ms: 0, slow: false, m: nm, from, start, cur, t0: performance.now(), end: 260, made: new Set() }; dirty = true;
+    // what the piece drove off: each a small molecule of its own, set where it left from, on its way to where it is kept
+    if (mp && g.reopened.gone && g.reopened.gone.length) { const rev = new Map(); mp.forEach((na, oa) => rev.set(na, oa)); const t00 = performance.now(); g.reopened.gone.forEach((grp0, gi) => { const kind = P.byKind(grp0); const p = flyer(grp0, gi, kind, a => rev.get(a), prev, null); const f = st.flyers[st.flyers.length - 1], q = kind === 'water' ? BEAK : kind === 'h2' ? BALN : TALLY; f.t0 = t00 + 90 + gi * 45; f.to = new T.Vector3(q.x, kind === 'h2' ? 2.4 : 1.2, q.z - (kind === 'h2' ? 1.6 : 0.6)); f.keep = kind === 'water' || kind === 'h2' ? kind : null; }); g.reopened.gone = []; }
+  }
+  // one thing that has left the molecule, as a small molecule of its own standing where it left from
+  function flyer(grp0, gi, kind, back, prev, nm) {
+    const grp = new T.Group(), els = kind === 'water' ? ['O', 'H', 'H'] : kind === 'h2' ? ['H', 'H'] : grp0.map(a => a.el).sort((a, b) => (a === 'H') - (b === 'H')).slice(0, 3), hub = els[0] !== 'H';
+    els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
+    const srcA = grp0.map(back).find(a => a && prev.balls.has(a)), p = srcA ? prev.at.get(srcA) : nm && nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 };
+    grp.position.set(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc); grp.scale.setScalar(st.sc); scene.add(grp);
+    st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: null, t0: 0, dur: 520, spin: (Math.random() - 0.5) * 9 });
+    return p;
   }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
   function fireNext() {
@@ -872,11 +883,7 @@ function start(app) {
     // catches it, or to the beaker, the balloon or the tally.
     { const rev = new Map(); if (o.map) o.map.forEach((na, oa) => rev.set(na, oa));
       (o.r.gone || []).forEach((grp0, gi) => {
-        const kind = P.byKind(grp0), grp = new T.Group(), els = kind === 'water' ? ['O', 'H', 'H'] : kind === 'h2' ? ['H', 'H'] : grp0.map(a => a.el).sort((a, b) => (a === 'H') - (b === 'H')).slice(0, 3), hub = els[0] !== 'H';
-        els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
-        const srcA = grp0.map(a => rev.get(a)).find(a => a && prev.balls.has(a)), p = srcA ? prev.at.get(srcA) : nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 };
-        grp.position.set(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc); grp.scale.setScalar(st.sc); scene.add(grp);
-        st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: null, t0: 0, dur: 520, spin: (Math.random() - 0.5) * 9 });
+        flyer(grp0, gi, P.byKind(grp0), a => rev.get(a), prev, nm);
       }); }
     prods.forEach(m => { if (m) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.14, () => freeMol(m)); }); prods = [];
     tweens = tweens.filter(tw => tw.m !== prev); freeMol(prev); center = nm; SC_MAIN = fitMain(nm);
@@ -1108,8 +1115,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       const h = st.toolList.length === 1 && st.toolList[0].whole ? st.toolList[0] : st.toolSpot;
       if (h) { (h.gone || []).forEach(q => blot(q, REDINK, 0.42));
         if (h.ghost) { x.globalAlpha = 0.4; x.strokeStyle = INK; x.lineWidth = Math.max(4, 0.16 * sc * U); x.lineCap = 'round'; x.setLineDash([10, 9]); const j0 = P2(h.ghost.join[0]), j1 = P2(h.ghost.join[1]); x.beginPath(); x.moveTo(j0[0], j0[1]); x.lineTo(j1[0], j1[1]); x.stroke(); x.setLineDash([]); h.ghost.bonds.forEach(b => { const a0 = P2(b[0]), b0 = P2(b[1]); x.beginPath(); x.moveTo(a0[0], a0[1]); x.lineTo(b0[0], b0[1]); x.stroke(); }); h.ghost.pts.forEach(q => { const c = P2(q); x.fillStyle = q.o ? REDINK : INK; x.globalAlpha = 0.34; x.beginPath(); x.arc(c[0], c[1], r * 0.6, 0, 6.3); x.fill(); }); }
+        else if (st.tool === 'bunsen') { x.globalAlpha = 0.9; x.strokeStyle = REDINK; x.lineWidth = 6; x.lineCap = 'round'; h.at.forEach(q => { const c = P2(q); x.beginPath(); x.moveTo(c[0] - r * 0.7, c[1] + r * 0.45); x.lineTo(c[0] + r * 0.7, c[1] - r * 0.45); x.stroke(); }); }
         else if (!h.gone || st.tool !== 'magnet') h.at.forEach(q => blot(q, st.tool === 'clamp' ? '#39435c' : '#2f78a0', 0.5));
-        const word = st.tool === 'crystal' ? 'OH' : st.tool === 'bunsen' ? 'C=O' : ''; if (word) { hand(x, 30); x.textAlign = 'center'; x.globalAlpha = 0.9; x.fillStyle = '#2f78a0'; h.at.forEach(q => { const c = P2(q); x.fillText(word, c[0], c[1] - r - 8); }); } }
+        const word = st.tool === 'crystal' ? 'OH' : st.tool === 'bunsen' ? 'C=C' : ''; if (word) { hand(x, 30); x.textAlign = 'center'; x.globalAlpha = 0.9; x.fillStyle = '#2f78a0'; h.at.forEach(q => { const c = P2(q); x.fillText(word, c[0], c[1] - r - 8); }); } }
       x.globalAlpha = 1; }
     // ink that runs from a reagent to a place, and from a place to the equipment it sets off
     st.strokes = st.strokes.filter(q => now - q.t < q.dur + 260); st.strokes.forEach(q => {

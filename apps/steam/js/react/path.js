@@ -231,7 +231,7 @@ const GEAR = [
   { id: 'sieves', tok: '{r} +0.6', fam: 'row', note: 'catches water that leaves: row +0.6', name: 'sieves', shape: 'round' },
   { id: 'hood', tok: '{e} +0.06', fam: 'extra', note: 'catches anything that leaves: extra +0.06', name: 'fume hood', shape: 'box' },
   { id: 'scrubber', tok: '{p} +50', fam: 'places', note: 'catches hydrogen that leaves: +50 places. an oxygen or a chloride: +80', name: 'scrubber', shape: 'column' },
-  { id: 'bunsen', tok: 'every C=C|becomes C=O', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every C=C becomes C=O', name: 'burner', shape: 'funnel' },
+  { id: 'bunsen', tok: 'every OH|becomes C=C', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every OH becomes C=C', name: 'burner', shape: 'funnel' },
   { id: 'litmus', tok: '{e} +0.08', fam: 'extra', note: 'an acid: extra +0.08. catches a chloride that leaves: extra +0.4', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.08) : null) },
   { id: 'stopwatch', tok: '{e} +0.35', fam: 'extra', note: 'last reaction on a page: extra +0.35', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.35) : null) },
   { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
@@ -271,7 +271,7 @@ const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 //   clamp, on an oxygen or a C=C: nothing changes that part for the rest of the round, except the molecule's own zip.
 //   seed crystal, on a carbon: a hydrogen there becomes an OH, and the molecule zips from it at once.
 //   magnet, on the whole molecule: every stretch of four or more CH2 is pulled shut to two carbons.
-//   burner, on the whole molecule: every C=C becomes a C=O.
+//   burner, on the whole molecule: every OH loses water and becomes a C=C, all at once.
 // Three more still do what they say and are passive: carousel (one more reagent in the hand), dropper (one more use),
 // timer (a fourth circle). RULE.five: only these eight are offered, each from the supplier given here. Off: all sixty.
 const FIVE = { crystal: 0, clamp: 0, bunsen: 0, dropper: 0, magnet: 1, carousel: 1, mirror: 2, timer: 3 };
@@ -682,7 +682,9 @@ function toolUse(g, id, spot) {
   const res = RX.tools.apply(cm.model, id, sp); if (!res) return false;
   if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
   const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
-  cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [] };
+  cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [], gone: res.leaving || [] };
+  // what a piece drives off is collected as a reagent's by-product is
+  (res.leaving || []).forEach(grp => { const kind = byKind(grp); if (kind === 'water' || kind === 'h2') g.by[kind]++; g.by.gauge++; });
   g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = id !== 'clamp';
   return true;
 }
