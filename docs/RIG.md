@@ -108,6 +108,44 @@ Coins held after rounds one, two, three: novice 1.3, 1.7, 2.1; median player 1.7
 
 The gate is missed by far, and it is lower than the 35% of the fourth measure. With four reactions and a molecule of 12 to 14 heavy atoms, two thirds of circles have one thing that acts. The three switches moved it from 14.4 to 17.9. Counted by whole lines instead of circles the page looks different (above: 9 of 55 lines within a fifth of the best, order decisive on 78 pages in 100), so the choice in tier one is the order of the line, not what goes in a circle. Breaking a row on purpose was not run (`simBreak` cannot play the bare game).
 
+### A coin sink, measured (added later the same day)
+
+Measured, awaiting review. Coins had nothing in a round to be spent on. One sink was built behind `RULE.sink` (off): while a page is being lined up, coins buy one more use of a reaction of the hand, for this round only. The price is 1, then 2, then 3 within a round (`SINK.price`) and starts again next round. `P.useCost(g)`, `P.canBuyUse(g, run, id)`, `P.buyUse(g, run, id)`. Nothing is locked without coins.
+
+The players (`buyUses` in `tools_sim.js`): the median player and the planner find their best line with one more use of each reaction they hold one or none of, and buy when that line sets off 0.8 of a step more for each coin of the price (the rate used for the pair of molecules) or makes a quarter of the number to beat more for each coin. The greedy player buys a reaction it has run out of when its line then makes more. The novice buys, half the time, one use of a reaction of the hand that has run out and still fits the molecule.
+
+Tier one, three bare rounds, 200 runs a player, the same seeds with the sink off and on (`sinkJob` in `tools_sinkjob.js`):
+
+| Player | Price | Uses bought in rounds 1, 2, 3 | Rounds with a use bought, in 100 | Coins held after rounds 1, 2, 3 | Round total over the same round with the sink off | Pass | Wins all three |
+|---|---|---|---|---|---|---|---|
+| median | off | | | 1.7, 3.4, 5.3 | | 100, 99, 97 | 96.0% |
+| median | 1, 2, 3 | 0, 0.01, 0.07 | 0, 1, 7 | 1.7, 3.4, 5.2 | 1.000, 1.001, 1.019 | 100, 99, 97 | 96.0% |
+| median | 1, 1, 2 | 0, 0.01, 0.10 | 0, 1, 7 | 1.7, 3.4, 5.2 | 1.000, 1.001, 1.025 | 100, 99, 97 | 96.0% |
+| median | 2, 3, 4 | 0, 0.01, 0.04 | 0, 1, 5 | 1.7, 3.4, 5.2 | 1.000, 1.001, 1.015 | 100, 99, 97 | 96.0% |
+| greedy | off | | | 1.2, 1.5, 1.7 | | 99, 92, 90 | 82.0% |
+| greedy | 1, 2, 3 | 0, 0, 0.04 | 0, 0, 5 | 1.2, 1.5, 1.7 | 1.000, 1.000, 1.011 | 99, 92, 90 | 82.0% |
+| novice | off | | | 1.2, 1.9, 2.7 | | 85, 69, 64 | 38.5% |
+| novice | 1, 2, 3 | 0.04, 0.07, 0.09 | 5, 8, 9 | 1.2, 1.8, 2.6 | 1.031, 1.037, 1.040 | 86, 71, 68 | 42.0% |
+| novice | 2, 3, 4 | 0, 0.03, 0.05 | 0, 3, 5 | 1.2, 1.8, 2.5 | 1.000, 1.016, 1.017 | 85, 69, 64 | 38.5% |
+
+Nine rounds, every supplier and the five pieces, the median player, 200 runs, the same seeds (`python docs/tools_sink.py`):
+
+| Price | Uses bought a run | Most in one round | Coins held after rounds 3, 6, 9 | Coins at the end of a run | Rounds beaten | Round total over off, rounds 3 and 4 |
+|---|---|---|---|---|---|---|
+| off | 0 | | 9.5, 21.7, 31.4 | 27.1 | 7.67 | |
+| 1, 2, 3 | 0.41 | 0.15 in round 3 (13 rounds in 100) | 9.2, 21.2, 30.9 | 26.8 | 7.71 | 1.053, 1.030 |
+| 1, 1, 2 | 0.41 | 0.15 in round 3 | 9.2, 21.2, 30.9 | 26.9 | 7.74 | 1.061, 1.045 |
+| 2, 3, 4 | 0.31 | 0.13 in round 3 | 9.1, 20.9, 30.6 | 26.5 | 7.72 | 1.046, 1.012 |
+
+What it says:
+
+- **This sink does not change the round.** A player who reads the page buys a use in 0 to 13 rounds in 100 and under half a use in a whole run. It ends a run with 27 coins either way. No price changes that: the price is not what holds the player back, the use is seldom wanted.
+- The reason is the one the fifth measure found: three uses of a reaction do not bind for a player who reads. A reaction of the hand is empty on 0 to 4 pages in 100 for the median player in tier one. Round 3, the first assay, is where most uses are bought.
+- Uses do bind for the novice (a reaction of the hand is empty on a third of its pages), and a novice that buys at random gains 3 to 4 in 100 on a round and wins tier one 42 times in 100 against 38.5. But the novice holds one or two coins, so it buys in under one round in ten. The move is within the noise of 200 runs: the numbers of tier one do not need fitting again for it.
+- The pair of molecules was drawn again 0 times in 1,600 rounds. The reroll and the redraw of the pair are not starved, because almost nothing is spent.
+- The price kept is 1, 2, 3. The switch is left off: the page does not draw it yet, and with it on the simulated players would do what a person cannot.
+- **What would be a sink.** Coins have to buy something that binds. Read from these runs: (1) helpers bought with coins between rounds, priced from their measured worth, which is the owner's decision in `LOOP.md` and belongs to a layer above; (2) in the bare game, a fourth circle on one page, since players fill all three circles on nearly every page and rings pay by their count; (3) uses, only if a reaction had two a round and not three. None of these is built or measured.
+
 ### What is still wrong, found in this measure
 
 - **A turn in tier one is not a choice by the measure in `PASS.md`**: a second option is worth taking on 18 turns in 100.

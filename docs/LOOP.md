@@ -221,6 +221,10 @@ A flip leaves a C=O a ring can close on; a ring leaves an OH that may dry; a dry
 
 Between rounds coins buy helpers from the ones the player has unlocked. The player decides which to buy. Better ones cost more. This is the main thing coins are for, with the redraw of the molecule pair and of the offer as small sinks. The free pick of one from three stays for reactions. Prices are set from each helper's measured worth in the game.
 
+### Measured in the game, 2026-11-11: one more use of a reaction, bought with coins
+
+Built behind `RULE.sink` (off) and measured (`RIG.md`, first section, "A coin sink, measured"). While a page is lined up, 1 coin buys one more use of a reaction for the round, then 2, then 3. It does not change the round: the median player buys under half a use in a nine-round run and still ends with 27 coins (27.1 without it), and in tier one it buys in 0, 1 and 7 rounds in 100. Three uses seldom run out for a player who reads the page. It helps a novice a little (tier one won 42 times in 100 against 38.5) but a novice holds one or two coins. Coins need to buy something that binds: helpers, as above, or in the bare game a fourth circle on one page. Neither is built.
+
 ## How hard it is (the owner, 2026-11-11)
 
 "The bar should not be an average person wins the whole game, getting every single thing and unlock should be hard but not impossible but not easy."
