@@ -116,6 +116,7 @@ const zaitsev = (m, c, betas) => {
 function eliminable(m, o) {
   const s = hydroxyl(m, o);
   if (!s) return null;
+  if (MODE.zip && otherHetero(m, s.c, o)) return null;     // the OH a zip leaves on its last ring stays: a zip can always open again
   const cn = carbonsOf(m, s.c);
   if (cn.some(x => hasO(m, x))) return null;              // 1,2-diols and alpha-hydroxy ketones rearrange instead; left out
   const betas = cn.filter(x => isSp3(m, x) && Hs(m, x).length && !hetero(m, x));
@@ -153,6 +154,18 @@ function dehydrohalogenable(m, x) {
   return { cl: x, c: s.c, beta, atoms: [s.c, beta, x] };
 }
 const carbonyls = m => m.bonds.map(b => reducible(m, b)).filter(Boolean);
+// MODE.zip is set by the cascade game (path.js). With it on, two reagents are setup tools for the zip and no longer
+// wipe out every C=O at once: hydroborate acts on C=C only (a hindered borane does), and reduce takes only a C=O at
+// the end of a chain (an aldehyde, which borohydride takes long before a ketone). The main game leaves it off.
+// MODE.weld: 'ol' stops a weld before water leaves, so it leaves an OH on the new ring (an aldol); 'ene' lets the
+// water go and leaves a C=C beside the C=O that stays (the condensation).
+const MODE = { zip: false, weld: 'ol' };
+const aldehydes = m => carbonyls(m).filter(s => Hs(m, s.c).length > 0);
+// a C=O whose carbon carries a CH3: the end of a chain, where a base takes a hydrogen off and a new piece goes on
+const methylKetones = m => carbonyls(m).map(k => { const me = carbonsOf(m, k.c).find(c => !c.fly && Hs(m, c).length === 3); return me ? { kind: 'end', kc: k.c, ko: k.o, me, atoms: [me, k.c] } : null; }).filter(Boolean);
+const endOk = (m, s) => m.atoms.includes(s.me) && Hs(m, s.me).length === 3 && isCarbonylC(m, s.kc);
+// builds a piece of chain onto atom `to`, one carbon for each entry of spec: [hydrogens, bond order to the one before, '=O' or 'OH' or '']
+function grow(m, to, spec) { const made = [], cs = []; let prev = to; spec.forEach(q => { const c = attach(m, 'C', prev, 3.0); if (q[1] === 2) m.bond(prev, c); made.push(c); cs.push(c); for (let i = 0; i < q[0]; i++) made.push(attach(m, 'H', c, 2.2)); if (q[2] === '=O') { const o = attach(m, 'O', c, 2.8); m.bond(c, o); made.push(o); } else if (q[2] === 'OH') { const o = attach(m, 'O', c, 2.8), h = attach(m, 'H', o, 1.2); made.push(o, h); } prev = c; }); return { made, cs }; }
 const reduceCO = (m, s) => { s.bond.order = 1; const h1 = attach(m, 'H', s.c, 2.4), h2 = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [h1, h2], leaving: [], tag: '+2H' }; };
 
 // find(model) -> sites; ok(model, site) re-checks a site just before it reacts;
@@ -169,7 +182,7 @@ const LIST = [
     apply(m, s) { const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },
   { id: 'nabh4', verb: 'Reduce', formula: 'NaBH₄', chem: 'Sodium borohydride', rgb: [214, 40, 40], cls: 'hydride', ghs: ['flame', 'corr', 'skull'],
     rule: 'Turns C=O into C-OH. Leaves C=C alone.', from: 'one', to: 'ol',
-    find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond), apply: reduceCO },
+    find: m => (MODE.zip ? aldehydes(m) : carbonyls(m)), ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond), apply: reduceCO },
   { id: 'dehydrate', verb: 'Dehydrate', formula: 'H₂SO₄ conc.', chem: 'Sulfuric acid, 98 %, hot', rgb: [24, 24, 24], cls: 'acid', ghs: ['corr'],
     rule: 'Removes water from an alcohol and leaves C=C behind.', from: 'addO', to: 'ene',
     find: m => m.atoms.map(a => eliminable(m, a)).filter(Boolean), ok: (m, s) => !!eliminable(m, s.o),
@@ -184,7 +197,7 @@ const LIST = [
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), cl = attach(m, 'Cl', cx, 3.0); return { focus: [cx, ch], incoming: [hh, cl], leaving: [], tag: '+HCl' }; } },
   { id: 'bh3', verb: 'Hydroborate', formula: 'BH₃ in THF', chem: 'Borane, then H₂O₂ and NaOH', rgb: [0, 140, 150], cls: 'hydride', ghs: ['flame', 'corr', 'excl'],
     rule: 'Adds water across C=C with the OH on the carbon with more H. Also turns C=O into C-OH.', from: 'ene', to: 'addOanti',
-    find: m => alkenes(m).concat(carbonyls(m)),
+    find: m => (MODE.zip ? alkenes(m) : alkenes(m).concat(carbonyls(m))),
     ok: (m, s) => s.kind === 'ene' ? alkeneOk(m, s) : m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) {
       if (s.kind === 'co') return reduceCO(m, s);
@@ -236,6 +249,33 @@ const LIST = [
     rule: 'Adds a three-carbon arm with its own C=C to the carbon of C=O and leaves C-OH.', from: 'one', to: 'ol',
     find: carbonyls, ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) { s.bond.order = 1; const c1 = attach(m, 'C', s.c, 3.0), h1 = [0, 1].map(() => attach(m, 'H', c1, 2.2)), c2 = attach(m, 'C', c1, 3.0), h2 = attach(m, 'H', c2, 2.2), c3 = attach(m, 'C', c2, 3.0); m.bond(c2, c3); const h3 = [0, 1].map(() => attach(m, 'H', c3, 2.2)), ho = attach(m, 'H', s.o, 2.0); return { focus: [s.c, s.o], incoming: [c1, c2, c3, h2, ho].concat(h1, h3), leaving: [], tag: '+C₃H₅' }; } },
+  // Reagents of the cascade game. Each is a setup move for a cascade (docs/CASCADES.md): grow, chunk, bridge.
+  // Extend: a base takes a hydrogen off the CH3 beside a C=O and a three-carbon piece with its own C=O goes on there.
+  // The new C=O sits three carbons from the old one, which is where a zip can reach it, and it ends in a CH3 again.
+  { id: 'extend', verb: 'Extend', formula: 'LDA, BrCH₂COCH₃', chem: 'Lithium diisopropylamide, then a masked bromoacetone', rgb: [110, 160, 30], cls: 'base', ghs: ['flame', 'corr'],
+    rule: 'A chain that ends in C(=O)CH₃ grows by three carbons with a new C=O on them.', from: 'one', to: 'one',
+    find: methylKetones, ok: endOk,
+    apply(m, s) { const h = Hs(m, s.me)[0]; cut(m, s.me, h); const g = grow(m, s.me, [[2, 1, ''], [0, 1, '=O'], [3, 1, '']]); return { focus: [s.me, g.cs[1]], incoming: g.made, leaving: [[h]], tag: '+C₃H₅O' }; } },
+  // Chunk: the same move with a longer piece that carries two C=O, each three carbons from the last.
+  { id: 'dione', verb: 'Chain on', formula: 'LDA, BrCH₂COC₂H₄COCH₃', chem: 'Lithium diisopropylamide, then a masked bromo diketone', rgb: [214, 96, 30], cls: 'base', ghs: ['flame', 'corr'],
+    rule: 'A chain that ends in C(=O)CH₃ grows by six carbons with two new C=O on them.', from: 'one', to: 'one',
+    find: methylKetones, ok: endOk,
+    apply(m, s) { const h = Hs(m, s.me)[0]; cut(m, s.me, h); const g = grow(m, s.me, [[2, 1, ''], [0, 1, '=O'], [2, 1, ''], [2, 1, ''], [0, 1, '=O'], [3, 1, '']]); return { focus: [s.me, g.cs[1], g.cs[4]], incoming: g.made, leaving: [[h]], tag: '+2 C=O' }; } },
+  // Chunk: a benzene ring with an OH on it goes on at the CH3 beside a C=O. That OH sits where it can zip onto the
+  // C=O (a chromanol, as in the vitamin E family), and nothing the player holds can take it away again.
+  { id: 'phenol', verb: 'Add phenol', formula: 'LDA, HOC₆H₄CH₂Br', chem: 'Lithium diisopropylamide, then 2-hydroxybenzyl bromide', rgb: [150, 90, 170], cls: 'base', ghs: ['flame', 'corr', 'skull'],
+    rule: 'A chain that ends in C(=O)CH₃ takes on a benzene ring that carries an OH.', from: 'one', to: 'ol',
+    find: methylKetones, ok: endOk,
+    apply(m, s) { const h = Hs(m, s.me)[0]; cut(m, s.me, h); const made = [], c1 = attach(m, 'C', s.me, 3.0); made.push(c1, attach(m, 'H', c1, 2.2), attach(m, 'H', c1, 2.2));
+      const R = [attach(m, 'C', c1, 3.0)]; for (let i = 1; i < 6; i++) R.push(attach(m, 'C', R[i - 1], 3.0)); m.bond(R[5], R[0]); [0, 2, 4].forEach(i => m.bond(R[i], R[i + 1])); R.forEach(a => made.push(a));
+      const o = attach(m, 'O', R[1], 2.8); made.push(o, attach(m, 'H', o, 1.2)); [2, 3, 4, 5].forEach(i => made.push(attach(m, 'H', R[i], 2.2)));
+      return { focus: [s.me, c1, o], incoming: made, leaving: [[h]], tag: '+phenol' }; } },
+  // Bridge: two C=C at the ends of chains swap partners. The two end carbons leave as ethene and the carbons behind
+  // them join, so two far parts of the molecule are tied into one ring and whatever was far apart is now close.
+  { id: 'rcm', verb: 'Bridge', formula: 'Ru cat.', chem: 'A ruthenium carbene, ring-closing metathesis', rgb: [40, 110, 120], cls: 'metal', ghs: ['excl'],
+    rule: 'Two C=C at the ends of chains join into one ring. Ethene leaves.', from: 'ene', to: 'ring',
+    find: m => bridgeable(m).slice(0, 1), ok: m => bridgeable(m).length > 0,
+    apply(m) { const s = bridgeable(m)[0], gone = [s.e1, s.e2].concat(Hs(m, s.e1), Hs(m, s.e2)); cut(m, s.a, s.e1); cut(m, s.a, s.e1); cut(m, s.b, s.e2); cut(m, s.b, s.e2); m.bond(s.a, s.b); m.bond(s.a, s.b); m.bond(s.e1, s.e2); return { focus: [s.a, s.b], incoming: [], leaving: [gone], tag: 'ties a ring' }; } },
   // A radical starts a chain at a C=C. The chain is one carbon that carries its length, and every further use doubles
   // it. An unseen carbon is added each time so that the molecule counts as a new one.
   { id: 'aibn', verb: 'Polymerize', formula: 'AIBN, heat', chem: 'Azobisisobutyronitrile, a radical initiator', rgb: [226, 60, 110], cls: 'radical', ghs: ['flame', 'excl'],
@@ -260,11 +300,24 @@ const CARDS = {};
 //   lactol (named zip on the page, docs/CASCADES.md kind 1): an OH whose carbon is three or four carbons from the
 //   carbon of a C=O closes a ring of five or six through its oxygen, and the C=O becomes C-OH. That new OH can do
 //   the same to the next C=O along, so on a chain with a C=O every three or four carbons one OH runs down it.
-//   The C=O must not be in a ring already; the OH may be, which is what lets the zip go on. One pair a step: the
-//   first C=O in the molecule's own order that has such an OH, and the first such OH.
+//   The OH may be on a ring, or on a benzene ring (a phenol). Either part may be in a ring as long as the new ring
+//   shares at most one bond with rings of eight atoms or fewer that are already there, so small rings come out side
+//   by side or joined at one atom and never bridged (a wide ring tied by a bridge may be crossed). One pair a step: the first C=O in the molecule's own order that has such an OH, and the first such OH.
+//   reopen undoes it: a zip ring is loose (a hemiketal), and it comes apart again when the page is turned.
+//   weld (docs/CASCADES.md kind 5): the carbon beside one C=O joins the carbon of a second C=O four or five carbons
+//   away and a ring of five or six closes. As played (MODE.weld 'ol') the second C=O becomes C-OH on the new ring, and
+//   that OH can start a zip. With MODE.weld 'ene' water leaves as well and a C=C is left beside the first C=O.
 //   ether: an OH and a Cl three or four carbons apart close a ring through the oxygen. HCl leaves.
 //   enone: an OH two carbons from a C=O leaves as water, and a C=C forms beside the C=O.
-function lactolable(m) { for (const k of carbonyls(m)) { if (ringAtom(m, k.c)) continue; const dist = carbonDist(m, k.c, 4); for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || s.c === k.c) continue; const d = dist.get(s.c); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }]; } } return []; }
+function lactolable(m) {
+  const ks = carbonyls(m); if (!ks.length) return [];
+  const ar = aromaticAtoms(m), ohs = []; m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (s) ohs.push(s); }); if (!ohs.length) return [];
+  for (const k of ks) { const kr = ringAtom(m, k.c), dist = carbonDist(m, k.c, 4);
+    for (const s of ohs) { if (s.c === k.c) continue; const d = dist.get(s.c); if (d !== 3 && d !== 4) continue;
+      if (kr || ringAtom(m, s.c)) { const p = carbonPath(m, s.c, k.c, 4); let shared = 0; for (let i = 0; p && i + 1 < p.length; i++) if (ringBond(m, p[i], p[i + 1], 8)) shared++; if (!p || shared > 1) continue; }
+      return [{ o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }]; } }
+  return [];
+}
 function etherable(m) { for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) continue; const dist = carbonDist(m, s.c, 4); for (const x of m.atoms) { if (x.el !== 'Cl' || x.fly) continue; const c2 = carbonsOf(m, x)[0]; if (!c2 || c2 === s.c || ringAtom(m, c2)) continue; const d = dist.get(c2); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, cl: x, c2, atoms: [s.o, s.c, c2, x] }]; } } return []; }
 function enonable(m) { const dbl = a => nbs(m, a).some(n => n.bond.order === 2); for (const k of carbonyls(m)) for (const a of carbonsOf(m, k.c)) { if (!Hs(m, a).length || dbl(a)) continue; for (const b of carbonsOf(m, a)) { if (b === k.c || dbl(b)) continue; const oh = nbs(m, b).map(n => n.atom).find(q => q.el === 'O' && !q.fly && hydroxyl(m, q)); if (!oh) continue; const s = hydroxyl(m, oh); return [{ a, b, o: s.o, ho: s.ho, kc: k.c, atoms: [a, b, s.o] }]; } } return []; }
 //   taut: an OH on a carbon of a C=C (an enol) becomes C=O, and the other carbon takes the hydrogen.
@@ -272,7 +325,12 @@ function tautable(m) { for (const q of alkenes(m)) for (const pr of [[q.bond.a, 
 //   aldol: the carbon beside one C=O joins the carbon of a second C=O four or five carbons away. A ring of five or
 //   six closes and the second C=O becomes C-OH, which then sits where an enone can form.
 function aldolable(m) { const ks = carbonyls(m); for (const k of ks) for (const a of carbonsOf(m, k.c)) { if (!Hs(m, a).length || ringAtom(m, a) || nbs(m, a).some(n => n.bond.order === 2)) continue; const dist = carbonDist(m, a, 5); for (const k2 of ks) { if (k2 === k || k2.c === k.c || ringAtom(m, k2.c)) continue; const d = dist.get(k2.c); if (d === 4 || d === 5) return [{ a, c1: k.c, c2: k2.c, o2: k2.o, bond: k2.bond, atoms: [a, k.c, k2.c, k2.o] }]; } } return []; }
+const weldable = m => { const ks = carbonyls(m); for (const k of ks) for (const a of carbonsOf(m, k.c)) { if (Hs(m, a).length < 2 || ringAtom(m, a) || nbs(m, a).some(n => n.bond.order === 2)) continue; const dist = carbonDist(m, a, 5); for (const k2 of ks) { if (k2 === k || k2.c === k.c || ringAtom(m, k2.c)) continue; const d = dist.get(k2.c); if (d === 4 || d === 5) return [{ a, c1: k.c, c2: k2.c, o2: k2.o, bond: k2.bond, atoms: [a, k.c, k2.c, k2.o] }]; } } return []; };
 const SELFCARDS = [
+  { id: 'weld', verb: 'Weld', formula: '', chem: 'by itself', rgb: [168, 92, 36], cls: 'self', ghs: [], rule: 'Two C=O close a ring between them.', from: 'one', to: 'ring', find: m => (MODE.weld === 'ene' ? weldable(m) : aldolable(m)), ok: m => (MODE.weld === 'ene' ? weldable(m) : aldolable(m)).length > 0,
+    apply(m) {
+      if (MODE.weld !== 'ene') { const s = aldolable(m)[0], ha = Hs(m, s.a)[0]; cut(m, s.a, ha); s.bond.order = 1; m.bond(s.a, s.c2); m.bond(s.o2, ha); return { focus: [s.a, s.c2, s.o2], incoming: [], leaving: [], tag: 'welds a ring' }; }
+      const s = weldable(m)[0], hs = Hs(m, s.a).slice(0, 2); hs.forEach(h => cut(m, s.a, h)); cut(m, s.c2, s.o2); m.bond(s.a, s.c2); m.bond(s.a, s.c2); hs.forEach(h => m.bond(s.o2, h)); return { focus: [s.a, s.c2, s.c1], incoming: [], leaving: [[s.o2].concat(hs)], tag: 'welds a ring' }; } },
   { id: 'aldol', verb: 'Aldol', formula: '', chem: 'by itself', rgb: [31, 95, 191], cls: 'self', ghs: [], rule: 'Two C=O close a ring between them.', from: 'one', to: 'ring', find: aldolable, ok: m => aldolable(m).length > 0,
     apply(m) { const s = aldolable(m)[0], ha = Hs(m, s.a)[0]; cut(m, s.a, ha); s.bond.order = 1; m.bond(s.a, s.c2); m.bond(s.o2, ha); return { focus: [s.a, s.c2, s.o2], incoming: [], leaving: [], tag: 'closes a ring' }; } },
   { id: 'taut', verb: 'Shift', formula: '', chem: 'by itself', rgb: [176, 24, 154], cls: 'self', ghs: [], rule: 'An OH on a C=C becomes C=O.', from: 'ene', to: 'one', find: tautable, ok: m => tautable(m).length > 0,
@@ -372,6 +430,28 @@ const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
 
 const bondOf = (m, a, b) => m.bonds.find(k => (k.a === a && k.b === b) || (k.a === b && k.b === a));
 function carbonDist(m, from, max) { const dist = new Map([[from, 0]]), q = [from]; while (q.length) { const a = q.shift(), d = dist.get(a); if (d >= max) continue; carbonsOf(m, a).forEach(b => { if (!b.fly && !dist.has(b)) { dist.set(b, d + 1); q.push(b); } }); } return dist; }
+// the shortest way from one carbon to another along carbon, as a list of atoms, or nothing past max bonds
+function carbonPath(m, from, to, max) { const prev = new Map([[from, null]]), dist = new Map([[from, 0]]), q = [from]; while (q.length) { const a = q.shift(), d = dist.get(a); if (a === to) break; if (d >= max) continue; carbonsOf(m, a).forEach(b => { if (!b.fly && !prev.has(b)) { prev.set(b, a); dist.set(b, d + 1); q.push(b); } }); } if (!prev.has(to)) return null; const p = []; for (let a = to; a; a = prev.get(a)) p.push(a); return p.reverse(); }
+// whether the bond between two atoms lies in a ring: one is still reached from the other without it
+// (with size: in a ring of at most that many atoms)
+function ringBond(m, a, b, size) { const nb = x => nbs(m, x).map(n => n.atom).filter(y => y.el !== 'H' && !y.fly), dist = new Map([[a, 0]]), q = [a]; while (q.length) { const u = q.shift(), d = dist.get(u); if (size && d + 1 >= size) continue; for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!dist.has(v)) { dist.set(v, d + 1); q.push(v); } } } return false; }
+// an O-H on a carbon with single bonds only, or on a benzene ring: what a zip can start from
+function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m, o); if (q.length !== 2 || q.some(n => n.bond.order !== 1)) return null; const c = q.find(n => n.atom.el === 'C'), hh = q.find(n => n.atom.el === 'H'); if (!c || !hh) return null; if (!isSp3(m, c.atom) && !(ar || aromaticAtoms(m)).has(c.atom)) return null; return { o, c: c.atom, ho: hh.atom }; }
+// Every ring a zip has closed and that can still come apart: a carbon that carries an OH and, beside it, an oxygen
+// that is in a ring. The ring oxygen lets go and takes the hydrogen, and the OH becomes the C=O it was. Done last
+// ring first until none is left, so a ladder comes apart from its far end back to the OH that set it off. A ring
+// whose OH has been taken away (by a dehydration, say) stays shut for good. Returns how many rings opened.
+function reopen(m) { let n = 0; for (let guard = 0; guard < 80; guard++) { let hit = null;
+  for (const c of m.atoms) { if (c.el !== 'C' || c.fly) continue; const q = nbs(m, c); if (q.some(x => x.bond.order !== 1)) continue;
+    const oh = q.find(x => x.atom.el === 'O' && !x.atom.prot && nbs(m, x.atom).length === 2 && nbs(m, x.atom).some(y => y.atom.el === 'H')); if (!oh) continue;
+    const or = q.find(x => x.atom.el === 'O' && x.atom !== oh.atom && nbs(m, x.atom).length === 2 && nbs(m, x.atom).every(y => y.atom.el === 'C') && ringBond(m, c, x.atom)); if (!or) continue;
+    hit = { c, oh: oh.atom, or: or.atom }; break; }
+  if (!hit) break; const h = nbs(m, hit.oh).find(y => y.atom.el === 'H').atom; cut(m, hit.c, hit.or); cut(m, hit.oh, h); m.bond(hit.or, h); m.bond(hit.c, hit.oh); n++; }
+  return n; }
+// two C=C that each end in CH2, whose inner carbons are four or more carbons apart: the pair a bridge ties, nearest ends last
+function bridgeable(m) { const ar = aromaticAtoms(m), ends = []; m.bonds.forEach(b => { if (b.order !== 2 || b.a.el !== 'C' || b.b.el !== 'C' || ar.has(b.a)) return; [[b.a, b.b], [b.b, b.a]].forEach(q => { if (Hs(m, q[0]).length === 2 && carbonsOf(m, q[1]).length >= 2) ends.push({ e: q[0], a: q[1] }); }); });
+  const out = []; for (let i = 0; i < ends.length; i++) for (let j = i + 1; j < ends.length; j++) { const A = ends[i], B = ends[j]; if (A.a === B.a || A.e === B.a || A.a === B.e) continue; const d = carbonDist(m, A.a, 16).get(B.a); if (d == null || d < 4) continue; out.push({ a: A.a, e1: A.e, b: B.a, e2: B.e, d, atoms: [A.a, A.e, B.a, B.e] }); }
+  return out.sort((x, y) => y.d - x.d); }
 // pairs of C=C whose nearest carbons are three to five bonds apart
 function snappable(m) {
   const es = alkenes(m).map(q => q.bond), out = [], used = new Set();
@@ -421,5 +501,5 @@ function shapeOf(m) {
   const dbl = a => nbs(m, a).some(n => n.bond.order === 2), conj = m.bonds.filter(b => b.order === 1 && set.has(b.a) && set.has(b.b) && dbl(b.a) && dbl(b.b)).length;
   return { conj, ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };
 }
-AA.rx = { shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+AA.rx = { MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
