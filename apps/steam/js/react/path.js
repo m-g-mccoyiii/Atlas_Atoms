@@ -136,8 +136,11 @@ const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 // The cascade. Step n of a page is worth n times the first: it adds place for its one place and that counts n times,
 // and it adds n times step to extra. (mul: it multiplies extra by 1 + n step instead, as it did until 2026-11-11: ten
 // steps then multiplied a round by 1,100, and with the zip opening again on every page one long cascade decided a run.)
-// most: a page stops cascading after this many steps, so that it cannot stall.
-const CASC = { step: 0.05, place: 30, mul: false, most: 40 };
+// row: what a step adds to the row (a reagent that follows on adds SYN.row). most: a page stops cascading after this
+// many steps, so that it cannot stall. With these a page with three steps makes about 2.6 times a page with none,
+// six steps about 13 times and ten about 50 times: the steps count 1, 2, 3 and so on, and the row and extra they
+// build are kept small so that the count is what pays.
+const CASC = { step: 0.01, place: 50, row: 0.1, mul: false, most: 40 };
 const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1, extend: 1, dione: 1, phenol: 1, rcm: 1, couple: 1 };
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
@@ -536,7 +539,7 @@ function scoreRound(g, o, free) {
     g.by.gauge++; if (g.by.gauge >= BY.tally) { g.by.gauge -= BY.tally; emit('tally', A('p', BY.pay * Math.max(1, cur.path.length))); }
   });
   if (r.hits) kinsOf(o.model).forEach(q => { const fx = KIN[q.id].fx(Object.assign({ free: !!free }, c)); if (fx) emit('family', { part: fx.part, op: fx.op, val: fx.op === 'mul' ? 1 + (fx.val - 1) * q.lv : fx.val * q.lv }, { kin: q.id, lv: q.lv }); });
-  if (o.cont && b !== 'loose') { emit('row', A('r', SYN.row * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
+  if (o.cont && b !== 'loose') { emit('row', A('r', (o.casc ? CASC.row : SYN.row) * (b === 'broad' ? 0.5 : 1))); const nr = namedRow(cur.path); if (nr) emit('route', A('r', 0.5 * (nr.seq.length - 1)), { route: nr.id }); }
   pieces('step');
   if (b === 'loose') emit('brief', A('e', 0.3)); else if (b === 'each' && first) emit('brief', A('e', 0.5)); else if (b === 'back' && loop) emit('brief', A('e', 0.5));
   const rare = (g.rare && g.rare[id]) || null;

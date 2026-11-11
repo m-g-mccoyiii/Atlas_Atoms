@@ -49,7 +49,7 @@
   function standing(g) {
     const left = P.pagesOf(g) - g.page; if (left <= 0 || !P.RULE.reopen || !P.RULE.cascade || g.over) return 0;
     const s = snap(g), q = g.queue; g.queue = []; P.reopenAll(g); g.casc = 0; const n = P.cascade(g); back(g, s); g.queue = q;
-    return left * 0.7 * P.CASC.place * n * (n + 1) / 2 * (1 + P.SYN.row * n) * g.E;
+    return left * 0.7 * P.CASC.place * n * (n + 1) / 2 * (1 + P.CASC.row * n) * g.E;
   }
   function leaf(g, cfg) {
     let v = P.made(g);
