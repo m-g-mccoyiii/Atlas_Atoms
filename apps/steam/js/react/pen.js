@@ -1,5 +1,7 @@
-// Overreact's own lettering. Every letter is a few pen strokes written out below, drawn with a broad nib: the pen is
-// put down twice a little apart, which gives thick and thin the way a cut quill does. Nothing here is a font file.
+// Overreact's own lettering. Every letter is a few pen strokes written out below. Nothing here is a font file.
+// One hand in two weights: heavy (numbers, the four words) and thin (names). Same glyphs, same slant, same x-height.
+// Each string is drawn as ONE stroked path (one pass, no second offset pass, no per-letter wobble), so there is no
+// doubling at any size and a see-through color does not darken where strokes cross.
 // A glyph is [advance, strokes]. A stroke is a string of commands on a grid where the baseline is 0, small letters
 // are 0.6 tall and capitals are 1 tall: M x y, L x y, Q cx cy x y, and E cx cy rx ry from to (an ellipse, degrees).
 (function () {
@@ -27,44 +29,66 @@
     0: [0.64, 'E .32 .5 .26 .5 0 360'], 1: [0.5, 'M .06 .74 L .3 1 L .3 0 M .1 0 L .5 0'], 2: [0.66, 'M .08 .76 Q .12 1 .32 1 Q .56 1 .56 .76 Q .56 .56 .08 0 L .6 0'],
     3: [0.66, 'M .08 .86 Q .2 1 .34 1 Q .56 1 .56 .76 Q .56 .54 .28 .52 Q .6 .5 .6 .26 Q .6 0 .32 0 Q .14 0 .06 .16'], 4: [0.66, 'M .46 0 L .46 1 L .04 .32 L .62 .32'],
     5: [0.66, 'M .54 1 L .14 1 L .1 .56 Q .22 .64 .36 .62 Q .6 .58 .6 .3 Q .6 0 .32 0 Q .14 0 .06 .16'], 6: [0.66, 'M .5 .98 Q .1 .8 .08 .3 E .33 .3 .25 .3 0 360'],
-    7: [0.64, 'M .06 1 L .6 1 L .26 0 M .22 .5 L .54 .5'], 8: [0.64, 'E .32 .76 .22 .24 0 360 E .32 .27 .26 .27 0 360'], 9: [0.66, 'E .31 .7 .25 .3 0 360 M .56 .7 Q .56 .2 .14 .02'],
-    '.': [0.2, 'M .1 .03 L .1 .04'], ',': [0.2, 'M .1 .06 L .05 -.14'], '+': [0.56, 'M .06 .42 L .5 .42 M .28 .2 L .28 .64'], '-': [0.52, 'M .08 .4 L .44 .4'], "'": [0.18, 'M .1 1 L .08 .78'],
+    7: [0.64, 'M .06 1 L .6 1 L .24 0'], 8: [0.64, 'E .32 .76 .22 .24 0 360 E .32 .27 .26 .27 0 360'], 9: [0.66, 'E .31 .7 .25 .3 0 360 M .56 .7 Q .56 .2 .14 .02'],
+    '.': [0.2, 'M .1 .03 L .1 .04'], ',': [0.26, 'M .13 .07 L .13 .03 Q .13 -.1 .04 -.2'], '+': [0.56, 'M .06 .42 L .5 .42 M .28 .2 L .28 .64'], '-': [0.52, 'M .08 .4 L .44 .4'], "'": [0.18, 'M .1 1 L .08 .78'],
     ':': [0.2, 'M .1 .08 L .1 .09 M .1 .5 L .1 .51'], '!': [0.2, 'M .1 1 L .1 .3 M .1 .03 L .1 .04'], '?': [0.56, 'M .06 .8 Q .1 1 .28 1 Q .5 1 .5 .78 Q .5 .6 .28 .46 L .28 .3 M .28 .03 L .28 .04'],
     '=': [0.56, 'M .06 .54 L .5 .54 M .06 .28 L .5 .28'], '>': [0.54, 'M .08 .66 L .46 .42 L .08 .18'], '<': [0.54, 'M .46 .66 L .08 .42 L .46 .18'],
     '»': [0.7, 'M .06 .56 L .28 .36 L .06 .16 M .36 .56 L .58 .36 L .36 .16'], '/': [0.44, 'M .04 0 L .4 1'], '(': [0.3, 'M .26 1.05 Q .02 .5 .26 -.1'], ')': [0.3, 'M .04 1.05 Q .28 .5 .04 -.1'],
     '%': [0.68, 'M .08 0 L .6 1 E .16 .8 .12 .16 0 360 E .52 .2 .12 .16 0 360'], '#': [0.62, 'M .2 0 L .28 1 M .42 0 L .5 1 M .04 .68 L .6 .68 M .02 .32 L .58 .32'], '→': [0.76, 'M .04 .4 L .7 .4 M .5 .58 L .7 .4 L .5 .22']
   };
   G['−'] = G['-']; G['–'] = G['-'];
-  const CMD = {}; Object.keys(G).forEach(ch => { CMD[ch] = G[ch][1].split(' ').filter(Boolean).map(t => (/^[MLQE]$/.test(t) ? t : parseFloat(t))); });
-  const GAP = 0.07, CAP = 0.7;
-  const adv = ch => (G[ch] ? G[ch][0] : 0.5) + GAP;
-  const width = (str, size) => { let w = 0; for (const ch of String(str)) w += adv(ch); return w * size * CAP; };
-  // writes the strokes of a string into the current path of ctx
-  function trace(ctx, str, x0, yb, size, dots) {
-    const u = size * CAP; let cx = x0, n = 0;
-    for (const ch of String(str)) {
-      const y0 = yb + Math.sin((n++) * 2.3 + ch.charCodeAt(0)) * u * 0.018;
-      const c = CMD[ch]; if (c) { let i = 0;
-        while (i < c.length) { const k = c[i++];
-          if (k === 'M') { ctx.moveTo(cx + c[i] * u, y0 - c[i + 1] * u); if (dots) dots.push(cx + c[i] * u, y0 - c[i + 1] * u); i += 2; }
-          else if (k === 'L') { ctx.lineTo(cx + c[i] * u, y0 - c[i + 1] * u); i += 2; }
-          else if (k === 'Q') { ctx.quadraticCurveTo(cx + c[i] * u, y0 - c[i + 1] * u, cx + c[i + 2] * u, y0 - c[i + 3] * u); i += 4; }
-          else if (k === 'E') { const ex = cx + c[i] * u, ey = y0 - c[i + 1] * u, a0 = -c[i + 4] * Math.PI / 180, a1 = -c[i + 5] * Math.PI / 180; ctx.moveTo(ex + c[i + 2] * u * Math.cos(a0), ey + c[i + 3] * u * Math.sin(a0)); ctx.ellipse(ex, ey, c[i + 2] * u, c[i + 3] * u, 0, a0, a1, true); i += 6; } } }
-      cx += adv(ch) * u; }
-  }
-  // Replaces the text calls of one canvas context. The size comes from the font last set through hand or marker.
+  const SLANT = 0.09, CAP = 0.7, XH = 0.6, GAPS = { thin: 0.07, heavy: 0.1 }, CELL = 0.62;
+  const wname = w => (w === true || w === 'heavy' || w === 'bold' ? 'heavy' : 'thin');
+  // Glyph strokes become polylines once (y up, units of the grid); digits are centered in one cell so numbers space evenly.
+  const POLY = {}, ADV = {};
+  const flat = (cmd) => { const out = []; let cur = null, i = 0;
+    while (i < cmd.length) { const k = cmd[i++];
+      if (k === 'M') { cur = [[cmd[i], cmd[i + 1]]]; out.push(cur); i += 2; }
+      else if (k === 'L') { cur.push([cmd[i], cmd[i + 1]]); i += 2; }
+      else if (k === 'Q') { const p0 = cur[cur.length - 1]; for (let s = 1; s <= 8; s++) { const t = s / 8, m = 1 - t; cur.push([m * m * p0[0] + 2 * m * t * cmd[i] + t * t * cmd[i + 2], m * m * p0[1] + 2 * m * t * cmd[i + 1] + t * t * cmd[i + 3]]); } i += 4; }
+      else if (k === 'E') { const cx = cmd[i], cy = cmd[i + 1], rx = cmd[i + 2], ry = cmd[i + 3], a0 = cmd[i + 4], a1 = cmd[i + 5], n = Math.max(6, Math.ceil(Math.abs(a1 - a0) / 10)); cur = []; out.push(cur); for (let s = 0; s <= n; s++) { const a = (a0 + (a1 - a0) * s / n) * Math.PI / 180; cur.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]); } i += 6; } }
+    return out; };
+  Object.keys(G).forEach(ch => { const cmd = G[ch][1].split(' ').filter(Boolean).map(t => (/^[MLQE]$/.test(t) ? t : parseFloat(t)));
+    let pl = flat(cmd), a = G[ch][0];
+    if (/[0-9]/.test(ch) && pl.length) { let lo = 9, hi = -9; pl.forEach(s => s.forEach(p => { lo = Math.min(lo, p[0]); hi = Math.max(hi, p[0]); })); const d = (CELL - (lo + hi)) / 2; pl = pl.map(s => s.map(p => [p[0] + d, p[1]])); a = CELL + 0.04; }
+    POLY[ch] = pl; ADV[ch] = a; });
+  const adv = (ch, g) => (ADV[ch] !== undefined ? ADV[ch] : 0.5) + g;
+  // The line width for a size: heavy gets a little louder as the size grows, so a big word is the same hand speaking up.
+  const lineW = (size, w) => w === 'heavy' ? Math.max(2.1, size * (0.097 + 0.02 * Math.min(1, Math.max(0, (size - 40) / 130)))) : Math.max(1.7, size * 0.05);
+  const width = (str, size, w) => { w = wname(w); let t = 0; for (const ch of String(str)) t += adv(ch, GAPS[w]); return t * size * CAP; };
+  // Size of a string before it is drawn: width, height of capitals and ascenders, descender depth, x-height (all pixels).
+  function measure(str, size, w) { w = wname(w); const u = size * CAP, lw = lineW(size, w), s = String(str); let desc = 0, asc = 0;
+    for (const ch of s) { (POLY[ch] || []).forEach(st => st.forEach(p => { desc = Math.max(desc, -p[1]); asc = Math.max(asc, p[1]); })); }
+    const aw = width(s, size, w) - GAPS[w] * u;
+    return { width: aw + lw + SLANT * u * asc, w: aw + lw, ascent: asc * u + lw / 2, descent: desc * u + lw / 2, height: (asc + desc) * u + lw, xHeight: XH * u, cap: u, lineWidth: lw, advance: aw }; }
+  // Strokes of a string as pixel polylines, with lengths. (x0, yb) is the left end of the baseline.
+  function strokes(str, x0, yb, size, w) { const u = size * CAP, g = GAPS[w], out = []; let cx = x0;
+    for (const ch of String(str)) { (POLY[ch] || []).forEach(st => { const pts = st.map(p => [cx + (p[0] + SLANT * p[1]) * u, yb - p[1] * u]); let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); out.push({ pts, len, dot: len < 0.04 * u }); }); cx += adv(ch, g) * u; }
+    return out; }
+  // Draws a string. o: { weight 'heavy'|'thin', color, align 'left'|'center'|'right', t 0..1 (how much is written so far),
+  // base 'alphabetic'|'middle'|'top', extra (added line width, for a knockout under text), alpha }. Returns the pen tip {x, y}.
+  function write(ctx, str, x, y, size, o) { o = o || {}; const w = wname(o.weight), al = o.align || 'left', bl = o.base || 'alphabetic', t = o.t === undefined ? 1 : o.t, s = String(str);
+    const adw = width(s, size, w) - GAPS[w] * size * CAP; const x0 = al === 'center' ? x - adw / 2 : al === 'right' || al === 'end' ? x - adw : x;
+    const yb = bl === 'middle' ? y + size * 0.26 : bl === 'top' ? y + size * 0.74 : y, lw = lineW(size, w) + (o.extra || 0);
+    const st = strokes(s, x0, yb, size, w); if (t <= 0) return { x: x0, y: yb };
+    let tot = 0; st.forEach(k => { k.w = k.dot ? 0.05 * size : k.len; tot += k.w; }); let left = t >= 1 ? Infinity : t * tot, tip = { x: x0, y: yb };
+    ctx.save(); ctx.setLineDash([]); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = lw; const col = o.color || ctx.fillStyle; ctx.strokeStyle = col; ctx.fillStyle = col; if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
+    ctx.beginPath(); const dots = [];
+    for (const k of st) { if (left <= 0) break; const p = k.pts;
+      if (k.dot) { dots.push(p[0]); left -= k.w; tip = { x: p[0][0], y: p[0][1] }; continue; }
+      ctx.moveTo(p[0][0], p[0][1]); let rem = Math.min(left, k.len);
+      for (let i = 1; i < p.length && rem > 0; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); if (d <= rem) { ctx.lineTo(p[i][0], p[i][1]); rem -= d; tip = { x: p[i][0], y: p[i][1] }; } else { const f = rem / d, px = p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, py = p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f; ctx.lineTo(px, py); tip = { x: px, y: py }; rem = 0; } }
+      left -= k.w; }
+    ctx.stroke(); ctx.beginPath(); const r = lw * 0.62; dots.forEach(d => { ctx.moveTo(d[0] + r, d[1]); ctx.arc(d[0], d[1], r, 0, 6.3); }); ctx.fill(); ctx.restore(); return tip; }
+  // Replaces the text calls of one canvas context. The size and weight come from the last hand() / marker() call (set).
+  // fillText writes the string; strokeText is the page's paper-colored knockout, drawn as the same strokes slightly fatter.
   function install(ctx) {
     if (ctx.__pen) return; ctx.__pen = { size: 20, heavy: false };
-    const start = (str, x) => { const w = width(str, ctx.__pen.size), al = ctx.textAlign; return al === 'center' ? x - w / 2 : al === 'right' || al === 'end' ? x - w : x; };
-    const base = y => (ctx.textBaseline === 'middle' ? y + ctx.__pen.size * 0.26 : ctx.textBaseline === 'top' ? y + ctx.__pen.size * 0.74 : y);
-    const pen = () => Math.max(ctx.__pen.heavy ? 3 : 2.3, ctx.__pen.size * (ctx.__pen.heavy ? 0.105 : 0.066));
-    const write = (str, x, y, col, extra) => { const s = ctx.__pen.size, nib = s * (ctx.__pen.heavy ? 0.056 : 0.04), x0 = start(str, x), y0 = base(y);
-      ctx.save(); ctx.setLineDash([]); ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = pen() + (extra || 0);
-      const dots = []; ctx.beginPath(); trace(ctx, str, x0, y0, s, dots); trace(ctx, str, x0 + nib, y0 - nib, s); ctx.stroke();
-      if (!extra) { ctx.fillStyle = col; const r = ctx.lineWidth * 0.72; ctx.beginPath(); for (let i = 0; i < dots.length; i += 2) { ctx.moveTo(dots[i] + nib / 2 + r, dots[i + 1] - nib / 2); ctx.arc(dots[i] + nib / 2, dots[i + 1] - nib / 2, r, 0, 6.3); } ctx.fill(); } ctx.restore(); };
-    ctx.fillText = (str, x, y) => write(str, x, y, ctx.fillStyle, 0);
-    ctx.strokeText = (str, x, y) => write(str, x, y, ctx.strokeStyle, ctx.lineWidth);
-    ctx.measureText = str => ({ width: width(str, ctx.__pen.size) });
+    const go = (str, x, y, col, extra) => { const P = ctx.__pen; write(ctx, str, x, y, P.size, { weight: P.heavy ? 'heavy' : 'thin', color: col, align: ctx.textAlign, base: ctx.textBaseline, extra: extra }); };
+    ctx.fillText = (str, x, y) => go(str, x, y, ctx.fillStyle, 0);
+    ctx.strokeText = (str, x, y) => go(str, x, y, ctx.strokeStyle, Math.min(ctx.lineWidth, ctx.__pen.size * 0.14));
+    ctx.measureText = str => ({ width: measure(str, ctx.__pen.size, ctx.__pen.heavy ? 'heavy' : 'thin').advance });
   }
-  AA.rxPen = { install, width, set: (ctx, size, heavy) => { install(ctx); ctx.__pen.size = size; ctx.__pen.heavy = !!heavy; } };
+  AA.rxPen = { install, width: (s, n, w) => measure(s, n, w).advance, measure, write, INK: '#2b2420', slant: SLANT, lineWidth: (n, w) => lineW(n, wname(w)),
+    set: (ctx, size, heavy) => { install(ctx); ctx.__pen.size = size; ctx.__pen.heavy = !!heavy; } };
 })();
