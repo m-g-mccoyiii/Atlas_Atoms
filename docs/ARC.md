@@ -17,7 +17,8 @@ Alchemy describes its work in four stages. They are the four stages of the game.
 | I | Nigredo | to react a molecule and keep a row | the bare game | 0 to 1 |
 | II | Albedo | to build with equipment | the lab shelf, suppliers, by-products | 1 to 4 |
 | III | Citrinitas | to bend the rules | the alchemist, the occult shelf, the seals and the circle | 4 to 12 |
-| IV | Rubedo | to master it | familiars, the pact, the stone, the endless run | 12 to 30 |
+| IV | Rubedo | to master it | familiars, the pact, the stone | 12 to 30 |
+| V | the second book | nothing new: reasons to start again | endless, seeds, the daily, records, the collection, new molecules | 30 and on |
 
 About thirty hours to the stone. The review was right that the first draft's hundred hours was not backed by the content. Hours beyond thirty come from the pact, the endless run and content added later.
 
@@ -128,6 +129,34 @@ After the first win the player may add named conditions to a run for more credit
 
 Winning a run with the Sol seal makes the philosopher's stone. That is the end of the arc. The endless run and the pact stay for those who go on.
 
+## Stage V: the second book (after the stone)
+
+The owner asked whether four stages are enough. Four stages get a player to the stone in about thirty hours. What keeps a game played and watched after that is a fifth stage that is not a gate but a set of reasons to start another run.
+
+| Layer | What it is | Why |
+|---|---|---|
+| Endless | after round nine the run goes on, the number rising every round | the uncapped score is the thing people clip and compare |
+| Seeds | every run has a seed that can be typed in; the same seed gives the same molecules and the same offers | two people can play the same run and compare; a streamer's audience can play the streamer's run |
+| The daily | one seed a day, the same for everyone, first attempt counted, with a local record | a reason to come back that is not a streak: missing a day costs nothing |
+| The record book | best total, longest chain, biggest single reaction and furthest round, kept for each seal | a high score for every way of playing, so one record does not end the chase |
+| The collection | a page of every piece, seal and familiar met so far, blank where one has not been found | Balatro's collection; a visible list of what is left |
+| The grid | every seal against every pact level, a mark where a run was won | Balatro's decks and stakes; optional, and nothing is locked behind it |
+| New molecules | classes that react in new ways: peptides that grow by coupling, monomers that run away into polymers | fresh content on the same rules, the thing the study found extends a game's life most |
+
+### What makes a run worth watching
+
+From what is on record about how Balatro and Vampire Survivors spread:
+
+1. **Readable at a glance.** A viewer who arrives mid-run must see what is happening. This is the five-second rule already in the brief.
+2. **A question on screen: will it reach the number?** One analysis of Balatro puts its tension there. Overreact has the same question every round; the assay sharpens it.
+3. **Every run looks different.** Seal, familiar and five pieces of equipment out of sixty must produce runs that do not resemble each other. The balance matrix is what proves or disproves this.
+4. **A moment worth clipping.** The overreact chain and a transmutation are that moment. The score must have no cap and must be allowed to get absurd.
+5. **Short, and instant to restart.** A streamer drops a short cheap game into a rotation. One key starts a new run.
+6. **A low price.** Vampire Survivors spread at three dollars.
+7. **Something the audience can do.** A seed on screen lets a viewer play the same run.
+
+Streamers did not find Balatro by accident: its publisher listed streamers who had played similar games and approached small ones first, and one streamer took it from 183 wishlists to about 30,000 in six weeks. That is marketing, not design, and it is outside this document.
+
 ## What never happens
 
 No timers, no login streaks, no paid currency. No unlock sits behind top difficulty. Every deed can be advanced in a lost run. No character speaks, and no screen explains.
@@ -154,6 +183,9 @@ No timers, no login streaks, no paid currency. No unlock sits behind top difficu
 5. **Four familiars.**
 6. **The pact.**
 7. **The last three seals and the stone.**
+8. **Seeds, the daily and the record book.** Seeds come first; they need every random draw in a run to come from one seeded source.
+9. **The collection and the grid.**
+10. **New molecule classes.**
 
 ## What the review said that the plan does not follow
 
