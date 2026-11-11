@@ -24,7 +24,7 @@ const KITV = (() => { try { return new URLSearchParams(root.location.search).get
 const CM = { balance: 35, spatula: 30, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 26, logbook: 30, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 30, litmus: 26, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
   stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 38, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
-const EDGE = -22.6 + SX, STEP = { x: -21.6 + SX, z: 0.9 }, PAGES = { x: -15.2 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = { x: -15.8 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -79,7 +79,7 @@ function start(app) {
   const isoMat = a => { const k = a.el + a.iso; return mIso[k] || (mIso[k] = std({ color: new T.Color(E[a.el].color).lerp(new T.Color(ISOC[a.iso]), 0.55).convertSRGBToLinear(), emissive: lin(ISOC[a.iso]), emissiveIntensity: 0.45, roughness: 0.3 })); };
   const slimeMat = std({ color: lin(0x7fd14a), roughness: 0.15 }), cureMat = std({ color: lin(0xf4f1e8), roughness: 0.95 });
   const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x2b2622), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
-  function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); c.x.font = 'bold ' + (txt.length > 2 ? 50 : 66) + 'px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = '#2b2622'; c.x.fillText(txt, 64, 68); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
+  function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); AA.rxPen.write(c.x, txt, 64, 64, txt.length > 2 ? 50 : 66, { weight: 'heavy', color: '#2b2420', align: 'center', base: 'middle' }); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
   function liveAtoms(md, ar) {
     const live = new Set();
@@ -310,7 +310,7 @@ function start(app) {
   function letterMat(el) {
     if (mLetter[el]) return mLetter[el];
     const hx = E[el].color, n = parseInt(hx.slice(1), 16), dark = ((n >> 16 & 255) * 0.299 + (n >> 8 & 255) * 0.587 + (n & 255) * 0.114) > 150, c = canvasTex(128, 128);
-    c.x.font = 'bold 84px "Trebuchet MS", system-ui, sans-serif'; c.x.textAlign = 'center'; c.x.textBaseline = 'middle'; c.x.fillStyle = dark ? '#14202e' : '#ffffff'; c.x.fillText(el, 64, 68); c.t.needsUpdate = true;
+    AA.rxPen.write(c.x, el, 64, 64, 84, { weight: 'heavy', color: dark ? '#2b2420' : '#ffffff', align: 'center', base: 'middle' }); c.t.needsUpdate = true;
     return (mLetter[el] = new T.SpriteMaterial({ map: c.t, depthWrite: false }));
   }
   // a heavy atom wears a collar in the color of the number it adds to
@@ -415,7 +415,7 @@ function start(app) {
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
-  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.4 : C0B.x; C0.z = wide ? -0.4 : C0B.z; LANE.w = wide ? 20.4 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 10.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
+  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.9 : C0B.x; C0.z = wide ? -0.4 : C0B.z; LANE.w = wide ? 21.6 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 10.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
   const fitMain = m => Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -583,7 +583,8 @@ function start(app) {
     { id: 'choices', x: 16.8, z: -9.6, r: 0, name: 'reactions', line: '', lx: 16.8, lz: -12.3 }
   ];
   // the first round: what is pointed at, in order, each once the page has reached it
-  const TEACH = [
+  const TEACH = [];
+  const TEACH_OLD = [
     { z: 'choices', say: 'pick three', when: () => true },
     { z: 'made', say: 'made', when: () => g.trail.length >= 1 },
     { z: 'beat', say: 'beat this', when: () => g.trail.length >= 1 && st.shown < st.quota },
@@ -602,7 +603,7 @@ function start(app) {
     const fin = view ? (view.fin && !g.queue.includes(P.SYN.finish) ? view.fin : null) : live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 16.6, z: z + 0.4 }; SCS[i] = 0.4; }); } }
+      if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 18.0, z: z + 0.4 }; SCS[i] = 0.4; }); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
@@ -839,11 +840,11 @@ function start(app) {
         const ev = beats.find(e => e.gone === f.gi && (P.GEARS[e.src] || e.src === 'collect')), ko = ev && P.GEARS[ev.src] ? kitObjs.find(q => q.id === ev.src) : null;
         if (ko) { f.to = new T.Vector3(ko.grp.position.x, 1.6, ko.grp.position.z - 0.6); }
         else { f.to = byTarget(f.kind); f.keep = ev ? f.kind : null; } }); (mol.groups || []).forEach(q => { if (q.born) q.t = near(q); }); (mol.ghosts || []).forEach(q => { q.t = near(q); }); }
-    if (o.casc) { const gn = P.made(g) - before, src = spot(0), t0 = performance.now(); st.gains.push({ ring: true, sp: spotOf(st.pair), txt: '+' + fmt(gn), a: { x: src.x, z: src.z }, t0: t0 + stepT * 0.03, t: t0 + stepT * 0.14, dur: Math.max(110, stepT * 0.42), to: P.made(g), fresh: !st.cstep || st.cstep.fresh }); }
+    if (o.casc) { const gn = P.made(g) - before, src = spot(0), t0 = performance.now(); laneGain({ ring: true, sp: spotOf(st.pair), txt: '+' + fmt(gn), a: { x: src.x, z: src.z }, t0: t0 + stepT * 0.03, t: t0 + stepT * 0.14, dur: Math.max(110, stepT * 0.42), to: P.made(g), fresh: !st.cstep || st.cstep.fresh }); }
     const final = () => {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
-      if (!o.casc && gain > 0 && PLAIN) { const t1 = performance.now(); st.gains.push({ txt: '+' + fmt(gain), t0: t1, t: t1 + 60, dur: 520, to: P.made(g), fresh: true, gx: spot(0) }); }
+      if (!o.casc && gain > 0 && PLAIN) { const t1 = performance.now(); laneGain({ txt: '+' + fmt(gain), t0: t1, t: t1 + 60, dur: 520, to: P.made(g), fresh: true, gx: spot(0) }); }
       if (!st.gains.length) st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g);
       if (!PLAIN) st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
       st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
@@ -889,6 +890,8 @@ function start(app) {
     marker(c, 56); c.textAlign = 'left'; c.fillStyle = INK; c.fillText(String(n), cx + 48, cy + 20); const w = c.measureText(String(n)).width;
     c.lineWidth = 5; c.beginPath(); const ax = cx + 48 + w + 18; if (atMost) { c.moveTo(ax - 9, cy - 6); c.lineTo(ax, cy + 6); c.lineTo(ax + 9, cy - 6); } else { c.moveTo(ax - 9, cy + 6); c.lineTo(ax, cy - 6); c.lineTo(ax + 9, cy + 6); } c.stroke(); c.restore();
   }
+  // gains go through one lane, one at a time: each is shown for a short while, the next waits its turn
+  const laneGain = q => { const start = Math.max(q.t, st.laneFree || 0), dur = Math.max(260, Math.min(420, q.dur)); q.t0 = start; q.t = start; q.dur = dur; st.laneFree = start + dur + 40; st.gains.push(q); };
   const spotOf = pr => (pr && pr.a && pr.b && center ? { x: C0.x + (pr.a.x + pr.b.x) / 2 * center.group.scale.x, z: C0.z + (pr.a.z + pr.b.z) / 2 * center.group.scale.x } : null);
   const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
   function pick(i) {
@@ -898,15 +901,15 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 16.9, z: -10.2 };
+  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 18.3, z: -10.2 };
   const lining = () => P.RULE.queue && st.mode === 'play' && !!g && !g.over && !g.chain && !g.shot;
   const bankAt = () => st.mode === 'play' && g && (lining() || P.canBank(g)) && hit.x > BANK.x - 1.4 && hit.x < BANK.x + 5 && Math.abs(hit.z - BANK.z) < 1.2;
   // the reaction arrow after the circles fires the page; a click on a filled circle takes its reagent back
-  const FIREP = () => ({ x: STEP.x + P.stepsOf(g) * 2.5 + 0.9, z: STEP.z });
+  const FIREP = () => ({ x: STEP.x + P.stepsOf(g) * STEPD + 0.9, z: STEP.z });
   const fireAt = () => lining() && Math.abs(hit.x - FIREP().x) < 2.2 && Math.abs(hit.z - STEP.z) < 1.4;
-  const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * 2.5)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
+  const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * STEPD)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
-  function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * 2.5, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
+  function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * STEPD, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
   function doFire() { if (!lining()) return; if (AA.sfx.fire) AA.sfx.fire(); toolOff(); flush(); setHover(-1); st.firing = true; st.fireN = 0; st.acted = false; st.rezip = false; st.seeded = false; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
   // A piece that acts on the molecule or the page is shown acting: it hops, as a piece does when it fires
   const pieceActs = id => { st.fired[id] = { t: performance.now(), txt: '', col: INK }; const k = kitObjs.find(q => q.id === id); if (k) st.strokes.push({ a: { x: k.hx, z: k.hz + 4.3 }, b: { x: C0.x + (k.hx - C0.x) * 0.25, z: C0.z - 3.2 }, col: '#2f78a0', t: performance.now(), dur: 300 }); sfx.lock(6); dirty = true; };
@@ -984,7 +987,7 @@ function start(app) {
     if (st.starting) { st.firing = false; st.starting = false; if (g.over) return; st.mode = 'play'; refresh(); if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g) && !g.queue.length && !kitObjs.some(k => P.canTool(g, k.id))) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 350); } return; }
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; if (homOffer()) return; return nextPage(); }
     P.queueShift(g); st.fireN = (st.fireN || 0) + 1; st.acted = h.kind === 'take';
-    if (h.kind === 'take' || h.kind === 'finish') return react(h.o, h.id, h.kind === 'finish', { x: STEP.x + g.pageSteps * 2.5, z: STEP.z }, false);
+    if (h.kind === 'take' || h.kind === 'finish') return react(h.o, h.id, h.kind === 'finish', { x: STEP.x + g.pageSteps * STEPD, z: STEP.z }, false);
     const wait = 160; if (h.kind === 'bank') bankNow(); else { P.waste(g, h.id); if (AA.sfx.wasted) AA.sfx.wasted(); else sfx.bad(); st.shake = Math.max(st.shake, 0.3); }
     st.mode = 'move'; dirty = true; setTimeout(() => { if (tok === st.tok) fireNext(); }, wait);
   }
@@ -1247,7 +1250,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
-      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round + '', h[0], h[1]);
+      const h = px({ x: 0, z: -11 }); hand(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round + '', h[0], h[1]);
       briefs.forEach((b, i) => {
         const c = px({ x: BX(i), z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         if (b.ease != null) {
@@ -1351,14 +1354,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.peek && center) { const sc = center.group.scale.x, ol = st.peek.outline; x.strokeStyle = st.peek.col; x.lineWidth = 8; x.lineCap = 'round'; x.setLineDash(ol ? [12, 11] : []); x.globalAlpha = 0.85; st.peek.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc + 1.25 }); x.beginPath(); x.moveTo(c[0] - 34, c[1] + 16); x.lineTo(c[0] + 34, c[1] + 13); x.stroke(); }); x.setLineDash([]); x.globalAlpha = 1; }
     // a step of a cascade: for the instant before two parts join, a thin dashed pencil arc bows out from the OH to the C=O
     // with a small arrowhead. It is gone before the ring starts to close, and it is not drawn like a bond
-    if (st.pair && st.pair.a && st.pair.b && center && st.mode !== 'done' && now - st.pair.t < Math.max(800, st.pair.ms * 0.9)) { const sc = center.group.scale.x, el = now - st.pair.t, k = Math.min(1, el / Math.max(200, st.pair.ms * 0.3)), A = px({ x: C0.x + st.pair.a.x * sc, z: C0.z + st.pair.a.z * sc }), B = px({ x: C0.x + st.pair.b.x * sc, z: C0.z + st.pair.b.z * sc }), fade = el > Math.max(600, st.pair.ms * 0.7) ? 0.5 : 1;
-      x.save(); x.globalAlpha = fade; x.lineCap = 'round'; x.strokeStyle = INK;
-      x.lineWidth = 11; [A, B].forEach(q => { x.beginPath(); x.moveTo(q[0] - 36, q[1] + 52); x.lineTo(q[0] + 36, q[1] + 50); x.stroke(); });
-      x.lineWidth = 12; x.strokeStyle = PENCIL; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k); x.stroke();
-      { const bx2 = molBox(); if (bx2 && k > 0.3) { const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, lx = Math.max(bx2.l + 30, Math.min(bx2.r - 30, mx)); x.lineWidth = 4; x.strokeStyle = PENCIL; x.globalAlpha = fade * 0.8; x.beginPath(); x.moveTo(mx, my + 14); x.lineTo(lx, bx2.b + 16); x.stroke(); } }
+    if (st.pair && st.pair.a && st.pair.b && center && st.mode !== 'done' && now - st.pair.t < Math.max(800, st.pair.ms * 0.9)) { const sc = center.group.scale.x, el = now - st.pair.t, A = px({ x: C0.x + st.pair.a.x * sc, z: C0.z + st.pair.a.z * sc }), B = px({ x: C0.x + st.pair.b.x * sc, z: C0.z + st.pair.b.z * sc }), fade = el > Math.max(600, st.pair.ms * 0.7) ? 0.5 : 1;
+      x.save(); x.globalAlpha = fade; x.fillStyle = INK; x.lineJoin = 'round';
+      [A, B].forEach(q => { x.beginPath(); x.moveTo(q[0], q[1] + 44); x.lineTo(q[0] - 14, q[1] + 70); x.lineTo(q[0] + 14, q[1] + 70); x.closePath(); x.fill(); });
+      { const bx2 = molBox(); if (bx2 && el > 80) { const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, lx = Math.max(bx2.l + 30, Math.min(bx2.r - 30, mx)); x.lineWidth = 4; x.lineCap = 'round'; x.strokeStyle = PENCIL; x.globalAlpha = fade * 0.8; x.beginPath(); x.moveTo(mx, my + 74); x.lineTo(lx, bx2.b + 16); x.stroke(); } }
       x.restore(); dirty = true; }
-    // atoms that carry a mark are not recolored: a short bar of the mark's color is drawn on the paper under each
-    if (center && center.balls && st.mode !== 'done' && !P.RULE.bare) { const sc = center.group.scale.x; center.balls.forEach((b, a) => { if (!a.iso || ISOC[a.iso] == null) return; const p = px({ x: C0.x + b.mesh.position.x * sc, z: C0.z + b.mesh.position.z * sc }), hx = ISOC[a.iso].toString(16).padStart(6, '0'); x.strokeStyle = '#' + hx; x.lineWidth = 11; x.lineCap = 'round'; x.beginPath(); x.moveTo(p[0] - 30, p[1] + 50); x.lineTo(p[0] + 30, p[1] + 48); x.stroke(); }); }
+    if (g && center && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done')) { const bx = molBox(); if (bx) { const rx = (bx.r - bx.l) / 2 + 36, gr = x.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(90,70,40,0.18)'); gr.addColorStop(1, 'rgba(90,70,40,0)'); x.save(); x.translate((bx.l + bx.r) / 2, bx.b - 14); x.scale(1, 0.13); x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.3); x.fill(); x.restore(); } }
     // a piece picked up: a short ink tick under each place it can go. The place under the pointer shows what would happen in
     // lines and letters only: what goes is drawn over heavy in red, what comes is a ghost of bonds, a new group is its word
     if (st.tool && st.toolList && center && lining()) { const sc = center.group.scale.x, P2 = q => px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }), r = 1.0 * sc * U, seg = (a, b) => { x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -1430,15 +1431,15 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     { const hh = g.hurdle || st.hurdle; if (hh) { const hp = px({ x: EDGE + 2.4, z: PAGES.z - 4.6 }); drawHurdle(g, hp[0], hp[1], hh); } }
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
-    for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
+    for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * STEPD, z: STEP.z }), b0 = px({ x: STEP.x + k * STEPD, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
     const cross = (c, col) => { x.strokeStyle = col; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 15, c[1] - 13); x.lineTo(c[0] + 15, c[1] + 13); x.moveTo(c[0] + 15, c[1] - 13); x.lineTo(c[0] - 15, c[1] + 13); x.stroke(); };
-    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
+    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * STEPD, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
       if (k < g.pageSteps) { const t = tr[k]; if (t && t.wasted) cross(c, PENCIL); else if (t && t.bank) tray(x, c[0], c[1] - 2, 0.5, INK, 5); else { x.strokeStyle = t ? rgb(colOf(t.id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
       else if (qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.5, INK, 5);
       else if (qid) { const kd = st.view && st.view.kinds[qi], cc = rgb(colOf(qid)), hi = g.kinds.indexOf(qid); x.fillStyle = cc; x.globalAlpha = 0.9; x.beginPath(); x.ellipse(c[0] + 1, c[1], 21, 19, 0.2, 0, 6.3); x.fill(); x.globalAlpha = 1; if (qid === P.SYN.finish) { marker(x, 30); x.textAlign = 'center'; x.fillStyle = '#fbf8ee'; x.fillText('F', c[0] + 1, c[1] + 11); } }
@@ -1533,7 +1534,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // the gain of each step of a cascade: written at the new ring, then it travels to the total and the total takes it
-    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); st.gains.forEach((q, qi) => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, gy = ra[3].b + 104 + (q.ring ? 0 : 42), S0 = [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, spx ? spx[0] : px(q.gx || { x: C0.x, z: C0.z })[0])), gy], Bf = [T0[0] + (st.madeW || 200) + 80, gy], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * e, cy = gy;
+    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); if (ra) { x.save(); x.setLineDash([3, 11]); x.strokeStyle = FAINT; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.moveTo(T0[0] + (st.madeW || 200) + 80, ra[3].b + 114); x.lineTo(ra[3].r, ra[3].b + 114); x.stroke(); x.restore(); }
+      st.gains.forEach((q, qi) => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, gy = ra[3].b + 104, S0 = [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, spx ? spx[0] : px(q.gx || { x: C0.x, z: C0.z })[0])), gy], Bf = [T0[0] + (st.madeW || 200) + 80, gy], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * e, cy = gy;
         x.globalAlpha = k > 0.78 ? Math.max(0, 1 - (k - 0.78) / 0.24) : 1; marker(x, (q.fresh ? 46 : 36) * pop * (1 - 0.3 * e)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, cx, cy); x.fillStyle = q.fresh ? INK : PENCIL; x.fillText(q.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // bonuses in flight: from where they were earned to the points or to the multiplier
     if (st.motes.length) { const mp2 = px(FORM), tx0 = mp2[0] + Math.max(st.fW || 260, (st.madeW || 0) + 10) + 64, tgt = { p: [tx0, mp2[1] - 24], m: [tx0, mp2[1] - 24] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
@@ -1572,9 +1574,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let wk = -1; for (let k = 0; k < 4 && k < wv.length; k++) if (done ? g.total >= wv[k] : !!st.passT[k]) wk = k;
       if (wk >= 0) {
         st.wordK = wk; const c = px({ x: 0, z: -9 }), t0 = st.passT[wk] || 0, pr = t0 && now - t0 < 420 ? (now - t0) / 420 : 1;
-        marker(x, WSZ[wk]); let tw = x.measureText(WS[wk]).width; const sc = Math.min(1, 1500 / tw); if (sc < 1) { marker(x, WSZ[wk] * sc); tw = x.measureText(WS[wk]).width; }
-        st.wordW = tw; x.save(); if (pr < 1) { x.beginPath(); x.rect(c[0] - tw / 2 - 20, c[1] - 260, (tw + 40) * pr, 360); x.clip(); dirty = true; }
-        x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = wk < 2 ? GREEN : REDINK; x.strokeText(WS[wk], c[0], c[1]); x.fillText(WS[wk], c[0], c[1]); x.restore();
+        let sz = WSZ[wk], tw = AA.rxPen.measure(WS[wk], sz, 'heavy').width; if (tw > 1500) { sz *= 1500 / tw; tw = 1500; }
+        st.wordW = tw; if (pr < 1) dirty = true; AA.rxPen.write(x, WS[wk], c[0], c[1], sz, { weight: 'heavy', color: GREEN, align: 'center', t: pr });
       }
     }
     // the round is over: how it went, and where to click
@@ -1586,7 +1587,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) rcoin(x, c[0] + tw / 2 + 70 + n * 62, c[1] - 36, 28);
       if (st.won) x.fillText('won', c[0], c[1] + 80); else if (!st.pass && run.beaten + (run.bonus || 0) > 0) purse(x, c[0] - tw / 2 - 90, c[1] - 8, run.beaten + (run.bonus || 0), 20, 0);
       if (st.newSig) { const sc = px({ x: -12, z: 3.5 }), T0 = P.TERMS.find(q => q.id === st.newSig); sigil(x, sc, 120, st.newSig, '#b88a00', 10); marker(x, 50); x.textAlign = 'center'; x.fillStyle = '#b88a00'; x.fillText(T0.name, sc[0], sc[1] + 136); hand(x, 28); x.fillStyle = PENCIL; x.fillText('new sigil', sc[0], sc[1] - 96); }
-      { const nx = px({ x: 17.5, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; marker(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
+      { const nx = px({ x: 17.5, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; hand(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
     ink.t.needsUpdate = true;
   }

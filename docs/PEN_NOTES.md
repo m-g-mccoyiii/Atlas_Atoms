@@ -5,9 +5,16 @@ One hand, two weights. Same glyphs, same slant (0.09), same x-height (0.6 of the
 - heavy: numbers, flag values, gains, the four words, buttons.
 - thin: names (helpers, creatures, reactions), small labels.
 
-## Why the 7s were doubled, and the fix
+## Second pass: a hand, not a typeface
 
-The old pen drew every string twice, the second time offset diagonally by a "nib" amount, and each glyph also had a small per-letter baseline wobble. At heavy weights the two passes did not merge on thin diagonals (the 7), and with any alpha they darkened where they overlapped. Now a string is one stroked path, one pass, no wobble, round caps. A see-through color stays even.
+- Each stroke is a filled brush outline with a real start and end: it lands, swells and lifts. Heavy (loaded brush) swells strongly and is fatter on down strokes; thin (quick pen) is nearly even with a light start and a flick at the end. All strokes of a string go into one path and one fill, so there is still no doubling and no alpha overlap. Sharp corners are written as separate pieces so an outline never folds.
+- Small steady variation: every glyph gets a tiny change of size (3.5 percent), tilt (0.04 rad), baseline, shear and spacing (digits less, and never in width). It is seeded by the glyph and its place, so a string is identical every time it is drawn and nothing shimmers. Digits are seeded by the digit and its place from the right, so a total that counts up keeps its other digits unchanged. Digit cells have a fixed width.
+- Letterforms chosen on purpose: e with a rising bar, r with a drooping beak, t with a long stem and hooked foot, y as a u with a tail, 7 with a curved stem, 2 with a flicked base, 5 with a tilted top bar. 1 (flag and base), 7 (curved, no base), 3 (open), 8 (two loops), 0 (plain oval) and 6 (loop with a tail) stay apart.
+- Heavy width is 0.132 of the size at 50 and below, easing to 0.116 at 170 and above (wider relative weight at small sizes so it stays legible; less at large sizes so the r and e do not close up). Thin is 0.057.
+
+## Why the 7s were doubled (first pass), and the fix
+
+The old pen drew every string twice, the second time offset diagonally by a "nib" amount, and each glyph also had a small baseline wobble. At heavy weights the two passes did not merge on thin diagonals (the 7), and alpha darkened the overlaps. Now there is one fill per string.
 
 ## What the page gets with no edits
 
@@ -23,7 +30,6 @@ The old pen drew every string twice, the second time offset diagonally by a "nib
 - `AA.rxPen.width(str, size, weight)`, `AA.rxPen.lineWidth(size, weight)`, `AA.rxPen.INK` (warm near-black `#2b2420`), `AA.rxPen.slant`.
 - `AA.rxPen.set(ctx, size, heavy)` still works.
 
-Heavy line width is 0.097 of the size at 40 and below, rising to 0.117 at 170 and above, so the four words get louder with size.
 
 ## Calls the page builder should change
 
@@ -35,6 +41,6 @@ Heavy line width is 0.097 of the size at 40 and below, rising to 0.117 at 170 an
 
 ## Not done
 
-- No calligraphic thick and thin: the strokes are monoline. It was the cause of the smear and was removed on purpose.
+- No two-color or textured ink. Letter shapes are one set; the variation is small by design.
 - The `Trebuchet MS` labels in scheme.js (two places) are not drawn by the pen.
 - Heavy at 12 px or below is a little tight; use 14 px or more.
