@@ -892,6 +892,21 @@ function start(app) {
   }
   // gains go through one lane, one at a time: each is shown for a short while, the next waits its turn
   const laneGain = q => { const start = Math.max(q.t, st.laneFree || 0), dur = Math.max(260, Math.min(420, q.dur)); q.t0 = start; q.t = start; q.dur = dur; st.laneFree = start + dur + 40; st.gains.push(q); };
+  // A reaction is drawn as what it changes: a small ball-and-stick fragment before, an arrow, and the fragment after
+  const FBALL = { C: ['#5b667d', 12], O: ['#ff4d4d', 12], Cl: ['#37d67a', 13], H: ['#f4f1e8', 8] };
+  function fball(c, cx, cy, el, on) { const b = FBALL[el], r = b[1]; c.save(); c.globalAlpha = on ? 1 : 0.38; const gr = c.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.12, cx, cy, r); gr.addColorStop(0, '#ffffffaa'); gr.addColorStop(0.35, b[0]); gr.addColorStop(1, b[0]); c.fillStyle = b[0]; c.beginPath(); c.arc(cx, cy, r, 0, 6.3); c.fill(); if (el === 'H') { c.strokeStyle = '#a9a394'; c.lineWidth = 2.5; c.stroke(); } c.fillStyle = 'rgba(255,255,255,0.38)'; c.beginPath(); c.ellipse(cx - r * 0.32, cy - r * 0.38, r * 0.34, r * 0.22, -0.5, 0, 6.3); c.fill(); c.restore(); }
+  function fbond(c, ax, ay, bx, by, n, on) { c.save(); c.globalAlpha = on ? 1 : 0.38; c.strokeStyle = '#7a8296'; c.lineWidth = 5; c.lineCap = 'round'; const dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy) || 1, nx = -dy / d * 4, ny = dx / d * 4; c.beginPath(); if (n === 2) { c.moveTo(ax + nx, ay + ny); c.lineTo(bx + nx, by + ny); c.moveTo(ax - nx, ay - ny); c.lineTo(bx - nx, by - ny); } else { c.moveTo(ax, ay); c.lineTo(bx, by); } c.stroke(); c.restore(); }
+  const FRAG = {
+    'C=C': (c, cx, cy, on) => { fbond(c, cx - 18, cy, cx + 18, cy, 2, on); fball(c, cx - 18, cy, 'C', on); fball(c, cx + 18, cy, 'C', on); },
+    'C=O': (c, cx, cy, on) => { fbond(c, cx - 18, cy, cx + 18, cy, 2, on); fball(c, cx - 18, cy, 'C', on); fball(c, cx + 18, cy, 'O', on); },
+    'OH': (c, cx, cy, on) => { fbond(c, cx - 26, cy, cx + 4, cy, 1, on); fbond(c, cx + 4, cy, cx + 24, cy - 12, 1, on); fball(c, cx - 26, cy, 'C', on); fball(c, cx + 4, cy, 'O', on); fball(c, cx + 24, cy - 12, 'H', on); },
+    'Cl': (c, cx, cy, on) => { fbond(c, cx - 18, cy, cx + 18, cy, 1, on); fball(c, cx - 18, cy, 'C', on); fball(c, cx + 18, cy, 'Cl', on); },
+    'CH': (c, cx, cy, on) => { fbond(c, cx - 14, cy, cx + 18, cy, 1, on); fball(c, cx - 14, cy, 'C', on); fball(c, cx + 18, cy, 'H', on); },
+    ring: (c, cx, cy, on) => { const p = []; for (let k = 0; k < 5; k++) { const a = -1.5708 + k * 1.2566; p.push([cx + 24 * Math.cos(a), cy + 24 * Math.sin(a)]); } p.forEach((q, k) => fbond(c, q[0], q[1], p[(k + 1) % 5][0], p[(k + 1) % 5][1], 1, on)); p.forEach(q => fball(c, q[0], q[1], 'C', on)); },
+    arene: (c, cx, cy, on) => { const p = []; for (let k = 0; k < 6; k++) { const a = -1.5708 + k * 1.0472; p.push([cx + 26 * Math.cos(a), cy + 26 * Math.sin(a)]); } p.forEach((q, k) => fbond(c, q[0], q[1], p[(k + 1) % 6][0], p[(k + 1) % 6][1], k % 2 ? 1 : 2, on)); p.forEach(q => fball(c, q[0], q[1], 'C', on)); },
+    cage: (c, cx, cy, on) => { const p = [[-18, -18], [18, -18], [18, 18], [-18, 18]]; p.forEach((q, k) => fbond(c, cx + q[0], cy + q[1], cx + p[(k + 1) % 4][0], cy + p[(k + 1) % 4][1], 1, on)); fbond(c, cx - 18, cy - 18, cx + 18, cy + 18, 1, on); fbond(c, cx + 18, cy - 18, cx - 18, cy + 18, 1, on); p.forEach(q => fball(c, cx + q[0], cy + q[1], 'C', on)); }
+  };
+  function fragOrChip(c, tok, cx, cy, on) { if (FRAG[tok]) { c.save(); c.translate(cx, cy); c.scale(1.7, 1.7); FRAG[tok](c, 0, 0, on); c.restore(); return; } chip(c, tok, cx, cy, on); }
   const spotOf = pr => (pr && pr.a && pr.b && center ? { x: C0.x + (pr.a.x + pr.b.x) / 2 * center.group.scale.x, z: C0.z + (pr.a.z + pr.b.z) / 2 * center.group.scale.x } : null);
   const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
   function pick(i) {
@@ -1356,7 +1371,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // with a small arrowhead. It is gone before the ring starts to close, and it is not drawn like a bond
     if (st.pair && st.pair.a && st.pair.b && center && st.mode !== 'done' && now - st.pair.t < Math.max(800, st.pair.ms * 0.9)) { const sc = center.group.scale.x, el = now - st.pair.t, A = px({ x: C0.x + st.pair.a.x * sc, z: C0.z + st.pair.a.z * sc }), B = px({ x: C0.x + st.pair.b.x * sc, z: C0.z + st.pair.b.z * sc }), fade = el > Math.max(600, st.pair.ms * 0.7) ? 0.5 : 1;
       x.save(); x.globalAlpha = fade; x.fillStyle = INK; x.lineJoin = 'round';
-      [A, B].forEach(q => { x.beginPath(); x.moveTo(q[0], q[1] + 44); x.lineTo(q[0] - 14, q[1] + 70); x.lineTo(q[0] + 14, q[1] + 70); x.closePath(); x.fill(); });
+      
       { const bx2 = molBox(); if (bx2 && el > 80) { const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, lx = Math.max(bx2.l + 30, Math.min(bx2.r - 30, mx)); x.lineWidth = 4; x.lineCap = 'round'; x.strokeStyle = PENCIL; x.globalAlpha = fade * 0.8; x.beginPath(); x.moveTo(mx, my + 74); x.lineTo(lx, bx2.b + 16); x.stroke(); } }
       x.restore(); dirty = true; }
     if (g && center && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done')) { const bx = molBox(); if (bx) { const rx = (bx.r - bx.l) / 2 + 36, gr = x.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(90,70,40,0.18)'); gr.addColorStop(1, 'rgba(90,70,40,0)'); x.save(); x.translate((bx.l + bx.r) / 2, bx.b - 14); x.scale(1, 0.13); x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.3); x.fill(); x.restore(); } }
@@ -1387,13 +1402,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (!s) return;
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
       if (o && !SIDE) { arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
-      if (o && SIDE && o.cont && open) { x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(m[0] - 44, m[1] + 44); x.lineTo(m[0] + 36, m[1] + 42); x.stroke(); }
+      
       x.save(); x.translate(m[0], m[1]);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
-        hand(x, 30); x.textAlign = 'right'; x.fillStyle = 'rgba(90,86,78,0.7)'; x.fillText(s.fin ? 'F' : String(i + 1), -128, -2);
-        chip(x, tl[0], -72, 0, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, tl[1], 62, 0, on);
-        if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 108, -2); }
-        hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? (hov ? INK : PENCIL) : FAINT; x.fillText(verb, -4, 34);
+        
+        fragOrChip(x, tl[0], -92, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(2, -8); x.moveTo(-10, -20); x.lineTo(2, -8); x.lineTo(-10, 4); x.stroke(); fragOrChip(x, tl[1], 56, -8, on);
+        if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 110, -2); }
+        if (hov) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? INK : FAINT; x.fillText(verb, -20, 46); }
         if (o && g && st.mode === 'play' && !P.RULE.queue) { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); if (g.ring && !(g.ringSet || []).includes(o.id)) { const w0 = x.measureText('+' + fmt(s.gv)).width; x.strokeStyle = '#b88a00'; x.lineWidth = 5; x.lineJoin = 'round'; x.beginPath(); x.moveTo(-186 - w0 - 26, -18); x.lineTo(-186 - w0 - 12, 6); x.lineTo(-186 - w0 - 40, 6); x.closePath(); x.stroke(); } } }
         // uses left: one drop each, on the reagent's own chip. One placed in a circle is an empty drop
         if (!s.fin && !usesHidden()) { const qd = P.queued(g, s.id), nL = Math.min(6, Math.max(0, (g.left[s.id] || 0) - qd)); x.globalAlpha = on ? 1 : 0.5;
