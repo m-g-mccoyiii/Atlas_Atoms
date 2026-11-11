@@ -524,7 +524,7 @@ function synQuota(feed, n, gear, run) {
 // or one more use of a reagent on every page. What can turn up depends on the suppliers that have been opened.
 // Each round has a number to beat that is set by the round and not by what the player holds, so a better build
 // beats it by more.
-// the number to beat climbs by growth each round up to the knee, then by late
+// growth, late, knee, first and ask belonged to the old number to beat and are no longer read: see PAR
 const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'dehydrate'] };
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
@@ -543,6 +543,7 @@ const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPL
 // with no page turns it off to save the time.
 const MODEL = { relaxed: true };
 const modelOf = feed => { const m = feed.atoms ? RX.cloneMap(feed).model : MODEL.relaxed ? AA.Model.fromSmilesRelaxed(feed, 4) : RX.fromSmiles(feed); m.center(); return m; };
+// No longer used for the number to beat (see runQuota). Kept so that briefBase can still be called.
 // what a plain player makes from a molecule under a brief, with the starting reagents and the style that suits it best
 // Measured on 2026-11-10 with 12 plays for each style of play, chains included: the lower quarter of the best style. Measure again
 // after any change to the rules of a round, or delete the table and it is measured as needed.
@@ -554,7 +555,7 @@ function briefBase(feed, brief) {
   return (BASE[k] = Math.max(20, top));
 }
 // An assay: every third round is one round and not a choice of three. Its kind is one of the harder kinds, fixed for
-// each act when the run starts. A run without run.assay has no assays.
+// each act when the run starts. A run is nine rounds in three acts; past round nine the assays come round again.
 const ASSAYS = ['scarce', 'short', 'each', 'loose'];
 function runAssays(run, rnd) { const R = rnd || rand, a = ASSAYS.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } run.assay = a.slice(0, 3); return run; }
 const assayOf = (run, round) => { const r = round || run.round; return run.assay && r % 3 === 0 ? run.assay[(r / 3 - 1) % run.assay.length] : null; };
@@ -576,7 +577,7 @@ function runChoose(run, o) { run.kin = o.kin || 'chain'; run.src = o.src || null
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much
 function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (run.bonus || 0) + n; return n; }
-function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, by: { water: 0, h2: 0, gauge: 0 } }; }
+function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return runAssays({ extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, by: { water: 0, h2: 0, gauge: 0 } }); }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 // Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
@@ -611,9 +612,28 @@ function runTerm(run, id) {
   else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]); run.noGear = true; }
   return run;
 }
-function runQuota(run, feed, brief) {
-  const br = brief || run.brief || 'plain';
-  const q = briefBase(feed, br) * RUNG.first * (br === 'plain' || br === 'carry' ? 1 : RUNG.ask) * Math.pow(RUNG.growth, Math.min(run.round, RUNG.knee) - 1) * Math.pow(RUNG.late, Math.max(0, run.round - RUNG.knee)) * (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+// The number to beat: Par for the round, times the square root of the molecule's size factor, times any stake the
+// player chose (the pact, the idol, the hourglass, the terms of the run). It never reads the rest of the build, so a
+// better build beats it by more. The method is in docs/BALANCE.md and the measurement in docs/RIG.md.
+// GENERATED by the measuring rig (docs/RIG.md, docs/tools_sim.js) on 2026-11-10 from the rules at commit bb371d6.
+// Do not edit by hand: measure again. Par was fitted to the pass rates in docs/BALANCE.md on 500 runs of the median player (seeds 1 to 500).
+// PAR.rounds: the number for a molecule of average size in rounds one to nine. It starts at 3700 and each step is
+// smaller than the last: 2.5, 2.43, 2.36, 2.29, 2.22, 2.15, 2.08, 2.01. after: the step for every round past nine.
+const PAR = { rounds: [3700, 9250, 22500, 53000, 121000, 270000, 580000, 1210000, 2420000], after: 1.94, last: 1.15 };
+// MOLF: what the median simulated player makes in a plain round on each molecule with the starting four reagents
+// and no equipment, over the average of all the molecules (averages of logarithms).
+const MOLF = {"C=CCC(O)CC=C":1.592,"CC(O)CCC=C":0.19,"CC(=O)CCC(O)CC=C":0.165,"C=CCC(O)CC(O)CC=C":2.256,"C=CCC(=O)CCC(=O)CC=C":0.968,"CC(O)CC(=O)CCC(Cl)CCC=C":0.702,"O=C1CCC(CC=C)CC1":0.282,"C=CCC(O)C1=CC=CC=C1":3.194,"C=CC1CCC(O)CC1":0.336,"CC(=O)CCC(O)C1=CC=CC=C1":0.261,"C=CC12C3C4C1C5C2C3C45CO":2.214,"OC1C2CC3CC(C2)CC1C3":0.146,"OC1CC2CC1C=C2":0.136,"OCC1OC(O)C(O)C(O)C1O":9.456,"OC1CCC(O)CC1":1.774,"O=C1CCC(O)CC1C=C":1.265,"OC(C=C)C1=CC=CC=C1":1.847,"CC(O)CC(=O)C1=CC=CC=C1":3.584,"OCC12C3C4C1C5C2C3C45CO":0.781,"OC1CC2CCC1C=C2":0.11,"OCC(O)C(O)C(O)C(O)C=O":37.698,"OCC1OC(O)CC1O":1.56,"OCC(O)CO":5.283};
+// END GENERATED
+// A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more
+// asks for more, but for less than it makes.
+const MOLD = { lo: 0.35, hi: 3 };
+const parOf = round => { const r = Math.max(1, round | 0); return r <= 9 ? PAR.rounds[r - 1] * (r === 9 ? PAR.last : 1) : PAR.rounds[8] * PAR.last * Math.pow(PAR.after, r - 9); };
+const molSize = key => Math.sqrt(Math.min(MOLD.hi, Math.max(MOLD.lo, MOLF[key] || 1)));
+const stakeOf = run => (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1);
+// feed is the molecule's SMILES. A molecule carried on from the last round counts as the one it started as.
+const quotaParts = (run, feed) => ({ par: parOf(run.round), mult: molSize(typeof feed === 'string' ? feed : run.src) * stakeOf(run) });
+function runQuota(run, feed) {
+  const k = quotaParts(run, feed), q = k.par * k.mult, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
   return Math.max(50, Math.round(q / mag) * mag);
 }
 function runPicks(run, rnd) {
@@ -645,6 +665,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

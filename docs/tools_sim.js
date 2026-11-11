@@ -12,8 +12,9 @@
   const REAGENT = { bh3: 81.53, hcl: 1.02, nabh4: 0.99, snap: 0.94, cyclize: 0.86, aromatize: 0.66, socl2: 0.37, wittig: 0.21, memgbr: 0.15 };
   // Guesses, not measured: a stronger reagent, one more use, and a level as a share of the piece's worth above 1.
   const OTHER = { strong: 1.3, bottle: 1.1, level: 0.5 };
-  // How much a kind of round makes against a plain one, for choosing a round. Rough, from MATRIX.md and the old table.
-  const EASE = { plain: 1, carry: 1.3, broad: 1.2, loose: 1.5, each: 0.8, back: 0.9, scarce: 0.55, short: 0.5 };
+  // How much a kind of round makes against a plain one, for choosing a round. Rounded from what the median player
+  // made by kind in a first measure of 500 runs; carrying a molecule on makes much less than a new one until late.
+  const EASE = { plain: 1, carry: 0.4, broad: 1.4, loose: 1.1, each: 0.6, back: 1, scarce: 0.3, short: 0.4 };
   // Round one medians by molecule with no equipment (MATRIX.md, Numbers to beat), used until path.js carries MOLF.
   const MM = {"OCC12C3C4C1C5C2C3C45CO":16159,"C=CCC(=O)CCC(=O)CC=C":9578,"OCC(O)CO":25303,"CC(=O)CCC(O)C1=CC=CC=C1":26283,"C=CCC(O)CC(O)CC=C":20614,"CC(=O)CCC(O)CC=C":15678,"OCC(O)C(O)C(O)C(O)C=O":292593,"CC(O)CC(=O)CCC(Cl)CCC=C":7968,"OCC1OC(O)C(O)C(O)C1O":78343,"C=CCC(O)CC=C":10361,"CC(O)CCC=C":3360,"OC(C=C)C1=CC=CC=C1":90263,"OCC1OC(O)CC1O":10304,"CC(O)CC(=O)C1=CC=CC=C1":17910,"O=C1CCC(CC=C)CC1":4910,"C=CCC(O)C1=CC=CC=C1":120118,"C=CC1CCC(O)CC1":4466,"OC1CCC(O)CC1":28160,"OC1CC2CC1C=C2":3819,"C=CC12C3C4C1C5C2C3C45CO":81079,"OC1CC2CCC1C=C2":3579,"O=C1CCC(O)CC1C=C":31093,"OC1C2CC3CC(C2)CC1C3":4543};
   const molF = (() => { let t = 0, n = 0; Object.keys(MM).forEach(k => { t += Math.log(MM[k]); n++; }); const gm = Math.exp(t / n); return smi => (P.MOLF && P.MOLF[smi]) || (MM[smi] ? MM[smi] / gm : 1); })();

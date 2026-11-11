@@ -121,6 +121,14 @@ if __name__ == '__main__':
     for p in PLAYERS:
         a = [r for r in rows if r['player'] == p]; c = [r for r in a if r.get('cut')]
         if a: print('%s: %d rounds, cut short %d (%.1f%%), cut and missed %d, cut and under 5 times the number %d, largest molecule %d atoms' % (p, len(a), len(c), 100.0 * len(c) / len(a), sum(1 for r in c if not r['pass']), sum(1 for r in c if r['total'] < 5 * r['number']), max(r.get('atoms', 0) for r in a)))
+    print('')
+    print('median player, how wide a round is: totals over the number, runs that reached the round')
+    reached, _ = walk(by, 'median')
+    for r in range(1, 10):
+        v = [x[0]['total'] / max(1, x[1]) for x in reached[r]]
+        if len(v) >= 10:
+            tg = TARGET['median'][r - 1] / 100.0; lo = q(v, 1 - tg)
+            print('  round %d: n %d, 10th %.2f, median %.2f, 90th %.2f, 90th over 10th %.0f times; the %d%% line is at %.2f and %.0f%% of the passes above that line are over 5 times it' % (r, len(v), q(v, 0.1), med(v), q(v, 0.9), q(v, 0.9) / max(1e-9, q(v, 0.1)), TARGET['median'][r - 1], lo, 100.0 * sum(1 for t in v if t > 5 * lo) / max(1, sum(1 for t in v if t >= lo))))
     kinds = {}
     for r in rows:
         if r['player'] == 'median': kinds.setdefault(r['kind'], []).append(r['total'] / max(1, r['number']))
