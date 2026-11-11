@@ -27,28 +27,31 @@ function seed(n) {
 // deals from the molecules near that.
 const FEED = [
   // chains
-  ['chain', 'C=CCCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)C'], ['chain', 'CC(O)CCC(=O)CCCC(=O)C'],
-  ['chain', 'C=CCC(=O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(=O)CCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(=O)CCC(O)C'],
+  // the first eight are for rounds one and two. Each has an OH that oxidize cannot take (three carbons on its carbon) or an
+  // aldehyde end that reduce turns into one, and a spare C=C or two that hydrate and hydroborate can act on without harm,
+  // so that most lines of three set the zip off (docs/RIG.md, the novice)
+  ['chain', 'O=CCCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC=C'], ['chain', 'C=CCC(C)(O)CCC(=O)CCC=C'], ['chain', 'O=CCCC(=O)CCC(=O)CCC=C'],
+  ['chain', 'O=CCCC(C)(O)CCC(=O)CCC=C'], ['chain', 'C=CCCC(C)(O)CCC(=O)CCC=C'], ['chain', 'O=CCCC(=O)CCC(C)(O)CCC=C'], ['chain', 'C=CCCC(=O)CCC(=O)CCCC=O'],
   ['chain', 'CC(O)CCC(=O)CCC=CCCC(=O)C'], ['chain', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C'],
   ['chain', 'C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['chain', 'CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'],
   ['chain', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['chain', 'C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   ['chain', 'O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // a ring of carbon on the chain, or a C=O in a ring
-  ['ring', 'C=CCCC(=O)CC1CCCC1=O'], ['ring', 'C=CCCC(O)CCC(=O)C1CCCC1'], ['ring', 'OC1(CCCC1)CCC(=O)CCC(O)C'], ['ring', 'OC1CCCC1CCC(=O)CCC(=O)C'],
+  ['ring', 'C=CCCC(=O)CC1CCCC1=O'], ['ring', 'C=CCCC(O)CCC(=O)C1CCCC1'], ['ring', 'OC1(CCCC1)CCC(=O)CCC=C'], ['ring', 'C=CCCC(=O)CCC1(O)CCCC1'], ['ring', 'OC1(CCCC1)CCC(=O)CCCC=O'], ['ring', 'O=CCCC(=O)CCC1(O)CCCC1'],
   ['ring', 'C=CCCC(=O)CCC(=O)CC1CCCC1=O'], ['ring', 'C=CCCC(O)CCC(=O)CCC1(O)CCCC1'], ['ring', 'OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C'], ['ring', 'CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C'],
   ['ring', 'OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['ring', 'CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C'], ['ring', 'C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C'],
   ['ring', 'CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C'], ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // a benzene ring: an OH on it can start a zip and nothing takes it away
-  ['arene', 'OC1=CC=CC=C1CCC(O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)C'], ['arene', 'C=CCCC(=O)CCC(=O)C1=CC=CC=C1'],
+  ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCCC=O'], ['arene', 'OC1=CC=CC=C1CCC(O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(=O)CCC=C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)C'], ['arene', 'C=CCCC(=O)CCC(=O)C1=CC=CC=C1'],
   ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)C'], ['arene', 'CC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O'], ['arene', 'C=CCCC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O'], ['arene', 'C=CCCC(O)CCC(=O)CCC(=O)C1=CC=C(C=C1)C(=O)CCC(=O)C'],
   ['arene', 'OC(C1=CC=CC=C1)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // many OH: every one can be made a C=O at once
-  ['sugar', 'CC(C)(O)CCC(O)CCC(O)C'], ['sugar', 'OCCCC(O)CCC(O)CCC=C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C'],
+  ['sugar', 'CC(C)(O)CCC(O)CCC(O)C'], ['sugar', 'OCCCC(O)CCC(O)CCC=C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC=C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C'],
   ['sugar', 'OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCCCCC(O)CCC(O)CCC=C'],
   ['sugar', 'OCCCC(O)CCC(O)CCC(=O)CCCCCC(O)CCC(O)CCC(O)CCC=C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'],
   // a cage at the end of the chain
-  ['cage', 'CC(=O)CCC(O)C1CC2CCC1C2'], ['cage', 'CC(=O)CCC(=O)CCC(O)C1CC2CCC1C2'], ['cage', 'CC(O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'C=CCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'],
+  ['cage', 'OC1(CCC(=O)CCC=C)CC2CCC1C2'], ['cage', 'C=CCCC(=O)CCC(C)(O)C1CC2CCC1C2'], ['cage', 'CC(=O)CCC(=O)CCC(O)C1CC2CCC1C2'], ['cage', 'CC(O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'C=CCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'],
   ['cage', 'CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'], ['cage', 'C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'],
   ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2']
 ];
@@ -488,7 +491,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
-  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
+  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.filter(id => dealtIn(run, id)); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   RX.MODE.weld = RULE.weld || 'ol'; if (RULE.reopen && RULE.cascade) RX.reopen(g.m);
@@ -782,6 +785,13 @@ function screenRound(feed, pool, self, R, pages) {
 // beats it by more.
 // growth, late, knee, first and ask belonged to the old number to beat and are no longer read: see PAR
 const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'bh3', 'dehydrate', 'nabh4'] };
+// The deal of the first rounds. Two of the starting reagents wreck a chain when they are fired at it open: dehydrate
+// takes off the OH a zip starts from and grow turns every C=O into an OH. A player who does not yet read the page fires
+// them first half the time. So round one is dealt from the other four, dehydrate joins the deal in round two and grow
+// in round three. Measured with the screen (docs/RIG.md): with four, nine lines of three in ten set the zip off on the
+// molecules of round one; with all six, six in ten.
+RUNG.from = { dehydrate: 2, allyl: 3 };
+const dealtIn = (run, id) => !(RUNG.from[id] > ((run && run.round) || 1));
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
 // A reagent that makes a halide is a dead end without a base to take the halide off again, so the two come as one pick.
@@ -916,7 +926,7 @@ function runPicks(run, rnd) {
   const R = rnd || rand, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
   const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear ? st.gear.filter(id => !run.gear.includes(id)) : [];
   const newS = RULE.cascade ? SELF.filter(q => q.tier <= run.tier && !(run.self || []).includes(q.id) && !(RULE.ban || []).includes(q.id)).map(q => q.id) : [];
-  const from = { self: newS, reagent: newR, gear: newG, level: run.gear.filter(id => !GEARS[id].rule), strong: run.rack, bottle: run.rack };
+  const from = { self: newS, reagent: newR, gear: newG, level: run.gear.filter(id => !GEARS[id].rule), strong: run.rack.filter(id => dealtIn(run, id)), bottle: run.rack.filter(id => dealtIn(run, id)) };
   // one new thing where there is one, then whatever else, three different kinds where possible
   let kinds = ['reagent', 'gear', 'self'].filter(k => from[k].length); for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t; }
   const rest = ['strong', 'bottle', 'level'].filter(k => from[k].length); for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
@@ -945,6 +955,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
