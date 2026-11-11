@@ -19,13 +19,44 @@ Written 2026-11-11. This is the one place that says how the pieces of the game f
 - A helper is used on the molecule when the player chooses.
 - The total after page three is set against the number.
 
-## Choosing the molecule (decided by the owner 2026-11-11, not built)
+## Choosing the molecule (decided by the owner 2026-11-11, built the same day)
 
 - Before each round two molecules of the round's size are shown side by side. One is taken. Taking is always free.
 - The one that is harder to set off pays more: 1 or 2 coins on top, by how far apart the two are on the structural screen (`screen` in `path.js`). The easier one pays nothing extra.
 - The pair can be drawn again for coins: 1, then 2, then 3 within one round. The price starts again at 1 every round.
 - The owner's rule for this and for every coin sink: resource management that is not punishing. A player with no coins still chooses between two and is never stuck. Coins buy more choice, never the right to play.
 - Round one of a first run shows one molecule only; the pair appears from the second run, the redraw the first time a coin is held.
+
+### Built and measured, 2026-11-11
+
+Built behind `RULE.choose` (on). Measured, awaiting review.
+
+- **The screen.** The old page of three kinds of round is now this page. Two real molecules stand side by side, each with its family name, its number to beat in red, and under the harder one a plus and one or two copper coins. A click on a molecule takes it. Under them a turning arrow with the coins it costs draws the pair again. The coins held stand at the bottom left. No sentences.
+- **Kinds of round.** With two molecules to choose from, a plain round is always plain: the special kinds (short, scarce and the rest) are no longer offered between assays, and carrying the last molecule on is gone, as this file says. Rounds 3, 6 and 9 still change one rule: both molecules are shown under that rule, named once between them.
+- **Harder.** Each molecule is read by `screen` with the reactions the run holds: the longest cascade a hand of five can set off, averaged over every hand, plus the share of all lines of three that set off any zip (`easeOf`). The lower of the two is the harder one. It pays 1 coin when it is 0.5 or more behind and 2 coins when it is 2 or more behind (`CHOOSE`). The coins are paid when the round is beaten.
+- **Drawing again.** 1 coin, then 2, then 3, then no more that round (the mark is struck through). The price is 1 again next round. With too few coins the mark and its coins are drawn faint and a click does nothing; both molecules can still be taken.
+- **Order of appearing.** A first run shows one molecule. The pair shows from the second run. The redraw mark shows from the first time a coin is held (saved as `coined`).
+- **Simulated players.** The median player and the planner take the one that reads better once a coin is counted as 0.8 of a step (a mark above the number pays one coin and takes about one more step on a page to reach), and draw again only when both read under 1.5 and a coin would be left. The greedy player takes the one that reads better. The novice takes either.
+
+200 median runs, seeds 1 to 200, the number to beat as it stood (not fitted again), against the same seeds with the old page of three kinds:
+
+| | Old page | Two molecules |
+|---|---|---|
+| Rounds beaten, mean | 7.56 | 7.61 |
+| Wins | 41% | 44.5% |
+| Pass by round | 100, 100, 100, 100, 94, 94, 86, 77, 70 | 100, 100, 100, 100, 96, 91, 85, 82, 74 |
+| Coins held at the start of rounds 2 to 9 | 2.4, 6.0, 10.4, 14.7, 18.7, 22.2, 24.7, 26.7 | 2.4, 5.9, 10.3, 15.0, 19.4, 23.2, 26.4, 28.2 |
+
+- The number to beat still fits: no round moves by more than 5 points.
+- Of 1,632 pairs, 612 were too close to pay anything, 848 offered 1 coin and 172 offered 2. The median player took the harder one in 228 (14%), always for 1 coin and never for 2.
+- It never drew a pair again: no pair read under 1.5 on both sides.
+
+What is weak:
+
+- The median player ends a run holding 28 coins, so one or two more are a small reason to take the harder molecule. That is the coin economy as it stood, not this screen. The coins need a sink before this choice has weight.
+- The harder molecule usually also has the lower number to beat, because the number already carries a factor for each molecule. A player may read the lower number as the easier round.
+- The redraw was clicked for real but the simulated players never use it, so its price is not measured.
+- Frames: `.claude/shots/choose-1.jpg` to `choose-4.jpg`.
 
 ## Between rounds
 
