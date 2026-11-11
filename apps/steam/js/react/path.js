@@ -350,7 +350,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
-  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term) { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; } }
+  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term) { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   synDeal(g, rnd);
@@ -360,7 +360,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
 function close(g) {
   g.chain = false; g.bank += g.P * g.R; g.P = 0;
   g.R = Math.max(rowStart(g), g.gear.includes('clamp') ? g.R * 0.75 : 1);
-  g.lost = g.cur.path.length; g.cur.path = []; g.cur.fresh = new Set(); g.lit = 0;
+  g.lost = g.cur.path.length; g.cur.path = []; g.cur.fresh = new Set(); if (g.ringSet && g.lost > 0) { g.ringSet = g.ringSet.slice(0, -1); g.lit = g.ringSet.length; }
 }
 // true when this option would break the row that is open
 const unbroken = g => g.gear.includes('ouroboros') || (g.gear.includes('tower') && !g.tower);
@@ -412,17 +412,17 @@ function scoreRound(g, o, free) {
   // the homunculus does the last reaction of the page a second time
   if (g.gear.includes('homunculus') && g.pageSteps === stepsOf(g) - 1) emit('homunculus', M('h', 3));
   g.tally.places += r.hits; if (loop) g.tally.loops++; if (first) g.tally.kinds++;
-  if (g.ring) { g.lit = (g.lit || 0) + 1; if (g.lit >= g.ring) { g.lit = 0; emit('circle', { part: 'e', op: 'mul', val: g.ringMul }); } }
+  if (g.ring) { if (!g.ringSet.includes(id)) g.ringSet = g.ringSet.concat(id); g.lit = g.ringSet.length; if (g.lit >= g.ring) { g.lit = 0; g.ringSet = []; emit('circle', { part: 'e', op: 'mul', val: g.ringMul }); } }
   return { ev, rare };
 }
 // What a reaction would do if it were taken now, without taking it: what it adds to each number, what it makes,
 // whether it breaks the row and which pieces of equipment it sets off.
 function peek(g, o) {
-  const cur = g.cur, sv = { lit: g.lit, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
+  const cur = g.cur, sv = { lit: g.lit, ringSet: g.ringSet, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
   if (brk) close(g);
   const sc = scoreRound(g, o); if (o.finish) g.E += SYN.finishExtra * o.r.hits;
   const out = { gain: made(g) - before, dP: g.P - (brk ? 0 : sv.P), dR: g.R - sv.R, dE: g.E - sv.E, breaks: brk, fires: sc.ev.filter(e => GEARS[e.src]).map(e => e.src) };
-  g.lit = sv.lit; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally; Object.assign(g.by, sv.by);
+  g.lit = sv.lit; g.ringSet = sv.ringSet; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally; Object.assign(g.by, sv.by);
   return out;
 }
 // A chain reaction. When a row reaches three, the molecule is set off: every reaction that carries the row on then
@@ -561,9 +561,10 @@ function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1,
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 // Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
-// The transmutation circle under the molecule: every reaction lights a rune, a broken row puts them out, and a full
-// circle multiplies the round and starts again. Each sigil has its own circle.
-const CIRCLE = { plain: { n: 7, mul: 1.5 }, glass: { n: 5, mul: 2 }, occult: { n: 7, mul: 1.5 }, lean: { n: 5, mul: 1.5 }, long: { n: 9, mul: 2.5 }, hoard: { n: 7, mul: 1.5 } };
+// The transmutation circle under the molecule. A reagent lights a rune the first time it is used; using it again
+// lights nothing. A broken row puts out the last rune. A full circle multiplies the round and starts again. So the
+// reagent that keeps the row going and the reagent that feeds the circle are often not the same one.
+const CIRCLE = { plain: { n: 4, mul: 1.5 }, glass: { n: 3, mul: 2 }, occult: { n: 4, mul: 1.5 }, lean: { n: 3, mul: 1.5 }, long: { n: 5, mul: 2.5 }, hoard: { n: 4, mul: 1.5 } };
 const TERMS = [
   { id: 'plain', name: 'plain', note: 'no terms' },
   { id: 'glass', name: 'glass', note: 'mult starts at 3. a break ends it' },

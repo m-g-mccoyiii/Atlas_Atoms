@@ -792,7 +792,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.mode === 'terms') {
       const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('terms', h[0], h[1]);
       P.TERMS.forEach((t, i) => { const q = TERMP(i), c = px(q), hov = st.hover === i, r = hov ? 132 : 116;
-        sigil(x, c, r, t.id, hov ? REDINK : INK, hov ? 9 : 6); marker(x, 52); x.textAlign = 'center'; x.fillStyle = hov ? REDINK : INK; x.fillText(t.name, c[0], c[1] + 132);
+        sigil(x, c, r, t.id, hov ? REDINK : INK, hov ? 12 : 9); marker(x, 52); x.textAlign = 'center'; x.fillStyle = hov ? REDINK : INK; x.fillText(t.name, c[0], c[1] + 132);
         hand(x, 27); x.fillStyle = PENCIL; wrap(x, t.note, 520).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 166 + j * 30)); });
       ink.t.needsUpdate = true; return;
     }
@@ -836,15 +836,19 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         else { for (let q = 0; q < 4; q++) { x.moveTo(cx - r + q * r * 0.5, cy - r * 0.6); x.lineTo(cx - r + q * r * 0.5, cy + r * 0.6); } x.moveTo(cx - r * 1.2, cy + r * 0.5); x.lineTo(cx + r * 0.9, cy - r * 0.5); }
         x.stroke(); } }
     // the transmutation circle lies on the page under the molecule: the run's sigil, and a rune for every reaction in the row
-    if (g && g.ring && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px(C0), R0 = 178, fl = st.ringT ? Math.max(0, 1 - (now - st.ringT) / 800) : 0, GOLD = '#b88a00';
-      x.globalAlpha = 0.5 + 0.5 * fl; sigil(x, c, R0, run.term || 'plain', fl ? GOLD : PENCIL, 4 + 7 * fl, 1); x.globalAlpha = 1;
-      for (let k = 0; k < g.ring; k++) { const a = -Math.PI / 2 + k * 2 * Math.PI / g.ring, q0 = c[0] + Math.cos(a) * R0 * 1.17, q1 = c[1] + Math.sin(a) * R0 * 1.17, on = k < (g.lit || 0) || fl > 0, sz = on ? 15 : 11;
-        x.strokeStyle = on ? GOLD : FAINT; x.lineWidth = on ? 6 : 3; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+    if (g && g.ring && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px(C0), R0 = 196, fl = st.ringT ? Math.max(0, 1 - (now - st.ringT) / 800) : 0, GOLD = '#b88a00', n = g.ring, lit = fl > 0 ? n : (g.lit || 0), up = -Math.PI / 2;
+      x.globalAlpha = 0.62 + 0.38 * fl; sigil(x, c, R0, run.term || 'plain', fl ? GOLD : PENCIL, 7 + 6 * fl, 1); x.globalAlpha = 1;
+      // the lit part of the circle is one gold arc from the top, so how far it has come is read at a glance
+      if (lit > 0) { x.strokeStyle = GOLD; x.lineWidth = 13; x.lineCap = 'round'; x.beginPath(); x.arc(c[0], c[1], R0 * 1.17, up, up + (lit - 0.5) / n * 2 * Math.PI + (lit >= n ? Math.PI / n : 0)); x.stroke(); }
+      for (let k = 0; k < n; k++) { const a = up + k * 2 * Math.PI / n, q0 = c[0] + Math.cos(a) * R0 * 1.17, q1 = c[1] + Math.sin(a) * R0 * 1.17, on = k < lit, sz = on ? 20 : 15;
+        x.fillStyle = '#fbf8ee'; x.strokeStyle = on ? GOLD : PENCIL; x.lineWidth = on ? 8 : 5.5; x.lineCap = 'round'; x.lineJoin = 'round'; x.globalAlpha = on ? 1 : 0.85; x.beginPath();
         if (k % 4 === 0) { x.moveTo(q0, q1 - sz); x.lineTo(q0 + sz, q1 + sz * 0.8); x.lineTo(q0 - sz, q1 + sz * 0.8); x.closePath(); }
         else if (k % 4 === 1) x.arc(q0, q1, sz * 0.85, 0, 6.3);
-        else if (k % 4 === 2) { x.moveTo(q0 - sz, q1); x.lineTo(q0 + sz, q1); x.moveTo(q0, q1 - sz); x.lineTo(q0, q1 + sz); }
-        else { x.moveTo(q0, q1 - sz); x.lineTo(q0 + sz, q1); x.lineTo(q0, q1 + sz); x.lineTo(q0 - sz, q1); x.closePath(); }
-        x.stroke(); }
+        else if (k % 4 === 2) { x.moveTo(q0, q1 - sz); x.lineTo(q0 + sz, q1); x.lineTo(q0, q1 + sz); x.lineTo(q0 - sz, q1); x.closePath(); }
+        else { x.rect(q0 - sz * 0.8, q1 - sz * 0.8, sz * 1.6, sz * 1.6); }
+        x.fill(); if (on) { x.fillStyle = GOLD; x.fill(); } x.stroke(); x.globalAlpha = 1; }
+      // what a full circle gives, written at its foot
+      hand(x, 30); x.textAlign = 'right'; x.fillStyle = lit >= n - 1 ? GOLD : PENCIL; x.fillText('times ' + g.ringMul, c[0] - R0 * 1.17 - 34, c[1] + 10);
       if (fl > 0) dirty = true; }
     st.stains.forEach(k => { const c = px(k); if (k.ring) { x.strokeStyle = 'rgba(120,70,20,' + (k.a * 1.6) + ')'; x.lineWidth = k.r * 0.16; x.beginPath(); x.ellipse(c[0], c[1], k.r, k.r * 0.9, 0.3, 0, 7); x.stroke(); } else { x.fillStyle = 'rgba(150,80,20,' + k.a + ')'; x.beginPath(); x.ellipse(c[0], c[1], k.r, k.r * 0.8, 0.5, 0, 7); x.fill(); } });
     // ink thrown off by the last reaction
@@ -890,7 +894,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         chip(x, tl[0], -72, 0, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, tl[1], 62, 0, on);
         if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 108, -2); }
         hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? (hov ? INK : PENCIL) : FAINT; x.fillText(verb, -4, 34);
-        if (o && g && st.mode === 'play') { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); } }
+        if (o && g && st.mode === 'play') { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); if (g.ring && !(g.ringSet || []).includes(o.id)) { const w0 = x.measureText('+' + fmt(s.gv)).width; x.strokeStyle = '#b88a00'; x.lineWidth = 5; x.lineJoin = 'round'; x.beginPath(); x.moveTo(-186 - w0 - 26, -18); x.lineTo(-186 - w0 - 12, 6); x.lineTo(-186 - w0 - 40, 6); x.closePath(); x.stroke(); } } }
         if (!s.fin && o) { x.fillStyle = rgb(colOf(s.id)); for (let k = 0; k < Math.min(6, g.left[s.id] || 0); k++) { x.beginPath(); x.arc(-112 + k * 17, 27, 5.5, 0, 6.3); x.fill(); } }
         if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-120, 46); x.lineTo(112, 44); x.stroke(); } }
       x.restore();
