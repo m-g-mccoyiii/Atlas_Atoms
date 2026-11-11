@@ -30,3 +30,22 @@ Nothing needed. If rings carried the atoms of the ring (`o.atoms` of four or mor
 ## Browser
 
 The one tab I could open (`seed`) was navigated away by another agent to 8792 and 8766 three times; I reloaded 8791 and rechecked each time.
+
+## Second pass (after the merge as c6b53c7)
+
+Branch reset to steam first. Frames are in `C:\Work\atlas-atoms\.claude\shots\page2-1.jpg` to `page2-10.jpg` (1 to 3 and 10: a real ring step, played through the page's own functions and slowed five times with a clock wrapper in the test page only; 4: circles; 5: the pair page; 6: a 34-atom molecule; 7: a lost round; 8: a won round; 9: the single molecule page).
+
+### Done and seen
+
+1. A ring step is seen on the molecule: a short bar under each of the two parts, the new bond drawn closing between them, the count sitting just above that spot, the gain written at that spot, then it drops out under the molecule and runs left to the total. The old dashed arc is gone. Seen on a real chain (round 1, molecule `O=CCCC(=O)CCC(C)(O)CCC=C`, hydrate, pcc, bh3): the count 1, +142, the bond line and both bars. The gain starts on the molecule, so it overlaps atoms for a moment; it does not overlap the total.
+2. Circles: an empty one carries its place in the order (faint 1, 2, 3); a placed one is only the color of its reaction (no digit, no waste preview, since the harness says no preview). Click still takes one back (tried with a real click). Dragging one circle onto another calls `AA.rxPath.swapQueue`; it does nothing because path.js has none. Needed: `swapQueue(g, i, j)` or `swapQueue(i, j)` (either is handled by arity), which must swap `g.queue[i]` and `g.queue[j]` and keep the page's view right.
+3. Drops under each reaction are not drawn when `AA.rxPath.RULE.usesFree`, `infiniteUses` or `unlimitedUses` is true (checked with `usesFree`; no rule sets it yet; path.js must pick one name). The redraw mark loses its struck drop in the same case. The coin pills at the marks are bigger (copper, solid at the marks that are passed, lighter at the others).
+4. Pair page: each molecule at most 2.8 times, sized to its half; the redraw is a turning arrow with its price as coins and the coins held are a stack; the harder one shows its extra coins. No sentences. The title still carries the round's rule word (`assay`, `short`, `2 pages`) when the rules give one.
+5. Round end: the word reached, coins as copper coins, the next arrow. A lost round shows the shortfall as a number in red and the coins earned beside it as a stack with its count; "beaten" and "best" are gone. The leftover ring marks no longer show on the end page.
+6. A 34-atom folded molecule stays clear of the reaction list, the total and the go arrow (round 9 frame). The label of a round rule (`scarce`, `1 use`) moved to the left column, above the round number, off the molecule.
+
+### Not done or seen but not mine
+
+- The yellow `Pr` beads on a folded molecule (the fold option `bead`) are discs on the molecule. I did not change the default fold.
+- Ring 2 and later of a chain: in the slowed test the pane did not draw the molecule while the second ring ran, with the old code as well as the new, so I only have clean frames of ring 1 and of the whole chain at normal speed.
+- The word sounds are `sfx.flag(k)` only.
