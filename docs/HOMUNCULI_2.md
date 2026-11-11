@@ -352,3 +352,15 @@ The owner on the fold: "That's not what an acid does and also isn't really that 
 - Not real chemistry.
 - The choice: page one, and pages two and three start three rings longer; or page three, on the longest row.
 - The jar still needs a source of ammonia across runs (first idea: late molecules that carry nitrogen give it off when hydrate hits them). To be worked out.
+
+## The owner's rule on feeding, 2026-11-11
+
+Whatever a homunculus is fed must be something the player's reactions can make. No jar may depend on a by-product nothing gives off.
+
+| Homunculus | Fed by | Made by | State |
+|---|---|---|---|
+| water | water | dehydrate (start), the burner | in the game |
+| hydrogen | hydrogen | oxidize (start) | in the game |
+| carbon dioxide | carbon dioxide | grow then oxidize, with the new change to oxidize | proposed, being measured |
+| acid | fumes | hydrate or dehydrate fired (start) | to build |
+| ammonia | nothing in a run (once a round) | the jar across runs has no source yet | open |

@@ -115,3 +115,9 @@ After a win the next stake opens. A stake must change a rule, not only raise the
 | the book | not built |
 | record for each kit | not built |
 | stakes | the factor exists; the choice is not on a screen |
+
+## The pool in a run stays small (the owner, 2026-11-11)
+
+Reactions are unlocked for good over many runs, and the list of unlocked ones may grow long. The pool carried in one run may not, or there is no strategy. The model is Vampire Survivors: many things unlocked, few slots in a run.
+
+First proposal, to be measured: a run's pool holds at most eight reactions. It starts with the kit's six. Taking a ninth means putting one back. Which unlocked reactions are offered in a run is drawn from everything unlocked, so two runs see different ones.
