@@ -33,7 +33,9 @@ const KIN = {
   arene: { name: 'arene', tier: 1, odds: 16, col: '#a8791a', tok: '{e} +0.2', note: 'one place', fx: c => (c.hits === 1 ? { part: 'e', op: 'add', val: 0.2 } : null) },
   sugar: { name: 'sugar', tier: 2, odds: 13, col: '#c0489a', tok: '{r} +0.2', note: 'each extra place', fx: c => (c.hits > 1 ? { part: 'r', op: 'add', val: 0.2 * (c.hits - 1) } : null) },
   // not a family to be dealt: a state any molecule can be built into. Every reaction multiplies extra, more per link.
-  resonance: { name: 'resonance', tier: 0, odds: 0, col: '#b0189a', tok: '{e} times 1.05', note: 'every reaction', fx: () => ({ part: 'e', op: 'mul', val: 1.05 }) },
+  // It was 1.05 a link until 2026-11-10: at six links that is 1.3 a reaction, and it alone put the four phenyl molecules
+  // four times above the rest and doubled the spread of a round.
+  resonance: { name: 'resonance', tier: 0, odds: 0, col: '#b0189a', tok: '{e} times 1.02', note: 'every reaction', fx: () => ({ part: 'e', op: 'mul', val: 1.02 }) },
   cage: { name: 'cage', tier: 3, odds: 9, col: '#c8261c', tok: '{e} +0.3', note: 'a free reaction', fx: c => (c.free ? { part: 'e', op: 'add', val: 0.3 } : null) }
 };
 const KIN_OF = {};
@@ -53,6 +55,21 @@ function kinsOf(m) {
 const kinOf = feed => (typeof feed === 'string' && KIN_OF[feed]) || 'chain';
 // keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
 const DIAL = { keep: 3, steps: 3 };
+// Rules of a round that bound it and make a turn a choice. Each can be switched off (0 or false) to measure without it.
+//   atoms: a reaction that would grow the molecule past this many heavy atoms is not offered.
+//   chain: the most free reactions one overreact chain can run.
+//   loops: how many times a round a return to an earlier form may carry a row on.
+//   loopsAll: any player may do that. Off, only the recycler allows it.
+//   ground: a reaction carries the row on when it acts on what any of the last this-many reactions of the row made.
+//         0 or 1: only the last one.
+//   uses: how many times a reagent can be used in a whole round. Pages and the free chain spend the same uses. 0: two a page.
+//   fork: a chain that could go on with two or more reagents stops for the player to choose.
+//   hand: how many reagents of the rack a page shows. 0: five, dealt again up to forty times until two of them act.
+//   redraw: once a page the hand can be dealt again for one use of the fullest reagent in it.
+//   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
+//         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 0, fork: false, hand: 0, redraw: false, bank: 0, bankMin: 2 };
+const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
 // What a molecule does to itself once it has been set off, with no reagent held: opened by how deep the suppliers go.
@@ -199,12 +216,15 @@ const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + 
 function options(g, free) {
   const cur = g.cur, out = {}, self = free && SELFMODE.auto ? (g.self || []).filter(id => !g.kinds.includes(id)) : [];
   if (!free && (g.syn ? g.pageSteps : g.trail.length) >= stepsOf(g)) return out;
+  const size = RULE.atoms ? heavy(g.m) : 0, back = (RULE.loopsAll || g.gear.includes('recycler')) && (!RULE.loops || (g.loopsCont || 0) < RULE.loops);
   g.kinds.concat(self).forEach(id => {
-    const own = self.includes(id); if (!own && !g.left[id]) return;
+    const own = self.includes(id); if (!own && !(g.left[id] > 0) && !(g.free && g.free[id])) return;
     const sites = RX.CARDS[id].find(g.m); if (!sites.length) return;
     const t = tryOne(g, g.m, id), r = t.r; if (!r.hits && !r.spoiled) return;
+    // past the size limit a molecule can still change, but it cannot grow
+    if (RULE.atoms) { const n = heavy(t.model); if (n > RULE.atoms && n > size) return; }
     const loop = cur.seen.has(r.sig), spoil = r.spoiled > 0;
-    out[id] = { id, model: t.model, map: t.map, r, loop, spoil, self: own, cont: r.hits > 0 && (r.hot || own) && cur.path.length > 0 && (!loop || g.gear.includes('recycler')), atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
+    out[id] = { id, model: t.model, map: t.map, r, loop, spoil, self: own, cont: r.hits > 0 && (r.hot || own) && cur.path.length > 0 && (!loop || back), atoms: sites.reduce((a, s) => a.concat(s.atoms), []) };
   });
   return out;
 }
@@ -335,22 +355,50 @@ const made = g => Math.round((g.bank + g.P * g.R) * g.E);
 const held = g => Math.round(g.P * g.R * g.E);
 const mult = g => g.R * g.E;
 const rowStart = g => (g.gear.includes('magnet') ? 2.5 : 1);
+// how many times a reagent can be used in a round
+const usesOf = (g, id) => (g.brief === 'scarce' ? Math.ceil(RULE.uses / 2) : TIER[id] === 'rare' ? Math.max(1, RULE.uses - 1) : RULE.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0);
+const handOf = g => (RULE.hand || SYN.offer) + (g.gear.includes('carousel') ? 1 : 0);
+// n reagents from the rack. With a hand, reagents that still have uses come first and those in skip come last, and
+// nothing is dealt again: a hand on which nothing acts is a hand the player has to deal with.
+function draw(g, R, rack, n, skip) {
+  const pull = (pool, out) => { while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; };
+  if (!RULE.hand) { const live = rack.filter(id => RX.CARDS[id].find(g.m).length); let offer = []; for (let t = 0; t < 40; t++) { offer = pull(rack.slice(), []); if (offer.filter(id => live.includes(id)).length >= Math.min(2, live.length)) break; } return offer; }
+  const has = id => !RULE.uses || g.left[id] > 0, old = id => !!skip && skip.includes(id), out = [];
+  pull(rack.filter(id => has(id) && !old(id)), out); pull(rack.filter(id => has(id) && old(id)), out); pull(rack.filter(id => !has(id)), out);
+  return out;
+}
+// the reagents of a page: the hand, anything equipment adds to it, and which of them are a rare version on this page
+function dealHand(g, R, rack, offer, again) {
+  const was = again ? g.kinds.filter(id => !rack.includes(id)) : [];
+  g.kinds = rack.filter(id => offer.includes(id)).concat(was);
+  if (!RULE.uses) g.left = {};
+  if (!again && g.gear.includes('mystery')) { const all = RUNG.start.concat(...SUPPLY.map(q => q.reagents)).filter((id, i, a) => a.indexOf(id) === i && RX.CARDS[id] && !PAIR[id] && !g.kinds.includes(id) && !rack.includes(id) && RX.CARDS[id].find(g.m).length); if (all.length) { const id = all[Math.floor(R() * all.length)]; g.kinds.push(id); if (RULE.uses) g.left[id] = 1; } }
+  if (!again) { if (g.back && RX.CARDS[g.back] && !g.kinds.includes(g.back)) g.kinds.push(g.back); g.back = null; }
+  if (!RULE.uses) g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0); });
+  else g.kinds.forEach(id => { if (g.left[id] == null) g.left[id] = 1; });
+  // plenty: with a budget of uses, a reagent that is plenty on a page spends none while that page is open
+  const plenty = id => { g.rare[id] = 'plenty'; if (RULE.uses) g.free[id] = true; else g.left[id] = 9; };
+  g.rare = {}; g.free = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1) * (g.rareMul || 1)) { const t = RARE[Math.floor(R() * RARE.length)]; if (t === 'plenty') plenty(id); else g.rare[id] = t; } });
+  if (g.gear.includes('ouija') && g.kinds.length) plenty(g.kinds[Math.floor(R() * g.kinds.length)]);
+}
 function synDeal(g, rnd) {
-  const R = rnd || rand, rack = g.rackIds || synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length), n = SYN.offer + (g.gear.includes('carousel') ? 1 : 0); let offer = [];
-  for (let t = 0; t < 40; t++) {
-    const pool = rack.slice(); offer = [];
-    while (offer.length < n && pool.length) offer.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
-    if (offer.filter(id => live.includes(id)).length >= Math.min(2, live.length)) break;
-  }
+  const R = rnd || rand, rack = g.rackIds || synRack(), n = handOf(g); let offer = draw(g, R, rack, n, null);
   if (g.fore) offer = g.fore.filter(id => rack.includes(id));
-  g.fore = null; if (g.gear.includes('orb') && g.syn && (g.page || 1) < pagesOf(g)) { const pool = rack.slice(); g.fore = []; while (g.fore.length < n && pool.length) g.fore.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); g.fore = rack.filter(id => g.fore.includes(id)); }
-  g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false;
-  if (g.gear.includes('mystery')) { const all = RUNG.start.concat(...SUPPLY.map(q => q.reagents)).filter((id, i, a) => a.indexOf(id) === i && RX.CARDS[id] && !PAIR[id] && !g.kinds.includes(id) && RX.CARDS[id].find(g.m).length); if (all.length) g.kinds.push(all[Math.floor(R() * all.length)]); }
-  if (g.back && RX.CARDS[g.back] && !g.kinds.includes(g.back)) g.kinds.push(g.back); g.back = null;
-  g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0); });
-  g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1) * (g.rareMul || 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
-  if (g.gear.includes('ouija') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = 9; g.rare[id] = 'plenty'; }
-  if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = Math.max(1, g.left[id] - 1); }
+  g.fore = null; if (g.gear.includes('orb') && g.syn && (g.page || 1) < pagesOf(g)) { g.fore = draw(g, R, rack, n, null); g.fore = rack.filter(id => g.fore.includes(id)); }
+  g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false;
+  dealHand(g, R, rack, offer, false);
+  if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; if (g.left[id] > 0) g.left[id] = Math.max(1, g.left[id] - 1); }
+}
+// The redraw: once a page the hand is put back and dealt again from the rack, reagents that were not in it first.
+// It costs one use of the reagent in the hand that has the most left.
+function redrawCost(g) { let best = null; g.kinds.forEach(id => { if (g.free && g.free[id]) return; if (g.left[id] > 0 && (!best || g.left[id] > g.left[best])) best = id; }); return best; }
+const canRedraw = g => !!RULE.redraw && !!RULE.hand && !!g.syn && !g.over && !g.chain && !g.redrawn && (g.rackIds || synRack()).length > handOf(g) && (g.pageSteps < stepsOf(g)) && !!redrawCost(g);
+function redraw(g, rnd) {
+  if (!canRedraw(g)) return false;
+  const R = rnd || rand, rack = g.rackIds || synRack(), pay = redrawCost(g), was = g.kinds.slice();
+  g.left[pay]--; g.redrawn = true; g.paid = pay; g.tally.redraws = (g.tally.redraws || 0) + 1;
+  dealHand(g, R, rack, draw(g, R, rack, handOf(g), was), true);
+  return true;
 }
 function synBegin(feed, relaxed, rnd, gear, run) {
   const g = begin(feed, relaxed, [], null, gear || []);
@@ -362,6 +410,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
+  g.left = {}; g.free = {}; g.rare = {}; g.loopsCont = 0; if (RULE.uses) (g.rackIds || synRack()).forEach(id => { g.left[id] = usesOf(g, id); });
   synDeal(g, rnd);
   return g;
 }
@@ -369,7 +418,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
 function close(g) {
   g.chain = false; g.bank += g.P * g.R; g.P = 0;
   g.R = Math.max(rowStart(g), g.gear.includes('clamp') ? g.R * 0.75 : 1);
-  g.lost = g.cur.path.length; g.cur.path = []; g.cur.fresh = new Set(); if (g.ringSet && g.lost > 0) { g.ringSet = g.ringSet.slice(0, -1); g.lit = g.ringSet.length; }
+  g.lost = g.cur.path.length; g.cur.path = []; g.cur.fresh = new Set(); g.cur.layers = []; if (g.ringSet && g.lost > 0) { g.ringSet = g.ringSet.slice(0, -1); g.lit = g.ringSet.length; }
 }
 // true when this option would break the row that is open
 const unbroken = g => g.gear.includes('ouroboros') || (g.gear.includes('tower') && !g.tower);
@@ -427,25 +476,45 @@ function scoreRound(g, o, free) {
 // What a reaction would do if it were taken now, without taking it: what it adds to each number, what it makes,
 // whether it breaks the row and which pieces of equipment it sets off.
 function peek(g, o) {
-  const cur = g.cur, sv = { lit: g.lit, ringSet: g.ringSet, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
+  const cur = g.cur, sv = { lit: g.lit, ringSet: g.ringSet, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, layers: cur.layers, lost: g.lost, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
   if (brk) close(g);
   const sc = scoreRound(g, o); if (o.finish) g.E += SYN.finishExtra * o.r.hits;
   const out = { gain: made(g) - before, dP: g.P - (brk ? 0 : sv.P), dR: g.R - sv.R, dE: g.E - sv.E, breaks: brk, fires: sc.ev.filter(e => GEARS[e.src]).map(e => e.src) };
-  g.lit = sv.lit; g.ringSet = sv.ringSet; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; g.tally = sv.tally; Object.assign(g.by, sv.by);
+  g.lit = sv.lit; g.ringSet = sv.ringSet; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; cur.layers = sv.layers; g.lost = sv.lost; g.tally = sv.tally; Object.assign(g.by, sv.by);
   return out;
 }
 // A chain reaction. When a row reaches three, the molecule is set off: every reaction that carries the row on then
 // happens by itself, one after another, without using up the page's reactions, until nothing on the page carries
 // it on or the reagents run out. free marks a reaction that happened that way.
 // A row of three or more charges the page. Once the page's own reactions are used up, the player can set it off.
-const charged = g => !g.fired && !g.over && g.cur.path.length >= SYN.streak && Object.keys(options(g, true)).some(id => options(g, true)[id].cont);
-function fire(g) { if (!charged(g)) return false; g.chain = true; g.fired = true; return true; }
+const charged = g => { if (g.fired || g.over || g.cur.path.length < SYN.streak) return false; const o = options(g, true); return Object.keys(o).some(id => o[id].cont); };
+function fire(g) { if (!charged(g)) return false; g.chain = true; g.fired = true; g.chainLen = 0; return true; }
+// the reactions that would carry a running chain on. None, and the chain is over.
+function chainOpts(g) {
+  if (!g.chain || g.over) return [];
+  if (RULE.chain && (g.chainLen || 0) >= RULE.chain) { g.chain = false; return []; }
+  const o = options(g, true), out = Object.keys(o).filter(id => o[id].cont).map(id => o[id]);
+  if (!out.length) g.chain = false;
+  return out;
+}
+// The next link when the chain takes it by itself. With forks on and two or more reagents that could carry it on,
+// nothing is returned and the chain stays open: the player chooses from chainOpts, or banks.
 function chainNext(g) {
-  if (!g.chain || g.over) return null;
-  const o = options(g, true); let best = null, top = -1;
-  Object.keys(o).forEach(id => { if (!o[id].cont) return; const v = peek(g, o[id]).gain; if (v > top) { top = v; best = o[id]; } });
-  if (!best) g.chain = false;
+  const a = chainOpts(g); if (!a.length || (RULE.fork && a.length > 1)) return null;
+  let best = null, top = -1; a.forEach(q => { const v = a.length > 1 ? peek(g, q).gain : 0; if (v > top) { top = v; best = q; } });
   return best;
+}
+// The bank: the open row is closed on purpose and pays RULE.bank times what it holds. It takes one of the page's
+// reactions. At a fork of a chain it takes none and ends the chain.
+const canBank = g => !!RULE.bank && !!g.syn && !g.over && g.cur.path.length >= RULE.bankMin && g.P > 0 && (g.chain || g.pageSteps < stepsOf(g));
+const bankGain = g => Math.round(g.P * g.R * (RULE.bank - 1) * g.E);
+function bank(g) {
+  if (!canBank(g)) return false;
+  const len = g.cur.path.length, v = g.P * g.R * (RULE.bank - 1); g.bank += v; close(g);
+  if (g.chain) g.chain = false; else g.pageSteps++;
+  g.tally.banks = (g.tally.banks || 0) + 1;
+  g.trail.push({ id: '#bank', hits: 0, cont: false, bank: true, len, free: false, ev: [{ src: 'bank', part: 'p', op: 'mul', val: RULE.bank, P: g.P, R: g.R, E: g.E, made: made(g) }] });
+  return true;
 }
 function synTake(g, o, free) {
   const cur = g.cur;
@@ -453,8 +522,13 @@ function synTake(g, o, free) {
   if (breaks(g, o)) { close(g); g.tally.breaks++; }
   const hold = !o.cont && cur.path.length > 0 && !g.gear.includes('ouroboros') && unbroken(g);
   const sc = scoreRound(g, o, free); if (hold) g.tower = true;
-  cur.fresh = new Set(o.r.made); cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
-  g.left[o.id]--; g.m = o.model; if (!free) g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
+  { const mk = new Set(o.r.made);
+    if (RULE.ground > 1 && cur.path.length > 1 && o.map) { const live = new Set(o.model.atoms), prev = (cur.layers || []).slice(0, RULE.ground - 1).map(S => { const T = new Set(); S.forEach(a => { const c = o.map.get(a); if (c && live.has(c)) T.add(c); }); return T; }); cur.layers = [mk].concat(prev); cur.fresh = new Set(); cur.layers.forEach(S => S.forEach(a => cur.fresh.add(a))); }
+    else { cur.layers = [mk]; cur.fresh = mk; } }
+  cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
+  if (o.loop && o.cont) g.loopsCont = (g.loopsCont || 0) + 1;
+  if (!o.self && !(g.free && g.free[o.id]) && g.left[o.id] > 0) g.left[o.id]--;
+  g.m = o.model; if (!free) g.pageSteps++; else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
   const set = false;
   g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free });
   if (shatter) synEnd(g);
@@ -506,7 +580,7 @@ function synPlay(feed, rnd, gear, run, style) {
       from.forEach(id => { if (o[id].r.hits > o[best].r.hits || (o[id].r.hits === o[best].r.hits && R() < 0.5)) best = id; });
       synTake(g, o[best]);
     }
-    if (fire(g)) for (let c = chainNext(g); c; c = chainNext(g)) synTake(g, c, true);
+    if (fire(g)) for (let a = chainOpts(g); a.length; a = chainOpts(g)) { let c = a[0], top = -1; if (a.length > 1) a.forEach(q => { const v = peek(g, q).gain; if (v > top) { top = v; c = q; } }); synTake(g, c, true); }
     if (!turn(g, rnd)) break;
   }
   synEnd(g);
@@ -569,7 +643,8 @@ function runBriefs(run, rnd) {
   if (as) return [{ brief: as, pays: 2, assay: true, model: salt(modelOf(feeds[0]), R), kin: kinOf(feeds[0]), src: feeds[0], quota: runQuota(run, feeds[0], as) }];
   const sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
   // the molecule left by the last round can be carried on with, while a reagent held still acts on it
-  const carry = run.last && run.rack.filter(id => RX.CARDS[id].find(run.last).length).length >= 1;
+  // (with a size limit, a reagent that could only grow a molecule already at the limit does not count)
+  const carry = run.last && (() => { const g0 = begin(run.last, false, run.rack.slice(), null, []); g0.left = {}; run.rack.forEach(id => { g0.left[id] = 1; }); return Object.keys(options(g0)).length >= 1; })();
   return [{ brief: carry ? 'carry' : 'plain', pays: null }, { brief: sp[0].id, pays: pay[0] }, { brief: sp[1].id, pays: pay[1] }].map((o, i) => { const own = o.brief === 'carry'; o.model = own ? run.last : salt(modelOf(feeds[i]), R); o.kin = own ? (run.kin || 'chain') : kinOf(feeds[i]); o.src = own ? (run.src || null) : feeds[i]; o.quota = runQuota(run, own ? run.last : feeds[i], o.brief); return o; });
 }
 function runChoose(run, o) { run.kin = o.kin || 'chain'; run.src = o.src || null; run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
@@ -665,6 +740,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

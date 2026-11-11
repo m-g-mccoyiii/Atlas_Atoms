@@ -431,9 +431,10 @@ function start(app) {
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
   function refresh() {
     prods.forEach(freeMol); prods = []; slots = [];
-    const live = st.mode === 'play' && !g.over, o = live ? P.options(g) : {};
+    const live = st.mode === 'play' && !g.over, fork = live && g.chain, o = live ? P.options(g, fork) : {};
+    if (fork) Object.keys(o).forEach(id => { if (!o[id].cont) delete o[id]; });
     g.kinds.forEach((id, i) => { slots[i] = { id, o: o[id] || null }; });
-    const fin = live && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
+    const fin = live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
       if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 23.4, z }; LAB[i] = { x: 16.6, z: z + 0.4 }; SCS[i] = 0.4; }); } }
@@ -530,7 +531,7 @@ function start(app) {
   function setOff() {
     if (st.mode !== 'fuse' || !P.fire(g)) return;
     callout('overreact', '', REDINK); sfx.fuse(); sfx.over(); st.shake = 2.4; st.flash = 1; st.flashC = '214,69,58'; st.hold = performance.now() + 220; spray(60, REDINK, true);
-    const c = P.chainNext(g); if (!c) { st.mode = 'play'; return nextPage(); }
+    const c = P.chainNext(g); if (!c && g.chain) { st.chainN = 0; st.mode = 'play'; return refresh(); } if (!c) { st.mode = 'play'; return nextPage(); }
     st.chainN = 1; const k = g.kinds.indexOf(c.id); st.mode = 'play'; react(c, c.id, false, LAB[k] ? { x: LAB[k].x - 0.8, z: LAB[k].z + 0.5 } : { x: 17, z: -6 }, true);
   }
   // finishes at once whatever the last reaction was still playing, so that the next one can start
@@ -555,7 +556,7 @@ function start(app) {
     flush(); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center); freeMol(center); center = buildMol(g.m, null, false); SC_MAIN = fitMain(center); place(center, C0, st.sc); center.hot = g.cur.path.length ? marksOf(center, Array.from(g.cur.fresh), 0.01, 0.2) : []; center.groups = groupsOf(center); center.ghosts = []; st.pop = 1;
     rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh(); st.sq = 0.8; st.kvz += 10;
     // a page on which no reagent acts turns itself
-    if (!slots.some(q => q && q.o)) { const tok = st.tok; st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 350); }
+    if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g)) { const tok = st.tok; st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 350); }
   }
   // Everything the player sees and hears when a reaction lands. Each change arrives on its own beat, in the order it
   // was scored: the reagent at each place, then the row, then each piece of equipment. Returns how long it takes.
@@ -642,8 +643,28 @@ function start(app) {
   function pick(i) {
     const s = slots[i], o = s && s.o;
     if (!o || !prods[i] || st.mode !== 'play') return;
-    st.chainN = 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, false);
+    const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
+  // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
+  const BANK = { x: 3.3, z: 12.0 }, DRAW = { x: 16.9, z: -10.2 };
+  const bankAt = () => st.mode === 'play' && g && P.canBank(g) && Math.abs(hit.x - BANK.x) < 2.6 && Math.abs(hit.z - BANK.z) < 1.7;
+  const drawAt = () => st.mode === 'play' && g && P.canRedraw(g) && Math.abs(hit.x - DRAW.x) < 1.7 && Math.abs(hit.z - DRAW.z) < 1.5;
+  const stuck = () => st.mode === 'play' && !!g && !g.over && !g.chain && !slots.some(q => q && q.o);
+  const pagesAt = () => stuck() && hit.x > PAGES.x - 1.2 && hit.x < PAGES.x + 1.8 * P.pagesOf(g) + 1.6 && Math.abs(hit.z - PAGES.z) < 1.4;
+  function doBank() {
+    if (st.mode !== 'play' || !g || !P.canBank(g)) return;
+    flush(); setHover(-1); const wasChain = g.chain, gain = P.bankGain(g); P.bank(g);
+    st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = [];
+    st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: BANK.x, z: BANK.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5);
+    if (wasChain || g.pageSteps >= P.stepsOf(g)) { const tok = st.tok; st.mode = 'move'; slots = []; prods.forEach(freeMol); prods = []; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 260); }
+    else refresh();
+    dirty = true;
+  }
+  function doRedraw() {
+    if (st.mode !== 'play' || !g || !P.canRedraw(g)) return;
+    flush(); P.redraw(g); st.drawT = performance.now(); sfx.feed(); refresh(); dirty = true;
+  }
+  function doTurn() { if (stuck()) nextPage(); }
   // reactions that fold the molecule into a new shape: the model is settled fully first, and the move is slow enough to follow
   const FOLDS = { cyclize: 1, snap: 1, aromatize: 1 };
   // the clear lane just below the molecule as it stands
@@ -700,10 +721,10 @@ function start(app) {
       // a page that is used up with a row of three or more on it waits for the player to set it off
       if (!g.chain && g.pageSteps >= P.stepsOf(g) && P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); slots = []; prods.forEach(freeMol); prods = []; dirty = true; const tk = st.tok; setTimeout(() => { if (st.tok === tk && st.mode === 'fuse') setOff(); }, 280); return; }
       // a chain that has been set off takes the next reaction by itself
-      { const wasChain = g.chain, c = P.chainNext(g); if (!c && wasChain) { st.chainN = 0; st.mode = 'play'; return nextPage(); } if (c) { st.chainN = (st.chainN || 0) + 1; const k = g.kinds.indexOf(c.id); return react(c, c.id, false, LAB[k] ? { x: LAB[k].x - 0.8, z: LAB[k].z + 0.5 } : { x: 17, z: -6 }, true); } st.chainN = 0; }
+      { const wasChain = g.chain, c = P.chainNext(g); if (!c && wasChain && g.chain) { st.mode = 'play'; return refresh(); } if (!c && wasChain) { st.chainN = 0; st.mode = 'play'; return nextPage(); } if (c) { st.chainN = (st.chainN || 0) + 1; const k = g.kinds.indexOf(c.id); return react(c, c.id, false, LAB[k] ? { x: LAB[k].x - 0.8, z: LAB[k].z + 0.5 } : { x: 17, z: -6 }, true); } st.chainN = 0; }
       st.mode = 'play'; refresh();
       // a page with nothing left to do turns itself
-      if (!slots.some(q => q && q.o)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, Math.max(300, L.dur - L.unlock + 120)); }
+      if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, Math.max(300, L.dur - L.unlock + 120)); }
     }, L.unlock);
     if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
     dirty = true;
@@ -905,7 +926,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 108, -2); }
         hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? (hov ? INK : PENCIL) : FAINT; x.fillText(verb, -4, 34);
         if (o && g && st.mode === 'play') { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); if (g.ring && !(g.ringSet || []).includes(o.id)) { const w0 = x.measureText('+' + fmt(s.gv)).width; x.strokeStyle = '#b88a00'; x.lineWidth = 5; x.lineJoin = 'round'; x.beginPath(); x.moveTo(-186 - w0 - 26, -18); x.lineTo(-186 - w0 - 12, 6); x.lineTo(-186 - w0 - 40, 6); x.closePath(); x.stroke(); } } }
-        if (!s.fin && o) { x.fillStyle = rgb(colOf(s.id)); for (let k = 0; k < Math.min(6, g.left[s.id] || 0); k++) { x.beginPath(); x.arc(-112 + k * 17, 27, 5.5, 0, 6.3); x.fill(); } }
+        if (!s.fin) { const cc = rgb(colOf(s.id)), nL = Math.min(6, g.left[s.id] || 0); x.globalAlpha = on ? 1 : 0.45;
+          if (g.free && g.free[s.id]) { x.strokeStyle = cc; x.lineWidth = 4; x.beginPath(); x.ellipse(-120, 28, 9, 6.5, 0, 0, 6.3); x.moveTo(-93, 28); x.ellipse(-102, 28, 9, 6.5, 0, 0, 6.3); x.stroke(); }
+          else for (let k = 0; k < nL; k++) { x.fillStyle = cc; x.beginPath(); x.arc(-126 + k * 14, 28, 6, 0, 6.3); x.fill(); }
+          x.globalAlpha = 1; }
         if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-120, 46); x.lineTo(112, 44); x.stroke(); } }
       x.restore();
     });
@@ -943,15 +967,41 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
-    const tr = g.trail.slice(st.pageStart);
+    const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
     for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); swipe(x, a0, b0, 34); }
-    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = tr[k] ? rgb(colOf(tr[k].id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
+    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }); ring(x, c, 30, 27, 5, INK, 0.1 * k); if (k < g.pageSteps) { x.strokeStyle = tr[k] && !tr[k].bank ? rgb(colOf(tr[k].id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
     // how much has been made, and the number to beat
     const q = px(MADE), bq = px(BEAT), beaten = st.shown >= st.quota, done = st.mode === 'done';
     { const txt = fmt(st.shown), size = fit(x, txt, 112 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), 400, marker), mw = x.measureText(txt).width; x.textAlign = 'left'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
     }
     hand(x, 30); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText('beat', bq[0], bq[1] - 62);
     marker(x, 46); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(bq[0] - 60, bq[1] - 46); x.lineTo(bq[0] + 60, bq[1] - 49); x.stroke();
+    // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
+    // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
+    if (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') && P.RULE.hand) {
+      const rack = (g.rackIds || []).filter(id => !g.kinds.includes(id)), c = px(DRAW), can = play && P.canRedraw(g), hov = st.mark === 'draw', pay = can ? P.redrawCost(g) : null, age = st.drawT ? (now - st.drawT) / 350 : 9;
+      if ((g.rackIds || []).length > g.kinds.filter(id => (g.rackIds || []).includes(id)).length || rack.length) {
+        x.save(); x.translate(c[0], c[1]); if (age < 1) { x.rotate(age * 6.283); dirty = true; }
+        x.strokeStyle = can ? INK : FAINT; x.lineWidth = hov ? 10 : 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(0, 0, 25, 0.9, 5.6); x.stroke();
+        { const a = 5.6, hx = Math.cos(a) * 25, hy = Math.sin(a) * 25; x.beginPath(); x.moveTo(hx - 15, hy - 5); x.lineTo(hx, hy); x.lineTo(hx - 3, hy + 16); x.stroke(); }
+        x.restore();
+        if (pay) { x.fillStyle = rgb(colOf(pay)); x.beginPath(); x.arc(c[0] + 50, c[1] + 2, 8, 0, 6.3); x.fill(); x.strokeStyle = REDINK; x.lineWidth = 4; x.beginPath(); x.moveTo(c[0] + 38, c[1] + 12); x.lineTo(c[0] + 62, c[1] - 8); x.stroke(); }
+        let dx = 92; rack.forEach(id => { const nL = Math.min(8, g.left[id] || 0); x.fillStyle = rgb(colOf(id)); x.globalAlpha = 0.85; if (!nL) { x.strokeStyle = FAINT; x.lineWidth = 3; x.beginPath(); x.arc(c[0] + dx, c[1], 6, 0, 6.3); x.stroke(); dx += 16; } for (let k = 0; k < nL; k++) { x.beginPath(); x.arc(c[0] + dx, c[1], 6, 0, 6.3); x.fill(); dx += 15; } x.globalAlpha = 1; dx += 14; });
+      }
+    }
+    // The bank: a tray with an arrow into it, and what banking the open row would add now.
+    if (g && play && P.RULE.bank) {
+      const c = px(BANK), can = P.canBank(g), hov = st.mark === 'bank', col = can ? INK : FAINT;
+      if (can || g.cur.path.length > 0) {
+        x.strokeStyle = col; x.lineWidth = hov ? 9 : 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+        x.moveTo(c[0] - 34, c[1] - 14); x.lineTo(c[0] - 34, c[1] + 8); x.lineTo(c[0] + 34, c[1] + 8); x.lineTo(c[0] + 34, c[1] - 14);
+        x.moveTo(c[0], c[1] - 52); x.lineTo(c[0], c[1] - 10); x.moveTo(c[0] - 13, c[1] - 24); x.lineTo(c[0], c[1] - 10); x.lineTo(c[0] + 13, c[1] - 24); x.stroke();
+        hand(x, 28); x.textAlign = 'center'; x.fillStyle = can ? PENCIL : FAINT; x.fillText('bank', c[0], c[1] + 40);
+        if (can) { marker(x, hov ? 44 : 38); x.textAlign = 'left'; x.fillStyle = '#8a6a00'; x.fillText('+' + fmt(P.bankGain(g)), c[0] + 50, c[1] + 4); }
+      }
+    }
+    // a page on which nothing acts: an arrow after the page numbers turns it
+    if (g && stuck()) { const c = px({ x: PAGES.x + 1.8 * P.pagesOf(g) - 0.3, z: PAGES.z }), hov = st.mark === 'pages'; x.strokeStyle = INK; x.lineWidth = hov ? 9 : 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(c[0], c[1]); x.lineTo(c[0] + 44, c[1]); x.moveTo(c[0] + 28, c[1] - 14); x.lineTo(c[0] + 44, c[1]); x.lineTo(c[0] + 28, c[1] + 14); x.stroke(); }
     // what the last reaction made, at the right end of the band, with anything a rare reagent added above it
     st.pings = st.pings.filter(q => now - q.t < 800); st.pings.forEach(q => {
       const k = (now - q.t) / 800, c = px(q), up = c[1] - 30 - 46 * (1 - Math.pow(1 - k, 2));
@@ -1040,16 +1090,19 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     for (let i = 0; i < P.FAMILIES.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x >= 6.5) return 100 + i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'terms') { const i = termAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'terms') { const i = termAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { const mk = bankAt() ? 'bank' : drawAt() ? 'draw' : pagesAt() ? 'pages' : ''; if (mk !== st.mark) { st.mark = mk; dirty = true; } } { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mark || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
   cv.addEventListener('pointerdown', () => { if (!twistAt()) return; st.drag = { x: hit.x, z: hit.z }; doTwist(); if (morph && morph.slow) { morph.scrub = true; morph.kDrag = 0; morph.kHeld = 0; } });
   cv.addEventListener('pointermove', () => { if (st.drag && morph && morph.scrub) morph.kDrag = Math.min(1, Math.hypot(hit.x - st.drag.x, hit.z - st.drag.z) / 5); });
   root.addEventListener('pointerup', () => { if (!st.drag) return; st.drag = null; if (morph && morph.scrub) { morph.scrub = false; morph.t0 = performance.now() - morph.s0 - (morph.K || 0) * 460; } });
-  cv.addEventListener('click', e => { if (st.mode === 'terms') { const i = termAt(e); if (i >= 0) chooseTerm(i); return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else if (kitAt('extinguisher')) doDouse(); else { const b = byAt(); if (b) spend(b); } });
+  cv.addEventListener('click', e => { if (st.mode === 'terms') { const i = termAt(e); if (i >= 0) chooseTerm(i); return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (bankAt()) doBank(); else if (drawAt()) doRedraw(); else if (pagesAt()) doTurn(); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else if (kitAt('extinguisher')) doDouse(); else { const b = byAt(); if (b) spend(b); } });
   root.addEventListener('keydown', e => {
     if (e.key >= '1' && e.key <= '6') { if (st.mode === 'terms') chooseTerm(+e.key - 1); else if (st.mode === 'pick') takePick(+e.key - 1); else if (st.mode === 'brief') chooseBrief(+e.key - 1); else pick(+e.key - 1); }
     else if (e.key === 'f' || e.key === 'F') pick(FIN);
     else if (e.key === 't' || e.key === 'T') doTwist();
+    else if (e.key === 'b' || e.key === 'B') doBank();
+    else if (e.key === 'd' || e.key === 'D') doRedraw();
+    else if (e.key === 'n' || e.key === 'N') doTurn();
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
     else if (e.key === 'r' || e.key === 'R') newRun();
   });
@@ -1136,10 +1189,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
-    setOff, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
+    setOff, bank: doBank, redraw: doRedraw, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,
-    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, charged: P.charged(g), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

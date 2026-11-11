@@ -22,13 +22,28 @@
 
   // ---------- looking ahead: the state of a round is saved, a reaction is taken, and the state is put back ----------
   function snap(g) {
-    const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused };
+    const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn };
     c.seen = new Set(c.seen); return s;
   }
   function back(g, s) {
-    const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused;
+    const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn;
   }
   const gainOf = (g, o) => P.peek(g, o).gain;
+  const BANK = '#bank';
+  // what a move adds at once: a reaction, or the bank
+  const gainId = (g, o, id) => (id === BANK ? P.bankGain(g) : gainOf(g, o[id]));
+  const doMove = (g, o, id) => { if (id === BANK) P.bank(g); else P.synTake(g, o[id]); };
+  // a chain that is running is played to its end, the biggest gain at every fork. Returns how many links it ran
+  function runChain(g, fork, rnd, each) {
+    let n = 0;
+    for (let a = P.chainOpts(g); a.length; a = P.chainOpts(g)) {
+      let c = a[0];
+      if (a.length > 1) { c = fork ? fork(g, a, rnd) : null; if (!c) { let top = -Infinity; a.forEach(q => { const v = gainOf(g, q); if (v > top) { top = v; c = q; } }); } }
+      if (c === BANK) { P.bank(g); break; }
+      P.synTake(g, c, true); n++; if (g.over || (each && each())) break;
+    }
+    return n;
+  }
   // What the page is worth where it stands. A planner also counts what the open row will multiply on later pages,
   // and what a charged page would add when it goes off.
   function leaf(g, cfg) {
@@ -46,14 +61,17 @@
     // the finishing reagent ends the round, so it is weighed only as the last reaction of the last page
     const fin = cfg.finish && g.page >= P.pagesOf(g) && g.pageSteps === P.stepsOf(g) - 1 ? P.finishOpt(g) : null;
     if (fin) top = { val: P.made(g) + gainOf(g, fin), seq: ['#finish'] };
-    if (!ids.length) { const v = leaf(g, cfg); return v > top.val ? { val: v, seq: [] } : top; }
-    let cand = ids;
-    if (cfg.keep) { const c = ids.filter(id => !P.breaks(g, o[id])); if (c.length) cand = c; }
+    let cand = ids, kept = false;
+    if (cfg.keep) { const c = ids.filter(id => !P.breaks(g, o[id])); if (c.length) { cand = c; kept = g.cur.path.length > 0; } }
+    // a player that keeps the row banks only when nothing in the hand keeps it; one that may break weighs the bank always
+    const canB = cfg.bank && depth > 0 && P.canBank(g) && !kept;
+    if (!cand.length && !canB) { const v = leaf(g, cfg); return v > top.val ? { val: v, seq: [] } : top; }
     if (cfg.beam && cand.length > cfg.beam) {
       const gs = {}; cand.forEach(id => { gs[id] = gainOf(g, o[id]); }); const by = cand.slice().sort((a, b) => gs[b] - gs[a]), keepIds = by.slice(0, cfg.beam);
       const c1 = by.find(id => o[id].cont), c0 = by.find(id => !o[id].cont); [c1, c0].forEach(id => { if (id && !keepIds.includes(id)) keepIds.push(id); }); cand = keepIds;
     }
-    cand.forEach(id => { const s = snap(g); P.synTake(g, o[id]); const r = search(g, depth - 1, cfg); back(g, s); if (r.val > top.val) top = { val: r.val, seq: [id].concat(r.seq) }; });
+    if (canB) cand = cand.concat(BANK);
+    cand.forEach(id => { const s = snap(g); doMove(g, o, id); const r = search(g, depth - 1, cfg); back(g, s); if (r.val > top.val) top = { val: r.val, seq: [id].concat(r.seq) }; });
     return top;
   }
 
@@ -61,7 +79,7 @@
   // move(g, o, fin, ctx, rnd): the reagent to take from the options o, '#finish', or null to end the page
   // pick(run, picks, rnd): which of the three to take.  round(run, briefs, rnd): which round to play.
   const anyOf = (a, rnd) => a[Math.floor(rnd() * a.length)];
-  const topGain = (g, o, ids) => { let best = ids[0], top = -Infinity; ids.forEach(id => { const v = gainOf(g, o[id]); if (v > top) { top = v; best = id; } }); return best; };
+  const topGain = (g, o, ids) => { let best = ids[0], top = -Infinity; ids.forEach(id => { const v = gainId(g, o, id); if (v > top) { top = v; best = id; } }); return best; };
   const worthOf = (run, o, pairs) => {
     if (o.kind === 'gear') { let w = WORTH[o.id] || 1; if (pairs) { run.gear.forEach(h => { w *= syn(o.id, h); }); w /= o.id === 'pact' ? 2 : o.id === 'idol' ? 1.5 : o.id === 'hourglass' ? 1.25 : 1; } return w; }
     if (o.kind === 'level') return 1 + ((WORTH[o.id] || 1) - 1) * OTHER.level;
@@ -79,7 +97,7 @@
   function planned(cfg) {
     return (g, o, fin, ctx) => {
       const ids = Object.keys(o);
-      if (!ctx.plan || !ctx.plan.length || (ctx.plan[0] !== '#finish' && !o[ctx.plan[0]]) || (ctx.plan[0] === '#finish' && !fin)) {
+      if (!ctx.plan || !ctx.plan.length || (ctx.plan[0] === BANK ? !P.canBank(g) : ctx.plan[0] === '#finish' ? !fin : !o[ctx.plan[0]])) {
         // a molecule that has grown very large is slow to react, so the look-ahead is shortened on it
         const left = P.stepsOf(g) - g.pageSteps, size = g.m.atoms.length, deep = size > BIG.far ? 1 : size > BIG.near ? 2 : cfg.depth;
         if (size > BIG.far && !cfg.keep) { ctx.plan = []; return ids.length ? topGain(g, o, ids) : null; }
@@ -90,22 +108,61 @@
     };
   }
   const ORDER = ['gear', 'reagent', 'level', 'strong', 'bottle'];
+  // the moves on a page: every reaction on offer and, when it is allowed, the bank
+  const movesOf = (g, o) => { const ids = Object.keys(o); if (P.canBank(g)) ids.push(BANK); return ids; };
+  const conts = (g, o) => Object.keys(o).filter(id => o[id].cont && g.cur.path.length > 0).length;
+  // At a fork of a chain: each way on is played out to the end of the chain, and so is stopping here with the bank.
+  function forkPlan(g, a) {
+    let best = null, top = -Infinity;
+    a.forEach(q => { const s = snap(g); P.synTake(g, q, true); runChain(g, null, null); const v = P.made(g); back(g, s); if (v > top) { top = v; best = q; } });
+    if (P.canBank(g) && P.made(g) + P.bankGain(g) > top) return BANK;
+    return best;
+  }
+  // PLAYERS[x].move(g, o, fin, ctx, rnd): a reagent, '#bank', '#finish', or null to end the page
+  //   .redraw(g, o, rnd): whether to deal the hand again now.   .fork(g, a, rnd): which way a chain goes on, or '#bank'
   const PLAYERS = {
-    // takes the biggest number six times in ten and anything otherwise; picks and rounds at random
-    novice: { move: (g, o, fin, ctx, rnd) => { const ids = Object.keys(o); if (fin) { o = Object.assign({ '#finish': fin }, o); ids.push('#finish'); } if (!ids.length) return null; return rnd() < 0.6 ? topGain(g, o, ids) : anyOf(ids, rnd); },
+    // takes the biggest number six times in ten and anything otherwise; picks and rounds at random. It banks and
+    // redraws without a reason.
+    novice: { move: (g, o, fin, ctx, rnd) => { const ids = movesOf(g, o); if (fin) { o = Object.assign({ '#finish': fin }, o); ids.push('#finish'); } if (!ids.length) return null; return rnd() < 0.6 ? topGain(g, o, ids) : anyOf(ids, rnd); },
+      redraw: (g, o, rnd) => rnd() < 0.12, fork: (g, a, rnd) => (rnd() < 0.6 ? null : P.canBank(g) && rnd() < 0.34 ? BANK : anyOf(a, rnd)),
       pick: (run, picks, rnd) => Math.floor(rnd() * picks.length), round: (run, briefs, rnd) => Math.floor(rnd() * briefs.length) },
-    // the player the matrix was measured with: the biggest number now, equipment first, the plain round
-    greedy: { move: (g, o) => { const ids = Object.keys(o); return ids.length ? topGain(g, o, ids) : null; },
+    // the player the matrix was measured with: the biggest number now, equipment first, the plain round. The bank is
+    // one more number to it, so it banks whenever that is the biggest.
+    greedy: { move: (g, o) => { const ids = movesOf(g, o); return ids.length ? topGain(g, o, ids) : null; },
+      fork: (g, a) => { let c = BANK, top = P.canBank(g) ? P.bankGain(g) : -Infinity; a.forEach(q => { const v = gainOf(g, q); if (v > top) { top = v; c = q; } }); return c; },
       pick: (run, picks) => { let bi = 0; picks.forEach((o, i) => { if (ORDER.indexOf(o.kind) < ORDER.indexOf(picks[bi].kind)) bi = i; }); return bi; }, round: () => 0 },
-    // keeps the row, looks three reactions ahead, takes the pick worth most in a build, spends water
-    median: { move: planned({ depth: 3, keep: true, finish: true }), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
-    // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher
-    planner: { move: planned({ depth: 3, beam: 2, deep: true, finish: true }), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true }
+    // keeps the row, looks three reactions ahead, takes the pick worth most in a build, spends water. Redraws when a
+    // row is open and nothing in the hand keeps it; banks when even then nothing does. Takes the biggest link at a fork.
+    median: { move: planned({ depth: 3, keep: true, finish: true, bank: true }), redraw: (g, o) => g.cur.path.length >= 2 && !conts(g, o), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
+    // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
+    // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
+    planner: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: forkPlan, pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    // the planner with no way to end a row on purpose: it keeps the row whenever it can and never banks
+    keeper: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, keep: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a); return c === BANK ? null : c; }, pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true }
   };
+
+  // ---------- how much of a choice a turn is ----------
+  // A turn is one reaction of a page. Its options are the reactions on offer and the bank. near: the second biggest
+  // gain is within 30% of the biggest. later: it is not, but the second option followed by the biggest gain for two
+  // more turns (and the chain, if the page ends charged) makes more than the first option followed the same way.
+  // one: a row is open and at most one reaction keeps it.
+  function after(g, o, id) {
+    const s = snap(g); doMove(g, o, id);
+    for (let k = 0; k < 2 && !g.over; k++) { const o2 = P.options(g), ids = movesOf(g, o2); if (!ids.length) break; doMove(g, o2, topGain(g, o2, ids)); }
+    if (!g.over && P.fire(g)) runChain(g, null, null);
+    const v = P.made(g); back(g, s); return v;
+  }
+  function weigh(g, o, d) {
+    const ids = movesOf(g, o); d.n++; d.opts += ids.length; if (g.cur.path.length > 0) { d.open++; if (conts(g, o) <= 1) d.one++; }
+    if (ids.length < 2) { d.forced++; return; }
+    const gs = ids.map(id => ({ id, v: gainId(g, o, id) })).sort((a, b) => b.v - a.v);
+    if (gs[1].v >= 0.7 * gs[0].v) { d.near++; return; }
+    if (after(g, o, gs[1].id) > after(g, o, gs[0].id)) d.later++;
+  }
 
   // ---------- one round, played as the page plays it ----------
   function playRound(g, run, pol, rnd, log) {
-    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length); let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length;
+    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0 } : null; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
     const big = () => { atoms = Math.max(atoms, g.m.atoms.length); if (g.m.atoms.length > cap) cut = 1; return cut; };
     for (;;) {
       ctx.plan = null;
@@ -120,21 +177,26 @@
         // finding it takes seconds
         if (pol.twist && !twisted && g.self.length && g.cur.path.length > 0 && g.m.atoms.length <= BIG.twist) { twisted = true; const t = P.selfOptions(g)[0]; if (t && gainOf(g, t) > 0) { P.synTake(g, t, true); steps++; ctx.plan = null; continue; } }
         const o = P.options(g), fin = g.page >= P.pagesOf(g) && g.pageSteps < P.stepsOf(g) && (!pol.lastOnly || g.pageSteps === P.stepsOf(g) - 1) ? P.finishOpt(g) : null;
+        // the hand is dealt again when the player wants it, and always when nothing in it acts: on the page that is
+        // then the only thing left to click
+        if (P.canRedraw(g) && g.pageSteps < P.stepsOf(g) && ((!Object.keys(o).length && !fin && !P.canBank(g)) || (pol.redraw && pol.redraw(g, o, rnd)))) { P.redraw(g, rnd); ctx.plan = null; continue; }
+        if (dec && g.pageSteps < P.stepsOf(g) && (Object.keys(o).length || P.canBank(g))) weigh(g, o, dec);
         const id = pol.move(g, o, fin, ctx, rnd);
-        if (!id) break;
+        if (!id) { idle += Math.max(0, P.stepsOf(g) - g.pageSteps); break; }
         if (id === '#finish') { if (pol.wish && run.assayNow) P.wish(g, run); P.synFinish(g, fin); steps++; break; }
+        if (id === BANK) { P.bank(g); ctx.plan = ctx.plan && ctx.plan.length ? ctx.plan : null; continue; }
         P.synTake(g, o[id]); steps++; if (big()) break;
       }
       if (cut && !g.over) { P.synEnd(g); pages.push(g.total); break; }
       if (g.over) { pages.push(g.total); break; }
-      if (P.fire(g)) { let n = 0; for (let c = P.chainNext(g); c; c = P.chainNext(g)) { P.synTake(g, c, true); n++; steps++; if (g.over || big()) break; if (pol.douse && g.gear.includes('extinguisher') && !g.doused) { const o2 = P.options(g, true); if (!Object.keys(o2).some(k => o2[k].cont)) P.douse(g); } } chainMax = Math.max(chainMax, n); }
+      if (P.fire(g)) { const n = runChain(g, (g2, a, r2) => { forks++; return pol.fork ? pol.fork(g2, a, r2) : null; }, rnd, () => { steps++; if (big()) return true; if (pol.douse && g.gear.includes('extinguisher') && !g.doused && g.chain) { const o2 = P.options(g, true); if (!Object.keys(o2).some(k => o2[k].cont)) P.douse(g); } return false; }); chainMax = Math.max(chainMax, n); }
       if (cut && !g.over) P.synEnd(g);
       if (g.over) { pages.push(g.total); break; }
       if (g.page >= P.pagesOf(g)) { if (pol.wish && run.assayNow) P.wish(g, run); P.synEnd(g); pages.push(g.total); break; }
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -143,6 +205,7 @@
   // noCarry: the round that carries the last molecule on is not offered.  relaxed: settle molecules as the page does
   function runSim(player, seed, opts) {
     opts = opts || {}; const pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
+    const rule0 = Object.assign({}, P.RULE); if (opts.rule) Object.assign(P.RULE, opts.rule);
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
     const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || []);
     if (opts.noGear) run.noGear = true;
@@ -158,6 +221,7 @@
       P.runChoose(run, b); run.assayNow = !!P.assayOf(run);
       const g = P.synBegin(run.feed, false, rnd, run.gear, run);
       const row = { seed, player, round: r, mol: b.src || '', carry: b.brief === 'carry' ? 1 : 0, family: run.kin, kind: b.brief, assay: run.assayNow ? 1 : 0, gear: run.gear.map(id => id + ((run.lv[id] || 1) > 1 ? ':' + run.lv[id] : '')).join(' '), rack: run.rack.map(id => id + ((run.grade[id] || 1) > 1 ? '^' + run.grade[id] : '') + (run.uses[id] ? '+' + run.uses[id] : '')).join(' '), offered: picks.map(o => o.kind + ':' + o.id).join(' '), took: pi >= 0 ? picks[pi].kind + ':' + picks[pi].id : '', number: run.quota };
+      if (opts.dec) row.dec = true;
       if (P.quotaParts) { const k = P.quotaParts(run, run.src); row.par = k.par; row.mult = k.mult; }
       const total = playRound(g, run, pol, rnd, row);
       row.total = total; row.pass = total >= run.quota ? 1 : 0; row.live = alive ? 1 : 0;
@@ -166,7 +230,7 @@
       if (!row.pass) { alive = false; if (!opts.all) break; }
       P.runKeep(run, g); P.runPay(run);
     }
-    out.won = out.beaten >= 9; P.seed(); P.MODEL.relaxed = true;
+    out.won = out.beaten >= 9; P.seed(); P.MODEL.relaxed = true; Object.assign(P.RULE, rule0);
     return out;
   }
   // one round on one molecule with a given rack and equipment, for measuring a molecule by itself
@@ -187,7 +251,8 @@
     if (job.seed > to) return 'done ' + key + ' runs ' + job.n + ' files ' + (job.file - base);
     const t0 = performance.now(), rows = [];
     while (job.seed <= to && performance.now() - t0 < (ms || 22000)) {
-      try { const r = runSim(players[job.p], job.seed, opts); r.rounds.forEach(q => rows.push(q)); } catch (e) { rows.push({ seed: job.seed, player: players[job.p], error: e.message }); P.seed(); P.MODEL.relaxed = true; }
+      const rule0 = Object.assign({}, P.RULE);
+      try { const r = runSim(players[job.p], job.seed, opts); r.rounds.forEach(q => rows.push(q)); } catch (e) { rows.push({ seed: job.seed, player: players[job.p], error: e.message }); P.seed(); P.MODEL.relaxed = true; Object.assign(P.RULE, rule0); }
       job.n++;
       if (++job.p >= players.length) { job.p = 0; job.seed++; }
     }
@@ -211,5 +276,5 @@
   const simPart = (tag, k, base, opts) => simGo(tag, PARTS[k][0], PARTS[k][1], PARTS[k][2], base + 1000 * k, opts);
   window.simPart = simPart;
   window.runSim = runSim; window.roundSim = roundSim; window.simChunk = simChunk; window.simMols = simMols; window.simGo = simGo; window.simStat = () => stat;
-  window.SIM = { PLAYERS, WORTH, PAIRS, REAGENT, EASE, search, snap, back, playRound };
+  window.SIM = { PLAYERS, WORTH, PAIRS, REAGENT, EASE, search, snap, back, playRound, weigh, after, runChain };
 })();
