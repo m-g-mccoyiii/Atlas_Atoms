@@ -8,9 +8,9 @@ These are targets to measure against. The pass rates are judgment, not data, and
 
 | Round | Pass rate, median player | Novice | Planner | Median margin over the number |
 |---|---|---|---|---|
-| 1 | 98% | 90% | 99% | 3 times |
-| 2 | 95% | 80% | 99% | 2.5 |
-| 3, assay | 85% | 55% | 97% | 1.6 |
+| 1 | not a target: see below | wins the three rounds within a few tries | not a target | about 2 to 4 times |
+| 2 | not a target | the same | not a target | about 2 to 4 |
+| 3, assay | not a target | the same | not a target | about 2 to 4 |
 | 4 | 92% | 55% | 98% | 2 |
 | 5 | 88% | 40% | 95% | 1.8 |
 | 6, assay | 70% | 20% | 90% | 1.4 |
@@ -19,6 +19,14 @@ These are targets to measure against. The pass rates are judgment, not data, and
 | 9, assay | 50% | 5% | 70% | 1.2 |
 
 That is a win in about one run in eight for a median player and about four in ten for a planner. Median rounds beaten: novice 3, median player 6, planner 9.
+
+**Rewritten 2026-11-11 to the owner's targets (`LOOP.md`, "How hard it is" and "Tiers").** The rows for rounds 1 to 3 above said margins of 3, 2.5 and 1.6 and pass rates of 98, 95 and 85; they contradicted what the owner asked and are replaced.
+
+- Tier 1 (rounds 1 to 3, the bare game): a new player wins the three-round run within a few tries (measured as the share of novice runs that win all three: about 1 in 3). Each round is close, not beaten many times over: the median player beats it by about 2 to 4 times. Something is still undecided before the last page in at least 40 rounds in 100 (passing, or the next flag). The median player is expected to pass these rounds; what is in doubt for it is the flag reached.
+- Tier 2 (rounds 1 to 6, helpers held): the median player wins the six-round run about 1 time in 4.
+- Tier 3 (rounds 1 to 9, a creature too): the median player wins the nine-round run about 1 time in 10 and the planner about 1 in 3.
+- So the rows for rounds 4 to 9 above are not targets any more. Rounds 4 to 9 are not to be fitted so that the median player passes each one most of the time: they are fitted to the run-level shares above, with helpers and creatures held, when those tiers are worked.
+
 
 | Target | Value | Why |
 |---|---|---|

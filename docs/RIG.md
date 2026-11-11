@@ -4,7 +4,132 @@ Built 2026-11-10. The newest measure is the first section below (the fifth of 20
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11, sixth: the leak in the rig, and tier one again, headless
+
+Measured, awaiting review: nothing here says a section passes. No rule of play and no number to beat was changed. What changed is the rig, where it runs, and one thing in `path.js` that makes the game match what was measured. The section after this one is the tier one measure this checks.
+
+### The leak
+
+The reaction rules read one global, `AA.rx.MODE` (in `rules.js`). `path.js` set it from `RULE` only when a round began (`synBegin`). Everything read before the first round of a run, which is the reading of the pair of molecules (`easeOf`, the structural screen), ran under whatever the run before had left. On a fresh page that was `co2` off, although `RULE.co2` is on by default. Two faults came from it.
+
+1. The first run on a page, and any run that followed a run with other options, read its first pair under the wrong rule. The median player then took a different molecule and the whole run differed. Seed 65 alone beat 6 rounds; after seed 64 it beat 0. The 0 is the right answer under the rules as they stand: with `co2` on at the pair, the player takes a molecule on which it makes 1,119 against 1,200.
+2. `easeOf` keeps its readings in a table keyed by molecule, reagents and kinds of cascade, and not by the mode. A reading made with `co2` off was used again with it on, and the other way round, for as long as the page lived.
+
+### The fix
+
+- `path.js`: `modeSync(run)` sets the modes from `RULE` and from the run. It is called when a round begins, when the pair is drawn or read, and when the picks are dealt. The table in `easeOf` is keyed by the modes and by the size limit as well.
+- `path.js`: a bare run (`RULE.bare`, or tier 1) gives off no carbon dioxide whatever `RULE.co2` says, since it has no jar to fill. Before this a tier 1 run on the page played with `co2` on, while the fifth measure was made with `co2` off. The game now plays what was measured.
+- `sim.js`: `runSim` saves `P.RULE` and `AA.rx.MODE`, sets the modes from the rules before the run, and puts both back in a `finally`, so an error cannot leave a rule behind. `simChunk`, `simGo`, `simPart` and the sink job all go through `runSim`.
+- Not changed: `scrRound` and `gapRound` in `casc.js` set `RULE.atoms` and `RULE.fresh` and put them back at the end without a `finally`. They do not touch the modes.
+
+### The proof
+
+All headless, each in its own page.
+
+| Check | Result |
+|---|---|
+| `leak.js` (every value of `AA.rxPath` and `AA.rx` before and after a run) | nothing changed (it reported `rx.MODE` before the fix) |
+| Seed 65 after seed 64 against seed 65 alone, median player, default options | the same |
+| 60 runs, seeds 1 to 60, median player, default options: forwards, backwards, and split over two pages | the same in every round of every run |
+| 60 runs, tier one options, median player: forwards and backwards | the same |
+| 60 runs, novice, default options: forwards and backwards | the same |
+
+### What the leak did to earlier numbers
+
+- **The fifth measure (tier one) was not touched.** It passed `co2: false`, so the mode never differed from the rule. The 1,200 unseen runs (tag u2, seeds 1,001 to 1,300, four players) were run again headless on the fixed rig (tag hu2): every round of every run is the same, molecule, number and total. The seen runs (tag t2) were played before the numbers were baked, so they cannot be compared round by round; played again on the baked numbers (tag h2) they give the same tables to within a point (below).
+- **The fourth measure (the bare game) passed `co2: false` as well** and is untouched for the same reason. Its rounds four to nine are out of date for another reason: see "The gap" below.
+- **Runs made with default options after `RULE.co2` became the default** are touched a little: the first run of each page load, and the first run after a change of options in one tab. Seeds 1 to 100 of the median player with the pair read under the wrong rule in every run (the old `simN.js`) against the fixed rig: 2 or 3 runs in 100 differ (seeds 47, 65, 85), and rounds beaten is 7.4 both ways. In the recording page only one run in a page load was wrong, so under 1 run in 100.
+- **Not to be trusted without a rerun:** any comparison that switched `co2` on and off in one tab, because of the table in `easeOf`. That is the carbon dioxide source read in `HOMUNCULI_2.md` (100 median runs on and off) and the dry ice reads in `HOMUNCULI.md` and `JARS.md`. The creature and helper reads of the same day used one setting of `co2` throughout and are off by the first run of a page at most.
+
+### Tier one again, clean
+
+Options as the fifth measure: `{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`, the baked Par 1,210, 1,920, 2,580. Three measures: seeds 1 to 500 (tag h2), seeds 1,001 to 1,300 (tag hu2, the same runs as u2), and a new unseen measure four times the size the gate asks, seeds 2,001 to 4,000 (tag hv). A pass rate is of the runs that reached the round.
+
+| | Fifth measure, seen | Clean, seeds 1 to 500 | Fifth, unseen (300) | Clean, the same 300 | Clean, 2,000 unseen |
+|---|---|---|---|---|---|
+| Novice pass, rounds 1, 2, 3 | 85, 65, 66 | 85, 65, 66 | 82, 69, 60 | 82, 69, 60 | 81, 66, 66 |
+| Greedy pass | 97, 90, 90 | 97, 90, 90 | 97, 92, 91 | 97, 92, 91 | 98, 91, 92 |
+| Median pass | 100, 99, 96 | 100, 99, 96 | 100, 100, 98 | 100, 100, 98 | 100, 99, 97 |
+| Planner pass | 100, 99, 98 | 100, 99, 98 | 100, 100, 99 | 100, 100, 99 | 100, 99, 98 |
+| Wins all three: novice, greedy, median, planner | 36.4, 79.2, 95.0, 97.0 | 36.2, 79.0, 95.0, 97.2 | 33.7, 81.7, 97.3, 98.3 | 33.7, 81.7, 97.3, 98.3 | 35.6, 81.5, 95.8, 97.3 |
+| Novice, tries to win | 2.7 | 2.8 | 3.0 | 3.0 | 2.8 |
+| Median margin over the number | 4.05, 2.98, 3.01 | 4.05, 2.98, 3.02 | 5.23, 3.28, 2.80 | 5.23, 3.28, 2.80 | 4.20, 3.10, 3.00 |
+| Novice margin | | 2.17, 1.34, 1.41 | | 2.08, 1.46, 1.24 | 2.08, 1.46, 1.49 |
+| Last page changes the flag reached, median | 43, 47, 41 | 43, 47, 41 | 47, 54, 43 | 47, 54, 43 | 45, 47, 42 |
+| The same, novice | 38, 31, 40 | 38, 31, 40 | | 35, 35, 31 | 35, 32, 36 |
+| Novice over greedy, medians | 0.74, 0.58, 0.59 | 0.74, 0.58, 0.58 | | | 0.66, 0.67, 0.62 |
+| Planner over greedy, medians | 2.07, 1.86, 1.50 | 2.07, 1.85, 1.48 | | | 1.92, 1.89, 1.50 |
+| Molecules in a round, most over least, median player | 2.2, 2.5, 2.0 | 2.2, 2.5, 2.0 | 4.1 in round 1 | 4.1, 2.3, 1.9 | 1.6, 1.5, 1.4 |
+
+Flags reached on the 2,000 unseen runs, share of every run, none / stable / unstable / volatile / overreact:
+
+| | Round 1 | Round 2 | Round 3 |
+|---|---|---|---|
+| novice | 19 / 28 / 32 / 15 / 6 | 35 / 31 / 22 / 11 / 2 | 34 / 31 / 22 / 10 / 2 |
+| greedy | 2 / 23 / 38 / 25 / 13 | 9 / 36 / 31 / 17 / 7 | 8 / 31 / 33 / 19 / 9 |
+| median | 0 / 9 / 38 / 31 / 22 | 1 / 19 / 43 / 24 / 13 | 3 / 23 / 39 / 22 / 12 |
+| planner | 0 / 3 / 27 / 34 / 35 | 1 / 10 / 38 / 33 / 19 | 2 / 16 / 38 / 29 / 15 |
+
+What it says:
+
+- **The tier one numbers stand.** The leak moved nothing, so Par for rounds one to three was not fitted again.
+- **The two misses a reviewer found on unseen seeds were the size of the sample.** With 300 runs a molecule is played about 8 to 20 times in a round and one unlucky molecule read 4.1 times apart; on 2,000 runs, with 50 to 250 plays each, the molecules are 1.6, 1.5 and 1.4 times apart and the round one margin is 4.2, not 5.2. The molecule factors were left alone: a cap was not needed.
+- **Against the owner's targets** (`LOOP.md`, "How hard it is"): the novice wins the three rounds 36 runs in 100, 2.8 tries (met). The median player beats the rounds by 4.2, 3.1 and 3.0 times (round one a little over "about 2 to 4"). The last page changes the flag reached in 45, 47 and 42 rounds in 100 for the median player (met, two of them close to the gate of 40) and 35, 32, 36 for the novice (under).
+- **Still true from the fifth measure, and not a matter of numbers:** the median player wins tier one 96 times in 100, so only the flag is in doubt for it; a dealt reaction has no use left on a third of the novice's pages; the molecule does at most three things by itself on a page; every page shows the same four reactions. The turn measures (second option worth taking on 18 turns in 100) were not run again: they do not depend on the leak.
+- `BALANCE.md` rows for rounds one to three were rewritten to the owner's targets, which the old rows (margins 3, 2.5, 1.6) contradicted.
+
+### The gap between the headless default and the earlier sections
+
+`HEADLESS.md` found 7.4 rounds beaten and 48 wins in 100 for the median player with default options, against 6.1 to 6.4 rounds and 16 to 24 wins in the third and fourth measures. It is not the leak: the fixed rig gives 7.39 rounds and 49 wins on the same 100 seeds. It is the options and the rules. Same seeds (1 to 200, median player, failing ignored and the runs read again against each Par):
+
+| Run | Rounds beaten | Wins in 100 |
+|---|---|---|
+| Default now: all suppliers, pieces held and used by the reading, baked Par | 7.67 | 60.0 |
+| The same runs read against the Par of the third measure (675 to 225,000) | 7.50 | 42.0 |
+| Third reaction double off, at the third Par | 6.90 | 30.5 |
+| Double, next hand, filter, choosing the molecule and carbon dioxide all off, at the third Par | 6.43 | 26.5 |
+| The third measure as written (268 runs, the players wasting the pieces) | 6.4 | 19.0 |
+| No piece held, default rules, at the third Par | 6.70 | 27.5 |
+
+And for the bare game (first supplier only, nine rounds, 500 runs of the median player, seeds 1 to 500):
+
+| Run | Rounds beaten | Wins in 100 | Pass by round |
+|---|---|---|---|
+| The fourth measure as written | 6.1 | | 100, 95, 100, 96, 92, 68, 73, 70, 56 |
+| Bare now, baked Par | 7.43 | 43.6 | 100, 100, 100, 98, 96, 85, 87, 89, 71 |
+| Bare now, third reaction double off, read at the Par of the fourth measure (200 runs) | 5.00 | 12.0 | 100, 91, 81, 93, 88, 66, 74, 77, 52 |
+
+So three things, in order of size: the Par of rounds seven to nine was set by the bare fit of the fourth measure (58,200, 61,300, 105,000, where the third measure had 92,600, 130,000, 225,000) and is far too low for a run with pieces; the third reaction's double (fifth measure) raised every round's total and rounds four to nine were not fitted again; the players now use the pieces by the reading. With the double off, rounds four to nine of the bare game read as the fourth measure wrote them, to within the noise of 200 runs. The novice in the bare nine rounds now: 80, 68, 64, 35, 8 and 1.83 rounds beaten.
+
+**Rounds four to nine are not fitted to anything now.** They wait for the helper and creature tiers, and the owner's bar for those is by the run (a six-round run won about 1 time in 4 by the median player with helpers; nine rounds about 1 in 10, the planner about 1 in 3), which today's numbers miss by far (43 to 60 wins in 100).
+
+### Which earlier sections to trust
+
+- Fifth (tier one): stands; rerun and identical on unseen seeds.
+- Fourth (the bare game): rounds one to three are replaced by the fifth; rounds four to nine are out of date since the third reaction's double.
+- Third and earlier: older rules. Not touched by this leak (there was no `co2` mode then).
+- Outside this file: the carbon dioxide source on and off, and the dry ice reads, as said above.
+
+### Measuring headless now
+
+The browser pane is no longer used for measures (`HEADLESS.md`). In `.claude/headless/`:
+
+- `jobs/simR.js`: `player`, `from`, `n`, `opts`, `tag`, `order=rev`. Returns every round row of the rig.
+- `hlmany.sh <tag> <player> <from> <n> <pages> <timeout s> '<opts json>'` splits a measure over several pages at once and runs again a page that failed to load. The static server on 8766 answers one request at a time: twelve pages started in the same second lost scripts, so start at most six together.
+- `python docs/tools_hl.py gather <tag> <base>` writes the results where `tools_rig.py`, `tools_tier1.py` and the rest read them. `python docs/tools_hl.py same <tag a> <tag b>` says how many runs are the same in two measures (it reads the whole frames folder and takes some minutes).
+- Tier one, 500 runs: novice 6 s, greedy and median 13 s, planner 18 s of job time on one page; with start-up, all four players in under two minutes. 2,000 runs a player took about five minutes for all four. A nine-round run of the median player with pieces is about 6 s; 200 runs over five pages took about five minutes.
+
+### What is still wrong
+
+- Round one's margin for the median player is 4.2, just over the band, and the novice passes round one 81 to 85 times in 100, not 9 in 10. One number cannot do both; the fifth measure's table of trade-offs still holds.
+- The novice's last page changes the flag in 32 to 36 rounds in 100, under the gate of 40.
+- Rounds four to nine have no fitted number.
+- The turn measures, the break test and the redraw price were not run again.
+- `scrRound` and `gapRound` in the recording page still restore their rule without a `finally`.
+
 ## The measure of 2026-11-11, fifth: tier one, three bare rounds
+
+**Checked 2026-11-11 on the fixed rig (the section above): the unseen runs are the same run for run and the tables stand. The spread of molecules and the round one margin on unseen seeds were the size of the sample.**
 
 Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. A first run is now rounds one to three with no helper and no creature (`LOOP.md`, "Tiers"). Only those three rounds were fitted. The numbers of rounds four to nine were left as the fourth measure set them; they are to be fitted later with helpers held. The section after this one is the "before".
 
@@ -160,6 +285,8 @@ What it says:
 
 ## The measure of 2026-11-11, fourth: the bare game
 
+**Out of date (see the sixth measure): rounds one to three were fitted again in the fifth measure, and the third reaction's double has since raised every round, so the pass rates of rounds four to nine below are no longer what the game gives (the median player now beats 7.4 bare rounds, not 6.1).**
+
 Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. This is layers 1 and 4 of `ORDER.md`: no helper, no creature. The section after this one is the game with pieces and is the "before" of the comparisons here.
 
 ### What the bare game is for the rig
@@ -304,6 +431,8 @@ By round the median player's pages run 2.2, 2.3, 2.6, 2.7, 3.0, 2.9, 3.3, 3.8 an
 - The players' easiest-pair reading (`easeOf`) costs most of a run once the pool passes ten reagents: a run of the greedy player with all suppliers open takes 10 seconds.
 
 ## The measure of 2026-11-11, third: new steps pay, forgiving first rounds, five pieces used on the molecule
+
+**Out of date (see the sixth measure): the rules, the players' use of pieces and Par have all changed since; the same options now give 7.7 rounds beaten and 60 wins in 100.**
 
 Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. The section after this one is the "before" of every comparison here.
 
