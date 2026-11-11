@@ -775,28 +775,27 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode === 'shop') {
       const h = px({ x: 0, z: -13 }); marker(x, 100); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('suppliers', h[0], h[1]);
-      hand(x, 46); x.fillStyle = PENCIL; x.fillText('that run beat ' + shop.earned + ' rounds and paid ' + shop.earned + ' credit.   credit: ' + meta.credit, h[0], h[1] + 64);
+      { hand(x, 46); x.fillStyle = PENCIL; const ww = x.measureText('+' + shop.earned + '    ' + meta.credit).width; coin(x, h[0] - ww / 2 - 34, h[1] + 50, 18); x.fillText('+' + shop.earned + '    ' + meta.credit, h[0], h[1] + 64); }
       P.SUPPLY.forEach((sp, i) => { if (i > Math.min(meta.tier + 1, shopMax())) return;
         const c = px({ x: -20, z: -9.2 + i * 3.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
         if (open) swipe(x, [c[0] - 10, c[1] - 18], [c[0] + x.measureText(sp.name).width * 1.5 + 60, c[1] - 22], 50);
         marker(x, 50); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
-        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; x.fillText(open ? 'open' : nextUp ? (can ? 'open for ' + sp.cost : sp.cost + ' credit') : '', c[0] + 560, c[1] - 6);
+        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open && nextUp) { coin(x, c[0] + 540, c[1] - 20, 16); x.fillText(String(sp.cost), c[0] + 566, c[1] - 6); }
         hand(x, 38); x.fillStyle = open || nextUp ? PENCIL : FAINT;
         const things = (sp.kin || []).map(k => k + ' molecules').concat(sp.reagents.map(id => RX.CARDS[id].verb.toLowerCase())).concat(sp.gear.map(id => P.GEARS[id].name)).concat(sp.rare ? ['rare versions of reagents'] : []);
-        hand(x, 30); wrap(x, (things.length ? things.join(',  ') : ''), 800).slice(0, 1).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 40 + j * 30));
+        if (nextUp) { hand(x, 30); wrap(x, (things.length ? things.join(',  ') : ''), 800).slice(0, 1).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 40 + j * 30)); }
         if (hov) ring(x, [c[0] + 400, c[1] + 6], 470, 86, 5, INK, 0.01);
       });
       P.FAMILIES.forEach((f, i) => { if (meta.tier < 1) return;
         const c = px({ x: 8, z: -9.2 + i * 3.6 }), open = !!meta.fam[f.id], can = !open && meta.credit >= f.cost, hov = st.hover === 100 + i && !open;
         if (open) swipe(x, [c[0] - 10, c[1] - 18], [c[0] + 330, c[1] - 22], 50);
         marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(f.name, c[0], c[1]);
-        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; x.fillText(open ? 'open' : can ? 'open for ' + f.cost : f.cost + ' credit', c[0] + 380, c[1] - 6);
+        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open) { coin(x, c[0] + 370, c[1] - 20, 16); x.fillText(String(f.cost), c[0] + 396, c[1] - 6); }
         hand(x, 30); x.fillStyle = PENCIL; x.fillText(f.reagents.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), c[0], c[1] + 40); f.reagents.forEach((id, k) => dots(x, id, c[0] + 380 + k * 70, c[1] + 32, 6));
         if (hov) ring(x, [c[0] + 250, c[1] + 6], 300, 86, 5, INK, 0.01);
       });
-      { const found = Object.keys(meta.found).filter(k => meta.found[k]), c = px({ x: 8, z: 2.6 }); marker(x, 50); x.textAlign = 'left'; x.fillStyle = found.length ? INK : FAINT; x.fillText('found', c[0], c[1]); hand(x, 30); x.fillStyle = PENCIL; x.fillText(found.length ? found.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  ') : 'a named row done for the first time', c[0], c[1] + 40); }
-      const n0 = px({ x: 0, z: 12.4 }); marker(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('click here to start a run', n0[0], n0[1]);
-      hand(x, 40); x.fillStyle = PENCIL; x.fillText('best: ' + best + ' rounds', n0[0], n0[1] + 50);
+      { const found = Object.keys(meta.found).filter(k => meta.found[k]), c = px({ x: 8, z: 2.6 }); if (found.length) { marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('found', c[0], c[1]); hand(x, 30); x.fillStyle = PENCIL; x.fillText(found.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), c[0], c[1] + 40); } }
+      const n0 = px({ x: 0, z: 12.4 }); marker(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('new run', n0[0], n0[1]);
       if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 110); x.fillStyle = st.call.col; x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, c[0], c[1] + 500); x.fillText(st.call.text, c[0], c[1] + 500); }
       ink.t.needsUpdate = true; return;
     }
@@ -809,34 +808,30 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
-      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 300, h[1] - 36], [h[0] + 300, h[1] - 46], 110); x.fillStyle = INK; x.fillText('round ' + run.round, h[0], h[1]);
+      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round, h[0], h[1]);
       briefs.forEach((b, i) => {
         const c = px({ x: PICKX[i], z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 205, c[1] - 6);
-        { const K = P.KIN[b.kin], k1 = px({ x: PICKX[i], z: -8.3 }); if (K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok + '  ' + K.note, k1[0], k1[1] + 44, 34, INK); } }
+        { const K = P.KIN[b.kin], k1 = px({ x: PICKX[i], z: -8.3 }); if (K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok, k1[0], k1[1] + 44, 34, INK); } }
         fit(x, B.name, hov ? 76 : 68, 350, marker); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, c[0], c[1]);
         if (B.note) inkLine(x, B.note, c[0], c[1] + 62, 40, INK);
         const y = c[1] + 150; marker(x, 62); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0], y);
         for (let n = 0; n < (b.pays || 0); n++) coin(x, c[0] - ((b.pays - 1) * 26) + n * 52, y + 52, 20);
         if (hov) swipe(x, [c[0] - 150, c[1] + 16], [c[0] + 150, c[1] + 10], 16);
       });
-      { const k0 = px({ x: 0, z: 12.1 }); hand(x, 38); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText(run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'pick') {
       const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
-      hand(x, 50); x.fillStyle = PENCIL; x.fillText('round ' + run.round, h[0], h[1] + 70);
       picks.forEach((o, i) => {
         const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase() + (o.kind === 'reagent' && P.PAIR[o.id] ? ' + ' + RX.CARDS[P.PAIR[o.id]].verb.toLowerCase() : ''), hov = st.hover === i;
         const kind = o.kind === 'reagent' ? 'new' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger' : 'more';
         if (!isGear) { const t0 = px({ x: PICKX[i], z: -2 }); fit(x, title, 96, 440, marker); x.textAlign = 'center'; x.fillStyle = rgb(colOf(o.id)); x.fillText(title, t0[0], t0[1]); swipe(x, [t0[0] - 150, t0[1] + 22], [t0[0] + 150, t0[1] + 16], 20, rgb(colOf(o.id))); if (o.kind === 'reagent') dots(x, o.id, t0[0], t0[1] + 62, 9); }
-        hand(x, 40); x.fillStyle = PENCIL; x.fillText((i + 1) + '   ' + kind, c[0], c[1] - 56);
+        hand(x, 40); x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 190, c[1] - 56); if (o.kind === 'reagent') { hand(x, 36); x.fillText('new', c[0], c[1] - 56); }
         if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
-        hand(x, 40); x.fillStyle = INK; wrap(x, P.pickText(run, o), 430).forEach((w, j) => x.fillText(w, c[0], c[1] + 52 + j * 42));
+        if (isGear) inkLine(x, P.GEARS[o.id].tok || '', c[0], c[1] + 52, 40, INK); else { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(P.pickText(run, o), c[0], c[1] + 52); }
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
-      { const k0 = px({ x: 0, z: 11.4 }); hand(x, 38); x.fillStyle = PENCIL; x.fillText(run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText(run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
-      const b0 = px({ x: -21.5, z: 12.6 }); hand(x, 40); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText('best ' + best, b0[0], b0[1]);
       ink.t.needsUpdate = true; return;
     }
     const play = st.mode === 'play', open = g.cur.path.length > 0;
@@ -987,7 +982,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
     // the family of the round's molecule and its rule, above the round
-    if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.note + ': ' + K.tok, c[0] + dx, c[1] + 30, 22, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
+    if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.tok, c[0] + dx, c[1] + 30, 24, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
     // a molecule that could react with itself: the atoms that would meet are lit, and a click on the molecule folds it
     { const o = twistOpt(); if (o && center && center.model === g.m) { const key = st.twC.key; if (!st.twM || st.twM.key !== key) st.twM = { key, marks: marksOf(center, o.atoms || [], 0.01, 0.2) };
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
