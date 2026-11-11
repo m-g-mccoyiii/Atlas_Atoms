@@ -55,10 +55,19 @@
     let tri = 0; { const b = P.RULE.fresh ? Math.max(g.cascBest || 0, g.casc || 0) : 0; for (let k = 1; k <= n; k++) tri += k * (k > b ? 1 : P.CASC.old); }
     return left * 0.7 * (P.CASC.place * tri * (1 + P.CASC.row * n) * g.E + (P.CASC.mul ? 0 : P.CASC.step * tri * (g.bank + g.P * g.R)));
   }
+  function nextVal(g) {
+    const s0 = snap(g), sv = Object.assign({}, g), kinds = g.kinds.slice(), left = Object.assign({}, g.left); let a = (g.trail.length * 7919 + g.page * 104729 + g.m.atoms.length) >>> 0, v = -1;
+    const r2 = () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    try { if (P.turn(g, r2)) { lineGreedy(g).forEach(id => P.queueAdd(g, id)); while (g.queue.length && !g.over) P.queueStep(g); g.queue = []; v = P.made(g) + standing(g); } } catch (e) { v = -1; }
+    Object.keys(g).forEach(k => { if (!(k in sv)) delete g[k]; }); Object.assign(g, sv); g.kinds = kinds; g.left = left; back(g, s0); return v;
+  }
   function leaf(g, cfg) {
     let v = P.made(g);
     if (P.RULE.cascade === 'end' && !g.over && P.cascadeNext(g)) { const s = snap(g); P.cascade(g); v = P.made(g); back(g, s); }
     if (cfg.chain && !g.over && g.cur.path.length >= P.SYN.streak) { const s = snap(g); if (P.fire(g)) runChain(g, null, null); v = P.made(g); back(g, s); }
+    // the next page's hand is on the table (RULE.next): a player that plans plays it out, the biggest number at each
+    // circle, and counts what the round would then have made
+    if (cfg.next && P.RULE.next && g.fore && !g.over && g.page < P.pagesOf(g) && g.pageSteps >= P.stepsOf(g) && g.m.atoms.length <= BIG.near) { const nv = nextVal(g); if (nv >= 0) return nv; }
     if (cfg.stand && g.m.atoms.length <= BIG.far) v += standing(g);
     if (!cfg.deep) return v;
     const pagesLeft = P.pagesOf(g) - g.page;
@@ -255,7 +264,7 @@
     median: { pair: 'net', tools: 'read', line: lineQ(lineSearch({ depth: 3, finish: true, bank: true, stand: true })), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
     // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
     // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
-    planner: { pair: 'net', tools: 'plan', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    planner: { pair: 'net', tools: 'plan', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true, next: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
     // the planner without the bank and otherwise identical: it may still break a row by taking a reaction that does
     // not follow on. Used for the paired test of the bank
     nobank: { line: lineSearch({ depth: 3, beam: 2, deep: true, finish: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a, true); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
@@ -346,8 +355,9 @@
     // a player that tries a piece on the page before using it plays the same page more than once: its line for a
     // page as it stands is worked out once and kept
     const memo = pol.tools === 'read' || pol.tools === 'plan' ? new Map() : null, lineOf = (g2, fin) => { if (!memo) return pol.line(g2, fin, rnd); const key = g2.page + '|' + JSON.stringify(g2.tools || {}) + '|' + g2.kinds.join(',') + '|' + JSON.stringify(g2.left) + '|' + g2.pageSteps + '|' + (g2.casc || 0) + '|' + g2.m.atoms.length + '|' + (g2.hom ? g2.hom.used : '') + (g2.m.reach || ''); if (!memo.has(key)) memo.set(key, pol.line(g2, fin, rnd)); return memo.get(key).slice(); };
+    let dryPg = 0, pgN = 0;
     for (;;) {
-      ctx.plan = null;
+      ctx.plan = null; pgN++; if (g.kinds.some(id => !(g.free && g.free[id]) && (g.left[id] || 0) <= 0)) dryPg++;
       if (pol.tools && P.RULE.five && !g.over) useTools(g, rnd, pol.tools, null, P.RULE.queue && pol.line && memo ? g2 => { const fin = g2.page >= P.pagesOf(g2) ? P.finishOpt(g2) : null; lineOf(g2, fin).forEach(id => P.queueAdd(g2, id === '#finish' ? P.SYN.finish : id)); while (g2.queue.length && !g2.over) P.queueStep(g2); g2.queue = []; } : null);
       // the intern does one reaction of its own on every page after the first
       if (g.page > 1 && g.gear.includes('intern')) { const o = P.options(g, true), ids = Object.keys(o).filter(id => o[id].r.hits > 0); if (ids.length) { P.synTake(g, o[anyOf(ids, rnd)], true); steps++; } }
@@ -396,7 +406,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.co2 = g.by.co2 || 0; ['acid', 'wood', 'salt', 'slime', 'seedling'].forEach(k => { log['j_' + k] = g.by[k] || 0; }); log.hom = homAt.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.co2 = g.by.co2 || 0; ['acid', 'wood', 'salt', 'slime', 'seedling'].forEach(k => { log['j_' + k] = g.by[k] || 0; }); log.hom = homAt.join(' '); log.dryPg = dryPg; log.pgN = pgN; log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -407,7 +417,7 @@
     opts = opts || {}; const pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
     const rule0 = Object.assign({}, P.RULE); if (opts.rule) Object.assign(P.RULE, opts.rule);
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
-    const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || []);
+    const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || [], opts.tierNo ? { tierNo: opts.tierNo } : undefined), span = opts.rounds || P.runLast(run);
     if (opts.noGear) run.noGear = true;
     if (opts.hom) run.hom = opts.hom; if (opts.homFed) run.homFed = true;
     // rack0, self0: reagents and kinds of cascade held from the first round, for measuring what one of them adds
@@ -415,7 +425,7 @@
     P.runTerm(run, opts.term || 'plain');
     if (!run.assay) P.runAssays(run, rnd);
     let alive = true;
-    for (let r = 1; r <= (opts.rounds || 9); r++) {
+    for (let r = 1; r <= span; r++) {
       run.round = r;
       let picks = P.runPicks(run, rnd), skipped = false; const acts = [];
       if (P.RULE.coins && pol.coin && !opts.noCoin) for (let k = 0; k < 8; k++) { const a = pol.coin(run, picks, rnd); if (!a) break; if (a === 'reroll') { const n = P.runReroll(run, rnd); if (!n) break; picks = n; acts.push('reroll'); } else if (a === 'skip') { P.runSkip(run); skipped = true; acts.push('skip'); break; } else { if (!P.runBin(run, a.slice(4))) break; acts.push(a); } }
@@ -440,7 +450,7 @@
       if (!row.pass) { alive = false; if (!opts.all) break; }
       P.runKeep(run, g); P.runPay(run);
     }
-    out.won = out.beaten >= 9; P.seed(); P.MODEL.relaxed = true; Object.assign(P.RULE, rule0);
+    out.won = out.beaten >= span; out.span = span; P.seed(); P.MODEL.relaxed = true; Object.assign(P.RULE, rule0);
     return out;
   }
   // one round on one molecule with a given rack and equipment, for measuring a molecule by itself

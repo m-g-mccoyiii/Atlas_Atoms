@@ -63,7 +63,17 @@ const feedSize = smi => smi.replace(/Cl/g, 'X').replace(/[^A-Za-z]/g, '').length
 const FEEDSIZE = { rounds: [11.5, 12.5, 14, 16.5, 19.5, 23, 27, 31, 35], near: 3.5 };
 const sizeFor = round => FEEDSIZE.rounds[Math.max(1, Math.min(9, round | 0)) - 1];
 // the molecules of a family that suit a round: those near its size, or failing that the two nearest
-function feedsFor(kin, round, skip) { const of = FEEDS.filter(f => KIN_OF[f] === kin && !(skip || []).includes(f)), t = sizeFor(round), near = of.filter(f => Math.abs(feedSize(f) - t) <= FEEDSIZE.near); return near.length ? near : of.sort((a, b) => Math.abs(feedSize(a) - t) - Math.abs(feedSize(b) - t)).slice(0, 2); }
+// The shape of a molecule as dealt, counted from its SMILES: OH, C=C outside benzene rings, C=O.
+// RULE.filter (rounds one to three, docs/TIER1_DEPTH.md): a molecule is rejected when it has two or more OH and no
+// C=C, or a single C=O and no C=C, or only one kind of group; one with at most one OH and two or more C=C is
+// preferred (it is twice as likely to be dealt). A round that would be left with nothing keeps what it had.
+const SHAPE = {};
+function feedShape(f) { if (SHAPE[f]) return SHAPE[f]; const m = RX.fromSmiles(f), ar = RX.aromaticAtoms(m); let oh = 0, ene = 0, one = 0; m.bonds.forEach(b => { if (b.order !== 2) return; if (b.a.el === 'C' && b.b.el === 'C') { if (!(ar.has(b.a) && ar.has(b.b))) ene++; } else if ((b.a.el === 'O') !== (b.b.el === 'O')) one++; }); m.atoms.forEach(a => { if (a.el !== 'O') return; const nb = m.neighbors(a); if (nb.length === 2 && nb.every(q => q.bond.order === 1) && nb.some(q => q.atom.el === 'H')) oh++; });
+  const kinds = (oh ? 1 : 0) + (ene ? 1 : 0) + (one ? 1 : 0), bad = (oh >= 2 && !ene) || (one === 1 && !ene) || kinds <= 1; return (SHAPE[f] = { oh, ene, one, bad, good: !bad && oh <= 1 && ene >= 2 }); }
+const FILTER = { upTo: 3, prefer: 2 };
+function feedsFor(kin, round, skip) { const of = FEEDS.filter(f => KIN_OF[f] === kin && !(skip || []).includes(f)), t = sizeFor(round), near = of.filter(f => Math.abs(feedSize(f) - t) <= FEEDSIZE.near); let out = near.length ? near : of.sort((a, b) => Math.abs(feedSize(a) - t) - Math.abs(feedSize(b) - t)).slice(0, 2);
+  if (RULE.filter && round <= FILTER.upTo) { const ok = out.filter(f => !feedShape(f).bad); if (ok.length) { out = ok; const pref = out.filter(f => feedShape(f).good); for (let k = 1; k < FILTER.prefer; k++) out = out.concat(pref); } }
+  return out; }
 // Families. Every starting molecule belongs to one, and each family scores by a rule of its own, so the molecule a
 // round is played on decides how it is best played. The rule is paid on every reaction it fits.
 //   chain: keeps a row going.  ring: comes back round to a form it has had.  arene: one exact change at a time.
@@ -288,6 +298,25 @@ RULE.five = true;
 RULE.bare = false;
 // choose: before a round two molecules are shown and one is taken (docs/LOOP.md). Off: three kinds of round, as before.
 RULE.choose = true;
+// next: the hand of the next page is drawn when this page is dealt, from the same random source, and shown (g.nextHand).
+//       What is shown is what is dealt. The last page of a round shows nothing.
+// lastx: what the molecule does by itself after the THIRD reaction of the line pays double: every step of the cascade
+//       that runs once the last circle of the page has acted (g.lastOn). A third circle that is wasted or is the
+//       bank sets nothing off and doubles nothing. LASTX.mul is the factor.
+// filter: the molecules of rounds one to three are picked by shape (docs/TIER1_DEPTH.md): see feedShape.
+RULE.next = true; RULE.lastx = true; RULE.filter = true;
+const LASTX = { mul: 2 };
+// Tiers (docs/LOOP.md): a run is three rounds, then six, then nine. Tier 1 is the bare game: the six starting
+// reactions, no helper, no creature, nothing new offered between rounds. (run.tier is the supplier index, an older
+// thing: the tier of a run is run.tierNo, and run.span is how many rounds it has.)
+const TIERS = { 1: { rounds: 3, bare: true, helpers: false, creatures: false }, 2: { rounds: 6, bare: false, helpers: true, creatures: false }, 3: { rounds: 9, bare: false, helpers: true, creatures: true } };
+const tierRule = n => TIERS[n] || TIERS[3];
+const runLast = run => (run && run.span) || 9;
+const runWon = run => !!run && (run.beaten || 0) >= runLast(run);
+const bareRun = run => !!RULE.bare || !!(run && run.bare);
+// the three uses of a reaction never run out in a tier-1 run except in a scarce assay (measured: docs/RIG.md, fifth
+// measure), so the page may leave the use marks out there
+const usesBind = (run, g) => !(run && run.tierNo === 1) || (g ? g.brief === 'scarce' : run.brief === 'scarce');
 
 // offer: the reagents on the page for this order; the rest of the rack sits the order out
 // keep: index of the oxygen that is marked, or null. gear: equipment ids, left to right
@@ -492,8 +521,9 @@ function reopenAll(g) {
 function synDeal(g, rnd) {
   const R = rnd || rand, rack = g.rackIds || synRack(), n = handOf(g); let offer = draw(g, R, rack, n, null);
   if (g.fore) offer = g.fore.filter(id => rack.includes(id));
-  g.fore = null; if (g.gear.includes('orb') && g.syn && (g.page || 1) < pagesOf(g)) { g.fore = draw(g, R, rack, n, null); g.fore = rack.filter(id => g.fore.includes(id)); }
-  g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false; g.queue = []; g.shot = false; g.casc = 0;
+  g.fore = null; if ((g.gear.includes('orb') || RULE.next) && g.syn && (g.page || 1) < pagesOf(g)) { g.fore = draw(g, R, rack, n, null); g.fore = rack.filter(id => g.fore.includes(id)); }
+  g.nextHand = RULE.next && g.fore ? g.fore.slice() : null;
+  g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false; g.queue = []; g.shot = false; g.casc = 0; g.lastOn = false;
   dealHand(g, R, rack, offer, false);
   g.startTodo = []; g.mirrored = false; g.recycled = 0; g.wastedNow = 0; if (!g.manual) startRun(g);
   if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; if (g.left[id] > 0) g.left[id] = Math.max(1, g.left[id] - 1); }
@@ -514,7 +544,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.self = RULE.cascade ? ((run && run.self) || SELF0).slice() : SELF.filter(q => q.tier <= ((run && run.tier) || 0)).map(q => q.id); g.casc = 0;
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
-  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; HOMIDS.forEach(id => { g.by[id] = 0; }); g.hom = !RULE.bare && run && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: run.homFed ? HOMS[run.hom].need : 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; HOMIDS.forEach(id => { g.by[id] = 0; }); g.hom = !bareRun(run) && run && !run.noHom && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: run.homFed ? HOMS[run.hom].need : 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.filter(id => dealtIn(run, id)); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
@@ -560,9 +590,10 @@ function scoreRound(g, o, free) {
   cur.path = o.cont || (cur.path.length > 0 && unbroken(g)) ? cur.path.concat(id) : [id];
   const was = o.cont ? 0 : g.lost || 0; g.lost = 0;
   const c = { hits: r.hits, saved, was, cont: o.cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first, nth: cur.step + 1, page: g.page, pageStep: g.pageSteps, pageMax: stepsOf(g), cls: RX.CARDS[id].cls, same: cur.used[cur.used.length - 1] === id, distinct: new Set(cur.used.concat(id)).size };
-  const b = g.brief, polyLen = id === 'aibn' ? Math.max(2, o.model.atoms.reduce((t, a) => t + (a.poly || 0), 0)) / 2 : 1, per = (o.casc ? CASC.place : id === 'aibn' ? SYN.place * polyLen : id === 'allyl' ? SYN.place : rarityOf(id).place) * (1 + SYN.strong * ((g.grade[id] || 1) - 1)) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first && !o.casc ? 0 : 1);
+  const lx = RULE.lastx && o.casc && g.lastOn ? LASTX.mul : 1;
+  const b = g.brief, polyLen = id === 'aibn' ? Math.max(2, o.model.atoms.reduce((t, a) => t + (a.poly || 0), 0)) / 2 : 1, per = (o.casc ? CASC.place * lx : id === 'aibn' ? SYN.place * polyLen : id === 'allyl' ? SYN.place : rarityOf(id).place) * (1 + SYN.strong * ((g.grade[id] || 1) - 1)) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first && !o.casc ? 0 : 1);
   for (let i = 0; i < r.hits; i++) { c.hit = i; if (per) emit('bottle', A('p', per)); pieces('site'); }
-  if (o.casc && r.hits) { g.casc = (g.casc || 0) + 1; const fresh = !RULE.fresh || g.casc > (g.cascBest || 0), w = fresh ? 1 : CASC.old; if (g.casc > 1) emit('cascade', M('h', 1 + (g.casc - 1) * w)); emit('cascade', CASC.mul ? M('e', 1 + CASC.step * g.casc * w) : A('e', CASC.step * g.casc * w), { n: g.casc, fresh }); g.tally.casc = Math.max(g.tally.casc || 0, g.casc); }
+  if (o.casc && r.hits) { g.casc = (g.casc || 0) + 1; const fresh = !RULE.fresh || g.casc > (g.cascBest || 0), w = fresh ? 1 : CASC.old; if (g.casc > 1) emit('cascade', M('h', 1 + (g.casc - 1) * w)); emit('cascade', CASC.mul ? M('e', 1 + CASC.step * g.casc * w * lx) : A('e', CASC.step * g.casc * w * lx), { n: g.casc, fresh, lastx: lx > 1 }); g.tally.casc = Math.max(g.tally.casc || 0, g.casc); }
   if (o.by && GEARS[o.by] && r.hits) ev.push({ src: o.by, act: true, part: 'e', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) });
   if (SHORT[id] && r.hits) { emit('short', M('h', SHORT[id])); emit('short', A('r', 0.5 * (SHORT[id] - 1))); }
   new Set(o.atoms || []).forEach(a => { const I = a.iso && ISO[a.iso]; if (I) emit('iso', { part: I.part, op: I.op, val: I.val }, { iso: a.iso }); });
@@ -641,7 +672,7 @@ function synTake(g, o, free) {
   if (o.loop && o.cont) g.loopsCont = (g.loopsCont || 0) + 1;
   if (!o.self && !(g.free && g.free[o.id]) && g.left[o.id] > 0) g.left[o.id]--;
   if (!o.self && o.r && o.r.hits) { homEvent(g, 'use:' + o.id); if (o.id === 'pcc' && RX.homs.endOls(g.m).length) homEvent(g, 'endox'); }
-  g.m = o.model; if (!free) g.pageSteps++; else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
+  g.m = o.model; if (!free) { g.pageSteps++; g.lastOn = !o.self && g.pageSteps >= stepsOf(g); } else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
   const set = false;
   g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free });
   if (shatter) synEnd(g);
@@ -649,11 +680,11 @@ function synTake(g, o, free) {
 // ---------- the page lined up, then fired ----------
 // The state of a round is saved, something is tried, and the state is put back.
 function snap(g) {
-  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest };
+  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest, lastOn: g.lastOn };
   c.seen = new Set(c.seen); return s;
 }
 function back(g, s) {
-  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest;
+  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest; g.lastOn = s.lastOn;
 }
 const BANKID = '#bank';
 // The next step of a cascade: the first reaction the molecule has with itself as it stands, or nothing. Every kind
@@ -688,6 +719,7 @@ const toolSpots = (g, id) => (canTool(g, id) ? RX.tools.spots(g.m, id, RULE.atom
 // Uses piece id at a spot (from toolSpots). The molecule is replaced by a changed copy, as when rings open, and
 // g.reopened tells the page which atom became which. False when it cannot be done there (the size limit).
 function toolUse(g, id, spot) {
+  g.lastOn = false;
   if (!canTool(g, id) || !spot) return false;
   const cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
   const res = RX.tools.apply(cm.model, id, sp); if (!res) return false;
@@ -805,6 +837,7 @@ function homTry(m, id, spot) { const cm = RX.cloneMap(m), mp = v => (Array.isArr
 // Taps the homunculus at a spot (from homSpots). The molecule is replaced by a changed copy, as when a piece is
 // used, and g.reopened tells the page which atom became which. It is then empty.
 function homUse(g, spot, rnd) {
+  g.lastOn = false;
   if (!homFed(g) || !spot) return false; if (homOf(g).before && (g.shot || g.pageSteps > 0)) return false;
   const H = homOf(g), cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
   const res = H.act(cm.model, sp, g, rnd); if (!res) return false;
@@ -841,6 +874,14 @@ function queueAdd(g, id) {
   else if (!g.kinds.includes(id) || usesLeft(g, id) <= 0) return false;
   g.queue.push(id); return true;
 }
+// the circles are reordered freely before the page is fired: nothing is spent
+function queueSwap(g, i, j) { const q = g.queue; if (g.shot || !q || i === j || i < 0 || j < 0 || i >= q.length || j >= q.length) return false; const t = q[i]; q[i] = q[j]; q[j] = t; return true; }
+function queueMove(g, from, to) { const q = g.queue; if (g.shot || !q || from === to || from < 0 || to < 0 || from >= q.length || to >= q.length) return false; q.splice(to, 0, q.splice(from, 1)[0]); return true; }
+// Does a reaction fit anywhere on the molecule AS IT STANDS NOW? This reads the present only: nothing is tried and
+// nothing that the line would do first is counted. The page may grey a reaction (in the hand or in a circle) that
+// fits nowhere now. The bank fits when it could be used now.
+function fitsNow(g, id) { if (id === BANKID) return canBank(g); const c = RX.CARDS[id]; return !!c && c.find(g.m).length > 0; }
+const queueFits = g => (g.queue || []).map(id => fitsNow(g, id));
 function queueDrop(g, i) { if (g.shot || !g.queue || i < 0 || i >= g.queue.length) return false; g.queue.splice(i, 1); return true; }
 // what the first thing in the queue will do when its turn comes now: take (a reaction), bank, finish, or waste
 function queueHead(g) {
@@ -850,7 +891,7 @@ function queueHead(g) {
   const o = options(g)[id]; return o ? { id, kind: 'take', o } : { id, kind: 'waste' };
 }
 // a circle whose reagent found nothing to act on: the reaction of the page is gone and so is the use
-function waste(g, id) { if (id !== BANKID && id !== SYN.finish && !(g.free && g.free[id]) && g.left[id] > 0) g.left[id]--; g.pageSteps++; g.wastedNow = (g.wastedNow || 0) + 1; g.tally.wasted = (g.tally.wasted || 0) + 1; g.trail.push({ id, hits: 0, cont: false, wasted: true, free: false, ev: [] }); }
+function waste(g, id) { g.lastOn = false; if (id !== BANKID && id !== SYN.finish && !(g.free && g.free[id]) && g.left[id] > 0) g.left[id]--; g.pageSteps++; g.wastedNow = (g.wastedNow || 0) + 1; g.tally.wasted = (g.tally.wasted || 0) + 1; g.trail.push({ id, hits: 0, cont: false, wasted: true, free: false, ev: [] }); }
 // takes the head of the queue off it; the page then plays what queueHead said it would do
 function queueShift(g) { g.shot = true; return g.queue.shift(); }
 // fires the head of the queue and returns what it did. A cascade is set off only by a reagent that acted: a wasted
@@ -980,7 +1021,10 @@ const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, s
 // (2026-11-11, the bare game: dehydrate joined in round two and grow in round three. Dehydrate doubled what a reader
 // makes and grow tripled it, and neither added anything for a player who places at random. Dehydrate now joins in
 // round three and grow in round five: docs/RIG.md, fourth measure.)
-RUNG.from = { dehydrate: 3, allyl: 5 };
+// (2026-11-11, tier one: dehydrate now joins in round four, so the three rounds of a first run are dealt from four
+// reactions. With dehydrate in round three a reader made 5.7 times what a player placing at random made there, and
+// 2.8 times without it: docs/RIG.md, fifth measure.)
+RUNG.from = { dehydrate: 4, allyl: 5 };
 const dealtIn = (run, id) => !(RUNG.from[id] > ((run && run.round) || 1));
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
@@ -1047,7 +1091,8 @@ function runChoose(run, o) { run.redraws = 0; run.payCoins = o.coins || 0; run.k
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much
 function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (run.bonus || 0) + n; return n; }
-function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return runAssays({ extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], self: SELF0.slice(), lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, coins: 0, rerolls: 0, by: { water: 0, h2: 0, gauge: 0 } }); }
+// opts.tierNo: 1, 2 or 3 (TIERS). Without it a run is nine rounds with everything the switches allow, as before.
+function runNew(tier, extra, opts) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t), tn = opts && TIERS[opts.tierNo] ? opts.tierNo : 0, T = tn ? TIERS[tn] : null; return runAssays({ tierNo: tn || 3, span: T ? T.rounds : 9, bare: !!(T && T.bare), six: !!(T && T.bare), noGear: !!(T && !T.helpers), noHom: !!(T && !T.creatures), extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], self: SELF0.slice(), lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, coins: 0, rerolls: 0, by: { water: 0, h2: 0, gauge: 0 } }); }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 // Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
@@ -1089,15 +1134,16 @@ function runTerm(run, id) {
 // Do not edit by hand: measure again. Par of the bare game, fourth measure (docs/tools_par_bare.py): round one by the novice and the margin together, rounds two to five at a margin of 4 for the median player, rounds six to nine by its pass rate and margin.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
-const PAR = { rounds: [1230, 2790, 4620, 4960, 18800, 55300, 58200, 61300, 105000], after: 1.71, last: 1 };
+const PAR = { rounds: [1210, 1920, 2580, 4960, 18800, 55300, 58200, 61300, 105000], after: 1.71, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
 // multiplied by all of them, so every kind of round and every molecule is beaten by a like margin.
-const MOLF = {"C=CCC(C)(O)CCC(=O)CCC=C":0.826,"C=CCCC(=O)CC1CCCC1=O":0.366,"C=CCCC(=O)CCC(=O)CC1CCCC1=O":0.909,"C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C":2.09,"C=CCCC(=O)CCC(=O)CCCC=O":1.507,"C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C":1.286,"C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C":1.744,"C=CCCC(=O)CCC1(O)CCCC1":0.573,"C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.418,"C=CCCC(C)(O)CCC(=O)CCC=C":0.885,"C=CCCC(O)CCC(=O)C1CCCC1":0.304,"C=CCCC(O)CCC(=O)CCC1(O)CCCC1":0.819,"C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":1.46,"CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C":0.36,"CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C":0.715,"CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":0.724,"CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C":0.998,"CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C":0.984,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C":1.495,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":1.957,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C":0.787,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C":1.282,"CC(C)(O)CCC(=O)CCC=C":0.542,"CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C":0.491,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.907,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":3.017,"CC(O)CCC(=O)CCC=CCCC(=O)C":1.102,"O=CCCC(=O)CCC(=O)CCC=C":1.172,"O=CCCC(=O)CCC(C)(O)CCC=C":0.614,"O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C":1.67,"O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":1.117,"O=CCCC(=O)CCC1(O)CCCC1":0.384,"O=CCCC(=O)CCC=C":0.999,"O=CCCC(C)(O)CCC(=O)CCC=C":0.651,"OC1(CCCC1)CCC(=O)CCC=C":0.749,"OC1(CCCC1)CCC(=O)CCCC=O":0.682,"OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C":1.983,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C":0.687,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C":1.958,"OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C":0.968,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.655,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.961};
+const MOLF = {"C=CCC(C)(O)CCC(=O)CCC=C":0.594,"C=CCCC(=O)CC1CCCC1=O":0.393,"C=CCCC(=O)CCC(=O)CC1CCCC1=O":0.924,"C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C":2.09,"C=CCCC(=O)CCC(=O)CCCC=O":2.264,"C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C":1.286,"C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C":1.744,"C=CCCC(=O)CCC1(O)CCCC1":0.365,"C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.418,"C=CCCC(C)(O)CCC(=O)CCC=C":0.731,"C=CCCC(O)CCC(=O)C1CCCC1":0.307,"C=CCCC(O)CCC(=O)CCC1(O)CCCC1":0.819,"C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":1.46,"CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C":0.36,"CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C":0.715,"CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":0.724,"CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C":0.998,"CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C":0.984,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C":1.495,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":1.957,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C":0.787,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C":1.282,"CC(C)(O)CCC(=O)CCC=C":0.387,"CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C":0.491,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.907,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":3.017,"CC(O)CCC(=O)CCC=CCCC(=O)C":0.205,"O=CCCC(=O)CCC(=O)CCC=C":2.268,"O=CCCC(=O)CCC(C)(O)CCC=C":1.087,"O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C":1.67,"O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":1.117,"O=CCCC(=O)CCC1(O)CCCC1":0.513,"O=CCCC(=O)CCC=C":1.499,"O=CCCC(C)(O)CCC(=O)CCC=C":1.65,"OC1(CCCC1)CCC(=O)CCC=C":0.375,"OC1(CCCC1)CCC(=O)CCCC=O":0.942,"OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C":1.983,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C":0.687,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C":1.958,"OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C":0.968,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.655,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.961};
 const KINDF = {"plain":1.0,"carry":1.0,"broad":1.0,"loose":1.0,"each":1.0,"back":1.0,"scarce":1.0,"short":1.0};
-const ASSAYF = {"scarce":[0.827,1.138,0.854],"short":[0.449,0.309,0.527],"each":[1.655,1.745,1.339],"loose":[1.628,1.632,1.66]};
+const ASSAYF = {"scarce":[0.688,1.138,0.854],"short":[0.625,0.309,0.527],"each":[1.533,1.745,1.339],"loose":[1.519,1.632,1.66]};
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };
+// Tier one (rounds one to three) baked again on 2026-11-11 after commit 43791e7 (docs/tools_tier1_bake.py). Par of rounds one to three at margins 4, 3, 3 for the median player, tag t2.
 // END GENERATED
 // A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more
 // asks for more, but for less than it makes.
@@ -1127,8 +1173,8 @@ function runSkip(run) { run.rerolls = 0; if (RULE.coins) run.coins = (run.coins 
 function runBin(run, id) { if (!RULE.coins || (run.coins || 0) < COIN.bin || !run.gear.includes(id)) return false; run.coins -= COIN.bin; run.gear = run.gear.filter(q => q !== id); delete run.lv[id]; return true; }
 function runPicks(run, rnd) {
   const R = rnd || rand, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
-  const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear && !RULE.bare ? st.gear.filter(id => !run.gear.includes(id)) : [];
-  const newS = RULE.cascade ? SELF.filter(q => q.tier <= run.tier && !(run.self || []).includes(q.id) && !(RULE.ban || []).includes(q.id)).map(q => q.id) : [];
+  const newR = run.six ? [] : st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear && !bareRun(run) ? st.gear.filter(id => !run.gear.includes(id)) : [];
+  const newS = run.six ? [] : RULE.cascade ? SELF.filter(q => q.tier <= run.tier && !(run.self || []).includes(q.id) && !(RULE.ban || []).includes(q.id)).map(q => q.id) : [];
   const from = { self: newS, reagent: newR, gear: newG, level: run.gear.filter(id => !GEARS[id].rule), strong: run.rack.filter(id => dealtIn(run, id)), bottle: run.rack.filter(id => dealtIn(run, id)) };
   // one new thing where there is one, then whatever else, three different kinds where possible
   let kinds = ['reagent', 'gear', 'self'].filter(k => from[k].length); for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t; }
@@ -1158,6 +1204,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
