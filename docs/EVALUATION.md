@@ -62,3 +62,23 @@ Six independent reviewers each took one aspect. Each read `EVALUATOR_BRIEF.md` f
   3. A hand with a discard: deal four from a rack of six, one redraw a page at a cost, and drop the forty-try guarantee.
   4. A bank verb: end the row on purpose for one and a half times its worth, at the cost of the chain.
   5. Price the dominant picks and tie the number to beat to the build.
+
+## 5. The interaction matrix, analysed
+
+Data in `MATRIX.md`.
+
+- **Health:** 32 of 60 pieces do real work alone (worth 1.25 or more). 9 are marginal, 12 are dead, 7 hurt: carousel 0.44, coffee 0.83, black cat 0.88, unlabeled bottle 0.88, timer 0.89, seed crystal 0.90, clamp 0.97. Inside random builds 32 pieces average below 1.0.
+- **The shelves are inverted.** Targets were lab 1.2 to 2.5, alchemy 2.5 to 4, occult 4 to 8. Measured medians are lab 1.28, alchemy 1.58, occult 1.19. No alchemy piece reaches 2.5. Only the black candle (5.55) is in the occult band. Index cards (2.89) and the recycler (2.62) are lab pieces that beat every alchemy piece.
+- **Combos are thin:** 59 of 1,770 pairs, 3.3 percent. 30 pieces have none. Three pieces hold 29 of the 59 (carousel, seed crystal, recycler), and many of those are a bad piece climbing out of a loss. About 8 pairs are real jackpots.
+- **The top combos:**
+  1. Recycler and seed crystal, 10 times: both fire on returning to an earlier molecule, and the recycler keeps the row alive through loops. A bug, the ping-pong exploit.
+  2. Voodoo doll and cursed idol, 4.5 times: the idol fires the doll twice. Designed, readable, fun. The idol is the only true engine in the set.
+  3. Mirror and recycler: the same loop exploit.
+  4. Cursed idol and goat: fun, but it compounds over twenty reactions.
+  5. Recycler and dropper: the same exploit.
+- **Builds matter:** the top tenth of random builds scores 8.7 times the bottom tenth; best 73, worst 0.42. A tenth of random builds do nothing. Flat "extra +" pieces saturate each other: index cards 2.89 alone and 1.89 in a build; rubber duck 1.79 and 0.84.
+- **Families differ 15 times with no equipment** (arene 59,755, sugar 3,996) and kinds of round 7 times. That is fine only if the number to beat follows, and it does not.
+- **Numbers to beat are not tied to play.** The bare median beats the number on 6 of 23 molecules; the share runs from 0.08 to 9.67. Two cages have numbers of 210,000 and 470.
+- **Cannot be judged on this data:** monkey's paw, black cat, hand of glory, cursed idol alone, fire extinguisher, the intern, the pay pieces.
+- **Next measurements:** pass rate by round 1 to 9 after the number-to-beat multipliers; a smarter simulated player; hill-climbed best builds and triples around the engines.
+- **Changes proposed:** cap the recycler at two returns a round; seed crystal to an additive bonus capped at four returns; black candle to times 1.5 with a price; pact to times 4 against a number times 3; index cards down and capped; carousel's added reagent always continues the row; timer lets a row of three fire the chain anywhere on the page; coffee loses its penalty; unlabeled bottle's reagent always continues; elixir and hourglass pages count twice; mirror up, sharing the recycler's cap.
