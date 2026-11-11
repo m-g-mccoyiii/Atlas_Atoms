@@ -30,6 +30,7 @@ U. Build paths and every mechanic are evaluated by simulating from SMILES with R
 V. Starting molecules: the number of atoms goes up each round as the score needed goes up and more complex interactions are needed. They do not have to be wild.
 W. Difficulty: "the bar should not be an average person wins the whole game, getting every single thing and unlock should be hard but not impossible but not easy." The first short runs are winnable by a new player; a full run is not something an average player wins as a matter of course; having everything unlocked is hard.
 X. Learn from Balatro, Dead Cells, Vampire Survivors and others: difficulty ramps non-linearly; winning is a different thing from the score marks. But "it can't just straight copy those it needs to be our version of it fit for this game." Take the reason a thing works, then build it from this game's own pieces: molecules, reactions, what comes off, helpers, creatures.
+Y. Winning a round is making something: the player is given a target for the molecule at the start and wins if the molecule has it at the end. Points are a separate thing and pay coins. The owner agreed on three conditions: "With an unlimited number of possibilities, sure but we have to keep it realistic and have to do lots of testing." So targets are generated, not a short fixed list; each must be something the dealt molecule can really become with the reactions the player holds; and every kind of target is tested on the engine over many molecules before it is used.
 
 ## The lines broken most often
 
