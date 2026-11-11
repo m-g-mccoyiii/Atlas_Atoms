@@ -153,3 +153,16 @@ After a win the next stake opens. A stake must change a rule, not only raise the
 Reactions are unlocked for good over many runs, and the list of unlocked ones may grow long. The pool carried in one run may not, or there is no strategy. The model is Vampire Survivors: many things unlocked, few slots in a run.
 
 First proposal, to be measured: a run's pool holds at most eight reactions. It starts with the kit's six. Taking a ninth means putting one back. Which unlocked reactions are offered in a run is drawn from everything unlocked, so two runs see different ones.
+
+## The words at the flags (the owner, 2026-11-11)
+
+The word "beaten" is out. As the total runs past each flag the page letters one word, each bigger than the last, each with its own sound. The biggest one reached stays when the round ends.
+
+| Flag | At | Word |
+|---|---|---|
+| 1 | the number to beat | stable |
+| 2 | twice | unstable |
+| 3 | four times | volatile |
+| 4 | eight times | overreact |
+
+The game's name is only ever seen in play at the last flag.
