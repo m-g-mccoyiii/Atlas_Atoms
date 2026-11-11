@@ -29,6 +29,7 @@ T. Working: many sub-agents at once; sub-agents evaluate everything; keep buildi
 U. Build paths and every mechanic are evaluated by simulating from SMILES with RDKit, with reactions written exactly (`docs/tools_chem/`). The molecules themselves may be made up, and wild ones are wanted: "Made up molecules is fine wtf that's half the fucking fun of this insane shit." What is not acceptable is a crude stand-in that is not a real structure. "I told you to evaluate build paths and stuff using smiles." "You can do that with rdkit."
 V. Starting molecules: the number of atoms goes up each round as the score needed goes up and more complex interactions are needed. They do not have to be wild.
 W. Difficulty: "the bar should not be an average person wins the whole game, getting every single thing and unlock should be hard but not impossible but not easy." The first short runs are winnable by a new player; a full run is not something an average player wins as a matter of course; having everything unlocked is hard.
+X. Learn from Balatro, Dead Cells, Vampire Survivors and others: difficulty ramps non-linearly; winning is a different thing from the score marks. But "it can't just straight copy those it needs to be our version of it fit for this game." Take the reason a thing works, then build it from this game's own pieces: molecules, reactions, what comes off, helpers, creatures.
 
 ## The lines broken most often
 
