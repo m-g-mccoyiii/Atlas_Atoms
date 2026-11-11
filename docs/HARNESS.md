@@ -2,6 +2,31 @@
 
 Every design, every build and every message to the owner is checked against this page before it goes out. It was built from every message the owner typed in both sessions (8 to 11 November 2026). Where a line is in quotes it is the owner's words. When the owner makes a new ruling it is added here the same turn. Message numbers in brackets: O is the first session (8 to 10 November), N is the second (10 to 11 November). N1 is the pasted session-start brief, endorsed by the owner but not typed by them.
 
+## The current design, settled with the owner on 11 November
+
+This section is the frame. Everything else on this page is read through it. Where an older line disagrees, this section wins. Older ideas are used only where they fit it.
+
+A. A chain reaction: after the three reactions fire, any parts of the molecule that can change each other do so by themselves, and what that leaves may set off more. Nobody presses anything during it.
+B. "You must make all three reactions chosen at the beginning of a run to set up larger and larger chain reactions like in balatro. And, by unlocking stuff, messing with the types of reactions, gameplay, chance, and a bunch of game elements we have discussed, you're trying to make that as big as possible."
+C. "The whole point is to have every run be different and then use all of the player elements to change the odds or interactions between 3 reactions."
+D. Six reactions at the start. Fifteen to twenty in the end. Reactions dealt each turn are random from a pool; unlocks and the player's own choices change the pool and the deal. One run carries only a few, like Vampire Survivors. Everything after the first six is being re-evaluated from nothing.
+E. Closing a ring is only ONE thing a molecule can do by itself. These self-reactions are a set, "more than" the three first shown, each a piece of the game.
+F. Built like a pyramid: every element (reactions, self-reactions, what comes off, helpers, creatures, coins, unlocks) builds on the others, "like chained elements going back and forth".
+G. Long chains come "by a combination of strategy and chance".
+H. Reactions come in sizes unlocked by play; bridging is one; heavier compounds are an upgrade path; making real compounds such as cholesterol is an achievement.
+I. Helpers are lab objects and small real molecules (methane, methanol). Each is a big physical act on the molecule that does what the real object does, at a chosen place or on the whole structure: a mirror on a bond reflects the molecule there; a burner heats the whole structure so every OH loses water and becomes a C=C. Never say "reacts" without naming the exact change.
+J. Helpers are unlocked for good by special things done in play, and then are not given every time (Vampire Survivors). Coins let the player decide which helpers to buy; better ones cost more.
+K. What comes off the molecule is a separate system: jars that fill across runs, one creature (homunculus) per jar, about ten, slower jars better or more complex, thematic. The ten are settled in `HOMUNCULI.md`.
+L. Creatures must make a run deeper in strategy and never be "just reactions that can be pulled". They are perks: they can break chemistry and must be zany. What feeds one must be something the player's reactions make reliably. The player triggers it, it works only when it can, and it does not choose for the player. Their strengths are compared and evened by sub-agents.
+M. A page is one turn, a round is one molecule with three turns, a run is the whole game. Before a round the player picks one of two molecules and can pay to redraw. "Resource management that isn't punishing."
+N. Tiers: "a quick unlock tier that gradually expands in difficulty between tiers". A run is three rounds, then six, then nine.
+O. Players need a lot to do between runs.
+P. "New players are inexperienced that's the whole point of playing the game." No preview of what three reactions will do, no hints.
+Q. When the total passes the four marks the page letters: stable, unstable, volatile, and overreact last.
+R. Foundations first, then up. Later things and unlocks enhance the base. The owner will not play it until it is polished and fun.
+S. Talking to the owner: plain words and none of the game's own jargon; one thing at a time and short; a schematic picture for every suggestion; do not list problems, fix them; if there is an issue, evaluate it and resolve it; no line that labels or excuses a design; do not exaggerate or dramatize; answer about the state of the game as it stands today.
+T. Working: many sub-agents at once; sub-agents evaluate everything; keep building without waiting.
+
 ## The lines broken most often
 
 1. Plain wording only. No jargon, no "Claude speak", no AI-slop or twee writing, no game words the owner has not learned. Said at least 17 times. "Okay stop talking in the jargon of the game. For the final fucking time." [O28, O37, O42, O52, O62, N87, N119, N127, N130, N136, N143, N144, N202, N206, N215, N247, N249]
