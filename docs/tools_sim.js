@@ -331,6 +331,7 @@
     const H = g.hom && P.HOMS[g.hom.id]; if (!H || !H.before || g.over || !P.homReady(g)) return -1; const spots = P.homSpots(g); if (!spots.length) return -1; homStat.ready++;
     const go = sp => { const n = P.homGo(g, sp, rnd); homStat.used++; homStat.steps += Math.max(0, n); return Math.max(0, n); };
     if (mode === 'random') return rnd() < 0.5 ? -1 : go(spots[Math.floor(rnd() * spots.length)]);
+    if (window.__forcePre) return go(spots[0]);
     if (!playPage || mode === 'best') { if (H.whole) return go(spots[0]); const base = (() => { const c = AA.rx.cloneModel(g.m); return P.selfRun(c, g.self); })(); let best = null, top = base; spots.forEach(sp => { const t = P.homTry(g.m, g.hom.id, sp), v = t ? P.selfRun(t, g.self) : -1; if (v > top) { top = v; best = sp; } }); return best ? go(best) : -1; }
     let a = (g.trail.length * 7919 + g.page * 104729 + g.m.atoms.length * 31 + 17) >>> 0; const r2 = () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     const tryPage = fn => { const s = snap(g), m0 = P.made(g); let v = -1; try { fn(); v = P.made(g) - m0; } catch (e) { v = -1; } back(g, s); return v; };

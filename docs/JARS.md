@@ -77,6 +77,25 @@ What comes off in one whole run, 40 runs a player (12 for the median player), se
 - **Dry ice** was moved twice. Fed by 3 and paid once it was tapped in 2 rounds in 100 and made nothing (1.00 on 40 runs); with the rule of thumb in place of playing the round both ways it lowered the rounds it was used in to 0.59. Fed by 1 and paid 2 times it is in its band.
 - The simulated player decides the freeze by playing the rest of the round both ways on its own deals and taps only if that makes more, so "where tapped" for dry ice is where freezing was right. A person will also freeze when it is wrong.
 
+### Added 2026-11-11, later: acid, wood spirit, salt, slime, seedling
+
+Eight of the ten are built. Numbers are in `HOMUNCULI.md` ("Read in the game, later"). Measured, awaiting review.
+
+| | Jar (count) | Fed by | Tap |
+|---|---|---|---|
+| acid | medium (200) | 1 hydrate or dehydrate that acted | after the page: every stretch of four or more plain CH2 is eaten down to three, and for the rest of the round a ring closes across up to six carbons. The rings then run, counting on |
+| wood spirit | medium (40) | 1 reduce that acted | BEFORE the line: every reagent of the hand with a use left is lined up in an order taken at random, with a circle for each, and the page fires |
+| salt | medium (50) | 1 oxidize that met an OH on a CH2 at the end of a chain | BEFORE the line, on one C=O: it is cured for the round. A ring that closes on it leaves it a C=O (up to three rings a page; they open at the turn like any other) and no reagent finds it |
+| slime | medium (70) | 1 hydroborate that acted | after the page, on a C=O the rings could not reach: two carbons of slime join a carbon at or beside the OH to one at or beside that C=O, so they are three apart. Offered only where a ring would then close. May pass the size limit |
+| seedling | slow (120) | 1 grow that acted | after the page, on a carbon at or beside an OH: nine carbons with three C=O grow there. Offered only where a ring would close onto the arm. May pass the size limit |
+
+- **Tapped before the line** (`before: true` in the table): while the page is being lined up a click on the lit figure taps it. The wood spirit acts at once. The salt shows its places with the steps each would add and waits for a click on one; the go arrow leaves it. In the rig `useHomPre` does this at the start of a page.
+- **New on the molecule** (`rules.js`, `AA.rx.homs`): `cure` on the carbon and oxygen of a cured C=O (drawn with a white oxygen); `slime` on the two bridge carbons (drawn green); `seed` on a grown arm; `reach` on the molecule itself (how far apart a ring may close; copies carry it).
+- A ring that closes across the slime's bridge cannot lie flat with the big ring the bridge made (a bond came out 2 to 2.5 times its length), so while such a ring is closed the molecule keeps its shape in space, as a cage does. Not looked at frame by frame.
+- Figures: `homacid` (half melted, dripping), `homwood` (leaning, crosses for eyes, a cork hat), `homsalt` (a crusty pillar on legs), `homslime` (a see-through blob), `homseed` (a seed with a stalk and two leaves).
+- With more than five jars the row is two rows of up to five; the page before a run lays nine things out in two rows and hides the jar row. Seen with eight jars and eight figures.
+- The simulated players: the median player and the planner tap after a page where it adds most steps, or, for one that lasts the round, when playing the rest of the round both ways says so; before the line they play the page both ways. The greedy player goes by the bare structure and taps the wood spirit whenever it is lit. The novice taps half the time at random.
+
 ### Not done, and what is wrong
 
 - The simulated players do not play to feed a creature. A person who fires dehydrate or oxidize on purpose will have it lit more often than these runs show.

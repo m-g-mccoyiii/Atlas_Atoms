@@ -18,12 +18,12 @@ Settled with the owner 2026-11-11. This replaces the first version of this file.
 | 1 | Water (floods) | fast | 3 waters: dehydrate, the burner | every C=C becomes C-OH, every closed ring opens, the rings close again. Rings that only close again pay a quarter until they pass the longest row of the round | 1.5 |
 | 2 | Hydrogen (a balloon, floats over) | fast | 3 hydrogens: oxidize | when the rings stop at a stretch too long, the first C=O on the far side becomes OH and the rings carry on | 1.6 |
 | 3 | Carbon dioxide (dry ice, freezes) | medium | 1 carbon dioxide (it was 3, see "Read in the game"): grow then oxidize (oxidize cuts the end carbon off a chain that ends in C=C) | the rings the page closed are frozen: shut for the rest of the round, paid in full on later pages, cannot be opened again | 1.9 |
-| 4 | Acid (eats through) | medium | 3 fumes: hydrate or dehydrate fired | eats the extra carbons out of every stretch too long, leaving 3; and for the rest of the round a ring can close across up to 6 carbons | 1.5 |
-| 5 | Wood spirit (blind drunk) | medium | 3 reduces | tapped before lining up: the page fires all five dealt reactions, in a random order, each spending a use | 1.7 |
-| 6 | Salt (cures) | medium | 3 oxidizes on a chain-end OH | tap a C=O: it is cured for the round. A ring that closes on it leaves it a C=O, up to 3 rings a page, and no reaction changes it | 1.5 |
-| 7 | Slime (sticks) | medium | 3 hydroborates | tap two carbons: they are stuck together and count as 3 apart for the round, so rings cross from one stretch to the other | 1.6 |
+| 4 | Acid (eats through) | medium | 1 fume (it was 3, see "Read in the game"): hydrate or dehydrate fired | eats the extra carbons out of every stretch too long, leaving 3; and for the rest of the round a ring can close across up to 6 carbons | 1.5 |
+| 5 | Wood spirit (blind drunk) | medium | 1 reduce (it was 3) | tapped before lining up: the page fires all five dealt reactions, in a random order, each spending a use | 1.7 |
+| 6 | Salt (cures) | medium | 1 oxidize on a chain-end OH (it was 3) | tap a C=O: it is cured for the round. A ring that closes on it leaves it a C=O, up to 3 rings a page, and no reaction changes it | 1.5 |
+| 7 | Slime (sticks) | medium | 1 hydroborate (it was 3) | tap two carbons: they are stuck together and count as 3 apart for the round, so rings cross from one stretch to the other | 1.6 |
 | 8 | Ammonia (smelling salts, wakes) | slow | 2 ammonias: oxidize on an NH2 | the page's three reactions fire again by themselves, in the same order, no uses spent | 2.2 |
-| 9 | Seedling (grows) | slow | 3 grows | tap a carbon: 6 carbons with 2 C=O grow there, stay for the round, and may pass the size limit | 2.2 |
+| 9 | Seedling (grows) | slow | 1 grow (it was 3) | tap a carbon: 9 carbons with 3 C=O (it was 6 with 2) grow there, stay for the round, and may pass the size limit | 2.2 |
 | 10 | Brimstone (hellfire) | slow | 2 sulfurs: oxidize on an SH | tap a carbon: fire burns the next 8 plain carbons toward the chain end and writes an OH on the 4th and a C=O on the 8th. Groups already there stay. Then the rings run | 2.3 |
 
 ## What the model cannot say
@@ -60,3 +60,25 @@ Built as one table (`HOMS` in `path.js`; `JARS.md` says how). Read on 200 runs o
 - Carbon dioxide, read in the game: two amounts changed. Oxidize gives off carbon dioxide only at a C=C on the very end of a chain: 3.3 a run for the median player, 5.1 for the greedy one. Fed by 3 it was almost never lit, so it is fed by 1. Paid once ("in full"), freezing made nothing (1.00 on 40 runs, tapped in 2 rounds in 100) because frozen rings cannot be worked on by the next page's reagents; paid 2 times over it is 1.67, 2.5 times 2.12, 3 times 2.31. The carbon dioxide count measured earlier (2.07 a round, in `HOMUNCULI_2.md`) counted lines that were only tried and was about five times too high.
 - Jars: water 200, hydrogen 130, carbon dioxide 50 (about 6 to 8, 6 to 8 and 10 to 15 runs of greedy or median play).
 - Frames: `.claude/shots/hom-water-game.jpg`, `hom-hydrogen-game.jpg`, `hom-co2-game.jpg`.
+
+## Read in the game, 2026-11-11, later: acid, wood spirit, salt, slime, seedling
+
+Built as entries of the same table. Read on runs of the median simulated player, seeds 1 to 200, all nine rounds, against the same seeds with no creature (`tools_hom_cmp.py`). "Where tapped" is a round's total over the same round without it, geometric mean, in the rounds it was tapped in. Measured, awaiting review.
+
+| Creature | Amounts in the game | Runs | Tapped in | Where tapped | The same, median | All rounds | Rounds beaten, with and without | Band |
+|---|---|---|---|---|---|---|---|---|
+| Acid | 1 fume, once a round, stretches eaten to 3, rings reach 6 | 108 | 19% of rounds | 1.31 | 1.25 | 1.05 | 7.83, 7.79 | medium, 1.4 to 1.8: under |
+| Wood spirit | 1 reduce, once a round | 35 | never | | | 1.00 | 7.80, 7.80 | medium: not reached, see below |
+| Salt | 1 oxidize on a chain-end OH, once a round, 3 rings a page | 200 | 6% | 1.11 | 1.12 | 1.01 | 7.86, 7.79 | medium: under |
+| Slime | 1 hydroborate, once a round | 200 | 14% | 1.24 | 1.27 | 1.04 | 7.84, 7.79 | medium: under |
+| Seedling | 1 grow, once a round, 9 carbons with 3 C=O | 196 | 37% | 2.10 | 2.18 | 1.31 | 8.03, 7.78 | slow, 1.8 to 2.5: in |
+
+- Fed by 3, as first settled, none of the five was lit: in 24 to 29 runs each, acid was tapped in 6 rounds of 261, slime in 1, seedling in 1, salt in none. The things that feed them happen 0.3 to 1.8 times a round (per run: fumes 16.1, grows 5.7, hydroborates 5.4, oxidizes on a chain-end OH 4.2, reduces 2.9). So each is now fed by 1.
+- Acid, read in the game: under its band with every amount tried. Fed by 2 with reach 6: 1.15 where tapped (71 runs, tapped in 7 rounds in 100). Fed by 1 with reach 7: 1.20 (69 runs). Fed by 1 with reach 8: 1.18 (54 runs). Fed by 1 with reach 6, as kept: 1.31. A wider reach adds nothing, so the settled 6 stays. Fed before page one (not a real setting, 15 runs) it was 1.26.
+- Wood spirit, read in the game: a player that reads the page never taps it. It plays the page both ways on a copy (the wood spirit three times, with orders of its own) and the best line of three made more every time. Made to tap it on page one of every round (33 runs) the round made 0.74 of what it made without, and rounds beaten fell from 7.94 to 7.12. A random order of all five is worse than three in the right order: oxidize or dehydrate fired before the rings close takes the OH they start from. No amount changes that. The rule was not changed.
+- Salt, read in the game: under its band. A ring that closes on the cured C=O leaves no new OH there, so the row stops at it; it pays only where two or three OH sit round one C=O. Fed before page one (12 runs) it was 1.69 where tapped, median 1.27.
+- Slime, read in the game: under its band, a little. Two taps a round in place of one made no difference (1.25 on 158 runs), so it stays at one.
+- Seedling, read in the game: with 6 carbons and 2 C=O, fed by 2 it was 1.58 (76 runs) and fed by 1 it was 1.68 (86 runs), under the slow band. With 9 carbons and 3 C=O it is in the band. It is the only one of the five that moves rounds beaten (by a quarter of a round).
+- The structural screen (`homTable`) was not run for these five: it has no tap before the line. The reads above are whole runs.
+- Jars: acid 200, wood spirit 40, salt 50, slime 70, seedling 120 (about 12, 14, 12, 13 and 21 runs of the median player).
+- Frames: `.claude/shots/hom-acid-game.jpg`, `hom-wood-game.jpg`, `hom-salt-game.jpg`, `hom-slime-game.jpg`, `hom-seedling-game.jpg` (the seedling frame shows the arm of 6 carbons, recorded before it became 9).

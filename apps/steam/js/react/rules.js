@@ -608,10 +608,10 @@ const tools = {
 //     six carbons (m.reach, carried by copies of the molecule).
 //   salt: one C=O is cured (cure on its carbon and oxygen).
 //   slime: two carbons are stuck together by two carbons of slime, so they count as three apart.
-//   seedling: six carbons with two C=O grow from one carbon.
+//   seedling: an arm grows from one carbon, three carbons and one C=O for each of `arms`.
 const homs = {
   acidRuns: m => gapRuns(m),
-  acid(m) { const made = []; gapRuns(m).forEach(run => { const keep = run[run.length - 2]; run.slice(1, -2).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], keep); made.push(run[0], keep); }); m.reach = 6; return { made }; },
+  acid(m, reach) { const made = []; gapRuns(m).forEach(run => { const keep = run[run.length - 2]; run.slice(1, -2).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], keep); made.push(run[0], keep); }); m.reach = reach || 6; return { made }; },
   saltSpots(m) { return carbonyls(m).filter(k => !k.c.cure && !k.c.fly).map(k => ({ c: k.c, o: k.o })); },
   salt(m, sp) { if (!sp.c || !sp.o || sp.c.cure) return null; sp.c.cure = true; sp.o.cure = true; return { made: [sp.o] }; },
   // pairs that would let an OH reach a C=O it cannot reach now: one carbon at or beside the OH's carbon, one at or
@@ -630,7 +630,7 @@ const homs = {
     [x1, x2].forEach(c => { attach(m, 'H', c, 2.2); attach(m, 'H', c, 2.2); }); return { made: [x1, x2] }; },
   seedSpots(m) { const ar = aromaticAtoms(m), out = [], add = c => { if (c.el === 'C' && !c.fly && !c.slime && isSp3(m, c) && Hs(m, c).length && !out.includes(c)) out.push(c); };
     m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (!s) return; add(s.c); carbonsOf(m, s.c).forEach(add); }); return out.map(c => ({ c })); },
-  seed(m, sp) { const h = sp.c && Hs(m, sp.c)[0]; if (!h) return null; m.removeAtom(h); const r = grow(m, sp.c, [[2, 1, ''], [2, 1, ''], [0, 1, '=O'], [2, 1, ''], [2, 1, ''], [1, 1, '=O']]); r.made.forEach(a => { a.seed = true; }); return { made: r.made }; },
+  seed(m, sp, arms) { const h = sp.c && Hs(m, sp.c)[0]; if (!h) return null; m.removeAtom(h); const spec = []; for (let k = 0, n = arms || 2; k < n; k++) spec.push([2, 1, ''], [2, 1, ''], [k === n - 1 ? 1 : 0, 1, '=O']); const r = grow(m, sp.c, spec); r.made.forEach(a => { a.seed = true; }); return { made: r.made }; },
   // an OH that oxidize would take at the very end of a chain (CH2-OH): what feeds the salt
   endOls: m => m.atoms.filter(o => { const s = !o.fly && oxidisable(m, o); return !!s && Hs(m, s.c).length === 2; })
 };

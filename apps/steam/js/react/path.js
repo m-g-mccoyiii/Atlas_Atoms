@@ -759,9 +759,9 @@ const HOMS = {
     now(g) { return g.page >= pagesOf(g) - 1 ? (g.casc || 0) >= 1 : (g.casc || 0) >= HOMSIM.freezeAt; } },
   // acid eats through: every stretch of four or more plain CH2 is eaten down to three, and for the rest of the round a
   // ring closes across up to six carbons. The rings then run, counting on
-  acid: { name: 'acid', jar: 'medium', feed: ['use:hydrate', 'use:dehydrate'], need: 2, uses: 1, tok: 'eats long gaps|rings reach 6', whole: true, word: '', lasting: true,
-    spots(m) { const runs = RX.homs.acidRuns(m); return runs.length || m.reach !== 6 ? [{ runs }] : []; },
-    act(m) { return RX.homs.acid(m); } },
+  acid: { name: 'acid', jar: 'medium', feed: ['use:hydrate', 'use:dehydrate'], need: 1, uses: 1, reach: 6, tok: 'eats long gaps|rings reach 6', whole: true, word: '', lasting: true,
+    spots(m) { const runs = RX.homs.acidRuns(m); return runs.length || m.reach !== HOMS.acid.reach ? [{ runs }] : []; },
+    act(m) { return RX.homs.acid(m, HOMS.acid.reach); } },
   // wood spirit, blind drunk: tapped BEFORE the page is lined up. The page fires every reaction dealt that has a use
   // left, in an order taken at random, each spending a use
   wood: { name: 'wood spirit', jar: 'medium', feed: ['use:nabh4'], need: 1, uses: 1, tok: 'fires all five|any order', whole: true, word: '', before: true,
@@ -779,9 +779,9 @@ const HOMS = {
     act(m, sp) { const r = RX.homs.slime(m, sp); return r ? { made: r.made, over: true } : null; } },
   // the seedling grows: six carbons with two C=O grow from the carbon tapped, stay for the round, and may pass the
   // size limit. A place is offered only if a ring would close onto the new arm
-  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 2, uses: 1, tok: 'grows 6 carbons|2 C=O', word: '+6', lasting: true,
+  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 1, uses: 1, arms: 3, tok: 'grows 9 carbons|3 C=O', word: '+9', lasting: true,
     spots(m, g) { const self = (g && g.self) || SELF0; return RX.homs.seedSpots(m).filter(sp => { const t = homTry(m, 'seedling', sp); return !!t && selfRun(t, self) >= 1; }); },
-    act(m, sp) { const r = RX.homs.seed(m, sp); return r ? { made: r.made, over: true } : null; } },
+    act(m, sp) { const r = RX.homs.seed(m, sp, HOMS.seedling.arms); return r ? { made: r.made, over: true } : null; } },
   // not built yet (docs/HOMUNCULI.md, "To build, in order"): each becomes one entry like those above
   ammonia: { name: 'ammonia', jar: 'slow', feed: ['nh3'], need: 2, uses: 1, tok: 'page fires again', whole: true, offered: false },
   brimstone: { name: 'brimstone', jar: 'slow', feed: ['sulfur'], need: 2, uses: 1, tok: 'burns 8 carbons', offered: false }
