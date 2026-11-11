@@ -122,7 +122,8 @@ RULE.bank = 2; RULE.bankMin = 3; RULE.cascade = 'each';
 //         player has added to it. Rings made by a weld or a snap, and a zip whose OH has since been taken off, stay shut.
 //   ban: reagents and kinds of cascade that are never offered, for measuring a run without them.
 //   weld: 'ol' or 'ene', what a weld leaves behind (rules.js MODE.weld).
-RULE.atoms = 56; RULE.reopen = true; RULE.ban = []; RULE.weld = 'ol';
+//   fresh: only the steps of a cascade past the longest of the round's earlier pages are paid in full (CASC.old).
+RULE.atoms = 56; RULE.reopen = true; RULE.ban = []; RULE.weld = 'ol'; RULE.fresh = true;
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
@@ -142,7 +143,10 @@ const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 // Measured on one molecule of round eight: with step 0.01 a line that set off six steps made 4,800 and a line that
 // set off none made 4,440, because three reagents on a long molecule change many places; the count has to pay more
 // than that. most: a page stops cascading after this many steps, so that it cannot stall.
-const CASC = { step: 0.1, place: 50, row: 0.1, mul: false, most: 40 };
+// old: a step that is not new pays this share. A step is new when the page has run past the longest cascade of any
+// earlier page of the round (RULE.fresh). A chain that is standing opens and zips again on every page; fired again
+// as it is, it pays a quarter. What the three reagents of a page are for is making it longer than it has been.
+const CASC = { step: 0.1, place: 50, row: 0.1, mul: false, most: 40, old: 0.25 };
 const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1, extend: 1, dione: 1, phenol: 1, rcm: 1, couple: 1 };
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
@@ -530,7 +534,7 @@ function scoreRound(g, o, free) {
   const c = { hits: r.hits, saved, was, cont: o.cont, len: cur.path.length, loop, leaves: !!LEAVES[id], first, nth: cur.step + 1, page: g.page, pageStep: g.pageSteps, pageMax: stepsOf(g), cls: RX.CARDS[id].cls, same: cur.used[cur.used.length - 1] === id, distinct: new Set(cur.used.concat(id)).size };
   const b = g.brief, polyLen = id === 'aibn' ? Math.max(2, o.model.atoms.reduce((t, a) => t + (a.poly || 0), 0)) / 2 : 1, per = (o.casc ? CASC.place : id === 'aibn' ? SYN.place * polyLen : id === 'allyl' ? SYN.place : rarityOf(id).place) * (1 + SYN.strong * ((g.grade[id] || 1) - 1)) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first && !o.casc ? 0 : 1);
   for (let i = 0; i < r.hits; i++) { c.hit = i; if (per) emit('bottle', A('p', per)); pieces('site'); }
-  if (o.casc && r.hits) { g.casc = (g.casc || 0) + 1; if (g.casc > 1) emit('cascade', M('h', g.casc)); emit('cascade', CASC.mul ? M('e', 1 + CASC.step * g.casc) : A('e', CASC.step * g.casc), { n: g.casc }); g.tally.casc = Math.max(g.tally.casc || 0, g.casc); }
+  if (o.casc && r.hits) { g.casc = (g.casc || 0) + 1; const fresh = !RULE.fresh || g.casc > (g.cascBest || 0), w = fresh ? 1 : CASC.old; if (g.casc > 1) emit('cascade', M('h', 1 + (g.casc - 1) * w)); emit('cascade', CASC.mul ? M('e', 1 + CASC.step * g.casc * w) : A('e', CASC.step * g.casc * w), { n: g.casc, fresh }); g.tally.casc = Math.max(g.tally.casc || 0, g.casc); }
   if (SHORT[id] && r.hits) { emit('short', M('h', SHORT[id])); emit('short', A('r', 0.5 * (SHORT[id] - 1))); }
   new Set(o.atoms || []).forEach(a => { const I = a.iso && ISO[a.iso]; if (I) emit('iso', { part: I.part, op: I.op, val: I.val }, { iso: a.iso }); });
   // what leaves: caught by equipment, or collected, and always a stroke on the tally. Five strokes pay places, more the longer the row
@@ -681,7 +685,7 @@ function queueView(g) {
 // the fire extinguisher: stops a chain that is running; the round counts half again once the page is over
 function douse(g) { if (!g.gear.includes('extinguisher') || !g.chain || g.doused) return false; g.chain = false; g.doused = 1; return true; }
 const doused = g => { if (g.doused === 1) { g.E *= 1.5; g.doused = 2; } };
-function turn(g, rnd) { doused(g); if (g.page >= pagesOf(g)) return false; g.page++; g.back = g.gear.includes('raven') ? g.cur.used[g.cur.used.length - 1] : null; reopenAll(g); synDeal(g, rnd); return true; }
+function turn(g, rnd) { doused(g); if (g.page >= pagesOf(g)) return false; g.cascBest = Math.max(g.cascBest || 0, g.casc || 0); g.page++; g.back = g.gear.includes('raven') ? g.cur.used[g.cur.used.length - 1] : null; reopenAll(g); synDeal(g, rnd); return true; }
 // the finishing reagent, on the last page only
 function finishOpt(g) {
   if (g.page < pagesOf(g) || !RX.CARDS[SYN.finish].find(g.m).length) return null;

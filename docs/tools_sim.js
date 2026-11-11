@@ -51,7 +51,9 @@
     const left = P.pagesOf(g) - g.page; if (left <= 0 || !P.RULE.reopen || !P.RULE.cascade || g.over) return 0;
     const s = snap(g), q = g.queue; g.queue = []; P.reopenAll(g); g.casc = 0; const n = P.cascade(g); back(g, s); g.queue = q;
     // the places of the steps, and what the extra they add does to everything the round has made so far
-    return left * 0.7 * (P.CASC.place * n * (n + 1) / 2 * (1 + P.CASC.row * n) * g.E + (P.CASC.mul ? 0 : P.CASC.step * n * (n + 1) / 2 * (g.bank + g.P * g.R)));
+    // steps up to the longest cascade of the round so far pay CASC.old of that (RULE.fresh)
+    let tri = 0; { const b = P.RULE.fresh ? Math.max(g.cascBest || 0, g.casc || 0) : 0; for (let k = 1; k <= n; k++) tri += k * (k > b ? 1 : P.CASC.old); }
+    return left * 0.7 * (P.CASC.place * tri * (1 + P.CASC.row * n) * g.E + (P.CASC.mul ? 0 : P.CASC.step * tri * (g.bank + g.P * g.R)));
   }
   function leaf(g, cfg) {
     let v = P.made(g);
