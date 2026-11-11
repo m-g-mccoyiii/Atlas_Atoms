@@ -7,7 +7,12 @@ ring scoring, and one small function per creature.
 Run:  python hom_model.py [molecules_per_stage]
 """
 import itertools, os, random, statistics, sys
-WATER_V = int(os.environ.get('WATER_V', 0)); ARMS = int(os.environ.get('ARMS', 3)); EVERY = int(os.environ.get('EVERY', 4))
+NEW = int(os.environ.get('NEW', 0))   # NEW=1 turns on every changed rule; any single flag below can still override
+def E(k, old, new): return int(os.environ.get(k, new if NEW else old))
+WATER_V = E('WATER_V', 0, 1); ARMS = E('ARMS', 3, 2); EVERY = E('EVERY', 4, 6)
+SEEDNEED = E('SEEDNEED', 2, 3); AMM_NH2 = E('AMM_NH2', 0, 1); AMMNEED = E('AMMNEED', 2, 2); HYDNEED = E('HYDNEED', 3, 3)
+ACIDEXT = int(os.environ.get('ACIDEXT', 2))
+ACID = os.environ.get('ACID', 'g' if NEW else '')   # '', 'a', 'b', 'c'(a+b), 'd' (extra rule)
 SALTCAP = int(os.environ.get('SALTCAP', 3)); ONLY = os.environ.get('ONLY', '')
 from multiprocessing import Pool
 
@@ -24,8 +29,8 @@ LINES = list(itertools.permutations(range(6), 3))   # ordered lines of 3 differe
 TOPO = {}
 
 
-def topo(par, br=None):
-    key = (tuple(par), br)
+def topo(par, br=None, ext=0):
+    key = (tuple(par), br, ext)
     t = TOPO.get(key)
     if t:
         return t
@@ -42,7 +47,7 @@ def topo(par, br=None):
     reach = []
     for s in range(n):
         seen = {s}; fr = [s]; out = []
-        for d in range(1, 5):
+        for d in range(1, 5 + ext):
             nf = []
             for u in fr:
                 for v in adj[u]:
@@ -58,27 +63,27 @@ def topo(par, br=None):
 
 
 class Mol:
-    __slots__ = ('c', 'par', 'rings', 'nf', 'n', 'pay', 'L', 'feed', 'br', 'salt', 'scnt')
+    __slots__ = ('c', 'par', 'rings', 'nf', 'n', 'pay', 'L', 'feed', 'br', 'salt', 'scnt', 'ext')
 
     def copy(self):
         m = Mol()
         m.c = self.c[:]; m.par = self.par[:]; m.rings = self.rings[:]
         m.nf = self.nf; m.n = self.n; m.pay = self.pay; m.L = self.L
         m.feed = self.feed[:]
-        m.br = self.br; m.salt = self.salt; m.scnt = self.scnt
+        m.br = self.br; m.salt = self.salt; m.scnt = self.scnt; m.ext = self.ext
         return m
 
     def assign(self, o):
         self.c = o.c; self.par = o.par; self.rings = o.rings
         self.nf = o.nf; self.n = o.n; self.pay = o.pay; self.L = o.L; self.feed = o.feed
-        self.br = o.br; self.salt = o.salt; self.scnt = o.scnt
+        self.br = o.br; self.salt = o.salt; self.scnt = o.scnt; self.ext = o.ext
 
 
 def make(c, sh=0):
     m = Mol()
     m.c = list(c); m.par = [-1] + list(range(len(c) - 1)); m.rings = []
     m.nf = 0; m.n = 0; m.pay = 0.0; m.L = 0; m.feed = [0] * NFEED; m.feed[PSH] = sh
-    m.br = None; m.salt = -1; m.scnt = 0
+    m.br = None; m.salt = -1; m.scnt = 0; m.ext = 0
     return m
 
 
@@ -90,7 +95,7 @@ def alive(m):
 def cascade(m):
     """OH takes the nearest C=O 3 or 4 carbons away, closing a ring; repeat."""
     c = m.c
-    reach, _ = topo(m.par, m.br)
+    reach, _ = topo(m.par, m.br, m.ext)
     while True:
         order = []
         if m.rings and c[m.rings[-1][1]] == ROH:
@@ -248,7 +253,7 @@ def water(m, line):
 
 def hydrogen(m, line):
     """Where the rings stop, the first C=O past the gap becomes OH and the rings go on."""
-    if m.feed[H] < 3:
+    if m.feed[H] < HYDNEED:
         return 0
     c = m.c
     cands = []
@@ -282,37 +287,74 @@ def carbon_dioxide(m, line):
     return 2
 
 
+def _cuts(m, wide):
+    c = m.c; _, kids = topo(m.par)
+    live = lambda u: [x for x in kids[u] if c[x] != DEAD]
+    cuts = []
+    if not wide:
+        func = (OH, CO, NH2, RING, ROH)
+        for a in range(len(c)):
+            if c[a] not in func:
+                continue
+            for k in kids[a]:
+                if c[k] == DEAD:
+                    continue
+                run = []; u = k
+                while c[u] in (BARE, CC) and len(live(u)) == 1:
+                    run.append(u); u = live(u)[0]
+                if run and c[u] in func and len(run) > 3:
+                    cuts.append((a, run, u))
+    else:
+        first_oh = next((i for i, x in enumerate(c) if x == OH), -1)
+        for a in range(len(c)):
+            if c[a] != CO:
+                continue
+            for k in kids[a]:
+                if c[k] == DEAD:
+                    continue
+                run = []; u = k
+                while (c[u] in (BARE, CC) or (c[u] == OH and u != first_oh)) and len(live(u)) == 1:
+                    run.append(u); u = live(u)[0]
+                if run and c[u] == CO and len(run) > 3:
+                    cuts.append((a, run, u))
+    return cuts
+
+
+def messy(m):
+    return sum(len(r) - 3 for _, r, _ in _cuts(m, False)) + (sum(len(r) - 3 for _, r, _ in _cuts(m, True)) if ACID in ('b', 'c', 'f') else 0)
+
+
+def _apply(m, cuts):
+    for a, run, b in cuts:
+        for u in run[2:-1]:
+            m.c[u] = DEAD
+        m.par[run[-1]] = run[1]
+
+
 def acid(m, line):
-    """Every run of plain carbons between two OH/C=O carbons longer than 3 is eaten down to 3."""
+    """Every run of plain carbons between two OH/C=O carbons longer than 3 is eaten down to 3.
+    ACID b/c: also between neighbouring C=O, eating C=C and OH (not the first OH) on the way."""
     if m.feed[F] < 3:
         return 0
-    c = m.c; _, kids = topo(m.par)
-    func = (OH, CO, NH2, RING, ROH)
-    cuts = []
-    for a in range(len(c)):
-        if c[a] not in func:
-            continue
-        for k in kids[a]:
-            run = []; u = k
-            while c[u] in (BARE, CC) and len([x for x in kids[u] if c[x] != DEAD]) == 1:
-                run.append(u)
-                u = [x for x in kids[u] if c[x] != DEAD][0]
-            if run and c[u] in func and len(run) > 3:
-                cuts.append((a, run, u))
-    if not cuts:
+    got = False
+    if ACID in ('d', 'e', 'f', 'g'):
+        m.ext = ACIDEXT; got = True
+    if ACID in ('b', 'c', 'd', 'f'):
+        w = _cuts(m, True)
+        if w:
+            _apply(m, w); got = True
+    n = _cuts(m, False) if ACID != 'e' else []
+    if n:
+        _apply(m, n); got = True
+    if not got:
         return 1
-    for a, run, b in cuts:
-        # keep run[0], run[1] and run[-1] (three carbons); eat the middle
-        for u in run[2:-1]:
-            c[u] = DEAD
-        m.par[run[-1]] = run[1]
     cascade(m)
     return 2
 
 
 def ammonia(m, line):
     """The page's three reactions fire again in the same order, no uses spent."""
-    if m.feed[N] < 2:
+    if m.feed[N] < AMMNEED:
         return 0
     acted = False
     for r in line:
@@ -400,7 +442,7 @@ def brimstone(m, line):
 
 def seedling(m, line):
     """As the sprout, but past the size limit by up to 9 carbons, and fed by 2 grows."""
-    if m.feed[SE] < 2:
+    if m.feed[SE] < SEEDNEED:
         return 0
     return sprout(m, line, extra=9, arms=ARMS)
 
@@ -451,15 +493,14 @@ def wood_spirit(m, line):
 
 CREATURES = {
     'water': (water, W, 3),
-    'hydrogen': (hydrogen, H, 3),
+    'hydrogen': (hydrogen, H, HYDNEED),
     'carbon dioxide': (carbon_dioxide, C, 3),
     'acid': (acid, F, 3),
-    'ammonia': (ammonia, N, 2),
-    'sprout': (sprout, None, 0),
+    'ammonia': (ammonia, N, AMMNEED),
     'wood spirit': (wood_spirit, RD, 3),
     'salt': (salt, SA, 3),
     'brimstone': (brimstone, SU, 2),
-    'seedling': (seedling, SE, 2),
+    'seedling': (seedling, SE, SEEDNEED),
     'slime': (slime, BO, 3),
 }
 START_ONLY = ('wood spirit', 'salt')
@@ -624,20 +665,39 @@ def gen(stage, rng):
     return c
 
 
-def one(args):
-    stage, seed = args
-    rng = random.Random(seed)
+def mol_for(stage, seed, alt=0):
+    rng = random.Random(seed + alt)
     c = gen(stage, rng)
-    r2 = random.Random(seed + 99991)
+    r2 = random.Random(seed + alt + 99991)
     pn = {'early': 0.10, 'middle': 0.30, 'late': 0.40}[stage]
     sh = r2.choice([2, 3]) if r2.random() < pn else 0
+    return c, sh, rng
+
+
+def one(args):
+    stage, seed = args
+    c, sh, rng = mol_for(stage, seed)
     mol = make(c, sh)
     base = round_total(mol)
     out = {'base': base[0], 'len': len(c)}
     for name in CREATURES:
         if ONLY and name not in ONLY.split(','):
             continue
-        out[name] = with_creature(mol, name, base)
+        m_, b_ = mol, base
+        if name == 'ammonia' and AMM_NH2 and NH2 not in c:
+            c2 = c[:]
+            cos = [i for i in range(1, len(c2)) if c2[i] == CO]
+            r3 = random.Random(seed + 4242)
+            for i in r3.sample(cos, min(len(cos), r3.choice([2, 3]))):
+                c2[i] = NH2
+            m_ = make(c2, sh); b_ = round_total(m_)
+        if name == 'acid' and ACID in ('a', 'c', 'f'):
+            c2, sh2, _ = mol_for(stage, seed, 7777)
+            m2 = make(c2, sh2)
+            if messy(m2) > messy(mol):
+                m_ = m2; b_ = round_total(m2)
+        out[name] = with_creature(m_, name, b_)
+        out[name + '#base'] = b_[0]
     return stage, out
 
 
@@ -649,7 +709,7 @@ def pct(xs, q):
 def main():
     per = int(sys.argv[1]) if len(sys.argv) > 1 else 100
     jobs = [(s, 1000 * i + k) for i, s in enumerate(['early', 'middle', 'late']) for k in range(per)]
-    with Pool(14) as pool:
+    with Pool(min(14, os.cpu_count() or 4)) as pool:
         res = pool.map(one, jobs, chunksize=2)
     stages = ['early', 'middle', 'late']
     print('mean base round total:', {s: round(statistics.mean(o['base'] for st, o in res if st == s)) for s in stages})
@@ -660,9 +720,9 @@ def main():
         if ONLY and name not in ONLY.split(','):
             continue
         for s in stages:
-            rows = [o for st, o in res if st == s and o['base'] > 0]
+            rows = [o for st, o in res if st == s and o[name + '#base'] > 0]
             fed = sum(1 for o in rows if o[name][0]) / len(rows)
-            ratios = [o[name][1] / o['base'] for o in rows]
+            ratios = [o[name][1] / o[name + '#base'] for o in rows]
             used = [r for r in ratios if r > 1.0001]
             print('%-15s %-7s %5.0f %5.0f %7s %7s %8.2f' % (
                 name, s, 100 * fed, 100 * len(used) / len(rows),

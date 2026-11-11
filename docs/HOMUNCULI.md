@@ -1,53 +1,44 @@
-# Overreact: the homunculi
+# Overreact: the ten homunculi
 
-Being decided one at a time with the owner, 2026-11-11. Not built.
+Settled with the owner 2026-11-11. This replaces the first version of this file. How it was reached is in `HOMUNCULI_2.md` and `HOMUNCULI_3.md`. Pictures: `.claude/shots/hom-<name>.png`. Strength numbers are from a small model (`docs/tools_hom_model.py`, run with `NEW=1`), not from the game. Nothing here is built yet except the jars.
 
-What comes off the molecule is collected in jars that fill across runs and are never emptied. A homunculus grows in each jar and hatches when it is full. One is taken into a run. It sits by the molecule and does its one thing once every page, and is seen doing it. The owner's rule for all of them: the player decides where it acts. The player points it at a spot after firing a page and before the next page is dealt, so there is risk: the next set of reactions cannot be seen yet. Jars that fill slowly hatch homunculi that do more.
+## Rules for all of them
 
-## 1. Water (agreed)
+- What comes off the molecule fills jars across runs. A creature hatches from each full jar. One is taken into a run.
+- They are perks. They do what the substance is known for in plain terms, and they are big.
+- Each must make a run deeper. None is a reaction the player could be dealt.
+- Each is fed during a round by something the player's reactions make. When fed it lights up. The player taps it on the page wanted. It lights only when it can do something, so it is never wasted. On hover the page shows what it would do.
+- If a creature's food needs a group that only some molecules carry (NH2, SH), then while that creature is held, one of the two molecules offered before each round always carries it.
+- The amounts below are first numbers and will be tuned in the game.
 
-- Fills from: water coming off the molecule. Fast.
-- Looks like: a soaking wet little figure that leaves puddles.
-- Does: each page, turns one double bond the player picks into an OH.
-- Owner: it makes a squish sound as it moves.
+## The ten
 
-## 2. Hydrogen (agreed)
+| # | Creature | Jar | Fed by | Tap, and what happens | Times a round's total, model, middle rounds |
+|---|---|---|---|---|---|
+| 1 | Water (floods) | fast | 3 waters: dehydrate, the burner | every C=C becomes C-OH, every closed ring opens, the rings close again. Rings that only close again pay a quarter until they pass the longest row of the round | 1.5 |
+| 2 | Hydrogen (a balloon, floats over) | fast | 3 hydrogens: oxidize | when the rings stop at a stretch too long, the first C=O on the far side becomes OH and the rings carry on | 1.6 |
+| 3 | Carbon dioxide (dry ice, freezes) | medium | 3 carbon dioxides: grow then oxidize (oxidize cuts the end carbon off a chain that ends in C=C) | the rings the page closed are frozen: shut for the rest of the round, paid in full on later pages, cannot be opened again | 1.9 |
+| 4 | Acid (eats through) | medium | 3 fumes: hydrate or dehydrate fired | eats the extra carbons out of every stretch too long, leaving 3; and for the rest of the round a ring can close across up to 6 carbons | 1.5 |
+| 5 | Wood spirit (blind drunk) | medium | 3 reduces | tapped before lining up: the page fires all five dealt reactions, in a random order, each spending a use | 1.7 |
+| 6 | Salt (cures) | medium | 3 oxidizes on a chain-end OH | tap a C=O: it is cured for the round. A ring that closes on it leaves it a C=O, up to 3 rings a page, and no reaction changes it | 1.5 |
+| 7 | Slime (sticks) | medium | 3 hydroborates | tap two carbons: they are stuck together and count as 3 apart for the round, so rings cross from one stretch to the other | 1.6 |
+| 8 | Ammonia (smelling salts, wakes) | slow | 2 ammonias: oxidize on an NH2 | the page's three reactions fire again by themselves, in the same order, no uses spent | 2.2 |
+| 9 | Seedling (grows) | slow | 3 grows | tap a carbon: 6 carbons with 2 C=O grow there, stay for the round, and may pass the size limit | 2.2 |
+| 10 | Brimstone (hellfire) | slow | 2 sulfurs: oxidize on an SH | tap a carbon: fire runs from there to the chain end and every 6th plain carbon becomes OH, then C=O, in turn. Then the rings run | 2.3 |
 
-- Fills from: hydrogen coming off the molecule. Fast.
-- Looks like: a light little figure that floats, held down by a string like a balloon.
-- Does: each page, turns one C=O the player picks into an OH.
+## What the model cannot say
 
-## 3. Carbon dioxide (agreed in outline)
+- Acid's wider reach was found by the model and has not been seen on real molecules.
+- Ammonia and brimstone were measured on made-up molecules carrying NH2 and SH. No such molecules are in the game yet.
+- Salt, slime and seedling were tapped at a few spots only, so a good player gets more from them than the numbers show.
+- Wood spirit's page ignores the three uses of a reaction.
+- Hydrogen is a little above the fast band in middle rounds; carbon dioxide a little above the medium band. Left for tuning in the game.
 
-- Fills from: carbon dioxide coming off when an acid end is cut from the molecule. Medium.
-- Looks like: a fizzy little figure that burps bubbles.
-- Does: each page, puts a COOH on one bare chain end the player picks. COOH is the acid group: a carbon with a double-bonded O and an OH.
-- If there is no bare chain end it does nothing that page.
+## To build, in order
 
-## 4. Acid fumes (agreed)
-
-- Fills from: hydrogen chloride gas coming off when a chloride is put on the molecule. Medium.
-- Looks like: a half-melted little figure that eats through whatever it touches.
-- Does: each page, breaks open one ring the player picks, at the bond the player picks.
-- Why: a ring that already closed can close again, so the same spot can take part in a second cascade.
-
-## 5. Ammonia (agreed)
-
-- Fills from: ammonia coming off the molecule. Slow.
-- Looks like: a little figure that stinks. Everything near it leans away.
-- Does: each page, turns one C=O the player picks into a C=N, which puts a nitrogen into the molecule.
-- Why: nitrogen opens joins that oxygen cannot do.
-
-## 6. Wood spirit, methanol (agreed)
-
-- Fills from: methanol coming off the molecule. Slow.
-- Looks like: a blind-drunk little figure that stumbles about. Wood spirit is what makes people go blind.
-- Does: each page, blinds one OH the player picks: it is capped, and nothing can change it until the round ends. The player's reactions skip it and so does the burner.
-- Why: it is the only one that protects. Keep the one OH a cascade needs safe while everything else is changed.
-- Rejected by the owner: putting an OH on a carbon near where the player aimed.
-
-## 7. Salt (not agreed: needs work)
-
-- Fills from: salt left when a chloride is swapped off the molecule. Slow.
-- Looks like: a crusty little pillar of salt.
-- Does: undecided. Rejected by the owner so far: holding two ends side by side ("why would that be salty or do anything"); preserving one ring for the round; "it looked back", repeating the player's last reaction at a chosen spot.
+1. The feeding and tap flow for all ten behind one table, with hover preview.
+2. Water and hydrogen (the jars are being built).
+3. The change to oxidize that gives off carbon dioxide, then the freeze.
+4. Acid, salt, slime, seedling, wood spirit.
+5. Molecules that carry NH2 and SH, the offer rule, then ammonia and brimstone.
+6. Each read on the structural screen and on 200 runs, and the amounts changed until each sits in its band.
