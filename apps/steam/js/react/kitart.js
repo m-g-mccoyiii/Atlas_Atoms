@@ -9,7 +9,7 @@ const AA = root.AA = root.AA || {};
 //   desk: glass that refracts, metal that reflects the room, as if on a real table
 //   clay: everything matte and a little uneven, no glass, colors from the same small set
 const K = { look: 'now' };
-const PAL = [0x1f2a55, 0xf4efe0, 0xd6453a, 0xf0b93a, 0x3a6fd0, 0x3c9a5f, 0x8a5a2b, 0x8d949c, 0xb0189a, 0x2c2f34];
+const PAL = [0x2b2622, 0xf4efe0, 0xd6453a, 0xf0b93a, 0x3a6fd0, 0x3c9a5f, 0x8a5a2b, 0x8d949c, 0xb0189a, 0x2c2f34];
 let ramp = null;
 function snap(T, hex) { const c = new T.Color(hex); let best = PAL[0], bd = 9; PAL.forEach(p => { const q = new T.Color(p), d = (q.r - c.r) * (q.r - c.r) + (q.g - c.g) * (q.g - c.g) + (q.b - c.b) * (q.b - c.b); if (d < bd) { bd = d; best = p; } }); return best; }
 function mat(T, color, rough, metal, more) {
@@ -29,7 +29,7 @@ function finish(T, grp) {
   const parts = []; grp.traverse(o => { if (o.isMesh && !o.userData.plain) parts.push(o); });
   parts.forEach(m => {
     if (K.look === 'clay') { const p = m.geometry.attributes.position, a = 0.035; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x + a * Math.sin(y * 6.1 + z * 4.3 + 1), y + a * Math.sin(z * 5.7 + x * 4.9 + 2), z + a * Math.sin(x * 6.7 + y * 5.3 + 3)); } p.needsUpdate = true; m.geometry.computeVertexNormals(); return; }
-    m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new T.Vector3()), t = 0.05, o = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x1f2a55).convertSRGBToLinear(), side: T.BackSide }));
+    m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new T.Vector3()), t = 0.05, o = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x2b2622).convertSRGBToLinear(), side: T.BackSide }));
     o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.set(m.scale.x * (1 + 2 * t / Math.max(0.05, sz.x * m.scale.x)), m.scale.y * (1 + 2 * t / Math.max(0.05, sz.y * m.scale.y)), m.scale.z * (1 + 2 * t / Math.max(0.05, sz.z * m.scale.z))); o.userData.plain = true; m.parent.add(o);
   });
 }
@@ -96,7 +96,7 @@ function build(id, T, grp, tint) {
       sph(0.56, skin, 0, 1.92, 0, [1, 1.12, 0.95]); sph(0.09, shade, 0, 1.33, 0, [1, 0.8, 1]); sph(0.2, M(0xffffff, 0.2), -0.2, 2.2, 0.36, [0.7, 1.2, 0.4]);
       side.forEach(q => { rod([q * 0.5, 1.9, 0.05], [q * 0.82, 2.12, 0.08], 0.05, shade); sph(0.08, skin, q * 0.85, 2.15, 0.08); rod([q * 0.2, 1.42, 0.05], [q * 0.3, 1.2, 0.1], 0.05, shade); sph(0.08, shade, q * 0.31, 1.17, 0.12, [1, 0.7, 1.3]); sph(0.05, black, q * 0.17, 2.02, 0.5); }); },
     // carbon dioxide: a block of dry ice on two thin legs, standing in its own mist
-    homco2() { const ice = M(0xeef6fa, 0.18, 0, { transparent: true, opacity: 0.9 }), edge = M(0xa9d8ee, 0.3), mist = M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.6 }), leg = M(0x1f2a55, 0.6);
+    homco2() { const ice = M(0xeef6fa, 0.18, 0, { transparent: true, opacity: 0.9 }), edge = M(0xa9d8ee, 0.3), mist = M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.6 }), leg = M(0x2b2622, 0.6);
       [[-0.75, 0.2, 0.5], [-0.25, 0.3, 0.42], [0.3, -0.1, 0.5], [0.8, 0.25, 0.4], [0.05, 0.55, 0.36]].forEach(q => { sph(q[2], mist, q[0], 0.1, q[1], [1.3, 0.3, 1]).userData.plain = true; });
       side.forEach(q => { rod([q * 0.26, 0.95, 0], [q * 0.34, 0.12, 0.06], 0.045, leg); sph(0.09, leg, q * 0.36, 0.08, 0.14, [1, 0.6, 1.5]); });
       box(1.15, 1.05, 0.9, ice, 0, 1.5, 0, [0, 0.12, 0.03]); box(1.02, 0.1, 0.8, edge, 0, 2.0, 0, [0, 0.12, 0.03]).userData.plain = true; box(0.2, 0.42, 0.04, M(0xffffff, 0.1), -0.32, 1.62, 0.47, [0, 0.12, 0.3]).userData.plain = true;
@@ -117,7 +117,7 @@ function build(id, T, grp, tint) {
       rod([-0.25, 1.05, 0.02], [-0.7, 1.35, 0.1], 0.06, shade); sph(0.09, skin, -0.74, 1.39, 0.1); rod([0.45, 1.0, 0.02], [0.75, 0.6, 0.12], 0.06, shade); sph(0.09, skin, 0.78, 0.55, 0.13);
       box(0.16, 0.03, 0.02, black, 0.3, 1.36, 0.36, [0, 0, 0.3]); },
     // salt: a crusty white pillar on two thin legs, crystals growing off it
-    homsalt() { const salt = M(0xf4f1e8, 0.85), crust = M(0xcfc9b6, 0.95), leg = M(0x1f2a55, 0.6);
+    homsalt() { const salt = M(0xf4f1e8, 0.85), crust = M(0xcfc9b6, 0.95), leg = M(0x2b2622, 0.6);
       cyl(0.8, 0.9, 0.03, crust, 0, 0.015, 0).userData.plain = true;
       side.forEach(q => { rod([q * 0.22, 0.6, 0], [q * 0.3, 0.1, 0.06], 0.05, leg); sph(0.09, leg, q * 0.32, 0.07, 0.14, [1, 0.6, 1.5]); });
       box(0.8, 1.5, 0.7, salt, 0, 1.3, 0, [0, 0.2, 0.02]);
