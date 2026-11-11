@@ -11,7 +11,7 @@
   // What a reagent added to the starting four is worth (MATRIX.md, Reagents). One not listed counts as 1.
   const REAGENT = { hcl: 1.02, cyclize: 0.86, aromatize: 0.66, socl2: 0.37, wittig: 0.21, memgbr: 0.15,
     // guesses for the reagents of the cascade game, not measured: a chunk is worth most, then extend, then the bridge
-    extend: 1.6, dione: 1.7, phenol: 1.7, rcm: 1.4 };
+    extend: 1.6, dione: 1.7, phenol: 1.7, couple: 1.4 };
   // Guesses, not measured: a stronger reagent, one more use, and a level as a share of the piece's worth above 1.
   const OTHER = { strong: 1.3, bottle: 1.1, level: 0.5, self: 1.6 };
   // How much a kind of round makes against a plain one, for choosing a round. Rounded from what the median player
@@ -43,10 +43,19 @@
   }
   // What the page is worth where it stands. A planner also counts what the open row will multiply on later pages,
   // and what a charged page would add when it goes off.
+  // What the chain left standing is worth on the pages still to come: the zip rings open again when a page turns, so
+  // the molecule as it would then stand is set off and its steps counted. A player that reads the page does not
+  // wreck a chain that will go off again. Each step n is worth n places of the cascade, times the row it builds.
+  function standing(g) {
+    const left = P.pagesOf(g) - g.page; if (left <= 0 || !P.RULE.reopen || !P.RULE.cascade || g.over) return 0;
+    const s = snap(g), q = g.queue; g.queue = []; P.reopenAll(g); g.casc = 0; const n = P.cascade(g); back(g, s); g.queue = q;
+    return left * 0.7 * P.CASC.place * n * (n + 1) / 2 * (1 + P.SYN.row * n) * g.E;
+  }
   function leaf(g, cfg) {
     let v = P.made(g);
     if (P.RULE.cascade === 'end' && !g.over && P.cascadeNext(g)) { const s = snap(g); P.cascade(g); v = P.made(g); back(g, s); }
     if (cfg.chain && !g.over && g.cur.path.length >= P.SYN.streak) { const s = snap(g); if (P.fire(g)) runChain(g, null, null); v = P.made(g); back(g, s); }
+    if (cfg.stand && g.m.atoms.length <= BIG.far) v += standing(g);
     if (!cfg.deep) return v;
     const pagesLeft = P.pagesOf(g) - g.page;
     if (pagesLeft > 0) v = (g.bank + (g.P + 40 * 3 * pagesLeft) * g.R) * g.E;
@@ -161,12 +170,13 @@
       pick: (run, picks) => { let bi = 0; picks.forEach((o, i) => { if (ORDER.indexOf(o.kind) < ORDER.indexOf(picks[bi].kind)) bi = i; }); return bi; }, round: () => 0 },
     // Since the cascade (2026-11-11): tries every ordered line of three from the hand, cascades included, and lines up
     // the one that makes most on this page; a row may be broken for it. Deals the hand again when its best line sets
-    // off no cascade. Takes the pick worth most in a build, spends water. (Before the cascade it kept the row whenever
+    // off no cascade. It counts what the chain it leaves standing will do on the pages still to come, so it does not
+    // wreck its own chain for a few places now. Takes the pick worth most in a build, spends water. (Before the cascade it kept the row whenever
     // it could; that player could not line up a cascade, because the reagents that set one up seldom follow on.)
-    median: { line: lineSearch({ depth: 3, finish: true, bank: true }), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
+    median: { line: lineSearch({ depth: 3, finish: true, bank: true, stand: true }), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
     // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
     // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
-    planner: { line: lineSearch({ depth: 3, deep: true, finish: true, bank: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    planner: { line: lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
     // the planner without the bank and otherwise identical: it may still break a row by taking a reaction that does
     // not follow on. Used for the paired test of the bank
     nobank: { line: lineSearch({ depth: 3, beam: 2, deep: true, finish: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a, true); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
@@ -270,7 +280,7 @@
   }
 
   // ---------- a whole run ----------
-  // opts: tier (suppliers opened, default all six), all (go on after a miss), rounds (default 9), noGear, term
+  // opts: tier (suppliers opened, default all six), all (go on after a miss), rounds (default 9), noGear, term, rack0, self0, rule
   // noCarry: the round that carries the last molecule on is not offered.  relaxed: settle molecules as the page does
   function runSim(player, seed, opts) {
     opts = opts || {}; const pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
@@ -278,6 +288,8 @@
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
     const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || []);
     if (opts.noGear) run.noGear = true;
+    // rack0, self0: reagents and kinds of cascade held from the first round, for measuring what one of them adds
+    (opts.rack0 || []).forEach(id => { if (!run.rack.includes(id)) run.rack.push(id); }); (opts.self0 || []).forEach(id => { if (!run.self.includes(id)) run.self.push(id); });
     P.runTerm(run, opts.term || 'plain');
     if (!run.assay) P.runAssays(run, rnd);
     let alive = true;

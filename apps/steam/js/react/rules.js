@@ -270,6 +270,15 @@ const LIST = [
       const R = [attach(m, 'C', c1, 3.0)]; for (let i = 1; i < 6; i++) R.push(attach(m, 'C', R[i - 1], 3.0)); m.bond(R[5], R[0]); [0, 2, 4].forEach(i => m.bond(R[i], R[i + 1])); R.forEach(a => made.push(a));
       const o = attach(m, 'O', R[1], 2.8); made.push(o, attach(m, 'H', o, 1.2)); [2, 3, 4, 5].forEach(i => made.push(attach(m, 'H', R[i], 2.2)));
       return { focus: [s.me, c1, o], incoming: made, leaving: [[h]], tag: '+phenol' }; } },
+  // Bridge: two chain ends C(=O)CH3 lose a hydrogen each and their CH3 carbons join (an oxidative coupling of two
+  // enolates). The two C=O are then three carbons apart, so a zip that has run to one end of the molecule crosses to
+  // the other end and runs on from there. One pair a use: the two ends that are farthest apart.
+  { id: 'couple', verb: 'Bridge', formula: 'LDA, CuCl₂', chem: 'Lithium diisopropylamide, then copper(II) chloride', rgb: [40, 110, 120], cls: 'base', ghs: ['flame', 'corr'],
+    rule: 'Two chain ends C(=O)CH₃ join through their CH₃ carbons into one ring.', from: 'one', to: 'ring',
+    find: m => couplable(m).slice(0, 1), ok: m => couplable(m).length > 0,
+    apply(m) { const s = couplable(m)[0], h1 = Hs(m, s.me1)[0], h2 = Hs(m, s.me2)[0]; cut(m, s.me1, h1); cut(m, s.me2, h2); m.bond(s.me1, s.me2); m.bond(h1, h2); return { focus: [s.me1, s.me2], incoming: [], leaving: [[h1, h2]], tag: 'ties a ring' }; } },
+  // A bridge that was tried first and is not offered: ring-closing metathesis. Measured with the rig it made cascades
+  // shorter, because it uses up the C=C that a zip is started from.
   // Bridge: two C=C at the ends of chains swap partners. The two end carbons leave as ethene and the carbons behind
   // them join, so two far parts of the molecule are tied into one ring and whatever was far apart is now close.
   { id: 'rcm', verb: 'Bridge', formula: 'Ru cat.', chem: 'A ruthenium carbene, ring-closing metathesis', rgb: [40, 110, 120], cls: 'metal', ghs: ['excl'],
@@ -325,8 +334,21 @@ function tautable(m) { for (const q of alkenes(m)) for (const pr of [[q.bond.a, 
 //   aldol: the carbon beside one C=O joins the carbon of a second C=O four or five carbons away. A ring of five or
 //   six closes and the second C=O becomes C-OH, which then sits where an enone can form.
 function aldolable(m) { const ks = carbonyls(m); for (const k of ks) for (const a of carbonsOf(m, k.c)) { if (!Hs(m, a).length || ringAtom(m, a) || nbs(m, a).some(n => n.bond.order === 2)) continue; const dist = carbonDist(m, a, 5); for (const k2 of ks) { if (k2 === k || k2.c === k.c || ringAtom(m, k2.c)) continue; const d = dist.get(k2.c); if (d === 4 || d === 5) return [{ a, c1: k.c, c2: k2.c, o2: k2.o, bond: k2.bond, atoms: [a, k.c, k2.c, k2.o] }]; } } return []; }
+//   snap6 (named snap on the page, docs/CASCADES.md kind 3): two C=C side by side (C1=C2-C3=C4) and a third C=C
+//   whose near carbon is four or five carbons from C4 close a six-ring (a Diels-Alder inside one molecule). The ring
+//   keeps one C=C, between C2 and C3, and what hung beside C1 now sits three carbons from what hangs beside the third
+//   C=C: an OH there and a C=O here can zip. The older snap, a four-ring from any two C=C a few carbons apart, used up
+//   the C=C a zip starts from and made cascades shorter when measured, so it is not a kind of cascade any more.
+function dielsable(m) { const es = alkenes(m).map(q => q.bond), dbl = (a, b) => { const k = bondOf(m, a, b); return !!k && k.order === 2; };
+  for (const A of es) for (const pr of [[A.a, A.b], [A.b, A.a]]) { const c1 = pr[0], c2 = pr[1]; for (const c3 of carbonsOf(m, c2)) { if (c3 === c1 || c3.fly || dbl(c2, c3)) continue; for (const c4 of carbonsOf(m, c3)) { if (c4 === c2 || c4 === c1 || !dbl(c3, c4)) continue;
+    for (const B of es) { if (B === A || [B.a, B.b].some(x => x === c1 || x === c2 || x === c3 || x === c4)) continue; for (const q of [[B.a, B.b], [B.b, B.a]]) { const ca = q[0], cb = q[1], p = carbonPath(m, c4, ca, 5); if (!p || p.length < 5 || p.includes(c3) || p.includes(cb) || p.includes(c1) || bondOf(m, c1, cb)) continue; return [{ c1, c2, c3, c4, ca, cb, atoms: [c1, c2, c3, c4, ca, cb] }]; } } } } }
+  return []; }
+// two chain ends C(=O)CH3 whose CH3 carbons are four or more carbons apart, the farthest pair first
+function couplable(m) { const es = methylKetones(m), out = []; for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) { const A = es[i], B = es[j]; if (A.kc === B.kc || A.me === B.me) continue; const d = carbonDist(m, A.me, 60).get(B.me); if (d == null || d < 4) continue; out.push({ me1: A.me, me2: B.me, d, atoms: [A.me, A.kc, B.me, B.kc] }); } return out.sort((x, y) => y.d - x.d); }
 const weldable = m => { const ks = carbonyls(m); for (const k of ks) for (const a of carbonsOf(m, k.c)) { if (Hs(m, a).length < 2 || ringAtom(m, a) || nbs(m, a).some(n => n.bond.order === 2)) continue; const dist = carbonDist(m, a, 5); for (const k2 of ks) { if (k2 === k || k2.c === k.c || ringAtom(m, k2.c)) continue; const d = dist.get(k2.c); if (d === 4 || d === 5) return [{ a, c1: k.c, c2: k2.c, o2: k2.o, bond: k2.bond, atoms: [a, k.c, k2.c, k2.o] }]; } } return []; };
 const SELFCARDS = [
+  { id: 'snap6', verb: 'Snap', formula: '', chem: 'by itself', rgb: [200, 38, 28], cls: 'self', ghs: [], rule: 'Two C=C side by side and a third nearby close a six-ring with one new C=C in it.', from: 'ene', to: 'ring', find: dielsable, ok: m => dielsable(m).length > 0,
+    apply(m) { const s = dielsable(m)[0]; bondOf(m, s.c1, s.c2).order = 1; bondOf(m, s.c3, s.c4).order = 1; bondOf(m, s.c2, s.c3).order = 2; bondOf(m, s.ca, s.cb).order = 1; m.bond(s.c1, s.cb); m.bond(s.c4, s.ca); return { focus: [s.c1, s.c4, s.ca, s.cb], incoming: [], leaving: [], tag: 'snaps shut' }; } },
   { id: 'weld', verb: 'Weld', formula: '', chem: 'by itself', rgb: [168, 92, 36], cls: 'self', ghs: [], rule: 'Two C=O close a ring between them.', from: 'one', to: 'ring', find: m => (MODE.weld === 'ene' ? weldable(m) : aldolable(m)), ok: m => (MODE.weld === 'ene' ? weldable(m) : aldolable(m)).length > 0,
     apply(m) {
       if (MODE.weld !== 'ene') { const s = aldolable(m)[0], ha = Hs(m, s.a)[0]; cut(m, s.a, ha); s.bond.order = 1; m.bond(s.a, s.c2); m.bond(s.o2, ha); return { focus: [s.a, s.c2, s.o2], incoming: [], leaving: [], tag: 'welds a ring' }; }
@@ -439,14 +461,14 @@ function ringBond(m, a, b, size) { const nb = x => nbs(m, x).map(n => n.atom).fi
 function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m, o); if (q.length !== 2 || q.some(n => n.bond.order !== 1)) return null; const c = q.find(n => n.atom.el === 'C'), hh = q.find(n => n.atom.el === 'H'); if (!c || !hh) return null; if (!isSp3(m, c.atom) && !(ar || aromaticAtoms(m)).has(c.atom)) return null; return { o, c: c.atom, ho: hh.atom }; }
 // Every ring a zip has closed and that can still come apart: a carbon that carries an OH and, beside it, an oxygen
 // that is in a ring. The ring oxygen lets go and takes the hydrogen, and the OH becomes the C=O it was. Done last
-// ring first until none is left, so a ladder comes apart from its far end back to the OH that set it off. A ring
+// ring first until none is left (cuts, if given, collects the carbon and the oxygen of each bond that was cut), so a ladder comes apart from its far end back to the OH that set it off. A ring
 // whose OH has been taken away (by a dehydration, say) stays shut for good. Returns how many rings opened.
-function reopen(m) { let n = 0; for (let guard = 0; guard < 80; guard++) { let hit = null;
+function reopen(m, cuts) { let n = 0; for (let guard = 0; guard < 80; guard++) { let hit = null;
   for (const c of m.atoms) { if (c.el !== 'C' || c.fly) continue; const q = nbs(m, c); if (q.some(x => x.bond.order !== 1)) continue;
     const oh = q.find(x => x.atom.el === 'O' && !x.atom.prot && nbs(m, x.atom).length === 2 && nbs(m, x.atom).some(y => y.atom.el === 'H')); if (!oh) continue;
     const or = q.find(x => x.atom.el === 'O' && x.atom !== oh.atom && nbs(m, x.atom).length === 2 && nbs(m, x.atom).every(y => y.atom.el === 'C') && ringBond(m, c, x.atom)); if (!or) continue;
     hit = { c, oh: oh.atom, or: or.atom }; break; }
-  if (!hit) break; const h = nbs(m, hit.oh).find(y => y.atom.el === 'H').atom; cut(m, hit.c, hit.or); cut(m, hit.oh, h); m.bond(hit.or, h); m.bond(hit.c, hit.oh); n++; }
+  if (!hit) break; const h = nbs(m, hit.oh).find(y => y.atom.el === 'H').atom; cut(m, hit.c, hit.or); cut(m, hit.oh, h); m.bond(hit.or, h); m.bond(hit.c, hit.oh); if (cuts) cuts.push({ c: hit.c, o: hit.or }); n++; }
   return n; }
 // two C=C that each end in CH2, whose inner carbons are four or more carbons apart: the pair a bridge ties, nearest ends last
 function bridgeable(m) { const ar = aromaticAtoms(m), ends = []; m.bonds.forEach(b => { if (b.order !== 2 || b.a.el !== 'C' || b.b.el !== 'C' || ar.has(b.a)) return; [[b.a, b.b], [b.b, b.a]].forEach(q => { if (Hs(m, q[0]).length === 2 && carbonsOf(m, q[1]).length >= 2) ends.push({ e: q[0], a: q[1] }); }); });
@@ -496,7 +518,10 @@ function shapeOf(m) {
   const seen = new Set(); let comps = 0; hv.forEach(a => { if (seen.has(a)) return; comps++; const st = [a]; seen.add(a); while (st.length) { const u = st.pop(); nb(u).forEach(v => { if (!seen.has(v)) { seen.add(v); st.push(v); } }); } });
   const rings = Math.max(0, bonds - hv.length + comps), arene = Math.floor(aromaticAtoms(m).size / 6);
   const inRing = (a, b) => { const sn = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!sn.has(v)) { sn.add(v); st.push(v); } } } return false; };
-  const cage = rings >= 2 && hv.some(a => nb(a).filter(b => inRing(a, b)).length >= 3);
+  // a cage: some atom has three bonds in rings, and three of those neighbours are still joined to each other when the
+  // atom is taken away. Two rings that share one atom only (as a zip leaves them) are not a cage.
+  const joined = a => { const rn = nb(a).filter(b => inRing(a, b)); if (rn.length < 3) return false; const comp = new Map(); rn.forEach((s0, i) => { if (comp.has(s0)) return; const sn = new Set([s0]), st = [s0]; while (st.length) { const u = st.pop(); for (const v of nb(u)) { if (v === a || sn.has(v)) continue; sn.add(v); st.push(v); } } rn.forEach(t => { if (sn.has(t) && !comp.has(t)) comp.set(t, i); }); }); const cnt = {}; comp.forEach(v => { cnt[v] = (cnt[v] || 0) + 1; }); return Object.keys(cnt).some(k => cnt[k] >= 3); };
+  const cage = rings >= 2 && hv.some(joined);
   // resonance: single bonds with a double bond on each side (C=C-C=C, C=C-C=O, and three in a benzene ring)
   const dbl = a => nbs(m, a).some(n => n.bond.order === 2), conj = m.bonds.filter(b => b.order === 1 && set.has(b.a) && set.has(b.b) && dbl(b.a) && dbl(b.b)).length;
   return { conj, ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };

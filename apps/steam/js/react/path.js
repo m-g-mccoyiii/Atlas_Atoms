@@ -29,32 +29,34 @@ const FEED = [
   // chains
   ['chain', 'C=CCCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)C'], ['chain', 'CC(O)CCC(=O)CCCC(=O)C'],
   ['chain', 'C=CCC(=O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(=O)CCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(=O)CCC(O)C'],
-  ['chain', 'CC(O)CCC(=O)CCC=CCCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C'],
-  ['chain', 'C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'], ['chain', 'C=CC(=O)CCC(=O)CCCCCC(C)(O)CCC(=O)CCC(=O)C=C'],
-  ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['chain', 'C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(=O)C=CCCCC=CCC(=O)CCC(=O)CCC(=O)C'],
-  ['chain', 'O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C'],
+  ['chain', 'CC(O)CCC(=O)CCC=CCCC(=O)C'], ['chain', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C'],
+  ['chain', 'C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C'], ['chain', 'O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['chain', 'CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'],
+  ['chain', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['chain', 'C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
+  ['chain', 'O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C'], ['chain', 'CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C'], ['chain', 'CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // a ring of carbon on the chain, or a C=O in a ring
-  ['ring', 'CC(=O)CCC(O)C1CCCC1'], ['ring', 'C=CCCC(=O)CC1CCCC1=O'], ['ring', 'OC1(CCCC1)CCC(=O)CCC(O)C'], ['ring', 'OC1CCCC1CCC(=O)CCC(=O)C'],
+  ['ring', 'C=CCCC(=O)CC1CCCC1=O'], ['ring', 'C=CCCC(O)CCC(=O)C1CCCC1'], ['ring', 'OC1(CCCC1)CCC(=O)CCC(O)C'], ['ring', 'OC1CCCC1CCC(=O)CCC(=O)C'],
   ['ring', 'C=CCCC(=O)CCC(=O)CC1CCCC1=O'], ['ring', 'C=CCCC(O)CCC(=O)CCC1(O)CCCC1'], ['ring', 'OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C'], ['ring', 'CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C'],
-  ['ring', 'OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC(=O)C'], ['ring', 'C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C'], ['ring', 'CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C'],
-  ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C'],
+  ['ring', 'OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['ring', 'CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C'], ['ring', 'C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C'],
+  ['ring', 'CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['ring', 'OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C'], ['ring', 'OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // a benzene ring: an OH on it can start a zip and nothing takes it away
-  ['arene', 'OC1=CC=CC=C1CCC(=O)C'], ['arene', 'CC(=O)CCC(O)C1=CC=CC=C1'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)C'], ['arene', 'C=CCCC(=O)CCC(=O)C1=CC=CC=C1'],
+  ['arene', 'OC1=CC=CC=C1CCC(O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)C'], ['arene', 'C=CCCC(=O)CCC(=O)C1=CC=CC=C1'],
   ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)C'], ['arene', 'CC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O'], ['arene', 'C=CCCC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O'], ['arene', 'C=CCCC(O)CCC(=O)CCC(=O)C1=CC=C(C=C1)C(=O)CCC(=O)C'],
-  ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'],
+  ['arene', 'OC(C1=CC=CC=C1)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
+  ['arene', 'OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C'], ['arene', 'OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C'],
   // many OH: every one can be made a C=O at once
-  ['sugar', 'CC(C)(O)CCC(O)CCC(O)C'], ['sugar', 'OCCCC(O)CCC(O)CCC=C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)C'],
-  ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C'], ['sugar', 'OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'],
-  ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCCCCC(O)CCC(O)CCC=C'], ['sugar', 'OCCCC(O)CCC(O)CCC(=O)CCCCCC(O)CCC(O)CCC(O)CCC=C'],
+  ['sugar', 'CC(C)(O)CCC(O)CCC(O)C'], ['sugar', 'OCCCC(O)CCC(O)CCC=C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C'],
+  ['sugar', 'OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'], ['sugar', 'CC(C)(O)CCC(O)CCC(O)CCC(O)CCCCCC(O)CCC(O)CCC=C'],
+  ['sugar', 'OCCCC(O)CCC(O)CCC(=O)CCCCCC(O)CCC(O)CCC(O)CCC=C'], ['sugar', 'C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C'],
   // a cage at the end of the chain
   ['cage', 'CC(=O)CCC(O)C1CC2CCC1C2'], ['cage', 'CC(=O)CCC(=O)CCC(O)C1CC2CCC1C2'], ['cage', 'CC(O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'C=CCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'],
-  ['cage', 'CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'], ['cage', 'C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2']
+  ['cage', 'CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'], ['cage', 'C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'],
+  ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2']
 ];
 const FEEDS = FEED.map(q => q[1]);
 // heavy atoms of a molecule as it is dealt, read off its formula; what a round asks for; and how far off a molecule may be
 const feedSize = smi => smi.replace(/Cl/g, 'X').replace(/[^A-Za-z]/g, '').length;
-const FEEDSIZE = { first: 11.5, step: 2.4, near: 3.5 };
-const sizeFor = round => FEEDSIZE.first + FEEDSIZE.step * (Math.max(1, Math.min(9, round | 0)) - 1);
+const FEEDSIZE = { rounds: [11.5, 14, 16.5, 19, 21.5, 24, 27, 31, 35], near: 3.5 };
+const sizeFor = round => FEEDSIZE.rounds[Math.max(1, Math.min(9, round | 0)) - 1];
 // the molecules of a family that suit a round: those near its size, or failing that the two nearest
 function feedsFor(kin, round, skip) { const of = FEEDS.filter(f => KIN_OF[f] === kin && !(skip || []).includes(f)), t = sizeFor(round), near = of.filter(f => Math.abs(feedSize(f) - t) <= FEEDSIZE.near); return near.length ? near : of.sort((a, b) => Math.abs(feedSize(a) - t) - Math.abs(feedSize(b) - t)).slice(0, 2); }
 // Families. Every starting molecule belongs to one, and each family scores by a rule of its own, so the molecule a
@@ -119,23 +121,24 @@ RULE.bank = 2; RULE.bankMin = 3; RULE.cascade = 'each';
 //         again, so the next page begins with the chain as it was set up and can be set off again, longer if the
 //         player has added to it. Rings made by a weld or a snap, and a zip whose OH has since been taken off, stay shut.
 //   ban: reagents and kinds of cascade that are never offered, for measuring a run without them.
-RULE.atoms = 48; RULE.reopen = true; RULE.ban = [];
+//   weld: 'ol' or 'ene', what a weld leaves behind (rules.js MODE.weld).
+RULE.atoms = 56; RULE.reopen = true; RULE.ban = []; RULE.weld = 'ol';
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
 // What a molecule does to itself once it has been set off, with no reagent held: opened by how deep the suppliers go.
 // With the cascade these happen by themselves. A run starts with the ones of tier 0; the others turn up on the
 // take-one page once the supplier of their tier is open, and are active for the rest of the run once taken.
-// docs/CASCADES.md: zip (the card lactol) is the first and only cascade a new player has. snap comes with the
-// research supplier. The other kinds (fold, run, weld, link) are not built.
-const SELF = [{ id: 'lactol', tier: 0 }, { id: 'snap', tier: 2 }, { id: 'weld', tier: 3 }];
+// docs/CASCADES.md: zip (the card lactol) is the first and only cascade a new player has. snap (the card snap6)
+// comes with the research supplier and weld with the instrument maker. The other kinds (fold, run, link) are not built.
+const SELF = [{ id: 'lactol', tier: 0 }, { id: 'snap6', tier: 2 }, { id: 'weld', tier: 3 }];
 const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 // The cascade. Step n of a page is worth n times the first: it adds place for its one place and that counts n times,
 // and it adds n times step to extra. (mul: it multiplies extra by 1 + n step instead, as it did until 2026-11-11: ten
 // steps then multiplied a round by 1,100, and with the zip opening again on every page one long cascade decided a run.)
 // most: a page stops cascading after this many steps, so that it cannot stall.
 const CASC = { step: 0.05, place: 30, mul: false, most: 40 };
-const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1, extend: 1, dione: 1, phenol: 1, rcm: 1, weld: 1 };
+const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1, extend: 1, dione: 1, phenol: 1, rcm: 1, couple: 1 };
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
 // Equipment that catches a by-product as it leaves, and what that adds. A by-product nothing catches is collected
@@ -156,7 +159,7 @@ function spendBy(g, kind, rnd) {
 // How rare a reagent is. A rarer one turns up less often among the three to take and adds more for each place.
 // odds: weight among the reagents on offer.  place: what each place it changes adds.  dots: how it is marked.
 const RARITY = { common: { odds: 60, place: 20, dots: 1, col: '#5a564e' }, uncommon: { odds: 28, place: 30, dots: 2, col: '#1f5fbf' }, rare: { odds: 10, place: 45, dots: 3, col: '#b0189a' }, legend: { odds: 2, place: 70, dots: 4, col: '#c8891a' } };
-const TIER = { dione: 'uncommon', phenol: 'uncommon', rcm: 'rare', snap: 'rare', aromatize: 'rare', cyclize: 'uncommon', hcl: 'uncommon', koh: 'uncommon', socl2: 'uncommon', naoh: 'uncommon', memgbr: 'uncommon', wittig: 'uncommon', wacker: 'rare', wolff: 'rare', aibn: 'legend' };
+const TIER = { extend: 'uncommon', dione: 'rare', phenol: 'uncommon', couple: 'rare', rcm: 'rare', snap: 'rare', aromatize: 'rare', cyclize: 'uncommon', hcl: 'uncommon', koh: 'uncommon', socl2: 'uncommon', naoh: 'uncommon', memgbr: 'uncommon', wittig: 'uncommon', wacker: 'rare', wolff: 'rare', aibn: 'legend' };
 const rarityOf = id => RARITY[TIER[id] || 'common'];
 // Kinds of chemistry opened between runs with credit. Each adds its reagents to what any run can turn up.
 const FAMILIES = [
@@ -479,7 +482,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
-  if (RULE.reopen && RULE.cascade) RX.reopen(g.m);
+  RX.MODE.weld = RULE.weld || 'ol'; if (RULE.reopen && RULE.cascade) RX.reopen(g.m);
   g.left = {}; g.free = {}; g.rare = {}; g.loopsCont = 0; if (RULE.uses) (g.rackIds || synRack()).forEach(id => { g.left[id] = usesOf(g, id); });
   synDeal(g, rnd);
   return g;
@@ -728,6 +731,39 @@ function synQuota(feed, n, gear, run) {
   return Math.max(50, Math.round(q / mag) * mag);
 }
 
+// ---------- the screen: what a molecule can cascade to, worked out from its structure alone ----------
+// No round, no deal, no score: reagents and the kinds of cascade are applied to the bare graph. It answers in
+// milliseconds, so molecules and sets of reagents are designed with it and whole runs are kept for the number to beat.
+// selfRun: the molecule reacts with itself until nothing is left to react; returns the steps.
+function selfRun(m, self) { let n = 0; for (let go = true; go && n < CASC.most;) { go = false; for (const id of self) { const card = RX.CARDS[id]; if (!card.find(m).length) continue; card.apply(m).leaving.flat().forEach(a => m.removeAtom(a)); n++; go = true; break; } } return n; }
+// one reagent on a copy, then the cascade. A reagent that finds nothing, or would grow the molecule past the size
+// limit, changes nothing, and the cascade still runs (as a wasted circle on the page does).
+function screenStep(m, id, self) { const c = RX.cloneModel(m), h0 = heavy(c), t = RX.cloneModel(c); const hits = RX.runCard(t, RX.CARDS[id]); const use = hits > 0 && !(RULE.atoms && heavy(t) > RULE.atoms && heavy(t) > h0) ? t : c; return { m: use, n: selfRun(use, self), acted: use === t }; }
+// every ordered line of `depth` reagents from the pool on molecule m: Map of 'a b c' to { n: steps, m: what is left }
+function screenLines(m, pool, self, depth) { const out = new Map(); (function go(mm, line, n) { if (line.length === (depth || 3)) { out.set(line.join(' '), { n, m: mm }); return; } pool.forEach(id => { const r = screenStep(mm, id, self); go(r.m, line.concat(id), n + r.n); }); })(m, [], 0); return out; }
+// screen(smiles or model, pool, self): the steps as dealt, the best line of three from the whole pool, the best from
+// each deal of `hand` reagents of the pool (every deal counted once), and how many of all lines reach 1 and 3 steps.
+function screen(feed, pool, self, hand) {
+  pool = pool || RUNG.start; self = self || SELF0; const m0 = feed.atoms ? RX.cloneModel(feed) : RX.fromSmiles(feed); RX.reopen(m0);
+  const dealt = selfRun(RX.cloneModel(m0), self), lines = screenLines(m0, pool, self, 3); let best = -1, line = '', ge1 = 0, ge3 = 0;
+  lines.forEach((v, k) => { if (v.n > best) { best = v.n; line = k; } if (v.n >= 1) ge1++; if (v.n >= 3) ge3++; });
+  const k = Math.min(hand || RULE.hand || 5, pool.length), hands = [], pick = (from, got) => { if (got.length === k) { let b = 0; lines.forEach((v, key) => { if (v.n > b && key.split(' ').every(id => got.includes(id))) b = v.n; }); hands.push(b); return; } for (let i = from; i < pool.length; i++) pick(i + 1, got.concat(pool[i])); }; pick(0, []);
+  return { heavy: heavy(m0), dealt, best, line, hands, ge1: ge1 / lines.size, ge3: ge3 / lines.size };
+}
+// screenRound: three pages on one molecule as a player who goes for the longest cascade would play them. Each page a
+// hand is dealt from the pool (R is the source of chance), the line of three with the most steps is fired, every
+// reagent has RULE.uses uses, and the zip rings open again before the next page. Returns the steps of each page.
+function screenRound(feed, pool, self, R, pages) {
+  pool = pool || RUNG.start; self = self || SELF0; R = R || rand; let m = feed.atoms ? RX.cloneModel(feed) : RX.fromSmiles(feed); RX.reopen(m);
+  const left = {}, out = []; pool.forEach(id => { left[id] = TIER[id] === 'rare' ? Math.max(1, RULE.uses - 1) : RULE.uses; });
+  for (let p = 0; p < (pages || SYN.pages); p++) {
+    const bag = pool.filter(id => left[id] > 0), hand = []; while (hand.length < Math.min(RULE.hand || 5, bag.length)) hand.push(bag.splice(Math.floor(R() * bag.length), 1)[0]);
+    let best = null; screenLines(m, hand, self, 3).forEach((v, key) => { const ids = key.split(' '), cnt = {}; ids.forEach(id => { cnt[id] = (cnt[id] || 0) + 1; }); if (ids.some(id => cnt[id] > left[id])) return; if (!best || v.n > best.n) best = { n: v.n, m: v.m, ids }; });
+    if (!best) { out.push(selfRun(m, self)); } else { out.push(best.n); best.ids.forEach(id => { left[id]--; }); m = best.m; }
+    m = RX.cloneModel(m); RX.reopen(m);
+  }
+  return out;
+}
 // ---------- a run: rounds one after another until one is missed ----------
 // A run starts with four reagents and no equipment. Before the first round and after every round beaten the player
 // takes one of three: a new reagent, a new piece of equipment, a level for a piece they hold, a stronger reagent,
@@ -743,7 +779,7 @@ const PAIR = { hcl: 'koh', socl2: 'naoh' };
 const SUPPLY = [
   { name: 'corner chemist', cost: 0, reagents: ['extend', 'cyclize'], gear: ['balance', 'stirrer', 'cards', 'spatula', 'stopwatch', 'litmus', 'dryer', 'duck', 'poster', 'coffee', 'milk', 'goggles', 'intern'] },
   { name: 'trade supplier', cost: 6, kin: ['arene'], reagents: ['hcl', 'koh', 'aromatize', 'dione', 'phenol'], gear: ['cannula', 'coldtrap', 'schlenk', 'burette', 'logbook', 'scalepan', 'stopper', 'hood', 'scrubber', 'coat', 'mystery', 'grant', 'extinguisher'] },
-  { name: 'research supplier', cost: 16, kin: ['sugar'], reagents: ['socl2', 'naoh', 'snap', 'rcm'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper', 'mirror', 'sieves'], rare: true },
+  { name: 'research supplier', cost: 16, kin: ['sugar'], reagents: ['socl2', 'naoh', 'couple'], gear: ['reflux', 'crystal', 'mortar', 'thermometer', 'bunsen', 'dropper', 'mirror', 'sieves'], rare: true },
   { name: 'instrument maker', cost: 30, kin: ['cage'], reagents: [], gear: ['clamp', 'magnet', 'recycler', 'carousel', 'loupe', 'timer'] },
   { name: 'an alchemist, by appointment', cost: 50, reagents: [], gear: ['stone', 'transmute', 'regia', 'ouroboros', 'homunculus', 'elixir'] },
   { name: 'Brenda (deceased)', cost: 80, reagents: [], gear: ['ouija', 'candle', 'goat', 'pact', 'voodoo', 'tower', 'cat', 'paw', 'idol', 'grimoire', 'hourglass', 'raven', 'glory', 'orb'] }
@@ -899,6 +935,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { RULE, CASC, SELF0, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
