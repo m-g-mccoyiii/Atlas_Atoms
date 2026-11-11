@@ -7,6 +7,15 @@
 (function (root) {
 'use strict';
 const AA = root.AA, RX = AA.rx, RUN = AA.rxRun;
+// One source for every random draw on the run path: dealing, salt, picks, rounds on offer, rare reagents, wishes, terms.
+// seed(n) makes every draw repeatable from n, so a whole run can be played again. seed() goes back to the system's.
+let SRC = Math.random;
+const rand = () => SRC();
+function seed(n) {
+  if (n == null) { SRC = Math.random; return; }
+  let a = (n >>> 0) || 1;
+  SRC = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
 const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)CC=C', 'C=CCC(=O)CCC(=O)CC=C', 'CC(O)CC(=O)CCC(Cl)CCC=C',
   // rings, and a benzene ring that nothing here acts on
   'O=C1CCC(CC=C)CC1', 'C=CCC(O)C1=CC=CC=C1', 'C=CC1CCC(O)CC1', 'CC(=O)CCC(O)C1=CC=CC=C1',
@@ -278,7 +287,7 @@ const keeps = feed => RX.keepable(RX.fromSmiles(feed)).map(k => k.i);
 function safe(feed, keep) { const g = begin(feed, false, null, keep); return g.all.filter(id => { if (!RX.CARDS[id].find(g.m).length) return false; const r = tryOne(g, g.m, id).r; return r.hits && !r.spoiled; }); }
 // a random order: a marked group and n reagents, at least two of which can open safely
 function deal(feed, n, rnd) {
-  const R = rnd || Math.random, ks = keeps(feed), g = begin(feed, false);
+  const R = rnd || rand, ks = keeps(feed), g = begin(feed, false);
   for (let t = 0; t < 60; t++) {
     const keep = ks.length ? ks[Math.floor(R() * ks.length)] : null, ok = safe(feed, keep), pool = g.all.slice(), out = [];
     while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
@@ -288,8 +297,8 @@ function deal(feed, n, rnd) {
 }
 // n different pieces of equipment at random
 // n different pieces that work inside a round: the ones that act on a site or on a reaction
-function kitRound(n, rnd) { const R = rnd || Math.random, pool = GEAR.map(q => q.id), out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; }
-function kit(n, rnd) { const R = rnd || Math.random, pool = GEAR.map(q => q.id), out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; }
+function kitRound(n, rnd) { const R = rnd || rand, pool = GEAR.map(q => q.id), out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; }
+function kit(n, rnd) { const R = rnd || rand, pool = GEAR.map(q => q.id), out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(R() * pool.length), 1)[0]); return out; }
 
 // ---------- a round: one molecule carried through several pages ----------
 // The molecule at the end of a page starts the next page. A reaction that acts on what the last reaction changed
@@ -305,7 +314,7 @@ const RARE = ['double', 'strong', 'plenty'];
 // three numbers. They stay on the molecule for as long as the atom does, so they can be reacted at again.
 const ISO = { c13: { name: 'carbon-13', part: 'p', op: 'add', val: 60 }, o18: { name: 'oxygen-18', part: 'r', op: 'add', val: 1 }, c14: { name: 'carbon-14', part: 'e', op: 'mul', val: 1.25 } };
 const ISOP = { c13: 0.1, c14: 0.02, o18: 0.2 };
-function salt(m, rnd) { const R = rnd || Math.random, ar = RX.aromaticAtoms(m); m.atoms.forEach(a => { if (ar.has(a)) return; if (a.el === 'C') { const x = R(); if (x < ISOP.c14) a.iso = 'c14'; else if (x < ISOP.c14 + ISOP.c13) a.iso = 'c13'; } else if (a.el === 'O' && R() < ISOP.o18) a.iso = 'o18'; }); return m; }
+function salt(m, rnd) { const R = rnd || rand, ar = RX.aromaticAtoms(m); m.atoms.forEach(a => { if (ar.has(a)) return; if (a.el === 'C') { const x = R(); if (x < ISOP.c14) a.iso = 'c14'; else if (x < ISOP.c14 + ISOP.c13) a.iso = 'c13'; } else if (a.el === 'O' && R() < ISOP.o18) a.iso = 'o18'; }); return m; }
 // A brief changes what one round pays for, so a different set of equipment suits it. Every brief but the plain one
 // asks for more and pays something when it is beaten.
 const BRIEFS = [
@@ -327,7 +336,7 @@ const held = g => Math.round(g.P * g.R * g.E);
 const mult = g => g.R * g.E;
 const rowStart = g => (g.gear.includes('magnet') ? 2.5 : 1);
 function synDeal(g, rnd) {
-  const R = rnd || Math.random, rack = g.rackIds || synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length), n = SYN.offer + (g.gear.includes('carousel') ? 1 : 0); let offer = [];
+  const R = rnd || rand, rack = g.rackIds || synRack(), live = rack.filter(id => RX.CARDS[id].find(g.m).length), n = SYN.offer + (g.gear.includes('carousel') ? 1 : 0); let offer = [];
   for (let t = 0; t < 40; t++) {
     const pool = rack.slice(); offer = [];
     while (offer.length < n && pool.length) offer.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
@@ -466,7 +475,7 @@ function wish(g, run) {
   if (!g.gear.includes('paw') || g.wished || g.over || (run.wishes || 0) >= 3) return null;
   g.wished = true; run.wishes = (run.wishes || 0) + 1; g.E *= 2;
   if (run.rack.length <= 3) return '';
-  const id = run.rack[Math.floor(Math.random() * run.rack.length)]; run.rack = run.rack.filter(q => q !== id); return id;
+  const id = run.rack[Math.floor(rand() * run.rack.length)]; run.rack = run.rack.filter(q => q !== id); return id;
 }
 function synEnd(g) { doused(g); close(g); if (g.gear.includes('pact')) g.E *= 3; g.total = made(g); g.over = true; }
 function synFinish(g, o) {
@@ -489,7 +498,7 @@ const STYLES = {
 // and it is kept out of STYLES so that the numbers to beat are not set by it.
 const GREEDY = (o, ids, g) => { let best = ids[0], top = -1; ids.forEach(id => { const v = peek(g, o[id]).gain; if (v > top) { top = v; best = id; } }); return [best]; };
 function synPlay(feed, rnd, gear, run, style) {
-  const g = synBegin(feed, false, rnd, gear, run), R = rnd || Math.random, pick = style === 'greedy' ? GREEDY : STYLES[style || 'row'];
+  const g = synBegin(feed, false, rnd, gear, run), R = rnd || rand, pick = style === 'greedy' ? GREEDY : STYLES[style || 'row'];
   for (;;) {
     for (;;) {
       const o = options(g), ids = Object.keys(o); if (!ids.length) break;
@@ -543,7 +552,7 @@ function briefBase(feed, brief) {
 }
 // before each round: three rounds to choose from, each a molecule, a brief, a number to beat and what it pays
 function runBriefs(run, rnd) {
-  const R = rnd || Math.random, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
+  const R = rnd || rand, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const open = Object.keys(KIN).filter(k => KIN[k].tier <= (run.tier || 0)), draw = () => { let t = 0; open.forEach(k => { t += KIN[k].odds; }); let v = R() * t, pick = 'chain'; for (const k of open) { v -= KIN[k].odds; if (v < 0) { pick = k; break; } } return pick; };
   const feeds = []; for (let guard = 0; feeds.length < 3 && guard < 80; guard++) { const k = draw(), of = FEEDS.filter(f => KIN_OF[f] === k && !feeds.includes(f)); if (of.length && (open.length < 3 || !feeds.some(f => KIN_OF[f] === k))) feeds.push(of[Math.floor(R() * of.length)]); }
   while (feeds.length < 3) feeds.push(FEEDS[feeds.length]);
@@ -586,10 +595,10 @@ function deeds(g, run, pass) {
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
   if (id === 'glass') run.glass = true;
-  else if (id === 'occult') { const occ = Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(Math.random() * occ.length)]); run.stake = 1.5; }
+  else if (id === 'occult') { const occ = Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(rand() * occ.length)]); run.stake = 1.5; }
   else if (id === 'lean') { run.rack = RUNG.start.slice(0, 3); run.usesAll = 1; }
   else if (id === 'long') { run.steps = 1; run.pages = -1; }
-  else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); run.noGear = true; }
+  else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]); run.noGear = true; }
   return run;
 }
 function runQuota(run, feed, brief) {
@@ -598,7 +607,7 @@ function runQuota(run, feed, brief) {
   return Math.max(50, Math.round(q / mag) * mag);
 }
 function runPicks(run, rnd) {
-  const R = rnd || Math.random, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
+  const R = rnd || rand, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
   const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear ? st.gear.filter(id => !run.gear.includes(id)) : [];
   const from = { reagent: newR, gear: newG, level: run.gear.filter(id => !GEARS[id].rule), strong: run.rack, bottle: run.rack };
   // one new thing where there is one, then whatever else, three different kinds where possible
@@ -626,6 +635,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { seed, rand, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

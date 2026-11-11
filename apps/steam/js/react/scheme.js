@@ -489,7 +489,8 @@ function start(app) {
   const occultOpen = () => meta.stage >= 3;
   const shopMax = () => (meta.stage >= 3 ? P.SUPPLY.length - 1 : 3);
   const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
-  function newRun() { run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
+  // ?seed=N plays the run whose draws all come from N. Without it the draws are the system's, as before.
+  function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
   function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
@@ -655,7 +656,7 @@ function start(app) {
   const kitAt = id => kitObjs.find(k => k.id === id && Math.abs(hit.x - k.hx) < 1.8 && hit.z > k.hz - 3.6 && hit.z < k.hz + 1.4);
   const pawAt = () => kitAt('paw');
   function doDouse() { const k = kitObjs.find(q => q.id === 'extinguisher'); if (!k || !P.douse(g)) return; st.motes.push({ txt: 'times 1.5', part: 'm', col: PART.e, a: { x: k.hx, z: k.hz + 2.6 }, t: performance.now() + 80, dur: 420 }); callout('doused', '', PENCIL); dirty = true; }
-  function internGo() { if (st.mode !== 'play' || g.over || g.chain) return; const o = P.options(g, true), ids = Object.keys(o).filter(id => o[id].r && o[id].r.hits > 0); if (!ids.length) return; const id = ids[Math.floor(Math.random() * ids.length)], k = kitObjs.find(q => q.id === 'intern'); callout('intern', RX.CARDS[id].verb.toLowerCase(), PENCIL); react(o[id], id, false, k ? { x: k.hx, z: k.hz + 2.6 } : { x: 17, z: -6 }, true); }
+  function internGo() { if (st.mode !== 'play' || g.over || g.chain) return; const o = P.options(g, true), ids = Object.keys(o).filter(id => o[id].r && o[id].r.hits > 0); if (!ids.length) return; const id = ids[Math.floor(P.rand() * ids.length)], k = kitObjs.find(q => q.id === 'intern'); callout('intern', RX.CARDS[id].verb.toLowerCase(), PENCIL); react(o[id], id, false, k ? { x: k.hx, z: k.hz + 2.6 } : { x: 17, z: -6 }, true); }
   function doWish() { if (st.mode !== 'play') return; const k = kitObjs.find(q => q.id === 'paw'), id = P.wish(g, run); if (id === null || !k) return; st.E = g.E; st.want = (g.bank + g.P * g.R) * g.E; st.motes.push({ txt: 'times 2', part: 'm', col: PART.e, a: { x: k.hx, z: k.hz + 2.6 }, t: performance.now() + 80, dur: 420 }); callout('wish', id ? 'no more ' + RX.CARDS[id].verb.toLowerCase() : '', PENCIL); buildKit(); kitObjs.forEach(q => { q.born = 0; }); dirty = true; }
   function doTwist() { const o = twistOpt(); if (!o) return; g.twisted = g.page; st.twC = null; st.chainN = 0; react(o, o.id, false, { x: C0.x, z: C0.z }, true); }
   // One reaction on the page, whether it was clicked or is a step of a chain that is running by itself
