@@ -211,27 +211,27 @@ const GEAR = [
   { id: 'extinguisher', tok: 'times 1.5', fam: 'rule', rule: true, note: 'a click during a chain stops it and the round counts half again. once a round', name: 'extinguisher', shape: 'column' },
   { id: 'intern', tok: '+1 free', fam: 'rule', rule: true, note: 'does one reaction of its own choosing on every new page. it is not always a good one', name: 'the intern', shape: 'column' },
   { id: 'stopper', tok: '{p} times 4', fam: 'places', note: 'the first reaction of a new row counts four times', name: 'stopper', shape: 'funnel', at: 'step', fx: c => (!c.cont ? M('h', 4) : null) },
-  { id: 'mirror', tok: '{p} +200', fam: 'places', note: 'back to an earlier molecule: +200 places', name: 'mirror', shape: 'box', at: 'step', fx: c => (c.loop ? A('p', 200) : null) },
+  { id: 'mirror', tok: 'copies one side|across', fam: 'tool', five: true, rule: true, tool: true, note: 'copies one side across', name: 'mirror', shape: 'box' },
   { id: 'mortar', tok: '{p} times 2.5', fam: 'places', note: '3 or more places at once: that reaction counts two and a half times', name: 'mortar', shape: 'round', at: 'step', fx: c => (c.hits >= 3 ? M('h', 2.5) : null) },
   // row
   { id: 'cannula', tok: '{r} +1', fam: 'row', note: 'each reaction in a row: row +1', name: 'cannula', shape: 'column', at: 'step', fx: c => (c.cont ? A('r', 1) : null) },
   { id: 'reflux', tok: '{r} times 1.06', fam: 'row', note: '3 or more in a row: row times 1.06', name: 'reflux', shape: 'column', at: 'step', fx: c => (c.cont && c.len >= 3 ? M('r', 1.06) : null) },
   { id: 'burette', tok: '{r} +1.5', fam: 'row', note: 'first reaction on a page: row +1.5', name: 'burette', shape: 'column', at: 'step', fx: c => (c.pageStep === 0 ? A('r', 1.5) : null) },
-  { id: 'clamp', tok: '{r} most kept', fam: 'row', rule: true, note: 'a broken row keeps three quarters', name: 'clamp', shape: 'column' },
-  { id: 'magnet', tok: '{r} from 2.5', fam: 'row', rule: true, note: 'row never starts below 2.5', name: 'magnet', shape: 'round' },
+  { id: 'clamp', tok: 'nothing changes|this part', fam: 'tool', five: true, rule: true, tool: true, note: 'nothing changes this part', name: 'clamp', shape: 'column' },
+  { id: 'magnet', tok: 'pulls every gap|shut', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'pulls every gap shut', name: 'magnet', shape: 'round' },
   { id: 'recycler', tok: '{r} +0.5', fam: 'row', note: 'back to an earlier molecule: row +0.5', name: 'recycler', shape: 'flask', at: 'step', fx: c => (c.loop ? A('r', 0.5) : null) },
   // extra
   { id: 'stirrer', tok: '{e} +0.1', fam: 'extra', note: 'each reaction: extra +0.1', name: 'stir plate', shape: 'box', at: 'step', fx: () => A('e', 0.1) },
   { id: 'cards', tok: '{e} +0.25', fam: 'extra', note: 'a reagent not yet used this round: extra +0.25', name: 'index cards', shape: 'box', at: 'step', fx: c => (c.first ? A('e', 0.25) : null) },
   { id: 'logbook', tok: '{e} +0.02', fam: 'extra', note: 'each reaction: extra +0.02 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.02 * c.distinct) },
-  { id: 'crystal', tok: '{e} times 1.2', fam: 'extra', note: 'back to an earlier molecule: extra times 1.2', name: 'seed crystal', shape: 'round', at: 'step', fx: c => (c.loop ? M('e', 1.2) : null) },
+  { id: 'crystal', tok: 'adds OH here|and zips', fam: 'tool', five: true, rule: true, tool: true, note: 'adds OH here and zips', name: 'seed crystal', shape: 'round' },
   { id: 'scalepan', tok: '{e} +0.5', fam: 'extra', note: 'a reaction that is not in a row: extra +0.5', name: 'brass weights', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.5) : null) },
   { id: 'coldtrap', tok: '{e} +0.12', fam: 'extra', note: 'catches water that leaves: extra +0.12', name: 'cold trap', shape: 'funnel' },
   { id: 'dryer', tok: '{p} +60', fam: 'places', note: 'catches water that leaves: +60 places', name: 'drying tube', shape: 'column' },
   { id: 'sieves', tok: '{r} +0.6', fam: 'row', note: 'catches water that leaves: row +0.6', name: 'sieves', shape: 'round' },
   { id: 'hood', tok: '{e} +0.06', fam: 'extra', note: 'catches anything that leaves: extra +0.06', name: 'fume hood', shape: 'box' },
   { id: 'scrubber', tok: '{p} +50', fam: 'places', note: 'catches hydrogen that leaves: +50 places. an oxygen or a chloride: +80', name: 'scrubber', shape: 'column' },
-  { id: 'bunsen', tok: '{e} times 1.4', fam: 'extra', note: 'same reagent twice running: extra times 1.4. burns hydrogen that leaves: row +0.5', name: 'burner', shape: 'funnel', at: 'step', fx: c => (c.same ? M('e', 1.4) : null) },
+  { id: 'bunsen', tok: 'every C=C|becomes C=O', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every C=C becomes C=O', name: 'burner', shape: 'funnel' },
   { id: 'litmus', tok: '{e} +0.08', fam: 'extra', note: 'an acid: extra +0.08. catches a chloride that leaves: extra +0.4', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.08) : null) },
   { id: 'stopwatch', tok: '{e} +0.35', fam: 'extra', note: 'last reaction on a page: extra +0.35', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.35) : null) },
   { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
@@ -264,6 +264,20 @@ const GEAR = [
   { id: 'pact', tok: 'times 3', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' }
 ];
 const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
+// The pieces on offer (docs/PIECES.md). The sixty were made for the game before the cascade and most add a number.
+// Five have been made again for this game. Each is a thing the player uses ON the molecule, once a round, while the
+// page is being lined up (rules.js, tools). Three are put at a place the player chooses; two act on all of it.
+//   mirror, on a bond: one side of the bond goes; the other is copied across it, joined to its own reflection.
+//   clamp, on an oxygen or a C=C: nothing changes that part for the rest of the round, except the molecule's own zip.
+//   seed crystal, on a carbon: a hydrogen there becomes an OH, and the molecule zips from it at once.
+//   magnet, on the whole molecule: every stretch of four or more CH2 is pulled shut to two carbons.
+//   burner, on the whole molecule: every C=C becomes a C=O.
+// Three more still do what they say and are passive: carousel (one more reagent in the hand), dropper (one more use),
+// timer (a fourth circle). RULE.five: only these eight are offered, each from the supplier given here. Off: all sixty.
+const FIVE = { crystal: 0, clamp: 0, bunsen: 0, dropper: 0, magnet: 1, carousel: 1, mirror: 2, timer: 3 };
+// how many times a round a piece can be used on the molecule
+const TOOLUSES = 1;
+RULE.five = true;
 
 // offer: the reagents on the page for this order; the rest of the rack sits the order out
 // keep: index of the oxygen that is marked, or null. gear: equipment ids, left to right
@@ -430,7 +444,7 @@ const pagesOf = g => SYN.pages + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.i
 const made = g => Math.round((g.bank + g.P * g.R) * g.E);
 const held = g => Math.round(g.P * g.R * g.E);
 const mult = g => g.R * g.E;
-const rowStart = g => (g.gear.includes('magnet') ? 2.5 : 1);
+const rowStart = g => (g.gear.includes('magnet') && !RULE.five ? 2.5 : 1);
 // how many times a reagent can be used in a round
 const usesOf = (g, id) => (g.brief === 'scarce' ? Math.ceil(RULE.uses / 2) : TIER[id] === 'rare' ? Math.max(1, RULE.uses - 1) : RULE.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0);
 const handOf = g => (RULE.hand || SYN.offer) + (g.gear.includes('carousel') ? 1 : 0);
@@ -471,6 +485,7 @@ function synDeal(g, rnd) {
   g.fore = null; if (g.gear.includes('orb') && g.syn && (g.page || 1) < pagesOf(g)) { g.fore = draw(g, R, rack, n, null); g.fore = rack.filter(id => g.fore.includes(id)); }
   g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false; g.queue = []; g.shot = false; g.casc = 0;
   dealHand(g, R, rack, offer, false);
+  g.startTodo = []; g.mirrored = false; g.recycled = 0; g.wastedNow = 0; if (!g.manual) startRun(g);
   if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; if (g.left[id] > 0) g.left[id] = Math.max(1, g.left[id] - 1); }
 }
 // The redraw: once a page the hand is put back and dealt again from the rack, reagents that were not in it first.
@@ -485,7 +500,7 @@ function redraw(g, rnd) {
   return true;
 }
 function synBegin(feed, relaxed, rnd, gear, run) {
-  const g = begin(feed, relaxed, [], null, gear || []);
+  const g = begin(feed, relaxed, [], null, gear || []); g.manual = !!(run && run.manual); RX.MODE.reach = 4; g.tools = {};
   if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.self = RULE.cascade ? ((run && run.self) || SELF0).slice() : SELF.filter(q => q.tier <= ((run && run.tier) || 0)).map(q => q.id); g.casc = 0;
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
@@ -538,6 +553,7 @@ function scoreRound(g, o, free) {
   const b = g.brief, polyLen = id === 'aibn' ? Math.max(2, o.model.atoms.reduce((t, a) => t + (a.poly || 0), 0)) / 2 : 1, per = (o.casc ? CASC.place : id === 'aibn' ? SYN.place * polyLen : id === 'allyl' ? SYN.place : rarityOf(id).place) * (1 + SYN.strong * ((g.grade[id] || 1) - 1)) * (b === 'broad' ? 2 : 1) * (b === 'each' && !first && !o.casc ? 0 : 1);
   for (let i = 0; i < r.hits; i++) { c.hit = i; if (per) emit('bottle', A('p', per)); pieces('site'); }
   if (o.casc && r.hits) { g.casc = (g.casc || 0) + 1; const fresh = !RULE.fresh || g.casc > (g.cascBest || 0), w = fresh ? 1 : CASC.old; if (g.casc > 1) emit('cascade', M('h', 1 + (g.casc - 1) * w)); emit('cascade', CASC.mul ? M('e', 1 + CASC.step * g.casc * w) : A('e', CASC.step * g.casc * w), { n: g.casc, fresh }); g.tally.casc = Math.max(g.tally.casc || 0, g.casc); }
+  if (o.by && GEARS[o.by] && r.hits) ev.push({ src: o.by, act: true, part: 'e', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) });
   if (SHORT[id] && r.hits) { emit('short', M('h', SHORT[id])); emit('short', A('r', 0.5 * (SHORT[id] - 1))); }
   new Set(o.atoms || []).forEach(a => { const I = a.iso && ISO[a.iso]; if (I) emit('iso', { part: I.part, op: I.op, val: I.val }, { iso: a.iso }); });
   // what leaves: caught by equipment, or collected, and always a stroke on the tally. Five strokes pay places, more the longer the row
@@ -622,11 +638,11 @@ function synTake(g, o, free) {
 // ---------- the page lined up, then fired ----------
 // The state of a round is saved, something is tried, and the state is put back.
 function snap(g) {
-  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice() };
+  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest };
   c.seen = new Set(c.seen); return s;
 }
 function back(g, s) {
-  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue;
+  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest;
 }
 const BANKID = '#bank';
 // The next step of a cascade: the first reaction the molecule has with itself as it stands, or nothing. Every kind
@@ -635,11 +651,54 @@ const BANKID = '#bank';
 function cascadeNext(g) {
   if (!RULE.cascade || g.over || (g.casc || 0) >= CASC.most) return null;
   for (const id of g.self || []) { const sites = RX.CARDS[id].find(g.m); if (!sites.length) continue; const t = tryOne(g, g.m, id), r = t.r; if (!r.hits || (!RULE.reopen && g.cur.seen.has(r.sig))) continue;
-    return { id, model: t.model, map: t.map, r, loop: false, spoil: false, self: true, casc: true, cont: true, atoms: sites.reduce((a, q) => a.concat(q.atoms), []) }; }
+    return { id, model: t.model, map: t.map, r, loop: false, spoil: false, self: true, casc: true, cont: true, by: sites[0].d > 4 ? 'magnet' : undefined, atoms: sites.reduce((a, q) => a.concat(q.atoms), []) }; }
   return null;
 }
-// the step that is due now: after each reagent, or only once the line is empty
-const cascadeDue = g => (RULE.cascade === 'each' || (RULE.cascade && !(g.queue || []).length) ? cascadeNext(g) : null);
+// What a page does before any reagent (the burette, then the seed crystal). startDue gives the next such reaction
+// and takes it off the list, so whoever asks must take it; startRun takes them all. A page played with no screen
+// runs them when it is dealt; the page on screen (run.manual) plays them one at a time so they can be watched.
+function startDue(g) {
+  if (g.over || g.shot || !g.startTodo) return null;
+  while (g.startTodo.length) {
+    const k = g.startTodo[0];
+    if (k === 'burette') { g.startTodo.shift(); const card = RX.CARDS.extend, sites = card ? card.find(g.m) : []; if (!sites.length) continue; const t = tryOne(g, g.m, 'extend'), r = t.r; if (!r.hits || (RULE.atoms && heavy(t.model) > RULE.atoms)) continue;
+      return { id: 'extend', model: t.model, map: t.map, r, loop: false, spoil: false, self: true, by: 'burette', cont: g.cur.path.length > 0, atoms: sites.reduce((a, q) => a.concat(q.atoms), []) }; }
+    g.startTodo.shift();
+  }
+  return null;
+}
+function startRun(g, each) { let n = 0; for (let o = startDue(g); o; o = startDue(g)) { if (each) each(o); synTake(g, o, true); n++; } return n; }
+// (the passive versions of the pieces tried first, where the zip waited, ran twice or reached further by itself, were
+// taken out: a piece is now something the player uses on the molecule)
+const again = () => null, cascMode = () => RULE.cascade;
+// ---------- pieces used on the molecule ----------
+const canTool = (g, id) => !!RULE.five && !!g.syn && !g.over && !g.shot && g.gear.includes(id) && !!(GEARS[id] && GEARS[id].tool) && ((g.tools && g.tools[id]) || 0) < TOOLUSES;
+const toolSpots = (g, id) => (canTool(g, id) ? RX.tools.spots(g.m, id, RULE.atoms) : []);
+// Uses piece id at a spot (from toolSpots). The molecule is replaced by a changed copy, as when rings open, and
+// g.reopened tells the page which atom became which. False when it cannot be done there (the size limit).
+function toolUse(g, id, spot) {
+  if (!canTool(g, id) || !spot) return false;
+  const cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
+  const res = RX.tools.apply(cm.model, id, sp); if (!res) return false;
+  if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
+  const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
+  cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [] };
+  g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = id !== 'clamp';
+  return true;
+}
+// A piece that changes the molecule sets the zip off at once, as a reagent that acted does (the clamp changes
+// nothing and sets nothing off). toolGo uses a piece and runs whatever follows (for play with no page)
+function toolGo(g, id, spot) { if (!toolUse(g, id, spot)) return false; if (g.toolRun) { g.toolRun = false; for (let o = cascadeNext(g); o; o = cascadeNext(g)) synTake(g, o, true); } return true; }
+// What a placing is worth, read off the structure alone: how many steps the molecule would zip if it were set off
+// (the screen's selfRun, on a copy with its rings open). toolBest gives the spot of a piece worth most, and what a
+// spot is worth on average, so that how much the choice of place matters can be measured.
+// toolTry: the molecule as it would be with the piece used there (a copy, rings open), or nothing where it cannot be
+function toolTry(m, id, spot) { const cm = RX.cloneMap(m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; }); if (!RX.tools.apply(cm.model, id, sp)) return null; if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(m)) return null; RX.reopen(cm.model); return cm.model; }
+function toolWorth(m, id, spot, self) { const t = toolTry(m, id, spot); return t ? selfRun(t, self || SELF0) : -1; }
+function toolBest(m, id, self) { const m0 = RX.cloneModel(m); RX.reopen(m0); const base = selfRun(RX.cloneModel(m0), self || SELF0), spots = RX.tools.spots(m0, id, RULE.atoms); let best = null, top = -1, sum = 0, n = 0; spots.forEach(sp => { const v = toolWorth(m0, id, sp, self); if (v < 0) return; sum += v; n++; if (v > top) { top = v; best = sp; } }); return { base, best: top, mean: n ? sum / n : base, spots: n, spot: best, m: m0 }; }
+const cascadeDue = g => (cascMode(g) === 'each' || (RULE.cascade && !(g.queue || []).length) ? cascadeNext(g) : null);
+// everything that follows a circle's turn: the cascade if one is due, then each time a piece makes it zip again
+function afterTurn(g, acted, each) { const take = o => { if (each) each(o); else synTake(g, o, true); }; if (acted || cascMode(g) === 'end') for (let o = cascadeDue(g); o; o = cascadeDue(g)) take(o); for (let by = again(g); by; by = again(g)) { if (each) each(null, by); for (let o = cascadeNext(g); o; o = cascadeNext(g)) take(o); } }
 // runs the cascade to its end and returns how many steps it took
 function cascade(g, each) { let n = 0; for (let o = cascadeNext(g); o; o = cascadeNext(g)) { if (each) each(o); synTake(g, o, true); n++; } return n; }
 const queued = (g, id) => (g.queue || []).filter(q => q === id).length;
@@ -663,12 +722,12 @@ function queueHead(g) {
   const o = options(g)[id]; return o ? { id, kind: 'take', o } : { id, kind: 'waste' };
 }
 // a circle whose reagent found nothing to act on: the reaction of the page is gone and so is the use
-function waste(g, id) { if (id !== BANKID && id !== SYN.finish && !(g.free && g.free[id]) && g.left[id] > 0) g.left[id]--; g.pageSteps++; g.tally.wasted = (g.tally.wasted || 0) + 1; g.trail.push({ id, hits: 0, cont: false, wasted: true, free: false, ev: [] }); }
+function waste(g, id) { if (id !== BANKID && id !== SYN.finish && !(g.free && g.free[id]) && g.left[id] > 0) g.left[id]--; g.pageSteps++; g.wastedNow = (g.wastedNow || 0) + 1; g.tally.wasted = (g.tally.wasted || 0) + 1; g.trail.push({ id, hits: 0, cont: false, wasted: true, free: false, ev: [] }); }
 // takes the head of the queue off it; the page then plays what queueHead said it would do
 function queueShift(g) { g.shot = true; return g.queue.shift(); }
 // fires the head of the queue and returns what it did. A cascade is set off only by a reagent that acted: a wasted
 // circle and the bank change nothing on the molecule and set nothing off
-function queueStep(g) { const h = queueHead(g); if (!h) return null; queueShift(g); if (h.kind === 'bank') bank(g); else if (h.kind === 'finish') synFinish(g, h.o); else if (h.kind === 'take') synTake(g, h.o); else waste(g, h.id); if (h.kind === 'take') for (let o = cascadeDue(g); o; o = cascadeDue(g)) synTake(g, o, true); return h; }
+function queueStep(g) { const h = queueHead(g); if (!h) return null; queueShift(g); if (h.kind === 'bank') bank(g); else if (h.kind === 'finish') synFinish(g, h.o); else if (h.kind === 'take') synTake(g, h.o); else waste(g, h.id); if (h.kind !== 'finish') afterTurn(g, h.kind === 'take'); return h; }
 // The page as it would stand once everything queued has had its turn: what each reagent of the hand would then do,
 // whether the bank could then be used, what each queued thing does when its turn comes, and for every atom of the
 // molecule as it is now the atom it will be by then (fwd), so that places can be shown on the molecule on the page.
@@ -676,10 +735,10 @@ function queueView(g) {
   const s = snap(g), kinds = []; let fwd = null;
   const adv = (o, free) => { const live = new Set(o.model.atoms), nf = new Map(); if (fwd) fwd.forEach((a, a0) => { const b = o.map.get(a); if (b && live.has(b)) nf.set(a0, b); }); else o.map.forEach((b, a0) => { if (live.has(b)) nf.set(a0, b); }); fwd = nf; synTake(g, o, free); };
   while (g.queue.length && !g.over) {
-    const h = queueHead(g); g.queue.shift(); kinds.push(h.kind);
+    const h = queueHead(g); queueShift(g); kinds.push(h.kind);
     if (h.kind === 'take') adv(h.o, false);
     else if (h.kind === 'bank') bank(g); else if (h.kind === 'finish') break; else waste(g, h.id);
-    if (h.kind === 'take') for (let o = cascadeDue(g); o; o = cascadeDue(g)) adv(o, true);
+    afterTurn(g, h.kind === 'take', (o, by) => { if (o) return adv(o, true); const mp = g.reopened.map; if (fwd) { const nf = new Map(); fwd.forEach((a, a0) => { const b = mp.get(a); if (b) nf.set(a0, b); }); fwd = nf; } else fwd = new Map(mp); });
   }
   const done = kinds.includes('finish'), o = g.over || done ? {} : options(g, true), fin = g.over || done ? null : finishOpt(g), bankOk = !done && !!RULE.bank && g.cur.path.length >= RULE.bankMin && g.P > 0, row = g.cur.path.length;
   back(g, s);
@@ -804,7 +863,7 @@ const SUPPLY = [
   { name: 'an alchemist, by appointment', cost: 50, reagents: [], gear: ['stone', 'transmute', 'regia', 'ouroboros', 'homunculus', 'elixir'] },
   { name: 'Brenda (deceased)', cost: 80, reagents: [], gear: ['ouija', 'candle', 'goat', 'pact', 'voodoo', 'tower', 'cat', 'paw', 'idol', 'grimoire', 'hourglass', 'raven', 'glory', 'orb'] }
 ];
-const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); if (RULE.cascade) { o.reagents = o.reagents.filter(id => !SELF.some(q => q.id === id) && !(RULE.ban || []).includes(id)); o.gear = o.gear.filter(id => id !== 'extinguisher'); } return o; };
+const stock = tier => { const o = { reagents: [], gear: [], rare: false }; SUPPLY.forEach((sp, i) => { if (i <= tier) { o.reagents.push(...sp.reagents); o.gear.push(...sp.gear); if (sp.rare) o.rare = true; } }); if (RULE.cascade) { o.reagents = o.reagents.filter(id => !SELF.some(q => q.id === id) && !(RULE.ban || []).includes(id)); o.gear = o.gear.filter(id => id !== 'extinguisher'); } if (RULE.five) o.gear = Object.keys(FIVE).filter(id => FIVE[id] <= tier && !(RULE.ban || []).includes(id)); return o; };
 // MODEL.relaxed false skips settling a new molecule into shape. The rules do not read the shape, so a simulation
 // with no page turns it off to save the time.
 const MODEL = { relaxed: true };
@@ -873,7 +932,7 @@ function deeds(g, run, pass) {
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
   if (id === 'glass') run.glass = true;
-  else if (id === 'occult') { const occ = Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(rand() * occ.length)]); run.stake = 1.5; }
+  else if (id === 'occult') { const occ = RULE.five ? Object.keys(FIVE) : Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(rand() * occ.length)]); run.stake = 1.5; }
   else if (id === 'lean') { run.rack = RUNG.start.slice(0, 3); run.usesAll = 1; }
   else if (id === 'long') { run.steps = 1; run.pages = -1; }
   else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]); run.noGear = true; }
@@ -882,8 +941,8 @@ function runTerm(run, id) {
 // The number to beat: Par for the round, times the square root of the molecule's size factor, times any stake the
 // player chose (the pact, the idol, the hourglass, the terms of the run). It never reads the rest of the build, so a
 // better build beats it by more. The method is in docs/BALANCE.md and the measurement in docs/RIG.md.
-// GENERATED by the measuring rig (docs/RIG.md, docs/tools_sim.js) on 2026-11-11 from the rules at commit 164cd9c.
-// Do not edit by hand: measure again. Factors fitted on 474 runs of the median player choosing rounds at random (seeds 1 to 480), before a wasted circle stopped setting a cascade off. Par fitted on 500 runs of each player (tag d6): round one is what 88 in 100 novice first rounds reach, no round asks more than 2.6 times the one before or less than 1.15 times, and from round five on Par is fitted to the median player's pass rate and margin together. The pass rates in docs/RIG.md are that same measure read against this Par, not a replay.
+// GENERATED by the measuring rig (docs/RIG.md, docs/tools_sim.js) on 2026-11-11 from the rules at commit 60de143.
+// Do not edit by hand: measure again. Factors fitted on 478 runs of the median player choosing rounds at random (seeds 1 to 480) on the rules of docs/PIECES.md.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
 const PAR = { rounds: [2360, 6140, 16000, 41400, 75400, 129000, 221000, 436000, 739000], after: 1.7, last: 1 };
@@ -891,9 +950,9 @@ const PAR = { rounds: [2360, 6140, 16000, 41400, 75400, 129000, 221000, 436000, 
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
 // multiplied by all of them, so every kind of round and every molecule is beaten by a like margin.
-const MOLF = {"C=CCC(=O)CCC(=O)CCC=C":0.595,"C=CCCC(=O)CC1CCCC1=O":0.233,"C=CCCC(=O)CCC(=O)C1=CC=CC=C1":0.523,"C=CCCC(=O)CCC(=O)CC1CCCC1=O":0.902,"C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C":2.938,"C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C":1.026,"C=CCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":0.211,"C=CCCC(=O)CCC(O)CCC(=O)C":0.729,"C=CCCC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O":2.404,"C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45":0.644,"C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C":2.054,"C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.109,"C=CCCC(O)CCC(=O)C":0.33,"C=CCCC(O)CCC(=O)C1CCCC1":0.276,"C=CCCC(O)CCC(=O)CCC(=O)C1=CC=C(C=C1)C(=O)CCC(=O)C":2.738,"C=CCCC(O)CCC(=O)CCC1(O)CCCC1":0.42,"C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":1.209,"C=CCCC(O)CCC(O)CCC(O)C":0.678,"C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":9.046,"C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":6.435,"CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C":4.684,"CC(=O)CCC(=O)CCC(O)C1CC2CCC1C2":0.614,"CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C":2.081,"CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":2.761,"CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C":2.329,"CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":0.537,"CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":1.182,"CC(=O)CCC(O)C1CC2CCC1C2":0.125,"CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C":1.666,"CC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O":1.429,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C":1.007,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":1.647,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45":0.433,"CC(C)(O)CCC(=O)CCC(=O)C":0.285,"CC(C)(O)CCC(=O)CCC(O)C":0.182,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C":1.337,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C":1.815,"CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C":0.66,"CC(C)(O)CCC(O)CCC(O)C":0.173,"CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":2.1,"CC(C)(O)CCC(O)CCC(O)CCC(O)CCCCCC(O)CCC(O)CCC=C":0.857,"CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C":0.88,"CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45":0.596,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.382,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":4.719,"CC(O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45":0.323,"CC(O)CCC(=O)CCC=CCCC(=O)C":1.093,"CC(O)CCC(=O)CCCC(=O)C":0.361,"O=CCCC(=O)CCC(=O)CCC(O)C":1.255,"O=CCCC(=O)CCC(O)C":0.484,"O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C":1.053,"O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":1.32,"OC(C1=CC=CC=C1)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":3.295,"OC1(CCCC1)CCC(=O)CCC(O)C":0.208,"OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C":1.013,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C":0.598,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C":0.918,"OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C":0.676,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.403,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.872,"OC1=CC=CC=C1CCC(=O)CCC(=O)C":0.701,"OC1=CC=CC=C1CCC(=O)CCC(O)C":0.296,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)C":1.471,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)C":1.755,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":2.131,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC(=O)C":2.661,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC(=O)C":3.623,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":5.269,"OC1=CC=CC=C1CCC(O)CCC(=O)C":0.492,"OC1CCCC1CCC(=O)CCC(=O)C":0.429,"OCCCC(O)CCC(O)CCC(=O)CCCCCC(O)CCC(O)CCC(O)CCC=C":1.815,"OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C":0.918,"OCCCC(O)CCC(O)CCC=C":0.542};
-const KINDF = {"plain":1.0,"carry":1.065,"broad":1.48,"loose":1.083,"each":1.38,"back":1.085,"scarce":0.958,"short":0.323};
-const ASSAYF = {"scarce":[1.136,1.131,1.137],"short":[0.372,0.409,0.398],"each":[1.73,1.515,1.29],"loose":[1.368,1.426,1.716]};
+const MOLF = {"C=CCC(C)(O)CCC(=O)CCC=C":0.607,"C=CCCC(=O)CC1CCCC1=O":0.486,"C=CCCC(=O)CCC(=O)C1=CC=CC=C1":1.576,"C=CCCC(=O)CCC(=O)CC1CCCC1=O":1.263,"C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C":4.279,"C=CCCC(=O)CCC(=O)CCCC=O":2.264,"C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C":2.054,"C=CCCC(=O)CCC(C)(O)C1CC2CCC1C2":0.291,"C=CCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":0.734,"C=CCCC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O":2.482,"C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45":2.008,"C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C":2.917,"C=CCCC(=O)CCC1(O)CCCC1":0.661,"C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.133,"C=CCCC(C)(O)CCC(=O)CCC=C":1.142,"C=CCCC(O)CCC(=O)C1CCCC1":0.568,"C=CCCC(O)CCC(=O)CCC(=O)C1=CC=C(C=C1)C(=O)CCC(=O)C":4.26,"C=CCCC(O)CCC(=O)CCC1(O)CCCC1":0.772,"C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":1.867,"C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":3.921,"C=CCCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":7.992,"CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C":6.464,"CC(=O)CCC(=O)CCC(O)C1CC2CCC1C2":1.368,"CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C":1.811,"CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":1.571,"CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C":1.104,"CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":4.988,"CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2":19.885,"CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C":1.151,"CC(=O)CCC(O)CCC(=O)C1=CC=C(C=C1)C(C)=O":2.621,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C":0.777,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":3.503,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45":2.014,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C":2.254,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C":8.093,"CC(C)(O)CCC(=O)CCC=C":0.304,"CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C":0.905,"CC(C)(O)CCC(O)CCC(O)C":0.628,"CC(C)(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)CCC(O)C":1.284,"CC(C)(O)CCC(O)CCC(O)CCC(O)CCCCCC(O)CCC(O)CCC=C":2.819,"CC(C)(O)CCC(O)CCC(O)CCC=C":0.977,"CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C":1.282,"CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45":0.62,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.036,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.002,"CC(O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45":0.486,"CC(O)CCC(=O)CCC=CCCC(=O)C":1.926,"O=CCCC(=O)CCC(=O)CCC=C":2.675,"O=CCCC(=O)CCC(C)(O)CCC=C":1.107,"O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C":4.08,"O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":2.293,"O=CCCC(=O)CCC1(O)CCCC1":0.775,"O=CCCC(=O)CCC=C":2.598,"O=CCCC(C)(O)CCC(=O)CCC=C":1.194,"OC(C1=CC=CC=C1)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":4.953,"OC1(CCC(=O)CCC=C)CC2CCC1C2":0.444,"OC1(CCCC1)CCC(=O)CCC=C":0.513,"OC1(CCCC1)CCC(=O)CCCC=O":1.283,"OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C":0.983,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C":0.933,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C":7.694,"OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C":0.999,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.004,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.003,"OC1=CC=CC=C1CCC(=O)CCC(=O)CCC=C":0.66,"OC1=CC=CC=C1CCC(=O)CCC(O)C":0.656,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)C":1.842,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)C":1.688,"OC1=CC=CC=C1CCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":7.464,"OC1=CC=CC=C1CCC(=O)CCC=C":0.773,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC(=O)C":1.353,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.007,"OC1=CC=CC=C1CCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":0.004,"OC1=CC=CC=C1CCC(=O)CCCC=O":0.811,"OC1=CC=CC=C1CCC(O)CCC(=O)C":0.874,"OCCCC(O)CCC(O)CCC(=O)CCCCCC(O)CCC(O)CCC(O)CCC=C":8.057,"OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C":2.077,"OCCCC(O)CCC(O)CCC=C":3.531};
+const KINDF = {"plain":1.0,"carry":0.974,"broad":2.096,"loose":1.357,"each":1.928,"back":1.441,"scarce":0.956,"short":0.57};
+const ASSAYF = {"scarce":[0.914,0.96,1.053],"short":[0.383,0.409,0.577],"each":[1.796,1.479,1.184],"loose":[1.592,1.724,1.39]};
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };
 // END GENERATED
 // A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more
@@ -955,6 +1014,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { FIVE, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

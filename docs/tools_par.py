@@ -17,7 +17,10 @@ alive = set(x); par = []
 # round may ask more than this many times the one before; the median player is then over its margin until the
 # curve meets its own fit, about round five, and plays for the marks until then.
 STEPMAX = 2.6
-nov = sorted(rs[1]['total'] / (rs[1]['number'] / rs[1]['par']) for (pl, sd), rs in by.items() if pl == 'novice' and 1 in rs)
+# the novice's runs, round by round, for the rounds the novice sets: the share of them that must pass is NOVPASS
+novx = {sd: [rs[r]['total'] / (rs[r]['number'] / rs[r]['par']) for r in range(1, 4)] for (pl, sd), rs in by.items() if pl == 'novice' and all(r in rs for r in range(1, 4))}
+novalive = set(novx); NOVPASS = [0.90, 0.80, 0.55]
+nov = sorted(v[0] for v in novx.values())
 for r in range(9):
     v = sorted(x[sd][r] for sd in alive); med = v[len(v) // 2]; best = None
     for k in range(-200, 201):
@@ -32,10 +35,15 @@ for r in range(9):
     # Round one is set by the novice: the number is no higher than what 88 in 100 of the novice's first rounds reach,
     # so a player who lines a page up without thought still passes round one about nine times in ten. The median
     # player then passes it by more than its target margin; the marks above the number are what it plays for there.
-    if r == 0 and nov:
-        pn = nov[int(len(nov) * 0.12)]
+    # Rounds one to three are set by the novice: the number is what NOVPASS of the novices who reached the round make
+    # (90, 80 and 55 in 100), never under 1.15 times the round before. The median player passes them by more than its
+    # target margin and plays for the marks there.
+    if r < 3 and novalive:
+        nv = sorted(novx[sd][r] for sd in novalive); pn = nv[int(len(nv) * (1 - NOVPASS[r]))]
+        if r: pn = max(pn, par[-1] * 1.15)
         if pn < best[1]: best = (0, pn, 100.0 * sum(1 for t in v if t >= pn) / len(v), med / pn)
-        print('round 1 by the novice: %d first rounds, 12th percentile %.0f, novice pass %.1f%%' % (len(nov), pn, 100.0 * sum(1 for t in nov if t >= best[1]) / len(nov)))
+        print('round %d by the novice: %d reached, number %.0f, novice pass %.1f%%' % (r + 1, len(nv), best[1], 100.0 * sum(1 for t in nv if t >= best[1]) / len(nv)))
+        novalive = set(sd for sd in novalive if novx[sd][r] >= best[1])
     par.append(best[1]); alive = set(sd for sd in alive if x[sd][r] >= best[1])
     print('round %d: Par %9.0f  pass %5.1f%% (target %d, off %+.1f)  margin %.2f (target %s, %.2f times off)  alive %d' % (r + 1, best[1], best[2], T[r], best[2] - T[r], best[3], M[r], max(best[3] / M[r], M[r] / best[3]), len(v)))
 print('steps', [round(par[i + 1] / par[i], 2) for i in range(8)], 'whole climb %.0f times' % (par[8] / par[0]))

@@ -330,7 +330,7 @@ function lactolable(m) {
     for (const s of ohs) { if (s.c === k.c) continue; const d = dist.get(s.c); if (!(d >= 3 && d <= R)) continue;
       if (best && (s.front < bf || (s.front === bf && d >= bd))) continue;
       if (kr || ringAtom(m, s.c)) { const p = carbonPath(m, s.c, k.c, R); let shared = 0; for (let i = 0; p && i + 1 < p.length; i++) if (ringBond(m, p[i], p[i + 1], 8)) shared++; if (!p || shared > 1) continue; }
-      best = { o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }; bf = s.front; bd = d; } }
+      best = { o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, d, atoms: [s.o, s.c, k.c, k.o] }; bf = s.front; bd = d; } }
   return best ? [best] : [];
 }
 function etherable(m) { for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) continue; const dist = carbonDist(m, s.c, 4); for (const x of m.atoms) { if (x.el !== 'Cl' || x.fly) continue; const c2 = carbonsOf(m, x)[0]; if (!c2 || c2 === s.c || ringAtom(m, c2)) continue; const d = dist.get(c2); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, cl: x, c2, atoms: [s.o, s.c, c2, x] }]; } } return []; }
@@ -372,7 +372,8 @@ const SELFCARDS = [
 ];
 SELFCARDS.forEach(c => { CARDS[c.id] = c; });
 // a capped oxygen carries prot, and no bottle finds a site there
-LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot)); });
+// a clamped atom (the clamp, docs/PIECES.md) is out of reach of every reagent, but the molecule's own reactions still use it
+LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot || (a.clamp && c.cls !== 'self'))); });
 // the oxygens an order can ask to be kept: alcohol OH and aldehyde or ketone C=O, by index in the atom list
 const keepable = m => m.atoms.map((a, i) => (a.el !== 'O' ? null : hydroxyl(m, a) ? { i, kind: 'OH' } : carbonyls(m).some(s => s.o === a) ? { i, kind: 'C=O' } : null)).filter(Boolean);
 
@@ -443,7 +444,7 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
   return { model: n, map };
 }
@@ -532,5 +533,50 @@ function shapeOf(m) {
   const dbl = a => nbs(m, a).some(n => n.bond.order === 2), conj = m.bonds.filter(b => b.order === 1 && set.has(b.a) && set.has(b.b) && dbl(b.a) && dbl(b.b)).length;
   return { conj, ring: Math.max(0, rings - arene), arene, cage, oh: m.atoms.filter(a => !a.fly && hydroxyl(m, a)).length };
 }
-AA.rx = { MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+// ---------- the five pieces: things used on the molecule (docs/PIECES.md) ----------
+// spots(m, id, limit): every place piece id can be used on m, as plain objects holding atoms of m. A piece that acts
+// on the whole molecule has one spot. apply(m, id, spot): does it to m in place. Nothing here scores or animates.
+//   mirror, on a bond: a single bond between two carbons that is in no ring. spot { a, b }: everything on b's side of
+//     the bond is taken away and a copy of a's side, reflected, is joined on in its place by a bond from a to its copy.
+//   clamp, on a part: an oxygen, or the two carbons of a C=C. spot { part }: for the rest of the round no reagent and
+//     no other piece changes it. The molecule's own zip still uses it.
+//   crystal, on a carbon that has a hydrogen and no oxygen: spot { c }: one hydrogen becomes an OH.
+//   magnet, on the whole molecule: spot { runs }: every stretch of four or more plain CH2 in a row loses all but its
+//     two end carbons, which are bonded. What stood on either side of the stretch is then three carbons apart.
+//   bunsen (the burner), on the whole molecule: spot { pairs }: every C=C outside a benzene ring becomes a C=O on the
+//     carbon with fewer hydrogens, and the other carbon takes that carbon's hydrogen.
+const heavyNb = (m, a) => nbs(m, a).map(n => n.atom).filter(b => b.el !== 'H' && !b.fly);
+const sideOf = (m, a, b) => { const S = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); nbs(m, u).forEach(n => { const v = n.atom; if (S.has(v) || (u === a && v === b)) return; S.add(v); st.push(v); }); } return S; };
+const plainCH2 = (m, c) => c.el === 'C' && !c.fly && !c.clamp && Hs(m, c).length === 2 && heavyNb(m, c).length === 2 && heavyNb(m, c).every(q => q.el === 'C') && isSp3(m, c);
+const gapRuns = m => { const seen = new Set(), out = []; m.atoms.forEach(c => { if (seen.has(c) || !plainCH2(m, c)) return; const run = [c]; seen.add(c); for (let end = 0; end < 2; end++) for (let cur = c, prev = null; ;) { const nx = heavyNb(m, cur).find(q => q !== prev && !seen.has(q) && plainCH2(m, q)); if (!nx) break; seen.add(nx); if (end) run.unshift(nx); else run.push(nx); prev = cur; cur = nx; if (run.length > 40) break; } if (run.length >= 4 && !run.some(q => ringAtom(m, q))) out.push(run); }); return out; };
+// the C=C the burner can change, each as [the carbon that gets the O, the other carbon]
+const burnPairs = m => { const ar = aromaticAtoms(m), out = []; m.bonds.forEach(k => { if (k.order !== 2 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || k.a.clamp || k.b.clamp || (ar.has(k.a) && ar.has(k.b))) return; const ha = Hs(m, k.a).length, hb = Hs(m, k.b).length; let cx = ha <= hb ? k.a : k.b, ch = cx === k.a ? k.b : k.a; if (Hs(m, cx).length > 1 || nbs(m, cx).some(n => n.atom !== ch && n.bond.order > 1)) return; if (!Hs(m, cx).length) { if (Hs(m, ch).length !== 1) return; const t = cx; cx = ch; ch = t; } out.push([cx, ch]); }); return out; };
+const tools = {
+  spots(m, id, limit) {
+    const out = [];
+    if (id === 'mirror') m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || k.a.clamp || k.b.clamp || ringBond(m, k.a, k.b)) return; [[k.a, k.b], [k.b, k.a]].forEach(q => { let n = 0; sideOf(m, q[0], q[1]).forEach(x => { if (x.el !== 'H') n++; }); if (n >= 3 && (!limit || 2 * n <= limit - 6)) out.push({ a: q[0], b: q[1], n }); }); });
+    else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !o.clamp) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !k.a.clamp && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
+    else if (id === 'crystal') m.atoms.forEach(c => { if (c.el === 'C' && !c.fly && !c.clamp && isSp3(m, c) && Hs(m, c).length && heavyNb(m, c).every(q => q.el === 'C')) out.push({ c }); });
+    else if (id === 'magnet') { const runs = gapRuns(m); if (runs.length) out.push({ runs }); }
+    else if (id === 'bunsen') { const pairs = burnPairs(m); if (pairs.length) out.push({ pairs }); }
+    return out;
+  },
+  // the atoms a spot is drawn at, on the molecule as it stands; and those of them that will be gone
+  at(sp) { return sp.runs ? [].concat.apply([], sp.runs) : sp.pairs ? [].concat.apply([], sp.pairs) : sp.b ? [sp.a, sp.b] : sp.part || [sp.c]; },
+  apply(m, id, sp) {
+    if (id === 'mirror') {
+      const a = sp.a, b = sp.b, gone = sideOf(m, b, a), keep = Array.from(sideOf(m, a, b)); gone.forEach(x => m.removeAtom(x));
+      let ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z; const d = Math.hypot(ux, uy, uz) || 1; ux /= d; uy /= d; uz /= d;
+      const copy = new Map(); keep.forEach(x => { const t = 2 * ((a.x + ux * 0.77 - x.x) * ux + (a.y + uy * 0.77 - x.y) * uy + (a.z + uz * 0.77 - x.z) * uz), c = m.addAtom(x.el, x.x + t * ux, x.y + t * uy, x.z + t * uz); if (x.iso) c.iso = x.iso; if (x.clamp) c.clamp = true; copy.set(x, c); });
+      m.bonds.slice().forEach(k => { if (copy.has(k.a) && copy.has(k.b)) m.bonds.push({ a: copy.get(k.a), b: copy.get(k.b), order: k.order }); });
+      m.bond(a, copy.get(a)); return { made: Array.from(copy.values()) };
+    }
+    if (id === 'clamp') { sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }
+    if (id === 'crystal') { const h = Hs(m, sp.c)[0]; if (!h) return null; cut(m, sp.c, h); const o = attach(m, 'O', sp.c, 2.8); m.bond(o, h); return { made: [o] }; }
+    if (id === 'magnet') { const made = []; sp.runs.forEach(run => { run.slice(1, -1).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], run[run.length - 1]); made.push(run[0], run[run.length - 1]); }); return { made }; }
+    if (id === 'bunsen') { const made = []; sp.pairs.forEach(q => { const cx = q[0], ch = q[1], k = m.findBond(cx, ch); if (!k || k.order !== 2) return; const hx = Hs(m, cx)[0]; if (!hx) return; k.order = 1; cut(m, cx, hx); m.bond(ch, hx); const o = attach(m, 'O', cx, 2.8); m.bond(cx, o); made.push(o); }); return { made }; }
+    return null;
+  }
+};
+AA.rx = { tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
