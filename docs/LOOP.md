@@ -47,31 +47,32 @@ Sigils come after all of this and are not on the bench until then.
 
 ### Order things appear
 
-Nothing is on the bench before it has happened once.
+Revised after review, 2026-11-11. The reviewer failed the first order: a player could not see what there was to earn. The owner's rule is that nothing later than the player's stage is shown. Both are kept this way: **each object shows what is held, and the one next thing to earn as a blank outline with its count.** Never the whole list.
 
 1. First run: no bench. A lost run goes straight to a new run.
-2. The record appears after the first run.
+2. After the first run the bench appears with the record, the kits (plain, and the outline of the next kit with its count) and the book (empty, with the outline of the first compound).
 3. The reagent cabinet and the first supplier appear when round three is first beaten.
-4. The helper shelf appears with the first helper.
+4. The helper shelf appears with the first helper, and then always shows the outline of the next helper with its count.
 5. The jars appear the first time three waters have come off.
-6. The kits appear when the second kit is earned.
-7. The book appears when the first real compound is made.
-8. The stakes appear after the first win.
+6. The stakes appear after the first win.
 
 ### Kits
 
-A kit is chosen before a run. It sets the starting pool and one rule. It is the reason two runs start differently. One kit is held at the start; the rest are earned.
+A kit is chosen before a run. It sets the starting pool and one rule. It is the reason two runs start differently. A kit must change what the player does on the first page, not only a number. One kit is held at the start; the rest are earned in the order below, one outline at a time.
 
-These are first proposals. Each must be measured on the rig before it is offered, and changed if the median player's rounds beaten moves by more than one round against the plain kit.
+Each must be measured on the rig before it is offered, and changed if the median player's rounds beaten moves by more than one round against the plain kit.
 
 | Kit | Starting pool | Rule | Earned by |
 |---|---|---|---|
 | plain | the six starters | none | held from the start |
-| long | the starters with extend in place of reduce | molecules are dealt one size up | a cascade of six steps |
 | lean | hydrate, oxidize, dehydrate, grow | each reaction has five uses a round | a round beaten using three reactions only |
-| ring | the starters with weld in place of hydroborate | a weld or a snap counts as two steps | twenty rings closed in one run |
-| heavy | the starters with add phenol in place of reduce | two uses a round, each step adds 75 places | a molecule of forty atoms |
-| flush | the starters | a helper is offered after every round, reactions never | five helpers held at once |
+| long | the starters with extend in place of reduce | molecules are dealt one size up | a cascade of six steps |
+| gap | the starters | every molecule is dealt with one C=O taken out of its chain, so each round opens with a repair | three rounds beaten in which the first page had no cascade |
+| phenol | the starters with add phenol in place of reduce | none | a molecule of forty atoms |
+| anchor | the starters | the first line fired in a run is kept: it fires by itself, in that order, at the start of every later page, without spending uses | the same line of three fired on all three pages of a round |
+| reverse | the starters | a line fires last circle first, and a zip starts from the far end of the chain | a win |
+
+Held back: a kit that is offered helpers only (it needs a deeper helper shelf first). Cut: a kit that made weld and snap count double, because those two were measured as not making cascades longer.
 
 ### The book
 
@@ -83,7 +84,13 @@ These are first proposals. Each must be measured on the rig before it is offered
 
 ### Stakes
 
-After a win the next stake opens. Each raises the number to beat (`ASSAYF` and the stakes factor in `path.js`). A record is kept for each kit at each stake.
+After a win the next stake opens. A stake must change a rule, not only raise the number, or it is a grind. First proposals, each on top of the last: 1 the number is higher; 2 one fewer redraw a round; 3 the three rule-change rounds are drawn from a harder set; 4 a wasted reaction costs two uses; 5 the hand is four. A record is kept for each kit at each stake, shown as a grid that fills in.
+
+## What the review found that is not answered yet
+
+- By run 60 there is little left. The cure is content: more helpers, the other three cascades (fold, run, link), more molecules, more compounds in the book. This is the standing work, not a design gap.
+- Rounds 3, 6 and 9 need names and marks so a player knows them on sight.
+- The molecule not carrying is a weakness for the feeling of a build growing. One small way: the last OH or C=O left on the final page is carried onto a free end of the next molecule. Not built. The owner has not decided.
 
 ## What is built on 2026-11-11
 
