@@ -272,3 +272,20 @@ Shared rule for all ten: each creature wears pips for its hunger. The named food
 - Use: tie a distant C=O to the OH of a chain. Risk: the ring may shorten the wrong chain.
 - Run: it is a bridge for any shape.
 - Might not work: the S atom is new to the code, and a S ring must not count as a zip ring.
+
+## Taken to the owner, one at a time
+
+Each has a picture in `.claude/shots/hom-<name>.png`. The owner wants a schematic with every one.
+
+### Water: agreed by the owner 2026-11-11
+
+As written at the top of this file: fed by three waters coming off, then on the chosen page every C=C becomes C-OH, every ring a zip closed opens, the zip runs again, and its rings count on from the first run of that page.
+
+### Hydrogen: shown to the owner, not yet answered
+
+- Fed by hydrogen coming off, which happens when an OH becomes C=O (oxidize). Three and it is ready.
+- When ready, on the page the player chooses: where the zip stops at a stretch too long to cross, the first C=O on the far side becomes OH, and the zip goes on from there. The rings count on.
+- It costs that one C=O. It acts in the middle of a cascade, which no dealt reaction can.
+- Why it deepens a run: a long stretch is the main thing that stops a cascade. With hydrogen the player may leave one and spend reactions on length. Feeding it needs oxidize, which kills the chain if fired before the zip.
+- Not the judge's pick (a use given back to one circle): the owner turned down ones that do not touch the molecule.
+- To be measured.
