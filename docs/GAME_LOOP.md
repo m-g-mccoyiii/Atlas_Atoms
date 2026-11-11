@@ -2,11 +2,25 @@
 
 Written 2026-11-10. The first part is what the game does now. The second part is designed and not built.
 
+## Progression comes first
+
+The owner's rule, 2026-11-10: sigils, pets and the like are unlocked by play. A first run must be the bare game, and each new layer arrives because the player did something.
+
+| Stage | What the player has | How the next thing is earned |
+|---|---|---|
+| First run | a molecule, four reagents, rows, a number to beat, the take-one-of-three | play |
+| Sigils (built) | none at first, and no page of sigils and no circle | each sigil by a deed: glass by a round with no broken row, lean by a round beaten with two reagents, long by a row of ten, hoard by holding five pieces, occult by beating five rounds in a run |
+| Suppliers (built) | the corner chemist | credit from rounds beaten |
+| Pets (not built) | none | to be earned by deeds, one at a time |
+| Sigil transmutations (not built) | none | to come with the sigil that grants them |
+
+The page of sigils appears only after the first sigil is earned. Sigils not yet earned are drawn faint with the deed that earns them.
+
 ## What is built
 
 ### A run
 
-1. **Terms.** A run opens on a page of six sigils. One is taken. It sets the terms of the run and lies under the molecule as a transmutation circle.
+1. **Terms.** Once a sigil has been earned, a run opens on the page of sigils. One is taken. It sets the terms of the run and lies under the molecule as a transmutation circle. A run on the plain sigil has no circle.
 2. **Take one of three.** Before every round the page offers three things: a new reagent, a piece of equipment, a level for a piece already owned, a stronger reagent, or more uses of one. Up to five pieces of equipment are held.
 3. **Choose the round.** Three molecules stand on the page. Each shows what the round asks, the number to beat and what it pays.
 4. **The round.** Three pages, three reactions a page.

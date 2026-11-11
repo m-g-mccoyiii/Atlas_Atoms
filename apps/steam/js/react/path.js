@@ -350,7 +350,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
-  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term) { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
+  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   synDeal(g, rnd);
@@ -567,12 +567,22 @@ const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear,
 const CIRCLE = { plain: { n: 4, mul: 1.5 }, glass: { n: 3, mul: 2 }, occult: { n: 4, mul: 1.5 }, lean: { n: 3, mul: 1.5 }, long: { n: 5, mul: 2.5 }, hoard: { n: 4, mul: 1.5 } };
 const TERMS = [
   { id: 'plain', name: 'plain', note: '' },
-  { id: 'glass', name: 'glass', note: 'mult 3, one break' },
-  { id: 'occult', name: 'occult', note: '+1 occult, beat 1.5' },
-  { id: 'lean', name: 'lean', note: '3 reagents, +1 use' },
-  { id: 'long', name: 'long', note: '4 a page, 2 pages' },
-  { id: 'hoard', name: 'hoard', note: '3 pieces, no more' }
+  { id: 'glass', name: 'glass', note: 'mult 3, one break', deed: 'no breaks' },
+  { id: 'occult', name: 'occult', note: '+1 occult, beat 1.5', deed: 'round 5' },
+  { id: 'lean', name: 'lean', note: '3 reagents, +1 use', deed: '2 reagents' },
+  { id: 'long', name: 'long', note: '4 a page, 2 pages', deed: 'row of 10' },
+  { id: 'hoard', name: 'hoard', note: '3 pieces, no more', deed: '5 pieces' }
 ];
+// which sigils a finished round has earned: g is the round, run the run, pass whether the number was beaten
+function deeds(g, run, pass) {
+  const out = [];
+  if (pass && g.tally.breaks === 0 && g.trail.length >= 6) out.push('glass');
+  if (run.beaten >= 5) out.push('occult');
+  if (pass && new Set(g.cur.used).size <= 2) out.push('lean');
+  if (g.best >= 10) out.push('long');
+  if (run.gear.length >= 5) out.push('hoard');
+  return out;
+}
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
   if (id === 'glass') run.glass = true;
@@ -616,6 +626,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { TERMS, CIRCLE, runTerm, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

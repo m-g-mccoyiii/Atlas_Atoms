@@ -304,8 +304,8 @@ function start(app) {
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
-  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, taught: false }, shop = { earned: 0 };
-  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
+  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, taught: false }, shop = { earned: 0 };
+  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.sig = m.sig || {}; meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier);
   const PICKX = [-15, 0, 15];
@@ -482,11 +482,13 @@ function start(app) {
   }
   // what a run can turn up beyond the suppliers: families that have been opened and reactions that have been found
   const extraR = () => P.FAMILIES.filter(f => meta.fam[f.id]).reduce((a, f) => a.concat(f.reagents), []).concat(Object.keys(meta.found).filter(k => meta.found[k]));
-  function newRun() { run = P.runNew(meta.tier, extraR()); showTerms(); }
+  // a first run has no sigils. They are earned by deeds in play, and the page of sigils appears once one is earned
+  const sigOpen = t => t.id === 'plain' || !!(meta.sig && meta.sig[t.id]);
+  function newRun() { run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
   function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
-  function chooseTerm(i) { const t = P.TERMS[i]; if (st.mode !== 'terms' || !t) return; P.runTerm(run, t.id); sfx.stamp(); st.shake = 0.6; showPicks(); }
+  function chooseTerm(i) { const t = P.TERMS[i]; if (st.mode !== 'terms' || !t) return; if (!sigOpen(t)) { sfx.bad(); return; } P.runTerm(run, t.id); sfx.stamp(); st.shake = 0.6; showPicks(); }
   function termAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; for (let i = 0; i < P.TERMS.length; i++) { const q = TERMP(i); if (Math.abs(hit.x - q.x) < 6.5 && Math.abs(hit.z - q.z) < 4.4) return i; } return -1; }
   // a sigil: two rings and a figure inside that belongs to its terms
   function sigil(x, c, r, id, col, lw, sq) {
@@ -530,7 +532,8 @@ function start(app) {
   }
   function endRound() {
     st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; if (!meta.taught) { meta.taught = true; saveMeta(); }
-    if (st.pass) { run.beaten++; P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    if (st.pass) run.beaten++; { if (!meta.sig) meta.sig = {}; const got = P.deeds(g, run, st.pass).filter(id => !meta.sig[id]); if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
+    if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
@@ -791,7 +794,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     if (st.mode === 'terms') {
       const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('terms', h[0], h[1]);
-      P.TERMS.forEach((t, i) => { const q = TERMP(i), c = px(q), hov = st.hover === i, r = hov ? 132 : 116;
+      P.TERMS.forEach((t, i) => { const q = TERMP(i), c = px(q), open = sigOpen(t), hov = st.hover === i && open, r = hov ? 132 : 116;
+        if (!open) { x.globalAlpha = 0.3; sigil(x, c, r, 'plain', PENCIL, 6); x.globalAlpha = 1; hand(x, 30); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(t.deed, c[0], c[1] + 132); return; }
         sigil(x, c, r, t.id, hov ? REDINK : INK, hov ? 12 : 9); marker(x, 52); x.textAlign = 'center'; x.fillStyle = hov ? REDINK : INK; x.fillText(t.name, c[0], c[1] + 132);
         hand(x, 27); x.fillStyle = PENCIL; wrap(x, t.note, 520).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 166 + j * 30)); });
       ink.t.needsUpdate = true; return;
@@ -1003,6 +1007,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
       hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) coin(x, c[0] + tw / 2 + 60 + n * 56, c[1] - 36, 22);
       x.fillText(st.pass ? '' : run.beaten + ' beaten    best ' + best, c[0], c[1] + 80);
+      if (st.newSig) { const sc = px({ x: -12, z: 3.5 }), T0 = P.TERMS.find(q => q.id === st.newSig); sigil(x, sc, 120, st.newSig, '#b88a00', 10); marker(x, 50); x.textAlign = 'center'; x.fillStyle = '#b88a00'; x.fillText(T0.name, sc[0], sc[1] + 136); hand(x, 28); x.fillStyle = PENCIL; x.fillText('new sigil', sc[0], sc[1] - 96); }
       { const nx = px({ x: 12, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; marker(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
     ink.t.needsUpdate = true;
@@ -1123,7 +1128,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
+  AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
     setOff, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,
