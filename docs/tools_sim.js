@@ -11,7 +11,7 @@
   // What a reagent added to the starting four is worth (MATRIX.md, Reagents). One not listed counts as 1.
   const REAGENT = { bh3: 81.53, hcl: 1.02, nabh4: 0.99, snap: 0.94, cyclize: 0.86, aromatize: 0.66, socl2: 0.37, wittig: 0.21, memgbr: 0.15 };
   // Guesses, not measured: a stronger reagent, one more use, and a level as a share of the piece's worth above 1.
-  const OTHER = { strong: 1.3, bottle: 1.1, level: 0.5 };
+  const OTHER = { strong: 1.3, bottle: 1.1, level: 0.5, self: 1.6 };
   // How much a kind of round makes against a plain one, for choosing a round. Rounded from what the median player
   // made by kind in 150 runs under the rules of 2026-11-10 (budget of uses, hand, bank): the kinds are now within four
   // times of each other, where they were within ten.
@@ -27,7 +27,7 @@
   const BANK = '#bank';
   // what a move adds at once: a reaction, or the bank
   const gainId = (g, o, id) => (id === BANK ? P.bankGain(g) : gainOf(g, o[id]));
-  const doMove = (g, o, id) => { if (id === BANK) P.bank(g); else P.synTake(g, o[id]); };
+  const doMove = (g, o, id) => { if (id === BANK) P.bank(g); else { P.synTake(g, o[id]); if (P.RULE.cascade === 'each') P.cascade(g); } };
   // a chain that is running is played to its end, the biggest gain at every fork. Returns how many links it ran
   function runChain(g, fork, rnd, each) {
     let n = 0;
@@ -43,6 +43,7 @@
   // and what a charged page would add when it goes off.
   function leaf(g, cfg) {
     let v = P.made(g);
+    if (P.RULE.cascade === 'end' && !g.over && P.cascadeNext(g)) { const s = snap(g); P.cascade(g); v = P.made(g); back(g, s); }
     if (cfg.chain && !g.over && g.cur.path.length >= P.SYN.streak) { const s = snap(g); if (P.fire(g)) runChain(g, null, null); v = P.made(g); back(g, s); }
     if (!cfg.deep) return v;
     const pagesLeft = P.pagesOf(g) - g.page;
@@ -187,7 +188,7 @@
   function bankRight(g, o) {
     const d = Math.min(3, Math.max(1, P.stepsOf(g) - g.pageSteps)), ids = Object.keys(o); let vb, vn = -1;
     { const s = snap(g); P.bank(g); vb = search(g, d - 1, EVAL).val; back(g, s); }
-    ids.forEach(id => { const s = snap(g); P.synTake(g, o[id]); const v = search(g, d - 1, EVAL).val; back(g, s); if (v > vn) vn = v; });
+    ids.forEach(id => { const s = snap(g); doMove(g, o, id); const v = search(g, d - 1, EVAL).val; back(g, s); if (v > vn) vn = v; });
     if (!ids.length) vn = leaf(g, EVAL);
     return vb > vn;
   }
@@ -210,7 +211,7 @@
   }
   // ---------- one round, played as the page plays it ----------
   function playRound(g, run, pol, rnd, log) {
-    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0, bkOff: 0, bkRight: 0, bkOnly: 0, fkOff: 0, fkRight: 0, pg: 0, pgDeep: 0, pgSome: 0 } : null; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
+    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0, bkOff: 0, bkRight: 0, bkOnly: 0, fkOff: 0, fkRight: 0, pg: 0, pgDeep: 0, pgSome: 0 } : null; const cascs = []; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
     const big = () => { atoms = Math.max(atoms, g.m.atoms.length); if (g.m.atoms.length > cap) cut = 1; return cut; };
     for (;;) {
       ctx.plan = null;
@@ -221,14 +222,14 @@
       let twisted = false;
       // the page is lined up and then fired: twist and redraw come first, then the whole line is placed, then it runs
       if (P.RULE.queue && pol.line) {
-        if (pol.twist && g.self.length && g.cur.path.length > 0 && g.m.atoms.length <= BIG.twist) { const t = P.selfOptions(g)[0]; if (t && gainOf(g, t) > 0) { P.synTake(g, t, true); steps++; } }
+        if (pol.twist && !P.RULE.cascade && g.self.length && g.cur.path.length > 0 && g.m.atoms.length <= BIG.twist) { const t = P.selfOptions(g)[0]; if (t && gainOf(g, t) > 0) { P.synTake(g, t, true); steps++; } }
         const last = g.page >= P.pagesOf(g); let fin = null;
         for (let k = 0; k < 3 && !g.over; k++) { const o = P.options(g); fin = last ? P.finishOpt(g) : null; if (P.canRedraw(g) && ((!Object.keys(o).length && !fin && !P.canBank(g)) || (pol.redraw && pol.redraw(g, o, rnd)))) P.redraw(g, rnd); else break; }
         if (dec && log.deep && !g.over) depthOf(g, dec);
         if (!g.over) pol.line(g, fin, rnd).forEach(id => P.queueAdd(g, id === '#finish' ? P.SYN.finish : id));
         idle += Math.max(0, P.stepsOf(g) - g.pageSteps - g.queue.length);
         while (g.queue.length && !g.over) { if (dec) { const o = P.options(g); if (Object.keys(o).length || P.canBank(g)) weigh(g, o, dec); } if (g.queue[0] === P.SYN.finish && pol.wish && run.assayNow) P.wish(g, run); P.queueStep(g); steps++; if (big()) break; }
-        g.queue = []; g.shot = true;
+        g.queue = []; g.shot = true; if (!g.over && P.RULE.cascade) P.cascade(g); cascs.push(g.casc || 0);
       }
       else for (;;) {
         if (g.over) break;
@@ -255,7 +256,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 

@@ -651,7 +651,7 @@ function start(app) {
       dirty = true;
     };
     ids.push(setTimeout(() => { st.pending = null; final(); }, dur)); st.pending = { ids, final };
-    return { dur, unlock: Math.min(dur, st.firing && !FOLDS[reagent] ? (placeAt.length ? placeAt[0] : 160) + 70 : lastPlace + (FOLDS[reagent] ? 520 : 210)) };
+    return { dur, unlock: Math.min(dur, st.firing && !FOLDS[reagent] ? (placeAt.length ? placeAt[0] : 160) + 70 : lastPlace + (FOLDS[reagent] ? (st.firing ? Math.max(120, 300 * quick) : 520) : 210)) };
   }
   function pick(i) {
     const s = slots[i], o = s && s.o;
@@ -672,6 +672,8 @@ function start(app) {
   function doFire() { if (!lining()) return; flush(); setHover(-1); st.firing = true; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
   function fireNext() {
+    // the cascade: whatever the molecule can do to itself happens first, one step at a time, each quicker than the last
+    { const c = g.over ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; if (n >= 2) callout('cascade ' + n, 'times ' + fmtB(1 + P.CASC.step * n), REDINK); c.model.settle(FOLDS[c.id] ? 2200 : 160); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
     const h = P.queueHead(g), tok = st.tok;
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; return nextPage(); }
     P.queueShift(g);
@@ -699,14 +701,14 @@ function start(app) {
   }
   function doTurn() { if (stuck()) nextPage(); }
   // reactions that fold the molecule into a new shape: the model is settled fully first, and the move is slow enough to follow
-  const FOLDS = { cyclize: 1, snap: 1, aromatize: 1 };
+  const FOLDS = { cyclize: 1, snap: 1, aromatize: 1, lactol: 1, ether: 1, aldol: 1 };
   // the clear lane just below the molecule as it stands
   const under = () => { let d = 6; try { if (center) d = deepOf(center) * center.group.scale.x; } catch (e) { d = 6; } return Math.min(7.4, C0.z + d / 2 + 0.9); };
   // ?self=auto: a molecule that has been set off also reacts with itself. Otherwise the player does it: when the
   // molecule could react with itself, a twist stands under it, once a page. It uses none of the page's reactions.
   try { P.SELFMODE.auto = new URLSearchParams(root.location.search).get('self') === 'auto'; } catch (e) { /* default */ }
   const TWIST = { x: 0.6, z: 8.5 };
-  const twistOpt = () => { if (!g || st.mode !== 'play' || P.SELFMODE.auto || g.twisted === g.page) return null; const key = g.page + ':' + g.trail.length; if (!st.twC || st.twC.key !== key) st.twC = { key, o: P.selfOptions(g)[0] || null }; return st.twC.o; };
+  const twistOpt = () => { if (!g || st.mode !== 'play' || P.RULE.cascade || P.SELFMODE.auto || g.twisted === g.page) return null; const key = g.page + ':' + g.trail.length; if (!st.twC || st.twC.key !== key) st.twC = { key, o: P.selfOptions(g)[0] || null }; return st.twC.o; };
   const twistAt = () => twistOpt() && Math.abs(hit.x - C0.x) < 8.5 && Math.abs(hit.z - C0.z) < 3.8;
   // the monkey's paw is its own control: a click on it makes a wish
   const kitAt = id => kitObjs.find(k => k.id === id && Math.abs(hit.x - k.hx) < 1.8 && hit.z > k.hz - 3.6 && hit.z < k.hz + 1.4);
@@ -718,8 +720,8 @@ function start(app) {
   // One reaction on the page, whether it was clicked or is a step of a chain that is running by itself
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
-    if (free && o.model.settle) o.model.settle(FOLDS[rid] ? 2200 : 160);
-    if (free && !o.self) sfx.chain(st.chainN || 0);
+    if (free && o.model.settle && !o.casc) o.model.settle(FOLDS[rid] ? 2200 : 160);
+    if (free && (!o.self || o.casc)) sfx.chain(st.chainN || 0);
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o, free);
@@ -1107,6 +1109,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
+    if (g && P.RULE.cascade && g.self && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'OH+C=O', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'C=C+C=C' }, c = px({ x: EDGE + 0.2, z: 13.2 }); let dx = 0; hand(x, 26); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
+      g.self.forEach(id => { const t = TOK[id] || id, on = st.selfK.on.includes(id); x.fillStyle = on ? rgb(colOf(id)) : FAINT; x.fillText(t, c[0] + dx, c[1]); dx += x.measureText(t).width + 26; }); }
     // the family of the round's molecule and its rule, above the round
     if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.tok, c[0] + dx, c[1] + 30, 24, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
     // a molecule that could react with itself: the atoms that would meet are lit, and a click on the molecule folds it
@@ -1201,7 +1205,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     });
     ended.forEach(f => f());
     if (morph) { const el = now - morph.t0, ease = k => 1 - Math.pow(1 - k, 3), back = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), kOf = (a, d) => Math.max(0, Math.min(1, (el - morph.start.get(a)) / d));
-      const FOLD_MS = 460, slowDone = morph.slow && !morph.scrub && el - morph.s0 >= FOLD_MS;
+      const FOLD_MS = st.firing ? Math.max(150, 330 * Math.pow(0.86, st.chainN || 0)) : 460, slowDone = morph.slow && !morph.scrub && el - morph.s0 >= FOLD_MS;
       if (morph.slow ? slowDone : el > morph.end) { if (morph.slow) { st.pop = 1; st.sq = 1; st.hold = now + 90; st.shake = Math.max(st.shake, 0.55); sfx.bond(); sfx.good(); } else { st.pop = Math.max(st.pop, 0.4); st.sq = Math.max(st.sq, 0.35); } layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
       else if (morph.slow) {
         let K = Math.max(0, Math.min(1, (el - morph.s0) / FOLD_MS)); if (morph.scrub) { K = Math.max(morph.kHeld || 0, Math.min(0.9, morph.kDrag || 0)); morph.kHeld = K; } morph.K = K;
@@ -1264,10 +1268,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
-    setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
+    debugG: () => g, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,
-    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, queue: (g.queue || []).slice(), lining: lining(), firing: !!st.firing, room: P.stepsOf(g) - g.pageSteps, will: st.view ? st.view.kinds.slice() : [], charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, queue: (g.queue || []).slice(), lining: lining(), firing: !!st.firing, room: P.stepsOf(g) - g.pageSteps, will: st.view ? st.view.kinds.slice() : [], casc: g.casc || 0, self: (g.self || []).slice(), charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
