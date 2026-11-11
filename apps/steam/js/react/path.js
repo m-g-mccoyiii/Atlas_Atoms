@@ -566,12 +566,12 @@ const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear,
 // reagent that keeps the row going and the reagent that feeds the circle are often not the same one.
 const CIRCLE = { plain: { n: 4, mul: 1.5 }, glass: { n: 3, mul: 2 }, occult: { n: 4, mul: 1.5 }, lean: { n: 3, mul: 1.5 }, long: { n: 5, mul: 2.5 }, hoard: { n: 4, mul: 1.5 } };
 const TERMS = [
-  { id: 'plain', name: 'plain', note: 'no terms' },
-  { id: 'glass', name: 'glass', note: 'mult starts at 3. a break ends it' },
-  { id: 'occult', name: 'occult', note: 'an occult piece. beat times 1.5' },
-  { id: 'lean', name: 'lean', note: 'three reagents, used once more' },
-  { id: 'long', name: 'long', note: 'four reactions, two pages' },
-  { id: 'hoard', name: 'hoard', note: 'three pieces now, none later' }
+  { id: 'plain', name: 'plain', note: '' },
+  { id: 'glass', name: 'glass', note: 'mult 3, one break' },
+  { id: 'occult', name: 'occult', note: '+1 occult, beat 1.5' },
+  { id: 'lean', name: 'lean', note: '3 reagents, +1 use' },
+  { id: 'long', name: 'long', note: '4 a page, 2 pages' },
+  { id: 'hoard', name: 'hoard', note: '3 pieces, no more' }
 ];
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
