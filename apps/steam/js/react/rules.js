@@ -321,19 +321,22 @@ const CARDS = {};
 //   that OH can start a zip. With MODE.weld 'ene' water leaves as well and a C=C is left beside the first C=O.
 //   ether: an OH and a Cl three or four carbons apart close a ring through the oxygen. HCl leaves.
 //   enone: an OH two carbons from a C=O leaves as water, and a C=C forms beside the C=O.
+// (salt, docs/HOMUNCULI.md: a cured C=O carries cure on its carbon and its oxygen. A ring that closes on it leaves it
+//  a C=O, up to three rings, and no bottle finds a site on it)
+const cureRings = (m, c) => nbs(m, c).filter(n => n.atom.el === 'O' && n.bond.order === 1 && nbs(m, n.atom).length === 2 && nbs(m, n.atom).every(y => y.atom.el === 'C')).length;
 function lactolable(m) {
-  const ks = carbonyls(m); if (!ks.length) return [];
+  const ks = carbonyls(m).filter(k => !k.c.cure); m.atoms.forEach(c => { if (!c.cure || c.el !== 'C' || c.fly) return; const q = nbs(m, c).find(n => n.atom.el === 'O' && n.bond.order === 2); if (q && cureRings(m, c) < 3) ks.push({ c, o: q.atom, bond: q.bond, cure: true }); }); if (!ks.length) return [];
   const ar = aromaticAtoms(m), ohs = []; m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (s) ohs.push(s); }); if (!ohs.length) return [];
   // A zip travels. The OH the last step left (it sits on a carbon that also carries a ring oxygen) goes before any
   // other, so a cascade runs along the chain from where it was set off and does not jump about; and an OH takes the
   // nearest C=O in reach. MODE.reach is how many carbons apart the two may be (4; the magnet makes it 8).
-  const R = MODE.reach || 4; let best = null, bf = 0, bd = 99;
+  const R = m.reach || MODE.reach || 4; let best = null, bf = 0, bd = 99;
   ohs.forEach(s => { s.front = nbs(m, s.c).some(n => n.atom.el === 'O' && n.atom !== s.o && nbs(m, n.atom).length === 2 && nbs(m, n.atom).every(y => y.atom.el === 'C')) ? 1 : 0; });
   for (const k of ks) { const kr = ringAtom(m, k.c), dist = carbonDist(m, k.c, R);
     for (const s of ohs) { if (s.c === k.c) continue; const d = dist.get(s.c); if (!(d >= 3 && d <= R)) continue;
       if (best && (s.front < bf || (s.front === bf && d >= bd))) continue;
       if (kr || ringAtom(m, s.c)) { const p = carbonPath(m, s.c, k.c, R); let shared = 0; for (let i = 0; p && i + 1 < p.length; i++) if (ringBond(m, p[i], p[i + 1], 8)) shared++; if (!p || shared > 1) continue; }
-      best = { o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, d, atoms: [s.o, s.c, k.c, k.o] }; bf = s.front; bd = d; } }
+      best = { o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, d, cure: !!k.cure, atoms: [s.o, s.c, k.c, k.o] }; bf = s.front; bd = d; } }
   return best ? [best] : [];
 }
 function etherable(m) { for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) continue; const dist = carbonDist(m, s.c, 4); for (const x of m.atoms) { if (x.el !== 'Cl' || x.fly) continue; const c2 = carbonsOf(m, x)[0]; if (!c2 || c2 === s.c || ringAtom(m, c2)) continue; const d = dist.get(c2); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, cl: x, c2, atoms: [s.o, s.c, c2, x] }]; } } return []; }
@@ -367,7 +370,7 @@ const SELFCARDS = [
   { id: 'taut', verb: 'Shift', formula: '', chem: 'by itself', rgb: [176, 24, 154], cls: 'self', ghs: [], rule: 'An OH on a C=C becomes C=O.', from: 'ene', to: 'one', find: tautable, ok: m => tautable(m).length > 0,
     apply(m) { const s = tautable(m)[0]; cut(m, s.o, s.ho); m.bond(s.b, s.ho); s.bond.order = 1; bondOf(m, s.a, s.o).order = 2; return { focus: [s.a, s.b, s.o], incoming: [], leaving: [], tag: 'shifts' }; } },
   { id: 'lactol', verb: 'Zip', formula: '', chem: 'by itself', rgb: [47, 120, 160], cls: 'self', ghs: [], rule: 'An OH and a C=O close a ring.', from: 'ol', to: 'ring', find: lactolable, ok: m => lactolable(m).length > 0,
-    apply(m) { const s = lactolable(m)[0]; cut(m, s.o, s.ho); s.bond.order = 1; m.bond(s.o, s.kc); m.bond(s.ko, s.ho); return { focus: [s.o, s.kc, s.ko], incoming: [], leaving: [], tag: 'closes a ring' }; } },
+    apply(m) { const s = lactolable(m)[0]; if (s.cure) { m.removeAtom(s.ho); m.bond(s.o, s.kc); return { focus: [s.o, s.kc, s.ko], incoming: [], leaving: [], tag: 'closes a ring' }; } cut(m, s.o, s.ho); s.bond.order = 1; m.bond(s.o, s.kc); m.bond(s.ko, s.ho); return { focus: [s.o, s.kc, s.ko], incoming: [], leaving: [], tag: 'closes a ring' }; } },
   { id: 'ether', verb: 'Ether', formula: '', chem: 'by itself', rgb: [60, 154, 95], cls: 'self', ghs: [], rule: 'An OH and a Cl close a ring. HCl leaves.', from: 'cl', to: 'ring', find: etherable, ok: m => etherable(m).length > 0,
     apply(m) { const s = etherable(m)[0]; cut(m, s.o, s.ho); cut(m, s.c2, s.cl); m.bond(s.cl, s.ho); m.bond(s.o, s.c2); return { focus: [s.o, s.c2], incoming: [], leaving: [[s.cl, s.ho]], tag: 'closes a ring' }; } },
   { id: 'enone', verb: 'Enone', formula: '', chem: 'by itself', rgb: [224, 122, 0], cls: 'self', ghs: [], rule: 'An OH near a C=O leaves as water and a C=C forms.', from: 'ol', to: 'ene', find: enonable, ok: m => enonable(m).length > 0,
@@ -376,7 +379,7 @@ const SELFCARDS = [
 SELFCARDS.forEach(c => { CARDS[c.id] = c; });
 // a capped oxygen carries prot, and no bottle finds a site there
 // a clamped atom (the clamp, docs/PIECES.md) is out of reach of every reagent, but the molecule's own reactions still use it
-LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot || (a.clamp && c.cls !== 'self'))); });
+LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot || a.cure || (a.clamp && c.cls !== 'self'))); });
 // the oxygens an order can ask to be kept: alcohol OH and aldehyde or ketone C=O, by index in the atom list
 const keepable = m => m.atoms.map((a, i) => (a.el !== 'O' ? null : hydroxyl(m, a) ? { i, kind: 'OH' } : carbonyls(m).some(s => s.o === a) ? { i, kind: 'C=O' } : null)).filter(Boolean);
 
@@ -447,8 +450,9 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.frz) c.frz = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.frz) c.frz = true; if (a.cure) c.cure = true; if (a.slime) c.slime = true; if (a.seed) c.seed = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
+  if (m.reach) n.reach = m.reach;
   return { model: n, map };
 }
 const cloneModel = m => cloneMap(m).model;
@@ -474,7 +478,9 @@ function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m,
 // that is in a ring. The ring oxygen lets go and takes the hydrogen, and the OH becomes the C=O it was. Done last
 // ring first until none is left (cuts, if given, collects the carbon and the oxygen of each bond that was cut), so a ladder comes apart from its far end back to the OH that set it off. A ring
 // whose OH has been taken away (by a dehydration, say) stays shut for good. Returns how many rings opened.
-function reopen(m, cuts) { let n = 0; for (let guard = 0; guard < 80; guard++) { let hit = null;
+function reopen(m, cuts) { let n = 0;
+  m.atoms.slice().forEach(c => { if (!c.cure || c.el !== 'C' || c.fly) return; nbs(m, c).slice().forEach(x => { const o = x.atom; if (o.el !== 'O' || x.bond.order !== 1 || o.frz || nbs(m, o).length !== 2 || !nbs(m, o).every(y => y.atom.el === 'C')) return; cut(m, c, o); attach(m, 'H', o, 1.2); if (cuts) cuts.push({ c, o }); n++; }); });
+  for (let guard = 0; guard < 80; guard++) { let hit = null;
   for (const c of m.atoms) { if (c.el !== 'C' || c.fly) continue; const q = nbs(m, c); if (q.some(x => x.bond.order !== 1)) continue;
     const oh = q.find(x => x.atom.el === 'O' && !x.atom.prot && nbs(m, x.atom).length === 2 && nbs(m, x.atom).some(y => y.atom.el === 'H')); if (!oh) continue;
     const or = q.find(x => x.atom.el === 'O' && x.atom !== oh.atom && !x.atom.frz && nbs(m, x.atom).length === 2 && nbs(m, x.atom).every(y => y.atom.el === 'C') && ringBond(m, c, x.atom)); if (!or) continue;
@@ -597,5 +603,36 @@ const tools = {
     return null;
   }
 };
-AA.rx = { tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+// ---------- what five of the homunculi do to the molecule (path.js HOMS, docs/HOMUNCULI.md) ----------
+//   acid: every stretch of four or more plain CH2 is eaten down to three, and from then on a ring closes across up to
+//     six carbons (m.reach, carried by copies of the molecule).
+//   salt: one C=O is cured (cure on its carbon and oxygen).
+//   slime: two carbons are stuck together by two carbons of slime, so they count as three apart.
+//   seedling: six carbons with two C=O grow from one carbon.
+const homs = {
+  acidRuns: m => gapRuns(m),
+  acid(m) { const made = []; gapRuns(m).forEach(run => { const keep = run[run.length - 2]; run.slice(1, -2).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], keep); made.push(run[0], keep); }); m.reach = 6; return { made }; },
+  saltSpots(m) { return carbonyls(m).filter(k => !k.c.cure && !k.c.fly).map(k => ({ c: k.c, o: k.o })); },
+  salt(m, sp) { if (!sp.c || !sp.o || sp.c.cure) return null; sp.c.cure = true; sp.o.cure = true; return { made: [sp.o] }; },
+  // pairs that would let an OH reach a C=O it cannot reach now: one carbon at or beside the OH's carbon, one at or
+  // beside the C=O's carbon, three apart once stuck
+  slimeSpots(m) {
+    const ar = aromaticAtoms(m), R = m.reach || MODE.reach || 4, ohC = [], out = [], seen = new Set(), free = c => c.el === 'C' && !c.fly && !c.slime && isSp3(m, c) && Hs(m, c).length > 0;
+    m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (s && !ohC.includes(s.c)) ohC.push(s.c); });
+    const ks = carbonyls(m).filter(k => !k.c.fly); if (!ohC.length || !ks.length) return [];
+    ohC.forEach(c0 => { const d0 = carbonDist(m, c0, 60); ks.forEach(k => { const dk = d0.get(k.c); if (dk != null && dk <= R) return;
+      const A = [c0].concat(carbonsOf(m, c0)), B = [k.c].concat(carbonsOf(m, k.c));
+      A.forEach((a, i) => B.forEach((b, j) => { if ((i ? 1 : 0) + (j ? 1 : 0) > 1 || a === b || !free(a) || !free(b)) return; const dab = d0.get(b) == null ? 99 : carbonDist(m, a, 60).get(b); if (dab != null && dab < 4) return; const key = m.atoms.indexOf(c0) + ':' + m.atoms.indexOf(k.c); if (seen.has(key)) return; seen.add(key); out.push({ a, b, c: k.c, o: k.o }); })); }); });
+    return out;
+  },
+  slime(m, sp) { const a = sp.a, b = sp.b, ha = a && Hs(m, a)[0], hb = b && Hs(m, b)[0]; if (!ha || !hb || a === b) return null; m.removeAtom(ha); m.removeAtom(hb);
+    const at = t => m.addAtom('C', a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t + 0.4, a.z + (b.z - a.z) * t), x1 = at(0.33), x2 = at(0.67); x1.slime = true; x2.slime = true; m.bond(a, x1); m.bond(x1, x2); m.bond(x2, b);
+    [x1, x2].forEach(c => { attach(m, 'H', c, 2.2); attach(m, 'H', c, 2.2); }); return { made: [x1, x2] }; },
+  seedSpots(m) { const ar = aromaticAtoms(m), out = [], add = c => { if (c.el === 'C' && !c.fly && !c.slime && isSp3(m, c) && Hs(m, c).length && !out.includes(c)) out.push(c); };
+    m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (!s) return; add(s.c); carbonsOf(m, s.c).forEach(add); }); return out.map(c => ({ c })); },
+  seed(m, sp) { const h = sp.c && Hs(m, sp.c)[0]; if (!h) return null; m.removeAtom(h); const r = grow(m, sp.c, [[2, 1, ''], [2, 1, ''], [0, 1, '=O'], [2, 1, ''], [2, 1, ''], [1, 1, '=O']]); r.made.forEach(a => { a.seed = true; }); return { made: r.made }; },
+  // an OH that oxidize would take at the very end of a chain (CH2-OH): what feeds the salt
+  endOls: m => m.atoms.filter(o => { const s = !o.fly && oxidisable(m, o); return !!s && Hs(m, s.c).length === 2; })
+};
+AA.rx = { homs, tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

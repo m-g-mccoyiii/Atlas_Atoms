@@ -510,7 +510,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.self = RULE.cascade ? ((run && run.self) || SELF0).slice() : SELF.filter(q => q.tier <= ((run && run.tier) || 0)).map(q => q.id); g.casc = 0;
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
-  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; HOMIDS.forEach(id => { g.by[id] = 0; }); g.hom = run && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; HOMIDS.forEach(id => { g.by[id] = 0; }); g.hom = run && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: run.homFed ? HOMS[run.hom].need : 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.filter(id => dealtIn(run, id)); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
@@ -636,7 +636,7 @@ function synTake(g, o, free) {
   cur.seen.add(o.r.sig); cur.step++; cur.used.push(o.id);
   if (o.loop && o.cont) g.loopsCont = (g.loopsCont || 0) + 1;
   if (!o.self && !(g.free && g.free[o.id]) && g.left[o.id] > 0) g.left[o.id]--;
-  if (!o.self && o.r && o.r.hits) homEvent(g, 'use:' + o.id);
+  if (!o.self && o.r && o.r.hits) { homEvent(g, 'use:' + o.id); if (o.id === 'pcc' && RX.homs.endOls(g.m).length) homEvent(g, 'endox'); }
   g.m = o.model; if (!free) g.pageSteps++; else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
   const set = false;
   g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free });
@@ -723,8 +723,11 @@ function toolBest(m, id, self) { const m0 = RX.cloneModel(m); RX.reopen(m0); con
 //                  again (water), frozen: n when n more rings are frozen (carbon dioxide). The zip then runs
 //   pay            carbon dioxide only: how many times over a frozen ring is paid at the start of a later page
 //   now(g)         for the simulated players, when its worth cannot be read as steps: whether to tap it now
+//   before         it is tapped BEFORE the page is lined up (salt, wood spirit), not after the page has fired
+//   lasting        what it does stays for the round, so its worth is more than the steps it adds at once
+//   act may also return over: true (the molecule may pass the size limit) and line: [ids] (wood spirit: the page's line)
 //   offered        false: a creature not built yet. It has no jar, is never fed and cannot be taken
-const JAR = { full: { water: 200, h2: 130, co2: 50 }, stages: [0.12, 0.5, 1] };
+const JAR = { full: { water: 200, h2: 130, co2: 50, acid: 200, wood: 40, salt: 50, slime: 70, seedling: 120 }, stages: [0.12, 0.5, 1] };
 const closedRings = m => { const cm = RX.cloneMap(m), cuts = [], rev = new Map(); RX.reopen(cm.model, cuts); cm.map.forEach((c, a) => rev.set(c, a)); return cuts.map(q => ({ c: rev.get(q.c), o: rev.get(q.o) })).filter(q => q.c && q.o); };
 const HOMS = {
   // water floods: every C=C outside a benzene ring becomes C-OH, every closed ring opens, the rings close again.
@@ -754,13 +757,33 @@ const HOMS = {
     spots(m, g) { if (g && g.page >= pagesOf(g)) return []; const rings = closedRings(m); return rings.length ? [{ rings: rings.map(q => [q.o, q.c]) }] : []; },
     act(m) { const rings = closedRings(m); if (!rings.length) return null; rings.forEach(q => { q.o.frz = true; }); return { made: rings.map(q => q.o), frozen: rings.length }; },
     now(g) { return g.page >= pagesOf(g) - 1 ? (g.casc || 0) >= 1 : (g.casc || 0) >= HOMSIM.freezeAt; } },
+  // acid eats through: every stretch of four or more plain CH2 is eaten down to three, and for the rest of the round a
+  // ring closes across up to six carbons. The rings then run, counting on
+  acid: { name: 'acid', jar: 'medium', feed: ['use:hydrate', 'use:dehydrate'], need: 2, uses: 1, tok: 'eats long gaps|rings reach 6', whole: true, word: '', lasting: true,
+    spots(m) { const runs = RX.homs.acidRuns(m); return runs.length || m.reach !== 6 ? [{ runs }] : []; },
+    act(m) { return RX.homs.acid(m); } },
+  // wood spirit, blind drunk: tapped BEFORE the page is lined up. The page fires every reaction dealt that has a use
+  // left, in an order taken at random, each spending a use
+  wood: { name: 'wood spirit', jar: 'medium', feed: ['use:nabh4'], need: 1, uses: 1, tok: 'fires all five|any order', whole: true, word: '', before: true,
+    spots(m, g) { if (!g || !g.kinds) return []; return g.kinds.filter(id => (g.free && g.free[id]) || g.left[id] > 0).length >= 2 ? [{ all: true }] : []; },
+    act(m, sp, g, rnd) { if (!g) return { made: [] }; const R = rnd || rand, ids = g.kinds.filter(id => (g.free && g.free[id]) || g.left[id] > 0); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = ids[i]; ids[i] = ids[j]; ids[j] = t; } return { made: [], line: ids }; } },
+  // salt cures: tapped BEFORE the page is lined up, on one C=O. For the round a ring that closes on it leaves it a
+  // C=O, up to three rings a page, and no reaction changes it (rules.js, cure)
+  salt: { name: 'salt', jar: 'medium', feed: ['endox'], need: 1, uses: 1, tok: 'cures a C=O|3 rings close on it', word: 'cured', before: true, lasting: true,
+    spots(m) { return RX.homs.saltSpots(m); },
+    act(m, sp) { return RX.homs.salt(m, sp); } },
+  // slime sticks: two carbons are joined by two carbons of slime, so they count as three apart for the round and the
+  // rings cross from one stretch to the other. A place is offered only if a ring would close across it
+  slime: { name: 'slime', jar: 'medium', feed: ['use:bh3'], need: 1, uses: 1, tok: 'sticks two carbons|3 apart', word: 'stuck', lasting: true,
+    spots(m, g) { const self = (g && g.self) || SELF0; return RX.homs.slimeSpots(m).filter(sp => { const t = homTry(m, 'slime', sp); return !!t && selfRun(t, self) >= 1; }).slice(0, 12); },
+    act(m, sp) { const r = RX.homs.slime(m, sp); return r ? { made: r.made, over: true } : null; } },
+  // the seedling grows: six carbons with two C=O grow from the carbon tapped, stay for the round, and may pass the
+  // size limit. A place is offered only if a ring would close onto the new arm
+  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 2, uses: 1, tok: 'grows 6 carbons|2 C=O', word: '+6', lasting: true,
+    spots(m, g) { const self = (g && g.self) || SELF0; return RX.homs.seedSpots(m).filter(sp => { const t = homTry(m, 'seedling', sp); return !!t && selfRun(t, self) >= 1; }); },
+    act(m, sp) { const r = RX.homs.seed(m, sp); return r ? { made: r.made, over: true } : null; } },
   // not built yet (docs/HOMUNCULI.md, "To build, in order"): each becomes one entry like those above
-  acid: { name: 'acid', jar: 'medium', feed: ['use:hydrate', 'use:dehydrate'], need: 3, uses: 1, tok: 'eats long gaps', whole: true, offered: false },
-  wood: { name: 'wood spirit', jar: 'medium', feed: ['use:nabh4'], need: 3, uses: 1, tok: 'fires all five', whole: true, offered: false },
-  salt: { name: 'salt', jar: 'medium', feed: ['endox'], need: 3, uses: 1, tok: 'cures a C=O', offered: false },
-  slime: { name: 'slime', jar: 'medium', feed: ['use:bh3'], need: 3, uses: 1, tok: 'sticks two carbons', offered: false },
   ammonia: { name: 'ammonia', jar: 'slow', feed: ['nh3'], need: 2, uses: 1, tok: 'page fires again', whole: true, offered: false },
-  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 3, uses: 1, tok: 'grows 6 carbons', offered: false },
   brimstone: { name: 'brimstone', jar: 'slow', feed: ['sulfur'], need: 2, uses: 1, tok: 'burns 8 carbons', offered: false }
 };
 const HOMSIM = { freezeAt: 3 };
@@ -770,26 +793,28 @@ const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 // into the jars at the round's end), and the one held in the run is fed
 function homEvent(g, key) { if (!g.by) return; HOMIDS.forEach(id => { if (!homOn(id) || !HOMS[id].feed.includes(key)) return; g.by[id] = (g.by[id] || 0) + 1; if (g.hom && g.hom.id === id) g.hom = Object.assign({}, g.hom, { fed: g.hom.fed + 1 }); }); }
 const homFed = g => { const H = homOf(g); return !!H && !!g.syn && !g.over && g.hom.fed >= H.need && (g.hom.used || 0) < (H.uses || 1); };
-const homSpots = g => (homFed(g) ? homOf(g).spots(g.m, g) : []);
+const homSpots = g => (homFed(g) && !(homOf(g).before && (g.shot || g.pageSteps > 0)) ? homOf(g).spots(g.m, g) : []);
 // lit: fed, not yet used up this round, and there is something it can do. homReady is the old name
 const homLit = g => homSpots(g).length > 0, homReady = homFed;
 // the molecule as it would be after the homunculus acted there (a copy), or nothing
 function homTry(m, id, spot) { const cm = RX.cloneMap(m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; }); return HOMS[id].act(cm.model, sp) ? cm.model : null; }
 // Taps the homunculus at a spot (from homSpots). The molecule is replaced by a changed copy, as when a piece is
 // used, and g.reopened tells the page which atom became which. It is then empty.
-function homUse(g, spot) {
-  if (!homFed(g) || !spot) return false;
+function homUse(g, spot, rnd) {
+  if (!homFed(g) || !spot) return false; if (homOf(g).before && (g.shot || g.pageSteps > 0)) return false;
   const H = homOf(g), cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
-  const res = H.act(cm.model, sp, g); if (!res) return false;
-  if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
+  const res = H.act(cm.model, sp, g, rnd); if (!res) return false;
+  if (!res.over && RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
   const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
   cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [], gone: [] };
   g.hom = { id: g.hom.id, fed: 0, used: (g.hom.used || 0) + 1, frozen: (g.hom.frozen || 0) + (res.frozen || 0) }; g.tally.homs = (g.tally.homs || 0) + 1;
   if (res.restart) { g.cascBest = Math.max(g.cascBest || 0, g.casc || 0); g.casc = g.hom.frozen || 0; }
+  // wood spirit: the whole hand is lined up, with a circle for each
+  if (res.line) { g.queue = res.line.slice(); g.more = Math.max(0, res.line.length - (stepsOf(g) - (g.more || 0))); }
   return true;
 }
 // taps it and runs the zip that follows (for play with no page); returns the steps it added, or -1
-function homGo(g, spot) { if (!homUse(g, spot)) return -1; let n = 0; for (let o = cascadeNext(g); o; o = cascadeNext(g)) { synTake(g, o, true); n++; } return n; }
+function homGo(g, spot, rnd) { const pre = !!homOf(g) && !!homOf(g).before; if (!homUse(g, spot, rnd)) return -1; if (pre) { const c0 = g.casc || 0; if (!g.queue.length) return 0; while (g.queue.length && !g.over) queueStep(g); return (g.casc || 0) - c0; } let n = 0; for (let o = cascadeNext(g); o; o = cascadeNext(g)) { synTake(g, o, true); n++; } return n; }
 // A new page with frozen rings on it: they are counted again and paid in full, ring n as 50 places counted n times
 // and n times 0.1 of extra and 0.1 of row, as when it closed, and the rings of the page count on from them
 function frozenPay(g) { const n = (g.hom && g.hom.frozen) || 0; if (!n || g.over) return 0; const w = (homOf(g) && homOf(g).pay) || 1; let p = 0; for (let k = 1; k <= n; k++) { p += CASC.place * k * w; g.E += CASC.step * k * w; g.R += CASC.row * w; } g.P += p; g.casc = n; return p; }

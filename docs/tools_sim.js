@@ -319,8 +319,24 @@
     { const H = P.HOMS[g.hom.id]; if (H.now) { const yes = ahead && (mode === 'read' || mode === 'plan') ? ahead(spots[0]) : H.now(g); if (!yes) return -1; const n = P.homGo(g, spots[0]); homStat.used++; return Math.max(0, n); } }
     let best = null, top = 0, topMade = 0; const id = g.hom.id;
     spots.forEach(sp => { let v, md = 0; if (mode === 'best') { const t = P.homTry(g.m, id, sp); v = t ? P.selfRun(t, g.self) : 0; } else { const s = snap(g), m0 = P.made(g); v = P.homGo(g, sp); md = P.made(g) - m0; back(g, s); } if (v > top || (v === top && md > topMade)) { top = v; topMade = md; best = sp; } });
+    if ((!best || top < 1) && P.HOMS[id].lasting && ahead && (mode === 'read' || mode === 'plan') && ahead(spots[0])) { best = spots[0]; top = 1; }
     if (!best || top < 1) return -1;
     const n = P.homGo(g, best); homStat.used++; homStat.steps += Math.max(0, n); return n;
+  }
+  // A creature tapped before the page is lined up (salt, wood spirit). The novice taps half the times it is lit, at a
+  // place taken at random. The greedy player taps the wood spirit whenever it is lit and the salt where the bare
+  // structure reads most. A player that reads plays the page both ways on a copy (the wood spirit three times, with
+  // orders of its own) and taps where the page makes most, if that is more than the page without it.
+  function useHomPre(g, rnd, mode, playPage) {
+    const H = g.hom && P.HOMS[g.hom.id]; if (!H || !H.before || g.over || !P.homReady(g)) return -1; const spots = P.homSpots(g); if (!spots.length) return -1; homStat.ready++;
+    const go = sp => { const n = P.homGo(g, sp, rnd); homStat.used++; homStat.steps += Math.max(0, n); return Math.max(0, n); };
+    if (mode === 'random') return rnd() < 0.5 ? -1 : go(spots[Math.floor(rnd() * spots.length)]);
+    if (!playPage || mode === 'best') { if (H.whole) return go(spots[0]); const base = (() => { const c = AA.rx.cloneModel(g.m); return P.selfRun(c, g.self); })(); let best = null, top = base; spots.forEach(sp => { const t = P.homTry(g.m, g.hom.id, sp), v = t ? P.selfRun(t, g.self) : -1; if (v > top) { top = v; best = sp; } }); return best ? go(best) : -1; }
+    let a = (g.trail.length * 7919 + g.page * 104729 + g.m.atoms.length * 31 + 17) >>> 0; const r2 = () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const tryPage = fn => { const s = snap(g), m0 = P.made(g); let v = -1; try { fn(); v = P.made(g) - m0; } catch (e) { v = -1; } back(g, s); return v; };
+    const base = tryPage(() => playPage(g)); let best = null, top = base * 1.02;
+    spots.slice(0, 6).forEach(sp => { let v = 0; const n = H.whole ? 3 : 1; for (let k = 0; k < n; k++) v += tryPage(() => { P.homGo(g, sp, r2); if (!g.shot) playPage(g); }) / n; if (v > top) { top = v; best = sp; } });
+    return best ? go(best) : -1;
   }
   function playRound(g, run, pol, rnd, log) {
     const homAt = [];
@@ -328,7 +344,7 @@
     const big = () => { atoms = Math.max(atoms, g.m.atoms.length); if (g.m.atoms.length > cap) cut = 1; return cut; };
     // a player that tries a piece on the page before using it plays the same page more than once: its line for a
     // page as it stands is worked out once and kept
-    const memo = pol.tools === 'read' || pol.tools === 'plan' ? new Map() : null, lineOf = (g2, fin) => { if (!memo) return pol.line(g2, fin, rnd); const key = g2.page + '|' + JSON.stringify(g2.tools || {}) + '|' + g2.kinds.join(',') + '|' + JSON.stringify(g2.left) + '|' + g2.pageSteps + '|' + (g2.casc || 0) + '|' + g2.m.atoms.length; if (!memo.has(key)) memo.set(key, pol.line(g2, fin, rnd)); return memo.get(key).slice(); };
+    const memo = pol.tools === 'read' || pol.tools === 'plan' ? new Map() : null, lineOf = (g2, fin) => { if (!memo) return pol.line(g2, fin, rnd); const key = g2.page + '|' + JSON.stringify(g2.tools || {}) + '|' + g2.kinds.join(',') + '|' + JSON.stringify(g2.left) + '|' + g2.pageSteps + '|' + (g2.casc || 0) + '|' + g2.m.atoms.length + '|' + (g2.hom ? g2.hom.used : '') + (g2.m.reach || ''); if (!memo.has(key)) memo.set(key, pol.line(g2, fin, rnd)); return memo.get(key).slice(); };
     for (;;) {
       ctx.plan = null;
       if (pol.tools && P.RULE.five && !g.over) useTools(g, rnd, pol.tools, null, P.RULE.queue && pol.line && memo ? g2 => { const fin = g2.page >= P.pagesOf(g2) ? P.finishOpt(g2) : null; lineOf(g2, fin).forEach(id => P.queueAdd(g2, id === '#finish' ? P.SYN.finish : id)); while (g2.queue.length && !g2.over) P.queueStep(g2); g2.queue = []; } : null);
@@ -341,9 +357,10 @@
         const last = g.page >= P.pagesOf(g); let fin = null;
         for (let k = 0; k < 3 && !g.over; k++) { const o = P.options(g); fin = last ? P.finishOpt(g) : null; if (P.canRedraw(g) && ((!Object.keys(o).length && !fin && !P.canBank(g)) || (pol.redraw && pol.redraw(g, o, rnd)))) P.redraw(g, rnd); else break; }
         if (dec && log.deep && !g.over) depthOf(g, dec);
-        let line = g.over ? [] : lineOf(g, fin);
+        if (g.hom && !g.over && P.HOMS[g.hom.id].before) { const mode = pol.tools === 'plan' ? 'read' : pol.tools || 'random', hn = useHomPre(g, rnd, mode, memo ? g2 => { const f2 = g2.page >= P.pagesOf(g2) ? P.finishOpt(g2) : null; lineOf(g2, f2).forEach(id => P.queueAdd(g2, id === '#finish' ? P.SYN.finish : id)); while (g2.queue.length && !g2.over) P.queueStep(g2); g2.queue = []; } : null); if (hn >= 0) homAt.push(g.page); }
+        let line = g.over || g.shot ? [] : lineOf(g, fin);
         // a player that reads the page deals the hand again when the best it found sets off no cascade at all
-        if (pol.dry && P.RULE.cascade && !g.over && P.canRedraw(g) && !cascOf(g, line)) { P.redraw(g, rnd); fin = last ? P.finishOpt(g) : null; line = pol.line(g, fin, rnd); }
+        if (pol.dry && P.RULE.cascade && !g.over && !g.shot && P.canRedraw(g) && !cascOf(g, line)) { P.redraw(g, rnd); fin = last ? P.finishOpt(g) : null; line = pol.line(g, fin, rnd); }
         line.forEach(id => P.queueAdd(g, id === '#finish' ? P.SYN.finish : id));
         idle += Math.max(0, P.stepsOf(g) - g.pageSteps - g.queue.length);
         while (g.queue.length && !g.over) { if (dec) { const o = P.options(g); if (Object.keys(o).length || P.canBank(g)) weigh(g, o, dec); } if (g.queue[0] === P.SYN.finish && pol.wish && run.assayNow) P.wish(g, run); P.queueStep(g); steps++; if (big()) break; }
@@ -378,7 +395,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.co2 = g.by.co2 || 0; log.hom = homAt.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.co2 = g.by.co2 || 0; ['acid', 'wood', 'salt', 'slime', 'seedling'].forEach(k => { log['j_' + k] = g.by[k] || 0; }); log.hom = homAt.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -391,7 +408,7 @@
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
     const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || []);
     if (opts.noGear) run.noGear = true;
-    if (opts.hom) run.hom = opts.hom;
+    if (opts.hom) run.hom = opts.hom; if (opts.homFed) run.homFed = true;
     // rack0, self0: reagents and kinds of cascade held from the first round, for measuring what one of them adds
     (opts.rack0 || []).forEach(id => { if (!run.rack.includes(id)) run.rack.push(id); }); (opts.self0 || []).forEach(id => { if (!run.self.includes(id)) run.self.push(id); });
     P.runTerm(run, opts.term || 'plain');
