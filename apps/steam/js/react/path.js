@@ -750,7 +750,7 @@ const HOMS = {
     act(m, sp) { const bond = m.findBond(sp.c, sp.o); if (!bond || bond.order !== 2) return null; const r = RX.CARDS.nabh4.apply(m, { bond, c: sp.c, o: sp.o }); return { made: [sp.o].concat(r.incoming || []) }; } },
   // carbon dioxide freezes: the rings the page closed stay shut for the rest of the round, are paid in full at the
   // start of every later page (frozenPay), and nothing opens them again. Nothing to gain on the last page
-  co2: { name: 'dry ice', jar: 'medium', feed: ['co2'], need: 1, uses: 1, pay: 2.5, tok: 'rings freeze|pay each page', whole: true, word: '',
+  co2: { name: 'dry ice', jar: 'medium', feed: ['co2'], need: 1, uses: 1, pay: 2, tok: 'rings freeze|pay each page', whole: true, word: '',
     spots(m, g) { if (g && g.page >= pagesOf(g)) return []; const rings = closedRings(m); return rings.length ? [{ rings: rings.map(q => [q.o, q.c]) }] : []; },
     act(m) { const rings = closedRings(m); if (!rings.length) return null; rings.forEach(q => { q.o.frz = true; }); return { made: rings.map(q => q.o), frozen: rings.length }; },
     now(g) { return g.page >= pagesOf(g) - 1 ? (g.casc || 0) >= 1 : (g.casc || 0) >= HOMSIM.freezeAt; } },
