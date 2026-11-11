@@ -226,3 +226,17 @@ Did not work:
 ## The owner's ruling, 2026-11-11
 
 Pick 1 is rejected: nothing shows what a line will do before it is fired. "New players are inexperienced, that's the whole point of playing the game." Learning to read the molecule by firing and watching is the game; a preview plays it for them. Kept from pick 1: the three queued circles can be reordered freely. Picks 2, 3 and 4 go ahead, each measured in the game.
+
+## Measured in the game, 2026-11-11
+
+Built in `path.js` behind switches and measured on the rig (`RIG.md`, fifth measure). Pick 1 was not built: the owner ruled that nothing shows what a line will do. Only reordering the circles freely and "fits nowhere now" were built from it.
+
+| Pick | Model | Game |
+|---|---|---|
+| The novice against greedy | 0.20 | 0.40 by the mean, 0.6 to 0.7 by the median, with no help |
+| 2, the next hand | look-ahead over greedy 1.18 to 1.30 | planner over greedy 1.67, 1.64, 1.54 to 2.07, 1.86, 1.50 by the median, no change by the mean. In tier one the hand is always the same four reactions, so nothing new is shown |
+| 3, the third reaction pays double | orders within a fifth of the best 2.1 to 1.3 of 6 | lines within a fifth of the best 16.0 to 9.1 of 55; the best order beats the median order on 78 pages in 100, from 19. The median player pulls a little further from the novice |
+| 4, the filter | look-ahead over greedy 1.20 to 1.34 on good shapes | rejects none of the sixteen molecules tier one deals; no measure moves |
+| Three uses never bind | | false for the novice: a reaction is out of uses on a third of its pages |
+
+The turn measure of `PASS.md` (a second option worth taking at a circle) is 18 in 100 on these rules, under the gate of half.

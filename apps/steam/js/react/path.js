@@ -314,9 +314,11 @@ const tierRule = n => TIERS[n] || TIERS[3];
 const runLast = run => (run && run.span) || 9;
 const runWon = run => !!run && (run.beaten || 0) >= runLast(run);
 const bareRun = run => !!RULE.bare || !!(run && run.bare);
-// the three uses of a reaction never run out in a tier-1 run except in a scarce assay (measured: docs/RIG.md, fifth
-// measure), so the page may leave the use marks out there
-const usesBind = (run, g) => !(run && run.tierNo === 1) || (g ? g.brief === 'scarce' : run.brief === 'scarce');
+// Do the three uses of a reaction ever run out? Measured for tier one (docs/RIG.md, fifth measure): never for a player
+// who reads the page, outside a scarce assay; but a player placing at random meets a reaction with no use left on a
+// third of pages, because rounds one to three deal the same four reactions on every page. So the uses do bind for
+// the player the first run is for, and the page should keep the use marks: this says true.
+const usesBind = () => true;
 
 // offer: the reagents on the page for this order; the rest of the rack sits the order out
 // keep: index of the oxygen that is marked, or null. gear: equipment ids, left to right

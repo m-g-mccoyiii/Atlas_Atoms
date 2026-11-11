@@ -1,8 +1,124 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below. This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the fifth of 2026-11-11: tier one). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-11, fifth: tier one, three bare rounds
+
+Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. A first run is now rounds one to three with no helper and no creature (`LOOP.md`, "Tiers"). Only those three rounds were fitted. The numbers of rounds four to nine were left as the fourth measure set them; they are to be fitted later with helpers held. The section after this one is the "before".
+
+A measure is `simGo(tag, players, from, to, base, { tierNo: 1, tier: 0, all: true, rule: { co2: false } })`. `python docs/tools_tier1.py <tag> <first> <last> fit 4,3,3` prints every table here; `tools_tier1_bake.py` writes the numbers into `path.js`.
+
+### What was built
+
+| Thing | What it is | Switch |
+|---|---|---|
+| Tiers | a run is 3, 6 or 9 rounds. `runNew(tier, extra, { tierNo })` sets `run.tierNo`, `run.span`, and for tier 1 `run.bare` (no helper, no creature) and `run.six` (nothing new on the take-one page: only a stronger reagent or one more use). Without `tierNo` a run is nine rounds as before. `runLast(run)`, `runWon(run)`, `tierRule(n)` | `TIERS` |
+| The next hand | the hand of the next page is drawn when this page is dealt, from the same random source, and kept in `g.nextHand`. The next deal uses it. The last page of a round has none | `RULE.next` |
+| The third reaction | every step the molecule takes by itself after the third reaction of the line has acted pays double: twice the places and twice what it adds to extra. A third circle that is wasted or is the bank sets nothing off and doubles nothing. `g.lastOn` says it is on; the scoring event carries `lastx: true` | `RULE.lastx`, `LASTX.mul` |
+| The shape filter | in rounds one to three a molecule is rejected when it has two or more OH and no C=C, or a single C=O and no C=C, or one kind of group only; one with at most one OH and two or more C=C is twice as likely to be dealt | `RULE.filter`, `feedShape`, `FILTER` |
+| Reordering | `queueSwap(g, i, j)` and `queueMove(g, from, to)` reorder the circles before the page is fired. Nothing is spent | |
+| What fits now | `fitsNow(g, id)` and `queueFits(g)`: does a reaction fit anywhere on the molecule as it stands now. It reads the present only | |
+| When dehydrate joins | round four (it was round three). Rounds one to three are dealt from four reactions: hydrate, oxidize, hydroborate, reduce | `RUNG.from` |
+| The planner | when the next hand is known it plays the next page out on it, the biggest number at each circle, and counts what the round would then have made (`nextVal` in `tools_sim.js`). The median player, the greedy player and the novice do not look at the next hand. The novice was given no dry run and learns nothing ahead of firing | |
+
+There is no dry run and no preview of what a line will do: the owner ruled it out.
+
+### Each switch on and off
+
+200 runs for each player, seeds 1 to 200, the other two switches on, on the final deal and factors (tags xn, xl, xf, x0; "all on" is tag t2, 500 runs). Totals have the molecule and assay factors divided out. Ratios are of medians; the ratio of means is in brackets.
+
+| | novice over greedy, rounds 1, 2, 3 | planner over greedy | median player over novice |
+|---|---|---|---|
+| all three on | 0.74, 0.58, 0.59 (0.40, 0.37, 0.38) | 2.07, 1.86, 1.50 (1.71, 1.66, 1.50) | 1.86, 2.24, 2.11 |
+| next hand off | 0.67, 0.69, 0.57 (0.34, 0.39, 0.35) | 1.67, 1.64, 1.54 (1.76, 1.86, 1.36) | 1.87, 2.06, 2.34 |
+| third reaction off | 0.69, 0.64, 0.59 (0.38, 0.37, 0.39) | 1.79, 1.73, 1.60 (1.58, 1.56, 1.38) | 1.72, 1.81, 2.04 |
+| filter off | 0.65, 0.74, 0.52 (0.38, 0.41, 0.33) | 1.79, 1.95, 1.58 (2.03, 1.90, 1.42) | 2.22, 2.31, 2.49 |
+| all three off | 0.74, 0.68, 0.67 (0.38, 0.40, 0.43) | 1.37, 1.35, 1.35 (1.49, 1.24, 1.20) | 1.56, 1.70, 1.78 |
+
+- **The novice is already at two fifths of greedy by the mean and over half by the median**, with no help. The model in `TIER1_DEPTH.md` had it at a fifth. None of the three switches moves it.
+- **The next hand.** The planner over the greedy player goes from 1.67, 1.64, 1.54 to 2.07, 1.86, 1.50 by the median, and does not move by the mean. Read with care: in tier one the rack is four reactions and the hand is five, so every page is dealt the same four and the "next hand" is always the hand already on the page. What the planner gained is looking a page ahead at all, not anything the page newly shows. The switch will mean something once a round deals from six or more.
+- **The third reaction.** It is the one that changes the turn. Every ordered line of three of the hand was played on every page of 40 runs (`lineStudy` in the recording page; the player takes the best line of the page): of about 55 lines a page, the lines within a fifth of the best fall from 16.0 to 9.1; the best order of the best three beats their median order by over a fifth on 78 pages in 100, where it was 19. The cost: the median player pulls away from the novice (1.72, 1.81, 2.04 to 1.86, 2.24, 2.11), and pages on which the best line makes nothing go from 19 to 29 in 100 for a player who takes the best line of each page.
+- **The filter** rejects nothing that tier one deals: none of the sixteen molecules of rounds one to three has a rejected shape. It doubles the odds of the two molecules of the preferred shape and no measure moves outside noise. It is left on because it is harmless.
+- All six reactions from round one (with the three switches on, 57 runs): the median player makes 36 to 60 times what the novice makes, because of grow. Dehydrate from round two: 7.5 times in round two. Dehydrate in round three: 5.7 times there, 2.8 without it. That is why tier one is dealt from four.
+
+### The numbers
+
+Molecule factors for the sixteen molecules of tier one and the first act of the assay factors were fitted again (700 runs of the median player choosing at random, tag tf, `tools_factors.py`): the sixteen were 7.5 to 12 times apart in a round on the old factors. Then Par for rounds one to three, once, on tag t2: the median player's median total over a margin of 4, 3 and 3.
+
+Par: 1,210, 1,920, 2,580 (they were 1,230, 2,790, 4,620). Rounds four to nine unchanged: 4,960, 18,800, 55,300, 58,200, 61,300, 105,000.
+
+What other margins would give, same runs, every run counted in every round:
+
+| Margins, rounds 1, 2, 3 | novice passes | novice wins all three | tries | greedy wins | median player wins | last page changes the flag, median player |
+|---|---|---|---|---|---|---|
+| 2, 2, 2 | 56, 46, 47 | 11.8% | 8.5 | 40.8% | 70.6% | 48, 45, 43 |
+| 3, 3, 3 | 72, 66, 66 | 30.4% | 3.3 | 75.6% | 94.6% | 45, 47, 41 |
+| **4, 3, 3** | 86, 66, 66 | 36.8% | 2.7 | 79.2% | 95.2% | 43, 47, 41 |
+| 4, 4, 4 | 86, 75, 80 | 51.2% | 2.0 | 90.8% | 99.2% | 43, 39, 40 |
+| 5, 4, 4 | 93, 75, 80 | 55.0% | 1.8 | 93.2% | 99.2% | 45, 39, 40 |
+
+4, 3, 3 was taken: it is inside the band of 2 to 4, the novice wins inside three tries, and the last page is open in over 40 rounds in 100. With the third reaction paying double switched off, the same margins give the novice 45.5 wins in 100 (200 runs).
+
+### Pass rates
+
+500 runs for each player, seeds 1 to 500, tag t2, read against the Par fitted on them. Unseen: 300 runs for each player, seeds 1,001 to 1,300, tag u2, played on the baked numbers. A pass rate is of the runs that reached the round.
+
+| Round | novice | unseen | greedy | unseen | median | unseen | planner | unseen |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 85% (500) | 82% (300) | 97% (500) | 97% (300) | 100% (500) | 100% (300) | 100% (500) | 100% (300) |
+| 2 | 65% (423) | 69% (245) | 90% (486) | 92% (292) | 99% (500) | 100% (300) | 99% (500) | 100% (300) |
+| 3, assay | 66% (276) | 60% (168) | 90% (439) | 91% (270) | 96% (495) | 98% (299) | 98% (497) | 99% (299) |
+| wins all three | 36.4% | 33.7% | 79.2% | 81.7% | 95.0% | 97.3% | 97.0% | 98.3% |
+| tries a win takes | 2.7 | 3.0 | | | | | | |
+
+Median margin over the number: median player 4.05, 2.98, 3.01 (unseen 5.23, 3.28, 2.80); planner 6.03, 4.28, 3.58; greedy 2.91, 2.33, 2.43; novice 2.17, 1.34, 1.42.
+
+The last page changes the flag reached (missed, or which of the four flags), every run counted: median player 43, 47, 41 rounds in 100 (unseen 47, 54, 43); novice 38, 31, 40 (unseen 35, 35, 31); greedy 49, 42, 45; planner 51, 58, 48.
+
+Flags reached, rounds in 100, seen seeds: none / stable / unstable / volatile / overreact.
+
+| Round | novice | greedy | median | planner |
+|---|---|---|---|---|
+| 1 | 15 / 29 / 31 / 17 / 7 | 3 / 26 / 36 / 21 / 15 | 0 / 10 / 40 / 26 / 24 | 0 / 4 / 29 / 32 / 35 |
+| 2 | 34 / 36 / 21 / 7 / 2 | 10 / 31 / 33 / 17 / 9 | 1 / 21 / 40 / 25 / 13 | 1 / 10 / 35 / 36 / 18 |
+| 3 | 35 / 30 / 22 / 11 / 3 | 10 / 30 / 33 / 18 / 9 | 4 / 26 / 34 / 23 / 13 | 2 / 19 / 34 / 30 / 15 |
+
+Molecules in a round, median player, median of total over number for each molecule: 2.2, 2.5 and 2.0 times apart in rounds one to three (unseen 4.1, 2.4, 2.0). Round three by kind of assay, total over number: each 2.57, loose 3.81, scarce 3.52, short 2.70 (unseen 2.48, 2.50, 3.38, 2.62).
+
+What the molecule did by itself on a page, pages in 100 with 1 or more, 3 or more, 6 or more: novice 75, 5, 0; greedy 80, 15, 0; median 79, 20, 0; planner 89, 17, 0. The longest on any page of any player is 3. Mean 1.22, 1.67, 1.71, 1.87.
+
+Coins held after rounds one, two, three: novice 1.3, 1.7, 2.1; median player 1.7, 2.8, 3.9. The harder molecule of the pair is taken by the median player in 22 pairs in 100. The pair is never drawn again and the hand is never dealt again: with four reactions and a hand of five there is nothing to deal again.
+
+**The three uses.** A dealt reaction had no use left on 33, 32 and 32 pages in 100 of the novice's rounds one to three, and on none of the other players' outside a scarce assay (4 to 5 in 100 in round three). The same four reactions are dealt on every page, so a player placing at random fires one three times in six circles and finds it empty. The uses bind for the player a first run is for. `usesBind()` says true.
+
+### The turn, measured again
+
+80 runs each of the median player and the novice, seeds 1 to 80, `{ dec: true, deep: true }`, tags d2 (final rules) and d0 (the three switches off). An option is a thing that can go in the circle whose turn it is as the line fires: a reaction that acts there, or the bank.
+
+| | gate | final rules, median player | novice | three switches off, median player | novice |
+|---|---|---|---|---|---|
+| second option within 30% of the best, or better two turns on | half | 17.9% | 21.5% | 14.4% | 26.3% |
+| one option only | | 67.6% | 66.6% | 71.7% | 62.3% |
+| options a turn | | 1.42 | 1.41 | 1.37 | 1.49 |
+| best ordered play over the greedy one by over a fifth, pages | | 17.5% | 28.3% | 13.3% | 34.0% |
+| bank right when offered (the only move) | | 79.9% (59.8%) | 76.3% (62.7%) | 90.6% (79.4%) | 69.6% (57.7%) |
+| hand dealt again | | never | never | never | never |
+
+The gate is missed by far, and it is lower than the 35% of the fourth measure. With four reactions and a molecule of 12 to 14 heavy atoms, two thirds of circles have one thing that acts. The three switches moved it from 14.4 to 17.9. Counted by whole lines instead of circles the page looks different (above: 9 of 55 lines within a fifth of the best, order decisive on 78 pages in 100), so the choice in tier one is the order of the line, not what goes in a circle. Breaking a row on purpose was not run (`simBreak` cannot play the bare game).
+
+### What is still wrong, found in this measure
+
+- **A turn in tier one is not a choice by the measure in `PASS.md`**: a second option is worth taking on 18 turns in 100.
+- **Nothing is dealt in tier one.** Four reactions, a hand of five: every page shows the same four, the next hand is the same four, the hand cannot be dealt again. The only chance is the pair of molecules and the assay.
+- **The molecule never does more than three things by itself on a page** in tier one, and three or more on 20 pages in 100 for the median player.
+- **Pages on which the best line makes nothing**: 29 in 100 for a player who takes the best line of every page.
+- **The median player wins tier one 95 times in 100.** The margins are in the band that was asked for; the round is not in doubt for it.
+- **Round one on unseen seeds is over the band** for the median player (5.2) and the molecules of round one are 4.1 times apart there.
+- **Tier one is dealt from four reactions, not six.** Dehydrate joins in round four and grow in round five, which are tier two.
+- **Rounds four to nine were not fitted** and their numbers now follow a different round three.
+- The planner was taught the next hand; the median player was not.
 
 ## The measure of 2026-11-11, fourth: the bare game
 
