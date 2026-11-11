@@ -156,6 +156,10 @@ function start(app) {
     const lift = new Map(); nodes.forEach((c, ci) => { const nb = adj.get(c); if (nb.length < 3) return; let sgn = ci % 2 ? 1 : -1; nb.filter(t => adj.get(t).length === 1).forEach(t => { lift.set(t, 0.26 * sgn); sgn = -sgn; }); });
     md.atoms.forEach(a => { if (a.el !== 'H' || skip.has(a)) return; const par = md.neighbors(a).map(q => q.atom).find(q => lift.has(q)); if (par) lift.set(a, lift.get(par) * 1.25); });
     pos.forEach((p, a) => { const v = at.get(a); if (v) v.set(p.x * fx, lift.get(a) || 0, -p.y * fy); });
+    // a chain too long for the page is folded once, like a line of writing that runs on to the next line: the far
+    // half comes back under the near half, so the molecule stays large enough to read
+    if (!ring.size) { let lo = 1e9, hi = -1e9, zlo = 1e9, zhi = -1e9; pos.forEach((p, a) => { const v = at.get(a); if (!v) return; lo = Math.min(lo, v.x); hi = Math.max(hi, v.x); zlo = Math.min(zlo, v.z); zhi = Math.max(zhi, v.z); });
+      if (hi - lo > 25) { const mid = (lo + hi) / 2, gap = zhi - zlo + 2.4; let sx = 0, sz = 0, n2 = 0; pos.forEach((p, a) => { const v = at.get(a); if (!v) return; if (v.x > mid) { v.x = 2 * mid - v.x; v.z += gap; } sx += v.x; sz += v.z; n2++; }); pos.forEach((p, a) => { const v = at.get(a); if (v) { v.x -= sx / n2; v.z -= sz / n2; } }); } }
     // each oxygen a zip has closed stands over the chain, half way between the two carbons it joins, on the upper side of the page
     (arch || []).forEach(q => { const sc = (adj.get(q.o) || [])[0], P1 = sc && at.get(sc), P2 = at.get(q.c), O = at.get(q.o); if (!P1 || !P2 || !O) return; let ux = -(P2.z - P1.z), uz = P2.x - P1.x; const d = Math.hypot(ux, uz) || 1; ux /= d; uz /= d; if (uz > 0) { ux = -ux; uz = -uz; } O.set((P1.x + P2.x) / 2 + ux * 1.5, 0.3, (P1.z + P2.z) / 2 + uz * 1.5); });
   }

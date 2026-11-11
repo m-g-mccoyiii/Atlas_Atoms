@@ -134,13 +134,15 @@ RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 const SELF = [{ id: 'lactol', tier: 0 }, { id: 'snap6', tier: 2 }, { id: 'weld', tier: 3 }];
 const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 // The cascade. Step n of a page is worth n times the first: it adds place for its one place and that counts n times,
-// and it adds n times step to extra. (mul: it multiplies extra by 1 + n step instead, as it did until 2026-11-11: ten
-// steps then multiplied a round by 1,100, and with the zip opening again on every page one long cascade decided a run.)
-// row: what a step adds to the row (a reagent that follows on adds SYN.row). most: a page stops cascading after this
-// many steps, so that it cannot stall. With these a page with three steps makes about 2.6 times a page with none,
-// six steps about 13 times and ten about 50 times: the steps count 1, 2, 3 and so on, and the row and extra they
-// build are kept small so that the count is what pays.
-const CASC = { step: 0.01, place: 50, row: 0.1, mul: false, most: 40 };
+// and it adds n times step to extra, which multiplies everything the round makes. So three steps on a page add 0.6
+// to extra, six add 2.1 and ten add 5.5: a round of threes ends near 3 times a round with no cascade, a round of
+// sixes near 7 times and a round of tens near 17 times. It adds and does not multiply (mul: it multiplied extra by
+// 1 + n step until 2026-11-11; ten steps then multiplied a round by 1,100, and with the zip opening again on every
+// page one long cascade decided a run). row: what a step adds to the row (a reagent that follows on adds SYN.row).
+// Measured on one molecule of round eight: with step 0.01 a line that set off six steps made 4,800 and a line that
+// set off none made 4,440, because three reagents on a long molecule change many places; the count has to pay more
+// than that. most: a page stops cascading after this many steps, so that it cannot stall.
+const CASC = { step: 0.1, place: 50, row: 0.1, mul: false, most: 40 };
 const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 1, naoh: 1, wittig: 1, wolff: 1, extend: 1, dione: 1, phenol: 1, rcm: 1, couple: 1 };
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
