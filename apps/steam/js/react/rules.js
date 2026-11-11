@@ -447,7 +447,7 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.frz) c.frz = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
   m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
   return { model: n, map };
 }
@@ -469,6 +469,7 @@ function carbonPath(m, from, to, max) { const prev = new Map([[from, null]]), di
 function ringBond(m, a, b, size) { const nb = x => nbs(m, x).map(n => n.atom).filter(y => y.el !== 'H' && !y.fly), dist = new Map([[a, 0]]), q = [a]; while (q.length) { const u = q.shift(), d = dist.get(u); if (size && d + 1 >= size) continue; for (const v of nb(u)) { if (u === a && v === b) continue; if (v === b) return true; if (!dist.has(v)) { dist.set(v, d + 1); q.push(v); } } } return false; }
 // an O-H on a carbon with single bonds only, or on a benzene ring: what a zip can start from
 function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m, o); if (q.length !== 2 || q.some(n => n.bond.order !== 1)) return null; const c = q.find(n => n.atom.el === 'C'), hh = q.find(n => n.atom.el === 'H'); if (!c || !hh) return null; if (!isSp3(m, c.atom) && !(ar || aromaticAtoms(m)).has(c.atom)) return null; return { o, c: c.atom, ho: hh.atom }; }
+// (a ring whose oxygen carries frz has been frozen by the carbon dioxide homunculus and never opens again)
 // Every ring a zip has closed and that can still come apart: a carbon that carries an OH and, beside it, an oxygen
 // that is in a ring. The ring oxygen lets go and takes the hydrogen, and the OH becomes the C=O it was. Done last
 // ring first until none is left (cuts, if given, collects the carbon and the oxygen of each bond that was cut), so a ladder comes apart from its far end back to the OH that set it off. A ring
@@ -476,7 +477,7 @@ function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m,
 function reopen(m, cuts) { let n = 0; for (let guard = 0; guard < 80; guard++) { let hit = null;
   for (const c of m.atoms) { if (c.el !== 'C' || c.fly) continue; const q = nbs(m, c); if (q.some(x => x.bond.order !== 1)) continue;
     const oh = q.find(x => x.atom.el === 'O' && !x.atom.prot && nbs(m, x.atom).length === 2 && nbs(m, x.atom).some(y => y.atom.el === 'H')); if (!oh) continue;
-    const or = q.find(x => x.atom.el === 'O' && x.atom !== oh.atom && nbs(m, x.atom).length === 2 && nbs(m, x.atom).every(y => y.atom.el === 'C') && ringBond(m, c, x.atom)); if (!or) continue;
+    const or = q.find(x => x.atom.el === 'O' && x.atom !== oh.atom && !x.atom.frz && nbs(m, x.atom).length === 2 && nbs(m, x.atom).every(y => y.atom.el === 'C') && ringBond(m, c, x.atom)); if (!or) continue;
     hit = { c, oh: oh.atom, or: or.atom }; break; }
   if (!hit) break; const h = nbs(m, hit.oh).find(y => y.atom.el === 'H').atom; cut(m, hit.c, hit.or); cut(m, hit.oh, h); m.bond(hit.or, h); m.bond(hit.c, hit.oh); if (cuts) cuts.push({ c: hit.c, o: hit.or }); n++; }
   return n; }
@@ -581,7 +582,7 @@ const tools = {
     if (id === 'mirror') {
       const a = sp.a, b = sp.b, gone = sideOf(m, b, a), keep = Array.from(sideOf(m, a, b)); gone.forEach(x => m.removeAtom(x));
       let ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z; const d = Math.hypot(ux, uy, uz) || 1; ux /= d; uy /= d; uz /= d;
-      const copy = new Map(); keep.forEach(x => { const t = 2 * ((a.x + ux * 0.77 - x.x) * ux + (a.y + uy * 0.77 - x.y) * uy + (a.z + uz * 0.77 - x.z) * uz), c = m.addAtom(x.el, x.x + t * ux, x.y + t * uy, x.z + t * uz); if (x.iso) c.iso = x.iso; if (x.clamp) c.clamp = true; copy.set(x, c); });
+      const copy = new Map(); keep.forEach(x => { const t = 2 * ((a.x + ux * 0.77 - x.x) * ux + (a.y + uy * 0.77 - x.y) * uy + (a.z + uz * 0.77 - x.z) * uz), c = m.addAtom(x.el, x.x + t * ux, x.y + t * uy, x.z + t * uz); if (x.iso) c.iso = x.iso; if (x.clamp) c.clamp = true; if (x.frz) c.frz = true; copy.set(x, c); });
       m.bonds.slice().forEach(k => { if (copy.has(k.a) && copy.has(k.b)) m.bonds.push({ a: copy.get(k.a), b: copy.get(k.b), order: k.order }); });
       m.bond(a, copy.get(a)); return { made: Array.from(copy.values()) };
     }

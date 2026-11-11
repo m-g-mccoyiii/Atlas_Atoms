@@ -295,8 +295,12 @@ function start(app) {
     if (done.size) { let sx = 0, sz = 0, n2 = 0; at.forEach((v, a) => { if (a.el === 'H' || !adj.has(a)) return; sx += v.x; sz += v.z; n2++; }); if (n2) at.forEach((v, a) => { if (adj.has(a) || a.el === 'H') { v.x -= sx / n2; v.z -= sz / n2; } }); }
     return done;
   }
+  // the atoms of each ring that holds one of the given oxygens (the shortest way round from one of its carbons to the other)
+  function frostOf(md, oxy) { const out = []; (oxy || md.atoms.filter(a => a.frz)).forEach(o => { const nb = md.neighbors(o).map(q => q.atom).filter(a => a.el !== 'H'); if (nb.length !== 2) return; const par = new Map([[nb[0], null]]), qu = [nb[0]]; while (qu.length) { const a = qu.shift(); if (a === nb[1]) break; md.neighbors(a).forEach(q => { const b = q.atom; if (b === o || b.el === 'H' || par.has(b)) return; par.set(b, a); qu.push(b); }); } if (!par.has(nb[1])) return; const ring = [o]; for (let a = nb[1]; a; a = par.get(a)) ring.push(a); if (ring.length <= 9) out.push(ring); }); return out; }
   // the bonds a zip has closed, as pairs of the oxygen and the carbon it closed onto: found by opening a copy of the molecule
-  function archesOf(model) { try { const cm = RX.cloneMap(model), cuts = []; if (!RX.reopen(cm.model, cuts)) return []; const rev = new Map(); cm.map.forEach((c, a) => rev.set(c, a)); return cuts.map(q => ({ c: rev.get(q.c), o: rev.get(q.o) })).filter(q => q.c && q.o); } catch (e) { return []; } }
+  function archesOf(model) { try { const cm = RX.cloneMap(model), cuts = []; RX.reopen(cm.model, cuts); const rev = new Map(); cm.map.forEach((c, a) => rev.set(c, a)); const out = cuts.map(q => ({ c: rev.get(q.c), o: rev.get(q.o) })).filter(q => q.c && q.o);
+    // a frozen ring is laid out as the zip ring it was: its oxygen, and the carbon it closed onto (the one that carries a second oxygen)
+    model.atoms.forEach(o => { if (!o.frz) return; const cs = model.neighbors(o).map(q => q.atom).filter(c => c.el === 'C'), c = cs.find(k => model.neighbors(k).some(q => q.atom !== o && q.atom.el === 'O')); if (c) out.unshift({ c, o }); }); return out; } catch (e) { return []; } }
 
   // ---------- ball and stick, drawn as the viewer draws it ----------
   const SPH = new T.SphereGeometry(1, 36, 24), CYL = new T.CylinderGeometry(1, 1, 1, 12), UP = new T.Vector3(0, 1, 0), mBall = {}, mStick = {}, mLetter = {};
@@ -447,7 +451,7 @@ function start(app) {
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], gains: [], passT: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, stage: 1, six: 0, taught: false, jar: { water: 0, h2: 0 }, hatched: {} }, shop = { earned: 0 };
-  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.sig = m.sig || {}; meta.six = m.six | 0; meta.stage = m.stage | 0 || (meta.tier >= 4 ? 3 : meta.tier >= 1 ? 2 : 1); meta.taught = !!m.taught; meta.coined = !!m.coined; meta.jar = { water: (m.jar && m.jar.water) | 0, h2: (m.jar && m.jar.h2) | 0 }; meta.hatched = Object.assign({}, m.hatched || {}); } } catch (e) { /* storage unavailable */ }
+  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.sig = m.sig || {}; meta.six = m.six | 0; meta.stage = m.stage | 0 || (meta.tier >= 4 ? 3 : meta.tier >= 1 ? 2 : 1); meta.taught = !!m.taught; meta.coined = !!m.coined; meta.jar = { water: 0, h2: 0 }; Object.keys(m.jar || {}).forEach(k => { meta.jar[k] = m.jar[k] | 0; }); meta.hatched = Object.assign({}, m.hatched || {}); } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier); run.manual = true;
   const PICKX = [-15, 0, 15];
@@ -529,7 +533,11 @@ function start(app) {
   // runs, are saved with the player's progress (meta.jar) and are never emptied. A homunculus grows in each: a
   // speck, a small figure, full size; it hatches when the jar is full (docs/JARS.md).
   const BEAK = { x: -21.6 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, BALN = { x: -17.4 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, TALLY = { x: -13.4 + SX, z: KITV === 'back' ? -8.6 : -6.4 };
-  const JARK = ['water', 'h2'], JARP = { water: BEAK, h2: BALN }, JARC = { water: 0x3a6fd0, h2: 0xe58a7c }, JARINK = { water: '#3a6fd0', h2: '#c8604e' }, HOMID = { water: 'homwater', h2: 'homh2' };
+  // one jar for each creature that is built (P.HOMS). A jar stands on the page once its substance has first come off;
+  // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
+  const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2' };
+  const jarSeen = k => k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0;
+  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -1.9 + row * 3.1 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
   const JGLASS = std({ color: lin(0xdfe9ee), roughness: 0.08, transparent: true, opacity: 0.3, depthWrite: false });
@@ -538,14 +546,14 @@ function start(app) {
       add(new T.CylinderGeometry(1.0, 1.05, 0.14, 24), KM(T, 0x8a5a2b, 0.7), 0, 0.07, 0, shell); { const gl = add(new T.CylinderGeometry(0.92, 0.92, 2.1, 24, 1, true), JGLASS, 0, 1.19, 0, shell); gl.renderOrder = 3; gl.userData.plain = true; gl.castShadow = false; gl.receiveShadow = false; const rim = add(new T.TorusGeometry(0.93, 0.035, 6, 28), new T.MeshBasicMaterial({ color: lin(0x1f2a55) }), 0, 0.16, 0, shell); rim.rotation.x = Math.PI / 2; rim.userData.plain = true; }
       const lid = add(new T.CylinderGeometry(0.98, 0.98, 0.16, 24), KM(T, 0x2c2f34, 0.55, 0.3), 0, 2.32, 0, shell); AA.rxKit.finish(T, shell);
       const fill = add(new T.CylinderGeometry(0.85, 0.85, 1, 24), std({ color: lin(JARC[k]), roughness: 0.3, transparent: true, opacity: k === 'h2' ? 0.4 : 0.5, depthWrite: false }), 0, 0.64, 0, grp); fill.renderOrder = 2; fill.userData.plain = true; fill.castShadow = false;
-      const speck = add(new T.SphereGeometry(0.14, 12, 10), KM(T, k === 'h2' ? 0xf8e3dc : 0x7fc0ea, 0.4), 0.1, 0.5, 0.3, grp), small = homFig(k), full = homFig(k); small.scale.setScalar(0.42); small.position.set(0, 0.16, 0.3); full.scale.setScalar(0.74); full.position.set(0, 0.16, 0.12); grp.add(small); grp.add(full);
-      grp.rotation.x = -0.8; grp.position.set(JARP[k].x, 0, JARP[k].z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, fill, lid, figs: [speck, small, full] }; });
+      const speck = add(new T.SphereGeometry(0.14, 12, 10), KM(T, k === 'h2' ? 0xf8e3dc : k === 'co2' ? 0xf2f8fb : 0x7fc0ea, 0.4), 0.1, 0.5, 0.3, grp), small = homFig(k), full = homFig(k); small.scale.setScalar(0.42); small.position.set(0, 0.16, 0.3); full.scale.setScalar(0.74); full.position.set(0, 0.16, 0.12); grp.add(small); grp.add(full);
+      grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, fill, lid, figs: [speck, small, full] }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
   const HOMP = { x: 13.2, z: 12.3 }; let homObj = null, homObjs = [], homOpts = [];
   function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.45); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
-  function byTarget(kind) { const q = kind === 'water' ? BEAK : kind === 'h2' ? BALN : TALLY; return kind === 'water' || kind === 'h2' ? new T.Vector3(q.x, 2.0, q.z - 2.3) : new T.Vector3(q.x, 1.2, q.z - 0.6); }
+  function byTarget(kind) { const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
   //   point: in a first round, an inked arrow and a few words point at one thing at a time as it first matters
   //   words: one or two pencil words by each thing, always.  hover: its name and a line under the pointer.
@@ -666,11 +674,13 @@ function start(app) {
   function showHoms() { st.tok++; st.mode = 'hom'; clearRound(); clearBriefs(); clearKit(); clearPicks(); clearHoms(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1;
     homOpts = JARK.filter(k => meta.hatched[k]).concat([null]); const n = homOpts.length;
     homOpts.forEach((k, i) => { const hold = new T.Group(); if (k) hold.add(homFig(k)); else { const KM = AA.rxKit.mat; add(new T.CylinderGeometry(1.0, 1.05, 0.14, 24), KM(T, 0x8a5a2b, 0.7), 0, 0.07, 0, hold); { const gl = add(new T.CylinderGeometry(0.92, 0.92, 2.1, 24, 1, true), JGLASS, 0, 1.19, 0, hold); gl.renderOrder = 3; gl.userData.plain = true; gl.castShadow = false; gl.receiveShadow = false; [0.16, 2.24].forEach(y => { const rim = add(new T.TorusGeometry(0.93, 0.035, 6, 28), new T.MeshBasicMaterial({ color: lin(0x1f2a55) }), 0, y, 0, hold); rim.rotation.x = Math.PI / 2; rim.userData.plain = true; }); } AA.rxKit.finish(T, hold); }
-      hold.rotation.x = -0.8; hold.position.set(HOMX(i, n), 0, -1.6); hold.scale.setScalar(k ? 2.4 : 1.5); scene.add(hold); homObjs.push({ grp: hold, id: k, slot: i, born: performance.now() + 120 + i * 130 }); });
+      { const q = HOMPOS(i, n); hold.rotation.x = -0.8; hold.position.set(q.x, 0, q.z); hold.scale.setScalar(k ? q.s : q.s * 0.62); } scene.add(hold); homObjs.push({ grp: hold, id: k, slot: i, born: performance.now() + 120 + i * 130 }); });
     sfx.feed(); dirty = true; }
-  const HOMX = (i, n) => (n === 2 ? [-8, 8][i] : PICKX[i]);
+  // where each stands on the page before a run: up to three as on the take-one page, up to six in one row, more in two rows
+  const HOMPOS = (i, n) => { if (n <= 3) return { x: n === 2 ? [-8, 8][i] : n === 1 ? 0 : PICKX[i], z: -1.6, s: 2.4, tz: 4.6, ts: 1 }; if (n <= 6) return { x: (i - (n - 1) / 2) * (44 / n), z: -1.2, s: 1.9, tz: 3.9, ts: 0.72 }; const cols = Math.ceil(n / 2), row = i < cols ? 0 : 1, k = row ? i - cols : i, m = row ? n - cols : cols; return { x: (k - (m - 1) / 2) * (46 / cols), z: row ? 5.6 : -5.2, s: 1.5, tz: row ? 9.2 : -1.6, ts: 0.56 }; };
+  const HOMX = (i, n) => HOMPOS(i, n).x;
   function chooseHom(i) { if (st.mode !== 'hom' || i < 0 || i >= homOpts.length) return; run.hom = homOpts[i]; clearHoms(); homStand(); if (run.hom === 'water') sfx.squish(); else if (run.hom) sfx.drift(); sfx.stamp(); st.shake = 0.6; runOpen(); }
-  function homPageAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit) || hit.z < -8 || hit.z > 9) return -1; let best = -1; homOpts.forEach((k, i) => { if (Math.abs(hit.x - HOMX(i, homOpts.length)) < 6) best = i; }); return best; }
+  function homPageAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; let best = -1, bd = 1e9; const n = homOpts.length; homOpts.forEach((k, i) => { const q = HOMPOS(i, n), dx = Math.abs(hit.x - q.x), w = n <= 3 ? 6 : n <= 6 ? 22 / n : 23 / Math.ceil(n / 2); if (dx < w && hit.z > q.z - 2.8 * q.s && hit.z < q.tz + 4.6 * q.ts && dx < bd) { bd = dx; best = i; } }); return best; }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
   function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
@@ -736,7 +746,7 @@ function start(app) {
   }
   function endRound() {
     // what the round gave off goes into the jars for good, win or lose; a jar that is now full hatches
-    { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + b[k]); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; g.by.water = 0; g.by.h2 = 0; st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
+    { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + (b[k] || 0)); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; JARK.forEach(k => { g.by[k] = 0; }); st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
     st.homWait = false; st.homList = null;
     st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; st.won = st.pass && run.round === 9; if (st.won) run.won = true; if (!meta.taught) { meta.taught = true; saveMeta(); }
     if (st.pass) run.beaten++;
@@ -753,8 +763,9 @@ function start(app) {
     st.homWait = false; st.homList = null; st.homSpot = null; st.homHover = false; st.homNone = false;
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
     st.cstep = null;
+    if (g.hom && g.hom.frozen) { st.want = P.made(g); st.P = g.P; st.R = g.R; st.mult = P.mult(g); st.madeBump = 1; st.cstep = { n: g.hom.frozen, name: 'frozen', t: performance.now(), fresh: true }; }
     st.E = g.E; if (st.gear.includes('intern')) { const tk = st.tok; setTimeout(() => { if (tk === st.tok) internGo(); }, 700); }
-    flush(); if (g.reopened && g.m.settle && caged(g.m)) g.m.settle(500); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center);
+    flush(); if (g.reopened && g.m.settle && caged(g.m, archesOf(g.m))) g.m.settle(500); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center);
     // the new page's drawing carries on from the last: the same way up, and turned back to the same side if it turns back
     const sd = new Map(); if (center) { const mp = g.reopened && g.reopened.map, live = new Set(g.m.atoms); if (mp) mp.forEach((na, oa) => { const q = center.at.get(oa); if (q && center.balls.has(oa) && live.has(na)) sd.set(na, q); }); if (!sd.size) center.balls.forEach((b, a) => { if (live.has(a)) sd.set(a, center.at.get(a)); }); if (center.at.fold) sd.fold = { dir: center.at.fold.dir }; }
     freeMol(center); center = buildMol(g.m, null, false, sd.size ? sd : null); SC_MAIN = fitMain(center); place(center, C0, st.sc); center.hot = g.cur.path.length ? marksOf(center, Array.from(g.cur.fresh), 0.01, 0.2) : []; center.groups = groupsOf(center); center.ghosts = []; st.pop = 1;
@@ -952,7 +963,8 @@ function start(app) {
     const id = g.hom.id, H = P.HOMS[id], base = g.casc || 0, list = P.homSpots(g).map(sp => { const it = { sp, whole: !!H.whole, x: 0, z: 0, at: [], bonds: [] };
       if (sp.pairs) sp.pairs.forEach(q => { const A = toolPt(q[0]), B = toolPt(q[1]); if (A && B) { it.bonds.push([A, B]); it.at.push({ x: (A.x + B.x) / 2, z: (A.z + B.z) / 2 }); } });
       if (sp.c) { const A = toolPt(sp.c), B = toolPt(sp.o); if (A && B) { it.bonds.push([A, B]); it.at.push(B); it.x = B.x; it.z = B.z; } }
-      try { const t = P.homTry(g.m, id, sp); it.worth = t ? P.selfRun(t, g.self) : 0; } catch (e) { it.worth = null; } return it; });
+      if (sp.rings) frostOf(center.model, sp.rings.map(q => q[0])).forEach(ring => ring.forEach((a, k) => { const A = toolPt(a), B = toolPt(ring[(k + 1) % ring.length]); if (A && B) it.bonds.push([A, B]); }));
+      if (sp.rings) it.worth = null; else try { const t = P.homTry(g.m, id, sp); it.worth = t ? P.selfRun(t, g.self) : 0; } catch (e) { it.worth = null; } return it; });
     if (!list.length) { st.homNone = true; dirty = true; return false; }
     st.homWait = true; st.homList = list; st.homSpot = null; st.homHover = false; st.homBase = base; st.firing = false; dirty = true; return true;
   }
@@ -964,7 +976,7 @@ function start(app) {
     if (!st.homWait || !it) return; const id = g.hom.id, sc = center.group.scale.x, to = it.whole ? { x: C0.x - 5.5, z: C0.z + 1.6 } : { x: C0.x + it.x * sc - 0.9, z: C0.z + it.z * sc + 1.9 };
     if (!P.homUse(g, it.sp)) { sfx.bad(); return; }
     st.homWait = false; st.homList = null; st.homSpot = null; st.homHover = false; st.mode = 'move'; st.homAct = { t: performance.now(), to, id }; if (id === 'water') sfx.squish(); else sfx.drift();
-    const tok = st.tok; setTimeout(() => { if (tok !== st.tok) return; reopenShow(); sfx.good(); st.firing = true; st.rezip = true; st.acted = false; setTimeout(() => { if (tok === st.tok) fireNext(); }, 200); }, 210);
+    const tok = st.tok; setTimeout(() => { if (tok !== st.tok) return; reopenShow(); sfx.good(); st.firing = true; st.rezip = true; st.acted = false; setTimeout(() => { if (tok === st.tok) fireNext(); }, P.HOMS[id].now ? 380 : 200); }, 210);
   }
   const drawAt = () => st.mode === 'play' && g && P.canRedraw(g) && Math.abs(hit.x - DRAW.x) < 1.7 && Math.abs(hit.z - DRAW.z) < 1.5;
   const stuck = () => st.mode === 'play' && !!g && !g.over && !g.chain && !slots.some(q => q && q.o);
@@ -1166,11 +1178,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     if (st.mode === 'hom') {
       const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('homunculus', h[0], h[1]);
-      homOpts.forEach((k, i) => { const c = px({ x: HOMX(i, homOpts.length), z: 4.6 }), hov = st.hover === i, H = k ? P.HOMS[k] : null;
-        hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 190, c[1] - 56);
-        marker(x, hov ? 66 : 58); x.fillStyle = k ? JARINK[k] : INK; x.fillText(k ? H.name : 'none', c[0], c[1]);
-        if (H) { String(H.tok).split('|').forEach((ln, li) => inkLine(x, ln, c[0], c[1] + 52 + li * 40, 38, INK)); for (let n = 0; n < H.need; n++) drop(x, c[0] + (n - (H.need - 1) / 2) * 30, c[1] + 150, 10, JARINK[k], true); }
-        if (hov) swipe(x, [c[0] - 150, c[1] + 16], [c[0] + 150, c[1] + 10], 16); });
+      homOpts.forEach((k, i) => { const q = HOMPOS(i, homOpts.length), u = q.ts, c = px({ x: q.x, z: q.tz }), hov = st.hover === i, H = k ? P.HOMS[k] : null;
+        if (u === 1) { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 190, c[1] - 56); }
+        marker(x, (hov ? 66 : 58) * u); x.textAlign = 'center'; x.fillStyle = k ? JARINK[k] : INK; x.fillText(k ? H.name : 'none', c[0], c[1]);
+        if (H) { String(H.tok).split('|').forEach((ln, li) => inkLine(x, ln, c[0], c[1] + (52 + li * 40) * u, 38 * u, INK)); for (let n = 0; n < H.need; n++) drop(x, c[0] + (n - (H.need - 1) / 2) * 30 * u, c[1] + 150 * u, 10 * u, JARINK[k], true); }
+        if (hov) swipe(x, [c[0] - 150 * u, c[1] + 16 * u], [c[0] + 150 * u, c[1] + 10 * u], 16 * u); });
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'terms') {
@@ -1269,6 +1281,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the atoms the last reaction changed stay marked in yellow while the row is open: react there and the row goes on
     if (center && center.hot.length && g.cur.path.length && st.mode !== 'done' && !(CUT.includes('a') && st.peek)) { const pk = st.peek, sc = center.group.scale.x;
       center.hot.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc + 1.25 }); swipe(x, [c[0] - 30, c[1] + 12], [c[0] + 30, c[1] + 8], 12, pk && pk.breaks ? 'rgba(160,160,160,0.4)' : HILITE); }); }
+    if (center && st.mode !== 'done') { if (!center.frost) center.frost = frostOf(center.model); if (center.frost.length) { const sc = center.group.scale.x, gp = a => { const p = center.at.get(a), t = -p.y / camDir.y; return px({ x: C0.x + (p.x + camDir.x * t) * sc, z: C0.z + (p.z + camDir.z * t) * sc }); };
+      center.frost.forEach(ring => { if (ring.some(a => !center.at.get(a))) return; const pts = ring.map(gp); let cx = 0, cy = 0; pts.forEach(p => { cx += p[0]; cy += p[1]; }); cx /= pts.length; cy /= pts.length; x.fillStyle = 'rgba(126,190,226,0.42)'; x.strokeStyle = 'rgba(79,159,196,0.8)'; x.lineWidth = 4; x.lineJoin = 'round'; x.beginPath(); pts.forEach((p, k) => { const X = cx + (p[0] - cx) * 1.22, Y = cy + (p[1] - cy) * 1.22; if (k) x.lineTo(X, Y); else x.moveTo(X, Y); }); x.closePath(); x.fill(); x.stroke(); }); } }
     if (center && center.flat && !(morph && morph.m === center)) { const sc = center.group.scale.x, gp = a => { const p = center.at.get(a), t = -p.y / camDir.y; return px({ x: C0.x + (p.x + camDir.x * t) * sc, z: C0.z + (p.z + camDir.z * t) * sc }); }; x.strokeStyle = 'rgba(31,42,85,0.55)'; x.lineCap = 'round'; center.sticks.forEach(s => { if (s.a.el === 'H' || s.b.el === 'H') return; const a = gp(s.a), b = gp(s.b); x.lineWidth = s.parts.length > 2 ? 11 : 6; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); }); }
     // a page turning: a leaf of paper sweeps across from the right, its edge shaded
     if (st.turned && now - st.turned < 420) { const k = (now - st.turned) / 420, e = 1 - Math.pow(1 - k, 3), xe = IW * (1 - e), w = IW * 0.22 * Math.sin(k * Math.PI); x.fillStyle = 'rgba(243,237,220,' + (0.9 * (1 - k)).toFixed(3) + ')'; x.fillRect(xe, 0, IW - xe, IH); const gr = x.createLinearGradient(xe - w, 0, xe, 0); gr.addColorStop(0, 'rgba(60,50,30,0)'); gr.addColorStop(1, 'rgba(60,50,30,' + (0.28 * (1 - k)).toFixed(3) + ')'); x.fillStyle = gr; x.fillRect(xe - w, 0, w, IH); dirty = true; }
@@ -1478,17 +1492,18 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       else { chip(x, F.tl[0], -72, 0, false); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, F.tl[1], 62, 0, true); }
       x.restore(); x.globalAlpha = 1; dirty = true; } }
     // the jars: how much each holds of what fills it. A full one carries the name of what hatched
-    if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const c = px({ x: JARP[k].x, z: JARP[k].z + 1.75 }), n = jarOf(k), full = P.JAR.full[k]; hand(x, 26 * (1 + 0.25 * st.byBump[k])); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : n + '/' + full, c[0], c[1]); });
+    if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
     // the homunculus of the run: its name, a drop for each time it has been fed, and when the page waits on it what it would do
     if (g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
-      hand(x, 26); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(H.name, c[0], c[1]); for (let k = 0; k < H.need; k++) drop(x, c[0] + (k - (H.need - 1) / 2) * 24, c[1] + 34, 8, col, k < fed);
+      { const key = g.trail.length + ':' + g.hom.fed + ':' + g.hom.used + ':' + g.page; if (st.litK !== key) { st.litK = key; try { st.lit = P.homLit(g); } catch (e) { st.lit = false; } } }
+      hand(x, st.lit ? 30 : 26); x.textAlign = 'center'; x.fillStyle = st.lit ? col : PENCIL; x.fillText(H.name, c[0], c[1]); for (let k = 0; k < H.need; k++) drop(x, c[0] + (k - (H.need - 1) / 2) * 24, c[1] + 34, 8, col, k < fed);
       if (st.homNone && ready) strike(x, c[0] - 44, c[1] + 40, c[0] + 44, c[1] + 28, 1, 5, PENCIL);
       if (st.homWait && st.homList && center) { const sc = center.group.scale.x, P2 = q => px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }), r = 1.0 * sc * U, seg = (a, b) => { x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); }, one = st.homList.length === 1 ? st.homList[0] : null, h = st.homSpot || (st.homHover ? one : null);
         x.strokeStyle = INK; x.lineWidth = st.homHover ? 7 : 5; x.lineCap = 'round'; seg([c[0] - 50, c[1] + 58], [c[0] + 50, c[1] + 55]);
         if (one && one.worth != null) { marker(x, 44); x.textAlign = 'right'; x.fillStyle = one.worth ? INK : PENCIL; x.fillText('+' + one.worth, c[0] - 62, c[1] + 46); }
         if (!one) st.homList.forEach(q => { if (q === h) return; const p = P2(q), dead = q.worth === 0; x.strokeStyle = dead ? PENCIL : INK; x.globalAlpha = dead ? 0.45 : 0.85; x.lineWidth = 6; seg([p[0] - 1, p[1] + r * 0.8], [p[0] + 2, p[1] + r * 0.8 + 22]); if (q.worth != null) { hand(x, 24); x.textAlign = 'center'; x.fillStyle = dead ? PENCIL : INK; x.fillText('+' + q.worth, p[0] + 1, p[1] + r * 0.8 + 46); } });
         x.globalAlpha = 1;
-        if (h) { x.globalAlpha = 0.6; x.strokeStyle = col; x.lineWidth = Math.max(10, 0.3 * sc * U); h.bonds.forEach(b => seg(P2(b[0]), P2(b[1]))); x.globalAlpha = 0.95; hand(x, 30); x.textAlign = 'center'; x.fillStyle = col; h.at.forEach(q => { const p = P2(q); x.fillText('OH', p[0], p[1] - r - 8); });
+        if (h) { x.globalAlpha = 0.6; x.strokeStyle = col; x.lineWidth = Math.max(10, 0.3 * sc * U); h.bonds.forEach(b => seg(P2(b[0]), P2(b[1]))); x.globalAlpha = 0.95; hand(x, 30); x.textAlign = 'center'; x.fillStyle = col; if (H.word) h.at.forEach(q => { const p = P2(q); x.fillText(H.word, p[0], p[1] - r - 8); });
           if (!one && h.worth != null) { const p = P2(h), y = p[1] + r * 0.8 + 62; marker(x, 44); x.lineJoin = 'round'; x.lineWidth = 9; x.strokeStyle = '#fbf8ee'; x.strokeText('+' + h.worth, p[0], y); x.fillStyle = h.worth ? INK : PENCIL; x.fillText('+' + h.worth, p[0], y); } }
         x.globalAlpha = 1; } }
     // where the wet one has run: small puddles on the paper that dry
@@ -1589,18 +1604,18 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       f.grp.rotation.set(0, f.spin * k, 0); f.grp.scale.setScalar(st.sc * (k > 0.6 ? 1 - (k - 0.6) / 0.4 * 0.7 : 1));
       if (k < 1) return true;
       scene.remove(f.grp); burst3(f.to.x, 0.2, f.to.z + 0.6, 8, f.kind === 'water' ? '#3a6fd0' : f.kind === 'h2' ? '#d6453a' : '#5a564e');
-      if (f.keep) { st.by[f.keep] = Math.min(g ? g.by[f.keep] : 9, st.by[f.keep] + 1); st.byBump[f.keep] = 1; }
+      if (f.keep) { st.by[f.keep] = Math.min(g ? g.by[f.keep] || 0 : 9, (st.by[f.keep] || 0) + 1); st.byBump[f.keep] = 1; }
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
-    ['water', 'h2', 'gauge'].forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
+    JARK.concat(['gauge']).forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
     { const on = meta.stage >= 2 && ((!!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse')) || st.mode === 'hom'), tq = now / 1000;
-      JARK.forEach((k, ji) => { const J = jars[k]; J.grp.visible = on; if (!on) return; const f = jarOf(k) / P.JAR.full[k], out = !!(run && run.hom === k) && st.mode !== 'hom', stage = meta.hatched[k] ? 3 : f >= P.JAR.stages[1] ? 2 : f >= P.JAR.stages[0] ? 1 : 0, lv = 0.06 + 1.9 * Math.min(1, f);
+      JARK.forEach((k, ji) => { const J = jars[k], jp = on ? jarPos(k) : null; J.grp.visible = !!jp; if (!jp) return; J.grp.position.set(jp.x, 0, jp.z); const f = jarOf(k) / P.JAR.full[k], out = !!(run && run.hom === k) && st.mode !== 'hom', stage = meta.hatched[k] ? 3 : f >= P.JAR.stages[1] ? 2 : f >= P.JAR.stages[0] ? 1 : 0, lv = 0.06 + 1.9 * Math.min(1, f);
         J.fill.scale.y = lv; J.fill.position.y = 0.16 + lv / 2; J.fill.visible = f > 0 && !meta.hatched[k]; J.figs.forEach((m, n) => { m.visible = !out && stage === n + 1; });
-        const bump = st.byBump[k], hb = st.hatched === k && st.hatchT ? Math.max(0, 1 - (now - st.hatchT) / 600) : 0, s0 = 1.2 * (1 + 0.1 * bump * Math.cos(bump * 9)); J.grp.scale.set(s0, s0 * (1 + 0.16 * hb * Math.cos(hb * 10)), s0); J.grp.rotation.z = 0.02 * Math.sin(tq * 1.2 + ji * 2);
+        const bump = st.byBump[k] || 0, hb = st.hatched === k && st.hatchT ? Math.max(0, 1 - (now - st.hatchT) / 600) : 0, s0 = jp.s * (1 + 0.1 * bump * Math.cos(bump * 9)); J.grp.scale.set(s0, s0 * (1 + 0.16 * hb * Math.cos(hb * 10)), s0); J.grp.rotation.z = 0.02 * Math.sin(tq * 1.2 + ji * 2);
         if (stage === 2 || stage === 3) { const m = J.figs[stage - 1]; m.rotation.y = 0.5 * Math.sin(tq * 0.8 + ji); m.position.y = 0.16 + (k === 'h2' ? 0.08 + 0.06 * Math.sin(tq * 1.7) : 0); } if (hb) dirty = true; }); }
     if (homObj) { const on = !!g && !!g.hom && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), G = homObj.grp; G.visible = on;
       if (on) { const tq = now / 1000, A = st.homAct, age = A ? now - A.t : 1e9, floaty = homObj.id === 'h2', ease = u => u * u * (3 - 2 * u); let hx = HOMP.x, hz = HOMP.z, y = floaty ? 0.3 + 0.22 * Math.sin(tq * 1.7) : 0, sy = floaty ? 1 : 1 + 0.03 * Math.sin(tq * 2.3), rz = floaty ? 0.09 * Math.sin(tq * 1.1) : 0.02 * Math.sin(tq * 1.5);
-        if (age < 470) { const k = ease(Math.min(1, age / 190)) * (1 - ease(Math.max(0, Math.min(1, (age - 270) / 200)))); hx += (A.to.x - HOMP.x) * k; hz += (A.to.z - HOMP.z) * k; y += Math.sin(k * Math.PI) * (floaty ? 1.2 : 0.5); if (!floaty) { sy *= 1 - 0.18 * Math.abs(Math.sin(age / 38)); if (!A.pd || now - A.pd > 36) { A.pd = now; st.puddles.push({ x: hx + 0.5 * Math.sin(age / 20), z: hz + 1.1, r: 13 + 9 * Math.abs(Math.sin(age / 31)), t: now }); } } else rz += 0.25 * Math.sin(age / 60); dirty = true; } else if (A) st.homAct = null;
-        if (st.homWait) y += 0.12 + (st.homHover ? 0.3 : 0);
+        if (age < 470) { const k = ease(Math.min(1, age / 190)) * (1 - ease(Math.max(0, Math.min(1, (age - 270) / 200)))); hx += (A.to.x - HOMP.x) * k; hz += (A.to.z - HOMP.z) * k; y += Math.sin(k * Math.PI) * (floaty ? 1.2 : 0.5); if (homObj.id === 'water') { sy *= 1 - 0.18 * Math.abs(Math.sin(age / 38)); if (!A.pd || now - A.pd > 36) { A.pd = now; st.puddles.push({ x: hx + 0.5 * Math.sin(age / 20), z: hz + 1.1, r: 13 + 9 * Math.abs(Math.sin(age / 31)), t: now }); } } else if (floaty) rz += 0.25 * Math.sin(age / 60); else rz += 0.12 * Math.sin(age / 45); dirty = true; } else if (A) st.homAct = null;
+        if (st.lit) y += 0.1 + 0.05 * Math.sin(tq * 3); if (st.homWait) y += 0.12 + (st.homHover ? 0.3 : 0);
         G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.45, 1.45 * sy, 1.45); } }
     homObjs.forEach(k => { const age = (now - k.born) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), dropY = u < 1 ? (1 - u) * (1 - u) * 9 : 0, hov = st.hover === k.slot; k.grp.visible = age >= 0; k.grp.position.y = dropY + (k.id === 'h2' ? 0.3 + 0.2 * Math.sin(now / 600) : 0) + (hov ? 0.6 : 0); k.grp.rotation.z = k.id === 'h2' ? 0.08 * Math.sin(now / 900) : 0.02 * Math.sin(now / 700 + k.slot); });
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });

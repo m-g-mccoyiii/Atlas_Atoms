@@ -310,10 +310,13 @@
   // structure reads most steps. 'read', 'plan': it is set off on a copy at every place and done where that adds most,
   // if it adds a step or more. Returns the steps it added, or -1 when it was not set off.
   const homStat = { ready: 0, used: 0, steps: 0 };
-  function useHom(g, rnd, mode) {
+  function useHom(g, rnd, mode, ahead) {
     if (!g.hom || g.over || !P.homReady(g)) return -1; const spots = P.homSpots(g); if (!spots.length) return -1; homStat.ready++;
     if (mode === 'random') { if (rnd() < 0.5) return -1; const n = P.homGo(g, spots[Math.floor(rnd() * spots.length)]); homStat.used++; homStat.steps += Math.max(0, n); return n; }
     if (mode === 'randomSpot' || mode === 'always') { const n = P.homGo(g, mode === 'always' ? spots[0] : spots[Math.floor(rnd() * spots.length)]); homStat.used++; homStat.steps += Math.max(0, n); return n; }
+    // a creature whose worth is not steps on this page (the freeze): a player that reads plays the rest of the round
+    // both ways on a copy, with deals of its own, and taps only if that makes more; the others go by the table's rule
+    { const H = P.HOMS[g.hom.id]; if (H.now) { const yes = ahead && (mode === 'read' || mode === 'plan') ? ahead(spots[0]) : H.now(g); if (!yes) return -1; const n = P.homGo(g, spots[0]); homStat.used++; return Math.max(0, n); } }
     let best = null, top = 0, topMade = 0; const id = g.hom.id;
     spots.forEach(sp => { let v, md = 0; if (mode === 'best') { const t = P.homTry(g.m, id, sp); v = t ? P.selfRun(t, g.self) : 0; } else { const s = snap(g), m0 = P.made(g); v = P.homGo(g, sp); md = P.made(g) - m0; back(g, s); } if (v > top || (v === top && md > topMade)) { top = v; topMade = md; best = sp; } });
     if (!best || top < 1) return -1;
@@ -345,7 +348,10 @@
         idle += Math.max(0, P.stepsOf(g) - g.pageSteps - g.queue.length);
         while (g.queue.length && !g.over) { if (dec) { const o = P.options(g); if (Object.keys(o).length || P.canBank(g)) weigh(g, o, dec); } if (g.queue[0] === P.SYN.finish && pol.wish && run.assayNow) P.wish(g, run); P.queueStep(g); steps++; if (big()) break; }
         g.queue = []; g.shot = true; cascs.push(g.casc || 0);
-        if (g.hom && !g.over) { const hn = useHom(g, rnd, pol.tools === 'plan' ? 'read' : pol.tools || 'random'); if (hn >= 0) { cascs[cascs.length - 1] = g.casc || 0; homAt.push(g.page); } }
+        const ahead = sp => { const rest = tap => { const s0 = snap(g), sv = Object.assign({}, g), kinds = g.kinds.slice(), left = Object.assign({}, g.left); let a = (g.trail.length * 7919 + g.page * 104729 + g.m.atoms.length) >>> 0; const r2 = () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+            let v = 0; try { if (tap) P.homGo(g, sp); while (!g.over && P.turn(g, r2)) { const fin = g.page >= P.pagesOf(g) ? P.finishOpt(g) : null; pol.line(g, fin, r2).forEach(id => P.queueAdd(g, id === '#finish' ? P.SYN.finish : id)); while (g.queue.length && !g.over) P.queueStep(g); g.queue = []; } v = P.made(g); } catch (e) { v = -1; }
+            Object.keys(g).forEach(k => { if (!(k in sv)) delete g[k]; }); Object.assign(g, sv); g.kinds = kinds; g.left = left; back(g, s0); return v; }; const no = rest(false), yes = rest(true); return yes > no * 1.02; };
+        if (g.hom && !g.over) { const hn = useHom(g, rnd, pol.tools === 'plan' ? 'read' : pol.tools || 'random', ahead); if (hn >= 0) { cascs[cascs.length - 1] = g.casc || 0; homAt.push(g.page); } }
       }
       else for (;;) {
         if (g.over) break;
