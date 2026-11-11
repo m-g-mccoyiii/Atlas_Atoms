@@ -11,7 +11,8 @@ A piece is a thing the player uses on the molecule. It is not a number on a shel
 - The player clicks the piece, then clicks the molecule. Before the second click the page shows what would happen: the places the piece can go are dotted under the molecule, and the place under the pointer shows the change in faint ink.
 - A piece is used once a round, while the page is being lined up, before the go arrow.
 - Three of the five are put at a place the player chooses, because where it goes is the decision. Two act on the whole molecule at once.
-- Nothing is allowed to grow the molecule past the size limit of 56 heavy atoms.
+- A piece that changes the molecule sets the zip off at once, as a reagent does, if an OH then has a C=O in reach. The steps count on the page being lined up. The clamp changes nothing and sets nothing off.
+- Nothing is allowed to grow the molecule past the size limit of 56 heavy atoms, and a mirrored molecule must stay six under it so that reagents can still add to it.
 - No rule uses a vague word for what happens. Each one names which group becomes which group, and where.
 
 ## The five
