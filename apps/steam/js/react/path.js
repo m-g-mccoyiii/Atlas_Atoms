@@ -154,20 +154,12 @@ const LEAVES = { aromatize: 1, cyclize: 1, pcc: 1, dehydrate: 1, socl2: 1, koh: 
 // What leaves a molecule in a reaction, by what it is made of.
 const byKind = grp => { const k = grp.map(a => a.el).sort().join(''); return k === 'HHO' ? 'water' : k === 'HH' ? 'h2' : k === 'O' ? 'oxide' : k.includes('Cl') ? 'chloride' : 'other'; };
 // Equipment that catches a by-product as it leaves, and what that adds. A by-product nothing catches is collected
-// if it is water or hydrogen: three of either can be spent. Every by-product also adds a stroke to the tally.
-const CATCH = (() => { const A = (part, val) => ({ part, op: 'add', val }), M = (part, val) => ({ part, op: 'mul', val }); return { coldtrap: { water: A('e', 0.12) }, bunsen: { h2: A('r', 0.5) }, candle: { h2: A('e', 0.25) }, litmus: { chloride: A('e', 0.4) }, regia: { any: M('e', 1.02) },
+// if it is water or hydrogen: it goes to its jar (docs/JARS.md) and feeds the homunculus of the run.
+const CATCH = (() => { const A = (part, val) => ({ part, op: 'add', val }), M = (part, val) => ({ part, op: 'mul', val }); return { coldtrap: { water: A('e', 0.12) }, candle: { h2: A('e', 0.25) }, litmus: { chloride: A('e', 0.4) }, regia: { any: M('e', 1.02) },
   dryer: { water: A('p', 60) }, sieves: { water: A('r', 0.6) }, hood: { any: A('e', 0.06) }, scrubber: { h2: A('p', 50), chloride: A('p', 80), oxide: A('p', 80) } }; })();
 // a reagent found by doing counts for the whole row it stands for: its places count this many times and the row gets the name's bonus
 const SHORT = { wacker: 3, wolff: 4 };
-const BY = { need: 3, tally: 1e9, pay: 50 };
-// spends three of what has been collected. Water gives one more reaction on this page. Hydrogen gives every reagent on the page one more use.
-function spendBy(g, kind, rnd) {
-  if (!g.by || g.by[kind] < BY.need || g.over || g.chain) return false;
-  g.by[kind] -= BY.need;
-  if (kind === 'water') g.more = (g.more || 0) + 1;
-  else g.kinds.forEach(id => { g.left[id] = (g.left[id] || 0) + 1; });
-  return true;
-}
+const BY = { tally: 1e9, pay: 50 };
 // How rare a reagent is. A rarer one turns up less often among the three to take and adds more for each place.
 // odds: weight among the reagents on offer.  place: what each place it changes adds.  dots: how it is marked.
 const RARITY = { common: { odds: 60, place: 20, dots: 1, col: '#5a564e' }, uncommon: { odds: 28, place: 30, dots: 2, col: '#1f5fbf' }, rare: { odds: 10, place: 45, dots: 3, col: '#b0189a' }, legend: { odds: 2, place: 70, dots: 4, col: '#c8891a' } };
@@ -516,7 +508,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.self = RULE.cascade ? ((run && run.self) || SELF0).slice() : SELF.filter(q => q.tier <= ((run && run.tier) || 0)).map(q => q.id); g.casc = 0;
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
-  g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; g.hom = run && run.hom && HOMS[run.hom] ? { id: run.hom, fed: 0, used: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.filter(id => dealtIn(run, id)); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
@@ -572,7 +564,7 @@ function scoreRound(g, o, free) {
   (r.gone || []).forEach((grp, gi) => {
     const kind = byKind(grp); let caught = false;
     g.gear.forEach(q => { const fx = CATCH[q] && (CATCH[q][kind] || CATCH[q].any); if (fx) { emit(q, fx, { gone: gi, kind }); caught = true; } });
-    if (!caught && (kind === 'water' || kind === 'h2')) { g.by[kind]++; ev.push({ src: 'collect', kind, gone: gi, part: 'p', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) }); }
+    if (kind === 'water' || kind === 'h2') { g.by[kind]++; homFeed(g, kind); if (!caught) ev.push({ src: 'collect', kind, gone: gi, part: 'p', op: 'add', val: 0, P: g.P, R: g.R, E: g.E, made: made(g) }); }
     g.by.gauge++; if (g.by.gauge >= BY.tally) { g.by.gauge -= BY.tally; emit('tally', A('p', BY.pay * Math.max(1, cur.path.length))); }
   });
   if (r.hits) kinsOf(o.model).forEach(q => { const fx = KIN[q.id].fx(Object.assign({ free: !!free }, c)); if (fx) emit('family', { part: fx.part, op: fx.op, val: fx.op === 'mul' ? 1 + (fx.val - 1) * q.lv : fx.val * q.lv }, { kin: q.id, lv: q.lv }); });
@@ -590,11 +582,11 @@ function scoreRound(g, o, free) {
 // What a reaction would do if it were taken now, without taking it: what it adds to each number, what it makes,
 // whether it breaks the row and which pieces of equipment it sets off.
 function peek(g, o) {
-  const cur = g.cur, sv = { lit: g.lit, ringSet: g.ringSet, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, layers: cur.layers, lost: g.lost, casc: g.casc, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by) }, before = made(g), brk = breaks(g, o);
+  const cur = g.cur, sv = { lit: g.lit, ringSet: g.ringSet, P: g.P, R: g.R, E: g.E, bank: g.bank, path: cur.path, fresh: cur.fresh, layers: cur.layers, lost: g.lost, casc: g.casc, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), hom: g.hom }, before = made(g), brk = breaks(g, o);
   if (brk) close(g);
   const sc = scoreRound(g, o); if (o.finish) g.E += SYN.finishExtra * o.r.hits;
   const out = { gain: made(g) - before, dP: g.P - (brk ? 0 : sv.P), dR: g.R - sv.R, dE: g.E - sv.E, breaks: brk, fires: sc.ev.filter(e => GEARS[e.src]).map(e => e.src) };
-  g.lit = sv.lit; g.ringSet = sv.ringSet; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; cur.layers = sv.layers; g.lost = sv.lost; g.casc = sv.casc; g.tally = sv.tally; Object.assign(g.by, sv.by);
+  g.lit = sv.lit; g.ringSet = sv.ringSet; g.P = sv.P; g.R = sv.R; g.E = sv.E; g.bank = sv.bank; cur.path = sv.path; cur.fresh = sv.fresh; cur.layers = sv.layers; g.lost = sv.lost; g.casc = sv.casc; g.tally = sv.tally; Object.assign(g.by, sv.by); g.hom = sv.hom;
   return out;
 }
 // A chain reaction. When a row reaches three, the molecule is set off: every reaction that carries the row on then
@@ -650,11 +642,11 @@ function synTake(g, o, free) {
 // ---------- the page lined up, then fired ----------
 // The state of a round is saved, something is tried, and the state is put back.
 function snap(g) {
-  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest };
+  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest };
   c.seen = new Set(c.seen); return s;
 }
 function back(g, s) {
-  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest;
+  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest;
 }
 const BANKID = '#bank';
 // The next step of a cascade: the first reaction the molecule has with itself as it stands, or nothing. Every kind
@@ -696,7 +688,7 @@ function toolUse(g, id, spot) {
   const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
   cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [], gone: res.leaving || [] };
   // what a piece drives off is collected as a reagent's by-product is
-  (res.leaving || []).forEach(grp => { const kind = byKind(grp); if (kind === 'water' || kind === 'h2') g.by[kind]++; g.by.gauge++; });
+  (res.leaving || []).forEach(grp => { const kind = byKind(grp); if (kind === 'water' || kind === 'h2') { g.by[kind]++; homFeed(g, kind); } g.by.gauge++; });
   g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = id !== 'clamp';
   return true;
 }
@@ -710,6 +702,58 @@ function toolGo(g, id, spot) { if (!toolUse(g, id, spot)) return false; if (g.to
 function toolTry(m, id, spot) { const cm = RX.cloneMap(m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; }); if (!RX.tools.apply(cm.model, id, sp)) return null; if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(m)) return null; RX.reopen(cm.model); return cm.model; }
 function toolWorth(m, id, spot, self) { const t = toolTry(m, id, spot); return t ? selfRun(t, self || SELF0) : -1; }
 function toolBest(m, id, self) { const m0 = RX.cloneModel(m); RX.reopen(m0); const base = selfRun(RX.cloneModel(m0), self || SELF0), spots = RX.tools.spots(m0, id, RULE.atoms); let best = null, top = -1, sum = 0, n = 0; spots.forEach(sp => { const v = toolWorth(m0, id, sp, self); if (v < 0) return; sum += v; n++; if (v > top) { top = v; best = sp; } }); return { base, best: top, mean: n ? sum / n : base, spots: n, spot: best, m: m0 }; }
+// ---------- the jars and the homunculi (docs/JARS.md) ----------
+// What comes off the molecule is collected in jars that fill across runs and are never emptied (the page keeps them
+// in its saved progress; JAR.full is how much fills one). A homunculus grows in each jar and hatches when it is
+// full. One hatched homunculus is taken into a run (run.hom). In a round it is fed by its own substance coming off
+// the molecule; with `need` of them it is ready, and after a page has fired and before the next is dealt the player
+// may set it off. Then it is empty again. What each one DOES is one entry of this table and nothing else:
+//   spots(m): the places it can act on molecule m as it stands (one spot for an act on the whole molecule)
+//   act(m, spot): does it to m in place and returns { made }. The zip then runs, and its steps count on from the
+//   steps the page has already run.
+const JAR = { full: { water: 60, h2: 60 }, stages: [0.12, 0.5, 1] };
+const HOMS = {
+  // water floods the page: every C=C outside a benzene ring becomes C-OH, every ring a zip closed opens
+  water: { name: 'water', feed: 'water', need: 3, tok: 'C=C to OH|rings open', whole: true,
+    spots(m) { const cc = RX.CARDS.hydrate.find(m), rings = RX.reopen(RX.cloneModel(m)); return cc.length || rings ? [{ pairs: cc.map(q => [q.bond.a, q.bond.b]) }] : []; },
+    act(m) { RX.reopen(m); const c = RX.CARDS.hydrate, made = []; c.find(m).forEach(q => { if (c.ok(m, q)) c.apply(m, q).incoming.forEach(a => made.push(a)); }); return { made }; } },
+  // hydrogen floats over a gap: where the zip stopped at a stretch too long to cross, the first C=O on the far side becomes OH
+  h2: { name: 'hydrogen', feed: 'h2', need: 3, tok: 'far C=O|to OH',
+    spots(m) {
+      const nb = a => m.neighbors(a), cos = [], ohC = [];
+      m.bonds.forEach(b => { if (b.order !== 2) return; const c = b.a.el === 'C' && b.b.el === 'O' ? b.a : b.b.el === 'C' && b.a.el === 'O' ? b.b : null; if (!c || c.fly) return; const o = c === b.a ? b.b : b.a; if (nb(c).some(q => q.atom !== o && q.atom.el !== 'C' && q.atom.el !== 'H')) return; cos.push({ c, o }); });
+      if (!cos.length) return [];
+      m.atoms.forEach(o => { if (o.el !== 'O' || o.fly) return; const q = nb(o); if (q.length === 2 && q.some(k => k.atom.el === 'H') && q.some(k => k.atom.el === 'C')) ohC.push(q.find(k => k.atom.el === 'C').atom); });
+      if (!ohC.length) return cos.map(q => ({ c: q.c, o: q.o, d: 0 }));
+      const out = new Map();
+      ohC.forEach(c0 => { const dist = new Map([[c0, 0]]), qu = [c0]; while (qu.length) { const a = qu.shift(); nb(a).forEach(k => { if (k.atom.el === 'C' && !dist.has(k.atom)) { dist.set(k.atom, dist.get(a) + 1); qu.push(k.atom); } }); }
+        let best = 1e9; cos.forEach(q => { const d = dist.get(q.c); if (d > 0 && d < best) best = d; }); cos.forEach(q => { if (dist.get(q.c) === best && !out.has(q.c)) out.set(q.c, { c: q.c, o: q.o, d: best }); }); });
+      return Array.from(out.values());
+    },
+    act(m, sp) { const bond = m.findBond(sp.c, sp.o); if (!bond || bond.order !== 2) return null; const r = RX.CARDS.nabh4.apply(m, { bond, c: sp.c, o: sp.o }); return { made: [sp.o].concat(r.incoming || []) }; } }
+};
+const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
+function homFeed(g, kind) { const H = homOf(g); if (H && H.feed === kind) g.hom = Object.assign({}, g.hom, { fed: g.hom.fed + 1 }); }
+const homReady = g => { const H = homOf(g); return !!H && !!g.syn && !g.over && g.hom.fed >= H.need; };
+const homSpots = g => (homReady(g) ? homOf(g).spots(g.m) : []);
+// the molecule as it would be after the homunculus acted there (a copy), or nothing
+function homTry(m, id, spot) { const cm = RX.cloneMap(m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; }); return HOMS[id].act(cm.model, sp) ? cm.model : null; }
+// Sets the homunculus off at a spot (from homSpots). The molecule is replaced by a changed copy, as when a piece is
+// used, and g.reopened tells the page which atom became which. It is then empty.
+function homUse(g, spot) {
+  if (!homReady(g) || !spot) return false;
+  const H = homOf(g), cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
+  const res = H.act(cm.model, sp); if (!res) return false;
+  if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
+  const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
+  cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [], gone: [] };
+  g.hom = { id: g.hom.id, fed: 0, used: (g.hom.used || 0) + 1 }; g.tally.homs = (g.tally.homs || 0) + 1;
+  return true;
+}
+// sets it off and runs the zip that follows (for play with no page); returns the steps it added, or -1
+function homGo(g, spot) { if (!homUse(g, spot)) return -1; let n = 0; for (let o = cascadeNext(g); o; o = cascadeNext(g)) { synTake(g, o, true); n++; } return n; }
+// what a round gave off goes to the run's count, and from there to the jars
+function runBank(run, g) { run.jar = run.jar || { water: 0, h2: 0 }; run.jar.water += g.by.water || 0; run.jar.h2 += g.by.h2 || 0; return { water: g.by.water || 0, h2: g.by.h2 || 0 }; }
 const cascadeDue = g => (cascMode(g) === 'each' || (RULE.cascade && !(g.queue || []).length) ? cascadeNext(g) : null);
 // everything that follows a circle's turn: the cascade if one is due, then each time a piece makes it zip again
 function afterTurn(g, acted, each) { const take = o => { if (each) each(o); else synTake(g, o, true); }; if (acted || cascMode(g) === 'end') for (let o = cascadeDue(g); o; o = cascadeDue(g)) take(o); for (let by = again(g); by; by = again(g)) { if (each) each(null, by); for (let o = cascadeNext(g); o; o = cascadeNext(g)) take(o); } }
@@ -1028,6 +1072,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { JAR, HOMS, homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

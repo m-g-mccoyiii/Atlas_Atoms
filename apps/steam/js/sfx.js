@@ -83,6 +83,10 @@ AA.sfx = {
   // the fuse being lit, and each step of a chain: higher and tighter the further it runs
   fuse() { tone({ freq: 180, freqEnd: 720, dur: 0.28, gain: 0.09, type: 'sawtooth' }); hiss({ freq: 3200, q: 1.5, dur: 0.3, gain: 0.05 }); },
   chain(i) { const f = 440 * Math.pow(2, Math.min(i, 14) / 7); tone({ freq: f, dur: 0.09, gain: 0.07, type: 'square' }); tone({ freq: f * 1.5, dur: 0.07, gain: 0.03, delay: 0.03 }); },
+  // a wet foot on paper: two soft squelches, each a low burst of noise that slides down with a small wobble under it
+  squish() { [0, 0.11].forEach((d, i) => { hiss({ type: 'lowpass', freq: 1500 - i * 300, freqEnd: 260, q: 7, dur: 0.11, gain: 0.3, delay: d, attack: 0.012 }); tone({ freq: 250 - i * 40, freqEnd: 95, dur: 0.09, gain: 0.07, delay: d }); hiss({ freq: 3600, q: 3, dur: 0.03, gain: 0.05, delay: d + 0.07 }); }); },
+  // something light drifting: a soft rising breath
+  drift() { tone({ freq: 520, freqEnd: 880, dur: 0.22, gain: 0.035, type: 'sine' }); hiss({ freq: 5200, q: 0.8, dur: 0.2, gain: 0.02, attack: 0.08 }); },
   bad() { tone({ freq: 140, freqEnd: 90, dur: 0.22, gain: 0.1, type: 'sawtooth' }); }
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
