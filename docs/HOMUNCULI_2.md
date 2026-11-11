@@ -335,3 +335,20 @@ The owner on the fold: "That's not what an acid does and also isn't really that 
 - Why it deepens a run: once a round long stretches stop mattering, so the biggest and worst-spaced molecule of the two on offer becomes the right pick.
 - Hydrogen crosses one stretch and costs a C=O; this removes all of them. It is the stronger, slower jar.
 - To be measured: likely very strong on late molecules.
+
+### Acid bath: agreed by the owner 2026-11-11
+
+- The player triggers it: the creature lights when fed, and is tapped on the page wanted. It acts at once and the zip runs after.
+- It cannot be tapped when the molecule has no stretch too long, so it is never wasted.
+- It does not choose. Every run of plain carbons between two carbons that carry an OH or a C=O, if longer than 3, loses carbons from the middle until 3 are left. Rings are not touched, nor a carbon with a branch on it, nor a plain tail with nothing past it.
+- On hover the carbons it would eat go pale.
+
+### Ammonia: shown to the owner, not yet answered
+
+- Looks like: a little sack of fertilizer on legs, stinking.
+- Once a round, with no feeding: the reward of a slow jar.
+- When tapped after a page has fired: new chain sprouts from where the rings stopped, nine carbons with three C=O spaced to zip, and the rings carry on down it. The number three can be changed.
+- The new chain stays for the rest of the round, so later pages start longer. It counts toward the size limit.
+- Not real chemistry.
+- The choice: page one, and pages two and three start three rings longer; or page three, on the longest row.
+- The jar still needs a source of ammonia across runs (first idea: late molecules that carry nitrogen give it off when hydrate hits them). To be worked out.
