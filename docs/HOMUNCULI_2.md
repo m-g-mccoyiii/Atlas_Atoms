@@ -308,6 +308,22 @@ As above. The owner: the number of hydrogens that feed it can be adjusted later.
 
 The owner: something has to make it reliably or the homunculus cannot work. Proposal: oxidize, a starting reaction, gains one change. A C=C at the very end of a chain loses its end carbon as carbon dioxide and a C=O is left at the new end (real: oxidative cleavage of a terminal alkene). Grow, also a starting reaction, leaves a C=C at the end of every arm it adds, so grow then oxidize makes carbon dioxide in any run. It changes what oxidize does in the base game, so it goes behind a switch and is read on the structural screen before it is kept. Picture: `.claude/shots/co2-source.png`.
 
+**Measured 2026-11-11** (built behind `RULE.co2`, off by default; `rules.js` `endEnes`, the `pcc` card). Oxidize also takes a C=C at the very end of a chain (CH=CH2 only): the end carbon leaves as carbon dioxide and the next carbon is left as C=O. It flies off like water, is named `co2` by `byKind` and counted in `g.by.co2`, `run.jar.co2` and the round log. It goes to the tally place: there is no jar for it yet.
+
+| Read | Switch off | Switch on |
+|---|---|---|
+| Screen, 78 molecules, six starters: best line of three, mean steps | 3.53 | 3.53 (no molecule up or down) |
+| Screen: lines of three that set off any zip | 49% | 50% |
+| Screen: lines of three with 3 steps or more | 11% | 12% |
+| `scrTable`, pages with 1, 3, 6, 10 steps or more | 64.4, 23.3, 3.1, 0.0 | 68.9, 23.4, 3.4, 0.0 |
+| `scrTable`, mean steps a page | 1.56 | 1.66 |
+| 100 median runs, seeds 1 to 100: rounds beaten | 7.43 | 7.70 |
+| The same: wins | 38% | 43% |
+| The same: pass by round | 100, 100, 100, 100, 92, 92, 85, 78, 68 | 100, 100, 100, 100, 96, 94, 88, 78, 69 |
+| Carbon dioxides given off by the median player | none | 2.07 a round, 17.1 a run; 83 rounds in 100 give at least one |
+
+What it says: the source is reliable (a jar fed by three would be ready in most rounds) and it barely moves the base game. The best line of no molecule changes. A few more pages get a first step, because an end C=C that oxidize used to leave alone now becomes a C=O a zip can reach. Rounds beaten rise by 0.27, which is inside the noise of 100 runs. The carbon dioxide homunculus is not built.
+
 ### Carbon dioxide and its source: the owner said go on, 2026-11-11
 
 Freeze as above, fed by the oxidize source above, once that source is measured.
