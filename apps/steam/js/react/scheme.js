@@ -304,8 +304,8 @@ function start(app) {
   let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
-  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, taught: false }, shop = { earned: 0 };
-  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.sig = m.sig || {}; meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
+  let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, stage: 1, six: 0, taught: false }, shop = { earned: 0 };
+  try { best = +(localStorage.getItem('aa_scheme_best') || 0) || 0; const m = JSON.parse(localStorage.getItem('aa_scheme_meta') || 'null'); if (m) { meta.credit = m.credit | 0; meta.tier = Math.max(0, Math.min(P.SUPPLY.length - 1, m.tier | 0)); meta.fam = m.fam || {}; meta.found = m.found || {}; meta.sig = m.sig || {}; meta.six = m.six | 0; meta.stage = m.stage | 0 || (meta.tier >= 4 ? 3 : meta.tier >= 1 ? 2 : 1); meta.taught = !!m.taught; } } catch (e) { /* storage unavailable */ }
   const saveMeta = () => { try { localStorage.setItem('aa_scheme_meta', JSON.stringify(meta)); } catch (e) { /* storage unavailable */ } };
   run = P.runNew(meta.tier);
   const PICKX = [-15, 0, 15];
@@ -395,7 +395,7 @@ function start(app) {
     [bk, bl].forEach((q, i) => { AA.rxKit.finish(T, q); q.rotation.x = -0.8; q.position.set(i ? BALN.x : BEAK.x, 0, i ? BALN.z : BEAK.z); q.visible = false; scene.add(q); }); bk.userData.base = 1.5; bl.scale.setScalar(1.35);
     return { bk, bl, water, skin };
   })();
-  function byAt() { if (st.mode !== 'play') return null; for (const k of ['water', 'h2']) { const p = k === 'water' ? BEAK : BALN; if (Math.abs(hit.x - p.x) < 2 && hit.z > p.z - 3.4 && hit.z < p.z + 1.8) return k; } return null; }
+  function byAt() { if (st.mode !== 'play' || meta.stage < 2) return null; for (const k of ['water', 'h2']) { const p = k === 'water' ? BEAK : BALN; if (Math.abs(hit.x - p.x) < 2 && hit.z > p.z - 3.4 && hit.z < p.z + 1.8) return k; } return null; }
   function spend(kind) { if (st.mode !== 'play' || !P.spendBy(g, kind)) { sfx.bad(); return; } flush(); st.by[kind] = Math.max(0, st.by[kind] - P.BY.need); st.byBump[kind] = 1; const p = kind === 'water' ? BEAK : BALN; burst3(p.x, 0.5, p.z, 30, kind === 'water' ? '#3a6fd0' : '#d6453a'); st.shake = 1; sfx.good(); refresh(); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
   //   point: in a first round, an inked arrow and a few words point at one thing at a time as it first matters
@@ -484,9 +484,12 @@ function start(app) {
   const extraR = () => P.FAMILIES.filter(f => meta.fam[f.id]).reduce((a, f) => a.concat(f.reagents), []).concat(Object.keys(meta.found).filter(k => meta.found[k]));
   // Sigils belong to the occult part of the game. Nothing of them shows until the alchemist has been opened; after
   // that they are earned by deeds in play, and the page of sigils appears once one is earned
-  const occultOpen = () => meta.tier >= 4;
+  // The game opens in stages (docs/ARC.md). 1: the bare game. 2: equipment, suppliers, families. 3: the occult.
+  // Nothing of a later stage is shown before it is reached.
+  const occultOpen = () => meta.stage >= 3;
+  const shopMax = () => (meta.stage >= 3 ? P.SUPPLY.length - 1 : 3);
   const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
-  function newRun() { run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
+  function newRun() { run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
   function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
@@ -509,10 +512,10 @@ function start(app) {
     else { const q = pt(0, 0, 0); x.beginPath(); x.ellipse(c[0], c[1], r * 0.08, r * 0.05, 0, 0, 6.3); x.stroke(); }
   }
 
-  function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name + ' opened', '', '#8a6a00'); dirty = true; }
+  function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.tier < 1 || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name + ' opened', '', '#8a6a00'); dirty = true; }
   // between runs: what the run paid, and the suppliers that can be opened with it
   function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
-  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
+  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
   // Pointing at a reaction works out what it would do, so the page can show it before the click
   function setHover(i) {
     st.hover = i; st.peek = null; st.willFire = null;
@@ -534,7 +537,10 @@ function start(app) {
   }
   function endRound() {
     st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; if (!meta.taught) { meta.taught = true; saveMeta(); }
-    if (st.pass) run.beaten++; { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
+    if (st.pass) run.beaten++;
+    if (meta.stage < 2 && run.beaten >= 3) { meta.stage = 2; if (run.term !== 'hoard') run.noGear = false; saveMeta(); }
+    else if (meta.stage === 2 && st.pass && run.beaten === 6) { meta.six = (meta.six || 0) + 1; if (meta.six >= 2) meta.stage = 3; saveMeta(); }
+    { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
     if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
@@ -699,7 +705,7 @@ function start(app) {
     if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
     dirty = true;
   }
-  const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.pass) { run.round++; showPicks(); } else showSuppliers(); };
+  const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.pass) { run.round++; showPicks(); } else if (meta.stage < 2) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); newRun(); } else showSuppliers(); };
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
@@ -770,7 +776,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.mode === 'shop') {
       const h = px({ x: 0, z: -13 }); marker(x, 100); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('suppliers', h[0], h[1]);
       hand(x, 46); x.fillStyle = PENCIL; x.fillText('that run beat ' + shop.earned + ' rounds and paid ' + shop.earned + ' credit.   credit: ' + meta.credit, h[0], h[1] + 64);
-      P.SUPPLY.forEach((sp, i) => {
+      P.SUPPLY.forEach((sp, i) => { if (i > Math.min(meta.tier + 1, shopMax())) return;
         const c = px({ x: -20, z: -9.2 + i * 3.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
         if (open) swipe(x, [c[0] - 10, c[1] - 18], [c[0] + x.measureText(sp.name).width * 1.5 + 60, c[1] - 22], 50);
         marker(x, 50); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
@@ -780,7 +786,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         hand(x, 30); wrap(x, (things.length ? things.join(',  ') : ''), 800).slice(0, 1).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 40 + j * 30));
         if (hov) ring(x, [c[0] + 400, c[1] + 6], 470, 86, 5, INK, 0.01);
       });
-      P.FAMILIES.forEach((f, i) => {
+      P.FAMILIES.forEach((f, i) => { if (meta.tier < 1) return;
         const c = px({ x: 8, z: -9.2 + i * 3.6 }), open = !!meta.fam[f.id], can = !open && meta.credit >= f.cost, hov = st.hover === 100 + i && !open;
         if (open) swipe(x, [c[0] - 10, c[1] - 18], [c[0] + 330, c[1] - 22], 50);
         marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(f.name, c[0], c[1]);
@@ -814,22 +820,22 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         for (let n = 0; n < (b.pays || 0); n++) coin(x, c[0] - ((b.pays - 1) * 26) + n * 52, y + 52, 20);
         if (hov) swipe(x, [c[0] - 150, c[1] + 16], [c[0] + 150, c[1] + 10], 16);
       });
-      { const k0 = px({ x: 0, z: 12.1 }); hand(x, 38); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
+      { const k0 = px({ x: 0, z: 12.1 }); hand(x, 38); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText(run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'pick') {
-      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 230, h[1] - 36], [h[0] + 230, h[1] - 46], 110); x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
+      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
       hand(x, 50); x.fillStyle = PENCIL; x.fillText('round ' + run.round, h[0], h[1] + 70);
       picks.forEach((o, i) => {
         const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase() + (o.kind === 'reagent' && P.PAIR[o.id] ? ' + ' + RX.CARDS[P.PAIR[o.id]].verb.toLowerCase() : ''), hov = st.hover === i;
-        const kind = o.kind === 'reagent' ? 'new reagent' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger reagent' : 'more of a reagent';
+        const kind = o.kind === 'reagent' ? 'new' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger' : 'more';
         if (!isGear) { const t0 = px({ x: PICKX[i], z: -2 }); fit(x, title, 96, 440, marker); x.textAlign = 'center'; x.fillStyle = rgb(colOf(o.id)); x.fillText(title, t0[0], t0[1]); swipe(x, [t0[0] - 150, t0[1] + 22], [t0[0] + 150, t0[1] + 16], 20, rgb(colOf(o.id))); if (o.kind === 'reagent') dots(x, o.id, t0[0], t0[1] + 62, 9); }
         hand(x, 40); x.fillStyle = PENCIL; x.fillText((i + 1) + '   ' + kind, c[0], c[1] - 56);
         if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
         hand(x, 40); x.fillStyle = INK; wrap(x, P.pickText(run, o), 430).forEach((w, j) => x.fillText(w, c[0], c[1] + 52 + j * 42));
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
-      { const k0 = px({ x: 0, z: 11.4 }); hand(x, 38); x.fillStyle = PENCIL; x.fillText('reagents: ' + run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText('equipment: ' + run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
+      { const k0 = px({ x: 0, z: 11.4 }); hand(x, 38); x.fillStyle = PENCIL; x.fillText(run.rack.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), k0[0], k0[1]); if (run.gear.length) x.fillText(run.gear.map(id => P.GEARS[id].name + ((run.lv[id] || 1) > 1 ? ' level ' + run.lv[id] : '')).join(',  '), k0[0], k0[1] + 46); }
       const b0 = px({ x: -21.5, z: 12.6 }); hand(x, 40); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText('best ' + best, b0[0], b0[1]);
       ink.t.needsUpdate = true; return;
     }
@@ -981,7 +987,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
     // the family of the round's molecule and its rule, above the round
-    if (g && g.m && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.note + ': ' + K.tok, c[0] + dx, c[1] + 30, 22, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
+    if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.note + ': ' + K.tok, c[0] + dx, c[1] + 30, 22, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
     // a molecule that could react with itself: the atoms that would meet are lit, and a click on the molecule folds it
     { const o = twistOpt(); if (o && center && center.model === g.m) { const key = st.twC.key; if (!st.twM || st.twM.key !== key) st.twM = { key, marks: marksOf(center, o.atoms || [], 0.01, 0.2) };
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
@@ -1000,7 +1006,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       else { chip(x, F.tl[0], -72, 0, false); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-22, -12); x.lineTo(8, -12); x.lineTo(-2, -22); x.moveTo(8, -12); x.lineTo(-2, -2); x.stroke(); chip(x, F.tl[1], 62, 0, true); }
       x.restore(); x.globalAlpha = 1; dirty = true; } }
     // the beaker and the balloon are named while they hold something
-    if (g && st.mode !== 'done' && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') [['water', BEAK, 'click: +1 reaction'], ['h2', BALN, 'click: +1 use']].forEach(q => { if (st.by[q[0]] < P.BY.need) return; const c = px({ x: q[1].x + (q[0] === 'h2' ? -0.7 : 0.9), z: q[1].z + 2.2 }); hand(x, 27); x.textAlign = q[0] === 'h2' ? 'left' : 'right'; x.fillStyle = st.by[q[0]] >= P.BY.need ? INK : PENCIL; x.fillText(q[2], c[0], c[1]); });
+    if (g && st.mode !== 'done' && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') [['water', BEAK, 'click: +1 reaction'], ['h2', BALN, 'click: +1 use']].forEach(q => { if (meta.stage < 2 || st.by[q[0]] < P.BY.need) return; const c = px({ x: q[1].x + (q[0] === 'h2' ? -0.7 : 0.9), z: q[1].z + 2.2 }); hand(x, 27); x.textAlign = q[0] === 'h2' ? 'left' : 'right'; x.fillStyle = st.by[q[0]] >= P.BY.need ? INK : PENCIL; x.fillText(q[2], c[0], c[1]); });
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
@@ -1091,7 +1097,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
     ['water', 'h2', 'gauge'].forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done'), tq = now / 1000, nw = Math.min(P.BY.need, st.by.water), nh = Math.min(P.BY.need, st.by.h2), fullW = st.by.water >= P.BY.need, fullH = st.by.h2 >= P.BY.need;
-      keep.bk.visible = on && st.mode !== 'done' && st.by.water >= P.BY.need; keep.bl.visible = on && st.mode !== 'done' && st.by.h2 >= P.BY.need;
+      keep.bk.visible = on && meta.stage >= 2 && st.mode !== 'done' && st.by.water >= P.BY.need; keep.bl.visible = on && meta.stage >= 2 && st.mode !== 'done' && st.by.h2 >= P.BY.need;
       if (on) { const lv = 0.08 + 1.25 * nw / P.BY.need; keep.water.scale.y = lv; keep.water.position.y = 0.06 + lv / 2; keep.water.visible = nw > 0;
         const bw = 1 + 0.25 * st.byBump.water, bh = 1 + 0.25 * st.byBump.h2; keep.bk.scale.set(1.5 * bw, 1.5 * (2 - bw), 1.5 * bw); keep.bk.position.y = fullW ? 0.25 + 0.2 * Math.sin(tq * 5) : 0;
         const sz = (0.45 + 0.22 * nh) * bh; keep.skin.scale.setScalar(sz); keep.skin.position.y = 1.24 + 0.9 * sz; keep.bl.rotation.z = 0.08 * Math.sin(tq * 1.6) + (fullH ? 0.1 * Math.sin(tq * 9) : 0); keep.bl.position.y = fullH ? 0.3 + 0.25 * Math.sin(tq * 4) : 0; } }
@@ -1130,7 +1136,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
+  AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
     setOff, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,

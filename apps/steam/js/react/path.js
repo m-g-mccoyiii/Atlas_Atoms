@@ -620,11 +620,11 @@ function runTake(run, o) {
 }
 // one line saying what a pick does
 function pickText(run, o) {
-  if (o.kind === 'reagent') return PAIR[o.id] ? 'two new reactions for this run' : 'a new reaction for this run';
+  if (o.kind === 'reagent') return '';
   if (o.kind === 'gear') return GEARS[o.id].note;
   if (o.kind === 'level') return 'level ' + ((run.lv[o.id] || 1) + 1) + ': ' + GEARS[o.id].note;
-  if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
-  return 'one more use on every page';
+  if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
+  return '+1 use';
 }
 AA.rxPath = { TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };

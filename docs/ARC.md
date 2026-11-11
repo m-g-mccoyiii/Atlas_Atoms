@@ -18,7 +18,7 @@ Alchemy describes its work in four stages. They are the four stages of the game.
 | II | Albedo | to build with equipment | the lab shelf, suppliers, by-products | 1 to 4 |
 | III | Citrinitas | to bend the rules | the alchemist, the occult shelf, the seals and the circle | 4 to 12 |
 | IV | Rubedo | to master it | familiars, the pact, the stone | 12 to 30 |
-| V | the second book | nothing new: reasons to start again | endless, seeds, the daily, records, the collection, new molecules | 30 and on |
+| V | the second book | nothing new: reasons to start again | endless, seeds, records, the collection, new molecules | 30 and on |
 
 About thirty hours to the stone. The review was right that the first draft's hundred hours was not backed by the content. Hours beyond thirty come from the pact, the endless run and content added later.
 
@@ -137,7 +137,6 @@ The owner asked whether four stages are enough. Four stages get a player to the 
 |---|---|---|
 | Endless | after round nine the run goes on, the number rising every round | the uncapped score is the thing people clip and compare |
 | Seeds | every run has a seed that can be typed in; the same seed gives the same molecules and the same offers | two people can play the same run and compare; a streamer's audience can play the streamer's run |
-| The daily | one seed a day, the same for everyone, first attempt counted, with a local record | a reason to come back that is not a streak: missing a day costs nothing |
 | The record book | best total, longest chain, biggest single reaction and furthest round, kept for each seal | a high score for every way of playing, so one record does not end the chase |
 | The collection | a page of every piece, seal and familiar met so far, blank where one has not been found | Balatro's collection; a visible list of what is left |
 | The grid | every seal against every pact level, a mark where a run was won | Balatro's decks and stakes; optional, and nothing is locked behind it |
@@ -183,7 +182,7 @@ No timers, no login streaks, no paid currency. No unlock sits behind top difficu
 5. **Four familiars.**
 6. **The pact.**
 7. **The last three seals and the stone.**
-8. **Seeds, the daily and the record book.** Seeds come first; they need every random draw in a run to come from one seeded source.
+8. **Seeds and the record book.** No daily: the owner does not want one. Seeds come first; they need every random draw in a run to come from one seeded source.
 9. **The collection and the grid.**
 10. **New molecule classes.**
 
