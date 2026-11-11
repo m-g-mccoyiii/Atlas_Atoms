@@ -69,7 +69,8 @@ const DIAL = { keep: 3, steps: 3 };
 //   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
 //         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
 //   tiers: marks above the number to beat, each this many times the number. The number stays the pass line.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8] };
+//   coins: the currency of a run (see COIN). Off, nothing is paid and nothing can be spent.
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8], coins: true };
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
@@ -653,7 +654,7 @@ function runChoose(run, o) { run.kin = o.kin || 'chain'; run.src = o.src || null
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much
 function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (run.bonus || 0) + n; return n; }
-function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return runAssays({ extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, by: { water: 0, h2: 0, gauge: 0 } }); }
+function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return runAssays({ extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, coins: 0, rerolls: 0, by: { water: 0, h2: 0, gauge: 0 } }); }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
 // Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
@@ -714,6 +715,17 @@ function runQuota(run, feed) { const k = quotaParts(run, feed); return nice(k.pa
 // number has reached none.
 const runMarks = quota => (RULE.tiers || []).map(t => nice(quota * t));
 const marksHit = (total, quota) => (total >= quota ? runMarks(quota).filter(m => total >= m).length : 0);
+// Coins live only inside a run. A beaten round pays one for each mark above the number that was reached, and coins
+// already held pay interest first: one for every COIN.per held, COIN.cap at most. On the take-one page they are
+// spent: the three offers are dealt again for 1, then 2, then 3 within one visit; a held piece of equipment is
+// removed for COIN.bin. Leaving all three pays COIN.skip.
+const COIN = { mark: 1, skip: 1, bin: 2, per: 3, cap: 2 };
+const rerollCost = run => 1 + (run.rerolls || 0);
+const interestOf = run => (RULE.coins ? Math.min(COIN.cap, Math.floor((run.coins || 0) / COIN.per)) : 0);
+function runEarn(run, total, quota) { run.rerolls = 0; if (!RULE.coins || total < quota) return { marks: 0, interest: 0 }; const interest = interestOf(run), marks = marksHit(total, quota) * COIN.mark; run.coins = (run.coins || 0) + interest + marks; return { marks, interest }; }
+function runReroll(run, rnd) { const c = rerollCost(run); if (!RULE.coins || (run.coins || 0) < c) return null; run.coins -= c; run.rerolls = (run.rerolls || 0) + 1; return runPicks(run, rnd); }
+function runSkip(run) { run.rerolls = 0; if (RULE.coins) run.coins = (run.coins || 0) + COIN.skip; }
+function runBin(run, id) { if (!RULE.coins || (run.coins || 0) < COIN.bin || !run.gear.includes(id)) return false; run.coins -= COIN.bin; run.gear = run.gear.filter(q => q !== id); delete run.lv[id]; return true; }
 function runPicks(run, rnd) {
   const R = rnd || rand, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
   const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear ? st.gear.filter(id => !run.gear.includes(id)) : [];
@@ -729,6 +741,7 @@ function runPicks(run, rnd) {
   return out;
 }
 function runTake(run, o) {
+  run.rerolls = 0;
   if (o.kind === 'reagent') { [o.id, PAIR[o.id]].forEach(id => { if (id && !run.rack.includes(id)) run.rack.push(id); }); }
   else if (o.kind === 'gear') { if (run.gear.length < RUNG.slots && !run.gear.includes(o.id)) run.gear.push(o.id); }
   else if (o.kind === 'level') run.lv[o.id] = (run.lv[o.id] || 1) + 1;
@@ -743,6 +756,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, runMarks, marksHit, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

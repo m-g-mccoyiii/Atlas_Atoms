@@ -301,7 +301,7 @@ function start(app) {
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.7; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   if (KITV === 'back') { C0.x += 0.3; C0.z += 0.3; }
-  let SLOTW = 10, LABF = 50; const LADW = [];
+  let SLOTW = 10, LABF = 50;
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, stage: 1, six: 0, taught: false }, shop = { earned: 0 };
@@ -319,7 +319,8 @@ function start(app) {
   const spray = (n, col, wide) => { if (PLAIN) return; const now = performance.now(); for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, d = 2 + Math.random() * (wide ? 12 : 6); if (k % 3) continue; st.blots.push({ x: C0.x + Math.cos(a) * d * 1.3, z: C0.z + Math.sin(a) * d * 0.7, r: 4 + Math.random() * (wide ? 12 : 8), t: now, col }); } };
 
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
-  let kitObjs = [];
+  let kitObjs = [], heldObjs = [];
+  const clearPicks = () => { pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; heldObjs.forEach(k => scene.remove(k.grp)); heldObjs = []; };
   const GLASS = AA.rxKit.mat(T, 0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
@@ -452,17 +453,24 @@ function start(app) {
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
     st.tok++; st.mode = 'play'; st.paid = ''; st.shown = 0; st.pass = false; st.won = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
-    clearRound(); clearBriefs(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    clearRound(); clearBriefs(); clearPicks();
     st.stains = []; st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
     g = P.runBegin(run, run.feed, true); st.quota = run.quota; st.E = g.E; st.R = g.R;
     setAlign(g.m); center = buildMol(g.m, null); SC_MAIN = fitMain(center); place(center, C0, 0.01); tween(center, C0, SC_MAIN, 0.3); st.sc = SC_MAIN; center.groups = groupsOf(center); center.ghosts = []; st.by = Object.assign({}, g.by);
     refresh(); sfx.feed(); callout('round ' + run.round, fmt(st.quota) + ' to beat', INK);
   }
   // between rounds: three things on the page, take one
-  function showPicks() {
+  // coins on the take-one page: the three dealt again, all three left for a coin, a held piece removed
+  const REROLL = { x: -3.4, z: 11.6 }, SKIP = { x: 9, z: 11.6 }, PURSE = { x: -17, z: 12 }, HELD = i => ({ x: 10 + i * 3.3, z: -10.2 });
+  function pickMark() { if (!P.RULE.coins || st.mode !== 'pick') return ''; if (hit.x > REROLL.x - 1.6 && hit.x < REROLL.x + 5.4 && Math.abs(hit.z - REROLL.z) < 1.8) return 'reroll'; if (hit.x > SKIP.x - 2.2 && hit.x < SKIP.x + 4.6 && Math.abs(hit.z - SKIP.z) < 1.8) return 'skip'; for (let i = 0; i < run.gear.length; i++) { const q = HELD(i); if (Math.abs(hit.x - q.x) < 1.6 && hit.z > q.z - 3.2 && hit.z < q.z + 1.6) return 'bin' + i; } return ''; }
+  function doReroll() { if (st.mode !== 'pick') return; const n = P.runReroll(run); if (!n) { sfx.bad(); return; } st.drawT = performance.now(); st.coinT = performance.now(); showPicks(n); }
+  function doSkip() { if (st.mode !== 'pick' || !P.RULE.coins) return; P.runSkip(run); st.coinT = performance.now(); sfx.stamp(); showBriefs(); }
+  function doBin(i) { const id = run.gear[i]; if (st.mode !== 'pick' || !id) return; if (!P.runBin(run, id)) { sfx.bad(); return; } st.coinT = performance.now(); sfx.stamp(); st.shake = 0.5; showPicks(picks); }
+  function showPicks(list) {
     st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = []; st.pings = [];
-    pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
-    picks = P.runPicks(run);
+    clearPicks(); st.mark = '';
+    picks = list || P.runPicks(run);
+    if (P.RULE.coins) run.gear.forEach((id, i) => { const k = piece(id), q = HELD(i); k.grp.position.set(q.x, 0, q.z); k.grp.scale.setScalar(0.62 * sizeOf(id)); heldObjs.push(k); });
     picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') { const k = piece(o.id); k.grp.position.set(PICKX[i], 0, -2.2); k.grp.scale.setScalar(1.7); k.slot = i; k.born = performance.now() + 120 + i * 130; k.grp.visible = false; pickObjs.push(k); } });
     sfx.feed(); dirty = true;
   }
@@ -476,7 +484,7 @@ function start(app) {
   const BX = i => (briefs.length === 1 ? 0 : PICKX[i]);
   function showBriefs() {
     st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1;
-    pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = [];
+    clearPicks();
     briefs = P.runBriefs(run);
     briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: BX(i), z: -2.2 }, 0.01); tween(m, { x: BX(i), z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
     sfx.feed(); dirty = true;
@@ -498,7 +506,7 @@ function start(app) {
   function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
-  function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
+  function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
   function chooseTerm(i) { const t = P.TERMS[i]; if (st.mode !== 'terms' || !t) return; if (!sigOpen(t)) { sfx.bad(); return; } P.runTerm(run, t.id); sfx.stamp(); st.shake = 0.6; showPicks(); }
   function termAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; for (let i = 0; i < P.TERMS.length; i++) { const q = TERMP(i); if (Math.abs(hit.x - q.x) < 6.5 && Math.abs(hit.z - q.z) < 4.4) return i; } return -1; }
   // a sigil: two rings and a figure inside that belongs to its terms
@@ -520,7 +528,7 @@ function start(app) {
 
   function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.tier < 1 || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name + ' opened', '', '#8a6a00'); dirty = true; }
   // between runs: what the run paid, and the suppliers that can be opened with it
-  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
+  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
   function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
   // Pointing at a reaction works out what it would do, so the page can show it before the click
   function setHover(i) {
@@ -547,6 +555,7 @@ function start(app) {
     if (meta.stage < 2 && run.beaten >= 3) { meta.stage = 2; if (run.term !== 'hoard') run.noGear = false; saveMeta(); }
     else if (meta.stage === 2 && st.pass && run.beaten === 6) { meta.six = (meta.six || 0) + 1; if (meta.six >= 2) meta.stage = 3; saveMeta(); }
     { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
+    st.earn = st.pass ? P.runEarn(run, g.total, st.quota) : null; if (st.earn && st.earn.marks + st.earn.interest) st.coinT = performance.now();
     if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
@@ -779,6 +788,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function chip(x, txt, cx, cy, on) { hand(x, 34); const w = Math.max(74, x.measureText(txt).width + 26); x.fillStyle = on ? GCOL[txt] || INK : 'rgba(141,148,156,0.35)'; x.beginPath(); x.ellipse(cx, cy - 11, w / 2, 25, 0, 0, 6.3); x.fill(); x.fillStyle = '#fbf8ee'; x.textAlign = 'center'; x.fillText(txt, cx, cy); return w; }
   // a coin of credit, drawn in ink
   function coin(x, cx, cy, r) { x.fillStyle = '#e9b93a'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); x.strokeStyle = '#8a6a00'; x.lineWidth = 4; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.stroke(); x.beginPath(); x.arc(cx, cy, r * 0.55, 0.4, 5.2); x.stroke(); }
+  // A coin of the run, seen from the side so that coins stack, in copper: the credit kept between runs is the gold one.
+  function rcoin(x, cx, cy, r, a) { x.globalAlpha = a == null ? 1 : a; x.fillStyle = '#d98a4a'; x.strokeStyle = '#7a4318'; x.lineWidth = Math.max(2.5, r * 0.2); x.beginPath(); x.ellipse(cx, cy, r, r * 0.5, 0, 0, 6.3); x.fill(); x.stroke(); x.globalAlpha = 1; }
+  // the coins held: a stack, at most ten high, and how many
+  function purse(x, cx, cy, n, r, plus) { if (n <= 0) { x.strokeStyle = FAINT; x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, r, r * 0.5, 0, 0, 6.3); x.stroke(); } for (let k = 0; k < Math.min(10, n); k++) rcoin(x, cx + ((k * 7) % 3 - 1) * 1.5, cy - k * r * 0.46, r);
+    marker(x, r * 2); x.textAlign = 'left'; x.fillStyle = '#7a4318'; x.fillText(String(n), cx + r + 14, cy + r * 0.6); if (plus) { const w = x.measureText(String(n)).width; marker(x, r * 1.5); x.fillStyle = GREEN; x.fillText('+' + plus, cx + r + 30 + w, cy + r * 0.6); } }
+  function turnMark(x, cx, cy, r, col, lw) { x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(cx, cy, r, 0.9, 5.6); x.stroke(); const a = 5.6, hx = cx + Math.cos(a) * r, hy = cy + Math.sin(a) * r; x.beginPath(); x.moveTo(hx - r * 0.6, hy - r * 0.2); x.lineTo(hx, hy); x.lineTo(hx - r * 0.12, hy + r * 0.64); x.stroke(); }
   // the marks of the three numbers: a ring for places, chevrons for the row, a star for extra
   function glyph(x, k, cx, cy, s, col) {
     x.strokeStyle = col || PART[k]; x.lineWidth = Math.max(3, s * 0.15); x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
@@ -858,6 +873,19 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         if (isGear) inkLine(x, P.GEARS[o.id].tok || '', c[0], c[1] + 52, 40, INK); else { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(P.pickText(run, o), c[0], c[1] + 52); }
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
+      if (P.RULE.coins) {
+        { const c = px(PURSE); purse(x, c[0], c[1], run.coins || 0, 24); }
+        // the three dealt again: a turning arrow, and beside it the coins it costs
+        { const c = px(REROLL), cost = P.rerollCost(run), can = (run.coins || 0) >= cost, hov = st.mark === 'reroll', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0], c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < cost; k++) rcoin(x, c[0] + 66 + k * 38, c[1] + 2, 15, can ? 1 : 0.4); }
+        // all three left: an arrow past three dots, and the coin it pays
+        { const c = px(SKIP), hov = st.mark === 'skip'; x.fillStyle = PENCIL; for (let k = 0; k < 3; k++) { x.beginPath(); x.arc(c[0] - 34 + k * 26, c[1] + 12, 5, 0, 6.3); x.fill(); } x.strokeStyle = INK; x.lineWidth = hov ? 10 : 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(c[0] - 46, c[1] - 6); x.quadraticCurveTo(c[0] - 8, c[1] - 40, c[0] + 34, c[1] - 6); x.moveTo(c[0] + 14, c[1] - 22); x.lineTo(c[0] + 36, c[1] - 4); x.lineTo(c[0] + 38, c[1] - 30); x.stroke();
+          marker(x, 34); x.textAlign = 'left'; x.fillStyle = GREEN; x.fillText('+', c[0] + 58, c[1] + 10); rcoin(x, c[0] + 100, c[1] + 2, 15); }
+        // what is held stands at the top. One of them can go in the bin for two coins
+        if (run.gear.length) { const n = run.gear.length, b = px({ x: HELD(n).x - 0.4, z: HELD(0).z + 0.2 }), can = (run.coins || 0) >= P.COIN.bin, col = can ? INK : FAINT, hi = /^bin/.test(st.mark || '') ? +st.mark.slice(3) : -1;
+          x.strokeStyle = col; x.lineWidth = 5; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(b[0] - 24, b[1] - 40); x.lineTo(b[0] - 17, b[1] + 6); x.lineTo(b[0] + 17, b[1] + 6); x.lineTo(b[0] + 24, b[1] - 40); x.moveTo(b[0] - 30, b[1] - 40); x.lineTo(b[0] + 30, b[1] - 41); x.moveTo(b[0] - 8, b[1] - 30); x.lineTo(b[0] - 6, b[1] - 4); x.moveTo(b[0] + 8, b[1] - 30); x.lineTo(b[0] + 6, b[1] - 4); x.stroke();
+          for (let k = 0; k < P.COIN.bin; k++) rcoin(x, b[0] - 15 + k * 30, b[1] + 30, 12, can ? 1 : 0.4);
+          if (hi >= 0 && run.gear[hi]) { const q = px({ x: HELD(hi).x, z: HELD(hi).z - 0.7 }); x.strokeStyle = can ? REDINK : FAINT; x.lineWidth = 8; x.beginPath(); x.moveTo(q[0] - 34, q[1] - 34); x.lineTo(q[0] + 34, q[1] + 30); x.moveTo(q[0] + 34, q[1] - 34); x.lineTo(q[0] - 34, q[1] + 30); x.stroke(); hand(x, 28); x.textAlign = 'center'; x.fillStyle = PENCIL; const q2 = px({ x: HELD(hi).x, z: HELD(hi).z + 2.2 }); x.fillText(P.GEARS[run.gear[hi]].name, q2[0], q2[1]); } }
+      }
       ink.t.needsUpdate = true; return;
     }
     const play = st.mode === 'play', open = g.cur.path.length > 0;
@@ -982,7 +1010,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     { const marks = P.runMarks(st.quota), top = done ? g.total : st.shown, hitN = top >= st.quota ? marks.filter(m => top >= m).length : 0, lx = bq[0] + 104, y0 = bq[1] - 8, dy = 38;
       if (marks.length) { x.strokeStyle = INK; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(lx + 1, y0 + 14); x.lineTo(lx - 1, y0 - dy * (marks.length - 1) - 16); x.stroke(); }
       marks.forEach((m, k) => { const y = y0 - dy * k, on = k < hitN; x.strokeStyle = on ? GREEN : INK; x.fillStyle = on ? GREEN : '#fbf8ee'; x.lineWidth = 4; x.beginPath(); x.ellipse(lx, y, 9, 8, 0.2, 0, 6.3); x.fill(); x.stroke(); x.beginPath(); x.moveTo(lx + 9, y); x.lineTo(lx + 24, y - 1); x.stroke();
-        hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(fmt(m), lx + 32, y + 10); LADW[k] = x.measureText(fmt(m)).width; }); st.ladder = { lx, y0, dy, n: marks.length, hit: hitN }; }
+        hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(fmt(m), lx + 32, y + 10); if (P.RULE.coins) rcoin(x, lx + 32 + x.measureText(fmt(m)).width + 26, y - 1, 11, on ? 1 : 0.3); });
+      if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest : 0; purse(x, lx + 330, y0 + 6, run.coins || 0, 20, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
     if (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') && P.RULE.hand) {
@@ -1097,18 +1126,19 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     for (let i = 0; i < P.FAMILIES.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x >= 6.5) return 100 + i; }
     return hit.z > 9.5 ? -1 : -2;
   }
-  cv.addEventListener('pointermove', e => { if (st.mode === 'terms') { const i = termAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { const mk = bankAt() ? 'bank' : drawAt() ? 'draw' : pagesAt() ? 'pages' : ''; if (mk !== st.mark) { st.mark = mk; dirty = true; } } { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mark || st.mode === 'done' ? 'pointer' : ''; });
+  cv.addEventListener('pointermove', e => { if (st.mode === 'terms') { const i = termAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e), mk = i < 0 ? pickMark() : ''; if (i !== st.hover || mk !== st.mark) { st.hover = i; st.mark = mk; dirty = true; } cv.style.cursor = i >= 0 || mk ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); { const mk = bankAt() ? 'bank' : drawAt() ? 'draw' : pagesAt() ? 'pages' : ''; if (mk !== st.mark) { st.mark = mk; dirty = true; } } { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mark || st.mode === 'done' ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
   cv.addEventListener('pointerdown', () => { if (!twistAt()) return; st.drag = { x: hit.x, z: hit.z }; doTwist(); if (morph && morph.slow) { morph.scrub = true; morph.kDrag = 0; morph.kHeld = 0; } });
   cv.addEventListener('pointermove', () => { if (st.drag && morph && morph.scrub) morph.kDrag = Math.min(1, Math.hypot(hit.x - st.drag.x, hit.z - st.drag.z) / 5); });
   root.addEventListener('pointerup', () => { if (!st.drag) return; st.drag = null; if (morph && morph.scrub) { morph.scrub = false; morph.t0 = performance.now() - morph.s0 - (morph.K || 0) * 460; } });
-  cv.addEventListener('click', e => { if (st.mode === 'terms') { const i = termAt(e); if (i >= 0) chooseTerm(i); return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e); if (i >= 0) takePick(i); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (bankAt()) doBank(); else if (drawAt()) doRedraw(); else if (pagesAt()) doTurn(); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else if (kitAt('extinguisher')) doDouse(); else { const b = byAt(); if (b) spend(b); } });
+  cv.addEventListener('click', e => { if (st.mode === 'terms') { const i = termAt(e); if (i >= 0) chooseTerm(i); return; } if (st.mode === 'brief') { const i = pickAt(e, briefs); if (i >= 0) chooseBrief(i); return; } if (st.mode === 'shop') { const i = shopAt(e); if (i === -1) next(); else if (i >= 100) openFamily(i - 100); else if (i >= 0) openSupplier(i); return; } if (st.mode === 'pick') { const i = pickAt(e), mk = i < 0 ? pickMark() : ''; if (i >= 0) takePick(i); else if (mk === 'reroll') doReroll(); else if (mk === 'skip') doSkip(); else if (mk) doBin(+mk.slice(3)); return; } if (st.mode === 'fuse') return; if (st.mode === 'done') return next(); const s = slotAt(e); if (s >= 0) pick(s); else if (bankAt()) doBank(); else if (drawAt()) doRedraw(); else if (pagesAt()) doTurn(); else if (twistAt()) doTwist(); else if (pawAt()) doWish(); else if (kitAt('extinguisher')) doDouse(); else { const b = byAt(); if (b) spend(b); } });
   root.addEventListener('keydown', e => {
     if (e.key >= '1' && e.key <= '6') { if (st.mode === 'terms') chooseTerm(+e.key - 1); else if (st.mode === 'pick') takePick(+e.key - 1); else if (st.mode === 'brief') chooseBrief(+e.key - 1); else pick(+e.key - 1); }
     else if (e.key === 'f' || e.key === 'F') pick(FIN);
     else if (e.key === 't' || e.key === 'T') doTwist();
     else if (e.key === 'b' || e.key === 'B') doBank();
-    else if (e.key === 'd' || e.key === 'D') doRedraw();
+    else if (e.key === 'd' || e.key === 'D') { if (st.mode === 'pick') doReroll(); else doRedraw(); }
+    else if ((e.key === 's' || e.key === 'S') && st.mode === 'pick') doSkip();
     else if (e.key === 'n' || e.key === 'N') doTurn();
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); }
     else if (e.key === 'r' || e.key === 'R') newRun();
@@ -1196,10 +1226,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   root.addEventListener('resize', size);
   AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
-    setOff, bank: doBank, redraw: doRedraw, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
+    setOff, bank: doBank, redraw: doRedraw, reroll: doReroll, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,
-    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
+    state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' ? { mode: st.mode, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

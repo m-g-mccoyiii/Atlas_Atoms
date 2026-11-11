@@ -109,14 +109,27 @@
     };
   }
   const ORDER = ['gear', 'reagent', 'level', 'strong', 'bottle'];
+  // Coins on the take-one page. coin(run, picks, rnd) answers 'reroll', 'skip', 'bin:<piece>' or nothing, and is asked
+  // again after each. A player with a plan removes a piece that drags the build down, deals the three again when
+  // none of them is worth much, and leaves all three for a coin when even then none is. lo: the worth under which
+  // the offer is dealt again. deep: it also will not spend a coin that is earning interest unless the offer is worthless.
+  const heldWorth = (run, id, pairs) => { let w = WORTH[id] || 1; if (pairs) { run.gear.forEach(h => { if (h !== id) w *= syn(id, h); }); w /= id === 'pact' ? 2 : id === 'idol' ? 1.5 : id === 'hourglass' ? 1.25 : 1; } return w; };
+  const coinPlan = (pairs, lo, deep) => (run, picks) => {
+    const c = run.coins || 0, w = picks.reduce((t, o) => Math.max(t, worthOf(run, o, pairs)), 0), cost = P.rerollCost(run);
+    if (c >= P.COIN.bin && run.gear.length) { let worst = run.gear[0]; run.gear.forEach(id => { if (heldWorth(run, id, pairs) < heldWorth(run, worst, pairs)) worst = id; }); const ww = heldWorth(run, worst, pairs); if (ww < 0.7 || (ww < 0.85 && run.gear.length >= P.RUNG.slots)) return 'bin:' + worst; }
+    const keeps = Math.floor((c - cost) / P.COIN.per) >= Math.min(P.COIN.cap, Math.floor(c / P.COIN.per));
+    if (w < lo && cost <= c && (deep ? keeps || w < 1.05 : cost <= 2)) return 'reroll';
+    if (w < lo + 0.3 && cost <= c - P.COIN.per * P.COIN.cap) return 'reroll';
+    return w <= 1.1 ? 'skip' : null;
+  };
   // the moves on a page: every reaction on offer and, when it is allowed, the bank
   const movesOf = (g, o) => { const ids = Object.keys(o); if (P.canBank(g)) ids.push(BANK); return ids; };
   const conts = (g, o) => Object.keys(o).filter(id => o[id].cont && g.cur.path.length > 0).length;
   // At a fork of a chain: each way on is played out to the end of the chain, and so is stopping here with the bank.
-  function forkPlan(g, a) {
+  function forkPlan(g, a, noBank) {
     let best = null, top = -Infinity;
     a.forEach(q => { const s = snap(g); P.synTake(g, q, true); runChain(g, null, null); const v = P.made(g); back(g, s); if (v > top) { top = v; best = q; } });
-    if (P.canBank(g) && P.made(g) + P.bankGain(g) > top) return BANK;
+    if (!noBank && P.canBank(g) && P.made(g) + P.bankGain(g) > top) return BANK;
     return best;
   }
   // PLAYERS[x].move(g, o, fin, ctx, rnd): a reagent, '#bank', '#finish', or null to end the page
@@ -126,20 +139,25 @@
     // redraws without a reason.
     novice: { move: (g, o, fin, ctx, rnd) => { const ids = movesOf(g, o); if (fin) { o = Object.assign({ '#finish': fin }, o); ids.push('#finish'); } if (!ids.length) return null; return rnd() < 0.6 ? topGain(g, o, ids) : anyOf(ids, rnd); },
       redraw: (g, o, rnd) => rnd() < 0.12, fork: (g, a, rnd) => (rnd() < 0.6 ? null : P.canBank(g) && rnd() < 0.34 ? BANK : anyOf(a, rnd)),
+      coin: (run, picks, rnd) => { const x = rnd(); return x < 0.15 && (run.coins || 0) >= P.rerollCost(run) ? 'reroll' : x < 0.23 ? 'skip' : x < 0.26 && run.gear.length && (run.coins || 0) >= P.COIN.bin ? 'bin:' + anyOf(run.gear, rnd) : null; },
       pick: (run, picks, rnd) => Math.floor(rnd() * picks.length), round: (run, briefs, rnd) => Math.floor(rnd() * briefs.length) },
     // the player the matrix was measured with: the biggest number now, equipment first, the plain round. The bank is
     // one more number to it, so it banks whenever that is the biggest.
     greedy: { move: (g, o) => { const ids = movesOf(g, o); return ids.length ? topGain(g, o, ids) : null; },
       fork: (g, a) => { let c = BANK, top = P.canBank(g) ? P.bankGain(g) : -Infinity; a.forEach(q => { const v = gainOf(g, q); if (v > top) { top = v; c = q; } }); return c; },
+      coin: (run, picks) => (!picks.some(o => o.kind === 'gear' || o.kind === 'reagent') && P.rerollCost(run) === 1 && (run.coins || 0) >= 1 ? 'reroll' : null),
       pick: (run, picks) => { let bi = 0; picks.forEach((o, i) => { if (ORDER.indexOf(o.kind) < ORDER.indexOf(picks[bi].kind)) bi = i; }); return bi; }, round: () => 0 },
     // keeps the row, looks three reactions ahead, takes the pick worth most in a build, spends water. Redraws when a
     // row is open and nothing in the hand keeps it; banks when even then nothing does. Takes the biggest link at a fork.
-    median: { move: planned({ depth: 3, keep: true, finish: true, bank: true }), redraw: (g, o) => g.cur.path.length >= 2 && !conts(g, o), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
+    median: { move: planned({ depth: 3, keep: true, finish: true, bank: true }), redraw: (g, o) => g.cur.path.length >= 2 && !conts(g, o), coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
     // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
     // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
-    planner: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: forkPlan, pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    planner: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    // the planner without the bank and otherwise identical: it may still break a row by taking a reaction that does
+    // not follow on. Used for the paired test of the bank
+    nobank: { move: planned({ depth: 3, beam: 2, deep: true, finish: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a, true); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
     // the planner with no way to end a row on purpose: it keeps the row whenever it can and never banks
-    keeper: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, keep: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a); return c === BANK ? null : c; }, pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true }
+    keeper: { move: planned({ depth: 3, beam: 2, deep: true, finish: true, keep: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true }
   };
 
   // ---------- how much of a choice a turn is ----------
@@ -153,7 +171,19 @@
     if (!g.over && P.fire(g)) runChain(g, null, null);
     const v = P.made(g); back(g, s); return v;
   }
+  // Whether the bank is the right move where it is offered, by the planner's reckoning: the page is searched three
+  // reactions deep (what the open row will multiply later and what a charged page will add are counted) once with
+  // the bank as the first move and once with each reaction as the first move.
+  const EVAL = { depth: 3, beam: 2, deep: true, finish: true, bank: true };
+  function bankRight(g, o) {
+    const d = Math.min(3, Math.max(1, P.stepsOf(g) - g.pageSteps)), ids = Object.keys(o); let vb, vn = -1;
+    { const s = snap(g); P.bank(g); vb = search(g, d - 1, EVAL).val; back(g, s); }
+    ids.forEach(id => { const s = snap(g); P.synTake(g, o[id]); const v = search(g, d - 1, EVAL).val; back(g, s); if (v > vn) vn = v; });
+    if (!ids.length) vn = leaf(g, EVAL);
+    return vb > vn;
+  }
   function weigh(g, o, d) {
+    if (P.canBank(g) && g.m.atoms.length <= BIG.near) { d.bkOff++; if (bankRight(g, o)) d.bkRight++; if (!Object.keys(o).length) d.bkOnly++; }
     const ids = movesOf(g, o); d.n++; d.opts += ids.length; if (g.cur.path.length > 0) { d.open++; if (conts(g, o) <= 1) d.one++; }
     if (ids.length < 2) { d.forced++; return; }
     const gs = ids.map(id => ({ id, v: gainId(g, o, id) })).sort((a, b) => b.v - a.v);
@@ -163,7 +193,7 @@
 
   // ---------- one round, played as the page plays it ----------
   function playRound(g, run, pol, rnd, log) {
-    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0 } : null; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
+    const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0, bkOff: 0, bkRight: 0, bkOnly: 0, fkOff: 0, fkRight: 0 } : null; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
     const big = () => { atoms = Math.max(atoms, g.m.atoms.length); if (g.m.atoms.length > cap) cut = 1; return cut; };
     for (;;) {
       ctx.plan = null;
@@ -190,7 +220,7 @@
       }
       if (cut && !g.over) { P.synEnd(g); pages.push(g.total); break; }
       if (g.over) { pages.push(g.total); break; }
-      if (P.fire(g)) { const n = runChain(g, (g2, a, r2) => { forks++; return pol.fork ? pol.fork(g2, a, r2) : null; }, rnd, () => { steps++; if (big()) return true; if (pol.douse && g.gear.includes('extinguisher') && !g.doused && g.chain) { const o2 = P.options(g, true); if (!Object.keys(o2).some(k => o2[k].cont)) P.douse(g); } return false; }); chainMax = Math.max(chainMax, n); }
+      if (P.fire(g)) { const n = runChain(g, (g2, a, r2) => { forks++; if (dec && P.canBank(g2)) { dec.fkOff++; if (forkPlan(g2, a) === BANK) dec.fkRight++; } return pol.fork ? pol.fork(g2, a, r2) : null; }, rnd, () => { steps++; if (big()) return true; if (pol.douse && g.gear.includes('extinguisher') && !g.doused && g.chain) { const o2 = P.options(g, true); if (!Object.keys(o2).some(k => o2[k].cont)) P.douse(g); } return false; }); chainMax = Math.max(chainMax, n); }
       if (cut && !g.over) P.synEnd(g);
       if (g.over) { pages.push(g.total); break; }
       if (g.page >= P.pagesOf(g)) { if (pol.wish && run.assayNow) P.wish(g, run); P.synEnd(g); pages.push(g.total); break; }
@@ -215,7 +245,9 @@
     let alive = true;
     for (let r = 1; r <= (opts.rounds || 9); r++) {
       run.round = r;
-      const picks = P.runPicks(run, rnd), pi = picks.length ? pol.pick(run, picks, rnd) : -1; if (pi >= 0) P.runTake(run, picks[pi]);
+      let picks = P.runPicks(run, rnd), skipped = false; const acts = [];
+      if (P.RULE.coins && pol.coin && !opts.noCoin) for (let k = 0; k < 8; k++) { const a = pol.coin(run, picks, rnd); if (!a) break; if (a === 'reroll') { const n = P.runReroll(run, rnd); if (!n) break; picks = n; acts.push('reroll'); } else if (a === 'skip') { P.runSkip(run); skipped = true; acts.push('skip'); break; } else { if (!P.runBin(run, a.slice(4))) break; acts.push(a); } }
+      const pi = !skipped && picks.length ? pol.pick(run, picks, rnd) : -1; if (pi >= 0) P.runTake(run, picks[pi]);
       const kept = run.last; if (opts.noCarry) run.last = null;
       const briefs = P.runBriefs(run, rnd); run.last = kept;
       const can = briefs.filter(q => !(q.brief === 'carry' && run.last && run.last.atoms.length > BIG.carry)), b = can.length > 1 ? can[pol.round(run, can, rnd)] : can[0];
@@ -225,7 +257,7 @@
       if (opts.dec) row.dec = true;
       if (P.quotaParts) { const k = P.quotaParts(run, run.src); row.par = k.par; row.mult = k.mult; }
       const total = playRound(g, run, pol, rnd, row);
-      row.total = total; row.pass = total >= run.quota ? 1 : 0; row.tier = P.marksHit(total, run.quota); row.live = alive ? 1 : 0;
+      row.total = total; row.pass = total >= run.quota ? 1 : 0; row.tier = P.marksHit(total, run.quota); row.acts = acts.join(' '); if (row.pass) { const e = P.runEarn(run, total, run.quota); row.earn = e.marks; row.interest = e.interest; } row.coins = run.coins || 0; row.live = alive ? 1 : 0;
       out.rounds.push(row);
       if (row.pass && alive) { out.beaten++; run.beaten++; }
       if (!row.pass) { alive = false; if (!opts.all) break; }
@@ -278,18 +310,20 @@
   // of each run gives a molecule, a kind of round, a rack and equipment. Every build is then played n times by player
   // a and n times by player b on the same seeds, and their medians are posted. The planner may break a row and bank;
   // the keeper is the same player with neither.
-  const parseBuild = q => { const o = { gear: [], lv: {}, rack: [], grade: {}, uses: {}, brief: q.kind, tier: P.SUPPLY.length - 1, rare: true };
+  const parseBuild = q => { const o = { gear: [], lv: {}, rack: [], grade: {}, uses: {}, brief: q.kind, tier: q.tier == null ? P.SUPPLY.length - 1 : q.tier, rare: q.tier == null || q.tier >= 2 };
     q.gear.split(' ').filter(Boolean).forEach(t => { const m = t.split(':'); o.gear.push(m[0]); if (m[1]) o.lv[m[0]] = +m[1]; });
     q.rack.split(' ').filter(Boolean).forEach(t => { const m = /^([a-z0-9]+)(?:\^(\d+))?(?:\+(\d+))?$/.exec(t); if (!m) return; o.rack.push(m[1]); if (m[2]) o.grade[m[1]] = +m[2]; if (m[3]) o.uses[m[1]] = +m[3]; }); return o; };
-  function simBreak(tag, file, from, to, n, a, b) {
+  function simBreak(tag, file, from, to, n, a, b, wide) {
     a = a || 'planner'; b = b || 'keeper'; stat = 'builds';
     (async () => {
-      const builds = []; for (let sd = from; sd <= to; sd++) runSim(a, sd, { all: true }).rounds.forEach(q => { if (q.kind !== 'carry' && q.mol) builds.push(q); });
+      // wide: builds come from the runs of all four players, and from first runs (one supplier, no equipment)
+      const builds = [], src = wide ? [['novice', {}], ['greedy', {}], ['median', {}], ['planner', {}], ['median', { tier: 0, noGear: true }]] : [[a, {}]];
+      for (let sd = from; sd <= to; sd++) src.forEach(w => runSim(w[0], sd, Object.assign({ all: true }, w[1])).rounds.forEach(q => { if (q.kind !== 'carry' && q.mol) { q.from = w[0] + (w[1].noGear ? ' first run' : ''); q.tier = w[1].tier; builds.push(q); } }));
       const out = [], medOf = v => v.slice().sort((x, y) => x - y)[Math.floor(v.length / 2)]; let t0 = performance.now();
       for (let i = 0; i < builds.length; i++) {
         const q = builds[i], A = [], B = [];
         for (let k = 0; k < n; k++) { const sd = 50000 + i * 31 + k; A.push(roundSim(a, q.mol, sd, parseBuild(q))); B.push(roundSim(b, q.mol, sd, parseBuild(q))); }
-        out.push({ round: q.round, mol: q.mol, kind: q.kind, gear: q.gear, rack: q.rack, a: medOf(A), b: medOf(B), wins: A.filter((v, k) => v > B[k]).length, ties: A.filter((v, k) => v === B[k]).length });
+        out.push({ round: q.round, from: q.from || a, mol: q.mol, kind: q.kind, gear: q.gear, rack: q.rack, a: medOf(A), b: medOf(B), wins: A.filter((v, k) => v > B[k]).length, ties: A.filter((v, k) => v === B[k]).length });
         if (performance.now() - t0 > 4000) { stat = 'at ' + i + ' of ' + builds.length; await new Promise(r => fetch('http://127.0.0.1:8767/?i=' + (file + 1), { method: 'POST', body: 'x' }).then(r, r)); t0 = performance.now(); }
       }
       const ok = await send(file, { tag, a, b, n, builds: out }); stat = 'done break ' + out.length + ' posted ' + ok;

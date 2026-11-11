@@ -24,8 +24,9 @@ def report(tag, lo, hi, players):
         print('  worst spread %.1f' % worst)
         d = [r['dec'] for r in a if isinstance(r.get('dec'), dict)]
         if d:
-            T = {k: sum(x[k] for x in d) for k in d[0]}
+            T = {k: sum(x.get(k, 0) for x in d) for k in d[-1]}
             n = max(1, T['n'])
+            if T.get('bkOff'): print('  bank offered on %d turns of a page, right to take on %.1f%% (it was the only move on %.1f%%); offered at %d forks, right at %.1f%%; all offers %.1f%%' % (T['bkOff'], 100.0 * T['bkRight'] / T['bkOff'], 100.0 * T['bkOnly'] / T['bkOff'], T['fkOff'], 100.0 * T['fkRight'] / max(1, T['fkOff']), 100.0 * (T['bkRight'] + T['fkRight']) / (T['bkOff'] + T['fkOff'])))
             print('  turns %d: second within 30%% of the best %.1f%%, or better two turns on %.1f%%, either %.1f%% | one option only %.1f%% | row open and at most one reagent keeps it %.1f%% of %d | options a turn %.2f' % (T['n'], 100.0 * T['near'] / n, 100.0 * T['later'] / n, 100.0 * (T['near'] + T['later']) / n, 100.0 * T['forced'] / n, 100.0 * T['one'] / max(1, T['open']), T['open'], T['opts'] / n))
         for k in ('heavy', 'atoms', 'banks', 'redraws', 'forks', 'idle', 'left', 'steps'):
             v = [r[k] for r in a if k in r]
@@ -39,9 +40,11 @@ if __name__ == '__main__' and sys.argv[1] != 'break':
 
 # python tools_round.py break <file>: the paired test posted by simBreak (docs/tools_sim.js). A build counts for the
 # player that may break when its median over the same seeds is higher than the keeper's.
-def breaks(n):
+def breaks(ns):
     import json, io
-    d = json.load(io.open(rig.F + 'f%05d.jpg' % n, encoding='utf8')); b = d['builds']
+    b = []
+    for n in ns:
+        d = json.load(io.open(rig.F + 'f%05d.jpg' % n, encoding='utf8')); b += d['builds']
     up = sum(1 for q in b if q['a'] > q['b']); up5 = sum(1 for q in b if q['a'] > 1.05 * q['b']); dn = sum(1 for q in b if q['a'] < q['b']); dn5 = sum(1 for q in b if q['a'] < q['b'] / 1.05)
     plays = d['n'] * len(b); w = sum(q['wins'] for q in b); t = sum(q['ties'] for q in b)
     print('%s against %s, %d builds, %d plays each' % (d['a'], d['b'], len(b), d['n']))
@@ -51,5 +54,8 @@ def breaks(n):
     for rd in range(1, 10):
         v = [q for q in b if q['round'] == rd]
         if v: print('  round %d: %d builds, higher in %.0f%%' % (rd, len(v), 100.0 * sum(1 for q in v if q['a'] > q['b']) / len(v)))
+    for f in sorted(set(q.get('from', '') for q in b)):
+        v = [q for q in b if q.get('from', '') == f]
+        print('  builds from %s: %d, higher in %.0f%%, lower in %.0f%%, median ratio %.3f' % (f, len(v), 100.0 * sum(1 for q in v if q['a'] > q['b']) / len(v), 100.0 * sum(1 for q in v if q['a'] < q['b']) / len(v), sorted(q['a'] / max(1, q['b']) for q in v)[len(v) // 2]))
 
-if __name__ == '__main__' and sys.argv[1] == 'break': breaks(int(sys.argv[2]))
+if __name__ == '__main__' and sys.argv[1] == 'break': breaks([int(a) for a in sys.argv[2:]])
