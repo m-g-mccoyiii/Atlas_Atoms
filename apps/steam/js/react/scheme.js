@@ -38,7 +38,7 @@ function start(app) {
   const cam = new T.PerspectiveCamera(34, 1, 0.5, 200), CAM = new T.Vector3(0, 43, 22.6), LOOKAT = new T.Vector3(0, 0, 0.6);
   const camDir = LOOKAT.clone().sub(CAM).normalize();
   scene.add(new T.HemisphereLight(0xfff6e6, 0xcabf9f, LOOK === 'clay' ? 1.0 : LOOK === 'desk' ? 0.55 : 0.8));
-  const sun = new T.DirectionalLight(0xfff0d6, LOOK === 'clay' ? 0.6 : LOOK === 'desk' ? 1.1 : 0.85); sun.position.set(-16, 18, 4); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.radius = LOOK === 'toy' ? 1.5 : LOOK === 'now' ? 7 : 11;
+  const sun = new T.DirectionalLight(0xfff0d6, LOOK === 'clay' ? 0.6 : LOOK === 'desk' ? 1.1 : 0.85); sun.position.set(-16, 18, 4); sun.castShadow = false; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.radius = LOOK === 'toy' ? 1.5 : LOOK === 'now' ? 7 : 11;
   if (LOOK === 'desk') { // a room for glass and metal to reflect: a warm ceiling, a bright window, a dark floor
     const room = new T.Scene(), bm = c => new T.MeshBasicMaterial({ color: c, side: T.BackSide }); room.add(new T.Mesh(new T.SphereGeometry(50, 24, 16), bm(0x8a7f70)));
     const pane = (w, h, x, y, z, c) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: c, side: T.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); room.add(m); }; pane(30, 22, -30, 26, 6, 0xffffff); pane(40, 14, 14, 34, -18, 0xfff0d0); pane(60, 60, 0, -30, 0, 0x2a2420);
@@ -54,7 +54,7 @@ function start(app) {
   const paper = canvasTex(2048, 1408);
   (() => { const x = paper.x, w = 2048, h = 1408, u = w / SW; x.fillStyle = '#f3eddc'; x.fillRect(0, 0, w, h); noise(x, w, h, 50000, 0.05, '120,100,60');
     x.strokeStyle = 'rgba(70,120,170,0.2)'; x.lineWidth = 1.4; for (let i = 0; i <= SW; i++) { x.beginPath(); x.moveTo(i * u, 0); x.lineTo(i * u, h); x.stroke(); } for (let j = 0; j <= SH; j++) { x.beginPath(); x.moveTo(0, j * u); x.lineTo(w, j * u); x.stroke(); }
-    x.strokeStyle = 'rgba(200,60,50,0.45)'; x.lineWidth = 3; x.beginPath(); x.moveTo(5.5 * u, 0); x.lineTo(5.5 * u, h); x.stroke(); paper.t.needsUpdate = true; })();
+    paper.t.needsUpdate = true; })();
   add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), std({ map: paper.t, roughness: 0.95 }), 0, 0, 0).castShadow = false;
   const ink = canvasTex(IW, IH);
   const inkMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: ink.t, transparent: true, depthWrite: false }), 0, 0.02, 0); inkMesh.castShadow = false; inkMesh.receiveShadow = false;
@@ -415,8 +415,8 @@ function start(app) {
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
-  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 1.3 : C0B.x; C0.z = wide ? 0.5 : C0B.z; LANE.w = wide ? 22 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11.5 : KITV === 'bottom' ? 10.5 : 10; };
-  const fitMain = m => Math.max(0.7, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.4 : C0B.x; C0.z = wide ? 0.5 : C0B.z; LANE.w = wide ? 20.4 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
+  const fitMain = m => Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -655,7 +655,7 @@ function start(app) {
     clearPicks();
     if ((run.coins || 0) > 0 && !meta.coined) { meta.coined = true; saveMeta(); }
     briefs = list || P.runBriefs(run);
-    briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = briefs.length === 2 ? Math.min(1.3, 16 / spanOf(m), 8 / deepOf(m)) : Math.min(1.1, 11.5 / spanOf(m)); m.sc = sc; place(m, { x: BX(i), z: -2.2 }, 0.01); tween(m, { x: BX(i), z: -2.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
+    briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = briefs.length === 2 ? Math.min(2.4, 19 / spanOf(m), 10 / deepOf(m)) : Math.min(3.2, 44 / spanOf(m), 11 / deepOf(m)); m.sc = sc; place(m, { x: BX(i), z: -3.2 }, 0.01); tween(m, { x: BX(i), z: -3.2 }, sc, 0.2 + i * 0.05); briefMols.push(m); });
     sfx.feed(); dirty = true;
   }
   function chooseBrief(i) {
@@ -724,7 +724,7 @@ function start(app) {
   // sets off the chain that the row has charged. From here the molecule reacts by itself until nothing carries it on
   function setOff() {
     if (st.mode !== 'fuse' || !P.fire(g)) return;
-    callout('overreact', '', REDINK); sfx.fuse(); sfx.over(); st.shake = 2.4; st.flash = 1; st.flashC = '214,69,58'; st.hold = performance.now() + 220; spray(60, REDINK, true);
+    sfx.fuse(); st.shake = 2.4; st.flash = 1; st.flashC = '214,69,58'; st.hold = performance.now() + 220; spray(60, REDINK, true);
     const c = P.chainNext(g); if (!c && g.chain) { st.chainN = 0; st.mode = 'play'; return refresh(); } if (!c) { st.mode = 'play'; return nextPage(); }
     st.chainN = 1; const k = g.kinds.indexOf(c.id); st.mode = 'play'; react(c, c.id, false, LAB[k] ? { x: LAB[k].x - 0.8, z: LAB[k].z + 0.5 } : { x: 17, z: -6 }, true);
   }
@@ -754,14 +754,14 @@ function start(app) {
     // what the round gave off goes into the jars for good, win or lose; a jar that is now full hatches
     { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + (b[k] || 0)); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; JARK.forEach(k => { g.by[k] = 0; }); st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
     st.homWait = false; st.homList = null;
-    st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; st.won = st.pass && run.round === 9; if (st.won) run.won = true; if (!meta.taught) { meta.taught = true; saveMeta(); }
+    st.mode = 'done'; st.call = null; if (P.RULE.bare || !st.gear.length) { st.lx = 10; C0.x = 10; C0.z = 1.4; LANE.w = 37; LANE.d = 14.5; if (center) SC_MAIN = fitMain(center); } clearKit(); st.pass = g.total >= st.quota; st.won = st.pass && run.round === 9; if (st.won) run.won = true; if (!meta.taught) { meta.taught = true; saveMeta(); }
     if (st.pass) run.beaten++;
     if (meta.stage < 2 && run.beaten >= 3) { meta.stage = 2; if (run.term !== 'hoard') run.noGear = false; saveMeta(); }
     else if (meta.stage === 2 && st.pass && run.beaten === 6) { meta.six = (meta.six || 0) + 1; if (meta.six >= 2) meta.stage = 3; saveMeta(); }
     { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
     st.earn = st.pass ? P.runEarn(run, g.total, st.quota) : null; if (st.earn && st.earn.marks + st.earn.interest + (st.earn.extra || 0)) st.coinT = performance.now();
     if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
-    else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
+    else { run.over = true; if (AA.sfx.lost) AA.sfx.lost(); else sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
   }
@@ -775,7 +775,7 @@ function start(app) {
     // the new page's drawing carries on from the last: the same way up, and turned back to the same side if it turns back
     const sd = new Map(); if (center) { const mp = g.reopened && g.reopened.map, live = new Set(g.m.atoms); if (mp) mp.forEach((na, oa) => { const q = center.at.get(oa); if (q && center.balls.has(oa) && live.has(na)) sd.set(na, q); }); if (!sd.size) center.balls.forEach((b, a) => { if (live.has(a)) sd.set(a, center.at.get(a)); }); if (center.at.fold) sd.fold = { dir: center.at.fold.dir }; }
     freeMol(center); center = buildMol(g.m, null, false, sd.size ? sd : null); SC_MAIN = fitMain(center); place(center, C0, st.sc); center.hot = g.cur.path.length ? marksOf(center, Array.from(g.cur.fresh), 0.01, 0.2) : []; center.groups = groupsOf(center); center.ghosts = []; st.pop = 1;
-    rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); sfx.feed(); refresh(); st.sq = 0.8; st.kvz += 10;
+    rowMols.forEach(freeMol); rowMols = []; st.pageStart = g.trail.length; st.turned = performance.now(); if (AA.sfx.pageTurn) AA.sfx.pageTurn(); else sfx.feed(); refresh(); st.sq = 0.8; st.kvz += 10;
     if (startPage()) return;
     // a page on which no reagent acts turns itself
     if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g) && !kitObjs.some(k => P.canTool(g, k.id))) { const tok = st.tok; st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, 350); }
@@ -820,10 +820,10 @@ function start(app) {
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
         if (e.src === 'circle') { st.ringT = performance.now(); callout('transmute', '', '#8a6a00'); }
-        if (PLAIN && !o.casc && e.val && (e.src === 'bottle' || piece || e.src === 'circle' || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: under() + 0.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: e.src === 'family' && P.KIN[e.kin] ? P.KIN[e.kin].col : PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
+        if (false && PLAIN && !o.casc && e.val && (e.src === 'bottle' || piece || e.src === 'circle' || e.src === 'family' || e.src === 'iso' || e.src === 'row' || e.src === 'route' || e.src === 'short' || e.src === 'brief')) { const ko2 = piece ? kitObjs.find(q => q.id === piece) : null, src = ko2 ? { x: ko2.grp.position.x, z: ko2.grp.position.z + 2.6 } : { x: last.x, z: under() + 0.6 }; st.motes.push({ txt, part: key === 'p' ? 'p' : 'm', col: e.src === 'family' && P.KIN[e.kin] ? P.KIN[e.kin].col : PART[e.part], a: src, t: performance.now() + 120, dur: 380 }); }
         st.shake = Math.max(st.shake, (big ? 0.7 : e.src === 'iso' ? 0.5 : 0.2) * (1 + 1.0 * f));
         if (f >= 0.5 && k % 2 === 0) slash(PART[e.part]);
-        sfx.lock(Math.min(12, k + g.cur.path.length));
+        if (!o.casc) sfx.lock(Math.min(12, k + g.cur.path.length));
       }, when);
     });
     const stepT = o.casc ? stepMs(g.casc || 1) : 0, dur = Math.max(at + 60 + (FOLDS[reagent] && !stepT ? 380 : 0), stepT), lastPlace = placeAt.length ? placeAt[placeAt.length - 1] : 300;
@@ -839,10 +839,11 @@ function start(app) {
         const ev = beats.find(e => e.gone === f.gi && (P.GEARS[e.src] || e.src === 'collect')), ko = ev && P.GEARS[ev.src] ? kitObjs.find(q => q.id === ev.src) : null;
         if (ko) { f.to = new T.Vector3(ko.grp.position.x, 1.6, ko.grp.position.z - 0.6); }
         else { f.to = byTarget(f.kind); f.keep = ev ? f.kind : null; } }); (mol.groups || []).forEach(q => { if (q.born) q.t = near(q); }); (mol.ghosts || []).forEach(q => { q.t = near(q); }); }
-    if (o.casc) { const gn = P.made(g) - before, src = spot(0), t0 = performance.now(); st.gains.push({ txt: '+' + fmt(gn), a: { x: src.x, z: src.z }, t0: t0 + stepT * 0.03, t: t0 + stepT * 0.14, dur: Math.max(110, stepT * 0.42), to: P.made(g), fresh: !st.cstep || st.cstep.fresh }); }
+    if (o.casc) { const gn = P.made(g) - before, src = spot(0), t0 = performance.now(); st.gains.push({ ring: true, txt: '+' + fmt(gn), a: { x: src.x, z: src.z }, t0: t0 + stepT * 0.03, t: t0 + stepT * 0.14, dur: Math.max(110, stepT * 0.42), to: P.made(g), fresh: !st.cstep || st.cstep.fresh }); }
     const final = () => {
       if (tok !== st.tok) return;
       const now = performance.now(), gain = P.made(g) - before, route = t.ev.find(e => e.src === 'route'), len = g.cur.path.length, size = Math.log10(Math.max(10, gain));
+      if (!o.casc && gain > 0 && PLAIN) { const t1 = performance.now(); st.gains.push({ txt: '+' + fmt(gain), t0: t1, t: t1 + 60, dur: 520, to: P.made(g), fresh: true, gx: spot(0) }); }
       if (!st.gains.length) st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g);
       if (!PLAIN) st.floats.push({ txt: '+' + fmt(gain), t: now, size: 80 + 34 * size, dx: (Math.random() - 0.5) * 3, col: '#8a6a00' });
       st.shake = Math.max(st.shake, 0.4 + 0.35 * size);
@@ -864,9 +865,12 @@ function start(app) {
     if (stepT) return { dur, unlock: stepT };
     return { dur, unlock: Math.min(dur, st.firing && !FOLDS[reagent] ? (placeAt.length ? placeAt[0] : 160) + 70 : lastPlace + (FOLDS[reagent] ? (st.firing ? Math.max(120, 300 * quick) : 520) : 210)) };
   }
+  const molBox = () => { if (!center || !center.balls || !(center.balls.size || center.balls.length)) return null; const sc = center.group.scale.x; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; center.balls.forEach(b => { const p = b.mesh.position; if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.z < z0) z0 = p.z; if (p.z > z1) z1 = p.z; }); const r = 1.0 * sc, a = px({ x: C0.x + x0 * sc - r, z: C0.z + z0 * sc - r }), b2 = px({ x: C0.x + x1 * sc + r, z: C0.z + z1 * sc + r }); return { l: a[0], t: a[1], r: b2[0], b: b2[1] }; };
+  // where a ring's number is written: under the molecule, at the ring, clear of the atoms
+  const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; const sc = center.group.scale.x, pr = st.pair && st.pair.a && st.pair.b ? st.pair : null, gx = pr ? px({ x: C0.x + (pr.a.x + pr.b.x) / 2 * sc, z: C0.z }) [0] : (bx.l + bx.r) / 2; return [Math.max(bx.l + 40, Math.min(bx.r - 40, gx)), bx.b + 56, T0]; };
   function pick(i) {
     const s = slots[i], o = s && s.o;
-    if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } sfx.lock(g.queue.length); st.qT = performance.now(); refresh(); return; }
+    if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); st.qT = performance.now(); refresh(); return; }
     if (!o || !prods[i] || st.mode !== 'play') return;
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
@@ -880,7 +884,7 @@ function start(app) {
   const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * 2.5)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
   function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * 2.5, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
-  function doFire() { if (!lining()) return; toolOff(); flush(); setHover(-1); st.firing = true; st.fireN = 0; st.acted = false; st.rezip = false; st.seeded = false; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
+  function doFire() { if (!lining()) return; if (AA.sfx.fire) AA.sfx.fire(); toolOff(); flush(); setHover(-1); st.firing = true; st.fireN = 0; st.acted = false; st.rezip = false; st.seeded = false; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
   // A piece that acts on the molecule or the page is shown acting: it hops, as a piece does when it fires
   const pieceActs = id => { st.fired[id] = { t: performance.now(), txt: '', col: INK }; const k = kitObjs.find(q => q.id === id); if (k) st.strokes.push({ a: { x: k.hx, z: k.hz + 4.3 }, b: { x: C0.x + (k.hx - C0.x) * 0.25, z: C0.z - 3.2 }, col: '#2f78a0', t: performance.now(), dur: 300 }); sfx.lock(6); dirty = true; };
   // ---------- a piece used on the molecule ----------
@@ -958,7 +962,7 @@ function start(app) {
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; if (homOffer()) return; return nextPage(); }
     P.queueShift(g); st.fireN = (st.fireN || 0) + 1; st.acted = h.kind === 'take';
     if (h.kind === 'take' || h.kind === 'finish') return react(h.o, h.id, h.kind === 'finish', { x: STEP.x + g.pageSteps * 2.5, z: STEP.z }, false);
-    const wait = 160; if (h.kind === 'bank') bankNow(); else { P.waste(g, h.id); sfx.bad(); st.shake = Math.max(st.shake, 0.3); }
+    const wait = 160; if (h.kind === 'bank') bankNow(); else { P.waste(g, h.id); if (AA.sfx.wasted) AA.sfx.wasted(); else sfx.bad(); st.shake = Math.max(st.shake, 0.3); }
     st.mode = 'move'; dirty = true; setTimeout(() => { if (tok === st.tok) fireNext(); }, wait);
   }
 
@@ -1005,7 +1009,7 @@ function start(app) {
   const stuck = () => st.mode === 'play' && !!g && !g.over && !g.chain && !slots.some(q => q && q.o);
   const pagesAt = () => stuck() && hit.x > PAGES.x - 1.2 && hit.x < PAGES.x + 1.8 * P.pagesOf(g) + 1.6 && Math.abs(hit.z - PAGES.z) < 1.4;
   function doBank() {
-    if (lining()) { if (!P.queueAdd(g, P.BANKID)) { sfx.bad(); return; } sfx.lock(g.queue.length); refresh(); return; }
+    if (lining()) { if (!P.queueAdd(g, P.BANKID)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); refresh(); return; }
     if (st.mode !== 'play' || !g || !P.canBank(g)) return;
     flush(); setHover(-1); const wasChain = g.chain, gain = P.bankGain(g); P.bank(g);
     st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = [];
@@ -1048,7 +1052,7 @@ function start(app) {
     if (free && o.model.settle && !o.casc) o.model.settle(FOLDS[rid] ? 2200 : 160);
     if (o.casc && center && o.atoms && o.atoms.length >= 4) { const mk = a => marksOf(center, [a], 0.01, 0.2)[0]; st.pair = { a: mk(o.atoms[0]), b: mk(o.atoms[3]), t: performance.now(), ms: stepMs((g.casc || 0) + 1) }; }
     if (o.casc) st.cstep = { n: (g.casc || 0) + 1, name: KINDNAME[rid] || rid, t: performance.now(), fresh: !P.RULE.fresh || (g.casc || 0) + 1 > (g.cascBest || 0) };
-    if (free && (!o.self || o.casc)) sfx.chain(st.chainN || 0);
+    if (o.casc && AA.sfx.ring) AA.sfx.ring((g.casc || 0) + 1); else if (free && (!o.self || o.casc)) sfx.chain(st.chainN || 0);
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
     if (s.fin) P.synFinish(g, o); else P.synTake(g, o, free);
@@ -1226,14 +1230,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         if (b.ease != null) {
           // one of two molecules: its family, the number to beat, and the coins the harder one pays on top
           { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.6 }); if (K && meta.stage >= 2 && !b.assay) { marker(x, 58); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); } }
-          hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 240, c[1] + 70);
-          const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
+                    const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
           if (b.coins) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
           if (hov) swipe(x, [c[0] - 150, y + 24], [c[0] + 150, y + 19], 6, INK);
           return;
         }
-        hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 205, c[1] - 6);
-        { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.3 }); if (K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok, k1[0], k1[1] + 44, 34, INK); } }
+                { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.3 }); if (K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok, k1[0], k1[1] + 44, 34, INK); } }
         fit(x, B.name, hov ? 76 : 68, 350, marker); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, c[0], c[1]);
         if (B.note) inkLine(x, B.note, c[0], c[1] + 62, 40, INK);
         const y = c[1] + 150; marker(x, 62); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0], y);
@@ -1373,7 +1375,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.restore();
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
-    if (st.mode !== 'done') {
+    if (false) {
       const mp = px(FEWER ? { x: MULT.x + 0.6, z: MADE.z + 2.9 } : FORM), len = g.cur.path.length; x.save(); if (FEWER) { x.translate(mp[0], mp[1]); x.scale(0.6, 0.6); x.translate(-mp[0], -mp[1]); }
       { const mult = st.R * st.E, liveP = st.P > 0, liveM = mult > 1.0001, kp = 1 + 0.25 * st.bump.p, km = 1 + 0.25 * Math.max(st.bump.r, st.bump.e), tP = fmt(st.P), tM = fmtB(mult); x.textAlign = 'left';
         // the two numbers that multiply into the total, written small under it in the page's hand
@@ -1424,8 +1426,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.lineCap = 'round'; x.strokeStyle = FAINT; x.lineWidth = 5; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * (n ? 1 : 0.5), y - 3); x.stroke();
       if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 11; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
       vals.forEach((v, k) => { const fx = T0[0] + W * fr(k), on = done ? top >= v : !!st.passT[k], tx = fmt(v);
-        if (k === 0) { flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
-        else { flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 46, y - 30, 11, on ? 1 : 0.3); } });
+        if (k === 0) { flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
+        else { flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 46, y - 30, 11, on ? 1 : 0.3); } });
       if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest + (st.earn.extra || 0) : 0; purse(x, T1[0] + 86, y - 4, run.coins || 0, 17, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
@@ -1442,7 +1444,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     // The bank: a tray with an arrow into it, and what banking the open row would add now.
     if (g && play && P.RULE.bank && P.RULE.queue) { const c = px(BANK), placed = lineUp && g.queue.includes(P.BANKID), can = lineUp ? !placed && P.queueRoom(g) && !!st.view && st.view.bank : P.canBank(g), hov = st.mark === 'bank' && can;
-      if (lineUp || can) { tray(x, c[0], c[1], 0.72, can ? INK : FAINT, hov ? 8 : 6); inkLine(x, 'times ' + P.RULE.bank, c[0] + 38, c[1] + 16, 30, can ? PENCIL : FAINT, 'left'); } }
+      if (lineUp || can) { tray(x, c[0], c[1], 0.72, can ? INK : FAINT, hov ? 8 : 6); } }
     if (g && play && P.RULE.bank && !P.RULE.queue) {
       const c = px(BANK), can = P.canBank(g), hov = st.mark === 'bank', col = can ? INK : FAINT;
       if (can || g.cur.path.length > 0) {
@@ -1465,8 +1467,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     // the steps of a cascade, counted over the molecule in the page's own ink: a number and the name of the kind
     if (st.cstep && now - st.cstep.t < 1500 && (st.mode === 'play' || st.mode === 'move') && !lining()) {
-      const k = (now - st.cstep.t) / 1500, c = px({ x: 19.4, z: -6.2 }), pop = k < 0.04 ? 1 + 6 * k : k < 0.1 ? 1.24 - 4 * (k - 0.04) : 1;
-      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, st.cstep.fresh ? Math.min(260, 104 + 20 * st.cstep.n) : 80); x.textAlign = 'center'; x.fillStyle = st.cstep.fresh ? INK : PENCIL; x.fillText(String(st.cstep.n), 0, 0);
+      const k = (now - st.cstep.t) / 1500, ra = ringAt(), c = ra ? [ra[0], ra[1]] : px({ x: 19.4, z: -6.2 }), pop = k < 0.04 ? 1 + 6 * k : k < 0.1 ? 1.24 - 4 * (k - 0.04) : 1;
+      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, st.cstep.fresh ? Math.min(110, 70 + 6 * st.cstep.n) : 60); x.textAlign = 'center'; x.fillStyle = st.cstep.fresh ? INK : PENCIL; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(String(st.cstep.n), 0, 0); x.fillText(String(st.cstep.n), 0, 0);
       if (g && g.self && g.self.length > 1) { hand(x, 36); x.fillStyle = PENCIL; x.fillText(st.cstep.name, 0, 46); } x.restore(); x.globalAlpha = 1;
     } else if (st.cstep) st.cstep = null;
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
@@ -1501,7 +1503,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // the gain of each step of a cascade: written at the new ring, then it travels to the total and the total takes it
-    if (st.gains.length && st.mode !== 'done') { const T0 = px(MADE), B = [T0[0] + (st.madeW || 200) + 90, T0[1] - 30]; st.gains.forEach(q => { if (now < q.t0) return; const A0 = px({ x: q.a.x, z: q.a.z - 2.5 }), k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = A0[0] + (B[0] - A0[0]) * e, cy = A0[1] + (B[1] - A0[1]) * e - 36 * Math.sin(Math.PI * e);
+    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); st.gains.forEach(q => { if (now < q.t0 || !ra) return; const gx = q.ring ? ra[0] : Math.max(ra[0] - 400, Math.min(ra[0] + 400, px(q.gx || { x: C0.x, z: C0.z })[0])), A0 = [gx, ra[1] + 84], B = [T0[0] + (st.madeW || 200) + 80, ra[1] + 84], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = A0[0] + (B[0] - A0[0]) * e, cy = A0[1];
         x.globalAlpha = k > 0.78 ? Math.max(0, 1 - (k - 0.78) / 0.24) : 1; marker(x, (q.fresh ? 76 : 48) * pop * (1 - 0.3 * e)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, cx, cy); x.fillStyle = q.fresh ? INK : PENCIL; x.fillText(q.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // bonuses in flight: from where they were earned to the points or to the multiplier
     if (st.motes.length) { const mp2 = px(FORM), tx0 = mp2[0] + Math.max(st.fW || 260, (st.madeW || 0) + 10) + 64, tgt = { p: [tx0, mp2[1] - 24], m: [tx0, mp2[1] - 24] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
@@ -1510,7 +1512,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
-      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: Math.max(F.b.x, C0.x - 9), z: Math.max(-8.6, Math.min(F.b.z - 2.4, C0.z + 1)) }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
+      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), mb = molBox(), B = px({ x: Math.max(C0.x - 6, Math.min(C0.x + 8, F.b.x)), z: mb ? Math.max(-7.2, mb.t / U - SH / 2 - 2.4) : Math.max(-7.2, Math.min(F.b.z - 2.4, C0.z + 1)) }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
       const landed = u >= 1, k2 = landed ? (age - F.trav) / F.hold : 0, sc = 1.25 + (landed ? 0.4 * Math.max(0, 1 - k2 * 6) : 0);
       x.save(); x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha = k2 > 0.75 ? 1 - (k2 - 0.75) / 0.25 : 1;
       if (!landed) chip(x, F.tl[0], 0, 0, true);
@@ -1533,14 +1535,26 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         x.globalAlpha = 1; } }
     // where the wet one has run: small puddles on the paper that dry
     if (st.puddles && st.puddles.length) { st.puddles = st.puddles.filter(q => now - q.t < 2600); st.puddles.forEach((q, i) => { const k = (now - q.t) / 2600; const c = px(q), w = hash('pd' + Math.round(q.t)); x.globalAlpha = 0.3 * (1 - k); x.fillStyle = '#3a6fd0'; x.beginPath(); x.ellipse(c[0], c[1], q.r * 1.5, q.r * 0.62, w - 0.5, 0, 6.3); x.fill(); x.beginPath(); x.ellipse(c[0] + q.r * (0.9 + w), c[1] + q.r * 0.35, q.r * 0.55, q.r * 0.26, 0.2, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; }
+    // the word at the flag: as the total passes each of the four flags one word is lettered, bigger each time; the biggest reached stays
+    st.wordK = -1;
+    if (g && st.quota > 0 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || done)) {
+      const wv = [st.quota].concat(P.runMarks(st.quota)), WS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [64, 92, 128, 172];
+      let wk = -1; for (let k = 0; k < 4 && k < wv.length; k++) if (done ? g.total >= wv[k] : !!st.passT[k]) wk = k;
+      if (wk >= 0) {
+        st.wordK = wk; const c = px({ x: 0, z: -9 }), t0 = st.passT[wk] || 0, pr = t0 && now - t0 < 420 ? (now - t0) / 420 : 1;
+        marker(x, WSZ[wk]); let tw = x.measureText(WS[wk]).width; const sc = Math.min(1, 1500 / tw); if (sc < 1) { marker(x, WSZ[wk] * sc); tw = x.measureText(WS[wk]).width; }
+        st.wordW = tw; x.save(); if (pr < 1) { x.beginPath(); x.rect(c[0] - tw / 2 - 20, c[1] - 260, (tw + 40) * pr, 360); x.clip(); dirty = true; }
+        x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = wk < 2 ? GREEN : REDINK; x.strokeText(WS[wk], c[0], c[1]); x.fillText(WS[wk], c[0], c[1]); x.restore();
+      }
+    }
     // the round is over: how it went, and where to click
     if (done) {
       const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
       marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
-      const txt = st.won ? 'won' : st.pass ? 'beaten' : fmt(st.quota - g.total) + ' short', tw = x.measureText(txt).width, n = Math.floor(ratio);
-      x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]);
+      const txt = st.pass ? '' : fmt(st.quota - g.total) + ' short', tw = st.pass ? (st.wordW || 0) : x.measureText(txt).width, n = Math.floor(ratio);
+      if (txt) { x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]); }
       hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) coin(x, c[0] + tw / 2 + 60 + n * 56, c[1] - 36, 22);
-      x.fillText(st.pass ? '' : run.beaten + ' beaten    best ' + best, c[0], c[1] + 80);
+      x.fillText(st.won ? 'won' : st.pass ? '' : run.beaten + '    best ' + best, c[0], c[1] + 80);
       if (st.newSig) { const sc = px({ x: -12, z: 3.5 }), T0 = P.TERMS.find(q => q.id === st.newSig); sigil(x, sc, 120, st.newSig, '#b88a00', 10); marker(x, 50); x.textAlign = 'center'; x.fillStyle = '#b88a00'; x.fillText(T0.name, sc[0], sc[1] + 136); hand(x, 28); x.fillStyle = PENCIL; x.fillText('new sigil', sc[0], sc[1] - 96); }
       { const nx = px({ x: 17.5, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; marker(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
@@ -1650,7 +1664,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * (now - (st.tickT || 0) < 260 ? 50 : 16)); dirty = true; }
     // the number to beat, and each mark above it, is passed at the frame the total shown crosses it
-    if (g && st.quota > 0 && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop' && st.mode !== 'terms') [st.quota].concat(P.runMarks(st.quota)).forEach((m, k) => { if (!st.passT[k] && st.shown >= m) { st.passT[k] = now; if (k === 0) sfx.quota(); else sfx.lock(8 + k); dirty = true; } });
+    if (g && st.quota > 0 && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop' && st.mode !== 'terms') [st.quota].concat(P.runMarks(st.quota)).forEach((m, k) => { if (!st.passT[k] && st.shown >= m) { st.passT[k] = now; if (k < 4 && AA.sfx && AA.sfx.flag) AA.sfx.flag(k + 1); else if (k === 0) sfx.quota(); else sfx.lock(8 + k); dirty = true; } });
     pickObjs.forEach(k => { const age = (now - (k.born || 0)) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), drop = u < 1 ? (1 - u) * (1 - u) * 9 : 0, sq = u >= 1 && age < 0.75 ? Math.sin((age - 0.45) / 0.3 * Math.PI) * 0.18 : 0; k.grp.visible = age >= 0; k.grp.rotation.y += dt * 0.6; k.grp.position.y = drop + (st.hover === k.slot ? 0.8 + 0.15 * Math.sin(now / 140) : 0); k.grp.scale.set(1.7 * (1 + sq * 0.6), 1.7 * (1 - sq), 1.7 * (1 + sq * 0.6)); });
     // equipment is moved further down, once the heat of the round is known
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
@@ -1668,7 +1682,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.7, LANE.w / w); } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } center.group.position.set(C0.x + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), C0.z + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
+    if (center && !tweens.some(tw => tw.m === center)) { { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), st.cz + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
     prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'); flask.grp.visible = false; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.25 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.25 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.25); if (boil) dirty = true; } }
