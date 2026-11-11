@@ -307,3 +307,19 @@ As above. The owner: the number of hydrogens that feed it can be adjusted later.
 #### Where carbon dioxide comes from (proposed 2026-11-11, to be measured)
 
 The owner: something has to make it reliably or the homunculus cannot work. Proposal: oxidize, a starting reaction, gains one change. A C=C at the very end of a chain loses its end carbon as carbon dioxide and a C=O is left at the new end (real: oxidative cleavage of a terminal alkene). Grow, also a starting reaction, leaves a C=C at the end of every arm it adds, so grow then oxidize makes carbon dioxide in any run. It changes what oxidize does in the base game, so it goes behind a switch and is read on the structural screen before it is kept. Picture: `.claude/shots/co2-source.png`.
+
+### Carbon dioxide and its source: the owner said go on, 2026-11-11
+
+Freeze as above, fed by the oxidize source above, once that source is measured.
+
+Checked for the owner: no reaction asks the player for a bond. Each acts everywhere it fits. Hydrate puts the OH on the carbon with fewer H, hydroborate on the one with more, dehydrate makes the C=C toward the neighbor with fewer H (`markovnikov`, `zaitsev` in rules.js).
+
+### Acid fumes: shown to the owner, not yet answered
+
+- Looks like: a half-melted green figure that drips.
+- Fed by: fumes each time hydrate or dehydrate (the two acid reagents) acts. Three and it is ready. Both are starting reactions.
+- When ready, the player points it at one C=C. It starts a fold: that C=C joins the next C=C a few carbons along and closes a ring of carbon; that one joins the next, and so on while another C=C is in reach. The last one is left with an OH.
+- Fold rings are carbon to carbon. They do not open at the page turn. They count as steps in the same row as zip rings. The OH left at the end can start a zip.
+- This is the second cascade of `CASCADES.md` (fold, how squalene becomes the steroid skeleton), given to a homunculus to set off. Acid is what sets it off in life.
+- Why it deepens a run: C=C becomes something to save and space out; the burner (every OH to C=C) becomes a setup for it; a fold can hand over to a zip.
+- Needs fold built: the spacing rule (first proposal: the far carbon of one C=C is 4 carbons from the near carbon of the next, a six-ring), molecules that carry several C=C, and the layout of fused carbon rings. To be read on the structural screen.
