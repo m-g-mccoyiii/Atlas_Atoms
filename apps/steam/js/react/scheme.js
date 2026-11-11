@@ -152,16 +152,74 @@ function start(app) {
     let cx = 0, cy = 0, n = 0; pos.forEach(p => { cx += p.x; cy += p.y; n++; }); cx /= n; cy /= n; pos.forEach(p => { p.x -= cx; p.y -= cy; });
     { let sxx = 0, syy = 0, sxy = 0; pos.forEach(p => { sxx += p.x * p.x; syy += p.y * p.y; sxy += p.x * p.y; }); const th = 0.5 * Math.atan2(2 * sxy, sxx - syy), c = Math.cos(-th), s = Math.sin(-th); if (!ring.size || sxx + syy > 0) pos.forEach(p => { const x = p.x * c - p.y * s, y = p.x * s + p.y * c; p.x = x; p.y = y; }); }
     let fx = 1, fy = 1;
-    if (seed && seed.size) { let best = 1e18; [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(m => { let e = 0; seed.forEach((q, a) => { const p = pos.get(a); if (p) e += (p.x * m[0] - q.x) * (p.x * m[0] - q.x) + (-p.y * m[1] - q.z) * (-p.y * m[1] - q.z); }); if (e < best) { best = e; fx = m[0]; fy = m[1]; } }); }
+    if (seed && seed.flip) { fx = seed.flip[0]; fy = seed.flip[1]; }
+    else if (seed && seed.size) { let best = 1e18; [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(m => { let e = 0; seed.forEach((q, a) => { const p = pos.get(a); if (p) e += (p.x * m[0] - q.x) * (p.x * m[0] - q.x) + (-p.y * m[1] - q.z) * (-p.y * m[1] - q.z); }); if (e < best) { best = e; fx = m[0]; fy = m[1]; } }); }
     const lift = new Map(); nodes.forEach((c, ci) => { const nb = adj.get(c); if (nb.length < 3) return; let sgn = ci % 2 ? 1 : -1; nb.filter(t => adj.get(t).length === 1).forEach(t => { lift.set(t, 0.26 * sgn); sgn = -sgn; }); });
     md.atoms.forEach(a => { if (a.el !== 'H' || skip.has(a)) return; const par = md.neighbors(a).map(q => q.atom).find(q => lift.has(q)); if (par) lift.set(a, lift.get(par) * 1.25); });
+    at.flip = [fx, fy];
     pos.forEach((p, a) => { const v = at.get(a); if (v) v.set(p.x * fx, lift.get(a) || 0, -p.y * fy); });
     // a chain too long for the page is folded once, like a line of writing that runs on to the next line: the far
     // half comes back under the near half, so the molecule stays large enough to read
     if (!ring.size) { let lo = 1e9, hi = -1e9, zlo = 1e9, zhi = -1e9; pos.forEach((p, a) => { const v = at.get(a); if (!v) return; lo = Math.min(lo, v.x); hi = Math.max(hi, v.x); zlo = Math.min(zlo, v.z); zhi = Math.max(zhi, v.z); });
       if (hi - lo > 25) { const mid = (lo + hi) / 2, gap = zhi - zlo + 2.4; let sx = 0, sz = 0, n2 = 0; pos.forEach((p, a) => { const v = at.get(a); if (!v) return; if (v.x > mid) { v.x = 2 * mid - v.x; v.z += gap; } sx += v.x; sz += v.z; n2++; }); pos.forEach((p, a) => { const v = at.get(a); if (v) { v.x -= sx / n2; v.z -= sz / n2; } }); } }
     // each oxygen a zip has closed stands over the chain, half way between the two carbons it joins, on the upper side of the page
-    (arch || []).forEach(q => { const sc = (adj.get(q.o) || [])[0], P1 = sc && at.get(sc), P2 = at.get(q.c), O = at.get(q.o); if (!P1 || !P2 || !O) return; let ux = -(P2.z - P1.z), uz = P2.x - P1.x; const d = Math.hypot(ux, uz) || 1; ux /= d; uz /= d; if (uz > 0) { ux = -ux; uz = -uz; } O.set((P1.x + P2.x) / 2 + ux * 1.5, 0.3, (P1.z + P2.z) / 2 + uz * 1.5); });
+    const ringed = closeRings(md, at, adj, arch || []);
+    (arch || []).forEach(q => { if (ringed.has(q)) return; const sc = (adj.get(q.o) || [])[0], P1 = sc && at.get(sc), P2 = at.get(q.c), O = at.get(q.o); if (!P1 || !P2 || !O) return; let ux = -(P2.z - P1.z), uz = P2.x - P1.x; const d = Math.hypot(ux, uz) || 1; ux /= d; uz /= d; if (uz > 0) { ux = -ux; uz = -uz; } O.set((P1.x + P2.x) / 2 + ux * 1.5, 0.3, (P1.z + P2.z) / 2 + uz * 1.5); });
+  }
+  // A ring closed by a zip is drawn as a ring. The chain is laid out open, as it was before the zip, and then each
+  // ring in turn is pulled shut into a regular polygon: the carbon that carries the oxygen stays where it is, the
+  // ring's atoms take their corners, and everything beyond the ring is carried along with the corner it hangs from.
+  // So each step of a cascade moves the page by one ring and reels the rest of the chain in. Rings that share a
+  // corner (each zip starts from the carbon the last one closed on) lie on alternate sides of one straight line.
+  // A ring that shares a bond with a ring already there is built on that bond. Returns the arches it has drawn.
+  function closeRings(md, at, adj, arch) {
+    const done = new Set(); if (!arch.length) return done;
+    const info = arch.map(q => ({ q, O: q.o, p0: (adj.get(q.o) || [])[0], pk: q.c })).filter(r => r.p0 && at.get(r.p0) && at.get(r.pk) && at.get(r.O));
+    const order = []; info.filter(r => !info.some(t => t.pk === r.p0)).forEach(r0 => { let r = r0, prev = null; while (r && !order.includes(r)) { r.prev = prev; order.push(r); prev = r; r = info.find(t => t.p0 === prev.pk && !order.includes(t)); } });
+    info.forEach(r => { if (!order.includes(r)) { r.prev = null; order.push(r); } });
+    const withH = S => { const out = new Set(S); S.forEach(a => { if (a.bead || !md.atoms.includes(a)) return; md.neighbors(a).forEach(n => { if (n.atom.el === 'H' && at.has(n.atom)) out.add(n.atom); }); }); return out; };
+    order.forEach(r => {
+      const O = r.O, par = new Map([[r.p0, null]]), qu = [r.p0]; while (qu.length) { const a = qu.shift(); if (a === r.pk) break; (adj.get(a) || []).forEach(n => { if (!par.has(n) && n !== O) { par.set(n, a); qu.push(n); } }); }
+      if (!par.has(r.pk)) return; const path = []; for (let a = r.pk; a; a = par.get(a)) path.unshift(a);
+      const n = path.length + 1, k = path.length - 1; if (n < 4 || n > 8) return;
+      // what hangs from each corner once the ring's own bonds are left out
+      const idx = new Map(path.map((a, i) => [a, i])), comps = [], owner = new Map(); let bad = false;
+      path.forEach((p, i) => { if (owner.has(p)) return; const S = new Set([p]), st0 = [p], ringAtoms = [i]; while (st0.length) { const a = st0.pop(); (adj.get(a) || []).forEach(nb => { if (nb === O || S.has(nb)) return; if (idx.has(a) && idx.has(nb) && Math.abs(idx.get(a) - idx.get(nb)) === 1) return; S.add(nb); st0.push(nb); if (idx.has(nb)) ringAtoms.push(idx.get(nb)); }); }
+        ringAtoms.sort((x, y) => x - y); if (ringAtoms.length > 2 || (ringAtoms.length === 2 && ringAtoms[1] - ringAtoms[0] !== 1)) bad = true; const c = { S, ring: ringAtoms }; comps.push(c); ringAtoms.forEach(j => owner.set(path[j], c)); });
+      if (bad) return;
+      const W = a => at.get(a), c0 = owner.get(r.p0), fused0 = c0.ring.length === 2;
+      const s0 = Math.hypot(W(path[1]).x - W(path[0]).x, W(path[1]).z - W(path[0]).z) || 1.55, side = fused0 ? s0 : 1.55, R = side / (2 * Math.sin(Math.PI / n));
+      // corners in order round the ring: the oxygen, then the carbons from the one that carries it
+      const canon = sg => { const out = []; for (let m = 0; m < n; m++) out.push({ x: R * Math.cos(2 * Math.PI * m / n), z: sg * R * Math.sin(2 * Math.PI * m / n) }); return out; };
+      const fitTo = (sg, i1, W1, i2, W2) => { const C = canon(sg), zx = C[i2].x - C[i1].x, zz = C[i2].z - C[i1].z, wx = W2.x - W1.x, wz = W2.z - W1.z, d = zx * zx + zz * zz, ax = (wx * zx + wz * zz) / d, az = (wz * zx - wx * zz) / d, l = Math.hypot(ax, az) || 1, ux = ax / l, uz = az / l; return C.map(c => ({ x: W1.x + (c.x - C[i1].x) * ux - (c.z - C[i1].z) * uz, z: W1.z + (c.x - C[i1].x) * uz + (c.z - C[i1].z) * ux })); };
+      const cen = V => { let x = 0, z = 0; V.forEach(v => { x += v.x; z += v.z; }); return { x: x / V.length, z: z / V.length }; };
+      let V, u, sd;
+      if (fused0) {
+        let cx = 0, cz = 0, cn = 0; c0.S.forEach(a => { if (a === path[0] || a === path[1]) return; const w = W(a); cx += w.x; cz += w.z; cn++; }); const mid = { x: (W(path[0]).x + W(path[1]).x) / 2, z: (W(path[0]).z + W(path[1]).z) / 2 };
+        V = fitTo(1, 1, W(path[0]), 2, W(path[1])); if (cn) { const c = cen(V); if ((c.x - mid.x) * (cx / cn - mid.x) + (c.z - mid.z) * (cz / cn - mid.z) > 0) V = fitTo(-1, 1, W(path[0]), 2, W(path[1])); }
+      } else {
+        const A = W(r.p0), B = W(r.pk), ow = W(O); let want;
+        // rings that share a corner run on in one straight line, on alternate sides of it
+        if (r.prev && r.prev.u && Math.abs(r.prev.u.z) < 0.3) { u = r.prev.u; want = -r.prev.sd; } else { const d = Math.hypot(B.x - A.x, B.z - A.z) || 1; u = Math.abs(B.x - A.x) >= Math.abs(B.z - A.z) ? { x: B.x >= A.x ? 1 : -1, z: 0 } : { x: (B.x - A.x) / d, z: (B.z - A.z) / d }; const tw = r.prev && r.prev.cen ? r.prev.cen : ow; want = (u.x * (tw.z - A.z) - u.z * (tw.x - A.x)) >= 0 ? 1 : -1; }
+        const tgt = { x: A.x + u.x, z: A.z + u.z }; V = fitTo(1, 1, A, n - 1, tgt); { const cr = u.x * (V[0].z - A.z) - u.z * (V[0].x - A.x); if ((cr >= 0 ? 1 : -1) !== want) V = fitTo(-1, 1, A, n - 1, tgt); }
+        // fitTo keeps the bond length only when the two anchors are a chord apart: scale the ring back to its size about the first carbon
+        { const ch = Math.hypot(V[n - 1].x - V[1].x, V[n - 1].z - V[1].z), full = 2 * R * Math.sin(Math.PI * (n - 2) / n), f = full / (ch || 1); V = V.map(v => ({ x: A.x + (v.x - A.x) * f, z: A.z + (v.z - A.z) * f })); }
+      }
+      { const A = V[1], B = V[n - 1], d = Math.hypot(B.x - A.x, B.z - A.z) || 1; u = { x: (B.x - A.x) / d, z: (B.z - A.z) / d }; sd = (u.x * (V[0].z - A.z) - u.z * (V[0].x - A.x)) >= 0 ? 1 : -1; }
+      // carry what hangs from each corner
+      comps.forEach(c => { if (c === c0) return; const all = withH(c.S), i = c.ring[0], oa = W(path[i]), na = V[i + 1], ox = oa.x, oz = oa.z;
+        if (c.ring.length === 1) all.forEach(a => { const w = W(a); if (w) { w.x += na.x - ox; w.z += na.z - oz; } });
+        else { const ob = W(path[i + 1]), nb = V[i + 2], th = Math.atan2(nb.z - na.z, nb.x - na.x) - Math.atan2(ob.z - oz, ob.x - ox), cs = Math.cos(th), sn = Math.sin(th); all.forEach(a => { const w = W(a); if (!w) return; const dx = w.x - ox, dz = w.z - oz; w.x = na.x + dx * cs - dz * sn; w.z = na.z + dx * sn + dz * cs; }); } });
+      W(O).x = V[0].x; W(O).z = V[0].z; W(O).y = W(r.p0).y;
+      // the small things on the carbon the ring closed on (its new OH, a methyl) stand clear of the ring and of the chain
+      { const pk = r.pk, ck = owner.get(pk); if (ck.ring.length === 1) { const c = cen(V), w = W(pk), b = Math.atan2(w.z - c.z, w.x - c.x), outs = (adj.get(pk) || []).filter(nb => nb !== O && !idx.has(nb)), sub = nb => { const S = new Set([nb]), st0 = [nb]; while (st0.length) { const a = st0.pop(); (adj.get(a) || []).forEach(q => { if (q !== pk && !S.has(q)) { S.add(q); st0.push(q); } }); } return S; };
+        const subs = outs.map(nb => ({ nb, S: sub(nb) })); subs.forEach(q => { if (q.S.size <= 1) return; const v = W(q.nb), dx = v.x - w.x, dz = v.z - w.z, d = Math.hypot(dx, dz) || 1; if ((dx * u.x + dz * u.z) / d > -0.2) return; withH(q.S).forEach(a => { const t = W(a); if (!t) return; const dt = (t.x - w.x) * u.x + (t.z - w.z) * u.z; t.x -= 2 * dt * u.x; t.z -= 2 * dt * u.z; }); });
+        const small = subs.filter(q => q.S.size <= 1), taken = subs.filter(q => q.S.size > 1).map(q => Math.atan2(W(q.nb).z - w.z, W(q.nb).x - w.x)), dist = (a, b2) => Math.abs(Math.atan2(Math.sin(a - b2), Math.cos(a - b2)));
+        small.forEach(q => { let best = b, top = -1; [b + 0.9, b - 0.9, b].forEach(a => { const v = taken.length ? Math.min.apply(null, taken.map(t => dist(a, t))) : 1; if (v > top + 0.05) { top = v; best = a; } }); taken.push(best); const nx = w.x + Math.cos(best) * 1.55, nz = w.z + Math.sin(best) * 1.55, ow = W(q.nb), dx = nx - ow.x, dz = nz - ow.z; withH(q.S).forEach(a => { const v = W(a); if (v) { v.x += dx; v.z += dz; } }); }); } }
+      r.u = u; r.sd = sd; r.cen = cen(V); done.add(r.q);
+    });
+    if (done.size) { let sx = 0, sz = 0, n2 = 0; at.forEach((v, a) => { if (a.el === 'H' || !adj.has(a)) return; sx += v.x; sz += v.z; n2++; }); if (n2) at.forEach((v, a) => { if (adj.has(a) || a.el === 'H') { v.x -= sx / n2; v.z -= sz / n2; } }); }
+    return done;
   }
   // the bonds a zip has closed, as pairs of the oxygen and the carbon it closed onto: found by opening a copy of the molecule
   function archesOf(model) { try { const cm = RX.cloneMap(model), cuts = []; if (!RX.reopen(cm.model, cuts)) return []; const rev = new Map(); cm.map.forEach((c, a) => rev.set(c, a)); return cuts.map(q => ({ c: rev.get(q.c), o: rev.get(q.o) })).filter(q => q.c && q.o); } catch (e) { return []; } }
@@ -249,7 +307,7 @@ function start(app) {
       const A = pos(s.a), B = pos(s.b), k0 = grow ? Math.min(grow(s.a), grow(s.b)) : 1; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
       // a bond between atoms that are still far apart is not drawn until they have come near: it grows in as a fold closes
       if (!s.rest) { const fa = m.at.get(s.a), fb = m.at.get(s.b); s.rest = fa && fb ? Math.max(0.3, fa.distanceTo(fb)) : len; }
-      const k = k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.25) / 0.6));
+      const k = s.old ? k0 : k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.25) / 0.6));
       _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
       s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; const many = s.parts.length > 2, rr = s.r * k * (many ? 0.7 : 1); pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * (s.parts.length > 4 ? 0.34 : 0.36)); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, rr), fr.distanceTo(to), Math.max(0.0001, rr)); pt.mesh.visible = k > 0.01; });
     });
@@ -685,7 +743,7 @@ function start(app) {
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
   function fireNext() {
     // the cascade: whatever the molecule can do to itself happens first, one step at a time, each quicker than the last
-    { const c = g.over || !st.acted ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; st.cstep = { n, name: KINDNAME[c.id] || c.id, t: performance.now() }; if (c.model.settle && caged(c.model, archesOf(c.model))) c.model.settle(500); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
+    { const c = g.over || !st.acted ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; st.cstep = { n, name: KINDNAME[c.id] || c.id, t: performance.now(), fresh: !P.RULE.fresh || n > (g.cascBest || 0) }; st.fly = null; if (c.model.settle && caged(c.model, archesOf(c.model))) c.model.settle(500); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
     const h = P.queueHead(g), tok = st.tok;
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; return nextPage(); }
     P.queueShift(g); st.fireN = (st.fireN || 0) + 1; st.acted = h.kind === 'take';
@@ -715,9 +773,9 @@ function start(app) {
   // reactions that fold the molecule into a new shape: the model is settled fully first, and the move is slow enough to follow
   const FOLDS = { cyclize: 1, snap: 1, aromatize: 1, lactol: 1, ether: 1, aldol: 1 };
   // the clear lane just below the molecule as it stands
-  // how long step n of a cascade takes on the page: the first is slow enough to follow, each one after is quicker,
-  // and twenty are over in under four seconds
-  const stepMs = n => Math.max(120, 480 * Math.pow(0.84, Math.max(0, n - 1)));
+  // how long step n of a cascade takes on the page: the first is slow enough to follow, each one after is quicker.
+  // Six steps take 1.54 seconds and twelve 2.3
+  const stepMs = n => Math.max(130, 380 * Math.pow(0.84, Math.max(0, n - 1)));
   const KINDNAME = { lactol: 'zip', snap6: 'snap', weld: 'weld' };
   // the clear lane just above the molecule as it stands
   const over = () => { let d = 6; try { if (center) d = deepOf(center) * center.group.scale.x; } catch (e) { d = 6; } return Math.max(-9.4, C0.z - d / 2 - 3.0); };
@@ -739,7 +797,7 @@ function start(app) {
   function react(o, rid, fin, lab, free) {
     const s = { id: rid, fin };
     if (free && o.model.settle && !o.casc) o.model.settle(FOLDS[rid] ? 2200 : 160);
-    if (o.casc) st.cstep = { n: (g.casc || 0) + 1, name: KINDNAME[rid] || rid, t: performance.now() };
+    if (o.casc) st.cstep = { n: (g.casc || 0) + 1, name: KINDNAME[rid] || rid, t: performance.now(), fresh: !P.RULE.fresh || (g.casc || 0) + 1 > (g.cascBest || 0) };
     if (free && (!o.self || o.casc)) sfx.chain(st.chainN || 0);
     flush(); setHover(-1); st.mode = 'move';
     const prev = center, tok = st.tok, before = P.made(g), wasOpen = g.cur.path.length > 0, from = new Map();
@@ -747,10 +805,12 @@ function start(app) {
     // The molecule changes where it stands. Every atom that is still there moves from where it was to where it now
     // belongs, and atoms that are new grow in at the place the reagent reaches.
     const seed = new Map(), seedBead = new Map(); if (o.map) { o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && prev.balls.has(oa)) seed.set(na, p); }); prev.beads.forEach(q => { const nr = o.map.get(q.root); if (nr) seedBead.set(nr, prev.at.get(q.pa)); }); }
+    if (o.casc && prev.at.flip) seed.flip = prev.at.flip;
     const nm = buildMol(g.m, null, false, seed.size ? seed : null, seedBead); place(nm, C0, st.sc);
     if (o.map) o.map.forEach((na, oa) => { const p = prev.at.get(oa); if (p && prev.balls.has(oa) && nm.balls.has(na)) from.set(na, p.clone()); });
     nm.beads.forEach(b => { const ob = prev.beads.find(q => o.map && o.map.get(q.root) === b.root); if (ob) from.set(b.pa, prev.at.get(ob.pa).clone()); });
     nm.marks = marksOf(nm, o.r.made || []);
+    if (o.map) { const was = new Map(); prev.model.bonds.forEach(b => { const a2 = o.map.get(b.a), b2 = o.map.get(b.b); if (a2 && b2) { if (!was.has(a2)) was.set(a2, new Set()); was.get(a2).add(b2); } }); nm.sticks.forEach(q => { q.old = (was.has(q.a) && was.get(q.a).has(q.b)) || (was.has(q.b) && was.get(q.b).has(q.a)); }); }
     // group letters: one that is no longer there is struck through, one that is new is written when the reagent arrives
     { const old = prev.groups || [], now2 = groupsOf(nm), used = new Set(); now2.forEach(q => { let bi = -1, bd = 2.2; old.forEach((p, k) => { if (used.has(k) || p.txt !== q.txt) return; const d = Math.hypot(p.x - q.x, p.z - q.z); if (d < bd) { bd = d; bi = k; } }); if (bi >= 0) used.add(bi); else q.born = true; }); nm.groups = now2; nm.ghosts = old.filter((p, k) => !used.has(k)); }
     // What leaves the molecule: a small molecule of its own, set where it left from. It will fly to whatever
@@ -996,8 +1056,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (play) slots.forEach((s, i) => {
       if (!s) return;
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
-      if (o && !SIDE) { if (o.cont && open) swipe(x, px(e.a), px(e.b), 26); arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
-      if (o && SIDE && o.cont && open) swipe(x, [m[0] - 130, m[1] - 10], [m[0] + 120, m[1] - 14], 70);
+      if (o && !SIDE) { arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
+      if (o && SIDE && o.cont && open) { x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(m[0] - 44, m[1] + 44); x.lineTo(m[0] + 36, m[1] + 42); x.stroke(); }
       x.save(); x.translate(m[0], m[1]);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
         hand(x, 30); x.textAlign = 'right'; x.fillStyle = 'rgba(90,86,78,0.7)'; x.fillText(s.fin ? 'F' : String(i + 1), -128, -2);
@@ -1017,7 +1077,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.mode !== 'done') {
       const mp = px(FEWER ? { x: MULT.x + 0.6, z: MADE.z + 2.9 } : MULT), len = g.cur.path.length; x.save(); if (FEWER) { x.translate(mp[0], mp[1]); x.scale(0.6, 0.6); x.translate(-mp[0], -mp[1]); }
       { const mult = st.R * st.E, liveP = st.P > 0, liveM = mult > 1.0001, kp = 1 + 0.4 * st.bump.p, km = 1 + 0.4 * Math.max(st.bump.r, st.bump.e), c1 = mp[0] + 80, c2 = mp[0] + 228, c3 = mp[0] + 385;
-        if (liveM && len >= 2) swipe(x, [c3 - 70, mp[1] - 24], [c3 + 70, mp[1] - 30], 66);
+        if (liveM && len >= 2) { x.strokeStyle = PART.r; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c3 - 62, mp[1] + 14); x.lineTo(c3 + 62, mp[1] + 10); x.stroke(); }
         fit(x, fmt(st.P), 64 * kp, 150, marker); x.textAlign = 'center'; x.fillStyle = liveP ? PART.p : FAINT; x.fillText(fmt(st.P), c1, mp[1]);
         marker(x, 38); x.fillStyle = liveP ? INK : FAINT; x.fillText('times', c2, mp[1] - 4);
         fit(x, fmtB(mult), 64 * km, 160, marker); x.textAlign = 'center'; x.fillStyle = liveM ? PART.r : FAINT; x.fillText(fmtB(mult), c3, mp[1]);
@@ -1048,7 +1108,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
-    for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); swipe(x, a0, b0, 34); }
+    for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * 2.5, z: STEP.z }), b0 = px({ x: STEP.x + k * 2.5, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
     const cross = (c, col) => { x.strokeStyle = col; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 15, c[1] - 13); x.lineTo(c[0] + 15, c[1] + 13); x.moveTo(c[0] + 15, c[1] - 13); x.lineTo(c[0] - 15, c[1] + 13); x.stroke(); };
     for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * 2.5, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
       if (k < g.pageSteps) { const t = tr[k]; if (t && t.wasted) cross(c, PENCIL); else if (t && t.bank) tray(x, c[0], c[1] - 2, 0.5, INK, 5); else { x.strokeStyle = t ? rgb(colOf(t.id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
@@ -1108,7 +1168,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the steps of a cascade, counted over the molecule in the page's own ink: a number and the name of the kind
     if (st.cstep && now - st.cstep.t < 1500 && (st.mode === 'play' || st.mode === 'move')) {
       const k = (now - st.cstep.t) / 1500, c = px({ x: C0.x, z: over() }), pop = k < 0.04 ? 1 + 6 * k : k < 0.1 ? 1.24 - 4 * (k - 0.04) : 1;
-      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, 124); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(st.cstep.n), 0, 0);
+      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, st.cstep.fresh ? Math.min(260, 104 + 20 * st.cstep.n) : 80); x.textAlign = 'center'; x.fillStyle = st.cstep.fresh ? INK : PENCIL; x.fillText(String(st.cstep.n), 0, 0);
       hand(x, 36); x.fillStyle = PENCIL; x.fillText(st.cstep.name, 0, 46); x.restore(); x.globalAlpha = 1;
     } else if (st.cstep) st.cstep = null;
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
@@ -1149,7 +1209,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the reagent of a reaction travels from where it is listed to the place it changes, as the group it looks for,
     // and on landing shows that group and what it has become
     if (st.fly && st.mode !== 'done') { const F = st.fly, age = now - F.t; if (age > F.trav + F.hold) st.fly = null; else {
-      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: Math.max(F.b.x, BEAT.x + 8), z: under() + 1.9 }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
+      const u = Math.min(1, age / F.trav), e = u * u * (3 - 2 * u), A = px(F.a), B = px({ x: Math.max(F.b.x, C0.x - 9), z: Math.max(-8.6, Math.min(F.b.z - 2.4, C0.z + 1)) }), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 90 * Math.sin(Math.PI * e);
       const landed = u >= 1, k2 = landed ? (age - F.trav) / F.hold : 0, sc = 1.25 + (landed ? 0.4 * Math.max(0, 1 - k2 * 6) : 0);
       x.save(); x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha = k2 > 0.75 ? 1 - (k2 - 0.75) / 0.25 : 1;
       if (!landed) chip(x, F.tl[0], 0, 0, true);
@@ -1292,7 +1352,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
+  AA.rxScheme = { debugLay: (smi, n) => { const m = RX.fromSmiles(smi); RX.reopen(m); for (let i = 0; i < n; i++) { const c = RX.CARDS.lactol; if (!c.find(m).length) break; c.apply(m); } setAlign(m); const mm = buildMol(m, null, false), out = []; mm.at.forEach((v, a) => { if (a.el !== 'H') out.push((a.bead || a.el) + ' ' + v.x.toFixed(1) + ' ' + v.z.toFixed(1) + ' ' + v.y.toFixed(1)); }); const info = { caged: caged(m, archesOf(m)), arches: archesOf(m).length, flat: mm.flat, beads: mm.beads.length }; freeMol(mm); return { info, out }; }, st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, spend, debugBy: (w, h) => { g.by.water = w; g.by.h2 = h; st.by.water = w; st.by.h2 = h; },
     debugG: () => g, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta,
     chooseBrief,
