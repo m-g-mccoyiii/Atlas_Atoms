@@ -220,3 +220,11 @@ A flip leaves a C=O a ring can close on; a ring leaves an OH that may dry; a dry
 ## Coins buy helpers (the owner, 2026-11-11)
 
 Between rounds coins buy helpers from the ones the player has unlocked. The player decides which to buy. Better ones cost more. This is the main thing coins are for, with the redraw of the molecule pair and of the offer as small sinks. The free pick of one from three stays for reactions. Prices are set from each helper's measured worth in the game.
+
+## How hard it is (the owner, 2026-11-11)
+
+"The bar should not be an average person wins the whole game, getting every single thing and unlock should be hard but not impossible but not easy."
+
+- Starting molecules grow in atoms each round as the score needed grows and more complex interactions are needed. They do not have to be wild.
+- First targets, to be set on measured runs: a new player wins the three-round run within a few tries. An average player wins a six-round run about one time in four once helpers are held. An average player wins a nine-round run about one time in ten; a skilled player about one time in three. The last unlocks ask for wins at the harder stakes and are reached by few.
+- No unlock is impossible, and none is given for only showing up.

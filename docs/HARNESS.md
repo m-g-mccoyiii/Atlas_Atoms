@@ -27,6 +27,8 @@ R. Foundations first, then up. Later things and unlocks enhance the base. The ow
 S. Talking to the owner: plain words and none of the game's own jargon; one thing at a time and short; a schematic picture for every suggestion; do not list problems, fix them; if there is an issue, evaluate it and resolve it; no line that labels or excuses a design; do not exaggerate or dramatize; answer about the state of the game as it stands today.
 T. Working: many sub-agents at once; sub-agents evaluate everything; keep building without waiting.
 U. Build paths and every mechanic are evaluated by simulating from SMILES with RDKit, with reactions written exactly (`docs/tools_chem/`). The molecules themselves may be made up, and wild ones are wanted: "Made up molecules is fine wtf that's half the fucking fun of this insane shit." What is not acceptable is a crude stand-in that is not a real structure. "I told you to evaluate build paths and stuff using smiles." "You can do that with rdkit."
+V. Starting molecules: the number of atoms goes up each round as the score needed goes up and more complex interactions are needed. They do not have to be wild.
+W. Difficulty: "the bar should not be an average person wins the whole game, getting every single thing and unlock should be hard but not impossible but not easy." The first short runs are winnable by a new player; a full run is not something an average player wins as a matter of course; having everything unlocked is hard.
 
 ## The lines broken most often
 
