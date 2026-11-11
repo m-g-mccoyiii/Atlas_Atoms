@@ -186,7 +186,7 @@ function tryOne(g, m, id) {
   return { model: cm.model, r, map: cm.map };
 }
 // reactions allowed on a page
-const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + (g.syn && g.gear.includes('coffee') ? ((g.page || 1) <= 2 ? 1 : -1) : 0) + (g.more || 0);
+const stepsOf = g => DIAL.steps + (g.syn && g.gear.includes('timer') ? 1 : 0) + (g.syn && g.gear.includes('coffee') ? ((g.page || 1) <= 2 ? 1 : -1) : 0) + (g.termSteps || 0) + (g.more || 0);
 function options(g, free) {
   const cur = g.cur, out = {}, self = free && SELFMODE.auto ? (g.self || []).filter(id => !g.kinds.includes(id)) : [];
   if (!free && (g.syn ? g.pageSteps : g.trail.length) >= stepsOf(g)) return out;
@@ -320,7 +320,7 @@ const BRIEFS = [
 ];
 const BRIEF = {}; BRIEFS.forEach(b => { BRIEF[b.id] = b; });
 const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish && id !== 'aibn' && !Object.keys(FOUND).some(k => FOUND[k] === id));
-const pagesOf = g => SYN.pages + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.includes('hourglass') ? 1 : 0) - (g.brief === 'short' ? 1 : 0);
+const pagesOf = g => SYN.pages + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.includes('hourglass') ? 1 : 0) + (g.termPages || 0) - (g.brief === 'short' ? 1 : 0);
 // everything made so far: what closed rows made plus the open row, all times extra
 const made = g => Math.round((g.bank + g.P * g.R) * g.E);
 const held = g => Math.round(g.P * g.R * g.E);
@@ -338,8 +338,8 @@ function synDeal(g, rnd) {
   g.kinds = rack.filter(id => offer.includes(id)); g.left = {}; g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false;
   if (g.gear.includes('mystery')) { const all = RUNG.start.concat(...SUPPLY.map(q => q.reagents)).filter((id, i, a) => a.indexOf(id) === i && RX.CARDS[id] && !PAIR[id] && !g.kinds.includes(id) && RX.CARDS[id].find(g.m).length); if (all.length) g.kinds.push(all[Math.floor(R() * all.length)]); }
   if (g.back && RX.CARDS[g.back] && !g.kinds.includes(g.back)) g.kinds.push(g.back); g.back = null;
-  g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0); });
-  g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
+  g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0); });
+  g.rare = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1) * (g.rareMul || 1)) { const t = RARE[Math.floor(R() * RARE.length)]; g.rare[id] = t; if (t === 'plenty') g.left[id] = 9; } });
   if (g.gear.includes('ouija') && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = 9; g.rare[id] = 'plenty'; }
   if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; g.left[id] = Math.max(1, g.left[id] - 1); }
 }
@@ -350,7 +350,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
-  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; }
+  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   synDeal(g, rnd);
@@ -557,9 +557,27 @@ function runPay(run) { const n = run.pays || 0; run.pays = null; run.bonus = (ru
 function runNew(tier, extra) { const t = Math.max(0, Math.min(SUPPLY.length - 1, tier | 0)), st = stock(t); return { extra: (extra || []).slice(), round: 1, tier: t, rack: RUNG.start.slice(), rare: st.rare, gear: [], lv: {}, grade: {}, uses: {}, base: {}, beaten: 0, over: false, brief: 'plain', feed: FEEDS[0], pays: null, bonus: 0, by: { water: 0, h2: 0, gauge: 0 } }; }
 const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear, run);
 // the number to beat is measured against a plain player with the starting four reagents and nothing else
+// Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
+const TERMS = [
+  { id: 'plain', name: 'plain', note: 'no terms' },
+  { id: 'stakes', name: 'stakes', note: 'beat times 1.5. pays double' },
+  { id: 'occult', name: 'occult', note: 'start with an occult piece. beat times 1.5' },
+  { id: 'lean', name: 'lean', note: 'three reagents. one more use of each' },
+  { id: 'long', name: 'long', note: 'four reactions a page. two pages' },
+  { id: 'rare', name: 'rare', note: 'rare reagents twice as often. beat times 1.25' }
+];
+function runTerm(run, id) {
+  run.term = id; run.stake = 1; run.payMul = 1;
+  if (id === 'stakes') { run.stake = 1.5; run.payMul = 2; }
+  else if (id === 'occult') { const occ = Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(Math.random() * occ.length)]); run.stake = 1.5; }
+  else if (id === 'lean') { run.rack = RUNG.start.slice(0, 3); run.usesAll = 1; }
+  else if (id === 'long') { run.steps = 1; run.pages = -1; }
+  else if (id === 'rare') { run.rareMul = 2; run.stake = 1.25; }
+  return run;
+}
 function runQuota(run, feed, brief) {
   const br = brief || run.brief || 'plain';
-  const q = briefBase(feed, br) * RUNG.first * (br === 'plain' || br === 'carry' ? 1 : RUNG.ask) * Math.pow(RUNG.growth, Math.min(run.round, RUNG.knee) - 1) * Math.pow(RUNG.late, Math.max(0, run.round - RUNG.knee)) * (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
+  const q = briefBase(feed, br) * RUNG.first * (br === 'plain' || br === 'carry' ? 1 : RUNG.ask) * Math.pow(RUNG.growth, Math.min(run.round, RUNG.knee) - 1) * Math.pow(RUNG.late, Math.max(0, run.round - RUNG.knee)) * (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1), mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
   return Math.max(50, Math.round(q / mag) * mag);
 }
 function runPicks(run, rnd) {
@@ -591,6 +609,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return 'each place it changes: +' + rarityOf(o.id).place * SYN.strong + ' places';
   return 'one more use on every page';
 }
-AA.rxPath = { wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { TERMS, runTerm, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
