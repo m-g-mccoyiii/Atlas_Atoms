@@ -711,7 +711,7 @@ function toolBest(m, id, self) { const m0 = RX.cloneModel(m); RX.reopen(m0); con
 //   spots(m): the places it can act on molecule m as it stands (one spot for an act on the whole molecule)
 //   act(m, spot): does it to m in place and returns { made }. The zip then runs, and its steps count on from the
 //   steps the page has already run.
-const JAR = { full: { water: 60, h2: 60 }, stages: [0.12, 0.5, 1] };
+const JAR = { full: { water: 150, h2: 80 }, stages: [0.12, 0.5, 1] };
 const HOMS = {
   // water floods the page: every C=C outside a benzene ring becomes C-OH, every ring a zip closed opens
   water: { name: 'water', feed: 'water', need: 3, tok: 'C=C to OH|rings open', whole: true,
