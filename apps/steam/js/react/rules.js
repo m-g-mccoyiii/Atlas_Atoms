@@ -159,7 +159,7 @@ const carbonyls = m => m.bonds.map(b => reducible(m, b)).filter(Boolean);
 // the end of a chain (an aldehyde, which borohydride takes long before a ketone). The main game leaves it off.
 // MODE.weld: 'ol' stops a weld before water leaves, so it leaves an OH on the new ring (an aldol); 'ene' lets the
 // water go and leaves a C=C beside the C=O that stays (the condensation).
-const MODE = { zip: false, weld: 'ol' };
+const MODE = { zip: false, weld: 'ol', reach: 4 };
 const aldehydes = m => carbonyls(m).filter(s => Hs(m, s.c).length > 0);
 // a C=O whose carbon carries a CH3: the end of a chain, where a base takes a hydrogen off and a new piece goes on
 const methylKetones = m => carbonyls(m).map(k => { const me = carbonsOf(m, k.c).find(c => !c.fly && Hs(m, c).length === 3); return me ? { kind: 'end', kc: k.c, ko: k.o, me, atoms: [me, k.c] } : null; }).filter(Boolean);
@@ -321,11 +321,17 @@ const CARDS = {};
 function lactolable(m) {
   const ks = carbonyls(m); if (!ks.length) return [];
   const ar = aromaticAtoms(m), ohs = []; m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (s) ohs.push(s); }); if (!ohs.length) return [];
-  for (const k of ks) { const kr = ringAtom(m, k.c), dist = carbonDist(m, k.c, 4);
-    for (const s of ohs) { if (s.c === k.c) continue; const d = dist.get(s.c); if (d !== 3 && d !== 4) continue;
-      if (kr || ringAtom(m, s.c)) { const p = carbonPath(m, s.c, k.c, 4); let shared = 0; for (let i = 0; p && i + 1 < p.length; i++) if (ringBond(m, p[i], p[i + 1], 8)) shared++; if (!p || shared > 1) continue; }
-      return [{ o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }]; } }
-  return [];
+  // A zip travels. The OH the last step left (it sits on a carbon that also carries a ring oxygen) goes before any
+  // other, so a cascade runs along the chain from where it was set off and does not jump about; and an OH takes the
+  // nearest C=O in reach. MODE.reach is how many carbons apart the two may be (4; the magnet makes it 8).
+  const R = MODE.reach || 4; let best = null, bf = 0, bd = 99;
+  ohs.forEach(s => { s.front = nbs(m, s.c).some(n => n.atom.el === 'O' && n.atom !== s.o && nbs(m, n.atom).length === 2 && nbs(m, n.atom).every(y => y.atom.el === 'C')) ? 1 : 0; });
+  for (const k of ks) { const kr = ringAtom(m, k.c), dist = carbonDist(m, k.c, R);
+    for (const s of ohs) { if (s.c === k.c) continue; const d = dist.get(s.c); if (!(d >= 3 && d <= R)) continue;
+      if (best && (s.front < bf || (s.front === bf && d >= bd))) continue;
+      if (kr || ringAtom(m, s.c)) { const p = carbonPath(m, s.c, k.c, R); let shared = 0; for (let i = 0; p && i + 1 < p.length; i++) if (ringBond(m, p[i], p[i + 1], 8)) shared++; if (!p || shared > 1) continue; }
+      best = { o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }; bf = s.front; bd = d; } }
+  return best ? [best] : [];
 }
 function etherable(m) { for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) continue; const dist = carbonDist(m, s.c, 4); for (const x of m.atoms) { if (x.el !== 'Cl' || x.fly) continue; const c2 = carbonsOf(m, x)[0]; if (!c2 || c2 === s.c || ringAtom(m, c2)) continue; const d = dist.get(c2); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, cl: x, c2, atoms: [s.o, s.c, c2, x] }]; } } return []; }
 function enonable(m) { const dbl = a => nbs(m, a).some(n => n.bond.order === 2); for (const k of carbonyls(m)) for (const a of carbonsOf(m, k.c)) { if (!Hs(m, a).length || dbl(a)) continue; for (const b of carbonsOf(m, a)) { if (b === k.c || dbl(b)) continue; const oh = nbs(m, b).map(n => n.atom).find(q => q.el === 'O' && !q.fly && hydroxyl(m, q)); if (!oh) continue; const s = hydroxyl(m, oh); return [{ a, b, o: s.o, ho: s.ho, kc: k.c, atoms: [a, b, s.o] }]; } } return []; }
