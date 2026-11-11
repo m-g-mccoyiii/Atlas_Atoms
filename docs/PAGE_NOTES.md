@@ -49,3 +49,14 @@ Branch reset to steam first. Frames are in `C:\Work\atlas-atoms\.claude\shots\pa
 - The yellow `Pr` beads on a folded molecule (the fold option `bead`) are discs on the molecule. I did not change the default fold.
 - Ring 2 and later of a chain: in the slowed test the pane did not draw the molecule while the second ring ran, with the old code as well as the new, so I only have clean frames of ring 1 and of the whole chain at normal speed.
 - The word sounds are `sfx.flag(k)` only.
+
+## Third pass
+
+Frames: `.claude/shots/page3-1.jpg` (pair page with two hurdle marks), 2 (ring 1 frozen on a real chain: count under the molecule, thin line from the spot, bond closing, bars), 3 (atoms plain, tracer marks as bars), 4 (round 9 folded molecule, no discs), 5 (round page with a hurdle mark at top left), 6 and 7 (ring 2 frozen; crowded, see below).
+
+- Count and gain now stand under the molecule outline at the x of the spot, joined to it by a thin pencil line; the gain runs left along that strip. Page gains and ring gains have two fixed lanes. Seen on ring 1. On ring 2 (page3-6, 3-7) the strip is tight when the molecule is low on the page: the count and a gain still touch the track flags in those frames. Not solved; the audit's fixed gain lane is the next step.
+- Blue, orange and magenta atoms were not element colors: they were tracer (isotope) tints on atoms with `iso`. Atoms are no longer recolored; each such atom gets a short bar of the tracer color on the paper under it, and in the bare game the bars are not drawn at all.
+- The yellow `Pr` discs are gone: the default fold is now `none`, so every atom is drawn.
+- Rule words (`assay`, `short`, `2 pages`, `scarce`, `1 use`) are off the pair page and the round page. `drawHurdle(g, cx, cy, hurdle)` draws a named hand-drawn mark and a count from the table ring, joined, big, cage, size, kinds, water, chain, few, with a small caret for at least (up) or at most (down; `few` always). It runs when `b.hurdle` is on a brief (pair page, beside the flag) or `g.hurdle` or `st.hurdle` is set (round page, top left). Absent: nothing is drawn.
+- Guards kept: `AA.rxPath.swapQueue` (drag a circle onto another) and `RULE.usesFree` (drops hidden).
+- Test method: the pane draws the molecule badly when the page clock is slowed (the molecule scales in again after every step), so frames of a chain were taken by freezing the page clock a set time after a ring began.

@@ -67,7 +67,7 @@ function start(app) {
   //   bead: an arm or ring that nothing can act on folds into one lettered bead (Me, Et, Ph)
   //   flat: the molecule is laid out flat on the page with no overlaps, over an inked skeleton
   //   focus: what is far from anything that can react is drawn small and pale
-  const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'bead'; } catch (e) { return 'bead'; } })(), BIG = 11;
+  const FOLD = (() => { try { return new URLSearchParams(root.location.search).get('fold') || 'none'; } catch (e) { return 'bead'; } })(), BIG = 11;
   // Ways of drawing every molecule, being tried side by side with ?mol= on the page.
   //   full: every atom, standing as it settles.  lean: no H on carbon, no letter on carbon.
   //   flatlean: lean, and laid flat over an inked skeleton.  pads: flatlean, with a colored pad under each group.
@@ -362,8 +362,8 @@ function start(app) {
     model.atoms.forEach(a => {
       if (skip.has(a)) return;
       if (a.poly) { const e = { R: radius(a), sk: 1.6, mesh: add(SPH, polyMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat('n' + a.poly)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(a, e); return; }
-      const R = radius(a), b = { R, mesh: add(SPH, pale.has(a) ? paleMat : a.slime ? slimeMat : a.cure && a.el === 'O' ? cureMat : a.iso && CUT.includes('c') ? isoMat(a) : ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
-      if (a.iso && !CUT.includes('c')) b.collar = collar(grp, new T.Vector3(), R, ISOC[a.iso]); else if (a.clamp) b.collar = collar(grp, new T.Vector3(), R, 0x39435c);
+      const R = radius(a), b = { R, mesh: add(SPH, pale.has(a) ? paleMat : a.slime ? slimeMat : a.cure && a.el === 'O' ? cureMat : ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
+      if (a.clamp) b.collar = collar(grp, new T.Vector3(), R, 0x39435c);
       if (!pale.has(a) && (!(lean || flat) || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); }
       balls.set(a, b);
     });
@@ -415,7 +415,7 @@ function start(app) {
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
-  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.4 : C0B.x; C0.z = wide ? 0.5 : C0B.z; LANE.w = wide ? 20.4 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
+  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.4 : C0B.x; C0.z = wide ? -0.4 : C0B.z; LANE.w = wide ? 20.4 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 10.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
   const fitMain = m => Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -869,8 +869,28 @@ function start(app) {
   // where a ring's number is written: under the molecule, at the ring, clear of the atoms
   // in the first short runs the uses of a reaction never run out: the rules say so with one of these switches and the drops are not drawn
   const usesHidden = () => !!(P.RULE && (P.RULE.usesFree || P.RULE.infiniteUses || P.RULE.unlimitedUses));
+  // A hurdle is an at-least condition on the molecule, drawn as a small hand-drawn mark and a count: { kind, n, max }.
+  // Kinds: ring, joined (rings sharing an edge), big (a large ring), cage, size, kinds (kinds of group), water (water off), chain (longest chain), few (few reactions; at most).
+  const HURDLE = {
+    ring: (c, cx, cy) => { poly(c, cx, cy, 24, 6); },
+    joined: (c, cx, cy) => { poly(c, cx - 17, cy, 17, 6); poly(c, cx + 17, cy, 17, 6); },
+    big: (c, cx, cy) => { poly(c, cx, cy, 30, 12); },
+    cage: (c, cx, cy) => { c.moveTo(cx - 22, cy - 6); c.lineTo(cx + 4, cy - 6); c.lineTo(cx + 4, cy + 20); c.lineTo(cx - 22, cy + 20); c.closePath(); c.moveTo(cx - 10, cy - 20); c.lineTo(cx + 16, cy - 20); c.lineTo(cx + 16, cy + 6); c.lineTo(cx + 4, cy + 6); c.moveTo(cx - 22, cy - 6); c.lineTo(cx - 10, cy - 20); c.moveTo(cx + 4, cy - 6); c.lineTo(cx + 16, cy - 20); c.moveTo(cx + 4, cy + 20); c.lineTo(cx + 16, cy + 6); },
+    size: (c, cx, cy) => { for (let k = 0; k < 4; k++) { c.moveTo(cx - 27 + k * 18 + 6, cy - 6); c.arc(cx - 27 + k * 18, cy - 6, 6, 0, 6.3); } c.moveTo(cx - 30, cy + 14); c.lineTo(cx + 30, cy + 14); c.moveTo(cx - 30, cy + 8); c.lineTo(cx - 30, cy + 20); c.moveTo(cx + 30, cy + 8); c.lineTo(cx + 30, cy + 20); },
+    kinds: (c, cx, cy) => { c.rect(cx - 34, cy - 9, 18, 18); c.moveTo(cx - 9, cy + 10); c.lineTo(cx, cy - 10); c.lineTo(cx + 9, cy + 10); c.closePath(); poly(c, cx + 27, cy, 11, 6); },
+    water: (c, cx, cy) => { c.moveTo(cx - 14, cy - 18); c.bezierCurveTo(cx - 10, cy - 8, cx - 2, cy, cx - 2, cy + 8); c.arc(cx - 14, cy + 8, 12, 0, Math.PI); c.bezierCurveTo(cx - 26, cy, cx - 18, cy - 8, cx - 14, cy - 18); c.moveTo(cx + 8, cy + 2); c.lineTo(cx + 34, cy - 12); c.moveTo(cx + 22, cy - 14); c.lineTo(cx + 34, cy - 12); c.lineTo(cx + 30, cy); },
+    chain: (c, cx, cy) => { c.moveTo(cx - 34, cy + 10); c.lineTo(cx - 17, cy - 10); c.lineTo(cx, cy + 10); c.lineTo(cx + 17, cy - 10); c.lineTo(cx + 34, cy + 10); },
+    few: (c, cx, cy) => { c.moveTo(cx - 8 + 14, cy); c.ellipse(cx - 8, cy, 14, 11, 0, 0, 6.3); c.moveTo(cx + 36, cy); c.ellipse(cx + 22, cy, 14, 11, 0, 0, 6.3); }
+  };
+  function poly(c, cx, cy, r, n) { for (let k = 0; k <= n; k++) { const a = -Math.PI / 2 + k * 6.2832 / n, px0 = cx + r * Math.cos(a), py0 = cy + r * Math.sin(a); if (k === 0) c.moveTo(px0, py0); else c.lineTo(px0, py0); } }
+  function drawHurdle(g0, cx, cy, h) {
+    if (!h || !HURDLE[h.kind]) return; const c = ink.x, n = Math.max(0, h.n | 0), atMost = !!h.max || h.kind === 'few';
+    c.save(); c.translate(cx, cy); c.scale(1.4, 1.4); c.translate(-cx, -cy); c.strokeStyle = INK; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); HURDLE[h.kind](c, cx, cy); c.stroke();
+    marker(c, 56); c.textAlign = 'left'; c.fillStyle = INK; c.fillText(String(n), cx + 48, cy + 20); const w = c.measureText(String(n)).width;
+    c.lineWidth = 5; c.beginPath(); const ax = cx + 48 + w + 18; if (atMost) { c.moveTo(ax - 9, cy - 6); c.lineTo(ax, cy + 6); c.lineTo(ax + 9, cy - 6); } else { c.moveTo(ax - 9, cy + 6); c.lineTo(ax, cy - 6); c.lineTo(ax + 9, cy + 6); } c.stroke(); c.restore();
+  }
   const spotOf = pr => (pr && pr.a && pr.b && center ? { x: C0.x + (pr.a.x + pr.b.x) / 2 * center.group.scale.x, z: C0.z + (pr.a.z + pr.b.z) / 2 * center.group.scale.x } : null);
-  const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0]; };
+  const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
   function pick(i) {
     const s = slots[i], o = s && s.o;
     if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); st.qT = performance.now(); refresh(); return; }
@@ -1227,13 +1247,14 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
-      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round + (briefs.length && briefs[0].assay && (briefs.length === 1 || briefs[0].ease != null) ? '  assay' : ''), h[0], h[1]);
+      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round + '', h[0], h[1]);
       briefs.forEach((b, i) => {
         const c = px({ x: BX(i), z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         if (b.ease != null) {
           // one of two molecules: its family, the number to beat, and the coins the harder one pays on top
           { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.6 }); if (K && meta.stage >= 2 && !b.assay) { marker(x, 58); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); } }
                     const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
+          if (b.hurdle) { const hp = px({ x: BX(i) + 7.5, z: 5.5 }); drawHurdle(g, hp[0], hp[1], b.hurdle); }
           if (b.coins) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
           if (hov) swipe(x, [c[0] - 150, y + 24], [c[0] + 150, y + 19], 6, INK);
           return;
@@ -1247,7 +1268,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       });
       if (P.RULE.choose && briefs.length && briefs[0].ease != null) {
         // an assay changes one rule for both: its name and rule stand once, between the two
-        if (briefs[0].assay) { const B = P.BRIEF[briefs[0].brief], a0 = px({ x: 0, z: -8.9 }); marker(x, 56); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, a0[0], a0[1]); if (B.note) inkLine(x, B.note, a0[0], a0[1] + 44, 32, INK); }
+        if (false && briefs[0].assay) { const B = P.BRIEF[briefs[0].brief], a0 = px({ x: 0, z: -8.9 }); marker(x, 56); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, a0[0], a0[1]); if (B.note) inkLine(x, B.note, a0[0], a0[1] + 44, 32, INK); }
         if (P.RULE.coins && (meta.coined || (run.coins || 0) > 0)) { const c = px(PURSE); purse(x, c[0], c[1], run.coins || 0, 24); }
         if (pairOn()) { const c = px(PAIR), cost = P.pairCost(run), can = cost != null && (run.coins || 0) >= cost, hov = st.mark === 'pair', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0], c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < (cost == null ? 3 : cost); k++) rcoin(x, c[0] + 66 + k * 38, c[1] + 2, 15, can ? 1 : 0.35); if (cost == null) { x.strokeStyle = PENCIL; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 40, c[1] + 26); x.lineTo(c[0] + 160, c[1] - 22); x.stroke(); } }
       }
@@ -1333,7 +1354,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.pair && st.pair.a && st.pair.b && center && st.mode !== 'done' && now - st.pair.t < Math.max(800, st.pair.ms * 0.9)) { const sc = center.group.scale.x, el = now - st.pair.t, k = Math.min(1, el / Math.max(200, st.pair.ms * 0.3)), A = px({ x: C0.x + st.pair.a.x * sc, z: C0.z + st.pair.a.z * sc }), B = px({ x: C0.x + st.pair.b.x * sc, z: C0.z + st.pair.b.z * sc }), fade = el > Math.max(600, st.pair.ms * 0.7) ? 0.5 : 1;
       x.save(); x.globalAlpha = fade; x.lineCap = 'round'; x.strokeStyle = INK;
       x.lineWidth = 11; [A, B].forEach(q => { x.beginPath(); x.moveTo(q[0] - 36, q[1] + 52); x.lineTo(q[0] + 36, q[1] + 50); x.stroke(); });
-      x.lineWidth = 12; x.strokeStyle = PENCIL; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k); x.stroke(); x.restore(); dirty = true; }
+      x.lineWidth = 12; x.strokeStyle = PENCIL; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k); x.stroke();
+      { const bx2 = molBox(); if (bx2 && k > 0.3) { const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, lx = Math.max(bx2.l + 30, Math.min(bx2.r - 30, mx)); x.lineWidth = 4; x.strokeStyle = PENCIL; x.globalAlpha = fade * 0.8; x.beginPath(); x.moveTo(mx, my + 14); x.lineTo(lx, bx2.b + 16); x.stroke(); } }
+      x.restore(); dirty = true; }
+    // atoms that carry a mark are not recolored: a short bar of the mark's color is drawn on the paper under each
+    if (center && center.balls && st.mode !== 'done' && !P.RULE.bare) { const sc = center.group.scale.x; center.balls.forEach((b, a) => { if (!a.iso || ISOC[a.iso] == null) return; const p = px({ x: C0.x + b.mesh.position.x * sc, z: C0.z + b.mesh.position.z * sc }), hx = ISOC[a.iso].toString(16).padStart(6, '0'); x.strokeStyle = '#' + hx; x.lineWidth = 11; x.lineCap = 'round'; x.beginPath(); x.moveTo(p[0] - 30, p[1] + 50); x.lineTo(p[0] + 30, p[1] + 48); x.stroke(); }); }
     // a piece picked up: a short ink tick under each place it can go. The place under the pointer shows what would happen in
     // lines and letters only: what goes is drawn over heavy in red, what comes is a ghost of bonds, a new group is its word
     if (st.tool && st.toolList && center && lining()) { const sc = center.group.scale.x, P2 = q => px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }), r = 1.0 * sc * U, seg = (a, b) => { x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -1406,7 +1431,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
+    { const hh = g.hurdle || st.hurdle; if (hh) { const hp = px({ x: EDGE + 2.4, z: PAGES.z - 4.6 }); drawHurdle(g, hp[0], hp[1], hh); } }
+    if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
@@ -1471,8 +1497,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // a line lettered across the page when something worth naming happens, or a row of ticks when the number is beaten again
     // the steps of a cascade, counted over the molecule in the page's own ink: a number and the name of the kind
     if (st.cstep && now - st.cstep.t < 1500 && (st.mode === 'play' || st.mode === 'move') && !lining()) {
-      const k = (now - st.cstep.t) / 1500, ra = ringAt(), sp = st.cstep.sp || (st.cstep.sp = spotOf(st.pair)), sq = sp ? px(sp) : null, c = sq ? [sq[0], sq[1] - 104] : ra ? [ra[0], ra[1]] : px({ x: 19.4, z: -6.2 }), pop = k < 0.04 ? 1 + 6 * k : k < 0.1 ? 1.24 - 4 * (k - 0.04) : 1;
-      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, st.cstep.fresh ? Math.min(110, 70 + 6 * st.cstep.n) : 60); x.textAlign = 'center'; x.fillStyle = st.cstep.fresh ? INK : PENCIL; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(String(st.cstep.n), 0, 0); x.fillText(String(st.cstep.n), 0, 0);
+      const k = (now - st.cstep.t) / 1500, ra = ringAt(), sp = st.cstep.sp || (st.cstep.sp = spotOf(st.pair)), sq = sp ? px(sp) : null, c = sq && ra ? [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, sq[0])), ra[3].b + 44] : ra ? [ra[0], ra[1]] : px({ x: 19.4, z: -6.2 }), pop = k < 0.04 ? 1 + 6 * k : k < 0.1 ? 1.24 - 4 * (k - 0.04) : 1;
+      x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1; marker(x, st.cstep.fresh ? Math.min(74, 52 + 4 * st.cstep.n) : 46); x.textAlign = 'center'; x.fillStyle = st.cstep.fresh ? INK : PENCIL; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(String(st.cstep.n), 0, 0); x.fillText(String(st.cstep.n), 0, 0);
       if (g && g.self && g.self.length > 1) { hand(x, 36); x.fillStyle = PENCIL; x.fillText(st.cstep.name, 0, 46); } x.restore(); x.globalAlpha = 1;
     } else if (st.cstep) st.cstep = null;
     if (st.call && now - st.call.t < 1400 && st.mode !== 'fuse') {
@@ -1507,8 +1533,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // the gain of each step of a cascade: written at the new ring, then it travels to the total and the total takes it
-    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); st.gains.forEach(q => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, S0 = spx ? [spx[0], spx[1] + 6] : [Math.max(ra[0] - 400, Math.min(ra[0] + 400, px(q.gx || { x: C0.x, z: C0.z })[0])), ra[1] + 30], Bf = [T0[0] + (st.madeW || 200) + 80, ra[1] + 30], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * Math.max(0, (e - 0.3) / 0.7), cy = S0[1] + (Bf[1] - S0[1]) * Math.min(1, e / 0.3);
-        x.globalAlpha = k > 0.78 ? Math.max(0, 1 - (k - 0.78) / 0.24) : 1; marker(x, (q.fresh ? 62 : 44) * pop * (1 - 0.3 * e)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, cx, cy); x.fillStyle = q.fresh ? INK : PENCIL; x.fillText(q.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
+    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); st.gains.forEach((q, qi) => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, gy = ra[3].b + 104 + (q.ring ? 0 : 42), S0 = [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, spx ? spx[0] : px(q.gx || { x: C0.x, z: C0.z })[0])), gy], Bf = [T0[0] + (st.madeW || 200) + 80, gy], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * e, cy = gy;
+        x.globalAlpha = k > 0.78 ? Math.max(0, 1 - (k - 0.78) / 0.24) : 1; marker(x, (q.fresh ? 46 : 36) * pop * (1 - 0.3 * e)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, cx, cy); x.fillStyle = q.fresh ? INK : PENCIL; x.fillText(q.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // bonuses in flight: from where they were earned to the points or to the multiplier
     if (st.motes.length) { const mp2 = px(FORM), tx0 = mp2[0] + Math.max(st.fW || 260, (st.madeW || 0) + 10) + 64, tgt = { p: [tx0, mp2[1] - 24], m: [tx0, mp2[1] - 24] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
       const lanes = { p: 0, m: 0 }; st.motes.forEach(m => { const k = (now - m.t) / m.dur; if (k < 0) return; const lane = lanes[m.part]++ % 3; const e = k * k * (3 - 2 * k), A = px(m.a), B = [tgt[m.part][0] + lane * 70, tgt[m.part][1]], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e * e * e;
