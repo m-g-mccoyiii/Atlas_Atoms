@@ -250,7 +250,7 @@
         line.forEach(id => P.queueAdd(g, id === '#finish' ? P.SYN.finish : id));
         idle += Math.max(0, P.stepsOf(g) - g.pageSteps - g.queue.length);
         while (g.queue.length && !g.over) { if (dec) { const o = P.options(g); if (Object.keys(o).length || P.canBank(g)) weigh(g, o, dec); } if (g.queue[0] === P.SYN.finish && pol.wish && run.assayNow) P.wish(g, run); P.queueStep(g); steps++; if (big()) break; }
-        g.queue = []; g.shot = true; if (!g.over && P.RULE.cascade) P.cascade(g); cascs.push(g.casc || 0);
+        g.queue = []; g.shot = true; cascs.push(g.casc || 0);
       }
       else for (;;) {
         if (g.over) break;

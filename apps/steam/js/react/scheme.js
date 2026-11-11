@@ -654,7 +654,7 @@ function start(app) {
       else if (o.finish) { callout('finished', 'extra +' + fmtB(P.SYN.finishExtra * o.r.hits), GREEN); sfx.good(); spray(50, GREEN, true); }
 
       if (route || o.finish || t.set) { /* named above */ } else if (t.cont && len >= 3) { callout(len + ' in a row', 'row ' + fmtB(g.R), INK); spray(20 * len, INK, true); st.shake = Math.max(st.shake, 0.6 + 0.3 * len); }
-      else if (wasOpen && !t.cont && t.held) callout('held', '', PENCIL); else if (wasOpen && !t.cont && !st.gear.includes('ouroboros')) callout('row broken', '', PENCIL);
+      else if (wasOpen && !t.cont && t.held) callout('held', '', PENCIL); else if (wasOpen && !t.cont && !st.gear.includes('ouroboros') && !P.RULE.cascade) callout('row broken', '', PENCIL);
       // passing the number to beat, and each doubling past it
       const m = P.made(g), times = Math.floor(m / st.quota);
       if (times >= 1 && st.over === 0) { st.hold = performance.now() + 200; st.over = 1; st.flash = 1; st.flashC = '28,138,74'; st.shake = 2; sfx.quota(); spray(90, GREEN, true); burst3(FLASK.x, 0.2, FLASK.z, 30, flask.hex); }
@@ -681,14 +681,14 @@ function start(app) {
   const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * 2.5)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
   function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * 2.5, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
-  function doFire() { if (!lining()) return; flush(); setHover(-1); st.firing = true; st.fireN = 0; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
+  function doFire() { if (!lining()) return; flush(); setHover(-1); st.firing = true; st.fireN = 0; st.acted = false; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
   function fireNext() {
     // the cascade: whatever the molecule can do to itself happens first, one step at a time, each quicker than the last
-    { const c = g.over || !(st.fireN > 0 || !g.queue.length) ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; st.cstep = { n, name: KINDNAME[c.id] || c.id, t: performance.now() }; if (c.model.settle && caged(c.model, archesOf(c.model))) c.model.settle(500); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
+    { const c = g.over || !st.acted ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; st.cstep = { n, name: KINDNAME[c.id] || c.id, t: performance.now() }; if (c.model.settle && caged(c.model, archesOf(c.model))) c.model.settle(500); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
     const h = P.queueHead(g), tok = st.tok;
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; return nextPage(); }
-    P.queueShift(g); st.fireN = (st.fireN || 0) + 1;
+    P.queueShift(g); st.fireN = (st.fireN || 0) + 1; st.acted = h.kind === 'take';
     if (h.kind === 'take' || h.kind === 'finish') return react(h.o, h.id, h.kind === 'finish', { x: STEP.x + g.pageSteps * 2.5, z: STEP.z }, false);
     if (h.kind === 'bank') bankNow(); else { P.waste(g, h.id); sfx.bad(); st.shake = Math.max(st.shake, 0.3); }
     st.mode = 'move'; dirty = true; setTimeout(() => { if (tok === st.tok) fireNext(); }, 160);
