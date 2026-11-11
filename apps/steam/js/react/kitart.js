@@ -114,7 +114,10 @@ function build(id, T, grp, tint) {
     pact() { const paper = M(0xe0c88c, 0.9); box(1.6, 0.03, 2.0, paper, 0, 0.1, 0, [0, 0.12, 0]); [-1.05, 1.05].forEach(z => cyl(0.16, 0.16, 1.75, paper, z * 0.12, 0.16, z, [0, 0.12, H])); cyl(0.26, 0.26, 0.08, red, 0.45, 0.15, 0.5); for (let k = 0; k < 3; k++) box(1.0, 0.012, 0.05, black, -0.1, 0.125, -0.6 + k * 0.28, [0, 0.12, 0]); box(0.7, 0.012, 0.04, black, -0.3, 0.125, 0.45, [0, 0.12, 0]); bones(-0.75, 0.3, 0.75); rod([-0.6, 0.25, 0.5], [-0.25, 1.5, -0.2], 0.03, black); box(0.3, 0.8, 0.02, white, -0.33, 1.25, -0.06, [0.5, 0, -0.27]); },
   };
   if (!B[id]) return false;
-  B[id](); finish(T, grp); return true;
+  B[id]();
+  // every piece stands centered on its own place, so the words under it sit under its middle
+  { const bb = new T.Box3().setFromObject(grp), cx = (bb.min.x + bb.max.x) / 2; if (isFinite(cx)) grp.children.forEach(c => { c.position.x -= cx; }); }
+  finish(T, grp); return true;
 }
 // pieces that lie flat on the page and are seen from on top
 const FLAT = { spatula: 1, loupe: 1, ouija: 1, pact: 1, stopwatch: 1, magnet: 1, transmute: 1 };

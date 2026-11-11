@@ -727,7 +727,7 @@ function start(app) {
   }
   // lettering in which {p}, {r} and {e} are drawn as the marks. Words take the color of the mark before them
   function inkLine(x, str, cx, y, size, col, align) {
-    const bits = String(str).split(/(\{[pre]\})/).filter(Boolean); hand(x, size);
+    const bits = String(str).trim().split(/(\{[pre]\})/).filter(Boolean); hand(x, size); if (bits.length > 1 && bits[0] === '{p}') bits[1] = bits[1].replace(/^\s+/, '');
     const word = (b, i) => (b[1] === 'p' || /^\s*times/.test(bits[i + 1] || '') ? '' : 'times'), ws = bits.map((b, i) => (b[0] === '{' ? x.measureText(word(b, i)).width : x.measureText(b).width)), tot = ws.reduce((a, b) => a + b, 0);
     let px0 = align === 'right' ? cx - tot : align === 'left' ? cx : cx - tot / 2, cur = col; x.textAlign = 'left';
     bits.forEach((b, i) => { if (b[0] === '{') { cur = PART[b[1]]; const w = word(b, i); if (w) { x.fillStyle = cur; x.fillText(w, px0, y); } } else { x.fillStyle = cur || col; x.fillText(b, px0, y); } px0 += ws[i]; });
