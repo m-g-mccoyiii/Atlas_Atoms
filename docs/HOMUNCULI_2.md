@@ -289,3 +289,17 @@ As written at the top of this file: fed by three waters coming off, then on the 
 - Why it deepens a run: a long stretch is the main thing that stops a cascade. With hydrogen the player may leave one and spend reactions on length. Feeding it needs oxidize, which kills the chain if fired before the zip.
 - Not the judge's pick (a use given back to one circle): the owner turned down ones that do not touch the molecule.
 - To be measured.
+
+### Hydrogen: agreed by the owner 2026-11-11
+
+As above. The owner: the number of hydrogens that feed it can be adjusted later.
+
+### Carbon dioxide: shown to the owner, not yet answered
+
+- Looks like: a block of dry ice on legs, standing in mist.
+- Fed by carbon dioxide coming off the molecule. Three and it is ready. No reagent drives carbon dioxide off yet; a source has to be built (the real ones: an acid end heated by the burner loses it; a chain end oxidized all the way leaves as it).
+- When ready, after the page the player chooses has fired: every ring that page's zip closed is frozen. Frozen rings do not open when the page turns, for the rest of the round.
+- On later pages the frozen rings pay in full, where rings that only closed again pay a quarter. New rings carry on from the last frozen one.
+- Frozen rings cannot be opened again that round: not by the flood, and the C=O in them are spent.
+- The choice: freeze early for more pages of full pay, or wait and freeze a longer chain. With the rings frozen, oxidize fired first can no longer kill the chain.
+- To be measured: it changes what a round pays.
