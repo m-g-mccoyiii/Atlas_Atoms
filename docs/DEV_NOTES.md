@@ -32,7 +32,7 @@ Read this before changing anything. Then read `EVALUATOR_BRIEF.md`, `ARC.md`, `E
 | `apps/steam/js/react/kitart.js` | 3D models of the sixty pieces from primitives: `AA.rxKit` |
 | `apps/steam/js/react/pen.js` | the game's own lettering, drawn as strokes. `?font=classic` turns it off |
 | `apps/steam/scheme.html` | the game page |
-| `.claude/rec.html`, `.claude/rechelp.js`, `.claude/simhelp.js` | recording and measuring page, not shipped, not in git |
+| `.claude/rec.html`, `.claude/rechelp.js`, `.claude/simhelp.js`, `.claude/sim.js` | recording and measuring page, not shipped, not in git. `sim.js` is the measuring rig; its versioned copy is `docs/tools_sim.js` |
 
 ## How to change code safely
 
@@ -54,8 +54,9 @@ Heredocs with nested quotes fail in this shell; a script file does not.
 - The browser's JavaScript tool times out near 45 seconds. For long work, do it in chunks of about 22 seconds, one call per chunk. Background timers in the pane are throttled to about one a minute, so never rely on `setTimeout` loops for long jobs.
 - `AA.rxScheme.debugStage(n)`, `debugTerm(i)`, `debugKit(ids)`, `debugRack(ids)`, `debugFeed(smiles)` set up a state. `AA.rxScheme.meta` is the saved progress.
 - To measure: `AA.rxPath.synPlay(feed, rnd, gear, run, 'greedy')` plays one round and returns the total. Pass a seeded `rnd` so two measurements see the same deals. `docs/MATRIX.md` was made this way; the script that builds it is `matrix.py` in the scratchpad.
+- To measure whole runs: `runSim(player, seed, opts)` and the rest of the rig, in `.claude/sim.js` (copy in `docs/tools_sim.js`). `docs/RIG.md` says how. `AA.rxPath.seed(n)` seeds every draw on the run path; `AA.rxScheme.debugRound(n)` jumps the page to a round.
 - Judge whole frames, not crops. Look at what you built before saying it works.
 
 ## What is known to be wrong
 
-See `EVALUATION.md`. In short: the numbers to beat are not tied to play; most turns are forced; two thirds of piece pairs do not interact; twelve pieces are dead and seven harmful; the recycler loops forever; the overreact chain is not a spectacle; the page has rejected looks (navy ink, yellow pills).
+See `EVALUATION.md` and the end of `RIG.md`. In short: the number to beat now follows a measured curve but rounds are still passed by far more than five times and molecules differ by tens of times in the same round; most turns are forced; two thirds of piece pairs do not interact; twelve pieces are dead and seven harmful; the recycler loops forever; the overreact chain is not a spectacle; the page has rejected looks (navy ink, yellow pills).

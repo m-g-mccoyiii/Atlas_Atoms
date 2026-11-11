@@ -56,7 +56,7 @@ Set 2026-11-10. The owner asked that work continue until independent reviewers p
 
 | Section | Status | Date | Note |
 |---|---|---|---|
-| 1 Number to beat | fail | 2026-11-10 | share of the number varies 126 times across molecules |
+| 1 Number to beat | measured, awaiting review | 2026-11-10 | `RIG.md`. 500 runs for each of four players, seeds 1 to 500, commit `b2f39b6`. Median player within 12 points in every round: met, worst miss 8.8 (round 5, 79% against 88%), and 9.1 on 500 new seeds. Passed by more than 5 times: not met, 73% against under 8%. Molecules in the same round: not met, 27 to 254 times against 3. The last two cannot be met by the number alone. |
 | 2 Decisions | fail | 2026-11-10 | best move forced in most turns |
 | 3 Pieces combine | fail | 2026-11-10 | 66% of pairs inert, 59 combos |
 | 4 Spectacle and speed | fail | 2026-11-10 | chain is a tag and a number; three screens before a round |
