@@ -4,6 +4,100 @@ Built 2026-11-10. The newest measure is the first section below. This is the rig
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11, third: new steps pay, forgiving first rounds, five pieces used on the molecule
+
+Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. The section after this one is the "before" of every comparison here.
+
+**This measure is smaller than the gate asks.** `PASS.md` asks for 500 runs a player. This one has 205 novice, 205 greedy, 268 median and 120 planner runs (tag g1, seeds from 1), and 150 novice and 200 median runs on unseen seeds (tag u1, seeds from 1,001). The pieces were rebuilt twice on the owner's direction during the work and there was not time for the full measure.
+
+### What changed
+
+| Rule | What it is | Switch |
+|---|---|---|
+| New steps pay | a step of a cascade is paid in full only when the page has run past the longest cascade of any earlier page of the round. A step that repeats pays a quarter | `RULE.fresh`, `CASC.old` |
+| A zip travels | the OH the last step left goes before any other OH, and an OH takes the nearest C=O in reach, so a cascade runs along the chain from where it was set off | `rules.js` `lactolable` |
+| The deal of rounds one to three | round one is dealt from four reagents (hydrate, oxidize, hydroborate, reduce). Dehydrate joins in round two and grow in round three | `RUNG.from` |
+| Molecules of rounds one and two | 18 new small molecules. Most have an OH oxidize cannot take or an aldehyde end reduce turns into one, and a spare C=C that hydrate and hydroborate can work on without harm. 13 small ones that most lines could not set off were taken out | `FEED` |
+| Pieces | five pieces used on the molecule (docs/PIECES.md): mirror, seed crystal, clamp, magnet, burner. A piece that changes the molecule sets the zip off at once. Carousel, dropper and timer are still offered. The other 52 are off | `RULE.five`, `FIVE` |
+| The players | they use a piece at the start of a page, each once a round: the median player, the planner and the greedy player where the bare structure reads best, the novice at a place taken at random on half its pages | `tools_sim.js` `useTools` |
+| The number | rounds one to three are what 90, 80 and 55 in 100 novices who reach the round make, and no round asks more than 2.6 times the one before | `tools_par.py` |
+
+### The gap between extending a chain and firing it again
+
+One round on each of the 73 molecules as they then stood, the six starting reagents, the same deals, two players: one fires the line with the most steps on every page, the other on pages two and three fires the line with the most steps that is not longer than the chain already was (`gapRound` in the recording page).
+
+| | Paid in full every page (before) | New steps only (now) |
+|---|---|---|
+| Rounds where the chain could be made longer | 48 of 73 | 48 of 73 |
+| The extender's total over the refirer's, geometric mean | 2.67 | 2.59 |
+| The same, median | 2.92 | 2.64 |
+| A round where the chain was only fired again: total now over total before | | 0.55 |
+| The extender's own total now over before | | 0.64 |
+
+The rule did what it was asked: a round that only fires the standing chain again now makes 55 in 100 of what it made. It did not widen the gap between the two players, which stayed near 2.6 times, because the extender's own repeats (its page three on a chain it lengthened on page two) are paid a quarter as well.
+
+### Why the novice died in round two, and what was done
+
+Read with the screen (`scrNov` in the recording page: three reagents a page taken at random from those of the hand that act on the molecule as it stands). On the molecules of rounds one to three, with all six starting reagents, 6 to 63 lines of three in 100 set any zip off, and on 11 of the small molecules a novice had no cascade on any page in half its rounds or more. Three causes, all structural:
+
+1. A wasted circle sets nothing off, and a molecule dealt already able to zip often had nothing a harmless reagent could act on.
+2. Oxidize takes the OH a chain starts from when it is fired first, and so does dehydrate.
+3. Grow turns every C=O into an OH, which ends the chain.
+
+With the four reagents of round one and the new molecules, 88 to 98 lines of three in 100 set a zip off on the new chain molecules, and a novice round with no cascade on any page falls to 0 to 4 in 100. With dehydrate added (round two) it is 78 to 94.
+
+### Steps of cascade on a page
+
+Every page of every round, tag g1.
+
+| Player | | 1 or more | 3 or more | 6 or more | 10 or more | longest | mean |
+|---|---|---|---|---|---|---|---|
+| novice | before | 45.7% | 12.8% | 1.6% | 0.03% | 10 | 0.97 |
+| novice | now | 60.3% | 17.1% | 2.5% | 0.00% | 9 | 1.32 |
+| greedy | before | 55.0% | 10.5% | 1.2% | 0 | 9 | 1.01 |
+| greedy | now | 71.9% | 32.5% | 10.5% | 0.36% | 12 | 2.16 |
+| median | before | 92.0% | 56.0% | 14.0% | 0.26% | 11 | 3.13 |
+| median | now | 90.5% | 61.2% | 24.0% | 2.00% | 12 | 3.68 |
+| planner | before | 82.6% | 46.1% | 12.0% | 0.25% | 11 | 2.64 |
+| planner | now | 87.5% | 57.7% | 23.7% | 1.88% | 12 | 3.53 |
+
+Ten steps or more: asked for about 1 page in 100 for a good player. It is 2.0 for the median player and 1.9 for the planner (2.3 for the median player on unseen seeds). That is twice what was asked. It comes from the pieces: before them it was 0.26.
+
+### Pass rates
+
+Par: 675, 958, 2,490, 6,480, 16,800, 43,600, 92,600, 130,000, 225,000 (334 times over nine rounds). Read against the Par fitted on the same runs (`tools_reread.py`).
+
+| Round | novice | target | greedy | median | target | planner | target |
+|---|---|---|---|---|---|---|---|
+| 1 | 90% (205) | 90% | 98% (205) | 96% (268) | 98% | 96% (120) | 99% |
+| 2 | 79% (184) | 80% | 82% (200) | 97% (256) | 95% | 99% (115) | 99% |
+| 3, assay | 62% (146) | 55% | 99% (165) | 100% (248) | 85% | 100% (114) | 97% |
+| 4 | 34% (91) | 55% | 87% (164) | 98% (248) | 92% | 99% (114) | 98% |
+| 5 | 29% (31) | 40% | 67% (142) | 95% (244) | 88% | 96% (113) | 95% |
+| 6, assay | 11% (9) | 20% | 77% (95) | 87% (231) | 70% | 92% (108) | 90% |
+| 7 | 0% (1) | 15% | 56% (73) | 73% (201) | 78% | 77% (99) | 90% |
+| 8 | none reached | 10% | 61% (41) | 64% (146) | 70% | 68% (76) | 85% |
+| 9, assay | none reached | 5% | 48% (25) | 55% (93) | 50% | 56% (52) | 70% |
+
+Rounds beaten, mean: novice 2.3 (it was 1.5), greedy 4.5 (2.5), median 6.4 (5.7), planner 6.8 (5.7). Wins: 0, 5.9%, 19.0%, 24.2%.
+
+Median margin over the number, median player: 8.8, 22.6, 24.6, 12.1, 6.0, 3.1, 1.82, 1.62, 1.09 against targets 3, 2.5, 1.6, 2, 1.8, 1.4, 1.5, 1.3, 1.2. Round one came down from 58.5 to 8.8. Rounds two to four did not: they are set by the novice and by the cap of 2.6 times a round, and the median player is 12 to 25 times over them.
+
+**Unseen seeds, played on the baked numbers** (tag u1, seeds 1,001 on): novice 91, 82, 65, 40, 14 percent (150 runs); median player 94, 98, 100, 99, 95, 91, 71, 81, 64 (200 runs), margins 10.5, 21.9, 16.6, 14.0, 6.3, 3.7, 1.76, 1.71, 1.29.
+
+Molecule factors were fitted again on 480 runs of the median player choosing rounds at random (tag fd): the molecules are 17 times apart before the factor (they were 12,000 times apart in a first try, in which a mirror could fill the molecule to the size limit and leave nothing a reagent could add to; the mirror now has to leave six heavy atoms of room).
+
+### What is still wrong, found in this measure
+
+- **The measure is short of 500 runs a player**, and the unseen check has no planner or greedy runs.
+- **Rounds two to four are far too easy for a player who reads the page** (12 to 25 times over). The novice sets them. The gap between the novice and the median player is the problem, not the number.
+- **The novice falls off at round four** (34% against 55%) and reaches round six in 9 runs of 205.
+- **Ten steps or more is twice what was asked.**
+- **The simulated players use the pieces badly** (docs/PIECES.md): on the first page, by the bare structure. The pieces are worth more than these runs show, and the number to beat late in a run is fitted to players who waste them.
+- **Round one is thin on pages two and three.** With four reagents and one spare C=C, a molecule often has nothing left to set it off after page one: the median player's pages of round one average 1.7 steps.
+- **The turn measures were not run again** (second option worth taking, the bank, the best ordered play).
+- **Kinds of round are 4.1 times apart** before their factor (short rounds make half a plain one, broad ones twice).
+
 ## The measure of 2026-11-11, second: cascades on every page
 
 Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. The section after this one is the game as it stood this morning and is the "before" of every comparison here. What was built and why is in `CASCADES.md` ("What was built on 2026-11-11").

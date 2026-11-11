@@ -127,6 +127,14 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 `AA.rxPath.screen(smiles, pool, kinds)` returns in about 25 ms the steps as dealt, the best line of three, and the best from every deal of five. `screenRound` plays three pages. Neither needs a round, a deal or a run. They agree with the game on 16 of 16 molecules tried.
 
+### Added on 2026-11-11, later
+
+- **A step that is new pays; a step that repeats pays a quarter.** New means past the longest cascade of any earlier page of the round. This settles the first point under "Not decided".
+- **A zip travels along the chain.** The OH the last step left goes first, and an OH takes the nearest C=O.
+- **Rounds one to three are dealt gently**: four reagents, then five, then six, on small molecules most lines of three can set off.
+- **Pieces are used on the molecule**, and one that changes it sets the zip off at once. See `PIECES.md`.
+- On the page a zip closes a real ring, the rest of the chain is carried along, and a chain too long for the page turns back in a smooth U with every bond its own length.
+
 ## Not decided
 
 - Whether a step that already ran on an earlier page of the round should pay as much as a new one. A reviewer proposed that only new steps climb.
