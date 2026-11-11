@@ -24,3 +24,15 @@ Before it is built, say in one line which foundational decision it changes: whic
 ## What this changes now
 
 Layers 1 to 4 are worked and reviewed with every helper and creature switched off, on the six starting reactions. Work on layers 7 and up stops until 1 to 4 pass: no new helpers, no ammonia or brimstone, no bench art. What is already built above layer 4 stays in the code behind its switches.
+
+## The build path, as told to the owner 2026-11-11 (this replaces the table above where they differ)
+
+1. The chemistry engine: any molecule as SMILES, every reaction exact, in RDKit (`docs/tools_chem/`). Being built.
+2. The reactions as one set: the ones the player fires (about 19) and what the molecule does by itself (about 12), tuned together on the engine. Being worked.
+3. That set goes into the game, replacing the 10 reactions and 3 self-reactions there now.
+4. The first three rounds on the six starting reactions: tense, a clear page, sound. Being worked in the game.
+5. Helpers, retested on the engine against the new set; unlocked by deeds, bought with coins.
+6. Creatures, retested on the engine; jars and feeding.
+7. Rounds 4 to 9, balanced with helpers held, then with a creature too.
+8. Between runs: what was earned, what is next, kits, real compounds.
+9. Polish. Then the owner plays. Every step is reviewed by a fresh reviewer before the next is built on it.
