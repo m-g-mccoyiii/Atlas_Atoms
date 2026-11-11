@@ -675,9 +675,8 @@ function start(app) {
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
-  // the lettering can be tried in other faces with ?font=own, elite, macondo or pirata
-const FONT = new URLSearchParams(location.search).get('font') || '', FAM = { elite: 'Elite', macondo: 'Macondo', pirata: 'Pirata' }[FONT];
-if (FAM && document.fonts) { document.fonts.load('20px ' + FAM); document.fonts.load('bold 20px ' + FAM); }
+  // The page is written in the game's own pen lettering (pen.js). ?font=classic brings back the two font files.
+const FONT = new URLSearchParams(location.search).get('font') === 'classic' ? 'classic' : 'own', FAM = '';
 const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "Segoe Print", sans-serif'; if (FONT === 'own') AA.rxPen.set(x, n, false); };
   const marker = (x, n) => { x.font = (FAM ? 'bold ' : '') + Math.round(n) + 'px ' + (FAM || 'Marker') + ', "Segoe Print", sans-serif'; if (FONT === 'own') AA.rxPen.set(x, n, true); };
   function wob(x, a, b, lw, col, dash) {

@@ -58,7 +58,7 @@
     const start = (str, x) => { const w = width(str, ctx.__pen.size), al = ctx.textAlign; return al === 'center' ? x - w / 2 : al === 'right' || al === 'end' ? x - w : x; };
     const base = y => (ctx.textBaseline === 'middle' ? y + ctx.__pen.size * 0.26 : ctx.textBaseline === 'top' ? y + ctx.__pen.size * 0.74 : y);
     const pen = () => Math.max(ctx.__pen.heavy ? 3 : 2.3, ctx.__pen.size * (ctx.__pen.heavy ? 0.105 : 0.066));
-    const write = (str, x, y, col, extra) => { const s = ctx.__pen.size, nib = s * (ctx.__pen.heavy ? 0.05 : 0.032), x0 = start(str, x), y0 = base(y);
+    const write = (str, x, y, col, extra) => { const s = ctx.__pen.size, nib = s * (ctx.__pen.heavy ? 0.056 : 0.04), x0 = start(str, x), y0 = base(y);
       ctx.save(); ctx.setLineDash([]); ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = pen() + (extra || 0);
       const dots = []; ctx.beginPath(); trace(ctx, str, x0, y0, s, dots); trace(ctx, str, x0 + nib, y0 - nib, s); ctx.stroke();
       if (!extra) { ctx.fillStyle = col; const r = ctx.lineWidth * 0.72; ctx.beginPath(); for (let i = 0; i < dots.length; i += 2) { ctx.moveTo(dots[i] + nib / 2 + r, dots[i + 1] - nib / 2); ctx.arc(dots[i] + nib / 2, dots[i + 1] - nib / 2, r, 0, 6.3); } ctx.fill(); } ctx.restore(); };
