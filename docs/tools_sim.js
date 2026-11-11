@@ -243,7 +243,7 @@
       pick: (run, picks, rnd) => Math.floor(rnd() * picks.length), round: (run, briefs, rnd) => Math.floor(rnd() * briefs.length) },
     // the player the matrix was measured with: the biggest number now, equipment first, the plain round. The bank is
     // one more number to it, so it banks whenever that is the biggest.
-    greedy: { tools: 'best', line: lineGreedy, move: (g, o) => { const ids = movesOf(g, o); return ids.length ? topGain(g, o, ids) : null; },
+    greedy: { pair: 'ease', tools: 'best', line: lineGreedy, move: (g, o) => { const ids = movesOf(g, o); return ids.length ? topGain(g, o, ids) : null; },
       fork: (g, a) => { let c = BANK, top = P.canBank(g) ? P.bankGain(g) : -Infinity; a.forEach(q => { const v = gainOf(g, q); if (v > top) { top = v; c = q; } }); return c; },
       coin: (run, picks) => (!picks.some(o => o.kind === 'gear' || o.kind === 'reagent') && P.rerollCost(run) === 1 && (run.coins || 0) >= 1 ? 'reroll' : null),
       pick: (run, picks) => { let bi = 0; picks.forEach((o, i) => { if (ORDER.indexOf(o.kind) < ORDER.indexOf(picks[bi].kind)) bi = i; }); return bi; }, round: () => 0 },
@@ -252,10 +252,10 @@
     // off no cascade. It counts what the chain it leaves standing will do on the pages still to come, so it does not
     // wreck its own chain for a few places now. Takes the pick worth most in a build, spends water. (Before the cascade it kept the row whenever
     // it could; that player could not line up a cascade, because the reagents that set one up seldom follow on.)
-    median: { tools: 'read', line: lineQ(lineSearch({ depth: 3, finish: true, bank: true, stand: true })), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
+    median: { pair: 'net', tools: 'read', line: lineQ(lineSearch({ depth: 3, finish: true, bank: true, stand: true })), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
     // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
     // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
-    planner: { tools: 'plan', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    planner: { pair: 'net', tools: 'plan', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
     // the planner without the bank and otherwise identical: it may still break a row by taking a reaction that does
     // not follow on. Used for the paired test of the bank
     nobank: { line: lineSearch({ depth: 3, beam: 2, deep: true, finish: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a, true); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
@@ -372,7 +372,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.hom = homAt.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.water = g.by.water || 0; log.h2 = g.by.h2 || 0; log.co2 = g.by.co2 || 0; log.hom = homAt.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -397,11 +397,16 @@
       if (P.RULE.coins && pol.coin && !opts.noCoin) for (let k = 0; k < 8; k++) { const a = pol.coin(run, picks, rnd); if (!a) break; if (a === 'reroll') { const n = P.runReroll(run, rnd); if (!n) break; picks = n; acts.push('reroll'); } else if (a === 'skip') { P.runSkip(run); skipped = true; acts.push('skip'); break; } else { if (!P.runBin(run, a.slice(4))) break; acts.push(a); } }
       const pi = !skipped && picks.length ? pol.pick(run, picks, rnd) : -1; if (pi >= 0) P.runTake(run, picks[pi]);
       const kept = run.last; if (opts.noCarry) run.last = null;
-      const briefs = P.runBriefs(run, rnd); run.last = kept;
-      const can = briefs.filter(q => !(q.brief === 'carry' && run.last && run.last.atoms.length > BIG.carry)), b = can.length > 1 ? can[opts.pickRound === 'random' ? Math.floor(rnd() * can.length) : pol.round(run, can, rnd)] : can[0];
+      let briefs = P.runBriefs(run, rnd); run.last = kept; const coins0 = run.coins || 0; let redrew = 0;
+      // choosing the molecule (docs/LOOP.md): the median player and the planner take the one that reads better on the
+      // screen once a coin is counted as CHOOSE.coin of a step, and draw the pair again when both read badly and a
+      // coin would still be left; the greedy player takes the one that reads better; the novice takes either
+      const pair = P.RULE.choose && briefs.length === 2 && briefs[0].ease != null, how = pol.pair || 'random', net = q => q.ease + (how === 'net' ? P.CHOOSE.coin * (q.coins || 0) : 0);
+      if (pair && how === 'net' && opts.pickRound !== 'random') while (Math.max(briefs[0].ease, briefs[1].ease) < P.CHOOSE.bad && P.pairCost(run) != null && (run.coins || 0) > P.pairCost(run)) { const n = P.runRedraw(run, rnd); if (!n) break; briefs = n; redrew++; }
+      const can = briefs.filter(q => !(q.brief === 'carry' && run.last && run.last.atoms.length > BIG.carry)), b = can.length > 1 ? can[opts.pickRound === 'random' || (pair && how === 'random') ? Math.floor(rnd() * can.length) : pair ? (net(can[1]) > net(can[0]) ? 1 : 0) : pol.round(run, can, rnd)] : can[0];
       P.runChoose(run, b); run.assayNow = !!P.assayOf(run);
       const g = P.synBegin(run.feed, false, rnd, run.gear, run);
-      const row = { seed, player, round: r, mol: b.src || '', carry: b.brief === 'carry' ? 1 : 0, family: run.kin, kind: b.brief, assay: run.assayNow ? 1 : 0, gear: run.gear.map(id => id + ((run.lv[id] || 1) > 1 ? ':' + run.lv[id] : '')).join(' '), rack: run.rack.map(id => id + ((run.grade[id] || 1) > 1 ? '^' + run.grade[id] : '') + (run.uses[id] ? '+' + run.uses[id] : '')).join(' '), offered: picks.map(o => o.kind + ':' + o.id).join(' '), took: pi >= 0 ? picks[pi].kind + ':' + picks[pi].id : '', number: run.quota, heavy0: P.heavy(g.m), self: (run.self || []).join(' ') };
+      const row = { seed, player, round: r, mol: b.src || '', carry: b.brief === 'carry' ? 1 : 0, family: run.kin, kind: b.brief, assay: run.assayNow ? 1 : 0, gear: run.gear.map(id => id + ((run.lv[id] || 1) > 1 ? ':' + run.lv[id] : '')).join(' '), rack: run.rack.map(id => id + ((run.grade[id] || 1) > 1 ? '^' + run.grade[id] : '') + (run.uses[id] ? '+' + run.uses[id] : '')).join(' '), offered: picks.map(o => o.kind + ':' + o.id).join(' '), took: pi >= 0 ? picks[pi].kind + ':' + picks[pi].id : '', number: run.quota, coins0, pairCoins: pair ? b.coins || 0 : -1, pairGap: pair ? +Math.abs(briefs[0].ease - briefs[1].ease).toFixed(2) : -1, redrew, heavy0: P.heavy(g.m), self: (run.self || []).join(' ') };
       if (opts.dec) row.dec = true; if (opts.deep) row.deep = true;
       if (P.quotaParts) { const k = P.quotaParts(run, run.src, run.brief); row.par = k.par; row.mult = k.mult; row.stake = k.stake; }
       const total = playRound(g, run, pol, rnd, row);

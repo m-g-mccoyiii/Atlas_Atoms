@@ -159,7 +159,10 @@ const carbonyls = m => m.bonds.map(b => reducible(m, b)).filter(Boolean);
 // the end of a chain (an aldehyde, which borohydride takes long before a ketone). The main game leaves it off.
 // MODE.weld: 'ol' stops a weld before water leaves, so it leaves an OH on the new ring (an aldol); 'ene' lets the
 // water go and leaves a C=C beside the C=O that stays (the condensation).
-const MODE = { zip: false, weld: 'ol', reach: 4 };
+const MODE = { zip: false, weld: 'ol', reach: 4, co2: false };
+// MODE.co2 (path.js RULE.co2, off): oxidize also cuts a C=C at the very end of a chain (CH=CH2). The end carbon
+// leaves as carbon dioxide and a C=O is left on the new end carbon.
+const endEnes = m => (MODE.co2 ? alkenes(m).map(s => { const a = s.bond.a, b = s.bond.b, end = x => Hs(m, x).length === 2 && nbs(m, x).filter(n => n.atom.el !== 'H').length === 1, ce = end(a) ? a : end(b) ? b : null, c = ce === a ? b : a; return ce && Hs(m, c).length === 1 && !c.fly && !ce.fly ? { kind: 'cleave', bond: s.bond, c, ce, atoms: [c, ce] } : null; }).filter(Boolean) : []);
 const aldehydes = m => carbonyls(m).filter(s => Hs(m, s.c).length > 0);
 // a C=O whose carbon carries a CH3: the end of a chain, where a base takes a hydrogen off and a new piece goes on
 const methylKetones = m => carbonyls(m).map(k => { const me = carbonsOf(m, k.c).find(c => !c.fly && Hs(m, c).length === 3); return me ? { kind: 'end', kc: k.c, ko: k.o, me, atoms: [me, k.c] } : null; }).filter(Boolean);
@@ -178,8 +181,8 @@ const LIST = [
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), o = attach(m, 'O', cx, 2.8), ho = attach(m, 'H', o, 1.2); return { focus: [cx, ch], incoming: [hh, o, ho], leaving: [], tag: '+H₂O' }; } },
   { id: 'pcc', verb: 'Oxidize', formula: 'PCC', chem: 'Pyridinium chlorochromate', rgb: [240, 132, 0], cls: 'oxidant', ghs: ['oxid', 'health'],
     rule: 'Turns C-OH into C=O. The carbon must have an H to give up.', from: 'ol', to: 'one',
-    find: m => m.atoms.map(a => oxidisable(m, a)).filter(Boolean), ok: (m, s) => !!oxidisable(m, s.o),
-    apply(m, s) { const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },
+    find: m => m.atoms.map(a => oxidisable(m, a)).filter(Boolean).concat(endEnes(m)), ok: (m, s) => (s.kind === 'cleave' ? m.bonds.includes(s.bond) && s.bond.order === 2 : !!oxidisable(m, s.o)),
+    apply(m, s) { if (s.kind === 'cleave') { const c = s.c, ce = s.ce; Hs(m, ce).forEach(h => m.removeAtom(h)); m.bonds = m.bonds.filter(k => k !== s.bond); const o = attach(m, 'O', c, 2.8); m.bond(c, o); const o1 = attach(m, 'O', ce, 2.6), o2 = attach(m, 'O', ce, 2.6); m.bond(ce, o1); m.bond(ce, o2); return { focus: [c, o], incoming: [o], leaving: [[ce, o1, o2]], tag: 'loses CO2' }; } const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },
   { id: 'nabh4', verb: 'Reduce', formula: 'NaBH₄', chem: 'Sodium borohydride', rgb: [214, 40, 40], cls: 'hydride', ghs: ['flame', 'corr', 'skull'],
     rule: 'Turns C=O into C-OH. Leaves C=C alone.', from: 'one', to: 'ol',
     find: m => (MODE.zip ? aldehydes(m) : carbonyls(m)), ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond), apply: reduceCO },
