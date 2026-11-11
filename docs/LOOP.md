@@ -19,6 +19,14 @@ Written 2026-11-11. This is the one place that says how the pieces of the game f
 - A helper is used on the molecule when the player chooses.
 - The total after page three is set against the number.
 
+## Choosing the molecule (decided by the owner 2026-11-11, not built)
+
+- Before each round two molecules of the round's size are shown side by side. One is taken. Taking is always free.
+- The one that is harder to set off pays more: 1 or 2 coins on top, by how far apart the two are on the structural screen (`screen` in `path.js`). The easier one pays nothing extra.
+- The pair can be drawn again for coins: 1, then 2, then 3 within one round. The price starts again at 1 every round.
+- The owner's rule for this and for every coin sink: resource management that is not punishing. A player with no coins still chooses between two and is never stuck. Coins buy more choice, never the right to play.
+- Round one of a first run shows one molecule only; the pair appears from the second run, the redraw the first time a coin is held.
+
 ## Between rounds
 
 - The molecule is put away. It does not carry.
