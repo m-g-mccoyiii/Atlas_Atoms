@@ -68,7 +68,7 @@ const DIAL = { keep: 3, steps: 3 };
 //   redraw: once a page the hand can be dealt again for one use of the fullest reagent in it.
 //   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
 //         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 0, redraw: false, bank: 0, bankMin: 2 };
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 0, bankMin: 2 };
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
@@ -599,7 +599,7 @@ function synQuota(feed, n, gear, run) {
 // Each round has a number to beat that is set by the round and not by what the player holds, so a better build
 // beats it by more.
 // growth, late, knee, first and ask belonged to the old number to beat and are no longer read: see PAR
-const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'dehydrate'] };
+const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'dehydrate', 'nabh4', 'bh3'] };
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
 // A reagent that makes a halide is a dead end without a base to take the halide off again, so the two come as one pick.
