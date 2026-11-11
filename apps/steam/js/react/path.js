@@ -68,7 +68,7 @@ const DIAL = { keep: 3, steps: 3 };
 //   redraw: once a page the hand can be dealt again for one use of the fullest reagent in it.
 //   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
 //         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 0, fork: false, hand: 0, redraw: false, bank: 0, bankMin: 2 };
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: false, hand: 0, redraw: false, bank: 0, bankMin: 2 };
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
