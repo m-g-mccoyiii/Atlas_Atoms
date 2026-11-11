@@ -350,7 +350,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
   g.brief = (run && run.brief) || 'plain'; g.by = (run && run.by) || { water: 0, h2: 0, gauge: 0 }; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
-  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; }
+  if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.slice(); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   synDeal(g, rnd);
@@ -439,6 +439,7 @@ function chainNext(g) {
 }
 function synTake(g, o, free) {
   const cur = g.cur;
+  const shatter = g.glass && breaks(g, o);
   if (breaks(g, o)) { close(g); g.tally.breaks++; }
   const hold = !o.cont && cur.path.length > 0 && !g.gear.includes('ouroboros') && unbroken(g);
   const sc = scoreRound(g, o, free); if (hold) g.tower = true;
@@ -446,6 +447,7 @@ function synTake(g, o, free) {
   g.left[o.id]--; g.m = o.model; if (!free) g.pageSteps++; g.best = Math.max(g.best, cur.path.length);
   const set = false;
   g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free });
+  if (shatter) synEnd(g);
 }
 // the fire extinguisher: stops a chain that is running; the round counts half again once the page is over
 function douse(g) { if (!g.gear.includes('extinguisher') || !g.chain || g.doused) return false; g.chain = false; g.doused = 1; return true; }
@@ -560,19 +562,19 @@ const runBegin = (run, feed, relaxed) => synBegin(feed, relaxed, null, run.gear,
 // Terms are chosen before a run, one sigil for the whole run. Each changes the odds or the stakes and pays for it.
 const TERMS = [
   { id: 'plain', name: 'plain', note: 'no terms' },
-  { id: 'stakes', name: 'stakes', note: 'beat times 1.5. pays double' },
-  { id: 'occult', name: 'occult', note: 'start with an occult piece. beat times 1.5' },
-  { id: 'lean', name: 'lean', note: 'three reagents. one more use of each' },
-  { id: 'long', name: 'long', note: 'four reactions a page. two pages' },
-  { id: 'rare', name: 'rare', note: 'rare reagents twice as often. beat times 1.25' }
+  { id: 'glass', name: 'glass', note: 'mult starts at 3. a break ends it' },
+  { id: 'occult', name: 'occult', note: 'an occult piece. beat times 1.5' },
+  { id: 'lean', name: 'lean', note: 'three reagents, used once more' },
+  { id: 'long', name: 'long', note: 'four reactions, two pages' },
+  { id: 'hoard', name: 'hoard', note: 'three pieces now, none later' }
 ];
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
-  if (id === 'stakes') { run.stake = 1.5; run.payMul = 2; }
+  if (id === 'glass') run.glass = true;
   else if (id === 'occult') { const occ = Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(Math.random() * occ.length)]); run.stake = 1.5; }
   else if (id === 'lean') { run.rack = RUNG.start.slice(0, 3); run.usesAll = 1; }
   else if (id === 'long') { run.steps = 1; run.pages = -1; }
-  else if (id === 'rare') { run.rareMul = 2; run.stake = 1.25; }
+  else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); run.noGear = true; }
   return run;
 }
 function runQuota(run, feed, brief) {
@@ -582,7 +584,7 @@ function runQuota(run, feed, brief) {
 }
 function runPicks(run, rnd) {
   const R = rnd || Math.random, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
-  const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots ? st.gear.filter(id => !run.gear.includes(id)) : [];
+  const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear ? st.gear.filter(id => !run.gear.includes(id)) : [];
   const from = { reagent: newR, gear: newG, level: run.gear.filter(id => !GEARS[id].rule), strong: run.rack, bottle: run.rack };
   // one new thing where there is one, then whatever else, three different kinds where possible
   let kinds = ['reagent', 'gear'].filter(k => from[k].length); for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = kinds[i]; kinds[i] = kinds[j]; kinds[j] = t; }

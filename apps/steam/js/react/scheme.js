@@ -490,17 +490,21 @@ function start(app) {
   function termAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; for (let i = 0; i < P.TERMS.length; i++) { const q = TERMP(i); if (Math.abs(hit.x - q.x) < 6.5 && Math.abs(hit.z - q.z) < 4.4) return i; } return -1; }
   // a sigil: two rings and a figure inside that belongs to its terms
   function sigil(x, c, r, id, col, lw) {
-    const star = (n, skip, rot, rr) => { x.beginPath(); for (let k = 0; k <= n; k++) { const a = rot + k * skip * 2 * Math.PI / n, px0 = c[0] + Math.cos(a) * rr, py0 = c[1] + Math.sin(a) * rr * 0.62; if (k) x.lineTo(px0, py0); else x.moveTo(px0, py0); } x.stroke(); };
-    const ring = rr => { x.beginPath(); x.ellipse(c[0], c[1], rr, rr * 0.62, 0, 0, 6.3); x.stroke(); };
-    x.strokeStyle = col; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = lw; ring(r); x.lineWidth = lw * 0.6; ring(r * 0.88);
+    // drawn by hand: every line wanders a little and the rings are gone over twice
+    const wob = (k, n) => 1 + 0.035 * Math.sin(k * 2.7 + n * 1.9 + r * 0.01);
+    const pt = (a, rr, n) => [c[0] + Math.cos(a) * rr * wob(a * 3, n), c[1] + Math.sin(a) * rr * 0.62 * wob(a * 5, n + 2)];
+    const ring = (rr, n) => { x.beginPath(); for (let k = 0; k <= 40; k++) { const q = pt(k / 40 * 6.4 + n, rr, n); if (k) x.lineTo(q[0], q[1]); else x.moveTo(q[0], q[1]); } x.stroke(); };
+    const star = (m, skip, rot, rr, n) => { x.beginPath(); for (let k = 0; k <= m; k++) { const q = pt(rot + k * skip * 2 * Math.PI / m, rr, n + k); if (k) x.lineTo(q[0], q[1]); else x.moveTo(q[0], q[1]); } x.stroke(); };
+    x.strokeStyle = col; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = lw; ring(r, 0); x.lineWidth = lw * 0.5; ring(r * 0.97, 3); x.lineWidth = lw * 0.6; ring(r * 0.86, 5);
     x.lineWidth = lw * 0.8; const up = -Math.PI / 2;
-    if (id === 'stakes') { star(3, 1, up, r * 0.86); ring(r * 0.3); }
-    else if (id === 'occult') star(5, 2, up, r * 0.86);
-    else if (id === 'lean') { star(3, 1, up, r * 0.5); [0, 1, 2].forEach(k => { const a = up + k * 2.094; x.beginPath(); x.ellipse(c[0] + Math.cos(a) * r * 0.66, c[1] + Math.sin(a) * r * 0.66 * 0.62, r * 0.12, r * 0.08, 0, 0, 6.3); x.stroke(); }); }
-    else if (id === 'long') { star(4, 1, up + Math.PI / 4, r * 0.86); star(4, 1, up, r * 0.6); }
-    else if (id === 'rare') { star(3, 1, up, r * 0.86); star(3, 1, -up, r * 0.86); }
-    else { x.beginPath(); x.ellipse(c[0], c[1], r * 0.08, r * 0.05, 0, 0, 6.3); x.stroke(); }
+    if (id === 'glass') { star(4, 1, up, r * 0.84, 1); x.beginPath(); const a = pt(up, r * 0.84, 1), b = pt(up + 2.2, r * 0.5, 2), d = pt(up + 3.6, r * 0.84, 3); x.moveTo(a[0], a[1]); x.lineTo(c[0], c[1]); x.lineTo(b[0], b[1]); x.moveTo(c[0], c[1]); x.lineTo(d[0], d[1]); x.stroke(); }
+    else if (id === 'occult') star(5, 2, up, r * 0.84, 1);
+    else if (id === 'lean') { star(3, 1, up, r * 0.5, 1); [0, 1, 2].forEach(k => { const q = pt(up + k * 2.094, r * 0.66, 9); x.beginPath(); x.ellipse(q[0], q[1], r * 0.12, r * 0.08, 0, 0, 6.3); x.stroke(); }); }
+    else if (id === 'long') { star(4, 1, up + Math.PI / 4, r * 0.84, 1); star(4, 1, up, r * 0.58, 4); }
+    else if (id === 'hoard') { star(3, 1, up, r * 0.84, 1); star(3, 1, -up, r * 0.84, 6); }
+    else { const q = pt(0, 0, 0); x.beginPath(); x.ellipse(c[0], c[1], r * 0.08, r * 0.05, 0, 0, 6.3); x.stroke(); }
   }
+
   function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name + ' opened', '', '#8a6a00'); dirty = true; }
   // between runs: what the run paid, and the suppliers that can be opened with it
   function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
@@ -785,10 +789,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'terms') {
-      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; swipe(x, [h[0] - 220, h[1] - 36], [h[0] + 220, h[1] - 46], 110); x.fillStyle = INK; x.fillText('terms', h[0], h[1]);
-      P.TERMS.forEach((t, i) => { const q = TERMP(i), c = px(q), hov = st.hover === i, r = hov ? 132 : 116; if (hov) { x.globalAlpha = 0.5; x.fillStyle = HILITE; x.beginPath(); x.ellipse(c[0], c[1], r * 1.12, r * 0.7, 0, 0, 6.3); x.fill(); x.globalAlpha = 1; }
-        sigil(x, c, r, t.id, INK, hov ? 8 : 6); marker(x, 52); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(t.name, c[0], c[1] + 132);
-        hand(x, 27); x.fillStyle = PENCIL; wrap(x, t.note, 400).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 166 + j * 30)); });
+      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('terms', h[0], h[1]);
+      P.TERMS.forEach((t, i) => { const q = TERMP(i), c = px(q), hov = st.hover === i, r = hov ? 132 : 116;
+        sigil(x, c, r, t.id, hov ? REDINK : INK, hov ? 9 : 6); marker(x, 52); x.textAlign = 'center'; x.fillStyle = hov ? REDINK : INK; x.fillText(t.name, c[0], c[1] + 132);
+        hand(x, 27); x.fillStyle = PENCIL; wrap(x, t.note, 520).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 166 + j * 30)); });
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
@@ -830,7 +834,6 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         else if (kind === 1) { x.ellipse(cx, cy, r, r * 0.5, 0, 0, 7); x.moveTo(cx + r * 0.25, cy); x.arc(cx, cy, r * 0.25, 0, 7); }
         else { for (let q = 0; q < 4; q++) { x.moveTo(cx - r + q * r * 0.5, cy - r * 0.6); x.lineTo(cx - r + q * r * 0.5, cy + r * 0.6); } x.moveTo(cx - r * 1.2, cy + r * 0.5); x.lineTo(cx + r * 0.9, cy - r * 0.5); }
         x.stroke(); } }
-    if (g && run.term && run.term !== 'plain') { x.globalAlpha = 0.14; sigil(x, px(C0), 250, run.term, INK, 6); x.globalAlpha = 1; }
     st.stains.forEach(k => { const c = px(k); if (k.ring) { x.strokeStyle = 'rgba(120,70,20,' + (k.a * 1.6) + ')'; x.lineWidth = k.r * 0.16; x.beginPath(); x.ellipse(c[0], c[1], k.r, k.r * 0.9, 0.3, 0, 7); x.stroke(); } else { x.fillStyle = 'rgba(150,80,20,' + k.a + ')'; x.beginPath(); x.ellipse(c[0], c[1], k.r, k.r * 0.8, 0.5, 0, 7); x.fill(); } });
     // ink thrown off by the last reaction
     if (false && g && st.shown >= st.quota && st.quota > 0) { const ov = Math.log2(Math.max(1, st.shown / st.quota)), c = px({ x: FLASK.x, z: FLASK.z + 0.9 }), r = Math.min(140, 46 + 20 * ov); x.globalAlpha = 0.3; x.fillStyle = flask.hex; x.beginPath(); x.ellipse(c[0], c[1], r * 1.25, r * 0.6, 0.05, 0, 6.3); x.fill(); x.beginPath(); x.ellipse(c[0] + r * 0.9, c[1] + r * 0.2, r * 0.45, r * 0.25, 0.4, 0, 6.3); x.fill(); x.beginPath(); x.ellipse(c[0] - r, c[1] - r * 0.1, r * 0.35, r * 0.2, -0.3, 0, 6.3); x.fill(); x.globalAlpha = 1; }
@@ -910,7 +913,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); if (run.term && run.term !== 'plain') sigil(x, [r0[0] - 48, r0[1] - 18], 34, run.term, INK, 4); }
     if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row

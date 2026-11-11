@@ -62,16 +62,18 @@ Funny
 
 ## Terms set before a run
 
-The player chooses how a run is weighted before it starts, the way Balatro has decks and stakes. A term changes odds or outcomes and is paid for by another term. Candidates:
+Built 2026-11-10. A run opens on a page of six sigils and one is taken. Its mark stays beside the round number for the run.
 
-- Starting shelf: begin with one piece from the lab, alchemy or occult shelf. A stronger start raises every number to beat.
-- Odds: more rare offers and fewer common ones, or the reverse.
-- Molecules: which families can be dealt.
-- Pages: two long pages or four short ones.
-- Stakes: numbers to beat times 1.5, pay doubled.
-- Reagents: start with five reagents and one use each, or three and three uses.
+| Sigil | Terms |
+|---|---|
+| plain | no terms |
+| glass | the multiplier starts at 3. The first broken row ends the round |
+| occult | start with one occult piece. Every number to beat times 1.5 |
+| lean | three reagents, each with one more use |
+| long | four reactions a page, two pages |
+| hoard | three pieces of equipment at the start, none offered later |
 
-None of these are built.
+An evaluator found the first set weak: three of six only raised the number to beat. Stakes and rare were replaced by glass and hoard, which change how a run is played. None of the six has been measured for difficulty yet.
 
 ## Sigils on the ground (idea, not decided)
 
