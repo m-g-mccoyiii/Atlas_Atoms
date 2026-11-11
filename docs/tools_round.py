@@ -26,9 +26,10 @@ def report(tag, lo, hi, players):
         if d:
             T = {k: sum(x.get(k, 0) for x in d) for k in d[-1]}
             n = max(1, T['n'])
+            if T.get('pg'): print('  pages %d: the best ordered play adds over 20%% more than the greedy one-at-a-time play on %.1f%%, over 5%% more on %.1f%%' % (T['pg'], 100.0 * T['pgDeep'] / T['pg'], 100.0 * T['pgSome'] / T['pg']))
             if T.get('bkOff'): print('  bank offered on %d turns of a page, right to take on %.1f%% (it was the only move on %.1f%%); offered at %d forks, right at %.1f%%; all offers %.1f%%' % (T['bkOff'], 100.0 * T['bkRight'] / T['bkOff'], 100.0 * T['bkOnly'] / T['bkOff'], T['fkOff'], 100.0 * T['fkRight'] / max(1, T['fkOff']), 100.0 * (T['bkRight'] + T['fkRight']) / (T['bkOff'] + T['fkOff'])))
             print('  turns %d: second within 30%% of the best %.1f%%, or better two turns on %.1f%%, either %.1f%% | one option only %.1f%% | row open and at most one reagent keeps it %.1f%% of %d | options a turn %.2f' % (T['n'], 100.0 * T['near'] / n, 100.0 * T['later'] / n, 100.0 * (T['near'] + T['later']) / n, 100.0 * T['forced'] / n, 100.0 * T['one'] / max(1, T['open']), T['open'], T['opts'] / n))
-        for k in ('heavy', 'atoms', 'banks', 'redraws', 'forks', 'idle', 'left', 'steps'):
+        for k in ('heavy', 'atoms', 'banks', 'redraws', 'forks', 'idle', 'wasted', 'left', 'steps'):
             v = [r[k] for r in a if k in r]
             if v: print('  %s: mean %.2f, median %s, 90th %s, most %s' % (k, sum(v) / len(v), rig.med(v), rig.q(v, 0.9), max(v)))
         kinds = {}

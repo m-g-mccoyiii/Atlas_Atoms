@@ -66,11 +66,17 @@ const DIAL = { keep: 3, steps: 3 };
 //   fork: a chain that could go on with two or more reagents stops for the player to choose.
 //   hand: how many reagents of the rack a page shows. 0: five, dealt again up to forty times until two of them act.
 //   redraw: once a page the hand can be dealt again for one use of the fullest reagent in it.
-//   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
+//   bank: closing the open row on purpose pays this many times what it holds (2, on a row of 3 or more: measured with
+//         the rig so that the bank is the right move on about three in ten of the circles where it could be placed).
+//         It takes one of the page's reactions,
 //         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
 //   tiers: marks above the number to beat, each this many times the number. The number stays the pass line.
 //   coins: the currency of a run (see COIN). Off, nothing is paid and nothing can be spent.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8], coins: true };
+//   queue: a page is lined up and then fired. Reagents (and the bank) are placed in the page's circles in order, and
+//         the molecule then runs through them. One that finds nothing to act on when its turn comes is wasted and
+//         still spends its use. The redraw is allowed only before firing. Off: one click, one reaction, as before.
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8], coins: true, queue: true };
+RULE.bank = 2; RULE.bankMin = 3;
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
@@ -387,18 +393,18 @@ function synDeal(g, rnd) {
   const R = rnd || rand, rack = g.rackIds || synRack(), n = handOf(g); let offer = draw(g, R, rack, n, null);
   if (g.fore) offer = g.fore.filter(id => rack.includes(id));
   g.fore = null; if (g.gear.includes('orb') && g.syn && (g.page || 1) < pagesOf(g)) { g.fore = draw(g, R, rack, n, null); g.fore = rack.filter(id => g.fore.includes(id)); }
-  g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false;
+  g.pageSteps = 0; g.more = 0; g.chain = false; g.fired = false; g.chainLen = 0; g.redrawn = false; g.queue = []; g.shot = false;
   dealHand(g, R, rack, offer, false);
   if ((g.gear.includes('goat') || g.gear.includes('voodoo')) && g.kinds.length) { const id = g.kinds[Math.floor(R() * g.kinds.length)]; if (g.left[id] > 0) g.left[id] = Math.max(1, g.left[id] - 1); }
 }
 // The redraw: once a page the hand is put back and dealt again from the rack, reagents that were not in it first.
 // It costs one use of the reagent in the hand that has the most left.
 function redrawCost(g) { let best = null; g.kinds.forEach(id => { if (g.free && g.free[id]) return; if (g.left[id] > 0 && (!best || g.left[id] > g.left[best])) best = id; }); return best; }
-const canRedraw = g => !!RULE.redraw && !!RULE.hand && !!g.syn && !g.over && !g.chain && !g.redrawn && (g.rackIds || synRack()).length > handOf(g) && (g.pageSteps < stepsOf(g)) && !!redrawCost(g);
+const canRedraw = g => !!RULE.redraw && !!RULE.hand && !!g.syn && !g.over && !g.chain && !g.redrawn && !(RULE.queue && g.shot) && (g.rackIds || synRack()).length > handOf(g) && (g.pageSteps < stepsOf(g)) && !!redrawCost(g);
 function redraw(g, rnd) {
   if (!canRedraw(g)) return false;
   const R = rnd || rand, rack = g.rackIds || synRack(), pay = redrawCost(g), was = g.kinds.slice();
-  g.left[pay]--; g.redrawn = true; g.paid = pay; g.tally.redraws = (g.tally.redraws || 0) + 1;
+  g.queue = []; g.left[pay]--; g.redrawn = true; g.paid = pay; g.tally.redraws = (g.tally.redraws || 0) + 1;
   dealHand(g, R, rack, draw(g, R, rack, handOf(g), was), true);
   return true;
 }
@@ -534,6 +540,56 @@ function synTake(g, o, free) {
   const set = false;
   g.trail.push({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free });
   if (shatter) synEnd(g);
+}
+// ---------- the page lined up, then fired ----------
+// The state of a round is saved, something is tried, and the state is put back.
+function snap(g) {
+  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, queue: (g.queue || []).slice() };
+  c.seen = new Set(c.seen); return s;
+}
+function back(g, s) {
+  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.queue = s.queue;
+}
+const BANKID = '#bank';
+const queued = (g, id) => (g.queue || []).filter(q => q === id).length;
+// uses of a reagent not yet spent or placed in a circle
+const usesLeft = (g, id) => (g.free && g.free[id] ? 9 : (g.left[id] || 0) - queued(g, id));
+const queueRoom = g => !!RULE.queue && !!g.syn && !g.over && !g.chain && !g.shot && (g.queue || []).length < stepsOf(g) - g.pageSteps;
+// places a reagent of the hand, the bank, or on the last page the finishing reagent, in the next empty circle
+function queueAdd(g, id) {
+  if (!queueRoom(g)) return false;
+  if (id === BANKID) { if (!RULE.bank || g.queue.includes(id)) return false; }
+  else if (id === SYN.finish) { if (g.page < pagesOf(g) || g.queue.includes(id)) return false; }
+  else if (!g.kinds.includes(id) || usesLeft(g, id) <= 0) return false;
+  g.queue.push(id); return true;
+}
+function queueDrop(g, i) { if (g.shot || !g.queue || i < 0 || i >= g.queue.length) return false; g.queue.splice(i, 1); return true; }
+// what the first thing in the queue will do when its turn comes now: take (a reaction), bank, finish, or waste
+function queueHead(g) {
+  const id = g.queue[0]; if (id == null) return null;
+  if (id === BANKID) return { id, kind: canBank(g) ? 'bank' : 'waste' };
+  if (id === SYN.finish) { const f = finishOpt(g); return f ? { id, kind: 'finish', o: f } : { id, kind: 'waste' }; }
+  const o = options(g)[id]; return o ? { id, kind: 'take', o } : { id, kind: 'waste' };
+}
+// a circle whose reagent found nothing to act on: the reaction of the page is gone and so is the use
+function waste(g, id) { if (id !== BANKID && id !== SYN.finish && !(g.free && g.free[id]) && g.left[id] > 0) g.left[id]--; g.pageSteps++; g.tally.wasted = (g.tally.wasted || 0) + 1; g.trail.push({ id, hits: 0, cont: false, wasted: true, free: false, ev: [] }); }
+// takes the head of the queue off it; the page then plays what queueHead said it would do
+function queueShift(g) { g.shot = true; return g.queue.shift(); }
+// fires the head of the queue and returns what it did
+function queueStep(g) { const h = queueHead(g); if (!h) return null; queueShift(g); if (h.kind === 'bank') bank(g); else if (h.kind === 'finish') synFinish(g, h.o); else if (h.kind === 'take') synTake(g, h.o); else waste(g, h.id); return h; }
+// The page as it would stand once everything queued has had its turn: what each reagent of the hand would then do,
+// whether the bank could then be used, what each queued thing does when its turn comes, and for every atom of the
+// molecule as it is now the atom it will be by then (fwd), so that places can be shown on the molecule on the page.
+function queueView(g) {
+  const s = snap(g), kinds = []; let fwd = null;
+  while (g.queue.length && !g.over) {
+    const h = queueHead(g); g.queue.shift(); kinds.push(h.kind);
+    if (h.kind === 'take') { const live = new Set(h.o.model.atoms), nf = new Map(); if (fwd) fwd.forEach((a, a0) => { const b = h.o.map.get(a); if (b && live.has(b)) nf.set(a0, b); }); else h.o.map.forEach((b, a0) => { if (live.has(b)) nf.set(a0, b); }); fwd = nf; synTake(g, h.o); }
+    else if (h.kind === 'bank') bank(g); else if (h.kind === 'finish') break; else waste(g, h.id);
+  }
+  const done = kinds.includes('finish'), o = g.over || done ? {} : options(g, true), fin = g.over || done ? null : finishOpt(g), bankOk = !done && !!RULE.bank && g.cur.path.length >= RULE.bankMin && g.P > 0, row = g.cur.path.length;
+  back(g, s);
+  return { o, fin, bank: bankOk, kinds, fwd, row };
 }
 // the fire extinguisher: stops a chain that is running; the round counts half again once the page is over
 function douse(g) { if (!g.gear.includes('extinguisher') || !g.chain || g.doused) return false; g.chain = false; g.doused = 1; return true; }
@@ -700,17 +756,23 @@ const PAR = { rounds: [2530, 5330, 10900, 21400, 40400, 73700, 129000, 216000, 3
 // MOLF: what the median simulated player makes in a plain round on each molecule with the starting reagents
 // and no equipment, over the average of all the molecules (averages of logarithms).
 const MOLF = {"C=CCC(O)CC=C":0.187,"CC(O)CCC=C":1.098,"CC(=O)CCC(O)CC=C":0.407,"C=CCC(O)CC(O)CC=C":1.392,"C=CCC(=O)CCC(=O)CC=C":0.966,"CC(O)CC(=O)CCC(Cl)CCC=C":0.966,"O=C1CCC(CC=C)CC1":0.899,"C=CCC(O)C1=CC=CC=C1":2.42,"C=CC1CCC(O)CC1":0.798,"CC(=O)CCC(O)C1=CC=CC=C1":2.475,"C=CC12C3C4C1C5C2C3C45CO":1.662,"OC1C2CC3CC(C2)CC1C3":0.114,"OC1CC2CC1C=C2":2.39,"OCC1OC(O)C(O)C(O)C1O":1.076,"OC1CCC(O)CC1":0.973,"O=C1CCC(O)CC1C=C":1.011,"OC(C=C)C1=CC=CC=C1":2.427,"CC(O)CC(=O)C1=CC=CC=C1":2.268,"OCC12C3C4C1C5C2C3C45CO":1.09,"OC1CC2CCC1C=C2":2.365,"OCC(O)C(O)C(O)C(O)C=O":0.827,"OCC1OC(O)CC1O":0.887,"OCC(O)CO":0.427};
+// KINDF: what each kind of round makes against a plain one, measured inside runs. ASSAYF: the same for the kind of
+// an assay, for each of the three acts. The number to beat is multiplied by it, so every kind is beaten by a like margin.
+const KINDF = {"plain":1,"carry":1,"broad":1,"loose":1,"each":1,"back":1,"scarce":1,"short":1};
+const ASSAYF = {"scarce":[1,1,1],"short":[1,1,1],"each":[1,1,1],"loose":[1,1,1]};
+const MOLD = { lo: 0.35, hi: 3, pow: 0.5 };
 // END GENERATED
 // A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more
 // asks for more, but for less than it makes.
-const MOLD = { lo: 0.35, hi: 3 };
 const parOf = round => { const r = Math.max(1, round | 0); return r <= 9 ? PAR.rounds[r - 1] * (r === 9 ? PAR.last : 1) : PAR.rounds[8] * PAR.last * Math.pow(PAR.after, r - 9); };
-const molSize = key => Math.sqrt(Math.min(MOLD.hi, Math.max(MOLD.lo, MOLF[key] || 1)));
+const molSize = key => Math.pow(Math.min(MOLD.hi, Math.max(MOLD.lo, MOLF[key] || 1)), MOLD.pow);
+const kindSize = (run, brief, round) => { const r = round || run.round, a = assayOf(run, r) && ASSAYF[brief]; return a ? a[Math.min(2, Math.max(0, Math.floor(r / 3) - 1))] : KINDF[brief] || 1; };
 const stakeOf = run => (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1);
 // feed is the molecule's SMILES. A molecule carried on from the last round counts as the one it started as.
-const quotaParts = (run, feed) => ({ par: parOf(run.round), mult: molSize(typeof feed === 'string' ? feed : run.src) * stakeOf(run) });
+// A round that carries the last molecule on has no molecule factor: what it starts from is not what the factor measured.
+const quotaParts = (run, feed, brief) => { const b = brief || run.brief || 'plain', st = stakeOf(run); return { par: parOf(run.round), stake: st, mult: (b === 'carry' ? 1 : molSize(typeof feed === 'string' ? feed : run.src)) * kindSize(run, b) * st }; };
 const nice = q => { const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1)); return Math.max(50, Math.round(q / mag) * mag); };
-function runQuota(run, feed) { const k = quotaParts(run, feed); return nice(k.par * k.mult); }
+function runQuota(run, feed, brief) { const k = quotaParts(run, feed, brief); return nice(k.par * k.mult); }
 // The marks above the number to beat, lowest first, and how many of them a total has reached. A total under the
 // number has reached none.
 const runMarks = quota => (RULE.tiers || []).map(t => nice(quota * t));
@@ -756,6 +818,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { RULE, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
