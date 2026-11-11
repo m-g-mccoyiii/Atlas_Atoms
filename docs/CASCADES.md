@@ -76,7 +76,7 @@ Three kinds are built: zip, snap and weld. Fold, run and link are not. Everythin
 ### Decided
 
 - **How close is close.** Zip: the carbon of the OH is 3 or 4 carbons from the carbon of the C=O, so the ring has five or six atoms. The OH may be on a benzene ring (a phenol). Either part may be in a ring as long as the new ring shares at most one bond with a small ring that is already there. Weld: the carbon beside one C=O is 4 or 5 carbons from the second C=O. Snap: the third C=C is 4 or 5 carbons from the end of the pair.
-- **When a cascade runs.** After every reagent of the line, whether or not that reagent found anything to act on.
+- **When a cascade runs.** After every reagent of the line that acted. A reagent that found nothing is wasted and sets nothing off. (For most of the day a wasted circle did set a standing chain off; a reviewer called that a free cascade and it was taken out.)
 - **What a step is worth.** Step n of a page adds 50 places counted n times, and adds n times 0.1 to extra. It adds, it does not multiply. A round whose pages run three steps ends near 3 times a round with none, six steps near 7 times, ten steps near 17 times.
 
 ### A zip opens again when the page turns
@@ -129,6 +129,6 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 ## Not decided
 
-- Whether three wasted reagents should still set a standing chain off. They do now, and it reads oddly on the page.
+- Whether a step that already ran on an earlier page of the round should pay as much as a new one. A reviewer proposed that only new steps climb.
 - Whether weld and snap are worth having as they are: neither makes cascades longer on average.
 - Fold, run and link.

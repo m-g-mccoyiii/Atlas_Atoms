@@ -13,16 +13,22 @@ T = rig.TARGET['median']; M = rig.MARGIN
 runs = {sd: rs for (pl, sd), rs in by.items() if pl == 'median' and all(r in rs for r in range(1, 10))}
 x = {sd: [rs[r]['total'] / (rs[r]['number'] / rs[r]['par']) for r in range(1, 10)] for sd, rs in runs.items()}
 alive = set(x); par = []
+# With round one set by the novice, the median player's own fit for round two is some twenty times round one. No
+# round may ask more than this many times the one before; the median player is then over its margin until the
+# curve meets its own fit, about round five, and plays for the marks until then.
+STEPMAX = 2.6
 nov = sorted(rs[1]['total'] / (rs[1]['number'] / rs[1]['par']) for (pl, sd), rs in by.items() if pl == 'novice' and 1 in rs)
 for r in range(9):
     v = sorted(x[sd][r] for sd in alive); med = v[len(v) // 2]; best = None
     for k in range(-200, 201):
         p = med / M[r] * math.exp(k * 0.005 * math.log(4))
         if r and p < par[-1] * 1.15: continue   # the number never falls: each round asks at least 1.15 times the last
+        if r and p > par[-1] * STEPMAX: continue   # and never more than STEPMAX times the last, so the climb from the novice's round one is even
         ps = 100.0 * sum(1 for t in v if t >= p) / len(v)
         a = abs(ps - T[r]) / 12.0 * (2 if r == 0 else 1); b = abs(math.log(med / p / M[r])) / math.log(1.5)
         sc = max(a, b) + 0.05 * (a + b)
         if best is None or sc < best[0]: best = (sc, p, ps, med / p)
+    if best is None: pc = par[-1] * STEPMAX; best = (0, pc, 100.0 * sum(1 for t in v if t >= pc) / len(v), med / pc)   # the fit lies above the cap: the cap is the number
     # Round one is set by the novice: the number is no higher than what 88 in 100 of the novice's first rounds reach,
     # so a player who lines a page up without thought still passes round one about nine times in ten. The median
     # player then passes it by more than its target margin; the marks above the number are what it plays for there.

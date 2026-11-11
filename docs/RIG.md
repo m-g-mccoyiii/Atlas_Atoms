@@ -1,8 +1,167 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below. This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-11, second: cascades on every page
+
+Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. The section after this one is the game as it stood this morning and is the "before" of every comparison here. What was built and why is in `CASCADES.md` ("What was built on 2026-11-11").
+
+### What changed
+
+| Rule | What it is | Switch |
+|---|---|---|
+| A zip opens again | every ring a zip closed opens when a page turns, so the chain is set off again on the next page | `RULE.reopen` |
+| What sets a cascade off | only a reagent that acted. A wasted circle and the bank set nothing off | |
+| The combo | step n of a page adds 50 places counted n times and n times 0.1 to extra | `CASC` |
+| Molecules | 73, every one built to zip, dealt by size: 11.5 heavy atoms asked in round one, 35 in round nine. Size limit 56 | `FEED`, `FEEDSIZE`, `RULE.atoms` |
+| Starting reagents | hydrate, oxidize, grow, hydroborate (C=C only), dehydrate, reduce (a C=O at the end of a chain only) | `RUNG.start`, `rules.js MODE.zip` |
+| Sizes | extend (corner chemist), chain on and add phenol (trade supplier), bridge (research supplier) | `SUPPLY` |
+| Kinds | zip from the start; snap (a Diels-Alder) with the research supplier; weld (leaves an OH) with the instrument maker | `SELF`, `RULE.weld` |
+| The players | the median player and the planner try every ordered line of the hand, may break a row for a cascade, count what the chain left standing will do on later pages, and deal again when their best line sets off no cascade. Before, the median player kept the row whenever it could, and so could not line up a cascade | `tools_sim.js` |
+| The number | round one is what 88 in 100 novice first rounds reach; no round asks more than 2.6 times the one before | `tools_par.py` |
+
+### Steps of cascade on a page
+
+Every page of every round of 500 runs for each player (492 for the planner), tag d6, seeds 1 to 500, all six suppliers open.
+
+| Player | | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 1 or more | 3 or more | 6 or more | 10 or more | longest | mean |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| novice | before | 88.8% | 10.0% | 0.7% | 0.1% | 0.4% | | 0.0% | | | | | | 11.2% | 0.4% | 0.0% | 0 | 6 | |
+| novice | now | 54.3% | 19.1% | 13.9% | 6.4% | 3.3% | 1.4% | 0.9% | 0.5% | 0.2% | 0.1% | 0.0% | | 45.7% | 12.8% | 1.6% | 0.03% | 10 | 0.97 |
+| greedy | before | 79.1% | 18.1% | 2.4% | 0.2% | 0.2% | | | | | | | | 20.9% | 0.4% | 0.0% | 0 | 4 | |
+| greedy | now | 45.0% | 29.1% | 15.4% | 5.8% | 2.2% | 1.2% | 0.7% | 0.4% | 0.1% | 0.0% | | | 55.0% | 10.5% | 1.2% | 0 | 9 | 1.01 |
+| median | before | 60.8% | 24.5% | 11.8% | 1.1% | 1.8% | 0.0% | | | | | | | 39.2% | 2.9% | 0.0% | 0 | 5 | |
+| median | now | 8.0% | 13.4% | 22.6% | 18.2% | 14.9% | 9.0% | 7.0% | 3.8% | 2.2% | 0.7% | 0.2% | 0.0% | 92.0% | 56.0% | 14.0% | 0.26% | 11 | 3.13 |
+| planner | before | 63.3% | 21.4% | 10.3% | 2.9% | 2.0% | 0.1% | | | | | | | 36.7% | 5.0% | 0.0% | 0 | 5 | |
+| planner | now | 17.4% | 20.5% | 15.9% | 15.0% | 11.9% | 7.3% | 5.6% | 3.3% | 2.1% | 0.7% | 0.2% | 0.0% | 82.6% | 46.1% | 12.0% | 0.25% | 11 | 2.64 |
+
+Against the targets for the median player (1 or more on 75%, 3 or more on 35%, 6 or more on 8%, 10 or more on about 1%): 92, 56, 14 and 0.26. The first three are over. Ten or more is a quarter of what was asked: 33 pages of 12,628.
+
+The planner has fewer cascades than the median player. Its search still weighs what an open row will multiply later, and it gives up cascades for that.
+
+### Heavy atoms by round
+
+Median over the median player's 500 runs: at the start of the round, and at its end.
+
+| Round | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| Start | 14 | 14 | 15 | 18 | 22 | 24 | 27 | 31 | 33 |
+| End | 25 | 26 | 29 | 32 | 38 | 42 | 44 | 46 | 49 |
+| Steps a page, mean | 2.2 | 2.2 | 2.4 | 2.6 | 3.0 | 3.4 | 3.8 | 3.9 | 4.7 |
+
+The growth inside a round is mostly grow (three carbons on every C=O). The largest molecule in the depth measure below had 56 heavy atoms, the limit, and 142 atoms with its hydrogens.
+
+### From a deal of five, is there a line of three that sets up three steps
+
+The screen (`path.js screen`), page one, the six starting reagents, zip only, every deal of five of the six, every molecule counted once.
+
+| Heavy atoms as dealt | Molecules | Deals with 1 step or more | 2 or more | 3 or more | 6 or more |
+|---|---|---|---|---|---|
+| 11 to 16 | 21 | 95% | 86% | 20% | 0 |
+| 17 to 24 | 21 | 100% | 88% | 57% | 0 |
+| 25 to 37 | 31 | 97% | 91% | 80% | 24% |
+
+Over all molecules 56% of deals have a line of three steps or more. On the small molecules of the first rounds it is one deal in five: they carry two C=O. 23 of the 73 zip nothing as dealt and need setting up; every one of the 73 can be made to zip.
+
+### Pass rates
+
+The measure d6 read against the Par fitted on it (`tools_reread.py`). It is not a replay on the baked numbers and no unseen seeds were played; coins make a reading against another Par slightly inexact.
+
+Par: 2,360, 6,140, 16,000, 41,400, 75,400, 129,000, 221,000, 436,000, 739,000 (313 times over nine rounds).
+
+| Round | novice | target | greedy | median | target | planner | target |
+|---|---|---|---|---|---|---|---|
+| 1 | 88% (500) | 90% | 100% (500) | 100% (500) | 98% | 100% (492) | 99% |
+| 2 | 52% (438) | 80% | 68% (500) | 100% (500) | 95% | 100% (492) | 99% |
+| 3, assay | 28% (229) | 55% | 82% (338) | 99% (499) | 85% | 98% (491) | 97% |
+| 4 | 12% (64) | 55% | 29% (276) | 88% (493) | 92% | 93% (480) | 98% |
+| 5 | 12% (8) | 40% | 57% (79) | 81% (436) | 88% | 78% (445) | 95% |
+| 6, assay | 0% (1) | 20% | 38% (45) | 66% (351) | 70% | 69% (348) | 90% |
+| 7 | none reached | 15% | 59% (17) | 70% (233) | 78% | 68% (240) | 90% |
+| 8 | none reached | 10% | 30% (10) | 66% (164) | 70% | 61% (162) | 85% |
+| 9, assay | none reached | 5% | 0% (3) | 53% (109) | 50% | 40% (99) | 70% |
+
+| Player | Runs | Rounds beaten at 10, 25, 50, 75, 90 percent | Mean | Target median | Wins | Last page changed the level reached, round 4 on |
+|---|---|---|---|---|---|---|
+| novice | 500 | 0, 1, 1, 2, 3 | 1.5 | 3 | 0.0% | 11% of 73 |
+| greedy | 500 | 1, 1, 3, 3, 4 | 2.5 | | 0.0% | 28% of 430 |
+| median | 500 | 3, 4, 5, 7, 9 | 5.7 | 6 | 11.6% | 70% of 1,786 |
+| planner | 492 | 4, 4, 5, 7, 8 | 5.7 | 9 | 8.1% | 67% of 1,774 |
+
+Median margin over the number, median player: 58.5, 24.5, 7.9, 3.4, 2.3, 1.55, 1.82, 1.54, 1.09 against targets 3, 2.5, 1.6, 2, 1.8, 1.4, 1.5, 1.3, 1.2. Novice: 2.97, 1.08, 0.52, 0.25.
+
+**The novice's round one is fixed and its round two is not.** The 12th percentile of the novice's first round is 2,360 in units of Par; the median player's median first round is 139,000. They are 59 times apart, where they were nine times apart this morning: a player who lines up a cascade and keeps it now makes far more than one who does not. A number the novice passes 88 times in 100 is passed 59 times over by the median player. With the climb held to 2.6 times a round the median player is over its margin in rounds one to four (worst miss on the pass rate 13.6 points, round three) and on target from round five (misses of -7.3, -3.3, -6.2, -4.5, +2.7). The novice passes round two 52 times in 100 against 80.
+
+Molecules in the same round, median player, easiest over hardest with 8 plays or more: 2.7, 3.6, 3.2, 3.5, 6.0, 4.3, 2.8, 18.9, 13.6. The factors were fitted before a wasted circle stopped setting a cascade off and were not fitted again.
+
+### Ordering and choice
+
+- **The best ordered play of a page against the greedy one**: over 20% more on 60.0% of 922 pages, over 5% more on 66.1% (median player, 40 runs, seeds 1,001 to 1,040, `{ dec: true, deep: true }`). It was 65.6% before the cascade was narrowed to zip.
+- Second option within 30% of the best, or better two turns on: 44.1% of 2,978 turns (it was 52.4%). The gate asks for half.
+- The bank is the right move on 47.2% of the 1,066 circles where it could be placed (it was 27.8%). It is taken 1.8 times a round.
+- Rounds beaten: novice 1.5, greedy 2.5, median 5.7, planner 5.7.
+
+### What each unlock adds
+
+Two instruments. Neither is the final rules to the letter: both were run before a wasted circle stopped setting a cascade off.
+
+Whole runs, median player, the thing named held from round one and the other five never offered, 150 runs each on seeds 1 to 150 (first table) and 120 runs on seeds 1 to 120 after bridge and snap were rebuilt (second table):
+
+| Held | 1 or more | 3 or more | 6 or more | 10 or more | longest | mean steps a page |
+|---|---|---|---|---|---|---|
+| nothing | 83.6% | 52.3% | 7.0% | 0 | 7 | 2.70 |
+| extend | 91.2% | 61.5% | 8.6% | 0.03% | 10 | 3.04 |
+| chain on, three uses | 91.8% | 67.2% | 21.5% | 0.85% | 11 | 3.65 |
+| add phenol | 92.1% | 61.4% | 8.7% | 0 | 8 | 3.09 |
+| bridge as ring-closing metathesis (not kept) | 83.3% | 44.9% | 5.8% | 0 | 7 | 2.43 |
+| snap as a four-ring (not kept), 122 runs | 73.3% | 32.9% | 4.5% | 0 | 7 | 1.96 |
+| weld leaving an OH, 94 runs | 89.7% | 49.6% | 4.7% | 0 | 8 | 2.63 |
+| weld leaving a C=C, 103 runs | 88.0% | 48.8% | 5.3% | 0 | 8 | 2.61 |
+
+| Held | 1 or more | 3 or more | 6 or more | 10 or more | longest | mean |
+|---|---|---|---|---|---|---|
+| nothing | 82.7% | 51.3% | 7.9% | 0 | 8 | 2.64 |
+| bridge as the coupling of two ends | 85.0% | 49.1% | 6.8% | 0 | 7 | 2.54 |
+| snap as a Diels-Alder | 81.1% | 39.5% | 4.3% | 0 | 7 | 2.19 |
+| chain on, two uses | 90.8% | 65.6% | 20.0% | 0.46% | 11 | 3.48 |
+
+The median player of those runs did not yet count what a standing chain is worth later, and it spent C=C and OH on a snap or a bridge for one step now. So the second table reads bridge and snap low.
+
+The screen (`screenRound`: a player who fires the line with the most steps, all 73 molecules weighted as rounds deal them, three rounds each):
+
+| Pool | 1 or more | 3 or more | 6 or more | 10 or more | mean |
+|---|---|---|---|---|---|
+| the six starting reagents, zip | 95.2% | 39.4% | 5.6% | 0 | 2.43 |
+| and extend | 93.4% | 59.1% | 7.2% | 0.1% | 3.00 |
+| and chain on | 96.1% | 60.3% | 18.8% | 1.1% | 3.42 |
+| and add phenol | 96.8% | 57.3% | 11.8% | 0 | 3.19 |
+| and bridge | 96.8% | 44.6% | 7.2% | 0 | 2.68 |
+| and snap | 93.3% | 41.9% | 5.3% | 0 | 2.43 |
+| and weld | 93.8% | 36.9% | 4.0% | 0 | 2.35 |
+| everything | 96.6% | 72.3% | 26.3% | 1.5% | 4.02 |
+
+On the final rules the same screen gives 58.2%, 23.4%, 3.9% and 0 for the six starting reagents (mean 1.46) and 88.2%, 67.9%, 24.7% and 1.1% with everything (mean 3.80). The fall with the starting six is the screen's player, not the game: it fires whatever gives most steps now, and once a wasted circle sets nothing off, the reagent it fires to set the chain off again is often one that wrecks it. The median player of the runs, which looks ahead, has a cascade on 92% of pages.
+
+In short: chain on adds about one step a page and makes nearly all the pages of ten; add phenol and extend add about half a step; bridge adds a quarter of a step in the screen and nothing in runs; snap adds four steps on the one chain built for it and nothing on average; weld adds no length and starts chains that have no OH.
+
+### How the screen was checked against the game
+
+16 molecules across the five families, 11 to 35 heavy atoms: the best line of three and the share of all 216 lines with 1 and with 3 steps were the same from `screen` and from the game's own round (`cascLines` in the recording page). 0.4 seconds against 17.
+
+### What is still wrong, found in this measure
+
+- **Monsters are rare.** Ten steps or more come on 0.26% of the median player's pages, not 1%. They need chain on held, and the players seldom pick it.
+- **Three steps is ordinary, not good.** 56% of the median player's pages have three or more against a target of 35%.
+- **The novice dies in round two** (52% against 80%) and the median player is 59 times over the number in round one.
+- **The planner is worse than the median player** at cascades and under its targets from round five (wins 8.1% against 40%).
+- **Weld and snap do not make cascades longer.**
+- **Factors are one rule behind**, and molecules in rounds eight and nine are 14 to 19 times apart.
+- **Second option worth taking fell to 44%**, under the gate of half.
+- **The worth tables the players pick by are guesses** for every new reagent and stale for the rest.
+- **Nothing on equipment was retuned.** No piece was switched off: every one still fires. Pieces that pay "each reaction" (stir plate, philosopher's stone, goat, rubber duck, log book) and the cage family's rule now fire on every step of a cascade and were not measured.
+- **A measure takes 25 minutes**: the median player tries all 125 lines of a hand.
 
 ## The measure of 2026-11-11: the page lined up and fired, the zip, coins and marks
 
