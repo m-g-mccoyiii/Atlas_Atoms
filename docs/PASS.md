@@ -4,9 +4,13 @@ Set 2026-11-10. The owner asked that work continue until independent reviewers p
 
 ## 1. The number to beat
 
+Revised 2026-11-10 after the first review. The first bar asked that under 8% of passed rounds be passed by more than five times. The reviewer showed that cannot hold together with a 98% pass rate in round one while a round's total spreads nine times, and that in a score-attack game a huge total is the fun. The bar now asks for tension, not for small totals.
+
 - Measured on 500 or more whole simulated runs per player, same seeds.
 - Median player: pass rate within 12 points of the target for every round in `BALANCE.md`.
-- Rounds passed by more than 5 times: under 8%.
+- From round 4 on, something is still undecided before the last page in at least 40% of rounds: either passing, or the next tier above the number.
+- Median margin over the number within 1.5 times of the `BALANCE.md` target in every round.
+- Every kind of round is beaten by a similar margin: no kind more than 2 times easier than another.
 - No molecule more than 3 times harder or easier than another in the same round.
 
 ## 2. Decisions
@@ -56,8 +60,8 @@ Set 2026-11-10. The owner asked that work continue until independent reviewers p
 
 | Section | Status | Date | Note |
 |---|---|---|---|
-| 1 Number to beat | measured, awaiting review | 2026-11-10 | `RIG.md`, "The measure after the rules of a round were changed". 500 runs for each of four players, seeds 1 to 500, rules at commit `0220c1c` with Par fitted again. Median player within 12 points in every round: met, worst miss 7.1 (round 3, 92% against 85%), and 6.5 on 500 seeds no fit has seen. Passed by more than 5 times: not met, 58.6% against under 8% (it was 73.0%). Molecules in the same round: not met, 2.8 to 7.7 times against 3 (it was 27 to 254); two rounds of nine are within 3. Spread of a round, 90th percentile over 10th: 9 to 34 by round (it was 103 to 2,079); seven rounds of nine under 30. The last page decided 28% of passes from round 4 on (27% before, target 55%). |
-| 2 Decisions | measured, awaiting review | 2026-11-10 | `RIG.md`, same section. Built: a budget of three uses a reagent a round, a chain that stops at forks, a hand of five with a redraw, the bank. Second option within 30% of the best or better two turns later: 53.4% of the median player's turns, 60.0% of the planner's (44.3% before; 41.4% novice, 43.6% greedy). Verb for a bad deal: the redraw. A player that may break and bank beats one that may not on 70.6% of 269 builds (gate: a fifth). A row is still open with at most one reagent that keeps it in 63% of the median player's turns. Reviewer's "a turn is a small puzzle": not asked. |
+| 1 Number to beat | fail, reviewed | 2026-11-10 | Reviewer: pass rates on target (worst miss 7 points), but margins in rounds 1 to 5 are 20, 11.5, 4.7, 4.9, 3.9 against targets near 2 to 3; the last page decides 28% of rounds; kinds of round are 9 times apart. Needs tiers above the number, a factor per kind of round, and Par raised early. |
+| 2 Decisions | fail, narrowly, reviewed | 2026-11-10 | Measured gates met on paper (53% of turns have a second option, breaking wins on 71% of builds) but the reviewer does not trust them: every option's gain is printed, so a turn is "take the largest number"; the bank is the obvious answer in two of three frames; redraw, bank and use dots are not understood without words. |
 | 3 Pieces combine | fail | 2026-11-10 | 66% of pairs inert, 59 combos |
 | 4 Spectacle and speed | fail | 2026-11-10 | chain is a tag and a number; three screens before a round |
 | 5 The page | fail | 2026-11-10 | navy ink, yellow pills, unexplained ovals and chevrons |
