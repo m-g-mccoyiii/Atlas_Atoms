@@ -538,13 +538,19 @@ function shapeOf(m) {
 // on the whole molecule has one spot. apply(m, id, spot): does it to m in place. Nothing here scores or animates.
 //   mirror, on a bond: a single bond between two carbons that is in no ring. spot { a, b }: everything on b's side of
 //     the bond is taken away and a copy of a's side, reflected, is joined on in its place by a bond from a to its copy.
-//   clamp, on a part: an oxygen, or the two carbons of a C=C. spot { part }: for the rest of the round no reagent and
-//     no other piece changes it. The molecule's own zip still uses it.
+//   clamp (not offered any more; the cap it puts on is kept for the wood spirit), on a part: an oxygen, or the two
+//     carbons of a C=C. spot { part }: for the rest of the round no reagent and no other piece changes it.
 //   crystal, on a carbon that has a hydrogen and no oxygen: spot { c }: one hydrogen becomes an OH.
 //   magnet, on the whole molecule: spot { runs }: every stretch of four or more plain CH2 in a row loses all but its
 //     two end carbons, which are bonded. What stood on either side of the stretch is then three carbons apart.
 //   bunsen (the burner), on the whole molecule: spot { ohs }: every OH that can lose water does, all at once, and
 //     leaves a C=C where it stood (the same elimination as dehydrate). The waters are returned as `leaving`.
+//   Three candidates for the fifth piece (path.js RULE.fifth picks the one on offer):
+//   balance, on the whole molecule: spot { ols, ones }: every OH on a carbon with a hydrogen becomes a C=O and every
+//     C=O becomes an OH, at once: the hydrogens tip from one side to the other. Needs at least one of each.
+//   mortar, on a bond of a ring that is not a benzene ring: spot { ra, rb }: that bond is cut and each carbon takes a hydrogen.
+//   burette, on the whole molecule: spot { pairs }: every C=C outside a benzene ring becomes a C=O on the carbon with
+//     fewer hydrogens, and the other carbon takes that carbon's hydrogen.
 // apply takes what leaves out of the model and returns it as groups of atoms, so the page can show it going.
 const heavyNb = (m, a) => nbs(m, a).map(n => n.atom).filter(b => b.el !== 'H' && !b.fly);
 const sideOf = (m, a, b) => { const S = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); nbs(m, u).forEach(n => { const v = n.atom; if (S.has(v) || (u === a && v === b)) return; S.add(v); st.push(v); }); } return S; };
@@ -559,11 +565,14 @@ const tools = {
     else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !o.clamp) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !k.a.clamp && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
     else if (id === 'crystal') m.atoms.forEach(c => { if (c.el === 'C' && !c.fly && !c.clamp && isSp3(m, c) && Hs(m, c).length && heavyNb(m, c).every(q => q.el === 'C')) out.push({ c }); });
     else if (id === 'magnet') { const runs = gapRuns(m); if (runs.length) out.push({ runs }); }
+    else if (id === 'balance') { const ols = m.atoms.filter(o => !o.fly && !o.clamp && oxidisable(m, o)), ones = carbonyls(m).filter(q => !q.o.clamp && !q.o.fly).map(q => q.o); if (ols.length && ones.length) out.push({ ols, ones }); }
+    else if (id === 'mortar') { const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || k.a.clamp || k.b.clamp || (ar.has(k.a) && ar.has(k.b)) || !ringBond(m, k.a, k.b)) return; out.push({ ra: k.a, rb: k.b }); }); }
+    else if (id === 'burette') { const pairs = burnPairs(m); if (pairs.length) out.push({ pairs }); }
     else if (id === 'bunsen') { const ohs = m.atoms.filter(o => o.el === 'O' && !o.fly && !o.clamp && eliminable(m, o)); if (ohs.length) out.push({ ohs }); }
     return out;
   },
   // the atoms a spot is drawn at, on the molecule as it stands; and those of them that will be gone
-  at(sp) { return sp.ohs ? sp.ohs : sp.runs ? [].concat.apply([], sp.runs) : sp.pairs ? [].concat.apply([], sp.pairs) : sp.b ? [sp.a, sp.b] : sp.part || [sp.c]; },
+  at(sp) { return sp.ohs ? sp.ohs : sp.ols ? sp.ols.concat(sp.ones) : sp.ra ? [sp.ra, sp.rb] : sp.runs ? [].concat.apply([], sp.runs) : sp.pairs ? [].concat.apply([], sp.pairs) : sp.b ? [sp.a, sp.b] : sp.part || [sp.c]; },
   apply(m, id, sp) { const res = tools.act(m, id, sp); if (res && res.leaving) res.leaving.forEach(grp => grp.forEach(a => m.removeAtom(a))); return res; },
   act(m, id, sp) {
     if (id === 'mirror') {
@@ -576,6 +585,10 @@ const tools = {
     if (id === 'clamp') { sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }
     if (id === 'crystal') { const h = Hs(m, sp.c)[0]; if (!h) return null; cut(m, sp.c, h); const o = attach(m, 'O', sp.c, 2.8); m.bond(o, h); return { made: [o] }; }
     if (id === 'magnet') { const made = []; sp.runs.forEach(run => { run.slice(1, -1).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], run[run.length - 1]); made.push(run[0], run[run.length - 1]); }); return { made }; }
+    if (id === 'balance') { const ols = sp.ols.map(o => oxidisable(m, o)).filter(Boolean), ones = sp.ones.map(o => carbonyls(m).find(q => q.o === o)).filter(Boolean); if (!ols.length || !ones.length) return null;
+      ols.forEach(q => { const hc = Hs(m, q.c)[0]; m.removeAtom(hc); m.removeAtom(q.ho); m.bond(q.c, q.o); }); ones.forEach(q => reduceCO(m, q)); return { made: ols.map(q => q.o).concat(ones.map(q => q.o)) }; }
+    if (id === 'mortar') { const k = m.findBond(sp.ra, sp.rb); if (!k || k.order !== 1) return null; cut(m, sp.ra, sp.rb); attach(m, 'H', sp.ra, 2.2); attach(m, 'H', sp.rb, 2.2); return { made: [sp.ra, sp.rb] }; }
+    if (id === 'burette') { const made = []; sp.pairs.forEach(q => { const cx = q[0], ch = q[1], k = m.findBond(cx, ch); if (!k || k.order !== 2) return; const hx = Hs(m, cx)[0]; if (!hx) return; k.order = 1; cut(m, cx, hx); m.bond(ch, hx); const o = attach(m, 'O', cx, 2.8); m.bond(cx, o); made.push(o); }); return { made }; }
     if (id === 'bunsen') { const made = [], leaving = []; sp.ohs.forEach(o => { const q = eliminable(m, o); if (!q) return; const hb = Hs(m, q.beta)[0]; cut(m, q.c, q.o); cut(m, q.beta, hb); m.bond(q.o, hb); m.bond(q.c, q.beta); made.push(q.c, q.beta); leaving.push([q.o, q.ho, hb]); }); return made.length ? { made, leaving } : null; }
     return null;
   }

@@ -139,7 +139,7 @@
   // it would zip without; it clamps the OH the chain starts from. The novice uses a piece on half its pages at a
   // place taken at random. Order: clamp, magnet, burner, seed crystal, and the mirror last, so that what is doubled
   // has been mended first.
-  const TOOLORDER = ['clamp', 'magnet', 'bunsen', 'crystal', 'mirror'];
+  const TOOLORDER = ['magnet', 'bunsen', 'balance', 'burette', 'mortar', 'crystal', 'mirror'];
   // what a molecule is worth to a player who reads it: twice the steps it would zip as it stands, plus one for every
   // part a reagent could still work on (each oxygen, each C=C). So a mirror is not put where it throws half the parts away.
   const partsOf = m => { let n = 0; m.atoms.forEach(a => { if (a.el === 'O') n++; }); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C') n += 0.5; }); return n; };

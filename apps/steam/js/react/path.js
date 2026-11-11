@@ -217,7 +217,7 @@ const GEAR = [
   { id: 'cannula', tok: '{r} +1', fam: 'row', note: 'each reaction in a row: row +1', name: 'cannula', shape: 'column', at: 'step', fx: c => (c.cont ? A('r', 1) : null) },
   { id: 'reflux', tok: '{r} times 1.06', fam: 'row', note: '3 or more in a row: row times 1.06', name: 'reflux', shape: 'column', at: 'step', fx: c => (c.cont && c.len >= 3 ? M('r', 1.06) : null) },
   { id: 'burette', tok: '{r} +1.5', fam: 'row', note: 'first reaction on a page: row +1.5', name: 'burette', shape: 'column', at: 'step', fx: c => (c.pageStep === 0 ? A('r', 1.5) : null) },
-  { id: 'clamp', tok: 'nothing changes|this part', fam: 'tool', five: true, rule: true, tool: true, note: 'nothing changes this part', name: 'clamp', shape: 'column' },
+  { id: 'clamp', tok: 'nothing changes|this part', fam: 'tool', rule: true, tool: true, note: 'nothing changes this part', name: 'clamp', shape: 'column' },
   { id: 'magnet', tok: 'pulls every gap|shut', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'pulls every gap shut', name: 'magnet', shape: 'round' },
   { id: 'recycler', tok: '{r} +0.5', fam: 'row', note: 'back to an earlier molecule: row +0.5', name: 'recycler', shape: 'flask', at: 'step', fx: c => (c.loop ? A('r', 0.5) : null) },
   // extra
@@ -268,13 +268,25 @@ const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 // Five have been made again for this game. Each is a thing the player uses ON the molecule, once a round, while the
 // page is being lined up (rules.js, tools). Three are put at a place the player chooses; two act on all of it.
 //   mirror, on a bond: one side of the bond goes; the other is copied across it, joined to its own reflection.
-//   clamp, on an oxygen or a C=C: nothing changes that part for the rest of the round, except the molecule's own zip.
+//   burette, on the whole molecule: every C=C becomes a C=O (a drop on each).
 //   seed crystal, on a carbon: a hydrogen there becomes an OH, and the molecule zips from it at once.
 //   magnet, on the whole molecule: every stretch of four or more CH2 is pulled shut to two carbons.
 //   burner, on the whole molecule: every OH loses water and becomes a C=C, all at once.
 // Three more still do what they say and are passive: carousel (one more reagent in the hand), dropper (one more use),
 // timer (a fourth circle). RULE.five: only these eight are offered, each from the supplier given here. Off: all sixty.
-const FIVE = { crystal: 0, clamp: 0, bunsen: 0, dropper: 0, magnet: 1, carousel: 1, mirror: 2, timer: 3 };
+const FIVE = { crystal: 0, bunsen: 0, dropper: 0, magnet: 1, carousel: 1, mirror: 2, timer: 3 };
+// The fifth piece. The clamp was the fifth and was taken out (the wood spirit homunculus does what it did). Three
+// candidates are built (rules.js, tools) and RULE.fifth names the one on offer; fifthSet(id) swaps it, and
+// fifthSet(null) offers none and puts the old number-adding piece of that name back.
+const FIFTH = { balance: { tok: 'OH and C=O|trade places', note: 'OH and C=O trade places', whole: true },
+  mortar: { tok: 'cuts this|ring bond', note: 'cuts this ring bond' },
+  burette: { tok: 'every C=C|becomes C=O', note: 'every C=C becomes C=O', whole: true } }, FIFTH0 = {};
+function fifthSet(id) {
+  Object.keys(FIFTH0).forEach(k => { const G = GEARS[k]; Object.keys(G).forEach(f => { delete G[f]; }); Object.assign(G, FIFTH0[k]); delete FIFTH0[k]; delete FIVE[k]; });
+  RULE.fifth = id && FIFTH[id] ? id : null; if (!RULE.fifth) return;
+  const G = GEARS[id], F = FIFTH[id]; FIFTH0[id] = Object.assign({}, G); delete G.at; delete G.fx; Object.assign(G, { tok: F.tok, note: F.note, fam: 'tool', five: true, rule: true, tool: true, whole: !!F.whole }); FIVE[id] = 0;
+}
+fifthSet('burette');
 // how many times a round a piece can be used on the molecule
 const TOOLUSES = 1;
 RULE.five = true;
@@ -1016,6 +1028,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { FIVE, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

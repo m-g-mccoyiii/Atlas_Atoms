@@ -765,6 +765,7 @@ function start(app) {
       const it = { sp, x, z, at, whole: !!G.whole };
       if (sp.runs) it.gone = [].concat.apply([], sp.runs.map(r => r.slice(1, -1))).map(toolPt).filter(Boolean);
       if (sp.pairs) it.at = sp.pairs.map(q => toolPt(q[0])).filter(Boolean);
+      if (sp.ols) it.words = sp.ols.map(() => 'C=O').concat(sp.ones.map(() => 'OH'));
       if (sp.b) { const keep = side(sp.a, sp.b), A = toolPt(sp.a), B = toolPt(sp.b); if (A && B) { let ux = B.x - A.x, uz = B.z - A.z; const d = Math.hypot(ux, uz) || 1; ux /= d; uz /= d; const mx = (A.x + B.x) / 2, mz = (A.z + B.z) / 2, fl = q => { const t = 2 * ((mx - q.x) * ux + (mz - q.z) * uz); return { x: q.x + t * ux, z: q.z + t * uz }; }, pt = new Map(); keep.forEach(a => { const q = toolPt(a); if (q) pt.set(a, fl(q)); });
           it.ghost = { pts: Array.from(pt.entries()).map(e => ({ x: e[1].x, z: e[1].z, o: e[0].el === 'O' })), bonds: md.bonds.filter(k => pt.has(k.a) && pt.has(k.b)).map(k => [pt.get(k.a), pt.get(k.b)]), join: [A, fl(A)] }; it.gone = side(sp.b, sp.a).map(toolPt).filter(Boolean); } }
       return it; }).filter(Boolean);
@@ -1115,9 +1116,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       const h = st.toolList.length === 1 && st.toolList[0].whole ? st.toolList[0] : st.toolSpot;
       if (h) { (h.gone || []).forEach(q => blot(q, REDINK, 0.42));
         if (h.ghost) { x.globalAlpha = 0.4; x.strokeStyle = INK; x.lineWidth = Math.max(4, 0.16 * sc * U); x.lineCap = 'round'; x.setLineDash([10, 9]); const j0 = P2(h.ghost.join[0]), j1 = P2(h.ghost.join[1]); x.beginPath(); x.moveTo(j0[0], j0[1]); x.lineTo(j1[0], j1[1]); x.stroke(); x.setLineDash([]); h.ghost.bonds.forEach(b => { const a0 = P2(b[0]), b0 = P2(b[1]); x.beginPath(); x.moveTo(a0[0], a0[1]); x.lineTo(b0[0], b0[1]); x.stroke(); }); h.ghost.pts.forEach(q => { const c = P2(q); x.fillStyle = q.o ? REDINK : INK; x.globalAlpha = 0.34; x.beginPath(); x.arc(c[0], c[1], r * 0.6, 0, 6.3); x.fill(); }); }
+        else if (h.words || st.tool === 'burette') { /* the word of what each part becomes is written over it, below */ }
+        else if (st.tool === 'mortar') { const a0 = P2(h.at[0]), b0 = P2(h.at[1] || h.at[0]); x.globalAlpha = 0.85; x.strokeStyle = REDINK; x.lineWidth = Math.max(9, 0.3 * sc * U); x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0], a0[1]); x.lineTo(b0[0], b0[1]); x.stroke(); }
         else if (st.tool === 'bunsen') { x.globalAlpha = 0.9; x.strokeStyle = REDINK; x.lineWidth = 6; x.lineCap = 'round'; h.at.forEach(q => { const c = P2(q); x.beginPath(); x.moveTo(c[0] - r * 0.7, c[1] + r * 0.45); x.lineTo(c[0] + r * 0.7, c[1] - r * 0.45); x.stroke(); }); }
         else if (!h.gone || st.tool !== 'magnet') h.at.forEach(q => blot(q, st.tool === 'clamp' ? '#39435c' : '#2f78a0', 0.5));
-        const word = st.tool === 'crystal' ? 'OH' : st.tool === 'bunsen' ? 'C=C' : ''; if (word) { hand(x, 30); x.textAlign = 'center'; x.globalAlpha = 0.9; x.fillStyle = '#2f78a0'; h.at.forEach(q => { const c = P2(q); x.fillText(word, c[0], c[1] - r - 8); }); } }
+        const word = st.tool === 'crystal' ? 'OH' : st.tool === 'bunsen' ? 'C=C' : st.tool === 'burette' ? 'C=O' : ''; if (word || h.words) { hand(x, 30); x.textAlign = 'center'; x.globalAlpha = 0.9; x.fillStyle = '#2f78a0'; h.at.forEach((q, i) => { const c = P2(q); x.fillText(h.words ? h.words[i] || '' : word, c[0], c[1] - r - 8); }); } }
       x.globalAlpha = 1; }
     // ink that runs from a reagent to a place, and from a place to the equipment it sets off
     st.strokes = st.strokes.filter(q => now - q.t < q.dur + 260); st.strokes.forEach(q => {
