@@ -24,9 +24,11 @@ Settled with the owner 2026-11-11. This replaces the first version of this file.
 | 7 | Slime (sticks) | medium | 3 hydroborates | tap two carbons: they are stuck together and count as 3 apart for the round, so rings cross from one stretch to the other | 1.6 |
 | 8 | Ammonia (smelling salts, wakes) | slow | 2 ammonias: oxidize on an NH2 | the page's three reactions fire again by themselves, in the same order, no uses spent | 2.2 |
 | 9 | Seedling (grows) | slow | 3 grows | tap a carbon: 6 carbons with 2 C=O grow there, stay for the round, and may pass the size limit | 2.2 |
-| 10 | Brimstone (hellfire) | slow | 2 sulfurs: oxidize on an SH | tap a carbon: fire runs from there to the chain end and every 6th plain carbon becomes OH, then C=O, in turn. Then the rings run | 2.3 |
+| 10 | Brimstone (hellfire) | slow | 2 sulfurs: oxidize on an SH | tap a carbon: fire burns the next 8 plain carbons toward the chain end and writes an OH on the 4th and a C=O on the 8th. Groups already there stay. Then the rings run | 2.3 |
 
 ## What the model cannot say
+
+- Brimstone was first weakened to every 6th carbon. Groups 6 apart cannot close a ring, so that was dropped for a shorter fire with the groups 4 apart. Lengths 12, 16 and 20 gave 2.9, 3.1 and 3.1 in middle rounds.
 
 - Acid's wider reach was found by the model and has not been seen on real molecules.
 - Ammonia and brimstone were measured on made-up molecules carrying NH2 and SH. No such molecules are in the game yet.

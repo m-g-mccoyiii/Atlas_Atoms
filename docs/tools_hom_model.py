@@ -11,6 +11,7 @@ NEW = int(os.environ.get('NEW', 0))   # NEW=1 turns on every changed rule; any s
 def E(k, old, new): return int(os.environ.get(k, new if NEW else old))
 WATER_V = E('WATER_V', 0, 1); ARMS = E('ARMS', 3, 2); EVERY = E('EVERY', 4, 6)
 SEEDNEED = E('SEEDNEED', 2, 3); AMM_NH2 = E('AMM_NH2', 0, 1); AMMNEED = E('AMMNEED', 2, 2); HYDNEED = E('HYDNEED', 3, 3)
+BRIML = E('BRIML', 0, 8); BRIM_SH = int(os.environ.get('BRIM_SH', 0))   # BRIML>0: fire burns only the next BRIML plain carbons; OH on the 4th, then C=O on every 4th
 ACIDEXT = int(os.environ.get('ACIDEXT', 2))
 ACID = os.environ.get('ACID', 'g' if NEW else '')   # '', 'a', 'b', 'c'(a+b), 'd' (extra rule)
 SALTCAP = int(os.environ.get('SALTCAP', 3)); ONLY = os.environ.get('ONLY', '')
@@ -425,7 +426,12 @@ def brimstone(m, line):
             for u in seg:
                 if t.c[u] == BARE:
                     cnt += 1
-                    if cnt % EVERY == 0:
+                    if BRIML:
+                        if cnt > BRIML:
+                            break
+                        if cnt % 4 == 0:
+                            t.c[u] = OH if not changed else CO; changed = True
+                    elif cnt % EVERY == 0:
                         t.c[u] = nxt; nxt = CO if nxt == OH else OH; changed = True
             if not changed:
                 continue
@@ -691,6 +697,8 @@ def one(args):
             for i in r3.sample(cos, min(len(cos), r3.choice([2, 3]))):
                 c2[i] = NH2
             m_ = make(c2, sh); b_ = round_total(m_)
+        if name == 'brimstone' and BRIM_SH and sh < 2:
+            m_ = make(c, 2); b_ = round_total(m_)
         if name == 'acid' and ACID in ('a', 'c', 'f'):
             c2, sh2, _ = mol_for(stage, seed, 7777)
             m2 = make(c2, sh2)
