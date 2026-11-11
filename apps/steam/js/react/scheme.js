@@ -482,8 +482,10 @@ function start(app) {
   }
   // what a run can turn up beyond the suppliers: families that have been opened and reactions that have been found
   const extraR = () => P.FAMILIES.filter(f => meta.fam[f.id]).reduce((a, f) => a.concat(f.reagents), []).concat(Object.keys(meta.found).filter(k => meta.found[k]));
-  // a first run has no sigils. They are earned by deeds in play, and the page of sigils appears once one is earned
-  const sigOpen = t => t.id === 'plain' || !!(meta.sig && meta.sig[t.id]);
+  // Sigils belong to the occult part of the game. Nothing of them shows until the alchemist has been opened; after
+  // that they are earned by deeds in play, and the page of sigils appears once one is earned
+  const occultOpen = () => meta.tier >= 4;
+  const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
   function newRun() { run = P.runNew(meta.tier, extraR()); if (!meta.sig) meta.sig = {}; if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
@@ -532,7 +534,7 @@ function start(app) {
   }
   function endRound() {
     st.mode = 'done'; st.call = null; clearKit(); st.pass = g.total >= st.quota; if (!meta.taught) { meta.taught = true; saveMeta(); }
-    if (st.pass) run.beaten++; { if (!meta.sig) meta.sig = {}; const got = P.deeds(g, run, st.pass).filter(id => !meta.sig[id]); if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
+    if (st.pass) run.beaten++; { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
     if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
     else { run.over = true; sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }

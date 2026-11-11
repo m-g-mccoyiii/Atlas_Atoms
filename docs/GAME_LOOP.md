@@ -56,52 +56,7 @@ There are no timers, login streaks or paid currency.
 
 ## Designed, not built
 
-### Sigils that grant transmutations
-
-The owner's direction: a sigil should let the player do a new transmutation, not only multiply. The plan is that a full circle performs the sigil's transmutation on the molecule, free:
-
-| Sigil | Transmutation on a full circle |
-|---|---|
-| ring sigil | closes a ring |
-| cage sigil | snaps two double bonds into a cage |
-| arene sigil | turns a ring into an arene |
-| growth sigil | the molecule grows by three carbons |
-| gold sigil | one atom becomes a heavy isotope, which scores more wherever it is touched |
-
-This ties the sigil to the families: the sigil chosen before the run decides which family the run can build toward. Terms such as glass and lean would become a second, separate choice (stakes), the way Balatro separates deck from stake. Sigils would be unlocked by deeds, for example the cage sigil by making a cage in a run.
-
-### Pets (homunculi)
-
-The owner's direction: turn the homunculus from a shelf piece into a pet that is unlocked and does things, about ten of them, animated.
-
-Assessment: this is a better home for anything that acts by itself. The intern, the raven and the homunculus are already "something that does a thing for the player"; as shelf pieces they are words under an object. As a pet the action is visible: the creature walks to the molecule and does it. One pet is taken into a run, which adds a third choice at the start after sigil and stakes.
-
-Ten candidates, each one action the player can watch:
-
-1. Homunculus: does the last reaction of each page again.
-2. Raven: carries the last reagent of a page to the next.
-3. Intern: does one reaction of its own choosing on each page.
-4. Black cat: walks across the row; a broken row pays for what it lost.
-5. Rat: eats a by-product and turns it into points.
-6. Toad: swallows the worst reagent on the page and spits out a random one.
-7. Moth: goes to the heaviest atom; that place counts twice.
-8. Imp: steals one use of a reagent each page and doubles another.
-9. Snail: slow. Lights one rune of the circle every page by itself.
-10. Golem: holds a broken row once a round.
-
-Building it needs a creature that moves on the page: a walk to a point, an action pose, a return. That animation rig does not exist yet and is the main cost. The raven, the intern, the cat and the homunculus would leave the shelf when they become pets.
-
-### Interaction and balance matrix
-
-The owner asked for a full interaction and evaluation matrix. The plan:
-
-1. **Solo worth.** Every piece of equipment alone, 41 simulated rounds each, as now.
-2. **Pairs.** All 1,770 pairs of the sixty pieces. A pair worth much more than the product of its two solo worths is a combo; much less is an anti-combo. This finds the broken pairs and the dead pieces.
-3. **Sigil by piece.** Six sigils against sixty pieces, same measure.
-4. **Run survival.** For each sigil, how many rounds a simulated player beats, with equipment taken first and with reagents taken first.
-5. **A better player.** The simulated player is greedy: it never breaks a row on purpose, never wishes, never feeds the circle. Pieces that reward those (black cat, monkey's paw, the circle) cannot be measured until it can.
-
-The output is one table in `docs/` with a flag on every outlier, and the balance pass is made from it.
+The whole arc, with stages, the nine-round run, the seven seals, familiars, the pact and the stone, is in `ARC.md`. The balance matrix is step 3 of its order of work.
 
 ## Known weak points
 
