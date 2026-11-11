@@ -257,10 +257,14 @@ const LIST = [
 const CARDS = {};
 // Reactions a molecule has with itself when two of its groups sit close together. They are not reagents: nothing is
 // held or used. Each finds one pair at a time. (Close, Snap and Aromatize above are of this kind too.)
-//   lactol: an OH and a C=O three or four carbons apart close a ring through the oxygen, and the C=O becomes C-OH.
+//   lactol (named zip on the page, docs/CASCADES.md kind 1): an OH whose carbon is three or four carbons from the
+//   carbon of a C=O closes a ring of five or six through its oxygen, and the C=O becomes C-OH. That new OH can do
+//   the same to the next C=O along, so on a chain with a C=O every three or four carbons one OH runs down it.
+//   The C=O must not be in a ring already; the OH may be, which is what lets the zip go on. One pair a step: the
+//   first C=O in the molecule's own order that has such an OH, and the first such OH.
 //   ether: an OH and a Cl three or four carbons apart close a ring through the oxygen. HCl leaves.
 //   enone: an OH two carbons from a C=O leaves as water, and a C=C forms beside the C=O.
-function lactolable(m) { for (const k of carbonyls(m)) { if (ringAtom(m, k.c)) continue; const dist = carbonDist(m, k.c, 4); for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || s.c === k.c || ringAtom(m, s.c)) continue; const d = dist.get(s.c); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }]; } } return []; }
+function lactolable(m) { for (const k of carbonyls(m)) { if (ringAtom(m, k.c)) continue; const dist = carbonDist(m, k.c, 4); for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || s.c === k.c) continue; const d = dist.get(s.c); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, kc: k.c, ko: k.o, bond: k.bond, atoms: [s.o, s.c, k.c, k.o] }]; } } return []; }
 function etherable(m) { for (const o of m.atoms) { if (o.fly) continue; const s = hydroxyl(m, o); if (!s || ringAtom(m, s.c)) continue; const dist = carbonDist(m, s.c, 4); for (const x of m.atoms) { if (x.el !== 'Cl' || x.fly) continue; const c2 = carbonsOf(m, x)[0]; if (!c2 || c2 === s.c || ringAtom(m, c2)) continue; const d = dist.get(c2); if (d === 3 || d === 4) return [{ o: s.o, ho: s.ho, c: s.c, cl: x, c2, atoms: [s.o, s.c, c2, x] }]; } } return []; }
 function enonable(m) { const dbl = a => nbs(m, a).some(n => n.bond.order === 2); for (const k of carbonyls(m)) for (const a of carbonsOf(m, k.c)) { if (!Hs(m, a).length || dbl(a)) continue; for (const b of carbonsOf(m, a)) { if (b === k.c || dbl(b)) continue; const oh = nbs(m, b).map(n => n.atom).find(q => q.el === 'O' && !q.fly && hydroxyl(m, q)); if (!oh) continue; const s = hydroxyl(m, oh); return [{ a, b, o: s.o, ho: s.ho, kc: k.c, atoms: [a, b, s.o] }]; } } return []; }
 //   taut: an OH on a carbon of a C=C (an enol) becomes C=O, and the other carbon takes the hydrogen.
@@ -273,7 +277,7 @@ const SELFCARDS = [
     apply(m) { const s = aldolable(m)[0], ha = Hs(m, s.a)[0]; cut(m, s.a, ha); s.bond.order = 1; m.bond(s.a, s.c2); m.bond(s.o2, ha); return { focus: [s.a, s.c2, s.o2], incoming: [], leaving: [], tag: 'closes a ring' }; } },
   { id: 'taut', verb: 'Shift', formula: '', chem: 'by itself', rgb: [176, 24, 154], cls: 'self', ghs: [], rule: 'An OH on a C=C becomes C=O.', from: 'ene', to: 'one', find: tautable, ok: m => tautable(m).length > 0,
     apply(m) { const s = tautable(m)[0]; cut(m, s.o, s.ho); m.bond(s.b, s.ho); s.bond.order = 1; bondOf(m, s.a, s.o).order = 2; return { focus: [s.a, s.b, s.o], incoming: [], leaving: [], tag: 'shifts' }; } },
-  { id: 'lactol', verb: 'Lactol', formula: '', chem: 'by itself', rgb: [47, 120, 160], cls: 'self', ghs: [], rule: 'An OH and a C=O close a ring.', from: 'ol', to: 'ring', find: lactolable, ok: m => lactolable(m).length > 0,
+  { id: 'lactol', verb: 'Zip', formula: '', chem: 'by itself', rgb: [47, 120, 160], cls: 'self', ghs: [], rule: 'An OH and a C=O close a ring.', from: 'ol', to: 'ring', find: lactolable, ok: m => lactolable(m).length > 0,
     apply(m) { const s = lactolable(m)[0]; cut(m, s.o, s.ho); s.bond.order = 1; m.bond(s.o, s.kc); m.bond(s.ko, s.ho); return { focus: [s.o, s.kc, s.ko], incoming: [], leaving: [], tag: 'closes a ring' }; } },
   { id: 'ether', verb: 'Ether', formula: '', chem: 'by itself', rgb: [60, 154, 95], cls: 'self', ghs: [], rule: 'An OH and a Cl close a ring. HCl leaves.', from: 'cl', to: 'ring', find: etherable, ok: m => etherable(m).length > 0,
     apply(m) { const s = etherable(m)[0]; cut(m, s.o, s.ho); cut(m, s.c2, s.cl); m.bond(s.cl, s.ho); m.bond(s.o, s.c2); return { focus: [s.o, s.c2], incoming: [], leaving: [[s.cl, s.ho]], tag: 'closes a ring' }; } },

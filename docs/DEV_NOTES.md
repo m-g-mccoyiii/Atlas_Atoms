@@ -57,6 +57,7 @@ Heredocs with nested quotes fail in this shell; a script file does not.
 - To measure whole runs: `runSim(player, seed, opts)` and the rest of the rig, in `.claude/sim.js` (copy in `docs/tools_sim.js`). `docs/RIG.md` says how. `opts.rule` overrides `AA.rxPath.RULE` for one run, so a rule can be measured on and off on the same seeds; `opts.dec` logs how much of a choice each turn was. `python docs/tools_round.py <tag> <first> <last>` prints the spread of a round and the turn measures.
 - Never start `simGo` or `simPart` in a tab where one is still running: the two fight over one job and neither ends. Reload the tab first.
 - `AA.rxScheme.bank()`, `redraw()` and `turn()` do what the three new marks do. `state()` reports `fork`, `canBank`, `canRedraw`, `stuck` and `left`. `AA.rxPath.seed(n)` seeds every draw on the run path; `AA.rxScheme.debugRound(n)` jumps the page to a round.
+- The page is lined up and fired: `AA.rxScheme.pick(i)` places slot i of the hand in the next circle, `unqueue(k)` takes circle k back (-1 for the last), `bank()` places the bank token, `fire()` fires. `state()` reports `queue`, `will` (what each queued thing will do), `lining`, `casc`, `coins`. On the take-one page `reroll()`, `skip()`, `bin(i)`. `recQ(base, opts, pages, plan)` in the recording page records pages lined up and fired. Never take a screenshot of the recording page: it runs the page's own clock against the recording clock and the view breaks.
 - Judge whole frames, not crops. Look at what you built before saying it works.
 
 ## What is known to be wrong

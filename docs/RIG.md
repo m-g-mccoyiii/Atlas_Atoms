@@ -4,6 +4,115 @@ Built 2026-11-10. This is the rig `BALANCE.md` asks for: whole runs played with 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11: the page lined up and fired, the zip, coins and marks
+
+Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. Everything below this section describes the game before these rules and is kept as the "before".
+
+### What changed
+
+| Rule | What it is | Switch in `RULE` |
+|---|---|---|
+| Marks | three marks above the number to beat, at 2, 4 and 8 times it. The last page of a round multiplied its total by 1.9 at the median, so a step of 2 puts the next mark within one page | `tiers` |
+| Coins | a mark reached pays 1 at the end of a beaten round, after interest on coins held (1 for every 3, at most 2). On the take-one page: deal the three again for 1, 2, then 3; leave all three for +1; bin a held piece for 2 | `coins` |
+| The page | reagents are placed in the page's circles in order and the page is then fired. One that finds nothing to act on at its turn is wasted and still spends its use. No number is shown before firing. The redraw is only before firing | `queue` |
+| The bank | a token placed in a circle like a reagent. Pays 2 times what the row holds, on a row of 3 or more | `bank`, `bankMin` |
+| The cascade | after each queued reagent the molecule reacts with itself until nothing is left to react. Step n counts its places n times and multiplies extra by 1 + 0.2 n. There is no free chain of reagents, no fork and no chain limit | `cascade` ('each', or 'end' for after the whole line) |
+| Zip | the only cascade a run starts with (`docs/CASCADES.md`, kind 1; the card `lactol` in `rules.js`): an OH whose carbon is 3 or 4 carbons from the carbon of a C=O closes a ring of 5 or 6, and the C=O becomes C-OH, which can zip onto the next C=O | `SELF` in `path.js` |
+| Snap | two C=C a few carbons apart close a ring between them. Turns up on the take-one page once the research supplier is open | `SELF` |
+| The number | Par for the round, times a factor for the kind of round (`KINDF`, `ASSAYF` by act), times a factor for the molecule measured inside runs (`MOLF`, taken whole), times any stake | generated block |
+
+Off while the cascade is on: the twist, the extinguisher (not offered), and the reagents Close, Aromatize and Snap (not offered: Snap happens by itself).
+
+### How the tables were made
+
+1. `simGo('ci', ['median'], a, b, base, { all: true, pickRound: 'random' })` on seeds 1 to 800, then `python docs/tools_factors.py ci 650000 657999 fa.json`: least squares on log(total / (Par times stake)) = round + kind + molecule. Kinds were 2.7 times apart in what they make and molecules 27 times.
+2. `python docs/tools_bake.py - fa.json`, then the standard measure without `dec`, then `python docs/tools_par.py d3 660000 667999 par.json`: round by round, Par is set where the worse of two misses is least, the pass rate in units of 12 points and the margin in units of 1.5 times. No round asks less than 1.15 times the one before. `python docs/tools_bake.py par.json -`.
+3. Coins make a run depend on its margins (marks pay coins, coins buy deals), so a measure can no longer be read exactly against another Par. The final measure below was played on the baked numbers.
+
+Par: 2,880, 4,940, 8,730, 10,100, 14,500, 32,600, 52,100, 121,000, 439,000 (153 times over nine rounds).
+
+### Pass rates, 500 runs for each player, seeds 1 to 500 (tag h4)
+
+| Round | novice | target | greedy | median | target | planner | target |
+|---|---|---|---|---|---|---|---|
+| 1 | 21% (500) | 90% | 71% (500) | 92% (500) | 98% | 97% (500) | 99% |
+| 2 | 11% (105) | 80% | 48% (356) | 87% (462) | 95% | 95% (487) | 99% |
+| 3, assay | 8% (12) | 55% | 52% (172) | 78% (402) | 85% | 90% (464) | 97% |
+| 4 | 0% (1) | 55% | 58% (90) | 84% (315) | 92% | 92% (416) | 98% |
+| 5 | none reached | 40% | 62% (52) | 79% (264) | 88% | 94% (382) | 95% |
+| 6, assay | none reached | 20% | 59% (32) | 68% (208) | 70% | 80% (358) | 90% |
+| 7 | none reached | 15% | 32% (19) | 74% (141) | 78% | 76% (286) | 90% |
+| 8 | none reached | 10% | 0% (6) | 64% (104) | 70% | 65% (217) | 85% |
+| 9, assay | none reached | 5% | none reached | 39% (67) | 50% | 36% (140) | 70% |
+
+Rounds beaten, mean: novice 0.2, greedy 1.5, median 4.0, planner 5.6. Wins: 0, 0, 5.2%, 10.2%.
+
+Median margin over the number: median player 4.15, 2.99, 2.16, 2.96, 2.45, 1.77, 2.09, 1.48, 0.81 against targets 3, 2.5, 1.6, 2, 1.8, 1.4, 1.5, 1.3, 1.2. Planner 7.20, 5.49, 3.86, 5.05, 4.50, 2.77, 2.45, 1.73, 0.71.
+
+**Unseen seeds** (median player, seeds 1,001 to 1,500, which no fit has read): pass 91, 84, 78, 85, 80, 72, 69, 61, 50 percent; margin 4.05, 2.87, 2.19, 3.35, 3.02, 1.82, 1.74, 1.39, 1.03.
+
+### The gates of section 1, measured, awaiting review
+
+| Gate | Seeds 1 to 500 | Unseen seeds | Met |
+|---|---|---|---|
+| 500 or more whole runs for each player, same seeds | 500 each | 500 more, median player | yes |
+| Median player within 12 points of the target in every round | misses -5.6, -8.0, -6.6, -8.2, -9.2, -2.2, -4.2, -5.6, -11.2; worst 11.2 (round 9) | worst 10.7 (round 2) | yes, with little room |
+| From round 4 on, passing or the next mark still undecided before the last page in 40% of rounds | 50.0% of 1,099 rounds (the pass itself in 27.0%). Planner 58.6%, greedy 40.2% | 52.0% | yes |
+| Median margin within 1.5 times of the target in every round | 1.38, 1.20, 1.35, 1.48, 1.36, 1.27, 1.39, 1.14, 1.50 (round 9 is under its target: 0.81 against 1.2) | 1.35, 1.15, 1.37, 1.68, 1.68, 1.30, 1.16, 1.07, 1.17: rounds 4 and 5 are over | on the fitted seeds yes, at the limit in rounds 4 and 9; on unseen seeds no in rounds 4 and 5 |
+| No kind of round more than 2 times easier than another | each kind's margin over the median margin of its round: scarce 0.98, loose 1.01, back 1.12, short 0.98, broad 0.97, each 1.05. Widest apart 1.16 | 1.22 | yes |
+| No molecule more than 3 times harder or easier than another in the same round | easiest over hardest by round, molecules with 16 plays or more among runs still alive: 2.3, 2.3, 3.2, 2.9, 2.4 (rounds 1 to 5; later rounds have too few plays). With 8 plays or more: 2.3, 4.5, 3.3, 5.1, 7.5, 8.5, 5.0, 4.2 | not computed | no. With 20 plays a molecule, chance alone gives about 2.7 |
+
+"Undecided" is counted as: the round ended at another level (missed, passed, mark 1, 2 or 3) than it stood at before its last page.
+
+Assays in round nine, every run counted: scarce 20% of 115, loose 14% of 135, short 15% of 132, each 14% of 118. They were 91, 72, 26 and 4 percent apart before the factors.
+
+Plain and carried rounds are almost never chosen by the median player and the planner (they choose what is easiest for what it pays, and the factors make every kind as easy), so those two kinds are not in the comparison.
+
+### The gates of section 2, measured, awaiting review
+
+| Measure | novice | greedy | median | planner |
+|---|---|---|---|---|
+| Turns (circles of a page as they are fired) | 33,668 | 34,365 | 32,724 | 37,311 |
+| Second option within 30% of the best, or better two turns on: the gate asks for half | 45.2% | 46.9% | 52.4% | 56.0% |
+| Circles where the bank could be placed on which it was the right move | 22.1% | 24.8% | 27.8% | 17.6% |
+| Reactions wasted a round | 4.25 | 0 | 0 | 0 |
+
+- The turn measure is the old one, taken at each circle as the page fires: the options are the reagents that would act there and the bank; the gain of each is what the page's own preview used to print.
+- "Right" for the bank is the planner's own reckoning: the page searched three deep with the bank first, against each reaction first, counting what an open row multiplies later.
+- **Depth of a page**: on 65.6% of 784 pages (median player, 40 runs, measured before the cascade was narrowed to zip and snap) the best ordered play of the page added over 20% more than the greedy one-at-a-time play. Under the free chain it was 64.0% of 1,165 pages. Not measured again on the final rules.
+- **Gap between players**, rounds beaten: novice 0.2, greedy 1.5, median 4.0, planner 5.6.
+- **A verb for a bad deal**: the redraw, before firing, for one use.
+- **The paired test of the bank** (the planner against the same planner with no bank, on builds from all four players' runs and from first runs, 5 plays each) was run only under the free chain: the planner with the bank had the higher median on 88.6% of 387 builds, median ratio 1.62. So the bank at 2 is right on about a quarter of the circles it could go in and still worth having on nine builds in ten. Not run again with the cascade.
+
+### Cascades
+
+Steps of cascade on a page, share of pages (all 500 runs of each player, every round):
+
+| Player | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 3 or more | 6 or more | longest |
+|---|---|---|---|---|---|---|---|---|---|---|
+| novice | 88.8% | 10.0% | 0.7% | 0.1% | 0.4% | | 0.0% | 0.4% | 0.0% | 6 |
+| greedy | 79.1% | 18.1% | 2.4% | 0.2% | 0.2% | | | 0.4% | 0.0% | 4 |
+| median | 60.8% | 24.5% | 11.8% | 1.1% | 1.8% | 0.0% | | 2.9% | 0.0% | 5 |
+| planner | 63.3% | 21.4% | 10.3% | 2.9% | 2.0% | 0.1% | | 5.0% | 0.0% | 5 |
+
+With seven reactions a molecule had with itself (an enol shift, a water loss beside a C=O, two OH closing a ring, an aldol, the zip, an OH and a Cl closing a ring, a ring to an arene, and snap), measured the same way before the set was narrowed: the planner had 3 or more on 8.0% of pages, 6 or more on 0.6%, longest 9. Those cards are still in `rules.js` and are not in `SELF`.
+
+**Which starting molecules can zip.** Every line of up to three of the six starting reagents was tried on each molecule, first page, zip only. Zip steps at best: `CC(O)CCC(=O)CCC(=O)CCC(=O)CCC(=O)C` 4 with any first move; `C=CCCC(=O)CCC(=O)CCC(=O)CCC(=O)C` 4 after hydrate (both added for the zip); `CC(=O)CCC(O)CC=C` 2; `C=CCC(=O)CCC(=O)CC=C` 2; the open sugar `OCC(O)C(O)C(O)C(O)C=O` 2; one step on `CC(O)CCC=C`, `C=CCC(O)CC(O)CC=C`, `CC(O)CC(=O)CCC(Cl)CCC=C`, `O=C1CCC(CC=C)CC1`, `CC(=O)CCC(O)C1=CC=CC=C1`, `OCC1OC(O)C(O)C(O)C1O`, `O=C1CCC(O)CC1C=C`, `CC(O)CC(=O)C1=CC=CC=C1`, `OCC1OC(O)CC1O`. None at all on eleven: `C=CCC(O)CC=C`, `C=CCC(O)C1=CC=CC=C1`, `C=CC1CCC(O)CC1`, the two cubanes, adamantanol, the two bridged rings, `OC1CCC(O)CC1`, `OC(C=C)C1=CC=CC=C1`, glycerol. Those eleven (`NOZIP` in `path.js`) are not dealt in round one.
+
+### Coins
+
+Median player: 1.12 coins a round from marks and 0.53 from interest; deals the three again 0.54 times a round, skips 0.07, bins nothing. It holds 2, 3, 3, 5, 7, 8, 9, 10, 10 by round. Planner: 1.51 and 1.03, deals again 0.89, skips 0.16, holds 11 from round 5. Coins pile up late: there is not enough to spend them on.
+
+### What is still wrong, found in this measure
+
+- **A player who does not line a page up in order cannot pass round one.** The novice passes round one 21% of the time and the greedy player 71%, against a target of 90% for the novice. Par follows the median player's margin, and the median player makes nine times what the novice makes.
+- **Cascades are short.** With zip and snap, a page has 3 or more steps 3 to 5% of the time for the players that look for them and never 6. Most of the starting molecules allow one zip step or none.
+- **The planner is far under its targets late** (76, 65, 36 percent in rounds 7 to 9).
+- **Round 9** is under its margin (0.81) because Par may not fall and climbs 3.6 times from round 8.
+- **Molecules** are still 3 to 8 times apart by round when every molecule with 8 plays is counted.
+- **The worth tables the players pick by are older still**; a self-reaction on offer is worth a guessed 1.6.
+- **Nothing on equipment was retuned for the cascade.** Pieces that pay on a row still work, because a cascade step carries the row on.
+
 ## What it is
 
 | Piece | Where | What it does |

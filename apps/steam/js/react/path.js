@@ -22,7 +22,9 @@ const FEEDS = ['C=CCC(O)CC=C', 'CC(O)CCC=C', 'CC(=O)CCC(O)CC=C', 'C=CCC(O)CC(O)C
   // cages and a sugar: a cube with two handles, adamantanol, a bridged ring, glucose
   'C=CC12C3C4C1C5C2C3C45CO', 'OC1C2CC3CC(C2)CC1C3', 'OC1CC2CC1C=C2', 'OCC1OC(O)C(O)C(O)C1O',
   'OC1CCC(O)CC1', 'O=C1CCC(O)CC1C=C', 'OC(C=C)C1=CC=CC=C1', 'CC(O)CC(=O)C1=CC=CC=C1', 'OCC12C3C4C1C5C2C3C45CO', 'OC1CC2CCC1C=C2',
-  'OCC(O)C(O)C(O)C(O)C=O', 'OCC1OC(O)CC1O', 'OCC(O)CO'];
+  'OCC(O)C(O)C(O)C(O)C=O', 'OCC1OC(O)CC1O', 'OCC(O)CO',
+  // chains with a C=O every three carbons, for the zip: one OH at the end runs down them
+  'C=CCCC(=O)CCC(=O)CCC(=O)CCC(=O)C', 'CC(O)CCC(=O)CCC(=O)CCC(=O)CCC(=O)C'];
 // Families. Every starting molecule belongs to one, and each family scores by a rule of its own, so the molecule a
 // round is played on decides how it is best played. The rule is paid on every reaction it fits.
 //   chain: keeps a row going.  ring: comes back round to a form it has had.  arene: one exact change at a time.
@@ -52,6 +54,10 @@ function kinsOf(m) {
   if (s.conj) out.push({ id: 'resonance', lv: Math.min(6, s.conj) });
   return out;
 }
+KIN_OF[FEEDS[23]] = 'chain'; KIN_OF[FEEDS[24]] = 'chain';
+// Molecules on which no line of three starting reagents sets off a zip (found by trying every line). They are not
+// dealt in round one, where the zip is the only cascade there is.
+const NOZIP = ['C=CCC(O)CC=C', 'C=CCC(O)C1=CC=CC=C1', 'C=CC1CCC(O)CC1', 'C=CC12C3C4C1C5C2C3C45CO', 'OC1C2CC3CC(C2)CC1C3', 'OC1CC2CC1C=C2', 'OC1CCC(O)CC1', 'OC(C=C)C1=CC=CC=C1', 'OCC12C3C4C1C5C2C3C45CO', 'OC1CC2CCC1C=C2', 'OCC(O)CO'];
 const kinOf = feed => (typeof feed === 'string' && KIN_OF[feed]) || 'chain';
 // keep: batch multiplier at delivery when the marked group is intact. steps: reactions allowed in one order.
 const DIAL = { keep: 3, steps: 3 };
@@ -86,7 +92,9 @@ RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // What a molecule does to itself once it has been set off, with no reagent held: opened by how deep the suppliers go.
 // With the cascade these happen by themselves. A run starts with the ones of tier 0; the others turn up on the
 // take-one page once the supplier of their tier is open, and are active for the rest of the run once taken.
-const SELF = [{ id: 'taut', tier: 0 }, { id: 'enone', tier: 0 }, { id: 'cyclize', tier: 0 }, { id: 'aldol', tier: 1 }, { id: 'lactol', tier: 1 }, { id: 'ether', tier: 1 }, { id: 'aromatize', tier: 2 }, { id: 'snap', tier: 2 }];
+// docs/CASCADES.md: zip (the card lactol) is the first and only cascade a new player has. snap comes with the
+// research supplier. The other kinds (fold, run, weld, link) are not built.
+const SELF = [{ id: 'lactol', tier: 0 }, { id: 'snap', tier: 2 }];
 const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 // The cascade. step: what each step multiplies extra by, times its number in the cascade (step 3 multiplies by 1 + 3 step),
 // and the places of step n count n times. most: a page stops cascading after this many steps, so that it cannot stall.
@@ -719,8 +727,8 @@ const assayOf = (run, round) => { const r = round || run.round; return run.assay
 function runBriefs(run, rnd) {
   const R = rnd || rand, mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const open = Object.keys(KIN).filter(k => KIN[k].tier <= (run.tier || 0)), draw = () => { let t = 0; open.forEach(k => { t += KIN[k].odds; }); let v = R() * t, pick = 'chain'; for (const k of open) { v -= KIN[k].odds; if (v < 0) { pick = k; break; } } return pick; };
-  const feeds = []; for (let guard = 0; feeds.length < 3 && guard < 80; guard++) { const k = draw(), of = FEEDS.filter(f => KIN_OF[f] === k && !feeds.includes(f)); if (of.length && (open.length < 3 || !feeds.some(f => KIN_OF[f] === k))) feeds.push(of[Math.floor(R() * of.length)]); }
-  while (feeds.length < 3) feeds.push(FEEDS[feeds.length]);
+  const feeds = []; for (let guard = 0; feeds.length < 3 && guard < 80; guard++) { const k = draw(), of = FEEDS.filter(f => KIN_OF[f] === k && !feeds.includes(f) && !(RULE.cascade && run.round === 1 && NOZIP.includes(f))); if (of.length && (open.length < 3 || !feeds.some(f => KIN_OF[f] === k))) feeds.push(of[Math.floor(R() * of.length)]); }
+  while (feeds.length < 3) feeds.push(FEEDS.filter(f => !feeds.includes(f) && !NOZIP.includes(f))[feeds.length]);
   const as = assayOf(run);
   if (as) return [{ brief: as, pays: 2, assay: true, model: salt(modelOf(feeds[0]), R), kin: kinOf(feeds[0]), src: feeds[0], quota: runQuota(run, feeds[0], as) }];
   const sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
@@ -772,18 +780,18 @@ function runTerm(run, id) {
 // The number to beat: Par for the round, times the square root of the molecule's size factor, times any stake the
 // player chose (the pact, the idol, the hourglass, the terms of the run). It never reads the rest of the build, so a
 // better build beats it by more. The method is in docs/BALANCE.md and the measurement in docs/RIG.md.
-// GENERATED by the measuring rig (docs/RIG.md, docs/tools_sim.js) on 2026-11-10 from the rules at commit 35995b9.
-// Do not edit by hand: measure again. Factors fitted on 800 runs of the median player choosing rounds at random (seeds 1 to 800). Par fitted round by round to the pass rate and the margin together on 1,000 runs of the median player (seeds 1 to 1,000), a second time, because coins make a run depend on its margins.
+// GENERATED by the measuring rig (docs/RIG.md, docs/tools_sim.js) on 2026-11-11 from the rules at commit 6be9e55.
+// Do not edit by hand: measure again. Factors fitted on 800 runs of the median player choosing rounds at random (seeds 1 to 800), zip and snap only. Par fitted round by round to the pass rate and the margin together on 500 runs of the median player (seeds 1 to 500); no round asks less than 1.15 times the one before.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
-const PAR = { rounds: [14300, 24700, 42200, 60000, 101000, 184000, 375000, 1090000, 1730000], after: 1.6, last: 1 };
+const PAR = { rounds: [2880, 4940, 8730, 10100, 14500, 32600, 52100, 121000, 439000], after: 3.63, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
 // multiplied by all of them, so every kind of round and every molecule is beaten by a like margin.
-const MOLF = {"C=CC12C3C4C1C5C2C3C45CO":0.758,"C=CC1CCC(O)CC1":0.802,"C=CCC(=O)CCC(=O)CC=C":2.448,"C=CCC(O)C1=CC=CC=C1":1.288,"C=CCC(O)CC(O)CC=C":2.334,"C=CCC(O)CC=C":1.218,"CC(=O)CCC(O)C1=CC=CC=C1":1.333,"CC(=O)CCC(O)CC=C":1.41,"CC(O)CC(=O)C1=CC=CC=C1":1.421,"CC(O)CC(=O)CCC(Cl)CCC=C":1.499,"CC(O)CCC=C":0.717,"O=C1CCC(CC=C)CC1":1.025,"O=C1CCC(O)CC1C=C":1.56,"OC(C=C)C1=CC=CC=C1":0.947,"OC1C2CC3CC(C2)CC1C3":0.169,"OC1CC2CC1C=C2":0.757,"OC1CC2CCC1C=C2":0.739,"OC1CCC(O)CC1":0.893,"OCC(O)C(O)C(O)C(O)C=O":0.974,"OCC(O)CO":0.683,"OCC12C3C4C1C5C2C3C45CO":0.701,"OCC1OC(O)C(O)C(O)C1O":1.356,"OCC1OC(O)CC1O":0.79};
-const KINDF = {"plain":1.0,"carry":1.188,"broad":1.409,"loose":1.29,"each":1.222,"back":1.625,"scarce":0.436,"short":0.639};
-const ASSAYF = {"scarce":[0.486,0.478,0.453],"short":[0.767,0.82,0.731],"each":[1.596,1.771,1.679],"loose":[1.681,1.442,1.796]};
+const MOLF = {"C=CC12C3C4C1C5C2C3C45CO":0.699,"C=CC1CCC(O)CC1":0.317,"C=CCC(=O)CCC(=O)CC=C":0.788,"C=CCC(O)C1=CC=CC=C1":1.174,"C=CCC(O)CC(O)CC=C":1.051,"C=CCC(O)CC=C":1.555,"C=CCCC(=O)CCC(=O)CCC(=O)CCC(=O)C":2.45,"CC(=O)CCC(O)C1=CC=CC=C1":0.934,"CC(=O)CCC(O)CC=C":0.739,"CC(O)CC(=O)C1=CC=CC=C1":1.095,"CC(O)CC(=O)CCC(Cl)CCC=C":1.124,"CC(O)CCC(=O)CCC(=O)CCC(=O)CCC(=O)C":3.126,"CC(O)CCC=C":0.743,"O=C1CCC(CC=C)CC1":0.426,"O=C1CCC(O)CC1C=C":2.534,"OC(C=C)C1=CC=CC=C1":0.42,"OC1C2CC3CC(C2)CC1C3":0.238,"OC1CC2CC1C=C2":0.566,"OC1CC2CCC1C=C2":0.53,"OC1CCC(O)CC1":0.727,"OCC(O)C(O)C(O)C(O)C=O":3.239,"OCC(O)CO":2.585,"OCC12C3C4C1C5C2C3C45CO":0.658,"OCC1OC(O)C(O)C(O)C1O":6.366,"OCC1OC(O)CC1O":0.747};
+const KINDF = {"plain":1.0,"carry":0.923,"broad":1.607,"loose":0.97,"each":1.674,"back":1.524,"scarce":0.917,"short":0.619};
+const ASSAYF = {"scarce":[0.913,1.06,0.931],"short":[0.621,0.524,0.581],"each":[1.703,1.785,1.706],"loose":[1.035,1.009,1.083]};
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };
 // END GENERATED
 // A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more

@@ -298,7 +298,7 @@ function start(app) {
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: EDGE, z: 7.6 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -9.6 + i * 4.5, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
-  if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.7; }
+  if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   if (KITV === 'back') { C0.x += 0.3; C0.z += 0.3; }
   let SLOTW = 10, LABF = 50;
@@ -669,14 +669,14 @@ function start(app) {
   const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * 2.5)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
   function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * 2.5, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
-  function doFire() { if (!lining()) return; flush(); setHover(-1); st.firing = true; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
+  function doFire() { if (!lining()) return; flush(); setHover(-1); st.firing = true; st.fireN = 0; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; fireNext(); }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
   function fireNext() {
     // the cascade: whatever the molecule can do to itself happens first, one step at a time, each quicker than the last
-    { const c = g.over ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; if (n >= 2) callout('cascade ' + n, 'times ' + fmtB(1 + P.CASC.step * n), REDINK); c.model.settle(FOLDS[c.id] ? 2200 : 160); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
+    { const c = g.over || !(st.fireN > 0 || !g.queue.length) ? null : P.cascadeDue(g); if (c) { st.chainN = (st.chainN || 0) + 1; const n = (g.casc || 0) + 1; if (n >= 2) callout((c.id === 'lactol' ? 'zip ' : c.id === 'snap' ? 'snap ' : 'cascade ') + n, 'times ' + fmtB(1 + P.CASC.step * n), REDINK); c.model.settle(FOLDS[c.id] ? 2200 : 160); return react(c, c.id, false, { x: C0.x, z: C0.z - 2 }, true); } }
     const h = P.queueHead(g), tok = st.tok;
     if (!h) { st.firing = false; if (g.over) return; if (P.charged(g)) { st.mode = 'fuse'; st.fuseT = performance.now(); dirty = true; setTimeout(() => { if (st.tok === tok && st.mode === 'fuse') setOff(); }, 280); return; } st.mode = 'play'; return nextPage(); }
-    P.queueShift(g);
+    P.queueShift(g); st.fireN = (st.fireN || 0) + 1;
     if (h.kind === 'take' || h.kind === 'finish') return react(h.o, h.id, h.kind === 'finish', { x: STEP.x + g.pageSteps * 2.5, z: STEP.z }, false);
     if (h.kind === 'bank') bankNow(); else { P.waste(g, h.id); sfx.bad(); st.shake = Math.max(st.shake, 0.3); }
     st.mode = 'move'; dirty = true; setTimeout(() => { if (tok === st.tok) fireNext(); }, 160);
@@ -1048,7 +1048,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (marks.length) { x.strokeStyle = INK; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(lx + 1, y0 + 14); x.lineTo(lx - 1, y0 - dy * (marks.length - 1) - 16); x.stroke(); }
       marks.forEach((m, k) => { const y = y0 - dy * k, on = k < hitN; x.strokeStyle = on ? GREEN : INK; x.fillStyle = on ? GREEN : '#fbf8ee'; x.lineWidth = 4; x.beginPath(); x.ellipse(lx, y, 9, 8, 0.2, 0, 6.3); x.fill(); x.stroke(); x.beginPath(); x.moveTo(lx + 9, y); x.lineTo(lx + 24, y - 1); x.stroke();
         hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(fmt(m), lx + 32, y + 10); if (P.RULE.coins) rcoin(x, lx + 32 + x.measureText(fmt(m)).width + 26, y - 1, 11, on ? 1 : 0.3); });
-      if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest : 0; purse(x, lx + 262, y0 + 4, run.coins || 0, 18, e); } }
+      if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest : 0; purse(x, lx + 14, y0 - dy * marks.length - 22, run.coins || 0, 17, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
     if (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') && P.RULE.hand) {
@@ -1109,7 +1109,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
-    if (g && P.RULE.cascade && g.self && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'OH+C=O', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'C=C+C=C' }, c = px({ x: EDGE + 0.2, z: 13.2 }); let dx = 0; hand(x, 26); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
+    if (g && P.RULE.cascade && g.self && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'zip', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'snap' }, c = px({ x: EDGE + 0.2, z: 13.2 }); let dx = 0; hand(x, 26); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
       g.self.forEach(id => { const t = TOK[id] || id, on = st.selfK.on.includes(id); x.fillStyle = on ? rgb(colOf(id)) : FAINT; x.fillText(t, c[0] + dx, c[1]); dx += x.measureText(t).width + 26; }); }
     // the family of the round's molecule and its rule, above the round
     if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = inkLine(x, K.tok, c[0] + dx, c[1] + 30, 24, PENCIL, 'left'); dx += Math.max(w1, w2) + 34; }); }
