@@ -4,6 +4,151 @@ Built 2026-11-10. The newest measure is the first section below. This is the rig
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11, fourth: the bare game
+
+Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. This is layers 1 and 4 of `ORDER.md`: no helper, no creature. The section after this one is the game with pieces and is the "before" of the comparisons here.
+
+### What the bare game is for the rig
+
+| Thing | Setting | How |
+|---|---|---|
+| Helpers and creatures | none offered, none held | `RULE.bare`. Checked: no round of any player in these measures logs a piece |
+| Choosing the molecule | on: two molecules, the harder pays a coin, the pair can be drawn again for coins | `RULE.choose` |
+| Carbon dioxide from oxidize | off. The code turns it on for every run, but only so that a jar can fill, and there is no jar here | `rule: { co2: false }` |
+| Suppliers | the first one only, as on a first run | `tier: 0`. The take-one page then offers extend, a stronger reagent or one more use. Every earlier measure had all six suppliers open |
+| Coins, marks, the bank, the redraw | as they are | |
+
+A measure is `simGo(tag, players, from, to, base, { all: true, tier: 0, rule: { bare: true, co2: false } })`.
+
+Why the first supplier only: with all six open the pick before round one already decides the round. The median player made 10,600 to 13,600 in round one after taking a kind of cascade it could not use, 30,000 after taking add phenol or extend and 76,500 after taking chain on (400 runs, tag f1). That is layer 5, and it hid the bare game.
+
+### The gap between the novice and the median player
+
+Before anything was fitted. Totals with the molecule and assay factors divided out, every run, missed or not. "Spread" is the 90th run over the 10th.
+
+| Round | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| Median player's total over the novice's, as the game stood (tag b1, all suppliers) | 2.9 | 5.5 | 11.7 | 13.1 | 14.6 | 13.1 | 24.1 | 12.9 | 12.2 |
+| The same on the final rules (tag b3) | 3.4 | 3.9 | 5.4 | 6.1 | 17.6 | 17.7 | 17.8 | 11.3 | 13.2 |
+| Spread of the novice's own total, final rules | 9 | 9 | 8 | 9 | 15 | 18 | 19 | 18 | 21 |
+| Spread of the median player's own total, final rules | 8 | 9 | 7 | 9 | 16 | 11 | 8 | 9 | 6 |
+
+**One number cannot serve both.** A margin is the median player's median total over the number. With the two players 3.4 times apart and each spread 8 to 9 times, the number that nine novices in ten pass in round one gives the median player a margin of 9.5. The number that gives the median player a margin of 4 passes 58 novices in 100 in round one, 51 in round two and 34 in round three (every novice run counted). At a margin of 2 it is 26, 22 and 10.
+
+The targets for the median player alone also pull apart: with its total spread 8 times, a margin of 2.5 goes with a pass rate near 85 in 100, not 95.
+
+### What was changed, and why
+
+| Thing | Before | Now | Why |
+|---|---|---|---|
+| When dehydrate and grow join the deal | rounds two and three | rounds three and five (`RUNG.from`) | Each one multiplied what a reader makes and added nothing for a player who places at random. Round two with dehydrate and 14 heavy atoms had a gap of 5.5; without dehydrate and with 12.5 it is 3.3 (tags b1 and e1). The round grow joined, the median player's total tripled (20,100 to 79,100 from round four to five on the final rules) and the novice's did not move. Grow in round four put the gap at 14.1 there (tag b2); in round five it is 6.1 there |
+| Heavy atoms a round asks for | 11.5, 14, 16.5, 19, 21.5, 24, 27, 31, 35 | 11.5, 12.5, 14, 16.5, 19.5, 23, 27, 31, 35 (`FEEDSIZE`) | A longer molecule is a longer chain for a reader and nothing for the novice |
+| Molecule and assay factors | fitted with pieces held and all suppliers open | fitted again on 480 runs of the median player choosing at random (tag f3, `tools_factors.py`) | The molecules were 5.6 to 20 times apart in a round under the old factors |
+| Par | 675, 958, 2,490, 6,480, 16,800, 43,600, 92,600, 130,000, 225,000 | 1,230, 2,790, 4,620, 4,960, 18,800, 55,300, 58,200, 61,300, 105,000 | below |
+
+Nothing was changed in what a ring pays, in the rule for a ring that only closes again, or on the page. `BALANCE.md` was not changed.
+
+**How Par was fitted** (`tools_par_bare.py`, on tag b3, once):
+
+- Round one: where the worst of three misses is least. The novice's pass rate under nine in ten, in units of 12 points and counted double. The median player's margin over 4, in units of a factor of 1.5. The median player's pass rate off its target, in units of 12 points.
+- Rounds two to five: the median player's median total, among its runs still alive, over 4. This is the top of the band that was asked for. The novice's targets in `BALANCE.md` (80, 55, 55, 40) cannot be met with it.
+- Rounds six to nine, which no novice reaches: the median player's pass rate and margin against their targets. No round asks less than 1.05 times the one before (it was 1.15: with the first supplier only the median player makes no more in round eight than in round six).
+
+Steps from round to round: 2.26, 1.66, 1.08, 3.80, 2.94, 1.05, 1.05, 1.71. The climb is not even. Round five is where grow joins. Round six is where the fit changes from a margin of 4 to the old targets.
+
+### Pass rates
+
+500 runs for each player, seeds 1 to 500, tag b3, read against the Par fitted on them. Unseen: 300 runs for each player, seeds 1,001 to 1,300, tag u3, played on the baked numbers.
+
+| Round | novice | unseen | target | greedy | unseen | median | unseen | target | planner | unseen | target |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 81% (500) | 85% (300) | 90% | 98% (500) | 98% (300) | 100% (500) | 100% (300) | 98% | 100% (500) | 100% (300) | 99% |
+| 2 | 49% (405) | 49% (256) | 80% | 84% (491) | 86% (295) | 95% (499) | 93% (300) | 95% | 96% (499) | 95% (300) | 99% |
+| 3, assay | 37% (198) | 38% (125) | 55% | 81% (410) | 83% (253) | 100% (476) | 99% (278) | 85% | 99% (479) | 98% (284) | 97% |
+| 4 | 23% (73) | 35% (48) | 55% | 74% (333) | 77% (211) | 96% (474) | 98% (276) | 92% | 98% (475) | 98% (277) | 98% |
+| 5 | 6% (17) | 6% (17) | 40% | 48% (246) | 43% (162) | 92% (457) | 89% (270) | 88% | 88% (466) | 87% (272) | 95% |
+| 6, assay | 0% (1) | 0% (1) | 20% | 11% (118) | 13% (69) | 68% (420) | 66% (239) | 70% | 67% (412) | 64% (236) | 90% |
+| 7 | none reached | none reached | 15% | 15% (13) | 11% (9) | 73% (285) | 73% (158) | 78% | 75% (276) | 76% (152) | 90% |
+| 8 | none reached | none reached | 10% | 50% (2) | 0% (1) | 70% (207) | 81% (116) | 70% | 78% (208) | 74% (116) | 85% |
+| 9, assay | none reached | none reached | 5% | 0% (1) | none reached | 56% (144) | 48% (94) | 50% | 51% (162) | 56% (86) | 70% |
+
+Rounds beaten, mean: novice 1.4 (unseen 1.5), greedy 3.2 (3.3), median 6.1 (5.9), planner 6.1 (5.9). Wins of all nine: 0, 0, 16.0% (15.0%), 16.4% (16.0%). With nothing but the six reactions and extend the planner has nothing to plan with and plays as the median player does.
+
+Median margin over the number, median player: 7.12, 3.92, 4.00, 4.05, 4.08, 1.50, 1.54, 1.38, 1.04. Unseen: 6.68, 3.76, 3.93, 3.97, 3.29, 1.65, 1.73, 1.84, 1.00. They were 10.3, 19.0, 15.5, 8.7, 5.2, 3.2, 2.2, 1.5, 1.0 on the bare game as it stood (tag b1). The targets in `BALANCE.md` are 3, 2.5, 1.6, 2, 1.8, 1.4, 1.5, 1.3, 1.2.
+
+**Tier one** (`LOOP.md`: a first run is rounds one to three). A run that beats all three: novice 15 in 100 (unseen 16), greedy 66 (70), median 95 (92), planner 95 (92). What other numbers for rounds one to three would give, on the same runs:
+
+| Margins asked of the median player in rounds 1, 2, 3 | Par | Novice wins tier one | Novice passes round one | Greedy wins | Median wins |
+|---|---|---|---|---|---|
+| 9.5, 8, 6 | 911, 1,395, 3,058 | 42% | 89% | 93% | 98% |
+| 7, 6, 6 | 1,236, 1,856, 3,072 | 32% | 81% | 89% | 97% |
+| 7, 5, 5 | 1,236, 2,228, 3,687 | 23% | 81% | 80% | 96% |
+| 7, 4, 4 (baked) | 1,230, 2,790, 4,620 | 15% | 81% | 66% | 95% |
+| 4, 4, 4 | 2,163, 2,790, 4,570 | 11% | 58% | 60% | 90% |
+| 4, 3, 3 | 2,163, 3,721, 5,975 | 6% | 58% | 40% | 84% |
+| 3, 2.5, 2.5 | 2,885, 4,497, 6,574 | 3% | 46% | 30% | 70% |
+
+### The gates of section 1, measured, awaiting review
+
+| Gate | Seeds 1 to 500 | Unseen seeds | Met |
+|---|---|---|---|
+| 500 or more whole runs for each player, same seeds | 500 each | 300 each | yes |
+| Median player within 12 points of the target in every round | off +2, 0, +15, +4, +4, -2, -5, 0, +6 | +2, -2, +14, +6, +1, -4, -5, +11, -2 | no: round three, an assay, is passed 99 to 100 times in 100 against 85 |
+| From round 4 on, passing or the next mark still undecided before the last page in 40% of rounds | 70.9% of 1,987 rounds (the pass itself in 36.1%). Planner 71.5%, greedy 42.1%, novice 18.7% of 91 | 70.9% of 1,153 (36.6%) | yes |
+| Median margin within 1.5 times of the target in every round | 2.4, 1.6, 2.5, 2.0, 2.3, 1.07, 1.03, 1.06, 1.15 times off | 2.2, 1.5, 2.5, 2.0, 1.8, 1.18, 1.15, 1.42, 1.2 | no in rounds one to five against the targets of `BALANCE.md`. Rounds two to five sit at 3.3 to 4.1, the top of the band of 2 to 4 that was asked for after the review. Round one is at 6.7 to 7.1 |
+| No kind of round more than 2 times easier than another | the special kinds are no longer offered: every round is plain but the assays (confirmed: rounds 1, 2, 4, 5, 7, 8 log only plain). Assays, margin by kind: round three 3.7 to 4.5, round six 1.27 to 1.72, round nine 1.02 to 1.23. Widest apart 1.35 | 1.17, 1.68, 1.17 | yes |
+| No molecule more than 3 times harder or easier than another in the same round | easiest over hardest, molecules with 8 plays or more: 4.5, 2.8, 3.6, 7.9, 3.8, 2.4, 1.4, 1.8, 1.3 | 3.3, 2.4, 2.6, 7.5, 4.0, 4.0, 2.1, 1.9, 1.7 | no: round four is 7.5 to 7.9, rounds one, three, five and six pass 3 on one set of seeds or the other |
+
+Choosing the molecule, median player: a harder one was on offer in 2,160 pairs and taken in 30% of them, always for one coin (two coins were on offer and taken never). The pair was drawn again 0 times in 3,462. Coins held at the start of rounds one to nine: 0, 2.8, 5.7, 7.0, 6.9, 7.0, 6.9, 6.7, 6.3. The novice takes the harder one 47% of the time (at random).
+
+### Steps of cascade on a page
+
+Every page of every round, tag b3. With pieces (the section below) the median player had 6 or more on 24% of pages and 10 or more on 2.0%.
+
+| Player | 1 or more | 3 or more | 6 or more | 10 or more | longest | mean |
+|---|---|---|---|---|---|---|
+| novice | 54.0% | 14.1% | 0.8% | 0 | 9 | 1.09 |
+| greedy | 65.3% | 24.2% | 2.8% | 0.01% | 10 | 1.59 |
+| median | 89.6% | 55.9% | 12.5% | 0 | 9 | 3.05 |
+| planner | 81.3% | 43.6% | 9.5% | 0.04% | 10 | 2.51 |
+
+By round the median player's pages run 2.2, 2.3, 2.6, 2.7, 3.0, 2.9, 3.3, 3.8 and 4.9 steps.
+
+### Layer 1: the turn, measured again
+
+80 runs for each player with every turn weighed (tag d3, `tools_round.py`). An option is taken as the rig takes it: at each circle of the line as it fires, each reagent of the hand that would act on the molecule as it then stands, and the bank where it can be placed. Its worth is what it adds at that circle.
+
+| Measure | novice | greedy | median | planner | Gate |
+|---|---|---|---|---|---|
+| Turns | 5,710 | 5,535 | 5,524 | 5,581 | |
+| Options a turn | 2.14 | 2.02 | 2.06 | 2.15 | |
+| One option only | 30.7% | 35.2% | 35.9% | 32.5% | |
+| Second option within 30% of the best | 20.5% | 19.3% | 18.1% | 19.3% | |
+| or better two turns on | 16.5% | 14.4% | 17.2% | 18.4% | |
+| Either | 37.0% | 33.7% | 35.3% | 37.8% | at least 50%: not met |
+| Pages where the best ordered play adds over 20% more than the greedy one | 51.9% of 1,902 | 46.7% | 47.5% of 1,867 | 51.9% | |
+| Circles where the bank could go on which it was right | 52.9% | 60.0% | 67.8% | 51.8% | |
+| of those, the bank was the only move | 34.7% | 40.8% | 52.0% | 38.2% | |
+| Redraws a round | 0.27 | 0.06 | 0.51 | 0.93 | |
+
+- The second option was worth taking on 52.4% of the median player's turns in the first measure of the day and is 35.3% here. The bare hand is four to six reagents of which two act at a circle on average; a third of turns have one thing that acts.
+- The best ordered play beat the greedy one by over 20% on 60 to 66% of pages before; it is 47.5% here.
+- **The redraw.** Used in 39% of the median player's rounds. Same seeds with the redraw taken away (200 runs, tag r3): rounds beaten 6.52 without it against 6.25 with it, which is inside the noise of 200 runs. In the 598 rounds where both runs still held the same molecule and reagents the redraw was used in 42; there the round made 1.14 times what it made without (more in 45%, less in 36%). It is a verb for a bad deal that does not measurably help this player.
+- **Breaking a row on purpose** was not run: the paired test (`simBreak`) builds its rounds from runs with pieces and takes no rules, so it does not play the bare game.
+
+### What is still wrong, found in this measure
+
+- **The novice and the reader are still 3.4 to 6 times apart in rounds one to four and 17 times from round five.** No number serves both. The baked one gives the median player 4 and lets 15 novices in 100 win tier one. The simulated novice places at random for ever; a person learns, so this is a floor.
+- **Round one is still passed by 7 times** by the median player, because it is held where eight novices in ten pass.
+- **Grow is the wall.** The round it joins the deal, a reader's total triples and a random player's does not move. Moving it later moved the wall from round four to round five; it did not take it down.
+- **Round three, the first assay, is no test**: the median player passes it 99 times in 100.
+- **Rounds six to nine do not climb in the bare game.** With the first supplier only the median player makes 83,000 to 107,000 in each of rounds six to nine. `LOOP.md` now fits rounds four to nine to players who hold helpers and creatures, so the numbers baked here for those rounds are a floor to be fitted again with them.
+- **Molecules in a round are up to 7.9 times apart** (round four) after the factors.
+- **The second option is worth taking on 35% of turns**, under the gate of half, and a third of turns have one thing that acts.
+- **The redraw does not measurably help** and the pair of molecules is never drawn again: coins pile up to 7 and are not spent.
+- **With all six suppliers open these numbers are far too low**: the first pick alone is worth 3 to 7 times. Not measured on the baked numbers.
+- The players' easiest-pair reading (`easeOf`) costs most of a run once the pool passes ten reagents: a run of the greedy player with all suppliers open takes 10 seconds.
+
 ## The measure of 2026-11-11, third: new steps pay, forgiving first rounds, five pieces used on the molecule
 
 Measured on the rules as committed with this section. Measured, awaiting review: nothing here says a section passes. The section after this one is the "before" of every comparison here.

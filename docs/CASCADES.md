@@ -122,7 +122,7 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 ### Molecules
 
-73 molecules replace the 25. Every one can zip with the six starting reagents. As dealt most zip one or two steps. The rest is behind gaps: an OH or a C=C where a C=O should be (the starting reagents fix those), or a stretch of six or eight carbons with more C=O beyond it, which takes a chunk, a bridge, a snap or a weld to reach. A few long chains of C=C or of OH zip six to eight steps once two reagents are fired in the right order. Rounds ask for 11.5, 14, 16.5, 19, 21.5, 24, 27, 31 and 35 heavy atoms and deal from the molecules within 3.5 of that. The size limit is 56.
+73 molecules replace the 25. Every one can zip with the six starting reagents. As dealt most zip one or two steps. The rest is behind gaps: an OH or a C=C where a C=O should be (the starting reagents fix those), or a stretch of six or eight carbons with more C=O beyond it, which takes a chunk, a bridge, a snap or a weld to reach. A few long chains of C=C or of OH zip six to eight steps once two reagents are fired in the right order. Rounds ask for 11.5, 12.5, 14, 16.5, 19.5, 23, 27, 31 and 35 heavy atoms (they asked for 11.5, 14, 16.5, 19, 21.5, 24, 27, 31 and 35 until the fourth measure) and deal from the molecules within 3.5 of that. The size limit is 56.
 
 ### How to design a molecule or a reagent now
 
@@ -132,7 +132,7 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 - **A ring that only closes again pays a quarter of the climb.** The rule is written once, under "Decided" above (the pay rule for a ring).
 - **A zip travels along the chain.** The OH the last step left goes first, and an OH takes the nearest C=O.
-- **Rounds one to three are dealt gently**: four reagents, then five, then six, on small molecules most lines of three can set off.
+- **The first rounds are dealt gently**: rounds one and two from four reagents, dehydrate joins in round three and grow in round five (changed in the fourth measure, `RIG.md`: it was rounds two and three), on small molecules most lines of three can set off.
 - **Pieces are used on the molecule**, and one that changes it sets the zip off at once. See `PIECES.md`.
 - On the page a zip closes a real ring, the rest of the chain is carried along, and a chain too long for the page turns back in a smooth U with every bond its own length.
 
