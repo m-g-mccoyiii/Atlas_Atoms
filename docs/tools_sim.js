@@ -225,7 +225,7 @@
       if (opts.dec) row.dec = true;
       if (P.quotaParts) { const k = P.quotaParts(run, run.src); row.par = k.par; row.mult = k.mult; }
       const total = playRound(g, run, pol, rnd, row);
-      row.total = total; row.pass = total >= run.quota ? 1 : 0; row.live = alive ? 1 : 0;
+      row.total = total; row.pass = total >= run.quota ? 1 : 0; row.tier = P.marksHit(total, run.quota); row.live = alive ? 1 : 0;
       out.rounds.push(row);
       if (row.pass && alive) { out.beaten++; run.beaten++; }
       if (!row.pass) { alive = false; if (!opts.all) break; }

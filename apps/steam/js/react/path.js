@@ -68,7 +68,8 @@ const DIAL = { keep: 3, steps: 3 };
 //   redraw: once a page the hand can be dealt again for one use of the fullest reagent in it.
 //   bank: closing the open row on purpose pays this many times what it holds. It takes one of the page's reactions,
 //         or ends a chain that is stopped at a fork. bankMin: the shortest row that can be banked.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2 };
+//   tiers: marks above the number to beat, each this many times the number. The number stays the pass line.
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8] };
 const heavy = m => { let n = 0; for (let i = 0; i < m.atoms.length; i++) if (m.atoms[i].el !== 'H') n++; return n; };
 RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // reagents whose reaction makes a group leave the molecule
@@ -707,10 +708,12 @@ const molSize = key => Math.sqrt(Math.min(MOLD.hi, Math.max(MOLD.lo, MOLF[key] |
 const stakeOf = run => (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1);
 // feed is the molecule's SMILES. A molecule carried on from the last round counts as the one it started as.
 const quotaParts = (run, feed) => ({ par: parOf(run.round), mult: molSize(typeof feed === 'string' ? feed : run.src) * stakeOf(run) });
-function runQuota(run, feed) {
-  const k = quotaParts(run, feed), q = k.par * k.mult, mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1));
-  return Math.max(50, Math.round(q / mag) * mag);
-}
+const nice = q => { const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(10, q))) - 1)); return Math.max(50, Math.round(q / mag) * mag); };
+function runQuota(run, feed) { const k = quotaParts(run, feed); return nice(k.par * k.mult); }
+// The marks above the number to beat, lowest first, and how many of them a total has reached. A total under the
+// number has reached none.
+const runMarks = quota => (RULE.tiers || []).map(t => nice(quota * t));
+const marksHit = (total, quota) => (total >= quota ? runMarks(quota).filter(m => total >= m).length : 0);
 function runPicks(run, rnd) {
   const R = rnd || rand, any = a => a[Math.floor(R() * a.length)], st = stock(run.tier), out = [];
   const newR = st.reagents.concat(run.extra || []).filter(id => !run.rack.includes(id) && !Object.keys(PAIR).some(k => PAIR[k] === id)), newG = run.gear.length < RUNG.slots && !run.noGear ? st.gear.filter(id => !run.gear.includes(id)) : [];
@@ -740,6 +743,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { RULE, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, spendBy, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, parOf, quotaParts, runMarks, marksHit, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -6,6 +6,11 @@ PLAYERS = ['novice', 'greedy', 'median', 'planner']
 TARGET = {'median': [98, 95, 85, 92, 88, 70, 78, 70, 50], 'novice': [90, 80, 55, 55, 40, 20, 15, 10, 5], 'planner': [99, 99, 97, 98, 95, 90, 90, 85, 70]}
 MARGIN = [3, 2.5, 1.6, 2, 1.8, 1.4, 1.5, 1.3, 1.2]
 BEAT = {'novice': 3, 'median': 6, 'planner': 9}
+# the marks above the number to beat, as multiples of it (path.js RULE.tiers)
+TIERS = [2, 4, 8]
+def level(x, num):
+    """0 missed, 1 passed, 2 and up one for each mark reached."""
+    return 0 if x < num else 1 + sum(1 for t in TIERS if x >= num * t)
 
 def load(tag, lo, hi):
     rows = []; seen = set()
@@ -50,11 +55,18 @@ def walk(by, player, number=None, seeds=None):
 def stats(by, player, number=None, seeds=None):
     reached, beaten = walk(by, player, number, seeds)
     out = {'n': len(beaten), 'pass': [], 'reach': [], 'margin': [], 'last': None}
-    over5 = 0; passed = 0; lastdec = 0; lastn = 0
+    over5 = 0; passed = 0; lastdec = 0; lastn = 0; und = 0; undn = 0; undpass = 0; out['marks'] = []
     for r in range(1, 10):
         a = reached[r]; out['reach'].append(len(a))
         out['pass'].append(100.0 * sum(1 for x in a if x[2]) / len(a) if a else float('nan'))
         out['margin'].append(med([x[0]['total'] / max(1, x[1]) for x in a]))
+        out['marks'].append([100.0 * sum(1 for x in a if x[0]['total'] >= x[1] * t) / max(1, len(a)) for t in TIERS])
+        for row, num, ok in a:
+            if r >= 4:
+                pg = row.get('pages') or []; b4 = pg[-2] if len(pg) >= 2 else 0
+                undn += 1
+                if level(row['total'], num) != level(b4, num): und += 1
+                if level(b4, num) == 0 and ok: undpass += 1
         for row, num, ok in a:
             if ok:
                 passed += 1
@@ -65,6 +77,7 @@ def stats(by, player, number=None, seeds=None):
                     if len(pg) < 2 or pg[-2] < num: lastdec += 1
     out['over5'] = 100.0 * over5 / max(1, passed); out['passed'] = passed
     out['lastdec'] = 100.0 * lastdec / max(1, lastn)
+    out['undecided'] = 100.0 * und / max(1, undn); out['undn'] = undn; out['undpass'] = 100.0 * undpass / max(1, undn)
     out['beaten'] = [q(beaten, p) for p in (0.1, 0.25, 0.5, 0.75, 0.9)]
     out['win'] = 100.0 * sum(1 for b in beaten if b >= 9) / max(1, len(beaten))
     out['mean'] = sum(beaten) / max(1, len(beaten))
@@ -113,6 +126,10 @@ if __name__ == '__main__':
     rows = load(tag, lo, hi); by = runs_of(rows)
     print('rows', len(rows), 'runs', {p: sum(1 for k in by if k[0] == p) for p in PLAYERS})
     t, S = table(by); print(t)
+    print('\nRounds from round 4 on, of those reached, that ended at another level (missed, passed, mark 1, 2, 3) than they stood at before the last page; and those where the last page made the pass:')
+    for p in S: print('  %s: %.1f%% of %d (the pass itself: %.1f%%)' % (p, S[p]['undecided'], S[p]['undn'], S[p]['undpass']))
+    print('Share of rounds reached that got to each mark (%s times the number), by round:' % ', '.join(str(t) for t in TIERS))
+    for p in S: print('  %s: ' % p + '  '.join('/'.join('%.0f' % v for v in m) for m in S[p]['marks']))
     print('\nmedian player, molecules in the same round (alive runs, at least 8 plays):')
     for x in mol_spread(by, 'median'): print('  round %d: %d molecules, easiest over hardest %.1f  (%s %.2f, %s %.2f)' % x)
     print('')

@@ -301,7 +301,7 @@ function start(app) {
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.7; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
   if (KITV === 'back') { C0.x += 0.3; C0.z += 0.3; }
-  let SLOTW = 10, LABF = 50;
+  let SLOTW = 10, LABF = 50; const LADW = [];
   const st = { mode: 'play', feed: 0, hover: -1, quota: 0, shown: 0, pass: false, tok: 0, shake: 0, flash: 0, flashC: '28,138,74', pageStart: 0, floats: [], blots: [], pings: [], slashes: [], strokes: [], flyers: [], motes: [], chainN: 0, tip: null, teach: { i: 0, t: 0 }, by: { water: 0, h2: 0, gauge: 0 }, byBump: { water: 0, h2: 0, gauge: 0 }, struck: 0, hold: 0, kx: 0, kz: 0, kvx: 0, kvz: 0, sq: 0, zoomUntil: 0, fx: 3.5, fz: 2.6, focus: { x: 3.5, z: 2.6 }, peek: null, willFire: null, pending: null, sc: 1, fury: 0, call: null, multBump: 0, over: 0, turned: 0, gear: [], fired: {}, want: 0, mult: 1, P: 0, R: 1, E: 1, bump: { p: 0, r: 0, e: 0 }, stains: [], pop: 0, zoom: 0, zoomT: 0, madeBump: 0, bubble: 0 };
   let g = null, slots = [], center = null, prods = [], rowMols = [], tweens = [], dirty = true, last = performance.now(), lastInk = 0;
   let run = null, picks = [], pickObjs = [], briefs = [], briefMols = [], best = 0; const meta = { credit: 0, tier: 0, fam: {}, found: {}, sig: {}, stage: 1, six: 0, taught: false }, shop = { earned: 0 };
@@ -648,8 +648,8 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: 3.3, z: 12.0 }, DRAW = { x: 16.9, z: -10.2 };
-  const bankAt = () => st.mode === 'play' && g && P.canBank(g) && Math.abs(hit.x - BANK.x) < 2.6 && Math.abs(hit.z - BANK.z) < 1.7;
+  const BANK = { get x() { return STEP.x + (g ? Math.min(g.pageSteps, P.stepsOf(g)) : 0) * 2.5; }, z: STEP.z + 2.6 }, DRAW = { x: 16.9, z: -10.2 };
+  const bankAt = () => st.mode === 'play' && g && P.canBank(g) && Math.abs(hit.x - BANK.x) < 1.6 && hit.z > STEP.z - 1.2 && hit.z < BANK.z + 1.7;
   const drawAt = () => st.mode === 'play' && g && P.canRedraw(g) && Math.abs(hit.x - DRAW.x) < 1.7 && Math.abs(hit.z - DRAW.z) < 1.5;
   const stuck = () => st.mode === 'play' && !!g && !g.over && !g.chain && !slots.some(q => q && q.o);
   const pagesAt = () => stuck() && hit.x > PAGES.x - 1.2 && hit.x < PAGES.x + 1.8 * P.pagesOf(g) + 1.6 && Math.abs(hit.z - PAGES.z) < 1.4;
@@ -966,7 +966,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     });
     // the round of the run, the pages, and a circle for each reaction on this page
     { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); marker(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: 3.4 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
+    if (g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: PAGES.x + 1.8 * P.pagesOf(g) + 2.4, z: PAGES.z + 0.45 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
@@ -978,6 +978,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     hand(x, 30); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText('beat', bq[0], bq[1] - 62);
     marker(x, 46); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(st.quota), bq[0], bq[1]); x.strokeStyle = REDINK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(bq[0] - 60, bq[1] - 46); x.lineTo(bq[0] + 60, bq[1] - 49); x.stroke();
+    // The ladder: the marks above the number, lowest at the foot. A rung that has been reached is filled.
+    { const marks = P.runMarks(st.quota), top = done ? g.total : st.shown, hitN = top >= st.quota ? marks.filter(m => top >= m).length : 0, lx = bq[0] + 104, y0 = bq[1] - 8, dy = 38;
+      if (marks.length) { x.strokeStyle = INK; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(lx + 1, y0 + 14); x.lineTo(lx - 1, y0 - dy * (marks.length - 1) - 16); x.stroke(); }
+      marks.forEach((m, k) => { const y = y0 - dy * k, on = k < hitN; x.strokeStyle = on ? GREEN : INK; x.fillStyle = on ? GREEN : '#fbf8ee'; x.lineWidth = 4; x.beginPath(); x.ellipse(lx, y, 9, 8, 0.2, 0, 6.3); x.fill(); x.stroke(); x.beginPath(); x.moveTo(lx + 9, y); x.lineTo(lx + 24, y - 1); x.stroke();
+        hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(fmt(m), lx + 32, y + 10); LADW[k] = x.measureText(fmt(m)).width; }); st.ladder = { lx, y0, dy, n: marks.length, hit: hitN }; }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
     if (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') && P.RULE.hand) {
