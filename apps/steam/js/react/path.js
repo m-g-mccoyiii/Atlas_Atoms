@@ -510,7 +510,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (!(feed && feed.atoms)) salt(g.m, rnd);
   g.self = RULE.cascade ? ((run && run.self) || SELF0).slice() : SELF.filter(q => q.tier <= ((run && run.tier) || 0)).map(q => q.id); g.casc = 0;
   g.kin = feed && feed.atoms ? ((run && run.kin) || 'chain') : kinOf(feed);
-  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; g.hom = run && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
+  g.brief = (run && run.brief) || 'plain'; g.by = { water: 0, h2: 0, gauge: 0 }; HOMIDS.forEach(id => { g.by[id] = 0; }); g.hom = run && run.hom && HOMS[run.hom] && HOMS[run.hom].act ? { id: run.hom, fed: 0, used: 0, frozen: 0 } : null; g.syn = true; g.page = 1; g.total = 0; g.over = false; g.pageSteps = 0; g.best = 0;
   g.P = 0; g.E = 1; g.bank = 0; g.grade = {}; g.gearLv = {}; g.R = rowStart(g); g.tally = { places: 0, loops: 0, kinds: 0, breaks: 0 };
   if (run) { g.grade = Object.assign({}, run.grade); g.gearLv = run.lv; g.usesPlus = run.uses; if (run.rack) g.rackIds = run.rack.filter(id => dealtIn(run, id)); g.rareOn = !!run.rare; g.usesAll = run.usesAll || 0; g.termSteps = run.steps || 0; g.termPages = run.pages || 0; g.rareMul = run.rareMul || 1; if (run.glass) { g.glass = true; g.E = 3; } if (run.term && run.term !== 'plain') { const C = CIRCLE[run.term] || CIRCLE.plain; g.ring = C.n; g.ringMul = C.mul; g.lit = 0; g.ringSet = []; } }
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
@@ -724,7 +724,7 @@ function toolBest(m, id, self) { const m0 = RX.cloneModel(m); RX.reopen(m0); con
 //   pay            carbon dioxide only: how many times over a frozen ring is paid at the start of a later page
 //   now(g)         for the simulated players, when its worth cannot be read as steps: whether to tap it now
 //   offered        false: a creature not built yet. It has no jar, is never fed and cannot be taken
-const JAR = { full: { water: 150, h2: 80, co2: 60 }, stages: [0.12, 0.5, 1] };
+const JAR = { full: { water: 200, h2: 130, co2: 50 }, stages: [0.12, 0.5, 1] };
 const closedRings = m => { const cm = RX.cloneMap(m), cuts = [], rev = new Map(); RX.reopen(cm.model, cuts); cm.map.forEach((c, a) => rev.set(c, a)); return cuts.map(q => ({ c: rev.get(q.c), o: rev.get(q.o) })).filter(q => q.c && q.o); };
 const HOMS = {
   // water floods: every C=C outside a benzene ring becomes C-OH, every closed ring opens, the rings close again.
@@ -750,7 +750,7 @@ const HOMS = {
     act(m, sp) { const bond = m.findBond(sp.c, sp.o); if (!bond || bond.order !== 2) return null; const r = RX.CARDS.nabh4.apply(m, { bond, c: sp.c, o: sp.o }); return { made: [sp.o].concat(r.incoming || []) }; } },
   // carbon dioxide freezes: the rings the page closed stay shut for the rest of the round, are paid in full at the
   // start of every later page (frozenPay), and nothing opens them again. Nothing to gain on the last page
-  co2: { name: 'dry ice', jar: 'medium', feed: ['co2'], need: 3, uses: 1, pay: 1, tok: 'rings freeze|pay each page', whole: true, word: '',
+  co2: { name: 'dry ice', jar: 'medium', feed: ['co2'], need: 1, uses: 1, pay: 2.5, tok: 'rings freeze|pay each page', whole: true, word: '',
     spots(m, g) { if (g && g.page >= pagesOf(g)) return []; const rings = closedRings(m); return rings.length ? [{ rings: rings.map(q => [q.o, q.c]) }] : []; },
     act(m) { const rings = closedRings(m); if (!rings.length) return null; rings.forEach(q => { q.o.frz = true; }); return { made: rings.map(q => q.o), frozen: rings.length }; },
     now(g) { return g.page >= pagesOf(g) - 1 ? (g.casc || 0) >= 1 : (g.casc || 0) >= HOMSIM.freezeAt; } },

@@ -550,7 +550,7 @@ function start(app) {
       grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, fill, lid, figs: [speck, small, full] }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = { x: 13.2, z: 12.3 }; let homObj = null, homObjs = [], homOpts = [];
+  const HOMP = { x: 13.0, z: 13.7 }; let homObj = null, homObjs = [], homOpts = [];
   function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.45); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind) { const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
@@ -763,7 +763,7 @@ function start(app) {
     st.homWait = false; st.homList = null; st.homSpot = null; st.homHover = false; st.homNone = false;
     if (!P.turn(g)) { P.synEnd(g); return endRound(); }
     st.cstep = null;
-    if (g.hom && g.hom.frozen) { st.want = P.made(g); st.P = g.P; st.R = g.R; st.mult = P.mult(g); st.madeBump = 1; st.cstep = { n: g.hom.frozen, name: 'frozen', t: performance.now(), fresh: true }; }
+    if (g.hom && g.hom.frozen) { st.want = P.made(g); st.P = g.P; st.R = g.R; st.mult = P.mult(g); st.madeBump = 1; }
     st.E = g.E; if (st.gear.includes('intern')) { const tk = st.tok; setTimeout(() => { if (tk === st.tok) internGo(); }, 700); }
     flush(); if (g.reopened && g.m.settle && caged(g.m, archesOf(g.m))) g.m.settle(500); setAlign(g.m); tweens = tweens.filter(tw => tw.m !== center);
     // the new page's drawing carries on from the last: the same way up, and turned back to the same side if it turns back
