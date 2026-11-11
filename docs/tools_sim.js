@@ -433,9 +433,14 @@
   // ---------- a whole run ----------
   // opts: tier (suppliers opened, default all six), all (go on after a miss), rounds (default 9), noGear, term, rack0, self0, rule
   // noCarry: the round that carries the last molecule on is not offered.  relaxed: settle molecules as the page does
-  function runSim(player, seed, opts) {
+  // A run must leave nothing behind for the next run in the same page: the rules (P.RULE) and the reaction modes
+  // (AA.rx.MODE) are put back whatever happens, and the modes are set from the rules before the run starts.
+  const ruleSave = () => ({ rule: Object.assign({}, P.RULE), mode: Object.assign({}, AA.rx.MODE) });
+  const ruleBack = s0 => { Object.keys(P.RULE).forEach(k => { if (!(k in s0.rule)) delete P.RULE[k]; }); Object.assign(P.RULE, s0.rule); Object.keys(AA.rx.MODE).forEach(k => { if (!(k in s0.mode)) delete AA.rx.MODE[k]; }); Object.assign(AA.rx.MODE, s0.mode); P.seed(); P.MODEL.relaxed = true; };
+  function runSim(player, seed, opts) { const s0 = ruleSave(); try { return runSim0(player, seed, opts); } finally { ruleBack(s0); } }
+  function runSim0(player, seed, opts) {
     opts = opts || {}; const pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
-    const rule0 = Object.assign({}, P.RULE); if (opts.rule) Object.assign(P.RULE, opts.rule);
+    if (opts.rule) Object.assign(P.RULE, opts.rule); if (P.modeSync) P.modeSync(null);
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
     const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || [], opts.tierNo ? { tierNo: opts.tierNo } : undefined), span = opts.rounds || P.runLast(run);
     if (opts.noGear) run.noGear = true;
@@ -470,7 +475,7 @@
       if (!row.pass) { alive = false; if (!opts.all) break; }
       P.runKeep(run, g); P.runPay(run);
     }
-    out.won = out.beaten >= span; out.span = span; P.seed(); P.MODEL.relaxed = true; Object.assign(P.RULE, rule0);
+    out.won = out.beaten >= span; out.span = span;
     return out;
   }
   // one round on one molecule with a given rack and equipment, for measuring a molecule by itself
