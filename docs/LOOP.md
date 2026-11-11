@@ -166,3 +166,39 @@ The word "beaten" is out. As the total runs past each flag the page letters one 
 | 4 | eight times | overreact |
 
 The game's name is only ever seen in play at the last flag.
+
+## Tiers (the owner, 2026-11-11)
+
+The wall at round four is not fixed by making nine bare rounds beatable. A run starts short and grows.
+
+| Tier | A run is | Held | Winning it opens |
+|---|---|---|---|
+| 1 | rounds 1 to 3 | the six starting reactions only | the helper shelf, with its first two helpers; tier 2 |
+| 2 | rounds 1 to 6 | helpers | the jars' creatures; tier 3 |
+| 3 | rounds 1 to 9 | helpers and one creature | kits, stakes |
+
+- Rounds 4 to 6 are fitted for a player who holds helpers. Rounds 7 to 9 for a player who also holds a creature.
+- Tier 1 is the bare game. It must be tense and fun alone: the median player beats its three rounds by about 2 to 4 times, a new player wins it within a few tries.
+- Once on a higher tier, rounds 1 to 3 must stay quick or pay something worth having. Open.
+
+## Helpers are unlocked for good, one deed each (the owner, as in Vampire Survivors)
+
+- Winning tier 1 opens the shelf. It does not give every helper.
+- Each helper is unlocked for good by its own deed, done in play. Once unlocked it is in the pool that the pick of one from three draws from. It is not given every run: the run still has to offer it.
+- On the bench each locked helper is shown one at a time as a blank outline with the count toward its deed.
+- A deed must be something a player does on the way anyway at first, then something they have to aim for.
+
+First proposals, to be checked that each can be done on the tier where it is shown:
+
+| Helper | Deed |
+|---|---|
+| mirror, seed crystal | given when tier 1 is won |
+| burner | 10 waters driven off in one run |
+| magnet | a row of 5 rings |
+| burette | 5 C=C turned into OH on one page |
+| recycler | 3 waters driven off on one page |
+| voodoo doll | two rows of rings closed on one page |
+| methanol | 5 chain ends reduced in one run |
+| ethylene | 5 arms grown in one run |
+| cannula | a round beaten with three different reactions only |
+| monkey's paw | a round beaten on the last page from under half the number |

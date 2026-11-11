@@ -9,7 +9,7 @@ A layer passes when its gates in `PASS.md` are met on the current rules and a re
 | 1 | The turn | three reactions lined up and fired, the rings close by themselves; a turn is a small puzzle with no creature, helper or unlock | 2 | passed narrowly on old measures; to be measured again |
 | 2 | The page | every element on the round page understood by a first-time player, no sentences, nothing overlapping, none of the rejected looks | 5 | failed |
 | 3 | The chain reaction on screen | the rings closing is the thing worth watching | 4 | passed narrowly |
-| 4 | The round and the run | the number to beat is tense in every round, for a new player and a good one, with the six starting reactions only | 1 | failed: rounds 1 to 3 far too easy |
+| 4 | The round and the run | tier 1: a run of three rounds on the six starting reactions is tense, and a new player wins it within a few tries (see Tiers in LOOP.md) | 1 | failed: rounds 1 to 3 far too easy |
 | 5 | Between rounds | choosing the molecule, the pick of one from three, coins with something to buy | 1, 2 | built; coins have no sink |
 | 6 | Between runs | a lost run shows what was earned; the next thing to earn is seen with its count | 6 | failed: not built |
 | 7 | Helpers | each one enhances layer 1: it changes what three reactions the player wants to line up | 3 | 5 live, 3 weak alone; 8 more designed |
