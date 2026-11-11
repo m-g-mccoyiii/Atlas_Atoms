@@ -157,6 +157,7 @@
       P.runChoose(run, b); run.assayNow = !!P.assayOf(run);
       const g = P.synBegin(run.feed, false, rnd, run.gear, run);
       const row = { seed, player, round: r, mol: b.src || '', carry: b.brief === 'carry' ? 1 : 0, family: run.kin, kind: b.brief, assay: run.assayNow ? 1 : 0, gear: run.gear.map(id => id + ((run.lv[id] || 1) > 1 ? ':' + run.lv[id] : '')).join(' '), rack: run.rack.map(id => id + ((run.grade[id] || 1) > 1 ? '^' + run.grade[id] : '') + (run.uses[id] ? '+' + run.uses[id] : '')).join(' '), offered: picks.map(o => o.kind + ':' + o.id).join(' '), took: pi >= 0 ? picks[pi].kind + ':' + picks[pi].id : '', number: run.quota };
+      if (P.quotaParts) { const k = P.quotaParts(run, run.src); row.par = k.par; row.mult = k.mult; }
       const total = playRound(g, run, pol, rnd, row);
       row.total = total; row.pass = total >= run.quota ? 1 : 0; row.live = alive ? 1 : 0;
       out.rounds.push(row);
@@ -193,10 +194,11 @@
     const ok = await send(job.file++, { tag, opts: opts || {}, rows });
     return (job.seed > to ? 'done ' : 'at ' + job.seed + ' ') + key + ' runs ' + job.n + ' sec/run ' + (job.t / 1000 / job.n).toFixed(3) + ' posted ' + ok;
   }
-  // every molecule by itself: n plain rounds each with the starting four and no equipment
-  async function simMols(tag, player, n, file, over) {
-    const out = {}; P.FEEDS.forEach((f, k) => { out[f] = []; for (let i = 0; i < n; i++) out[f].push(roundSim(player, f, 1000 * (k + 1) + i, over)); });
-    const ok = await send(file, { tag, player, n, mols: out }); return 'mols ' + Object.keys(out).length + ' posted ' + ok;
+  // Every molecule by itself: n plain rounds each with the starting four and no equipment. Molecules from..to of
+  // FEEDS at a call (six take about twenty seconds), posted as file number file + from.
+  async function simMols(tag, player, n, file, from, to, over) {
+    const out = {}; P.FEEDS.slice(from, to).forEach((f, k) => { out[f] = []; for (let i = 0; i < n; i++) out[f].push(roundSim(player, f, 1000 * (from + k + 1) + i, over)); });
+    const ok = await send(file + from, { tag, player, n, mols: out }); return 'mols ' + from + '..' + to + ' posted ' + ok;
   }
   // The same work driven from inside the page, so that several tabs can measure at once: it starts, answers at once,
   // and goes on in pieces of five seconds, each ended by its post. simStat() says how far it has got.
