@@ -323,3 +323,15 @@ Checked for the owner: no reaction asks the player for a bond. Each acts everywh
 - This is the second cascade of `CASCADES.md` (fold, how squalene becomes the steroid skeleton), given to a homunculus to set off. Acid is what sets it off in life.
 - Why it deepens a run: C=C becomes something to save and space out; the burner (every OH to C=C) becomes a setup for it; a fold can hand over to a zip.
 - Needs fold built: the spacing rule (first proposal: the far carbon of one C=C is 4 carbons from the near carbon of the next, a six-ring), molecules that carry several C=C, and the layout of fused carbon rings. To be read on the structural screen.
+
+### Acid: the fold was rejected; the acid bath shown to the owner, not yet answered
+
+The owner on the fold: "That's not what an acid does and also isn't really that zany. These are like perks, they can break chemistry." Rule for all the rest: a homunculus is a perk, it may break chemistry, it does what the substance is known for in plain terms, and it is big.
+
+- Fed by fumes each time hydrate or dehydrate acts. Three and it is ready.
+- When ready, on the page the player chooses: it eats the extra carbons out of every stretch that is too long for a ring to close across, leaving three. The cut ends join. Then the zip runs.
+- Not real chemistry.
+- The eaten carbons are gone for the round.
+- Why it deepens a run: once a round long stretches stop mattering, so the biggest and worst-spaced molecule of the two on offer becomes the right pick.
+- Hydrogen crosses one stretch and costs a C=O; this removes all of them. It is the stronger, slower jar.
+- To be measured: likely very strong on late molecules.
