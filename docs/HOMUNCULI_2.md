@@ -303,3 +303,7 @@ As above. The owner: the number of hydrogens that feed it can be adjusted later.
 - Frozen rings cannot be opened again that round: not by the flood, and the C=O in them are spent.
 - The choice: freeze early for more pages of full pay, or wait and freeze a longer chain. With the rings frozen, oxidize fired first can no longer kill the chain.
 - To be measured: it changes what a round pays.
+
+#### Where carbon dioxide comes from (proposed 2026-11-11, to be measured)
+
+The owner: something has to make it reliably or the homunculus cannot work. Proposal: oxidize, a starting reaction, gains one change. A C=C at the very end of a chain loses its end carbon as carbon dioxide and a C=O is left at the new end (real: oxidative cleavage of a terminal alkene). Grow, also a starting reaction, leaves a C=C at the end of every arm it adds, so grow then oxidize makes carbon dioxide in any run. It changes what oxidize does in the base game, so it goes behind a switch and is read on the structural screen before it is kept. Picture: `.claude/shots/co2-source.png`.
