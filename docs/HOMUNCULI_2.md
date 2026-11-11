@@ -364,3 +364,15 @@ Whatever a homunculus is fed must be something the player's reactions can make. 
 | carbon dioxide | carbon dioxide | grow then oxidize, with the new change to oxidize | proposed, being measured |
 | acid | fumes | hydrate or dehydrate fired (start) | to build |
 | ammonia | nothing in a run (once a round) | the jar across runs has no source yet | open |
+
+### The sprout: kept by the owner, creature not chosen yet
+
+The owner liked the growing chain but not on ammonia. Kept for a creature that fits growth: tapped on a carbon the player chooses, new chain sprouts there, nine carbons with three C=O spaced to zip, and it stays for the round. The number can be changed.
+
+### Ammonia as smelling salts: chosen by the owner from four, the rule shown, not yet answered
+
+- Looks like: a little stoppered bottle on legs, fuming.
+- Fed by ammonia. Source proposed: some molecules are dealt with an NH2; when oxidize hits one it becomes C=O and ammonia comes off. Two and it is ready. Needs molecules that carry NH2, and the player can pick them when two are shown.
+- When ready, tapped after a page has fired: the same three reactions fire again by themselves, in the same order, on the molecule as the first pass left it. No uses are spent. Rings closed in the first pass stay closed, so new rings carry on the row.
+- Why it deepens a run: one page a round is played twice, so a line has to be chosen that still does something the second time.
+- To be measured.
