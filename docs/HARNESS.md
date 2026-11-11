@@ -26,7 +26,7 @@ Q. When the total passes the four marks the page letters: stable, unstable, vola
 R. Foundations first, then up. Later things and unlocks enhance the base. The owner will not play it until it is polished and fun.
 S. Talking to the owner: plain words and none of the game's own jargon; one thing at a time and short; a schematic picture for every suggestion; do not list problems, fix them; if there is an issue, evaluate it and resolve it; no line that labels or excuses a design; do not exaggerate or dramatize; answer about the state of the game as it stands today.
 T. Working: many sub-agents at once; sub-agents evaluate everything; keep building without waiting.
-U. Build paths and every mechanic are evaluated by simulating from SMILES on real molecules, with RDKit and reactions written exactly (`docs/tools_chem/`). Never on made-up chains. "I told you to evaluate build paths and stuff using smiles." "You can do that with rdkit."
+U. Build paths and every mechanic are evaluated by simulating from SMILES with RDKit, with reactions written exactly (`docs/tools_chem/`). The molecules themselves may be made up, and wild ones are wanted: "Made up molecules is fine wtf that's half the fucking fun of this insane shit." What is not acceptable is a crude stand-in that is not a real structure. "I told you to evaluate build paths and stuff using smiles." "You can do that with rdkit."
 
 ## The lines broken most often
 
