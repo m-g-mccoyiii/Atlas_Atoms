@@ -19,7 +19,7 @@ block += "// Do not edit by hand: measure again. %s\n" % note
 block += "// PAR.rounds: the number for a molecule of average size in rounds one to nine. It starts at %s and each step is\n" % sig(par['first'])
 block += "// smaller than the last: %s. after: the step for every round past nine.\n" % ', '.join(str(x) for x in steps)
 block += "const PAR = { rounds: %s, after: %s, last: 1.15 };\n" % (json.dumps(rounds), par.get('after', 1.2))
-block += "// MOLF: what the median simulated player makes in a plain round on each molecule with the starting four reagents\n// and no equipment, over the average of all the molecules (averages of logarithms).\n"
+block += "// MOLF: what the median simulated player makes in a plain round on each molecule with the starting reagents\n// and no equipment, over the average of all the molecules (averages of logarithms).\n"
 block += "const MOLF = %s;\n" % json.dumps({k: round(v, 3) for k, v in molf.items()}, separators=(',', ':'))
 f = R + 'apps/steam/js/react/path.js'; s = io.open(f, encoding='utf8').read()
 i = s.index('// GENERATED'); j = s.index('// END GENERATED')

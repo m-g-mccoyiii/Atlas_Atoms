@@ -8,7 +8,7 @@ The owner's rule, 2026-11-10: sigils, pets and the like are unlocked by play. A 
 
 | Stage | What the player has | How the next thing is earned |
 |---|---|---|
-| First run | a molecule, four reagents, rows, a number to beat, the take-one-of-three | play |
+| First run | a molecule, six reagents, a hand of five, rows, the bank and the redraw, a number to beat, the take-one-of-three | play |
 | Sigils (built) | none at first, and no page of sigils and no circle | each sigil by a deed: glass by a round with no broken row, lean by a round beaten with two reagents, long by a row of ten, hoard by holding five pieces, occult by beating five rounds in a run |
 | Suppliers (built) | the corner chemist | credit from rounds beaten |
 | Pets (not built) | none | to be earned by deeds, one at a time |
@@ -29,17 +29,22 @@ The page of sigils appears only after the first sigil is earned. Sigils not yet 
 
 ### A round
 
-- A page deals reagents from the rack, each with a limited number of uses. A reagent is clicked and the molecule reacts at every place the reagent fits.
+- **Hand.** A page deals a hand of five reagents from the rack, those with uses left first. Nothing guarantees that any of them acts. A reagent is clicked and the molecule reacts at every place the reagent fits.
+- **Uses.** Each reagent has three uses for the whole round (two for a rare one). The pages and the free chain spend the same uses and a new page does not refill them. The dots under a reagent are what it has left. The dots at the top right are the reagents of the rack that are not in the hand.
+- **Redraw.** Once a page the hand can be dealt again, reagents that were not in it first. It costs one use of the fullest reagent in the hand. The mark is the turning arrow at the top right, with the dot it costs beside it.
 - **Score.** The page shows a total, and under it points times multiplier. Places changed add points. The multiplier is the row times extra.
-- **Row.** A reaction that acts on what the last reaction just made continues the row and raises the multiplier. A reaction that does not breaks the row: what the row made is kept and the row starts again.
-- **Overreact.** If a page ends with a row of three or more, the molecule keeps reacting by itself, free, until nothing continues the row.
+- **Row.** A reaction that acts on what either of the last two reactions of the row made continues the row and raises the multiplier. A reaction that does not breaks the row: what the row made is kept and the row starts again. A return to a form the molecule has already had continues a row at most twice a round.
+- **Bank.** The open row can be closed on purpose for one and a half times what it holds. It takes one of the page's reactions. The mark is the tray under the molecule, and the number beside it is what banking would add now.
+- **Overreact.** If a page ends with a row of three or more, the molecule keeps reacting by itself, free, for up to six reactions. With one reagent that continues the row it goes on at once. With two or more it stops and the player clicks one, or banks, which ends the chain.
+- **Size.** A reaction that would grow the molecule past 32 heavy atoms is not offered.
+- A page on which nothing acts waits: the redraw, the bank, or the arrow after the page numbers, which turns the page.
 - **Families.** The shape the molecule is in gives a bonus: chain, ring, arene, sugar, cage, and resonance, which builds up as the molecule gains linked double bonds. The player builds these during a round with reagents that close rings, make arenes and snap cages.
 - **By-products.** Water and hydrogen that leave the molecule are collected. Three water give one more reaction on the page; three hydrogen give every reagent one more use.
 - **The circle.** A reagent lights a rune on the circle the first time it is used. A broken row puts out the last rune. A full circle multiplies the round and starts again. The reagent that keeps the row and the reagent that feeds the circle are often different.
 
 ### What a run collects
 
-- **Reagents.** Four to start: add water, oxidize, grow, lose water. More come from the take-one-of-three.
+- **Reagents.** Six to start: add water, oxidize, grow, lose water, reduce, hydroborate, so every group has two reagents that take it. More come from the take-one-of-three.
 - **Equipment.** Sixty pieces on three shelves: lab (steady), alchemy (strong, with a condition), occult (strongest, with a price). Rules for all sixty are in `EQUIPMENT.md`.
 - **Sigils.** plain, glass, occult, lean, long, hoard.
 

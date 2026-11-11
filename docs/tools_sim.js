@@ -13,8 +13,9 @@
   // Guesses, not measured: a stronger reagent, one more use, and a level as a share of the piece's worth above 1.
   const OTHER = { strong: 1.3, bottle: 1.1, level: 0.5 };
   // How much a kind of round makes against a plain one, for choosing a round. Rounded from what the median player
-  // made by kind in a first measure of 500 runs; carrying a molecule on makes much less than a new one until late.
-  const EASE = { plain: 1, carry: 0.4, broad: 1.4, loose: 1.1, each: 0.6, back: 1, scarce: 0.3, short: 0.4 };
+  // made by kind in 150 runs under the rules of 2026-11-10 (budget of uses, hand, bank): the kinds are now within four
+  // times of each other, where they were within ten.
+  const EASE = { plain: 1, carry: 0.45, broad: 1.2, loose: 1.6, each: 1.6, back: 1.3, scarce: 0.55, short: 0.85 };
   // Round one medians by molecule with no equipment (MATRIX.md, Numbers to beat), used until path.js carries MOLF.
   const MM = {"OCC12C3C4C1C5C2C3C45CO":16159,"C=CCC(=O)CCC(=O)CC=C":9578,"OCC(O)CO":25303,"CC(=O)CCC(O)C1=CC=CC=C1":26283,"C=CCC(O)CC(O)CC=C":20614,"CC(=O)CCC(O)CC=C":15678,"OCC(O)C(O)C(O)C(O)C=O":292593,"CC(O)CC(=O)CCC(Cl)CCC=C":7968,"OCC1OC(O)C(O)C(O)C1O":78343,"C=CCC(O)CC=C":10361,"CC(O)CCC=C":3360,"OC(C=C)C1=CC=CC=C1":90263,"OCC1OC(O)CC1O":10304,"CC(O)CC(=O)C1=CC=CC=C1":17910,"O=C1CCC(CC=C)CC1":4910,"C=CCC(O)C1=CC=CC=C1":120118,"C=CC1CCC(O)CC1":4466,"OC1CCC(O)CC1":28160,"OC1CC2CC1C=C2":3819,"C=CC12C3C4C1C5C2C3C45CO":81079,"OC1CC2CCC1C=C2":3579,"O=C1CCC(O)CC1C=C":31093,"OC1C2CC3CC(C2)CC1C3":4543};
   const molF = (() => { let t = 0, n = 0; Object.keys(MM).forEach(k => { t += Math.log(MM[k]); n++; }); const gm = Math.exp(t / n); return smi => (P.MOLF && P.MOLF[smi]) || (MM[smi] ? MM[smi] / gm : 1); })();
@@ -196,7 +197,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -273,6 +274,29 @@
   // The standard measure, 500 seeds for each player, cut into eight parts of about equal work so that eight tabs can
   // share it. Part k posts to files base + 1000 k onward.
   const PARTS = [[['novice', 'greedy'], 1, 500], [['median'], 1, 250], [['median'], 251, 500], [['planner'], 1, 100], [['planner'], 101, 200], [['planner'], 201, 300], [['planner'], 301, 400], [['planner'], 401, 500]];
+  // Does ending a row on purpose ever pay? Builds are taken from the planner's own runs on seeds from..to: each round
+  // of each run gives a molecule, a kind of round, a rack and equipment. Every build is then played n times by player
+  // a and n times by player b on the same seeds, and their medians are posted. The planner may break a row and bank;
+  // the keeper is the same player with neither.
+  const parseBuild = q => { const o = { gear: [], lv: {}, rack: [], grade: {}, uses: {}, brief: q.kind, tier: P.SUPPLY.length - 1, rare: true };
+    q.gear.split(' ').filter(Boolean).forEach(t => { const m = t.split(':'); o.gear.push(m[0]); if (m[1]) o.lv[m[0]] = +m[1]; });
+    q.rack.split(' ').filter(Boolean).forEach(t => { const m = /^([a-z0-9]+)(?:\^(\d+))?(?:\+(\d+))?$/.exec(t); if (!m) return; o.rack.push(m[1]); if (m[2]) o.grade[m[1]] = +m[2]; if (m[3]) o.uses[m[1]] = +m[3]; }); return o; };
+  function simBreak(tag, file, from, to, n, a, b) {
+    a = a || 'planner'; b = b || 'keeper'; stat = 'builds';
+    (async () => {
+      const builds = []; for (let sd = from; sd <= to; sd++) runSim(a, sd, { all: true }).rounds.forEach(q => { if (q.kind !== 'carry' && q.mol) builds.push(q); });
+      const out = [], medOf = v => v.slice().sort((x, y) => x - y)[Math.floor(v.length / 2)]; let t0 = performance.now();
+      for (let i = 0; i < builds.length; i++) {
+        const q = builds[i], A = [], B = [];
+        for (let k = 0; k < n; k++) { const sd = 50000 + i * 31 + k; A.push(roundSim(a, q.mol, sd, parseBuild(q))); B.push(roundSim(b, q.mol, sd, parseBuild(q))); }
+        out.push({ round: q.round, mol: q.mol, kind: q.kind, gear: q.gear, rack: q.rack, a: medOf(A), b: medOf(B), wins: A.filter((v, k) => v > B[k]).length, ties: A.filter((v, k) => v === B[k]).length });
+        if (performance.now() - t0 > 4000) { stat = 'at ' + i + ' of ' + builds.length; await new Promise(r => fetch('http://127.0.0.1:8767/?i=' + (file + 1), { method: 'POST', body: 'x' }).then(r, r)); t0 = performance.now(); }
+      }
+      const ok = await send(file, { tag, a, b, n, builds: out }); stat = 'done break ' + out.length + ' posted ' + ok;
+    })().catch(e => { stat = 'error ' + e.message; });
+    return stat;
+  }
+  window.simBreak = simBreak;
   const simPart = (tag, k, base, opts) => simGo(tag, PARTS[k][0], PARTS[k][1], PARTS[k][2], base + 1000 * k, opts);
   window.simPart = simPart;
   window.runSim = runSim; window.roundSim = roundSim; window.simChunk = simChunk; window.simMols = simMols; window.simGo = simGo; window.simStat = () => stat;

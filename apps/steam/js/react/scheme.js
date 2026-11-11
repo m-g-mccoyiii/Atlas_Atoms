@@ -415,6 +415,8 @@ function start(app) {
     { id: 'r', x: MULT.x + 6.9, z: BAND - 1, r: 2.1, name: 'row', line: 'grows with reactions in a row', lx: MULT.x + 6.9, lz: BAND + 1.5 },
     { id: 'e', x: MULT.x + 11.6, z: BAND - 1, r: 2.1, name: 'extra', line: 'added by equipment', lx: MULT.x + 11.6, lz: BAND + 1.5 },
     { id: 'beat', x: FLASK.x, z: FLASK.z - 1, r: 2.6, name: 'to beat', line: 'fill past the red line', lx: FLASK.x - 3.6, lz: BEAT.z },
+    { id: 'bank', x: BANK.x, z: BANK.z, r: 2.3, name: 'bank', line: 'close the row now for one and a half times what it holds', lx: BANK.x, lz: BANK.z + 2 },
+    { id: 'draw', x: DRAW.x + 1.6, z: DRAW.z, r: 2.6, name: 'redraw', line: 'a new hand, once a page, for one use. the dots are the rest of the rack', lx: DRAW.x, lz: DRAW.z + 2 },
     { id: 'choices', x: 16.8, z: -9.6, r: 0, name: 'reactions', line: 'pick one', lx: 16.8, lz: -12.3 }
   ];
   // the first round: what is pointed at, in order, each once the page has reached it

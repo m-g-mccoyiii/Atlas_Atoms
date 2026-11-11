@@ -26,7 +26,7 @@ Read this before changing anything. Then read `EVALUATOR_BRIEF.md`, `ARC.md`, `E
 
 | File | What it is |
 |---|---|
-| `apps/steam/js/react/path.js` | all rules: `AA.rxPath`. Scoring (`scoreRound`, `synTake`, `peek`), dealing (`synDeal`), chains (`charged`, `fire`, `chainNext`), runs (`runNew`, `runPicks`, `runTake`, `runBriefs`, `runChoose`, `runQuota`, `runTerm`, `deeds`), the simulated player (`synPlay`), tables `GEARS`, `SUPPLY`, `FEEDS`, `KIN`, `BRIEFS`, `TERMS`, `CIRCLE`, `BASE` |
+| `apps/steam/js/react/path.js` | all rules: `AA.rxPath`. Scoring (`scoreRound`, `synTake`, `peek`), dealing (`synDeal`, `redraw`), chains (`charged`, `fire`, `chainOpts`, `chainNext`), the bank (`canBank`, `bank`), the switches for the rules of a round (`RULE`), runs (`runNew`, `runPicks`, `runTake`, `runBriefs`, `runChoose`, `runQuota`, `runTerm`, `deeds`), the simulated player (`synPlay`), tables `GEARS`, `SUPPLY`, `FEEDS`, `KIN`, `BRIEFS`, `TERMS`, `CIRCLE`, `BASE` |
 | `apps/steam/js/react/rules.js` | reaction cards: `AA.rx`. Each card has `find`, `ok`, `apply` |
 | `apps/steam/js/react/scheme.js` | the page: `AA.rxScheme`. Three.js scene, the ink canvas drawn in `drawInk`, modes `terms`, `pick`, `brief`, `play`, `move`, `fuse`, `done`, `shop`, saved `meta` (credit, tier, stage, sig) |
 | `apps/steam/js/react/kitart.js` | 3D models of the sixty pieces from primitives: `AA.rxKit` |
@@ -54,7 +54,9 @@ Heredocs with nested quotes fail in this shell; a script file does not.
 - The browser's JavaScript tool times out near 45 seconds. For long work, do it in chunks of about 22 seconds, one call per chunk. Background timers in the pane are throttled to about one a minute, so never rely on `setTimeout` loops for long jobs.
 - `AA.rxScheme.debugStage(n)`, `debugTerm(i)`, `debugKit(ids)`, `debugRack(ids)`, `debugFeed(smiles)` set up a state. `AA.rxScheme.meta` is the saved progress.
 - To measure: `AA.rxPath.synPlay(feed, rnd, gear, run, 'greedy')` plays one round and returns the total. Pass a seeded `rnd` so two measurements see the same deals. `docs/MATRIX.md` was made this way; the script that builds it is `matrix.py` in the scratchpad.
-- To measure whole runs: `runSim(player, seed, opts)` and the rest of the rig, in `.claude/sim.js` (copy in `docs/tools_sim.js`). `docs/RIG.md` says how. `AA.rxPath.seed(n)` seeds every draw on the run path; `AA.rxScheme.debugRound(n)` jumps the page to a round.
+- To measure whole runs: `runSim(player, seed, opts)` and the rest of the rig, in `.claude/sim.js` (copy in `docs/tools_sim.js`). `docs/RIG.md` says how. `opts.rule` overrides `AA.rxPath.RULE` for one run, so a rule can be measured on and off on the same seeds; `opts.dec` logs how much of a choice each turn was. `python docs/tools_round.py <tag> <first> <last>` prints the spread of a round and the turn measures.
+- Never start `simGo` or `simPart` in a tab where one is still running: the two fight over one job and neither ends. Reload the tab first.
+- `AA.rxScheme.bank()`, `redraw()` and `turn()` do what the three new marks do. `state()` reports `fork`, `canBank`, `canRedraw`, `stuck` and `left`. `AA.rxPath.seed(n)` seeds every draw on the run path; `AA.rxScheme.debugRound(n)` jumps the page to a round.
 - Judge whole frames, not crops. Look at what you built before saying it works.
 
 ## What is known to be wrong
