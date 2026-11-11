@@ -18,7 +18,7 @@ Everything a creature is, is one entry of `HOMS` in `path.js`: its name and toke
 
 | | Jar | Fed by | Tap |
 |---|---|---|---|
-| water | fast | 3 waters coming off | every C=C outside a benzene ring becomes C-OH, every closed ring opens (not a frozen one), the rings close again. The count of rings starts again at one, so a ring that only closes again pays a quarter and a ring past the longest row of the round pays in full |
+| water | fast | 3 waters coming off | every C=C outside a benzene ring becomes C-OH, every closed ring opens (not a frozen one), the rings close again. The count of rings starts again at one, and the pay rule for a ring in `CASCADES.md` applies |
 | hydrogen | fast | 3 hydrogens coming off (oxidize) | where the rings stopped, the first C=O beyond the stretch becomes OH and the rings carry on, counting on. A place is offered only if a ring would close from it |
 | dry ice | medium | 1 carbon dioxide coming off | the rings the page closed are frozen: they stay shut for the rest of the round and nothing opens them. At the start of each later page they are counted again and paid 2 times over (ring n: 50 places counted n times, 0.1 n of extra, 0.1 of row), and the page's rings count on from them. Not offered on the last page |
 

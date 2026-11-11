@@ -56,6 +56,10 @@ Revised 2026-11-10 after the first review. The first bar asked that under 8% of 
 
 - Reviewer, from recordings of three different runs: would they start another run, and what would they tell a friend about. Pass needs a yes and a specific answer to the second.
 
+## The pay rule for a ring
+
+The same words as in `CASCADES.md` and `LOOP.md`. Ring n of a page pays in full when n is past the most rings any earlier page of the same round closed: 50 places counted n times, and n times 0.1 added to extra. A ring that only closes again (n is at or under that most) pays a quarter of the climb: 50 places counted 1 plus a quarter of n minus 1 times, and a quarter of n times 0.1 added to extra. The most is kept for the round and starts at nothing in the next round. Creatures use the same rule: after the water creature's flood the count of the page starts again at one and the rings before the flood count as an earlier page, and rings frozen by dry ice are paid again at the start of each later page with the count carrying on from them.
+
 ## Record
 
 | Section | Status | Date | Note |

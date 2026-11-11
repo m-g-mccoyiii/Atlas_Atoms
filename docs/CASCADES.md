@@ -78,6 +78,7 @@ Three kinds are built: zip, snap and weld. Fold, run and link are not. Everythin
 - **How close is close.** Zip: the carbon of the OH is 3 or 4 carbons from the carbon of the C=O, so the ring has five or six atoms. The OH may be on a benzene ring (a phenol). Either part may be in a ring as long as the new ring shares at most one bond with a small ring that is already there. Weld: the carbon beside one C=O is 4 or 5 carbons from the second C=O. Snap: the third C=C is 4 or 5 carbons from the end of the pair.
 - **When a cascade runs.** After every reagent of the line that acted. A reagent that found nothing is wasted and sets nothing off. (For most of the day a wasted circle did set a standing chain off; a reviewer called that a free cascade and it was taken out.)
 - **What a step is worth.** Step n of a page adds 50 places counted n times, and adds n times 0.1 to extra. It adds, it does not multiply. A round whose pages run three steps ends near 3 times a round with none, six steps near 7 times, ten steps near 17 times.
+- **The pay rule for a ring.** Ring n of a page pays in full when n is past the most rings any earlier page of the same round closed: 50 places counted n times, and n times 0.1 added to extra. A ring that only closes again (n is at or under that most) pays a quarter of the climb: 50 places counted 1 plus a quarter of n minus 1 times, and a quarter of n times 0.1 added to extra. The most is kept for the round and starts at nothing in the next round. Creatures use the same rule: after the water creature's flood the count of the page starts again at one and the rings before the flood count as an earlier page, and rings frozen by dry ice are paid again at the start of each later page with the count carrying on from them. (`RULE.fresh`, `CASC.old`, `g.cascBest` in `path.js`.)
 
 ### A zip opens again when the page turns
 
@@ -129,7 +130,7 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 ### Added on 2026-11-11, later
 
-- **A step that is new pays; a step that repeats pays a quarter.** New means past the longest cascade of any earlier page of the round. This settles the first point under "Not decided".
+- **A ring that only closes again pays a quarter of the climb.** The rule is written once, under "Decided" above (the pay rule for a ring).
 - **A zip travels along the chain.** The OH the last step left goes first, and an OH takes the nearest C=O.
 - **Rounds one to three are dealt gently**: four reagents, then five, then six, on small molecules most lines of three can set off.
 - **Pieces are used on the molecule**, and one that changes it sets the zip off at once. See `PIECES.md`.
@@ -137,6 +138,5 @@ A first bridge, ring-closing metathesis of two C=C, was built and measured and i
 
 ## Not decided
 
-- Whether a step that already ran on an earlier page of the round should pay as much as a new one. A reviewer proposed that only new steps climb.
 - Whether weld and snap are worth having as they are: neither makes cascades longer on average.
 - Fold, run and link.
