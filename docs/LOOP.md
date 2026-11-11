@@ -202,3 +202,21 @@ First proposals, to be checked that each can be done on the tier where it is sho
 | ethylene | 5 arms grown in one run |
 | cannula | a round beaten with three different reactions only |
 | monkey's paw | a round beaten on the last page from under half the number |
+
+## What the molecule does by itself is a set of pieces, not one step (the owner, 2026-11-11)
+
+Closing a ring is one thing a molecule can do by itself. It is not the game's one step. Each such thing is its own piece of the game, held and unlocked like a reaction or a helper, and each can leave what another needs, so they chain back and forth. In docs and on the page never describe the turn as "rings close": the turn is three reactions lined up and fired, and then whatever the molecule can do by itself, it does.
+
+First set, proposed, to be read on the structural screen:
+
+| Name | When | Becomes | Leaves |
+|---|---|---|---|
+| ring | an OH 3 or 4 carbons from a C=O | a ring | a new OH |
+| flip | an OH sitting on a carbon of a C=C | that carbon is C=O, the C=C is single | a C=O |
+| dry | an OH 2 carbons from a C=O | water comes off, a C=C beside the C=O | a C=C and a water |
+
+A flip leaves a C=O a ring can close on; a ring leaves an OH that may dry; a dry gives off water for a jar and leaves a C=C that hydrate turns back into an OH. The six kinds in `CASCADES.md` (fold, snap, run, weld, link) are later members of the same set. The player starts with one and unlocks the others by play.
+
+## Coins buy helpers (the owner, 2026-11-11)
+
+Between rounds coins buy helpers from the ones the player has unlocked. The player decides which to buy. Better ones cost more. This is the main thing coins are for, with the redraw of the molecule pair and of the offer as small sinks. The free pick of one from three stays for reactions. Prices are set from each helper's measured worth in the game.
