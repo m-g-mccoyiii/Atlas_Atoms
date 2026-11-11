@@ -1,5 +1,8 @@
 @font-face { font-family: Marker; src: url(../fonts/PermanentMarker-Regular.ttf); }
 @font-face { font-family: Hand; src: url(../fonts/PatrickHand-Regular.ttf); }
+@font-face { font-family: Elite; src: url(../fonts/SpecialElite-Regular.ttf); }
+@font-face { font-family: Macondo; src: url(../fonts/Macondo-Regular.ttf); }
+@font-face { font-family: Pirata; src: url(../fonts/PirataOne-Regular.ttf); }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #e9e2d0; }
 #schemeapp { position: fixed; left: 0; top: 0; right: 0; bottom: 0; }
 #schemeapp canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }

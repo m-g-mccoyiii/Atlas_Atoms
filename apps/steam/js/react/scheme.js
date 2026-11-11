@@ -675,8 +675,11 @@ function start(app) {
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
-  const hand = (x, n) => { x.font = Math.round(n) + 'px Hand, "Segoe Print", sans-serif'; };
-  const marker = (x, n) => { x.font = Math.round(n) + 'px Marker, "Segoe Print", sans-serif'; };
+  // the lettering can be tried in other faces with ?font=own, elite, macondo or pirata
+const FONT = new URLSearchParams(location.search).get('font') || '', FAM = { elite: 'Elite', macondo: 'Macondo', pirata: 'Pirata' }[FONT];
+if (FAM && document.fonts) { document.fonts.load('20px ' + FAM); document.fonts.load('bold 20px ' + FAM); }
+const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "Segoe Print", sans-serif'; if (FONT === 'own') AA.rxPen.set(x, n, false); };
+  const marker = (x, n) => { x.font = (FAM ? 'bold ' : '') + Math.round(n) + 'px ' + (FAM || 'Marker') + ', "Segoe Print", sans-serif'; if (FONT === 'own') AA.rxPen.set(x, n, true); };
   function wob(x, a, b, lw, col, dash) {
     const A = px(a), B = px(b), n = 14; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.setLineDash(dash || []); x.beginPath();
     for (let k = 0; k <= n; k++) { const t = k / n, j = Math.sin(t * 11 + A[0] * 0.013) * 2.2; const X = A[0] + (B[0] - A[0]) * t + j, Y = A[1] + (B[1] - A[1]) * t + j * 0.6; if (k) x.lineTo(X, Y); else x.moveTo(X, Y); }
