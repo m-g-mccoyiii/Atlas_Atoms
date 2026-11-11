@@ -1,0 +1,61 @@
+# Overreact: notes for whoever works on the code
+
+Read this before changing anything. Then read `EVALUATOR_BRIEF.md`, `ARC.md`, `EVALUATION.md`, `BALANCE.md`, `ENGINES.md` and `PASS.md`.
+
+## Hard rules
+
+- Work only in `C:\Work\atlas-atoms` on branch `steam`. Never commit to `main`. Never touch the deployed site.
+- Commit with `git -c user.name="m-g-mccoyiii" -c user.email="m.g.mccoyiii@gmail.com" commit`. Do not change git config. End every commit message with `Co-Authored-By: Claude <noreply@anthropic.com>`. Push to `origin steam` after every commit.
+- Do not download any file. Everything shipped must be licensed for commercial use.
+- Vanilla JS globals on `AA`, Three.js r128, Canvas 2D, Web Audio, localStorage. No node, no build step. The page has a CSP that forbids inline scripts.
+- Any edited script or css needs its `?v=N` bumped in both `apps/steam/scheme.html` and `.claude/rec.html`.
+- American spelling.
+
+## The owner's taste, which decides what passes
+
+- A fun, insane, fast game. Not textbook-like. Not like cheap mobile game ads.
+- Words on a game screen are names, numbers and short tokens. No sentences. Only instructions may be wordy. No quips, no ominous hints, no second-person labels.
+- No multiplication signs, middle dots or em dashes in text.
+- UI is objects. Menus are full game screens, never a dialog with titled boxes.
+- Rejected looks: dark navy, uppercase letter-spaced mono labels, serif headings, glow accents, flat signage, hard rectangles, cards like Balatro's, yellow pills and banners added for excitement, pulsing buttons, bursts, particle balls, check marks.
+- Do not restyle the ball-and-stick molecule. Never put faces on atoms.
+- Every new layer is unlocked by play. Nothing later than the player's stage is shown.
+- No timers, login streaks or paid currency. No daily challenge.
+
+## Files
+
+| File | What it is |
+|---|---|
+| `apps/steam/js/react/path.js` | all rules: `AA.rxPath`. Scoring (`scoreRound`, `synTake`, `peek`), dealing (`synDeal`), chains (`charged`, `fire`, `chainNext`), runs (`runNew`, `runPicks`, `runTake`, `runBriefs`, `runChoose`, `runQuota`, `runTerm`, `deeds`), the simulated player (`synPlay`), tables `GEARS`, `SUPPLY`, `FEEDS`, `KIN`, `BRIEFS`, `TERMS`, `CIRCLE`, `BASE` |
+| `apps/steam/js/react/rules.js` | reaction cards: `AA.rx`. Each card has `find`, `ok`, `apply` |
+| `apps/steam/js/react/scheme.js` | the page: `AA.rxScheme`. Three.js scene, the ink canvas drawn in `drawInk`, modes `terms`, `pick`, `brief`, `play`, `move`, `fuse`, `done`, `shop`, saved `meta` (credit, tier, stage, sig) |
+| `apps/steam/js/react/kitart.js` | 3D models of the sixty pieces from primitives: `AA.rxKit` |
+| `apps/steam/js/react/pen.js` | the game's own lettering, drawn as strokes. `?font=classic` turns it off |
+| `apps/steam/scheme.html` | the game page |
+| `.claude/rec.html`, `.claude/rechelp.js`, `.claude/simhelp.js` | recording and measuring page, not shipped, not in git |
+
+## How to change code safely
+
+These files have very long lines. Do not rewrite them. Write a small Python script with the Write tool into the scratchpad that does exact-string replacement with a count assertion, then run it:
+
+```python
+def rep(s, a, b):
+    assert s.count(a) == 1, (a[:70], s.count(a)); return s.replace(a, b)
+```
+
+Heredocs with nested quotes fail in this shell; a script file does not.
+
+## How to see the game
+
+- A preview server serves the repo at `http://localhost:8766`. The game is `/apps/steam/scheme.html`. The recording page is `/.claude/rec.html?name=none&r=<any number>`.
+- A frame server on port 8767 saves POSTed frames as `fNNNNN.jpg` into the scratchpad `frames` folder. If nothing is listening there, start `recsrv.py` from the scratchpad in the background.
+- In the recording page: `await recClip(base, '', {feed, kit, rack, by, term}, n)` plays n reactions and saves every frame from number `base`; `recStill`, `recTick(ms, {base, label, i})`. `window.__fast = true` speeds the player. `window.__nopost = true` runs without saving frames.
+- Resize the browser to 1280 by 720 before recording and only reset it after the recording has finished.
+- The browser's JavaScript tool times out near 45 seconds. For long work, do it in chunks of about 22 seconds, one call per chunk. Background timers in the pane are throttled to about one a minute, so never rely on `setTimeout` loops for long jobs.
+- `AA.rxScheme.debugStage(n)`, `debugTerm(i)`, `debugKit(ids)`, `debugRack(ids)`, `debugFeed(smiles)` set up a state. `AA.rxScheme.meta` is the saved progress.
+- To measure: `AA.rxPath.synPlay(feed, rnd, gear, run, 'greedy')` plays one round and returns the total. Pass a seeded `rnd` so two measurements see the same deals. `docs/MATRIX.md` was made this way; the script that builds it is `matrix.py` in the scratchpad.
+- Judge whole frames, not crops. Look at what you built before saying it works.
+
+## What is known to be wrong
+
+See `EVALUATION.md`. In short: the numbers to beat are not tied to play; most turns are forced; two thirds of piece pairs do not interact; twelve pieces are dead and seven harmful; the recycler loops forever; the overreact chain is not a spectacle; the page has rejected looks (navy ink, yellow pills).
