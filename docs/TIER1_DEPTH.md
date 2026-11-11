@@ -222,3 +222,7 @@ Did not work:
 - The "new player" is random plus a rule, not a person.
 - Carbon chains are single trees: no real geometry, no rings in the molecule, and no heavy atoms.
 - The molecule generator is the old early stage with no NH2 and no SH.
+
+## The owner's ruling, 2026-11-11
+
+Pick 1 is rejected: nothing shows what a line will do before it is fired. "New players are inexperienced, that's the whole point of playing the game." Learning to read the molecule by firing and watching is the game; a preview plays it for them. Kept from pick 1: the three queued circles can be reordered freely. Picks 2, 3 and 4 go ahead, each measured in the game.
