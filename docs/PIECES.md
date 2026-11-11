@@ -119,11 +119,51 @@ The owner's burner removes every OH it can. An OH is what a zip starts from, so 
 - With the best line of three reagents after it: 3.23, the same as nothing. Used on every molecule: 2.61, against 3.23.
 - It pays with the burette (4.10 on the best line, against 3.52 for the burette alone), a little with the seed crystal (3.84 against 3.77) and with the mirror (4.39 against 4.29), and not at all with the magnet.
 
-So alone it is a dead piece by these readings and a harmful one in careless hands, and it is a real half of one pair. Its other worth is not in these tables: every OH it removes is a water collected. Whole rounds with a player that uses pieces well have not been run on it yet.
+So alone it is a dead piece by these readings and a harmful one in careless hands, and it is a real half of one pair. Its other worth is not in these tables: every OH it removes is a water collected. In whole rounds played well (below) it is never used alone, it is worth 1.22 with the burette against 1.04 for the burette alone, and it adds nothing to the seed crystal or the mirror.
 
 ### Whole rounds
 
-Not run again. The whole-round table that stood here was played by a simulated player that used every piece on the first page it could by the bare structure, with the old burner and the clamp. It is to be run again once the simulated players use pieces where the screen says they lengthen the cascade.
+Run again on 2026-11-11 with players that use a piece when and where the structure says it lengthens the cascade (`toolRound` in the recording page; the rule of use is `useTools` in `tools_sim.js`). One round of three pages on each of the same 31 molecules, round five's deal, the six starting reagents. The player tries every line of the hand and fires the one that makes most.
+
+How a piece is used here. At the start of a page the player reads, from the structure alone, the steps of the best line of its hand as the molecule stands, and the same after each piece it has not used at each of its places, and after each ordered pair of pieces. It uses a piece now only where that is worth one new step or more over not using it, and holds it otherwise; on the last page it uses a piece that adds anything. Before it commits, it plays the page both ways on a copy and drops the use if the page would make less with it (for the mirror, this page and the next). "At random" is the novice: each piece once, on a page and at a place taken at random.
+
+Score is the round's total over the same round with the same pieces held and never used, as a geometric mean. (Not over a round with no piece: see the last point below.)
+
+| Held | Steps a page | Pages with 6 or more | 10 or more | Longest | Score | Rounds it raised, lowered, of 31 |
+|---|---|---|---|---|---|---|
+| nothing | 3.95 | 19% | 0 | 7 | 1.00 | |
+| mirror | 4.49 | 39% | 0 | 8 | 1.23 | 17, 3 |
+| seed crystal | 4.24 | 25% | 0 | 9 | 1.13 | 9, 1 |
+| magnet | 4.09 | 24% | 0 | 9 | 1.08 | 3, 0 |
+| burner | 3.99 | 20% | 0 | 7 | 1.00 | 0, 0 |
+| burette | 3.87 | 18% | 0 | 7 | 1.04 | 1, 0 |
+| mirror and seed crystal | 4.70 | 43% | 0 | 9 | 1.27 | 20, 4 |
+| mirror and magnet | 4.47 | 38% | 3% | 11 | 1.29 | 18, 2 |
+| mirror and burner | 5.00 | 45% | 1% | 11 | 1.22 | 17, 6 |
+| mirror and burette | 4.26 | 34% | 0 | 8 | 1.23 | 17, 3 |
+| seed crystal and magnet | 4.27 | 27% | 0 | 9 | 1.15 | 10, 1 |
+| seed crystal and burner | 4.28 | 26% | 0 | 9 | 1.14 | 9, 1 |
+| seed crystal and burette | 4.15 | 25% | 0 | 9 | 1.14 | 10, 1 |
+| magnet and burner | 4.13 | 25% | 0 | 9 | 1.09 | 3, 0 |
+| magnet and burette | 4.01 | 23% | 0 | 9 | 1.13 | 4, 0 |
+| burner and burette | 4.16 | 30% | 0 | 8 | 1.22 | 7, 0 |
+| all five | 5.03 | 41% | 8% | 11 | 1.45 | 22, 4 |
+| mirror, at random | 3.31 | 23% | 0 | 8 | 0.36 | 9, 22 |
+| seed crystal, at random | 3.90 | 19% | 0 | 7 | 0.57 | 7, 23 |
+| magnet, at random | 4.01 | 20% | 0 | 8 | 0.88 | 3, 8 |
+| burner, at random | 3.22 | 13% | 0 | 9 | 0.72 | 10, 19 |
+| burette, at random | 3.94 | 20% | 0 | 7 | 0.99 | 2, 2 |
+| all five, at random | 3.51 | 22% | 0 | 8 | 0.44 | 7, 24 |
+
+What it says:
+
+- **A piece used well now lowers few rounds.** Alone: the mirror 3 of 31, the seed crystal 1, the others none. It was about half of the rounds a piece was used in. The worst is the mirror with the burner, 6 of 31.
+- **Where and when a piece is used is most of its worth.** The mirror is 1.23 used well and 0.36 at a place and page taken at random; the seed crystal 1.13 and 0.57; all five 1.45 and 0.44. A novice is hurt by holding them.
+- **The mirror is the strongest piece** (1.23, and six steps or more on 39 pages in 100 against 19). The seed crystal and the magnet are small and safe. The burette alone is close to nothing in a round (1.04): with reagents in hand, hydrate and oxidize already do its work.
+- **The owner's burner, played well.** Alone it is never used: no page was found where taking every OH away was worth a step, so it is dead, not harmful (1.00, no round raised or lowered). With the burette it is a real pair: 1.22, 7 rounds raised and none lowered, against 1.04 and 1 for the burette alone. With the seed crystal it adds nothing (1.14 against 1.13). With the mirror it makes longer pages (5.00 steps against 4.49, ten or more on 1 page in 100) but not more score (1.22 against 1.23) and lowers 6 rounds. At random it is harmful: 0.72, 19 rounds of 31 lowered. Its rule was not changed.
+- **Why the page is tried both ways before a piece is used.** The structure reads the steps of the cascade. A round's total is mostly the row: on one molecule the same three pages ran 3, 7, 7 steps for 217,000 without the seed crystal, and 4, 4, 5 steps for 47,000 with it used on page one, because the zip it set off left the reagents nothing to carry the row on with. And a mirror on page one can fill the molecule to the size limit, so that nothing can be added to it on pages two and three. A player who only read the steps lost both ways; the check stops that.
+- **Found wrong, not fixed here:** a burner that is held and never used raises a round by 1.49 times. An old rule is still in `path.js` (`CATCH`: the burner adds 0.5 to the row for every hydrogen that leaves). It belongs to the old by-product system and should go when the jars are built. This is why the score above is taken against the same pieces held and unused.
+- In 40 whole runs (seeds 1 to 40, the number to beat not fitted again) the median player used the mirror in 98 of the 124 rounds it held it, the seed crystal in 57 of 151, the burette in 45 of 157, the burner in 43 of 173, the magnet in 18 of 138. Six steps or more on 24.0 pages in 100, ten or more on 1.95.
 
 ## The fifth piece: three candidates
 

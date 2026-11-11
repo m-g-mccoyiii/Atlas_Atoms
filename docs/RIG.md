@@ -22,6 +22,19 @@ Measured on the rules as committed with this section. Measured, awaiting review:
 | The players | they use a piece at the start of a page, each once a round: the median player, the planner and the greedy player where the bare structure reads best, the novice at a place taken at random on half its pages | `tools_sim.js` `useTools` |
 | The number | rounds one to three are what 90, 80 and 55 in 100 novices who reach the round make, and no round asks more than 2.6 times the one before | `tools_par.py` |
 
+### How the players use the pieces, changed 2026-11-11 (after this measure)
+
+The numbers in this section were made with players that used every piece on the first page by the bare structure. That is changed (`tools_sim.js`, `useTools`, `readTools`); the tables below have not been made again and the number to beat has not been fitted again. That is the next full measure.
+
+| Player | How it uses a piece now |
+|---|---|
+| median | at the start of a page it reads the steps of the best line of its hand as the molecule stands, and after each unused piece at each place, and after each ordered pair of pieces. It uses one now only for a new step or more, else holds it; on the last page for anything. It plays the page both ways on a copy first and drops a use that makes the page worth less |
+| planner | the same, and it also counts what the molecule the line leaves would zip by itself on the pages still to come |
+| greedy | where the bare structure reads better than leaving the piece, and only then |
+| novice | each piece on a page taken at random, at a place taken at random |
+
+On 40 runs each, seeds 1 to 40, played on the baked numbers: the median player beat 7.65 rounds (it was 6.4) and passed 100, 100, 100, 100, 90, 97, 86, 87, 73 percent; six steps or more on 24.0 pages in 100 and ten or more on 1.95. The novice beat 2.30 rounds (95, 74, 71, 30, 0 percent). A median run takes about 2.2 times as long to play as before (about 430 ms a round against 200), most of it the page played both ways. Whole rounds with each piece are in `PIECES.md`.
+
 ### The gap between extending a chain and firing it again
 
 One round on each of the 73 molecules as they then stood, the six starting reagents, the same deals, two players: one fires the line with the most steps on every page, the other on pages two and three fires the line with the most steps that is not longer than the chain already was (`gapRound` in the recording page).
@@ -93,7 +106,7 @@ Molecule factors were fitted again on 480 runs of the median player choosing rou
 - **Rounds two to four are far too easy for a player who reads the page** (12 to 25 times over). The novice sets them. The gap between the novice and the median player is the problem, not the number.
 - **The novice falls off at round four** (34% against 55%) and reaches round six in 9 runs of 205.
 - **Ten steps or more is twice what was asked.**
-- **The simulated players use the pieces badly** (docs/PIECES.md): on the first page, by the bare structure. The pieces are worth more than these runs show, and the number to beat late in a run is fitted to players who waste them.
+- **The simulated players used the pieces badly** in this measure: on the first page, by the bare structure. This has since been changed (see "How the players use the pieces" above); the number to beat here is still the one fitted to players who wasted them.
 - **Round one is thin on pages two and three.** With four reagents and one spare C=C, a molecule often has nothing left to set it off after page one: the median player's pages of round one average 1.7 steps.
 - **The turn measures were not run again** (second option worth taking, the bank, the best ordered play).
 - **Kinds of round are 4.1 times apart** before their factor (short rounds make half a plain one, broad ones twice).

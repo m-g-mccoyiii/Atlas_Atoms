@@ -134,24 +134,79 @@
   // a player with a plan searches the ordered plays of the page with its own look-ahead
   const lineSearch = cfg => g => { const left = P.stepsOf(g) - g.pageSteps, size = g.m.atoms.length; if (left <= 0) return []; if (size > BIG.far && !cfg.keep) return lineGreedy(g); return search(g, size > BIG.far ? 1 : size > BIG.near ? 2 : left, size > BIG.near ? Object.assign({}, cfg, { deep: false }) : cfg).seq.slice(); };
   const lineQ = base => base;
-  // The pieces used on the molecule (docs/PIECES.md). A player that reads the page puts each one, once a round, at the
-  // place the structure says is worth most (the steps the molecule would then zip), and only where that is more than
-  // it would zip without; it clamps the OH the chain starts from. The novice uses a piece on half its pages at a
-  // place taken at random. Order: clamp, magnet, burner, seed crystal, and the mirror last, so that what is doubled
-  // has been mended first.
+  // The pieces used on the molecule (docs/PIECES.md), each once a round. How a player uses them:
+  //   read (median player): at the start of a page it works out, from the structure alone, the steps of the best
+  //     line of the hand as the molecule stands, and the same after each unused piece at each of its places, and
+  //     after each ordered pair of unused pieces (burner then burette, seed crystal then mirror). It uses a piece
+  //     now only where that is worth at least one new step more than not using it, and otherwise holds it for a
+  //     later page. On the last page it uses a piece that adds anything.
+  //   plan (planner): the same, and it also counts what the molecule left by the best line would zip by itself on
+  //     the pages still to come, a quarter each (a step that repeats pays a quarter).
+  //   best (greedy): a piece is used where the bare structure reads better than leaving it, and only then.
+  //   random (novice): each piece on a page taken at random, at a place taken at random, with no reading.
   const TOOLORDER = ['magnet', 'bunsen', 'balance', 'burette', 'mortar', 'crystal', 'mirror'];
-  // what a molecule is worth to a player who reads it: twice the steps it would zip as it stands, plus one for every
-  // part a reagent could still work on (each oxygen, each C=C). So a mirror is not put where it throws half the parts away.
+  // what a molecule is worth to a player who reads only its shape: twice the steps it would zip as it stands, plus
+  // one for every part a reagent could still work on (each oxygen, each C=C).
   const partsOf = m => { let n = 0; m.atoms.forEach(a => { if (a.el === 'O') n++; }); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C') n += 0.5; }); return n; };
   const readOf = (m, self) => 2 * P.selfRun(AA.rx.cloneModel(m), self || P.SELF0) + partsOf(m);
-  function useTools(g, rnd, mode, only) {
-    TOOLORDER.forEach(id => { if ((only && !only.includes(id)) || !P.canTool(g, id)) return; const spots = P.toolSpots(g, id); if (!spots.length) return;
-      if (mode === 'random') { if (rnd() < 0.5) P.toolGo(g, id, spots[Math.floor(rnd() * spots.length)]); return; }
-      if (id === 'clamp') { const st0 = AA.rx.CARDS.lactol.find(g.m)[0], sp = st0 && spots.find(q => q.part.includes(st0.o)); if (sp) P.toolGo(g, id, sp); return; }
-      // a gap pulled shut loses nothing a reagent wants: the magnet is used as soon as there is a gap
-      if (id === 'magnet') { P.toolGo(g, id, spots[0]); return; }
+  // a piece used at a place on a copy of a molecule, rings left as they are (as on the page), or nothing
+  const toolAt = (m, id, spot) => { const RX = AA.rx, cm = RX.cloneMap(m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; }); if (!RX.tools.apply(cm.model, id, sp)) return null; if (P.RULE.atoms && P.heavy(cm.model) > P.RULE.atoms && P.heavy(cm.model) > P.heavy(m)) return null; return cm.model; };
+  const TOOLCAP = 4, PAIRCAP = [1, 3], FULL = 1, MID = 3, toolStat = { n: 0, ms: 0, used: {}, held: {} };
+  // the steps of the best line of `depth` reagents of the hand on molecule m, each reagent no more often than it has
+  // uses, and (far) what the molecule that line leaves would zip by itself on a later page
+  function lineRead(g, m, hand, depth, far) {
+    if (!hand.length || depth < 1) return { n: 0, stand: far ? P.selfRun(AA.rx.cloneModel(m), g.self) : 0 };
+    let top = -1; const tops = [];
+    P.screenLines(m, hand, g.self, depth).forEach((v, key) => { if (v.n < top) return; const cnt = {}; if (key.split(' ').some(id => (cnt[id] = (cnt[id] || 0) + 1) > P.usesLeft(g, id))) return; if (v.n > top) { top = v.n; tops.length = 0; } if (tops.length < 3) tops.push(v.m); });
+    if (top < 0) return { n: 0, stand: 0 };
+    let stand = 0; if (far) tops.forEach(t => { const c = AA.rx.cloneModel(t); AA.rx.reopen(c); stand = Math.max(stand, P.selfRun(c, g.self)); });
+    return { n: top, stand };
+  }
+  // what a page of V steps pays, in new steps: a step past the longest cascade of the round counts one, a repeat a quarter
+  const paysOf = (g, V) => { const b = P.RULE.fresh ? g.cascBest || 0 : 0, old = P.RULE.fresh ? P.CASC.old : 1; return V <= b ? old * V : V - b + old * b; };
+  function readTools(g, mode, only, force) {
+    const ids = TOOLORDER.filter(id => (!only || only.includes(id)) && P.canTool(g, id)); if (!ids.length) return null;
+    const hand = g.kinds.filter(id => P.usesLeft(g, id) > 0), depth = Math.min(g.m.atoms.length > BIG.near ? 2 : 3, P.stepsOf(g) - g.pageSteps), left = P.pagesOf(g) - g.page, far = mode === 'plan' && left > 0, c0 = g.casc || 0, self = g.self;
+    const val = (z, m, d) => { const r = lineRead(g, m, hand, d, far && d === depth); return { V: c0 + z + r.n, v: paysOf(g, c0 + z + r.n) + (far ? 0.25 * left * r.stand : 0), stand: r.stand }; };
+    // every way of using one piece, or two in order: the molecule after, and the steps the pieces set off at once
+    const cands = [], firsts = {};
+    ids.forEach(id => { if (force && force !== id) return; let spots = P.toolSpots(g, id).map(sp => { const t = toolAt(g.m, id, sp); if (!t) return null; const z = P.selfRun(t, self); return { id, sp, m: t, z }; }).filter(Boolean);
+      if (spots.length > TOOLCAP) { spots.forEach(q => { q.q = q.z * 2 + partsOf(q.m); }); spots.sort((x, y) => y.q - x.q); spots = spots.slice(0, TOOLCAP); }
+      firsts[id] = spots; spots.forEach(q => cands.push({ ids: [id], first: q, m: q.m, z: q.z })); });
+    if (!force) ids.forEach(a => { const fa = (firsts[a] || []).slice(0, PAIRCAP[0]); ids.forEach(b => { if (b === a) return; fa.forEach(q => { let sp2 = AA.rx.tools.spots(q.m, b, P.RULE.atoms).map(sp => { const t = toolAt(q.m, b, sp); if (!t) return null; const z = P.selfRun(t, self); return { m: t, z }; }).filter(Boolean);
+      if (sp2.length > PAIRCAP[1]) { sp2.forEach(k => { k.q = k.z * 2 + partsOf(k.m); }); sp2.sort((x, y) => y.q - x.q); sp2 = sp2.slice(0, PAIRCAP[1]); }
+      sp2.forEach(k => cands.push({ ids: [a, b], first: q, m: k.m, z: q.z + k.z })); }); }); });
+    if (!cands.length) return null;
+    // a quick reading (one reagent fewer) sorts them and drops those that do not beat leaving the pieces alone; the
+    // full reading is taken of the best few
+    let cs = cands; if (depth > 2 && cs.length > MID) { cs.forEach(c => { c.q1 = val(c.z, c.m, depth - 2).v; }); cs.sort((x, y) => y.q1 - x.q1 || x.ids.length - y.ids.length); cs = cs.slice(0, MID); }
+    if (depth > 1) { const q0 = val(0, g.m, depth - 1).v; cs.forEach(c => { c.q = val(c.z, c.m, depth - 1).v; }); cs = cs.filter(c => c.q > q0 + 1e-9 || (force && c.q >= q0 - 1e-9)); if (!cs.length) return null; cs.sort((x, y) => y.q - x.q || x.ids.length - y.ids.length); cs = cs.slice(0, FULL); }
+    const base = val(0, g.m, depth);
+    let best = null; cs.forEach(c => { const r = val(c.z, c.m, depth); c.v = r.v; c.V = r.V; c.stand = r.stand; if (!best || c.v > best.v + 1e-9 || (Math.abs(c.v - best.v) < 1e-9 && (c.ids.length < best.ids.length || (c.ids.length === best.ids.length && c.stand > best.stand)))) best = c; });
+    const last = left <= 0, ok = force ? best.v >= base.v - 1e-9 : last ? best.v > base.v + 1e-9 : best.v >= base.v + 1 - 1e-9;
+    return ok ? best : null;
+  }
+  // pageOf(g): plays the page as the player would (mutating g). With it, a use the structure proposes is tried on
+  // the page itself first and dropped if the page would then make less than without it: the structure reads the
+  // steps of the cascade, not the row a reagent may break.
+  function useTools(g, rnd, mode, only, pageOf) {
+    const t0 = performance.now(); toolStat.n++;
+    const held = TOOLORDER.filter(id => (!only || only.includes(id)) && P.canTool(g, id)); if (g.page === 1) held.forEach(id => { toolStat.held[id] = (toolStat.held[id] || 0) + 1; });
+    let count = true; const go = (id, sp) => { if (P.toolGo(g, id, sp) && count) toolStat.used[id] = (toolStat.used[id] || 0) + 1; };
+    if (mode === 'read' || mode === 'plan') {
+      // what this page and the next make, played on a copy of the round: the next page is dealt from a source of
+      // chance of its own, the same with and without the piece, so the run's own draws are not touched
+      const madeOf = far2 => { const keep = { page: g.page, back: g.back, fore: g.fore, mirrored: g.mirrored, reopened: g.reopened }, s = snap(g); pageOf(g); if (far2 && !g.over && g.page < P.pagesOf(g)) { let sd = 4099 + 31 * g.page; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647; if (P.turn(g, R)) pageOf(g); } const v = g.over ? g.total : P.made(g); back(g, s); Object.assign(g, keep); return v; };
+      for (let k = 0; k < 4 && !g.over; k++) { const c = readTools(g, mode, only, null); if (!c) break;
+        const apply = () => { go(c.first.id, c.first.sp); if (c.ids.length > 1) { const c2 = readTools(g, mode, only, c.ids[1]); if (c2) go(c2.first.id, c2.first.sp); } };
+        if (pageOf) { toolStat.asked = (toolStat.asked || 0) + 1; const tl = performance.now(), far2 = c.ids.includes('mirror'), v0 = madeOf(far2), s = snap(g); count = false; apply(); count = true; const v1 = madeOf(far2); back(g, s); toolStat.look = (toolStat.look || 0) + performance.now() - tl; if (far2) toolStat.look2 = (toolStat.look2 || 0) + performance.now() - tl; if (v1 < v0) { toolStat.veto = (toolStat.veto || 0) + 1; break; } }
+        apply(); }
+    }
+    else held.forEach(id => { if (!P.canTool(g, id)) return; const spots = P.toolSpots(g, id); if (!spots.length) return;
+      if (mode === 'random') { if (rnd() < 1 / Math.max(1, P.pagesOf(g) - g.page + 1)) go(id, spots[Math.floor(rnd() * spots.length)]); return; }
       const c0 = AA.rx.cloneModel(g.m); AA.rx.reopen(c0); let best = null, top = readOf(c0, g.self);
-      spots.forEach(sp => { const t = P.toolTry(g.m, id, sp); if (!t) return; const v = readOf(t, g.self); if (v > top) { top = v; best = sp; } }); if (best) P.toolGo(g, id, best); });
+      spots.forEach(sp => { const t = P.toolTry(g.m, id, sp); if (!t) return; const v = readOf(t, g.self); if (v > top) { top = v; best = sp; } }); if (best) go(id, best); });
+    toolStat.ms += performance.now() - t0;
   }
   const ORDER = ['gear', 'reagent', 'level', 'strong', 'bottle'];
   // Coins on the take-one page. coin(run, picks, rnd) answers 'reroll', 'skip', 'bin:<piece>' or nothing, and is asked
@@ -197,10 +252,10 @@
     // off no cascade. It counts what the chain it leaves standing will do on the pages still to come, so it does not
     // wreck its own chain for a few places now. Takes the pick worth most in a build, spends water. (Before the cascade it kept the row whenever
     // it could; that player could not line up a cascade, because the reagents that set one up seldom follow on.)
-    median: { tools: 'best', line: lineQ(lineSearch({ depth: 3, finish: true, bank: true, stand: true })), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
+    median: { tools: 'read', line: lineQ(lineSearch({ depth: 3, finish: true, bank: true, stand: true })), move: planned({ depth: 3, keep: true, finish: true, bank: true }), dry: true, coin: coinPlan(false, 1.2, false), pick: bestPick(false), round: easiest, water: true, twist: true, lastOnly: true },
     // searches the page, may break the row, counts the chain, takes picks that pair, wishes, uses the extinguisher.
     // Weighs the bank against every reaction, plays each way out at a fork, redraws a hand with fewer than two live reagents.
-    planner: { tools: 'best', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
+    planner: { tools: 'plan', line: lineQ(lineSearch({ depth: 3, deep: true, finish: true, bank: true, stand: true })), move: planned({ depth: 3, beam: 2, deep: true, finish: true, bank: true }), redraw: (g, o) => Object.keys(o).length < 2, dry: true, fork: forkPlan, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
     // the planner without the bank and otherwise identical: it may still break a row by taking a reaction that does
     // not follow on. Used for the paired test of the bank
     nobank: { line: lineSearch({ depth: 3, beam: 2, deep: true, finish: true }), move: planned({ depth: 3, beam: 2, deep: true, finish: true }), redraw: (g, o) => (g.cur.path.length >= 2 && !conts(g, o)) || Object.keys(o).length < 2, fork: (g, a) => { const c = forkPlan(g, a, true); return c === BANK ? null : c; }, coin: coinPlan(true, 1.3, true), pick: bestPick(true), round: easiest, water: true, h2: true, twist: true, wish: true, douse: true, lastOnly: true },
@@ -253,9 +308,12 @@
   function playRound(g, run, pol, rnd, log) {
     const ctx = {}, pages = [], cap = Math.max(BIG.cut, 3 * g.m.atoms.length), dec = log && log.dec ? { n: 0, opts: 0, open: 0, one: 0, forced: 0, near: 0, later: 0, bkOff: 0, bkRight: 0, bkOnly: 0, fkOff: 0, fkRight: 0, pg: 0, pgDeep: 0, pgSome: 0 } : null; const cascs = []; let chainMax = 0, steps = 0, cut = 0, atoms = g.m.atoms.length, forks = 0, idle = 0;
     const big = () => { atoms = Math.max(atoms, g.m.atoms.length); if (g.m.atoms.length > cap) cut = 1; return cut; };
+    // a player that tries a piece on the page before using it plays the same page more than once: its line for a
+    // page as it stands is worked out once and kept
+    const memo = pol.tools === 'read' || pol.tools === 'plan' ? new Map() : null, lineOf = (g2, fin) => { if (!memo) return pol.line(g2, fin, rnd); const key = g2.page + '|' + JSON.stringify(g2.tools || {}) + '|' + g2.kinds.join(',') + '|' + JSON.stringify(g2.left) + '|' + g2.pageSteps + '|' + (g2.casc || 0) + '|' + g2.m.atoms.length; if (!memo.has(key)) memo.set(key, pol.line(g2, fin, rnd)); return memo.get(key).slice(); };
     for (;;) {
       ctx.plan = null;
-      if (pol.tools && P.RULE.five && !g.over) useTools(g, rnd, pol.tools);
+      if (pol.tools && P.RULE.five && !g.over) useTools(g, rnd, pol.tools, null, P.RULE.queue && pol.line && memo ? g2 => { const fin = g2.page >= P.pagesOf(g2) ? P.finishOpt(g2) : null; lineOf(g2, fin).forEach(id => P.queueAdd(g2, id === '#finish' ? P.SYN.finish : id)); while (g2.queue.length && !g2.over) P.queueStep(g2); g2.queue = []; } : null);
       // the intern does one reaction of its own on every page after the first
       if (g.page > 1 && g.gear.includes('intern')) { const o = P.options(g, true), ids = Object.keys(o).filter(id => o[id].r.hits > 0); if (ids.length) { P.synTake(g, o[anyOf(ids, rnd)], true); steps++; } }
       if (pol.h2 && g.by.h2 >= P.BY.need) P.spendBy(g, 'h2');
@@ -267,7 +325,7 @@
         const last = g.page >= P.pagesOf(g); let fin = null;
         for (let k = 0; k < 3 && !g.over; k++) { const o = P.options(g); fin = last ? P.finishOpt(g) : null; if (P.canRedraw(g) && ((!Object.keys(o).length && !fin && !P.canBank(g)) || (pol.redraw && pol.redraw(g, o, rnd)))) P.redraw(g, rnd); else break; }
         if (dec && log.deep && !g.over) depthOf(g, dec);
-        let line = g.over ? [] : pol.line(g, fin, rnd);
+        let line = g.over ? [] : lineOf(g, fin);
         // a player that reads the page deals the hand again when the best it found sets off no cascade at all
         if (pol.dry && P.RULE.cascade && !g.over && P.canRedraw(g) && !cascOf(g, line)) { P.redraw(g, rnd); fin = last ? P.finishOpt(g) : null; line = pol.line(g, fin, rnd); }
         line.forEach(id => P.queueAdd(g, id === '#finish' ? P.SYN.finish : id));
@@ -300,7 +358,7 @@
       pages.push(P.made(g));
       P.turn(g, rnd);
     }
-    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
+    if (log) { log.pages = pages; log.chain = chainMax; log.row = g.best; log.steps = steps; log.atoms = atoms; log.cut = cut; log.heavy = P.heavy(g.m); log.banks = g.tally.banks || 0; log.bankAt = g.trail.filter(t => t.bank).map(t => (t.fork ? 'fork' : t.last ? (t.page >= P.pagesOf(g) ? 'end' : 'last') : 'mid') + ':' + t.len).join(' '); log.redraws = g.tally.redraws || 0; log.forks = forks; log.idle = idle; log.wasted = g.tally.wasted || 0; log.casc = cascs.join(' '); log.tools = Object.keys(g.tools || {}).filter(k => g.tools[k]).join(' '); log.left = Object.keys(g.left).reduce((t, k) => t + (g.left[k] > 0 && g.left[k] < 9 ? g.left[k] : 0), 0); if (dec) log.dec = dec; }
     return g.total;
   }
 
@@ -409,5 +467,5 @@
   const simPart = (tag, k, base, opts) => simGo(tag, PARTS[k][0], PARTS[k][1], PARTS[k][2], base + 1000 * k, opts);
   window.simPart = simPart;
   window.runSim = runSim; window.roundSim = roundSim; window.simChunk = simChunk; window.simMols = simMols; window.simGo = simGo; window.simStat = () => stat;
-  window.SIM = { useTools, PLAYERS, WORTH, PAIRS, REAGENT, EASE, search, snap, back, playRound, weigh, after, runChain };
+  window.SIM = { useTools, toolStat, readTools, lineRead, PLAYERS, WORTH, PAIRS, REAGENT, EASE, search, snap, back, playRound, weigh, after, runChain };
 })();
