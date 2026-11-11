@@ -82,3 +82,29 @@ Data in `MATRIX.md`.
 - **Cannot be judged on this data:** monkey's paw, black cat, hand of glory, cursed idol alone, fire extinguisher, the intern, the pay pieces.
 - **Next measurements:** pass rate by round 1 to 9 after the number-to-beat multipliers; a smarter simulated player; hill-climbed best builds and triples around the engines.
 - **Changes proposed:** cap the recycler at two returns a round; seed crystal to an additive bonus capped at four returns; black candle to times 1.5 with a price; pact to times 4 against a number times 3; index cards down and capped; carousel's added reagent always continues the row; timer lets a row of three fire the chain anywhere on the page; coffee loses its penalty; unlabeled bottle's reagent always continues; elixir and hourglass pages count twice; mirror up, sharing the recycler's cap.
+
+## 6. Why pieces do not combine, and the balance method
+
+Two more reviewers worked from the matrix. Their output is in two documents of its own:
+
+- `ENGINES.md`: why sixty pieces make so few combos (each reads one noun and writes one number, and nothing makes a thing another piece spends), eight patterns that fix it, rewrites for 24 pieces, five builds, three rare events and eight pieces to cut.
+- `BALANCE.md`: targets by round, a formula for the number to beat, four simulated players, budgets for content, and the steps of a balance pass.
+
+## What the six agree on
+
+1. **The numbers to beat are broken and nothing else can be judged until they are fixed.** Every reviewer who saw a number said so.
+2. **There are too few decisions.** The best move is nearly always forced, and the preview shows it. The game needs a hand, scarcity and a verb for bad luck.
+3. **Pieces do not combine.** Two thirds of pairs do nothing together. This, not the count of pieces, is why it does not feel wild.
+4. **The peak is not a spectacle yet.** The overreact chain is the clip, and on the page it is a tag and a number.
+5. **Too many screens and too many small labels** between the player and the next reaction.
+
+## Order of work drawn from this
+
+1. The measuring rig: seeded draws, whole-run simulation, four players, logging.
+2. The nine-round run with assays, and the number to beat from the formula.
+3. Decisions: the chain pauses at forks; uses are scarce across the round; a hand with a discard.
+4. Engines, one at a time, with a balance pass after each. Break and Ash first, since they also give by-products and breaks a purpose.
+5. The overreact chain as a spectacle that speeds up and shows on the molecule.
+6. The page: one readout for total, multiplier and number to beat; reagents as objects; the old forty pieces redrawn to the weight of the new twenty; navy ink and yellow pills replaced.
+7. The run economy: reroll, skip, bin, and a sink for credit.
+8. Then seals, familiars, the pact and the rest of `ARC.md`.
