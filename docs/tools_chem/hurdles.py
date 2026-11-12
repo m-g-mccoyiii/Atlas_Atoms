@@ -1,24 +1,31 @@
-"""Hurdles for Overreact rounds: an "at least N" about the molecule or about what happened in the round.
+"""Specs for Overreact rounds: an "at least N" about the molecule or about what happened in the round.
 
-A hurdle is a measured number.  A round is won when value >= N (N is shown at the start of the round).  Nothing caps the
-value: going past N is what the points and the four words reward.  Points are a separate thing (engine.py).
+(The file keeps its old name.  In the game a round asks for "the spec"; docs/NAMES.md.  `HURDLES` is the same dict as `SPECS`.)
 
-  HURDLES            name -> Hurdle, every hurdle that can be checked exactly
-  Hurdle.check(molecule, round_log) -> the measured value (a number)
-  Log                a round as the hurdles read it: the start molecule and, per turn, the line, the chain, what was fired,
-                     what came off, and the molecule at the end of the turn's chain (before the rings open again)
+A spec is a measured number.  A round is won when the value at the end of the round is at least N (N is shown at the start of
+the round).  Nothing caps the value: going past N is what the yield and the four words reward.  Yield is a separate thing
+(engine.py).  See docs/tools_chem/SPECS.md for the kept set and the tests.
+
+  SPECS              name -> Spec, every spec that can be checked exactly (`live` ones are aimed at in the study)
+  Spec.fn(log)       the measured value (a number)
+  Log                a round as the specs read it: the start molecule, the reagents carried and, per turn, the line, the
+                     chain of reflexes, what was fired, the runoff, and the molecule at the end of the turn's chain
   round_log(rr)      a Log from the dict engine.Engine.play_round returns
-  SeekPlayer(h)      plays for the hurdle's value, then points      (what a player who aims at it does)
-  AimPlayer([(h,N)]) plays toward N and then for points             (the competent player the generator is tested with)
-  pick_hurdle(...)   the generator: a hurdle and its N for a dealt molecule
+  Players that play a round (all take the engine's ctx):
+    SeekPlayer(spec)        maximises the spec's value (N not needed), then yield
+    AimPlayer([(spec, N)])  plays toward N for each, then for yield          (the aiming player)
+    NewPlayer(spec, N)      a person learning: sees the spec, the molecule and what each reagent does by itself, but not
+                            what the reflexes will do; picks with noise; looks at nothing ahead of firing
+    MixPlayer(a, b, p)      per turn plays like a with chance p, else like b    (middling and skilled players)
+    engine.PLAYERS['greedy']  the yield-only player
 
-How a structural hurdle reads the molecule (the same for all, so a page can say it in one line):
-  gain  : the best end-of-turn molecule of the round, minus the start molecule (never below 0)
-  loss  : the start molecule minus the smallest end-of-turn molecule
-  abs   : the best end-of-turn molecule of the round
-  last  : the molecule at the end of the last turn
-  range : the largest minus the smallest size seen (start and all end-of-turn molecules)
-The molecule is read at the end of the turn's chain, before the loose rings open again.
+How a structural spec reads the molecule (the same for all, so a page can say it in one line):
+  gain      : the best end-of-turn molecule of the round, minus the start molecule (never below 0)
+  loss      : the start molecule minus the smallest end-of-turn molecule
+  lastgain  : the molecule at the end of the last turn, minus the start molecule (never below 0)
+  lastloss  : the start molecule minus the molecule at the end of the last turn (never below 0)
+The molecule is read at the end of the turn's chain, before the loose rings open again.  No spec reads an absolute value, so a
+molecule that already has a cage or four rings cannot clear a spec on page zero.
 """
 import itertools
 import random
@@ -53,7 +60,7 @@ GROUP_SMARTS = {
     'C=N': _P('[CX3]=[NX2]'),
 }
 GROUPS = list(GROUP_SMARTS)
-SITE7 = ['OH', 'C=O', 'C=C', 'COOH', 'NH2', 'SH', 'Cl']       # the groups the player's reactions work on
+SITE7 = ['OH', 'C=O', 'C=C', 'COOH', 'NH2', 'SH', 'Cl']       # the groups the player's reagents work on
 
 
 def _uf(n):
@@ -99,7 +106,7 @@ def _longest_chain(mol):
 
 @lru_cache(maxsize=400000)
 def feat(smi):
-    """Every structural number any hurdle reads, for one molecule (a canonical SMILES)."""
+    """Every structural number any spec reads, for one molecule (a canonical SMILES)."""
     mol = parse(smi)
     f = {}
     atoms = list(mol.GetAtoms())
@@ -132,6 +139,7 @@ def feat(smi):
     f['aromatic'] = rdMolDescriptors.CalcNumAromaticRings(mol)
     het = lambda r: {mol.GetAtomWithIdx(a).GetAtomicNum() for a in r} - {6}
     f['ring_hetero'] = sum(1 for r in rings if het(r))
+    f['ring_oxygen'] = sum(1 for r in rings if 8 in het(r))
     f['ring_mixed'] = sum(1 for r in rings if len(het(r)) >= 2)
     f['branch'] = sum(1 for a in atoms if a.GetDegree() >= 3)
     f['chain'] = _longest_chain(mol)
@@ -172,18 +180,20 @@ def feat(smi):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# a round as the hurdles read it
+# a round as the specs read it
 # ---------------------------------------------------------------------------------------------------------------
 
 class Log:
     """start: SMILES of the molecule at the start of the round.  turns: list of dicts with keys
-    line, chain (names of the self-reactions in order), fired ((reaction, places), ...), off (jar -> count),
-    set_off (steps set off by each reaction of the line), smi_end (molecule at the end of the chain)."""
-    __slots__ = ('start', 'turns', '_f0', '_pages')
+    line, chain (names of the reflexes in order), fired ((reagent, places), ...), off (runoff -> count),
+    set_off (reflexes started by each reagent of the line), smi_end (molecule at the end of the chain).
+    carried: the reagents the player holds this round."""
+    __slots__ = ('start', 'turns', 'carried', '_f0', '_pages')
 
-    def __init__(self, start, turns):
+    def __init__(self, start, turns, carried=()):
         self.start = start
         self.turns = turns
+        self.carried = tuple(carried)
         self._f0 = None
         self._pages = None
 
@@ -200,36 +210,53 @@ class Log:
         return self._pages
 
     def head(self, k):
-        return Log(self.start, self.turns[:k])
+        return Log(self.start, self.turns[:k], self.carried)
 
 
-def turn_dict(line, t):
+def turn_dict(line, t, smi_end=None):
     """A turn dict from an engine.Turn (what Ctx.evaluate returns for a line)."""
     return {'line': tuple(line), 'chain': tuple(t.steps), 'fired': t.fired, 'off': dict(t.off), 'set_off': t.set_off,
-            'smi_end': t.smi}
+            'smi_end': t.smi if smi_end is None else smi_end}
 
 
 def round_log(rr):
     """A Log from the dict play_round returns."""
     return Log(rr['smi0'], [{'line': t['line'], 'chain': tuple(t['chain']), 'fired': t['fired'], 'off': t['off'],
-                             'set_off': t['set_off'], 'smi_end': t['smi_end']} for t in rr['turns']])
+                             'set_off': t['set_off'], 'smi_end': t['smi_end']} for t in rr['turns']], rr.get('carried', ()))
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# the hurdles
+# the specs
 # ---------------------------------------------------------------------------------------------------------------
 
-class Hurdle:
-    def __init__(self, name, family, text, mark, fn, how, needs=None, kind='event', reading=''):
+class Spec:
+    """One spec.  text: the condition for the page, 'at least {N} ...', at most eight words.  mark: the name of the small drawn
+    icon; icon: one line saying what the icon shows.  plan: the direction of play it pulls in (at most three kept specs per plan).
+    family: the coarse group (tiers, and no family twice running).  plain: 1 reads plainest .. 3.  tops_out: the count cannot
+    grow without limit (room is then measured as twice N).  short: the players may fire fewer than three reagents in a turn.
+    grain: it makes the player give something up."""
+
+    def __init__(self, name, family, plan, text, mark, icon, fn, how, needs=None, kind='event', reading='', tops_out=False,
+                 short=False, grain=False, cap=None, plain=2, live=True, prog=None, cluster=None):
         self.name = name
         self.family = family
-        self.text = text            # the condition in plain words; {N} is the number
-        self.mark = mark            # the name of the mark the page draws
+        self.plan = plan
+        self.text = text
+        self.mark = mark
+        self.icon = icon
         self.fn = fn
-        self.how = how              # how it is checked
-        self.needs = needs          # None, or fn(carried, rules) -> True when the round can reach it at all
-        self.kind = kind            # 'structure' (reads molecules) or 'event' (reads what happened)
-        self.reading = reading      # gain / loss / abs / last / range for a structural one
+        self.how = how
+        self.needs = needs
+        self.kind = kind
+        self.reading = reading
+        self.tops_out = tops_out
+        self.short = short
+        self.grain = grain
+        self.cap = cap                  # fn(f0, rnd) -> the most N may be for this molecule, or None
+        self.plain = plain
+        self.live = live
+        self.prog = prog                # fn(log, N) -> progress in [0, N] for a player; default min(value, N)
+        self.cluster = cluster          # specs with the same cluster count the same thing; at most one of them is kept
 
     def value(self, log):
         return self.fn(log)
@@ -238,38 +265,56 @@ class Hurdle:
         """The measured value.  molecule: SMILES at the start of the round.  round_log_: a Log, or the dict of play_round."""
         lg = round_log_ if isinstance(round_log_, Log) else round_log(round_log_)
         if molecule is not None and canon(molecule) != lg.start and not isinstance(round_log_, Log):
-            lg = Log(canon(molecule), lg.turns)
+            lg = Log(canon(molecule), lg.turns, lg.carried)
         return self.fn(lg)
+
+    def progress(self, log, n):
+        """How far a player is toward N, in [0, 1] (n None: the raw value, for a player who does not know N)."""
+        if self.prog is not None:
+            p = self.prog(log, n if n else 1)
+            return p / n if n else p
+        v = self.fn(log)
+        return min(v, n) / float(n) if n else float(v)
 
     def applicable(self, carried, rules):
         return True if self.needs is None else bool(self.needs(tuple(carried), tuple(rules)))
 
     def condition(self, n):
-        return self.text.format(N=n)
+        """The words for the page with N put in ('at least 1 more kind of group', not '1 more kinds')."""
+        t = self.text.format(N=n)
+        if n == 1:
+            head, tail = t.split('1', 1)
+            for plural, single in SINGULAR:
+                if plural in tail.split():
+                    words = tail.split(' ')
+                    words[words.index(plural)] = single
+                    tail = ' '.join(words)
+                    break
+            t = head + '1' + tail
+        return t
 
     def __repr__(self):
-        return 'Hurdle(%s)' % self.name
+        return 'Spec(%s)' % self.name
 
 
-HURDLES = {}
+SINGULAR = [('rings', 'ring'), ('atoms', 'atom'), ('forks', 'fork'), ('kinds', 'kind'), ('turns', 'turn'), ('reagents', 'reagent'),
+            ('reflexes', 'reflex'), ('bonds', 'bond'), ('mass', 'mass'), ('ring-closing', 'ring-closing')]
+SPECS = {}
+HURDLES = SPECS                 # the old name
 
 
-def _add(name, family, text, mark, fn, how, needs=None, kind='event', reading=''):
-    HURDLES[name] = Hurdle(name, family, text, mark, fn, how, needs, kind, reading)
+def _add(name, family, plan, text, mark, icon, fn, how, **kw):
+    SPECS[name] = Spec(name, family, plan, text, mark, icon, fn, how, **kw)
 
 
-def has(*reactions):
-    return lambda carried, rules: any(r in carried for r in reactions)
+def has(*reagents):
+    return lambda carried, rules: any(r in carried for r in reagents)
 
 
 def rule_on(*names, feeders=()):
     def f(carried, rules):
         return all(n in rules for n in names) and (not feeders or any(r in carried for r in feeders))
     return f
-
-
-def both(a, b):
-    return lambda c, r: a(c, r) and b(c, r)
 
 
 def _struct(key, mode):
@@ -282,10 +327,12 @@ def _struct(key, mode):
             return max(0, max(vals) - f0)
         if mode == 'loss':
             return max(0, f0 - min(vals))
+        if mode == 'lastgain':
+            return max(0, vals[-1] - f0)
+        if mode == 'lastloss':
+            return max(0, f0 - vals[-1])
         if mode == 'abs':
             return max(vals)
-        if mode == 'last':
-            return vals[-1]
         if mode == 'range':
             return max(vals + [f0]) - min(vals + [f0])
         raise ValueError(mode)
@@ -298,275 +345,346 @@ def _struct_group(group, mode):
             return 0
         f0 = log.f0['groups'][group]
         vals = [p['groups'][group] for p in log.pages]
-        return {'last': vals[-1], 'gain': max(0, max(vals) - f0), 'abs': max(vals)}[mode]
+        if mode == 'lastgain':
+            return max(0, vals[-1] - f0)
+        if mode == 'gain':
+            return max(0, max(vals) - f0)
+        raise ValueError(mode)
     return fn
 
 
-def S(name, family, key, mode, text, mark, how, needs=None):
-    _add(name, family, text, mark, _struct(key, mode), how, needs, 'structure', mode)
+def S(name, family, plan, key, mode, text, mark, icon, how, **kw):
+    _add(name, family, plan, text, mark, icon, _struct(key, mode), how, kind='structure', reading=mode, **kw)
 
 
-# --- shape ---------------------------------------------------------------------------------------------------------
-S('rings', 'shape', 'rings', 'gain', 'at least {N} more rings than the molecule starts with', 'ring',
-  'count of the smallest rings (RDKit ring perception) at the end of a turn minus at the start; best turn')
-S('five_rings', 'shape', 'ring5', 'gain', 'at least {N} more rings of five atoms', 'ring5',
-  'rings of exactly 5 atoms, end of a turn minus start; best turn')
-S('six_rings', 'shape', 'ring6', 'gain', 'at least {N} more rings of six atoms', 'ring6',
-  'rings of exactly 6 atoms, end of a turn minus start; best turn')
-S('fused_pairs', 'shape', 'fused_pairs', 'gain', 'at least {N} more pairs of rings that share a side', 'ring_pair',
-  'pairs of rings with 2 or more atoms in common, end of a turn minus start; best turn')
-S('fused_block', 'shape', 'fused_block', 'gain', 'a joined block of rings {N} bigger than the biggest at the start', 'ladder',
-  'most rings in one group where rings are joined if they share a side (2+ atoms), end of a turn minus start; best turn')
-S('ring_systems', 'shape', 'ring_systems', 'gain', 'at least {N} more separate groups of rings', 'islands',
+def E_(name, family, plan, text, mark, icon, fn, how, **kw):
+    _add(name, family, plan, text, mark, icon, fn, how, kind='event', **kw)
+
+
+# --- rings -----------------------------------------------------------------------------------------------------------
+S('rings', 'shape', 'rings', 'rings', 'gain', 'at least {N} more rings', 'ring',
+  'a ring outline for each ring made', 'count of the smallest rings (RDKit ring perception) at the end of a turn minus at the start; best turn',
+  plain=1)
+S('five_rings', 'shape', 'rings', 'ring5', 'gain', 'at least {N} more five-atom rings', 'ring5',
+  'a ring drawn with five dots', 'rings of exactly 5 atoms, end of a turn minus start; best turn', plain=1)
+S('six_rings', 'shape', 'rings', 'ring6', 'gain', 'at least {N} more six-atom rings', 'ring6',
+  'a ring drawn with six dots', 'rings of exactly 6 atoms, end of a turn minus start; best turn', plain=1)
+S('fused_pairs', 'shape', 'rings', 'fused_pairs', 'gain', 'at least {N} more rings sharing a side', 'ring_pair',
+  'two rings drawn with one side in common', 'pairs of rings with 2 or more atoms in common, end of a turn minus start; best turn')
+S('fused_block', 'shape', 'rings', 'fused_block', 'gain', 'at least {N} more rings fused together', 'ladder',
+  'three rings in a row, each sharing a side with the next',
+  'most rings in one group where rings are joined if they share a side (2+ atoms), end of a turn minus start; best turn',
+  grain=True, plain=2)
+S('ring_systems', 'shape', 'rings', 'ring_systems', 'gain', 'at least {N} more separate ring groups', 'islands',
+  'ring clusters drawn apart from each other',
   'groups of rings that touch at no atom (rings joined if they share any atom), end of a turn minus start; best turn')
-S('spiro', 'shape', 'spiro', 'gain', 'at least {N} more atoms where two rings meet at a single point', 'spiro',
-  'atoms shared by exactly two rings that share only that atom (RDKit CalcNumSpiroAtoms), minus start; best turn')
-S('bridgehead', 'shape', 'bridgehead', 'gain', 'at least {N} more bridgehead atoms (a cage)', 'cage',
-  'atoms at the ends of a bridge between two rings (RDKit CalcNumBridgeheadAtoms), minus start; best turn')
-S('small_rings', 'shape', 'ring_small', 'gain', 'at least {N} more rings of three or four atoms', 'ring3',
-  'rings of 3 or 4 atoms, minus start; best turn')
-S('big_rings', 'shape', 'ring_big', 'gain', 'at least {N} more rings of seven or more atoms', 'ring7',
-  'rings of 7 or more atoms, minus start; best turn')
-S('aromatic', 'shape', 'aromatic', 'gain', 'at least {N} more benzene-type rings', 'benzene',
-  'aromatic rings (RDKit CalcNumAromaticRings), minus start; best turn')
-S('ring_hetero', 'shape', 'ring_hetero', 'gain', 'at least {N} more rings with an oxygen, nitrogen or sulfur in them', 'ring_o',
-  'rings with at least one atom that is not carbon, minus start; best turn')
-S('ring_mixed', 'shape', 'ring_mixed', 'gain', 'at least {N} more rings holding two different odd atoms', 'ring_on',
-  'rings with at least two different non-carbon elements, minus start; best turn',
-  has('amination', 'thiolene', 'chlorination', 'jones'))
-S('ring_atoms', 'shape', 'ring_atoms', 'gain', 'at least {N} more atoms inside rings', 'ring_fill',
-  'atoms that are in at least one ring, minus start; best turn')
-S('ring_sizes', 'shape', 'ring_sizes', 'gain', 'at least {N} more different ring sizes', 'ring_sizes',
-  'number of different ring sizes present, minus start; best turn')
-# --- size ----------------------------------------------------------------------------------------------------------
-S('longest_chain', 'size', 'chain', 'gain', 'a chain of carbons {N} longer than the longest at the start', 'ladder_chain',
-  'atoms on the longest path through carbons that are not in rings, minus start; best turn')
-S('diameter', 'size', 'diameter', 'gain', 'the molecule {N} bonds longer end to end', 'span',
-  'largest number of bonds between any two atoms, minus start; best turn')
-S('branch', 'size', 'branch', 'gain', 'at least {N} more branch points', 'fork',
-  'atoms with 3 or more heavy neighbours, minus start; best turn')
-S('growth', 'size', 'atoms', 'gain', 'at least {N} atoms bigger than the start', 'grow',
-  'heavy atoms at the end of a turn minus heavy atoms at the start; best turn')
-S('cut_down', 'size', 'atoms', 'loss', 'at least {N} atoms smaller than the start', 'cut',
-  'heavy atoms at the start minus the fewest at the end of any turn')
-S('size_range', 'size', 'atoms', 'range', 'swing the size by at least {N} atoms between the smallest and the biggest', 'swing',
-  'largest minus smallest heavy-atom count over the start and every end of turn')
-S('weight', 'size', 'weight', 'gain', 'at least {N} mass units heavier than the start', 'weight',
-  'molecular weight at the end of a turn minus at the start; best turn')
-# --- makeup --------------------------------------------------------------------------------------------------------
-S('kinds_at_once', 'makeup', 'kinds', 'abs', 'at least {N} different kinds of group on the molecule at once', 'groups',
-  'number of the 12 group kinds (OH, C=O, C=C, COOH, NH2, SH, Cl, ester, ether, amide, S-S, C=N) present, end of a turn; best turn')
-for _g, _lab in (('OH', 'OH'), ('C=O', 'C=O'), ('C=C', 'C=C')):
-    _add('left_' + _g.replace('=', ''), 'makeup', 'at least {N} ' + _lab + ' groups still standing at the end', 'keep_' + _lab,
-         _struct_group(_g, 'last'), 'count of the group on the molecule at the end of the last turn', None, 'structure', 'last')
-S('conjugated', 'makeup', 'conj', 'gain', 'a run of alternating bonds {N} atoms longer than at the start', 'conjugated',
-  'atoms in the biggest connected set of conjugated bonds (RDKit), minus start; best turn')
-S('double_bonds', 'makeup', 'dbl', 'gain', 'at least {N} more double bonds (C=C and C=O)', 'double',
-  'C=C plus C=O double bonds (an aromatic ring counts 3), minus start; best turn')
-S('unsaturation', 'makeup', 'unsat', 'gain', 'at least {N} more rings and double bonds together', 'unsat',
+S('spiro', 'shape', 'rings', 'spiro', 'gain', 'at least {N} more rings sharing one atom', 'figure_eight',
+  'two rings touching at a single dot, like a figure eight',
+  'atoms shared by exactly two rings that share only that atom (RDKit CalcNumSpiroAtoms), minus start; best turn', plain=2)
+S('ring_oxygen', 'shape', 'rings', 'ring_oxygen', 'gain', 'at least {N} more rings holding oxygen', 'ring_o',
+  'a ring with a red O in its outline', 'rings with at least one oxygen atom, minus start; best turn', plain=1)
+S('ring_atoms', 'shape', 'rings', 'ring_atoms', 'gain', 'at least {N} more atoms in rings', 'ring_fill',
+  'ring outlines with the atoms inside filled in', 'atoms that are in at least one ring, minus start; best turn',
+  cap=lambda f0, rnd: f0['atoms'])
+# --- size ------------------------------------------------------------------------------------------------------------
+S('growth', 'size', 'big', 'atoms', 'gain', 'at least {N} atoms bigger than the start', 'grow',
+  'the start molecule with a larger one drawn after it',
+  'heavy atoms at the end of a turn minus heavy atoms at the start; best turn; N is at most the start size and the total at most 56',
+  cap=lambda f0, rnd: max(1, min(E.MAX_HEAVY - f0['atoms'], f0['atoms'])), plain=1)
+S('branch', 'size', 'big', 'branch', 'gain', 'at least {N} more forks in the molecule', 'fork',
+  'a tree that splits', 'atoms with 3 or more heavy neighbours, minus start; best turn')
+S('longest_chain', 'size', 'big', 'chain', 'gain', 'at least {N} longer chain than the start', 'ladder_chain',
+  'a straight zigzag with a ruler along it', 'atoms on the longest path through carbons that are not in rings, minus start; best turn')
+S('cut_down', 'size', 'small', 'atoms', 'loss', 'at least {N} atoms smaller than the start', 'cut',
+  'the start molecule with a ghost outline of the atoms that went',
+  'heavy atoms at the start minus the fewest at the end of any turn; N is at most half the start size',
+  grain=True, cap=lambda f0, rnd: max(1, f0['atoms'] // 2), plain=1)
+S('finish_smaller', 'size', 'small', 'atoms', 'lastloss', 'at least {N} atoms smaller at the finish', 'cut_end',
+  'the start molecule and a smaller one at the end of an arrow',
+  'heavy atoms at the start minus heavy atoms after the last turn; N is at most half the start size',
+  grain=True, cap=lambda f0, rnd: max(1, f0['atoms'] // 2), plain=1)
+
+
+def _lean(log):
+    prev = log.f0['atoms']
+    n = 0
+    for p in log.pages:
+        if p['atoms'] < prev:
+            n += 1
+        prev = p['atoms']
+    return n
+
+
+E_('lean_turns', 'size', 'small', 'at least {N} turns ending smaller', 'lean',
+   'three small boxes, each with a down arrow when the molecule got smaller', _lean,
+   'turns whose end-of-turn heavy atoms are fewer than at the end of the turn before (the start for turn 1)', grain=True,
+   tops_out=True, plain=1)
+# --- makeup ------------------------------------------------------------------------------------------------------------
+S('kinds_gain', 'makeup', 'kinds', 'kinds', 'gain', 'at least {N} more kinds of group', 'groups',
+  'coloured tiles, one for each kind of group on the molecule',
+  'number of the 12 group kinds (OH, C=O, C=C, COOH, NH2, SH, Cl, ester, ether, amide, S-S, C=N) present, end of a turn minus start; best turn',
+  tops_out=True)
+S('hetero_atoms', 'makeup', 'kinds', 'hetero', 'gain', 'at least {N} more non-carbon atoms', 'hetero',
+  'the red and blue atoms circled', 'atoms other than carbon, minus start; best turn', plain=1)
+S('double_bonds', 'makeup', 'bonds', 'dbl', 'gain', 'at least {N} more double bonds', 'double',
+  'double lines, one for each double bond', 'C=C plus C=O double bonds (an aromatic ring counts 3), minus start; best turn', plain=1)
+S('conjugated', 'makeup', 'bonds', 'conj', 'gain', 'at least {N} more atoms in alternating bonds', 'conjugated',
+  'a zigzag of single and double lines lit up end to end',
+  'atoms in the biggest connected set of conjugated bonds (RDKit), minus start; best turn', plain=3)
+S('unsaturation', 'makeup', 'bonds', 'unsat', 'gain', 'at least {N} more rings and double bonds', 'unsat',
+  'ring outlines and double lines counted together',
   'rings plus double bonds (an aromatic ring counts 1 ring and 3 bonds), minus start; best turn')
-S('mirror', 'makeup', 'mirror', 'gain', 'at least {N} more atoms that have a twin elsewhere', 'mirror',
-  'atoms minus the number of distinct atom classes (RDKit canonical ranks with ties kept), minus start; best turn')
-S('stereo', 'makeup', 'stereo', 'gain', 'at least {N} more handed centres', 'hand',
-  'atoms that could be handed (RDKit FindMolChiralCenters with unassigned), minus start; best turn')
-S('hetero_atoms', 'makeup', 'hetero', 'gain', 'at least {N} more atoms that are not carbon', 'hetero',
-  'atoms other than carbon, minus start; best turn')
-S('elements', 'makeup', 'elements', 'gain', 'at least {N} more different elements besides carbon', 'elements',
-  'distinct elements other than carbon, minus start; best turn', has('amination', 'thiolene', 'chlorination', 'hofmann'))
+for _g, _lab in (('OH', 'OH'), ('C=O', 'C=O'), ('C=C', 'C=C')):
+    _add('end_' + _g.replace('=', ''), 'makeup', 'keep', 'at least {N} more ' + _lab + ' at the finish', 'keep_' + _lab,
+         'the group drawn in a box that stays lit to the end of the round',
+         _struct_group(_g, 'lastgain'), 'count of the group on the molecule after the last turn minus the count at the start',
+         kind='structure', reading='lastgain', grain=True, plain=2)
 
 
-def _burn(log):
+def _fewer_groups(log):
     if not log.turns:
         return 0
     return max(0, log.f0['sites'] - log.pages[-1]['sites'])
 
 
-_add('burn_down', 'makeup', 'at least {N} fewer reactive groups at the end than at the start', 'burn', _burn,
-     'count of OH, C=O, C=C, COOH, NH2, SH, Cl on the molecule at the start minus at the end of the last turn', None,
-     'structure', 'lastloss')
+_add('fewer_groups', 'makeup', 'keep', 'at least {N} fewer groups at the finish', 'burn',
+     'a row of group tiles, some crossed out', _fewer_groups,
+     'count of OH, C=O, C=C, COOH, NH2, SH, Cl on the molecule at the start minus after the last turn', kind='structure',
+     reading='lastloss', grain=True)
+
+# --- the molecule's own reflexes -----------------------------------------------------------------------------------------
+_STEPS = lambda log: [len(t['chain']) for t in log.turns]
 
 
-def _passing(log):
-    if not log.turns:
-        return 0
-    p0 = log.f0['present']
-    seen = set().union(*[p['present'] for p in log.pages])
-    return len([g for g in SITE7 if g not in p0 and g in seen and g not in log.pages[-1]['present']])
-
-
-_add('passing_through', 'makeup', 'at least {N} kinds of group made during the round and gone by the end', 'passing', _passing,
-     'groups (of the 7 reactive kinds) absent at the start, present at the end of some turn, absent at the end of the last turn',
-     None, 'structure', 'special')
-
-
-# --- what the molecule did by itself ------------------------------------------------------------------------------
-def _steps(log):
-    return [len(t['chain']) for t in log.turns]
-
-
-def E_(name, family, text, mark, fn, how, needs=None):
-    _add(name, family, text, mark, fn, how, needs, 'event')
-
-
-E_('busy', 'chain', 'at least {N} steps by itself over the round', 'steps',
-   lambda lg: sum(_steps(lg)), 'sum over the turns of the length of the chain')
-E_('long_chain', 'chain', 'a chain of at least {N} steps in one turn', 'ladder_steps',
-   lambda lg: max(_steps(lg) or [0]), 'longest chain of any turn')
-E_('every_turn', 'chain', 'at least {N} steps in every turn', 'steady',
-   lambda lg: min(_steps(lg) or [0]) if len(lg.turns) >= 1 else 0, 'shortest chain of the turns played')
-E_('finish_strong', 'chain', 'at least {N} steps in the last turn alone', 'finish',
-   lambda lg: _steps(lg)[2] if len(lg.turns) >= 3 else 0, 'length of the chain of turn 3')
-E_('opener', 'chain', 'the first reaction of a turn sets off at least {N} steps', 'first',
-   lambda lg: max([t['set_off'][0] for t in lg.turns if t['set_off']] or [0]), 'largest steps set off by the first reaction of a line')
-E_('closer', 'chain', 'the third reaction of a turn sets off at least {N} steps', 'third',
-   lambda lg: max([t['set_off'][2] for t in lg.turns if len(t['set_off']) >= 3] or [0]), 'largest steps set off by the third reaction of a line')
-E_('kinds_in_turn', 'chain', 'at least {N} different self-reactions in one turn', 'kinds_turn',
-   lambda lg: max([len(set(t['chain'])) for t in lg.turns] or [0]), 'most distinct self-reaction names in one chain')
-E_('kinds_in_round', 'chain', 'at least {N} different self-reactions over the round', 'kinds_round',
-   lambda lg: len({c for t in lg.turns for c in t['chain']}), 'distinct self-reaction names over all chains')
-
-
-def _loops(log):
-    n = 0
-    for t in log.turns:
-        last = {}
-        for i, c in enumerate(t['chain']):
-            if c in last and any(x != c for x in t['chain'][last[c] + 1:i]):
-                n += 1
-            last[c] = i
-    return n
-
-
-E_('loop', 'chain', 'a kind comes round again after another kind at least {N} times', 'loop', _loops,
-   'times a self-reaction fires again with a different one between, summed over the turns')
-E_('pile_on', 'chain', 'one self-reaction fires at least {N} times in one turn', 'pile',
-   lambda lg: max([max(Counter(t['chain']).values()) for t in lg.turns if t['chain']] or [0]),
-   'largest count of one name in one chain')
-E_('all_three_feed', 'chain', 'at least {N} turns where each of the three reactions sets something off', 'three_feed',
-   lambda lg: sum(1 for t in lg.turns if len(t['set_off']) == 3 and min(t['set_off']) >= 1),
-   'turns whose three set_off numbers are all 1 or more')
-E_('no_dead_reaction', 'restraint', 'at least {N} turns where all three reactions found something to act on', 'no_dead',
-   lambda lg: sum(1 for t in lg.turns if len(t['fired']) == 3 and all(p > 0 for _, p in t['fired'])),
-   'turns where all three fired reactions acted')
-E_('crescendo', 'chain', 'each turn longer than the one before, {N} times', 'crescendo',
-   lambda lg: sum(1 for a, b in zip(_steps(lg), _steps(lg)[1:]) if b > a), 'count of turns whose chain is longer than the turn before')
-E_('distinct_triggers', 'chain', 'at least {N} different reactions that set something off', 'trigger',
+E_('opener', 'chain', 'chains', 'at least {N} reflexes after the first reagent', 'first',
+   'a lit bolt after the first of three bottles',
+   lambda lg: max([t['set_off'][0] for t in lg.turns if t['set_off']] or [0]),
+   'largest number of reflexes started by the first reagent of a line, over the turns', plain=2)
+E_('closer', 'chain', 'chains', 'at least {N} reflexes after the last reagent', 'third',
+   'a lit bolt after the third of three bottles',
+   lambda lg: max([t['set_off'][2] for t in lg.turns if len(t['set_off']) >= 3] or [0]),
+   'largest number of reflexes started by the third reagent of a line, over the turns', plain=2)
+E_('distinct_triggers', 'chain', 'chains', 'at least {N} reagents that start a reflex', 'trigger',
+   'bottles with a spark above them',
    lambda lg: len({n for t in lg.turns for (n, _), s in zip(t['fired'], t['set_off']) if s > 0}),
-   'distinct reactions of the line with set_off 1 or more')
-
-_NEEDS_RULE = {'strip': has('chlorination'), 'knit': has('amination'), 'pop': has('jones'), 'seal': has('jones'),
-               'pair': has('thiolene')}
-for _r in library.SELF_ORDER:
-    _nd = _NEEDS_RULE.get(_r)
-    E_('kind_' + _r, 'chain', 'at least {N} steps of ' + _r + ' over the round', 'self_' + _r,
-       (lambda r: lambda lg: sum(t['chain'].count(r) for t in lg.turns))(_r),
-       'count of ' + _r + ' in the chains',
-       (lambda r, nd: lambda c, rules: r in rules and (nd is None or nd(c, rules)))(_r, _nd))
-
-E_('rare_close', 'chain', 'at least {N} rings closed through nitrogen, sulfur or an acid', 'ring_rare',
-   lambda lg: sum(t['chain'].count(x) for t in lg.turns for x in ('knit', 'seal', 'pair')),
-   'count of knit, seal and pair steps', lambda c, r: any(x in r for x in ('knit', 'seal', 'pair')) and has('amination', 'jones', 'thiolene')(c, r))
+   'distinct reagents of the lines whose set_off is 1 or more', tops_out=True)
+E_('kind_ring', 'chain', 'chains', 'at least {N} ring-closing reflexes', 'self_ring',
+   'a chain being closed into a ring', lambda lg: sum(t['chain'].count('ring') for t in lg.turns),
+   'count of the ring reflex in the chains', needs=lambda c, r: 'ring' in r, plain=1)
 
 
-def _order(a, b):
-    def fn(log):
-        n = 0
-        for t in log.turns:
+def _after(name):
+    """Reflexes that came after the first `name` reflex of a turn (the most in one turn)."""
+    def fn(lg):
+        best = 0
+        for t in lg.turns:
             ch = t['chain']
-            ia = [i for i, c in enumerate(ch) if c == a]
-            ib = [i for i, c in enumerate(ch) if c == b]
-            if ia and ib and min(ia) < max(ib):
-                n += 1
-        return n
+            if name in ch:
+                best = max(best, len(ch) - 1 - ch.index(name))
+        return best
     return fn
 
 
-for _a, _b in (('ring', 'dry'), ('dry', 'tuck'), ('weld', 'dry')):
-    E_('order_%s_%s' % (_a, _b), 'chain', 'at least {N} turns where ' + _a + ' comes before ' + _b, 'order_%s_%s' % (_a, _b),
-       _order(_a, _b), 'turns whose chain has ' + _a + ' somewhere before a later ' + _b,
-       rule_on(_a, _b))
+E_('through_ring', 'chain', 'chains', 'at least {N} reflexes after a ring closes', 'after_ring',
+   'a chain of lit links that carries on past a ring', _after('ring'),
+   'most reflexes after the first ring reflex of one turn', needs=lambda c, r: 'ring' in r, grain=True)
+E_('through_dry', 'chain', 'chains', 'at least {N} reflexes after a dry reflex', 'after_dry',
+   'a chain of lit links that carries on past a water drop', _after('dry'),
+   'most reflexes after the first dry reflex of one turn', needs=lambda c, r: 'dry' in r, grain=True)
 
-# --- what came off -------------------------------------------------------------------------------------------------
+
+# --- timing --------------------------------------------------------------------------------------------------------------
+def _quiet_loud(log):
+    if len(log.turns) < 3:
+        return 0
+    s = _STEPS(log)
+    return s[2] if s[0] <= 1 and s[1] <= 1 else 0
+
+
+def _quiet_loud_prog(log, n):
+    s = _STEPS(log)
+    if len(s) < 3:
+        return 0.9 * n if all(x <= 1 for x in s) else 0.0
+    return min(n, _quiet_loud(log))
+
+
+E_('quiet_then_loud', 'timing', 'late', 'at least {N} reflexes after two quiet turns', 'quiet_loud',
+   'two flat turns and then a tall bar', _quiet_loud,
+   'reflexes in turn 3, counted only when turns 1 and 2 each had at most 1 reflex', prog=_quiet_loud_prog, grain=True, plain=2)
+E_('opening_burst', 'timing', 'late', 'at least {N} reflexes in the first turn', 'burst',
+   'a tall bar in the first of three turns', lambda lg: len(lg.turns[0]['chain']) if lg.turns else 0,
+   'reflexes in turn 1', plain=1)
+SPECS['by_two_rings'] = Spec('by_two_rings', 'timing', 'rings', 'at least {N} more rings after two turns', 'deadline_ring',
+                             'a ring outline with a clock showing two of three turns',
+                             lambda lg: SPECS['rings'].fn(lg.head(2)),
+                             'the rings spec counted over turns 1 and 2 only', kind='structure', reading='gain', plain=1)
+
+# --- runoff --------------------------------------------------------------------------------------------------------------
+GAS_JARS = ('hydrogen', 'carbon dioxide', 'acid fumes', 'trimethylamine')
+
+
 def _offsum(log, jar=None):
     return sum(v for t in log.turns for k, v in t['off'].items() if jar is None or k == jar)
 
 
-E_('off_total', 'off', 'at least {N} things driven off over the round', 'off_all', lambda lg: _offsum(lg),
-   'sum of everything that came off, over the turns')
-for _jar, _need in (('water', None), ('hydrogen', has('oxidize')), ('carbon dioxide', has('oxidize', 'decarboxylation', 'jones')),
-                    ('acid fumes', has('chlorination', 'williamson')), ('sulfur', has('raney')),
-                    ('trimethylamine', has('hofmann'))):
-    E_('off_' + _jar.replace(' ', '_'), 'off', 'at least {N} ' + _jar + ' driven off', 'jar_' + _jar.replace(' ', '_'),
-       (lambda j: lambda lg: _offsum(lg, j))(_jar), 'amount of ' + _jar + ' that came off, over the turns', _need)
-E_('many_jars', 'off', 'at least {N} different things driven off', 'jars',
-   lambda lg: len({k for t in lg.turns for k, v in t['off'].items() if v > 0}), 'distinct jars with something in them')
-E_('big_puff', 'off', 'at least {N} things driven off in one turn', 'puff',
-   lambda lg: max([sum(t['off'].values()) for t in lg.turns] or [0]), 'largest sum of everything off in one turn')
-
-# --- restraint and variety ------------------------------------------------------------------------------------------
-E_('variety', 'restraint', 'at least {N} different reactions used over the round', 'variety',
-   lambda lg: len({n for t in lg.turns for n, _ in t['fired']}), 'distinct reaction names in the lines of the round')
-E_('repeats', 'restraint', 'at least {N} reactions used again that were already used this round', 'repeat',
-   lambda lg: sum(len(t['fired']) for t in lg.turns) - len({n for t in lg.turns for n, _ in t['fired']}),
-   'reactions fired minus distinct reactions fired')
-E_('acted_total', 'restraint', 'at least {N} of the reactions fired found something to act on', 'acted',
-   lambda lg: sum(1 for t in lg.turns for _, p in t['fired'] if p > 0), 'fired reactions that acted at least once')
-E_('distinct_acted', 'restraint', 'at least {N} different reactions that found something to act on', 'acted_kinds',
-   lambda lg: len({n for t in lg.turns for n, p in t['fired'] if p > 0}), 'distinct reactions that acted')
-E_('places', 'restraint', 'reactions that act at least {N} places in all', 'places',
-   lambda lg: sum(p for t in lg.turns for _, p in t['fired']), 'sum of places each fired reaction acted at')
-E_('same_line', 'restraint', 'the same line of three fired on at least {N} turns', 'same_line',
-   lambda lg: max(Counter(t['line'] for t in lg.turns if len(t['line']) == 3).values() or [0]) if lg.turns and any(len(t['line']) == 3 for t in lg.turns) else 0,
-   'largest number of turns that fired the identical ordered line')
-
-# --- by a deadline (a hurdle that must be met by the end of turn two) ---------------------------------------------------
-for _b in ('busy', 'rings', 'off_total'):
-    _base = HURDLES[_b]
-    _add('by_two_' + _b, 'timing', _base.text + ', by the end of the second turn', 'deadline_' + _base.mark,
-         (lambda base: lambda lg: base.fn(lg.head(2)))(_base), _base.how + ' (only turns 1 and 2 count)', _base.needs,
-         _base.kind, _base.reading)
+E_('off_total', 'runoff', 'vent', 'at least {N} runoff over the round', 'off_all',
+   'jars filling with drops and bubbles', lambda lg: _offsum(lg), 'sum of everything that came off, over the turns', plain=1)
+for _jar, _need in (('water', None), ('hydrogen', has('oxidize')),
+                    ('carbon dioxide', has('oxidize', 'decarboxylation', 'jones'))):
+    E_('off_' + _jar.replace(' ', '_'), 'runoff', 'vent', 'at least {N} ' + _jar + ' in the runoff', 'jar_' + _jar.replace(' ', '_'),
+       'a jar of ' + _jar, (lambda j: lambda lg: _offsum(lg, j))(_jar), 'amount of ' + _jar + ' that came off, over the turns',
+       needs=_need, plain=1)
+E_('many_jars', 'runoff', 'vent', 'at least {N} kinds of runoff', 'jars',
+   'several different jars side by side', lambda lg: len({k for t in lg.turns for k, v in t['off'].items() if v > 0}),
+   'distinct runoff kinds with something in them', tops_out=True, plain=1)
+E_('big_puff', 'runoff', 'vent', 'at least {N} runoff in one turn', 'puff',
+   'one big cloud over a single turn', lambda lg: max([sum(t['off'].values()) for t in lg.turns] or [0]),
+   'largest sum of everything off in one turn', plain=1)
+E_('pure_water', 'runoff', 'pure', 'at least {N} more water than other runoff', 'water_only',
+   'a full water jar beside empty ones',
+   lambda lg: max(0, _offsum(lg, 'water') - (_offsum(lg) - _offsum(lg, 'water'))),
+   'water that came off minus everything else that came off, over the turns', grain=True)
+E_('pure_gas', 'runoff', 'pure', 'at least {N} more gas than water', 'gas_only',
+   'bubbles rising from a jar with no water in it',
+   lambda lg: max(0, sum(_offsum(lg, j) for j in GAS_JARS) - _offsum(lg, 'water')),
+   'hydrogen, carbon dioxide, acid fumes and trimethylamine that came off minus water, over the turns', grain=True,
+   needs=has('oxidize', 'decarboxylation', 'jones', 'chlorination', 'williamson', 'hofmann'))
 
 
-def all_hurdles():
-    return list(HURDLES.values())
+# --- restraint -----------------------------------------------------------------------------------------------------------
+def _unused(log):
+    if not log.turns:
+        return 0
+    used = {r for t in log.turns for r in t['line']}
+    return max(0, len(set(log.carried)) - len(used))
+
+
+E_('unused_reagents', 'restraint', 'restraint', 'at least {N} reagents left unused', 'shelf',
+   'bottles still full on the shelf at the end', _unused, 'carried reagents never fired in the round', grain=True, tops_out=True,
+   plain=1)
+E_('clean_turns', 'restraint', 'restraint', 'at least {N} turns with no wasted reagent', 'clean',
+   'three bottles, each with a tick, for a turn where all three worked',
+   lambda lg: sum(1 for t in lg.turns if len(t['fired']) == 3 and all(p > 0 for _, p in t['fired'])),
+   'turns where all three fired reagents found something to change', tops_out=True, plain=1)
+E_('held_back', 'restraint', 'restraint', 'at least {N} turns firing fewer than three', 'held',
+   'a turn with one empty slot', lambda lg: sum(1 for t in lg.turns if 0 < len(t['line']) < 3),
+   'turns in which fewer than three reagents were fired', short=True, grain=True, tops_out=True, plain=1)
+
+# --- measured and dropped without a player aimed at them (kept here so their values can be compared and tested) -------------
+
+def _drop(name, family, plan, text, mark, icon, fn, how, **kw):
+    E_(name, family, plan, text, mark, icon, fn, how, live=False, **kw)
+
+
+S('size_range', 'size', 'big', 'atoms', 'range', 'at least {N} atoms of size swing', 'swing', 'a molecule that grows and shrinks',
+  'largest minus smallest heavy-atom count over the start and every end of turn', live=False)
+S('diameter', 'size', 'big', 'diameter', 'gain', 'at least {N} bonds longer end to end', 'span', 'a ruler from end to end',
+  'largest number of bonds between any two atoms, minus start; best turn', live=False)
+S('ring_sizes', 'shape', 'rings', 'ring_sizes', 'gain', 'at least {N} more different ring sizes', 'ring_sizes', 'rings of different sizes',
+  'number of different ring sizes present, minus start; best turn', live=False)
+S('elements', 'makeup', 'kinds', 'elements', 'gain', 'at least {N} more different elements besides carbon', 'elements',
+  'element tiles', 'distinct elements other than carbon, minus start; best turn', live=False,
+  needs=has('amination', 'thiolene', 'chlorination', 'hofmann'))
+_drop('kinds_in_turn', 'chain', 'chains', 'at least {N} different reflexes in one turn', 'kinds_turn', 'reflex tiles',
+      lambda lg: max([len(set(t['chain'])) for t in lg.turns] or [0]), 'most distinct reflex names in one chain')
+_drop('acted_total', 'restraint', 'restraint', 'at least {N} reagents that found something', 'acted', 'ticks',
+      lambda lg: sum(1 for t in lg.turns for _, p in t['fired'] if p > 0), 'fired reagents that acted at least once')
+_drop('distinct_acted', 'restraint', 'restraint', 'at least {N} different reagents that found something', 'acted_kinds', 'ticks',
+      lambda lg: len({n for t in lg.turns for n, p in t['fired'] if p > 0}), 'distinct reagents that acted')
+_drop('by_two_off_total', 'timing', 'vent', 'at least {N} runoff after two turns', 'deadline_off', 'jar and clock',
+      lambda lg: _offsum(lg.head(2)), 'the runoff spec counted over turns 1 and 2 only')
+_drop('busy', 'chain', 'chains', 'at least {N} reflexes over the round', 'steps', 'bolts',
+      lambda lg: sum(_STEPS(lg)), 'sum over the turns of the length of the chain')
+_drop('finish_strong', 'chain', 'chains', 'at least {N} reflexes in the last turn', 'finish', 'bar',
+      lambda lg: _STEPS(lg)[2] if len(lg.turns) >= 3 else 0, 'length of the chain of turn 3')
+_drop('kind_dry', 'chain', 'chains', 'at least {N} dry reflexes', 'self_dry', 'drops',
+      lambda lg: sum(t['chain'].count('dry') for t in lg.turns), 'count of the dry reflex in the chains')
+S('weight', 'size', 'big', 'weight', 'gain', 'at least {N} mass units over the start', 'weight', 'scale',
+  'molecular weight, minus start; best turn', live=False)
+S('bridgehead', 'shape', 'rings', 'bridgehead', 'gain', 'at least {N} more cage corner atoms', 'cage', 'a cage',
+  'atoms at the ends of a bridge between two rings (RDKit), minus start; best turn', live=False)
+S('mirror', 'makeup', 'kinds', 'mirror', 'gain', 'at least {N} more atoms with a twin', 'mirror', 'twins',
+  'atoms minus the number of distinct atom classes, minus start; best turn', live=False)
+S('stereo', 'makeup', 'kinds', 'stereo', 'gain', 'at least {N} more handed centres', 'hand', 'hands',
+  'atoms that could be handed, minus start; best turn', live=False)
+
+# specs that count the same thing in a different dress: at most one of each cluster is kept
+for _n in ('rings', 'five_rings', 'six_rings', 'ring_atoms', 'by_two_rings'):
+    SPECS[_n].cluster = 'ring count'
+for _n in ('fused_pairs', 'fused_block'):
+    SPECS[_n].cluster = 'fused rings'
+SPECS['big_puff'].plain = 2
+
+
+def all_specs():
+    return list(SPECS.values())
+
+
+def live_specs():
+    return [s for s in SPECS.values() if s.live]
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# players that aim at hurdles
+# lines: what a player may fire
+# ---------------------------------------------------------------------------------------------------------------
+
+def lines_for(ctx, short=False):
+    """[(line, Turn, pay)] for the lines of three reagents (the engine's own list) and, when short, also lines of one or two."""
+    base = ctx.evaluate()
+    if not short:
+        return base
+    eng = ctx.engine
+    out = list(base)
+    have = {l for l, _, _ in base}
+    for L in (2, 1):
+        for line in itertools.product(ctx.hand, repeat=L):
+            if line in have:
+                continue
+            c = Counter(line)
+            if any(ctx.left.get(r, 0) < n for r, n in c.items()):
+                continue
+            t = eng.run_line(ctx.smi, line, ctx.rules)
+            out.append((line, t, E.pay_cached(len(t.steps), ctx.best_prior)[0]))
+    return out
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# players that aim at specs
 # ---------------------------------------------------------------------------------------------------------------
 
 class _TrackPlayer:
     """Keeps the turns played so far in a round; the engine calls choose once a turn, turn 0 first."""
+    shared = False
 
     def _begin(self, ctx):
-        if ctx.turn == 0:
+        if ctx.turn == 0 and not self.shared:
             self.start = ctx.smi
             self.done = []
-
-    def _cands(self, ctx):
-        return ctx.evaluate()
+        self.carried = ctx.carried
 
     def _commit(self, line, t):
         self.done.append(turn_dict(line, t))
 
+    def _log(self, extra):
+        return Log(self.start, self.done + [extra], self.carried)
+
 
 class SeekPlayer(_TrackPlayer):
-    """Maximises the hurdle's value after this turn, then points.  Ties are drawn at random."""
+    """Maximises the spec's value after this turn (the raw value: it is not told N), then yield.  Ties are drawn at random."""
     name = 'seek'
 
-    def __init__(self, hurdle):
-        self.h = hurdle
+    def __init__(self, spec):
+        self.h = spec
 
     def choose(self, ctx):
         self._begin(ctx)
-        lines = self._cands(ctx)
+        lines = lines_for(ctx, self.h.short)
         if not lines:
             return ()
         scored = []
         for line, t, pay in lines:
-            td = turn_dict(line, t)
-            v = self.h.fn(Log(self.start, self.done + [td]))
-            scored.append(((v, pay), line, t))
+            lg = self._log(turn_dict(line, t))
+            scored.append(((self.h.progress(lg, None), pay), line, t))
         top = max(s[0] for s in scored)
         pick = ctx.rng.choice([s for s in scored if s[0] == top])
         self._commit(pick[1], pick[2])
@@ -574,22 +692,22 @@ class SeekPlayer(_TrackPlayer):
 
 
 class AimPlayer(_TrackPlayer):
-    """Plays toward the numbers (min(value, N) for each, scaled), then for points.  Aims = [(hurdle, N), ...]."""
+    """Plays toward the numbers (min(value, N) for each, scaled), then for yield.  aims = [(spec, N), ...].  The aiming player."""
     name = 'aim'
 
     def __init__(self, aims):
         self.aims = list(aims)
+        self.short = any(h.short for h, _ in self.aims)
 
     def choose(self, ctx):
         self._begin(ctx)
-        lines = self._cands(ctx)
+        lines = lines_for(ctx, self.short)
         if not lines:
             return ()
         scored = []
         for line, t, pay in lines:
-            td = turn_dict(line, t)
-            lg = Log(self.start, self.done + [td])
-            prog = sum(min(h.fn(lg), n) / float(n) for h, n in self.aims)
+            lg = self._log(turn_dict(line, t))
+            prog = sum(h.progress(lg, n) for h, n in self.aims)
             scored.append(((round(prog, 9), pay), line, t))
         top = max(s[0] for s in scored)
         pick = ctx.rng.choice([s for s in scored if s[0] == top])
@@ -597,33 +715,170 @@ class AimPlayer(_TrackPlayer):
         return pick[1]
 
 
+NEW_EPS = 0.10          # share of turns in which a new player just fires something
+NEW_SIGMA = 0.25        # noise on the 0..1 judgement of a line
+NEW_ACTED = 0.15        # a line in which every reagent has something to work on looks better to a new player
+
+
+class NewPlayer(_TrackPlayer):
+    """A person learning.  It sees the spec, its number and the molecule, and it knows what each reagent does by itself (the card
+    says so), so it can tell which reagents will find something and judge how a line moves the molecule toward the spec.  It does
+    NOT see what the molecule will do by itself afterwards (the reflexes) and learns nothing ahead of firing: it never plays a line
+    out to look at the result.  Its judgement of a line is the spec's value on the molecule after the reagents alone (no reflexes),
+    scaled over the lines of the turn, plus a liking for lines where every reagent finds something, plus noise; now and then
+    (NEW_EPS of turns) it just fires something.  aims: [(spec, N), ...] (N None: the raw value)."""
+    name = 'new'
+
+    def __init__(self, aims, eps=NEW_EPS, sigma=NEW_SIGMA, acted=NEW_ACTED):
+        self.aims = list(aims) if not isinstance(aims, Spec) else [(aims, None)]
+        self.short = any(h.short for h, _ in self.aims)
+        self.eps = eps
+        self.sigma = sigma
+        self.acted = acted
+
+    def _direct(self, ctx, line):
+        eng = ctx.engine
+        smi = ctx.smi
+        fired, off = [], Counter()
+        ok = True
+        for r in line:
+            f = eng.fire(smi, r)
+            fired.append((r, f.n))
+            if f.acted:
+                smi = f.smi
+                off.update(dict(f.off))
+            else:
+                ok = False
+        td = {'line': tuple(line), 'chain': (), 'fired': tuple(fired), 'off': dict(off), 'set_off': tuple(0 for _ in line),
+              'smi_end': smi}
+        return td, ok
+
+    def _lines(self, ctx):
+        """The lines the player may fire (no reflexes are run to look at them)."""
+        out = [l for l in ctx.engine.valid_lines(ctx.hand, ctx.left)]
+        if self.short:
+            have = set(out)
+            for L in (2, 1):
+                for line in itertools.product(ctx.hand, repeat=L):
+                    if line in have:
+                        continue
+                    c = Counter(line)
+                    if any(ctx.left.get(r, 0) < n for r, n in c.items()):
+                        continue
+                    out.append(line)
+        return out
+
+    def choose(self, ctx):
+        self._begin(ctx)
+        lines = self._lines(ctx)
+        if not lines:
+            return ()
+        rng = ctx.rng
+        if rng.random() < self.eps:
+            line = rng.choice(lines)
+        else:
+            prog, ok = [], []
+            for line in lines:
+                td, acted = self._direct(ctx, line)
+                lg = self._log(td)
+                prog.append(sum(h.progress(lg, n) for h, n in self.aims))
+                ok.append(acted)
+            lo, hi = min(prog), max(prog)
+            span = max(hi - lo, 1e-9)
+            best, bi = None, 0
+            for i in range(len(lines)):
+                sc = (prog[i] - lo) / span + (self.acted if ok[i] else 0.0) + rng.gauss(0, self.sigma)
+                if best is None or sc > best:
+                    best, bi = sc, i
+            line = lines[bi]
+        self._commit(line, ctx.engine.run_line(ctx.smi, tuple(line), ctx.rules))
+        return line
+
+
+class MixPlayer(_TrackPlayer):
+    """Each turn plays like `a` with chance p, else like `b`.  Middling player: p(aim) = P_AIM['middling'] (0.5) on each turn;
+    skilled player: p(aim) = P_AIM['skilled'] (0.95); on the other turns each plays like the NewPlayer."""
+    name = 'mix'
+
+    def __init__(self, a, b, p_a):
+        self.a, self.b, self.p = a, b, p_a
+        self.short = getattr(a, 'short', False) or getattr(b, 'short', False)
+
+    def choose(self, ctx):
+        if ctx.turn == 0:
+            self.start = ctx.smi
+            self.done = []
+        for pl in (self.a, self.b):
+            pl.shared = True
+            pl.start, pl.done = self.start, self.done
+        pl = self.a if ctx.rng.random() < self.p else self.b
+        return pl.choose(ctx)
+
+
+P_AIM = {'middling': 0.5, 'skilled': 0.95}
+
+
+def make_player(kind, aims):
+    """The players of the tests.  kind: 'yield' (the engine's greedy player), 'random', 'new', 'aim', 'middling', 'skilled', 'seek'.
+    aims: [(spec, N), ...] (N may be None for 'seek' and 'new' fits)."""
+    if kind == 'yield':
+        return E.PLAYERS['greedy']
+    if kind == 'random':
+        return E.PLAYERS['random']
+    if kind == 'new':
+        return NewPlayer(aims)
+    if kind == 'aim':
+        return AimPlayer(aims)
+    if kind == 'seek':
+        return SeekPlayer(aims[0][0])
+    if kind in P_AIM:
+        a = AimPlayer(aims) if all(n for _, n in aims) else SeekPlayer(aims[0][0])
+        return MixPlayer(a, NewPlayer(aims), P_AIM[kind])
+    raise ValueError(kind)
+
+
 # ---------------------------------------------------------------------------------------------------------------
-# the generator
+# the rounds of a run
 # ---------------------------------------------------------------------------------------------------------------
-TARGETS = {1: .85, 2: .80, 3: .65, 4: .75, 5: .70, 6: .55, 7: .65, 8: .60, 9: .45}
-# the sets carried and the self-reactions held in each band of rounds, for the study and the generator test
-EXTRA = ('jones', 'amination', 'thiolene', 'chlorination', 'wittig', 'ozonolysis', 'williamson', 'decarboxylation', 'hofmann',
-         'raney', 'hydrogenation', 'dihydroxylation', 'suzuki')
+# the reagents a run can pick up after the six: whatever library.py lists beyond them (the 13 of the first library)
+EXTRA = tuple(r for r in getattr(library, 'POOL19', library.SIX) if r not in library.SIX)
+# the reflexes held in each band of rounds: the starting two; seven (the first library's first seven); all of them
+_FIRST_SEVEN = tuple(r for r in ('ring', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap') if r in library.SELF_RULES)
 RULES_BAND = {1: library.SELF_TIER1, 2: library.SELF_TIER1, 3: library.SELF_TIER1,
-              4: tuple(library.SELF_ORDER[:7]), 5: tuple(library.SELF_ORDER[:7]), 6: tuple(library.SELF_ORDER[:7]),
+              4: _FIRST_SEVEN, 5: _FIRST_SEVEN, 6: _FIRST_SEVEN,
               7: library.SELF_ALL, 8: library.SELF_ALL, 9: library.SELF_ALL}
 
 
-def carried_for(rnd, rng):
-    """The reactions carried in a round: the six for rounds 1-3; the six and two others (rounds 4-6) or three of the six and five
-    others (rounds 7-9), at most eight."""
-    if rnd <= 3:
-        return library.SIX
-    if rnd <= 6:
-        return library.SIX + tuple(rng.sample(EXTRA, 2))
-    return tuple(rng.sample(library.SIX, 3)) + tuple(rng.sample(EXTRA, 5))
+def run_carried(seed):
+    """The reagents a run holds in each round 1..9, as a real run grows them: the six in rounds 1 to 3; one more from round 4,
+    one or two more from round 5, two more from round 6 (eight at most); from round 7 the eight stay, and now and then one is
+    swapped for a newly found reagent.  Returns {round: tuple}."""
+    rng = random.Random('carried/%s' % (seed,))
+    extras = rng.sample(EXTRA, 3)
+    cur = list(library.SIX)
+    out = {}
+    for r in range(1, 10):
+        if r == 4:
+            cur.append(extras[0])
+        elif r == 5 and rng.random() < 0.5:
+            cur.append(extras[1])
+        elif r == 6 and len(cur) < 8:
+            cur.append(extras[1] if extras[1] not in cur else extras[2])
+        elif r >= 7 and rng.random() < 0.4:
+            new = rng.choice([x for x in EXTRA if x not in cur])
+            cur[rng.randrange(len(cur))] = new
+        out[r] = tuple(cur)
+    return out
 
 
 def band(rnd):
     return 'early' if rnd <= 3 else 'mid' if rnd <= 6 else 'late'
 
 
-def pick_hurdle(*args, **kw):
-    """The generator (hurdle_gen.pick_hurdle): see there."""
+def pick_spec(*args, **kw):
+    """The generator (hurdle_gen.pick_spec): see there."""
     import hurdle_gen
-    return hurdle_gen.pick_hurdle(*args, **kw)
+    return hurdle_gen.pick_spec(*args, **kw)
+
+
+pick_hurdle = pick_spec

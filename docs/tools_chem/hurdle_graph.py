@@ -155,6 +155,7 @@ def ring_numbers(el, bonds):
     out['bridgehead'] = len(bridge_at)
     hetero = lambda r: {el[a] for a in r} - {'C'}
     out['ring_hetero'] = sum(1 for r in rs if hetero(r))
+    out['ring_oxygen'] = sum(1 for r in rs if 'O' in hetero(r))
     out['ring_mixed'] = sum(1 for r in rs if len(hetero(r)) >= 2)
     # a benzene-type ring: six carbons joined alternately by single and double bonds
     bo = {}
@@ -261,20 +262,109 @@ def alternating_run(el, bonds):
     return max(Counter(f(i) for i in inc).values()) if inc else 0
 
 
+# --- bonds, odd atoms and the twelve kinds of group -----------------------------------------------------------------------------
+def double_bonds(el, bonds):
+    """C=C plus C=O double bonds; a benzene ring written in kekule form has three C=C, so it counts 3 as it should."""
+    return sum(1 for i, j, o in bonds if o == 2 and {el[i], el[j]} in ({'C'}, {'C', 'O'}))
+
+
+def unsaturation(el, bonds):
+    """rings plus all double bonds (a benzene ring: 1 ring and 3 double bonds)."""
+    return len(rings(len(el), bonds)) + sum(1 for _, _, o in bonds if o == 2)
+
+
+def hetero_atoms(el):
+    return sum(1 for e in el if e != 'C')
+
+
+def aromatic_bonds(el, bonds):
+    """Bonds of benzene-type rings (six carbons joined alternately by single and double bonds), which the C=C group must skip."""
+    n = len(el)
+    bo = {}
+    for i, j, o in bonds:
+        bo[(i, j)] = bo[(j, i)] = o
+    out = set()
+    for r in rings(n, bonds):
+        if len(r) == 6 and all(el[a] == 'C' for a in r) and sorted(bo[(r[t], r[(t + 1) % 6])] for t in range(6)) == [1, 1, 1, 2, 2, 2] \
+                and all(bo[(r[t], r[(t + 1) % 6])] != bo[(r[(t + 1) % 6], r[(t + 2) % 6])] for t in range(6)):
+            for t in range(6):
+                out.add(frozenset((r[t], r[(t + 1) % 6])))
+    return out
+
+
+def group_counts(el, bonds, nh):
+    """How many of each of the 12 kinds of group are on the molecule (hydrogens are not atoms; nh is the hydrogens on each atom).
+    OH: an O with one H on a carbon that is not a C=O carbon.  C=O: a carbon with three connections, a double bond to an O with
+    nothing else on it, and no other atom but carbon beside it.  C=C: a double bond between two carbons not in a benzene ring.
+    COOH, ester (C(=O)-O-C), ether (O between two carbons, not an ester O), amide (C(=O)-N), NH2 (on a carbon that is not a C=O
+    carbon), SH, Cl, S-S, C=N (a carbon double-bonded to an N with two connections)."""
+    n = len(el)
+    adj = adjacency(n, bonds)
+    arom = aromatic_bonds(el, bonds)
+    conn = [len(adj[i]) + nh[i] for i in range(n)]
+
+    def dbl_to(i, sym, deg=None):
+        return [j for j, o in adj[i] if o == 2 and el[j] == sym and (deg is None or len(adj[j]) == deg)]
+
+    carbonyl = [i for i in range(n) if el[i] == 'C' and conn[i] == 3 and dbl_to(i, 'O', 1)]
+    cnt = {g: 0 for g in ('OH', 'C=O', 'C=C', 'COOH', 'NH2', 'SH', 'Cl', 'ester', 'ether', 'amide', 'S-S', 'C=N')}
+    carbonyl_set = set(carbonyl)
+    for i in carbonyl:
+        singles = [j for j, o in adj[i] if o == 1]
+        if all(el[j] == 'C' for j in singles):
+            cnt['C=O'] += 1
+        for j in singles:
+            if el[j] == 'O' and len(adj[j]) == 1 and nh[j] == 1:
+                cnt['COOH'] += 1
+            if el[j] == 'O' and len(adj[j]) == 2 and nh[j] == 0 and any(el[k] == 'C' and k != i for k, _ in adj[j]):
+                cnt['ester'] += 1
+            if el[j] == 'N' and conn[j] == 3:
+                cnt['amide'] += 1
+    for i in range(n):
+        e = el[i]
+        if e == 'O' and len(adj[i]) == 1 and nh[i] == 1:
+            c = adj[i][0][0]
+            if el[c] == 'C' and c not in carbonyl_set:
+                cnt['OH'] += 1
+        elif e == 'O' and len(adj[i]) == 2 and nh[i] == 0 and all(el[k] == 'C' and o == 1 for k, o in adj[i]):
+            if not any(k in carbonyl_set for k, _ in adj[i]):
+                cnt['ether'] += 1
+        elif e == 'N' and len(adj[i]) == 1 and nh[i] == 2 and adj[i][0][0] not in carbonyl_set and el[adj[i][0][0]] == 'C':
+            cnt['NH2'] += 1
+        elif e == 'S' and len(adj[i]) == 1 and nh[i] == 1:
+            cnt['SH'] += 1
+        elif e == 'Cl':
+            cnt['Cl'] += 1
+    for i, j, o in bonds:
+        if o == 2 and el[i] == 'C' and el[j] == 'C' and frozenset((i, j)) not in arom:
+            cnt['C=C'] += 1
+        if o == 1 and el[i] == 'S' and el[j] == 'S' and len(adj[i]) == 2 and len(adj[j]) == 2:
+            cnt['S-S'] += 1
+        if o == 2 and {el[i], el[j]} == {'C', 'N'}:
+            c, nn = (i, j) if el[i] == 'C' else (j, i)
+            if conn[c] == 3 and len(adj[nn]) == 2:
+                cnt['C=N'] += 1
+    return cnt
+
+
 # --- what everything adds up to ---------------------------------------------------------------------------------------------------
 def numbers(smi):
     el, bonds, nh = graph_of(smi)
     out = ring_numbers(el, bonds)
+    g = group_counts(el, bonds, nh)
     out.update({'atoms': len(el), 'chain': longest_chain(el, bonds), 'diameter': diameter(el, bonds),
-                'branch': branch_points(el, bonds), 'mirror': twins(el, bonds, nh), 'conj': alternating_run(el, bonds)})
+                'branch': branch_points(el, bonds), 'mirror': twins(el, bonds, nh), 'conj': alternating_run(el, bonds),
+                'dbl': double_bonds(el, bonds), 'unsat': unsaturation(el, bonds), 'hetero': hetero_atoms(el), 'groups': g,
+                'kinds': sum(1 for v in g.values() if v),
+                'sites': sum(g[k] for k in ('OH', 'C=O', 'C=C', 'COOH', 'NH2', 'SH', 'Cl'))})
     return out
 
 
 def compare(smiles):
     import hurdles as H
     keys = ['rings', 'ring5', 'ring6', 'ring_small', 'ring_big', 'ring_sizes', 'ring_atoms', 'fused_pairs', 'fused_block',
-            'ring_systems', 'spiro', 'bridgehead', 'ring_hetero', 'ring_mixed', 'aromatic', 'atoms', 'chain', 'diameter', 'branch',
-            'mirror', 'conj']
+            'ring_systems', 'spiro', 'bridgehead', 'ring_hetero', 'ring_oxygen', 'ring_mixed', 'aromatic', 'atoms', 'chain',
+            'diameter', 'branch', 'mirror', 'conj', 'dbl', 'unsat', 'hetero', 'kinds', 'sites']
     ok, bad, ex = Counter(), Counter(), {}
     for s in smiles:
         a, b = numbers(s), H.feat(s)
@@ -284,6 +374,13 @@ def compare(smiles):
             else:
                 bad[k] += 1
                 ex.setdefault(k, (s, a[k], b[k]))
+        for g in H.GROUPS:
+            k = 'group ' + g
+            if a['groups'][g] == b['groups'][g]:
+                ok[k] += 1
+            else:
+                bad[k] += 1
+                ex.setdefault(k, (s, a['groups'][g], b['groups'][g]))
     return ok, bad, ex
 
 
@@ -291,7 +388,7 @@ def gains(pairs):
     """For (start, end) pairs: how often the GAIN (end minus start, never below 0) is the same by the graph version and by RDKit."""
     import hurdles as H
     keys = ['rings', 'ring5', 'ring6', 'fused_pairs', 'fused_block', 'ring_systems', 'spiro', 'bridgehead', 'ring_hetero',
-            'aromatic', 'chain', 'diameter', 'branch', 'mirror', 'conj']
+            'ring_oxygen', 'aromatic', 'chain', 'diameter', 'branch', 'mirror', 'conj', 'dbl', 'unsat', 'hetero', 'kinds', 'atoms']
     same = Counter()
     for a, b in pairs:
         na, nb, fa, fb = numbers(a), numbers(b), H.feat(a), H.feat(b)
@@ -312,7 +409,7 @@ def sample(n=300, pairs=False):
             smi = molecules.deal_molecule(rnd, rng, 3)
             out.add(E.canon(smi))
             eng = E.Engine()
-            car = H.carried_for(rnd, rng)
+            car = H.run_carried('g%d' % i)[rnd]
             for pl in ('greedy', 'random'):
                 rr = eng.play_round(smi, car, H.RULES_BAND[rnd], E.PLAYERS[pl], 'g%d' % i, analyse=False)
                 for t in rr['turns']:

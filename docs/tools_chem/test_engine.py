@@ -18,6 +18,7 @@ from chemlib import parse, comp, canon
 from engine import (Engine, PLAYERS, SIX, SELF_RING, SELF_ALL, SELF_TIER1, pay_of, run_rounds, deal_source, summarize,
                     game_comparison, MAX_HEAVY, STEP_CAP)
 from library import REACTIONS, SELF_RULES, reopen, POOL19
+SELF_ORDER_ALL = tuple(library.SELF_ORDER)
 
 E = Engine(check_balance=True)
 
@@ -56,22 +57,27 @@ R = [
     ('grow', 'CC(C)=O', 'C=CCC(C)(C)O', 1, {}),
     ('grow', 'O=CCCC(C)=O', 'C=CCC(O)CCC(C)(O)CC=C', 2, {}),
     ('grow', 'CC(=O)OC', 'CC(=O)OC', 0, {}),
-    # the other thirteen
-    ('wittig', 'CC(C)=O', 'C=C(C)C', 1, {}),
-    ('wittig', 'O=CCC(C)=O', 'C=CCC(=C)C', 2, {}),
-    ('wittig', 'CC(=O)OC', 'CC(=O)OC', 0, {}),
+    # the twelve unlocked later
+    ('hwe', 'CC(C)=O', 'CC(=O)C=C(C)C', 1, {}),                            # a methyl ketone: C=O becomes C=CH-CO-CH3
+    ('hwe', 'CCC=O', 'CCC=CC(C)=O', 1, {}),                                # an aldehyde
+    ('hwe', 'CCC(=O)CC', 'CCC(=O)CC', 0, {}),                              # not a methyl ketone, not an aldehyde
+    ('hwe', 'CC(=O)C=C', 'CC(=O)C=C', 0, {}),                              # already beside a C=C
     ('dihydroxylation', 'CC=CC', 'CC(O)C(C)O', 1, {}),
     ('dihydroxylation', 'C=CC=C', 'OCC(O)C(O)CO', 2, {}),
     ('dihydroxylation', 'c1ccccc1', 'c1ccccc1', 0, {}),
     ('ozonolysis', 'CCC=CCC', 'CCC=O', 1, {'piece': 1}),                   # the shorter (here equal) piece is lost
     ('ozonolysis', 'CC=CCCC', 'CCCC=O', 1, {'piece': 1}),
     ('ozonolysis', 'C1CCC=CC1', 'O=CCCCCC=O', 1, {}),                      # a ring opens
-    ('ozonolysis', 'C=CCC', 'C=CCC', 0, {}),                               # a chain-end C=C stays oxidize's
-    ('jones', 'CCC=O', 'CCC(=O)O', 1, {}),
-    ('jones', 'O=CCCCC=O', 'O=C(O)CCCC(=O)O', 2, {}),
-    ('jones', 'CC(C)=O', 'CC(C)=O', 0, {}),
-    ('amination', 'CC(C)=O', 'CC(C)N', 1, {'water': 1}),
-    ('amination', 'O=CCCCC=O', 'NCCCCCN', 2, {'water': 2}),
+    ('ozonolysis', 'C=CCC', 'CCC=O', 1, {'piece': 1}),                     # a chain-end C=C: formaldehyde is the piece
+    ('permanganate', 'CCC=C', 'CCC(=O)O', 1, {'carbon dioxide': 1}),       # chain-end C=C loses its end carbon
+    ('permanganate', 'CCC=O', 'CCC(=O)O', 1, {}),                          # an aldehyde
+    ('permanganate', 'OCCCC', 'CCCC(=O)O', 1, {'hydrogen': 1}),            # a chain-end CH2-OH
+    ('permanganate', 'CC(C)=O', 'CC(C)=O', 0, {}),
+    ('permanganate', 'CC(O)CC', 'CC(O)CC', 0, {}),                         # a secondary OH is left to oxidize
+    ('ritter', 'CC=C', 'CC(C)N', 1, {}),                                   # NH2 on the carbon with fewer H
+    ('ritter', 'C1CCC=CC1', 'NC1CCCCC1', 1, {}),
+    ('ritter', 'C=CCC=C', 'CC(N)CC(C)N', 2, {}),
+    ('ritter', 'CCC(=O)CC', 'CCC(=O)CC', 0, {}),
     ('thiolene', 'CC=C', 'CCCS', 1, {}),                                   # SH on the carbon with more H
     ('thiolene', 'C1CCC=CC1', 'SC1CCCCC1', 1, {}),                         # also on a ring C=C
     ('thiolene', 'C=CC(C)=O', 'CC(=O)C(C)S', 1, {}),                       # anti: the carbon beside the C=O
@@ -80,25 +86,20 @@ R = [
     ('chlorination', 'CC(C)(O)C', 'CC(C)(O)C', 0, {}),                     # tertiary: it eliminates instead
     ('chlorination', 'CC(=O)O', 'CC(=O)O', 0, {}),                         # an acid would give an acyl chloride
     ('chlorination', 'Oc1ccccc1', 'Oc1ccccc1', 0, {}),
-    ('williamson', 'ClCCCCCO', 'C1CCOCC1', 1, {'acid fumes': 1}),         # Cl and OH 4 carbons apart: a six-ring
-    ('williamson', 'ClCCCCO', 'C1CCOC1', 1, {'acid fumes': 1}),
-    ('williamson', 'ClCCCCCCO', 'C1CCCOCC1', 1, {'acid fumes': 1}),        # five carbons apart: a seven-ring
-    ('williamson', 'ClCCCCCCCO', 'ClCCCCCCCO', 0, {}),                     # an eight-ring does not form
-    ('suzuki', 'C=CCl', 'C=Cc1ccccc1O', 1, {}),
-    ('suzuki', 'C=CCCl', 'C=CCc1ccccc1O', 1, {}),
-    ('suzuki', 'ClCc1ccccc1', 'Oc1ccccc1Cc1ccccc1', 1, {}),
-    ('suzuki', 'CCCCl', 'CCCCl', 0, {}),                                   # an alkyl chloride is a poor partner
-    ('suzuki_loose', 'CCCCl', 'CCCc1ccccc1O', 1, {}),
-    ('suzuki_loose', 'CC(Cl)C', 'CC(C)c1ccccc1O', 1, {}),
+    ('cyanohydrin', 'CC(C)=O', 'CC(C)(O)C(=O)O', 1, {'ammonia': 1}),       # a methyl ketone gains a carbon: C(OH)-COOH
+    ('cyanohydrin', 'CCC=O', 'CCC(O)C(=O)O', 1, {'ammonia': 1}),
+    ('cyanohydrin', 'CCC(=O)CC', 'CCC(=O)CC', 0, {}),
     ('hofmann', 'CCCN', 'C=CC', 1, {'trimethylamine': 1, 'water': 1}),
     ('hofmann', 'CC(N)CC', 'C=CCC', 1, {'trimethylamine': 1, 'water': 1}), # toward the neighbor with MORE H
-    ('raney', 'CCS', 'CC', 1, {'sulfur': 1}),
-    ('raney', 'C=CCCS', 'CCCC', 2, {'sulfur': 1}),                          # also saturates the C=C
-    ('decarboxylation', 'CCC(=O)O', 'CC', 1, {'carbon dioxide': 1}),
-    ('decarboxylation', 'O=C(O)CCCCC(=O)O', 'CCCC', 2, {'carbon dioxide': 2}),
-    ('hydrogenation', 'C=CC=C', 'CCCC', 2, {}),
-    ('hydrogenation', 'CC=O', 'CC=O', 0, {}),
-    ('hydrogenation', 'c1ccccc1', 'c1ccccc1', 0, {}),
+    ('chugaev', 'CC(O)CC', 'C=CCC', 1, {'sulfur': 1}),                     # toward the neighbor with MORE H (dehydrate goes the other way)
+    ('chugaev', 'CC(C)(O)C', 'C=C(C)C', 1, {'sulfur': 1}),
+    ('chugaev', 'CC(=O)O', 'CC(=O)O', 0, {}),
+    ('hydroformylation', 'CC=C', 'CCCC=O', 1, {}),                         # CHO on the carbon with more H
+    ('hydroformylation', 'CC=CC', 'CCC(C)C=O', 1, {}),
+    ('hydroformylation', 'CCC', 'CCC', 0, {}),
+    ('epoxidation', 'CC=CC', 'CC1OC1C', 1, {}),
+    ('epoxidation', 'C=CC=C', 'C1OC1C1CO1', 2, {}),
+    ('epoxidation', 'CC(C)=O', 'CC(C)=O', 0, {}),
 ]
 
 # self-reactions: (rule, before, after, off)   one step of the rule alone
@@ -109,8 +110,11 @@ S = [
     ('ring', 'OCCC=O', 'OCCC=O', {}),                                      # d = 2: too near
     ('ring', 'OCCCCCC=O', 'OCCCCCC=O', {}),                                # d = 5: too far
     ('ring', 'OCCCC(=O)CCC(=O)C', 'CC(=O)CCC1(O)CCCO1', {}),               # the OH goes to the nearer C=O
-    ('dry', 'CC(=O)CC(C)O', 'CC(=O)C=CC', {'water': 1}),
+    ('dry', 'CC1(O)CCCC(=O)C1', 'CC1=CC(=O)CCC1', {'water': 1}),            # the OH a weld leaves, on a ring carbon
+    ('dry', 'CC(=O)CC(C)(C)O', 'CC(=O)C=C(C)C', {'water': 1}),             # a tertiary OH
+    ('dry', 'CC(=O)CC(C)O', 'CC(=O)C=CC', {'water': 1}),                   # a secondary OH
     ('dry', 'O=CCC(O)CC', 'O=CC=CCC', {'water': 1}),
+    ('dry', 'CC1(O)OCCC1CC(C)=O', 'CC1(O)OCCC1CC(C)=O', {}),               # an OH on a carbon that also holds the ring oxygen stays
     ('dry', 'CC(=O)CCC(C)O', 'CC(=O)CCC(C)O', {}),                         # the OH is 3 away: not dry
     ('flip', 'OC=C', 'CC=O', {}),
     ('flip', 'CC(O)=CC', 'CC(=O)CC', {}),
@@ -127,18 +131,27 @@ S = [
     ('snap', 'C=CC=CCCCC=C', 'C1C=CC2CCCC2C1', {}),                        # Diels-Alder, a five-ring tether
     ('snap', 'C=CC=CCCCCC=C', 'C1C=CC2CCCCC2C1', {}),                      # a six-ring tether
     ('snap', 'C=CC=C', 'C=CC=C', {}),                                      # no third C=C
-    ('strip', 'CC(=O)CC(C)Cl', 'CC(=O)C=CC', {'acid fumes': 1}),
-    ('strip', 'O=CCC(Cl)C', 'O=CC=CC', {'acid fumes': 1}),
-    ('knit', 'NCCCC(C)=O', 'CC1=NCCC1', {'water': 1}),                     # a five-ring (N joins the carbon)
-    ('knit', 'NCCCCC=O', 'C1=NCCCC1', {'water': 1}),                       # a six-ring
-    ('knit', 'NCC=O', 'NCC=O', {}),
-    ('pop', 'CC(=O)CC(=O)O', 'C=C(C)O', {'carbon dioxide': 1}),
-    ('pop', 'CC(=O)C(C)C(=O)O', 'CC=C(C)O', {'carbon dioxide': 1}),
-    ('pop', 'CC(=O)CCC(=O)O', 'CC(=O)CCC(=O)O', {}),                       # the COOH is 3 away
+    ('knit', 'NCCCC(C)=O', 'CC1(O)CCCN1', {}),                             # a five-ring: N joins the carbon, the C=O becomes C-OH
+    ('knit', 'NCCCCC=O', 'OC1CCCCN1', {}),                                 # a six-ring
+    ('knit', 'NCC=O', 'NCC=O', {}),                                        # too near
     ('seal', 'OCCCC(=O)O', 'O=C1CCCO1', {'water': 1}),                     # a five-ring lactone
     ('seal', 'OCCCCC(=O)O', 'O=C1CCCCO1', {'water': 1}),                   # a six-ring lactone
-    ('pair', 'SCCCS', 'C1CSSC1', {'hydrogen': 1}),
-    ('pair', 'SCCCCS', 'C1CCSSC1', {'hydrogen': 1}),
+    ('seal', 'NCCCC(=O)O', 'O=C1CCCN1', {'water': 1}),                     # a lactam
+    ('seal', 'SCCCC(=O)O', 'O=C1CCCS1', {'water': 1}),                     # a thiolactone
+    ('cap', 'SCCCC(C)=O', 'CC1(O)CCCS1', {}),                              # the sulfur twin of ring
+    ('cap', 'SCCCCC=O', 'OC1CCCCS1', {}),
+    ('cap', 'SCC=O', 'SCC=O', {}),                                         # too near
+    ('close', 'ClCCCCCO', 'C1CCOCC1', {'acid fumes': 1}),                  # Cl and OH 4 carbons apart: a six-ring ether
+    ('close', 'ClCCCCN', 'C1CCNC1', {'acid fumes': 1}),                    # an amine ring
+    ('close', 'ClCCCCS', 'C1CCSC1', {'acid fumes': 1}),                    # a thioether ring
+    ('close', 'ClCCCC(=O)O', 'O=C1CCCO1', {'acid fumes': 1}),              # a lactone
+    ('close', 'ClCCCCCCCO', 'ClCCCCCCCO', {}),                             # an eight-ring does not form
+    ('open', 'OCCCC1CO1', 'OCC1CCCO1', {}),                                # the OH attacks the near carbon; the other keeps the O as OH
+    ('open', 'CC1OC1CCCO', 'CC(O)C1CCCO1', {}),
+    ('open', 'CC1OC1CO', 'CC1OC1CO', {}),                                  # OH too near
+    ('fold', 'CC1OC1C', 'CCC(C)=O', {}),                                   # an epoxide with carbon on both ends becomes C=O
+    ('fold', 'C1CCC2OC2C1', 'O=C1CCCCC1', {}),
+    ('fold', 'CC1CO1', 'CC1CO1', {}),                                      # a chain-end epoxide is left for open
 ]
 
 
@@ -239,14 +252,34 @@ def test_self_reactions_deterministic_whatever_the_atom_order():
 
 
 def test_zip_runs_along_a_chain_and_opens_again():
-    # OH ... C=O ... C=O: the OH of the first ring closes the second
+    # OH ... C=O ... C=O ... C=O: the OH of the first ring closes the next; ring is limited to two a turn
     smi = 'OCCCC(=O)CCC(=O)CCC(=O)C'
     s, steps, off, capped = E.settle(canon(smi), SELF_RING, 40)
-    assert steps == ('ring', 'ring', 'ring'), steps
+    assert steps == ('ring', 'ring'), steps
     assert not capped
     # at the turn's end every loose ring opens: back to the OH and the C=Os it came from
     back, n = E.reopen(s)
-    assert n == 3 and back == canon(smi), (back, n)
+    assert n == 2 and back == canon(smi), (back, n)
+    # the third ring waits for the next turn
+    s2, steps2, _, _ = E.settle(back, SELF_RING, 40)
+    assert steps2 == ('ring', 'ring')
+
+
+def test_per_turn_limits_and_the_order_rare_groups_first():
+    assert {n: SELF_RULES[n].per_turn for n in ('dry', 'weld', 'ring')} == {'dry': 1, 'weld': 2, 'ring': 2}
+    assert all(getattr(r, 'per_turn', None) is None for n, r in SELF_RULES.items() if n not in ('dry', 'weld', 'ring'))
+    # dry once a turn: two tertiary OH, each two from a C=O
+    smi = canon('CC(=O)CC(C)(O)CCCC(C)(O)CC(C)=O')
+    both = E.settle(smi, ('dry',), 40)[1]
+    assert both.count('dry') == 1, both
+    # weld twice a turn: four C=O in a row, three welds fit, only two are made
+    steps = E.settle(canon('CC(=O)CCCC(C)=O'), ('weld',), 40)[1]
+    assert steps.count('weld') <= 2
+    # the order: a Cl-and-OH closes (prio 0) before a ring (prio 2) takes the C=O
+    assert SELF_RULES['close'].prio == 0 and SELF_RULES['ring'].prio == 2
+    smi = canon('ClCCCC(O)CCC(C)=O')       # ring would close the OH on the C=O; close would close it on the Cl
+    steps = E.settle(smi, SELF_ORDER_ALL, 40)[1]
+    assert steps[0] == 'close', steps
 
 
 def test_a_ring_whose_oh_was_taken_stays_shut():
@@ -361,40 +394,66 @@ def test_players_order():
     assert res['lookahead'] >= res['greedy'] * 0.97, res
 
 
-def test_the_ten_lines_of_docs_reactions_md():
-    """Each line of three of docs/REACTIONS.md section 6, with the chemistry check's corrections.  Reactions only (no
-    self-reactions) except where the line itself names one (6: dry, 9: ring)."""
-    def go(smi, line, rules=()):
-        cur = canon(smi)
-        for r in line:
-            f = E.fire(cur, r)
-            assert f.acted, (smi, line, r, cur)
-            cur = f.smi
-            cur = E.settle(cur, tuple(rules), 40)[0]
-        return cur
-    # 1 but-1-ene: both C=C carbons take OH, both become C=O, both become NH2 (water off twice)
-    assert go('C=CCC', ['dihydroxylation', 'oxidize', 'amination']) == canon('CCC(N)CN')
-    # 2 pent-4-en-1-amine: OH on the end carbon, C=O, COOH (the amine is attacked by chromic acid in life: accepted)
-    assert go('NCCCC=C', ['hydroborate', 'oxidize', 'jones']) == canon('NCCCCC(=O)O')
-    # 3 hex-5-en-1-ol: OH to Cl, OH on carbon 5, a six-ring ether
-    assert go('OCCCCC=C', ['chlorination', 'hydrate', 'williamson']) == canon('CC1CCCCO1')
-    # 4 cyclohexene: opened, both ends COOH, both lost as carbon dioxide: butane
-    assert go('C1CCC=CC1', ['ozonolysis', 'jones', 'decarboxylation']) == canon('CCCC')
-    # 5 pentan-2-one: C=O to NH2, NH2 to C=C toward the methyl, OH on the end carbon: the C=O has moved to a chain-end alcohol
-    assert go('CCCC(C)=O', ['amination', 'hofmann', 'hydroborate']) == canon('OCCCCC')
-    # 6 propanone: grow, oxidize cuts the arm end as carbon dioxide (dry then fires), Jones makes the C=O a COOH
-    assert go('CC(C)=O', ['grow', 'oxidize', 'jones'], SELF_TIER1) == canon('CC(C)=CC(=O)O')
-    # 7 propanone: Wittig gives isobutene, hydroborate puts OH on the CH2 end, oxidize makes it C=O
-    assert go('CC(C)=O', ['wittig', 'hydroborate', 'oxidize']) == canon('O=CC(C)C')
-    # 8 pent-4-en-2-ol: SH on the end carbon, C=C toward the neighbor with fewer H, then Raney nickel takes the SH (and, as the
-    #   check says, the C=C): pentane
-    assert go('CC(O)CC=C', ['thiolene', 'dehydrate', 'raney']) == canon('CCCCC')
-    # 9 hydroxyacetone: Cl, a 2-hydroxyphenyl ring on it, and the ring OH closes onto the C=O.  (Needs suzuki_loose: an alkyl
-    #   chloride is a poor Suzuki partner.)
-    assert go('CC(=O)CO', ['chlorination', 'suzuki_loose'], SELF_RING) == canon('CC1(O)Cc2ccccc2O1')
-    assert not E.fire(canon('CC(=O)CCl'), 'suzuki').acted
-    # 10 hex-5-en-2-one: C=C goes single, C=O to C=CH2, OH on the =CH2 end only
-    assert go('CC(=O)CCC=C', ['hydrogenation', 'wittig', 'hydroborate']) == canon('OCC(C)CCCC')
+# three lines on game molecules, step by step: (molecule, line, [(what happened, the molecule after it)])
+WORKED = [
+    ('C=CCCC(=O)CCC(=O)CCC=O', ('ritter', 'ozonolysis', 'grow'), [
+        ('ritter', 'CC(N)CCC(=O)CCC(=O)CCC=O'),
+        ('knit', 'CC1CCC(O)(CCC(=O)CCC=O)N1'),
+        ('weld', 'CC1CCC(O)(CC2C(=O)CCC2O)N1'),
+        ('dry', 'CC1CCC(O)(CC2=CCCC2=O)N1'),
+        ('ring', 'CC1CCC2(CC3=CCCC3(O)O2)N1'),
+        ('ozonolysis', 'CC1CCC2(CC(=O)C(O)(CCC=O)O2)N1'),
+        ('ring', 'CC1CCC2(CC(=O)C3(CCC(O)O3)O2)N1'),
+        ('grow', 'C=CCC1(O)CC2(CCC(C)N2)OC12CCC(O)O2'),
+    ]),
+    ('C=CCCC(=O)CCC(O)CCC(=O)CCC(C)(C)O', ('dehydrate', 'oxidize', 'thiolene'), [
+        ('dehydrate', 'C=CCCC(=O)CC=CCCC(=O)CC=C(C)C'),
+        ('shift', 'C=CCCC(=O)C=CCCCC(=O)CC=C(C)C'),
+        ('shift', 'C=CCCC(=O)C=CCCCC(=O)C=CC(C)C'),
+        ('weld', 'C=CCCC1(O)C=CCCC1C(=O)C=CC(C)C'),
+        ('dry', 'C=CCCC1=C(C(=O)C=CC(C)C)CCC=C1'),
+        ('oxidize', 'CC(C)C=CC(=O)C1=C(CCC=O)C=CCC1'),
+        ('weld', 'CC(C)C=CC1(O)C2=C(C=CCC2)CC1C=O'),
+        ('thiolene', 'CC(C)CC(S)C1(O)C(C=O)CC2CC(S)CCC21S'),
+        ('cap', 'CC(C)CC1SC(O)C2CC3CC(S)CCC3(S)C12O'),
+    ]),
+    ('CC(=O)CCC(=O)CCCCCC(=O)CCC(C)(C)O', ('dehydrate', 'grow', 'epoxidation'), [
+        ('dehydrate', 'CC(=O)CCC(=O)CCCCCC(=O)CC=C(C)C'),
+        ('shift', 'CC(=O)CCC(=O)CCCCCC(=O)C=CC(C)C'),
+        ('weld', 'CC(C)C=CC(=O)CCCCCC1(O)CCC(=O)C1'),
+        ('dry', 'CC(C)C=CC(=O)CCCCCC1=CC(=O)CC1'),
+        ('grow', 'C=CCC(O)(C=CC(C)C)CCCCCC1=CC(O)(CC=C)CC1'),
+        ('epoxidation', 'CC(C)C1OC1C(O)(CCCCCC12CCC(O)(CC3CO3)C1O2)CC1CO1'),
+        ('open', 'CC(C)C1OC1C(O)(CCCCCC12CCC3(CC(O)CO3)C1O2)CC1CO1'),
+        ('open', 'CC(C)C1OC1C1(CCCCCC23CCC4(CC(O)CO4)C2O3)CC(O)CO1'),
+        ('fold', 'CC(C)CC(=O)C1(CCCCCC23CCC4(CC(O)CO4)C2O3)CC(O)CO1'),
+        ('fold', 'CC(C)CC(=O)C1(CCCCCC2CCC3(CC(O)CO3)C2=O)CC(O)CO1'),
+    ]),
+]
+
+
+def test_three_worked_examples_step_by_step():
+    rules = tuple(library.SELF_ORDER)
+    for smi, line, steps in WORKED:
+        got = E.trace_line(canon(smi), line, rules)
+        assert got[0] == ('start', canon(smi))
+        assert [(lab, s) for lab, s in got[1:]] == [(lab, canon(s)) for lab, s in steps], smi
+        kinds = {lab for lab, _ in steps if lab in SELF_RULES}
+        assert len(kinds) >= 3, (smi, kinds)
+        t = E.run_line(canon(smi), line, rules)
+        assert t.smi == canon(steps[-1][1])
+        assert all(n > 0 for _, n in t.fired)             # every reaction of the line acted
+        assert smi in {m.smiles for m in molecules.game_molecules()} or canon(smi) in {m.canonical for m in molecules.game_molecules()}
+
+
+def test_every_deed_can_be_done():
+    """docs/tools_chem/unlocks.py: each deed can be done on the game's molecules with the pieces held when it is asked."""
+    import unlocks
+    assert len(unlocks.ORDER) == 23 and len(set(unlocks.KEYS)) == 23
+    assert set(unlocks.KEYS) == (set(REACTIONS) - set(SIX)) | (set(SELF_RULES) - set(unlocks.START_SELF))
+    for i, item in enumerate(unlocks.ORDER):
+        ok, tried, ex = unlocks.check(i, sample=40)
+        assert ok >= 1 and ex is not None, (item[1], ok, tried)
 
 
 def test_molecule_table():

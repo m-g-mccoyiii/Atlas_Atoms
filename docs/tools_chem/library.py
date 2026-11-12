@@ -1,12 +1,18 @@
-"""The reactions and self-reactions, written as reaction SMARTS and graph queries on RDKit molecules.
+"""The reactions and self-reactions of Overreact, written as reaction SMARTS and graph queries on RDKit molecules.
+
+The final set (docs/tools_chem/FINAL.md).  Chosen from three joint tunings (A, B, C) by running them on the game's molecules.
 
 REACTIONS (what the player fires), `source`:
-  'built'  the six starting reactions exactly as the game has them (apps/steam/js/react/rules.js, MODE.zip = true,
-           MODE.co2 = true).  hydrate, hydroborate, dehydrate, oxidize, reduce, grow.
-  'paper'  the other thirteen of docs/REACTIONS.md with the corrections of its "Chemistry and harness check" applied.
+  'built'  the six the player starts with, exactly as the game has them (apps/steam/js/react/rules.js, MODE.zip = true,
+           MODE.co2 = true): hydrate, hydroborate, dehydrate, oxidize, reduce, grow.
+  'final'  the twelve that are unlocked later.  Each one makes a group that a self-reaction takes, or takes away one.
 SELF_RULES (what the molecule does by itself):
   ring     exactly as built (the game's `lactol`, called zip in play).
-  the other eleven are docs/SELF_REACTIONS.md as a first draft (weld is the game's 'ol' weld, snap its Diels-Alder snap6).
+  the others are docs/SELF_REACTIONS.md, rewritten where the chemistry check or the measures asked for it.
+Order and limits (engine rules the game has to carry; the engine reads them from the rule objects):
+  rule.prio      0 runs before 1 before 2 when more than one fits; within one prio the nearest pair goes first.
+                 Rules on the rarer groups (Cl, NH2, SH, COOH, epoxide) are 0; ring is 2 so the others take a C=O first.
+  rule.per_turn  most steps of that kind in one turn: dry 1, weld 2, ring 2.
 
 Every rule says what it adds and loses (formulas) so the engine can check the atoms balance on every use.
 """
@@ -145,101 +151,79 @@ SIX = ('hydrate', 'hydroborate', 'dehydrate', 'oxidize', 'reduce', 'grow')
 # the game's order in path.js RUNG.start: hydrate, oxidize (pcc), grow (allyl), hydroborate (bh3), dehydrate, reduce (nabh4)
 
 # ---------------------------------------------------------------------------------------------------------------
-# the other thirteen of docs/REACTIONS.md, with the corrections of the chemistry check
+# ---------------------------------------------------------------------------------------------------------------
+# the twelve reactions after the six
 # ---------------------------------------------------------------------------------------------------------------
 
-wittig = Reaction('wittig', 'Wittig', [SmartsStep('[%s:1]=[O:2]>>[C:1]=C' % KC, adds='CH2', loses='O')],
-                  family='reshape C=C', note='Every ketone/aldehyde C=O becomes C=C with a new =CH2 (methylenetriphenylphosphorane). '
-                                            'Acids, esters and amides are not touched (real Wittig chemistry).')
+KET = 'CX3H0;!$(C(=O)-[!#6])'            # a ketone carbon
+ALD = 'CX3H1;!$(C(=O)-[!#6])'            # an aldehyde carbon (chain-end C=O)
+
+hwe = Reaction('hwe', 'Horner-Wadsworth-Emmons (acetonyl phosphonate)', [
+    SmartsStep('[CX3;$(C(=O)[CH3]),$([CX3H1]);!$(C(=O)-[!#6]);!$(C-[#6]=[#6]):1]=[O:2]>>[C:1]=C-C(=O)C',
+               adds='C3H4O', loses='O')],
+    family='make C=O and C=C',
+    note='Every aldehyde and every methyl ketone (CH3-C=O) that is not already beside a C=C becomes C=CH-C(=O)-CH3: a C=C '
+         'beside a new ketone (phosphonate carbanion; hindered and conjugated ketones do not react).')
 
 dihydroxylation = Reaction('dihydroxylation', 'Dihydroxylation',
-                           [SmartsStep('[C:1]=[C:2]>>[C:1](-O)-[C:2]-O', adds='H2O2')], family='reshape C=C',
-                           note='Every C=C becomes two OH on its two carbons (osmium tetroxide). Stereochemistry is not tracked.')
+                           [SmartsStep('[C:1]=[C:2]>>[C:1](-O)-[C:2]-O', adds='H2O2')], family='make OH',
+                           note='Every C=C becomes two OH on its two carbons (osmium tetroxide).')
 
-ozonolysis = Reaction('ozonolysis', 'Ozonolysis', [SmartsStep('[C;!D1:1]=[C;!D1:2]>>([C:1]=O.[C:2]=O)', adds='O2')],
-                      family='reshape C=C',
-                      note='Every C=C that has a carbon-side on both ends is cut and each cut carbon becomes C=O. A chain keeps its '
-                           'longer piece (the shorter one is counted as a piece), a ring opens. Real ozone also cuts a '
-                           'chain-end C=C; here that stays with oxidize: a game rule, not chemistry.')
+ozonolysis = Reaction('ozonolysis', 'Ozonolysis', [SmartsStep('[C:1]=[C:2]>>([C:1]=O.[C:2]=O)', adds='O2')],
+                      family='make C=O',
+                      note='Every C=C is cut and each cut carbon becomes C=O. A chain keeps its longer piece (the shorter one, '
+                           'formaldehyde for a chain-end C=C, is counted as a piece), a ring opens.')
 
-jones = Reaction('jones', 'Jones', [SmartsStep('[%s;H1:1]=[O:2]>>[C:1](=[O:2])-O' % KC, adds='O')], family='acid',
-                 note='Every aldehyde (chain-end C=O) becomes COOH (chromic acid). A free amine would be attacked: accepted.')
+permanganate = Reaction('permanganate', 'Strong oxidation (hot permanganate)', [
+    SmartsStep('[CH2D1:1]=[CH1D2:2]>>[C:2](=O)O', adds='O5', loses='CH2O3', off={'carbon dioxide': 1}),
+    SmartsStep('[%s:1]=[O:2]>>[C:1](=[O:2])O' % ALD, adds='O'),
+    SmartsStep('[CH2X4;D2;$(C-[#6]):1]-[OX2H:2]>>[C:1](=O)-[O:2]', adds='O', loses='H2', off={'hydrogen': 1}),
+], family='make COOH',
+    note='Every chain-end C=C, every aldehyde and every chain-end OH (CH2-OH) becomes COOH; a chain-end C=C loses its end '
+         'carbon as carbon dioxide.')
 
-amination = Reaction('amination', 'Reductive amination',
-                     [SmartsStep('[%s:1]=[O:2]>>[C:1]-N' % KC, adds='H5N', loses='H2O', off={'water': 1})], family='nitrogen',
-                     note='Every ketone/aldehyde C=O becomes C-NH2 (ammonia and sodium cyanoborohydride). Water off.')
+ritter = Reaction('ritter', 'Ritter amination', addition_steps('N', False, 'NH3'), family='make NH2',
+                     note='Every C=C takes NH2 and H, Markovnikov (acetonitrile in strong acid gives the amide on the carbon '
+                          'with fewer H, boiling acid frees the amine; net ammonia added).')
 
-thiolene = Reaction('thiolene', 'Thiol-ene', addition_steps('S', True, 'H2S'), family='sulfur',
-                    note='Every C=C takes SH, anti-Markovnikov: on the carbon with MORE H (the same choice as hydroborate), '
-                         'also on an inner or ring C=C. Written as radical addition of thioacetic acid then hydrolysis, '
-                         'net H2S (the check: H2S itself over-reacts to sulfides).')
+thiolene = Reaction('thiolene', 'Thiol-ene', addition_steps('S', True, 'H2S'), family='make SH',
+                    note='Every C=C takes SH, anti-Markovnikov: on the carbon with MORE H (thioacetic acid and light, then '
+                         'hydrolysis: net H2S).')
 
 chlorination = Reaction('chlorination', 'Chlorination',
                         [SmartsStep('[CX4;!H0;%s:1]-[OX2H]>>[C:1]-Cl' % ONE_HET, adds='SOCl2', loses='HClO2S',
-                                    off={'acid fumes': 1})], family='halide',
+                                    off={'acid fumes': 1})], family='make Cl',
                         note='Every primary or secondary alcohol OH becomes Cl (thionyl chloride; SO2 and HCl come off as acid '
-                             'fumes). Not a COOH (acyl chloride), a phenol OH, a hemiketal OH, or a tertiary OH (it eliminates).')
+                             'fumes). Tertiary OH, phenol OH, COOH and hemiketal OH are left.')
 
-
-def _williamson_find(mol):
-    return pair_sites(mol, '[Cl:1]-[CX4:2]', '[OX2H:3]-[CX4;%s:4]' % ONE_HET, 2, 4, 3, 5, ring='lactol')
-
-
-def _williamson_edit(rw, s):
-    cl, o = s['A'][1], s['B'][3]
-    c = s['A'][2]
-    rw.AddBond(o, c, Chem.BondType.SINGLE)
-    rw.RemoveAtom(cl)
-
-
-williamson_rule = GraphRule('williamson', _williamson_find, _williamson_edit, off={'acid fumes': 1}, loses='HCl',
-                            label='Williamson ether', source='paper')
-williamson = Reaction('williamson', 'Williamson ether', [RepeatStep(williamson_rule)], size='join', family='halide',
-                      note='A Cl and an OH 3 to 5 carbons apart (4 to 6 carbons counting both) close a ring of 5 to 7 atoms through O '
-                           '(base). HCl counted as acid fumes. One pair at a time, nearest first, until none fits.')
-
-# Suzuki. The check: alkyl chlorides are poor partners (beta-hydride loss); it needs an aryl or vinyl halide; the ring must
-# be 2-hydroxyphenyl.  'suzuki' is that: Cl on an sp2 carbon, or on an allylic/benzylic carbon (which couple well).
-# 'suzuki_loose' keeps the paper's "every Cl" and is NOT real chemistry for a plain alkyl chloride.
-_AR = 'c1ccccc1O'
-suzuki = Reaction('suzuki', 'Suzuki coupling', [
-    SmartsStep('[Cl]-[$([CX3]=[C]),$(c):2]>>[#6:2]-%s' % _AR, adds='C6H5O', loses='Cl'),
-    SmartsStep('[Cl]-[CX4:2]-[$([CX3]=[C]),$(c):3]>>[#6:3]-[C:2]-%s' % _AR, adds='C6H5O', loses='Cl'),
-], size='chunk', family='halide',
-    note='A Cl on a vinyl, aryl, allylic or benzylic carbon is replaced by a 2-hydroxyphenyl ring (2-hydroxyphenylboronic acid, '
-         'palladium). Plain alkyl chlorides are left alone (beta-hydride loss), so chlorination feeds it only for allylic or '
-         'benzylic alcohols.')
-suzuki_loose = Reaction('suzuki_loose', 'Suzuki coupling (any Cl)', [
-    SmartsStep('[Cl]-[#6:1]>>[#6:1]-%s' % _AR, adds='C6H5O', loses='Cl')],
-    size='chunk', source='paper', family='halide',
-    note='The paper as written: every Cl becomes a 2-hydroxyphenyl ring. For an alkyl chloride this is not real chemistry.')
+cyanohydrin = Reaction('cyanohydrin', 'Cyanohydrin route (cyanide, then acid)', [
+    SmartsStep('[CX3;$(C(=O)[CH3]),$([CX3H1]);!$(C(=O)-[!#6]):1]=[O:2]>>[C:1](-[O:2])C(=O)O', adds='CH5NO2', loses='H3N',
+               off={'ammonia': 1})], family='make COOH',
+    note='Every aldehyde and methyl ketone (CH3-C=O) becomes C(OH)-COOH, one carbon longer (cyanide adds to the C=O, boiling '
+         'acid turns the nitrile to COOH). Ammonia leaves.')
 
 hofmann = Reaction('hofmann', 'Hofmann elimination', [SmartsStep(
     '[CX4;%s:1](-[NX3H2:2])-[CX4;!H0;!$(C-[!#6]):3]>>[C:1]=[C:3]' % ONE_HET, adds='C3H8O', loses='C3H11NO',
-    off={'trimethylamine': 1, 'water': 1}, choose=most_h)], family='nitrogen',
-    note='Every NH2 on a saturated carbon leaves as trimethylamine and water (methyl iodide in excess, then silver oxide, '
-         'heat) and a C=C forms toward the neighbor with MORE H. It is a C=C at the end of the chain only when the NH2 sits next '
-         'to a CH3. The check: what comes off is trimethylamine, NOT ammonia.')
+    off={'trimethylamine': 1, 'water': 1}, choose=most_h)], family='make C=C',
+    note='Every NH2 on a saturated carbon leaves as trimethylamine and water and a C=C forms toward the neighbor with MORE H.')
 
-raney = Reaction('raney', 'Raney nickel', [
-    SmartsStep('[SX2H:1]-[#6:2]>>[#6:2]', loses='S', off={'sulfur': 1}),
-    SmartsStep('[C:1]=[C:2]>>[C:1]-[C:2]', adds='H2'),
-], family='sulfur',
-    note='Every SH becomes C-H and sulfur comes off. As the check says, Raney nickel also saturates every C=C (so it '
-         'overlaps hydrogenation).')
+chugaev = Reaction('chugaev', 'Chugaev elimination', [SmartsStep(
+    '[CX4;%s;!$(C-[#6]~[#8]):1](-[OX2H:2])-[CX4;!H0;!$(C-[!#6]):3]>>[C:1]=[C:3]' % ONE_HET,
+    adds='C2H3IS2', loses='C2H5IOS2', off={'sulfur': 1}, choose=most_h)], family='make C=C',
+    note='Every OH on a saturated carbon becomes C=C toward the neighbor with MORE H (the opposite of dehydrate): carbon '
+         'disulfide and methyl iodide make the xanthate, heat drives it off with carbonyl sulfide and methanethiol (sulfur).')
 
-decarboxylation = Reaction('decarboxylation', 'Decarboxylation',
-                           [SmartsStep('[#6:1]-[CX3](=O)-[OX2H]>>[#6:1]', loses='CO2', off={'carbon dioxide': 1})],
-                           family='acid', note='Every COOH loses its carbon as carbon dioxide and leaves C-H (soda lime, heat; '
-                                              'heat alone does not do this for a plain acid).')
+hydroformylation = Reaction('hydroformylation', 'Hydroformylation', addition_steps('C=O', True, 'CH2O'),
+                            family='make C=O', note='Every C=C takes CHO and H, anti-Markovnikov (carbon monoxide and hydrogen, '
+                                                    'rhodium): the CHO goes on the carbon with MORE H, one carbon longer.')
 
-hydrogenation = Reaction('hydrogenation', 'Hydrogenation', [SmartsStep('[C:1]=[C:2]>>[C:1]-[C:2]', adds='H2')],
-                         family='reshape C=C', note='Every C=C becomes a single bond (hydrogen, palladium).')
+epoxidation = Reaction('epoxidation', 'Epoxidation', [SmartsStep('[C:1]=[C:2]>>[C:1]1[C:2]O1', adds='O')],
+                       family='make epoxide', note='Every C=C becomes a three-ring with O (peracid).')
+
 
 # ---------------------------------------------------------------------------------------------------------------
 # self-reactions
 # ---------------------------------------------------------------------------------------------------------------
-
 def _ring_find(mol):
     """The game's lactol (zip).  An OH whose carbon is 3 or 4 carbons from the carbon of a C=O closes a ring through its
     oxygen.  The OH may be on a benzene ring.  Either part in a ring: the new ring may share at most one bond with a
@@ -284,13 +268,6 @@ ring = GraphRule('ring', _ring_find, _ring_edit, label='Ring', source='built',
                      'the C=O becomes C-OH (a hemiketal). It is loose: it opens again when the turn ends.')
 
 
-def _two_c_edit_dbl(rw, s):
-    pass
-
-
-dry = SmartsSelfRule('dry', '[%s:1](=[O:2])-[CX4;!H0:3]-[CX4:4]-[OX2H:5]>>[C:1](=[O:2])-[C:3]=[C:4]' % KC, 2,
-                     off={'water': 1}, loses='H2O', label='Dry',
-                     doc='An OH two carbons from a C=O leaves as water and a C=C forms beside the C=O (aldol dehydration).')
 
 flip = SmartsSelfRule('flip', '[C:1](-[OX2H:2])=[C:3]>>[C:1](=[O:2])-[C:3]', 0, label='Flip',
                       doc='An OH on a carbon of a C=C (an enol) becomes C=O and the C=C goes single.')
@@ -299,14 +276,6 @@ shift = SmartsSelfRule('shift', '[%s:1](=[O:2])-[CX4;!H0:3]-[CX3;!$(C-[#6]=O):4]
                                 '[C:1](=[O:2])-[C:3]=[C:4]-[C:5]' % KC, 2, label='Shift',
                        doc='A C=C whose near carbon is two carbons from a C=O slides one carbon toward it, so it sits beside '
                            'the C=O. Only when the C=C is not already beside a C=O (that stops it sliding back).')
-
-strip = SmartsSelfRule('strip', '[%s:1](=[O:2])-[CX4;!H0:3]-[CX4:4]-[Cl:5]>>[C:1](=[O:2])-[C:3]=[C:4]' % KC, 2,
-                       off={'acid fumes': 1}, loses='HCl', label='Strip',
-                       doc='A Cl two carbons from a C=O comes off as acid fumes and a C=C forms beside the C=O.')
-
-pop = SmartsSelfRule('pop', '[OX2H]-[CX3](=O)-[CX4:2]-[%s:3]=[O:4]>>[C:2]=[C:3]-[O:4]' % KC, 2,
-                     off={'carbon dioxide': 1}, loses='CO2', label='Pop',
-                     doc='A COOH two carbons from a C=O leaves as carbon dioxide; the C=O becomes an OH on a C=C (an enol).')
 
 
 def _tuck_find(mol):
@@ -384,24 +353,33 @@ snap = GraphRule('snap', _snap_find, _snap_edit, label='Snap',
                      '(an intramolecular Diels-Alder); one C=C is left, between C2 and C3.', source='built-draft')
 
 
+
+
+dry = SmartsSelfRule('dry', '[%s:1](=[O:2])-[CX4;!H0:3]-[CX4;!$(C(-[!#6])-[!#6]):4]-[OX2H:5]>>[C:1](=[O:2])-[C:3]=[C:4]' % KC, 2,
+                     off={'water': 1}, loses='H2O', label='Dry',
+                     doc='An OH two carbons from a C=O leaves as water and a C=C forms beside the C=O (aldol dehydration). Not an OH on a '
+                         'carbon that also carries another O (the OH a ring leaves). At most once a turn.')
+
+
 def _knit_find(mol):
     return pair_sites(mol, '[%s:1]=[OX1:2]' % KC, '[NX3H2:3]-[CX4:4]', 1, 4, 3, 4, ring='lactol')
 
 
 def _knit_edit(rw, s):
-    c, o, n = s['A'][1], s['A'][2], s['B'][3]
-    rw.AddBond(c, n, Chem.BondType.DOUBLE)
-    rw.RemoveAtom(o)
+    c, n = s['A'][1], s['B'][3]
+    rw.GetBondBetweenAtoms(c, s['A'][2]).SetBondType(Chem.BondType.SINGLE)
+    rw.AddBond(c, n, Chem.BondType.SINGLE)
+    # the O of the C=O stays on the carbon as OH
 
 
-knit = GraphRule('knit', _knit_find, _knit_edit, off={'water': 1}, loses='H2O', label='Knit',
-                 doc='An NH2 3 or 4 carbons from a C=O: N joins that carbon in a ring of 5 or 6, water comes off. The real product '
-                     'is a cyclic imine (C=N). The paper says it leaves a C=C: that is the enamine form of the same ring and '
-                     'is NOT written here.')
+knit = GraphRule('knit', _knit_find, _knit_edit, label='Knit',
+                 doc='An NH2 3 or 4 carbons from a C=O adds to it and closes a ring of 5 or 6 through N; the C=O becomes C-OH '
+                     '(a carbinolamine, the nitrogen twin of ring). Loose: it opens again when the turn ends.')
 
 
 def _seal_find(mol):
-    return pair_sites(mol, '[CX3:1](=[OX1:2])(-[OX2H:3])-[#6]', '[OX2H:4]-[CX4;%s:5]' % ONE_HET, 1, 5, 3, 4, ring='lactol')
+    return pair_sites(mol, '[CX3:1](=[OX1:2])(-[OX2H:3])-[#6]', '[OX2H,NX3H2,SX2H;$(*-[CX4]):4]-[CX4;%s:5]' % ONE_HET, 1, 5, 3, 4,
+                      ring='lactol')
 
 
 def _seal_edit(rw, s):
@@ -411,51 +389,94 @@ def _seal_edit(rw, s):
 
 
 seal = GraphRule('seal', _seal_find, _seal_edit, off={'water': 1}, loses='H2O', label='Seal',
-                 doc='A COOH and an OH 3 or 4 carbons apart (counting the acid carbon) join as a lactone ring of 5 or 6 atoms; '
-                     'water comes off.')
+                 doc='A COOH and an OH, NH2 or SH 3 or 4 carbons apart (counting the acid carbon) join as a lactone, lactam or '
+                     'thiolactone ring of 5 or 6 atoms; water comes off.')
 
 
-def _pair_find(mol):
-    return pair_sites(mol, '[SX2H:1]-[CX4:2]', '[SX2H:1]-[CX4:2]', 2, 2, 2, 3, ring='any', ordered=False)
+def _cap_find(mol):
+    return pair_sites(mol, '[SX2H:1]-[CX4:2]', '[%s:3]=[OX1:4]' % KC, 2, 3, 3, 4, ring='lactol')
 
 
-def _pair_edit(rw, s):
-    rw.AddBond(s['A'][1], s['B'][1], Chem.BondType.SINGLE)
+def _cap_edit(rw, s):
+    sulf, c = s['A'][1], s['B'][3]
+    rw.GetBondBetweenAtoms(c, s['B'][4]).SetBondType(Chem.BondType.SINGLE)
+    rw.AddBond(sulf, c, Chem.BondType.SINGLE)
 
 
-pair = GraphRule('pair', _pair_find, _pair_edit, off={'hydrogen': 1}, loses='H2', label='Pair',
-                 doc='Two SH 2 or 3 carbons apart join as S-S in a ring of 5 or 6 atoms (a disulfide); hydrogen comes off.')
+cap = GraphRule('cap', _cap_find, _cap_edit, label='Cap',
+                doc='An SH 3 or 4 carbons from a C=O adds to it and closes a ring of 5 or 6 through S; the C=O becomes C-OH '
+                    '(a thiohemiketal, the sulfur twin of ring).')
+
+
+def _close_find(mol):
+    a = pair_sites(mol, '[Cl:1]-[CX4:2]', '[OX2H,NX3H2,SX2H;$(*-[CX4]):3]-[CX4;%s:4]' % ONE_HET, 2, 4, 3, 5, ring='lactol')
+    b = pair_sites(mol, '[Cl:1]-[CX4:2]', '[OX2H:3]-[CX3:4]=[OX1]', 2, 4, 3, 5, ring='lactol')
+    return a + b
+
+
+def _close_edit(rw, s):
+    cl, o = s['A'][1], s['B'][3]
+    c = s['A'][2]
+    rw.AddBond(o, c, Chem.BondType.SINGLE)
+    rw.RemoveAtom(cl)
+
+
+close = GraphRule('close', _close_find, _close_edit, off={'acid fumes': 1}, loses='HCl', label='Close',
+                  doc='A Cl and an OH, NH2, SH or COOH 3 to 5 carbons apart close a ring of 5 to 7 atoms through O, N or S (Williamson '
+                      'ether, amine, thioether or lactone by alkylation, base); HCl comes off as acid fumes.')
+
+def _open_find(mol):
+    return pair_sites(mol, '[C:1]1-[O:2]-[C:3]1', '[OX2H:4]-[CX4;%s:5]' % ONE_HET, 1, 5, 3, 4, ring='lactol')
+
+
+def _open_edit(rw, s):
+    ca, oe = s['A'][1], s['A'][2]
+    oh = s['B'][4]
+    rw.RemoveBond(ca, oe)
+    rw.AddBond(oh, ca, Chem.BondType.SINGLE)
+
+
+open_ = GraphRule('open', _open_find, _open_edit, label='Open',
+                  doc='An OH 3 or 4 carbons from a carbon of an epoxide attacks that carbon, closing a ring of 5 or 6 through O; '
+                      'the epoxide opens and its other carbon is left with an OH (acid-catalysed epoxy-alcohol cyclization).')
+
+fold = SmartsSelfRule('fold', '[C;H0,H1:1]1-[O:2]-[C;H1:3]1>>[C:1]-[C:3]=[O:2]', 9, label='Fold',
+                      doc='An epoxide with a carbon on both ends turns into a C=O (Meinwald rearrangement): the O stays on one '
+                          'carbon as C=O and an H moves to the other. A chain-end epoxide is left for open. Runs last of its kind.')
 
 
 # ---------------------------------------------------------------------------------------------------------------
 # the registry
 # ---------------------------------------------------------------------------------------------------------------
-
 REACTIONS = {r.name: r for r in [
     hydrate, hydroborate, dehydrate, oxidize, reduce_, grow,
-    wittig, dihydroxylation, ozonolysis, jones, amination, thiolene, chlorination, williamson, suzuki, hofmann, raney,
-    decarboxylation, hydrogenation, suzuki_loose]}
-POOL19 = SIX + ('wittig', 'dihydroxylation', 'ozonolysis', 'jones', 'amination', 'thiolene', 'chlorination', 'williamson',
-                'suzuki', 'hofmann', 'raney', 'decarboxylation', 'hydrogenation')
+    hwe, dihydroxylation, ozonolysis, permanganate, ritter, thiolene, chlorination, cyanohydrin, hofmann, chugaev,
+    hydroformylation, epoxidation]}
 
-SELF_ORDER = ['ring', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'strip', 'knit', 'pop', 'seal', 'pair']
-SELF_RULES = {r.name: r for r in [ring, dry, flip, shift, tuck, weld, snap, strip, knit, pop, seal, pair]}
-SELF_RING = ('ring',)                 # the game as built (docs/CASCADES.md): ring alone
-SELF_TIER1 = ('ring', 'dry')          # docs/SELF_REACTIONS.md tier 1
+# the order the engine looks in (earlier wins a tie of prio and distance)
+SELF_ORDER = ['seal', 'close', 'knit', 'cap', 'open', 'fold', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'ring']
+SELF_RULES = {r.name: r for r in [ring, dry, flip, shift, tuck, weld, snap, knit, seal, cap, close, open_, fold]}
+for _n in ('seal', 'close', 'knit', 'cap', 'open'):
+    SELF_RULES[_n].prio = 0
+SELF_RULES['ring'].prio = 2
+PER_TURN = {'dry': 1, 'weld': 2, 'ring': 2}
+for _n, _c in PER_TURN.items():
+    SELF_RULES[_n].per_turn = _c
+SELF_RING = ('ring',)                    # the game as built before this set
+START_SELF = ('ring', 'dry')             # what the player holds at the start
+SELF_TIER1 = START_SELF
 SELF_ALL = tuple(SELF_ORDER)
 
-
-# ---------------------------------------------------------------------------------------------------------------
-# what the turn's end does: loose rings open again (rules.js reopen)
-# ---------------------------------------------------------------------------------------------------------------
+POOL = SIX + ('hwe', 'dihydroxylation', 'ozonolysis', 'permanganate', 'ritter', 'thiolene', 'chlorination', 'cyanohydrin',
+              'hofmann', 'chugaev', 'hydroformylation', 'epoxidation')
+POOL19 = POOL                            # the old name
 
 def reopen(mol):
     """A ring a self-reaction closed loosely (a carbon with an OH and, beside it, an ether oxygen in a ring) opens again:
-    the ring oxygen takes the H and the OH becomes the C=O it was.  Repeated until none is left.  A ring whose OH has been
-    taken away (dehydrated, say) stays shut.  Returns (mol, rings opened)."""
+    the ring oxygen takes the H and the OH becomes the C=O it was.  Repeated until none is left."""
     n = 0
     for _ in range(80):
-        ms = matches(mol, '[CX4:1](-[OX2H:2])-;@[OX2;D2:3]-[#6]')
+        ms = matches(mol, '[CX4:1](-[OX2H:2])-;@[OX2,SX2,NX3;D2:3]-[#6]')
         if not ms:
             break
         m = ms[0]

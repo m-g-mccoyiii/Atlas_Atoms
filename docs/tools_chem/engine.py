@@ -9,8 +9,10 @@ A molecule is a canonical SMILES string everywhere.  Reactions and self-reaction
 The rules of the round (docs/CASCADES.md, docs/HARNESS.md section A to T):
   * a round is one molecule and three turns; a turn deals five of the carried reactions (at most eight), three are lined up
     in order and fired; each reaction makes its change everywhere it fits;
-  * after each reaction that acted, the molecule's self-reactions run one at a time, nearest first, until none fits; each
-    is one step of the turn's chain (the cap is 40 steps a turn; `capped` says it was hit);
+  * after each reaction that acted, the molecule's self-reactions run one at a time until none fits; each is one step of
+    the turn's chain (the cap is 40 steps a turn; `capped` says it was hit).  Which goes first: the lowest rule.prio, then
+    the nearest pair, then the order of the rules.  A rule with rule.per_turn stops after that many steps in the turn
+    (dry 1, weld 2, ring 2);
   * a reaction that finds nothing, or that would grow the molecule past 56 heavy atoms, is wasted: it spends its use and
     sets nothing off;
   * a reaction can be used three times a round;
@@ -136,7 +138,7 @@ class Engine:
             rule = self.self_rules[rn]
             sites = rule.find(mol)
             if sites:
-                cands.append(((sites[0].dist, ri), rule, sites))
+                cands.append(((getattr(rule, 'prio', 1), sites[0].dist, ri), rule, sites))
         cands.sort(key=lambda t: t[0])
         for _, rule, sites in cands:
             for s in sites:
@@ -145,10 +147,11 @@ class Engine:
                     return rule, r
         return None
 
-    def settle(self, smi, rules, budget):
+    def settle(self, smi, rules, budget, used=()):
         """The molecule reacts with itself, one place at a time, the nearest first, until nothing fits or `budget` steps are
-        done.  Returns (smiles, steps, off items, capped)."""
-        key = (smi, rules, budget)
+        done.  A self-reaction that has a limit per turn (rule.per_turn) stops after that many steps in the turn: `used` holds
+        the steps already made earlier in the turn.  Returns (smiles, steps, off items, capped)."""
+        key = (smi, rules, budget, used)
         hit = self._settle.get(key)
         if hit is not None:
             return hit
@@ -156,15 +159,19 @@ class Engine:
         steps = []
         off = Counter()
         capped = False
+        cnt = Counter(dict(used))
         while True:
+            act = tuple(r for r in rules if getattr(self.self_rules[r], 'per_turn', None) is None
+                        or cnt[r] < self.self_rules[r].per_turn)
             if len(steps) >= budget:
-                capped = self._next_self(mol, rules) is not None
+                capped = self._next_self(mol, act) is not None
                 break
-            nxt = self._next_self(mol, rules)
+            nxt = self._next_self(mol, act)
             if nxt is None:
                 break
             rule, (mol, dropped) = nxt
             steps.append(rule.name)
+            cnt[rule.name] += 1
             for k, v in rule.off.items():
                 off[k] += v
         res = (Chem.MolToSmiles(mol), tuple(steps), tuple(sorted(off.items())), capped)
@@ -194,7 +201,7 @@ class Engine:
                 res = Turn(prev.smi, prev.steps, prev.fired + ((line[-1], 0),), prev.off, prev.capped,
                            prev.set_off + (0,))
             else:
-                s2, st, off2, capped = self.settle(f.smi, rules, self.cap - len(prev.steps))
+                s2, st, off2, capped = self.settle(f.smi, rules, self.cap - len(prev.steps), tuple(sorted(Counter(prev.steps).items())))
                 off = Counter(dict(prev.off))
                 off.update(dict(f.off))
                 off.update(dict(off2))
@@ -202,6 +209,31 @@ class Engine:
                            prev.capped or capped, prev.set_off + (len(st),))
         self._line[key] = res
         return res
+
+    def trace_line(self, smi, line, rules):
+        """Like run_line, but returns every state: [(label, smiles)], the start first, then the molecule right after each
+        reaction of the line that acted (label = its name) and after each self-reaction step (label = its name)."""
+        states = [('start', smi)]
+        cnt = Counter()
+        cur = smi
+        for r in line:
+            f = self.fire(cur, r)
+            if not f.acted:
+                continue
+            cur = f.smi
+            states.append((r, cur))
+            mol = parse(cur)
+            for _ in range(self.cap):
+                act = tuple(x for x in rules if getattr(self.self_rules[x], 'per_turn', None) is None
+                            or cnt[x] < self.self_rules[x].per_turn)
+                nxt = self._next_self(mol, act)
+                if nxt is None:
+                    break
+                rule, (mol, dropped) = nxt
+                cnt[rule.name] += 1
+                states.append((rule.name, Chem.MolToSmiles(mol)))
+            cur = Chem.MolToSmiles(mol)
+        return states
 
     def clear(self):
         self._fire.clear()

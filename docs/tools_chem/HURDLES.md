@@ -1,3 +1,5 @@
+> **Superseded on 2026-11-11 by `SPECS.md`, the document of record.** This page describes the first tested set (called hurdles there) that the independent review failed (`HURDLES_REVIEW.md`). `SPECS.md` has the set after the seven changes the review asked for: twins and crowded plans cut, every reading a gain, real restraint and against-the-grain specs added, plain words, the held-out pool and the new-player model, the growth cap, and the generator retested. The numbers below are history: do not build from them.
+
 # Overreact: hurdles
 
 2026-11-11. What a round asks for, built and tested on real molecules (`docs/tools_chem`). Read with `HARNESS.md` section Y: a win condition is an "at least", known at the start of the round, about the molecule or about what happened in the round. It never caps what the player may build. Points are a separate thing: they pay coins and letter the four words.
