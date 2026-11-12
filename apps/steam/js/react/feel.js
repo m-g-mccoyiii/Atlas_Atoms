@@ -109,6 +109,7 @@ function molWorldBox(mol) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; const 
 function molLocalBox(mol) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; mol.at.forEach((p, a) => { if (a.el === 'H' || !mol.balls.has(a)) return; x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }); return { x0, x1, z0, z1, w: Math.max(1, x1 - x0), d: Math.max(1, z1 - z0), cx: (x0 + x1) / 2, cz: (z0 + z1) / 2 }; }
 function inkBox(mol) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const v = _v(); mol.balls.forEach((b, a) => { if (a.el === 'H') return; b.mesh.getWorldPosition(v); const q = inkOf(v); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); const pad = 26; return { l: x0 - pad, r: x1 + pad, t: y0 - pad, b: y1 + pad, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 }; }
 // ink pixels per screen pixel at the middle of the page
+function inkAtScreen(sx, sy) { const v = new T.Vector3(sx / 1280 * 2 - 1, -(sy / 720 * 2 - 1), 0.5).unproject(api.cam), c = api.cam.position, dy = v.y - c.y, t = -c.y / (dy || -1e-6); return api.px({ x: c.x + (v.x - c.x) * t, z: c.z + (v.z - c.z) * t }); }
 function inkPerScreen() { const a = new T.Vector3(-5, 0, 2).project(api.cam), b = new T.Vector3(5, 0, 2).project(api.cam), sw = Math.abs(b.x - a.x) / 2 * 1280; return 10 * api.U / Math.max(1, sw); }
 
 // ---------- firing ----------
@@ -369,10 +370,11 @@ function frame(t, dt) {
 // ---------- the ink: the count, the step numerals, the gains, the words, the throw, the tally ----------
 function ink(x, t) {
   const S = F.seq; if (!S || !api) return; const st = api.st, c = api.center(), d = S.d, ips = inkPerScreen();
-  const Y = api.px(api.MADE);
+  // while the camera is pushed in the yield would leave the shot: it keeps its place on the screen (bottom left) and its size on the screen
+  const Y0 = api.px(api.MADE), wz = clamp((1.58 - ips) / 0.3, 0, 1), YA = wz > 0 ? inkAtScreen(55, 525) : Y0, Y = [Y0[0] + (YA[0] - Y0[0]) * wz, Y0[1] + (YA[1] - Y0[1]) * wz], yf = 1 + (Math.min(1, ips / 1.6) - 1) * wz;
   // the yield: set down on each hit (never scaled), green once the spec is met
   { const dropT = S.yDrop ? (t - S.yDrop) / 1000 : 9, dy = dropT < 0.5 ? (mode === 1 ? 10 : 6) * ips * kick(dropT, 5, 0.45) : 0, txt = api.fmt(st.shown), beaten = st.quota && st.shown >= st.quota;
-    const big = 112 + Math.min(28, 7 * Object.keys(S.flagged).length); api.marker(x, big); let sz = big; const w = x.measureText(txt).width; if (w > 420) sz = big * 420 / w; api.marker(x, sz);
+    const big = (112 + Math.min(28, 7 * Object.keys(S.flagged).length)) * yf; api.marker(x, big); let sz = big; const w = x.measureText(txt).width; if (w > 420 * yf) sz = big * 420 * yf / w; api.marker(x, sz);
     x.textAlign = 'left'; x.fillStyle = beaten ? api.GREEN : api.INK; x.fillText(txt, Y[0], Y[1] + dy); st.madeW = x.measureText(txt).width; }
   // tokens in flight
   S.tokens.forEach(tk => { const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);

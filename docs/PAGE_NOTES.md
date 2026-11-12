@@ -105,3 +105,21 @@ Branch `worktree-agent-a91f980f51482bfbf`, reset to `steam` first. Frames are in
 - The three frames were taken for each look with a seeded run, not by a full run through every page.
 - Item 6 as a whole run, the 3D coin, the multiplier object.
 - Merge notes: `scheme.html` is not committed; version lines to set are `scheme.js?v=361` and `shot.js?v=12`. Lines I touched inside the feel builder's area: `flyer` (the model of what leaves), `animKit` (one `use` line), `land` (family name removed from the ping), the hom block in `frame` (a pose line).
+
+## Third builder
+
+Branch `page-builder-3`, cut from `steam`. Frames `page10-*`, `run-a-*`, `run-b-*`, `mark-sheet.png` in `C:\Work\atlas-atoms\.claude\shots`. Test rig: `?shot=x&script=/dev/<file>.js` as before; `shot.js` now also logs `console.error` and `console.warn` and any script error to `/__log`. The frame server and the Edge runner are in `.claude/p3` (not in git): `srv.py` (port 8821), `shot.sh <name> <script> [&query]`.
+
+### Step 0: does the merged page load
+Yes. Real page headless, parchment (PAPERN 2) by default, no console error and no unhandled rejection in a whole bare round (first screen, pick, molecule, three pages, round end, 13 frames, `page10-0-*`). Capture was checked by throwing a test error (it was logged). Found and changed: with nothing saved feel.js used direction 1; it is now 3 (the owner's stated default). Seen but not caused by the merge: the close-up of direction 3 cuts the molecule off at the top edge on some pages (`run-b-06`).
+
+### Done
+1. The spec decides the round: `endRound` calls `P.roundEnd(g, run)`; `st.pass` is the spec result, `st.ypass` the yield; gold comes from `res.earn`; the page no longer counts `run.beaten` or sets `run.over` itself. The round page shows the spec at top left (mark, N with a caret, pips or a ruled line, the mark itself filled from the bottom to value over N); met: it turns green and settles (spring and drop 0.56 s, a soft bell and a strike). Two parts (round 6 on) are drawn side by side. End screen: the spec result at the left, large, red and partly filled when lost (seen: 2 of 9), green when met (seen). Pair page: the spec mark and N beside each molecule. Seen: `page10-1-*`, `page10-1L-*`.
+2. `marks.js` (new, needs a script line, see below): 45 hand-drawn marks with the names of SPEC_NOTES and of the kept table (`keep_CO`, `ring_pair`, `grow`, `cut_end`, `lean`, `water_only`, ...) as aliases; `AA.rxMarks.draw / resolve / plain`. `mark-sheet.png` shows each large, at 28 px, half filled, met, with its plain condition. Not every mark is equally easy at 28 px (lean, islands, trigger are the weakest).
+3. Nothing shows the future: `P.peek`, `st.view.fwd`, the hover outline marks, the per-reagent gain preview and the mirror's hover ghost are removed. A queued circle that fits nowhere (`P.queueFits`) is paler (alpha 0.3), nothing more. Not seen in a frame.
+4. Motifs: `drawMotifs(g)` reads `g.motifs = { id: level }` or `{ id: { level, pct } }` and `g.motifMult`. A column at the right of the stage (max 6 rows) with the picture (one piece a level, up to six), the level, the percent, and the product at the head. A rise pops a piece in and bumps the numeral; a fall lets a piece drop. `b.motifs` draws a row under a molecule on the pair page (not seen). Seen with injected state: `page10-4-*`. Twelve held at once overflow; six are shown.
+5. Whole run: `dev/p5.js` plays a run by the page's own functions. See the report for what was and was not recorded. No video was recorded.
+6. Feel: in direction 3 the yield now keeps its place and size on the screen while the camera is pushed in (`inkAtScreen` in feel.js; seen, `run-b-06`). The page-curl wedge is not touched.
+
+### scheme.html
+Add before the feel.js line: `<script src="js/react/marks.js?v=1"></script>`; bump `scheme.js?v=369`, `feel.js?v=2`, `shot.js?v=13`.
