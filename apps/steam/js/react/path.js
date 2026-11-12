@@ -58,7 +58,8 @@ const FEED = [
 // INTERIM MOLECULES (owner's ruling AF, 2026-11-12): until docs/tools_chem/MOLECULES.md lands, the chain molecules of up to 19 heavy atoms are replaced by these, which hold N, S and Cl
 // at the distances the reflexes work at (checked with RDKit and with the engine, jobs/cand.js). Set AA.rxFeedOld = true before the scripts load to keep the older table.
 const FEED_HET = ["C=CCCC(=O)C(S)C(Cl)C=O", "C=CCC(N)C(=O)CCC=O", "C=CCC(N)C(=O)C(N)CC=O", "C=CCC(Cl)C(=O)CCC(C)(O)CC=C", "C=CCCC(=O)C(Cl)C1CCCC1=O", "C=CCCC(=O)CC(S)C1(O)CCCC1", "C=CCCC(=O)CC(N)C1(O)CCCC1", "C=CCCC(=O)C(N)C1CCCC1=O", "C=CCCC(=O)CCC(=O)C(S)CCC=O", "C=CCCC(=O)CC(N)C(=O)C(Cl)CCC=O", "C=CCCC(=O)C(Cl)CC(C)(O)CCC=O", "C=CC(N)CC(=O)CCC(=O)C(Cl)C1CCCC1=O", "C=CCCC(=O)C(Cl)CC(=O)CC1CCCC1=O", "C=CCC(Cl)C(=O)C(Cl)CC(=O)CCC=O", "C=CCCC(=O)CCC(C)(O)C(Cl)CC=C", "C=CCCC(=O)CC(S)C(=O)CC1CCCC1=O"];
-if (!AA.rxFeedOld) { const heavyOf = s => (s.match(/Cl|[A-Z]/g) || []).length, keep = FEED.filter(q => !(q[0] === 'chain' && heavyOf(q[1]) <= 19)); FEED.length = 0; FEED_HET.forEach(s => FEED.push(['chain', s])); keep.forEach(q => FEED.push(q)); }
+const FEED_HET_RING = ["C=CCCC(=O)C(S)C1CCCC1=O", "C=CCCC(O)C(N)CC(=O)C1CCCC1", "C=CC(Cl)CC(=O)CCC1(O)CCCC1", "NC(C=O)CCC(=O)CCC1(O)CCCC1", "O=CCC(Cl)C(=O)CCC1(O)CCCC1", "C=CCCC(=O)C(N)CC(=O)CC1CCCC1=O", "C=CC(Cl)CC(O)CCC(=O)CCC1(O)CCCC1"];
+if (!AA.rxFeedOld) { const heavyOf = s => (s.match(/Cl|[A-Z]/g) || []).length, keep = FEED.filter(q => !((q[0] === 'chain' || q[0] === 'ring') && heavyOf(q[1]) <= 19)); FEED.length = 0; FEED_HET.forEach(s => FEED.push(['chain', s])); FEED_HET_RING.forEach(s => FEED.push(['ring', s])); keep.forEach(q => FEED.push(q)); }
 const FEEDS = FEED.map(q => q[1]);
 // heavy atoms of a molecule as it is dealt, read off its formula; what a round asks for; and how far off a molecule may be
 const feedSize = smi => smi.replace(/Cl/g, 'X').replace(/[^A-Za-z]/g, '').length;

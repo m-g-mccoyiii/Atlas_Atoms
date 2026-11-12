@@ -402,7 +402,7 @@ const ENG = (() => {
       else if (k.a.el === 'H' && ib != null) hc[ib]++;
       else if (k.b.el === 'H' && ia != null) hc[ia]++;
     });
-    const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null, lock: atoms.map(a => !!(a.prot || a.cure || a.clamp)) };
+    const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null, lock: atoms.map(a => !!(a.prot || a.cure || a.clamp)), lockSelf: atoms.map(a => !!a.prot), self: false };
     const ar = aromaticAtoms(m); G.ar = atoms.map(a => ar.has(a));
     return G;
   }
@@ -459,8 +459,8 @@ const ENG = (() => {
     while (layer.length) { const nx = []; for (const a of layer) { const cn = cnb(G, a); if (cn.length <= 1) return d; cn.forEach(x => { if (!seen.has(x)) { seen.add(x); nx.push(x); } }); } layer = nx; d++; }
     return d;
   }
-  // a site that touches a protected, cured or clamped atom (prot, cure, clamp) is left out: the engine honours them, and a protected site never stalls the cascade
-  const free = (G, s) => { for (const f of ['t', 'k', 'oh', 'c', 'A', 'B']) { const v = s[f]; if (v && v.some(i => G.lock[i])) return false; } return true; };
+  // a site that touches a protected, cured or clamped atom (prot, cure, clamp) is left out: reagents leave them alone (prot, cure, clamp); the molecule's own reflexes leave only prot alone (a cured C=O still takes the ring, the salt rule); a protected site never stalls the cascade
+  const free = (G, s) => { const L = G.self ? G.lockSelf : G.lock; for (const f of ['t', 'k', 'oh', 'c', 'A', 'B']) { const v = s[f]; if (v && v.some(i => L[i])) return false; } return true; };
   const lex = (a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; };
   // ---------- groups (each is a list of tuples of atom indices, the numbered atoms of the SMARTS) ----------
   const KC = (G, c) => CX3(G, c) && dblO(G, c) >= 0 && !G.nb[c].some(q => q.o === 1 && el(G, q.j) !== 'C');    // [CX3;!$(C(=O)-[!#6])] with its =O
@@ -639,7 +639,7 @@ const ENG = (() => {
   const CARDID = {}; Object.keys(KIND).forEach(k => { CARDID[KIND[k]] = k; });
   // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
   function nextReflex(m, held, cnt, G0) {
-    const G = G0 || snapG(m), rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
+    const G = G0 || snapG(m); G.self = true; const rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
     rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
     cands.sort((a, b) => lex(a.key, b.key));
     return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G } : null;
@@ -812,9 +812,9 @@ Object.keys(REFLEXES).forEach(kind => {
   const P = REFLEXES[kind], old = CARDS[P.id], lf = old ? { find: old.find, ok: old.ok, apply: old.apply } : null;
   const c = old || { id: P.id, verb: P.verb, formula: '', chem: 'by itself', rgb: P.rgb, cls: 'self', ghs: [], rule: P.rule, from: P.from, to: P.to };
   c.kind = kind; c.legacy = lf;
-  c.find = m => { if (!MODE.eng && lf) return lf.find(m); const G = ENG.snapG(m), s = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); return s.length ? [{ atoms: siteAtoms(G, s[0]), d: s[0].dist, kind, join: siteAnch(G, s[0]), via: s[0].via || 'chain' }] : []; };
+  c.find = m => { if (!MODE.eng && lf) return lf.find(m); const G = ENG.snapG(m); G.self = true; const s = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); return s.length ? [{ atoms: siteAtoms(G, s[0]), d: s[0].dist, kind, join: siteAnch(G, s[0]), via: s[0].via || 'chain' }] : []; };
   c.ok = (m, s) => ((!MODE.eng && lf) ? lf.ok(m, s) : c.find(m).length > 0);
-  c.apply = (m, s) => { if (!MODE.eng && lf) return lf.apply(m, s); const G = ENG.snapG(m), sites = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); if (!sites.length) return { focus: [], incoming: [], leaving: [], tag: '' }; ENG.removed.length = 0; const r = ENG.R[kind].edit(G, m, sites[0]); r.tag = P.tag; r.off = ENG.R[kind].off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; };
+  c.apply = (m, s) => { if (!MODE.eng && lf) return lf.apply(m, s); const G = ENG.snapG(m); G.self = true; const sites = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); if (!sites.length) return { focus: [], incoming: [], leaving: [], tag: '' }; ENG.removed.length = 0; const r = ENG.R[kind].edit(G, m, sites[0]); r.tag = P.tag; r.off = ENG.R[kind].off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; };
   CARDS[P.id] = c;
 });
 const SIXMAP = { hydrate: 'hydrate', pcc: 'oxidize', nabh4: 'reduce', dehydrate: 'dehydrate', bh3: 'hydroborate', allyl: 'grow' };
