@@ -323,7 +323,7 @@ function spawnNumeral(n, gain, y, c) {
 // the gain arrives at the yield: the count takes it
 function arrive(num) {
   const S = F.seq; if (!S) return; num.arrived = true; const ct = S.count, t = now();
-  if (num.last && overPending()) { S.ovHeld = { y: num.y }; S.landed = t; return; }   // the last gain is kept back: the yield rockets inside OVERREACT
+  if (num.last && overPending()) { S.ovHeld = { y: num.y }; ct.frozen = true; S.landed = t; return; }   // the last gain is kept back: the yield rockets inside OVERREACT
   ct.from = ct.shown; ct.to = num.y; ct.t0 = t; ct.dur = Math.min(400, 0.8 * Math.max(200, num.last ? 500 : Tn(num.n))) / S.speed; ct.ease = 'outQuart'; ct.target = num.y;
   S.yDrop = t;
   if (num.last) S.landed = t + ct.dur;
@@ -444,23 +444,29 @@ function vibeApply(t, c) {
 // the heat in the bonds: nothing at the first mark, then orange, then yellow, then white at the core
 function heatLevel(t) {
   if (!VIBE || !api) return 0; const S = F.seq, ov = F.ov;
-  if (ov) { const a0 = t - ov.t - OV.pre; return a0 < 0 ? (ov.heat0 || 0) : clamp(1 - (a0 - 1500) / 1300, 0, 1); }
-  if (!S) return 0; const nf = Object.keys(S.flagged).length; if (nf < 2) return 0;
+  if (ov) { const a0 = t - ov.t - OV.pre; return F.heatNow = (a0 < 0 ? (ov.heat0 || 0) : clamp(1 - (a0 - 1500) / 1100, 0, 1)); }
+  if (!S) return F.heatNow = 0; const nf = Object.keys(S.flagged).length; if (nf < 2) return F.heatNow = 0;
   const since = Object.values(S.flagged).sort((a, b) => a - b)[1]; let h = clamp(0.2 + 0.27 * (nf - 1), 0, 1) * clamp((t - since) / 500, 0, 1);
   if (S.done && S.restT && !S.ovHeld && !overPending()) h *= clamp(1 - (t - S.restT) / 600, 0, 1);
   return F.heatNow = h;
 }
 const _ha = { v: null, w: null };
+// where each bond lies on the screen, taken at the end of a frame when the molecule and the camera have been set for it
+function heatCache(c) {
+  if (!VIBE || !c || !c.sticks || !(F.heatNow > 0.01 || F.ov)) { F.heatSeg = null; return; } if (!_ha.v) { _ha.v = _v(); _ha.w = _v(); }
+  const seg = []; let i = 0; c.group.updateMatrixWorld(true);
+  c.sticks.forEach(s => { i++; if (s.a.el === 'H' || s.b.el === 'H') return; const ba = c.balls.get(s.a), bb = c.balls.get(s.b); if (!ba || !bb || !s.parts[0] || !s.parts[0].mesh.visible) return;
+    const A = toScreen(ba.mesh.getWorldPosition(_ha.v)), B = toScreen(bb.mesh.getWorldPosition(_ha.w)); seg.push([A[0], A[1], B[0], B[1], i]); });
+  F.heatSeg = seg;
+}
 function heatDraw(x, t, k, h) {
-  const c = api.center(); if (!c || !c.sticks) return; if (!_ha.v) { _ha.v = _v(); _ha.w = _v(); }
-  const S = F.seq, still = S && S.cur && S.cur.last && !S.cur.hitT; let i = 0;
+  const seg = F.heatSeg, S = F.seq; if (!seg || !S) return; const still = S.cur && S.cur.last && !S.cur.hitT;
   x.save(); x.lineCap = 'round';
-  c.sticks.forEach(s => { i++; if (s.a.el === 'H' || s.b.el === 'H') return; const ba = c.balls.get(s.a), bb = c.balls.get(s.b); if (!ba || !bb || !ba.mesh.visible) return;
-    const A = toScreen(ba.mesh.getWorldPosition(_ha.v)), B = toScreen(bb.mesh.getWorldPosition(_ha.w)), dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy); if (len < 4 || len > 220 * k) return;
-    const fl = still ? 1 : 0.72 + 0.28 * nz(t / 1000 * 11 + i * 1.7, i * 2.1), a = h * fl, x0 = A[0] + dx * 0.24, y0 = A[1] + dy * 0.24, x1 = A[0] + dx * 0.76, y1 = A[1] + dy * 0.76;
-    const ln = (w, col) => { x.strokeStyle = col; x.lineWidth = w; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
-    ln(len * 0.5, 'rgba(255,110,20,' + (0.2 * a).toFixed(3) + ')'); ln(len * 0.27, 'rgba(255,150,30,' + (0.5 * a).toFixed(3) + ')'); ln(len * 0.13, 'rgba(255,215,90,' + (0.85 * a).toFixed(3) + ')');
-    if (h > 0.6) ln(len * 0.06, 'rgba(255,252,230,' + (clamp((h - 0.6) / 0.4, 0, 1) * fl).toFixed(3) + ')'); });
+  seg.forEach(q => { const dx = q[2] - q[0], dy = q[3] - q[1], len = Math.hypot(dx, dy), i = q[4]; if (len < 4 || len > 240 * k) return;
+    const fl = still ? 1 : 0.72 + 0.28 * nz(t / 1000 * 11 + i * 1.7, i * 2.1), a = h * fl, x0 = q[0] + dx * 0.2, y0 = q[1] + dy * 0.2, x1 = q[0] + dx * 0.8, y1 = q[1] + dy * 0.8, w = Math.min(len, 46 * k);
+    const ln = (lw, col) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
+    ln(w * 0.5, 'rgba(255,110,20,' + (0.14 * a).toFixed(3) + ')'); ln(w * 0.3, 'rgba(255,130,30,' + (0.3 * a).toFixed(3) + ')'); ln(w * 0.15, 'rgba(255,190,70,' + (0.8 * a).toFixed(3) + ')');
+    if (h > 0.6) ln(w * 0.06, 'rgba(255,252,230,' + (clamp((h - 0.6) / 0.4, 0, 1) * fl).toFixed(3) + ')'); });
   x.restore();
 }
 
@@ -490,7 +496,7 @@ function overBeats(t) { const ov = F.ov, S = F.seq, a0 = t - ov.t - OV.pre, pw =
   if (ov.gold && ov.beat.count) { const n = ov.gold; while (ov.coins.length < n && a0 >= 520 + ov.coins.length * Math.min(130, 700 / n)) ov.coins.push({ t, i: ov.coins.length, sd: Math.random() }); }
 }
 function overGold(fin) { try { if (!api.P.RULE.coins) return 0; return flagVals().filter(v => fin >= v).length; } catch (e) { return 0; } }
-function overRelease() { const S = F.seq; if (!S || !S.ovHeld) return; const ct = S.count, t = now(), fin = P_made(); S.ovHeld = null; ct.from = ct.shown; ct.to = fin; ct.t0 = t; ct.dur = 300; ct.ease = 'outQuart'; ct.target = fin; S.landed = t + 300; }
+function overRelease() { const S = F.seq; if (!S || !S.ovHeld) return; const ct = S.count, t = now(), fin = P_made(); S.ovHeld = null; ct.frozen = false; ct.from = ct.shown; ct.to = fin; ct.t0 = t; ct.dur = 300; ct.ease = 'outQuart'; ct.target = fin; S.landed = t + 300; }
 // a click during OVERREACT lets the word go at once
 function overSkip() { const ov = F.ov, S = F.seq, t = now(); if (!ov || ov.skipped || t - ov.t > OV.ms - 320) return; ov.skipped = true;
   if (!ov.beat.hit) { snd('flag', 4); mus('state', 'overreact'); } ['hit', 'ring', 'count', 'third', 'fourth', 'swell'].forEach(n => { ov.beat[n] = ov.beat[n] || t; });
@@ -518,12 +524,12 @@ function overDraw(x, t, W, H, k, wipe) {
   overBeats(t);
   const wordOut = clamp((OV.ms - age) / 300, 0, 1), fade = age < OV.ms - 300 ? 1 : clamp(1 - (age - (OV.ms - 300)) / (OV.after + 300), 0, 1), swell = bell(a0, 1750, 480);
   // colour pushed warm: a wash over the whole page and a hot edge
-  { const wa = (0.07 + 0.2 * Math.exp(-a0 / 500) + 0.12 * swell) * fade * (0.8 + 0.3 * rk); x.fillStyle = 'rgba(255,168,60,' + wa.toFixed(3) + ')'; x.fillRect(0, 0, W, H);
-    const g = x.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, diag * 0.6), ea = (0.28 + 0.3 * Math.exp(-a0 / 600) + 0.2 * swell) * fade * (0.7 + 0.4 * rk); g.addColorStop(0, 'rgba(240,90,20,0)'); g.addColorStop(1, 'rgba(226,70,16,' + ea.toFixed(3) + ')'); x.fillStyle = g; x.fillRect(0, 0, W, H); }
+  { const wa = (0.07 + 0.15 * Math.exp(-a0 / 500) + 0.12 * swell) * fade * (0.8 + 0.3 * rk); x.fillStyle = 'rgba(255,168,60,' + wa.toFixed(3) + ')'; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, diag * 0.6), ea = (0.34 + 0.4 * Math.exp(-a0 / 600) + 0.25 * swell) * fade * (0.6 + 0.6 * rk); g.addColorStop(0, 'rgba(240,90,20,0)'); g.addColorStop(1, 'rgba(196,48,10,' + ea.toFixed(3) + ')'); x.fillStyle = g; x.fillRect(0, 0, W, H); }
   // the molecule bursting with light: a core, and rays turning slowly
   { const la = clamp(0.95 * Math.exp(-a0 / 420) + 0.5 * swell + 0.2, 0, 1) * fade, Rb = (ov.mr * 1.3 + (0.2 + 0.3 * pw) * W * E.outCubic(clamp(a0 / 320, 0, 1))) * (1 + 0.12 * swell);
     const g = x.createRadialGradient(mc[0], mc[1], 0, mc[0], mc[1], Rb); g.addColorStop(0, 'rgba(255,255,255,' + la.toFixed(3) + ')'); g.addColorStop(0.3, 'rgba(255,240,170,' + (la * 0.75).toFixed(3) + ')'); g.addColorStop(0.65, 'rgba(255,170,50,' + (la * 0.32).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,140,30,0)'); x.fillStyle = g; x.beginPath(); x.arc(mc[0], mc[1], Rb, 0, 6.3); x.fill();
-    const nr = Math.round(10 + 10 * rk), ra = clamp(0.6 * Math.exp(-a0 / 700) + 0.4 * swell, 0, 1) * fade, len = diag * (0.35 + 0.5 * E.outCubic(clamp(a0 / 260, 0, 1))) * (0.7 + 0.3 * pw), rot = a0 / 1000 * 0.35 + sd;
+    const nr = Math.round(12 + 12 * rk), ra = clamp((0.75 + 0.35 * rk) * Math.exp(-a0 / 1200) + 0.5 * swell, 0, 1) * fade, len = diag * (0.35 + 0.5 * E.outCubic(clamp(a0 / 260, 0, 1))) * (0.7 + 0.3 * pw), rot = a0 / 1000 * 0.35 + sd;
     if (ra > 0.01) { x.save(); x.translate(mc[0], mc[1]); for (let i = 0; i < nr; i++) { const an = rot + i / nr * 6.283 + (R(i + 300) - 0.5) * 0.3, wd = 0.035 + 0.06 * R(i + 320), L = len * (0.55 + 0.45 * R(i + 340)), gr = x.createLinearGradient(0, 0, Math.cos(an) * L, Math.sin(an) * L); gr.addColorStop(0, 'rgba(255,250,215,' + (ra * 0.85).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,200,90,0)'); x.fillStyle = gr; x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.cos(an - wd) * L, Math.sin(an - wd) * L); x.lineTo(Math.cos(an + wd) * L, Math.sin(an + wd) * L); x.closePath(); x.fill(); } x.restore(); } }
   // the shockwave: a ring of ink with a white lip crossing the whole page (a second and a third in the deeper rounds)
   for (let j = 0; j < (rk > 0.75 ? 3 : rk > 0.35 ? 2 : 1); j++) { const rg = ringAt(t, j); if (!rg) continue; const r = rg.r * k, al = (1 - rg.u) * (j ? 0.6 : 1), lw = (26 - 14 * rg.u) * k * (0.8 + 0.4 * pw);
@@ -531,11 +537,11 @@ function overDraw(x, t, W, H, k, wipe) {
     x.lineWidth = lw; x.strokeStyle = 'rgba(255,196,80,' + (0.75 * al).toFixed(3) + ')'; x.beginPath(); x.arc(mc[0], mc[1], r, 0, 6.3); x.stroke();
     x.lineWidth = lw * 0.32; x.strokeStyle = 'rgba(34,37,44,' + (0.85 * al).toFixed(3) + ')'; x.beginPath(); x.arc(mc[0], mc[1], r + lw * 0.6, 0, 6.3); x.stroke(); }
   // ink and sparks thrown across the whole frame: each flies out, slows, and falls
-  { const N = Math.round(70 + 90 * rk), tau = a0 / 1000, at = (i, tq) => { const an = R(i) * 6.283, v = (420 + 1500 * R(i + 60) * (0.75 + 0.25 * pw)) * k, dr = 2.0 + 1.2 * R(i + 90), ds = (1 - Math.exp(-dr * tq)) / dr; return [mc[0] + Math.cos(an) * v * ds * 1.25, mc[1] + Math.sin(an) * v * ds * 0.8 + 0.5 * (520 + 500 * R(i + 30)) * k * tq * tq]; };
+  { const N = Math.round(90 + 260 * rk), tau = a0 / 1000, at = (i, tq) => { const an = R(i) * 6.283, v = (420 + 1500 * R(i + 60) * (0.75 + 0.25 * pw)) * k, dr = 2.0 + 1.2 * R(i + 90), ds = (1 - Math.exp(-dr * tq)) / dr; return [mc[0] + Math.cos(an) * v * ds * 1.25, mc[1] + Math.sin(an) * v * ds * 0.8 + 0.5 * (520 + 500 * R(i + 30)) * k * tq * tq]; };
     x.save(); x.lineCap = 'round';
     for (let i = 0; i < N; i++) { const life = 0.9 + 1.5 * R(i + 120), u = tau / life; if (u >= 1) continue; const p = at(i, tau), kind = i % 3, al = (u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3) * wordOut;
       if (kind === 0) { const r = (4 + 20 * R(i + 150) * R(i + 180)) * k * (0.8 + 0.3 * pw); x.globalAlpha = 0.9 * al; x.fillStyle = i % 2 ? '#b83a2c' : '#22252c'; const q = at(i, Math.max(0, tau - 0.05)); x.beginPath(); x.ellipse(p[0], p[1], r, r * 0.7, Math.atan2(p[1] - q[1], p[0] - q[0]), 0, 6.3); x.fill(); if (tau < 0.5) { x.strokeStyle = x.fillStyle; x.lineWidth = Math.max(1.5, r * 0.4); x.beginPath(); x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]); x.stroke(); } }
-      else { const q = at(i, Math.max(0, tau - 0.045)), tw = 0.6 + 0.4 * Math.sin(a0 / 28 + i * 2.1); x.globalAlpha = al * tw; x.strokeStyle = kind === 1 ? '#ffb020' : '#fff3b8'; x.lineWidth = (2.2 + 3.2 * R(i + 210)) * k; x.beginPath(); x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]); x.stroke(); x.fillStyle = '#fffbe6'; x.beginPath(); x.arc(p[0], p[1], x.lineWidth * 0.75, 0, 6.3); x.fill(); } }
+      else { const q = at(i, Math.max(0, tau - 0.07)), tw = 0.6 + 0.4 * Math.sin(a0 / 28 + i * 2.1); x.globalAlpha = al * tw; x.strokeStyle = kind === 1 ? '#ff7a10' : '#ffc21a'; x.lineWidth = (3.2 + 5 * R(i + 210)) * k * (0.8 + 0.4 * pw); x.beginPath(); x.moveTo(q[0], q[1]); x.lineTo(p[0], p[1]); x.stroke(); x.fillStyle = '#fffbe6'; x.beginPath(); x.arc(p[0], p[1], x.lineWidth * 0.75, 0, 6.3); x.fill(); } }
     x.restore(); x.globalAlpha = 1; }
   // white flash on the first blow, a smaller one on the second
   if (a0 < 190) { x.fillStyle = 'rgba(255,255,255,' + (1 - a0 / 190).toFixed(3) + ')'; x.fillRect(0, 0, W, H); }
@@ -547,10 +553,10 @@ function overDraw(x, t, W, H, k, wipe) {
       x.fillStyle = 'rgba(255,214,90,0.35)'; x.beginPath(); x.arc(cx, cy, r * 1.7, 0, 6.3); x.fill();
       if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, cx, cy, r, {}); else { x.fillStyle = '#e8b53a'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); x.strokeStyle = '#7a4318'; x.lineWidth = 3 * k; x.stroke(); } }); }
   // the word: slammed in from far too big, squashed flat by the blow, springing back; white-hot, cooling to red; knocked again on each later blow
-  if (wordOut > 0) { let sz = 100 * k; const w0 = AA.rxPen.measure('OVERREACT', sz, 'heavy').width; sz *= Math.min(0.68 * W / Math.max(1, w0), 0.4 * H / (100 * k));
+  if (wordOut > 0) { let sz = 100 * k; const w0 = AA.rxPen.measure('OVERREACT', sz, 'heavy').width; sz *= Math.min(0.64 * W / Math.max(1, w0), 0.4 * H / (100 * k));
     const IN = 110; let sx, sy;
-    if (a0 < IN) { const e = E.inCubic(a0 / IN); sx = 1.36 - 0.36 * e; sy = 2.5 - 1.5 * e; }   // it comes in stretched tall, never wider than the frame
-    else { const q = (a0 - IN) / 1000, rg = ring(q, 4.2, 0.3) * (q < 1.2 ? 1 : 0); sx = 1 + 0.24 * rg; sy = 1 - 0.3 * rg; }
+    if (a0 < IN) { const e = E.inCubic(a0 / IN); sx = 1.15 - 0.15 * e; sy = 2.5 - 1.5 * e; }   // it comes in stretched tall, never wider than the frame
+    else { const q = (a0 - IN) / 1000, rg = ring(q, 4.2, 0.3) * (q < 1.2 ? 1 : 0); sx = 1 + 0.2 * rg; sy = 1 - 0.3 * rg; }
     const knock = name => { const b = ov.beat[name]; if (!b) return 0; const q = (t - b) / 1000; return q < 0.6 ? kick(q, 5, 0.4) : 0; }, kn = 0.05 * knock('ring') + 0.07 * knock('third') + 0.07 * knock('fourth') + 0.05 * swell;
     const breathe = 1 + 0.035 * clamp(a0 / 2400, 0, 1), exit = 1 + 0.3 * E.inCubic(1 - wordOut); sx *= (1 + kn) * breathe * exit; sy *= (1 + kn) * breathe * exit;
     const jam = a0 < 750 ? (1 - a0 / 750) : 0, jx = 14 * k * pw * jam * nz(t / 1000 * 60, 1.1), jy = 10 * k * pw * jam * nz(t / 1000 * 60, 3.7), hot = Math.exp(-Math.max(0, a0 - IN) / 260), al = Math.min(1, a0 / 45) * wordOut;
@@ -615,6 +621,7 @@ function frame(t, dt) {
     if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); row.bb = [x0, x1, y0, y1]; return x1 - x0; })(); { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const sc = c.group.scale.x, v2 = new T.Vector3(); c.balls.forEach((bb, a) => { bb.mesh.getWorldPosition(v2); const q = pj(v2), r = Math.abs(pj(v2.clone().add(new T.Vector3((bb.R || 0.4) * sc, 0, 0)))[0] - q[0]) + 1; x0 = Math.min(x0, q[0] - r); x1 = Math.max(x1, q[0] + r); y0 = Math.min(y0, q[1] - r); y1 = Math.max(y1, q[1] + r); }); row.bbr = [x0, x1, y0, y1]; } F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
   st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } });
+  heatCache(c);
 }
 
 // ---------- the ink: the count, the step numerals, the gains, the words, the throw, the tally ----------
