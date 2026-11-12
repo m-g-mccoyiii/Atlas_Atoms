@@ -846,7 +846,7 @@ const LAB = (function () {
     clink:   { rr: 2, lo: 84, hi: 102, gen: m => { const f = mf(m), x = modal([[f, 1, 0.24], [f * 2.32, 0.6, 0.15], [f * 4.25, 0.4, 0.09], [f * 6.63, 0.2, 0.05]], 0.4); burst(x, 0, 0.002, 3000, 12000, 0.7, 201 + m); return norm(x, 0.8); } },
     // glass cracking: a handful of splinters ringing for a few milliseconds, a snap of noise, a late tick
     crack:   { rr: 3, fix: 60, gen: () => { const r = RNG(211 + TAKE * 977), x = buf(0.35); for (let i = 0; i < 9; i++) ping(x, i ? r() * 0.06 : 0, 2500 + r() * 7000, i ? 0.3 + 0.5 * r() : 1, 0.004 + 0.012 * r()); burst(x, 0, 0.003, 3000, 14000, 1.4, 212); burst(x, 0.001, 0.006, 300, 1200, 0.5, 213); burst(x, 0.05 + r() * 0.05, 0.002, 4000, 12000, 0.5, 214); return norm(x, 0.85); } },
-    // glass shattering: ninety splinters, dense at first, falling for two seconds
+    // glass shattering: a crash, a thud, three hundred splinters falling for two seconds
     shatter: { rr: 2, fix: 60, gen: () => { const r = RNG(221 + TAKE * 977), x = buf(2.3); for (let i = 0; i < 300; i++) { const u = r(), t0 = 1.9 * u * u * u, a = (1 - 0.8 * u) * (0.2 + 0.8 * r()); ping(x, t0, 1400 + r() * 9000, a * 0.5, 0.004 + 0.05 * r() * r()); burst(x, t0, 0.0015 + 0.003 * r(), 2500, 14000, a * 0.9, 222 + i); } burst(x, 0, 0.06, 900, 14000, 2.2, 240); burst(x, 0, 0.02, 2500, 15000, 1.6, 241); burst(x, 0.002, 0.05, 150, 400, 1.3, 242); return norm(fade(x, 0.2), 0.85); } },
     // a flask rung like a bowl: long modes in close pairs, so it beats
     bowl:    { lo: 45, hi: 84, gen: m => { const f = mf(m), x = modal([[f, 1, 2.4], [f * 1.005, 0.6, 2.2], [f * 2.71, 0.5, 1.3], [f * 2.722, 0.3, 1.2], [f * 5.12, 0.25, 0.6], [f * 8.1, 0.1, 0.3]], 2.4); burst(x, 0, 0.003, 1800, 9000, 0.35, 225 + m); return norm(fade(x, 0.3), 0.85); } },
@@ -964,12 +964,12 @@ const K4 = {
   // capped: a piano string with a bolt in it
   cap: (t, m, g, p) => { Q('prep', m, t, g * 1.4, { pan: p, rev: 0.3, dur: 1.0, r: 0.3, hp: 500 }); Q('prep', m + 12, t + 0.004, g * 1.0, { pan: -p, rev: 0.3, dur: 0.6, r: 0.3, hp: 700 }); Q('glass', clamp(m + 12, 67, 93), t, g * 0.9, { pan: p * 0.5, rev: 0.35 }); },
   // a ring opens and spills: a pour and a bubble
-  open: (t, m, g, p) => { Q('pour', NO, t, g * 1.4, { pan: p, rev: 0.2, dur: 0.5, r: 0.2 }); Q('blub', clamp(m - 12, 48, 72), t + 0.05, g * 0.8, { pan: -p, rev: 0.2 }); },
+  open: (t, m, g, p) => { Q('pour', NO, t, g * 1.4, { pan: p, rev: 0.2, dur: 0.5, r: 0.2 }); Q('blub', clamp(m - 12, 48, 72), t, g * 0.9, { pan: -p, rev: 0.2 }); },
   // a rung across the fold: the page creases, two cellos bow an open fifth over a low piano string, one far bell
   fold: (t, m, g, p) => { Q('paper', NO, t, g * 0.9, { pan: -p, rev: 0.15 }); Q('paper', NO, t + 0.07, g * 0.6, { pan: p, rev: 0.15, det: -400 }); Q('piano', m - 24, t, g * 0.55, { rev: 0.25, dur: 0.7, r: 0.3 }); [m - 12, m - 5].forEach((q, i) => Q('cello', q, t, g * 0.7, { dur: 0.4, a: 0.02, r: 0.25, pan: i ? p : -p, rev: 0.3 })); Q('tbell', clamp(m + 7, 50, 79), t + 0.03, g * 0.2, { pan: -p, rev: 0.35, dur: 0.9, r: 0.4 }); }
 };
 // each kind's level, set by measuring each alone so that none is more than about 2 dB from the rest
-const KLV4 = { fold: 0.62, open: 0.75, snap6: 1.25, knit: 1.25, seal: 1.3, tuck: 1.15, weld: 1.15, ether: 1.1 };
+const KLV4 = { fold: 0.62, open: 0.75, snap6: 1.25, knit: 1.25, seal: 1.3, tuck: 1.15, weld: 1.3, ether: 1.25 };
 // ---------- the deep layer as a real low choir over double basses (ruling AK); deep 1 basses alone, 2 with the choir, 3 with a heartbeat too ----------
 function deep4(t, n, P, ix) {
   if (!DEEP) return; const L = Math.min(1, Math.pow(10, 2.0 * (Math.min(n, 13) - 12) / 20)) * 1.15, d = P * 1.02, r = MROOT[ix], w = madW();
@@ -985,11 +985,11 @@ function deep4(t, n, P, ix) {
   }
   if (DEEP === 3 && n >= 4) { Q('bdrum', NO, t + P / 2 - 0.13, 0.12 * L, { lp: 500, bed: true }); Q('bdrum', NO, t + P / 2, 0.2 * L, { lp: 600, bed: true }); }
 }
-// with the last hit: the choir and basses at full on D minor, 1.4 s; inside OVERREACT: every voice, three seconds, sinking
+// with the last hit: the choir and basses at full on D minor, 1.4 s; inside OVERREACT: every voice, three seconds, the low ones sinking and the high ones torn upward (calm: held, in D major, for a run won)
 function deepLand4(t, peak, calm) {
   if (!DEEP) return; const P = peak ? 3.0 : 1.3, w = madW(), g = peak ? 0.3 : 0.17;
   Q('basses', 26, t, g * (peak ? 1.0 : 0.8), { dur: P, a: 0.03, r: 0.6, bed: true, wide: 0.3, rev: 0.3, strict: true }); Q('basses', 38, t, g * 1.2, { dur: P, a: 0.03, r: 0.6, bed: true, rev: 0.3, strict: true });
-  if (DEEP >= 2) (peak ? [38, 45, 50, 53, 57, 62, 65, 69] : [38, 45, 50, 53, 57, 62]).forEach((m, i) => { const off = i > 1 && rnd() < 0.5 * w ? 1 : 0; Q('choirA', m + off, t, g, { dur: P, a: 0.03, r: 0.7, bed: true, pan: (i % 2 ? 1 : -1) * 0.1 * i, wide: 0.25, rev: 0.5, vib: 8, gl: peak && !calm ? [0, i < 4 ? -70 - 15 * i : 60 + 40 * (i - 4), 2.4, 0.5] : null }); });
+  if (DEEP >= 2) (peak ? [38, 45, 50, calm ? 54 : 53, 57, 62, calm ? 66 : 65, 69] : [38, 45, 50, 53, 57, 62]).forEach((m, i) => { const off = i > 1 && rnd() < 0.5 * w ? 1 : 0; Q('choirA', m + off, t, g, { dur: P, a: 0.03, r: 0.7, bed: true, pan: (i % 2 ? 1 : -1) * 0.1 * i, wide: 0.25, rev: 0.5, vib: 8, gl: peak && !calm ? [0, i < 4 ? -70 - 15 * i : 60 + 40 * (i - 4), 2.4, 0.5] : null }); });
 }
 // ---------- a step of the chain: the arcade's pulse and build, on the orchestra and the lab ----------
 // step 1 a bass drum, a plucked bass and the kind's voice; 2 wood on the offbeat, the kind answering itself, the deep layer; 3 the
@@ -1006,10 +1006,10 @@ function steps4(t, kd, n, o, P, bl, e, pan, w) {
   Q('pizz', r + 12, t, 0.24 * e, { pan: -0.1, rev: 0.15 }); Q('legno', 50, t, 0.14 * e, { pan: 0.1, rev: 0.15 });
   kv(t, m, kg * (KLV4[kd] || 1), pan, n); duck(t, 0.4, 0.25);
   if (o.echo) kv(t + 0.12, m, 0.06 * e, -pan, n);
-  if (w > 0.2 && rnd() < w) kv(t + Math.min(0.3, P * 0.3), m + 6, 0.2 * e, -pan, n);       // later rounds: a wrong echo, a tritone off
+  if (w > 0.2 && rnd() < w) kv(t + Math.min(0.3, P * 0.3), m + 6, 0.42 * e, -pan, n);       // later rounds: a wrong echo, a tritone off
   if (w > 0.35 && rnd() < 0.6 * w) Q('bdrum', NO, t + P * 0.82, 0.1 * bl, { hp: 62, dur: 0.2, r: 0.15 });       // a drum that jumps the beat
-  if (w > 0.5 && rnd() < 0.7 * w) Q('prep', 50 + Math.floor(rnd() * 24), t + P * (0.3 + 0.5 * rnd()), 0.16 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.4, dur: 0.5, r: 0.3 });   // a wrong note from nowhere
-  if (w > 0.1 && rnd() < 0.9 * w) Q('crack', NO, t + 0.03 + rnd() * 0.1, 0.16 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.3 });
+  if (w > 0.5 && rnd() < 0.7 * w) Q('prep', 50 + Math.floor(rnd() * 24), t + P * (0.3 + 0.5 * rnd()), 0.34 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.4, dur: 0.5, r: 0.3 });   // a wrong note from nowhere
+  if (w > 0.1 && rnd() < 0.9 * w) Q('crack', NO, t + 0.03 + rnd() * 0.1, 0.32 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.3 });
   if (n >= 2) { Q('legno', 62 + (n % 3) * 3, t + P / 2, 0.16 * e, { pan: -pan, rev: 0.15 }); kv(t + P / 2 + w * rnd() * 0.05, m + (n >= 5 ? 7 : 0), 0.34 * kg * (KLV4[kd] || 1), -pan, n); deep4(t, n, P, ix); }
   if (n >= 3) { Q('pizz', r + (w > 0.55 && rnd() < 0.4 * w ? 6 : 0), t, 0.2 * e, { rev: 0.15 }); Q('pizz', r + (n >= 5 ? 12 : 0), t + P / 2, 0.17 * e, { pan: 0.15, rev: 0.15 }); if (n >= 7) { Q('pizz', r, t + P / 4, 0.1 * e, { rev: 0.1 }); Q('pizz', r + 12, t + 3 * P / 4, 0.12 * e, { rev: 0.1 }); } }
   if (n >= 4) { Q('harp', underD(m, ix), t, 0.14 * e, { pan: -pan, rev: 0.3, dur: 0.7, r: 0.3 }); Q('fdrum', NO, t + P / 2, 0.1 * e, { pan: -0.15, rev: 0.2 }); }
@@ -1019,7 +1019,8 @@ function steps4(t, kd, n, o, P, bl, e, pan, w) {
   if (n >= 7) MPROG[ix].forEach((q, i) => Q('piano', q, t, 0.13 * e, { pan: (i - 1) * 0.4, rev: 0.25, dur: 0.4, r: 0.25 }));
   if (n >= (w > 0.4 ? 5 : 8)) [r + 12, r + 19].forEach((q, i) => Q('bone', q + 12, t, 0.32 * e, { dur: 0.2, a: 0.012, r: 0.14, lp: 1200, lp1: 2500 + 450 * n, lpt: 0.05, pan: i ? 0.3 : -0.3, rev: 0.3 }));
   if (n >= 9) { Q('tbell', clamp(m, 50, 77), t, 0.2 * e, { pan: -pan, rev: 0.4, dur: 1.0, r: 0.5 }); Q('piano', m + 12, t, 0.18 * e, { pan, rev: 0.3, dur: 0.6, r: 0.3 }); }
-  if (n >= 10) { roll4('timp', r + 12, t + P * 0.5, t + P * 0.98, 0.03 * e, 0.13 * e, 0.075); if (n >= (w > 0.4 ? 8 : 11)) { Q('anvil', 74, t + P / 2, 0.14 * e, { pan: 0.4, rev: 0.3 }); roll4('fdrum', NO, t + P * 0.7, t + P * 0.98, 0.03 * e, 0.12 * e, 0.045); } }
+  if (n >= 10) { roll4('timp', r + 12, t + P * 0.5, t + P * 0.98, 0.03 * e, 0.13 * e, 0.075); if (n >= 11) roll4('fdrum', NO, t + P * 0.7, t + P * 0.98, 0.03 * e, 0.12 * e, 0.045); }
+  if (n >= (w > 0.4 ? 8 : 11)) Q('anvil', 74, t + P / 2, 0.16 * e, { pan: 0.4, rev: 0.3 });
 }
 // the last hit: everything lands on a low D minor; a semitone rubs against it and dies first (in later rounds it stays)
 function fin4(t, kd, n) {
@@ -1042,19 +1043,22 @@ function over4(t) {
   const w = madW();
   // a held voice here is struck hard, falls back at once and then swells for a second and a half (so the blow, the second blow and
   // the falling glass are heard through it) before it lets go over another second and a half
-  const held = (i, m, g, x) => { Q(i, m, t, g, Object.assign({ dur: 0.28, a: 0.015, r: 0.25 }, x, { gl: null })); Q(i, m, t + 0.3, g * 0.36, Object.assign({ dur: 1.6, a: 0.15, g1: 1.25, r: 1.5 }, x)); };
+  const held = (i, m, g, x) => { Q(i, m, t, g, Object.assign({ dur: 0.28, a: 0.015, r: 0.25 }, x, { gl: null })); Q(i, m, t + 0.35, g * 0.2, Object.assign({ dur: 1.6, a: 0.2, g1: 2.6, r: 1.5 }, x)); };
   Q('bdrum', NO, t, 0.65, { rev: 0.35 }); Q('bdrum', NO, t + 0.11, 0.55, { rev: 0.35 }); Q('timp', 38, t, 0.6, { rev: 0.4 }); Q('timp', 45, t + 0.11, 0.6, { pan: 0.2, rev: 0.4 });
-  Q('tam', NO, t, 0.55, { rev: 0.5 }); Q('anvil', 74, t, 0.5, { rev: 0.4, pan: -0.3 }); Q('anvil', 71, t + 0.11, 0.4, { rev: 0.4, pan: 0.3 });
+  Q('tam', NO, t, 0.35, { rev: 0.5 }); Q('anvil', 74, t, 0.5, { rev: 0.4, pan: -0.3 }); Q('anvil', 71, t + 0.11, 0.4, { rev: 0.4, pan: 0.3 });
   [26, 39, 38, 50].forEach((q, i) => Q(i === 1 ? 'prep' : 'piano', q, t, 0.45, { rev: 0.35, pan: (i - 1.5) * 0.2 }));
-  Q('organ', 26, t, 0.3, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.5, rev: 0.2, strict: true }); Q('organ', 38, t, 0.25, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.5, rev: 0.2, strict: true });
+  Q('organ', 26, t, 0.2, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.8, rev: 0.2, strict: true }); Q('organ', 38, t, 0.16, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.8, rev: 0.2, strict: true });
   // the low brass sags, the horns hold, the choir is torn upward: the chord comes apart
   [[38, 0.26], [45, 0.26], [50, 0.28], [53, 0.24], [51, 0.24], [57, 0.22]].forEach((q, i) => held('bone', q[0], q[1], { lp: 1600, lp1: 7000, lpt: 0.07, pan: (i - 2.5) * 0.22, wide: 0.15, rev: 0.45, gl: [0, -40 - 22 * i, 1.6, 0.2] }));
   [57, 62, 65].forEach((q, i) => held('horn', q, 0.38, { pan: (i - 1) * 0.5, rev: 0.45 }));
   [62, 65, 69, 74, 75].forEach((q, i) => held('choirA', q, 0.48, { pan: (i - 2) * 0.3, wide: 0.3, rev: 0.55, vib: 14, gl: [0, 100 + 38 * i, 1.6, 0.2] }));
   Q('shatter', NO, t + 0.03, 0.7, { pan: -0.2, rev: 0.35 }); Q('shatter', NO, t + 0.5, 0.45, { pan: 0.4, rev: 0.35, det: -300 });
-  Q('roar', NO, t, 0.7, { dur: 2.6, a: 0.03, r: 1.4, g1: 0.5, wide: 0.5, rev: 0.25 }); Q('steam', NO, t, 0.5, { dur: 0.5, a: 0.02, r: 0.5, g1: 0.3, wide: 0.6, rev: 0.3 }); Q('steam', NO, t + 0.6, 0.12, { dur: 1.6, a: 0.8, g1: 1.6, r: 1.2, wide: 0.6, rev: 0.3 });
+  Q('roar', NO, t + 0.3, 0.12, { dur: 2.2, a: 0.9, g1: 3.0, r: 1.4, wide: 0.5, rev: 0.25 }); Q('steam', NO, t, 0.5, { dur: 0.5, a: 0.02, r: 0.5, g1: 0.3, wide: 0.6, rev: 0.3 }); Q('steam', NO, t + 0.6, 0.12, { dur: 1.6, a: 0.8, g1: 1.6, r: 1.2, wide: 0.6, rev: 0.3 });
   roll4('timp', 50, t + 0.3, t + 2.4, 0.4, 0.05, 0.08, { rev: 0.4 });
   for (let i = 0; i < 12 + Math.round(8 * w); i++) { const tt = t + 0.4 + rnd() * 2.6, k = rnd(); Q(k < 0.45 ? 'crack' : k < 0.8 ? 'clink' : 'clamp', k < 0.8 && k >= 0.45 ? 86 + Math.floor(rnd() * 14) : NO, tt, 0.14 + 0.16 * rnd(), { pan: rnd() * 1.6 - 0.8, rev: 0.4 }); }
+  // deeper in the run: a third and a fourth blow, late and off the beat, and more of the glass
+  if (w > 0.3) { Q('bdrum', NO, t + 0.47, 0.7 * w, { rev: 0.35 }); Q('anvil', 77, t + 0.47, 0.45 * w, { rev: 0.4 }); Q('prep', 27, t + 0.47, 0.5 * w, { rev: 0.35 }); }
+  if (w > 0.6) { Q('bdrum', NO, t + 1.03, 0.6 * w, { rev: 0.35 }); Q('timp', 44, t + 1.03, 0.6 * w, { rev: 0.4 }); Q('shatter', NO, t + 1.05, 0.5 * w, { pan: 0.1, rev: 0.35, det: 200 }); }
   duck(t, 0.08, 1.2);
 }
 const DMS = [50, 52, 53, 55, 57, 58, 60, 62];        // D minor, for things that count up
@@ -1096,8 +1100,8 @@ const S4 = { name: 'lab orchestra', step: step4, deepLand: deepLand4,
     Q('steam', NO, t, 0.4, { dur: end, a: end * 0.96, ax: true, cut: true, wide: 0.5 }); Q('roar', NO, t, 0.5, { dur: end, a: end * 0.96, ax: true, cut: true });
     breathe(t + end, t + d); },
   // runoff lands in its jar. m names what came off: 'water' (or 0, 3) a drip, 'heavy' (1) a thunk, 'gas' (2) a puff and the lid,
-  // 'acid' (4) a fizz, 'salt' (5) grains, 'oil' (6) a slow bubble; then the jar rings, a note of D minor by the step
-  clink: (t, n, m) => { const k = typeof m === 'string' ? ({ water: 0, heavy: 1, gas: 2, acid: 4, salt: 5, oil: 6 })[m] || 0 : (m | 0), jar = DMS[(n || 1) % 8] + 24;
+  // 'acid' (4) a fizz, 'salt' (5) grains, 'oil' (6) a slow bubble; then the jar rings, always the same note
+  clink: (t, n, m) => { const k = typeof m === 'string' ? ({ water: 0, heavy: 1, gas: 2, acid: 4, salt: 5, oil: 6 })[m] || 0 : (m | 0), jar = 74;
     if (k === 1) { Q('grain', NO, t, 0.2, { pan: 0.4 }); Q('pizz', 38, t + 0.03, 0.3, { dur: 0.15, pan: 0.4 }); }
     else if (k === 2) { Q('puff', NO, t, 0.2, { pan: 0.4, hp: 1500 }); Q('clamp', NO, t + 0.12, 0.14, { pan: 0.4 }); }
     else if (k === 4) Q('fizz', NO, t, 0.25, { pan: 0.4, rev: 0.2 });
