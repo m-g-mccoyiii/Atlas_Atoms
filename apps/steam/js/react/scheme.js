@@ -22,7 +22,7 @@ const PAPERS = {
   3: { name: 'blotter', ink: '#23302a', pencil: '#4f5f55', faint: 'rgba(60,80,70,0.35)', red: '#c0301f', green: '#1c7d46', sh: '40,70,50', sha: 0.18, bg: '#c5d3bb', veil: ['rgba(240,255,225,0.12)', 'rgba(40,80,50,0.08)'] },
   4: { name: 'slate', ink: '#f3eee2', pencil: '#cfc8b8', faint: 'rgba(235,228,212,0.35)', red: '#f08c78', green: '#8fd6a0', sh: '0,0,0', sha: 0.5, bg: '#26211d', veil: ['rgba(255,225,180,0.05)', 'rgba(0,0,0,0.18)'] },
   5: { name: 'kraft', ink: '#2a1e12', pencil: '#4a3a28', faint: 'rgba(60,40,20,0.35)', red: '#a8231a', green: '#1d6b3a', sh: '60,35,10', sha: 0.28, bg: '#a98657', veil: ['rgba(255,225,170,0.10)', 'rgba(70,40,10,0.14)'] } };
-let PAPERN = 1; try { const qp = new URLSearchParams(window.location.search).get('paper'); if (qp && PAPERS[+qp]) { PAPERN = +qp; window.localStorage.setItem('aa_paper', qp); } else { const sv = +window.localStorage.getItem('aa_paper'); if (PAPERS[sv]) PAPERN = sv; } } catch (e) { /* no storage */ }
+let PAPERN = 2; try { const qp = new URLSearchParams(window.location.search).get('paper'); if (qp && PAPERS[+qp]) { PAPERN = +qp; window.localStorage.setItem('aa_paper', qp); } else { const sv = +window.localStorage.getItem('aa_paper'); if (PAPERS[sv]) PAPERN = sv; } } catch (e) { /* no storage */ }
 { const P0 = PAPERS[PAPERN]; INK = P0.ink; PENCIL = P0.pencil; FAINT = P0.faint; REDINK = P0.red; GREEN = P0.green; }
 const SHADE = PAPERS[PAPERN].sh, SHADA = PAPERS[PAPERN].sha;
 function paperDraw(x, w, h, n, SW0) {
