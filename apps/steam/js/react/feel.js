@@ -64,6 +64,7 @@ let api = null, T = null;
 const F = { log: [], probeRows: [], seq: null, BOX: { x0: -11.5, x1: 25, z0: -17.2, z1: -1.4 }, BOXW: { x0: -23.5, x1: 25, z0: -17.4, z1: -4.8 } };
 let PACE = null; try { PACE = new URLSearchParams(root.location.search).get('pace'); } catch (e) { PACE = null; }
 const PACES = { 1: { T1: 1900, r: 0.93, Tmin: 650, gap: 220, lastWind: 1100, fullDraw: 450, kindBeat: 320 }, 2: { T1: 1500, r: 0.91, Tmin: 500, gap: 150, lastWind: 900, fullDraw: 350, kindBeat: 250 }, 3: { T1: 700, r: 0.9, Tmin: 360, gap: 100, lastWind: 500, fullDraw: 150, kindBeat: 150 } };
+if (PACE === null) PACE = paceSaved();
 if (!PACES[PACE] && PACE !== 'new' && PACE !== '0') PACE = '2';
 const D = () => { const d = DIR[mode] || DIR[1]; if (PACES[PACE]) return Object.assign({}, d, NEWPACE, PACES[PACE]); return PACE === 'new' && !d.gap ? Object.assign({}, d, NEWPACE) : d; };
 const B3 = () => ((DIR[mode] || {}).base || mode) === 3, SM = () => (DIR[mode] || {}).base || mode;
@@ -82,7 +83,7 @@ const ring = (t, hz, z) => { const w = 2 * Math.PI * hz, wd = w * Math.sqrt(Math
 const kick = (t, hz, z) => { const w = 2 * Math.PI * hz, wd = w * Math.sqrt(Math.max(0.01, 1 - z * z)), tp = Math.atan(wd / (z * w)) / wd, pk = Math.exp(-z * w * tp) * Math.sin(wd * tp); return t <= 0 ? 0 : Math.exp(-z * w * t) * Math.sin(wd * t) / pk; };
 // smooth noise from a few sines with fixed phases
 const nz = (t, s) => (Math.sin(t * 1.0 + s) * 0.5 + Math.sin(t * 2.31 + s * 1.7) * 0.3 + Math.sin(t * 4.13 + s * 2.9) * 0.2);
-const snd = (name, ...a) => { try { if (AA.sfx && AA.sfx[name]) AA.sfx[name](...a); } catch (e) { /* sound never breaks play */ } };
+const snd = (name, ...a) => { if (F.mute) return; try { if (AA.sfx && AA.sfx[name]) AA.sfx[name](...a); } catch (e) { /* sound never breaks play */ } };
 
 // T(n): wind-up plus swing plus hit-stop; the settle overlaps the next step. Never under ten frames.
 function Tn(n) { const d = D(); return Math.max(167, d.Tmin, d.T1 * Math.pow(d.r, n - 1)); }
@@ -150,7 +151,7 @@ function throwThen(h, react) {
   const tok = { t0: now(), dur, from, tgt, col, i, id: h.id, arc: d.arc };
   S.tokens.push(tok);
   if (d.throwZ) camTo(tgt, d.throwZ, Math.max(120, dur * 0.9));
-  setTimeout(() => {
+  later(() => {
     S.tokens = S.tokens.filter(q => q !== tok);
     // impact: the change starts as the token touches
     const dir = (() => { const a = inkOf(tgt); const dx = a[0] - from[0], dy = a[1] - from[1], l = Math.hypot(dx, dy) || 1; return { x: dx / l, z: dy / l }; })();
@@ -508,8 +509,152 @@ function ink(x, t) {
 }
 
 // ---------- a click while it plays: twice as fast ----------
-function onClick() { const S = F.seq; if (!S) return; if (S.done) { S.skip = true; return; } S.speed = 2; }
-try { root.addEventListener('pointerdown', onClick, true); root.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') onClick(); }, true); } catch (e) { /* no window */ }
+function onClick() { const S = F.seq; if (!S) return; if (S.done) { S.skip = true; return; } }
+try { root.addEventListener('pointerdown', onClick, true); } catch (e) { /* no window */ }
+// ================= the player's speed control, skip, and turning the molecule in 3D =================
+// ---------- speed: slow, normal, fast are the three paces, remembered between sessions; skip jumps a chain to its result ----------
+const PKEY = 'overreact.pace';
+function paceSaved() { try { const s = root.localStorage.getItem('overreact.pace'); return s === '1' || s === '2' || s === '3' ? s : null; } catch (e) { return null; } }
+function setPace(p, quiet) { p = String(p); if (!PACES[p]) return PACE; PACE = p; try { root.localStorage.setItem(PKEY, p); } catch (e) { /* storage blocked */ } const S = F.seq; if (S && !S.skipAll) S.d = D(); UI.dirty = true; UI.pulse = now(); if (!quiet) snd('click'); if (api) api.dirty(); return PACE; }
+// a wait of the play sequence that a skip may cut short
+const LATER = new Set();
+function later(fn, ms) { const S = F.seq, o = { fn, id: 0 }; o.id = setTimeout(() => { LATER.delete(o); fn(); }, S && S.skipAll ? 0 : ms); LATER.add(o); return o.id; }
+function flushLater() { const all = Array.from(LATER); LATER.clear(); all.forEach(o => clearTimeout(o.id)); all.forEach(o => setTimeout(o.fn, 0)); }
+// skip: every step still to come is taken at once and in silence; the page then lands on the result with one hit (pageEndC)
+function skipNow() {
+  const S = F.seq; if (!S) return false; if (S.done) { S.skip = true; return true; } if (S.skipAll) return true;
+  snd('swish', 0.3); S.skipAll = true; S.skipT = now(); S.speed = 1000; S.ySkip = S.count.shown; F.mute = true; S.cur = null; S.breath = null; S.count.frozen = false;
+  if (S.morph) { S.morph.ms = 1; S.morph.end = 0; }
+  flushLater(); UI.dirty = true; return true;
+}
+function armSkip(v) { UI.arm = v === undefined ? !UI.arm : !!v; UI.dirty = true; return UI.arm; }
+function fireC(go) { fire(go); if (!(TW.drag && TW.drag.moved)) twistHome(true); if (F.seq && UI.arm) { UI.arm = false; skipNow(); } UI.dirty = true; }
+function onReactC(o, nm, prev, L, morph) { onReact(o, nm, prev, L, morph); const S = F.seq; if (!S || !morph) return; S.morph = morph; if (S.skipAll) { morph.ms = 1; morph.end = 0; S.cur = null; } }
+function pageEndC(next) { const S = F.seq; if (S && S.skipAll && !S.skipHit) { S.skipHit = true; S.cur = null; F.mute = false; S.speed = 1; try { comboHit(S); } catch (e) { /* the page still turns */ } } return pageEnd(next); }
+// the one hit of a skipped chain: everything the steps would have thrown, at once, in the middle of the molecule
+function comboHit(S) {
+  const t = now(), d = S.d, c = api.center(), N = S.plan.N || 0, fin = P_made(), gain = fin - (S.ySkip || 0), ct = S.count;
+  let kind = 'ring'; S.plan.ev.forEach(e => { if (e.k === 's') kind = e.id; });
+  S.steps = N; S.hitN = N; S.lastHitT = t; S.finaleAt = t; S.nums = []; S.tokens = [];
+  if (c) { const b = molWorldBox(c), w = new T.Vector3(b.cx, 0.6, b.cz), sp = toScreen(w); (S.fx || (S.fx = [])).push({ t, x: sp[0], y: sp[1], n: Math.min(12, N + 3), last: true }); splat(inkOf(w), N + 3, true); }
+  addShake(N ? 0.75 : 0.3); S.drops.push({ t, a: N ? 0.045 : 0.02, ms: 260 }); S.swHit = { t, a: N ? 0.09 : 0.04 }; S.recoils.push({ t, x: 0, z: 0, yaw: N ? 7 : 3, hz: 3, z0: 0.4 });
+  if (N) { snd('reflex', kind, N, { bell: d.bell * 1.4, fast: false, echo: true, last: true }); snd('snap', N, d.snapW * 1.5); snd('boom', SM()); mus('step', N); } else snd('strike', 2, 1);
+  if (N) S.nums.push({ n: N, gain, y: fin, t, hold: 420, fly: 160, join: null, last: true, w: d.numW(N), arrived: true });
+  ct.frozen = false; ct.holdTill = 0; ct.from = ct.shown; ct.to = fin; ct.t0 = t + 120; ct.dur = 320; ct.ease = 'outQuart'; ct.target = fin; S.yDrop = t + 120; S.landed = t + 460;
+  F.log.push(['skip', N, Math.round(t - S.t0)]);
+}
+
+// ---------- twist: the player drags on the molecule and it turns in 3D; it coasts, and goes home by itself ----------
+// The home pose is not touched: the turn is laid over whatever the page and the play sequence set this frame, about the middle of the
+// molecule, lifted clear of the paper along the line of sight and shrunk until it stands inside its own part of the page.
+const TW = { q: null, w: null, drag: null, homing: false, f: 1, amt: 0, was: false, eat: false, idle: 0, grp: null };
+const TWR = { l: 345, r: 1045, t: 112, b: 578 };
+function twInit() { if (TW.q || !T) return; TW.q = new T.Quaternion(); TW.I = new T.Quaternion(); TW.w = new T.Vector3(); TW.q2 = new T.Quaternion(); TW.q3 = new T.Quaternion(); TW.q4 = new T.Quaternion(); TW.v = [_v(), _v(), _v(), _v(), _v(), _v(), _v(), _v()]; TW.s = _v(); TW.Z = new T.Vector3(0, 0, 1); }
+const twAngle = () => (TW.q ? 2 * Math.acos(Math.min(1, Math.abs(TW.q.w))) : 0);
+function twCan() { if (!api) return false; const st = api.st, c = api.center(); return !!c && !!c.balls && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') && !st.tool && !st.homWait; }
+// dx, dy: how far the pointer moved, in the frame's pixels (1280 wide); ms: over how long (for the coasting)
+function twistBy(dx, dy, ms) {
+  twInit(); if (!TW.q) return; const len = Math.hypot(dx, dy); if (len < 1e-6) return; const cam = api.cam, up = TW.v[0].set(0, 1, 0).applyQuaternion(cam.quaternion), right = TW.v[1].set(1, 0, 0).applyQuaternion(cam.quaternion);
+  const ax = TW.v[2].copy(up).multiplyScalar(dx).addScaledVector(right, dy).normalize(), ang = len * 0.0085;
+  TW.q.premultiply(TW.q2.setFromAxisAngle(ax, ang)).normalize(); TW.homing = false; TW.idle = now();
+  if (ms > 0) TW.w.multiplyScalar(0.5).addScaledVector(ax, 0.5 * ang / (ms / 1000)); api.dirty();
+}
+function twistHome(quiet) { twInit(); if (!TW.q) return; if (twAngle() > 0.01 && !TW.homing && !quiet) snd('swish', 0.2); TW.homing = true; TW.w.set(0, 0, 0); }
+const twistState = () => ({ ang: +twAngle().toFixed(3), f: +TW.f.toFixed(3), amt: TW.amt, homing: TW.homing, held: !!(TW.drag && TW.drag.moved), w: TW.w ? +TW.w.length().toFixed(2) : 0, box: molScreenBox(), err: F.cErr || null });
+const hostCv = () => root.document.querySelector('#schemeapp canvas');
+function refXY(e) { const r = hostCv().getBoundingClientRect(); return [(e.clientX - r.left) / Math.max(1, r.width) * 1280, (e.clientY - r.top) / Math.max(1, r.height) * 720]; }
+// the box of the molecule as it is seen, in the frame's pixels (1280 by 720), with the atoms' radii
+function molScreenBox() {
+  const c = api && api.center(); if (!c || !c.balls || !TW.q) return null; const cam = api.cam, right = TW.v[5].set(1, 0, 0).applyQuaternion(cam.quaternion), p = TW.v[6], q = TW.v[7]; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  c.balls.forEach(b => { b.mesh.getWorldPosition(p); const rw = b.mesh.scale.x * (TW.sNow && TW.was ? TW.sNow : c.group.scale.x); q.copy(p).addScaledVector(right, rw).project(cam); p.project(cam); const sx = (p.x + 1) * 640, sy = (1 - p.y) * 360, r = Math.abs((q.x + 1) * 640 - sx); x0 = Math.min(x0, sx - r); x1 = Math.max(x1, sx + r); y0 = Math.min(y0, sy - r); y1 = Math.max(y1, sy + r); });
+  return x0 > 1e8 ? null : { x0: Math.round(x0), x1: Math.round(x1), y0: Math.round(y0), y1: Math.round(y1) };
+}
+// letters and collars are set to face the eye in the molecule's own frame; turned, they are set again against the turn
+function twSprites(c, R) {
+  const dir = TW.v[3].copy(api.CAM).sub(api.LOOKAT).normalize(); if (R) { TW.q4.copy(R); if (TW.q4.invert) TW.q4.invert(); else TW.q4.inverse(); dir.applyQuaternion(TW.q4); }
+  c.balls.forEach(b => { if (b.sprite) b.sprite.position.copy(b.mesh.position).addScaledVector(dir, b.mesh.scale.x * 1.04); if (b.collar) b.collar.quaternion.setFromUnitVectors(TW.Z, dir); });
+}
+function twistFrame(t, dt) {
+  if (!api) return; twInit(); const c = api.center(), st = api.st;
+  if (TW.grp && (!c || TW.grp !== c.group)) { TW.grp.matrixAutoUpdate = true; TW.grp = null; }
+  if (!c || !c.balls || !c.group) return; const g = c.group, held = !!(TW.drag && TW.drag.moved);
+  if (!held) { const sp = TW.w.length(); if (sp > 0.03 && !TW.homing) { TW.q.premultiply(TW.q2.setFromAxisAngle(TW.v[0].copy(TW.w).normalize(), sp * dt)).normalize(); TW.w.multiplyScalar(Math.exp(-dt * 2.4)); TW.idle = t; } else TW.w.set(0, 0, 0); }
+  let ang = twAngle();
+  if (ang > 0.002 && !held && (!twCan() || (st.firing && t - TW.idle > 700))) TW.homing = true;
+  if (TW.homing) { TW.q.slerp(TW.I, 1 - Math.exp(-dt * 7)); ang = twAngle(); if (ang < 0.006) { TW.q.copy(TW.I); TW.homing = false; ang = 0; } api.dirty(); }
+  if (ang <= 0.002) { if (TW.was) { TW.was = false; g.matrixAutoUpdate = true; TW.grp = null; TW.f = 1; twSprites(c, null); UI.dirty = true; api.dirty(); } TW.amt = 0; return; }
+  if (!TW.was) UI.dirty = true; TW.was = true; TW.grp = g; TW.amt = clamp(ang / 0.3, 0, 1);
+  const cam = api.cam, R = TW.q3.copy(TW.q).multiply(g.quaternion), s0 = g.scale, v = TW.v;
+  // the middle of the heavy atoms, in the molecule's own units, and where it stands at home
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9; c.balls.forEach((b, a) => { if (a.el === 'H') return; const p = b.mesh.position; x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); });
+  if (x0 > 1e8) return; const pc = v[1].set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), W = v[2].copy(pc).multiply(s0).applyQuaternion(g.quaternion).add(g.position);
+  // lifted along the line of sight until its lowest atom is no lower than at home
+  let lowH = 1e9, low = 1e9; const f = TW.f, p = v[3];
+  c.balls.forEach(b => { const r = b.mesh.scale.x * s0.x; p.copy(b.mesh.position).sub(pc).multiply(s0); const yh = v[4].copy(p).applyQuaternion(g.quaternion).y - r, yt = p.multiplyScalar(f).applyQuaternion(R).y - r * f; lowH = Math.min(lowH, yh); low = Math.min(low, yt); });
+  const dir = v[4].copy(cam.position).sub(W).normalize(), lift = Math.max(0, lowH - low); W.addScaledVector(dir, lift / Math.max(0.2, dir.y));
+  // shrunk until nothing of it stands outside its part of the page
+  const right = v[5].set(1, 0, 0).applyQuaternion(cam.quaternion), q = v[6]; let l = 1e9, r2 = -1e9, tp = 1e9, bt = -1e9;
+  c.balls.forEach(b => { const rw = b.mesh.scale.x * s0.x * f; p.copy(b.mesh.position).sub(pc).multiply(s0).multiplyScalar(f).applyQuaternion(R).add(W); q.copy(p).addScaledVector(right, rw).project(cam); p.project(cam); const sx = (p.x + 1) * 640, sy = (1 - p.y) * 360, rr = Math.abs((q.x + 1) * 640 - sx) + 3; l = Math.min(l, sx - rr); r2 = Math.max(r2, sx + rr); tp = Math.min(tp, sy - rr); bt = Math.max(bt, sy + rr); });
+  p.copy(W).project(cam); const cx = (p.x + 1) * 640, cy = (1 - p.y) * 360, sd = (room, ext) => (ext > 1 ? Math.max(0.05, room) / ext : 9);
+  const kf = Math.min(sd(cx - TWR.l, cx - l), sd(TWR.r - cx, r2 - cx), sd(cy - TWR.t, cy - tp), sd(TWR.b - cy, bt - cy));
+  if (kf < 1) TW.f = Math.max(0.25, f * kf); else { const want = Math.min(1, f * kf * 0.985); if (want > f) TW.f = f + (want - f) * Math.min(1, dt * 6); }
+  const fe = 1 + (TW.f - 1) * TW.amt; TW.sNow = s0.x * fe; TW.s.copy(s0).multiplyScalar(fe);
+  p.copy(pc).multiply(TW.s).applyQuaternion(R); q.copy(W).sub(p);
+  g.matrixAutoUpdate = false; g.matrix.compose(q, R, TW.s); g.matrixWorldNeedsUpdate = true; twSprites(c, R); api.dirty();
+}
+function twDown(e) {
+  if (!api || e.button > 0 || !e.target || !e.target.closest || !e.target.closest('#schemeapp')) return; TW.eat = false; twInit(); const xy = refXY(e), h = uiHit(xy[0], xy[1]);
+  if (h) { TW.eat = true; e.stopImmediatePropagation(); e.preventDefault(); uiAct(h); return; }
+  if (!twCan()) return; const b = molScreenBox(); if (!b || xy[0] < b.x0 - 14 || xy[0] > b.x1 + 14 || xy[1] < b.y0 - 14 || xy[1] > b.y1 + 14) return;
+  TW.drag = { x: xy[0], y: xy[1], x0: xy[0], y0: xy[1], t: now(), moved: false, id: e.pointerId };
+}
+function twMove(e) {
+  const dg = TW.drag; if (!dg) { if (api && e.target && e.target.closest && e.target.closest('#schemeapp')) { const xy = refXY(e), h = uiHit(xy[0], xy[1]), hv = h ? h.act : ''; if (hv !== UI.hov) { UI.hov = hv; UI.dirty = true; api.dirty(); } if (h) { hostCv().style.cursor = 'pointer'; e.stopImmediatePropagation(); } } return; }
+  if (dg.id != null && e.pointerId != null && e.pointerId !== dg.id) return; const xy = refXY(e), t = now();
+  if (!dg.moved) { if (Math.hypot(xy[0] - dg.x0, xy[1] - dg.y0) < 6) return; dg.moved = true; TW.w.set(0, 0, 0); dg.t = t - 16; try { hostCv().setPointerCapture(e.pointerId); } catch (er) { /* no capture */ } hostCv().style.cursor = 'grabbing'; }
+  twistBy(xy[0] - dg.x, xy[1] - dg.y, Math.max(8, t - dg.t)); dg.x = xy[0]; dg.y = xy[1]; dg.t = t; e.stopImmediatePropagation(); e.preventDefault();
+}
+function twUp(e) {
+  const dg = TW.drag; if (!dg) return; TW.drag = null; if (!dg.moved) return; TW.eat = true; if (e.type === 'pointercancel' || now() - dg.t > 90) TW.w.set(0, 0, 0); const sp = TW.w.length(); if (sp > 8) TW.w.multiplyScalar(8 / sp);
+  TW.idle = now(); try { hostCv().style.cursor = ''; } catch (er) { /* no canvas */ } e.stopImmediatePropagation();
+}
+function twClick(e) { if (TW.eat) { TW.eat = false; e.stopImmediatePropagation(); e.preventDefault(); } }
+function twDbl(e) { if (twAngle() > 0.01 && e.target && e.target.closest && e.target.closest('#schemeapp')) { twistHome(); e.stopImmediatePropagation(); e.preventDefault(); } }
+function keyC(e) {
+  if (!api || e.ctrlKey || e.metaKey || e.altKey) return; const S = F.seq, k = e.key, stop = () => { e.stopImmediatePropagation(); e.preventDefault(); }, cur = PACES[PACE] ? +PACE : 2;
+  if (S && !S.done && (k === '1' || k === '2' || k === '3')) { setPace(k); return stop(); }
+  if (S && (k === ' ' || k === 'Enter')) { const done = S.done; skipNow(); if (!done) stop(); return; }
+  if (k === '[' || k === '-') { setPace(Math.max(1, cur - 1)); return stop(); }
+  if (k === ']' || k === '=' || k === '+') { setPace(Math.min(3, cur + 1)); return stop(); }
+  if ((k === 'h' || k === 'H' || k === 'Home') && twAngle() > 0.01) { twistHome(); return stop(); }
+}
+try { root.addEventListener('pointerdown', twDown, true); root.addEventListener('pointermove', twMove, true); root.addEventListener('pointerup', twUp, true); root.addEventListener('pointercancel', twUp, true); root.addEventListener('click', twClick, true); root.addEventListener('dblclick', twDbl, true); root.addEventListener('keydown', keyC, true); } catch (e) { /* no window */ }
+
+// ---------- the two small controls, drawn by hand above the page: the speed row and the way home ----------
+const UI = { cv: null, x: null, hit: [], dirty: true, arm: false, pulse: 0, key: '', hov: '' };
+function uiInit() { if (UI.cv || !root.document) return; const app = root.document.getElementById('schemeapp'); if (!app || !hostCv()) return; const cv = root.document.createElement('canvas'); cv.className = 'veil'; app.append(cv); UI.cv = cv; UI.x = cv.getContext('2d'); try { hostCv().style.touchAction = 'none'; } catch (e) { /* no style */ } }
+const uiHit = (x, y) => UI.hit.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) || null;
+function uiAct(h) { if (h.act === 'home') return twistHome(); if (h.act === 'skip') { if (F.seq && !F.seq.done) skipNow(); else if (!F.seq) { armSkip(); snd('click'); } UI.pulse = now(); return; } setPace(h.act); }
+// a loop of ink drawn twice, a little off itself, the way a pen goes round a word
+function uiLoop(x, cx, cy, rx, ry, col, lw) { x.save(); x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.beginPath(); x.ellipse(cx, cy, rx, ry, -0.05, 0.5, 6.6); x.stroke(); x.globalAlpha = 0.6; x.beginPath(); x.ellipse(cx + 1.5, cy - 1, rx * 1.03, ry * 0.94, 0.04, 2.6, 7.4); x.stroke(); x.restore(); }
+function uiFrame(t) {
+  uiInit(); if (!UI.cv || !api) return; const host = hostCv(), dpr = Math.min(2, root.devicePixelRatio || 1), W = Math.round((host.clientWidth || 1280) * dpr), H = Math.round((host.clientHeight || 720) * dpr), st = api.st, S = F.seq;
+  const show = !!api.center() && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), pulsing = t - UI.pulse < 420, skipping = !!(S && S.skipAll) || UI.arm;
+  const key = [W, H, show, PACE, skipping, TW.was, UI.hov, !!S].join('|'); if (key === UI.key && !pulsing && !UI.dirty) return; UI.key = key; UI.dirty = false;
+  if (UI.cv.width !== W || UI.cv.height !== H) { UI.cv.width = W; UI.cv.height = H; } const x = UI.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); UI.hit = []; if (!show || !AA.rxPen) return;
+  x.setTransform(W / 1280, 0, 0, H / 720, 0, 0); const pen = AA.rxPen, INK = api.INK, PEN = api.PENCIL, RED = api.REDINK;
+  // the speed row, in the left margin under the queue
+  { const X0 = 66, Y = 452, sz = 23, gap = 19; let wx = X0; pen.write(x, 'speed', X0, Y - 30, 15, { color: PEN }); x.save(); x.strokeStyle = PEN; x.globalAlpha = 0.5; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X0 + 46, Y - 34); x.lineTo(X0 + 262, Y - 36); x.stroke(); x.restore();
+    [['slow', '1'], ['normal', '2'], ['fast', '3'], ['skip', 'skip']].forEach(w => { const on = w[1] === 'skip' ? skipping : (PACE === w[1] && !(S && S.skipAll)), ww = pen.width(w[0], sz, on ? 'heavy' : 'thin'), hov = UI.hov === w[1], pop = on && pulsing ? 1 + 0.16 * Math.max(0, ring((t - UI.pulse) / 1000, 6, 0.45)) : 1;
+      x.save(); x.translate(wx + ww / 2, Y - 7); x.scale(pop, pop); pen.write(x, w[0], -ww / 2, 7, sz, { weight: on ? 'heavy' : 'thin', color: on ? (w[1] === 'skip' ? RED : INK) : hov ? INK : PEN }); x.restore();
+      if (on) uiLoop(x, wx + ww / 2, Y - 8, (ww / 2 + 9) * pop, 15 * pop, w[1] === 'skip' ? RED : INK, 2.4);
+      UI.hit.push({ x: wx - gap / 2, y: Y - 30, w: ww + gap, h: 42, act: w[1] }); wx += ww + gap; }); }
+  // the way home: an arrow going round, shown while the molecule is turned
+  if (TW.was) { const cx = 1004, cy = 138, r = 15, hov = UI.hov === 'home', col = hov ? RED : INK; uiLoop(x, cx, cy, 23, 21, col, 2.2);
+    x.save(); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.arc(cx, cy, r - 3, -0.4, 4.3); x.stroke(); const ax = cx + (r - 3) * Math.cos(-0.4), ay = cy + (r - 3) * Math.sin(-0.4); x.beginPath(); x.moveTo(ax + 6, ay - 6); x.lineTo(ax - 5, ay - 3); x.lineTo(ax + 3, ay + 6); x.closePath(); x.fill(); x.restore();
+    pen.write(x, 'flat', cx, cy + 42, 15, { color: PEN, align: 'center' }); UI.hit.push({ x: cx - 28, y: cy - 26, w: 56, h: 74, act: 'home' }); }
+}
+function frameC(t, dt) { frame(t, dt); if (F.mute && !F.seq) F.mute = false; try { twistFrame(t, dt); uiFrame(t); } catch (e) { if (!F.cErr) { F.cErr = String((e && e.stack) || e); try { console.error(e); } catch (e2) { /* no console */ } } } }
 
 AA.rxFeel = {
   DIR, WORDS,
@@ -518,7 +663,8 @@ AA.rxFeel = {
   get mode() { return mode; },
   set(n) { mode = Math.max(0, Math.min(6, n | 0)); try { root.localStorage.setItem(KEY, String(mode)); } catch (e) { /* storage blocked */ } return mode; },
   reset() { if (F.seq) { F.seq.dead = true; F.seq = null; } },
-  fire, throwThen, onReact, hit, k, ease, pose, unlock, pageEnd, frame, ink, Tn, phases,
+  fire: fireC, throwThen, onReact: onReactC, hit, k, ease, pose, unlock, pageEnd: pageEndC, frame: frameC, ink, Tn, phases,
+  later, pace: () => PACE, setPace, skip: skipNow, armSkip, twistBy, twistHome, twistState, uiSpots: () => UI.hit.map(h => Object.assign({}, h)),
   dbg: () => [F.ovN, F.ovT, F.ov && F.ov.t, now(), !!F.seq, F.ovL],
   stepMs: n => Tn(n), log: F.log, probeRows: F.probeRows, probe: false,
   state: () => F.seq && { steps: F.seq.steps, N: F.seq.plan.N, shown: F.seq.count.shown, zoom: F.seq.zoom, shake: F.seq.shake, words: F.seq.words.map(w => w.k), speed: F.seq.speed, done: F.seq.done, plan: F.seq.plan.ev.map(e => e.k + (e.n || '')).join('') }

@@ -1350,7 +1350,7 @@ function start(app) {
     if (fe() && morph && morph.m === nm) FEEL.onReact(o, nm, prev, L, morph);
     st.zoomT = performance.now();
     // the next choice opens as soon as the places have changed. Equipment goes on firing while the player looks
-    setTimeout(() => {
+    (fe() && FEEL.later ? FEEL.later : setTimeout)(() => {
       if (tok !== st.tok || center !== nm) return;
       nm.hot = g.cur.path.length ? marksOf(nm, Array.from(g.cur.fresh), 0.01, 0.2) : [];
       if (g.over) { st.firing = false; return; }
