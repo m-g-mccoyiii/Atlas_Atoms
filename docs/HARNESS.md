@@ -49,6 +49,8 @@ AK. Sound (12 November): "the more that the reaction proceeds, the longer it goe
 
 AK2. "We also need a soundtrack" (12 November). The game has its own music, made by us so it is ours to sell.
 
+AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
+
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
 ## The lines broken most often
