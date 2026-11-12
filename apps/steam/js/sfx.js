@@ -905,9 +905,9 @@ const SWAP4 = { harp: 'vibes', tbell: 'vibes', piano: 'ep', prep: 'ep', legno: '
 let INT4 = 0;                                        // intensity carried across the round, 0 to 1: the next chain starts that far up its build
 let MAD = 1;                                         // the round, 1 to 9
 let G4 = 1;                                          // the level of what is being written now (a chain step sits under the last hit and OVERREACT)
-const LAST4 = 0.125;                                  // the last hit: under OVERREACT, so OVERREACT is the biggest
-const RISE4 = 1.1;                                   // the riser before the last hit
-const CHAIN4 = 0.268;                                 // a chain step and its wind-up: 7 dB under full, so the chain sits about 6 dB over the soundtrack
+const LAST4 = 0.111;                                  // the last hit: under OVERREACT, so OVERREACT is the biggest
+const RISE4 = 1.0;                                   // the riser before the last hit
+const CHAIN4 = 0.239;                                 // a chain step and its wind-up: 7 dB under full, so the chain sits about 6 dB over the soundtrack
 const ACT4 = 0.45;                                   // the acts of the other screens (the soundtrack leads there)
 const madW = () => Math.pow((MAD - 1) / 8, 0.8);     // how unhinged, 0 to 1, bowed so the middle rounds are already plainly odd
 // one buffer per recording, shared by every audio context (a buffer belongs to no context); the working copy is dropped once it is in one
@@ -926,8 +926,8 @@ function hall4() {
   const inp = c.createGain(), cv = c.createConvolver(), ret = c.createGain(); cv.normalize = true; cv.buffer = ir; ret.gain.value = 0.55; inp.connect(cv); cv.connect(ret); ret.connect(SB.sum); SB.hall = inp; return inp;
 }
 // past the limiter and the bus, through its own soft clip with a ceiling of -1.5 dB: only the blow of OVERREACT goes this way, so it can stand far over everything before it
-// two of them, the low voices and the bright ones, each with its own ceiling (-5.1 and -7.5 dB, -0.2 dB together), so the thump does not grind the glass
-function dir4(lo) { const k = lo ? 'dirLo' : 'dir'; if (!SB[k]) { const w = C.createWaveShaper(), out = C.createGain(); w.curve = softCurve(); w.oversample = '2x'; out.gain.value = lo ? 0.57 : 0.43; SB[k] = C.createGain(); SB[k].connect(w); w.connect(out); out.connect(C.destination); } SB[k].gain.value = 1.3 * SLV * level(); return SB[k]; }
+// two of them, the low voices and the bright ones, each with its own ceiling (-5.4 and -8.1 dB, -0.6 dB together), so the thump does not grind the glass
+function dir4(lo) { const k = lo ? 'dirLo' : 'dir'; if (!SB[k]) { const w = C.createWaveShaper(), out = C.createGain(); w.curve = softCurve(); w.oversample = '2x'; out.gain.value = lo ? 0.55 : 0.40; SB[k] = C.createGain(); SB[k].connect(w); w.connect(out); out.connect(C.destination); } SB[k].gain.value = 1.3 * SLV * level(); return SB[k]; }
 // play one made instrument. o: i (instrument), m (note), t, g, pan, rev (hall send), bed (the ducked bus), det (cents),
 // gl [from cents, to cents, seconds, delay] (a slide), lp/lp1/lpt, hp, bp/bq, vib (cents), trem { f, d }, strict (no looseness);
 // held tones: dur, a (attack), r (release), ax (swell in from nothing), g1 (level at the end, times g), cut (stop dead), wide;
@@ -1046,7 +1046,7 @@ function step4(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const kd = kindOf(kind), w = madW(), bl = Math.sqrt(clamp(o.bell || 1, 0.6, 1.6)), P = clk5(t, n), u = place5(n);
   // the last hit of a short chain is smaller than the last hit of a long one
   if (o.last) { G4 = LAST4 * bl * dB(-8 * (1 - Math.min(u, 1))); try { fin5(t, kd, w); deepLand4(t, false); } finally { G4 = 1; OUT4 = null; } return; }
-  G4 = CHAIN4 * dB(-4 * (1 - Math.min(u, 1.3))) * (1 + 0.18 * w) * bl; try { steps5(t, kd, n, o, P, u, w); } finally { G4 = 1; OUT4 = null; }
+  G4 = CHAIN4 * dB(-4 * (1 - Math.min(u, 1.3))) * bl;   // a deeper round is wilder, not louder try { steps5(t, kd, n, o, P, u, w); } finally { G4 = 1; OUT4 = null; }
 }
 function steps5(t, kd, n, o, P, u, w) {
   const U = Math.min(u, 1.25), u1 = Math.min(u, 1), r = roots4()[chordIx(n)], m = mel5(1 + Math.round(u * 11)), kv = K4[kd] || K4.lactol, kg = 1.25 * (KLV4[kd] || 1) * (o.fast ? 0.85 : 1), wd = 0.2 + 0.75 * u1, pan = (n % 2 ? -1 : 1) * (0.12 + 0.5 * u1);
@@ -1055,7 +1055,7 @@ function steps5(t, kd, n, o, P, u, w) {
   Q('kick', NO, t, 0.6 + 0.25 * U, { strict: true, rev: 0.06 }); Q('ebass', r + 12, t, 0.5, { strict: true, dur: Math.min(0.45, P * 0.5), r: 0.12 }); Q('conga', 60, t, 0.32, { strict: true, pan: 0.1, rev: 0.1 });
   OUT4 = shelf5((KSH4[kd] || 0) - 3 + 10 * U); try { kv(t, m, kg, pan, n); if (o.echo) kv(t + 0.12, m, kg * 0.07, -pan, n); } finally { OUT4 = null; }
   Q('vibes', m, t, 0.3, { pan: -pan, rev: 0.3, dur: 0.9, r: 0.4, strict: true });
-  duck(t, 0.12 + 0.12 * u1, 0.7 - 0.3 * u1);   // the soundtrack is pushed further down, for longer, under the early (quieter) steps
+  duck(t, 0.09 + 0.13 * u1, 0.7 - 0.3 * u1);   // the soundtrack is pushed further down, for longer, under the early (quieter) steps
   // bigger: an electric piano under the line, a low tom, the bass an octave down
   if (u >= 0.18) Q('ep', m - 12, t, 0.3, { pan: pan * 0.5, rev: 0.25, dur: 0.5, r: 0.3 });
   if (u >= 0.5) { Q('tom', 38, t, 0.35 + 0.3 * (U - 0.5), { strict: true, rev: 0.15 }); Q('ebass', r, t, 0.35, { strict: true, dur: 0.4, r: 0.12 }); }
