@@ -847,18 +847,18 @@ const LAB = (function () {
     // glass cracking: a handful of splinters ringing for a few milliseconds, a snap of noise, a late tick
     crack:   { rr: 3, fix: 60, gen: () => { const r = RNG(211 + TAKE * 977), x = buf(0.35); for (let i = 0; i < 9; i++) ping(x, i ? r() * 0.06 : 0, 2500 + r() * 7000, i ? 0.3 + 0.5 * r() : 1, 0.004 + 0.012 * r()); burst(x, 0, 0.003, 3000, 14000, 1.4, 212); burst(x, 0.001, 0.006, 300, 1200, 0.5, 213); burst(x, 0.05 + r() * 0.05, 0.002, 4000, 12000, 0.5, 214); return norm(x, 0.85); } },
     // glass shattering: ninety splinters, dense at first, falling for two seconds
-    shatter: { rr: 2, fix: 60, gen: () => { const r = RNG(221 + TAKE * 977), x = buf(2.3); for (let i = 0; i < 90; i++) { const u = r(), t0 = 1.8 * u * u; ping(x, t0, 1400 + r() * 9000, (1 - 0.75 * u * u) * (0.3 + 0.7 * r()), 0.01 + 0.07 * r() * r()); } for (let i = 0; i < 14; i++) burst(x, 1.5 * r() * r(), 0.004 + 0.01 * r(), 2500, 13000, 0.8, 222 + i); burst(x, 0, 0.012, 1500, 12000, 1.6, 240); return norm(fade(x, 0.2), 0.85); } },
+    shatter: { rr: 2, fix: 60, gen: () => { const r = RNG(221 + TAKE * 977), x = buf(2.3); for (let i = 0; i < 300; i++) { const u = r(), t0 = 1.9 * u * u * u, a = (1 - 0.8 * u) * (0.2 + 0.8 * r()); ping(x, t0, 1400 + r() * 9000, a * 0.5, 0.004 + 0.05 * r() * r()); burst(x, t0, 0.0015 + 0.003 * r(), 2500, 14000, a * 0.9, 222 + i); } burst(x, 0, 0.06, 900, 14000, 2.2, 240); burst(x, 0, 0.02, 2500, 15000, 1.6, 241); burst(x, 0.002, 0.05, 150, 400, 1.3, 242); return norm(fade(x, 0.2), 0.85); } },
     // a flask rung like a bowl: long modes in close pairs, so it beats
     bowl:    { lo: 45, hi: 84, gen: m => { const f = mf(m), x = modal([[f, 1, 2.4], [f * 1.005, 0.6, 2.2], [f * 2.71, 0.5, 1.3], [f * 2.722, 0.3, 1.2], [f * 5.12, 0.25, 0.6], [f * 8.1, 0.1, 0.3]], 2.4); burst(x, 0, 0.003, 1800, 9000, 0.35, 225 + m); return norm(fade(x, 0.3), 0.85); } },
-    bubble:  { rr: 3, fix: 60, gen: () => { const r = RNG(227 + TAKE * 977), x = buf(0.6); for (let i = 0; i < 8; i++) { const f0 = 320 + r() * 800; chirp(x, i ? r() * 0.4 : 0, f0, f0 * (1.25 + 0.3 * r()), 0.03 + 0.05 * r(), 0.5 + 0.5 * r()); } return norm(x, 0.8); } },
-    blub:    { rr: 2, lo: 48, hi: 84, gen: m => { const f = mf(m), x = buf(0.16); chirp(x, 0, f, f * 1.35, 0.09, 1); chirp(x, 0, f * 2.02, f * 2.6, 0.04, 0.25); return norm(x, 0.8); } },
-    pour:    { rr: 2, fix: 60, gen: () => { const r = RNG(229 + TAKE * 977), x = buf(0.9); for (let i = 0; i < 70; i++) { const u = r(), f0 = (350 + 900 * u) * (0.7 + 0.6 * r()); chirp(x, 0.75 * u, f0, f0 * 1.3, 0.015 + 0.03 * r(), (0.3 + 0.7 * r()) * Math.sin(Math.PI * Math.min(1, u * 1.1))); } for (let j = 0; j < 10; j++) burst(x, j * 0.07, 0.03, 1500, 6000, 0.12 * Math.sin(Math.PI * (j + 0.5) / 10), 230 + j); return norm(fade(x, 0.05), 0.8); } },
+    bubble:  { rr: 3, fix: 60, gen: () => { const r = RNG(227 + TAKE * 977), x = buf(0.6); for (let i = 0; i < 8; i++) { const f0 = 220 + r() * 480, t0 = i ? r() * 0.4 : 0, a = 0.5 + 0.5 * r(); chirp(x, t0, f0, f0 * (1.05 + 0.05 * r()), 0.03 + 0.05 * r(), a); burst(x, t0, 0.004, 1500, 6000, a * 0.12, 228 + i); } return norm(x, 0.8); } },
+    blub:    { rr: 2, lo: 48, hi: 84, gen: m => { const f = mf(m) / 2, x = buf(0.2); chirp(x, 0, f, f * 1.08, 0.11, 1); chirp(x, 0.03, f * 1.5, f * 1.6, 0.06, 0.4); burst(x, 0, 0.012, 300, 2500, 0.25, 226 + m); burst(x, 0.05, 0.02, 1500, 6000, 0.08, 227 + m); return norm(x, 0.8); } },
+    pour:    { rr: 2, fix: 60, gen: () => { const r = RNG(229 + TAKE * 977), x = buf(0.9); for (let i = 0; i < 70; i++) { const u = r(), f0 = (250 + 600 * u) * (0.7 + 0.6 * r()); chirp(x, 0.75 * u, f0, f0 * 1.08, 0.015 + 0.03 * r(), (0.3 + 0.7 * r()) * Math.sin(Math.PI * Math.min(1, u * 1.1))); } for (let j = 0; j < 10; j++) burst(x, j * 0.07, 0.03, 1200, 7000, 0.3 * Math.sin(Math.PI * (j + 0.5) / 10), 230 + j); return norm(fade(x, 0.05), 0.8); } },
     cork:    { rr: 2, fix: 60, gen: () => { const x = modal([[390, 1, 0.12], [780, 0.5, 0.08], [1290, 0.3, 0.05], [2350, 0.15, 0.03]], 0.3); burst(x, 0, 0.004, 400, 3500, 0.9, 231); burst(x, 0.002, 0.03, 120, 600, 0.5, 232); chirp(x, 0.004, 520, 300, 0.12, 0.35); return norm(x, 0.85); } },
     clamp:   { rr: 2, fix: 60, gen: () => { const x = buf(0.4); [0, 0.05].forEach((t0, j) => addAt(x, modal([[1150, 1, 0.25], [3170, 0.7, 0.16], [6200, 0.5, 0.1], [640, 0.5, 0.12]], 0.3), t0, j ? 1 : 0.6)); burst(x, 0, 0.0015, 2500, 10000, 1.2, 241); burst(x, 0.05, 0.0015, 2500, 10000, 1.5, 242); return norm(x, 0.85); } },
     paper:   { rr: 3, fix: 60, gen: () => { const r = RNG(251 + TAKE * 977), x = buf(0.34); for (let i = 0; i < 16; i++) burst(x, r() * 0.24, 0.004 + 0.012 * r(), 1500, 9000, 0.3 + 0.7 * r(), 252 + i); return norm(fade(x, 0.03), 0.8); } },
     page:    { fix: 60, gen: () => { const r = RNG(271), x = buf(0.6); for (let i = 0; i < 26; i++) burst(x, 0.05 + r() * 0.38, 0.004 + 0.014 * r(), 1200, 8000, 0.3 + 0.7 * r(), 272 + i); burst(x, 0.02, 0.07, 700, 4500, 0.5, 299); burst(x, 0.3, 0.05, 1500, 6000, 0.35, 298); return norm(fade(x, 0.03), 0.8); } },
-    drip:    { lo: 72, hi: 96, gen: m => { const f = mf(m), x = buf(0.2); chirp(x, 0, f * 0.7, f * 1.5, 0.045, 1); chirp(x, 0.06, f * 1.1, f * 2.1, 0.03, 0.4); return norm(x, 0.8); } },
-    fizz:    { fix: 60, gen: () => { const r = RNG(261), x = buf(0.8); for (let i = 0; i < 220; i++) { const u = r(), f0 = 2500 + r() * 5000; chirp(x, 0.7 * u * u, f0, f0 * 1.2, 0.004 + 0.008 * r(), (1 - u * 0.6) * (0.3 + 0.7 * r())); } burst(x, 0, 0.1, 3000, 10000, 0.15, 262); return norm(x, 0.8); } },
+    drip:    { lo: 72, hi: 96, gen: m => { const f = mf(m) / 2, x = buf(0.2); chirp(x, 0, f, f * 1.07, 0.05, 1); burst(x, 0, 0.003, 2000, 9000, 0.5, 259 + m); burst(x, 0.004, 0.02, 800, 4000, 0.15, 260 + m); return norm(x, 0.8); } },
+    fizz:    { fix: 60, gen: () => { const r = RNG(261), x = buf(0.8); for (let i = 0; i < 220; i++) { const u = r(), f0 = 2500 + r() * 5000; chirp(x, 0.7 * u * u, f0, f0 * 1.05, 0.004 + 0.008 * r(), (1 - u * 0.6) * (0.3 + 0.7 * r())); } burst(x, 0, 0.1, 3000, 10000, 0.15, 262); return norm(x, 0.8); } },
     grain:   { rr: 2, fix: 60, gen: () => { const r = RNG(281 + TAKE * 977), x = buf(0.4); for (let i = 0; i < 45; i++) burst(x, r() * 0.3, 0.0008 + 0.001 * r(), 3000, 12000, 0.3 + 0.7 * r(), 282 + i); return norm(x, 0.8); } },
     puff:    { rr: 2, fix: 60, gen: () => { const x = buf(0.5); burst(x, 0, 0.06, 900, 6000, 1, 291); burst(x, 0, 0.02, 3000, 11000, 0.6, 292); for (let i = 0; i < 530; i++) x[i] *= i / 530; return norm(x, 0.8); } },
     coin:    { rr: 2, lo: 93, hi: 105, gen: m => { const f = mf(m), x = modal([[f, 1, 0.5], [f * 1.61, 0.7, 0.35], [f * 2.41, 0.5, 0.25], [f * 3.9, 0.3, 0.14]], 0.6); burst(x, 0, 0.0015, 4000, 13000, 0.6, 301 + m); return norm(x, 0.8); } },
@@ -882,8 +882,8 @@ const LAB = (function () {
 let MAD = 1;                                         // the round, 1 to 9
 let G4 = 1;                                          // the level of what is being written now (a chain step sits under the last hit and OVERREACT)
 const LAST4 = 0.52;                                  // the last hit: under OVERREACT, so OVERREACT is the biggest
-const CHAIN4 = 0.43;
-const ACT4 = 0.55;                                   // the acts of the other screens (the soundtrack leads there)                                 // a chain step and its wind-up: 7 dB under full, so the chain sits about 6 dB over the soundtrack
+const CHAIN4 = 0.43;                                 // a chain step and its wind-up: 7 dB under full, so the chain sits about 6 dB over the soundtrack
+const ACT4 = 0.45;                                   // the acts of the other screens (the soundtrack leads there)
 const madW = () => Math.pow((MAD - 1) / 8, 0.8);     // how unhinged, 0 to 1, bowed so the middle rounds are already plainly odd
 // one buffer per recording, shared by every audio context (a buffer belongs to no context); the working copy is dropped once it is in one
 const ABUF = {}, ABYTES = { n: 0 };
@@ -909,9 +909,9 @@ function L4(o) {
   const sp = LAB.INST[name]; if (!sp || !(o.g > 0)) return;
   const m = o.m === undefined || o.m === null ? (sp.fix === undefined ? sp.lo : sp.fix) : o.m, bz = labBuf(c, name, m, Math.floor(j3 * 3)); if (!bz.b) return;
   const t = Math.max(0, o.t + (o.strict ? 0 : (j1 - 0.5) * 0.006 + w * j2 * 0.014)), vel = o.g * G4 * (o.strict ? 1 : 0.9 + 0.2 * j3);
-  const cents = (sp.fix === undefined ? (m - bz.z) * 100 : 0) + (o.det || 0) + (o.strict ? 0 : (j1 - 0.5) * 2 * (sp.fix === undefined ? 3 + 32 * w : 6 + 24 * w)), rate = Math.pow(2, cents / 1200);
+  const cents = (sp.fix === undefined ? (m - bz.z) * 100 : 0) + (o.det || 0) + (o.strict ? 0 : (j1 - 0.5) * 2 * (sp.fix === undefined ? 3 + 9 * w : 6 + 14 * w)), rate = Math.pow(2, cents / 1200);
   // later rounds: about half the tuned notes sag or creep after they start
-  if (!o.gl && !o.strict && sp.fix === undefined && w > 0.3 && j2 > 1 - 0.55 * w) o = Object.assign({}, o, { gl: [0, (j3 < 0.6 ? -1 : 1) * 80 * w, sp.loop ? 0.5 : 0.3, 0.04] });
+  if (!o.gl && !o.strict && sp.fix === undefined && !o.bed && w > 0.3 && j2 > 1 - 0.4 * w) o = Object.assign({}, o, { gl: [0, (j3 < 0.6 ? -1 : 1) * 60 * w, sp.loop ? 0.5 : 0.3, 0.04] });
   const g = c.createGain(); let head = g, tail = g, end;
   if (sp.loop) { const a = Math.max(0.004, o.a || 0.05), h = Math.max(0.01, (o.dur || 0.5) - a), r = o.r || 0.18; end = t + a + h + (o.cut ? 0.03 : r * 1.6);
     if (o.ax) { g.gain.setValueAtTime(vel * 0.004, t); g.gain.exponentialRampToValueAtTime(vel, t + a); } else { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vel, t + a); }
@@ -933,7 +933,7 @@ function L4(o) {
   }
   if (n0 === 1 && o.pan && HASPAN) { const p = c.createStereoPanner(); p.pan.value = clamp(o.pan, -1, 1); tail.connect(p); tail = p; }
   tail.connect(o.bed ? SB.bed : SB.sum);
-  if (o.rev) { const s = c.createGain(); s.gain.value = o.rev * (1 + 0.9 * w); tail.connect(s); s.connect(hall4()); }
+  if (o.rev) { const s = c.createGain(); s.gain.value = o.rev * (1 + 0.45 * w); tail.connect(s); s.connect(hall4()); }
 }
 const Q = (i, m, t, g, x) => L4(Object.assign({ i, m, t, g }, x));
 const NO = null;
@@ -942,52 +942,54 @@ function roll4(i, m, t0, t1, g0, g1, sp, x) { let t = t0; while (t < t1 - 0.01) 
 // ---------- the thirteen kinds: a different instrument or lab object each, in its own register ----------
 const K4 = {
   // a ring closes on itself: a flask rung like a bowl, a tap of glass on top
-  lactol: (t, m, g, p) => { Q('bowl', m, t, g * 0.7, { pan: p, rev: 0.35, dur: 1.0, r: 0.3 }); Q('clink', clamp(m + 24, 84, 100), t, g * 0.25, { pan: -p, rev: 0.2 }); },
+  lactol: (t, m, g, p) => { Q('bowl', m, t, g * 0.95, { pan: p, rev: 0.35, dur: 1.0, r: 0.3 }); Q('clink', clamp(m + 24, 84, 100), t, g * 0.3, { pan: -p, rev: 0.2 }); },
   // water is driven off: a puff of steam and the drop that falls
-  enone: (t, m, g, p) => { Q('puff', NO, t, g, { pan: p, rev: 0.3, hp: 1200 }); Q('steam', NO, t + 0.01, g * 1.6, { dur: 0.12, a: 0.02, r: 0.22, g1: 0.4, pan: p, rev: 0.3 }); Q('drip', clamp(m + 24, 76, 94), t + 0.09, g * 0.5, { pan: -p, rev: 0.2 }); },
+  enone: (t, m, g, p) => { Q('puff', NO, t, g * 1.3, { pan: p, rev: 0.3, hp: 1200 }); Q('steam', NO, t + 0.01, g * 2.2, { dur: 0.14, a: 0.02, r: 0.25, g1: 0.4, pan: p, rev: 0.3 }); Q('roar', NO, t, g * 2.2, { dur: 0.1, a: 0.015, r: 0.18, g1: 0.3, lp: 500, pan: -p * 0.3 }); Q('drip', clamp(m + 24, 76, 94), t + 0.12, g * 0.4, { pan: -p, rev: 0.2 }); },
   // a hydrogen hops and the double bond flips: two plucked notes, there and back
   taut: (t, m, g, p) => { Q('pizz', m - 5, t, g * 1.3, { pan: p, rev: 0.25 }); Q('pizz', m - 12, t + 0.07, g * 1.5, { pan: -p * 0.5, rev: 0.25 }); Q('pizz', m - 5, t + 0.14, g * 0.7, { pan: p, rev: 0.25 }); Q('harp', m - 12, t + 0.07, g * 1.1, { pan: -p * 0.5, rev: 0.3, dur: 0.9, r: 0.4, lp: 1500 }); },
   // carbon welded to carbon: an anvil and a short blast of low brass
-  weld: (t, m, g, p) => { Q('anvil', 76, t, g, { pan: p, rev: 0.3 }); Q('bone', m - 12, t, g * 0.8, { dur: 0.26, a: 0.012, r: 0.14, lp: 1200, lp1: 5000, lpt: 0.05, pan: -p * 0.5, rev: 0.25 }); },
+  weld: (t, m, g, p) => { Q('anvil', 76, t, g * 1.1, { pan: p, rev: 0.3 }); Q('bone', m - 24, t, g * 0.9, { dur: 0.26, a: 0.012, r: 0.14, lp: 1200, lp1: 5000, lpt: 0.05, pan: -p * 0.5, rev: 0.25 }); },
   // a six ring snaps shut: glass cracks
-  snap6: (t, m, g, p) => { Q('crack', NO, t, g, { pan: p, rev: 0.3 }); Q('clink', clamp(m + 31, 88, 102), t + 0.012, g * 0.7, { pan: -p, rev: 0.3 }); Q('crack', NO, t + 0.1, g * 0.45, { pan: -p, rev: 0.3, det: 300 }); Q('shatter', NO, t + 0.02, g * 0.5, { dur: 0.3, r: 0.25, pan: p * 0.5, rev: 0.3 }); },
+  snap6: (t, m, g, p) => { Q('crack', NO, t, g * 1.3, { pan: p, rev: 0.3 }); Q('clink', clamp(m + 31, 88, 102), t + 0.012, g * 0.8, { pan: -p, rev: 0.3 }); Q('crack', NO, t + 0.1, g * 0.6, { pan: -p, rev: 0.3, det: 300 }); Q('shatter', NO, t + 0.02, g * 0.5, { dur: 0.3, r: 0.25, pan: p * 0.5, rev: 0.3, hp: 2500 }); },
   // an oxygen bridges: one sung "oh"
   ether: (t, m, g, p) => { Q('choirO', m, t, g * 1.1, { dur: 0.3, a: 0.03, r: 0.25, wide: 0.4, pan: p * 0.4, rev: 0.4, vib: 12 }); Q('glass', clamp(m + 12, 67, 93), t, g * 0.15, { pan: -p, rev: 0.3 }); },
   // a group slides along the chain: a cello slides into its note
-  shift: (t, m, g, p) => { Q('bow', NO, t, g * 0.35, { pan: p }); Q('cello', m - 12, t, g * 1.15, { dur: 0.32, a: 0.03, r: 0.2, gl: [280, 0, 0.13], pan: p, rev: 0.25, vib: 10 }); },
+  shift: (t, m, g, p) => { Q('bow', NO, t, g * 0.4, { pan: p }); Q('cello', m, t, g * 1.15, { dur: 0.42, a: 0.03, r: 0.2, gl: [-500, 0, 0.22], pan: p, rev: 0.25, vib: 10 }); },
   // a group tucks in: a kettledrum, and the clamp that holds it
   tuck: (t, m, g, p) => { Q('timp', clamp(m - 19, 38, 57), t, g * 0.8, { pan: p * 0.5, rev: 0.3, dur: 0.5, r: 0.2 }); Q('clamp', NO, t + 0.01, g * 0.5, { pan: -p, rev: 0.2 }); Q('pizz', clamp(m - 7, 45, 74), t, g * 0.6, { pan: p, rev: 0.2, dur: 0.2, r: 0.1 }); },
   // chains knit together: a harp runs up
   knit: (t, m, g, p) => { [0, 7, 12].forEach((s, i) => Q('harp', m + 12 + s, t + i * 0.045, g * (1.45 - 0.12 * i), { pan: p * (1 - i), rev: 0.35, dur: 1.1, r: 0.4 })); Q('harp', m, t, g * 0.6, { pan: -p, rev: 0.3, dur: 0.8, r: 0.3 }); },
   // sealed: a cork driven home and the clamp shut
-  seal: (t, m, g, p) => { Q('cork', NO, t, g * 1.1, { pan: p, rev: 0.3, det: -400, lp: 1600 }); Q('cork', NO, t + 0.006, g * 0.8, { pan: -p, det: -1200, lp: 900, rev: 0.3 }); Q('pizz', clamp(m - 24, 33, 50), t, g * 0.7, { dur: 0.12, r: 0.08, lp: 700 }); Q('clamp', NO, t + 0.09, g * 0.3, { pan: -p, rev: 0.2 }); Q('puff', NO, t + 0.01, g * 0.6, { lp: 1200, pan: p, rev: 0.25, det: -700 }); },
+  seal: (t, m, g, p) => { Q('cork', NO, t, g * 1.1, { pan: p, rev: 0.3, det: -400, lp: 1600 }); Q('cork', NO, t + 0.006, g * 0.8, { pan: -p, det: -1200, lp: 900, rev: 0.3 }); Q('puff', NO, t + 0.01, g * 0.7, { lp: 1200, pan: p, rev: 0.25, det: -700 }); },
   // capped: a piano string with a bolt in it
   cap: (t, m, g, p) => { Q('prep', m, t, g * 1.4, { pan: p, rev: 0.3, dur: 1.0, r: 0.3, hp: 500 }); Q('prep', m + 12, t + 0.004, g * 1.0, { pan: -p, rev: 0.3, dur: 0.6, r: 0.3, hp: 700 }); Q('glass', clamp(m + 12, 67, 93), t, g * 0.9, { pan: p * 0.5, rev: 0.35 }); },
   // a ring opens and spills: a pour and a bubble
-  open: (t, m, g, p) => { Q('pour', NO, t, g * 0.9, { pan: p, rev: 0.2, dur: 0.45, r: 0.2 }); Q('blub', clamp(m - 12, 48, 72), t, g * 0.8, { pan: -p, rev: 0.2 }); },
-  // a rung across the fold: the page creases and two bells a fifth apart ring over a low string
-  fold: (t, m, g, p) => { Q('paper', NO, t, g * 0.45, { pan: -p }); Q('tbell', clamp(m, 50, 77), t, g * 0.5, { pan: p, rev: 0.35, dur: 0.9, r: 0.4 }); Q('tbell', clamp(m + 7, 50, 79), t + 0.03, g * 0.35, { pan: -p, rev: 0.35, dur: 0.9, r: 0.4 }); Q('piano', m - 24, t, g * 0.4, { rev: 0.25, dur: 0.7, r: 0.3 }); }
+  open: (t, m, g, p) => { Q('pour', NO, t, g * 1.4, { pan: p, rev: 0.2, dur: 0.5, r: 0.2 }); Q('blub', clamp(m - 12, 48, 72), t + 0.05, g * 0.8, { pan: -p, rev: 0.2 }); },
+  // a rung across the fold: the page creases, two cellos bow an open fifth over a low piano string, one far bell
+  fold: (t, m, g, p) => { Q('paper', NO, t, g * 0.9, { pan: -p, rev: 0.15 }); Q('paper', NO, t + 0.07, g * 0.6, { pan: p, rev: 0.15, det: -400 }); Q('piano', m - 24, t, g * 0.55, { rev: 0.25, dur: 0.7, r: 0.3 }); [m - 12, m - 5].forEach((q, i) => Q('cello', q, t, g * 0.7, { dur: 0.4, a: 0.02, r: 0.25, pan: i ? p : -p, rev: 0.3 })); Q('tbell', clamp(m + 7, 50, 79), t + 0.03, g * 0.2, { pan: -p, rev: 0.35, dur: 0.9, r: 0.4 }); }
 };
+// each kind's level, set by measuring each alone so that none is more than about 2 dB from the rest
+const KLV4 = { fold: 0.62, open: 0.75, snap6: 1.25, knit: 1.25, seal: 1.3, tuck: 1.15, weld: 1.15, ether: 1.1 };
 // ---------- the deep layer as a real low choir over double basses (ruling AK); deep 1 basses alone, 2 with the choir, 3 with a heartbeat too ----------
 function deep4(t, n, P, ix) {
   if (!DEEP) return; const L = Math.min(1, Math.pow(10, 2.0 * (Math.min(n, 13) - 12) / 20)) * 1.15, d = P * 1.02, r = MROOT[ix], w = madW();
-  Q('basses', r, t, (r < 34 ? 0.15 : 0.22) * L, { dur: d, a: 0.05, r: 0.2, bed: true, wide: 0.25, rev: 0.2 });
-  Q('basses', r + 12, t, 0.2 * L, { dur: d, a: 0.05, r: 0.2, bed: true, pan: 0.2, rev: 0.2 });
+  Q('basses', r, t, (r < 34 ? 0.15 : 0.22) * L, { dur: d, a: 0.05, r: 0.2, bed: true, wide: 0.25, rev: 0.2, strict: true });
+  Q('basses', r + 12, t, 0.2 * L, { dur: d, a: 0.05, r: 0.2, bed: true, pan: 0.2, rev: 0.2, strict: true });
   if (n >= 5) Q('cello', r + 19, t, 0.3 * L, { dur: d, a: 0.06, r: 0.2, bed: true, pan: -0.3, rev: 0.25 });
-  if (n >= 8) Q('basses', r - 12, t, 0.22 * L, { dur: d, a: 0.05, r: 0.2, bed: true });
+  if (n >= 8) Q('basses', r - 12, t, 0.22 * L, { dur: d, a: 0.05, r: 0.2, bed: true, strict: true });
   if (DEEP >= 2) {
     // the chant: one more singer every two steps, the mouth opening oo, oh, ah; one syllable a step, two from step 8
     const k = Math.min(7, 1 + Math.floor(n / 2)), vow = n < 5 ? 'choirU' : n < 9 ? 'choirO' : 'choirA', third = MPROG[ix][1] - 12, notes = [r + 12, r + 19, r + 24, third, r + 12, third + 12, r + 31], syl = n >= 8 ? [[0, 0.46], [P / 2, 0.5]] : [[0, 0.9]];
-    for (let i = 0; i < k; i++) { const off = i && rnd() < 0.55 * w ? (rnd() < 0.5 ? 1 : -1) : 0;
+    for (let i = 0; i < k; i++) { const off = i > 1 && rnd() < 0.55 * w ? (rnd() < 0.5 ? 1 : -1) : 0;
       syl.forEach(s => Q(vow, notes[i] + off, t + s[0], 0.42 * L / Math.sqrt(k), { dur: d * s[1], a: 0.045, r: 0.22, bed: true, pan: (i % 2 ? 1 : -1) * 0.12 * i, wide: 0.2, rev: 0.4, vib: 6, det: i === 4 ? 9 : 0 })); }
   }
   if (DEEP === 3 && n >= 4) { Q('bdrum', NO, t + P / 2 - 0.13, 0.12 * L, { lp: 500, bed: true }); Q('bdrum', NO, t + P / 2, 0.2 * L, { lp: 600, bed: true }); }
 }
 // with the last hit: the choir and basses at full on D minor, 1.4 s; inside OVERREACT: every voice, three seconds, sinking
-function deepLand4(t, peak) {
+function deepLand4(t, peak, calm) {
   if (!DEEP) return; const P = peak ? 3.0 : 1.3, w = madW(), g = peak ? 0.3 : 0.17;
-  Q('basses', 26, t, g * (peak ? 1.6 : 0.8), { dur: P, a: 0.03, r: 0.6, bed: true, wide: 0.3, rev: 0.3 }); Q('basses', 38, t, g * 1.2, { dur: P, a: 0.03, r: 0.6, bed: true, rev: 0.3 });
-  if (DEEP >= 2) (peak ? [38, 45, 50, 53, 57, 62, 65, 69] : [38, 45, 50, 53, 57, 62]).forEach((m, i) => { const off = i > 1 && rnd() < 0.5 * w ? 1 : 0; Q('choirA', m + off, t, g, { dur: P, a: 0.03, r: 0.7, bed: true, pan: (i % 2 ? 1 : -1) * 0.1 * i, wide: 0.25, rev: 0.5, vib: 8, gl: peak ? [0, -90 - 20 * i, 2.4, 0.5] : null }); });
+  Q('basses', 26, t, g * (peak ? 1.0 : 0.8), { dur: P, a: 0.03, r: 0.6, bed: true, wide: 0.3, rev: 0.3, strict: true }); Q('basses', 38, t, g * 1.2, { dur: P, a: 0.03, r: 0.6, bed: true, rev: 0.3, strict: true });
+  if (DEEP >= 2) (peak ? [38, 45, 50, 53, 57, 62, 65, 69] : [38, 45, 50, 53, 57, 62]).forEach((m, i) => { const off = i > 1 && rnd() < 0.5 * w ? 1 : 0; Q('choirA', m + off, t, g, { dur: P, a: 0.03, r: 0.7, bed: true, pan: (i % 2 ? 1 : -1) * 0.1 * i, wide: 0.25, rev: 0.5, vib: 8, gl: peak && !calm ? [0, i < 4 ? -70 - 15 * i : 60 + 40 * (i - 4), 2.4, 0.5] : null }); });
 }
 // ---------- a step of the chain: the arcade's pulse and build, on the orchestra and the lab ----------
 // step 1 a bass drum, a plucked bass and the kind's voice; 2 wood on the offbeat, the kind answering itself, the deep layer; 3 the
@@ -995,29 +997,29 @@ function deepLand4(t, peak) {
 // bell doubles the line; 10 a timpani roll into the next step; 11 an anvil on the offbeat
 function step4(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const last = !!o.last, P = clk(t, n), bl = Math.sqrt(clamp(o.bell || 1, 0.6, 1.6)), e = clamp(0.3 + 0.064 * n, 0.3, 1) * bl, pan = (n % 2 ? -1 : 1) * 0.3, kd = kindOf(kind), w = madW();
-  if (last) { G4 = LAST4; try { fin4(t, kd, n); deepLand4(t, false); } finally { G4 = 1; } return; }
-  G4 = CHAIN4; try { steps4(t, kd, n, o, P, bl, e, pan, w); } finally { G4 = 1; }
+  if (last) { G4 = LAST4 * (1 + 0.3 * w); try { fin4(t, kd, n); deepLand4(t, false); } finally { G4 = 1; } return; }
+  G4 = CHAIN4 * (1 + 0.26 * w); try { steps4(t, kd, n, o, P, bl, e, pan, w); } finally { G4 = 1; }
 }
 function steps4(t, kd, n, o, P, bl, e, pan, w) {
   const ix = chordIx(n), m = melD(n), r = MROOT[ix], kv = K4[kd] || K4.lactol, kg = 1.35 * e * (o.fast ? 0.85 : 1);
   Q('bdrum', NO, t, (0.1 + 0.014 * Math.min(n, 12)) * bl, { lp: 400 + 300 * n, hp: 62, rev: 0.12, dur: 0.3, r: 0.2 });
-  Q('pizz', r + 12, t, 0.24 * e, { pan: -0.1, rev: 0.15 });
-  kv(t, m, kg, pan, n); duck(t, 0.4, 0.25);
+  Q('pizz', r + 12, t, 0.24 * e, { pan: -0.1, rev: 0.15 }); Q('legno', 50, t, 0.14 * e, { pan: 0.1, rev: 0.15 });
+  kv(t, m, kg * (KLV4[kd] || 1), pan, n); duck(t, 0.4, 0.25);
   if (o.echo) kv(t + 0.12, m, 0.06 * e, -pan, n);
   if (w > 0.2 && rnd() < w) kv(t + Math.min(0.3, P * 0.3), m + 6, 0.2 * e, -pan, n);       // later rounds: a wrong echo, a tritone off
-  if (w > 0.35 && rnd() < 0.6 * w) Q('bdrum', NO, t - 0.07, 0.1 * bl, { hp: 62, dur: 0.2, r: 0.15 });       // a drum that jumps the beat
+  if (w > 0.35 && rnd() < 0.6 * w) Q('bdrum', NO, t + P * 0.82, 0.1 * bl, { hp: 62, dur: 0.2, r: 0.15 });       // a drum that jumps the beat
   if (w > 0.5 && rnd() < 0.7 * w) Q('prep', 50 + Math.floor(rnd() * 24), t + P * (0.3 + 0.5 * rnd()), 0.16 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.4, dur: 0.5, r: 0.3 });   // a wrong note from nowhere
   if (w > 0.1 && rnd() < 0.9 * w) Q('crack', NO, t + 0.03 + rnd() * 0.1, 0.16 * e, { pan: rnd() * 1.4 - 0.7, rev: 0.3 });
-  if (n >= 2) { Q('legno', 62 + (n % 3) * 3, t + P / 2, 0.16 * e, { pan: -pan, rev: 0.15 }); kv(t + P / 2 + w * rnd() * 0.05, m + (n >= 5 ? 7 : 0), 0.34 * kg, -pan, n); deep4(t, n, P, ix); }
+  if (n >= 2) { Q('legno', 62 + (n % 3) * 3, t + P / 2, 0.16 * e, { pan: -pan, rev: 0.15 }); kv(t + P / 2 + w * rnd() * 0.05, m + (n >= 5 ? 7 : 0), 0.34 * kg * (KLV4[kd] || 1), -pan, n); deep4(t, n, P, ix); }
   if (n >= 3) { Q('pizz', r + (w > 0.55 && rnd() < 0.4 * w ? 6 : 0), t, 0.2 * e, { rev: 0.15 }); Q('pizz', r + (n >= 5 ? 12 : 0), t + P / 2, 0.17 * e, { pan: 0.15, rev: 0.15 }); if (n >= 7) { Q('pizz', r, t + P / 4, 0.1 * e, { rev: 0.1 }); Q('pizz', r + 12, t + 3 * P / 4, 0.12 * e, { rev: 0.1 }); } }
   if (n >= 4) { Q('harp', underD(m, ix), t, 0.14 * e, { pan: -pan, rev: 0.3, dur: 0.7, r: 0.3 }); Q('fdrum', NO, t + P / 2, 0.1 * e, { pan: -0.15, rev: 0.2 }); }
   if (n >= 5) Q('timp', r + 12, t, 0.11 * e, { pan: 0.1, rev: 0.25 });
-  if (n >= 6) { Q('tick', NO, t + P / 4, 0.1 * e, { pan }); Q('tick', NO, t + 3 * P / 4, 0.13 * e, { pan: -pan }); if (n >= 8) Q('legno', 55, t + 3 * P / 4, 0.12 * e, { pan }); }
+  if (n >= 4) { Q('tick', NO, t + P / 4, (n >= 6 ? 0.1 : 0.06) * e, { pan }); Q('tick', NO, t + 3 * P / 4, (n >= 6 ? 0.13 : 0.08) * e, { pan: -pan }); if (n >= 8) Q('legno', 55, t + 3 * P / 4, 0.12 * e, { pan }); }
   if (n >= 7) { const lv = clamp((n - 6) / 6, 0.15, 1); MPROG[ix].forEach((q, i) => Q('strings', q, t, 0.2 * lv, { dur: P, a: 0.04, r: 0.2, bed: true, pan: (i - 1) * 0.5, wide: 0.3, rev: 0.4, trem: { f: 11, d: 0.7 } })); }
   if (n >= 7) MPROG[ix].forEach((q, i) => Q('piano', q, t, 0.13 * e, { pan: (i - 1) * 0.4, rev: 0.25, dur: 0.4, r: 0.25 }));
-  if (n >= 8) [r + 12, r + 19].forEach((q, i) => Q('bone', q + 12, t, 0.32 * e, { dur: 0.2, a: 0.012, r: 0.14, lp: 1200, lp1: 5000, lpt: 0.05, pan: i ? 0.3 : -0.3, rev: 0.3 }));
+  if (n >= (w > 0.4 ? 5 : 8)) [r + 12, r + 19].forEach((q, i) => Q('bone', q + 12, t, 0.32 * e, { dur: 0.2, a: 0.012, r: 0.14, lp: 1200, lp1: 2500 + 450 * n, lpt: 0.05, pan: i ? 0.3 : -0.3, rev: 0.3 }));
   if (n >= 9) { Q('tbell', clamp(m, 50, 77), t, 0.2 * e, { pan: -pan, rev: 0.4, dur: 1.0, r: 0.5 }); Q('piano', m + 12, t, 0.18 * e, { pan, rev: 0.3, dur: 0.6, r: 0.3 }); }
-  if (n >= 10) { roll4('timp', r + 12, t + P * 0.5, t + P * 0.98, 0.03 * e, 0.13 * e, 0.075); if (n >= 11) { Q('anvil', 74, t + P / 2, 0.14 * e, { pan: 0.4, rev: 0.3 }); roll4('fdrum', NO, t + P * 0.7, t + P * 0.98, 0.03 * e, 0.12 * e, 0.045); } }
+  if (n >= 10) { roll4('timp', r + 12, t + P * 0.5, t + P * 0.98, 0.03 * e, 0.13 * e, 0.075); if (n >= (w > 0.4 ? 8 : 11)) { Q('anvil', 74, t + P / 2, 0.14 * e, { pan: 0.4, rev: 0.3 }); roll4('fdrum', NO, t + P * 0.7, t + P * 0.98, 0.03 * e, 0.12 * e, 0.045); } }
 }
 // the last hit: everything lands on a low D minor; a semitone rubs against it and dies first (in later rounds it stays)
 function fin4(t, kd, n) {
@@ -1038,17 +1040,21 @@ function fin4(t, kd, n) {
 // glass shattering, the burner roaring, steam, thunder on the timpani, and things still falling two seconds later
 function over4(t) {
   const w = madW();
-  Q('bdrum', NO, t, 1.1, { rev: 0.35 }); Q('bdrum', NO, t + 0.11, 0.9, { rev: 0.35 }); Q('timp', 38, t, 0.9, { rev: 0.4 }); Q('timp', 45, t + 0.11, 0.7, { pan: 0.2, rev: 0.4 });
-  Q('tam', NO, t, 0.6, { rev: 0.5 }); Q('anvil', 74, t, 0.5, { rev: 0.4, pan: -0.3 }); Q('anvil', 71, t + 0.11, 0.4, { rev: 0.4, pan: 0.3 });
-  [26, 27, 38, 50].forEach((q, i) => Q(i === 1 ? 'prep' : 'piano', q, t, 0.5, { rev: 0.35, pan: (i - 1.5) * 0.2 }));
-  Q('organ', 26, t, 0.5, { dur: 2.6, a: 0.02, r: 1.0, g1: 0.35, rev: 0.2 }); Q('organ', 38, t, 0.32, { dur: 2.6, a: 0.02, r: 1.0, g1: 0.35, rev: 0.2 });
-  [[38, 0.26], [45, 0.26], [50, 0.28], [53, 0.24], [51, 0.24], [57, 0.22]].forEach((q, i) => Q('bone', q[0], t, q[1], { dur: 2.4, a: 0.015, r: 0.9, g1: 0.4, lp: 1600, lp1: 7000, lpt: 0.07, pan: (i - 2.5) * 0.22, wide: 0.15, rev: 0.45, gl: [0, -60 - 25 * i, 2.0, 0.6] }));
-  [57, 62, 65].forEach((q, i) => Q('horn', q, t, 0.3, { dur: 2.2, a: 0.02, r: 0.8, g1: 0.45, pan: (i - 1) * 0.5, rev: 0.45, gl: [0, -50, 2.0, 0.6] }));
-  [62, 65, 69, 74, 75].forEach((q, i) => Q('choirA', q, t + 0.02, 0.3, { dur: 2.4, a: 0.03, r: 0.9, pan: (i - 2) * 0.3, wide: 0.3, rev: 0.55, vib: 14, gl: [0, -130 - 30 * i, 2.2, 0.5] }));
-  Q('shatter', NO, t + 0.03, 0.6, { pan: -0.2, rev: 0.35 }); Q('shatter', NO, t + 0.5, 0.4, { pan: 0.4, rev: 0.35, det: -300 });
-  Q('roar', NO, t, 0.8, { dur: 2.8, a: 0.03, r: 1.0, g1: 0.2, wide: 0.5, rev: 0.25 }); Q('steam', NO, t, 0.55, { dur: 2.6, a: 0.02, r: 0.9, g1: 0.25, wide: 0.6, rev: 0.3 });
-  roll4('timp', 38, t + 0.3, t + 2.4, 0.4, 0.05, 0.08, { rev: 0.4 });
-  for (let i = 0; i < 12 + Math.round(8 * w); i++) { const tt = t + 0.4 + rnd() * 2.4, k = rnd(); Q(k < 0.4 ? 'crack' : k < 0.7 ? 'clink' : k < 0.85 ? 'clamp' : 'coin', k < 0.7 && k >= 0.4 ? 86 + Math.floor(rnd() * 14) : NO, tt, 0.12 + 0.14 * rnd(), { pan: rnd() * 1.6 - 0.8, rev: 0.4 }); }
+  // a held voice here is struck hard, falls back at once and then swells for a second and a half (so the blow, the second blow and
+  // the falling glass are heard through it) before it lets go over another second and a half
+  const held = (i, m, g, x) => { Q(i, m, t, g, Object.assign({ dur: 0.28, a: 0.015, r: 0.25 }, x, { gl: null })); Q(i, m, t + 0.3, g * 0.36, Object.assign({ dur: 1.6, a: 0.15, g1: 1.25, r: 1.5 }, x)); };
+  Q('bdrum', NO, t, 0.65, { rev: 0.35 }); Q('bdrum', NO, t + 0.11, 0.55, { rev: 0.35 }); Q('timp', 38, t, 0.6, { rev: 0.4 }); Q('timp', 45, t + 0.11, 0.6, { pan: 0.2, rev: 0.4 });
+  Q('tam', NO, t, 0.55, { rev: 0.5 }); Q('anvil', 74, t, 0.5, { rev: 0.4, pan: -0.3 }); Q('anvil', 71, t + 0.11, 0.4, { rev: 0.4, pan: 0.3 });
+  [26, 39, 38, 50].forEach((q, i) => Q(i === 1 ? 'prep' : 'piano', q, t, 0.45, { rev: 0.35, pan: (i - 1.5) * 0.2 }));
+  Q('organ', 26, t, 0.3, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.5, rev: 0.2, strict: true }); Q('organ', 38, t, 0.25, { dur: 2.4, a: 0.02, r: 1.4, g1: 0.5, rev: 0.2, strict: true });
+  // the low brass sags, the horns hold, the choir is torn upward: the chord comes apart
+  [[38, 0.26], [45, 0.26], [50, 0.28], [53, 0.24], [51, 0.24], [57, 0.22]].forEach((q, i) => held('bone', q[0], q[1], { lp: 1600, lp1: 7000, lpt: 0.07, pan: (i - 2.5) * 0.22, wide: 0.15, rev: 0.45, gl: [0, -40 - 22 * i, 1.6, 0.2] }));
+  [57, 62, 65].forEach((q, i) => held('horn', q, 0.38, { pan: (i - 1) * 0.5, rev: 0.45 }));
+  [62, 65, 69, 74, 75].forEach((q, i) => held('choirA', q, 0.48, { pan: (i - 2) * 0.3, wide: 0.3, rev: 0.55, vib: 14, gl: [0, 100 + 38 * i, 1.6, 0.2] }));
+  Q('shatter', NO, t + 0.03, 0.7, { pan: -0.2, rev: 0.35 }); Q('shatter', NO, t + 0.5, 0.45, { pan: 0.4, rev: 0.35, det: -300 });
+  Q('roar', NO, t, 0.7, { dur: 2.6, a: 0.03, r: 1.4, g1: 0.5, wide: 0.5, rev: 0.25 }); Q('steam', NO, t, 0.5, { dur: 0.5, a: 0.02, r: 0.5, g1: 0.3, wide: 0.6, rev: 0.3 }); Q('steam', NO, t + 0.6, 0.12, { dur: 1.6, a: 0.8, g1: 1.6, r: 1.2, wide: 0.6, rev: 0.3 });
+  roll4('timp', 50, t + 0.3, t + 2.4, 0.4, 0.05, 0.08, { rev: 0.4 });
+  for (let i = 0; i < 12 + Math.round(8 * w); i++) { const tt = t + 0.4 + rnd() * 2.6, k = rnd(); Q(k < 0.45 ? 'crack' : k < 0.8 ? 'clink' : 'clamp', k < 0.8 && k >= 0.45 ? 86 + Math.floor(rnd() * 14) : NO, tt, 0.14 + 0.16 * rnd(), { pan: rnd() * 1.6 - 0.8, rev: 0.4 }); }
   duck(t, 0.08, 1.2);
 }
 const DMS = [50, 52, 53, 55, 57, 58, 60, 62];        // D minor, for things that count up
@@ -1068,13 +1074,13 @@ const S4 = { name: 'lab orchestra', step: step4, deepLand: deepLand4,
   // a reagent set down in the line: glass on the bench, a third higher each
   queue: (t, i) => { Q('clink', [86, 89, 93][i], t, 0.2, { rev: 0.2, pan: (i - 1) * 0.3 }); Q('legno', 50, t, 0.12, { rev: 0.1 }); },
   // the line fires: the cork goes, the burner lights
-  fire: t => { Q('cork', NO, t, 0.5, { rev: 0.25 }); Q('bdrum', NO, t + 0.02, 0.5, { rev: 0.2 }); Q('roar', NO, t + 0.02, 0.5, { dur: 0.35, a: 0.02, r: 0.3, g1: 0.3, wide: 0.4, rev: 0.2 }); Q('steam', NO, t + 0.02, 0.25, { dur: 0.25, a: 0.01, r: 0.2, g1: 0.3 }); },
+  fire: t => { Q('cork', NO, t, 0.3, { rev: 0.25, det: -500, lp: 1500 }); Q('bdrum', NO, t + 0.02, 0.5, { rev: 0.2 }); Q('roar', NO, t + 0.02, 0.5, { dur: 0.35, a: 0.02, r: 0.3, g1: 0.3, wide: 0.4, rev: 0.2 }); Q('steam', NO, t + 0.02, 0.25, { dur: 0.25, a: 0.01, r: 0.2, g1: 0.3 }); },
   // a reagent lands on the molecule: a splash, a drum, the basses plucking Dm, Gm, A; heavier each
   strike: (t, i, w) => { Q('bdrum', NO, t, (0.4 + 0.14 * i) * w, { rev: 0.2 }); Q('pour', NO, t, 0.3 * w, { dur: 0.25, r: 0.15, pan: (i - 1) * 0.4, rev: 0.2 }); Q('pizz', [38, 43, 45][i], t, 0.4 * w, { rev: 0.2 }); Q('piano', [50, 55, 57][i], t, 0.22 * w, { rev: 0.25, pan: 0.2 }); if (i === 2) Q('timp', 45, t, 0.4 * w, { rev: 0.3 }); },
   // the molecule takes over: a low flask rings and the basses settle under it
   handoff: t => { Q('bowl', 50, t, 0.3, { rev: 0.45 }); Q('basses', 38, t, 0.45, { dur: 0.5, a: 0.04, r: 0.4, g1: 0.4, rev: 0.3, gl: [0, -100, 0.5, 0] }); Q('steam', NO, t, 0.12, { dur: 0.3, a: 0.05, r: 0.3 }); SB.clk.P0 = 0.86; },
-  // the yield counting: glass ticks, climbing D minor
-  tick: (t, n) => Q('clink', DMS[Math.min(7, n || 0) % 8] + 36, t, 0.07, { pan: rnd() * 0.8 - 0.4, rev: 0.1 }),
+  // the yield counting: a pencil of glass ticks on one pitch
+  tick: (t, n) => Q('clink', 93, t, 0.06, { pan: rnd() * 0.8 - 0.4, rev: 0.1, det: (rnd() - 0.5) * 60 }),
   swish: (t, d) => Q('steam', NO, t, 0.06, { dur: d * 1.2, a: d * 0.9, r: d * 0.5, lp: 3000, bed: true, pan: -0.4 }),
   drone: (t, lv, step, d) => { const ix = chordIx(SB.clk.n || 1); Q('basses', MROOT[ix], t, 0.2 + 0.3 * lv, { dur: d, a: Math.min(0.06, d * 0.3), r: 0.2, bed: true, wide: 0.3 }); Q('cello', MROOT[ix] + 19, t, 0.1 + 0.2 * lv, { dur: d, a: Math.min(0.06, d * 0.3), r: 0.2, bed: true }); },
   draw: (t, n, d) => Q('strings', melD(n), t, 0.1, { dur: d, a: d * 0.95, ax: true, cut: true, bed: true, wide: 0.4, trem: { f: 12, d: 0.7 } }),
@@ -1084,9 +1090,9 @@ const S4 = { name: 'lab orchestra', step: step4, deepLand: deepLand4,
   wind: (t, n, ms, last) => { const d = ms / 1000;
     if (!last) { if (d > 0.12) { Q('strings', melD(n), t + d * 0.3, 0.16 * lvl(n), { dur: d * 0.7, a: d * 0.66, ax: true, cut: true, bed: true, wide: 0.4, trem: { f: 13, d: 0.6 } }); Q('legno', 57, t + d - 0.1, 0.07 * lvl(n), { pan: 0.3 }); } return; }
     const end = d - 0.17; roll4('timp', 45, t, t + end, 0.06, 0.5, 0.07, { rev: 0.3 }); roll4('fdrum', NO, t + end * 0.3, t + end, 0.03, 0.32, 0.045);
-    [57, 61, 64, 69].forEach((q, i) => Q('choirA', q, t, 0.34, { dur: end, a: end * 0.96, ax: true, cut: true, pan: (i - 1.5) * 0.3, wide: 0.3, rev: 0.4 }));
-    [69, 70, 76, 81].forEach((q, i) => Q('strings', q, t, 0.3, { dur: end, a: end * 0.96, ax: true, cut: true, pan: (1.5 - i) * 0.3, wide: 0.3, rev: 0.4, trem: { f: 14, d: 0.8 } }));
-    Q('bone', 33, t, 0.4, { dur: end, a: end * 0.96, ax: true, cut: true, lp: 500, lp1: 4000, lpt: end, rev: 0.3 });
+    [57, 61, 64, 69].forEach((q, i) => Q('choirA', q, t, 0.34, { dur: end, a: end * 0.96, ax: true, cut: true, pan: (i - 1.5) * 0.3, wide: 0.3, rev: 0.12 }));
+    [69, 70, 76, 81].forEach((q, i) => Q('strings', q, t, 0.3, { dur: end, a: end * 0.96, ax: true, cut: true, pan: (1.5 - i) * 0.3, wide: 0.3, rev: 0.12, trem: { f: 14, d: 0.8 } }));
+    Q('bone', 33, t, 0.4, { dur: end, a: end * 0.96, ax: true, cut: true, lp: 500, lp1: 4000, lpt: end, rev: 0.1 });
     Q('steam', NO, t, 0.4, { dur: end, a: end * 0.96, ax: true, cut: true, wide: 0.5 }); Q('roar', NO, t, 0.5, { dur: end, a: end * 0.96, ax: true, cut: true });
     breathe(t + end, t + d); },
   // runoff lands in its jar. m names what came off: 'water' (or 0, 3) a drip, 'heavy' (1) a thunk, 'gas' (2) a puff and the lid,
@@ -1099,7 +1105,7 @@ const S4 = { name: 'lab orchestra', step: step4, deepLand: deepLand4,
     else if (k === 6) Q('blub', 55, t, 0.3, { pan: 0.4, rev: 0.2 });
     else Q('drip', 84, t, 0.25, { pan: 0.4, rev: 0.2 });
     Q('glass', jar, t + 0.05, 0.14, { pan: 0.5, rev: 0.35, dur: 0.5, r: 0.3 }); },
-  gold: (t, n) => { const k = clamp(n | 0 || 2, 1, 5); for (let i = 0; i < k; i++) Q('coin', i % 2 ? 100 : 96, t + i * 0.07, 0.16, { pan: 0.2 * (i % 2 ? 1 : -1), rev: 0.25 }); },
+  gold: (t, n) => { Q('coin', 96, t, 0.16, { rev: 0.25, det: -700, lp: 6000 }); if ((n | 0) > 1) Q('coin', 93, t + 0.11, 0.13, { pan: 0.2, rev: 0.25, det: -700, lp: 6000 }); Q('legno', 50, t, 0.1); },
   // a reagent that did nothing: a dull cork, a damped string, a fizzle
   wasted: t => { Q('cork', NO, t, 0.3, { lp: 900, det: -500 }); Q('pizz', 33, t, 0.3, { dur: 0.12, r: 0.08 }); Q('steam', NO, t + 0.03, 0.12, { dur: 0.2, a: 0.02, r: 0.25, g1: 0.2, lp: 4000, lp1: 800, lpt: 0.3 }); },
   // a round lost: the cello falls D, B flat, A, and stops on the low D; a soft drum under the last
@@ -1107,7 +1113,7 @@ const S4 = { name: 'lab orchestra', step: step4, deepLand: deepLand4,
   pageTurn: t => Q('page', NO, t, 0.3, { pan: -0.2, rev: 0.15 })
 };
 // what the player does before the chain sits under the chain's late steps
-(function () { const lv = { queue: 0.7, fire: 0.6, strike: 0.6, handoff: 0.6, lost: 0.6, wasted: 0.7, snap: CHAIN4, drone: CHAIN4, draw: CHAIN4, swish: CHAIN4 }; Object.keys(lv).forEach(k => { const f = S4[k]; S4[k] = function () { G4 = lv[k]; try { return f.apply(S4, arguments); } finally { G4 = 1; } }; }); })();
+(function () { const lv = { queue: 0.7, fire: 0.6, strike: 0.6, handoff: 0.6, lost: 0.4, wasted: 0.45, snap: CHAIN4, drone: CHAIN4, draw: CHAIN4, swish: CHAIN4 }; Object.keys(lv).forEach(k => { const f = S4[k]; S4[k] = function () { G4 = lv[k]; try { return f.apply(S4, arguments); } finally { G4 = 1; } }; }); })();
 STYLE[4] = S4;
 // the rest of the game in style 4: a piano and a plucked string carry the notes, tuned glass the bright ones, a bass drum and
 // timpani the hits, a tap of glass the small clicks; a creature is a gurgle and a slide on a plucked bass
@@ -1117,12 +1123,38 @@ PAL[4] = { key: -1,
   hit: (t, g) => { Q('bdrum', NO, t, g * 1.3, { rev: 0.25 }); Q('timp', 38, t, g * 0.7, { rev: 0.3 }); },
   tick: (t, g) => Q('clink', 93, t, g * 1.3, { rev: 0.1 }),
   boing: (t, g) => { Q('blub', 52, t, g * 2, { rev: 0.2 }); Q('blub', 59, t + 0.06, g * 1.5, { rev: 0.2, pan: 0.3 }); Q('pizz', 45, t, g * 1.6, { gl: [0, -500, 0.25, 0.02], rev: 0.2 }); } };
+// the other screens and acts in style 4. No tunes, no runs up: the soundtrack carries the tune, so each act is one gesture on the
+// orchestra or one thing done at the bench
+const ACTS4 = {
+  title: t => { Q('bdrum', NO, t, 0.6, { rev: 0.3 }); Q('timp', 38, t, 0.5, { rev: 0.35 }); [26, 38, 45].forEach(q => Q('piano', q, t, 0.4, { rev: 0.35 })); Q('tbell', 62, t + 0.02, 0.35, { rev: 0.5, pan: 0.3 }); Q('bowl', 50, t + 0.5, 0.2, { rev: 0.5, pan: -0.3 }); },
+  runStart: t => { Q('cork', NO, t, 0.3, { det: -500, lp: 1500, rev: 0.25 }); Q('roar', NO, t + 0.02, 0.6, { dur: 0.5, a: 0.03, r: 0.5, g1: 0.3, wide: 0.4, rev: 0.25 }); Q('timp', 38, t + 0.02, 0.6, { rev: 0.35 }); [38, 45, 50, 53].forEach((q, i) => Q('bone', q, t + 0.02, 0.26, { dur: 0.5, a: 0.015, r: 0.4, lp: 1200, lp1: 5000, lpt: 0.06, pan: (i - 1.5) * 0.3, rev: 0.4 })); Q('piano', 26, t + 0.02, 0.4, { rev: 0.3 }); },
+  shopOpen: t => { Q('bowl', 57, t, 0.3, { rev: 0.45 }); Q('clink', 90, t + 0.12, 0.16, { pan: 0.3, rev: 0.2 }); Q('page', NO, t, 0.14, { pan: -0.3 }); },
+  buy: t => { Q('coin', 96, t, 0.22, { det: -700, lp: 6000, rev: 0.2 }); Q('legno', 50, t, 0.2); Q('clamp', NO, t + 0.1, 0.22, { pan: 0.2, rev: 0.2 }); [38, 45].forEach(q => Q('piano', q, t + 0.1, 0.3, { rev: 0.3 })); },
+  cantBuy: t => { Q('pizz', 39, t, 0.3, { dur: 0.14, r: 0.08 }); Q('pizz', 38, t + 0.14, 0.3, { dur: 0.14, r: 0.08 }); Q('cork', NO, t, 0.16, { det: -900, lp: 800 }); },
+  hover: t => Q('clink', 93, t, 0.03, { rev: 0.1 }),
+  click: t => { Q('legno', 50, t, 0.14, { rev: 0.1 }); Q('clink', 90, t, 0.07, { rev: 0.1 }); },
+  pick: t => { Q('timp', 38, t, 0.4, { rev: 0.3 }); Q('piano', 50, t, 0.35, { rev: 0.3 }); Q('bowl', 62, t, 0.25, { rev: 0.45, pan: 0.3 }); },
+  redraw: t => { Q('page', NO, t, 0.35, { pan: -0.3, rev: 0.15 }); Q('pizz', 45, t + 0.22, 0.3, { rev: 0.2 }); Q('pizz', 38, t + 0.34, 0.35, { rev: 0.2, pan: 0.2 }); },
+  // a round won: the kettledrums step from A to D and the brass and choir close on a bare fifth
+  roundWon: t => { Q('timp', 45, t, 0.5, { rev: 0.35 }); Q('timp', 38, t + 0.3, 0.7, { rev: 0.35 }); Q('bdrum', NO, t + 0.3, 0.6, { rev: 0.3 }); [38, 45, 50, 57].forEach((q, i) => Q('bone', q, t + 0.3, 0.26, { dur: 1.1, a: 0.02, r: 0.7, lp: 1400, lp1: 5500, lpt: 0.08, pan: (i - 1.5) * 0.3, wide: 0.15, rev: 0.45 })); [57, 62].forEach((q, i) => Q('horn', q, t + 0.3, 0.3, { dur: 1.1, a: 0.03, r: 0.7, pan: i ? 0.4 : -0.4, rev: 0.45 })); [50, 57, 62].forEach((q, i) => Q('choirO', q, t + 0.3, 0.26, { dur: 1.2, a: 0.05, r: 0.8, pan: (i - 1) * 0.4, wide: 0.3, rev: 0.5 })); Q('tbell', 62, t + 0.3, 0.3, { rev: 0.5, pan: 0.3 }); Q('piano', 26, t + 0.3, 0.4, { rev: 0.3 }); },
+  // a run won: G minor, A, then D major held, every player, the tam-tam under it
+  runWon: t => { [[31, 43, 46, 50, 55, 58], [33, 45, 49, 52, 57, 61], [26, 38, 45, 50, 54, 57, 62, 66]].forEach((ch, j) => { const tt = t + j * 0.5, d = j === 2 ? 2.4 : 0.42; Q('timp', [43, 45, 38][j], tt, 0.5 + 0.15 * j, { rev: 0.35 }); Q('bdrum', NO, tt, 0.4 + 0.2 * j, { rev: 0.3 }); ch.forEach((q, i) => Q(q < 44 ? 'basses' : q < 56 ? 'bone' : i % 2 ? 'horn' : 'choirA', q, tt, 0.24, { dur: d, a: 0.02, r: j === 2 ? 1.2 : 0.2, lp: q < 56 && q >= 44 ? 1400 : 0, lp1: 6000, lpt: 0.08, pan: (i / (ch.length - 1) - 0.5) * 1.2, wide: 0.15, rev: 0.45, strict: q < 44 })); }); Q('tam', NO, t + 1.0, 0.4, { rev: 0.5 }); Q('tbell', 62, t + 1.0, 0.35, { rev: 0.5, pan: 0.3 }); Q('tbell', 66, t + 1.02, 0.3, { rev: 0.5, pan: -0.3 }); Q('piano', 26, t + 1.0, 0.45, { rev: 0.3 }); deepLand4(t + 1.0, true, true); },
+  runLost: t => { [57, 53, 50].forEach((q, i) => { Q('bow', NO, t + i * 0.55, 0.08); Q('cello', q, t + i * 0.55, 0.4, { dur: i === 2 ? 1.6 : 0.5, a: 0.06, r: i === 2 ? 1.0 : 0.2, rev: 0.45, vib: i === 2 ? 12 : 0 }); }); [38, 45].forEach((q, i) => Q('choirU', q, t + 1.1, 0.35, { dur: 1.6, a: 0.3, r: 1.0, wide: 0.3, rev: 0.5 })); Q('piano', 26, t + 1.1, 0.4, { rev: 0.35 }); Q('tam', NO, t + 1.1, 0.14, { rev: 0.5 }); },
+  // an unlock: a clamp let go, a flask and a bell a fifth apart over a low string
+  unlock: t => { Q('clamp', NO, t, 0.35, { rev: 0.2 }); Q('bowl', 50, t + 0.12, 0.35, { rev: 0.5, pan: -0.3 }); Q('tbell', 57, t + 0.12, 0.35, { rev: 0.5, pan: 0.3 }); [26, 38].forEach(q => Q('piano', q, t + 0.12, 0.35, { rev: 0.3 })); Q('timp', 38, t + 0.12, 0.4, { rev: 0.35 }); },
+  // a finding: the page, a pencil, one cello note and a glass harmonic left hanging
+  finding: t => { Q('paper', NO, t, 0.3, { pan: -0.3 }); Q('tick', NO, t + 0.2, 0.14); Q('tick', NO, t + 0.3, 0.1); Q('bow', NO, t + 0.4, 0.1); Q('cello', 57, t + 0.4, 0.4, { dur: 0.9, a: 0.08, r: 0.6, rev: 0.45, vib: 10 }); Q('glass', 76, t + 0.45, 0.25, { rev: 0.5, pan: 0.3 }); },
+  // a creature: something wet and low turning over in its jar
+  creature: t => { Q('bubble', NO, t, 0.45, { det: -1200, lp: 900, rev: 0.25 }); Q('pour', NO, t + 0.05, 0.35, { det: -1000, lp: 1200, dur: 0.4, r: 0.2, pan: 0.2, rev: 0.25 }); Q('cork', NO, t + 0.3, 0.2, { det: -1200, lp: 700 }); Q('basses', 31, t, 0.3, { dur: 0.3, a: 0.05, r: 0.2, gl: [0, -200, 0.3, 0.05] }); },
+  instrument: t => { Q('clamp', NO, t, 0.35, { rev: 0.2 }); Q('roar', NO, t, 0.5, { dur: 0.28, a: 0.2, r: 0.25, wide: 0.4, rev: 0.2 }); Q('timp', 38, t + 0.25, 0.5, { rev: 0.35 }); [38, 45].forEach(q => Q('piano', q, t + 0.25, 0.35, { rev: 0.3 })); Q('anvil', 74, t + 0.25, 0.2, { rev: 0.35, pan: 0.3 }); }
+};
 // the quiet room under the screens between reactions: the burner, and a loop of the lab (bubbles, glass, paper, drips)
 function amb4(kind, dur, t) {
   const c = C, g = c.createGain(), nodes = [], stop = dur ? t + dur : null; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 1.5); if (stop) g.gain.setTargetAtTime(0, stop - 1, 0.3); g.connect(SB.bed);
-  const one = (name, lv, lp) => { const src = c.createBufferSource(), og = c.createGain(); src.buffer = labBuf(c, name, NO, 0).b; src.loop = true; og.gain.value = lv; let n = src; if (lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; src.connect(f); n = f; } n.connect(og); og.connect(g); const s = c.createGain(); s.gain.value = 0.3; og.connect(s); s.connect(hall4()); src.start(t, rnd()); nodes.push(src); if (stop) src.stop(stop + 0.1); };
-  one('roar', kind === 'title' ? 0.1 : kind === 'bench' ? 0.07 : 0.04, 700); if (kind === 'pick' || kind === 'title') one('steam', 0.012, 5000);
-  one(kind === 'shop' ? 'ambS' : kind === 'pick' ? 'ambP' : kind === 'bench' ? 'ambB' : 'ambT', 0.12);
+  const one = (name, lv, lp, rate) => { const src = c.createBufferSource(), og = c.createGain(); src.buffer = labBuf(c, name, NO, 0).b; src.loop = true; src.playbackRate.value = rate; og.gain.value = lv; let n = src; if (lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; src.connect(f); n = f; } n.connect(og); og.connect(g); const s = c.createGain(); s.gain.value = 0.3; og.connect(s); s.connect(hall4()); src.start(t, rnd()); nodes.push(src); if (stop) src.stop(stop + 0.1); };
+  // two copies of the burner at different speeds, and two room loops of different lengths, so nothing is heard coming round
+  const rl = kind === 'title' ? 0.1 : kind === 'bench' ? 0.07 : 0.04; one('roar', rl * 0.7, 700, 1); one('roar', rl * 0.7, 600, 0.79); if (kind === 'pick' || kind === 'title') { one('steam', 0.009, 5000, 1); one('steam', 0.008, 4000, 0.71); }
+  one(kind === 'shop' ? 'ambS' : kind === 'pick' ? 'ambP' : kind === 'bench' ? 'ambB' : 'ambT', 0.1, 0, 1); one(kind === 'shop' ? 'ambB' : kind === 'pick' ? 'ambT' : kind === 'bench' ? 'ambP' : 'ambP', 0.06, 0, 0.87);
   SB.amb = { g, nodes };
 }
 // make the bank ahead of time, a little at a time, so the first sound of a kind does not wait for its instrument
@@ -1139,6 +1171,7 @@ function sty(name, args) {
   if ((name === 'reflex' || name === 'ring') && S.step) { S.step(name === 'ring' ? 'lactol' : args[0], Math.max(1, Math.round(name === 'ring' ? args[0] : args[1]) || 1), name === 'ring' ? {} : args[2]); return true; }
   if (name === 'reflex' || name === 'ring') { stepLayers(S, name === 'ring' ? 'lactol' : args[0], name === 'ring' ? args[0] : args[1], name === 'ring' ? {} : args[2]); return true; }
   if (name === 'ambience') { ambience(args[0], args[1]); return true; }
+  if (STY === 4 && ACTS4[name]) { const t = begin(); if (t == null) return true; G4 = ACT4; try { ACTS4[name](t, args[0]); } finally { G4 = 1; } return true; }
   if (ACTS[name]) { const t = begin(); if (t == null) return true; G4 = ACT4; try { ACTS[name](STY === 2 && ARCV ? PAL.d : PAL[STY], t, args[0]); } finally { G4 = 1; } return true; }
   const fn = S[name]; if (!fn) return false; const t = begin(); if (t == null) return true;
   if (name === 'snap') { fn(t, Math.max(1, args[0] | 0), args[1] || 1); return true; }
@@ -1280,7 +1313,7 @@ const fx = {
   round(n) { if (n === undefined) return MAD; MAD = clamp(Math.round(+n) || 1, 1, 9); return MAD; },
   setRound(n) { return fx.round(n); }, getRound() { return MAD; },
   // test hooks for style 4: one kind's voice alone at step n; one made instrument alone
-  _kind(kind, n) { const t = begin(); if (t == null) return; n = Math.max(1, n | 0); G4 = CHAIN4; try { (K4[kindOf(kind)] || K4.lactol)(t, melD(n), 1.35 * clamp(0.3 + 0.064 * n, 0.3, 1), 0, n); } finally { G4 = 1; } },
+  _kind(kind, n) { const t = begin(); if (t == null) return; n = Math.max(1, n | 0); G4 = CHAIN4; try { (K4[kindOf(kind)] || K4.lactol)(t, melD(n), 1.35 * clamp(0.3 + 0.064 * n, 0.3, 1) * (KLV4[kindOf(kind)] || 1), 0, n); } finally { G4 = 1; } },
   _inst(i, m, g, x) { const t = begin(); if (t == null) return; L4(Object.assign({ i, m, t, g: g || 0.5 }, x || {})); },
   // make style 4's instruments ahead of time, in small slices (style(4) does this itself); returns how many are left to make
   warm(sync) { return warm4(sync); },
