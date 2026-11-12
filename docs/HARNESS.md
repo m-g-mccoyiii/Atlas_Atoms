@@ -53,6 +53,8 @@ AI2. Of the three notebook pages (ruled, graph, aged) the owner picked 3, the ag
 
 AL2. On the look4 videos (12 November): "Let's default to 2 on speed but let the speed be modular. Some issues, the reactions are very difficult to see in some instances, the bonds are being stretched very far, lots of overlapping atoms". Pace 2 is the default and the player can change the speed. Every reaction must be easy to see; bonds are never stretched; atoms never overlap.
 
+AL3. "I don't like shitty looking clip art like a water droplet that's blue signifying dehydration and stuff. The overreact clip art stuff is fine, though I worry about how short the cycles are on the game and how those might lead to less play" (12 November). No symbolic icons for a reaction or for what leaves; show the real atoms. Open worry: a run may be too short to keep people playing.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
