@@ -425,7 +425,7 @@ function drawOver(t) {
 // ---------- every frame ----------
 function frame(t, dt) {
   if (api) drawOver(t);
-  seeFrame(t);
+  if (!F.seq) seeFrame(t);
   const S = F.seq; if (!S || !api) return; const st = api.st, c = api.center(), d = S.d; if (!c) return; api.dirty();
   st.sq = 0; st.pop = 0; st.shake = 0; st.flash = 0;
   // the count
@@ -475,6 +475,7 @@ function frame(t, dt) {
     if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); row.bb = [x0, x1, y0, y1]; return x1 - x0; })(); { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const sc = c.group.scale.x, v2 = new T.Vector3(); c.balls.forEach((bb, a) => { bb.mesh.getWorldPosition(v2); const q = pj(v2), r = Math.abs(pj(v2.clone().add(new T.Vector3((bb.R || 0.4) * sc, 0, 0)))[0] - q[0]) + 1; x0 = Math.min(x0, q[0] - r); x1 = Math.max(x1, q[0] + r); y0 = Math.min(y0, q[1] - r); y1 = Math.max(y1, q[1] + r); }); row.bbr = [x0, x1, y0, y1]; } F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
   st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } });
+  seeFrame(t);
 }
 
 // ---------- the ink: the count, the step numerals, the gains, the words, the throw, the tally ----------
