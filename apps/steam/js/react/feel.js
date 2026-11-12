@@ -496,7 +496,7 @@ function drawOver(t) {
 // ---------- the molecule trembles when the round is being won (?vibe=0|1, on unless 0) ----------
 // Once the yield has passed the round's target the atoms themselves tremble about their places, finely and fast: more with each mark
 // passed and with each step of the chain. From the second mark on the bonds glow with heat. It is dead still in the held breath
-// before the last hit. The most an atom moves is 0.3 of its own radius, so atoms never touch and bonds are not stretched.
+// before the last hit. The most an atom moves is 0.17 of its own radius, so atoms never touch and bonds are not stretched.
 let VIBE = 1; try { if (new URLSearchParams(root.location.search).get('vibe') === '0') VIBE = 0; } catch (e) { VIBE = 1; }
 const roundNow = () => { try { const r = AA.rxScheme && AA.rxScheme.debugRun && AA.rxScheme.debugRun(); return clamp((r && r.round) || 1, 1, 9); } catch (e) { return 1; } };
 const bell = (v, mid, half) => { const u = (v - mid) / half; return Math.abs(u) >= 1 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * u); };
@@ -513,20 +513,22 @@ function vibeLevel(t) {
 }
 const _same = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;
 function vibeApply(t, c) {
-  const lv = vibeLevel(t); F.vibeLv = lv;
+  // the level is eased toward its target (in over about a third of a second, out in a tenth) so the shiver never starts or stops with a jerk
+  const want = vibeLevel(t), was = F.vibeE || 0, dtv = clamp((t - (F.vibeT || t)) / 1000, 0, 0.1); F.vibeT = t; const lv = F.vibeE = want > was ? Math.min(want, was + dtv * 2.5) : Math.max(want, was - dtv * 9); F.vibeLv = lv;
   if (lv > 0.03 && (!F.vibeS || t - F.vibeS > 220)) { F.vibeS = t; snd('tremble', lv); }
   if (lv <= 0.002 && !F.vibeOn) return; F.vibeOn = lv > 0.002;
   const tt = t / 1000 * 6.283; let i = 0;
   // each ball is moved from where the page last laid it; if nobody has laid it out since the last frame, the last offset is taken off first
   c.balls.forEach(b => { const m = b.mesh.position; if (!b.vo) { b.vo = new T.Vector3(); b.vp = new T.Vector3(1e9, 0, 0); }
     if (_same(m, b.vp)) { m.sub(b.vo); if (b.sprite) b.sprite.position.sub(b.vo); if (b.collar) b.collar.position.sub(b.vo); }
-    const A = lv * 0.3 * (b.R || 0.4), s = (i++) * 2.399, an = Math.random() * 6.283, rr = 0.55 + 0.45 * Math.random();
-    b.vo.set(A * (0.75 * rr * Math.cos(an) + 0.25 * Math.sin(tt * 19 + s)), A * 0.3 * Math.sin(tt * 23 + s * 1.7), A * (0.75 * rr * Math.sin(an) + 0.25 * Math.cos(tt * 17 + s * 0.6)));
+    // a blend of three sines per atom on the play clock, each atom with its own phase: an even shiver, never a jump; at most 0.17 of the atom's radius
+    const A = lv * 0.17 * (b.R || 0.4), s = (i++) * 2.399;
+    b.vo.set(A * (0.6 * Math.sin(tt * 11 + s) + 0.4 * Math.sin(tt * 13.7 + s * 1.9)), A * 0.25 * Math.sin(tt * 9.3 + s * 1.3), A * (0.6 * Math.cos(tt * 12.1 + s * 0.7) + 0.4 * Math.sin(tt * 14.3 + s * 2.3)));
     m.add(b.vo); if (b.sprite) b.sprite.position.add(b.vo); if (b.collar) b.collar.position.add(b.vo); b.vp.copy(m); });
   c.sticks.forEach(s => { const ba = c.balls.get(s.a), bb = c.balls.get(s.b); if (!ba || !bb || !ba.vo || !bb.vo) return;
     s.parts.forEach(pt => { const m = pt.mesh.position; if (!pt.vo) { pt.vo = new T.Vector3(); pt.vp = new T.Vector3(1e9, 0, 0); } if (_same(m, pt.vp)) m.sub(pt.vo); pt.vo.copy(ba.vo).add(bb.vo).multiplyScalar(0.5); m.add(pt.vo); pt.vp.copy(m); }); });
 }
-// the heat in the bonds: nothing at the first mark, then orange, then yellow, then white at the core
+// the heat in the bonds: nothing at the first mark, then a soft warm lightening that grows with each mark
 function heatLevel(t) {
   if (!VIBE || !api) return 0; const S = F.seq, ov = F.ov;
   if (ov) { const a0 = t - ov.t - OV.pre; return F.heatNow = (a0 < 0 ? (ov.heat0 || 0) : clamp(1 - (a0 - 1500) / 1100, 0, 1)); }
@@ -548,10 +550,10 @@ function heatDraw(x, t, k, h) {
   const seg = F.heatSeg, S = F.seq; if (!seg || !S) return; const still = S.cur && S.cur.last && !S.cur.hitT;
   x.save(); x.lineCap = 'round';
   seg.forEach(q => { const dx = q[2] - q[0], dy = q[3] - q[1], len = Math.hypot(dx, dy), i = q[4]; if (len < 4 || len > 240 * k) return;
-    const fl = still ? 1 : 0.72 + 0.28 * nz(t / 1000 * 11 + i * 1.7, i * 2.1), a = h * fl, x0 = q[0] + dx * 0.2, y0 = q[1] + dy * 0.2, x1 = q[0] + dx * 0.8, y1 = q[1] + dy * 0.8, w = Math.min(len, 46 * k);
+    const fl = 1, a = h, x0 = q[0] + dx * 0.2, y0 = q[1] + dy * 0.2, x1 = q[0] + dx * 0.8, y1 = q[1] + dy * 0.8, w = Math.min(len, 46 * k);
     const ln = (lw, col) => { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
-    ln(w * 0.5, 'rgba(255,110,20,' + (0.14 * a).toFixed(3) + ')'); ln(w * 0.3, 'rgba(255,130,30,' + (0.3 * a).toFixed(3) + ')'); ln(w * 0.15, 'rgba(255,190,70,' + (0.8 * a).toFixed(3) + ')');
-    if (h > 0.6) ln(w * 0.06, 'rgba(255,252,230,' + (clamp((h - 0.6) / 0.4, 0, 1) * fl).toFixed(3) + ')'); });
+    // a soft warm lightening along the middle of the bond, narrower than the bond itself: no outline, no flicker
+    ln(w * 0.2, 'rgba(255,196,120,' + (0.22 * a).toFixed(3) + ')'); ln(w * 0.09, 'rgba(255,226,170,' + (0.6 * a).toFixed(3) + ')'); });
   x.restore();
 }
 
