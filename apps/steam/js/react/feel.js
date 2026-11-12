@@ -52,9 +52,9 @@ const DIR = {
 const NEWPACE = { T1: 800, r: 0.92, Tmin: 420, gap: 150, wind: 0.26, swing: 0.2, ov: 0.08, settleHz: 6, settleZ: 0.62, firstWait: 350, fitM: 0.78 };
 const JOLT = { shakeGain: 1.1, shakeHz: 18, shakePeak: 0.03, drop: () => 0.02, dropMs: 200 };
 DIR[3].fitM = 0.78; DIR[3].base = 3; DIR[3].throwZ = 1.6;
-DIR[4] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'steady', cam: 'steady', panK: 0.15, zoomMax: 1.3, lastZ: 1.8, panLast: 0.3, throwZ: 0 });
-DIR[5] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'half', cam: 'half', panK: 0.25, zoomMax: 1.3, zHalf: [1.4, 1.2], lastZ: 1.45, throwZ: 1.2, pullAfter: true });
-DIR[6] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'wide-then-close', cam: 'late', panK: 0.3, zoomMax: 1.3, count: 'race', lastZ: 2.0, late: [1.7, 1.85, 2.0], droneFrom: 4, throwZ: 0 });
+DIR[4] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'steady', cam: 'steady', panK: 0.06, zoomMax: 1.3, lastZ: 1.8, panLast: 0.1, throwZ: 0 });
+DIR[5] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'half', cam: 'half', panK: 0.08, zoomMax: 1.3, zHalf: [1.4, 1.2], lastZ: 1.45, throwZ: 1.2, pullAfter: true });
+DIR[6] = Object.assign({}, DIR[3], NEWPACE, JOLT, { name: 'wide-then-close', cam: 'late', panK: 0.08, zoomMax: 1.3, count: 'race', lastZ: 2.0, late: [1.7, 1.85, 2.0], droneFrom: 4, throwZ: 0 });
 const WORDS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [54, 64, 76, 130];
 
 let mode = 0;
@@ -175,7 +175,8 @@ function onReact(o, nm, prev, L, morph) {
   if (!o.casc) { morph.feelEase = true; return; }
   const n = g.casc || 1, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(n, last), d = S.d;
   const kindNow = o.kind || o.kindName || o.id, change = !!S.prevKind && S.prevKind !== kindNow && !last; S.prevKind = kindNow;
-  S.steps = n; S.cur = { n, last, ph, t0: now(), kind: kindNow, change }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
+  const fm = last ? KIND_FEEL.ring : KIND_FEEL[famOf(kindNow)]; ph.wind *= fm.w; ph.swing *= fm.s; ph.hold = Math.max(16, ph.hold * fm.h);
+  S.steps = n; S.cur = { n, last, ph, t0: now(), kind: kindNow, change, fm }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
   // the two atoms that join, on the new drawing
   const ids = o.atoms || [], mp = o.map || new Map(), A = mp.get(ids[0]), B = mp.get(ids[3] || ids[ids.length - 1]);
   S.cur.a = A && nm.balls.has(A) ? A : null; S.cur.b = B && nm.balls.has(B) ? B : null;
@@ -186,14 +187,14 @@ function onReact(o, nm, prev, L, morph) {
   S.cur.W = W; S.cur.back = back;
   const held = last ? (d.finale === 'breath' ? breathMs() : d.fullDraw || 0) : (change ? 150 : 0);
   morph.slow = true; morph.s0 = 0; morph.ms = ph.wind + held + ph.swing;
-  const wf = ph.wind / morph.ms, bf = (ph.wind + held) / morph.ms, pw = d.swingPow;
+  const wf = ph.wind / morph.ms, bf = (ph.wind + held) / morph.ms, pw = last ? d.swingPow : (S.cur.fm ? S.cur.fm.pow : d.swingPow);
   morph.fk = K => { if (K < wf) return -back * E.outSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
   if (morph.bend) morph.fk0 = morph.fk;
   // the camera
   const jp = S.cur.a ? worldOf(nm, S.cur.a) : null, Np = S.plan.N || n, c = S.cur;
   S.cam.panK = d.panK != null ? d.panK : 0.75;
   if (d.cam === 'dive') { const late = Np >= 6 && n >= Np - 2, z = late ? 1.7 + 0.15 * (n - Np + 2) : n >= 9 ? 1.15 : clamp(2.4 - (2.4 - 1.15) * (n - 1) / 7, 1.15, 2.4); camTo(jp, last ? 2.0 : z, Math.max(120, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
-  else if (d.cam === 'steady') { if (last) { S.cam.panK = d.panLast; camTo(jp, d.lastZ, Math.max(200, ph.wind)); } else { S.cam.panK = c.change ? 0.3 : d.panK; camTo(jp, 1, Math.max(200, ph.wind + ph.swing)); } if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
+  else if (d.cam === 'steady') { if (last) { S.cam.panK = d.panLast; camTo(jp, d.lastZ, Math.max(200, ph.wind)); } else { S.cam.panK = c.change ? 0.1 : d.panK; camTo(jp, 1, Math.max(200, ph.wind + ph.swing)); } if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
   else if (d.cam === 'half') { const z = last ? d.lastZ : d.zHalf[0] + (d.zHalf[1] - d.zHalf[0]) * clamp((n - 1) / Math.max(1, Np - 1), 0, 1) + (c.change ? 0.05 : 0); camTo(jp, z, Math.max(150, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
   else if (d.cam === 'late') { const k3 = Np - n; if (k3 <= 2 && Np >= 4) { camTo(jp, d.late[2 - k3], Math.max(150, ph.wind)); snd('swish', Math.max(0.12, ph.wind / 1000)); } else camTo(null, 1, Math.max(250, ph.wind)); }
   if (last && d.finale === 'breath') { S.breath = { t0: now() + ph.wind, ms: breathMs() }; S.count.frozen = true; }
@@ -205,6 +206,9 @@ function onReact(o, nm, prev, L, morph) {
   if (n >= d.droneFrom && !last) { const lvl = clamp((n - d.droneFrom) / 8, 0, 1); snd('drone', lvl, Math.floor((n - d.droneFrom) / (mode === 2 ? 2 : 3)), Math.max(0.15, (ph.T || 300) / 1000 + 0.05), d.droneLow ? 1 : 0); }
   if (mode === 2 && n >= 8 && !last) snd('draw', n, ph.wind / 1000);
 }
+// each kind of reflex has its own motion: how long it winds up, how it swings, how long it is held at contact and how far it carries past
+const famOf = k => { k = k || ''; return /lactol|aldol|ring|ether|close/.test(k) ? 'ring' : /enone|dry|open/.test(k) ? 'dry' : /weld|knit|seal/.test(k) ? 'weld' : /taut|shift/.test(k) ? 'shift' : /tuck|cap/.test(k) ? 'tuck' : /flip|fold/.test(k) ? 'flip' : /snap/.test(k) ? 'snap' : 'ring'; };
+const KIND_FEEL = { ring: { w: 1, s: 1, h: 1, pow: 3, ov: 1 }, dry: { w: 0.8, s: 0.7, h: 0.8, pow: 4, ov: 0.7 }, weld: { w: 1.35, s: 1.0, h: 1.8, pow: 2.5, ov: 0.5 }, shift: { w: 0.9, s: 1.7, h: 0.2, pow: 1.5, ov: 0.2 }, tuck: { w: 1.25, s: 1.3, h: 0.8, pow: 2, ov: 1.6 }, flip: { w: 1, s: 0.8, h: 1.2, pow: 3, ov: 2.2 }, snap: { w: 0.55, s: 0.5, h: 0.4, pow: 6, ov: 0.8 } };
 function align(nm, from) {
   let n = 0, px = 0, pz = 0, qx = 0, qz = 0; const pr = []; from.forEach((q, a) => { const p = nm.at.get(a); if (!p || a.el === 'H') return; pr.push([p, q]); px += p.x; pz += p.z; qx += q.x; qz += q.z; n++; });
   if (n < 3) return; px /= n; pz /= n; qx /= n; qz /= n; let sn = 0, cs = 0; pr.forEach(([p, q]) => { const ax = p.x - px, az = p.z - pz, bx = q.x - qx, bz = q.z - qz; sn += ax * bz - az * bx; cs += ax * bx + az * bz; });
@@ -233,11 +237,13 @@ function hit(morph, t) {
   (S.marks || (S.marks = [])).push({ t, kind: c.kind, a: c.ja || c.a, b: c.jb || c.b, n, m: nm }); F.log.push(['hit', n, Math.round(t - S.t0)]);
   // what moved, and how far: the overshoot carries on past the end along the same path and rings down
   const vecs = new Map(); morph.from.forEach((p, a) => { const q = nm.at.get(a); if (q) { const dv = q.clone().sub(p); if (dv.length() > 0.02) vecs.set(a, dv); } });
-  S.settle = { m: nm, vecs, t0: t + c.ph.hold, hold: c.ph.hold, ov: d.ov * (c.last ? 1.6 : 1), hz: d.settleHz, z: d.settleZ, a: c.a, b: c.b, ms: 700 };
+  S.settle = { m: nm, vecs, t0: t + c.ph.hold, hold: c.ph.hold, ov: d.ov * (c.last ? 1.6 : (c.fm ? c.fm.ov : 1)), hz: d.settleHz, z: d.settleZ, a: c.a, b: c.b, ms: 700 };
   // the rest of the molecule is knocked the other way and turns, as one piece
   let dir = { x: 0, z: 1 }; if (c.b && vecs.get(c.b)) { const v = vecs.get(c.b); const l = Math.hypot(v.x, v.z) || 1; dir = { x: v.x / l, z: v.z / l }; }
   const wsc = (api.center().group.scale.x || 1), W = c.W * wsc, rec = d.recoil(n) * W * (c.last ? 2.6 : 1);
   S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: (n % 2 ? 1 : -1) * d.yaw * (0.5 + 0.5 * Math.min(1, n / 8)) * (c.last ? 2.2 : 1), hz: d.recHz, z0: d.recZ });
+  // late in the run (madness) every hit shakes the page a little more and throws a few drops of ink
+  { const mm = api.st.madness || 0; if (mm > 0.4) { addShake(0.3 * mm); try { const mol = api.center(), A = c.ja || c.a; if (A && mol && mol.balls.has(A)) { const q = inkOf(worldOf(mol, A)), arr = api.st.splats || (api.st.splats = []); for (let j = 0; j < Math.round(3 + mm * 6); j++) { const ang = Math.random() * 6.28, dd = (30 + Math.random() * 110) * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * 6 * mm, a: 0.35 + Math.random() * 0.3 }); } if (arr.length > 120) arr.splice(0, arr.length - 120); } } catch (e) { /* no splatter */ } } }
   // the page
   if (n > 2 || c.last) addShake(0.25 + 0.03 * n + (c.last ? 0.4 : 0));
   const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 2.2 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
@@ -349,10 +355,10 @@ function frame(t, dt) {
   // the molecule: framed large in the free part of the page for the action, knocked and turned as one piece
   // two free boxes: the whole width above the left column, or the part right of it reaching lower; the one that frames it larger
   const sc0 = c.group.scale.x, gp = c.group.position.clone(), wb = molWorldBox(c), lw = wb.w + 2.4, ld = wb.d + 2.4, zmax = d.zoomMax * (mode === 2 ? 1 + Math.min(0.25, 0.022 * (S.steps || 0)) : 1);
-  const LK = api.LOOKAT, CB = { x0: LK.x - 22, x1: LK.x + 22, z0: LK.z - 8.5, z1: LK.z + 8.5 }, fitIn = B => Math.min((B.x1 - B.x0) / lw, (B.z1 - B.z0) / ld, zmax), zW = fitIn(CB), zR = zW, BOX = CB;
+  const LK = api.LOOKAT, CB = { x0: LK.x - 22, x1: LK.x + 22, z0: LK.z - 7.5, z1: LK.z + 7.5 }, fitIn = B => Math.min((B.x1 - B.x0) / lw, (B.z1 - B.z0) / ld, zmax), zW = fitIn(CB), zR = zW, BOX = CB;
   const zA = clamp(Math.max(zW, zR), 0.7, 2.4);
   S.zA += (zA - S.zA) * Math.min(1, dt / 0.18); if (S.zA > zA) S.zA = zA;
-  const kIn = E.inOutCubic(clamp((t - S.t0) / 450, 0, 1)), kOut = S.restT && !d.fitM ? E.inOutSine(clamp((t - S.restT) / 600, 0, 1)) : 0, fk = kIn * (1 - kOut); S.fk = fk;
+  const kIn = E.inOutCubic(clamp((t - S.t0) / 260, 0, 1)), kOut = S.restT && !d.fitM ? E.inOutSine(clamp((t - S.restT) / 600, 0, 1)) : 0, fk = kIn * (1 - kOut); S.fk = fk;
   const Z = 1 + (S.zA - 1) * fk, s1 = sc0 * Z, tcx = wb.cx + ((BOX.x0 + BOX.x1) / 2 - wb.cx) * fk, tcz = wb.cz + ((BOX.z0 + BOX.z1) / 2 - wb.cz) * fk;
   const px0 = tcx - Z * (wb.cx - gp.x), pz0 = tcz - Z * (wb.cz - gp.z); S.zoom = Z;
   c.group.scale.setScalar(s1);
@@ -381,13 +387,14 @@ function frame(t, dt) {
   const setCam = () => { const off = CAM.clone().sub(LOOK).multiplyScalar(dist); cam.position.set(look.x + off.x + ox, look.y + off.y, look.z + off.z + oz); cam.lookAt(look.x + ox, look.y, look.z + oz); cam.updateMatrixWorld(true); };
   setCam();
   // the frame never cuts the molecule: its box is fitted to the screen with a margin, by moving the look point and, if it still does not fit, backing off
-  if (d.fitM && S.fk > 0.05) { const M = d.fitM, My = d.fitM - 0.03, v = _v();
-    let ok = false; for (let it = 0; it < 8; it++) { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; bb.mesh.getWorldPosition(v); const q = v.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); });
-      const w = x1 - x0, h = y1 - y0; if (w > 2 * M || h > 2 * My) { dist = Math.min(1, dist * Math.max(w / (2 * M), h / (2 * My)) * 1.02); setCam(); if (dist >= 1) break; continue; }
-      let dx = 0, dy = 0; if (x1 > M) dx = x1 - M; else if (x0 < -M) dx = x0 + M; if (y1 > My) dy = y1 - My; else if (y0 < -My) dy = y0 + My; if (!dx && !dy) { ok = true; break; }
+  if (d.fitM && S.fk > 0.05) { const M = d.fitM, My = 0.5, v = _v(); let ok = false;
+    const box = () => { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; bb.mesh.getWorldPosition(v); const q = v.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }); return [x0, x1, y0, y1]; };
+    for (let it = 0; it < 8; it++) { const [x0, x1, y0, y1] = box(), w = x1 - x0, h = y1 - y0;
+      if (w > 2 * M || h > 2 * My) { dist = Math.min(1, dist * Math.max(w / (2 * M), h / (2 * My)) * 1.02); setCam(); if (dist >= 1) { ok = true; } continue; }
+      const dx = (x0 + x1) / 2, dy = (y0 + y1) / 2; if (Math.abs(dx) < 0.015 && Math.abs(dy) < 0.015) { ok = true; break; }
       const p0 = new T.Vector3(look.x, 0, look.z).project(cam), px1 = new T.Vector3(look.x + 1, 0, look.z).project(cam), pz1 = new T.Vector3(look.x, 0, look.z + 1).project(cam), ax = px1.x - p0.x || 1e-3, az = pz1.y - p0.y || 1e-3;
-      look.x += dx / ax; look.z += dy / az; { const Zc = Math.max(1, 1 / dist); look.x = clamp(look.x, -20 + 20 / Zc, 20 - 20 / Zc); look.z = clamp(look.z, -13 + 13 / Zc, 11 - 11 / Zc); } if (it >= 2) dist = Math.min(1, dist * 1.05); setCam(); }
-    if (!ok) { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; bb.mesh.getWorldPosition(v); const q = v.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }); if (x1 > M + 0.02 || x0 < -M - 0.02 || y1 > My + 0.02 || y0 < -My - 0.02) { dist = 1; look.copy(LOOK); setCam(); } } }
+      look.x += dx / ax; look.z += dy / az; { const Zc = Math.max(1, 1 / dist); look.x = clamp(look.x, -20 + 20 / Zc, 20 - 20 / Zc); look.z = clamp(look.z, -13 + 13 / Zc, 11 - 11 / Zc); } setCam(); }
+    if (!ok) { const [x0, x1, y0, y1] = box(); if (x1 > M + 0.02 || x0 < -M - 0.02 || y1 > My + 0.02 || y0 < -My - 0.02) { dist = 1; look.copy(LOOK); setCam(); } } }
   // the yield flags on the track: the pole jolts back and rings when its flag fills
   (S.poles || []).forEach(p => { const fl = st.flags3 && st.flags3[p.k]; if (!fl || !fl.on) return; const s = (t - p.t) / 1000, lean = (mode === 1 ? 0.105 : 0.06) * ring(s, mode === 1 ? 2.5 : 3.3, 0.25) * (s < 1.5 ? 1 : 0); fl.on.rotation.z = lean; });
   if (AA.rxFeel.probe) { const pj = v => { const p = v.clone().project(cam); return [Math.round((p.x + 1) * 640), Math.round((1 - p.y) * 360)]; }, cu = S.cur, wbx = molWorldBox(c), mc = new T.Vector3(wbx.cx, 0.6, wbx.cz);
@@ -442,7 +449,7 @@ function ink(x, t) {
     const top3 = ws.filter(w => w.k < 3), tk = top3[top3.length - 1];
     ws.forEach(w => { const u = clamp((t - w.t) / (w.k === 3 ? 140 : 150), 0, 1);
       if (w.k === 3) { // OVERREACT takes the whole screen: the paper washed over, the word as wide as the frame, written once
-        const TL = inkAtScreen(0, 0), BR = inkAtScreen(1280, 720), cx = (TL[0] + BR[0]) / 2, cy = (TL[1] + BR[1]) / 2, sw = (BR[0] - TL[0]), age = t - w.t, wash = clamp(age / 220, 0, 1) * 0.62;
+        const TL = inkAtScreen(0, 0), BR = inkAtScreen(1280, 720), ML = inkAtScreen(0, 360), MR = inkAtScreen(1280, 360), cx = (ML[0] + MR[0]) / 2, cy = (TL[1] + BR[1]) / 2, sw = (MR[0] - ML[0]), age = t - w.t, wash = clamp(age / 220, 0, 1) * 0.62;
         x.save(); x.globalAlpha = wash; x.fillStyle = '#f6f5f0'; x.fillRect(TL[0] - 40, TL[1] - 40, sw + 80, BR[1] - TL[1] + 80); x.restore();
         let sz = 400 * ips, tw = AA.rxPen.measure(WORDS[3], sz, 'heavy').width; sz *= (sw * 0.8) / Math.max(1, tw); const kk = age < 120 ? 1 + 0.06 * (1 - age / 120) : 1;
         AA.rxPen.write(x, WORDS[3], cx, cy + sz * 0.2, sz * kk, { weight: 'heavy', color: api.REDINK, align: 'center', t: clamp(age / 260, 0, 1), extra: 3 }); return; }

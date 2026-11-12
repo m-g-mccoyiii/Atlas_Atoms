@@ -8,6 +8,7 @@ const AA = root.AA, T = root.THREE, RX = AA.rx, E = AA.ELEMENTS, P = AA.rxPath, 
 const lin = h => new T.Color(h).convertSRGBToLinear();
 const rgb = c => 'rgb(' + c.join(',') + ')';
 const bright = c => { const m = Math.max(c[0], c[1], c[2], 1), k = Math.max(1, 190 / m); return c.map(q => Math.min(255, Math.round(q * k + 20))); };
+const sfxN = (n, ...a) => { try { if (AA.sfx && AA.sfx[n]) AA.sfx[n](...a); } catch (e) { /* sound never breaks play */ } };
 const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return ((x >>> 0) % 1000) / 1000; };
 const fmt = n => Math.round(n).toLocaleString('en-US');
   const fmtK = n => { const t = v => String(Math.round(v * 10) / 10).replace(/\.0$/, ''); return n >= 1e9 ? t(n / 1e9) + 'B' : n >= 1e6 ? t(n / 1e6) + 'M' : n >= 1e5 ? t(n / 1e3) + 'K' : fmt(n); };
@@ -23,7 +24,7 @@ const PAPERS = {
   4: { name: 'slate', ink: '#f3eee2', pencil: '#cfc8b8', faint: 'rgba(235,228,212,0.35)', red: '#f08c78', green: '#8fd6a0', sh: '0,0,0', sha: 0.5, bg: '#26211d', veil: ['rgba(255,225,180,0.05)', 'rgba(0,0,0,0.18)'] },
   6: { name: 'lab ruled', ink: '#22252c', pencil: '#4b5160', faint: 'rgba(70,80,100,0.34)', red: '#c0392b', green: '#1f7a4c', sh: '55,60,75', sha: 0.2, bg: '#d8d6cf', veil: ['rgba(255,255,255,0.05)', 'rgba(40,45,70,0.06)'], base: '#f4f3ee' },
   7: { name: 'lab graph', ink: '#22252c', pencil: '#4b5160', faint: 'rgba(70,80,100,0.34)', red: '#c0392b', green: '#1f7a4c', sh: '55,60,75', sha: 0.2, bg: '#d8d6cf', veil: ['rgba(255,255,255,0.05)', 'rgba(40,45,70,0.06)'], base: '#f3f4f1' },
-  8: { name: 'lab aged', ink: '#22252c', pencil: '#4b5160', faint: 'rgba(70,80,100,0.34)', red: '#b83a2c', green: '#1f7a4c', sh: '60,58,64', sha: 0.22, bg: '#cfccc4', veil: ['rgba(255,255,255,0.04)', 'rgba(50,45,50,0.08)'], base: '#ecebe6' },
+  8: { name: 'lab aged', ink: '#22252c', pencil: '#4b5160', faint: 'rgba(70,80,100,0.34)', red: '#b83a2c', green: '#1f7a4c', sh: '60,58,64', sha: 0.22, bg: '#cfccc4', veil: ['rgba(255,255,255,0.04)', 'rgba(50,45,50,0.08)'], base: '#e5e5e2' },
   5: { name: 'kraft', ink: '#2a1e12', pencil: '#4a3a28', faint: 'rgba(60,40,20,0.35)', red: '#a8231a', green: '#1d6b3a', sh: '60,35,10', sha: 0.28, bg: '#a98657', veil: ['rgba(255,225,170,0.10)', 'rgba(70,40,10,0.14)'] } };
 let PAPERN = 6; try { const qp = new URLSearchParams(window.location.search).get('paper'); if (qp && PAPERS[+qp]) { PAPERN = +qp; window.localStorage.setItem('aa_paper2', qp); } else { const sv = +window.localStorage.getItem('aa_paper2'); if (PAPERS[sv]) PAPERN = sv; } } catch (e) { /* no storage */ }
 { const P0 = PAPERS[PAPERN]; INK = P0.ink; PENCIL = P0.pencil; FAINT = P0.faint; REDINK = P0.red; GREEN = P0.green; }
@@ -36,23 +37,26 @@ function paperDraw(x, w, h, n, SW0) {
   const specks = (cnt, col, a) => { for (let i = 0; i < cnt; i++) { x.fillStyle = 'rgba(' + col + ',' + (R() * a).toFixed(3) + ')'; x.fillRect(R() * w, R() * h, 1 + R() * 2, 1 + R() * 2); } };
   const edges = (col, a, depth) => { [[0, 0, 0, depth, 1], [0, h, 0, h - depth, 1], [0, 0, depth, 0, 0], [w, 0, w - depth, 0, 0]].forEach(q => { const g = x.createLinearGradient(q[0], q[1], q[2], q[3]); g.addColorStop(0, 'rgba(' + col + ',' + a + ')'); g.addColorStop(1, 'rgba(' + col + ',0)'); x.fillStyle = g; if (q[4]) x.fillRect(0, Math.min(q[1], q[3]), w, depth); else x.fillRect(Math.min(q[0], q[2]), 0, depth, h); }); };
   const lines = (step, col, lw, vert, horz) => { x.strokeStyle = col; x.lineWidth = lw; if (vert) for (let i = 0; i * step <= w; i++) { x.beginPath(); x.moveTo(i * step, 0); x.lineTo(i * step, h); x.stroke(); } if (horz) for (let j = 0; j * step <= h; j++) { x.beginPath(); x.moveTo(0, j * step); x.lineTo(w, j * step); x.stroke(); } };
-  if (n >= 6) { // a lab notebook page: off-white, quiet blue-grey rules or grid, a margin line, a little unevenness, one or two stains placed away from the middle
-    specks(26000, '90,95,110', 0.04); blotch(30, 300, '120,120,130', 0.035); blotch(22, 240, '255,255,255', 0.1); fibers(3500, 18, '255,255,255', 0.12, 1, 0, 6.3); fibers(2200, 30, '110,110,125', 0.05, 1, 0, 6.3);
-    if (n === 7) { lines(u * 0.5, 'rgba(80,115,165,0.15)', 1, true, true); lines(u * 2.5, 'rgba(80,115,165,0.28)', 1.5, true, true); } else lines(u * 1.5, 'rgba(80,115,165,0.3)', 1.5, false, true);
-    x.strokeStyle = n === 7 ? 'rgba(60,110,190,0.5)' : 'rgba(200,60,50,0.5)'; x.lineWidth = 2.4; x.beginPath(); x.moveTo(u * 4.3, 0); x.lineTo(u * 4.3, h); x.stroke();
-    if (n === 6) { x.beginPath(); x.moveTo(u * 4.55, 0); x.lineTo(u * 4.55, h); x.stroke(); }
-    edges('120,120,130', n === 8 ? 0.16 : 0.1, 140);
-    // the coffee-cup ring, top right: a thin broken ring, darker on one side, with a faint wash inside
-    { const cx = w * 0.9, cy = h * 0.17, r = u * 4.2; const g = x.createRadialGradient(cx, cy, r * 0.2, cx, cy, r); g.addColorStop(0, 'rgba(140,105,70,0.05)'); g.addColorStop(1, 'rgba(140,105,70,0.09)'); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill();
-      for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,90,55,' + (0.16 - k * 0.04).toFixed(2) + ')'; x.lineWidth = 7 - k * 2; x.beginPath(); x.arc(cx + R() * 4, cy + R() * 4, r * (1 + k * 0.012), 0.3 + k * 0.5, 5.6 + k * 0.3); x.stroke(); }
-      x.strokeStyle = 'rgba(105,72,42,0.2)'; x.lineWidth = 9; x.beginPath(); x.arc(cx, cy, r * 1.005, 2.2, 3.6); x.stroke(); }
-    // a faded reagent drip, lower right: a thin run with a round drop and a few droplets
-    { const cx = w * 0.955, cy = h * 0.66; x.fillStyle = 'rgba(70,110,140,0.12)'; x.beginPath(); x.moveTo(cx - 7, cy - 140); x.lineTo(cx + 7, cy - 140); x.lineTo(cx + 5, cy); x.lineTo(cx - 5, cy); x.closePath(); x.fill(); x.beginPath(); x.ellipse(cx, cy + 6, 17, 21, 0, 0, 6.3); x.fill(); x.fillStyle = 'rgba(70,110,140,0.09)'; [[26, -30, 5], [-30, -80, 4], [34, 38, 6]].forEach(q => { x.beginPath(); x.arc(cx + q[0], cy + q[1], q[2], 0, 6.3); x.fill(); }); }
-    if (n === 8) {
-      // three punched holes down the left, a piece of tape across the top-left corner
-      [0.27, 0.5, 0.73].forEach(f => { const cx = 98, cy = h * f; x.fillStyle = 'rgba(0,0,0,0.12)'; x.beginPath(); x.arc(cx + 2, cy + 3, 30, 0, 6.3); x.fill(); x.fillStyle = P0.bg; x.beginPath(); x.arc(cx, cy, 27, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(0,0,0,0.18)'; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, 27, 0.6, 3.6); x.stroke(); });
-      x.save(); x.translate(w - 150, 190); x.rotate(0.62); x.fillStyle = 'rgba(0,0,0,0.1)'; x.fillRect(-150, -30, 320, 74); x.fillStyle = 'rgba(232,226,200,0.78)'; x.fillRect(-150, -36, 320, 72); x.strokeStyle = 'rgba(150,140,110,0.4)'; x.lineWidth = 2; x.strokeRect(-150, -36, 320, 72); for (let k = 0; k < 7; k++) { x.beginPath(); x.moveTo(-150, -36 + k * 12 + R() * 4); x.lineTo(-142, -34 + k * 12); x.moveTo(170, -36 + k * 12); x.lineTo(162, -34 + k * 12 + R() * 4); x.stroke(); } x.restore();
-    }
+  if (n >= 6) { // a lab notebook page, three ways: 6 ruled with punched holes and a coffee ring; 7 graph paper in a spiral binding with a chemical splash; 8 aged, taped, scorched
+    specks(24000, '90,95,110', 0.04); blotch(26, 300, '120,120,130', 0.03); blotch(20, 240, '255,255,255', 0.1); fibers(3000, 18, '255,255,255', 0.12, 1, 0, 6.3); fibers(1800, 30, '110,110,125', 0.05, 1, 0, 6.3);
+    const pen = (t, px0, py0, sz, col) => { try { AA.rxPen.write(x, t, px0, py0, sz, { weight: 'thin', color: col || 'rgba(70,80,105,0.6)', align: 'left' }); } catch (e) { /* no pen yet */ } };
+    if (n === 7) { lines(22, 'rgba(100,140,200,0.3)', 1, true, true); lines(110, 'rgba(95,135,200,0.55)', 1.7, true, true); }
+    else { const st = n === 8 ? 40 : 44; x.strokeStyle = n === 8 ? 'rgba(115,145,190,0.5)' : 'rgba(105,145,205,0.58)'; x.lineWidth = 1.8; for (let yy = 196; yy < h; yy += st) { x.beginPath(); x.moveTo(0, yy); x.lineTo(w, yy); x.stroke(); } }
+    // the red margin line down one side
+    x.strokeStyle = 'rgba(205,60,52,0.72)'; x.lineWidth = 2.6; x.beginPath(); x.moveTo(n === 7 ? 340 : 360, 0); x.lineTo(n === 7 ? 340 : 360, h); x.stroke(); if (n === 6) { x.beginPath(); x.moveTo(372, 0); x.lineTo(372, h); x.stroke(); }
+    // the printed header strip along the top: experiment, date, page
+    x.strokeStyle = 'rgba(70,80,105,0.5)'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(0, 176); x.lineTo(w, 176); x.stroke();
+    if (n === 7) { [[480, 760, 'Expt.'], [800, 1160, 'Date'], [1200, 1520, 'Page 47']].forEach(q => { x.strokeStyle = 'rgba(70,80,105,0.5)'; x.lineWidth = 1.8; x.strokeRect(q[0], 112, q[1] - q[0], 56); pen(q[2], q[0] + 12, 154, 30); }); }
+    else { pen('Expt. no.', 520, 158, 32); x.strokeStyle = 'rgba(70,80,105,0.4)'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(690, 160); x.lineTo(860, 160); x.stroke(); pen('Date', 930, 158, 32); x.beginPath(); x.moveTo(1010, 160); x.lineTo(1210, 160); x.stroke(); pen('Page 47', n === 8 ? 1450 : 1330, 158, 32); }
+    // the binding: punched holes, or a spiral
+    if (n === 7) { for (let yy = 200; yy < h * 0.78; yy += 54) { x.fillStyle = 'rgba(60,62,72,0.55)'; x.beginPath(); x.arc(272, yy, 11, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(95,100,115,0.85)'; x.lineWidth = 6; x.beginPath(); x.ellipse(250, yy - 4, 38, 11, -0.15, 0, 6.3); x.stroke(); } }
+    else { [0.22, 0.42, 0.62].forEach(f => { const cx = 262, cy = h * f; x.fillStyle = 'rgba(0,0,0,0.14)'; x.beginPath(); x.arc(cx + 2, cy + 3, 32, 0, 6.3); x.fill(); x.fillStyle = P0.bg; x.beginPath(); x.arc(cx, cy, 29, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(0,0,0,0.22)'; x.lineWidth = 3.5; x.beginPath(); x.arc(cx, cy, 29, 0.6, 3.6); x.stroke(); }); }
+    // stains, whole and inside the page, under the ink
+    const ring = (cx, cy, r, a1) => { x.fillStyle = 'rgba(150,105,60,' + (a1 * 0.3).toFixed(3) + ')'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (a1 * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = 11 - k * 3; x.beginPath(); x.arc(cx + R() * 5, cy + R() * 5, r * (1 + k * 0.012), 0.1 + k * 0.5, 5.9 + k * 0.2); x.stroke(); } x.strokeStyle = 'rgba(95,65,35,' + (a1 * 0.9).toFixed(3) + ')'; x.lineWidth = 13; x.beginPath(); x.arc(cx, cy, r * 1.01, 2.4, 3.7); x.stroke(); };
+    if (n === 6) { ring(1560, 1030, 90, 0.34); ring(1660, 1075, 64, 0.22); }
+    else if (n === 7) { const cx = 1480, cy = 340; x.fillStyle = 'rgba(60,140,160,0.2)'; x.beginPath(); x.ellipse(cx, cy, 46, 38, 0.4, 0, 6.3); x.fill(); for (let k = 0; k < 16; k++) { const a = k * 0.39 + R() * 0.3, d = 62 + R() * 70, rr = 3 + R() * 9; x.fillStyle = 'rgba(60,140,160,' + (0.14 + R() * 0.12).toFixed(2) + ')'; x.beginPath(); x.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, rr, 0, 6.3); x.fill(); x.beginPath(); x.moveTo(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40); x.lineTo(cx + Math.cos(a) * (d - rr), cy + Math.sin(a) * (d - rr)); x.strokeStyle = 'rgba(60,140,160,0.12)'; x.lineWidth = 2.5; x.stroke(); } ring(380, 1110, 56, 0.28); }
+    else { const cx = 1640, cy = 1090, g = x.createRadialGradient(cx, cy, 10, cx, cy, 120); g.addColorStop(0, 'rgba(70,40,15,0.42)'); g.addColorStop(0.45, 'rgba(140,90,40,0.26)'); g.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 130, 100, 0.3, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(60,35,15,0.35)'; x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, 70, 52, 0.3, 0.4, 5.6); x.stroke(); ring(1000, 1135, 74, 0.3);
+      x.save(); x.translate(1880, 230); x.rotate(0.62); x.fillStyle = 'rgba(0,0,0,0.1)'; x.fillRect(-150, -26, 320, 70); x.fillStyle = 'rgba(232,226,200,0.82)'; x.fillRect(-150, -34, 320, 68); x.strokeStyle = 'rgba(150,140,110,0.45)'; x.lineWidth = 2; x.strokeRect(-150, -34, 320, 68); x.restore(); edges('120,110,100', 0.18, 140); }
   } else
   if (n === 1) { // aged notebook paper: ruled lines, a faint margin, soft staining at the edges
     specks(40000, '120,100,60', 0.05); blotch(26, 260, '170,125,60', 0.045); lines(u * 1.5, 'rgba(70,120,170,0.2)', 1.4, false, true);
@@ -684,7 +688,7 @@ function start(app) {
   function clearRound() { clearBench(); st.flyers.forEach(f => scene.remove(f.grp)); st.flyers = []; morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
-    st.tok++; st.specMetT = []; st.specWas = []; st.ypass = false; st.mode = 'play'; st.firing = false; st.starting = false; st.rezip = false; st.tool = null; st.toolList = null; st.toolSpot = null; st.view = null; st.paid = ''; st.shown = 0; st.gains = []; st.passT = []; st.pass = false; st.won = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
+    st.tok++; st.splats = []; st.specMetT = []; st.specWas = []; st.ypass = false; st.mode = 'play'; st.firing = false; st.starting = false; st.rezip = false; st.tool = null; st.toolList = null; st.toolSpot = null; st.view = null; st.paid = ''; st.shown = 0; st.gains = []; st.passT = []; st.pass = false; st.won = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
     clearRound(); clearBriefs(); clearPicks();
     st.stains = []; st.homPre = false; st.homWait = false; st.homList = null; st.homSpot = null; st.homHover = false; st.homAct = null; st.homNone = false; st.puddles = []; if ((homObj ? homObj.id : null) !== (run.hom || null)) homStand(); st.gear = run.gear.slice(); st.fired = {}; st.want = 0; st.mult = 1; st.P = 0; st.R = 1; st.E = 1; buildKit();
     g = P.runBegin(run, run.feed, true); st.quota = run.quota; st.E = g.E; st.R = g.R;
@@ -696,7 +700,7 @@ function start(app) {
   // coins on the take-one page: the three dealt again, all three left for a coin, a held piece removed
   const REROLL = { x: -3.4, z: 11.6 }, SKIP = { x: 9, z: 11.6 }, PURSE = { x: -17, z: 12 }, HELD = i => ({ x: 10 + i * 3.3, z: -10.2 });
   function pickMark() { if (!P.RULE.coins || st.mode !== 'pick') return ''; if (hit.x > REROLL.x - 1.6 && hit.x < REROLL.x + 5.4 && Math.abs(hit.z - REROLL.z) < 1.8) return 'reroll'; if (hit.x > SKIP.x - 2.2 && hit.x < SKIP.x + 4.6 && Math.abs(hit.z - SKIP.z) < 1.8) return 'skip'; for (let i = 0; i < run.gear.length; i++) { const q = HELD(i); if (Math.abs(hit.x - q.x) < 1.6 && hit.z > q.z - 3.2 && hit.z < q.z + 1.6) return 'bin' + i; } return ''; }
-  function doReroll() { if (st.mode !== 'pick') return; const n = P.runReroll(run); if (!n) { sfx.bad(); return; } st.drawT = performance.now(); st.coinT = performance.now(); showPicks(n); }
+  function doReroll() { if (st.mode !== 'pick') return; const n = P.runReroll(run); if (!n) { sfx.bad(); return; } st.drawT = performance.now(); st.coinT = performance.now(); sfxN('gold'); showPicks(n); }
   function doSkip() { if (st.mode !== 'pick' || !P.RULE.coins) return; P.runSkip(run); st.coinT = performance.now(); sfx.stamp(); showBriefs(); }
   function doBin(i) { const id = run.gear[i]; if (st.mode !== 'pick' || !id) return; if (!P.runBin(run, id)) { sfx.bad(); return; } st.coinT = performance.now(); sfx.stamp(); st.shake = 0.5; showPicks(picks); }
   function showPicks(list) {
@@ -711,7 +715,7 @@ function start(app) {
   }
   function takePick(i) {
     const o = picks[i]; if (st.mode !== 'pick' || !o) return;
-    P.runTake(run, o); sfx.stamp(); st.shake = 0.6; showBriefs();
+    sfxN('pick'); P.runTake(run, o); sfx.stamp(); st.shake = 0.6; showBriefs();
   }
   // before each round: three rounds stand on the page, each a molecule with what the round asks and what it pays
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; }
@@ -721,7 +725,7 @@ function start(app) {
   const PAIR = { x: -1.6, z: 11.6 };
   const pairOn = () => P.RULE.choose && P.RULE.coins && st.mode === 'brief' && briefs.length === 2 && !!meta.coined;
   const pairAt = () => pairOn() && hit.x > PAIR.x - 1.8 && hit.x < PAIR.x + 6.2 && Math.abs(hit.z - PAIR.z) < 1.8;
-  function doPair() { if (!pairOn()) return; const n = P.runRedraw(run); if (!n) { sfx.bad(); return; } st.drawT = performance.now(); st.coinT = performance.now(); showBriefs(n); }
+  function doPair() { if (!pairOn()) return; const n = P.runRedraw(run); if (!n) { sfxN('cantBuy'); sfx.bad(); return; } sfxN('redraw'); st.drawT = performance.now(); st.coinT = performance.now(); showBriefs(n); }
   function showBriefs(list) {
     st.noteTick = (st.noteTick | 0) + 1;
     st.tok++; st.mode = 'brief'; clearRound(); clearKit(); clearBriefs(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; st.mark = '';
@@ -733,7 +737,7 @@ function start(app) {
   }
   function chooseBrief(i) {
     const b = briefs[i]; if (st.mode !== 'brief' || !b) return;
-    P.runChoose(run, b); sfx.stamp(); st.shake = 0.6; load();
+    if ((run.round || 1) === 1) sfxN('runStart'); sfxN('ambience', 'round'); P.runChoose(run, b); sfx.stamp(); st.shake = 0.6; load();
   }
   // what a run can turn up beyond the suppliers: families that have been opened and reactions that have been found
   const extraR = () => P.FAMILIES.filter(f => meta.fam[f.id]).reduce((a, f) => a.concat(f.reagents), []).concat(Object.keys(meta.found).filter(k => meta.found[k]));
@@ -745,7 +749,7 @@ function start(app) {
   const shopMax = () => (meta.stage >= 3 ? P.SUPPLY.length - 1 : 3);
   const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
   // ?seed=N plays the run whose draws all come from N. Without it the draws are the system's, as before.
-  function newRun() { st.noteRun = null; try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR(), { tierNo: Math.max(1, Math.min(3, meta.reach || 1)) }); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && meta.stage >= 2 && JARK.some(jarSeen) && !run.noHom && !P.bareRun(run)) showHoms(); else runOpen(); }
+  function newRun() { sfxN('title'); sfxN('ambience', 'title'); st.noteRun = null; try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR(), { tierNo: Math.max(1, Math.min(3, meta.reach || 1)) }); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && meta.stage >= 2 && JARK.some(jarSeen) && !run.noHom && !P.bareRun(run)) showHoms(); else runOpen(); }
   function runOpen() { if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // Before a run, once a homunculus has hatched: those that have stand on the page with an empty jar, and one is
   // taken into the run, or none
@@ -815,10 +819,11 @@ function start(app) {
     bench.rx = knownR().slice(0, nx || famNext() >= 0 ? 9 : 10);
   }
   const benchGhostAt = () => { const G = bench && bench.gear; return G && G.ghost ? { x: BENCH.gear.x + G.K * G.ghost.lx, z: BENCH.gear.z, K: G.K } : null; };
-  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -2; benchBuild(); sfx.feed(); dirty = true; }
-  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name, '', '#8a6a00'); benchBuild(); dirty = true; }
+  function showSuppliers() { sfxN('shopOpen'); sfxN('ambience', 'bench'); st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -2; benchBuild(); sfx.feed(); dirty = true; }
+  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfxN('cantBuy'); sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfxN('buy'); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name, '', '#8a6a00'); benchBuild(); dirty = true; }
   // Pointing at a reaction works out what it would do, so the page can show it before the click
   function setHover(i) {
+    if (i >= 0 && i !== st.hover && st.mode === 'play') sfxN('hover');
     st.hover = i; st.peek = null; st.willFire = null;
     const s = st.mode === 'play' && g && slots[i], o = s && s.o;
     // nothing here shows what a reagent will do (no preview): the pointer only lifts the reagent
@@ -855,15 +860,15 @@ function start(app) {
   }
   function endRound() {
     // what the round gave off goes into the jars for good, win or lose; a jar that is now full hatches
-    { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + (b[k] || 0)); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; JARK.forEach(k => { g.by[k] = 0; }); st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
+    { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + (b[k] || 0)); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; sfxN('creature'); st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; JARK.forEach(k => { g.by[k] = 0; }); st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
     st.homWait = false; st.homList = null;
     st.mode = 'done'; st.call = null; if (P.RULE.bare || !st.gear.length) { st.lx = 0; C0.x = 0; C0.z = 1.2; LANE.w = 41; LANE.d = 10; if (center) SC_MAIN = fitMain(center); } clearKit(); { const re = P.roundEnd(g, run); st.res = re; st.pass = !!re.won; st.ypass = !!re.ypass; } st.doneT = performance.now(); st.won = st.pass && run.round >= (P.runLast ? P.runLast(run) : 9); if (st.won) { run.won = true; if ((meta.reach || 1) <= (run.tierNo || 1) && (run.tierNo || 1) < 3) { meta.reach = (run.tierNo || 1) + 1; saveMeta(); } } if (!meta.taught) { meta.taught = true; saveMeta(); }
     if (meta.stage < 2 && run.beaten >= 3) { meta.stage = 2; if (run.term !== 'hoard') run.noGear = false; saveMeta(); }
     else if (meta.stage === 2 && st.pass && run.beaten === 6) { meta.six = (meta.six || 0) + 1; if (meta.six >= 2) meta.stage = 3; saveMeta(); }
-    { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
+    { if (!meta.sig) meta.sig = {}; const got = occultOpen() ? P.deeds(g, run, st.pass).filter(id => !meta.sig[id]) : []; if (got.length) { sfxN('finding'); sfxN('unlock'); got.forEach(id => { meta.sig[id] = true; }); saveMeta(); st.newSig = got[0]; st.newSigT = performance.now(); } else st.newSig = null; }
     st.earn = st.res && st.res.earn && (st.res.earn.marks + st.res.earn.interest + (st.res.earn.extra || 0)) ? st.res.earn : null; if (st.earn && st.earn.marks + st.earn.interest + (st.earn.extra || 0)) st.coinT = performance.now();
-    if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
-    else { if (AA.sfx.lost) AA.sfx.lost(); else sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
+    if (st.pass) { P.runKeep(run, g); st.paid = P.runPay(run); { const extra = (run.gear.includes('goggles') ? 1 : 0) + (run.gear.includes('grant') && g.total >= st.quota * 10 ? 5 : 0); if (extra) { run.bonus = (run.bonus || 0) + extra; st.paid = (st.paid || 0) + extra; } } sfxN(st.won ? 'runWon' : 'roundWon'); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '28,138,74'; }
+    else { sfxN('runLost'); if (AA.sfx.lost) AA.sfx.lost(); else sfx.bad(); st.shake = 0.5; st.flash = 0.8; st.flashC = '200,38,28'; }
     if (run.beaten > best) { best = run.beaten; try { localStorage.setItem('aa_scheme_best', String(best)); } catch (e) { /* storage unavailable */ } }
     refresh();
   }
@@ -1040,7 +1045,7 @@ function start(app) {
   function fragOrChip(c, tok, cx, cy, on) { if (FRAG[tok]) { c.save(); c.translate(cx, cy); c.scale(1.45, 1.45); FRAG[tok](c, 0, 0, on); c.restore(); return; } chip(c, tok, cx, cy, on); }
   const spotOf = pr => (pr && pr.a && pr.b && center ? { x: C0.x + (pr.a.x + pr.b.x) / 2 * center.group.scale.x, z: C0.z + (pr.a.z + pr.b.z) / 2 * center.group.scale.x } : null);
   const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
-  function pick(i) {
+  function pick(i) { sfxN('click');
     const s = slots[i], o = s && s.o;
     if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); st.qT = performance.now(); refresh(); return; }
     if (!o || !prods[i] || st.mode !== 'play') return;
@@ -1091,7 +1096,7 @@ function start(app) {
   }
   function toolHover() { if (!st.tool || !st.toolList || !center) return; const sc = center.group.scale.x; let best = null, bd = 1.6; st.toolList.forEach(q => { const d = q.whole ? (Math.abs(hit.x - C0.x) < 11 && Math.abs(hit.z - C0.z) < 5.5 ? 0 : 9) : Math.hypot(hit.x - (C0.x + q.x * sc), hit.z - (C0.z + q.z * sc)); if (d < bd) { bd = d; best = q; } }); if (best !== st.toolSpot) { st.toolSpot = best; if (best && best.sp.b && best.ghost === undefined) best.ghost = null; dirty = true; } }
   function doTool() {
-    const id = st.tool, it = st.toolSpot; toolOff(); if (!it || !P.toolUse(g, id, it.sp)) { sfx.bad(); return; }
+    sfxN('instrument'); const id = st.tool, it = st.toolSpot; toolOff(); if (!it || !P.toolUse(g, id, it.sp)) { sfx.bad(); return; }
     setHover(-1); pieceActs(id); reopenShow(); sfx.good(); st.shake = Math.max(st.shake, 0.5); const tok = st.tok; st.mode = 'move';
     if (g.toolRun) { g.toolRun = false; st.starting = true; st.firing = true; st.rezip = true; st.acted = false; st.chainN = 0; setTimeout(() => { if (tok === st.tok) fireNext(); }, 420); }
     else setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; refresh(); }, 360);
@@ -1355,43 +1360,66 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // 0 none; 1 sketches only (a flask, an arrow, a crossed-out sum, a ring scribbled over, tally marks); 2 the same and a few short notes.
   // Different on every screen, seeded, none repeated within a run. Only the page's edges: the strip along the top, the bottom right corner, the margin on the left.
   let NOTES = 1; try { const q = new URLSearchParams(root.location.search).get('notes'); if (q !== null && q !== '') { NOTES = Math.max(0, Math.min(2, +q || 0)); root.localStorage.setItem('aa_notes', String(NOTES)); } else { const v = root.localStorage.getItem('aa_notes'); if (v !== null) NOTES = Math.max(0, Math.min(2, +v || 0)); } } catch (e) { /* no storage */ }
-  const NC = 'rgba(62,72,96,0.4)';
+  const NC = 'rgba(38,48,80,0.78)';
+  // doodles, drawn in the page's pen colour, dark enough to read; s is their size in ink pixels
   const MS = {
-    flask: (c, s) => { c.beginPath(); c.moveTo(-0.14 * s, -0.5 * s); c.lineTo(-0.14 * s, -0.15 * s); c.lineTo(-0.45 * s, 0.4 * s); c.lineTo(0.45 * s, 0.4 * s); c.lineTo(0.14 * s, -0.15 * s); c.lineTo(0.14 * s, -0.5 * s); c.moveTo(-0.2 * s, -0.5 * s); c.lineTo(0.2 * s, -0.5 * s); c.moveTo(-0.3 * s, 0.14 * s); c.quadraticCurveTo(0, 0.24 * s, 0.3 * s, 0.14 * s); c.stroke(); },
-    arrow: (c, s) => { c.beginPath(); c.moveTo(-0.6 * s, 0.2 * s); c.quadraticCurveTo(0, -0.5 * s, 0.6 * s, 0.1 * s); c.moveTo(0.46 * s, -0.04 * s); c.lineTo(0.6 * s, 0.1 * s); c.lineTo(0.42 * s, 0.2 * s); c.stroke(); },
-    ring: (c, s) => { c.beginPath(); for (let k = 0; k <= 6; k++) { const a = -1.5708 + k * 1.0472; k ? c.lineTo(0.4 * s * Math.cos(a), 0.4 * s * Math.sin(a)) : c.moveTo(0.4 * s * Math.cos(a), 0.4 * s * Math.sin(a)); } c.moveTo(-0.5 * s, -0.1 * s); for (let k = 0; k < 7; k++) c.lineTo((-0.5 + k * 0.17) * s, (k % 2 ? 0.34 : -0.34) * s); c.stroke(); },
+    flask: (c, s) => { c.beginPath(); c.moveTo(-0.14 * s, -0.5 * s); c.lineTo(-0.14 * s, -0.15 * s); c.lineTo(-0.45 * s, 0.4 * s); c.lineTo(0.45 * s, 0.4 * s); c.lineTo(0.14 * s, -0.15 * s); c.lineTo(0.14 * s, -0.5 * s); c.moveTo(-0.2 * s, -0.5 * s); c.lineTo(0.2 * s, -0.5 * s); c.moveTo(-0.3 * s, 0.14 * s); c.quadraticCurveTo(0, 0.24 * s, 0.3 * s, 0.14 * s); c.stroke(); c.beginPath(); c.arc(0.05 * s, -0.7 * s, 0.06 * s, 0, 6.3); c.arc(-0.1 * s, -0.9 * s, 0.04 * s, 0, 6.3); c.stroke(); },
+    homunculus: (c, s) => { c.beginPath(); c.arc(0, -0.3 * s, 0.22 * s, 0, 6.3); c.moveTo(-0.08 * s, -0.34 * s); c.lineTo(-0.08 * s, -0.3 * s); c.moveTo(0.08 * s, -0.34 * s); c.lineTo(0.08 * s, -0.3 * s); c.moveTo(-0.08 * s, -0.2 * s); c.quadraticCurveTo(0, -0.14 * s, 0.08 * s, -0.2 * s); c.moveTo(0, -0.08 * s); c.lineTo(0, 0.3 * s); c.moveTo(-0.28 * s, 0.05 * s); c.lineTo(0, 0.0); c.lineTo(0.28 * s, -0.1 * s); c.moveTo(0, 0.3 * s); c.lineTo(-0.16 * s, 0.55 * s); c.moveTo(0, 0.3 * s); c.lineTo(0.16 * s, 0.55 * s); c.moveTo(-0.2 * s, -0.5 * s); c.lineTo(-0.1 * s, -0.62 * s); c.lineTo(0, -0.5 * s); c.lineTo(0.1 * s, -0.62 * s); c.lineTo(0.2 * s, -0.5 * s); c.stroke(); },
+    eye: (c, s) => { c.beginPath(); c.moveTo(-0.5 * s, 0); c.quadraticCurveTo(0, -0.5 * s, 0.5 * s, 0); c.quadraticCurveTo(0, 0.5 * s, -0.5 * s, 0); c.moveTo(0.14 * s, 0); c.arc(0, 0, 0.14 * s, 0, 6.3); c.moveTo(-0.4 * s, -0.22 * s); c.lineTo(-0.5 * s, -0.36 * s); c.moveTo(0, -0.34 * s); c.lineTo(0, -0.5 * s); c.moveTo(0.4 * s, -0.22 * s); c.lineTo(0.5 * s, -0.36 * s); c.stroke(); },
+    moon: (c, s) => { c.beginPath(); c.arc(0, 0, 0.4 * s, 0.9, 5.4); c.quadraticCurveTo(0.12 * s, 0, 0.25 * s, 0.31 * s); c.stroke(); },
+    ring: (c, s) => { c.beginPath(); for (let k = 0; k <= 6; k++) { const a = -1.5708 + k * 1.0472; k ? c.lineTo(0.4 * s * Math.cos(a), 0.4 * s * Math.sin(a)) : c.moveTo(0.4 * s * Math.cos(a), 0.4 * s * Math.sin(a)); } c.moveTo(-0.5 * s, -0.1 * s); for (let k = 0; k < 9; k++) c.lineTo((-0.5 + k * 0.125) * s, (k % 2 ? 0.34 : -0.34) * s); c.stroke(); },
     tally: (c, s) => { c.beginPath(); for (let k = 0; k < 4; k++) { c.moveTo((-0.3 + k * 0.2) * s, -0.35 * s); c.lineTo((-0.29 + k * 0.2) * s, 0.35 * s); } c.moveTo(-0.45 * s, 0.2 * s); c.lineTo(0.45 * s, -0.2 * s); c.stroke(); },
-    beaker: (c, s) => { c.beginPath(); c.moveTo(-0.3 * s, -0.4 * s); c.lineTo(-0.3 * s, 0.4 * s); c.lineTo(0.3 * s, 0.4 * s); c.lineTo(0.3 * s, -0.4 * s); for (let k = 0; k < 4; k++) { c.moveTo(0.3 * s, (-0.2 + k * 0.18) * s); c.lineTo(0.12 * s, (-0.2 + k * 0.18) * s); } c.stroke(); },
-    bonds: (c, s) => { const p = [[-0.55, 0.15], [-0.28, -0.15], [0, 0.15], [0.28, -0.15], [0.55, 0.15]]; c.beginPath(); p.forEach((q, i) => (i ? c.lineTo(q[0] * s, q[1] * s) : c.moveTo(q[0] * s, q[1] * s))); c.stroke(); p.forEach(q => { c.beginPath(); c.arc(q[0] * s, q[1] * s, 0.05 * s, 0, 6.3); c.fill(); }); },
-    spiral: (c, s) => { c.beginPath(); for (let k = 0; k < 60; k++) { const a = k * 0.35, r = (0.04 + k * 0.007) * s; k ? c.lineTo(r * Math.cos(a), r * Math.sin(a)) : c.moveTo(r * Math.cos(a), r * Math.sin(a)); } c.stroke(); },
-    sum: (c, s, sz) => { AA.rxPen.write(c, '12 + 7 = 20', -0.55 * s, 0.1 * s, sz, { weight: 'thin', color: NC }); c.beginPath(); c.moveTo(-0.6 * s, 0.14 * s); c.lineTo(0.6 * s, -0.12 * s); c.stroke(); AA.rxPen.write(c, '19', 0.35 * s, 0.42 * s, sz, { weight: 'thin', color: NC }); },
-    under: (c, s, sz) => { AA.rxPen.write(c, '47', -0.1 * s, 0.1 * s, sz * 1.2, { weight: 'thin', color: NC }); [0.2, 0.28, 0.36].forEach((k, i) => { c.beginPath(); c.moveTo(-0.12 * s, k * s + i); c.quadraticCurveTo(0.12 * s, (k + 0.03) * s, 0.2 * s, (k - 0.01) * s); c.stroke(); }); }
+    skull: (c, s) => { c.beginPath(); c.arc(0, -0.1 * s, 0.34 * s, 3.4, 6.0); c.lineTo(0.2 * s, 0.35 * s); c.lineTo(-0.2 * s, 0.35 * s); c.lineTo(-0.34 * s, -0.02 * s); c.moveTo(-0.07 * s, -0.08 * s); c.arc(-0.14 * s, -0.08 * s, 0.07 * s, 0, 6.3); c.moveTo(0.21 * s, -0.08 * s); c.arc(0.14 * s, -0.08 * s, 0.07 * s, 0, 6.3); c.stroke(); },
+    sum: (c, s, sz) => { AA.rxPen.write(c, '12 + 7 = 20', -0.55 * s, 0.1 * s, sz, { weight: 'thin', color: NC }); c.beginPath(); c.moveTo(-0.6 * s, 0.14 * s); c.lineTo(0.7 * s, -0.16 * s); c.stroke(); AA.rxPen.write(c, '= 19?', 0.1 * s, 0.5 * s, sz, { weight: 'thin', color: NC }); },
+    sum2: (c, s, sz) => { AA.rxPen.write(c, '3 x 7 = 22', -0.55 * s, 0.1 * s, sz, { weight: 'thin', color: NC }); c.beginPath(); c.moveTo(-0.55 * s, 0.2 * s); c.lineTo(0.5 * s, 0.2 * s); c.moveTo(-0.55 * s, 0.3 * s); c.lineTo(0.5 * s, 0.3 * s); c.moveTo(-0.55 * s, 0.4 * s); c.lineTo(0.5 * s, 0.4 * s); c.stroke(); }
   };
-  const NOTE_TXT = ['again', 'do not heat', 'it moved', 'still wet', 'wrong flask', 'third time', 'recheck', 'n = 3', '14/3', 'no', 'label?', 'same as before'];
+  const SKETCH = ['flask', 'homunculus', 'eye', 'moon', 'ring', 'tally', 'skull', 'sum', 'sum2'];
+  // THE MADNESS (ruling AM): the page starts as a tidy lab notebook and loses its mind as the run goes deeper (round 1 to 9) and as a chain runs long.
+  // madLevel() is 0..1 from the round and the length of the chain. It drives the margin notes (three tiers), the handwriting (neat, shaky, frantic),
+  // the paper (stains, scorch, blots, a torn corner, tape, ruled lines that wobble), and a little more shake and ink splatter on late hits.
+  // ?notes=0 is off; 1 (and 2) is this progression.
+  const madLevel = () => { const r = Math.max(1, Math.min(9, (run && run.round) || 1)); return Math.max(0, Math.min(1, (r - 1) / 8 * 0.8 + Math.min(1, ((g && g.casc) || 0) / 14) * 0.2)); };
+  const TIER0 = ['Run 3. 40 mg in 5 ml.', 'Temp 22 C.', 'Stirred 10 min.', 'Check the stirrer.', 'Clear solution.', 'Added slowly.', 'Yield noted.', 'Repeat on Monday.', 'Cooled to 5 C.', 'Filtered, washed.', 'Flask 2 of 3.', 'Sample labelled.', 'pH 7.', 'Dried overnight.', 'Colour: pale.', 'Balance zeroed.', 'Reagent from shelf B.', 'See previous page.', 'Glassware clean.', 'Ratio 1 : 2.', 'No change at 5 min.', 'Notebook initialled.'];
+  const TIER1 = ['should be 12?', 'why 12', 'recheck the sum~', 'it was clear before', 'who moved the flask', 'smell is odd', 'three times now', 'is this the right shelf', 'the colour changed. did I?', 'ask Gerald', 'not what I wrote last week', 'yield too high. suspicious.', 'again', 'measure it twice', 'the label has changed', 'it is warm. I did not heat it', 'the page is thinner', 'check the balance (again)', 'I am sure it was 40', 'ring closed? already?', 'I wrote 7. it says 9.', 'stir the other way'];
+  const TIER2 = ['do NOT feed after midnight', 'it winked at me', 'Doug is hungry', 'the homunculus is humming', 'THE RING CLOSED BY ITSELF', 'it knows my name', 'tell the little ones to stop counting', 'I did not order this', 'it said thank you', 'who is counting', 'there are more atoms now', 'the cat has left the lab', 'not water. NOT water.', 'little one, put it back', 'it grew. it GREW.', 'the lid is breathing', 'smell: purple', 'I am fine I am fine I am fine', 'do not look at it directly', 'the fume hood is on fire (small)', 'its name is Doug. Doug is the flask.', 'it is watching the other flask', 'who taught it to nod', 'GOLD-ISH IS NOT GOLD', 'the page turned itself', 'the lead is the cat'];
+  const SKETCH_EARLY = ['flask', 'tally', 'sum'], SKETCH_MID = ['flask', 'tally', 'sum', 'sum2', 'ring', 'moon'], SKETCH_LATE = ['eye', 'homunculus', 'skull', 'ring', 'sum2', 'eye', 'moon', 'homunculus'];
+  // handwriting by madness: neat, then shaky, then frantic (each letter off its line and askew)
+  function scrawl(c, t, x0, y0, sz, m, rnd, col) {
+    if (m < 0.3) { AA.rxPen.write(c, t, x0, y0, sz, { weight: 'thin', color: col, align: 'left' }); return AA.rxPen.measure(t, sz, 'thin').width; }
+    let w = 0; for (let i = 0; i < t.length; i++) { const ch = t[i], pre = AA.rxPen.measure(t.slice(0, i), sz, 'thin').width, jx = (rnd() - 0.5) * m * 7, jy = (rnd() - 0.5) * m * 11, rot = (rnd() - 0.5) * m * 0.6 + m * 0.12; c.save(); c.translate(x0 + pre + jx, y0 + jy); c.rotate(rot); AA.rxPen.write(c, ch, 0, 0, sz * (0.92 + rnd() * 0.2 + m * 0.1), { weight: m > 0.6 ? 'heavy' : 'thin', color: col, align: 'left' }); c.restore(); w = pre; }
+    return w + sz * 0.4;
+  }
+  function buildMargin(m, tick) {
+    let sd = (st.noteRun * 2654435761 + tick * 40503 + 17) >>> 0; const R = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
+    const cv = document.createElement('canvas'); cv.width = IW; cv.height = IH; const c = cv.getContext('2d');
+    // the paper going wrong: stains, scorch, blots, a torn corner, tape, ruled lines that wobble (only at the edges and under everything else)
+    const stains = Math.floor(m * 7.5);
+    const spots = [[420, 1090], [1620, 1090], [1560, 250], [1010, 1130], [1700, 700], [330, 640], [700, 1120], [1330, 1130]];
+    for (let k = 0; k < stains && k < spots.length; k++) { const q = spots[k], kind = k % 3; if (kind === 0) { c.strokeStyle = 'rgba(120,82,42,0.3)'; c.lineWidth = 9; c.beginPath(); c.arc(q[0], q[1], 60 + R() * 30, 0.2, 5.8); c.stroke(); } else if (kind === 1) { const g2 = c.createRadialGradient(q[0], q[1], 6, q[0], q[1], 90); g2.addColorStop(0, 'rgba(60,35,15,0.4)'); g2.addColorStop(1, 'rgba(150,100,50,0)'); c.fillStyle = g2; c.beginPath(); c.ellipse(q[0], q[1], 100, 70, R(), 0, 6.3); c.fill(); } else { c.fillStyle = 'rgba(25,30,60,0.55)'; c.beginPath(); c.ellipse(q[0], q[1], 14 + R() * 16, 10 + R() * 12, R() * 3, 0, 6.3); c.fill(); for (let j = 0; j < 7; j++) { c.beginPath(); c.arc(q[0] + (R() - 0.5) * 120, q[1] + (R() - 0.5) * 80, 2 + R() * 5, 0, 6.3); c.fill(); } } }
+    if (m > 0.55) { c.fillStyle = 'rgba(40,40,44,0.85)'; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1760, 1130); c.lineTo(1760, 1230); c.closePath(); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 5; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1672, 1196); c.lineTo(1712, 1204); c.lineTo(1760, 1130); c.stroke(); }
+    if (m > 0.4) { c.save(); c.translate(1760, 250); c.rotate(0.6); c.fillStyle = 'rgba(232,226,200,0.78)'; c.fillRect(-100, -22, 210, 46); c.strokeStyle = 'rgba(150,140,110,0.45)'; c.strokeRect(-100, -22, 210, 46); c.restore(); }
+    if (m > 0.62) { c.strokeStyle = 'rgba(105,145,205,0.3)'; c.lineWidth = 1.8; for (let yy = 220; yy < IH; yy += 44) { c.beginPath(); for (let xx = 0; xx <= IW; xx += 16) { const yv = yy + Math.sin(xx * 0.018 + yy) * (m - 0.55) * 22; xx ? c.lineTo(xx, yv) : c.moveTo(xx, yv); } c.stroke(); } }
+    // the notes: more, larger and wilder with madness; never over the molecule, the yield or the reagents
+    const pool = m < 0.34 ? TIER0 : m < 0.67 ? TIER1 : TIER2, used = st.noteUsed, take = pl => { let f = pl.filter(k => used.indexOf(k) < 0); if (!f.length) { st.noteUsed = used.filter(k => pl.indexOf(k) < 0); f = pl.slice(); } const k = f[Math.floor(R() * f.length)]; st.noteUsed.push(k); return k; };
+    const n = m < 0.2 ? 1 : m < 0.45 ? 2 : m < 0.7 ? 3 : 4, sz = 38 + m * 8, col = 'rgba(38,48,80,' + (0.7 + m * 0.2).toFixed(2) + ')', slots = [{ x: 310, y: 1160, w: 700, al: 'l' }, { x: 1730, y: 1160, w: 520, al: 'r' }, { x: 540, y: 158, w: 900, al: 'l' }, { x: 1430, y: 250, w: 400, al: 'l' }];
+    c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 3.6 + m * 2; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let i = 0; i < n; i++) { const sl = slots[i]; let t = take(pool); const strike = t.endsWith('~'); t = t.replace('~', ''); let z = sz, tw = AA.rxPen.measure(t, z, 'thin').width * (1 + m * 0.1); if (tw > sl.w) { z = Math.max(28, z * sl.w / tw); tw = sl.w; } const x0 = sl.al === 'r' ? sl.x - tw : sl.x, y0 = sl.y;
+      c.save(); c.translate(x0, y0); c.rotate((R() - 0.5) * m * 0.12); scrawl(c, t, 0, 0, z, m, R, col); if (strike || (m > 0.34 && R() < 0.4)) { c.beginPath(); c.moveTo(-6, -z * 0.3); c.lineTo(tw + 6, -z * 0.45); c.stroke(); } if (m > 0.34 && R() < 0.35) { for (let u = 0; u < 3; u++) { c.beginPath(); c.moveTo(0, z * 0.2 + u * 6); c.lineTo(tw, z * 0.2 + u * 6 + (R() - 0.5) * 5); c.stroke(); } } c.restore(); }
+    const sk = m < 0.34 ? SKETCH_EARLY : m < 0.67 ? SKETCH_MID : SKETCH_LATE, ns = m < 0.1 ? 0 : m < 0.5 ? 1 : m < 0.8 ? 2 : 3, sp = [[1060, 1142, 44], [1190, 1142, 44], [1320, 1142, 44]];
+    for (let i = 0; i < ns; i++) { const k = take(sk), q = sp[i]; c.save(); c.translate(q[0], q[1]); c.rotate((R() - 0.5) * m * 0.5); MS[k](c, q[2] * (1 + m * 0.3), 30); c.restore(); }
+    return cv;
+  }
   function marginalia(c, now0) {
     if (!NOTES || !AA.rxPen) return;
     if (st.noteRun == null) { st.noteRun = (Math.random() * 1e6) | 0; st.noteUsed = []; st.noteTick = 0; }
-    const tick = st.noteTick | 0;
-    if (!st.noteSet || st.noteSet.tick !== tick || st.noteSet.n !== NOTES) {
-      let sd = (st.noteRun * 2654435761 + tick * 40503 + 17) >>> 0; const R = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
-      const pool = Object.keys(MS).concat(NOTES === 2 ? NOTE_TXT.map(t => 't:' + t).concat(['t:Hartwell~']) : []), fresh = pool.filter(k => st.noteUsed.indexOf(k) < 0); if (fresh.length < 3) st.noteUsed = [];
-      const pick = () => { const f = pool.filter(k => st.noteUsed.indexOf(k) < 0), k = f[Math.floor(R() * f.length)]; st.noteUsed.push(k); return k; };
-      // zones in ink pixels: the strip along the top, the corner at the bottom right, the margin at the left
-      const zones = [[560 + R() * 900, 138 + R() * 14], [1500 + R() * 400, 1138 + R() * 40], [92, 360 + R() * 300]];
-      if (R() > 0.45) zones.push([1120 + R() * 300, 1150 + R() * 30]);
-      st.noteSet = { tick, n: NOTES, items: zones.map(z => ({ k: pick(), x: z[0], y: z[1], rot: (R() - 0.5) * 0.3, sz: 58 + R() * 22 })) };
-    }
-    c.save(); c.strokeStyle = NC; c.fillStyle = NC; c.lineWidth = 3.4; c.lineCap = 'round'; c.lineJoin = 'round';
-    st.noteSet.items.forEach(it => { c.save(); c.translate(it.x, it.y); c.rotate(it.rot);
-      if (it.k.startsWith('t:')) { const t = it.k.slice(2).replace('~', ''), sz = 38; AA.rxPen.write(c, t, 0, 0, sz, { weight: 'thin', color: NC, align: it.x < 200 ? 'left' : 'center' }); if (it.k.endsWith('~')) { const w = AA.rxPen.measure(t, sz, 'thin').width; c.beginPath(); c.moveTo(-w / 2 - 4, -sz * 0.3); c.lineTo(w / 2 + 4, -sz * 0.42); c.stroke(); } }
-      else if (it.x < 200 && (it.k === 'sum' || it.k === 'under' || it.k === 'arrow' || it.k === 'bonds')) MS.tally(c, 70);
-      else MS[it.k](c, it.sz, 34);
-      c.restore(); });
-    c.restore();
+    const m = madLevel(); st.madness = m; const key = (st.noteTick | 0) + ':' + Math.floor(m * 6);
+    if (!st.noteSet || st.noteSet.key !== key) st.noteSet = { key, cv: buildMargin(m, st.noteTick | 0) };
+    c.drawImage(st.noteSet.cv, 0, 0);
   }
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode !== 'shop') marginalia(x, now);
+    if (st.splats && st.splats.length && st.mode !== 'shop') { x.save(); st.splats.forEach(d => { x.fillStyle = 'rgba(28,34,66,' + d.a.toFixed(2) + ')'; x.beginPath(); x.arc(d.x, d.y, d.r, 0, 6.3); x.fill(); }); x.restore(); }
     if (st.mode === 'shop') {
       if (bench) { const B = bench, nx = supplyNext(), fi = famNext(), can = nx && meta.credit >= nx.cost, hovG = st.hover === meta.tier + 1, held = Math.max(0, meta.credit - shop.earned);
         // the coins: what the run just paid, apart from what was held
@@ -1750,7 +1778,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (g && st.quota > 0 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || done)) {
       const wv = [st.quota].concat(P.runMarks(st.quota)), WS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [64, 92, 128, 172];
       let wk = -1; for (let k = 0; k < 4 && k < wv.length; k++) if (done ? g.total >= wv[k] : !!st.passT[k]) wk = k;
-      if (wk === 3 && !fe()) {
+      if (wk === 3 && !fe() && (!AA.rxFeel || !AA.rxFeel.mode)) {
         st.wordK = wk; const c = px({ x: 0, z: -11.4 }), t0 = st.passT[wk] || 0, pr = t0 && now - t0 < 420 ? (now - t0) / 420 : 1;
         let sz = WSZ[wk], tw = AA.rxPen.measure(WS[wk], sz, 'heavy').width; if (tw > 1500) { sz *= 1500 / tw; tw = 1500; }
         st.wordW = tw; if (pr < 1) dirty = true; AA.rxPen.write(x, WS[wk], c[0], c[1], sz, { weight: 'heavy', color: GREEN, align: 'center', t: pr });
