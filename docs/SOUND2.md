@@ -167,7 +167,7 @@ First (bench, first arcade, boiler against today): "arcade has the best bones (a
 
 Second (the grown-up arcade, against "would this pass in a game for adults on Steam"): "arc_c with the deep layer from arc_a, but it is not finished: the payoff is not yet clearly bigger than the last hit, and the deep layer is a wash, not a rising voice." It named bright pluck lines on steps 3 to 7 as the child-game remnant. Acted on: the last hit about 3 dB smaller and OVERREACT given a distorted low brass stab (it now tops the last hit by 2.7 to 4.9 dB); the deep layer rebuilt as a staircase (+1.6 dB a step, -16 dB at step 2 to full at step 12) with saw harmonics at two and three times its root for a phone; the leads moved down (melody from A3, capped at A5) and the metal and pluck partials low-passed at 2.2 to 2.6 kHz. Not judged again after these changes.
 
-## Clips for the owner (C:\Worktlas-atoms\.claude\shots)
+## Clips for the owner (C:Worktlas-atoms.claudeshots)
 
 - `arcade-compare.mp4`: the first arcade, then a, b, c, a numbered card between. `arcade-a.mp4`, `arcade-b.mp4`, `arcade-c.mp4` alone.
 - `deep-layer-a.mp4` (drone), `deep-layer-b.mp4` (chant), `deep-layer-c.mp4` (engine), each under arcade a.
