@@ -1,12 +1,12 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the fifth of 2026-11-11: tier one). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the seventh of 2026-11-11: the spec, run lengths, five dealt from six; part two first, part one after it). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
 ## The measure of 2026-11-11, seventh, part two: the spec, run lengths, the preview removed
 
-Measured, awaiting review. Headless, tier one (`{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`), `RULE.spec` on, every player plays for the spec first and the yield second. Tools: `docs/tools_deal.py <tag>`, `docs/tools_spec_check.py`. Tags: s2 (seeds 1 to 500, no ease), f0, f0.1, f0.2 (seeds 1 to 300, `RULE.specEase` 0, 0.1, 0.2), u3 (unseen seeds 1,001 to 1,500, the default, ease 0.2), L1 (novice, one line looked at).
+Measured, awaiting review. Headless, tier one (`{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`), `RULE.spec` on, every player plays for the spec first and the yield second. Tools: `docs/tools_deal.py <tag>`, `docs/tools_spec_check.py`. Tags: g0 (seeds 1 to 300, `RULE.specEase` 0), u4 (unseen seeds 1,001 to 1,500, the default, ease 0.2), L1b (novice, one line looked at, seeds 1,001 to 1,300). The first measures of this part (tags s2, f0, f0.1, f0.2, u3, L1) were made while a trial line the aiming player played and took back could leave a page in the round record (`snap` and `back` did not keep `g.rec`); a reviewer found it, it was fixed in commit after c774b4e, and g0, u4 and L1b were made again. The old numbers are not used below except where said.
 
 ### What was built
 
@@ -36,14 +36,14 @@ The differences from RDKit are all cages (cubane, adamantane): RDKit lists the s
 
 Every run counted in every round (a failed round does not stop the run: `all`). The Python generator's tested target for an aiming player in rounds 1 to 3 is 85, 80, 65 percent. Seeds 1 to 300 (tags f0, f0.1, f0.2) and, last, unseen seeds 1,001 to 1,500 with the default (u3).
 
-| Player | Clear rate, rounds 1, 2, 3, ease 0 | Ease 0.1 | Ease 0.2 | Unseen, default (0.2) |
-|---|---|---|---|---|
-| novice (4 lines looked at) | 48, 45, 31 | 81, 59, 38 | 91, 91, 41 | 91, 90, 41 |
-| greedy (12 lines) | 76, 68, 49 | 93, 87, 61 | 97, 97, 67 | 97, 98, 66 |
-| median (every line) | 94, 94, 77 | 99, 96, 89 | 100, 100, 90 | 99, 99, 92 |
-| planner | the same as the median player: the line it is given under the spec is the median player's | | | |
+| Player | Clear rate, rounds 1, 2, 3, ease 0 (seeds 1 to 300) | Unseen, default (ease 0.2, seeds 1,001 to 1,500) |
+|---|---|---|
+| novice (4 lines looked at) | 51, 44, 27 | 93, 93, 45 |
+| greedy (12 lines) | 81, 78, 56 | 99, 99, 75 |
+| median (every line) | 97, 96, 82 | 100, 100, 94 |
+| planner | the same as the median player: the line it is given under the spec is the median player's | |
 
-The Python aiming player clears about the same as the median player at ease 0. The table was fitted on the Python engine; the game's aiming players clear less in round 3 (round three is an assay and short has two pages), so the first run is eased by `RULE.specEase = 0.2` (bachelor's only).
+The Python aiming player clears 85, 80 and 65 percent in those rounds; the median player here clears 97, 96 and 82 at ease 0. The table was fitted on the Python engine; the game's aiming players clear less in round 3 (round three is an assay and short has two pages), so the first run is eased by `RULE.specEase = 0.2` (bachelor's only).
 
 ### Yield, separate from the win
 
@@ -51,9 +51,9 @@ Share of rounds (every run counted) in which the total passes the number to beat
 
 | Player | Number to beat | Twice | Four times | Eight times |
 |---|---|---|---|---|
-| novice | 73, 69, 54 | 50, 42, 27 | 21, 17, 10 | 6, 5, 3 |
-| greedy | 88, 89, 80 | 69, 70, 51 | 41, 41, 24 | 18, 21, 12 |
-| median | 99, 99, 96 | 97, 98, 90 | 92, 91, 76 | 78, 76, 56 |
+| novice | 73, 67, 49 | 50, 40, 26 | 21, 17, 10 | 6, 5, 4 |
+| greedy | 87, 89, 79 | 69, 70, 52 | 41, 39, 27 | 18, 20, 13 |
+| median | 99, 99, 97 | 97, 98, 90 | 92, 92, 74 | 78, 78, 58 |
 
 Gold is paid by these marks whether or not the spec was met, as before.
 
@@ -63,18 +63,18 @@ Unseen seeds 1,001 to 1,500, 500 runs a player, the default.
 
 | Player | Wins the three rounds | Tries to a win | Pass, rounds 1, 2, 3 (of runs that reached it) |
 |---|---|---|---|
-| novice | 34.8 percent | 2.9 | 91, 90, 43 |
-| greedy | 62.6 | 1.6 | 97, 98, 66 |
-| median | 90.6 | 1.1 | 99, 99, 92 |
+| novice | 39.8 percent | 2.5 | 93, 93, 46 |
+| greedy | 73.6 | 1.4 | 99, 99, 75 |
+| median | 94.0 | 1.1 | 100, 100, 94 |
 | planner | the same as the median player | | |
 
-On seeds 1 to 300 the same table at other eases: ease 0: novice 6.7 percent (15 tries), greedy 24.0, median 68.0; ease 0.1: novice 18.0 (5.6), greedy 47.7, median 83.7; ease 0.2: novice 33.0 (3.0), greedy 64.3, median 89.3.
+Without the ease (seeds 1 to 300): novice 7.3 percent (13.6 tries), greedy 33.0 (3.0), median 76.3 (1.3). The eases 0.1 and 0.2 were swept before the fix (novice 18.0 and 33.0 percent, greedy 47.7 and 64.3, median 83.7 and 89.3) and not swept again; with the record fixed the default 0.2 is easier than that sweep said, so a lower ease (0.15 or less) is the next thing to try when the revised list is in.
 
 Against the owner's targets:
 
-- A new player wins within a few tries: met by the novice at ease 0.2 (2.9 tries), not at ease 0 (15). The novice is a model: it looks at four lines of the hand and keeps the one that comes closest to the spec. A novice that looks at one line only (places blind, tag L1, seeds 1,001 to 1,300) wins about 7 percent of runs (about 15 tries) and passes rounds 1, 2, 3 at 68, 75 and 13 percent (the run was not finished when this was written). How much a real new player sees of the effect of a line before it is fired is the thing this number rests on, and no person has been measured.
-- Each round is close: not met. Counting a round as close when the final number is within a quarter of N (or 1), the median player is close in 27, 16 and 52 percent of rounds 1, 2, 3 and reaches twice N or more in 92, 94 and 32. Many specs sit far under what a player who reads can make. The revised list and its N (`docs/tools_chem/SPECS.md`) are to fix that; the machinery takes them wholesale.
-- An average player does not win everything as a matter of course: the greedy player wins 62.6 percent, the median player 90.6. The median player is the better of the two and is not an average player.
+- A new player wins within a few tries: met by the novice at ease 0.2 (2.5 tries), not at ease 0 (13.6). The novice is a model: it looks at four lines of the hand and keeps the one that comes closest to the spec. A novice that looks at one line only (places blind, tag L1b, seeds 1,001 to 1,300; old code, before the fix, see above) wins 6.3 percent of runs (15.8 tries) and passes rounds 1, 2, 3 at 67, 72 and 13 percent. How much a real new player sees of the effect of a line before it is fired is the thing this number rests on, and no person has been measured.
+- Each round is close: not met. Counting a round as close when the final number is within a quarter of N (or 1), the median player is close in 27, 15 and 53 percent of rounds 1, 2, 3 and reaches twice N or more in 92, 94 and 33. Many specs sit far under what a player who reads can make. The revised list and its N (`docs/tools_chem/SPECS.md`) are to fix that; the machinery takes them wholesale.
+- An average player does not win everything as a matter of course: the greedy player wins 73.6 percent, the median player 94.0. The median player is the better of the two and is not an average player.
 
 ### The preview, removed
 
@@ -82,7 +82,7 @@ Against the owner's targets:
 
 ### What the reviewers said
 
-Part one (the deal): a conditional pass on the mechanism and the numbers, a fail on the balance result, which the document did not say plainly: under the yield the new player could no longer win the first run (3.6 percent), the median and planner players won 97 to 99 percent, rounds four to nine were not touched, molecule factors were not fitted again, and Par was fitted on the seeds it is reported on. Those hold for the yield; the spec (this part) is what decides a win now. Rounds four to nine are still not fitted. Part two: see the end of this section.
+Part one (the deal): a conditional pass on the mechanism and the numbers, a fail on the balance result, which the document did not say plainly: under the yield the new player could no longer win the first run (3.6 percent), the median and planner players won 97 to 99 percent, rounds four to nine were not touched, molecule factors were not fitted again, and Par was fitted on the seeds it is reported on. Those hold for the yield; the spec (this part) is what decides a win now. Rounds four to nine are still not fitted. Part two (the spec, lengths, the preview): conditional pass on the mechanism and the stored numbers; fail on three points, all taken up: (1) the round record was not restored after a trial line (fixed: `snap` and `back` keep `g.rec` and `g.spec`; the numbers above were made again; the greedy player went from 62.6 to 73.6 percent and the novice from 34.8 to 39.8); (2) the preview is not gone from the page: `queueView` is cut down, but `o` still carries the full option of each reagent and `scheme.js` still calls `P.peek` and reads `st.view.fwd`; this is the page builder's to remove and stays open; (3) in rounds 6 to 9 the second spec could repeat the last round's family and the fall-back was unproved (fixed in `specPick`; rounds 6 to 9 not measured); the end-of-run result was not complete or safe (fixed: `roundEnd` once only, pays the harder molecule's coins on a spec win, logs `ypass` and the word; `runResult.gold` is the gold earned, `coins` the purse). It also found that the port is faithful on everything the game's molecules exercise, with unexercised differences in the readers for C=N, S-S and the aromatic C=C exclusion, which no game molecule has.
 
 ### What is not done
 
