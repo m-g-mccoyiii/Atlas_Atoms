@@ -173,6 +173,7 @@ function onReact(o, nm, prev, L, morph) {
   try { if (!nm.fl && !morph.bend && !(nm.at && nm.at.fold) && !(prev && prev.at && prev.at.fold)) align(nm, morph.from); } catch (e) { /* drawn as laid out */ }
   // runoff leaves as the art's runoff objects, kicked out and falling
   try { st.flyers.forEach(f => { if (f.feel) return; f.feel = true; f.kick = { x: (Math.random() - 0.5) * 0.6, z: -1 }; f.dur = 950; dressFlyer(f); }); } catch (e) { /* plain flyer */ }
+  try { snapPlan(o, nm, prev); } catch (e) { /* no snap */ }
   if (!o.casc) { morph.feelEase = true; seeStrike(o, nm, prev); return; }
   const n = g.casc || 1, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(n, last), d = S.d;
   const kindNow = o.kind || o.kindName || o.id, change = !!S.prevKind && S.prevKind !== kindNow && !last; S.prevKind = kindNow;
@@ -217,11 +218,94 @@ function align(nm, from) {
 const breathMs = () => Math.min(520, 80 + 40 * ((F.seq && F.seq.plan.N) || 6));
 const P_made = () => { try { return api.P.made(api.g()); } catch (e) { return 0; } };
 function dressFlyer(f) {
+  if (f.real) return;
   if (!AA.rxKit || !AA.rxKit.build || !f.grp) return; const key = { water: 'ro_water', h2: 'ro_h2', co2: 'ro_co2', chloride: 'ro_acid', acid: 'ro_acid', fumes: 'ro_acid', hcl: 'ro_acid', nh3: 'ro_nh3', ammonia: 'ro_nh3', tma: 'ro_nh3', trimethylamine: 'ro_nh3', amine: 'ro_nh3', sulfur: 'ro_sulfur', sulfide: 'ro_sulfur', so2: 'ro_sulfur' }[f.kind] || null; if (!key) return;
   const inner = new T.Group(); if (!AA.rxKit.build(key, T, inner, new T.Color(0xffffff))) return;
   const bb = new T.Box3().setFromObject(inner), sz = bb.getSize(new T.Vector3()), k = 1.5 / Math.max(sz.x, sz.y, sz.z, 0.01);
   inner.scale.setScalar(k); inner.position.set(-(bb.min.x + bb.max.x) / 2 * k, -(bb.min.y + bb.max.y) / 2 * k, -(bb.min.z + bb.max.z) / 2 * k); inner.rotation.x = -0.8;
   f.grp.children.slice().forEach(ch => { ch.visible = false; }); f.grp.add(inner); f.ro = inner;
+}
+
+// ---------- what leaves, as its own atoms; and a bond that breaks, snapped ----------
+// Ruling AL3: no icon for what leaves. scheme.js (flyerReal) builds the small molecule out of the atoms the step record says left and
+// stands it where they stood. Here it stays on its atom through the wind-up while its hydrogens grow in, then lifts off, drifts away
+// and fades, or arcs into its jar when one is collecting that runoff.
+// The snap (an idea to show, AL4, not a ruling; ?snap=0 turns it off): a bond that breaks is stretched a little, never past 1.3 times
+// its length, then cracks with a flash and the two atoms recoil, all scaled by the strength of the bond in kJ/mol.
+const SNAPQ = (() => { try { return new URLSearchParams(root.location.search).get('snap') !== '0'; } catch (e) { return true; } })();
+const BONDE = { 'C-C': 350, 'C=C': 610, 'C-O': 360, 'C=O': 750, 'C-N': 305, 'C-S': 270, 'C-Cl': 340, 'H-O': 460, 'S-S': 250, 'C=N': 615, 'N-O': 200, 'O-O': 145, 'O-S': 265, 'N-N': 160, 'Cl-S': 255, 'C-H': 415, 'H-N': 390, 'H-S': 365 };
+// the strength of what breaks: all of a bond, or the part of a double bond that is lost (the difference)
+function bondE(a, b, order, lost) { const k = [a, b].sort(), one = BONDE[k.join('-')] || 330, two = BONDE[k.join('=')] || one * 1.75; if (order >= 2) return lost >= order ? two : two - one; return one; }
+let _snapGeo = null, _snapBall = null;
+const snapGeo = () => _snapGeo || (_snapGeo = new T.CylinderGeometry(1, 1, 1, 10)), snapBall = () => _snapBall || (_snapBall = new T.SphereGeometry(1, 16, 12));
+// a stick from A to B (two halves in the colours given), in the space of its parent
+function snapStick(parent, mats, r) { const g = snapGeo(), parts = [0, 1].map(h => { const m = new T.Mesh(g, mats[h]); m.castShadow = true; parent.add(m); return m; }); return { parts, r, set(A, B, off) { const u = _v().copy(B).sub(A), len = u.length() || 1e-4, q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), u.clone().divideScalar(len)), mid = _v().copy(A).add(B).multiplyScalar(0.5); parts.forEach((m, h) => { const fr = h ? mid : A, to = h ? B : mid; m.position.copy(fr).add(to).multiplyScalar(0.5); if (off) m.position.add(off); m.quaternion.copy(q); m.scale.set(r, fr.distanceTo(to), r); }); }, free() { parts.forEach(m => { if (m.parent) m.parent.remove(m); }); } }; }
+// the crack: a white flash and short ink splinters thrown out from the break, larger and longer for a stronger bond
+function crack(pos, e, sc) {
+  const S = F.seq, k = Math.pow(clamp(e / 750, 0.2, 1.1), 1.6), grp = new T.Group(), mats = []; grp.position.copy(pos); grp.position.y += 0.4; grp.scale.setScalar((sc || 1) * 1.7);
+  const core = new T.Mesh(snapBall(), new T.MeshBasicMaterial({ color: 0xfff6d8, transparent: true, depthTest: false })); core.renderOrder = 30; core.scale.setScalar(0.0001); grp.add(core); mats.push(core.material);
+  const ink = new T.MeshBasicMaterial({ color: 0x22252c, transparent: true, depthTest: false }), hot = new T.MeshBasicMaterial({ color: 0xd2301f, transparent: true, depthTest: false }); mats.push(ink, hot);
+  const n = 5 + Math.round(6 * k), sp = []; for (let i = 0; i < n; i++) { const an = i / n * 6.283 + (pos.x * 3.1 + pos.z * 1.7 + i * 0.9) % 0.7, m = new T.Mesh(snapGeo(), i % 3 === 0 ? hot : ink); m.renderOrder = 31; m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(Math.cos(an), 0, Math.sin(an))); m.scale.setScalar(0.0001); grp.add(m); sp.push({ m, an, far: 0.7 + 0.5 * ((i * 7) % 5) / 5 }); }
+  api.T && api.center() && api.center().group.parent && api.center().group.parent.add(grp);
+  (F.cracks || (F.cracks = [])).push({ grp, core, sp, mats, t: now(), k, ms: 150 + 230 * k });
+  if (S) F.log.push(['snap', Math.round(e), Math.round(now() - S.t0)]);
+  snd('snap', Math.max(1, Math.round(e / 75)), 0.7 + 1.1 * k);
+}
+function crackFrame(t) {
+  if (!F.cracks || !F.cracks.length) return;
+  F.cracks = F.cracks.filter(c => { const u = clamp((t - c.t) / c.ms, 0, 1), e = E.outCubic(u); c.core.scale.setScalar((0.25 + 0.75 * c.k) * (0.4 + 1.3 * e)); c.core.material.opacity = (1 - u) * (1 - u);
+    c.sp.forEach(q => { const r0 = (0.35 + 1.5 * c.k * e) * q.far, len = (0.25 + 0.9 * c.k) * (1 - u) * q.far; q.m.position.set(Math.cos(q.an) * (r0 + len / 2), 0, Math.sin(q.an) * (r0 + len / 2)); q.m.scale.set(0.022 + 0.02 * c.k, Math.max(0.001, len), 0.022 + 0.02 * c.k); }); c.mats[1].opacity = c.mats[2].opacity = 1 - u * u;
+    if (u < 1) return true; if (c.grp.parent) c.grp.parent.remove(c.grp); c.mats.forEach(m => m.dispose()); return false; });
+  api.dirty();
+}
+// an atom knocked back by a break next to it: a short damped kick along the line of the broken bond, laid over wherever the page has put it
+function nudge(mol, atom, dir, amp) { (F.nudges || (F.nudges = [])).push({ mol, atom, dir: dir.clone(), amp, t: now() }); }
+function nudgeFrame(t) {
+  if (!F.nudges || !F.nudges.length) return; const c = api.center();
+  F.nudges = F.nudges.filter(q => { const u = (t - q.t) / 380; if (u >= 1 || q.mol !== c) return false; const b = c.balls.get(q.atom); if (!b) return false; const a = q.amp * Math.exp(-3.2 * u) * Math.cos(u * 10.5) * (1 - u); b.mesh.position.addScaledVector(q.dir, a); if (b.sprite) b.sprite.position.addScaledVector(q.dir, a); return true; });
+  api.dirty();
+}
+// the bonds of the molecule itself that this step breaks (both atoms stay): each is drawn on for the wind-up and snapped as the swing begins
+function snapPlan(o, nm, prev) {
+  const S = F.seq; if (!S || !SNAPQ || !o.map || !prev || !prev.model || !nm.model) return;
+  const has = new Map(); nm.model.bonds.forEach(b => { [[b.a, b.b], [b.b, b.a]].forEach(q => { if (!has.has(q[0])) has.set(q[0], new Map()); has.get(q[0]).set(q[1], b.order || 1); }); });
+  const list = []; prev.model.bonds.forEach(b => { const a2 = o.map.get(b.a), b2 = o.map.get(b.b); if (!a2 || !b2 || a2.el === 'H' || b2.el === 'H' || !nm.balls.has(a2) || !nm.balls.has(b2)) return; const was = b.order || 1, is = (has.get(a2) && has.get(a2).get(b2)) || 0; if (is >= was) return;
+    const pa = prev.at.get(b.a), pb = prev.at.get(b.b), L0 = pa && pb ? pa.distanceTo(pb) : 1.5; list.push({ m: nm, a: a2, b: b2, e: bondE(a2.el, b2.el, was, was - is), part: is > 0, L0, t0: now(), casc: !!o.casc, stick: null }); });
+  if (list.length) S.snaps = (S.snaps || []).concat(list.slice(0, 4));
+}
+function snapFrame(t) {
+  crackFrame(t); nudgeFrame(t);
+  const S = F.seq, c = api.center(); if (!S || !S.snaps || !S.snaps.length) return;
+  S.snaps = S.snaps.filter(q => { if (q.m !== c) { if (q.stick) q.stick.free(); return false; } const A = c.balls.get(q.a), B = c.balls.get(q.b); if (!A || !B) return false;
+    if (q.at == null) q.at = q.t0 + (q.casc && S.cur && S.cur.ph ? Math.max(260, S.cur.ph.wind * 0.85) : 300);
+    const pa = A.mesh.position, pb = B.mesh.position, d = pa.distanceTo(pb), u = _v().copy(pb).sub(pa).normalize(), side = q.part ? new T.Vector3(-u.z, 0, u.x).multiplyScalar(0.3) : null;
+    if (!q.stick) { const mk = el => new T.MeshStandardMaterial({ color: A.mesh.material.color.clone(), roughness: 0.35 }); q.mats = [mk(), mk()]; q.mats[1].color.copy(B.mesh.material.color); q.stick = snapStick(c.group, q.mats, q.part ? 0.06 : 0.09); }
+    // it is held on for the wind-up, stretching with the atoms; never past 1.3 times its length
+    if (t < q.at && d <= 1.3 * q.L0) { q.stick.set(pa, pb, side); q.stick.parts.forEach(m => { m.scale.x = m.scale.z = q.stick.r * clamp(1.15 - 0.5 * (d / q.L0 - 1) / 0.3, 0.6, 1.15); }); return true; }
+    q.stick.free(); q.mats.forEach(m => m.dispose()); const mid = _v().copy(pa).add(pb).multiplyScalar(0.5); c.group.localToWorld(mid); crack(mid, q.e, c.group.scale.x); const amp = 0.06 + 0.4 * Math.pow(clamp(q.e / 750, 0, 1), 1.6); nudge(c, q.a, u.clone().negate(), amp); nudge(c, q.b, u, amp); return false; });
+  api.dirty();
+}
+// one leaving group drawn as its atoms, every frame
+function flyReal(f, t, S) {
+  const R = f.real, c = api.center(), sc = c ? c.group.scale.x : api.st.sc, DUR = R.jar ? 1500 : 1900, ST = SNAPQ && R.anchor ? 240 : 0, e = bondE(R.els[0], R.els[1], R.order, R.order), k = clamp(e / 750, 0.2, 1.1);
+  if (f.dur !== DUR - ST) f.dur = DUR - ST; const age = t - f.t0 + ST; f.feel = true; if (!R.last) { R.last = f.from.clone(); R.sc = sc; }
+  // on the molecule: beside the atom it is bonded to, wherever the wind-up has carried that atom
+  const aw = R.anchor && c && c.balls.has(R.anchor) ? worldOf(c, R.anchor, R._a || (R._a = _v())) : null, base = R._b || (R._b = _v());
+  if (age < ST) { if (aw && R.off) base.copy(R.off).multiplyScalar(sc).add(aw); else base.copy(f.from); R.last.copy(base); R.sc = sc; }
+  // its hydrogens are not drawn on the molecule: they grow in, small and white, just before it goes
+  const hk = E.outBack(clamp((age + 420) / 260, 0, 1), 1.6); R.hs.forEach(h => { h.mesh.scale.copy(h.s).multiplyScalar(Math.max(0.0001, hk)); h.mesh.position.copy(h.at).lerp(h.p, clamp(hk, 0, 1)); });
+  let pos = base, op = 1, s = sc;
+  if (age >= 0 && age < ST) { // the bond is stretched, to 1.22 times its length at most
+    const u = E.inOutSine(age / ST), L = R.off ? R.off.length() * sc : 1; pos = (R._p || (R._p = _v())).copy(base).addScaledVector(R.dir, 0.22 * L * u); R.last.copy(pos);
+    if (aw && R.stick) { if (!R.bond) { const par = c.group.parent; R.bond = snapStick(par, [R.stick[1], R.stick[2]], 0.09 * sc); } R.bond.set(aw, pos); R.bond.parts.forEach(m => { m.scale.x = m.scale.z = 0.09 * sc * (1 - 0.35 * u); }); }
+  } else if (age >= ST) {
+    if (!R.gone) { R.gone = true; if (R.bond) { R.bond.free(); R.bond = null; } if (ST && aw) { crack(_v().copy(aw).add(R.last).multiplyScalar(0.5), e, sc); if (c) nudge(c, R.anchor, R.dir.clone().negate(), 0.06 + 0.4 * k * k); } R.sc = sc; }
+    const u = clamp((age - ST) / (DUR - ST), 0, 1), from = R.last; pos = R._p || (R._p = _v());
+    if (R.jar && f.to) { const m = E.inOutSine(u); pos.set(from.x + (f.to.x - from.x) * m, from.y + (f.to.y - from.y) * m + Math.sin(u * Math.PI) * 2.4, from.z + (f.to.z - from.z) * m); s = R.sc * (1 - 0.45 * E.inCubic(u)); op = 1 - clamp((u - 0.86) / 0.14, 0, 1); if (u >= 0.98 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } }
+    else { // thrown clear by the break (further for a stronger bond), then a slow drift up the page while it fades
+      const kick = (ST ? 0.5 + 3.4 * k * k : 1.6) * R.sc, out = E.outCubic(Math.min(1, u * 2.6)); pos.set(from.x + R.dir.x * (kick * out + 3.4 * R.sc * u), from.y + 1.4 * R.sc * u, from.z + R.dir.z * (kick * out + 3.4 * R.sc * u) - 0.8 * R.sc * u * u); s = R.sc; op = 1 - E.inOutSine(clamp((u - 0.5) / 0.5, 0, 1)); }
+  }
+  f.grp.position.copy(pos); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(s); R.mats.forEach(m => { m.opacity = op; }); f.grp.visible = op > 0.01; api.dirty();
 }
 
 // ---------- every kind of reflex acts out its own change on the atoms themselves ----------
@@ -615,7 +699,8 @@ function frame(t, dt) {
     const row = { t: Math.round(t - S.t0), n: cu ? cu.n : 0, Z: +S.zoom.toFixed(3), c: pj(mc), rec: pj(mc.clone().sub(new T.Vector3(rx, 0, rz))), cam: [Math.round(ox * 24.4), Math.round(oz * 24.4)], shown: Math.round(S.count.shown) };
     if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); row.bb = [x0, x1, y0, y1]; return x1 - x0; })(); { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const sc = c.group.scale.x, v2 = new T.Vector3(); c.balls.forEach((bb, a) => { bb.mesh.getWorldPosition(v2); const q = pj(v2), r = Math.abs(pj(v2.clone().add(new T.Vector3((bb.R || 0.4) * sc, 0, 0)))[0] - q[0]) + 1; x0 = Math.min(x0, q[0] - r); x1 = Math.max(x1, q[0] + r); y0 = Math.min(y0, q[1] - r); y1 = Math.max(y1, q[1] + r); }); row.bbr = [x0, x1, y0, y1]; } F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
-  st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } });
+  snapFrame(t);
+  st.flyers.forEach(f => { if (f.real) return flyReal(f, t, S); if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } });
   seeFrame(t);
 }
 

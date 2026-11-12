@@ -1264,11 +1264,58 @@ function start(app) {
   }
   // one thing that has left the molecule, as a small molecule of its own standing where it left from
   function flyer(grp0, gi, kind, back, prev, nm) {
+    if (REALOFF) { try { const p0 = flyerReal(grp0, gi, kind, back, prev, nm); if (p0) return p0; } catch (e) { /* drawn the old way */ } }
     const grp = new T.Group(), els = kind === 'water' ? ['O', 'H', 'H'] : kind === 'h2' ? ['H', 'H'] : grp0.map(a => a.el).sort((a, b) => (a === 'H') - (b === 'H')).slice(0, 3), hub = els[0] !== 'H';
     const RO = { water: 'ro_water', h2: 'ro_h2', co2: 'ro_co2', chloride: 'ro_acid', acid: 'ro_acid', nh3: 'ro_nh3', ammonia: 'ro_nh3', tma: 'ro_nh3', trimethylamine: 'ro_nh3', amine: 'ro_nh3', sulfur: 'ro_sulfur', sulfide: 'ro_sulfur', so2: 'ro_sulfur', fumes: 'ro_acid', hcl: 'ro_acid', 'acid fumes': 'ro_acid' }[kind], roIn = RO ? new T.Group() : null; if (roIn && AA.rxKit.build(RO, T, roIn, new T.Color(0xffffff))) { roIn.scale.setScalar(0.5); roIn.position.y = 0.6; grp.add(roIn); } else els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
     const srcA = grp0.map(back).find(a => a && prev.balls.has(a)), p = srcA ? prev.at.get(srcA) : nm && nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 };
     grp.position.set(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc); grp.scale.setScalar(st.sc); scene.add(grp);
     st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: byTarget(kind), t0: performance.now() + 200, dur: 400, spin: gi % 2 ? 1.2 : -1.2 });
+    return p;
+  }
+  // What leaves is drawn as what it is (ruling AL3): the atoms the step record says left, in the molecule's own balls and sticks,
+  // with their hydrogens as small white atoms, standing where they stood on the molecule. No icon and no coloured puff.
+  // feel.js (flyReal) lifts it off, lets it drift and fades it, or drops it in its jar when one is collecting that runoff. ?real=0 brings the icons back.
+  const REALOFF = (() => { try { return new URLSearchParams(root.location.search).get('real') !== '0'; } catch (e) { return true; } })();
+  // each small molecule flat on the page, its main atom at the middle and its hydrogens pointing up the page (turned to point away from the molecule)
+  const REALT = {
+    water: { a: [['O', 0, 0], ['H', -0.8, -0.62], ['H', 0.8, -0.62]], b: [[0, 1, 1], [0, 2, 1]] },
+    hydrogen: { a: [['H', -0.4, 0], ['H', 0.4, 0]], b: [[0, 1, 1]] },
+    carbon_dioxide: { a: [['C', 0, 0], ['O', -1.25, 0], ['O', 1.25, 0]], b: [[0, 1, 2], [0, 2, 2]] },
+    acid_fumes: { a: [['Cl', 0, 0], ['H', 0, -1.2]], b: [[0, 1, 1]] },
+    ammonia: { a: [['N', 0, 0], ['H', 0, -1.05], ['H', 0.91, 0.52], ['H', -0.91, 0.52]], b: [[0, 1, 1], [0, 2, 1], [0, 3, 1]] },
+    sulfur: { a: [['S', 0, 0], ['H', -0.95, -0.85], ['H', 0.95, -0.85]], b: [[0, 1, 1], [0, 2, 1]] },
+    so2: { a: [['S', 0, 0], ['O', -1.2, -0.75], ['O', 1.2, -0.75]], b: [[0, 1, 2], [0, 2, 2]] },
+    o2: { a: [['O', -0.62, 0], ['O', 0.62, 0]], b: [[0, 1, 2]] }
+  };
+  ['h2:hydrogen', 'co2:carbon_dioxide', 'chloride:acid_fumes', 'hcl:acid_fumes', 'acid:acid_fumes', 'fumes:acid_fumes', 'nh3:ammonia', 'sulfide:sulfur', 'h2s:sulfur', 'oxygen:o2'].forEach(q => { const k = q.split(':'); REALT[k[0]] = REALT[k[1]]; });
+  const realRad = el => BALL(el) * (el === 'N' || el === 'S' || el === 'Cl' ? 1.3 : 1) * (el === 'H' ? 0.92 : 1);
+  // the small molecule a leaving group is: by what the step says went off (grp.off), else by its atoms, else the atoms themselves in a row
+  function realShape(grp0, kind) {
+    const key = grp0 && grp0.off ? Object.keys(grp0.off)[0] : null, els = grp0.map(a => a.el), hv = els.filter(e => e !== 'H').sort().join('');
+    if (key && REALT[key]) return REALT[key]; if (REALT[kind]) return REALT[kind];
+    const by = { O: 'water', N: 'ammonia', S: 'sulfur', Cl: 'acid_fumes', '': 'hydrogen', COO: 'carbon_dioxide', OO: 'o2', OOS: 'so2' }[hv]; if (by) return REALT[by];
+    const heavy = els.filter(e => e !== 'H'), a = heavy.map((e, i) => [e, (i - (heavy.length - 1) / 2) * 1.3, 0]), b = []; for (let i = 1; i < heavy.length; i++) b.push([i - 1, i, 1]); return { a, b };
+  }
+  function flyerReal(grp0, gi, kind, back, prev, nm) {
+    const shape = realShape(grp0, kind), olds = grp0.map(back).filter(Boolean), gone = new Set(olds), main = shape.a[0][0];
+    // the atom of the group that was drawn on the molecule, and the atom it was bonded to that stays
+    const srcA = olds.find(a => prev.balls.has(a) && a.el === main) || olds.find(a => prev.balls.has(a)); let ancOld = null, order = 1;
+    if (srcA) prev.model.bonds.forEach(bd => { const o2 = bd.a === srcA ? bd.b : bd.b === srcA ? bd.a : null; if (o2 && !gone.has(o2) && o2.el !== 'H' && prev.balls.has(o2) && !ancOld) { ancOld = o2; order = bd.order || 1; } });
+    let anc = null; if (ancOld && nm) nm.balls.forEach((b, a) => { if (!anc && back(a) === ancOld) anc = a; });
+    const p = srcA ? prev.at.get(srcA) : nm && nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 }, pa = ancOld ? prev.at.get(ancOld) : null;
+    // turned so that its hydrogens point away from the atom it leaves
+    let dx = 0, dz = -1; if (pa) { const L = Math.hypot(p.x - pa.x, p.z - pa.z); if (L > 0.05) { dx = (p.x - pa.x) / L; dz = (p.z - pa.z) / L; } }
+    const grp = new T.Group(), mats = [], mk = {}, mat = (f, el) => { const k = (f === ballMat ? 'b' : 's') + el; if (!mk[k]) { mk[k] = f(el).clone(); mk[k].transparent = true; mats.push(mk[k]); } return mk[k]; };
+    const pts = shape.a.map(q => new T.Vector3(-q[1] * dz - q[2] * dx, 0, q[1] * dx - q[2] * dz)), hs = [], cd = camDir.clone();
+    shape.b.forEach(q => { const A = pts[q[0]], B = pts[q[1]], u = B.clone().sub(A), len = u.length(), mid = A.clone().add(B).multiplyScalar(0.5), perp = new T.Vector3().crossVectors(u.clone().normalize(), cd).normalize(), qt = new T.Quaternion().setFromUnitVectors(UP, u.clone().normalize());
+      (q[2] > 1 ? [-0.5, 0.5] : [0]).forEach(f => [0, 1].forEach(h => { const fr = h ? mid : A, to = h ? B : mid, m = add(CYL, mat(stickMat, shape.a[q[h]][0]), 0, 0, 0, grp), rr = q[2] > 1 ? 0.06 : 0.09; m.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(perp, f * 0.36); m.quaternion.copy(qt); m.scale.set(rr, fr.distanceTo(to), rr); if (shape.a[q[0]][0] === 'H' || shape.a[q[1]][0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.a[q[0]][0] === 'H' ? q[1] : q[0]].clone(), p: m.position.clone() }); })); });
+    shape.a.forEach((q, i) => { const R = realRad(q[0]), m = add(SPH, mat(ballMat, q[0]), pts[i].x, 0, pts[i].z, grp); m.scale.setScalar(R); if (q[0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.b.length ? (shape.b.find(k => k[1] === i) || [0])[0] : 0].clone(), p: m.position.clone() });
+      else if (q[0] !== 'C') { const sm = letterMat(q[0]).clone(); sm.transparent = true; mats.push(sm); const sp = new T.Sprite(sm); sp.position.copy(pts[i]).addScaledVector(cd, -R * 1.04); sp.scale.setScalar(R * (q[0] === 'N' || q[0] === 'S' || q[0] === 'Cl' ? 2.0 : 1.6)); grp.add(sp); } });
+    const wp = srcA && prev.balls.has(srcA) ? prev.balls.get(srcA).mesh.getWorldPosition(new T.Vector3()) : new T.Vector3(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc), ws = prev.group ? prev.group.scale.x : st.sc;
+    grp.position.copy(wp); grp.scale.setScalar(ws); scene.add(grp);
+    const kOn = !P.RULE.bare && JARK.includes(kind) && !!jarPos(kind);
+    st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: byTarget(kind), t0: performance.now() + 200, dur: 400, spin: 0,
+      real: { mats, hs, anchor: anc, off: pa ? new T.Vector3(p.x - pa.x, p.y - pa.y, p.z - pa.z) : null, dir: new T.Vector3(dx, 0, dz), els: [ancOld ? ancOld.el : 'C', main], order, jar: kOn, shape, stick: anc ? [CYL, stickMat(ancOld.el), stickMat(main)] : null } });
     return p;
   }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
@@ -2047,7 +2094,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       f.grp.position.set(f.from.x + (f.to.x - f.from.x) * e, f.from.y + (f.to.y - f.from.y) * e + Math.sin(k * Math.PI) * (0.9 + 0.04 * d), f.from.z + (f.to.z - f.from.z) * e);
       f.grp.rotation.set(0, f.spin * k, 0); f.grp.scale.setScalar(st.sc * (k > 0.6 ? 1 - (k - 0.6) / 0.4 * 0.7 : 1));
       if (k < 1) return true;
-      scene.remove(f.grp); burst3(f.to.x, 0.2, f.to.z + 0.6, 8, f.kind === 'water' ? '#3a6fd0' : f.kind === 'h2' ? '#d6453a' : '#5a564e');
+      scene.remove(f.grp); if (!f.real) burst3(f.to.x, 0.2, f.to.z + 0.6, 8, f.kind === 'water' ? '#3a6fd0' : f.kind === 'h2' ? '#d6453a' : '#5a564e');
       if (f.keep) { st.by[f.keep] = Math.min(g ? g.by[f.keep] || 0 : 9, (st.by[f.keep] || 0) + 1); st.byBump[f.keep] = 1; }
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
     JARK.concat(['gauge']).forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
