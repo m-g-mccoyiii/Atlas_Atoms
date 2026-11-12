@@ -1038,7 +1038,9 @@ const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, s
 // reactions. With dehydrate in round three a reader made 5.7 times what a player placing at random made there, and
 // 2.8 times without it: docs/RIG.md, fifth measure.)
 RUNG.from = { dehydrate: 4, allyl: 5 };
-const dealtIn = (run, id) => !(RUNG.from[id] > ((run && run.round) || 1));
+// RULE.deal6 (owner, 2026-11-11): all six starting reagents are in the deal from round one, five dealt from the six, three fired.
+RULE.deal6 = true;
+const dealtIn = (run, id) => RULE.deal6 || !(RUNG.from[id] > ((run && run.round) || 1));
 // Suppliers are opened between runs with credit. Each one adds reagents and equipment to what a run can turn up.
 // A run pays one credit for every round beaten.
 // A reagent that makes a halide is a dead end without a base to take the halide off again, so the two come as one pick.
@@ -1148,7 +1150,7 @@ function runTerm(run, id) {
 // Do not edit by hand: measure again. Par of the bare game, fourth measure (docs/tools_par_bare.py): round one by the novice and the margin together, rounds two to five at a margin of 4 for the median player, rounds six to nine by its pass rate and margin.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
-const PAR = { rounds: [1210, 1920, 2580, 4960, 18800, 55300, 58200, 61300, 105000], after: 1.71, last: 1 };
+const PAR = { rounds: [4500, 5600, 10000, 4960, 18800, 55300, 58200, 61300, 105000], after: 1.71, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
@@ -1157,7 +1159,7 @@ const MOLF = {"C=CCC(C)(O)CCC(=O)CCC=C":0.594,"C=CCCC(=O)CC1CCCC1=O":0.393,"C=CC
 const KINDF = {"plain":1.0,"carry":1.0,"broad":1.0,"loose":1.0,"each":1.0,"back":1.0,"scarce":1.0,"short":1.0};
 const ASSAYF = {"scarce":[0.688,1.138,0.854],"short":[0.625,0.309,0.527],"each":[1.533,1.745,1.339],"loose":[1.519,1.632,1.66]};
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };
-// Tier one (rounds one to three) baked again on 2026-11-11 after commit 43791e7 (docs/tools_tier1_bake.py). Par of rounds one to three at margins 4, 3, 3 for the median player, tag t2.
+// Tier one (rounds one to three) baked again on 2026-11-11 after commit 1e859ea (docs/tools_tier1_bake.py). Par for the six-reagent deal (greedy median over 3).
 // END GENERATED
 // A molecule's size factor is held between lo and hi, and only its square root is taken: a molecule that makes more
 // asks for more, but for less than it makes.
