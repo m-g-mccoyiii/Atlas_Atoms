@@ -582,6 +582,22 @@ function start(app) {
       s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; const many = s.parts.length > 2, rr = s.r * k * (many ? 0.7 : 1); pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * (s.parts.length > 4 ? 0.34 : 0.36)); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, rr), fr.distanceTo(to), Math.max(0.0001, rr)); pt.mesh.visible = k > 0.01; }); s.len = len; s.vis = k > 0.01;
     });
   }
+  // The last guard before anything is drawn: whatever moved the atoms (a settle, a tremble, a snap, a pose), no bond that is drawn is left
+  // longer than 1.22 of its own length and no two atoms are left nearer than their balls allow; the two atoms are moved together or apart.
+  function layoutSafe(m, pos, grow) {
+    if (!m.fl) return layout(m, pos, grow);
+    let G = m._sg; if (!G) { const A = []; m.balls.forEach((b, a) => { if (a.el !== 'H' && m.at.get(a)) A.push(a); }); const ix = new Map(); A.forEach((a, i) => ix.set(a, i)); const bs = [], bset = new Set(); m.sticks.forEach(q => { const i = ix.get(q.a), j = ix.get(q.b); if (i == null || j == null) return; bset.add(i * 1000 + j); bset.add(j * 1000 + i); if (!q.rung) bs.push([i, j, m.at.get(q.a).distanceTo(m.at.get(q.b)), q]); });
+      const rp = []; for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) { if (bset.has(i * 1000 + j)) continue; const ta = m.at.get(A[i]), tb = m.at.get(A[j]); rp.push([i, j, Math.min(Math.hypot(ta.x - tb.x, ta.z - tb.z), 1.06 * (radOf(A[i]) + radOf(A[j])) + 0.03)]); }
+      const hs = []; m.balls.forEach((b, a) => { if (a.el !== 'H') return; const pa = m.model.neighbors(a).map(q => q.atom).find(q => ix.has(q)); hs.push([a, pa ? ix.get(pa) : -1]); });
+      G = m._sg = { A, bs, rp, hs, P: A.map(() => new T.Vector3()), P0: A.map(() => new T.Vector3()), H: hs.map(() => new T.Vector3()), map: new Map() }; A.forEach((a, i) => G.map.set(a, G.P[i])); hs.forEach((h, i) => G.map.set(h[0], G.H[i])); }
+    G.A.forEach((a, i) => { G.P[i].copy(pos(a)); G.P0[i].copy(G.P[i]); }); G.hs.forEach((h, i) => G.H[i].copy(pos(h[0])));
+    for (let it = 0; it < 5; it++) { let moved = false;
+      const mid = !!morph && morph.m === m; G.bs.forEach(b => { const q = b[3]; if (q.vis === false || (q.gk != null && q.gk < 1) || (mid && q.old === false)) return; const p = G.P[b[0]], r = G.P[b[1]], dx = r.x - p.x, dy = r.y - p.y, dz = r.z - p.z, d = Math.hypot(dx, dy, dz), max = b[2] * 1.22; if (d <= max) return; const f = (d - max) / d * 0.5; p.x += dx * f; p.y += dy * f; p.z += dz * f; r.x -= dx * f; r.y -= dy * f; r.z -= dz * f; moved = true; });
+      G.rp.forEach(b => { const p = G.P[b[0]], r = G.P[b[1]]; let dx = r.x - p.x, dz = r.z - p.z; const d = Math.hypot(dx, dz); if (d >= b[2]) return; if (d < 1e-4) { dx = 1; dz = 0; } const f = (d - b[2]) / Math.max(d, 1e-4) * 0.5; p.x += dx * f; p.z += dz * f; r.x -= dx * f; r.z -= dz * f; moved = true; });
+      if (!moved) break; }
+    G.hs.forEach((h, i) => { if (h[1] >= 0) { G.H[i].x += G.P[h[1]].x - G.P0[h[1]].x; G.H[i].y += G.P[h[1]].y - G.P0[h[1]].y; G.H[i].z += G.P[h[1]].z - G.P0[h[1]].z; } });
+    return layout(m, a => G.map.get(a) || pos(a), grow);
+  }
   // Where to circle a set of atoms on the page. Each atom is carried down to the page along the line of sight, so
   // the circle sits behind it on screen. Atoms close together share one circle. Lengths are in the molecule's own units.
   function marksOf(m, atoms, join, pad) {
@@ -2076,7 +2092,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   });
 
   // the moment of play is played by feel.js (AA.rxFeel); with feel 0 or no feel.js the page plays it as before
-  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => layout(m, f, s), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => layoutSafe(m, f, s), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
   function size() {
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
@@ -2109,14 +2125,14 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         for (let it = 0; it < 10; it++) morph.m.sticks.forEach(q => { const fa = morph.from.get(q.a), fb = morph.from.get(q.b); if (!fa || !fb) return; const ca = morph.cur.get(q.a), cb = morph.cur.get(q.b), rest = fa.distanceTo(fb) * (1 - k) + morph.m.at.get(q.a).distanceTo(morph.m.at.get(q.b)) * k; _u.copy(cb).sub(ca); const len = _u.length() || 1e-4, df = (len - rest) / len * 0.5; ca.addScaledVector(_u, df); cb.addScaledVector(_u, -df); });
         if (morph.act && fe() && FEEL.pose) FEEL.pose(morph, K);
         if (morph.m.fl) untangle(morph, k);
-        layout(morph.m, a => morph.cur.get(a), a => (morph.from.has(a) ? 1 : Math.max(0, k)));
+        layoutSafe(morph.m, a => morph.cur.get(a), a => (morph.from.has(a) ? 1 : Math.max(0, k)));
       }
       else if (morph.bend) { const s0 = morph.s0 < 1e8 ? morph.s0 : 0, kb = ease(Math.max(0, Math.min(1, (el - s0) / Math.max(200, morph.end - s0 - 60)))); morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a); if (fr) morph.cur.get(a).copy(fr).lerp(morph.m.at.get(a), kb); }); bendEval(morph.bend, kb, morph); if (morph.m.fl) untangle(morph, kb);
         layout(morph.m, a => (morph.from.has(a) ? morph.cur.get(a) : morph.m.at.get(a)), a => (morph.from.has(a) ? 1 : kb)); }
       else if (morph.slide) { const s0 = morph.s0 < 1e8 ? morph.s0 : 0, ks = ease(Math.max(0, Math.min(1, (el - s0) / Math.max(260, morph.end - s0 - 60)))); morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a); if (fr) morph.cur.get(a).copy(fr).lerp(morph.m.at.get(a), ks); }); slideEval(morph, ks); if (morph.m.fl) untangle(morph, ks);
         layout(morph.m, a => (morph.from.has(a) ? morph.cur.get(a) : morph.m.at.get(a)), a => (morph.from.has(a) ? 1 : ks)); }
       else { let ksum = 0, kn = 0; morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a), to = morph.m.at.get(a), c = morph.cur.get(a); if (!c) return; if (fr) { const kq = Math.max(0, Math.min(1.12, morph.feelEase && fe() ? FEEL.ease(kOf(a, 240)) : ease(kOf(a, 240)))); c.copy(fr).lerp(to, kq); ksum += kq; kn++; } else c.copy(to); }); if (morph.m.fl) untangle(morph, kn ? ksum / kn : 1);
-        layout(morph.m, a => morph.cur.get(a) || morph.m.at.get(a), a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; }); }
+        layoutSafe(morph.m, a => morph.cur.get(a) || morph.m.at.get(a), a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; }); }
       dirty = true; }
     if (st.flyers.length) { st.flyers = st.flyers.filter(f => {
       if (!f.to) f.to = byTarget(f.kind, f.at); if (!f.t0) f.t0 = now; const age = now - f.t0; if (age < 0) return true;
