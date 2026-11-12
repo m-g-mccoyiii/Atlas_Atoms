@@ -5,8 +5,8 @@
   python traits.py test    the tests: for each motif, SMILES in and the count out (3 or more cases each)
   python traits.py study   the measures of TRAITS.md (rounds 1-3, 4-6, 7-9; greedy and look-ahead, ignoring and seeking)
 
-The pay (TRAITS.md, "What they do"): after each step of a turn's chain the molecule is read; the step's places are
-multiplied by  1 + sum over motifs of rate * level.  Nothing is capped.
+The pay (TRAITS.md, "What they do"): after each step of a turn's chain the molecule is read as it stands; the step's places
+are multiplied by the product over motifs of (1 + rate * level).  Nothing is capped.
 """
 import itertools
 import math
@@ -226,17 +226,17 @@ class Motif:
 # name, how it is said, count, pay per level, what one level is, the mark beside the molecule
 MOTIFS = {m.name: m for m in [
     Motif('sugar', 'sugar', n_sugar, 0.07, 'a carbon with an OH', 'a sugar cube'),
-    Motif('resonance', 'resonance', n_resonance, 0.09, 'a double bond in the longest alternating run', 'a wave'),
-    Motif('arene', 'benzene ring', n_arene, 0.35, 'an aromatic ring', 'a hexagon with an inner circle'),
-    Motif('ring', 'ring', n_ring, 0.07, 'a ring that is not aromatic and not in a cage', 'a plain polygon'),
-    Motif('fusion', 'shared side', n_fusion, 0.2, 'two rings sharing one side', 'two polygons touching along a side'),
-    Motif('cage', 'cage', n_cage, 0.04, 'a ring tied into a bridged or closed shell, minus one', 'a cube outline'),
-    Motif('spiro', 'spiro centre', n_spiro, 0.12, 'a single atom two rings share', 'two polygons touching at a point'),
-    Motif('acid', 'acid', n_acid, 0.35, 'a COOH', 'a drop'),
-    Motif('amine', 'amine', n_amine, 0.3, 'an amine nitrogen', 'a three-pronged crown'),
-    Motif('sulfur', 'sulfur bridge', n_sulfur, 0.5, 'a C-S-C or an S-S', 'a yellow arch'),
+    Motif('resonance', 'resonance', n_resonance, 0.08, 'a double bond in the longest alternating run', 'a wave'),
+    Motif('arene', 'benzene ring', n_arene, 0.30, 'an aromatic ring', 'a hexagon with an inner circle'),
+    Motif('ring', 'ring', n_ring, 0.05, 'a ring that is not aromatic and not in a cage', 'a plain polygon'),
+    Motif('fusion', 'shared side', n_fusion, 0.15, 'two rings sharing one side', 'two polygons touching along a side'),
+    Motif('cage', 'cage', n_cage, 0.03, 'a ring tied into a bridged or closed shell, minus one', 'a cube outline'),
+    Motif('spiro', 'spiro centre', n_spiro, 0.10, 'a single atom two rings share', 'two polygons touching at a point'),
+    Motif('acid', 'acid', n_acid, 0.25, 'a COOH', 'a drop'),
+    Motif('amine', 'amine', n_amine, 0.20, 'an amine nitrogen', 'a three-pronged crown'),
+    Motif('sulfur', 'sulfur bridge', n_sulfur, 0.35, 'a C-S-C or an S-S', 'a yellow arch'),
     Motif('branch', 'branch point', n_branch, 0.04, 'a carbon holding three or four other carbons', 'a fork'),
-    Motif('chain', 'long chain', n_chain, 0.15, 'three plain carbons in a row, longest stretch', 'a zigzag'),
+    Motif('chain', 'long chain', n_chain, 0.12, 'three plain carbons in a row, longest stretch', 'a zigzag'),
 ]}
 NAMES = tuple(MOTIFS)
 
@@ -298,6 +298,46 @@ def run_tests():
                 bad += 1
                 print('FAIL %-9s %-34s want %d got %d' % (name, smi, want, got))
     print('%d cases, %d wrong, %d motifs' % (total, bad, len(CASES)))
+    bad += run_pay_tests()
+    return bad
+
+
+def run_pay_tests():
+    """The pay: each motif multiplies; two sugars and a run of five are worth what TRAITS.md says; the step-by-step turn used for
+    the pay is the engine's own turn (same steps, same end molecule)."""
+    bad = 0
+    def near(a, b):
+        return abs(a - b) < 1e-9
+    z = [0] * len(NAMES)
+    c = list(z); c[NAMES.index('sugar')] = 2
+    m2 = step_mult(tuple(c), RATES)[0]
+    c[NAMES.index('resonance')] = 5
+    m25 = step_mult(tuple(c), RATES)[0]
+    c3 = list(z); c3[NAMES.index('resonance')] = 3
+    c5 = list(z); c5[NAMES.index('resonance')] = 5
+    checks = [('two sugars x1.14', near(m2, 1.14)), ('two sugars and run of five x1.596', near(m25, 1.14 * 1.4)),
+              ('run of five pays more than run of three', step_mult(tuple(c5), RATES)[0] > step_mult(tuple(c3), RATES)[0]),
+              ('nothing held pays x1', near(step_mult(tuple(z), RATES)[0], 1.0))]
+    eng = E.Engine()
+    n = 0
+    for seed in range(12):
+        stage = 1 + seed % 3
+        st = STAGES[stage]
+        smi = molecules.deal_molecule(st['rounds'][seed % 3], random.Random('mol/%s' % seed), 3)
+        smi, _ = eng.reopen(canon(smi))
+        car = carried_for(stage, seed)
+        rng = random.Random(seed)
+        line = tuple(rng.choice(car) for _ in range(3))
+        a, b = eng.run_line(smi, line, st['rules']), stepped(eng, smi, line, st['rules'])
+        n += 1
+        if a.steps != b.steps or a.smi != b.smi:
+            checks.append(('stepped turn equals engine turn (seed %d)' % seed, False))
+    checks.append(('stepped turn equals engine turn, %d lines' % n, True))
+    for name, ok in checks:
+        if not ok:
+            bad += 1
+            print('FAIL', name)
+    print('%d pay checks, %d wrong' % (len(checks), bad))
     return bad
 
 # ---------------------------------------------------------------------------------------------------------------

@@ -12,6 +12,7 @@ Criteria for a name: it comes from a real lab or from alchemy; it says what the 
 | a reaction the player fires | a reagent | the bottle on the shelf; already the game's word | reaction card |
 | what the molecule does by itself | a reflex | it happens without being told, at once, every time | self-reaction, cascade kind, zip |
 | a run of reflexes setting each other off | an overreaction | the game's own name for its own best moment | chain, cascade, combo |
+| something the molecule has that can be pointed at and counted (a sugar, a run of alternating double bonds, a ring, a cage) | a motif | a lab word for a repeating unit; more of it pays more; see `docs/tools_chem/TRAITS.md` | family, trait, kin |
 | a lab object or small molecule used on the molecule | an instrument | a thing a person picks up and uses on the work | helper, piece, equipment |
 | a creature hatched from a jar | a homunculus | alchemy's little made creature; the owner's word | pet, creature, familiar |
 | what comes off the molecule | runoff | what leaves the flask and is collected | by-product |
