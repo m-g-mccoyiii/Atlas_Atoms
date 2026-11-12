@@ -242,10 +242,10 @@ const snapGeo = () => _snapGeo || (_snapGeo = new T.CylinderGeometry(1, 1, 1, 10
 function snapStick(parent, mats, r) { const g = snapGeo(), parts = [0, 1].map(h => { const m = new T.Mesh(g, mats[h]); m.castShadow = true; parent.add(m); return m; }); return { parts, r, set(A, B, off) { const u = _v().copy(B).sub(A), len = u.length() || 1e-4, q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), u.clone().divideScalar(len)), mid = _v().copy(A).add(B).multiplyScalar(0.5); parts.forEach((m, h) => { const fr = h ? mid : A, to = h ? B : mid; m.position.copy(fr).add(to).multiplyScalar(0.5); if (off) m.position.add(off); m.quaternion.copy(q); m.scale.set(r, fr.distanceTo(to), r); }); }, free() { parts.forEach(m => { if (m.parent) m.parent.remove(m); }); } }; }
 // the crack: a white flash and short ink splinters thrown out from the break, larger and longer for a stronger bond
 function crack(pos, e, sc) {
-  const S = F.seq, k = clamp(e / 750, 0.2, 1.1), grp = new T.Group(), mats = []; grp.position.copy(pos); grp.position.y += 0.4; grp.scale.setScalar(sc || 1);
-  const core = new T.Mesh(snapBall(), new T.MeshBasicMaterial({ color: 0xfff6d8, transparent: true, depthTest: false })); core.renderOrder = 30; grp.add(core); mats.push(core.material);
+  const S = F.seq, k = Math.pow(clamp(e / 750, 0.2, 1.1), 1.6), grp = new T.Group(), mats = []; grp.position.copy(pos); grp.position.y += 0.4; grp.scale.setScalar((sc || 1) * 1.7);
+  const core = new T.Mesh(snapBall(), new T.MeshBasicMaterial({ color: 0xfff6d8, transparent: true, depthTest: false })); core.renderOrder = 30; core.scale.setScalar(0.0001); grp.add(core); mats.push(core.material);
   const ink = new T.MeshBasicMaterial({ color: 0x22252c, transparent: true, depthTest: false }), hot = new T.MeshBasicMaterial({ color: 0xd2301f, transparent: true, depthTest: false }); mats.push(ink, hot);
-  const n = 5 + Math.round(6 * k), sp = []; for (let i = 0; i < n; i++) { const an = i / n * 6.283 + (pos.x * 3.1 + pos.z * 1.7 + i * 0.9) % 0.7, m = new T.Mesh(snapGeo(), i % 3 === 0 ? hot : ink); m.renderOrder = 31; m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(Math.cos(an), 0, Math.sin(an))); grp.add(m); sp.push({ m, an, far: 0.7 + 0.5 * ((i * 7) % 5) / 5 }); }
+  const n = 5 + Math.round(6 * k), sp = []; for (let i = 0; i < n; i++) { const an = i / n * 6.283 + (pos.x * 3.1 + pos.z * 1.7 + i * 0.9) % 0.7, m = new T.Mesh(snapGeo(), i % 3 === 0 ? hot : ink); m.renderOrder = 31; m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(Math.cos(an), 0, Math.sin(an))); m.scale.setScalar(0.0001); grp.add(m); sp.push({ m, an, far: 0.7 + 0.5 * ((i * 7) % 5) / 5 }); }
   api.T && api.center() && api.center().group.parent && api.center().group.parent.add(grp);
   (F.cracks || (F.cracks = [])).push({ grp, core, sp, mats, t: now(), k, ms: 150 + 230 * k });
   if (S) F.log.push(['snap', Math.round(e), Math.round(now() - S.t0)]);
@@ -254,7 +254,7 @@ function crack(pos, e, sc) {
 function crackFrame(t) {
   if (!F.cracks || !F.cracks.length) return;
   F.cracks = F.cracks.filter(c => { const u = clamp((t - c.t) / c.ms, 0, 1), e = E.outCubic(u); c.core.scale.setScalar((0.25 + 0.75 * c.k) * (0.4 + 1.3 * e)); c.core.material.opacity = (1 - u) * (1 - u);
-    c.sp.forEach(q => { const r0 = (0.35 + 1.5 * c.k * e) * q.far, len = (0.25 + 0.9 * c.k) * (1 - u) * q.far; q.m.position.set(Math.cos(q.an) * (r0 + len / 2), 0, Math.sin(q.an) * (r0 + len / 2)); q.m.scale.set(0.035 + 0.03 * c.k, Math.max(0.001, len), 0.035 + 0.03 * c.k); }); c.mats[1].opacity = c.mats[2].opacity = 1 - u * u;
+    c.sp.forEach(q => { const r0 = (0.35 + 1.5 * c.k * e) * q.far, len = (0.25 + 0.9 * c.k) * (1 - u) * q.far; q.m.position.set(Math.cos(q.an) * (r0 + len / 2), 0, Math.sin(q.an) * (r0 + len / 2)); q.m.scale.set(0.022 + 0.02 * c.k, Math.max(0.001, len), 0.022 + 0.02 * c.k); }); c.mats[1].opacity = c.mats[2].opacity = 1 - u * u;
     if (u < 1) return true; if (c.grp.parent) c.grp.parent.remove(c.grp); c.mats.forEach(m => m.dispose()); return false; });
   api.dirty();
 }
@@ -282,7 +282,7 @@ function snapFrame(t) {
     if (!q.stick) { const mk = el => new T.MeshStandardMaterial({ color: A.mesh.material.color.clone(), roughness: 0.35 }); q.mats = [mk(), mk()]; q.mats[1].color.copy(B.mesh.material.color); q.stick = snapStick(c.group, q.mats, q.part ? 0.06 : 0.09); }
     // it is held on for the wind-up, stretching with the atoms; never past 1.3 times its length
     if (t < q.at && d <= 1.3 * q.L0) { q.stick.set(pa, pb, side); q.stick.parts.forEach(m => { m.scale.x = m.scale.z = q.stick.r * clamp(1.15 - 0.5 * (d / q.L0 - 1) / 0.3, 0.6, 1.15); }); return true; }
-    q.stick.free(); q.mats.forEach(m => m.dispose()); const mid = _v().copy(pa).add(pb).multiplyScalar(0.5); c.group.localToWorld(mid); crack(mid, q.e, c.group.scale.x); const amp = 0.1 + 0.3 * clamp(q.e / 750, 0, 1); nudge(c, q.a, u.clone().negate(), amp); nudge(c, q.b, u, amp); return false; });
+    q.stick.free(); q.mats.forEach(m => m.dispose()); const mid = _v().copy(pa).add(pb).multiplyScalar(0.5); c.group.localToWorld(mid); crack(mid, q.e, c.group.scale.x); const amp = 0.06 + 0.4 * Math.pow(clamp(q.e / 750, 0, 1), 1.6); nudge(c, q.a, u.clone().negate(), amp); nudge(c, q.b, u, amp); return false; });
   api.dirty();
 }
 // one leaving group drawn as its atoms, every frame
@@ -295,15 +295,15 @@ function flyReal(f, t, S) {
   // its hydrogens are not drawn on the molecule: they grow in, small and white, just before it goes
   const hk = E.outBack(clamp((age + 420) / 260, 0, 1), 1.6); R.hs.forEach(h => { h.mesh.scale.copy(h.s).multiplyScalar(Math.max(0.0001, hk)); h.mesh.position.copy(h.at).lerp(h.p, clamp(hk, 0, 1)); });
   let pos = base, op = 1, s = sc;
-  if (age >= 0 && age < ST) { // the bond is stretched, to 1.28 times its length at most
-    const u = E.inOutSine(age / ST), L = R.off ? R.off.length() * sc : 1; pos = (R._p || (R._p = _v())).copy(base).addScaledVector(R.dir, 0.28 * L * u); R.last.copy(pos);
+  if (age >= 0 && age < ST) { // the bond is stretched, to 1.22 times its length at most
+    const u = E.inOutSine(age / ST), L = R.off ? R.off.length() * sc : 1; pos = (R._p || (R._p = _v())).copy(base).addScaledVector(R.dir, 0.22 * L * u); R.last.copy(pos);
     if (aw && R.stick) { if (!R.bond) { const par = c.group.parent; R.bond = snapStick(par, [R.stick[1], R.stick[2]], 0.09 * sc); } R.bond.set(aw, pos); R.bond.parts.forEach(m => { m.scale.x = m.scale.z = 0.09 * sc * (1 - 0.35 * u); }); }
   } else if (age >= ST) {
-    if (!R.gone) { R.gone = true; if (R.bond) { R.bond.free(); R.bond = null; } if (ST && aw) { crack(_v().copy(aw).add(R.last).multiplyScalar(0.5), e, sc); if (c) nudge(c, R.anchor, R.dir.clone().negate(), 0.12 + 0.3 * k); } R.sc = sc; }
+    if (!R.gone) { R.gone = true; if (R.bond) { R.bond.free(); R.bond = null; } if (ST && aw) { crack(_v().copy(aw).add(R.last).multiplyScalar(0.5), e, sc); if (c) nudge(c, R.anchor, R.dir.clone().negate(), 0.06 + 0.4 * k * k); } R.sc = sc; }
     const u = clamp((age - ST) / (DUR - ST), 0, 1), from = R.last; pos = R._p || (R._p = _v());
     if (R.jar && f.to) { const m = E.inOutSine(u); pos.set(from.x + (f.to.x - from.x) * m, from.y + (f.to.y - from.y) * m + Math.sin(u * Math.PI) * 2.4, from.z + (f.to.z - from.z) * m); s = R.sc * (1 - 0.45 * E.inCubic(u)); op = 1 - clamp((u - 0.86) / 0.14, 0, 1); if (u >= 0.98 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } }
     else { // thrown clear by the break (further for a stronger bond), then a slow drift up the page while it fades
-      const kick = (ST ? 1.2 + 2.2 * k : 1.6) * R.sc, out = E.outCubic(Math.min(1, u * 2.6)); pos.set(from.x + R.dir.x * kick * out + R.dir.x * 1.6 * R.sc * u, from.y + 1.4 * R.sc * u, from.z + R.dir.z * kick * out + R.dir.z * 1.6 * R.sc * u - 1.5 * R.sc * u * u); s = R.sc; op = 1 - E.inOutSine(clamp((u - 0.5) / 0.5, 0, 1)); }
+      const kick = (ST ? 0.5 + 3.4 * k * k : 1.6) * R.sc, out = E.outCubic(Math.min(1, u * 2.6)); pos.set(from.x + R.dir.x * (kick * out + 3.4 * R.sc * u), from.y + 1.4 * R.sc * u, from.z + R.dir.z * (kick * out + 3.4 * R.sc * u) - 0.8 * R.sc * u * u); s = R.sc; op = 1 - E.inOutSine(clamp((u - 0.5) / 0.5, 0, 1)); }
   }
   f.grp.position.copy(pos); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(s); R.mats.forEach(m => { m.opacity = op; }); f.grp.visible = op > 0.01; api.dirty();
 }
