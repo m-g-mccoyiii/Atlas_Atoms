@@ -812,22 +812,23 @@ const ENG = (() => {
   const conjC = (G, c) => G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C' && dblO(G, q.j) >= 0);                 // $(C-[#6]=O)
   const pull = (G, c, other) => G.nb[c].some(q => q.j !== other && el(G, q.j) === 'C' && hetero(G, q.j));
   // addition across C=C: X on one carbon, H on the other (library.addition_steps); X is O, N, S or CHO
-  function putX(G, m, cx, ch, X) {
+  function putX(G, m, cx, ch, X, wacker) {
     const a = G.atoms[cx], b = G.atoms[ch], inc = [];
     setBond(m, a, b, 1);
+    if (wacker && MODE.hydrateKetone && G.hc[cx] >= 1) { const o = newAt(m, 'O', a, 2); inc.push(o); normH(m, [a, b, o]); return { focus: [a, b], incoming: inc, leaving: [] }; }      // RULE.hydrateKetone: hydrate as a Wacker, the C=C becomes C=O
     if (X === 'CHO') { const c = newAt(m, 'C', a, 1), o = newAt(m, 'O', c, 2); inc.push(c, o); normH(m, [c, o]); } else { const x = newAt(m, X, a, 1); inc.push(x); normH(m, [x]); }
     normH(m, [a, b]); return { focus: [a, b], incoming: inc, leaving: [] };
   }
-  function addSteps(X, anti) {
+  function addSteps(X, anti, wacker) {
     const mk = (f, pick, key) => ({
       find(G) { const out = allC(G, f).map(([c1, c2]) => ({ t: [c1, c2], cx: pick(c1, c2), key: key ? key(G, c1, c2) : [0] })); return out.sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); },
       edit(G, m, s) { const ch = s.t[0] === s.cx ? s.t[1] : s.t[0]; return putX(G, m, s.cx, ch, X); }
     });
     const stepA = G => allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2));
     const steps = [];
-    steps.push({ find(G) { return allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2)).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c1 : c2 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X) });
-    [[0, [1, 2]], [1, [2]]].forEach(([lo, his]) => steps.push({ find(G) { return allC(G, (c1, c2) => G.hc[c1] === lo && his.includes(G.hc[c2])).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c2 : c1 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X) }));
-    steps.push({ find(G) { return allC(G).map(([c1, c2]) => { const k = [pull(G, c1, c2) ? 1 : 0, endDist(G, c1)]; return { t: [c1, c2], cx: c1, key: anti ? [-k[0], -k[1]] : k }; }).sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[1], X) });
+    steps.push({ find(G) { return allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2)).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c1 : c2 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X, wacker) });
+    [[0, [1, 2]], [1, [2]]].forEach(([lo, his]) => steps.push({ find(G) { return allC(G, (c1, c2) => G.hc[c1] === lo && his.includes(G.hc[c2])).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c2 : c1 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X, wacker) }));
+    steps.push({ find(G) { return allC(G).map(([c1, c2]) => { const k = [pull(G, c1, c2) ? 1 : 0, endDist(G, c1)]; return { t: [c1, c2], cx: c1, key: anti ? [-k[0], -k[1]] : k }; }).sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[1], X, wacker) });
     return steps;
   }
   // elimination: the group on c1 leaves and a C=C forms toward a neighbour with an H; zaitsev (fewest H) or most H
@@ -853,13 +854,15 @@ const ENG = (() => {
   // every C=O (a ketone or aldehyde, see KC) that a test takes, best first: the places of a carbonyl reagent
   const carbonyls = (G, f) => ketones(G).filter(k => f(G, k[0])).map(k => ({ t: k }));
   const REAG = {
-    hydrate: addSteps('O', false),
+    hydrate: addSteps('O', false, true),
     hydroborate: addSteps('O', true),
     dehydrate: [elimStep(isOH, false, true, { water: 1 })],
     oxidize: [
-      { off: { hydrogen: 1 }, find(G) { const out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); } return out; },
+      { off: { hydrogen: 1 }, find(G) { let out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); }
+          if (MODE.oxNarrow === 'secondary') out = out.filter(s => cnb(G, s.t[0]).length === 2); else if (MODE.oxNarrow === 'one') out = out.slice(0, 1);      // RULE.oxNarrow: oxidize acts on secondary OH only, or on one place
+          return out; },
         edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 2); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } },
-      { when: () => MODE.co2, off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
+      { when: () => MODE.co2 && !MODE.oxNarrow, off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
         edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), c2 = A(s.t[1]), g = take(m, c1); cut(m, c1, c2); const o1 = newAt(m, 'O', c2, 2); normH(m, [c2, o1]); return { focus: [c2], incoming: [o1], leaving: [g] }; } }
     ],
     reduce: [{ find: G => ketones(G).filter(k => G.hc[k[0]] === 1 || G.hc[k[0]] === 2).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 1); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } }],
