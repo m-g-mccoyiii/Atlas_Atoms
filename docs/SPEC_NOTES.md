@@ -11,15 +11,41 @@ Written 2026-11-11 with the rules builder's port (`path.js`, the block "THE SPEC
 
 ## The readings
 
-`gain` (the best end-of-page value minus the start, never below 0), `loss`, `abs`, `last` (the last page), `range`. The molecule is read at the end of each page, before the loose rings open again, and the start is the dealt molecule with its loose rings open. Event specs read the record `g.rec`: for each page the circles (a reagent, whether it acted and where, the bank), the reflex steps each circle set off, the reflex steps in order, and what was driven off by kind (water, hydrogen, carbon dioxide, acid fumes, other).
+`gain` (the best end-of-page value minus the start, never below 0), `loss` (the start minus the smallest), `lastgain` and `lastloss` (the same, read on the last page only: `end_CO`, `end_CC`, `finish_smaller`). The molecule is read at the end of each page, before the loose rings open again, and the start is the dealt molecule with its loose rings open. Event specs read the record `g.rec`: for each page the circles (a reagent, whether it acted and where, the bank), the reflex steps each circle set off, the reflex steps in order, and what was driven off by kind (water, hydrogen, carbon dioxide, acid fumes, other).
 
 ## Marks
 
-Existing marks used: `ring` (rings), `joined` (fused pairs, fused block), `cage` (bridgehead), `big` (growth), `size` (size swing), `kinds` (kinds of group at once), `water` (water driven off), `chain` (longest carbon chain). `few` is not used: it always means at most, and no kept spec is an at most.
+The revised list (docs/tools_chem/SPECS.md): 24 specs and one rider, written into `SPEC_TABLE` by `python docs/tools_spec_bake.py`. A spec is an "at least N"; `text` has the number in it and `text1` is the singular for N = 1. Each row below: the mark name the page draws (`g.spec.mark`, one drawing for each), the spec name (`g.spec.name`), the plain condition, what the drawing shows, the family and plan, and the rounds it is offered in. Mark names are unique. The marks of the first list that are no longer used (`ring`, `joined`, `cage`, `big`, `size`, `kinds`, `water`, `chain`, `five_rings`, `spiro`, `span`, `unsat` as before, and the rest) can be dropped from the page.
 
-New marks the page must draw (the name the table gives, with the spec): `ring5` five_rings, `ring6` six_rings, `islands` ring_systems, `spiro` spiro, `ring_o` ring_hetero, `ring_fill` ring_atoms, `ring_sizes` ring_sizes, `span` diameter, `fork` branch, `cut` cut_down, `keep_C=O` left_CO, `conjugated` conjugated, `double` double_bonds, `unsat` unsaturation, `hetero` hetero_atoms, `elements` elements (never offered today: nothing feeds it), `first` opener, `third` closer, `kinds_turn` kinds_in_turn, `three_feed` all_three_feed, `trigger` distinct_triggers, `self_ring` kind_ring, `self_snap` kind_snap, `off_all` off_total, `jar_hydrogen` off_hydrogen, `jar_carbon_dioxide` off_carbon_dioxide, `jars` many_jars, `puff` big_puff, `no_dead` no_dead_reaction, `acted` acted_total, `acted_kinds` distinct_acted, `deadline_off_all` by_two_off_total. `by_two_rings` shares `ring` with rings, so the page cannot say "by turn two"; give it its own mark if it is kept.
+| Mark | Spec | Condition | What the drawing shows | Family / plan | Rounds |
+|---|---|---|---|---|---|
+| `ring6` | `six_rings` | at least {N} more six-atom rings | a ring drawn with six dots | shape / rings | 6,8,9 |
+| `ring_pair` | `fused_pairs` | at least {N} more rings sharing a side | two rings drawn with one side in common | shape / rings | 6,7 |
+| `islands` | `ring_systems` | at least {N} more separate ring groups | ring clusters drawn apart from each other | shape / rings | 7,8 |
+| `grow` | `growth` | at least {N} atoms bigger than the start | the start molecule with a larger one drawn after it | size / big | 1,2,3,4,5,6,7,8,9 |
+| `fork` | `branch` | at least {N} more forks in the molecule | a tree that splits | size / big | 1,2,3,4,5,6,7,8,9 |
+| `ladder_chain` | `longest_chain` | at least {N} longer chain than the start | a straight zigzag with a ruler along it | size / big | 1,2,3 |
+| `cut` | `cut_down` | at least {N} atoms smaller than the start | the start molecule with a ghost outline of the atoms that went | size / small | 1,6,7,8,9 |
+| `cut_end` | `finish_smaller` | at least {N} atoms smaller at the finish | the start molecule and a smaller one at the end of an arrow | size / small | 6,7,8 |
+| `lean` | `lean_turns` | at least {N} turns ending smaller | three small boxes, each with a down arrow when the molecule got smaller | size / small | 1,4,5,6,7,8,9 |
+| `groups` | `kinds_gain` | at least {N} more kinds of group | coloured tiles, one for each kind of group on the molecule | makeup / kinds | 7,8 |
+| `hetero` | `hetero_atoms` | at least {N} more non-carbon atoms | the red and blue atoms circled | makeup / kinds | 1,2,3,4,5,6,7,8,9 |
+| `double` | `double_bonds` | at least {N} more double bonds | double lines, one for each double bond | makeup / bonds | 1,2,3,4,5,6,7,8,9 |
+| `conjugated` | `conjugated` | at least {N} more atoms in alternating bonds | a zigzag of single and double lines lit up end to end | makeup / bonds | 2,3,6,7 |
+| `unsat` | `unsaturation` | at least {N} more rings and double bonds | ring outlines and double lines counted together | makeup / bonds | 1,2,3,4,5,6,7,8,9 |
+| `keep_CO` | `end_CO` | at least {N} more C=O at the finish | the group drawn in a box that stays lit to the end of the round | makeup / keep | 1,2,3 |
+| `keep_CC` | `end_CC` | at least {N} more C=C at the finish | the group drawn in a box that stays lit to the end of the round | makeup / keep | 4,5,6,7,8,9 |
+| `first` | `opener` | at least {N} reflexes after the first reagent | a lit bolt after the first of three bottles | chain / chains | 3,4,5,6,7,8 |
+| `third` | `closer` | at least {N} reflexes after the last reagent | a lit bolt after the third of three bottles | chain / chains | 6,7,8,9 |
+| `self_ring` | `kind_ring` | at least {N} ring-closing reflexes | a chain being closed into a ring | chain / chains | 7,8,9 |
+| `off_all` | `off_total` | at least {N} runoff over the round | jars filling with drops and bubbles | runoff / vent | 1,2,3,4,5,6,7,8 |
+| `jar_hydrogen` | `off_hydrogen` | at least {N} hydrogen in the runoff | a jar of hydrogen | runoff / vent | 1,2,3,4,5,8,9 |
+| `jar_carbon_dioxide` | `off_carbon_dioxide` | at least {N} carbon dioxide in the runoff | a jar of carbon dioxide | runoff / vent | 1,2,5 |
+| `water_only` | `pure_water` | at least {N} more water than other runoff | a full water jar beside empty ones | runoff / pure | 4,5,6,7,8,9 |
+| `gas_only` | `pure_gas` | at least {N} more gas than water | bubbles rising from a jar with no water in it | runoff / pure | 1,2,3 |
+| `held` | `held_back` | at least {N} turns firing fewer than three | a turn with one empty slot | restraint / restraint | 6,7,8,9 |
 
-Until a mark is drawn, `drawHurdle` draws nothing for it (the number is not shown either). `g.spec.text` is plain words with the number in it, for a hover or the end screen.
+`held` (held_back) is a rider: it is only ever the second spec of a pair, in rounds 6 to 9, N = 2, and the round must let a turn be fired with one or two reagents (a turn with one empty slot). Until a mark is drawn, `drawHurdle` draws nothing for it (the number is not shown either). `g.spec.text` is plain words with the number in it, for a hover or the end screen. `g.spec.parts[i].plan` and `.family` are given too.
 
 ## What the code does and where
 

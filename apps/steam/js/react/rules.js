@@ -377,6 +377,477 @@ const SELFCARDS = [
     apply(m) { const s = enonable(m)[0], ha = Hs(m, s.a)[0]; cut(m, s.b, s.o); cut(m, s.a, ha); m.bond(s.o, ha); bondOf(m, s.a, s.b).order = 2; return { focus: [s.a, s.b], incoming: [], leaving: [[s.o, s.ho, ha]], tag: 'loses water' }; } }
 ];
 SELFCARDS.forEach(c => { CARDS[c.id] = c; });
+// ===================================================================================================================
+// THE ENGINE (rules builder, eighth measure): the eighteen reagents and thirteen reflexes of docs/tools_chem/library.py, ported
+// onto the game's molecule. A reading of the molecule is a snapshot G of the heavy atoms (indices, neighbours with bond orders,
+// the hydrogens counted); a change edits the model and then sets the hydrogens of the atoms it touched from the valences
+// (C 4, N 3, O 2, S 2, Cl 1), as RDKit's implicit hydrogens do. docs/tools_chem/FINAL.md says what each piece does.
+//   ENG.fire(m, id)            a reagent at every place it fits, one place at a time (library.py Reaction.fire): { n, off, piece }
+//   ENG.nextReflex(m, held, cnt) the reflex that fires next (engine.py _next_self): { id, site } or null
+//   ENG.settle(m, held, cnt, budget) the reflexes run one at a time until none fits or the budget is spent: { steps, off, capped }
+//   ENG.reopen(m)              the loose rings open again (library.py reopen)
+//   ENG.toSmiles(m)            the molecule as a Kekule SMILES (for the comparison with RDKit)
+// ===================================================================================================================
+const ENG = (() => {
+  const REMOVED = [];
+  const VAL = { C: 4, N: 3, O: 2, S: 2, Cl: 1 }, DIST = { C: 3.0, N: 2.9, O: 2.8, S: 3.3, Cl: 3.0, H: 2.2 };
+  // ---------- the reading ----------
+  function snapG(m) {
+    const atoms = [], idx = new Map();
+    m.atoms.forEach(a => { if (a.el !== 'H' && !a.fly) { idx.set(a, atoms.length); atoms.push(a); } });
+    const nb = atoms.map(() => []), hc = atoms.map(() => 0);
+    m.bonds.forEach(k => {
+      const ia = idx.get(k.a), ib = idx.get(k.b);
+      if (ia != null && ib != null) { nb[ia].push({ j: ib, o: k.order }); nb[ib].push({ j: ia, o: k.order }); }
+      else if (k.a.el === 'H' && ib != null) hc[ib]++;
+      else if (k.b.el === 'H' && ia != null) hc[ia]++;
+    });
+    const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null };
+    const ar = aromaticAtoms(m); G.ar = atoms.map(a => ar.has(a));
+    return G;
+  }
+  const el = (G, i) => G.atoms[i].el, X = (G, i) => G.nb[i].length + G.hc[i];
+  const aC = (G, i) => el(G, i) === 'C' && !G.ar[i];
+  const bo = (G, i, j) => { for (const q of G.nb[i]) if (q.j === j) return q.o; return 0; };
+  const cnb = (G, i) => G.nb[i].filter(q => el(G, q.j) === 'C').map(q => q.j);
+  const hetero = (G, i) => G.nb[i].some(q => el(G, q.j) !== 'C');
+  const sp3 = (G, i) => G.nb[i].every(q => q.o === 1);
+  const oneHet = (G, i) => G.nb[i].filter(q => q.o === 1 && el(G, q.j) !== 'C').length < 2;          // !$(C(-[!#6])-[!#6])
+  const CX4 = (G, i) => aC(G, i) && X(G, i) === 4, CX3 = (G, i) => aC(G, i) && X(G, i) === 3;
+  const dblO = (G, i) => { const q = G.nb[i].find(q => q.o === 2 && el(G, q.j) === 'O'); return q ? q.j : -1; };
+  // THE NEIGHBOUR RELATION (owner's ruling AC, docs/HARNESS.md): every reflex asks which sites are close through cdist, and says whether the
+  // two sites are close along the chain or facing each other across the fold through NEAR.via. Today only along the chain; docs/tools_chem/FOLD.md
+  // (when it lands) sets NEAR.fn(G, src, maxd) -> Map(atom index -> distance) and NEAR.via(G, a, b) -> 'chain' | 'fold'. The fold must be one
+  // deterministic function of the molecule that the page also uses to draw it.
+  const NEAR = { fn: null, via: () => 'chain' };
+  function cdist(G, src, maxd) {
+    if (NEAR.fn) return NEAR.fn(G, src, maxd);
+    const key = src + ':' + maxd, hit = G.cd.get(key); if (hit) return hit;
+    const dist = new Map([[src, 0]]), q = [src];
+    for (let k = 0; k < q.length; k++) { const u = q[k], d = dist.get(u); if (d >= maxd) continue; for (const v of cnb(G, u)) if (!dist.has(v)) { dist.set(v, d + 1); q.push(v); } }
+    G.cd.set(key, dist); return dist;
+  }
+  function cpath(G, src, dst, maxd) {
+    const prev = new Map([[src, null]]), dist = new Map([[src, 0]]), q = [src];
+    for (let k = 0; k < q.length; k++) { const u = q[k]; if (u === dst) break; if (dist.get(u) >= maxd) continue; for (const v of cnb(G, u).sort((a, b) => a - b)) if (!prev.has(v)) { prev.set(v, u); dist.set(v, dist.get(u) + 1); q.push(v); } }
+    if (!prev.has(dst)) return null; const p = []; for (let u = dst; u != null; u = prev.get(u)) p.push(u); return p.reverse();
+  }
+  // bonds that lie in a ring: all but the bridges
+  function ringSet(G) {
+    if (G.rb) return G.rb; const n = G.n, disc = new Array(n).fill(-1), low = new Array(n).fill(0), bridge = new Set(); let t = 0;
+    const key = (a, b) => (a < b ? a + ',' + b : b + ',' + a);
+    const dfs = (u, pe) => { disc[u] = low[u] = t++; for (const q of G.nb[u]) { const v = q.j; if (v === pe) continue; if (disc[v] < 0) { dfs(v, u); low[u] = Math.min(low[u], low[v]); if (low[v] > disc[u]) bridge.add(key(u, v)); } else low[u] = Math.min(low[u], disc[v]); } };
+    for (let i = 0; i < n; i++) if (disc[i] < 0) dfs(i, -1);
+    G.rb = { bridge, key }; return G.rb;
+  }
+  const bondInRing = (G, a, b) => !ringSet(G).bridge.has(ringSet(G).key(a, b));
+  const inRing = (G, i) => G.nb[i].some(q => bondInRing(G, i, q.j));
+  function bondRingSize(G, a, b) {              // the smallest ring that holds the bond a-b, 0 if none
+    if (!bondInRing(G, a, b)) return 0;
+    const dist = new Map([[a, 0]]), q = [a];
+    for (let k = 0; k < q.length; k++) { const u = q[k]; for (const w of G.nb[u]) { if (u === a && w.j === b) continue; if (w.j === b) return dist.get(u) + 2; if (!dist.has(w.j)) { dist.set(w.j, dist.get(u) + 1); q.push(w.j); } } }
+    return 0;
+  }
+  function lactolOk(G, a, b, limit) {
+    if (!(inRing(G, a) || inRing(G, b))) return true;
+    const p = cpath(G, a, b, 99); if (!p) return false;
+    let shared = 0; for (let i = 0; i + 1 < p.length; i++) { const r = bondRingSize(G, p[i], p[i + 1]); if (r && r <= limit) shared++; }
+    return shared <= 1;
+  }
+  function endDist(G, c) {
+    const seen = new Set([c]); let layer = [c], d = 0;
+    while (layer.length) { const nx = []; for (const a of layer) { const cn = cnb(G, a); if (cn.length <= 1) return d; cn.forEach(x => { if (!seen.has(x)) { seen.add(x); nx.push(x); } }); } layer = nx; d++; }
+    return d;
+  }
+  const lex = (a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; };
+  // ---------- groups (each is a list of tuples of atom indices, the numbered atoms of the SMARTS) ----------
+  const KC = (G, c) => CX3(G, c) && dblO(G, c) >= 0 && !G.nb[c].some(q => q.o === 1 && el(G, q.j) !== 'C');    // [CX3;!$(C(=O)-[!#6])] with its =O
+  const ketones = G => { const out = []; for (let c = 0; c < G.n; c++) if (KC(G, c)) out.push([c, dblO(G, c)]); return out; };       // [KC:1]=[O:2]
+  const isOH = (G, o) => el(G, o) === 'O' && X(G, o) === 2 && G.hc[o] === 1;                     // [OX2H]
+  const hydroxyls = (G, withAr) => { const out = []; for (let o = 0; o < G.n; o++) if (isOH(G, o)) { const q = G.nb[o][0]; if (q.o === 1 && (CX4(G, q.j) || (withAr && el(G, q.j) === 'C' && G.ar[q.j]))) out.push([o, q.j]); } return out; };
+  const hx = (G, x) => (el(G, x) === 'O' && isOH(G, x)) || (el(G, x) === 'N' && X(G, x) === 3 && G.hc[x] === 2) || (el(G, x) === 'S' && X(G, x) === 2 && G.hc[x] === 1);
+  const donors = G => { const out = []; for (let x = 0; x < G.n; x++) if (hx(G, x) && G.nb[x].length === 1) { const q = G.nb[x][0]; if (q.o === 1 && CX4(G, q.j) && oneHet(G, q.j)) out.push([x, q.j]); } return out; };   // [OX2H,NX3H2,SX2H]-[CX4;ONE_HET]
+  // the pairs of groups whose anchor carbons are lo..hi bonds apart along carbon (chemlib.pair_sites)
+  function pairs(G, As, Bs, aa, bb, lo, hi, ring, limit) {
+    const out = [];
+    As.forEach((a, ia) => { const dist = cdist(G, a[aa], hi); Bs.forEach((b, ib) => {
+      const ca = a[aa], cb = b[bb], d = dist.get(cb); if (d == null || d < lo || d > hi || cb === ca) return;
+      if (a.some(x => b.includes(x))) return; if (ring === 'lactol' && !lactolOk(G, cb, ca, limit || 8)) return;
+      out.push({ A: a, B: b, dist: d, tie: [ia, ib], anch: [ca, cb], via: NEAR.via(G, ca, cb) }); }); });
+    return out;
+  }
+  const byDist = (x, y) => x.dist - y.dist || lex(x.tie, y.tie);
+  // ---------- the editing ----------
+  const setBond = (m, a, b, o) => { const k = m.findBond(a, b); if (k) k.order = o; else m.bonds.push({ a, b, order: o }); };
+  function normH(m, list) {
+    list.forEach(a => {
+      if (!a || a.el === 'H' || !m.atoms.includes(a)) return; let s = 0; const hs = [];
+      m.bonds.forEach(k => { if (k.a === a) { if (k.b.el === 'H') hs.push(k.b); else s += k.order; } else if (k.b === a) { if (k.a.el === 'H') hs.push(k.a); else s += k.order; } });
+      const want = (VAL[a.el] || 0) - s; for (let i = hs.length; i < want; i++) attach(m, 'H', a, DIST.H); for (let i = hs.length; i > want && i > 0; i--) { REMOVED.push(hs[i - 1]); m.removeAtom(hs[i - 1]); }
+    });
+  }
+  const newAt = (m, e, to, order) => { const a = attach(m, e, to, DIST[e]); if (order > 1) setBond(m, to, a, order); return a; };
+  const unbond = (m, a, b) => cut(m, a, b);
+  // a group leaving: the atom and the hydrogens on it, detached from the molecule (the caller removes them)
+  const hOf = (m, a) => nbs(m, a).filter(n => n.atom.el === 'H').map(n => n.atom);
+  const take = (m, a) => [a].concat(hOf(m, a));
+  // ---------- the reflexes ----------
+  const R = {};
+  // ring (the zip): an OH 3 or 4 carbons from a C=O closes a ring through its oxygen
+  R.ring = {
+    prio: 2, per: 2,
+    find(G, reach) {
+      const hi = Math.max(4, reach | 0), ks = ketones(G), ohs = hydroxyls(G, true), out = []; if (!ks.length || !ohs.length) return out;
+      ks.forEach((k, ik) => { const dist = cdist(G, k[0], hi); ohs.forEach((s, io) => {
+        const kc = k[0], sc = s[1]; if (sc === kc) return; const d = dist.get(sc); if (d == null || d < 3 || d > hi) return;
+        if ((inRing(G, kc) || inRing(G, sc)) && !lactolOk(G, sc, kc, 8)) return;
+        let front = 0; G.nb[sc].forEach(q => { if (q.j !== s[0] && el(G, q.j) === 'O' && G.nb[q.j].length === 2 && G.nb[q.j].every(w => el(G, w.j) === 'C')) front = 1; });
+        out.push({ dist: d, sort: [-front, d, ik, io], k, oh: s }); }); });
+      return out.sort((x, y) => lex(x.sort, y.sort));
+    },
+    edit(G, m, s) { const A = i => G.atoms[i]; setBond(m, A(s.k[0]), A(s.k[1]), 1); m.bond(A(s.oh[0]), A(s.k[0])); normH(m, [A(s.oh[0]), A(s.k[1])]); return { focus: [A(s.oh[0]), A(s.k[0]), A(s.k[1])], incoming: [], leaving: [] }; }
+  };
+  // dry: an OH 2 carbons from a C=O leaves as water and a C=C forms beside the C=O
+  R.dry = {
+    prio: 1, per: 1, off: { water: 1 },
+    find(G) {
+      const out = [];
+      ketones(G).forEach(k => { const c1 = k[0]; G.nb[c1].forEach(q3 => { const c3 = q3.j; if (q3.o !== 1 || !CX4(G, c3) || G.hc[c3] < 1) return;
+        G.nb[c3].forEach(q4 => { const c4 = q4.j; if (c4 === c1 || q4.o !== 1 || !CX4(G, c4) || !oneHet(G, c4)) return;
+          G.nb[c4].forEach(q5 => { if (q5.j !== c3 && q5.o === 1 && isOH(G, q5.j)) out.push({ dist: 2, t: [c1, k[1], c3, c4, q5.j] }); }); }); }); });
+      return out.sort((x, y) => lex(x.t, y.t));
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c3 = A(s.t[2]), c4 = A(s.t[3]), o = A(s.t[4]), g = take(m, o); cut(m, c4, o); setBond(m, c3, c4, 2); normH(m, [c3, c4]); return { focus: [c3, c4], incoming: [], leaving: [g] }; }
+  };
+  // flip: an OH on a carbon of a C=C becomes C=O
+  R.flip = {
+    prio: 1, dist0: 0,
+    find(G) {
+      const out = []; for (let c1 = 0; c1 < G.n; c1++) { if (!aC(G, c1)) continue;
+        const oh = G.nb[c1].find(q => q.o === 1 && isOH(G, q.j)); if (!oh) continue;
+        G.nb[c1].forEach(q => { if (q.o === 2 && aC(G, q.j)) out.push({ dist: 0, t: [c1, oh.j, q.j] }); }); }
+      return out.sort((x, y) => lex(x.t, y.t));
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), o = A(s.t[1]), c3 = A(s.t[2]); setBond(m, c1, c3, 1); setBond(m, c1, o, 2); normH(m, [c1, o, c3]); return { focus: [c1, o, c3], incoming: [], leaving: [] }; }
+  };
+  // shift: a C=C whose near carbon is 2 carbons from a C=O slides one carbon toward it
+  R.shift = {
+    prio: 1,
+    find(G) {
+      const out = [], conj = c => G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C' && dblO(G, q.j) >= 0);
+      ketones(G).forEach(k => { const c1 = k[0]; G.nb[c1].forEach(q3 => { const c3 = q3.j; if (q3.o !== 1 || !CX4(G, c3) || G.hc[c3] < 1) return;
+        G.nb[c3].forEach(q4 => { const c4 = q4.j; if (c4 === c1 || q4.o !== 1 || !CX3(G, c4) || conj(c4)) return;
+          G.nb[c4].forEach(q5 => { const c5 = q5.j; if (q5.o === 2 && aC(G, c5) && !conj(c5)) out.push({ dist: 2, t: [c1, k[1], c3, c4, c5] }); }); }); });  });
+      return out.sort((x, y) => lex(x.t, y.t));
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c3 = A(s.t[2]), c4 = A(s.t[3]), c5 = A(s.t[4]); setBond(m, c3, c4, 2); setBond(m, c4, c5, 1); normH(m, [c3, c4, c5]); return { focus: [c3, c4, c5], incoming: [], leaving: [] }; }
+  };
+  // tuck: a C=C beside a C=O and an OH 3 or 4 carbons from its far end: the OH adds to the far carbon and closes a ring
+  R.tuck = {
+    prio: 1,
+    find(G) {
+      const As = []; ketones(G).forEach(k => { const c1 = k[0]; G.nb[c1].forEach(q3 => { if (q3.o !== 1 || !aC(G, q3.j)) return; G.nb[q3.j].forEach(q4 => { if (q4.o === 2 && aC(G, q4.j) && q4.j !== c1) As.push([c1, k[1], q3.j, q4.j]); }); }); });
+      As.sort(lex); const Bs = hydroxyls(G, false).filter(b => oneHet(G, b[1]));
+      return pairs(G, As, Bs, 3, 1, 3, 4, 'lactol').sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c3 = A(s.A[2]), c4 = A(s.A[3]), o = A(s.B[0]); setBond(m, c3, c4, 1); m.bond(o, c4); normH(m, [c3, c4, o]); return { focus: [o, c4, c3], incoming: [], leaving: [] }; }
+  };
+  // weld: the carbon beside one C=O joins a second C=O 4 or 5 carbons away and a ring closes
+  R.weld = {
+    prio: 1, per: 2,
+    find(G) {
+      const As = [], Bs = [];
+      ketones(G).forEach(k => { G.nb[k[0]].forEach(q => { const c3 = q.j; if (q.o === 1 && CX4(G, c3) && !inRing(G, c3) && G.hc[c3] >= 1) As.push([k[0], k[1], c3]); }); if (!inRing(G, k[0])) Bs.push([k[0], k[1]]); });
+      As.sort(lex);
+      return pairs(G, As, Bs, 2, 0, 4, 5, 'any').sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], a = A(s.A[2]), c2 = A(s.B[0]), o2 = A(s.B[1]); setBond(m, c2, o2, 1); m.bond(a, c2); normH(m, [a, c2, o2]); return { focus: [a, c2, o2], incoming: [], leaving: [] }; }
+  };
+  // snap: two C=C side by side and a third C=C close a six-ring
+  R.snap = {
+    prio: 1,
+    find(G) {
+      const out = [], dbls = []; G.nb.forEach((l, a) => l.forEach(q => { if (q.j > a && q.o === 2 && el(G, a) === 'C' && el(G, q.j) === 'C' && !G.ar[a] && !G.ar[q.j]) dbls.push([a, q.j]); }));
+      if (dbls.length < 3) return out;
+      dbls.forEach(([x, y], ia) => [[x, y], [y, x]].forEach(([c1, c2]) => { cnb(G, c2).forEach(c3 => { if (c3 === c1 || bo(G, c2, c3) === 2) return;
+        cnb(G, c3).forEach(c4 => { if (c4 === c2 || c4 === c1 || bo(G, c3, c4) !== 2) return;
+          dbls.forEach(([u, v], ib) => { if (ib === ia || [u, v].some(w => w === c1 || w === c2 || w === c3 || w === c4)) return;
+            [[u, v], [v, u]].forEach(([ca, cb]) => { const p = cpath(G, c4, ca, 5); if (!p || p.length < 5 || p.includes(c3) || p.includes(cb) || p.includes(c1) || bo(G, c1, cb)) return;
+              out.push({ dist: p.length - 1, tie: [ia, ib], c: [c1, c2, c3, c4, ca, cb] }); }); }); }); }); }));
+      return out.sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], [c1, c2, c3, c4, ca, cb] = s.c.map(A); setBond(m, c1, c2, 1); setBond(m, c3, c4, 1); setBond(m, c2, c3, 2); setBond(m, ca, cb, 1); m.bond(c1, cb); m.bond(c4, ca); normH(m, [c1, c2, c3, c4, ca, cb]); return { focus: [c1, c4, ca, cb], incoming: [], leaving: [] }; }
+  };
+  // knit: an NH2 3 or 4 carbons from a C=O adds to it and closes a ring through N
+  R.knit = {
+    prio: 0,
+    find(G) { const Bs = []; for (let n = 0; n < G.n; n++) if (el(G, n) === 'N' && X(G, n) === 3 && G.hc[n] === 2 && G.nb[n].length === 1 && G.nb[n][0].o === 1 && CX4(G, G.nb[n][0].j)) Bs.push([n, G.nb[n][0].j]);
+      return pairs(G, ketones(G), Bs, 0, 1, 3, 4, 'lactol').sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], c = A(s.A[0]), o = A(s.A[1]), n = A(s.B[0]); setBond(m, c, o, 1); m.bond(c, n); normH(m, [c, o, n]); return { focus: [c, o, n], incoming: [], leaving: [] }; }
+  };
+  // seal: a COOH and an OH, NH2 or SH 3 or 4 carbons apart join as a lactone, lactam or thiolactone; water comes off
+  R.seal = {
+    prio: 0, off: { water: 1 },
+    find(G) {
+      const As = []; for (let c = 0; c < G.n; c++) { if (!CX3(G, c)) continue; const o = dblO(G, c); if (o < 0) continue; const oh = G.nb[c].find(q => q.o === 1 && isOH(G, q.j)); if (!oh) continue; if (!G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C')) continue; As.push([c, o, oh.j]); }
+      return pairs(G, As, donors(G), 0, 1, 3, 4, 'lactol').sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c = A(s.A[0]), oh = A(s.A[2]), x = A(s.B[0]), g = take(m, oh); cut(m, c, oh); m.bond(x, c); normH(m, [c, x]); return { focus: [c, x], incoming: [], leaving: [g] }; }
+  };
+  // cap: an SH 3 or 4 carbons from a C=O adds to it and closes a ring through S
+  R.cap = {
+    prio: 0,
+    find(G) { const As = []; for (let s = 0; s < G.n; s++) if (el(G, s) === 'S' && X(G, s) === 2 && G.hc[s] === 1 && G.nb[s].length === 1 && G.nb[s][0].o === 1 && CX4(G, G.nb[s][0].j)) As.push([s, G.nb[s][0].j]);
+      return pairs(G, As, ketones(G), 1, 0, 3, 4, 'lactol').sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], sf = A(s.A[0]), c = A(s.B[0]), o = A(s.B[1]); setBond(m, c, o, 1); m.bond(sf, c); normH(m, [c, o, sf]); return { focus: [sf, c, o], incoming: [], leaving: [] }; }
+  };
+  // close: a Cl and an OH, NH2, SH or COOH 3 to 5 carbons apart close a ring; acid fumes come off
+  R.close = {
+    prio: 0, off: { acid_fumes: 1 },
+    find(G) {
+      const As = []; for (let c = 0; c < G.n; c++) if (el(G, c) === 'Cl' && G.nb[c].length === 1 && CX4(G, G.nb[c][0].j) && G.nb[c][0].o === 1) As.push([c, G.nb[c][0].j]);
+      if (!As.length) return [];
+      const Bacid = []; for (let o = 0; o < G.n; o++) if (isOH(G, o)) { const q = G.nb[o][0]; if (q.o === 1 && CX3(G, q.j) && dblO(G, q.j) >= 0) Bacid.push([o, q.j]); }
+      return pairs(G, As, donors(G), 1, 1, 3, 5, 'lactol').concat(pairs(G, As, Bacid, 1, 1, 3, 5, 'lactol')).sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], cl = A(s.A[0]), c = A(s.A[1]), x = A(s.B[0]), g = take(m, cl); cut(m, cl, c); m.bond(x, c); normH(m, [c, x]); return { focus: [x, c], incoming: [], leaving: [g] }; }
+  };
+  // open: an OH 3 or 4 carbons from a carbon of an epoxide opens it and closes a ring
+  R.open = {
+    prio: 0,
+    find(G) {
+      const As = []; for (let o = 0; o < G.n; o++) { if (el(G, o) !== 'O' || G.nb[o].length !== 2 || G.hc[o] !== 0 || G.nb[o].some(q => q.o !== 1 || !aC(G, q.j))) continue; const a = G.nb[o][0].j, b = G.nb[o][1].j; if (bo(G, a, b) === 1) { As.push([a, o, b]); As.push([b, o, a]); } }
+      As.sort(lex); return pairs(G, As, hydroxyls(G, false).filter(b => oneHet(G, b[1])), 0, 1, 3, 4, 'lactol').sort(byDist);
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], ca = A(s.A[0]), oe = A(s.A[1]), oh = A(s.B[0]); cut(m, ca, oe); m.bond(oh, ca); normH(m, [ca, oe, oh]); return { focus: [ca, oh, oe], incoming: [], leaving: [] }; }
+  };
+  // fold: an epoxide with a carbon on both ends turns into a C=O
+  R.fold = {
+    prio: 1, dist0: 9,
+    find(G) {
+      const out = []; for (let o = 0; o < G.n; o++) { if (el(G, o) !== 'O' || G.nb[o].length !== 2 || G.hc[o] !== 0 || G.nb[o].some(q => q.o !== 1 || !aC(G, q.j))) continue; const a = G.nb[o][0].j, b = G.nb[o][1].j; if (bo(G, a, b) !== 1) continue;
+        [[a, b], [b, a]].forEach(([c1, c3]) => { if (G.hc[c1] <= 1 && G.hc[c3] === 1) out.push({ dist: 9, t: [c1, o, c3] }); }); }
+      return out.sort((x, y) => lex(x.t, y.t));
+    },
+    edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), o = A(s.t[1]), c3 = A(s.t[2]); cut(m, c1, o); setBond(m, c3, o, 2); normH(m, [c1, c3, o]); return { focus: [c1, c3, o], incoming: [], leaving: [] }; }
+  };
+  const ORDER = ['seal', 'close', 'knit', 'cap', 'open', 'fold', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'ring'];
+  // the game's card ids for the reflexes it already had (the page draws them by these names); the kind is the name in the record
+  const KIND = { lactol: 'ring', enone: 'dry', taut: 'flip', weld: 'weld', snap6: 'snap', ether: 'close', shift: 'shift', tuck: 'tuck', knit: 'knit', seal: 'seal', cap: 'cap', open: 'open', fold: 'fold' };
+  const CARDID = {}; Object.keys(KIND).forEach(k => { CARDID[KIND[k]] = k; });
+  // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
+  function nextReflex(m, held, cnt, G0) {
+    const G = G0 || snapG(m), rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
+    rules.forEach((k, ri) => { const sites = R[k].find(G); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
+    cands.sort((a, b) => lex(a.key, b.key));
+    return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G } : null;
+  }
+  const mergeOff = (to, off) => { if (off) Object.keys(off).forEach(k => { to[k] = (to[k] || 0) + off[k]; }); };
+  function doReflex(m, nx, remove) {
+    const r = R[nx.id].edit(nx.G, m, nx.site); if (remove) r.leaving.forEach(g => g.forEach(a => m.removeAtom(a))); return r;
+  }
+  function settle(m, held, cnt, budget) {
+    const steps = [], off = {}; let capped = false; cnt = cnt || {};
+    for (;;) {
+      if (steps.length >= budget) { capped = !!nextReflex(m, held, cnt); break; }
+      const nx = nextReflex(m, held, cnt); if (!nx) break;
+      doReflex(m, nx, true); steps.push(nx.id); cnt[nx.id] = (cnt[nx.id] || 0) + 1; mergeOff(off, R[nx.id].off);
+    }
+    return { steps, off, capped };
+  }
+  // loose rings: a carbon with an OH, beside a ring bond to an O, S or N of two connections: the ring lets go (library.py reopen)
+  function reopenOne(m, cuts) {
+    const G = snapG(m);
+    for (let c = 0; c < G.n; c++) { if (!CX4(G, c)) continue; const oh = G.nb[c].find(q => q.o === 1 && isOH(G, q.j)); if (!oh) continue;
+      for (const q of G.nb[c]) { const x = q.j; if (x === oh.j || G.atoms[x].frz || G.atoms[oh.j].prot || q.o !== 1 || !((el(G, x) === 'O' && X(G, x) === 2) || (el(G, x) === 'S' && X(G, x) === 2) || (el(G, x) === 'N' && X(G, x) === 3)) || G.nb[x].length !== 2) continue;
+        if (!bondInRing(G, c, x) || !G.nb[x].some(w => w.j !== c && el(G, w.j) === 'C')) continue;
+        const A = i => G.atoms[i], ca = A(c), xa = A(x), oa = A(oh.j); cut(m, ca, xa); setBond(m, ca, oa, 2); normH(m, [ca, oa, xa]); if (cuts) cuts.push({ c: ca, o: xa }); return true; } }
+    return false;
+  }
+  function reopen(m, cuts) { let n = 0; for (let i = 0; i < 80 && reopenOne(m, cuts); i++) n++; return n; }
+  // ---------- the twelve reagents after the six (library.py Reaction.steps) ----------
+  // A step is applied at one place, then looked for again, until it fits nowhere. find gives the places best first.
+  const allC = (G, f) => { const out = []; for (let a = 0; a < G.n; a++) for (const q of G.nb[a]) if (q.j > a && q.o === 2 && aC(G, a) && aC(G, q.j)) out.push([a, q.j]); return out.flatMap(([a, b]) => [[a, b], [b, a]]).filter(p => (f ? f(p[0], p[1]) : true)); };
+  const conjC = (G, c) => G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C' && dblO(G, q.j) >= 0);                 // $(C-[#6]=O)
+  const pull = (G, c, other) => G.nb[c].some(q => q.j !== other && el(G, q.j) === 'C' && hetero(G, q.j));
+  // addition across C=C: X on one carbon, H on the other (library.addition_steps); X is O, N, S or CHO
+  function putX(G, m, cx, ch, X) {
+    const a = G.atoms[cx], b = G.atoms[ch], inc = [];
+    setBond(m, a, b, 1);
+    if (X === 'CHO') { const c = newAt(m, 'C', a, 1), o = newAt(m, 'O', c, 2); inc.push(c, o); normH(m, [c, o]); } else { const x = newAt(m, X, a, 1); inc.push(x); normH(m, [x]); }
+    normH(m, [a, b]); return { focus: [a, b], incoming: inc, leaving: [] };
+  }
+  function addSteps(X, anti) {
+    const mk = (f, pick, key) => ({
+      find(G) { const out = allC(G, f).map(([c1, c2]) => ({ t: [c1, c2], cx: pick(c1, c2), key: key ? key(G, c1, c2) : [0] })); return out.sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); },
+      edit(G, m, s) { const ch = s.t[0] === s.cx ? s.t[1] : s.t[0]; return putX(G, m, s.cx, ch, X); }
+    });
+    const stepA = G => allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2));
+    const steps = [];
+    steps.push({ find(G) { return allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2)).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c1 : c2 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X) });
+    [[0, [1, 2]], [1, [2]]].forEach(([lo, his]) => steps.push({ find(G) { return allC(G, (c1, c2) => G.hc[c1] === lo && his.includes(G.hc[c2])).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c2 : c1 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X) }));
+    steps.push({ find(G) { return allC(G).map(([c1, c2]) => { const k = [pull(G, c1, c2) ? 1 : 0, endDist(G, c1)]; return { t: [c1, c2], cx: c1, key: anti ? [-k[0], -k[1]] : k }; }).sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[1], X) });
+    return steps;
+  }
+  // elimination: the group on c1 leaves and a C=C forms toward a neighbour with an H; zaitsev (fewest H) or most H
+  function elimStep(groupOK, mostH, noOxyNb, leaveOff) {
+    return {
+      off: leaveOff,
+      find(G) {
+        const out = [];
+        for (let c1 = 0; c1 < G.n; c1++) { if (!CX4(G, c1) || !oneHet(G, c1)) continue;
+          if (noOxyNb && G.nb[c1].some(q => el(G, q.j) === 'C' && G.nb[q.j].some(w => el(G, w.j) === 'O'))) continue;
+          const g = G.nb[c1].find(q => q.o === 1 && groupOK(G, q.j)); if (!g) continue;
+          G.nb[c1].forEach(q => { const c3 = q.j; if (c3 === g.j || q.o !== 1 || !CX4(G, c3) || G.hc[c3] < 1 || G.nb[c3].some(w => el(G, w.j) !== 'C')) return;
+            const conj = G.nb[c3].some(w => w.j !== c1 && el(G, w.j) === 'C' && !sp3(G, w.j));
+            out.push({ t: [c1, g.j, c3], key: mostH ? [-G.hc[c3]] : [G.hc[c3], conj ? 0 : 1, -endDist(G, c3)] }); }); }
+        return out.sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t));
+      },
+      edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), x = A(s.t[1]), c3 = A(s.t[2]), g = take(m, x); cut(m, c1, x); setBond(m, c1, c3, 2); normH(m, [c1, c3]); return { focus: [c1, c3], incoming: [], leaving: [g] }; }
+    };
+  }
+  const isNH2 = (G, x) => el(G, x) === 'N' && X(G, x) === 3 && G.hc[x] === 2 && G.nb[x].length === 1;
+  const methylKet = (G, c) => dblO(G, c) >= 0 && G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C' && G.hc[q.j] === 3 && X(G, q.j) === 4);       // $(C(=O)[CH3])
+  const hweSite = (G, c) => KC(G, c) && (methylKet(G, c) || G.hc[c] === 1);
+  // every C=O (a ketone or aldehyde, see KC) that a test takes, best first: the places of a carbonyl reagent
+  const carbonyls = (G, f) => ketones(G).filter(k => f(G, k[0])).map(k => ({ t: k }));
+  const REAG = {
+    hydrate: addSteps('O', false),
+    hydroborate: addSteps('O', true),
+    dehydrate: [elimStep(isOH, false, true, { water: 1 })],
+    oxidize: [
+      { off: { hydrogen: 1 }, find(G) { const out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); } return out; },
+        edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 2); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } },
+      { when: () => MODE.co2, off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
+        edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), c2 = A(s.t[1]), g = take(m, c1); cut(m, c1, c2); const o1 = newAt(m, 'O', c2, 2); normH(m, [c2, o1]); return { focus: [c2], incoming: [o1], leaving: [g] }; } }
+    ],
+    reduce: [{ find: G => ketones(G).filter(k => G.hc[k[0]] === 1 || G.hc[k[0]] === 2).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 1); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } }],
+    grow: [{ find: G => ketones(G).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 1); const c1 = newAt(m, 'C', c, 1), c2 = newAt(m, 'C', c1, 1), c3 = newAt(m, 'C', c2, 2); normH(m, [c, o, c1, c2, c3]); return { focus: [c, o], incoming: [c1, c2, c3], leaving: [] }; } }],
+    hwe: [{ find: G => carbonyls(G, (g, c) => hweSite(g, c) && !g.nb[c].some(q => q.o === 1 && el(g, q.j) === 'C' && g.nb[q.j].some(w => w.o === 2 && el(g, w.j) === 'C')))
+      , edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); m.removeAtom(o); const c2 = newAt(m, 'C', c, 2), c3 = newAt(m, 'C', c2, 1), o3 = newAt(m, 'O', c3, 2), c4 = newAt(m, 'C', c3, 1); normH(m, [c, c2, c3, o3, c4]); return { focus: [c, c2], incoming: [c2, c3, o3, c4], leaving: [] }; } }],
+    dihydroxylation: [{ find: G => allC(G).filter((p, i) => p[0] < p[1]).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], a = A(s.t[0]), b = A(s.t[1]); setBond(m, a, b, 1); const o1 = newAt(m, 'O', a, 1), o2 = newAt(m, 'O', b, 1); normH(m, [a, b, o1, o2]); return { focus: [a, b], incoming: [o1, o2], leaving: [] }; } }],
+    ozonolysis: [{ cut: true, find: G => allC(G).filter(p => p[0] < p[1]).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], a = A(s.t[0]), b = A(s.t[1]); cut(m, a, b); const o1 = newAt(m, 'O', a, 2), o2 = newAt(m, 'O', b, 2); normH(m, [a, b, o1, o2]); return { focus: [a, b], incoming: [o1, o2], leaving: [] }; } }],
+    permanganate: [
+      { off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
+        edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), c2 = A(s.t[1]), g = take(m, c1); cut(m, c1, c2); const o1 = newAt(m, 'O', c2, 2), o2 = newAt(m, 'O', c2, 1); normH(m, [c2, o1, o2]); return { focus: [c2], incoming: [o1, o2], leaving: [g] }; } },
+      { find: G => ketones(G).filter(k => G.hc[k[0]] === 1).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); const o2 = newAt(m, 'O', c, 1); normH(m, [c, o, o2]); return { focus: [c, o], incoming: [o2], leaving: [] }; } },
+      { off: { hydrogen: 1 }, find: G => { const out = []; for (let o = 0; o < G.n; o++) { if (!isOH(G, o)) continue; const c = G.nb[o][0].j; if (G.nb[o][0].o === 1 && CX4(G, c) && G.hc[c] === 2 && G.nb[c].length === 2 && G.nb[c].some(q => el(G, q.j) === 'C')) out.push({ t: [c, o] }); } return out.sort((x, y) => lex(x.t, y.t)); },
+        edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]), o2 = newAt(m, 'O', c, 2); normH(m, [c, o, o2]); return { focus: [c, o], incoming: [o2], leaving: [] }; } }
+    ],
+    ritter: addSteps('N', false),
+    thiolene: addSteps('S', true),
+    hydroformylation: addSteps('CHO', true),
+    chlorination: [{ off: { acid_fumes: 1 }, find(G) { const out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); } return out; },
+      edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]), g = take(m, o); cut(m, c, o); const cl = newAt(m, 'Cl', c, 1); normH(m, [c, cl]); return { focus: [c, cl], incoming: [cl], leaving: [g] }; } }],
+    cyanohydrin: [{ off: { ammonia: 1 }, find: G => carbonyls(G, (g, c) => KC(g, c) && (methylKet(g, c) || g.hc[c] === 1)),
+      edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 1); const c2 = newAt(m, 'C', c, 1), o2 = newAt(m, 'O', c2, 2), o3 = newAt(m, 'O', c2, 1); normH(m, [c, o, c2, o2, o3]); return { focus: [c, o], incoming: [c2, o2, o3], leaving: [] }; } }],
+    hofmann: [Object.assign(elimStep(isNH2, true, false, { trimethylamine: 1, water: 1 }), {})],
+    chugaev: [elimStep(isOH, true, true, { sulfur: 1 })],
+    epoxidation: [{ find: G => allC(G).filter(p => p[0] < p[1]).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], a = A(s.t[0]), b = A(s.t[1]); setBond(m, a, b, 1); const o = newAt(m, 'O', a, 1); m.bond(o, b); normH(m, [a, b, o]); return { focus: [a, b], incoming: [o], leaving: [] }; } }]
+  };
+  // the heaviest piece stays when a cut makes two (ozonolysis); the others are 'piece'
+  function dropPieces(m) {
+    const comps = m.components ? m.components() : null; if (!comps || comps.length < 2) return 0;
+    const size = c => c.filter(a => a.el !== 'H').length; comps.sort((a, b) => size(b) - size(a) || m.atoms.indexOf(a[0]) - m.atoms.indexOf(b[0]));
+    for (let i = 1; i < comps.length; i++) comps[i].forEach(a => m.removeAtom(a)); return comps.length - 1;
+  }
+  // one reagent at every place it fits: { n, off, piece, made, gone } (library.py Reaction.fire); the molecule is changed in place
+  function fire(m, id, each) {
+    const steps = REAG[id]; if (!steps) return null; const res = { n: 0, off: {}, piece: 0, made: [], gone: [] };
+    steps.forEach(st => {
+      if (st.when && !st.when()) return;
+      for (let guard = 0; guard < 64; guard++) {
+        const G = snapG(m), sites = st.find(G); if (!sites.length) break;
+        REMOVED.length = 0; const r = st.edit(G, m, sites[0]); const grp = r.leaving.reduce((a, g) => a.concat(g), []).concat(REMOVED); r.leaving.forEach(g => g.forEach(a => m.removeAtom(a)));
+        if (st.off || r.leaving.length) { grp.off = st.off || null; res.gone.push(grp); }
+        r.focus.concat(r.incoming).forEach(a => res.made.push(a)); res.n++; mergeOff(res.off, st.off);
+        if (st.cut) { const k = dropPieces(m); if (k) { res.piece += k; res.off.piece = (res.off.piece || 0) + k; } }
+        if (each) each(r);
+      }
+    });
+    return res;
+  }
+  // ---------- SMILES out (Kekule, hydrogens implicit): for the comparison with RDKit ----------
+  function toSmiles(m) {
+    const G = snapG(m), seen = new Array(G.n).fill(false), nr = [0], parts = [];
+    const sym = i => el(G, i), ob = o => (o === 2 ? '=' : o === 3 ? '#' : '');
+    for (let s = 0; s < G.n; s++) {
+      if (seen[s]) continue;
+      const order = [], parent = new Map(), tree = new Set(), ring = new Map(); const stack = [[s, -1]];
+      // depth-first: find ring closure bonds
+      const state = new Array(G.n).fill(0), kids = new Map(), closes = []; const dfs = (u, p) => { state[u] = 1; seen[u] = true; kids.set(u, []); for (const q of G.nb[u]) { if (q.j === p) continue; if (state[q.j] === 0) { kids.get(u).push(q); dfs(q.j, u); } else if (state[q.j] === 1) closes.push({ a: q.j, b: u, o: q.o }); } state[u] = 2; };
+      dfs(s, -1);
+      const opens = new Map(), digs = new Map(); closes.forEach((c, i) => { const d = (i % 9) + 1; (opens.get(c.a) || opens.set(c.a, []).get(c.a)).push({ d: i + 1, o: c.o }); (digs.get(c.b) || digs.set(c.b, []).get(c.b)).push({ d: i + 1, o: c.o }); });
+      const num = d => (d < 10 ? String(d) : '%' + d);
+      const w = u => { let t = sym(u); (opens.get(u) || []).forEach(r => { t += ob(r.o) + num(r.d); }); (digs.get(u) || []).forEach(r => { t += num(r.d); }); const k = kids.get(u); k.forEach((q, i) => { const sub = ob(q.o) + w(q.j); t += i < k.length - 1 ? '(' + sub + ')' : sub; }); return t; };
+      parts.push(w(s));
+    }
+    return parts.join('.');
+  }
+  return { NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
+})();
+// ---------- the cards: the twelve reagents and the thirteen reflexes as the page and the rules read them ----------
+// MODE.eng (path.js RULE.engine, on) switches the engine's version of a reflex on; off, the older version of the card is used.
+MODE.eng = true;
+const siteAnch = (G, s) => (s.anch ? s.anch : s.t ? [s.t[0], s.t[s.t.length - 1]] : s.k ? [s.k[0], s.oh[1]] : s.c ? [s.c[0], s.c[3]] : [0, 0]).map(i => G.atoms[i]);
+const siteAtoms = (G, s) => { const idx = []; ['k', 'oh', 't', 'c', 'A', 'B'].forEach(f => { if (s[f]) idx.push(...s[f]); }); return Array.from(new Set(idx)).map(i => G.atoms[i]); };
+const REFLEXES = {
+  ring: { id: 'lactol', verb: 'Zip', tag: 'closes a ring', rgb: [47, 120, 160], rule: 'An OH and a C=O close a ring.', from: 'ol', to: 'ring' },
+  dry: { id: 'enone', verb: 'Dry', tag: 'loses water', rgb: [224, 122, 0], rule: 'An OH near a C=O leaves as water and a C=C forms.', from: 'ol', to: 'ene' },
+  flip: { id: 'taut', verb: 'Flip', tag: 'flips', rgb: [176, 24, 154], rule: 'An OH on a C=C becomes C=O.', from: 'ene', to: 'one' },
+  weld: { id: 'weld', verb: 'Weld', tag: 'welds a ring', rgb: [168, 92, 36], rule: 'Two C=O close a ring between them.', from: 'one', to: 'ring' },
+  snap: { id: 'snap6', verb: 'Snap', tag: 'folds shut', rgb: [200, 38, 28], rule: 'Two C=C side by side and a third nearby close a six-ring with one new C=C in it.', from: 'ene', to: 'ring' },
+  close: { id: 'ether', verb: 'Close', tag: 'closes a ring', rgb: [60, 154, 95], rule: 'A Cl and an OH, NH2, SH or COOH close a ring. Acid fumes leave.', from: 'cl', to: 'ring' },
+  shift: { id: 'shift', verb: 'Shift', tag: 'slides', rgb: [140, 90, 190], rule: 'A C=C two carbons from a C=O slides to sit beside it.', from: 'ene', to: 'ene' },
+  tuck: { id: 'tuck', verb: 'Tuck', tag: 'tucks in', rgb: [30, 140, 140], rule: 'An OH adds to the far end of a C=C beside a C=O and closes a ring.', from: 'ol', to: 'ring' },
+  knit: { id: 'knit', verb: 'Knit', tag: 'knits a ring', rgb: [80, 90, 200], rule: 'An NH2 and a C=O close a ring.', from: 'one', to: 'ring' },
+  seal: { id: 'seal', verb: 'Seal', tag: 'seals a ring', rgb: [120, 120, 60], rule: 'A COOH and an OH, NH2 or SH join into a ring. Water leaves.', from: 'ol', to: 'ring' },
+  cap: { id: 'cap', verb: 'Cap', tag: 'caps a ring', rgb: [200, 170, 30], rule: 'An SH and a C=O close a ring.', from: 'one', to: 'ring' },
+  open: { id: 'open', verb: 'Open', tag: 'opens an epoxide', rgb: [60, 110, 170], rule: 'An OH opens an epoxide and closes a ring.', from: 'ol', to: 'ring' },
+  fold: { id: 'fold', verb: 'Fold', tag: 'folds over', rgb: [170, 70, 100], rule: 'An epoxide turns into a C=O.', from: 'ene', to: 'one' }
+};
+Object.keys(REFLEXES).forEach(kind => {
+  const P = REFLEXES[kind], old = CARDS[P.id], lf = old ? { find: old.find, ok: old.ok, apply: old.apply } : null;
+  const c = old || { id: P.id, verb: P.verb, formula: '', chem: 'by itself', rgb: P.rgb, cls: 'self', ghs: [], rule: P.rule, from: P.from, to: P.to };
+  c.kind = kind; c.legacy = lf;
+  c.find = m => { if (!MODE.eng && lf) return lf.find(m); const G = ENG.snapG(m), s = ENG.R[kind].find(G, m.reach); return s.length ? [{ atoms: siteAtoms(G, s[0]), d: s[0].dist, kind, join: siteAnch(G, s[0]), via: s[0].via || 'chain' }] : []; };
+  c.ok = (m, s) => ((!MODE.eng && lf) ? lf.ok(m, s) : c.find(m).length > 0);
+  c.apply = (m, s) => { if (!MODE.eng && lf) return lf.apply(m, s); const G = ENG.snapG(m), sites = ENG.R[kind].find(G, m.reach); if (!sites.length) return { focus: [], incoming: [], leaving: [], tag: '' }; ENG.removed.length = 0; const r = ENG.R[kind].edit(G, m, sites[0]); r.tag = P.tag; r.off = ENG.R[kind].off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; };
+  CARDS[P.id] = c;
+});
+const SIXMAP = { hydrate: 'hydrate', pcc: 'oxidize', nabh4: 'reduce', dehydrate: 'dehydrate', bh3: 'hydroborate', allyl: 'grow' };
+Object.keys(SIXMAP).forEach(cid => {
+  const c = LIST.find(x => x.id === cid), eid = SIXMAP[cid], steps = ENG.REAG[eid], lf = { find: c.find, ok: c.ok, apply: c.apply };
+  c.legacy = lf; c.eid = eid;
+  c.find = m => { if (!MODE.eng) return lf.find(m); const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => { if (st.when && !st.when()) return; st.find(G).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); }); }); return out; };
+  c.ok = (m, s) => { if (!MODE.eng) return lf.ok(m, s); const G = ENG.snapG(m); return steps.some(st => (!st.when || st.when()) && st.find(G).length > 0); };
+  c.apply = (m, s) => { if (!MODE.eng) return lf.apply(m, s); const G = ENG.snapG(m); for (const st of steps) { if (st.when && !st.when()) continue; const sites = st.find(G); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = c.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
+  c.all = m => (MODE.eng ? ENG.fire(m, eid) : null);
+});
+const NEWR = {
+  hwe: { verb: 'Extend', formula: 'HWE', chem: 'Dimethyl 2-oxopropylphosphonate, base', rgb: [196, 120, 40], cls: 'ylide', ghs: ['flame'], rule: 'Turns an aldehyde or methyl ketone C=O into C=C beside a new ketone.', from: 'one', to: 'ene' },
+  dihydroxylation: { verb: 'Dihydroxylate', formula: 'OsO₄, NMO', chem: 'Osmium tetroxide, N-methylmorpholine N-oxide', rgb: [90, 60, 150], cls: 'oxidant', ghs: ['skull', 'health'], rule: 'Puts an OH on both carbons of every C=C.', from: 'ene', to: 'ol' },
+  ozonolysis: { verb: 'Cleave', formula: 'O₃, Zn', chem: 'Ozone, then zinc', rgb: [120, 170, 220], cls: 'oxidant', ghs: ['oxid'], rule: 'Cuts every C=C into two C=O.', from: 'ene', to: 'one' },
+  permanganate: { verb: 'Burn', formula: 'KMnO₄, heat', chem: 'Potassium permanganate, hot, acid', rgb: [150, 30, 120], cls: 'oxidant', ghs: ['oxid', 'corr'], rule: 'Turns chain-end C=C, aldehydes and chain-end CH2-OH into COOH.', from: 'ene', to: 'acid' },
+  ritter: { verb: 'Aminate', formula: 'CH₃CN, H₂SO₄', chem: 'Acetonitrile in strong acid, then boiling aqueous acid', rgb: [60, 90, 200], cls: 'acid', ghs: ['corr'], rule: 'Adds NH2 and H across every C=C. The NH2 goes on the carbon with fewer H.', from: 'ene', to: 'amine' },
+  thiolene: { verb: 'Thiolate', formula: 'AcSH, hν', chem: 'Thioacetic acid with light, then base', rgb: [200, 180, 40], cls: 'radical', ghs: ['flame', 'skull'], rule: 'Adds SH and H across every C=C. The SH goes on the carbon with more H.', from: 'ene', to: 'thiol' },
+  chlorination: { verb: 'Chlorinate', formula: 'SOCl₂', chem: 'Thionyl chloride', rgb: [150, 160, 0], cls: 'chloride', ghs: ['corr', 'skull'], rule: 'Swaps the OH of a primary or secondary alcohol for Cl.', from: 'ol', to: 'cl' },
+  cyanohydrin: { verb: 'Cyanate', formula: 'NaCN, H₃O⁺', chem: 'Sodium cyanide, then boiling acid', rgb: [110, 70, 40], cls: 'base', ghs: ['skull', 'corr'], rule: 'Turns an aldehyde or methyl ketone C=O into C(OH)-COOH. Ammonia leaves.', from: 'one', to: 'acid' },
+  hofmann: { verb: 'Eliminate N', formula: 'MeI, Ag₂O', chem: 'Excess methyl iodide, silver oxide, heat', rgb: [70, 110, 90], cls: 'base', ghs: ['health'], rule: 'An NH2 leaves and a C=C forms toward the neighbor with more H.', from: 'amine', to: 'ene' },
+  chugaev: { verb: 'Eliminate S', formula: 'CS₂, MeI', chem: 'Carbon disulfide, base, methyl iodide, heat', rgb: [170, 150, 20], cls: 'base', ghs: ['flame', 'health'], rule: 'An OH leaves and a C=C forms toward the neighbor with more H.', from: 'ol', to: 'ene' },
+  hydroformylation: { verb: 'Formylate', formula: 'CO, H₂, Rh', chem: 'Carbon monoxide and hydrogen over a rhodium catalyst', rgb: [60, 130, 130], cls: 'metal', ghs: ['flame', 'cyl'], rule: 'Adds CHO and H across every C=C. The CHO goes on the carbon with more H.', from: 'ene', to: 'one' },
+  epoxidation: { verb: 'Epoxidize', formula: 'mCPBA', chem: 'meta-Chloroperoxybenzoic acid', rgb: [210, 90, 90], cls: 'oxidant', ghs: ['oxid', 'flame'], rule: 'Turns every C=C into an epoxide.', from: 'ene', to: 'epoxide' }
+};
+Object.keys(NEWR).forEach(id => {
+  const steps = ENG.REAG[id], P = NEWR[id];
+  const c = Object.assign({ id }, P);
+  c.find = m => { const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => st.find(G).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); })); return out; };
+  c.ok = m => { const G = ENG.snapG(m); return steps.some(st => st.find(G).length > 0); };
+  c.apply = (m, s) => { const G = ENG.snapG(m); for (const st of steps) { const sites = st.find(G); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = P.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
+  // every place at once, as the engine does it (the molecule is changed in place; what left is already removed)
+  c.all = m => ENG.fire(m, id);
+  c.reagent = true; LIST.push(c); CARDS[id] = c;
+});
 // a capped oxygen carries prot, and no bottle finds a site there
 // a clamped atom (the clamp, docs/PIECES.md) is out of reach of every reagent, but the molecule's own reactions still use it
 LIST.forEach(c => { CARDS[c.id] = c; const f = c.find; c.find = m => f(m).filter(s => !s.atoms.some(a => a.prot || a.cure || (a.clamp && c.cls !== 'self'))); });
@@ -457,9 +928,10 @@ function cloneMap(m) {
 }
 const cloneModel = m => cloneMap(m).model;
 // applies a bottle to every site of m in place and returns how many sites reacted
-function runCard(m, card) {
+function runCard(m, card, out) {
+  const all = card.all ? card.all(m) : null; if (all) { if (out) all.gone.forEach(g => out.push(g)); return all.n; }
   let hits = 0;
-  card.find(m).forEach(s => { if (!card.ok(m, s)) return; card.apply(m, s).leaving.flat().forEach(a => m.removeAtom(a)); hits++; });
+  card.find(m).forEach(s => { if (!card.ok(m, s)) return; const r = card.apply(m, s); if (out) r.leaving.forEach(g => out.push(g)); r.leaving.flat().forEach(a => m.removeAtom(a)); hits++; });
   return hits;
 }
 const fromSmiles = smi => AA.Model.fromSmiles(smi, 1);
@@ -480,6 +952,7 @@ function hydroxylAny(m, o, ar) { if (o.el !== 'O') return null; const q = nbs(m,
 // whose OH has been taken away (by a dehydration, say) stays shut for good. Returns how many rings opened.
 function reopen(m, cuts) { let n = 0;
   m.atoms.slice().forEach(c => { if (!c.cure || c.el !== 'C' || c.fly) return; nbs(m, c).slice().forEach(x => { const o = x.atom; if (o.el !== 'O' || x.bond.order !== 1 || o.frz || nbs(m, o).length !== 2 || !nbs(m, o).every(y => y.atom.el === 'C')) return; cut(m, c, o); attach(m, 'H', o, 1.2); if (cuts) cuts.push({ c, o }); n++; }); });
+  if (MODE.eng) return n + ENG.reopen(m, cuts);
   for (let guard = 0; guard < 80; guard++) { let hit = null;
   for (const c of m.atoms) { if (c.el !== 'C' || c.fly) continue; const q = nbs(m, c); if (q.some(x => x.bond.order !== 1)) continue;
     const oh = q.find(x => x.atom.el === 'O' && !x.atom.prot && nbs(m, x.atom).length === 2 && nbs(m, x.atom).some(y => y.atom.el === 'H')); if (!oh) continue;
@@ -634,5 +1107,5 @@ const homs = {
   // an OH that oxidize would take at the very end of a chain (CH2-OH): what feeds the salt
   endOls: m => m.atoms.filter(o => { const s = !o.fly && oxidisable(m, o); return !!s && Hs(m, s.c).length === 2; })
 };
-AA.rx = { homs, tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
+AA.rx = { ENG, homs, tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

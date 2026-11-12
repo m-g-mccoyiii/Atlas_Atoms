@@ -357,6 +357,8 @@ function look(run, m, id) {
 // applies a bottle to every site of m in place, without animation, and returns the info that commit needs
 function react(run, m, id) {
   const card = RX.CARDS[id], sites = card.find(m), hot = isHot(run.cur, sites), made = [], gone = [];
+  // a card that acts as the engine does (place after place, the best place each time) does it in one go
+  if (card.all && !m.atoms.some(a => a.keep)) { const res = card.all(m); if (res) return { hits: res.n, spoiled: 0, hot, made: res.made, gone: res.gone, sig: RX.sigOf(m) }; }
   let hits = 0, spoiled = 0;
   sites.forEach(s => {
     if (!card.ok(m, s)) return;

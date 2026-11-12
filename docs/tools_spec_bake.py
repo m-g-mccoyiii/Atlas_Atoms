@@ -1,51 +1,58 @@
 # Writes the table of specs into path.js (between "// SPEC TABLE BEGIN" and "// SPEC TABLE END").
-# Reads docs/tools_chem/hurdle_table.json (or SPECS table when it lands: same shape: name -> {good_rounds, sf}) and
-# docs/tools_chem/hurdles.py (family, text). The reader of each spec (key, mode, event name), the plain mark name the page
-# draws and what a spec needs the run to hold are in the three dicts below: edit them when the list changes.
+# Reads docs/tools_chem/hurdle_table.json (the revised table: specs -> rounds -> options/usable) and docs/tools_chem/hurdles.py
+# (family, plan, plain condition, mark). The reader of each spec (key, mode, event name) and what a spec needs the run to hold
+# are in the dicts below: edit them when the list changes.
 # Usage: python tools_spec_bake.py [table.json]
-import io, json, os, sys, re
+# Each row: { fam, plan, text, text1, read, key, mode, by, mark, need, good, use, cap }
+#   use: { round: [[N, rate], ...] } the usable N for the round with the clear rate of the model the table was fitted to
+#        (the new player in rounds 1 to 3, the middling player in rounds 4 to 9)
+#   cap: null, 'start' (N at most the start size, start plus N at most 56) or 'half' (N at most half the start size)
+import io, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, 'tools_chem'))
-# --head: read hurdles.py and the table as committed (while the list is being revised in the working tree)
-import subprocess, tempfile
-args = [a for a in sys.argv[1:] if a != '--head']
-if '--head' in sys.argv:
-    tmp = tempfile.mkdtemp()
-    for f in ('hurdles.py', 'hurdle_table.json'):
-        io.open(os.path.join(tmp, f), 'wb').write(subprocess.check_output(['git', '-C', HERE, 'show', 'HEAD:docs/tools_chem/' + f]))
-    sys.path.insert(0, tmp); TABLE = os.path.join(tmp, 'hurdle_table.json')
-else: TABLE = os.path.join(HERE, 'tools_chem', 'hurdle_table.json')
 import hurdles as H
+args = [a for a in sys.argv[1:]]
+TABLE = os.path.join(HERE, 'tools_chem', 'hurdle_table.json')
 tab = json.load(io.open(args[0] if args else TABLE, encoding='utf8'))
 # name -> (reader, key, mode): 's' structure key of the molecule, 'g' group count, 'e' event reader
 READ = {
- 'rings': ('s', 'rings', 'gain'), 'five_rings': ('s', 'ring5', 'gain'), 'six_rings': ('s', 'ring6', 'gain'), 'fused_pairs': ('s', 'fused_pairs', 'gain'),
- 'fused_block': ('s', 'fused_block', 'gain'), 'ring_systems': ('s', 'ring_systems', 'gain'), 'spiro': ('s', 'spiro', 'gain'), 'bridgehead': ('s', 'bridgehead', 'gain'),
- 'ring_hetero': ('s', 'ring_hetero', 'gain'), 'ring_atoms': ('s', 'ring_atoms', 'gain'), 'ring_sizes': ('s', 'ring_sizes', 'gain'),
- 'longest_chain': ('s', 'chain', 'gain'), 'diameter': ('s', 'diameter', 'gain'), 'branch': ('s', 'branch', 'gain'), 'growth': ('s', 'atoms', 'gain'),
- 'cut_down': ('s', 'atoms', 'loss'), 'size_range': ('s', 'atoms', 'range'), 'kinds_at_once': ('s', 'kinds', 'abs'), 'left_CO': ('g', 'C=O', 'last'),
- 'conjugated': ('s', 'conj', 'gain'), 'double_bonds': ('s', 'dbl', 'gain'), 'unsaturation': ('s', 'unsat', 'gain'), 'hetero_atoms': ('s', 'hetero', 'gain'),
- 'elements': ('s', 'elements', 'gain'), 'opener': ('e', 'opener', ''), 'closer': ('e', 'closer', ''), 'kinds_in_turn': ('e', 'kinds_in_turn', ''),
- 'all_three_feed': ('e', 'all_three_feed', ''), 'no_dead_reaction': ('e', 'no_dead', ''), 'distinct_triggers': ('e', 'distinct_triggers', ''),
- 'kind_ring': ('e', 'kind:lactol', ''), 'kind_snap': ('e', 'kind:snap6', ''), 'off_total': ('e', 'off:all', ''), 'off_water': ('e', 'off:water', ''),
- 'off_hydrogen': ('e', 'off:hydrogen', ''), 'off_carbon_dioxide': ('e', 'off:carbon_dioxide', ''), 'many_jars': ('e', 'jars', ''), 'big_puff': ('e', 'puff', ''),
- 'acted_total': ('e', 'acted', ''), 'distinct_acted': ('e', 'acted_kinds', ''),
+ 'six_rings': ('s', 'ring6', 'gain'), 'fused_pairs': ('s', 'fused_pairs', 'gain'), 'ring_systems': ('s', 'ring_systems', 'gain'),
+ 'growth': ('s', 'atoms', 'gain'), 'branch': ('s', 'branch', 'gain'), 'longest_chain': ('s', 'chain', 'gain'),
+ 'cut_down': ('s', 'atoms', 'loss'), 'finish_smaller': ('s', 'atoms', 'lastloss'), 'lean_turns': ('e', 'lean', ''),
+ 'kinds_gain': ('s', 'kinds', 'gain'), 'hetero_atoms': ('s', 'hetero', 'gain'), 'double_bonds': ('s', 'dbl', 'gain'),
+ 'conjugated': ('s', 'conj', 'gain'), 'unsaturation': ('s', 'unsat', 'gain'),
+ 'end_CO': ('g', 'C=O', 'lastgain'), 'end_CC': ('g', 'C=C', 'lastgain'),
+ 'opener': ('e', 'opener', ''), 'closer': ('e', 'closer', ''), 'kind_ring': ('e', 'kind:ring', ''),
+ 'off_total': ('e', 'off:all', ''), 'off_hydrogen': ('e', 'off:hydrogen', ''), 'off_carbon_dioxide': ('e', 'off:carbon_dioxide', ''),
+ 'pure_water': ('e', 'pure_water', ''), 'pure_gas': ('e', 'pure_gas', ''), 'held_back': ('e', 'held', ''),
 }
-# the page's marks that exist today are used where one fits; every other spec keeps the name hurdles.py gave it (docs/SPEC_NOTES.md)
-MARK = {'rings': 'ring', 'fused_pairs': 'joined', 'fused_block': 'joined', 'bridgehead': 'cage', 'growth': 'big', 'size_range': 'size',
-        'kinds_at_once': 'kinds', 'off_water': 'water', 'longest_chain': 'chain'}
-# what the run must hold: reagent ids or reflex ids (any of), 'mode:co2' (carbon dioxide is on), 'never' (nothing in the game feeds it yet)
-NEED = {'off_hydrogen': ['pcc'], 'off_carbon_dioxide': ['mode:co2'], 'elements': ['never'], 'kind_ring': ['lactol'], 'kind_snap': ['snap6'],
-        'kinds_in_turn': ['selfs:2'], 'all_three_feed': None}
+CAP = {'growth': 'start', 'cut_down': 'half', 'finish_smaller': 'half'}
+# what the run must hold: reagent ids or reflex ids (any of), 'mode:co2' (carbon dioxide is on), 'never'
+NEED = {'off_hydrogen': ['pcc', 'permanganate'], 'off_carbon_dioxide': ['mode:co2', 'permanganate'], 'kind_ring': ['lactol'],
+        'pure_gas': ['pcc', 'socl2', 'hofmann', 'permanganate']}
 out = {}
-for name, row in tab.items():
+rider = tab.get('riders', {}).get('held_back', {})
+for name, row in tab['specs'].items():
     if not row.get('good_rounds'): continue
-    base = name[7:] if name.startswith('by_two_') else name
-    if base not in READ: print('no reader for', name); continue
-    h = H.HURDLES[name]; r = READ[base]
-    out[name] = {'fam': h.family, 'text': h.text, 'read': r[0], 'key': r[1], 'mode': r[2], 'by': 2 if name != base else 0,
-                 'mark': MARK.get(base, h.mark), 'need': NEED.get(base), 'good': row['good_rounds'],
-                 'sf': {k: [round(x, 3) for x in v] for k, v in row['sf'].items()}}
+    if name not in READ: print('no reader for', name); continue
+    h = H.HURDLES[name]; r = READ[name]
+    use = {}
+    for rd, info in row['rounds'].items():
+        if int(rd) not in row['good_rounds']: continue
+        model = 'W' if int(rd) <= 3 else 'M'
+        ops = {o['N']: o['rates'][model] for o in info['options']}
+        ns = info.get('usable') or [info.get('ref')]
+        use[rd] = [[n, round(ops[n], 3)] for n in ns if n in ops]
+    if name == 'held_back':
+        use = {rd: [[n, 0.9]] for rd, n in rider.items()}
+    try: t1 = h.condition(1)
+    except Exception: t1 = h.text.replace('{N}', '1')
+    out[name] = {'fam': h.family, 'plan': h.plan, 'text': h.text, 'text1': t1, 'read': r[0], 'key': r[1], 'mode': r[2], 'by': 0,
+                 'mark': h.mark, 'need': NEED.get(name), 'good': row['good_rounds'], 'use': use, 'cap': CAP.get(name)}
+if 'held_back' not in out and rider:
+    h = H.HURDLES['held_back']
+    out['held_back'] = {'fam': h.family, 'plan': h.plan, 'text': h.text, 'text1': h.condition(1), 'read': 'e', 'key': 'held', 'mode': '', 'by': 0,
+                        'mark': h.mark, 'need': None, 'good': [int(k) for k in rider], 'use': {k: [[n, 0.9]] for k, n in rider.items()}, 'cap': None, 'rider': True}
 txt = 'const SPEC_TABLE = ' + json.dumps(out, separators=(',', ':')) + ';'
 f = os.path.join(HERE, '..', 'apps', 'steam', 'js', 'react', 'path.js')
 s = io.open(f, encoding='utf8', newline='').read()
