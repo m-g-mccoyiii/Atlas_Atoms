@@ -1304,7 +1304,7 @@ function runTerm(run, id) {
 // Do not edit by hand: measure again. Par of the bare game, fourth measure (docs/tools_par_bare.py): round one by the novice and the margin together, rounds two to five at a margin of 4 for the median player, rounds six to nine by its pass rate and margin.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
-const PAR = { rounds: [6069, 5872, 9599, 4960, 18800, 55300, 58200, 61300, 105000], after: 1.71, last: 1 };
+const PAR = { rounds: [4770, 3500, 4118, 7340, 10295, 16248, 20038, 25187, 27028], after: 1.71, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
