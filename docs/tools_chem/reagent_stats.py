@@ -37,6 +37,18 @@ from chemlib import canon
 from library import REACTIONS, SELF_RULES, SIX
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# RS_V2=1: the current game.  The starting six below (library.SIX is left as it is), molecules v2 (molecules2.deal), ten
+# reflexes held in rounds 1 to 3 and all of them from round 4, at most six worker processes, and `agg` writes
+# reagent_stats_v2.json and REAGENT_STATS_V2.md.  Without it everything is as before.
+V2 = os.environ.get('RS_V2', '') == '1'
+SIX_V2 = ('hydrate', 'oxidize', 'grow', 'thiolene', 'dehydrate', 'ritter')
+TEN_V2 = ('ring', 'dry', 'weld', 'shift', 'tuck', 'flip', 'snap', 'knit', 'cap', 'close')
+if V2:
+    SIX = SIX_V2
+    TEN_MISSING = tuple(n for n in TEN_V2 if n not in SELF_RULES)
+    RULES_V2_EARLY = tuple(n for n in library.SELF_ORDER if n in TEN_V2)        # in the engine's own order
+    RULES_V2_LATE = tuple(library.SELF_ALL)
+MAX_WORKERS = 6 if V2 else 15
 STARTERS = SIX
 NONSTART = tuple(n for n in REACTIONS if n not in SIX)              # 14, including the paper variant suzuki_loose
 VARIANT = 'suzuki_loose'
@@ -52,6 +64,8 @@ def band_of(r):
 
 def rules_for(r, mode='band'):
     if mode == 'band':
+        if V2:
+            return RULES_V2_EARLY if r <= 3 else RULES_V2_LATE
         return H.RULES_BAND[r]
     if mode == 'start':
         return library.SELF_TIER1
@@ -64,7 +78,39 @@ def rules_for(r, mode='band'):
 # the rounds: for each round number 1..9, half the game's molecules as the game deals them, half generated ones
 # ---------------------------------------------------------------------------------------------------------------
 
+INST = Counter()        # under RS_V2: where the molecules came from (pool, generator, generator failed so pool)
+GEN_SLOW = 20.0         # seconds; a generator deal slower than this is counted (it is still used)
+
+
+def instances_v2(per_round, tag):
+    import molecules2
+    out = []
+    j0 = int(os.environ.get('RS_J0', '0') or 0)       # RS_J0=k: molecules k, k+1, ... of each round number (to add to an earlier run)
+    for r in range(1, 10):
+        for j in range(j0, j0 + per_round):
+            seed = '%s/%d/%d' % (tag, r, j)
+            rng = random.Random(seed)
+            ps = molecules2.POOLS[r]
+            if rng.random() < molecules2.P_POOL[r]:           # the same choice molecules2.deal makes
+                smi = rng.choice(ps)['smiles']
+                INST['pool'] += 1
+            else:
+                t0 = time.time()
+                try:
+                    smi = molecules2.generate(r, rng, ())['smiles']
+                    INST['generator'] += 1
+                    if time.time() - t0 > GEN_SLOW:
+                        INST['generator slow'] += 1
+                except Exception as e:
+                    smi = rng.choice(ps)['smiles']
+                    INST['generator failed, pool used'] += 1
+            out.append((r, j, smi, seed, 'game'))
+    return out
+
+
 def instances(per_round=72, tag='rs'):
+    if V2:
+        return instances_v2(per_round, tag)
     out = []
     for r in range(1, 10):
         for j in range(per_round):
@@ -315,34 +361,69 @@ def work_reach(task):
 
 
 def _pool():
-    return mp.Pool(min(15, os.cpu_count() or 4))
+    return mp.Pool(min(MAX_WORKERS, os.cpu_count() or 4))
+
+
+class Safe:
+    """Wraps a worker: a molecule the engine cannot read or play comes back as a skip record instead of stopping the run."""
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def __call__(self, task):
+        t0 = time.time()
+        try:
+            out = self.fn(task)
+            out['secs'] = time.time() - t0
+            return out
+        except Exception as e:
+            _engine().clear()
+            return {'skip': True, 'r': task[0][0], 'j': task[0][1], 'smi': task[0][2], 'err': '%s: %s' % (type(e).__name__, str(e)[:200])}
+
+
+def _side(out_path, label, n_tasks, n_done, skips, dt):
+    json.dump({'phase': label, 'tasks': n_tasks, 'done': n_done, 'skipped': skips, 'seconds': dt, 'workers': min(MAX_WORKERS, os.cpu_count() or 4),
+               'molecule_source': dict(INST), 'six': list(SIX), 'v2': V2}, open(out_path + '.meta.json', 'w'), indent=1)
 
 
 def run_phase(fn, tasks, out_path, label):
     t0 = time.time()
     res = []
+    skips = []
     with _pool() as pool:
-        for i, x in enumerate(pool.imap_unordered(fn, tasks, chunksize=1)):
+        for i, x in enumerate(pool.imap_unordered(Safe(fn), tasks, chunksize=1)):
+            if x.get('skip'):
+                skips.append(x)
+                print('%s SKIP r%d j%d %s %s' % (label, x['r'], x['j'], x['smi'], x['err']), flush=True)
+                continue
             res.append(x)
             if (i + 1) % 50 == 0:
                 print('%s %d/%d %.0fs' % (label, i + 1, len(tasks), time.time() - t0), flush=True)
     dt = time.time() - t0
     pickle.dump({'res': res, 'seconds': dt}, open(out_path, 'wb'))
-    print('%s done: %d tasks, %.0f s' % (label, len(tasks), dt), flush=True)
+    _side(out_path, label, len(tasks), len(res), skips, dt)
+    print('%s done: %d tasks, %d skipped, %.0f s  %s' % (label, len(tasks), len(skips), dt, dict(INST)), flush=True)
 
 
 def run_stream(fn, tasks, out_path, label):
     """Like run_phase but each result is appended to the file as soon as it is done, so a partial run can be read."""
     t0 = time.time()
     n = 0
+    skips = []
     with open(out_path, 'wb') as fh, _pool() as pool:
-        for x in pool.imap_unordered(fn, tasks, chunksize=1):
+        for x in pool.imap_unordered(Safe(fn), tasks, chunksize=1):
+            if x.get('skip'):
+                skips.append(x)
+                print('%s SKIP r%d j%d %s %s' % (label, x['r'], x['j'], x['smi'], x['err']), flush=True)
+                continue
             pickle.dump(x, fh)
             fh.flush()
             n += 1
             if n % 20 == 0:
                 print('%s %d/%d %.0fs' % (label, n, len(tasks), time.time() - t0), flush=True)
-    print('%s done: %d tasks, %.0f s' % (label, n, time.time() - t0), flush=True)
+            _side(out_path, label, len(tasks), n, skips, time.time() - t0)
+    _side(out_path, label, len(tasks), n, skips, time.time() - t0)
+    print('%s done: %d tasks, %d skipped, %.0f s  %s' % (label, n, len(skips), time.time() - t0, dict(INST)), flush=True)
 
 
 def read_stream(path):
@@ -553,7 +634,7 @@ def fit_stats(fit):
         d['all'] = mean(d['r%d' % r] for r in range(1, 10))
         for s in ('game', 'made'):
             v = [i['res'][x] for i in res if i['src'] == s]
-            d[s] = sum(v) / len(v)
+            d[s] = sum(v) / len(v) if v else float('nan')
         out[x] = d
     return out
 
@@ -714,21 +795,35 @@ def _jsonable(o):
 
 def collect(OUT):
     """Read the pickles and streams of a run and compute every table."""
+    # under RS_V2 the reach, specs and other-reflex-set phases may be left out: their tables then read "not run"
+    has = lambda f: os.path.exists(OUT + '/' + f)
+    opt = lambda f: V2 and not has(f)
+    nan = float('nan')
+    empty = {'res': [], 'seconds': nan}
     main = read_stream(OUT + '/main.stream')
+    if V2:                                           # further main runs on other molecules (RS_J0): main_*.stream
+        for f in sorted(os.listdir(OUT)):
+            if f.startswith('main_') and f.endswith('.stream'):
+                main['res'] += read_stream(OUT + '/' + f)['res']
     fit = load(OUT + '/fit.pkl')
-    reach = load(OUT + '/reach.pkl')
+    reach = empty if opt('reach.pkl') else load(OUT + '/reach.pkl')
     pairs = read_stream(OUT + '/pairs.stream')
-    specs = load(OUT + '/specs.pkl')
-    specs_null = read_stream(OUT + '/specs_null.stream')
-    sens = read_stream(OUT + '/sens.stream')
+    no_specs = opt('specs.pkl') or opt('specs_null.stream')
+    specs = empty if no_specs else load(OUT + '/specs.pkl')
+    specs_null = empty if no_specs else read_stream(OUT + '/specs_null.stream')
+    sens = empty if opt('sens.stream') else read_stream(OUT + '/sens.stream')
     D = per_reagent_main(main)
     F = fit_stats(fit)
-    RE = {x: sum(1 for i in reach['res'] if i['res'][x]) / len(reach['res']) for x in ALL20}
-    REB = {x: {r: (lambda v: sum(v) / len(v))([1 if i['res'][x] else 0 for i in reach['res'] if i['r'] == r]) for r in range(1, 10)} for x in ALL20}
+    if reach['res']:
+        RE = {x: sum(1 for i in reach['res'] if i['res'][x]) / len(reach['res']) for x in ALL20}
+        REB = {x: {r: (lambda v: sum(v) / len(v) if v else nan)([1 if i['res'][x] else 0 for i in reach['res'] if i['r'] == r]) for r in range(1, 10)} for x in ALL20}
+    else:
+        RE = {x: nan for x in ALL20}
+        REB = {x: {r: nan for r in range(1, 10)} for x in ALL20}
     P = pair_stats(pairs)
     n_spec_plays = sum(len(i['res']) for i in specs['res']) + sum(len(i['res']) for i in specs_null['res'])
-    S, Smeta = spec_stats(specs, specs_null)
-    SE = sens_stats(sens)
+    S, Smeta = ({x: None for x in ALL20}, {}) if no_specs else spec_stats(specs, specs_null)
+    SE = sens_stats(sens) if sens['res'] else None
     sc = sum(D[x]['strength_raw'] for x in STARTERS) / 6.0
     for x in ALL20:
         D[x]['strength'] = D[x]['strength_raw'] / sc
@@ -854,12 +949,14 @@ def make_report(OUT, outdir, seconds=None, prose=None):
     rows = []
     for x in order:
         s = S[x]
+        if s is None:
+            continue
         rows.append([x, pc(s['easier']), pc(s['harder']), pc(s['unchanged']), '%+.2f' % s['mean_value_change_over_N'],
                      '%d of %d' % (s['specs_made_easier_somewhere'], s['specs_total']),
                      ', '.join('%s %d' % (n, c) for n, c in s['most_helped'][:3]) or '-'])
     sec['specs'] = tbl(['Reagent', 'Spec cells it makes easier', 'Harder', 'No change', 'Mean change in the spec value, in units of N', 'Distinct specs eased somewhere',
-                        'Most helped (rounds, of 9)'], rows)
-    sec['sens'] = tbl(['Reagent', 'STRENGTH, reflexes by round (as the game)', 'Starting reflexes only (ring, dry)', 'All reflexes'],
+                        'Most helped (rounds, of 9)'], rows) if rows else '(not run)'
+    sec['sens'] = '(not run)' if SE is None else tbl(['Reagent', 'STRENGTH, reflexes by round (as the game)', 'Starting reflexes only (ring, dry)', 'All reflexes'],
                       [[x, f2(D[x]['strength']), f2(SE['start'][x]), f2(SE['all'][x])] for x in order])
 
     # --- counts
@@ -880,17 +977,34 @@ def make_report(OUT, outdir, seconds=None, prose=None):
                                'fit_round_start': F[x], 'can_act_in_some_line': RE[x], 'can_act_in_some_line_by_round': REB[x],
                                'alone': {k: v for k, v in D[x].items() if k not in ('strength', 'strength_ci')},
                                'partners_best3': [(n, p) for n, p in best3[x]], 'partner_worst': worst[x],
-                               'spec_effect': S[x], 'strength_other_reflex_sets': {'start': SE['start'][x], 'all': SE['all'][x]}} for x in ALL20},
+                               'spec_effect': S[x], 'strength_other_reflex_sets': None if SE is None else {'start': SE['start'][x], 'all': SE['all'][x]}} for x in ALL20},
               'pairs': P, 'must_have_pairs': [(a, b) for a, b, _ in C['musts']], 'spoiling_pairs': [(a, b) for a, b, _ in C['spoils']],
               'redundant_pairs': [(a, b) for a, b, _ in C['redund']]}
     os.makedirs(outdir, exist_ok=True)
-    json.dump(_jsonable(result), open(os.path.join(outdir, 'reagent_stats.json'), 'w'), indent=1)
+    if V2:
+        meta['v2'] = {'six': list(SIX), 'molecules': 'molecules2.deal', 'reflexes_rounds_1_3': list(RULES_V2_EARLY), 'reflexes_rounds_4_9': list(RULES_V2_LATE),
+                      'phases': {f: json.load(open(os.path.join(OUT, f))) for f in sorted(os.listdir(OUT)) if f.endswith('.meta.json')}}
+        for ph in meta['v2']['phases'].values():
+            meta['seconds'][ph['phase']] = meta['seconds'].get(ph['phase'], 0) + ph['seconds']
+    json.dump(_jsonable(result), open(os.path.join(outdir, 'reagent_stats_v2.json' if V2 else 'reagent_stats.json'), 'w'), indent=1)
     md = prose
+    if V2:
+        ph = meta['v2']['phases']
+        lines = []
+        for f in sorted(ph):
+            q = ph[f]
+            src = q.get('molecule_source', {})
+            lines.append('- **%s:** %d molecules played, %d skipped (the engine could not play them), %.0f s on %d worker processes; dealt from the pool %d, '
+                         'from the generator %d, generator failed and the pool was used %d.'
+                         % (q['phase'], q['done'], len(q['skipped']), q['seconds'], q['workers'], src.get('pool', 0), src.get('generator', 0),
+                            src.get('generator failed, pool used', 0)))
+        md = md.replace('<<v2_phases>>', '\n'.join(lines))
+        md = md.replace('<<v2_dud>>', '%.2f' % (1.0 / C['sc']))
     for k, v in sec.items():
         md = md.replace('<<%s>>' % k, v)
     for k, v in (('nr_main', nrounds['main']), ('nr_pairs', nrounds['pairs']), ('nr_specs', nrounds['specs']), ('nr_sens', nrounds['sens']), ('nr_total', nrounds['total'])):
         md = md.replace('<<%s>>' % k, '{:,}'.format(v))
-    open(os.path.join(outdir, 'REAGENT_STATS.md'), 'w', encoding='utf8').write(md)
+    open(os.path.join(outdir, 'REAGENT_STATS_V2.md' if V2 else 'REAGENT_STATS.md'), 'w', encoding='utf8').write(md)
     return result, meta
 
 PROSE = r'''# Overreact: how each reagent scores
@@ -1065,7 +1179,118 @@ python reagent_stats.py agg    OUT                      # writes REAGENT_STATS.m
 '''
 
 
+PROSE_V2 = r'''# Overreact: how each reagent scores (current game)
+
+Written by `RS_V2=1 python reagent_stats.py agg _rs_v2`. Tables only; the older page `REAGENT_STATS.md` describes the old starting six on the old C, H, O molecules and its remarks do not carry over.
+
+## What was played
+
+- **Starting six:** hydrate, oxidize, grow, thiolene, dehydrate, ritter. The twelve others are unlocks (hydroborate and reduce among them).
+- **Molecules:** molecules v2 (`molecules2.deal`): the round's pool with chance `P_POOL`, else the generator; 10 to 35 heavy atoms by round; they hold N, S and Cl. Rounds 1 to 9 equally. The columns "made molecules" are empty: every molecule is the game's.
+- **Reflexes held:** rounds 1 to 3 the ten a new run holds (ring, dry, weld, shift, tuck, flip, snap, knit, cap, close); rounds 4 to 9 all thirteen (plus seal, open, fold). The engine has no "across the fold" reflexes.
+- **Rounds played:** <<nr_total>> (main <<nr_main>>, pairs <<nr_pairs>>, specs <<nr_specs>>, other reflex sets <<nr_sens>>).
+<<v2_phases>>
+
+## Words
+
+- **Dud:** a reagent that never acts; it takes a place in the bag and the deal. Every reagent is compared with a dud in its place (a starter: the six with it replaced by a dud; an unlock: the six plus it against the six plus a dud).
+- **Yield change vs a dud:** mean yield with the reagent over mean yield with a dud, minus one. **Vs the six alone:** the same against the plain six (a starter: the other five).
+- **STRENGTH:** for two players (greedy, look-ahead) and three bands (rounds 1 to 3, 4 to 6, 7 to 9), mean yield with over mean yield with a dud; the six numbers averaged; divided by the same averaged over the six starters. A dud scores <<v2_dud>>.
+- **Ratio** (per round): (yield with + 50) over (yield without + 50). **Swing:** spread of the log of the ratio. **Rounds it changes:** share of rounds where the yield differs at all.
+- **Fit at round start:** share of dealt molecules the reagent has something to act on before anything is fired. **Can act in some line:** share where some line of three from the six and the reagent makes it act.
+- **Bonus** (pairs): yield together over base, minus A over base, minus B over base, plus one; all four bags the same size (duds fill the gaps). Pairs of two starters are measured in a small bag (four starters and two duds) and read large.
+- The flags (DEAD, NEAR-DEAD, CROWDS, DOMINATES, pairs with) are set by the same rules as the older page.
+
+## The one table
+
+<<master>>
+
+## Pairs worth more together than apart
+
+<<must>>
+
+## Pairs that give less together than the sum
+
+<<redund>>
+
+## Pairs that spoil each other
+
+<<spoil>>
+
+## Alone value
+
+<<alone>>
+
+By player, and against the six alone:
+
+<<alone_player>>
+
+## Fit rate
+
+<<fit>>
+
+Acts somewhere in some line of three made from the six and itself:
+
+<<reach>>
+
+On the page, when dealt:
+
+<<fitpage>>
+
+## What it sets off
+
+<<setsoff>>
+
+## Value by position in the line
+
+<<position>>
+
+## Value by round
+
+<<band>>
+
+<<round>>
+
+## Partners
+
+<<partners>>
+
+## Swing
+
+<<swing>>
+
+## Value toward the spec
+
+<<specs>>
+
+## Other reflex sets
+
+<<sens>>
+
+## Limits
+
+- No "across the fold" reflexes in the Python engine. Instruments, homunculi, specs and the gold price are not in it either.
+- Yield comes only from reflex steps. The players are greedy (one page) and look-ahead (this page and the next), not people.
+- Each reagent is measured as a seventh on top of the six (a starter against the other five); a real run carries up to eight.
+- Small sample: see the counts above and the 90% ranges in the table.
+
+## Commands
+
+```
+RS_V2=1 python reagent_stats.py fit   _rs_v2/fit.pkl N
+RS_V2=1 RS_LA_EVERY=9 python reagent_stats.py main _rs_v2/main.stream 72            # look-ahead on every 9th molecule
+RS_V2=1 RS_LA_EVERY=1 RS_J0=72 python reagent_stats.py main _rs_v2/main_b.stream 20  # 20 more per round number, both players
+RS_V2=1 python reagent_stats.py pairs _rs_v2/pairs.stream N
+RS_V2=1 python reagent_stats.py reach _rs_v2/reach.pkl N        # optional
+RS_V2=1 python reagent_stats.py agg   _rs_v2                    # writes reagent_stats_v2.json and REAGENT_STATS_V2.md
+RS_V2=1 python offer_formula.py table
+```
+'''
+
+
 def run_agg(out_dir):
+    if V2:
+        return make_report(out_dir, HERE, {'note': 'seconds of waiting, at most 6 worker processes, machine shared with other jobs'}, PROSE_V2)
     seconds = {'main': 2951, 'pairs': 562, 'specs': 4268, 'specs_null': 522, 'sens': 120, 'fit': 109, 'reach': 45,
                'note': 'seconds of waiting on 15 worker processes, machine shared with other jobs'}
     return make_report(out_dir, HERE, seconds, PROSE)
@@ -1083,7 +1308,11 @@ if __name__ == '__main__':
         n = int(sys.argv[3]) if len(sys.argv) > 3 else 72
         la = int(sys.argv[4]) if len(sys.argv) > 4 else 30        # the first `la` rounds of each round number are also played by the look-ahead player
         ins = sorted(instances(n), key=lambda i: (i[1], i[0]))     # interleaved by round so a partial run is balanced
-        run_stream(work_main, [(i, 'band', PLAYERS if i[1] < la else ('greedy',)) for i in ins], sys.argv[2], 'main')
+        # RS_LA_EVERY=k: the look-ahead player plays every k-th molecule of each round number instead of the first `la`, so a
+        # run that is stopped early (the stream is readable) has both players on rounds 1 to 9 equally
+        every = int(os.environ.get('RS_LA_EVERY', '0') or 0)
+        both = (lambda i: i[1] % every == 0) if every else (lambda i: i[1] < la)
+        run_stream(work_main, [(i, 'band', PLAYERS if both(i) else ('greedy',)) for i in ins], sys.argv[2], 'main')
     elif cmd == 'sens':
         n = int(sys.argv[3]) if len(sys.argv) > 3 else 27
         ins = sorted(instances(n, tag='sens'), key=lambda i: (i[1], i[0]))

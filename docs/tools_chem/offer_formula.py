@@ -29,8 +29,11 @@ import time
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-STATS = json.load(open(os.path.join(HERE, 'reagent_stats.json')))
-SIX = ('hydrate', 'hydroborate', 'dehydrate', 'oxidize', 'reduce', 'grow')
+# RS_V2=1: the current game (reagent_stats.py run with RS_V2=1): its JSON and its starting six.  Without it, as before.
+V2 = os.environ.get('RS_V2', '') == '1'
+STATS = json.load(open(os.path.join(HERE, 'reagent_stats_v2.json' if V2 else 'reagent_stats.json')))
+SIX = (('hydrate', 'oxidize', 'grow', 'thiolene', 'dehydrate', 'ritter') if V2 else
+       ('hydrate', 'hydroborate', 'dehydrate', 'oxidize', 'reduce', 'grow'))
 ALL = tuple(STATS['reagents'])
 UNLOCKS = tuple(x for x in ALL if x not in SIX)
 LENGTHS = {'bachelor': 3, 'master': 6, 'doctorate': 9}
