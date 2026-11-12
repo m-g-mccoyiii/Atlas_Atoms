@@ -24,7 +24,7 @@ const KITV = (() => { try { return new URLSearchParams(root.location.search).get
 const CM = { balance: 35, spatula: 30, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 26, logbook: 30, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 30, litmus: 26, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
   stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 38, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
-const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = { x: -15.8 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -415,7 +415,7 @@ function start(app) {
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
-  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0.9 : C0B.x; C0.z = wide ? -0.4 : C0B.z; LANE.w = wide ? 21.6 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 10.5 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
+  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
   const fitMain = m => Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -603,7 +603,7 @@ function start(app) {
     const fin = view ? (view.fin && !g.queue.includes(P.SYN.finish) ? view.fin : null) : live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(4.2, (KITV === 'back' ? 19.5 : 17) / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = (KITV === 'back' ? -8.2 : -10.4) + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 18.0, z: z + 0.4 }; SCS[i] = 0.4; }); } }
+      if (SIDE) { const gap = Math.min(3.0, 13.4 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -3.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 21.8, z: z + 0.4 }; SCS[i] = 0.4; }); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
@@ -673,7 +673,7 @@ function start(app) {
   const shopMax = () => (meta.stage >= 3 ? P.SUPPLY.length - 1 : 3);
   const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
   // ?seed=N plays the run whose draws all come from N. Without it the draws are the system's, as before.
-  function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR()); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && JARK.some(k => meta.hatched[k])) showHoms(); else runOpen(); }
+  function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR(), { tierNo: Math.max(1, Math.min(3, meta.reach || 1)) }); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && JARK.some(k => meta.hatched[k])) showHoms(); else runOpen(); }
   function runOpen() { if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // Before a run, once a homunculus has hatched: those that have stand on the page with an empty jar, and one is
   // taken into the run, or none
@@ -755,7 +755,7 @@ function start(app) {
     // what the round gave off goes into the jars for good, win or lose; a jar that is now full hatches
     { const b = P.runBank(run, g); st.hatched = null; JARK.forEach(k => { meta.jar[k] = Math.min(P.JAR.full[k], (meta.jar[k] || 0) + (b[k] || 0)); if (!meta.hatched[k] && meta.jar[k] >= P.JAR.full[k]) { meta.hatched[k] = true; st.hatched = k; st.hatchT = performance.now(); } }); st.by = { water: 0, h2: 0, gauge: 0 }; JARK.forEach(k => { g.by[k] = 0; }); st.flyers.forEach(f => { f.keep = null; }); saveMeta(); }
     st.homWait = false; st.homList = null;
-    st.mode = 'done'; st.call = null; if (P.RULE.bare || !st.gear.length) { st.lx = 10; C0.x = 10; C0.z = 1.4; LANE.w = 37; LANE.d = 14.5; if (center) SC_MAIN = fitMain(center); } clearKit(); st.pass = g.total >= st.quota; st.won = st.pass && run.round === 9; if (st.won) run.won = true; if (!meta.taught) { meta.taught = true; saveMeta(); }
+    st.mode = 'done'; st.call = null; if (P.RULE.bare || !st.gear.length) { st.lx = 0; C0.x = 0; C0.z = 1.2; LANE.w = 41; LANE.d = 10; if (center) SC_MAIN = fitMain(center); } clearKit(); st.pass = g.total >= st.quota; st.doneT = performance.now(); st.won = st.pass && run.round >= (P.runLast ? P.runLast(run) : 9); if (st.won) { run.won = true; if ((meta.reach || 1) <= (run.tierNo || 1) && (run.tierNo || 1) < 3) { meta.reach = (run.tierNo || 1) + 1; saveMeta(); } } if (!meta.taught) { meta.taught = true; saveMeta(); }
     if (st.pass) run.beaten++;
     if (meta.stage < 2 && run.beaten >= 3) { meta.stage = 2; if (run.term !== 'hoard') run.noGear = false; saveMeta(); }
     else if (meta.stage === 2 && st.pass && run.beaten === 6) { meta.six = (meta.six || 0) + 1; if (meta.six >= 2) meta.stage = 3; saveMeta(); }
@@ -869,7 +869,7 @@ function start(app) {
   const molBox = () => { if (!center || !center.balls || !(center.balls.size || center.balls.length)) return null; const sc = center.group.scale.x; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; center.balls.forEach(b => { const p = b.mesh.position; if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.z < z0) z0 = p.z; if (p.z > z1) z1 = p.z; }); const r = 1.0 * sc, a = px({ x: C0.x + x0 * sc - r, z: C0.z + z0 * sc - r }), b2 = px({ x: C0.x + x1 * sc + r, z: C0.z + z1 * sc + r }); return { l: a[0], t: a[1], r: b2[0], b: b2[1] }; };
   // where a ring's number is written: under the molecule, at the ring, clear of the atoms
   // in the first short runs the uses of a reaction never run out: the rules say so with one of these switches and the drops are not drawn
-  const usesHidden = () => !!(P.RULE && (P.RULE.usesFree || P.RULE.infiniteUses || P.RULE.unlimitedUses));
+  const usesHidden = () => !!(P.usesFreeOn && run && P.usesFreeOn(run)) || !!(P.RULE && (P.RULE.infiniteUses || P.RULE.unlimitedUses));
   // A hurdle is an at-least condition on the molecule, drawn as a small hand-drawn mark and a count: { kind, n, max }.
   // Kinds: ring, joined (rings sharing an edge), big (a large ring), cage, size, kinds (kinds of group), water (water off), chain (longest chain), few (few reactions; at most).
   const HURDLE = {
@@ -885,10 +885,15 @@ function start(app) {
   };
   function poly(c, cx, cy, r, n) { for (let k = 0; k <= n; k++) { const a = -Math.PI / 2 + k * 6.2832 / n, px0 = cx + r * Math.cos(a), py0 = cy + r * Math.sin(a); if (k === 0) c.moveTo(px0, py0); else c.lineTo(px0, py0); } }
   function drawHurdle(g0, cx, cy, h) {
-    if (!h || !HURDLE[h.kind]) return; const c = ink.x, n = Math.max(0, h.n | 0), atMost = !!h.max || h.kind === 'few';
-    c.save(); c.translate(cx, cy); c.scale(1.4, 1.4); c.translate(-cx, -cy); c.strokeStyle = INK; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); HURDLE[h.kind](c, cx, cy); c.stroke();
-    marker(c, 56); c.textAlign = 'left'; c.fillStyle = INK; c.fillText(String(n), cx + 48, cy + 20); const w = c.measureText(String(n)).width;
-    c.lineWidth = 5; c.beginPath(); const ax = cx + 48 + w + 18; if (atMost) { c.moveTo(ax - 9, cy - 6); c.lineTo(ax, cy + 6); c.lineTo(ax + 9, cy - 6); } else { c.moveTo(ax - 9, cy + 6); c.lineTo(ax, cy - 6); c.lineTo(ax + 9, cy + 6); } c.stroke(); c.restore();
+    const key = h && (HURDLE[h.mark] ? h.mark : HURDLE[h.kind] ? h.kind : null); if (!key) return;
+    const c = ink.x, n = Math.max(0, h.n | 0), val = Math.max(0, +h.value || 0), frac = n ? Math.min(1, val / n) : 0, met = !!h.met, atMost = !!h.max || key === 'few', col = met ? GREEN : INK;
+    c.save(); c.translate(cx, cy); c.scale(1.4, 1.4); c.translate(-cx, -cy); c.strokeStyle = col; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); HURDLE[key](c, cx, cy); c.stroke();
+    marker(c, 56); c.textAlign = 'left'; c.fillStyle = col; c.fillText(String(n), cx + 48, cy + 20); const w = c.measureText(String(n)).width;
+    c.lineWidth = 5; c.beginPath(); const ax = cx + 48 + w + 18; if (atMost) { c.moveTo(ax - 9, cy - 6); c.lineTo(ax, cy + 6); c.lineTo(ax + 9, cy - 6); } else { c.moveTo(ax - 9, cy + 6); c.lineTo(ax, cy - 6); c.lineTo(ax + 9, cy + 6); } c.stroke();
+    // how far along: a ruled line under the mark, drawn to the fraction reached; met is the whole line in green, heavier
+    const x0 = cx - 34, x1 = cx + 48 + w + 30; c.lineWidth = 4; c.strokeStyle = FAINT; c.beginPath(); c.moveTo(x0, cy + 44); c.lineTo(x1, cy + 44); c.stroke();
+    if (frac > 0 || met) { c.lineWidth = met ? 9 : 7; c.strokeStyle = col; c.beginPath(); c.moveTo(x0, cy + 44); c.lineTo(x0 + (x1 - x0) * (met ? 1 : frac), cy + 44); c.stroke(); }
+    c.restore();
   }
   // gains go through one lane, one at a time: each is shown for a short while, the next waits its turn
   const laneGain = q => { const start = Math.max(q.t, st.laneFree || 0), dur = Math.max(260, Math.min(420, q.dur)); q.t0 = start; q.t = start; q.dur = dur; st.laneFree = start + dur + 40; st.gains.push(q); };
@@ -906,7 +911,7 @@ function start(app) {
     arene: (c, cx, cy, on) => { const p = []; for (let k = 0; k < 6; k++) { const a = -1.5708 + k * 1.0472; p.push([cx + 26 * Math.cos(a), cy + 26 * Math.sin(a)]); } p.forEach((q, k) => fbond(c, q[0], q[1], p[(k + 1) % 6][0], p[(k + 1) % 6][1], k % 2 ? 1 : 2, on)); p.forEach(q => fball(c, q[0], q[1], 'C', on)); },
     cage: (c, cx, cy, on) => { const p = [[-18, -18], [18, -18], [18, 18], [-18, 18]]; p.forEach((q, k) => fbond(c, cx + q[0], cy + q[1], cx + p[(k + 1) % 4][0], cy + p[(k + 1) % 4][1], 1, on)); fbond(c, cx - 18, cy - 18, cx + 18, cy + 18, 1, on); fbond(c, cx + 18, cy - 18, cx - 18, cy + 18, 1, on); p.forEach(q => fball(c, cx + q[0], cy + q[1], 'C', on)); }
   };
-  function fragOrChip(c, tok, cx, cy, on) { if (FRAG[tok]) { c.save(); c.translate(cx, cy); c.scale(1.7, 1.7); FRAG[tok](c, 0, 0, on); c.restore(); return; } chip(c, tok, cx, cy, on); }
+  function fragOrChip(c, tok, cx, cy, on) { if (FRAG[tok]) { c.save(); c.translate(cx, cy); c.scale(1.45, 1.45); FRAG[tok](c, 0, 0, on); c.restore(); return; } chip(c, tok, cx, cy, on); }
   const spotOf = pr => (pr && pr.a && pr.b && center ? { x: C0.x + (pr.a.x + pr.b.x) / 2 * center.group.scale.x, z: C0.z + (pr.a.z + pr.b.z) / 2 * center.group.scale.x } : null);
   const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
   function pick(i) {
@@ -916,7 +921,7 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 18.3, z: -10.2 };
+  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 21.2, z: 10.6 };
   const lining = () => P.RULE.queue && st.mode === 'play' && !!g && !g.over && !g.chain && !g.shot;
   const bankAt = () => st.mode === 'play' && g && (lining() || P.canBank(g)) && hit.x > BANK.x - 1.4 && hit.x < BANK.x + 5 && Math.abs(hit.z - BANK.z) < 1.2;
   // the reaction arrow after the circles fires the page; a click on a filled circle takes its reagent back
@@ -1137,7 +1142,7 @@ function start(app) {
     if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
     dirty = true;
   }
-  const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.pass) { run.round++; showPicks(); } else if (meta.stage < 2) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); newRun(); } else showSuppliers(); };
+  const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.won) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); return newRun(); } if (st.pass) { run.round++; showPicks(); } else if (meta.stage < 2) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); newRun(); } else showSuppliers(); };
 
   // ---------- ink ----------
   const px = p => [(p.x + SW / 2) * U, (p.z + SH / 2) * U];
@@ -1185,9 +1190,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const GCOL = { 'C=C': '#3a6fd0', OH: '#d6453a', 'C=O': '#e07a00', Cl: '#3c9a5f', CH: '#8d949c', chain: '#e23c6e' };
   function chip(x, txt, cx, cy, on) { hand(x, 34); const w = Math.max(74, x.measureText(txt).width + 26); x.fillStyle = on ? GCOL[txt] || INK : 'rgba(141,148,156,0.35)'; x.beginPath(); x.ellipse(cx, cy - 11, w / 2, 25, 0, 0, 6.3); x.fill(); x.fillStyle = '#fbf8ee'; x.textAlign = 'center'; x.fillText(txt, cx, cy); return w; }
   // a coin of credit, drawn in ink
-  function coin(x, cx, cy, r) { x.fillStyle = '#e9b93a'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); x.strokeStyle = '#8a6a00'; x.lineWidth = 4; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.stroke(); x.beginPath(); x.arc(cx, cy, r * 0.55, 0.4, 5.2); x.stroke(); }
+  function coin(x, cx, cy, r) { if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, cx, cy, r, {}); }
   // A coin of the run, seen from the side so that coins stack, in copper: the credit kept between runs is the gold one.
-  function rcoin(x, cx, cy, r, a) { x.globalAlpha = a == null ? 1 : a; x.fillStyle = '#d98a4a'; x.strokeStyle = '#7a4318'; x.lineWidth = Math.max(2.5, r * 0.2); x.beginPath(); x.ellipse(cx, cy, r, r * 0.5, 0, 0, 6.3); x.fill(); x.stroke(); x.globalAlpha = 1; }
+  function rcoin(x, cx, cy, r, a) { if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, cx, cy, r * 0.8, { alpha: a == null ? 1 : a }); }
   // the coins held: a stack, at most ten high, and how many
   function purse(x, cx, cy, n, r, plus) { if (n <= 0) { x.strokeStyle = FAINT; x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, r, r * 0.5, 0, 0, 6.3); x.stroke(); } for (let k = 0; k < Math.min(10, n); k++) rcoin(x, cx + ((k * 7) % 3 - 1) * 1.5, cy - k * r * 0.46, r);
     marker(x, r * 2); x.textAlign = 'left'; x.fillStyle = '#7a4318'; x.fillText(String(n), cx + r + 14, cy + r * 0.6); if (plus) { const w = x.measureText(String(n)).width; marker(x, r * 1.5); x.fillStyle = GREEN; x.fillText('+' + plus, cx + r + 30 + w, cy + r * 0.6); } }
@@ -1272,7 +1277,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           // one of two molecules: its family, the number to beat, and the coins the harder one pays on top
           { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.6 }); if (K && meta.stage >= 2 && !b.assay) { marker(x, 58); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); } }
                     const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
-          if (b.hurdle) { const hp = px({ x: BX(i) + 7.5, z: 5.5 }); drawHurdle(g, hp[0], hp[1], b.hurdle); }
+          if (b.spec || b.hurdle) { const hp = px({ x: BX(i) + 7.5, z: 5.5 }); drawHurdle(g, hp[0], hp[1], b.spec || b.hurdle); }
           if (b.coins) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
           if (hov) swipe(x, [c[0] - 150, y + 24], [c[0] + 150, y + 19], 6, INK);
           return;
@@ -1406,8 +1411,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.save(); x.translate(m[0], m[1]);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
         
-        fragOrChip(x, tl[0], -92, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(2, -8); x.moveTo(-10, -20); x.lineTo(2, -8); x.lineTo(-10, 4); x.stroke(); fragOrChip(x, tl[1], 56, -8, on);
-        if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 110, -2); }
+        fragOrChip(x, tl[0], -78, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
+        if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 86, -2); }
+        { const nid = g.nextHand && g.nextHand[i], nt = nid && TILE[nid]; if (nt) { x.save(); x.translate(-205, -4); x.scale(0.5, 0.5); fragOrChip(x, nt[0], -78, -8, false); x.strokeStyle = FAINT; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, nt[1], 46, -8, false); x.restore(); } }
         if (hov) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? INK : FAINT; x.fillText(verb, -20, 46); }
         if (o && g && st.mode === 'play' && !P.RULE.queue) { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); if (g.ring && !(g.ringSet || []).includes(o.id)) { const w0 = x.measureText('+' + fmt(s.gv)).width; x.strokeStyle = '#b88a00'; x.lineWidth = 5; x.lineJoin = 'round'; x.beginPath(); x.moveTo(-186 - w0 - 26, -18); x.lineTo(-186 - w0 - 12, 6); x.lineTo(-186 - w0 - 40, 6); x.closePath(); x.stroke(); } } }
         // uses left: one drop each, on the reagent's own chip. One placed in a circle is an empty drop
@@ -1446,8 +1452,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 52); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    { const hh = g.hurdle || st.hurdle; if (hh) { const hp = px({ x: EDGE + 2.4, z: PAGES.z - 4.6 }); drawHurdle(g, hp[0], hp[1], hh); } }
+    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 44); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    { const hh = g.spec || g.hurdle || st.hurdle; if (hh) { const hp = px({ x: 20.2, z: -8.6 }); drawHurdle(g, hp[0], hp[1], hh); } }
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
@@ -1549,8 +1555,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
         st.twM.marks.forEach(k => { const c = px({ x: C0.x + k.x * sc, z: C0.z + k.z * sc }), r = 0.95 * sc * U; x.beginPath(); x.ellipse(c[0], c[1], r, r * 0.86, 0, 0, 6.3); x.fill(); }); x.globalAlpha = 1; dirty = true; } }
     // the gain of each step of a cascade: written at the new ring, then it travels to the total and the total takes it
-    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); if (ra) { x.save(); x.setLineDash([3, 11]); x.strokeStyle = FAINT; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.moveTo(T0[0] + (st.madeW || 200) + 80, ra[3].b + 114); x.lineTo(ra[3].r, ra[3].b + 114); x.stroke(); x.restore(); }
-      st.gains.forEach((q, qi) => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, gy = ra[3].b + 104, S0 = [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, spx ? spx[0] : px(q.gx || { x: C0.x, z: C0.z })[0])), gy], Bf = [T0[0] + (st.madeW || 200) + 80, gy], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * e, cy = gy;
+    if (st.gains.length && st.mode !== 'done') { const ra = ringAt(), T0 = px(MADE); if (ra) { x.save(); x.setLineDash([3, 11]); x.strokeStyle = FAINT; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.moveTo(T0[0] + (st.madeW || 200) + 80, T0[1] - 12); x.lineTo(ra[3].r, T0[1] - 12); x.stroke(); x.restore(); }
+      st.gains.forEach((q, qi) => { if (now < q.t0 || !ra) return; const spx = q.sp ? px(q.sp) : null, gy = T0[1] - 24, S0 = [Math.max(ra[3].l + 30, Math.min(ra[3].r - 30, spx ? spx[0] : px(q.gx || { x: C0.x, z: C0.z })[0])), gy], Bf = [T0[0] + (st.madeW || 200) + 80, gy], k = Math.max(0, Math.min(1, (now - q.t) / q.dur)), e = k * k, pop = now - q.t0 < 70 ? 1.25 : 1, cx = S0[0] + (Bf[0] - S0[0]) * e, cy = gy;
         x.globalAlpha = k > 0.78 ? Math.max(0, 1 - (k - 0.78) / 0.24) : 1; marker(x, (q.fresh ? 46 : 36) * pop * (1 - 0.3 * e)); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 12; x.strokeStyle = '#f3eddc'; x.strokeText(q.txt, cx, cy); x.fillStyle = q.fresh ? INK : PENCIL; x.fillText(q.txt, cx, cy); x.globalAlpha = 1; }); dirty = true; }
     // bonuses in flight: from where they were earned to the points or to the multiplier
     if (st.motes.length) { const mp2 = px(FORM), tx0 = mp2[0] + Math.max(st.fW || 260, (st.madeW || 0) + 10) + 64, tgt = { p: [tx0, mp2[1] - 24], m: [tx0, mp2[1] - 24] }; st.motes = st.motes.filter(m => now - m.t < m.dur);
@@ -1588,21 +1594,22 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       const wv = [st.quota].concat(P.runMarks(st.quota)), WS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [64, 92, 128, 172];
       let wk = -1; for (let k = 0; k < 4 && k < wv.length; k++) if (done ? g.total >= wv[k] : !!st.passT[k]) wk = k;
       if (wk >= 0) {
-        st.wordK = wk; const c = px({ x: 0, z: -9 }), t0 = st.passT[wk] || 0, pr = t0 && now - t0 < 420 ? (now - t0) / 420 : 1;
+        st.wordK = wk; const c = px({ x: 0, z: -11.4 }), t0 = st.passT[wk] || 0, pr = t0 && now - t0 < 420 ? (now - t0) / 420 : 1;
         let sz = WSZ[wk], tw = AA.rxPen.measure(WS[wk], sz, 'heavy').width; if (tw > 1500) { sz *= 1500 / tw; tw = 1500; }
         st.wordW = tw; if (pr < 1) dirty = true; AA.rxPen.write(x, WS[wk], c[0], c[1], sz, { weight: 'heavy', color: GREEN, align: 'center', t: pr });
       }
     }
     // the round is over: how it went, and where to click
     if (done) {
-      const c = px({ x: 0, z: -9 }), ratio = g.total / st.quota;
+      const c = px({ x: 0, z: -11.4 }), ratio = g.total / st.quota;
       marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
       const txt = st.pass ? '' : fmt(st.quota - g.total) + ' short', tw = st.pass ? (st.wordW || 0) : x.measureText(txt).width, n = Math.floor(ratio);
-      if (txt) { x.strokeText(txt, c[0], c[1]); x.fillText(txt, c[0], c[1]); }
-      hand(x, 50); x.fillStyle = PENCIL; for (let n = 0; n < (st.pass ? st.paid || 0 : 0); n++) rcoin(x, c[0] + tw / 2 + 70 + n * 62, c[1] - 36, 28);
-      if (st.won) x.fillText('won', c[0], c[1] + 80); else if (!st.pass && run.beaten + (run.bonus || 0) > 0) purse(x, c[0] - tw / 2 - 90, c[1] - 8, run.beaten + (run.bonus || 0), 20, 0);
+      if (txt) { x.fillText(txt, c[0], c[1]); }
+      { const t0 = st.doneT || now, nC = st.pass ? Math.min(12, st.paid || 0) : Math.min(12, run.beaten + (run.bonus || 0)), baseX = st.pass ? c[0] + tw / 2 + 80 : c[0] - tw / 2 - 90; for (let n = 0; n < nC; n++) { const kk = Math.max(0, Math.min(1, (now - t0 - 450 - n * 190) / 300)); if (kk <= 0) { dirty = true; continue; } const dy = (1 - kk) * (1 - kk) * 260, bx2 = st.pass ? baseX + n * 54 : baseX, by2 = st.pass ? c[1] - 36 : c[1] - 8 - n * 12; if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, bx2, by2 - dy, 24, { turn: kk < 1 ? kk : 0 }); if (kk < 1) dirty = true; } }
+      if (st.won || !st.pass) { const nF = P.runLast ? P.runLast(run) : 9, wF = 70, x0F = c[0] - (nF - 1) * wF / 2, yF = c[1] + 96; for (let n = 0; n < nF; n++) { const kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 200 - n * 120) / 260)); if (kk < 1) dirty = true; flag(x, x0F + n * wF, yF - (1 - kk) * 30, 44, n < run.beaten ? GREEN : FAINT, n < run.beaten); } }
+      
       if (st.newSig) { const sc = px({ x: -12, z: 3.5 }), T0 = P.TERMS.find(q => q.id === st.newSig); sigil(x, sc, 120, st.newSig, '#b88a00', 10); marker(x, 50); x.textAlign = 'center'; x.fillStyle = '#b88a00'; x.fillText(T0.name, sc[0], sc[1] + 136); hand(x, 28); x.fillStyle = PENCIL; x.fillText('new sigil', sc[0], sc[1] - 96); }
-      { const nx = px({ x: 17.5, z: 11.6 }), wd = st.pass ? 'next' : 'new run'; hand(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
+      { const nx = px({ x: 17.5, z: 11.6 }), wd = st.pass && !st.won ? 'next' : 'new run'; hand(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
     ink.t.needsUpdate = true;
   }

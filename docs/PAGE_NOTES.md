@@ -60,3 +60,13 @@ Frames: `.claude/shots/page3-1.jpg` (pair page with two hurdle marks), 2 (ring 1
 - Rule words (`assay`, `short`, `2 pages`, `scarce`, `1 use`) are off the pair page and the round page. `drawHurdle(g, cx, cy, hurdle)` draws a named hand-drawn mark and a count from the table ring, joined, big, cage, size, kinds, water, chain, few, with a small caret for at least (up) or at most (down; `few` always). It runs when `b.hurdle` is on a brief (pair page, beside the flag) or `g.hurdle` or `st.hurdle` is set (round page, top left). Absent: nothing is drawn.
 - Guards kept: `AA.rxPath.swapQueue` (drag a circle onto another) and `RULE.usesFree` (drops hidden).
 - Test method: the pane draws the molecule badly when the page clock is slowed (the molecule scales in again after every step), so frames of a chain were taken by freezing the page clock a set time after a ring began.
+
+## Round 7 (stage, spec, run length, end screens)
+
+- Stage: the molecule sits in a band across the top, about 55 percent of the canvas width (page7-1), the left stack and the list below and beside it, the list at the far right with its fragments smaller, the next five shown as small pairs left of the list (RULE.next), the redraw mark at the bottom of the list, the word at the very top. The gain lane runs along the line of the total, from under the molecule to the total, with its dotted rule. Use marks are hidden when `P.usesFreeOn(run)`.
+- Coin: `coin` and `rcoin` now call `AA.rxKit.drawCoin`. The 3D coin and the jars are not yet used.
+- Spec: `drawHurdle` takes `{kind or mark, n, value, met}` from `g.spec`, `b.spec` (pair) or `st.hurdle`: the mark, the count, a ruled line drawn to value over n, and the whole in green with a heavier line when met (page7-2, page7-3). At the top right of the round page and beside each molecule on the pair page. New mark names must be added to the `HURDLE` table.
+- Run length: `newRun` passes `{ tierNo: meta.reach }` (1 first, so three rounds); winning a run sets `meta.reach` one higher up to 3; the last round is `P.runLast(run)`.
+- End screens: the round end and the run end show the word reached, the coins dropping in one at a time (the single coin), one flag per round of the run (green for beaten), `next` or `new run`. Seen won (page7-4) and lost (page7-5).
+- Test hook: shot.js takes `round`, `quota`, `lose`, `end`, `pre`, `spec`, `next`, `free` in the address.
+- Not done: the jars and creatures with the new kitart calls, the 3D coin, the left stack still draws on the end screens, the multiplier object, the ink stroke to what a change sets off.

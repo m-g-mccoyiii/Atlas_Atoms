@@ -25,13 +25,18 @@
   }
   window.addEventListener('load', () => realST(async () => {
     const S = AA.rxScheme, P = AA.rxPath, base = q.get('name') || 'shot', at = (q.get('at') || '300').split(',').map(Number);
-    P.seed(+(q.get('seed') || 3)); S.debugBare(true); S.debugRound(1);
+    if (q.get('next')) P.RULE.next = true; if (q.get('free')) P.RULE.usesFree = true; P.seed(+(q.get('seed') || 3)); S.debugBare(true); S.debugRound(+(q.get('round') || 1));
     await run(1500); S.takePick(0); await run(1200); S.chooseBrief(0); await run(2500);
     if (q.get('rack') || mode === 'water') { S.debugRack((q.get('rack') || 'dehydrate,hydrate,pcc,bh3,nabh4').split(',')); await run(900); }
     S.debugFeed(q.get('smiles') || (mode === 'water' ? 'CC(O)CCC(O)CC' : 'O=CCCC(=O)CCC(C)(O)CCC=C')); await run(1500);
+    if (q.get('spec')) { const g = S.debugG(); const p = q.get('spec').split(':'); S.st.hurdle = { kind: p[0], n: +p[1], value: +p[2], met: p[3] === '1' }; }
     const names = (q.get('line') || (mode === 'water' ? 'dehydrate' : 'hydrate,pcc,bh3')).split(','), off = S.state().offer; names.forEach(n => S.pick(off.indexOf(n))); await run(600);
+    if (q.get('pre')) { await run(300, () => save(base + '-pre.jpg')); }
+    if (q.get('quota')) S.st.quota = +q.get('quota');
+    if (q.get('lose')) { S.st.quota = 99999999; }
     S.fire(); const t0 = vnow; const first = +(q.get('first') || 1);
     if (q.get('ring')) { let seen = 0, last = null; while (vnow - t0 < 20000) { await run(10); const c = S.st.cstep; if (c && c !== last) { last = c; if (++seen === +q.get('ring')) break; } } }
+    if (q.get('end')) { for (let k = 0; k < 6 && S.st.mode !== 'done'; k++) { await run(2500); if (S.st.mode === 'play') { const u = S.state().usable || []; if (u.length) { u.slice(0, 3).forEach(i => S.pick(i)); S.fire(); } else S.turn(); } } }
     const t1 = vnow;
     for (let i = 0; i < at.length; i++) { await run(Math.max(1, at[i] - (vnow - t1)), () => save(base + '-' + (i + first) + '.jpg')); }
     document.title = 'done';
