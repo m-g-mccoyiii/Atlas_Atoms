@@ -11,7 +11,7 @@ const AA = root.AA = root.AA || {};
 // Output goes into the effects' own bus (the ducked bed of sfx.js) when one exists, so hits push the music down and the two
 // share one limiter; otherwise the music has its own limiter. See docs/MUSIC.md.
 
-const KEY = 'overreact.music', TRIM = 0.96, LOOK = 0.35, MASTER = 0.67;
+const KEY = 'overreact.music', TRIM = 0.96, LOOK = 0.35, MASTER = 0.67, NTH = 11;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
 function RNG(seed) { let s = Math.floor(Math.abs(seed)) % 2147483647; if (s <= 0) s += 2147483646; const r = () => { s = s * 16807 % 2147483647; return (s - 1) / 2147483646; }; r.i = n => Math.floor(r() * n); r.pick = a => a[r.i(a.length)]; r.chance = p => r() < p; return r; }
@@ -91,19 +91,17 @@ const FORMS = ['AABA', 'ABAB', 'AABB', 'ABAA'], FRAG = [[1, 1, 0, 0, 1, 1, 0, 0]
 // ====================================================================================================================
 function Engine(c, o) {
   o = o || {}; const E = this, G = v => { const g = c.createGain(); if (v !== undefined) g.gain.value = v; return g; };
-  E.c = c; E.G = G; E.th = clamp(Math.round(+o.theme) || 4, 1, 6); E.gv = E.th >= 4; E.arr = ARR[o.arr] ? o.arr : 'c'; E.slow = 0.5; E.sg = 0; E.playI = 0.2; E.rnd = 1; E.I = 0.5; E.vol = o.volume === undefined ? 0.7 : o.volume; E.seed = o.seed || 1; E.dry = !!o.dry; E.solo = o.solo || null;
+  E.c = c; E.G = G; E.th = clamp(Math.round(+o.theme) || 6, 1, NTH); E.gv = E.th >= 4; E.arr = ARR[o.arr] ? o.arr : 'c'; E.slow = 0.5; E.sg = 0; E.playI = 0.2; E.rnd = 1; E.I = 0.5; E.vol = o.volume === undefined ? 0.7 : o.volume; E.seed = o.seed || 1; E.dry = !!o.dry; E.solo = o.solo || null;
   E.jr = RNG(E.seed * 31 + 5); E.deck = null; E.pending = null; E.nDeck = 0; E.log = []; E.nodes = 0; E.spans = []; E.stepN = 0; E.cix = 0;
   E.sum = G(MASTER); E.duckG = G(1); E.volG = G(E.vol); E.out = G(1); E.duckG.connect(E.volG); E.volG.connect(E.out);
   // the grooves go to "tape": a slow wobble of pitch (a short delay whose length wanders), a faster flutter, a soft squash. The older themes go straight through.
   E.plain = G(E.gv ? 0 : 1); E.sum.connect(E.plain); E.plain.connect(E.duckG);
-  const td = c.createDelay(0.06); td.delayTime.value = 0.014; const w1 = c.createOscillator(), w2 = c.createOscillator(), fl = G(0.00005); E.wowG = G(0.0007); w1.frequency.value = 0.53; w2.frequency.value = 6.1; w1.connect(E.wowG); E.wowG.connect(td.delayTime); w2.connect(fl); fl.connect(td.delayTime); w1.start(); w2.start();
+  const td = c.createDelay(0.06); td.delayTime.value = 0.014; const w1 = c.createOscillator(), w2 = c.createOscillator(), fl = G(0.00005); E.wowG = G(0.0007 * wowOf(E.th)); w1.frequency.value = 0.53; w2.frequency.value = 6.1; w1.connect(E.wowG); E.wowG.connect(td.delayTime); w2.connect(fl); fl.connect(td.delayTime); w1.start(); w2.start();
   const tsh = c.createWaveShaper(), tcu = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; tcu[i] = Math.tanh(x * 1.5) / Math.tanh(1.5); } tsh.curve = tcu; tsh.oversample = '2x'; E.taped = G(E.gv ? 1 : 0); E.sum.connect(td); td.connect(tsh); tsh.connect(E.taped); E.taped.connect(E.duckG);
   // noise, made here from a seed
   const nb = c.createBuffer(1, Math.floor(c.sampleRate * 2), c.sampleRate), nd = nb.getChannelData(0), nr = RNG(4711); for (let i = 0; i < nd.length; i++) nd[i] = nr() * 2 - 1; E.noise = nb;
   // a room: a made impulse (decaying noise, darker towards the end) in a convolver
-  const len = Math.floor(c.sampleRate * 3.0), ir = c.createBuffer(2, len, c.sampleRate), pre = Math.floor(0.025 * c.sampleRate);
-  for (let chn = 0; chn < 2; chn++) { const d = ir.getChannelData(chn), r = RNG(99 + chn * 31); let lp = 0; for (let i = 0; i < len; i++) { const x = i / len, w = r() * 2 - 1, k = 0.8 - 0.68 * x; lp += k * (w - lp); d[i] = i < pre ? 0 : lp * Math.pow(1 - x, 2.2) * Math.exp(-(E.gv ? 6.5 : E.arr === 'a' && E.th === 3 ? 5 : 3.4) * x) * (i < pre + 400 ? (i - pre) / 400 : 1); } for (let j = 0; j < 9; j++) { const at = Math.floor((0.007 + r() * 0.07) * c.sampleRate); d[at] += (r() - 0.5) * 1.6; } }   // a hall: a few early walls, then a tail that darkens
-  E.revIn = G(1); const cv = c.createConvolver(); cv.normalize = true; cv.buffer = ir; const rr = G(0.55); E.revIn.connect(cv); cv.connect(rr); rr.connect(E.sum);
+  E.revIn = G(1); E.cv = c.createConvolver(); E.cv.normalize = true; const rr = G(0.55); E.revIn.connect(E.cv); E.cv.connect(rr); rr.connect(E.sum); E.mkRoom();
   // an echo
   E.dlyIn = G(1); E.dl = c.createDelay(1.5); E.dl.delayTime.value = 0.4; const fb = G(0.36), dlp = c.createBiquadFilter(); dlp.type = 'lowpass'; dlp.frequency.value = 2400; const dr = G(0.5);
   E.dlyIn.connect(E.dl); E.dl.connect(dlp); dlp.connect(fb); fb.connect(E.dl); dlp.connect(dr); dr.connect(E.sum);
@@ -111,6 +109,13 @@ function Engine(c, o) {
   E.sat = {};
 }
 const EP = Engine.prototype;
+// the room of the engine: made again when a track with another hall is chosen
+EP.mkRoom = function () {
+  const E = this, c = E.c, hall = hallOf(E); if (E.hall === hall) return; E.hall = hall;
+  const len = Math.floor(c.sampleRate * 3.0), ir = c.createBuffer(2, len, c.sampleRate), pre = Math.floor(0.025 * c.sampleRate);
+  for (let chn = 0; chn < 2; chn++) { const d = ir.getChannelData(chn), r = RNG(99 + chn * 31); let lp = 0; for (let i = 0; i < len; i++) { const x = i / len, w = r() * 2 - 1, k = 0.8 - 0.68 * x; lp += k * (w - lp); d[i] = i < pre ? 0 : lp * Math.pow(1 - x, 2.2) * Math.exp(-hall * x) * (i < pre + 400 ? (i - pre) / 400 : 1); } for (let j = 0; j < 9; j++) { const at = Math.floor((0.007 + r() * 0.07) * c.sampleRate); d[at] += (r() - 0.5) * 1.6; } }   // a hall: a few early walls, then a tail that darkens
+  E.cv.buffer = ir;
+};
 EP.shaper = function (k, over) { const key = k.toFixed(1); if (!this.sat[key]) { const n = 1024, cu = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; cu[i] = Math.tanh(x * k) / Math.tanh(k); } this.sat[key] = cu; } const w = this.c.createWaveShaper(); w.curve = this.sat[key]; if (over) w.oversample = '4x'; return w; };
 // where the music goes: a node of the effects' bus, or (null) its own limiter
 EP.attach = function (node) {
@@ -124,21 +129,22 @@ EP.u = function () { return (this.rnd - 1) / 8; };
 // the same, bowed so the middle rounds are already plainly odd
 EP.w = function () { return Math.pow(this.u(), 0.8); };
 // the heat of a groove: the slow value the game raises turn by turn, plus the surge of a chain on top of it
-EP.setTheme = function (k) { const E = this; E.th = k; E.gv = k >= 4; E.plain.gain.value = E.gv ? 0 : 1; E.taped.gain.value = E.gv ? 1 : 0; };
+EP.setTheme = function (k) { const E = this; E.th = k; E.gv = k >= 4; E.plain.gain.value = E.gv ? 0 : 1; E.taped.gain.value = E.gv ? 1 : 0; E.wowG.gain.value = 0.0007 * wowOf(k) * (1 + 2.5 * E.w()); E.mkRoom(); E.glide = null; };
 EP.heat = function (t, tau) { const E = this; E.I = clamp(E.slow + (1 - E.slow) * E.sg, 0, 1); if (E.deck) E.setI(E.deck, E.I, t, tau || 0.25); if (E.gv && E.state === 'chain' && E.chainTrim) E.chainTrim(t, true); };
 // in a chain the effects are the star: the groove gets denser and brighter with the surge but steps back in level, and comes forward again after
-EP.chainTrim = function (t, on) { const dk = this.deck; if (dk && dk.sg0 && !dk.dead) dk.gs.forEach(g => g.gain.setTargetAtTime(dk.sg0 * (on ? (this.th === 4 ? 0.2 * (1 - 0.3 * this.sg) : this.th === 6 ? 0.6 * (1 - 0.15 * this.sg) : 0.45 * (1 - 0.4 * this.sg)) : 1), t, on ? 0.12 : 0.5)); };
+EP.chainTrim = function (t, on) { const dk = this.deck; if (dk && dk.sg0 && !dk.dead) dk.gs.forEach(g => g.gain.setTargetAtTime(dk.sg0 * (on ? trimOf(this.th, this.sg) : 1), t, on ? 0.12 : 0.5)); };
 EP.stat = function (n, t0, t1) { this.nodes += n; this.spans.push(t0, t1, n); };
 EP.note = function (dst, t, f, kind) { const d = this.cur; if (d) d.push((dst.__n || '?') + ':' + Math.round((t - d.t) / d.spu) + ':' + Math.round(69 + 12 * Math.log2(Math.max(f, 1) / 440)) + (kind || '')); };
 
 // ---------- voices ----------
+const skipRe = (E, dst, t) => t < E.reT - 0.002 || dst.__n === 'drums' || dst === E.fx;
 // a voice that has ended is taken off the graph at once (not left for the garbage collector)
 const done = n => { try { n.disconnect(); } catch (e) { /* gone */ } };
 // a pitched voice: o = { t, f, g, type, det [cents...], a, h, d, lp, lp1, lpt, q, f1, ft, fm { r, i, i1, d }, vib { f, c, in }, pan }
 function V(E, dst, o) {
   const u = E.w(), ln = dst.__n, mel = ln === 'lead' || ln === 'arp' || ln === 'bell' || ln === 'vox', j1 = E.jr(), j2 = E.jr(), j3 = E.jr();
   let f0 = o.f; if (ln === 'arp' && j3 < 0.07 * u) f0 *= j1 < 0.5 ? 1.0595 : 1.4142;                      // a wrong note in the arpeggio: a semitone or a tritone off
-  E.note(dst, o.t, f0); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
+  if (E.reT && skipRe(E, dst, o.t)) return; E.note(dst, o.t, f0); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
   const slip = u > 0.2 && ln && ln !== 'bass' ? (j1 - 0.35) * (mel ? 0.04 : 0.012) * u : 0, drift = mel ? (j2 - 0.5) * 30 * u : 0, wide = 1 + u;
   const c = E.c, t = Math.max(o.t + slip, 0), a = o.a || 0.004, h = o.h || 0, d = o.d || 0.15, end = t + a + h + d, dets = o.det || [0], gg = o.g / Math.sqrt(dets.length);
   o = Object.assign({}, o, { f: f0 });
@@ -157,7 +163,7 @@ function V(E, dst, o) {
 }
 // noise: o = { t, g, ft, f, f1, fT, q, hp, a, d, pan }
 function N(E, dst, o) {
-  E.note(dst, o.t, o.f || 1000, 'n'); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
+  if (E.reT && skipRe(E, dst, o.t)) return; E.note(dst, o.t, o.f || 1000, 'n'); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
   const c = E.c, t = Math.max(o.t, 0), a = o.a || 0.001, d = o.d || 0.05, end = t + a + d;
   const src = c.createBufferSource(); src.buffer = E.noise; src.loop = true; const f = c.createBiquadFilter(); f.type = o.ft || 'bandpass'; f.Q.value = o.q || 0.7; f.frequency.setValueAtTime(o.f || 1000, t); if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + (o.fT || a + d));
   const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(o.g, t + a); g.gain.setTargetAtTime(0, t + a, d / 4.5);
@@ -168,7 +174,7 @@ function N(E, dst, o) {
 // a low singing voice: two saws through two mouth resonances and a body; vow 0 ah, 1 oh, 2 oo
 const VOW = [[700, 1150], [450, 820], [330, 720]];
 function chant(E, dst, o) {
-  E.note(dst, o.t, o.f, 'v'); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
+  if (E.reT && skipRe(E, dst, o.t)) return; E.note(dst, o.t, o.f, 'v'); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
   const uu = E.w(), drift = (E.jr() - 0.5) * 30 * uu, c = E.c, t = Math.max(o.t + (uu > 0.2 ? E.jr() * 0.04 * uu : 0), 0), a = o.a || 0.08, h = o.h || 0, d = o.d || 0.3, end = t + a + h + d, vw = VOW[o.vow || 0];
   const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(o.g, t + a); g.gain.setValueAtTime(o.g, t + a + h); g.gain.setTargetAtTime(0, t + a + h, d / 4.5);
   const f1 = c.createBiquadFilter(), f2 = c.createBiquadFilter(), f0 = c.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = vw[0]; f1.Q.value = 5; f2.type = 'bandpass'; f2.frequency.value = vw[1]; f2.Q.value = 7; f0.type = 'lowpass'; f0.frequency.value = 280; f0.Q.value = 0.5;
@@ -205,25 +211,26 @@ function leadNote(E, dk, inst, t, dur, m, g, bright) {
 // ---------- a deck: one state's music, with its own layer buses, fading in and out as a whole ----------
 EP.mkDeck = function (state, t0, fin) {
   const E = this, c = E.c, G = E.G, S = ST[state], T = TH[E.th], dk = { E, state, S, T, t0, nextT: t0, bar: 0, sb: 0, secN: 0, sec: null, L: {}, rng: RNG(E.seed * 7919 + hash(state) + (E.nDeck++) * 977 + E.th * 131), form: 'AABA', ends: [], mix: E.gv ? GMIX[E.th] : E.th === 3 ? FMIX[E.arr] : LMIX[E.th] };
-  dk.sw = E.gv ? swingOf(E.th, E.w()) : (u => u);
+  dk.sw = !E.gv ? (u => u) : TK[E.th] && TK[E.th].swing ? TK[E.th].swing(E.w()) : swingOf(E.th, E.w());
   dk.upb = T.upb; dk.setTempo = () => { const d = (E.rnd - 1) / 8, bpm = (T.bpm[0] + (T.bpm[1] - T.bpm[0]) * d) * (S.tm || 1); dk.spu = T.upb === 12 ? 60 / bpm / 6 : 60 / bpm / 4; }; dk.setTempo();
-  const a = fin || [1, 0.01], sg = S.g * (E.gv ? (S.I > 0.8 ? 0.33 : state === 'plan' ? 0.62 : 0.34) * (E.th === 6 ? 1.3 : E.th === 5 ? (S.I > 0.8 ? 0.7 : 0.62) : 1) : E.th !== 3 ? 1 : S.drone ? 0.9 : S.I > 0.8 ? 0.53 : 0.66);   // Fuse's loud states are many instruments at once: held back so the limiter is not what sets their level
+  const a = fin || [1, 0.01], sg = S.g * (E.gv ? (S.I > 0.8 ? 0.33 : state === 'plan' ? 0.62 : 0.34) * tkG(E.th, state, S) : E.th !== 3 ? 1 : S.drone ? 0.9 : S.I > 0.8 ? 0.53 : 0.66);   // Fuse's loud states are many instruments at once: held back so the limiter is not what sets their level
   dk.sg0 = sg; dk.gs = ['dry', 'rev', 'dly'].map((k, i) => { const g = G(0); g.gain.setValueAtTime(a[0] * sg, t0 - 0.01); g.gain.setTargetAtTime(sg, t0, a[1]); g.connect(i === 0 ? E.sum : i === 1 ? E.revIn : E.dlyIn); return g; });
   if (E.gv) { dk.tone = c.createBiquadFilter(); dk.tone.type = 'lowpass'; dk.tone.Q.value = 0.5; dk.tone.frequency.value = 6000; dk.tone.connect(dk.gs[0]); }   // a groove opens up as it heats: the whole deck through a filter that rises with the heat
   if (!S.drone) Object.keys(LAY).forEach(k => {
-    const cf = (E.gv ? LAYG : E.th === 3 ? LAYF : LAY)[k], inp = G(1), lv = G(0); inp.__n = k; let x = inp;
-    if (k === 'bass' || k === 'pad') { const p = G(1); x.connect(p); x = p; dk.L[k + 'Pump'] = p; }
+    const cf = (E.gv ? (TK[E.th] && TK[E.th].lay) || LAYG : E.th === 3 ? LAYF : LAY)[k], inp = G(1), lv = G(0), nx = G(1); inp.__n = k; inp.connect(nx); let x = nx;
+    if (k === 'bass' || k === 'pad' || cf.pump) { const p = G(1); x.connect(p); x = p; dk.L[k + 'Pump'] = p; }
     const uu = E.w(), drive = cf.sat ? cf.sat + 2.2 * uu : (k === 'lead' || k === 'vox' || k === 'arp') && uu > 0.1 ? 1 + 2.5 * uu : 0;   // more drive as the rounds go on, levelled so it gets rougher, not louder
     if (drive) { const pg = cf.sat ? (k === 'drums' ? 0.9 : 0.8) : 1 + 1.5 * uu, pre = G(pg), sh = E.shaper(drive, !cf.sat), post = G(cf.sat ? Math.pow(cf.sat / drive, E.gv ? 0.65 : 0.8) : 1 / (pg * Math.pow(drive, E.th === 5 ? 0.4 : E.gv ? 0.65 : 0.8))); x.connect(pre); pre.connect(sh); sh.connect(post); x = post; }
+    if (cf.ins) { const io = cf.ins(E, dk, k); x.connect(io.i); x = io.o; }
     x.connect(lv); lv.connect(dk.tone || dk.gs[0]); if (cf.rev) { const s = G(cf.rev); lv.connect(s); s.connect(dk.gs[1]); } if (cf.dly) { const s = G(cf.dly); lv.connect(s); s.connect(dk.gs[2]); }
-    dk.L[k] = { in: inp, lv };
+    dk.L[k] = { in: inp, lv, nx };
   });
-  if (E.gv && dk.L.vox && !E.dry) { dk.rot = c.createOscillator(); dk.rot.frequency.value = 0.9; const rg = G(0.25); dk.rot.connect(rg); rg.connect(dk.L.vox.in.gain); dk.rot.start(Math.max(0, t0 - 0.01)); dk.ends.push(dk.rot); }   // the turning speaker: slow when cool, fast when hot
+  if (E.gv && E.th <= 5 && dk.L.vox && !E.dry) { dk.rot = c.createOscillator(); dk.rot.frequency.value = 0.9; const rg = G(0.25); dk.rot.connect(rg); rg.connect(dk.L.vox.in.gain); dk.rot.start(Math.max(0, t0 - 0.01)); dk.ends.push(dk.rot); }   // the turning speaker: slow when cool, fast when hot
   if (S.drone) (E.th === 3 ? buildDrone3 : buildDrone)(E, dk);
   E.setI(dk, E.I, t0 - 0.01, 0.001);
   return dk;
 };
-const thOf = (dk, k) => { const l = dk.S.L[k]; return !l ? 9 : dk.E.gv ? (k === 'lead' && dk.state === 'plan' ? 0.28 : l[1] > 5 ? 9 : 0) : k === 'vox' && l[1] < 5 ? l[1] - 0.55 * dk.E.u() : l[1]; };
+const thOf = (dk, k) => { const l = dk.S.L[k]; return !l ? 9 : dk.E.gv ? (k === 'lead' && dk.state === 'plan' ? leadAt(dk.E.th) : l[1] > 5 ? 9 : 0) : k === 'vox' && l[1] < 5 ? l[1] - 0.55 * dk.E.u() : l[1]; };
 const layLvl = (l, I, th) => !l || l[0] <= 0 ? 0 : l[0] * (th <= 0 ? 1 : clamp((I - th) / 0.12 + 0.25, 0, 1) * (I >= th - 0.03 ? 1 : 0)) * (0.78 + 0.22 * I);
 EP.setI = function (dk, I, t, tau) {
   if (dk.S.drone) { droneI(this, dk, I, t, tau); return; }
@@ -239,11 +246,11 @@ const pat = (s, fn) => { for (let i = 0; i < s.length; i++) if (s[i] !== '.') fn
 function newSection(E, dk) {
   const r = dk.rng, S = dk.S, T = dk.T, n = dk.secN++, k16 = T.upb / 16;
   if (dk.secM === undefined) dk.secM = 0;
-  const sting = S.sting && n === 0, intro = S.intro && n === 0, SG = E.gv ? STINGG : STING, sprog = !S.prog ? null : E.gv ? [0, 0, 2, 2, 1, 1, 3, 3].map(i => T.chain[i]) : S.prog;
+  const sting = S.sting && n === 0, intro = S.intro && n === 0, SG = E.gv ? (TK[E.th] && TK[E.th].sting) || STINGG : STING, sprog = !S.prog ? null : E.gv ? [0, 0, 2, 2, 1, 1, 3, 3].map(i => T.chain[i]) : S.prog;
   let type, len = 8, prog, base;
   if (sting) { type = 'S'; len = 4; prog = SG[S.sting].prog.slice(); base = SG[S.sting].tune.map(b => b && b.map(x => [Math.round(x[0] * k16), Math.max(1, Math.round(x[1] * k16)), x[2]])); }
   else if (intro) { type = 'I'; len = S.intro; prog = T.prog.A.slice(0, len); base = null; }
-  else { if (dk.secM % 4 === 0) dk.form = r.pick(S.forms || FORMS); type = dk.form[dk.secM % 4]; dk.secM++; prog = (sprog || T.prog[type]).slice(); base = T.tune[type];
+  else { if (dk.secM % 4 === 0) dk.form = r.pick(S.forms || T.forms || FORMS); type = dk.form[dk.secM % 4]; dk.secM++; prog = (sprog || T.prog[type]).slice(); base = T.tune[type];
     const al = T.alt[type]; if (!S.prog && al && dk.secM > 1) Object.keys(al).forEach(b => { if (r.chance(0.3)) prog[b] = al[b]; }); }
   const first = dk.secM <= 1, mode = sting ? 'full' : E.gv && dk.state === 'plan' && E.I > 0.6 ? 'full' : S.tune, plain = first || r.chance(E.gv ? 0.25 : 0.4);   // the tune comes back as written about two sections in five
   const mask = !base ? [] : mode === 'none' ? [0, 0, 0, 0, 0, 0, 0, 0] : mode === 'frag' ? r.pick(FRAG) : mode === 'ask' ? r.pick([[1, 1, 0, 0, 1, 1, 0, 0], [1, 0, 0, 0, 1, 1, 0, 0], [1, 1, 0, 0, 0, 0, 1, 0]]) : [1, 1, 1, 1, 1, 1, 1, 1];
@@ -272,8 +279,16 @@ EP.schedBar = function (dk) {
   if (dk.bar === 0 && !dk.S.cut) { if (E.gv) { /* a groove needs no marker: its own kit is there */ } else if (E.th === 3) Sm(E, E.fx, { i: 'bdrum', t, g: 0.22 }); else { I_.kick(E, E.fx, t, 0.16, true); N(E, E.fx, { t, ft: 'highpass', f: 5000, g: 0.025, a: 0.002, d: 1.2 }); } }
   if (dk.S.settle && dk.bar === dk.S.settle) { dk.drum = 'main'; E.I = 0.72; E.setI(dk, E.I, t, 0.4); }                // a long celebration eases off after its first statement
   PLAY[E.th](E, dk, t, b, ch, name);
-  // the tune
-  const bar = s.tune[b];
+  dk.hist = (dk.hist || []).slice(-1).concat([{ t, b, spu: dk.spu, sec: s, bar: dk.bar, end: t + dk.upb * dk.spu }]);
+  writeTune(E, dk, t, b, ch, name, s, inChain, u, w);
+  const full = E.cur.join('|'), lead = E.cur.filter(x => x.slice(0, 4) === 'lead').join('|');
+  E.log.push({ t: +t.toFixed(3), state: dk.state, sec: s.type, b, ch: name, sig: hash(full), lead: lead ? hash(lead) : 0, n: E.cur.length }); E.cur = null;
+  dk.bar++; dk.sb++; dk.nextT = t + dk.upb * dk.spu;
+};
+
+// the tune and the late-round mischief of one bar
+function writeTune(E, dk, t, b, ch, name, s, inChain, u, w) {
+  const bar = s.tune[b], gl = (TK[E.th] && TK[E.th].lead) || grooveLead;
   if (bar && on(dk, 'lead')) {
     const minor = ['Dm', 'Bb', 'Gm', 'Eb', 'Dsus', 'Edim'].indexOf(name) >= 0, dark = !E.gv && E.rnd >= 4 && minor, flat5 = !E.gv && E.rnd >= 6 && ['Bb', 'Gm', 'Eb', 'Edim'].indexOf(name) >= 0, mode = s.type === 'S' ? 'full' : dk.S.tune, bright = clamp(E.I, 0, 1), lastBar = b === s.len - 1;   // from round 4 E falls to E flat; from round 6 the short A's fall to A flat
     let inst = dk.T.leads[s.lv]; if (mode === 'low') inst = 'chant'; if ((E.th === 3 && E.I > 0.72) || (E.th === 1 && dk.state === 'overreact')) inst = 'brass';
@@ -281,20 +296,26 @@ EP.schedBar = function (dk) {
     bar.forEach(x => { let m = x[2] + s.lo + (answer ? 12 : 0); if (dark && ((m - 64) % 12 + 12) % 12 === 0) m -= 1; if (flat5 && x[1] <= dk.upb / 2 && ((m - 69) % 12 + 12) % 12 === 0) m -= 1; if (inChain) m = nearTone(m, ch); const tt = t + dk.sw(x[0]) * dk.spu, du = x[1] * dk.spu;
       if (mode === 'low') m = m > 69 ? m - 12 : m;
       if (x[1] <= dk.upb / 2 && dk.rng.chance(0.06 * w)) m += E.gv ? 12 : dk.rng.chance(0.5) ? 1 : -1;                // a wrong note (in a groove: a note that jumps the octave)
-      if (E.gv && w > 0.15 && x[1] >= 2 && dk.rng.chance(0.4 * w)) grooveLead(E, dk, tt - 0.08, 0.08, m - 1, 0.6, mode);                // in later rounds notes are slid into from a semitone under: cheeky, not sad
+      if (E.gv && w > 0.15 && x[1] >= 2 && dk.rng.chance(0.4 * w)) gl(E, dk, tt - 0.08, 0.08, m - 1, 0.6, mode);                // in later rounds notes are slid into from a semitone under: cheeky, not sad
       if (E.rnd >= 8 && lastBar && !E.gv) { if (E.th === 3) fuseLead(E, dk, tt, du, m + 6, 0.4, 'full'); else leadNote(E, dk, inst, tt, du, m + 6, 0.4, bright); }                                 // from round 8 the last bar of a section is doubled a tritone up                     // a wrong note, a semitone off, on the shorter notes
-      if (E.gv) grooveLead(E, dk, tt, du, m, 1, mode); else if (E.th === 3) fuseLead(E, dk, tt, du, m, 1, mode); else leadNote(E, dk, inst, tt, du, m, 1, bright);
+      if (E.gv) gl(E, dk, tt, du, m, 1, mode); else if (E.th === 3) fuseLead(E, dk, tt, du, m, 1, mode); else leadNote(E, dk, inst, tt, du, m, 1, bright);
       if (mode === 'oct' && E.th !== 3) { leadNote(E, dk, E.th === 2 ? 'bell' : 'saw', tt, du, m + (E.th === 2 ? 0 : 12), 0.5, bright); if (E.th !== 2) chant(E, dk.L.vox.in, { t: tt, f: mf(m - 24 > 45 ? m - 24 : m - 12), g: 0.3, a: 0.05, h: du * 0.85, d: 0.2, vow: 0, pan: 0.2 }); }
     });
   }
   if (u > 0.3 && on(dk, 'vox') && !E.gv) { const X = dk.L.vox.in, n = u > 0.8 ? 3 : u > 0.55 ? 2 : 1; for (let i = 0; i < n; i++) if (E.th === 3) { if (i < 2 || b % 2 === 0) hold(E, X, 'choirA', ch.r + [24, 31, 25][i], t + i * 0.09, dk.upb * dk.spu - 0.3, (i === 2 ? 0.5 : 0.3) * w, { a: 0.3, r: 0.5, wide: 0.7 }); } else chant(E, X, { t: t + i * 0.09, f: mf(ch.r + [24, 31, 25][i]), g: (i === 2 ? 0.2 : 0.11) * w, a: 0.3, h: dk.upb * dk.spu - 0.5, d: 0.5, vow: i, pan: [0, -0.6, 0.6][i] }); }   // more voices join; the last sings a semitone off
   if (E.gv) { /* the grooves have their own late-round mischief in playGroove */ } else if (E.rnd >= 8 && b === s.len - 1 && on(dk, 'bass') && E.th === 3) hold(E, dk.L.bass.in, E.arr === 'a' ? 'basses' : 'bone', ch.r + 18, t + dk.upb * dk.spu * 0.75, dk.upb * dk.spu * 0.24, 0.6, { a: 0.03, r: 0.1 });
   else if (E.rnd >= 8 && b === s.len - 1 && on(dk, 'bass')) V(E, dk.L.bass.in, { t: t + dk.upb * dk.spu * 0.75, f: mf(ch.r + 6), type: 'sawtooth', det: [-8, 8], g: 0.3, a: 0.004, h: dk.upb * dk.spu * 0.15, d: dk.upb * dk.spu * 0.1, lp: 900, lp1: 250, q: 3 });   // and the bass steps to the tritone
-  const full = E.cur.join('|'), lead = E.cur.filter(x => x.slice(0, 4) === 'lead').join('|');
-  E.log.push({ t: +t.toFixed(3), state: dk.state, sec: s.type, b, ch: name, sig: hash(full), lead: lead ? hash(lead) : 0, n: E.cur.length }); E.cur = null;
-  dk.bar++; dk.sb++; dk.nextT = t + dk.upb * dk.spu;
+}
+// a chain step has moved the chord: what is already written of the pitched layers is let go and the rest of the bar (and the next, if
+// it was written already) is written again on the new chord, so the harmony lands with the hit and not a bar late
+EP.rechord = function (t) {
+  const E = this, dk = E.deck; if (!dk || dk.S.drone || !dk.hist || E.dry) return;
+  if (E.olds) E.olds = E.olds.filter(x => { if (x[0] < t) { done(x[1]); return false; } return true; }); else E.olds = [];
+  ['bass', 'pad', 'lead', 'arp', 'vox', 'bell'].forEach(k => { const L = dk.L[k], old = L.in, inp = E.G(1); inp.__n = k; inp.connect(L.nx); old.gain.setTargetAtTime(0, t, 0.012); L.in = inp; E.olds.push([t + 0.5, old]); });
+  const keep = { sec: dk.sec, spu: dk.spu, bar: dk.bar, sb: dk.sb, cur: E.cur }, name = dk.T.chain[E.cix], ch = CH[name]; E.cur = null; E.reT = t;
+  try { dk.hist.forEach(h => { if (h.end <= t + 0.03) return; dk.sec = h.sec; dk.spu = h.spu; dk.bar = h.bar; dk.sb = h.b; dk.curCh = ch; PLAY[E.th](E, dk, h.t, h.b, ch, name); writeTune(E, dk, h.t, h.b, ch, name, h.sec, true, E.u(), E.w()); }); }
+  finally { E.reT = 0; dk.sec = keep.sec; dk.spu = keep.spu; dk.bar = keep.bar; dk.sb = keep.sb; E.cur = keep.cur; dk.curCh = ch; }
 };
-
 // ---------- theme 1, Burner: four on the floor, a pumping FM bass, a filtered arpeggio, saw stabs ----------
 const PLAY = {};
 PLAY[1] = function (E, dk, t, b, ch, name) {
@@ -455,7 +476,7 @@ EP.buf = function (name, m, take) { const E = this, r = rawOf(name, m, take); if
 // play one: o = { i instrument, m note, t, g, dur (held length, or when a struck note is damped), a attack, r release, lp, lp1, lpt, vib, trem, pan, wide, strict (no human looseness: a clock) }
 function Sm(E, dst, o) {
   const sp = INST[o.i], m = o.m === undefined ? sp.fix : o.m, u = E.w(), j1 = E.jr(), j2 = E.jr(), j3 = E.jr();
-  E.note(dst, o.t, mf(m), o.i); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
+  if (E.reT && skipRe(E, dst, o.t)) return; E.note(dst, o.t, mf(m), o.i); if (E.dry || (E.solo && dst.__n !== E.solo)) return;
   const c = E.c, bz = E.buf(o.i, m, Math.floor(j3 * 3)), loose = o.strict ? 0 : (j1 - 0.5) * 0.016 + (u > 0.15 && !(E.gv && dst.__n === 'drums') ? (j2 - 0.3) * 0.05 * u : 0), t = Math.max(o.t + loose, 0), vel = o.g * (o.strict ? 1 : 0.84 + 0.32 * j3);
   const cents = (m - bz.z) * 100 + (sp.fix === undefined && !o.strict ? (j2 - 0.5) * (E.gv ? 12 : 34) * u : 0), rate = Math.pow(2, cents / 1200), n0 = o.wide && sp.loop ? 2 : 1;
   const g = c.createGain(); let head = g, tail = g, n = 1, end;
@@ -660,6 +681,18 @@ Object.assign(INST, {
   beaker:  { rr: 2, lo: 74, hi: 92, gen: m => { const f = mf(m), x = modal([[f, 1, 0.4], [f * 2.32, 0.5, 0.22], [f * 4.25, 0.3, 0.13], [f * 6.63, 0.12, 0.08]], 0.6); burst(x, 0, 0.002, 2500, 11000, 0.5, 229 + m); return norm(x, 0.8); } },
   smash:   { fix: 80, gen: () => { const x = modal(rndParts(231, 70, 2200, 12500, 0.08, 0.5), 0.9); [0, 0.04, 0.09, 0.16, 0.27].forEach((t0, i) => burst(x, t0, 0.012, 3000, 13000, 1.4 - i * 0.2, 233 + i)); return norm(x, 0.85); } }
 });
+// ---- the tracks: each theme from 4 up may bring its own tables (TRACK below); 4, 5, 6 keep the grooves' ----
+const TK = { 4: { g: 1 }, 6: { g: 1.3 } }, TRACKS = [];
+const tkG = (th, state, S) => { const k = TK[th]; return k ? (k.g || 1) * ((k.sg && k.sg[state]) || 1) : th === 5 ? (S.I > 0.8 ? 0.7 : 0.62) : 1; };
+const trimOf = (th, sg) => TK[th] && TK[th].trim ? TK[th].trim(sg) : th === 4 ? 0.2 * (1 - 0.3 * sg) : th === 6 ? 0.6 * (1 - 0.15 * sg) : 0.45 * (1 - 0.4 * sg);
+const wowOf = th => TK[th] && TK[th].wow !== undefined ? TK[th].wow : 1;
+const leadAt = th => TK[th] && TK[th].leadAt !== undefined ? TK[th].leadAt : 0.28;
+const hallOf = E => E.gv ? (TK[E.th] && TK[E.th].hall) || 6.5 : E.arr === 'a' && E.th === 3 ? 5 : 3.4;
+// a track: th its theme number, id its name in AA.music.track(id); o brings the tune and chords (as TH), scale, mix, and its own play, lead and step
+function TRACK(th, id, o) {
+  TH[th] = { name: o.name, line: o.line, upb: 16, bpm: o.bpm, prog: o.prog, alt: o.alt || {}, chain: o.chain, tune: o.tune, leads: o.leads || ['x'], forms: o.forms };
+  SCALES[th] = o.scale; GMIX[th] = o.mix; PLAY[th] = o.play; TK[th] = Object.assign(TK[th] || {}, o); TRACKS.push({ id, th, name: o.name, line: o.line, why: o.why || '' });
+}
 const LAYG = { drums: { rev: 0.1, dly: 0, sat: 1.15 }, bass: { rev: 0.03, dly: 0, sat: 1.3 }, pad: { rev: 0.28, dly: 0.05 }, lead: { rev: 0.22, dly: 0.14 }, arp: { rev: 0.2, dly: 0.16 }, vox: { rev: 0.18, dly: 0, sat: 2.2 }, bell: { rev: 0.25, dly: 0.08 } };
 const GMIX = { 4: { drums: 3, bass: 1, pad: 0.7, lead: 1.2, arp: 3, vox: 1, bell: 6 }, 5: { drums: 2.8, bass: 1.8, pad: 2, lead: 1.2, arp: 1.6, vox: 1.2, bell: 6 }, 6: { drums: 2.4, bass: 1.1, pad: 1, lead: 1.3, arp: 5, vox: 0.9, bell: 5 } };   // set by measuring each layer alone
 // the kit's own balance: the kick is all low end and was drowning the rest; brushes and cymbals are thin and were lost
@@ -744,6 +777,10 @@ function grooveStep(E, dk, t, n) {
   if (n >= 5) Sm(E, dk.L.drums.in, { i: 'sn', t, g: 0.2 + 0.03 * Math.min(n - 5, 8), pan: -0.1 }); if (n % 4 === 0 || n >= 11) Sm(E, dk.L.drums.in, { i: 'tomK', m: 50 - (n % 3) * 3, t: t + 0.09, g: 0.3, pan: 0.2 });
 }
 PLAY[4] = PLAY[5] = PLAY[6] = playGroove;
+const ORDER = ['funk', 'gothic', 'edm', 'metal', 'surf', 'baroque'];
+TRACKS.push({ id: 'funk', th: 6, name: TH[6].name, line: TH[6].line, why: '' });
+// <<<TRACKS (each track's own block goes between these two lines)
+// TRACKS>>>
 // ---------- the chain bed: held voices that come in with intensity; no beat of its own ----------
 // mix per theme: [pad, voices, high strings, noise, sub]
 const DMIX = { 1: [1, 0.55, 0.8, 0.8, 1], 2: [0.5, 1.3, 0.6, 0.5, 0.8], 3: [0.35, 0.7, 1.3, 1, 0.6] };
@@ -791,7 +828,7 @@ function droneTick(E, dk, t) {
 // a step of the chain: the chord follows the effects, and one note of the theme's tune is sung low, bent to the chord
 EP.step = function (t, n) {
   const E = this, dk = E.deck; n = Math.max(1, Math.round(n) || 1); E.stepN = n; E.cix = Math.floor((n - 1) / 3) % 4;
-  if (E.gv) { E.sg = Math.pow(clamp(n / 16, 0, 1), 1.2); E.heat(t, 0.12); if (dk && !dk.S.drone) grooveStep(E, dk, t, n); return; }
+  if (E.gv) { const was = E.cixWas; E.cixWas = E.cix; E.sg = Math.pow(clamp(n / 16, 0, 1), 1.2); E.heat(t, 0.12); if (dk && !dk.S.drone) { if (E.state === 'chain' && was !== undefined && was !== E.cix) E.rechord(t); ((TK[E.th] && TK[E.th].step) || grooveStep)(E, dk, t, n); } return; }
   E.I = clamp(n / 12, 0.08, 1); if (!dk) return; E.setI(dk, E.I, t, 0.2); if (!dk.S.drone || !dk.dr) return;
   droneChord(E, dk, E.cix, t);
   const flat = TH[E.th].tune.A.reduce((a, b) => a.concat(b), []), x = flat[(n - 1) % flat.length], ch = CH[SFXCH[E.cix]], m = nearTone(x[2] - 12, ch), g = 0.1 + 0.12 * E.I;
@@ -807,23 +844,23 @@ EP.start = function (state, t) {
   if (old) E.fadeOut(old, t, S.cut ? S.cut / 3 : Math.max(0.12, old.upb * old.spu / 7 || 0.2));
   E.I = S.I; if (E.gv) { E.slow = key === 'plan' ? E.playI : S.I; E.sg = 0; E.I = E.slow; } E.state = state; E.deck = E.mkDeck(key, t + (S.cut ? 0.02 : 0), S.fadeIn || (old && !S.cut ? [0.6, 0.12] : null));
   if (E.gv && state === 'chain') E.chainTrim(t + 0.05, true);
-  if (state === 'overreact' && !E.dry) { if (E.gv) { Sm(E, E.fx, { i: 'crashC', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'kk', t: t + 0.02, g: 0.5 }); } else if (E.th === 3) { Sm(E, E.fx, { i: 'tam', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'bdrum', t: t + 0.02, g: 0.5 }); } else I_.crash(E, E.fx, t + 0.02, 0.07); }
+  if (E.gv && TK[E.th] && TK[E.th].enter) { if (!E.dry) TK[E.th].enter(E, state, t + 0.02, E.deck); } else if (state === 'overreact' && !E.dry) { if (E.gv) { Sm(E, E.fx, { i: 'crashC', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'kk', t: t + 0.02, g: 0.5 }); } else if (E.th === 3) { Sm(E, E.fx, { i: 'tam', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'bdrum', t: t + 0.02, g: 0.5 }); } else I_.crash(E, E.fx, t + 0.02, 0.07); }
 };
 EP.cmd = function (t, name, a) {
   const E = this; a = a || [];
   if (name === 'state') { const s = a[0]; if (!ST[s]) return; if (E.state === s && !E.pending) return; if (E.pending === s) return;
-    if (E.gv && (s === 'plan' || s === 'chain') && E.deck && E.deck.state === 'plan' && !E.pending) { E.state = s; if (s === 'chain') { E.sg = 0; E.cix = 0; } E.chainTrim(t, s === 'chain'); return; }   // a groove does not stop for a chain: the same music carries on and the chain surges on top
+    if (E.gv && (s === 'plan' || s === 'chain') && E.deck && E.deck.state === 'plan' && !E.pending) { E.state = s; if (s === 'chain') { E.sg = 0; E.cix = 0; E.cixWas = 0; } E.chainTrim(t, s === 'chain'); return; }   // a groove does not stop for a chain: the same music carries on and the chain surges on top
     if (E.gv && s === 'chain' && E.deck) { E.pending = s; return; }
     if (!E.deck || ST[s].cut || E.deck.S.drone) E.start(s, t + 0.01);
-    else { E.pending = s; const tb = E.deck.nextT; if (tb - t > 0.45 && !E.dry) { if (E.gv) { const k = Math.max(3, Math.round((tb - t) * 8)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'shaker', t: t + (tb - t) * i / k, g: 0.04 + 0.16 * i / k, pan: 0.3 }); } else if (E.th === 3) { const k = Math.max(3, Math.round((tb - t) * 11)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'timp', m: 50, t: t + (tb - t) * i / k, g: 0.04 + 0.14 * i / k, pan: 0.2 }); } else N(E, E.fx, { t, ft: 'bandpass', f: 500, f1: 3200, fT: tb - t, q: 1.2, g: 0.045, a: tb - t, d: 0.05 }); } } }   // a soft roll (a swell of noise in the old themes) into the bar line
+    else { E.pending = s; const tb = E.deck.nextT; if (tb - t > 0.45 && !E.dry) { if (E.gv && TK[E.th] && TK[E.th].roll) TK[E.th].roll(E, t, tb); else if (E.gv) { const k = Math.max(3, Math.round((tb - t) * 8)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'shaker', t: t + (tb - t) * i / k, g: 0.04 + 0.16 * i / k, pan: 0.3 }); } else if (E.th === 3) { const k = Math.max(3, Math.round((tb - t) * 11)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'timp', m: 50, t: t + (tb - t) * i / k, g: 0.04 + 0.14 * i / k, pan: 0.2 }); } else N(E, E.fx, { t, ft: 'bandpass', f: 500, f1: 3200, fT: tb - t, q: 1.2, g: 0.045, a: tb - t, d: 0.05 }); } } }   // a soft roll (a swell of noise in the old themes) into the bar line
   else if (name === 'intensity') { const v = clamp(+a[0] || 0, 0, 1); if (E.gv) { E.slow = v; if (E.state === 'plan' || E.state === 'chain' || !E.state) E.playI = v; E.heat(t, 0.5); } else { E.I = v; if (E.deck) E.setI(E.deck, E.I, t, 0.25); } }
   // a turn has ended: result 0 (did nothing) to 1 (a great turn). The slow value goes up, more for a better turn; a weak turn lets it sag a little. It is never reset between turns.
   else if (name === 'turn') { const r = clamp(+a[0] || 0, 0, 1); E.playI = clamp(E.playI + (r >= 0.25 ? 0.1 + 0.18 * r : -0.05), 0.12, 0.85); if (E.gv && (E.state === 'plan' || E.state === 'chain')) { E.slow = E.playI; E.heat(t, 0.8); } }
   else if (name === 'step') E.step(t, a[0]);
-  else if (name === 'round') { const was = E.rnd; E.rnd = clamp(Math.round(+a[0]) || 1, 1, 9); if (E.rnd !== was || a[1]) E.playI = Math.max(0.18 + 0.03 * (E.rnd - 1), E.playI * 0.55); if (E.wowG) E.wowG.gain.setTargetAtTime(0.0007 * (1 + 2.5 * E.w()), t, 0.5); }   // a new round starts cooler than the last one ended, but warmer than round 1 did
+  else if (name === 'round') { const was = E.rnd; E.rnd = clamp(Math.round(+a[0]) || 1, 1, 9); if (E.rnd !== was || a[1]) E.playI = Math.max(0.18 + 0.03 * (E.rnd - 1), E.playI * 0.55); if (E.wowG) E.wowG.gain.setTargetAtTime(0.0007 * wowOf(E.th) * (1 + 2.5 * E.w()), t, 0.5); }   // a new round starts cooler than the last one ended, but warmer than round 1 did
   else if (name === 'volume') { E.vol = clamp(+a[0], 0, 1); E.volG.gain.setTargetAtTime(E.vol, t, 0.05); }
   else if (name === 'duck') { const p = E.duckG.gain; p.setTargetAtTime(clamp(a[0] === undefined ? 0.4 : +a[0], 0, 1), t, 0.01); p.setTargetAtTime(1, t + 0.04, ((a[1] || 300) / 1000) / 3); }
-  else if (name === 'theme') { const k = clamp(Math.round(+a[0]) || 1, 1, 6); if (k !== E.th) { E.thNext = k; if (E.deck && E.state) { if (E.deck.S.drone) { E.setTheme(k); E.thNext = 0; E.start(E.state, t + 0.01); } else E.pending = E.state; } else { E.setTheme(k); E.thNext = 0; } } }
+  else if (name === 'theme') { const k = clamp(Math.round(+a[0]) || 1, 1, NTH); if (k !== E.th) { E.thNext = k; if (E.deck && E.state) { if (E.deck.S.drone) { E.setTheme(k); E.thNext = 0; E.start(E.state, t + 0.01); } else E.pending = E.state; } else { E.setTheme(k); E.thNext = 0; } } }
   else if (name === 'stop') { if (E.deck) E.fadeOut(E.deck, t, 0.15); E.deck = null; E.state = null; E.pending = null; }
 };
 // write everything that begins before `until`
@@ -840,9 +877,11 @@ EP.peakNodes = function () { const ev = []; for (let i = 0; i < this.spans.lengt
 // ====================================================================================================================
 // the live player
 // ====================================================================================================================
-let LE = null, timer = null, theme = 4, arrange = 'c', volume = 0.7, runSeed = Math.floor(Math.random() * 1e9) + 1, want = null, wantI = null, wantR = 1;
-try { const s = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (s) { if (s.theme) theme = clamp(Math.round(+s.theme) || 4, 1, 6); if (ARR[s.arrange]) arrange = s.arrange; if (typeof s.volume === 'number') volume = clamp(s.volume, 0, 1); } const q = root.location && root.location.search ? new URLSearchParams(root.location.search).get('music') : null; if (q !== null && q !== '') theme = clamp(Math.round(+q) || 4, 1, 6); const qg = root.location && root.location.search ? new URLSearchParams(root.location.search).get('groove') : null; if (qg === '1' || qg === '2' || qg === '3') theme = 3 + (+qg); const qa = root.location && root.location.search ? new URLSearchParams(root.location.search).get('fuse') : null; if (ARR[qa]) arrange = qa; } catch (e) { /* defaults */ }
-function persist() { try { root.localStorage.setItem(KEY, JSON.stringify({ theme, arrange, volume })); } catch (e) { /* storage blocked */ } }
+const thOfId = id => { const x = TRACKS.filter(k => k.id === id)[0]; return x ? x.th : 0; }, idOfTh = th => { const x = TRACKS.filter(k => k.th === th)[0]; return x ? x.id : ''; };
+let unlocked = ['funk'], shuffle = false;
+let LE = null, timer = null, theme = 6, arrange = 'c', volume = 0.7, runSeed = Math.floor(Math.random() * 1e9) + 1, want = null, wantI = null, wantR = 1;
+try { const s = JSON.parse(root.localStorage.getItem(KEY) || 'null'); if (s) { if (s.theme) theme = clamp(Math.round(+s.theme) || 6, 1, NTH); if (Array.isArray(s.unlocked)) unlocked = s.unlocked.filter(x => typeof x === 'string'); shuffle = !!s.shuffle; if (ARR[s.arrange]) arrange = s.arrange; if (typeof s.volume === 'number') volume = clamp(s.volume, 0, 1); } const q = root.location && root.location.search ? new URLSearchParams(root.location.search).get('music') : null; if (q !== null && q !== '') theme = clamp(Math.round(+q) || 6, 1, NTH); const qt = root.location && root.location.search ? new URLSearchParams(root.location.search).get('track') : null; if (qt && thOfId(qt)) theme = thOfId(qt); if (!PLAY[theme]) theme = 6; const qg = root.location && root.location.search ? new URLSearchParams(root.location.search).get('groove') : null; if (qg === '1' || qg === '2' || qg === '3') theme = 3 + (+qg); const qa = root.location && root.location.search ? new URLSearchParams(root.location.search).get('fuse') : null; if (ARR[qa]) arrange = qa; } catch (e) { /* defaults */ }
+function persist() { try { root.localStorage.setItem(KEY, JSON.stringify({ theme, arrange, volume, unlocked, shuffle })); } catch (e) { /* storage blocked */ } }
 function live() {
   if (LE) return LE;
   let c = cap; if (!c && AA.sfx && AA.sfx.resume) { try { AA.sfx.resume(); } catch (e) { /* no effects */ } c = cap; }
@@ -872,7 +911,7 @@ const music = {
   // the groove: 1 lab lounge, 2 hypnotic, 3 mad science funk (saved; also ?groove=1..3)
   groove(k) { if (k === undefined) return theme >= 4 ? theme - 3 : 0; return music.theme(3 + clamp(Math.round(+k) || 1, 1, 3)) - 3; },
   // the four chords a chain moves through in the current groove, three steps each (for the effects to follow)
-  chainChords() { return theme >= 4 ? TH[theme].chain.map(n => ({ name: n, root: CH[n].r, notes: CH[n].n.slice() })) : SFXCH.map(n => ({ name: n, root: CH[n].r, notes: CH[n].n.slice() })); },
+  chainChords(id) { const th = (id && thOfId(id)) || theme; return th >= 4 ? TH[th].chain.map(n => ({ name: n, root: CH[n].r, notes: CH[n].n.slice() })) : SFXCH.map(n => ({ name: n, root: CH[n].r, notes: CH[n].n.slice() })); },
   // the round of the run, 1 to 9: later rounds are faster and darker
   round(n) { if (n === undefined) return wantR; wantR = clamp(Math.round(+n) || 1, 1, 9); if (LE) LE.cmd(now(LE), 'round', [wantR]); },
   volume(v) { if (v === undefined) return volume; volume = clamp(+v, 0, 1); persist(); if (LE) LE.cmd(now(LE), 'volume', [volume]); },
@@ -882,10 +921,18 @@ const music = {
   // the arrangement of Fuse: 'a' chamber, 'b' gothic, 'c' hybrid (saved; also ?fuse=a..c). It takes hold on the next bar line.
   arrange(a) { if (a === undefined) return arrange; if (!ARR[a]) return arrange; arrange = a; persist(); if (LE) { LE.arr = a; warm(LE); if (LE.deck && LE.state && !LE.pending) { if (LE.deck.S.drone) LE.start(LE.state, now(LE)); else LE.pending = LE.state; } } return arrange; },
   ARRANGEMENTS: ARR, _made() { return { ms: GEN.ms, bytes: GEN.bytes, n: GEN.n }; },
-  theme(k) { if (k === undefined) return theme; theme = clamp(Math.round(+k) || 4, 1, 6); persist(); if (LE) LE.cmd(now(LE), 'theme', [theme]); return theme; },
+  theme(k) { if (k === undefined) return theme; theme = clamp(Math.round(+k) || 6, 1, NTH); if (!PLAY[theme]) theme = 6; persist(); if (LE) LE.cmd(now(LE), 'theme', [theme]); return theme; },
   // the seed of the run: the same seed gives the same choices; a new run should give a new one
-  seed(n) { if (n === undefined) return runSeed; runSeed = Math.floor(Math.abs(+n)) || 1; if (LE) LE.seed = runSeed; },
-  info() { return LE ? { theme: LE.th, state: LE.state, pending: LE.pending, intensity: LE.I, round: LE.rnd, shared: !!LE.shared, nodes: LE.nodes, bars: LE.log.length } : null; },
+  seed(n) { if (n === undefined) return runSeed; runSeed = Math.floor(Math.abs(+n)) || 1; if (LE) LE.seed = runSeed;
+    if (shuffle) { const pool = music.unlocked(), cur = idOfTh(theme), rest = pool.filter(x => x !== cur); if (rest.length) music.track(rest[RNG(runSeed * 13 + 7).i(rest.length)]); } },
+  // the soundtracks. track(id) chooses one (saved; also ?track=id); it takes hold on the next bar line. tracks() lists them.
+  track(id) { if (id === undefined) return idOfTh(theme); const th = thOfId(String(id)); if (!th) return idOfTh(theme); music.theme(th); return String(id); },
+  tracks() { const u = music.unlocked(); return TRACKS.map(k => ({ id: k.id, name: k.name, line: k.line, found: u.indexOf(k.id) >= 0 })); },
+  // the tracks the player has found (funk is always there). unlocked(list) sets them, unlocked() reads them; saved.
+  unlocked(list) { if (list !== undefined) { unlocked = (Array.isArray(list) ? list : [list]).filter(x => thOfId(x)); persist(); } return ['funk'].concat(unlocked.filter(x => x !== 'funk' && thOfId(x))); },
+  // shuffle(true): each run (each call of seed(n)) plays another found track, never the one just played; saved.
+  shuffle(v) { if (v === undefined) return shuffle; shuffle = !!v; persist(); return shuffle; },
+  info() { return LE ? { track: idOfTh(LE.th), theme: LE.th, state: LE.state, pending: LE.pending, intensity: LE.I, round: LE.rnd, shared: !!LE.shared, nodes: LE.nodes, bars: LE.log.length } : null; },
 
   _live() { return LE; },
   // -- test hooks: no speakers needed --
@@ -893,21 +940,21 @@ const music = {
   // opts: theme, seed, round, volume, solo (one layer only), rate. Resolves { l, r, bars, nodes, peak, ms }.
   _renderTimeline(events, secs, opts) {
     const OC = (root.OfflineAudioContext && root.OfflineAudioContext.__orig) || root.OfflineAudioContext || root.webkitOfflineAudioContext; if (!OC) return Promise.reject(new Error('no OfflineAudioContext'));
-    opts = opts || {}; const sr = opts.rate || 44100, off = new OC(2, Math.ceil(sr * secs), sr), E = new Engine(off, { theme: opts.theme || theme, arr: opts.arr || arrange, seed: opts.seed || 1, volume: opts.volume === undefined ? 0.7 : opts.volume, solo: opts.solo });
+    opts = opts || {}; const sr = opts.rate || 44100, off = new OC(2, Math.ceil(sr * secs), sr), E = new Engine(off, { theme: opts.theme || thOfId(opts.track) || theme, arr: opts.arr || arrange, seed: opts.seed || 1, volume: opts.volume === undefined ? 0.7 : opts.volume, solo: opts.solo });
     E.rnd = opts.round || 1; E.attach(null); run(E, events, secs, off);
     const t0 = Date.now(); return off.startRendering().then(b => ({ l: b.getChannelData(0), r: b.getChannelData(1), bars: E.log, nodes: E.nodes, peak: E.peakNodes(), ms: Date.now() - t0, err: E.err, made: { ms: GEN.ms, bytes: GEN.bytes, n: GEN.n } }));
   },
   // the same without sound: only the bar log (what was written, bar by bar), for counting repeats over a long time
   _score(events, secs, opts) {
     const OC = (root.OfflineAudioContext && root.OfflineAudioContext.__orig) || root.OfflineAudioContext || root.webkitOfflineAudioContext; opts = opts || {};
-    const off = new OC(2, 4410, 44100), E = new Engine(off, { theme: opts.theme || theme, arr: opts.arr || arrange, seed: opts.seed || 1, dry: true }); E.rnd = opts.round || 1; run(E, events, secs); return E.log;
+    const off = new OC(2, 4410, 44100), E = new Engine(off, { theme: opts.theme || thOfId(opts.track) || theme, arr: opts.arr || arrange, seed: opts.seed || 1, dry: true }); E.rnd = opts.round || 1; run(E, events, secs); return E.log;
   },
   // music and effects together through the effects' own bus: sfxEvents as AA.sfx._renderTimeline takes them. Resolves { l, r }.
   _renderWithSfx(events, sfxEvents, secs, opts, sfxOpts) {
     if (!AA.sfx || !AA.sfx._renderTimeline) return Promise.reject(new Error('no sfx'));
     opts = opts || {}; const key = root.OfflineAudioContext ? 'OfflineAudioContext' : 'webkitOfflineAudioContext', O = root[key]; let off = null, E = null;
     const W = function (a, b, c2) { off = new O(a, b, c2); return off; }; W.prototype = O.prototype; W.__orig = O; root[key] = W;
-    const fns = { __mus() { E = new Engine(off, { theme: opts.theme || theme, arr: opts.arr || arrange, seed: opts.seed || 1, volume: opts.volume === undefined ? 0.7 : opts.volume }); E.rnd = opts.round || 1; if (!opts.mute) run(E, events, secs, off); }, __att() { if (E) E.attach(off.__ovsb ? off.__ovsb.bed : null); music._lastShared = !!(E && E.shared); } };
+    const fns = { __mus() { E = new Engine(off, { theme: opts.theme || thOfId(opts.track) || theme, arr: opts.arr || arrange, seed: opts.seed || 1, volume: opts.volume === undefined ? 0.7 : opts.volume }); E.rnd = opts.round || 1; if (opts.probe) { const o = off.createOscillator(), g = E.G(0.004); o.frequency.value = 15000; o.connect(g); g.connect(E.out); o.start(); } else if (!opts.mute) run(E, events, secs, off); }, __att() { if (E) E.attach(off.__ovsb ? off.__ovsb.bed : null); music._lastShared = !!(E && E.shared); } };
     let p; try { p = AA.sfx._renderTimeline([{ t: -1, n: '__mus', a: [] }].concat(sfxEvents || [], [{ t: secs * 1000 - 1, n: '__att', a: [] }]), secs, fns, Object.assign({ stereo: true }, sfxOpts || {})); } finally { root[key] = O; }
     return p;
   }
@@ -920,5 +967,6 @@ function run(E, events, secs, off) {
   if (!off || !off.suspend || E.dry) { upTo(secs + 1); return; }
   upTo(1); for (let T = 1; T < secs; T++) off.suspend(T).then(() => { try { upTo(T + 1); } catch (e) { E.err = String(e && e.stack || e); } off.resume(); });
 }
+TRACKS.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 AA.music = music;
 })(typeof globalThis !== 'undefined' ? globalThis : window);
