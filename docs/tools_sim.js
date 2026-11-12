@@ -437,10 +437,14 @@
   // (AA.rx.MODE) are put back whatever happens, and the modes are set from the rules before the run starts.
   const ruleSave = () => ({ rule: Object.assign({}, P.RULE), mode: Object.assign({}, AA.rx.MODE) });
   const ruleBack = s0 => { Object.keys(P.RULE).forEach(k => { if (!(k in s0.rule)) delete P.RULE[k]; }); Object.assign(P.RULE, s0.rule); Object.keys(AA.rx.MODE).forEach(k => { if (!(k in s0.mode)) delete AA.rx.MODE[k]; }); Object.assign(AA.rx.MODE, s0.mode); P.seed(); P.MODEL.relaxed = true; };
+  // how many lines of the hand a player looks at when it aims at the spec: the novice tries a few and keeps the best, the greedy player a dozen, the median player and the planner every one
+  const SPECLOOK = { novice: 4, greedy: 12, median: null, planner: null };
   function runSim(player, seed, opts) { const s0 = ruleSave(); try { return runSim0(player, seed, opts); } finally { ruleBack(s0); } }
   function runSim0(player, seed, opts) {
-    opts = opts || {}; const pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
+    opts = opts || {}; let pol = PLAYERS[player]; if (!pol) throw new Error('no player ' + player);
     if (opts.rule) Object.assign(P.RULE, opts.rule); if (P.modeSync) P.modeSync(null);
+    // with the spec on every player plays for the spec first and the yield second (hurdles.py AimPlayer): it is given the line that makes most progress toward the spec among the lines it considers (SPECLOOK), a tie going to the bigger yield
+    if (P.RULE.spec && P.specLine) { const look = opts.look != null ? opts.look : SPECLOOK[player]; pol = Object.assign({}, pol, { line: (g2, fin, r2) => P.specLine(g2, r2, look) }); }
     P.seed(seed); P.MODEL.relaxed = !!opts.relaxed; const rnd = P.rand, out = { seed, player, rounds: [], beaten: 0, won: false };
     const run = P.runNew(opts.tier == null ? P.SUPPLY.length - 1 : opts.tier, opts.extra || [], opts.tierNo ? { tierNo: opts.tierNo } : undefined), span = opts.rounds || P.runLast(run);
     if (opts.noGear) run.noGear = true;
@@ -469,9 +473,9 @@
       if (opts.dec) row.dec = true; if (opts.deep) row.deep = true;
       if (P.quotaParts) { const k = P.quotaParts(run, run.src, run.brief); row.par = k.par; row.mult = k.mult; row.stake = k.stake; }
       const total = playRound(g, run, pol, rnd, row);
-      row.total = total; row.pass = total >= run.quota ? 1 : 0; row.tier = P.marksHit(total, run.quota); row.acts = acts.join(' '); if (row.pass) { const e = P.runEarn(run, total, run.quota); row.earn = e.marks; row.interest = e.interest; } row.coins = run.coins || 0; row.live = alive ? 1 : 0;
+      row.total = total; const re = P.roundEnd(g, run); row.ypass = re.ypass ? 1 : 0; row.pass = re.won ? 1 : 0; if (g.specDef) { const sp = P.specParts(g, false); row.spec = sp.map(q => q.name).join('+'); row.specN = sp.map(q => q.n).join('+'); row.specV = sp.map(q => q.value).join('+'); row.specFell = run.spec && run.spec.fell ? 1 : 0; row.specFam = (run.spec && run.spec.families || []).join('+'); } row.tier = re.marks; row.acts = acts.join(' '); if (row.ypass) { row.earn = re.earn.marks; row.interest = re.earn.interest; } row.coins = run.coins || 0; row.live = alive ? 1 : 0;
       out.rounds.push(row);
-      if (row.pass && alive) { out.beaten++; run.beaten++; }
+      if (row.pass && alive) out.beaten++;
       if (!row.pass) { alive = false; if (!opts.all) break; }
       P.runKeep(run, g); P.runPay(run);
     }

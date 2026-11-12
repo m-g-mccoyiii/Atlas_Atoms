@@ -167,7 +167,7 @@ What it says:
 
 ## The fifth piece: three candidates
 
-The clamp was the fifth. It was taken out because the wood spirit homunculus (docs/HOMUNCULI.md) does what it did. Three objects were built to take its place and read the same way. Pair rows are with each of the other four, as dealt and on the best line.
+The clamp was the fifth. It was taken out because it read the same as nothing (the wood spirit homunculus, docs/HOMUNCULI.md, fires all five dealt reagents and does not protect an OH, so it never did what the clamp did). Three objects were built to take its place and read the same way. Pair rows are with each of the other four, as dealt and on the best line.
 
 | Candidate | Five words | What it does, exactly | As dealt, best place, any place | Best line, best place, any place |
 |---|---|---|---|---|
@@ -200,7 +200,7 @@ Switched off behind `RULE.five` in `path.js` (set it to false and call `fifthSet
 
 ## Tried first and taken out
 
-- **The clamp** ("nothing changes this part": no reagent and no other piece changed the oxygen or the C=C it was put on, for the rest of the round). It read 1.13 steps as dealt, the same as nothing, because it changed what reagents could do and not the molecule. Taken out because the wood spirit homunculus protects one OH. The cap it put on an atom is still in the code for that.
+- **The clamp** ("nothing changes this part": no reagent and no other piece changed the oxygen or the C=C it was put on, for the rest of the round). It read 1.13 steps as dealt, the same as nothing, because it changed what reagents could do and not the molecule. It was first said to be taken out because the wood spirit protects one OH; that was wrong. The wood spirit homunculus (docs/HOMUNCULI.md) fires all five dealt reagents in a random order, each spending a use, and protects nothing. The clamp went because it changed what reagents could do and not the molecule. The cap it put on an atom is still in the code for that.
 - **The burner as "every C=C becomes C=O".** Not the owner's rule. The act is now the burette's.
 - Before the owner's direction the five were built as passive rules: the zip waited for the whole line (seed crystal), a link was added every page (burette), a zip reached twice as far (magnet), the first zip ran twice (mirror), a wasted reagent made the chain zip again (recycler). They worked and were measured: the mirror alone multiplied a round by 5 and put ten steps or more on a third of pages. They were taken out because a piece is to be something the player does to the molecule.
 

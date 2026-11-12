@@ -31,6 +31,15 @@ def report(tag, players):
             b = [r for r in a if r['round'] == rd and r.get('live', 1)]
             if b: line.append('%d (%d)' % (round(100.0 * sum(r['pass'] for r in b) / len(b)), len(b)))
         print('  pass by round: ' + ', '.join(line))
+        if any('spec' in r for r in a):
+            cl = []; mk = []
+            for rd in range(1, spanr + 1):
+                b = [r for r in a if r['round'] == rd]
+                cl.append('%d' % round(100.0 * sum(r['pass'] for r in b) / len(b)))
+                mk.append('/'.join('%d' % round(100.0 * sum(1 for r in b if r.get('tier', 0) >= k) / len(b)) for k in range(0, 5)) if False else '%d' % round(100.0 * sum(1 for r in b if r.get('ypass')) / len(b)))
+            print('  spec clear rate, every run counted in every round: ' + ', '.join(cl) + ' | first yield mark reached: ' + ', '.join(mk))
+            for k in range(1, 5): print('  marks: reached mark %d: ' % k + ', '.join('%d' % round(100.0 * sum(1 for r in a if r['round'] == rd and r.get('tier', 0) >= k) / max(1, len([r for r in a if r['round'] == rd]))) for rd in range(1, spanr + 1)))
+            print('  fell back to a plain spec: %.1f%% of rounds' % (100.0 * sum(r.get('specFell', 0) for r in a) / len(a)))
         win = sum(1 for s in seeds if all(r['pass'] for r in a if r['seed'] == s)) / float(len(seeds))
         print('  wins all rounds %.1f%%  tries %.1f' % (100 * win, 1.0 / win if win else float('inf')))
         m = []
