@@ -75,3 +75,26 @@ Found headless (job `.claude/headless/jobs/lines.js`) with a new game's seven re
 | `OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C` | dehydrate, grow, dehydrate | weld, dry, snap, snap | 3 |
 | `CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C` | oxidize, hydrate, dehydrate | weld, dry, tuck, weld | 3 |
 | `OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C` | oxidize, oxidize, hydrate | weld, dry, weld, ring | 3 |
+
+## Nitrogen, sulfur, chlorine and the thirteen reflex kinds (for the page and art builders)
+
+**Atoms.** N, S and Cl are in the molecule model (valence N 3, S 2, Cl 1; SMILES in and out). The page needs a color and a label for each: N blue-violet with `N`, S yellow with `S`, Cl green with `Cl` (`AA.ELEMENTS` already holds `color`: N #4f7cff, S #ffd23f, Cl #37d67a). Groups that now occur: NH2 (amine), SH (thiol), Cl on carbon, COOH, epoxide (three-ring with O), ring N (NH in a ring) and ring S. A new game's first three rounds deal molecules that hold N, S or Cl (interim table `FEED_HET` in path.js).
+
+**Runoff kinds** (`g.tally.off_<kind>`, `g.rec.pages[i].off`): water, hydrogen, carbon_dioxide, acid_fumes (SO2 and HCl from chlorination and close), ammonia (cyanohydrin), sulfur (chugaev), trimethylamine (hofmann; it comes with water). A leaving group carries `.off` = `{kind: amount}`; the jar names for the page are those.
+
+**The step record.** Each reflex step in `g.trail` and `g.rec.pages[i].steps[j]` carries `kind` (one of the thirteen below), `join` (the ids of the two anchor atoms it joined) and `via` ('chain'; 'fold' is reserved for the across steps, not built).
+
+**What each kind's picture must show** (atoms that join or part):
+- ring: the O of an OH reaches the carbon of a C=O; a ring closes; the C=O oxygen becomes an OH (it opens again at the page turn).
+- dry: an OH two carbons from a C=O parts as water; a C=C appears beside the C=O.
+- weld: the carbon beside one C=O joins the carbon of a second C=O four or five carbons away; a ring closes; the second C=O becomes an OH.
+- shift: a C=C two carbons from a C=O slides one place toward it; no atom joins or parts.
+- tuck: an OH oxygen joins the far carbon of a C=C that sits beside a C=O; the C=C becomes single; a ring ether closes.
+- flip: an OH on a C=C carbon becomes a C=O; the C=C goes single; the H moves to the other carbon.
+- snap: two C=C side by side and a third C=C close a six-ring; one C=C is left between the two middle carbons.
+- knit: an NH2 nitrogen joins the carbon of a C=O three or four carbons away; a ring with N closes; the C=O becomes an OH (loose).
+- cap: an SH sulfur joins the carbon of a C=O three or four carbons away; a ring with S closes; the C=O becomes an OH (loose).
+- close: a Cl parts (acid fumes) and an OH, NH2, SH or COOH joins that carbon; a ring of 5 to 7 closes.
+- seal: a COOH and an OH, NH2 or SH join into a ring (lactone, lactam, thiolactone); the acid OH parts as water.
+- open: an OH oxygen joins one epoxide carbon, the epoxide opens, its oxygen stays as an OH on the other carbon; a ring ether closes.
+- fold: an epoxide with carbon on both ends turns into a C=O; the O stays on one carbon, an H moves to the other.
