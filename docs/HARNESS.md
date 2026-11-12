@@ -67,6 +67,8 @@ AO. "I want the molecule to potentially start vibrating when we're winning. I wa
 
 AM2. "I was just looking at the notes on the pages and they're clashing a lot with everything else going on. I feel like the camera is very zoomed in as a result." (12 November). The notes must not clash with the play area, and the page must not feel zoomed in.
 
+AM3. The margin notes (12 November): "I also want like a hundred or more messages and I think it would be amazing if they change with the number of unlocks and as we get deeper into the game that they become gradually more and more desperate about seeing HIS FACE, the thing being the king in yellow. Perhaps the final sigil can be our version of the yellow sign and it lets you sacrifice gold or something to do things (the most complex tradeoffs)". A hundred or more notes; they change with how much is unlocked and how deep the game is; they grow desperate about seeing HIS FACE (the King in Yellow). The last sigil may be our own yellow sign, spending gold for the most complex tradeoffs ("perhaps").
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
