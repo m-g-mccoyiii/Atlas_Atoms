@@ -264,7 +264,7 @@ const KALIAS = { ring: 'lactol', dry: 'enone', dehydrate: 'enone', flip: 'taut',
 const kindOf = k => KALIAS[k] || k || 'lactol';
 // each kind also sits in its own register and has its own knock under it, so a change of kind is heard even under the shared layers
 const KORDER = ['lactol', 'enone', 'taut', 'weld', 'snap6', 'ether', 'shift', 'tuck', 'knit', 'seal', 'cap', 'open', 'fold'];
-const KOCT = { weld: -12, tuck: -12, knit: -12, fold: -12, taut: 12, ether: 12, cap: 12 };
+const KOCT = { weld: -12, tuck: -12, knit: 12, fold: -12, taut: 12, ether: 12, cap: 12 };
 function kindKnock(t, kind, g) { const i = Math.max(0, KORDER.indexOf(kind)), f = 260 * Math.pow(1.28, i); N({ t, ft: 'bandpass', f, q: 4, g: g * 0.9, a: 0.0005, d: 0.05 + 0.01 * (i % 4), pan: (i % 3 - 1) * 0.5 }); V({ t, f: f * 0.5, f1: f * 0.35, ft: 0.04, type: i % 2 ? 'triangle' : 'sine', g: g * 0.6, a: 0.0006, d: 0.08 }); }
 
 // ===================== 1 BENCH =====================
@@ -385,7 +385,7 @@ const HK = {
 //   b industrial: metal and steam on the offbeats, a distorted bass, knocks that roll
 //   c ominous: a slow heavy pulse at half time, low brass swells, led by the chant of the deep layer
 const MPROG = [[62, 65, 69], [58, 62, 65], [55, 58, 62], [57, 61, 64]], MROOT = [38, 34, 31, 33];
-function melD(n) { let m = 62; for (let k = 2; k <= n; k++) { const ch = MPROG[chordIx(k)]; let best = 999; ch.forEach(p => { for (let o = -24; o <= 36; o += 12) { const q = p + o; if (q > m && q < best) best = q; } }); m = best > 86 ? best - 12 : best; } return m; }
+function melD(n) { let m = 57; for (let k = 2; k <= n; k++) { const ch = MPROG[chordIx(k)]; let best = 999; ch.forEach(p => { for (let o = -24; o <= 36; o += 12) { const q = p + o; if (q > m && q < best) best = q; } }); m = best > 81 ? best - 12 : best; } return m; }
 function underD(m, ix) { let best = -1; MPROG[ix].forEach(p => { for (let o = -24; o <= 36; o += 12) { const q = p + o; if (q < m && q > best) best = q; } }); return best; }
 const AKEY = 'overreact.sfx.arcade', AVAR = ['old', 'a', 'b', 'c'];
 let ARCV = 1;
@@ -395,10 +395,10 @@ const D = {
   snare(t, g, v) { N({ t, ft: 'bandpass', f: 1500, q: 0.6, g, a: 0.0006, d: 0.15, sat: 2.5, rev: 0.12, pan: -0.1 }); V({ t, f: 185, f1: 150, ft: 0.04, type: 'triangle', g: g * 0.6, a: 0.0006, d: 0.08, sat: 2 }); if (v === 2) H.chuff(t, g * 0.6, { d: 0.08, f: 1300 }); },
   tom(t, g) { V({ t, f: 120, f1: 78, ft: 0.12, g, a: 0.001, d: 0.38, sat: 2.5 }); N({ t, ft: 'lowpass', f: 900, g: g * 0.35, a: 0.0006, d: 0.05 }); },
   hat(t, g, o) { N({ t, ft: 'highpass', f: 6000, ft2: 'lowpass', f2: 10000, g, a: 0.0005, d: (o && o.open) ? 0.1 : 0.03, pan: (o && o.pan) || 0.25 }); },
-  fmbass(t, f, d, g, v) { V({ t, f, g, a: 0.002, h: d * 0.3, d: d * 0.7, fm: { r: 1, i: v === 2 ? 5 : 3, i1: 0.15, d: d * 0.6 }, sat: v === 2 ? 4 : 2.2, bed: true }); if (v !== 3) V({ t, f, type: 'sawtooth', g: g * 0.6, a: 0.002, h: d * 0.3, d: d * 0.7, lp: 900, lp1: 220, lpt: 0.15, q: 5, sat: v === 2 ? 3 : 1.6, bed: true }); },
+  fmbass(t, f, d, g, v) { g *= 0.8; V({ t, f: f * 2, type: 'sawtooth', g: g * 0.3, a: 0.002, h: d * 0.2, d: d * 0.5, lp: 1400, lp1: 500, q: 2, sat: 2, bed: true }); V({ t, f, g, a: 0.002, h: d * 0.3, d: d * 0.7, fm: { r: 1, i: v === 2 ? 5 : 3, i1: 0.15, d: d * 0.6 }, sat: v === 2 ? 4 : 2.2, bed: true }); if (v !== 3) V({ t, f, type: 'sawtooth', g: g * 0.6, a: 0.002, h: d * 0.3, d: d * 0.7, lp: 900, lp1: 220, lpt: 0.15, q: 5, sat: v === 2 ? 3 : 1.6, bed: true }); },
   stab(t, ms, g, d, o) { o = o || {}; ms.forEach((m, i) => U({ t, f: mf(m), type: 'sawtooth', g, a: o.a || 0.003, h: o.h || 0, d, lp: o.lp || 2200, lp1: o.lp1 || 320, lpt: o.lpt || d * 0.7, q: 2, sat: o.sat || 1.6, pan: (i / Math.max(1, ms.length - 1) - 0.5) * 0.8, rev: o.rev == null ? 0.25 : o.rev, bed: o.bed }, 2, o.spread || 10, 0.4)); },
-  pluck(t, f, g, o) { o = o || {}; V({ t, f, g, a: 0.001, d: o.d || 0.5, fm: { r: o.r || 2, i: o.i || 3.5, i1: 0.05, d: 0.12 }, lp: 3200, pan: o.pan || 0, rev: 0.22 }); V({ t, f: f / 2, type: 'sawtooth', g: g * 0.35, a: 0.001, d: 0.22, lp: 700, pan: o.pan || 0 }); },
-  metal(t, f, g, o) { o = o || {}; V({ t, f, g, a: 0.0008, d: o.d || 0.8, pan: o.pan || 0, rev: 0.3, fm: { r: 1.414, i: 2.6, i1: 0.08, d: 0.3 } }); V({ t, f: f * 2.76, g: g * 0.25, a: 0.0006, d: 0.2, pan: -(o.pan || 0) }); },
+  pluck(t, f, g, o) { o = o || {}; V({ t, f, g, a: 0.001, d: o.d || 0.5, fm: { r: o.r || 2, i: o.i || 3.5, i1: 0.05, d: 0.12 }, lp: 2200, pan: o.pan || 0, rev: 0.22 }); V({ t, f: f / 2, type: 'sawtooth', g: g * 0.35, a: 0.001, d: 0.22, lp: 700, pan: o.pan || 0 }); },
+  metal(t, f, g, o) { o = o || {}; V({ t, f, g, a: 0.0008, d: o.d || 0.8, pan: o.pan || 0, rev: 0.3, lp: 2600, fm: { r: 1.414, i: 2.6, i1: 0.08, d: 0.3 } }); V({ t, f: f * 2.76, g: g * 0.12, a: 0.0006, d: 0.15, lp: 2600, pan: -(o.pan || 0) }); },
   crash(t, g, d) { N({ t, ft: 'highpass', f: 2800, ft2: 'lowpass', f2: 9000, g, a: 0.0008, d, pan: -0.3, rev: 0.4, sat: 1.5 }); N({ t, ft: 'highpass', f: 4000, ft2: 'lowpass', f2: 8000, g: g * 0.8, a: 0.0008, d: d * 0.85, pan: 0.3, rev: 0.4 }); D.metal(t, mf(45), g * 0.6, { d: d * 0.7 }); },
   riser(t, d, g) { N({ t, ft: 'bandpass', f: 300, f1: 3500, fT: d, q: 1.4, g, a: d, ax: true, d: 0.03, cut: true, bed: true, pan: -0.5, pan1: 0.5 }); V({ t, f: 110, f1: 220, ft: d, type: 'sawtooth', g: g * 0.25, a: d, ax: true, d: 0.03, cut: true, lp: 900, bed: true, sat: 2 }); }
 };
@@ -419,7 +419,7 @@ const DK = {
 };
 function darkArcade(v) {
   const ms = m => mf(m);
-  return { name: 'arcade-' + AVAR[v], mel: melD, under: underD, K: DK, kg: 1.4, prog: MPROG, root: MROOT, deepFrom: v === 3 ? 1 : 2, deepG: v === 3 ? 1.7 : 1,
+  return { name: 'arcade-' + AVAR[v], mel: melD, under: underD, K: DK, kg: 1.9, prog: MPROG, root: MROOT, deepFrom: v === 3 ? 1 : 2, deepG: v === 3 ? 1.7 : 1,
     thump: (t, g) => D.kick(t, g * (v === 3 ? 1.25 : 1.1), v),
     off: (t, e, n, p) => { if (v === 3) { if (n >= 3) D.tom(t, 0.22 * e); return; } D.hat(t, 0.07 * e, { pan: 0.3 }); if (v === 2) { H.chuff(t, 0.14 * e, { pan: p, f: 1100 }); if (n >= 3) D.metal(t, ms(50 + (n % 3) * 3), 0.05 * e, { pan: -p, d: 0.3 }); } if (n >= 4) D.snare(t, 0.2 * e, v); },
     bass: (t, ix, P, e, n) => { const f = mf(MROOT[ix]); if (v === 3) { D.fmbass(t, f, P * 0.95, 0.2 * e, v); return; } D.fmbass(t, f, P * 0.45, 0.17 * e, v); D.fmbass(t + P / 2, f * (n >= 5 ? 2 : 1), P * 0.45, 0.13 * e, v); if (n >= 7) { D.fmbass(t + P / 4, f, P * 0.2, 0.08 * e, v); D.fmbass(t + 3 * P / 4, f * 2, P * 0.2, 0.08 * e, v); } },
@@ -430,12 +430,12 @@ function darkArcade(v) {
     roll: (t, P, e, n) => { const k = n >= 11 ? 8 : 4; for (let i = 0; i < k; i++) { const tt = t + P * (0.5 + 0.48 * i / k), g = 0.05 * e * (0.4 + i / k); if (v === 3) D.tom(tt, g * 1.6); else if (v === 2) H.knock(tt, g * 1.4); else D.snare(tt, g, v); } },
     finale(t, kind, n) {
       // dangerous, not cheerful: D minor low and distorted with a semitone rub that dies first, metal, steam, a long dark tail
-      D.stab(t, [38, 45, 50, 53, 57, 62], 0.075, 1.9, { lp: 3600, lp1: 380, lpt: 1.6, sat: 2.2, h: 0.2 });
+      D.stab(t, [38, 45, 50, 53, 57, 62], 0.05, 1.6, { lp: 3000, lp1: 700, lpt: 1.4, sat: 2.2, h: 0.1 }); midSwell(t, [50, 53, 57, 62], 0.035, 0.4, 1.0, 'sawtooth');
       D.stab(t, [51, 63], 0.05, 0.35, { lp: 3000, lp1: 800, sat: 2.5 });
       (DK[kind] || DK.lactol)(t, mf(62), 0.2, 0); D.crash(t, 0.18, 1.8); H.steam(t, 1.2, 0.14); duck(t, 0.12, 0.6); bloom(t, 2.8, 1.2);
     },
     snap: (t, n, w) => { if (n >= 5) N({ t, ft: 'bandpass', f: 1800, q: 1, g: 0.05 * w * lvl(n), a: 0.0004, d: 0.03, sat: 2 }); },
-    boom: t => { V({ t, f: 240, f1: 110, ft: 0.08, type: 'triangle', g: 0.24, a: 0.0008, d: 0.3, sat: 2 }); D.kick(t, 1.2, v); V({ t, f: 95, f1: 27, ft: 1.2, g: 1.2, a: 0.002, d: 1.5, sat: 2 }); H.knock(t, 0.4); },
+    boom: t => { V({ t, f: 240, f1: 110, ft: 0.08, type: 'triangle', g: 0.2, a: 0.0008, d: 0.3, sat: 2 }); D.kick(t, 0.9, v); V({ t, f: 95, f1: 27, ft: 1.0, g: 0.8, a: 0.002, d: 1.2, sat: 2 }); H.knock(t, 0.3); },
     flag(t, k) {
       if (k === 1) { D.kick(t, 0.5, v); D.stab(t, [50, 57, 62], 0.09, 0.4, { lp: 2600, lp1: 500, sat: 2 }); D.metal(t + 0.05, mf(57), 0.12, { d: 0.5 }); H.knock(t + 0.05, 0.3); }
       else if (k === 2) { D.kick(t, 0.45, v); [50, 53, 57, 60].forEach((m, i) => V({ t, f: mf(m), f1: mf(m) * 0.985, type: 'sawtooth', g: 0.055, a: 0.01, d: 1.0, lp: 1500, q: 4, pan: (i / 3 - 0.5) * 1.2, rev: 0.3, trem: { f: 6, d: 0.7 }, sat: 1.6 })); }
@@ -443,9 +443,9 @@ function darkArcade(v) {
       else {
         // OVERREACT: the single biggest sound: a double hit, a sub drop, D minor torn by a semitone, metal, steam roaring, a falling siren
         D.kick(t, 1.3, v); D.kick(t + 0.11, 1.0, v); V({ t, f: 110, f1: 26, ft: 2.0, g: 1.3, a: 0.002, d: 2.6, sat: 2 }); V({ t, f: 240, f1: 100, ft: 0.12, type: 'triangle', g: 0.28, a: 0.0008, d: 0.4, sat: 2 });
-        D.stab(t, [26, 38, 45, 50, 53, 57, 62, 65], 0.07, 3.0, { lp: 5000, lp1: 300, lpt: 2.8, sat: 2.4, h: 0.6, spread: 18 }); D.stab(t, [51, 63, 75], 0.05, 0.6, { lp: 4000, lp1: 900, sat: 2.8 });
-        midSwell(t, [50, 53, 57, 62], 0.06, 1.3, 1.6, 'sawtooth'); D.crash(t, 0.26, 3.0); H.steam(t, 3.0, 0.24, { f: 7000, f1: 900 });
-        H.whistle(t + 0.1, 1300, 2.2, 0.05, { f1: 330 }); H.rattle(t + 0.3, 0.05, 18, 1.8); duck(t, 0.08, 1.2); bloom(t, 4.2, 2.4);
+        D.stab(t, [26, 38, 45, 50, 53, 57, 62, 65], 0.07, 3.0, { lp: 5000, lp1: 900, lpt: 2.8, sat: 2.4, h: 0.6, spread: 18 }); D.stab(t, [51, 63, 75], 0.05, 0.6, { lp: 4000, lp1: 900, sat: 2.8 });
+        midSwell(t, [50, 53, 57, 62, 65, 69], 0.1, 1.5, 1.6, 'sawtooth'); D.crash(t, 0.26, 3.0); H.steam(t, 3.0, 0.24, { f: 7000, f1: 900 });
+        D.stab(t, [38, 45, 50, 57], 0.1, 1.8, { lp: 1300, lp1: 600, lpt: 1.6, sat: 3, h: 0.8, spread: 22 }); H.whistle(t + 0.1, 1300, 2.2, 0.04, { f1: 330 }); H.rattle(t + 0.3, 0.05, 18, 1.8); duck(t, 0.08, 1.2); bloom(t, 4.2, 2.4);
       }
     },
     flagSoft: t => D.metal(t, mf(69), 0.06, { d: 0.6 }),
@@ -486,9 +486,10 @@ function chantVoice(t, f, g, d, vi, pan, a) { const v = VOW[clamp(vi, 0, 3)];
   [[v[0], 6, 1], [v[1], 8, 0.55], [2500, 6, 0.12]].forEach(([fq, q, gg]) => V({ t, f, type: 'sawtooth', g: g * gg, a: a || 0.06, h: d * 0.65, d: d * 0.35, bp: fq, bq: q, pan, bed: true, rev: 0.25, vib: { f: 4.6 + rnd(), c: 9, in: 0.2 }, det: (rnd() - 0.5) * 14 }));
   V({ t, f, g: g * 0.5, a: a || 0.06, h: d * 0.65, d: d * 0.35, bed: true }); }
 function deepStep(t, n, P, ix, big, rootM) {
-  const L = clamp((n - 1) / 10, 0.12, 1) * (big || 1) * (DEEPG || 1), d = P * 1.08 + 0.04, r = mf((rootM == null ? ROOT[ix] : rootM) - 12);
+  const L = Math.min(1, Math.pow(10, 1.6 * (Math.min(n, 13) - 12) / 20)) * 1.15 * (big || 1) * (DEEPG || 1), d = P * 1.08 + 0.04, r = mf((rootM == null ? ROOT[ix] : rootM) - 12);
   if (DEEP === 1) {
     const det = 4 + 2.2 * n, lp = 260 + 70 * n, f = [r]; if (n >= 5) f.push(r * 1.5); if (n >= 8) f.push(r / 2);
+    V({ t, f: r * 2, type: 'sawtooth', g: 0.035 * L, a: 0.05, h: d * 0.6, d: d * 0.4, lp: 900, sat: 1.8, bed: true }); V({ t, f: r * 3, type: 'sawtooth', g: 0.02 * L, a: 0.05, h: d * 0.6, d: d * 0.4, lp: 1200, bed: true });
     f.forEach((fq, i) => { [-1, 1].forEach(k => V({ t, f: fq, type: 'sawtooth', det: k * det, g: 0.05 * L, a: 0.05, h: d * 0.6, d: d * 0.4, lp, q: 2, sat: 1.6, pan: k * 0.3 * (i + 1) / f.length, bed: true })); V({ t, f: fq, g: 0.07 * L, a: 0.05, h: d * 0.6, d: d * 0.4, bed: true }); });
   } else if (DEEP === 2) {
     const k = Math.min(7, 1 + Math.floor(n / 2)), vi = Math.min(3, Math.floor((n - 1) / 3)), notes = [r * 2, r * 3, r * 2 * 1.003, r * 4, r * 3 * 0.997, r, r * 2 * 0.997];
@@ -497,6 +498,7 @@ function deepStep(t, n, P, ix, big, rootM) {
     const rate = clamp(2.5 / Math.max(0.2, P) * (1 + n / 12), 3, 16);
     V({ t, f: r, type: 'sawtooth', g: 0.12 * L, a: 0.04, h: d * 0.6, d: d * 0.4, lp: 300 + 50 * n, q: 3, sat: 2, trem: { f: rate, d: 0.9 }, bed: true });
     V({ t, f: r / 2, type: 'square', g: 0.05 * L, a: 0.04, h: d * 0.6, d: d * 0.4, lp: 220, trem: { f: rate, d: 0.9 }, bed: true });
+    V({ t, f: r * 2, type: 'sawtooth', g: 0.05 * L, a: 0.04, h: d * 0.6, d: d * 0.4, lp: 800, sat: 2, trem: { f: rate, d: 0.9 }, bed: true });
     N({ t, col: 'b', ft: 'bandpass', f: 160 + 10 * n, q: 1.2, g: 0.18 * L, a: 0.04, h: d * 0.6, d: d * 0.4, trem: { f: rate * 2, d: 0.8 }, bed: true });
   }
 }
