@@ -45,7 +45,7 @@ AI. The parchment "looks pee yellow instead of being lab notes with perhaps a st
 
 AJ. The words that pop as the yield climbs: "Let's have no react and then just OVERREACT the whole thing even it hits the stretch goal post" (12 November). No word at the lower marks. OVERREACT alone, over the whole screen, when the yield reaches the top (stretch) mark. Every earlier word set (stable, unstable, volatile and the rest) is dropped.
 
-AK. Sound (12 November): "the more that the reaction proceeds, the longer it goes on, there's an element of some kind of bass or chanting that goes on. A deeper sound that gets louder or something." A deep layer (bass, chant or similar) that comes in and grows the longer a chain runs. "The sound needs to be generated for the whole game": every screen and act has sound, not only the reaction.
+AK. Sound (12 November): "the more that the reaction proceeds, the longer it goes on, there's an element of some kind of bass or chanting that goes on. A deeper sound that gets louder or something." A deep layer (bass, chant or similar) that comes in and grows the longer a chain runs. "The sound needs to be generated for the whole game": every screen and act has sound, not only the reaction. Of the three styles: "I kind of liked arcade (2) but I feel like it needs to be less child game sounding." Arcade is the base; it must not sound like a children's game.
 
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
