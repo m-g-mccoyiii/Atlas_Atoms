@@ -459,7 +459,7 @@ const bareRun = run => !!RULE.bare || !!(run && run.bare);
 // The reaction rules read RX.MODE, which is one global. It is set from RULE and from the run every time rules are
 // read for a run (a round begun, the pair read, the picks dealt), so no run plays under what the run before it left.
 // The bare game has no jar to fill, so oxidize gives off no carbon dioxide there.
-const modeSync = run => { RX.MODE.weld = RULE.weld || 'ol'; RX.MODE.co2 = !!RULE.co2 && !bareRun(run); RX.MODE.eng = RULE.engine !== false; RX.MODE.oxNarrow = RULE.oxNarrow || null; RX.MODE.hydrateKetone = !!RULE.hydrateKetone; };
+const modeSync = run => { RX.MODE.weld = RULE.weld || 'ol'; RX.MODE.co2 = !!RULE.co2 && !bareRun(run); RX.MODE.eng = RULE.engine !== false; RX.MODE.oxNarrow = RULE.oxNarrow || null; RX.MODE.oxNoCleave = !!RULE.oxNoCleave; RX.MODE.hydrateKetone = !!RULE.hydrateKetone; };
 // Do the three uses of a reaction ever run out? Measured for tier one (docs/RIG.md, fifth measure): never for a player
 // who reads the page, outside a scarce assay; but a player placing at random meets a reaction with no use left on a
 // third of pages, because rounds one to three deal the same four reactions on every page. So the uses do bind for
@@ -1305,12 +1305,13 @@ function runTerm(run, id) {
 // Do not edit by hand: measure again. Par of the bare game, fourth measure (docs/tools_par_bare.py): round one by the novice and the margin together, rounds two to five at a margin of 4 for the median player, rounds six to nine by its pass rate and margin.
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
-const PAR = { rounds: [4770, 3500, 4118, 7340, 10295, 16248, 20038, 25187, 27028], after: 1.71, last: 1 };
+// greedy median of the round total on molecules v2 (120 bare nine-round runs: 4770, 3500, 4118, 7340, 10295, 16248, 20038, 25187, 27028), made to rise by at least 1.15 a round
+const PAR = { rounds: [4770, 5486, 6309, 7340, 10295, 16248, 20038, 25187, 28965], after: 1.71, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
 // multiplied by all of them, so every kind of round and every molecule is beaten by a like margin.
-const MOLF = {"C=CCC(C)(O)CCC(=O)CCC=C":0.594,"C=CCCC(=O)CC1CCCC1=O":0.393,"C=CCCC(=O)CCC(=O)CC1CCCC1=O":0.924,"C=CCCC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)CCC(=O)C":2.09,"C=CCCC(=O)CCC(=O)CCCC=O":2.264,"C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C":1.286,"C=CCCC(=O)CCC(O)CCC1(O)CCCC1CCC(=O)CCC(=O)C":1.744,"C=CCCC(=O)CCC1(O)CCCC1":0.365,"C=CCCC(=O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.418,"C=CCCC(C)(O)CCC(=O)CCC=C":0.731,"C=CCCC(O)CCC(=O)C1CCCC1":0.307,"C=CCCC(O)CCC(=O)CCC1(O)CCCC1":0.819,"C=CCCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)C":1.46,"CC(=O)CCC(=O)CCC(=O)CCC(O)CCCCCCCC(=O)CCC(=O)CCC(=O)C":0.36,"CC(=O)CCC(=O)CCC(O)CC1CCC(CC1)CCC(=O)CCC(=O)C":0.715,"CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":0.724,"CC(=O)CCC(=O)CCC1(O)CCCC1CCCCCC(=O)CCC(=O)C":0.998,"CC(=O)CCC(O)CC1CCC(CC1)CC(O)CCC(=O)C":0.984,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C":1.495,"CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C":1.957,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C":0.787,"CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC(=O)C":1.282,"CC(C)(O)CCC(=O)CCC=C":0.387,"CC(C)(O)CCC(=O)CCCCCC(=O)CCC(=O)C":0.491,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.907,"CC(C)(O)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":3.017,"CC(O)CCC(=O)CCC=CCCC(=O)C":0.205,"O=CCCC(=O)CCC(=O)CCC=C":2.268,"O=CCCC(=O)CCC(C)(O)CCC=C":1.087,"O=CCCC(=O)CCC(O)CCC(=O)CCCCCCCC(=O)CCC(=O)CCC=C":1.67,"O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C":1.117,"O=CCCC(=O)CCC1(O)CCCC1":0.513,"O=CCCC(=O)CCC=C":1.499,"O=CCCC(C)(O)CCC(=O)CCC=C":1.65,"OC1(CCCC1)CCC(=O)CCC=C":0.375,"OC1(CCCC1)CCC(=O)CCCC=O":0.942,"OC1(CCCCC1)C=CC=CCCCC=CC(=O)CCC(=O)C":1.983,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)C":0.687,"OC1(CCCCC1)CCC(=O)CCC(O)CCC(=O)CCCCCC(=O)CCC(=O)CCC=C":1.958,"OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C":0.968,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":1.655,"OC1(CCCCC1)CCC=CCCC=CCCC=CCCC=CCCC=CCCC=CCCC(=O)C":2.961};
+const MOLF = {};   // the molecule factors were fitted on the old table (42 keys); molecules v2 have none until they are fitted again (tools_factors.py), so every molecule counts 1
 const KINDF = {"plain":1.0,"carry":1.0,"broad":1.0,"loose":1.0,"each":1.0,"back":1.0,"scarce":1.0,"short":1.0};
 const ASSAYF = {"scarce":[0.688,1.138,0.854],"short":[0.625,0.309,0.527],"each":[1.533,1.745,1.339],"loose":[1.519,1.632,1.66]};
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };

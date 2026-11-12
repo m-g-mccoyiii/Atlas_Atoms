@@ -858,11 +858,11 @@ const ENG = (() => {
     hydroborate: addSteps('O', true),
     dehydrate: [elimStep(isOH, false, true, { water: 1 })],
     oxidize: [
-      { off: { hydrogen: 1 }, find(G) { let out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); }
+      { off: { hydrogen: 1 }, limit: () => (MODE.oxNarrow === 'one' ? 1 : 1e9), find(G) { let out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); }
           if (MODE.oxNarrow === 'secondary') out = out.filter(s => cnb(G, s.t[0]).length === 2); else if (MODE.oxNarrow === 'one') out = out.slice(0, 1);      // RULE.oxNarrow: oxidize acts on secondary OH only, or on one place
           return out; },
         edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 2); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } },
-      { when: () => MODE.co2 && !MODE.oxNarrow, off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
+      { when: () => MODE.co2 && !MODE.oxNoCleave, off: { carbon_dioxide: 1 }, find: G => { const out = []; for (let c1 = 0; c1 < G.n; c1++) for (const q of G.nb[c1]) { const c2 = q.j; if (q.o === 2 && aC(G, c1) && aC(G, c2) && G.hc[c1] === 2 && G.nb[c1].length === 1 && G.hc[c2] === 1 && G.nb[c2].length === 2) out.push({ t: [c1, c2] }); } return out.sort((x, y) => lex(x.t, y.t)); },
         edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), c2 = A(s.t[1]), g = take(m, c1); cut(m, c1, c2); const o1 = newAt(m, 'O', c2, 2); normH(m, [c2, o1]); return { focus: [c2], incoming: [o1], leaving: [g] }; } }
     ],
     reduce: [{ find: G => ketones(G).filter(k => G.hc[k[0]] === 1 || G.hc[k[0]] === 2).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]); setBond(m, c, o, 1); normH(m, [c, o]); return { focus: [c, o], incoming: [], leaving: [] }; } }],
@@ -900,7 +900,8 @@ const ENG = (() => {
     const steps = REAG[id]; if (!steps) return null; const res = { n: 0, off: {}, piece: 0, made: [], gone: [] };
     steps.forEach(st => {
       if (st.when && !st.when()) return;
-      for (let guard = 0; guard < 64; guard++) {
+      for (let guard = 0, done = 0; guard < 64; guard++) {
+        if (st.limit && done >= st.limit()) break; done++;
         const G = snapG(m), sites = st.find(G).filter(s => free(G, s)); if (!sites.length) break;
         REMOVED.length = 0; const r = st.edit(G, m, sites[0]); const grp = r.leaving.reduce((a, g) => a.concat(g), []).concat(REMOVED); r.leaving.forEach(g => g.forEach(a => m.removeAtom(a)));
         if (st.off || r.leaving.length) { grp.off = st.off || null; res.gone.push(grp); }
