@@ -187,7 +187,7 @@ const fx = {
   // -- the moment of play (feel.js). Every voice is self-contained (no held state), so a logged timeline renders offline --
   // a thrown reagent lands: a wood knock that gets heavier across the three (i 0 to 2); the third has a low body under it
   strike(i, w) {
-    i = Math.max(0, Math.min(2, i | 0)); w = w || 1; const f = [190, 213, 240][i], L = LADDER.ui * 4 * [1, 1.15, 1.35][i] * w;
+    i = Math.max(0, Math.min(2, i | 0)); w = w || 1; const f = [190, 213, 240][i], L = LADDER.ui * 2.2 * [1, 1.25, 1.6][i] * w;
     tone({ freq: f, freqEnd: f * 0.45, dur: 0.14, gain: 0.5, lv: L, attack: 0.001 });
     tone({ freq: f * 2.2, freqEnd: f * 1.3, dur: 0.05, gain: 0.14, lv: L, attack: 0.001 });
     hiss({ freq: 1100, q: 3, dur: 0.03, gain: 0.3, lv: L, attack: 0.001 });
@@ -198,7 +198,7 @@ const fx = {
   // a reflex step lands. Each kind has its own color: a ring closing is a bell, a water loss a hollow wood, a C=C shift a
   // plucked string. n climbs the pentatonic scale. o: bell (level), fast (short decay), echo (a small room), last
   reflex(kind, n, o) {
-    o = o || {}; n = Math.max(1, Math.round(n) || 1); const r = ringFreq(n), soft = 1 / (1 + r.oct * 0.25), lv = LADDER.ring * (o.bell || 1) * (o.last ? 1.5 : 1);
+    o = o || {}; n = Math.max(1, Math.round(n) || 1); const r = ringFreq(n), soft = 1 / (1 + r.oct * 0.25), lv = LADDER.ring * (o.bell || 1) * Math.min(1, 0.45 + 0.06 * n) * (o.last ? 1.6 : 1);
     const dur = o.fast ? 0.14 : o.last ? 1.4 : Math.max(0.3, 0.6 - n * 0.02), f = r.f * (1 + (Math.random() - 0.5) * 0.0093);
     const voice = (dl, g) => {
       if (kind === 'weld' || kind === 'dehydrate' || kind === 'ether') { tone({ freq: f * 0.5, freqEnd: f * 0.42, dur: dur * 0.6, gain: 0.4 * soft * g, lv, attack: 0.001, delay: dl, type: 'triangle', lp: 900 }); hiss({ freq: f * 1.5, q: 6, dur: 0.06, gain: 0.25 * g, lv, delay: dl, attack: 0.001 }); }
@@ -210,7 +210,7 @@ const fx = {
   },
   // a short low body hit under the bell: a sine sweep from 160 to 60 Hz and a click, heavier with the step and the weight
   snap(n, w) {
-    n = Math.max(1, n | 0); w = w || 1; const lv = LADDER.ring * Math.min(1.1, 0.5 + 0.06 * n) * w * 1.6, cut = 400 + 120 * n;
+    n = Math.max(1, n | 0); w = w || 1; const lv = LADDER.ring * Math.min(1.0, 0.18 + 0.07 * n) * w, cut = 400 + 120 * n;
     tone({ freq: 160, freqEnd: 58, dur: 0.11, gain: 0.55, lv, attack: 0.001, lp: Math.min(4000, cut) });
     tone({ freq: 2000, freqEnd: 1200, dur: 0.012, gain: 0.08, lv, attack: 0.0005, type: 'square' });
     hiss({ type: 'lowpass', freq: Math.min(3000, cut), q: 0.7, dur: 0.07, gain: 0.2, lv, attack: 0.001 });
