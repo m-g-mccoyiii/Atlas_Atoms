@@ -4,6 +4,44 @@ Built 2026-11-10. The newest measure is the first section below (the fifth of 20
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11, seventh, part one: five dealt from the six (`RULE.deal6`)
+
+Measured, awaiting review. Headless, 500 runs a player, seeds 1 to 500, `{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`; tools `docs/tools_deal.py <tag>` (reads `.claude/headless/out` directly). Tags d6on (Par as it was), d6b (Par fitted again), d6d (turn measures, 80 runs, `dec` and `deep`).
+
+### What changed
+
+- The three-round bare run was dealt from four reagents (dehydrate joined in round four and grow in round five, `RUNG.from`), so five slots of the hand held four reagents and nothing was dealt. `RULE.deal6` (on) puts all six in the deal from round one: five are dealt from the six, three are fired. `RUNG.from` is kept and read only with the switch off.
+- Grow and dehydrate make most of the yield. With the six, the median player makes 24, 27 and 15 times the old Par (it made 3 to 4), the novice 3 times: the old numbers are far too low (d6on: everybody passes, median 100 percent, novice wins all three 54.6 percent). Par for rounds one to three was fitted again, once: greedy player's median over 3 (`tools_tier1_bake.py`): 4,500, 5,600 and 10,000 (were 1,210, 1,920 and 2,580). Molecule and assay factors were not fitted again.
+- Yield is not the win condition once `RULE.spec` is built (next parts), so the pass rates below only say where the four marks fall.
+
+### The turn
+
+| | Four dealt (sixth measure) | Five from six: novice | median player |
+|---|---|---|---|
+| Second option within 30 percent of the best, or better two turns on | 21.5 and 17.9 percent | 56.7 | 61.3 |
+| of which within 30 percent | | 38.4 | 27.5 |
+| One option only | 66.6 and 67.6 | 14.1 | 11.5 |
+| Options a turn | 1.41 and 1.42 | 2.63 | 2.70 |
+| Best ordered play over the obvious one by over a fifth, pages | 28.3 and 17.5 | 73.6 | 80.9 |
+| Over 5 percent | | 79.2 | 85.6 |
+
+The gate (half the turns) is met by both players. Order is decisive on three pages in four. The numbers of the left column are from the sixth measure (the median player and the novice, 80 runs each).
+
+### Pass table at the new Par
+
+| Player | Pass, rounds 1, 2, 3 (of runs that reached it) | Wins all three | Median total over the number |
+|---|---|---|---|
+| novice | 38, 34, 28 | 3.6 percent | 0.79, 0.72, 0.51 |
+| greedy | 92, 90, 87 | 71.8 | 2.99, 3.08, 3.00 |
+| median | 100, 100, 99 | 99.0 | 23.9, 27.1, 15.1 |
+| planner | 99, 99, 99 | 96.8 | 25.1, 25.1, 11.1 |
+
+### What it says
+
+- The turn is a choice now: the gate is passed by 5 to 6 times the old rate.
+- Yield now spreads wider than the four marks (2, 4, 8 times the number) can cover: the median player is 15 to 27 times the number, the novice under 1. One Par cannot put the novice at the first mark and the median player short of the last. That is a property of grow doubling, not of the Par; yield no longer decides a win once the spec does.
+- Not done: unseen seeds, the molecule factors, a run with `deal6` off on the new Par.
+
 ## The measure of 2026-11-11, sixth: the leak in the rig, and tier one again, headless
 
 Measured, awaiting review: nothing here says a section passes. No rule of play and no number to beat was changed. What changed is the rig, where it runs, and one thing in `path.js` that makes the game match what was measured. The section after this one is the tier one measure this checks.
