@@ -322,7 +322,14 @@ const modeSync = run => { RX.MODE.weld = RULE.weld || 'ol'; RX.MODE.co2 = !!RULE
 // who reads the page, outside a scarce assay; but a player placing at random meets a reaction with no use left on a
 // third of pages, because rounds one to three deal the same four reactions on every page. So the uses do bind for
 // the player the first run is for, and the page should keep the use marks: this says true.
-const usesBind = () => true;
+// usesFree: in the three-round bare run no reaction runs out of uses, so the page hides the use marks there.
+RULE.usesFree = true;
+const usesFreeOn = run => !!RULE.usesFree && !!run && run.tierNo === 1;
+const usesBind = run => !usesFreeOn(run);
+const allFree = () => new Proxy({}, { get: () => true, set: () => true });
+// the round last begun, so the page can swap two queued circles by index alone
+let cur0 = null;
+const swapQueue = (i, j) => (cur0 ? queueSwap(cur0, i, j) : false);
 
 // offer: the reagents on the page for this order; the rest of the rack sits the order out
 // keep: index of the oxygen that is marked, or null. gear: equipment ids, left to right
@@ -513,7 +520,7 @@ function dealHand(g, R, rack, offer, again) {
   else g.kinds.forEach(id => { if (g.left[id] == null) g.left[id] = 1; });
   // plenty: with a budget of uses, a reagent that is plenty on a page spends none while that page is open
   const plenty = id => { g.rare[id] = 'plenty'; if (RULE.uses) g.free[id] = true; else g.left[id] = 9; };
-  g.rare = {}; g.free = {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1) * (g.rareMul || 1)) { const t = RARE[Math.floor(R() * RARE.length)]; if (t === 'plenty') plenty(id); else g.rare[id] = t; } });
+  g.rare = {}; g.free = g.usesFree ? allFree() : {}; g.kinds.forEach(id => { if (g.rareOn !== false && R() < SYN.rare * (g.gear.includes('loupe') ? 2 : 1) * (g.rareMul || 1)) { const t = RARE[Math.floor(R() * RARE.length)]; if (t === 'plenty') plenty(id); else g.rare[id] = t; } });
   if (g.gear.includes('ouija') && g.kinds.length) plenty(g.kinds[Math.floor(R() * g.kinds.length)]);
 }
 // Opens every ring a zip has closed (RULE.reopen). The molecule is replaced by a copy, and what the row was built on is
@@ -556,7 +563,7 @@ function synBegin(feed, relaxed, rnd, gear, run) {
   if (g.brief === 'carry' && run && run.carryE) g.E = run.carryE;
   if (run && g.gear.includes('milk')) { run.milk = (run.milk || 0) + 1; g.E += 0.1 * run.milk; }
   modeSync(run); if (RULE.reopen && RULE.cascade) RX.reopen(g.m);
-  g.left = {}; g.free = {}; g.rare = {}; g.loopsCont = 0; if (RULE.uses) (g.rackIds || synRack()).forEach(id => { g.left[id] = usesOf(g, id); });
+  g.left = {}; g.usesFree = usesFreeOn(run); g.free = g.usesFree ? allFree() : {}; g.rare = {}; g.loopsCont = 0; cur0 = g; if (RULE.uses) (g.rackIds || synRack()).forEach(id => { g.left[id] = usesOf(g, id); });
   synDeal(g, rnd);
   return g;
 }
@@ -1220,6 +1227,6 @@ function pickText(run, o) {
   if (o.kind === 'strong') return '+' + rarityOf(o.id).place * SYN.strong + ' a place';
   return '+1 use';
 }
-AA.rxPath = { modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

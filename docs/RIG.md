@@ -127,6 +127,22 @@ The browser pane is no longer used for measures (`HEADLESS.md`). In `.claude/hea
 - The turn measures, the break test and the redraw price were not run again.
 - `scrRound` and `gapRound` in the recording page still restore their rule without a `finally`.
 
+### Added later the same day: uses are free in tier one, and two hooks for the page
+
+- `RULE.usesFree` (on): in the three-round bare run (`run.tierNo === 1`) no reaction runs out of uses, so the page can hide the use marks there. `P.usesFreeOn(run)` and `P.usesBind(run)` say whether it applies.
+- `P.swapQueue(i, j)` swaps two queued circles of the round last begun, at no cost.
+- Measured headless, 500 runs a player, seeds 1 to 500, Par 1,210, 1,920, 2,580 kept.
+
+| Player | Pass, rounds 1, 2, 3, uses binding | Uses free | Wins all three, binding | Free |
+|---|---|---|---|---|
+| novice | 85, 65, 66 | 89, 69, 69 | 36.2% | 42.4% (2.4 tries) |
+| greedy | 97, 90, 90 | 97, 90, 90 | 79.0% | 79.0% |
+| median | 100, 99, 96 | 100, 99, 96 | 95.0% | 95.0% |
+| planner | 100, 99, 98 | 100, 99, 98 | 97.2% | 97.2% |
+
+- Median margins: 4.03, 2.98, 3.17 (were 4.03, 2.98, 3.01). Novice margins: 2.44, 1.52, 1.46 (were 2.16, 1.36, 1.37).
+- Only the novice moves, as expected: uses ran out on a third of its pages and on almost none of the others'. Par was not refit. Unseen seeds were not rerun with uses free.
+
 ## The measure of 2026-11-11, fifth: tier one, three bare rounds
 
 **Checked 2026-11-11 on the fixed rig (the section above): the unseen runs are the same run for run and the tables stand. The spread of molecules and the round one margin on unseen seeds were the size of the sample.**
