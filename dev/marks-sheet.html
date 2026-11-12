@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>marks</title>
+<body style="margin:0;background:#f6ecc9"><canvas id="c"></canvas>
+<script src="/apps/steam/js/react/marks.js"></script>
+<script>
+const q = new URLSearchParams(location.search), COLS = +(q.get('cols')||8), W = 190, H = 200, names = AA.rxMarks.names, rows = Math.ceil(names.length / COLS);
+const cv = document.getElementById('c'); cv.width = COLS * W; cv.height = rows * H + 60; const c = cv.getContext('2d');
+c.fillStyle = '#f6ecc9'; c.fillRect(0, 0, cv.width, cv.height);
+c.fillStyle = '#2a2118'; c.font = '22px sans-serif'; c.fillText('Overreact: the marks of the spec (large, then true size 28 px, then the same with a fill part way and met)', 12, 34);
+names.forEach((n, i) => {
+  const x = (i % COLS) * W + 12, y = Math.floor(i / COLS) * H + 60;
+  c.strokeStyle = 'rgba(0,0,0,0.12)'; c.strokeRect(x - 6, y - 6, W - 12, H - 8);
+  AA.rxMarks.draw(c, n, x + 50, y + 62, 90, {});
+  AA.rxMarks.draw(c, n, x + 118, y + 22, 28, {});
+  AA.rxMarks.draw(c, n, x + 146, y + 22, 28, { frac: 0.5 });
+  AA.rxMarks.draw(c, n, x + 174, y + 22, 28, { met: true });
+  c.fillStyle = '#2a2118'; c.font = 'bold 14px sans-serif'; c.fillText(n, x, y + 128);
+  c.font = '13px sans-serif'; const t = AA.rxMarks.plainOf(n, 'N'); const words = t.split(' '); let line = '', yy = y + 146;
+  words.forEach(w => { if (c.measureText(line + w).width > W - 30) { c.fillText(line, x, yy); yy += 16; line = ''; } line += w + ' '; }); c.fillText(line, x, yy);
+});
+document.title = 'ready';
+</script>

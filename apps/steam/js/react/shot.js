@@ -30,7 +30,7 @@
   }
   window.addEventListener('load', () => realST(async () => {
     const S = AA.rxScheme, P = AA.rxPath, base = q.get('name') || 'shot', at = (q.get('at') || '300').split(',').map(Number);
-    if (q.get('script')) { await new Promise(r => { const sc = document.createElement('script'); sc.src = q.get('script'); sc.onload = r; sc.onerror = r; document.head.append(sc); }); if (window.SHOT) await window.SHOT({ S, P, run, save, now: () => vnow, base, q }); await Promise.all(pend); new Image().src = '/__log?m=' + encodeURIComponent('flushed ' + base); document.title = 'done'; return; }
+    if (q.get('script')) { await new Promise(r => { const sc = document.createElement('script'); sc.src = q.get('script'); sc.onload = r; sc.onerror = r; document.head.append(sc); }); if (window.SHOT) { try { await window.SHOT({ S, P, run, save, now: () => vnow, base, q }); } catch (e) { new Image().src = '/__log?m=' + encodeURIComponent('SCRIPT ERR ' + (e && e.stack || e)); } } await Promise.all(pend); new Image().src = '/__log?m=' + encodeURIComponent('flushed ' + base); document.title = 'done'; return; }
     if (q.get('next')) P.RULE.next = true; if (q.get('free')) P.RULE.usesFree = true; P.seed(+(q.get('seed') || 3)); S.debugBare(true); S.debugRound(+(q.get('round') || 1));
     await run(1500); S.takePick(0); await run(1200); S.chooseBrief(0); await run(2500);
     if (q.get('rack') || mode === 'water') { S.debugRack((q.get('rack') || 'dehydrate,hydrate,pcc,bh3,nabh4').split(',')); await run(900); }
