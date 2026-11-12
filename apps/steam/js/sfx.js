@@ -1044,9 +1044,9 @@ function deepLand4(t, peak, calm) {
 // glass, a tom roll and steam rising into the next step.
 function step4(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const kd = kindOf(kind), w = madW(), bl = Math.sqrt(clamp(o.bell || 1, 0.6, 1.6)), P = clk5(t, n), u = place5(n);
-  // the last hit of a short chain is smaller than the last hit of a long one
+  // the last hit of a short chain is smaller than the last hit of a long one; a deeper round is wilder, not louder
   if (o.last) { G4 = LAST4 * bl * dB(-8 * (1 - Math.min(u, 1))); try { fin5(t, kd, w); deepLand4(t, false); } finally { G4 = 1; OUT4 = null; } return; }
-  G4 = CHAIN4 * dB(-4 * (1 - Math.min(u, 1.3))) * bl;   // a deeper round is wilder, not louder try { steps5(t, kd, n, o, P, u, w); } finally { G4 = 1; OUT4 = null; }
+  G4 = CHAIN4 * dB(-4 * (1 - Math.min(u, 1.3))) * bl; try { steps5(t, kd, n, o, P, u, w); } finally { G4 = 1; OUT4 = null; }
 }
 function steps5(t, kd, n, o, P, u, w) {
   const U = Math.min(u, 1.25), u1 = Math.min(u, 1), r = roots4()[chordIx(n)], m = mel5(1 + Math.round(u * 11)), kv = K4[kd] || K4.lactol, kg = 1.25 * (KLV4[kd] || 1) * (o.fast ? 0.85 : 1), wd = 0.2 + 0.75 * u1, pan = (n % 2 ? -1 : 1) * (0.12 + 0.5 * u1);
@@ -1071,7 +1071,7 @@ function steps5(t, kd, n, o, P, u, w) {
   // between the hits. The hand drums bounce into the next hit, closing up
   if (n >= 2) { const K = Math.round((2 + 7 * U) * (1 + 0.6 * w)); for (let j = 1; j <= K; j++) { const x = j / (K + 1); Q('conga', 55 + Math.round(12 * x), t + P * (0.13 + 0.8 * (1 - Math.pow(1 - x, 1.7))) + slip(), 0.1 + 0.22 * x, { pan: (j % 2 ? 1 : -1) * wd * 0.7, rev: 0.12 }); } }
   // the kit divides the gap: hats in 4, then 8, then 16; a kick and the bass on the half, then on every quarter; a snare on the half
-  if (u >= 0.18) { const div = Math.min(u < 0.45 ? 4 : u < 0.8 ? 8 : 16, Math.max(2, Math.floor(P / 0.065))); for (let j = 1; j < div; j++) Q('hat', NO, t + P * j / div + (j % 2 ? slip() : 0), (0.07 + 0.22 * U) * (j % 2 ? 0.6 : 1), { pan: (j % 2 ? 1 : -1) * wd, hp: 5000 }); }
+  if (u >= 0.18) { let div = u < 0.45 ? 4 : u < 0.8 ? 8 : 16; while (div > 4 && P / div < 0.045) div /= 2; for (let j = 1; j < div; j++) Q('hat', NO, t + P * j / div + (j % 2 ? slip() : 0), (0.07 + 0.22 * U) * (j % 2 ? 0.6 : 1), { pan: (j % 2 ? 1 : -1) * wd, hp: 5000 }); }
   if (u >= 0.36) { Q('kick', NO, t + P / 2, 0.3 + 0.2 * U, { strict: true }); if (DEEP < 2) Q('ebass', r + 12, t + P / 2, 0.3, { strict: true, dur: 0.2, r: 0.1 }); }
   if (u >= 0.6) Q('fdrum', NO, t + P / 2, 0.14 + 0.25 * (U - 0.6), { pan: 0.15, rev: 0.15 });
   if (u >= 0.78) [0.25, 0.75].forEach(x => Q('kick', NO, t + P * x, 0.3, { strict: true, hp: 50 }));
