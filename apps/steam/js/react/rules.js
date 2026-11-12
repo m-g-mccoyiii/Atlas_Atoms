@@ -403,7 +403,8 @@ const ENG = (() => {
       else if (k.b.el === 'H' && ia != null) hc[ia]++;
     });
     const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null, lock: atoms.map(a => !!(a.prot || a.cure || a.clamp)), lockSelf: atoms.map(a => !!a.prot), self: false };
-    const ar = aromaticAtoms(m); G.ar = atoms.map(a => ar.has(a));
+    let dc = 0; for (const k of m.bonds) if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C') dc++;       // a benzene ring has three C=C: fewer, and the search is skipped
+    const ar = dc >= 3 ? aromaticAtoms(m) : null; G.ar = atoms.map(a => !!ar && ar.has(a));
     return G;
   }
   const el = (G, i) => G.atoms[i].el, X = (G, i) => G.nb[i].length + G.hc[i];
@@ -862,7 +863,16 @@ function graphOf(m) {
   const bonds = m.bonds.filter(b => idx.has(b.a) && idx.has(b.b)).map(b => ({ a: idx.get(b.a), b: idx.get(b.b), order: b.order }));
   return { els: atoms.map(a => a.el), bonds };
 }
-const sigOf = m => { const g = graphOf(m); return C.signature(g.els, g.bonds); };
+// A fast signature (Weisfeiler-Lehman on integers); the rules only compare it with other signatures of the same session, it is not saved anywhere.
+const sigOf = m => {
+  const g = graphOf(m), n = g.els.length, adj = g.els.map(() => []), cnt = {};
+  g.bonds.forEach(b => { adj[b.a].push([b.b, b.order]); adj[b.b].push([b.a, b.order]); });
+  let lab = g.els.map(e => { cnt[e] = (cnt[e] || 0) + 1; let h = 7; for (let i = 0; i < e.length; i++) h = Math.imul(h ^ e.charCodeAt(i), 2654435761); return h | 0; });
+  for (let r = 0, R = Math.min(n, 12); r < R; r++) {
+    const prev = lab; lab = prev.map((l, i) => { const nb = adj[i].map(q => (Math.imul(prev[q[0]], 31) + q[1] * 1000003) | 0).sort((a, b) => a - b); let h = Math.imul(l ^ 0x9e3779b1, 2246822507); for (let k = 0; k < nb.length; k++) h = Math.imul(h ^ nb[k], 3266489909) ^ (h >>> 15); return h | 0; });
+  }
+  return Object.keys(cnt).sort().map(e => e + cnt[e]).join('') + '/' + lab.slice().sort((a, b) => a - b).join('.');
+};
 // what the three instruments can tell: the mass spectrum gives the molecular mass, the infrared gives the kinds of
 // functional group present, and the NMR settles the exact structure
 function probe(m) {

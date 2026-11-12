@@ -1693,7 +1693,7 @@ const SPEC_REACH = { plays: 3, look: 30 };
 function specPick(molecule, round, carried, rnd, tier, hist, run) {
   const R = rnd || rand, model = molecule && molecule.atoms ? RX.cloneModel(molecule) : RX.fromSmiles(molecule); RX.reopen(model);
   carried = carried || []; hist = hist || []; const last = hist.length ? hist[hist.length - 1] : [], recent = {}; hist.slice(-4).forEach(f => f.forEach(x => { recent[x] = (recent[x] || 0) + 1; }));
-  const target = Math.max(0.05, Math.min(0.99, SPEC_TARGET[Math.max(1, Math.min(9, round))] + (run && run.tierNo === 1 ? (RULE.specEase || 0) : 0))), pair = round >= 6, rider = pair && SPEC_TABLE.held_back && SPEC_TABLE.held_back.good.includes(round) && !last.includes('restraint') && R() < SPEC_RIDER.p, t1 = pair ? Math.min(0.97, Math.sqrt(target / 0.9)) : target, t1r = Math.min(0.97, target / SPEC_RIDER.factor);
+  const target = Math.max(0.05, Math.min(0.99, SPEC_TARGET[Math.max(1, Math.min(9, round))] + (run && run.tierNo === 1 ? (RULE.specEase || 0) + ((RULE.specShift || {})[round] || 0) : 0))), pair = round >= 6, rider = pair && SPEC_TABLE.held_back && SPEC_TABLE.held_back.good.includes(round) && !last.includes('restraint') && R() < SPEC_RIDER.p, t1 = pair ? Math.min(0.97, Math.sqrt(target / 0.9)) : target, t1r = Math.min(0.97, target / SPEC_RIDER.factor);
   const open = name => { const d = SPEC_TABLE[name]; return !d.rider && d.good.includes(round) && (SPEC_FAMILY_TIER[d.fam] == null ? 3 : SPEC_FAMILY_TIER[d.fam]) <= (tier == null ? 3 : tier) && specNeed(d, carried); };
   const order = list => list.map(n => [n, R() * (1 + 2 * (recent[SPEC_TABLE[n].fam] || 0))]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
   const atoms0 = SX.featOf(model).get('atoms');
