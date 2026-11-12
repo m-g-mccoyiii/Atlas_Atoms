@@ -1,0 +1,235 @@
+"""sweep_exps.py: the experiment grids of docs/SWEEP.md.  Each function returns the list of jobs for sweep_run.run.
+
+  python sweep_run.py list
+  python sweep_run.py a_six            every starting six of the 18 reagents (18,564), rounds 1 to 3
+  python sweep_exps.py all             every experiment in order (resumable)
+"""
+import itertools
+import json
+import os
+import random
+import sys
+
+import sweep_core as SC
+
+POOL = SC.POOL18
+START = list(SC.START_SIX)
+OLD = ['hydrate', 'hydroborate', 'dehydrate', 'oxidize', 'reduce', 'grow']
+EIGHT = START + ['reduce', 'hydroborate']
+HOMS = ('water', 'h2', 'co2', 'acid', 'wood', 'salt', 'slime', 'ammonia', 'seedling', 'brimstone')
+
+
+def _rid(rack):
+    return ''.join('%x' % POOL.index(r) if POOL.index(r) < 16 else 'gh'[POOL.index(r) - 16] for r in rack)
+
+
+def a_six():
+    """Every six of the 18 reagents (18,564 sets): a bachelor's (rounds 1 to 3), novice, greedy and median player, 2 seeds a set."""
+    jobs = []
+    for i, rack in enumerate(itertools.combinations(POOL, 6)):
+        b = i % 16                          # 16 blocks of seeds: sets in a block meet the same deals (48 seeds in all)
+        jobs.append({'id': 'six_' + _rid(rack), 'rack': list(rack), 'length': 'bachelor', 'players': ['novice', 'greedy', 'median'],
+                     'seeds': [b * 10 + 1, b * 10 + 2]})
+    return jobs
+
+
+def model_six(rows=None, key='median'):
+    """Least squares on the sweep of sixes: cleared rounds of a set = base + sum of its reagents' effects.  Returns
+    (base, {reagent: effect}, {set: predicted})."""
+    import numpy as np
+    import sweep_run as SR
+    rows = rows if rows is not None else [r for r in SR.rows_of('a_six') if 'by' in r]
+    X = np.zeros((len(rows), len(POOL) + 1))
+    y = np.zeros(len(rows))
+    for i, r in enumerate(rows):
+        X[i, 0] = 1
+        for g in r['rack']:
+            X[i, 1 + POOL.index(g)] = 1
+        y[i] = r['by'][key]['cleared'] / float(r['by'][key]['n'])
+    # every set has exactly six reagents, so the columns sum to six times the constant: solve with the effects centred
+    coef = np.linalg.lstsq(X, y, rcond=None)[0]
+    eff = coef[1:] - coef[1:].mean()
+    base = coef[0] + 6 * coef[1:].mean()
+    pred = {tuple(r['rack']): float(base + sum(eff[POOL.index(g)] for g in r['rack'])) for r in rows}
+    return float(base), {g: float(eff[i]) for i, g in enumerate(POOL)}, pred
+
+
+def six_picks(n_top=40, n_bot=20, n_rand=40):
+    base, eff, pred = model_six()
+    order = sorted(pred, key=lambda k: -pred[k])
+    rg = random.Random(7)
+    mid = rg.sample(order[n_top:-n_bot], n_rand)
+    picks = [('top', k) for k in order[:n_top]] + [('bottom', k) for k in order[-n_bot:]] + [('random', k) for k in mid]
+    if tuple(START) not in [k for _, k in picks]:
+        picks.append(('start', tuple(START)))
+    if tuple(sorted(OLD, key=POOL.index)) not in [k for _, k in picks]:
+        picks.append(('old', tuple(sorted(OLD, key=POOL.index))))
+    return picks
+
+
+def a_six2():
+    """Stage two: the 40 best, 20 worst and 40 random sixes by the model of a_six, and the two the game has had, 60 unseen seeds each."""
+    jobs = []
+    for tag, rack in six_picks():
+        for c in range(6):
+            jobs.append({'id': 'six2_%s_%d' % (_rid(rack), c), 'rack': list(rack), 'length': 'bachelor', 'tag': tag,
+                         'players': ['novice', 'greedy', 'median'] + (['planner'] if c < 2 else []),
+                         'seeds': list(range(3001 + c * 10, 3011 + c * 10))})
+    return jobs
+
+
+def a_eight():
+    """A sample of 300 of the 43,758 carried eights, played on rounds 4 to 6 (a master's), greedy and median player, 4 seeds."""
+    rg = random.Random(8)
+    seen, jobs = set(), []
+    while len(jobs) < 300:
+        rack = tuple(sorted(rg.sample(POOL, 8), key=POOL.index))
+        if rack in seen:
+            continue
+        seen.add(rack)
+        b = len(jobs) % 12
+        jobs.append({'id': 'eight_' + _rid(rack), 'rack': list(rack), 'length': 'master', 'first': 4, 'last': 6,
+                     'players': ['greedy', 'median'], 'seeds': [500 + b * 10 + k for k in range(4)]})
+    return jobs
+
+
+def b_elem():
+    """Elements: N, S, Cl and seven candidates, each with its reagent and reflex, nine rounds, three deal curves, median player."""
+    import sweep_elements as SE
+    jobs = []
+    base4 = ['hydrate', 'oxidize', 'grow', 'dehydrate']
+    for c in range(3):
+        seeds = list(range(700 + c * 4, 704 + c * 4))
+        jobs.append({'id': 'el_control_%d' % c, 'mods': [], 'rack': base4 + ['reduce', 'hydroborate'], 'length': 'doctorate',
+                     'players': ['median'], 'seeds': seeds, 'tag': 'control'})
+        for el in SE.ORDER:
+            rg = list(SE.ELEMENTS[el]['reagents'])[:1]
+            for curve in ('rise', 'flat', 'none'):
+                jobs.append({'id': 'el_%s_%s_%d' % (el, curve, c), 'mods': ['elem:%s:%s' % (el, curve)], 'rack': base4 + rg + ['hydroborate'],
+                             'length': 'doctorate', 'players': ['median'], 'seeds': seeds, 'watch': el, 'tag': '%s/%s' % (el, curve)})
+    return jobs
+
+
+def _best_six():
+    try:
+        return list(six_picks(1, 1, 1)[0][1])
+    except Exception:
+        return None
+
+
+def c_hom1():
+    """Homunculi, each alone and none: two reagent sets, three run lengths, median player."""
+    jobs = []
+    racks = {'start': START, 'eight': EIGHT}
+    for nm in ('none',) + HOMS:
+        mods = [] if nm == 'none' else ['perk:' + nm]
+        for rk, rack in racks.items():
+            for length, n in (('bachelor', 8), ('master', 4), ('doctorate', 2)):
+                for c in range(n):
+                    jobs.append({'id': 'h1_%s_%s_%s_%d' % (nm, rk, length, c), 'mods': mods, 'rack': rack, 'length': length,
+                                 'players': ['median'], 'seeds': list(range(900 + c * 4, 904 + c * 4)), 'tag': '%s|%s|%s' % (nm, rk, length)})
+    return jobs
+
+
+def c_hom23():
+    """Homunculi, every pair and every triple: the eight-reagent set, a master's, median player, 4 seeds."""
+    jobs = []
+    for k in (2, 3):
+        for combo in itertools.combinations(HOMS, k):
+            for c in range(1):
+                jobs.append({'id': 'h%d_%s_%d' % (k, '+'.join(combo), c), 'mods': ['perk:' + x for x in combo], 'rack': EIGHT,
+                             'length': 'master', 'players': ['median'], 'seeds': list(range(900 + c * 4, 904 + c * 4)),
+                             'tag': '+'.join(combo)})
+    return jobs
+
+
+def d_sig1():
+    """Sigils, each alone and none: two reagent sets, a bachelor's (24 runs a set) and a master's (12), median player."""
+    import sigil2_rules as S2
+    jobs = []
+    for sid in ('none',) + S2.ORDER:
+        mods = [] if sid == 'none' else ['sigil:' + sid]
+        for rk, rack in (('start', START), ('eight', EIGHT)):
+            for length, n in (('bachelor', 6), ('master', 3)):
+                for c in range(n):
+                    jobs.append({'id': 's1_%s_%s_%s_%d' % (sid, rk, length, c), 'mods': mods, 'rack': rack, 'length': length,
+                                 'players': ['median'], 'seeds': list(range(1100 + c * 4, 1104 + c * 4)), 'tag': '%s|%s|%s' % (sid, rk, length)})
+    return jobs
+
+
+def d_sig2():
+    """Sigils, every pair: the start six, rounds 1 to 4 of a master's (the fold comes in at round 4), median player, 4 seeds."""
+    import sigil2_rules as S2
+    jobs = []
+    for a, b in itertools.combinations(S2.ORDER, 2):
+        jobs.append({'id': 's2_%s+%s' % (a, b), 'mods': ['sigil:' + a, 'sigil:' + b], 'rack': START, 'length': 'master', 'first': 1, 'last': 4,
+                     'players': ['median'], 'seeds': list(range(1100, 1104)), 'tag': '%s+%s' % (a, b)})
+    return jobs
+
+
+def d_sighom():
+    """Each sigil with each homunculus: the eight-reagent set, rounds 1 to 4 of a master's, median player, 4 seeds."""
+    import sigil2_rules as S2
+    jobs = []
+    for a in S2.ORDER:
+        for h in HOMS:
+            jobs.append({'id': 'sh_%s+%s' % (a, h), 'mods': ['sigil:' + a, 'perk:' + h], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
+                         'players': ['median'], 'seeds': list(range(900, 904)), 'tag': '%s+%s' % (a, h)})
+    return jobs
+
+
+def d_sigsets():
+    """Each sigil on a sample of 12 other sixes (the best, worst and random of a_six), a bachelor's, median player, 8 seeds."""
+    import sigil2_rules as S2
+    picks = six_picks(4, 4, 4)[:12]
+    jobs = []
+    for sid in ('none',) + S2.ORDER:
+        for tag, rack in picks:
+            jobs.append({'id': 'ss_%s_%s' % (sid, _rid(rack)), 'mods': [] if sid == 'none' else ['sigil:' + sid], 'rack': list(rack),
+                         'length': 'bachelor', 'players': ['median'], 'seeds': list(range(1300, 1308)), 'tag': '%s|%s' % (sid, tag)})
+    return jobs
+
+
+def d_base4():
+    """No sigil and no creature on rounds 1 to 4, and each creature alone there: what the pairs of d_sig2 and d_sighom are held against."""
+    import sigil2_rules as S2
+    jobs = [{'id': 'b4_none_start', 'mods': [], 'rack': START, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
+             'seeds': list(range(1100, 1104)), 'tag': 'none|start'},
+            {'id': 'b4_none_eight', 'mods': [], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
+             'seeds': list(range(900, 904)), 'tag': 'none|eight'}]
+    for a in S2.ORDER:
+        jobs.append({'id': 'b4_%s_start' % a, 'mods': ['sigil:' + a], 'rack': START, 'length': 'master', 'first': 1, 'last': 4,
+                     'players': ['median'], 'seeds': list(range(1100, 1104)), 'tag': '%s|start' % a})
+        jobs.append({'id': 'b4_%s_eight' % a, 'mods': ['sigil:' + a], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
+                     'players': ['median'], 'seeds': list(range(900, 904)), 'tag': '%s|eight' % a})
+    for h in HOMS:
+        jobs.append({'id': 'b4_%s_eight' % h, 'mods': ['perk:' + h], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
+                     'players': ['median'], 'seeds': list(range(900, 904)), 'tag': '%s|eight' % h})
+    return jobs
+
+
+def e_last():
+    """The last sigil: four versions and their policies against no sigil; start six; a master's and nine rounds; median and greedy player."""
+    import sigil2_last as SL
+    jobs = []
+    for cell in ('none',) + SL.CELLS:
+        mods = [] if cell == 'none' else ['sigil:last_' + cell]
+        for length, n in (('master', 5), ('doctorate', 4)):
+            for c in range(n):
+                jobs.append({'id': 'last_%s_%s_%d' % (cell.replace(':', '-'), length, c), 'mods': mods, 'rack': START, 'length': length,
+                             'players': ['median', 'greedy'], 'seeds': list(range(1500 + c * 4, 1504 + c * 4)), 'tag': '%s|%s' % (cell, length)})
+    return jobs
+
+
+EXPERIMENTS = {'e_last': e_last, 'd_base4': d_base4, 'a_six': a_six, 'a_six2': a_six2, 'a_eight': a_eight, 'b_elem': b_elem, 'c_hom1': c_hom1, 'c_hom23': c_hom23,
+               'd_sig1': d_sig1, 'd_sig2': d_sig2, 'd_sighom': d_sighom, 'd_sigsets': d_sigsets}
+ORDER_ALL = ('d_sig1', 'c_hom1', 'd_base4', 'e_last', 'a_six', 'a_six2', 'b_elem', 'd_sig2', 'c_hom23', 'd_sighom', 'a_eight', 'd_sigsets')
+
+
+if __name__ == '__main__':
+    import sweep_run as SR
+    which = sys.argv[2:] or ORDER_ALL
+    workers = int(os.environ.get('SWEEP_WORKERS', '12'))
+    for name in which:
+        st = SR.run(name, EXPERIMENTS[name](), workers)
+        print('DONE', name, json.dumps(st), flush=True)
