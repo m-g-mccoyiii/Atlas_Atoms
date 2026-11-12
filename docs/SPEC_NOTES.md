@@ -58,3 +58,20 @@ The revised list (docs/tools_chem/SPECS.md): 24 specs and one rider, written int
 | Aiming players | `P.specLine(g, rnd, look)`, `P.specPlay`; the rig gives every player this line when `RULE.spec` is on (`SPECLOOK` in `sim.js`: novice 4 lines, greedy 12, median and planner all) |
 
 Not done: the offered spec is not checked against the points player (the Python generator refuses a spec the points player always clears); families open by run length follow `SPEC_FAMILY_TIER` with the run length as the tier number; handedness, twin atoms, loops and rising turns are not ported (held back in `HURDLES.md`).
+
+## Lines that show many kinds
+
+Found headless (job `.claude/headless/jobs/lines.js`) with a new game's seven reflexes held (ring, dry, weld, shift, tuck, flip, snap), on molecules of the game's table. Each row: the molecule, a line of three of the six starters fired in order, and the reflex steps of the one overreaction in order (the kinds are the names in the round record `g.rec.pages[i].steps[j].kind`, with `join` the two atom ids and `via` 'chain'; the first-kind-seen order is the third column).
+
+| Molecule | Line of three | Steps in order | Kinds |
+|---|---|---|---|
+| `CC(C)(O)CCC(=O)CCC(O)CCC(=O)CCC=C` | hydrate, reduce, hydroborate | weld, dry, tuck, ring | 4 |
+| `C=CCCC(=O)CCC(=O)CCCCCC(O)CCC(=O)C` | hydroborate, oxidize, oxidize | weld, dry, tuck, ring | 4 |
+| `OC1(CCCC1)CCC(=O)CCCC=O` | grow, oxidize, dehydrate | dry, tuck, weld, ring | 4 |
+| `O=CCCC(=O)CCC1(O)CCCC1` | grow, oxidize, grow | dry, tuck, weld, ring | 4 |
+| `CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)C` | dehydrate, grow, dehydrate | weld, dry, snap, snap | 3 |
+| `O=CCCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C` | oxidize, oxidize, hydrate | weld, dry, weld, ring | 3 |
+| `CC(=O)CCC(=O)CCC(O)CCCCCC(=O)CCC(=O)C` | dehydrate, hydrate, oxidize | weld, dry, weld, ring | 3 |
+| `OC1(CCCCC1)CCC(=O)CCCCCC(=O)CCC(=O)C` | dehydrate, grow, dehydrate | weld, dry, snap, snap | 3 |
+| `CC(C)(O)CCC(O)CCC(O)CCCCCC(O)CCC(=O)C` | oxidize, hydrate, dehydrate | weld, dry, tuck, weld | 3 |
+| `OCCCC(O)CCC(O)CCC(O)CCCCCC(=O)CCC(=O)C` | oxidize, oxidize, hydrate | weld, dry, weld, ring | 3 |

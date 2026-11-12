@@ -365,7 +365,7 @@ function react(run, m, id) {
     const sp = touchesKeep(s), r = card.apply(m, s);
     if (sp) { s.atoms.forEach(a => { a.keep = false; }); spoiled++; } else hits++;
     r.focus.concat(r.incoming).forEach(a => made.push(a));
-    r.leaving.forEach(grp => gone.push(grp.slice())); r.leaving.flat().forEach(a => m.removeAtom(a));
+    r.leaving.forEach(grp => { const c = grp.slice(); if (grp.off) c.off = grp.off; gone.push(c); }); r.leaving.flat().forEach(a => m.removeAtom(a));
   });
   return { hits, spoiled, hot, made, gone, sig: RX.sigOf(m) };
 }
