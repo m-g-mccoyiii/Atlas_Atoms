@@ -435,6 +435,7 @@ RULE.spec = true;
 // first run is eased. 0.2 gives the novice a win in about 3 tries. The longer runs are never eased (HARNESS W2).
 RULE.specEase = 0;
 // the bachelor's rounds are tuned for the new player (ruling W2, tenth pass): N of the table times a scale per round, and the chain spec 'opener' (cleared by 92 percent of novices) is not offered. Measured: novice clears 68, 52, 41 percent.
+RULE.foldPay2 = true;   // an across step is paid as two chain steps: median-player yield in rounds 4 to 9 (mean log total) 11.249 with, 11.197 without the fold, 10.915 with the fold and one step each (60 runs)
 RULE.specScale = { 1: 0.2, 2: 0.3, 3: 0.55 }; RULE.specBan = ['opener'];
 const LASTX = { mul: 2 };
 // Tiers (docs/LOOP.md): a run is three rounds, then six, then nine. Tier 1 is the bare game: the six starting
