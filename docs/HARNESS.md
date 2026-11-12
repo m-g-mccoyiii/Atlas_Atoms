@@ -65,6 +65,8 @@ W3. "I would say even 2% success rate out of 100 without any unlocks is too high
 
 AO. "I want the molecule to potentially start vibrating when we're winning. I want the overreact effects to be a visual and auditory dopamine hit" (12 November).
 
+AM2. "I was just looking at the notes on the pages and they're clashing a lot with everything else going on. I feel like the camera is very zoomed in as a result." (12 November). The notes must not clash with the play area, and the page must not feel zoomed in.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
