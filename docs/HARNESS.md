@@ -61,6 +61,10 @@ AF2. "Rarer elements should become more common as the rounds get deeper." (12 No
 
 AN. "you should be able to use rdkit to do massive compute scaling to investigate every combination of things quickly including our elemental additions, homunculus, and sigils (which break rules or change a rule right, like carbons can have 5 bonds or other fun 'alchemy' things)" (12 November). Testing runs on every core and covers every combination. A sigil breaks or changes one rule.
 
+W3. "I would say even 2% success rate out of 100 without any unlocks is too high still btw." (12 November). This replaces the 2-in-100 figure of W2: a bare nine-round run with no unlocks is won less often than 2 in 100.
+
+AO. "I want the molecule to potentially start vibrating when we're winning. I want the overreact effects to be a visual and auditory dopamine hit" (12 November).
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
