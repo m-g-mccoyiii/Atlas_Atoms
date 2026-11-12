@@ -307,6 +307,10 @@ RULE.choose = true;
 RULE.next = true; RULE.lastx = true; RULE.filter = true;
 // spec: a round is won by meeting its spec (an at-least about the molecule or the round, see the block THE SPEC); yield only pays gold and letters the words
 RULE.spec = true;
+// specEase: added to the aiming player's clear rate each spec is tuned to, in the bachelor's (three rounds) only. The table's N was fitted
+// on the Python engine with an aiming player; the game's players clear less (RIG.md, seventh measure, part two), so a new player's
+// first run is eased. 0.2 gives the novice a win in about 3 tries. The longer runs are never eased (HARNESS W2).
+RULE.specEase = 0.2;
 const LASTX = { mul: 2 };
 // Tiers (docs/LOOP.md): a run is three rounds, then six, then nine. Tier 1 is the bare game: the six starting
 // reactions, no helper, no creature, nothing new offered between rounds. (run.tier is the supplier index, an older
@@ -1093,7 +1097,7 @@ function runBriefs(run, rnd) {
   // Choosing the molecule (docs/LOOP.md): two molecules of the round's size, one is taken, free. Both are plain rounds,
   // or both the round's assay. The one that is harder to set off by the screen pays coins on top when it is beaten.
   if (RULE.choose) { const n = run.single ? 1 : 2, br = as || 'plain', out = feeds.slice(0, n).map(f => ({ brief: br, pays: as ? 2 : null, assay: !!as, model: salt(modelOf(f), R), kin: kinOf(f), src: f, quota: runQuota(run, f, br), ease: easeOf(run, f), coins: 0 }));
-    if (RULE.spec) out.forEach(o => { o.spec = specFor(run, o.model, R); o.hurdle = { kind: o.spec.mark, n: o.spec.n }; });
+    if (RULE.spec) out.forEach(o => { o.spec = specFor(run, o.model, R, o.brief); o.hurdle = { kind: o.spec.mark, n: o.spec.n }; });
     if (n === 2) { const hard = out[0].ease <= out[1].ease ? 0 : 1, d = Math.abs(out[0].ease - out[1].ease); out[hard].coins = d >= CHOOSE.two ? 2 : d >= CHOOSE.one ? 1 : 0; } return out; }
   if (as) return [{ brief: as, pays: 2, assay: true, model: salt(modelOf(feeds[0]), R), kin: kinOf(feeds[0]), src: feeds[0], quota: runQuota(run, feeds[0], as) }];
   const sp = mix(BRIEFS.filter(b => b.id !== 'plain' && b.id !== 'carry')), pay = mix([1, 2]);
@@ -1111,7 +1115,8 @@ function easeOf(run, src) { modeSync(run); const pool = run.rack || RUNG.start, 
 // the pair drawn again: 1 coin, then 2, then 3 within one round; nothing when it cannot be paid or has been done three times
 const pairCost = run => ((run.redraws || 0) >= CHOOSE.most ? null : 1 + (run.redraws || 0));
 function runRedraw(run, rnd) { const c = pairCost(run); if (!RULE.choose || !RULE.coins || c == null || (run.coins || 0) < c) return null; run.coins -= c; run.redraws = (run.redraws || 0) + 1; return runBriefs(run, rnd); }
-const specFor = (run, model, R) => specPick(model, run.round || 1, (run.rack || []).concat(run.self || SELF0), R, run.tierNo || 3, run.specHist || [], run);
+// the proof plays are played under the brief of the round (an assay changes the rules of the round)
+const specFor = (run, model, R, brief) => specPick(model, run.round || 1, (run.rack || []).concat(run.self || SELF0), R, run.tierNo || 3, run.specHist || [], Object.assign({}, run, { brief: brief || run.brief }));
 function runChoose(run, o) { run.spec = o.spec || null; if (o.spec) { run.specHist = (run.specHist || []).concat([o.spec.families]); } run.redraws = 0; run.payCoins = o.coins || 0; run.kin = o.kin || 'chain'; run.src = o.src || null; run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
 // keeps the molecule and the extra a beaten round ended on, for carrying on
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }

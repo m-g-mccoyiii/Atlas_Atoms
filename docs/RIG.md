@@ -4,6 +4,94 @@ Built 2026-11-10. The newest measure is the first section below (the fifth of 20
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-11, seventh, part two: the spec, run lengths, the preview removed
+
+Measured, awaiting review. Headless, tier one (`{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`), `RULE.spec` on, every player plays for the spec first and the yield second. Tools: `docs/tools_deal.py <tag>`, `docs/tools_spec_check.py`. Tags: s2 (seeds 1 to 500, no ease), f0, f0.1, f0.2 (seeds 1 to 300, `RULE.specEase` 0, 0.1, 0.2), u3 (unseen seeds 1,001 to 1,500, the default, ease 0.2), L1 (novice, one line looked at).
+
+### What was built
+
+| Piece | Where | Switch |
+|---|---|---|
+| Readers on the game's own molecule: rings (smallest set of smallest rings), by size, fused pairs and blocks, spiro, bridgehead, hetero rings, atoms in rings, longest carbon chain, diameter, branch points, the alternating run, the twelve kinds of group, double bonds, hetero atoms, elements | `SX` in `path.js` (port of `hurdle_graph.py`) | |
+| The record of a round: per page the circles (reagent, whether it acted and where, the bank), the reflex steps each set off, the reflex steps in order, runoff by kind, the molecule at the end of the page before the loose rings open | `g.rec`, `specBegin`, `specPage` | |
+| Five readings: gain, loss, abs, last, range | `specRead` | |
+| The table of specs: 42 rows, with the share of aiming players at each N by round | `SPEC_TABLE`, written by `tools_spec_bake.py` | replace wholesale |
+| State: `g.spec = { kind, n, mark, name, text, value, met, parts }` after every page; `P.specValue`, `P.specMet`, `P.specParts`; the round won by the spec: `P.roundWon`, `P.roundEnd` | | `RULE.spec` (on) |
+| The generator `P.specPick(molecule, round, carried, rnd, tier, hist, run)`: table mode, never the same family twice running, two specs from round 6, each reached by an aiming player in up to 3 plays on this molecule played under the brief of the round | | |
+| Run lengths: `P.LENGTHS`, `runNew(.., { reach, length, tierNo })`, `run.len`, `g.runLen`, `P.runWon(g or run)`, `P.runLast`, `P.runResult(run)`, `P.reachAfter` | | |
+| `queueView` reads the present only | | |
+
+### The JavaScript against Python
+
+`jobs/spec_dump.js` dumps the graph and the JS values for 300 molecules (the game's 78 and 222 more from the Python generator, in the Kekule form the game reads) and for 300 end-of-page molecules of rounds played by the aiming player on the game's table. `tools_spec_check.py` compares them with `hurdle_graph.py` on the same graph and with RDKit (`hurdles.feat`) on the molecule built from the same graph.
+
+| | Molecules | JS against the graph version | JS against RDKit |
+|---|---|---|---|
+| the game's table and the generated ones | 300 | 0 mismatches in 20 readers | 12 molecules differ on rings, rings of 3 or 4, rings of 6, fused pairs, fused block, rings plus double bonds |
+| end states of played rounds | 300 | 0 mismatches | 15 molecules differ on the same readers |
+
+The differences from RDKit are all cages (cubane, adamantane): RDKit lists the symmetrised set of rings, the smallest-set count is lower (`HURDLES.md`, "How close the graph version is"). The counts of the twelve kinds of group agree with RDKit on every molecule. Only OH, C=O, C=C, ether and ester occur in these molecules: no game molecule holds nitrogen, sulfur or chlorine, so the readers of COOH, NH2, SH, Cl, amide, S-S and C=N were not exercised.
+
+### Spec clear rate by round
+
+Every run counted in every round (a failed round does not stop the run: `all`). The Python generator's tested target for an aiming player in rounds 1 to 3 is 85, 80, 65 percent. Seeds 1 to 300 (tags f0, f0.1, f0.2) and, last, unseen seeds 1,001 to 1,500 with the default (u3).
+
+| Player | Clear rate, rounds 1, 2, 3, ease 0 | Ease 0.1 | Ease 0.2 | Unseen, default (0.2) |
+|---|---|---|---|---|
+| novice (4 lines looked at) | 48, 45, 31 | 81, 59, 38 | 91, 91, 41 | 91, 90, 41 |
+| greedy (12 lines) | 76, 68, 49 | 93, 87, 61 | 97, 97, 67 | 97, 98, 66 |
+| median (every line) | 94, 94, 77 | 99, 96, 89 | 100, 100, 90 | 99, 99, 92 |
+| planner | the same as the median player: the line it is given under the spec is the median player's | | | |
+
+The Python aiming player clears about the same as the median player at ease 0. The table was fitted on the Python engine; the game's aiming players clear less in round 3 (round three is an assay and short has two pages), so the first run is eased by `RULE.specEase = 0.2` (bachelor's only).
+
+### Yield, separate from the win
+
+Share of rounds (every run counted) in which the total passes the number to beat (the first of the four marks), then the 2, 4 and 8 times marks (stable, unstable, volatile, overreact). Unseen seeds, default.
+
+| Player | Number to beat | Twice | Four times | Eight times |
+|---|---|---|---|---|
+| novice | 73, 69, 54 | 50, 42, 27 | 21, 17, 10 | 6, 5, 3 |
+| greedy | 88, 89, 80 | 69, 70, 51 | 41, 41, 24 | 18, 21, 12 |
+| median | 99, 99, 96 | 97, 98, 90 | 92, 91, 76 | 78, 76, 56 |
+
+Gold is paid by these marks whether or not the spec was met, as before.
+
+### Run lengths: who wins a bachelor's
+
+Unseen seeds 1,001 to 1,500, 500 runs a player, the default.
+
+| Player | Wins the three rounds | Tries to a win | Pass, rounds 1, 2, 3 (of runs that reached it) |
+|---|---|---|---|
+| novice | 34.8 percent | 2.9 | 91, 90, 43 |
+| greedy | 62.6 | 1.6 | 97, 98, 66 |
+| median | 90.6 | 1.1 | 99, 99, 92 |
+| planner | the same as the median player | | |
+
+On seeds 1 to 300 the same table at other eases: ease 0: novice 6.7 percent (15 tries), greedy 24.0, median 68.0; ease 0.1: novice 18.0 (5.6), greedy 47.7, median 83.7; ease 0.2: novice 33.0 (3.0), greedy 64.3, median 89.3.
+
+Against the owner's targets:
+
+- A new player wins within a few tries: met by the novice at ease 0.2 (2.9 tries), not at ease 0 (15). The novice is a model: it looks at four lines of the hand and keeps the one that comes closest to the spec. A novice that looks at one line only (places blind, tag L1, seeds 1,001 to 1,300) wins about 7 percent of runs (about 15 tries) and passes rounds 1, 2, 3 at 68, 75 and 13 percent (the run was not finished when this was written). How much a real new player sees of the effect of a line before it is fired is the thing this number rests on, and no person has been measured.
+- Each round is close: not met. Counting a round as close when the final number is within a quarter of N (or 1), the median player is close in 27, 16 and 52 percent of rounds 1, 2, 3 and reaches twice N or more in 92, 94 and 32. Many specs sit far under what a player who reads can make. The revised list and its N (`docs/tools_chem/SPECS.md`) are to fix that; the machinery takes them wholesale.
+- An average player does not win everything as a matter of course: the greedy player wins 62.6 percent, the median player 90.6. The median player is the better of the two and is not an average player.
+
+### The preview, removed
+
+`queueView` no longer plays the queued circles. It reads the molecule as it stands: which reagents of the hand fit somewhere now (`o`, with no atoms marked), whether the bank could be used now, and for each queued circle whether it fits now (`kinds`, `fits`); `fwd` is null. `P.peek` is still there for the page's hover; the page must stop drawing from it (HARNESS P).
+
+### What the reviewers said
+
+Part one (the deal): a conditional pass on the mechanism and the numbers, a fail on the balance result, which the document did not say plainly: under the yield the new player could no longer win the first run (3.6 percent), the median and planner players won 97 to 99 percent, rounds four to nine were not touched, molecule factors were not fitted again, and Par was fitted on the seeds it is reported on. Those hold for the yield; the spec (this part) is what decides a win now. Rounds four to nine are still not fitted. Part two: see the end of this section.
+
+### What is not done
+
+- The list of specs is the first set (42 rows); the revised list is not in. Reach is checked by up to three aiming plays, not by a beam search; the spec is not checked against the points player (the Python generator refuses a spec the points player always clears). Families open by run length is a guess (`SPEC_FAMILY_TIER`).
+- Round six on (two specs): not measured here, the run lengths of six and nine were not played; the long-run rates wait for instruments and homunculi (HARNESS W2).
+- The planner has no next-hand reading under the spec.
+- The page still decides a win by `g.total >= st.quota`; it must call `P.roundWon` (`SPEC_NOTES.md`). Marks the page does not draw yet show nothing.
+- Findings: only the counters (`run.by`) are in `runResult`.
+
 ## The measure of 2026-11-11, seventh, part one: five dealt from the six (`RULE.deal6`)
 
 Measured, awaiting review. Headless, 500 runs a player, seeds 1 to 500, `{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`; tools `docs/tools_deal.py <tag>` (reads `.claude/headless/out` directly). Tags d6on (Par as it was), d6b (Par fitted again), d6d (turn measures, 80 runs, `dec` and `deep`).
