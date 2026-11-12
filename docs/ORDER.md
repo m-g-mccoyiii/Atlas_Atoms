@@ -36,3 +36,8 @@ Layers 1 to 4 are worked and reviewed with every helper and creature switched of
 7. Rounds 4 to 9, balanced with helpers held, then with a creature too.
 8. Between runs: what was earned, what is next, kits, real compounds.
 9. Polish. Then the owner plays. Every step is reviewed by a fresh reviewer before the next is built on it.
+
+## Open with the owner
+
+- **Sigils.** What a sigil does and what it transmutes is not decided (the owner, 2026-11-11: "Don't forget sigils which we haven't decided they do or what they transmute as"). Fixed so far: a later layer earned by play, one per run, drawn under the molecule as a circle of thick hand-drawn lines, fills as the molecule changes, then does something nothing else can. Three complete options are being designed and tested on the chemistry engine for the owner to choose from. Nothing about sigils is built until that choice is made.
+- Whether part of a molecule carries into the next round.
