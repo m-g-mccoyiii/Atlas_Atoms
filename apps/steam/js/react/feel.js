@@ -63,7 +63,8 @@ try { const q = new URLSearchParams(root.location.search).get('feel'); if (q !==
 let api = null, T = null;
 const F = { log: [], probeRows: [], seq: null, BOX: { x0: -11.5, x1: 25, z0: -17.2, z1: -1.4 }, BOXW: { x0: -23.5, x1: 25, z0: -17.4, z1: -4.8 } };
 let PACE = null; try { PACE = new URLSearchParams(root.location.search).get('pace'); } catch (e) { PACE = null; }
-const PACES = { 1: { T1: 1000, r: 0.94, Tmin: 560, gap: 220 }, 2: { T1: 700, r: 0.9, Tmin: 360, gap: 100 }, 3: { T1: 900, r: 0.8, Tmin: 300, gap: 90 } };
+const PACES = { 1: { T1: 1900, r: 0.93, Tmin: 650, gap: 220, lastWind: 1100, fullDraw: 450, kindBeat: 320 }, 2: { T1: 1500, r: 0.91, Tmin: 500, gap: 150, lastWind: 900, fullDraw: 350, kindBeat: 250 }, 3: { T1: 700, r: 0.9, Tmin: 360, gap: 100, lastWind: 500, fullDraw: 150, kindBeat: 150 } };
+if (!PACES[PACE] && PACE !== 'new' && PACE !== '0') PACE = '2';
 const D = () => { const d = DIR[mode] || DIR[1]; if (PACES[PACE]) return Object.assign({}, d, NEWPACE, PACES[PACE]); return PACE === 'new' && !d.gap ? Object.assign({}, d, NEWPACE) : d; };
 const B3 = () => ((DIR[mode] || {}).base || mode) === 3, SM = () => (DIR[mode] || {}).base || mode;
 const on = () => !!api && mode > 0;
@@ -107,7 +108,7 @@ function planPage(g) {
     out.q0 = q0;
   } catch (e) { out.err = String(e && e.message); }
   P.back(g, s);
-  out.N = out.ev.filter(e => e.k === 's').length; out.yEnd = out.ev.length ? out.ev[out.ev.length - 1].y : out.y0;
+  out.N = out.ev.reduce((m, e) => (e.k === 's' ? Math.max(m, e.n || 0) : m), 0) || out.ev.filter(e => e.k === 's').length; out.yEnd = out.ev.length ? out.ev[out.ev.length - 1].y : out.y0;
   return out;
 }
 
@@ -130,7 +131,7 @@ function fire(go) {
   F.seq = { t0: t, plan, d, speed: 1, ev: 0, throwN: 0, steps: 0, lastN: plan.N, hits: [], nums: [], words: [], wordAt: {}, flagged: {}, tokens: [], shake: 0, shakeT: t, recoils: [], drops: [], settle: null, count: { shown: st.shown || plan.y0, from: st.shown || plan.y0, to: st.shown || plan.y0, t0: t, dur: 1, target: plan.y0, frozen: false }, tick: 0, zoom: 1, zoomT: 1, cam: { z: 1, tx: 0, tz: 0, fz: 1, ftx: 0, ftz: 0, mt0: 0, mdur: 1, from: null, to: null }, tally: 0, done: false, endAt: 0, fireT: t, start: null, finaleAt: 0, breath: null, lastHitT: 0, landed: false, drone: null, fk: 0, zA: 1, cxA: null };
   // the molecule as it stood, for the before and after (direction 3)
   try { const c = api.center(); F.seq.start = sketchOf(c); } catch (e) { F.seq.start = null; }
-  st.sq = 0; st.pop = 0;
+  st.sq = 0; st.pop = 0; mus('state', 'chain'); F.seq.swT = d.cam === 'half' ? 0.94 : d.cam === 'late' ? 0.88 : 1;
   F.seq.drops.push({ t, a: 0.012, ms: 200 });
   setTimeout(() => go(), 120);
 }
@@ -157,7 +158,7 @@ function throwThen(h, react) {
     S.recoils.push({ t: now(), x: dir.x * rec, z: dir.z * rec, yaw: (i % 2 ? 1 : -1) * d.yaw * 0.5 * (i + 1) / 3, hz: d.recHz, z0: d.recZ });
     addShake(0.25 + 0.12 * i);
     if (mode === 1) S.drops.push({ t: now(), a: 0.008 + 0.006 * i, ms: 180 });
-    snd('strike', i, mode === 1 ? 1.25 : mode === 2 ? 0.8 : 1);
+    snd('strike', i, mode === 1 ? 1.25 : mode === 2 ? 0.8 : 1); F.log.push(['strike', i, Math.round(now() - S.t0)]);
     if (d.throwZ) setTimeout(() => camTo(null, 1, 300), 200 / sp);
     react();
     { const y = P_made(), ct = S.count; if (d.count === 'race') ct.target = y; else { ct.from = ct.shown; ct.to = y; ct.t0 = now() + 80; ct.dur = 260; ct.ease = 'outQuart'; ct.target = y; } S.yDrop = now() + 80; }
@@ -169,9 +170,9 @@ function onReact(o, nm, prev, L, morph) {
   const S = F.seq; if (!S || !morph) return;
   const st = api.st, g = api.g(); st.sq = 0; st.pop = 0; st.shake = 0;
   // the new drawing is turned and moved, as one piece, to lie as close as it can on the old: only what changed moves
-  try { if (!morph.bend && !(nm.at && nm.at.fold) && !(prev && prev.at && prev.at.fold)) align(nm, morph.from); } catch (e) { /* drawn as laid out */ }
+  try { if (!nm.fl && !morph.bend && !(nm.at && nm.at.fold) && !(prev && prev.at && prev.at.fold)) align(nm, morph.from); } catch (e) { /* drawn as laid out */ }
   // runoff leaves as the art's runoff objects, kicked out and falling
-  try { st.flyers.forEach(f => { if (f.feel) return; f.feel = true; f.kick = { x: (Math.random() - 0.5) * 0.6, z: -1 }; f.dur = (mode === 2 ? 420 : mode === 1 ? 480 : 560); dressFlyer(f); }); } catch (e) { /* plain flyer */ }
+  try { st.flyers.forEach(f => { if (f.feel) return; f.feel = true; f.kick = { x: (Math.random() - 0.5) * 0.6, z: -1 }; f.dur = 950; dressFlyer(f); }); } catch (e) { /* plain flyer */ }
   if (!o.casc) { morph.feelEase = true; return; }
   const n = g.casc || 1, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(n, last), d = S.d;
   const kindNow = o.kind || o.kindName || o.id, change = !!S.prevKind && S.prevKind !== kindNow && !last; S.prevKind = kindNow;
@@ -185,21 +186,19 @@ function onReact(o, nm, prev, L, morph) {
   let maxT = 0; const W = molLocalBox(nm).w; morph.from.forEach((p, a) => { const q = nm.at.get(a); if (q && a.el !== 'H') maxT = Math.max(maxT, p.distanceTo(q)); });
   const back = clamp(d.draw(n) * W / Math.max(0.2, maxT), 0.05, 0.4) * (last ? 1.5 : 1);
   S.cur.W = W; S.cur.back = back;
-  const held = last ? (d.finale === 'breath' ? breathMs() : d.fullDraw || 0) : (change ? 150 : 0);
+  const held = last ? (d.finale === 'breath' ? breathMs() : d.fullDraw || 0) : (change ? (d.kindBeat || 150) : 0);
   morph.slow = true; morph.s0 = 0; morph.ms = ph.wind + held + ph.swing;
   const wf = ph.wind / morph.ms, bf = (ph.wind + held) / morph.ms, pw = last ? d.swingPow : (S.cur.fm ? S.cur.fm.pow : d.swingPow);
-  morph.fk = K => { if (K < wf) return -back * E.outSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
+  morph.fk = K => { if (K < wf) return -back * E.inOutSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
   if (morph.bend) morph.fk0 = morph.fk;
-  // the camera
-  const jp = S.cur.a ? worldOf(nm, S.cur.a) : null, Np = S.plan.N || n, c = S.cur;
-  S.cam.panK = d.panK != null ? d.panK : 0.75;
-  if (d.cam === 'dive') { const late = Np >= 6 && n >= Np - 2, z = late ? 1.7 + 0.15 * (n - Np + 2) : n >= 9 ? 1.15 : clamp(2.4 - (2.4 - 1.15) * (n - 1) / 7, 1.15, 2.4); camTo(jp, last ? 2.0 : z, Math.max(120, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
-  else if (d.cam === 'steady') { if (last) { S.cam.panK = d.panLast; camTo(jp, d.lastZ, Math.max(200, ph.wind)); } else { S.cam.panK = c.change ? 0.1 : d.panK; camTo(jp, 1, Math.max(200, ph.wind + ph.swing)); } if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
-  else if (d.cam === 'half') { const z = last ? d.lastZ : d.zHalf[0] + (d.zHalf[1] - d.zHalf[0]) * clamp((n - 1) / Math.max(1, Np - 1), 0, 1) + (c.change ? 0.05 : 0); camTo(jp, z, Math.max(150, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
-  else if (d.cam === 'late') { const k3 = Np - n; if (k3 <= 2 && Np >= 4) { camTo(jp, d.late[2 - k3], Math.max(150, ph.wind)); snd('swish', Math.max(0.12, ph.wind / 1000)); } else camTo(null, 1, Math.max(250, ph.wind)); }
+  // the three directions, without ever moving the camera: 4 holds the molecule still, 5 leans in on every step and lets go, 6 waits and leans in for the last three
+  const Np = S.plan.N || n, c = S.cur; { const cap = swellCap(nm); let z = 1; if (d.cam === 'half') z = last ? 1.1 : 1.05; else if (d.cam === 'late') { const k3 = Np - n; z = k3 <= 2 && Np >= 4 ? [1.1, 1.03, 0.96][k3] : 0.88; } else z = last ? 1.05 : 1; S.swT = Math.min(cap, z); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
+  c.act = actOf(o, nm, kindNow); morph.act = c.act; morph.wf = wf; morph.bf = bf;
+  // what leaves is seen leaving: it lifts off as the atoms meet (the chlorine of a close goes first) and takes most of a second over it
+  st.flyers.forEach(f => { if (f.timed) return; f.timed = true; f.dur = 950; f.t0 = now() + morph.ms * (c.act.fam === 'close' ? wf * 0.5 : 0.9); });
   if (last && d.finale === 'breath') { S.breath = { t0: now() + ph.wind, ms: breathMs() }; S.count.frozen = true; }
   // a marker of the hand-off: the molecule takes over
-  snd('windup', n, ph.wind, last);
+  snd('windup', n, morph.ms, last);
   if (n === 1) snd('handoff');
   if (d.count === 'race') S.count.target = P_made();
   // the drone: one held voice per step, cut before the last step lands
@@ -225,6 +224,51 @@ function dressFlyer(f) {
   f.grp.children.slice().forEach(ch => { ch.visible = false; }); f.grp.add(inner); f.ro = inner;
 }
 
+// ---------- every kind of reflex acts out its own change on the atoms themselves ----------
+// The rules give the two atoms that join (or the two ends of what changes) and the atoms of the place. Each kind moves them its own way
+// through the wind-up and the swing; an across step leans the two groups together and grows a rung from row to row while the rows stay put.
+const KBASE = { lactol: 'ring', enone: 'dry', taut: 'flip', snap6: 'snap', ether: 'close' };
+const kfam = k => { k = String(k || '').replace(/_far$/, ''); k = KBASE[k] || k; return /^(ring|dry|weld|shift|tuck|flip|snap|knit|cap|close|seal|open|fold|bridge|stitch|link)$/.test(k) ? k : 'ring'; };
+let _rungMat = null;
+function actOf(o, nm, kind) {
+  const mp = o.map || new Map(), tr = a => (mp.get(a) || a), has = a => a && nm.balls.has(a);
+  const site = (o.atoms || []).map(tr).filter(has), jn = (o.join || []).map(tr).filter(has);
+  const act = { fam: kfam(kind), far: o.via === 'fold', A: jn[0] || site[0] || null, B: jn[1] || site[site.length - 1] || null, site, kind };
+  if (act.far) { let rs = nm.sticks.filter(s => !s.old && s.rung); if (!rs.length && act.A && act.B) rs = nm.sticks.filter(s => (s.a === act.A && s.b === act.B) || (s.a === act.B && s.b === act.A)); act.rung = rs;
+    if (!_rungMat) _rungMat = new T.MeshBasicMaterial({ color: 0xd8401c }); rs.forEach(s => { s.gk = 0; s.parts.forEach(pt => { if (!pt.m0) pt.m0 = pt.mesh.material; pt.mesh.material = _rungMat; }); }); }
+  return act;
+}
+function rungDone(act) { if (act && act.rung) act.rung.forEach(s => { s.gk = null; s.parts.forEach(pt => { if (pt.m0) { pt.mesh.material = pt.m0; pt.m0 = null; } }); }); }
+function pose(morph, K) {
+  const S = F.seq, act = morph.act; if (!S || !act || !act.A) return;
+  const cur = morph.cur, A = cur.get(act.A), B = act.B && act.B !== act.A ? cur.get(act.B) : null; if (!A) return;
+  const wf = morph.wf || 0.5, bf = morph.bf || 0.5, uw = clamp(K / Math.max(1e-6, wf), 0, 1), us = clamp((K - bf) / Math.max(1e-6, 1 - bf), 0, 1), sw = Math.sin(Math.PI * us), W = E.inOutSine(uw) * (1 - E.inQuad(us));
+  let dx = 0, dz = 1; if (B) { dx = B.x - A.x; dz = B.z - A.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl; } const nx = -dz, nz2 = dx;
+  const mv = (p, a, b, y) => { if (!p) return; p.x += dx * a + nx * b; p.z += dz * a + nz2 * b; if (y) p.y += y; };
+  if (act.far) { const lean = 0.5 * W + 0.25 * sw; mv(A, lean, 0, 0.3 * sw); mv(B, -lean, 0, 0.3 * sw); if (act.rung) act.rung.forEach(s => { s.gk = E.inOutCubic(us); }); return; }
+  switch (act.fam) {
+    case 'ring': mv(A, -0.42 * W, 0.6 * sw); mv(B, 0.3 * W, -0.25 * sw); break;                                   // drawn apart like a bow, then round in an arc
+    case 'weld': mv(A, -0.55 * W, 0, 0.8 * W); mv(B, 0.55 * W, 0, 0.8 * W); break;                                  // both lifted and drawn back, then hammered together
+    case 'knit': { const wig = Math.sin(uw * 18.85) * 0.3 * uw * (1 - us) + Math.sin(us * 9.42) * 0.5 * (1 - us); mv(A, -0.2 * W, wig); break; } // the nitrogen weaves its way in
+    case 'cap': mv(A, -0.15 * W, 0, 1.9 * E.outCubic(uw) * (1 - us * us)); break;                                   // the sulfur rises and comes down on top
+    case 'tuck': mv(A, -0.3 * W, 1.1 * sw + 0.3 * W); break;                                                        // round the side in a hook and in underneath
+    case 'seal': mv(A, -0.3 * W, 0.7 * sw); mv(B, 0.3 * W, -0.7 * sw); break;                                       // the two ends twist shut like a lid
+    case 'close': { const j = Math.sin(uw * 40) * 0.14 * W; mv(A, -0.3 * W, j); mv(B, 0, -j); break; }                // a tremble while the chlorine goes, then straight into its place
+    case 'open': mv(A, -0.2 * W, 0, 1.1 * sw); mv(B, 0.3 * W, 0.25 * sw); break;                                    // the small ring springs apart and the oxygen jumps in
+    case 'snap': { let cx = 0, cz = 0, n = 0; act.site.forEach(a => { const p = cur.get(a); if (p) { cx += p.x; cz += p.z; n++; } }); if (n) { cx /= n; cz /= n; act.site.forEach(a => { const p = cur.get(a); if (p) { p.x += (p.x - cx) * 0.24 * W; p.z += (p.z - cz) * 0.24 * W; } }); } break; } // all six breathe out, then clap shut
+    case 'dry': mv(A, -0.3 * W + 0.24 * sw, 0); mv(B, 0.3 * W - 0.24 * sw, 0); break;                               // pulled apart to let the water go, then pinched to a double bond
+    case 'shift': act.site.forEach((a, i) => { const p = cur.get(a); if (p) { const ph = clamp(us * (act.site.length + 1) - i, 0, 1); p.y += 1.0 * Math.sin(Math.PI * ph); } }); break; // a wave runs along the bond's atoms
+    case 'flip': mv(A, 0, 0.8 * sw, 1.4 * sw); mv(B, 0, -0.25 * sw); break;                                         // over the top
+    case 'fold': mv(A, 0.2 * W, -1.0 * sw, 0.2 * sw); mv(B, 0, 0.35 * sw); break;                                   // laid down flat to one side
+    default: mv(A, -0.3 * W, 0); mv(B, 0.3 * W, 0);
+  }
+}
+// how far the molecule may swell and still stand clear of everything else on the page
+function swellCap(m) { const b = m && m.box, hm = api.home(), H = api.HOME; return b && H ? Math.max(1, Math.min(1.12, H.w * 1.06 / (b.w * hm.s), H.d * 1.06 / (b.d * hm.s))) : 1.05; }
+const mus = (name, ...a) => { try { if (AA.music && AA.music[name]) AA.music[name](...a); } catch (e) { /* music never breaks play */ } };
+const toScreen = w => { const p = w.clone().project(api.cam), o = api.over; return [(p.x + 1) / 2 * (o ? o.cv.width : 1280), (1 - p.y) / 2 * (o ? o.cv.height : 720)]; };
+// ink thrown on the paper by a hit: more, further and bigger the longer the chain has run
+function splat(q, n, last) { const arr = api.st.splats || (api.st.splats = []), k = Math.round(4 + 1.6 * Math.min(12, n) + (last ? 10 : 0)), reach = (46 + 16 * Math.min(12, n)) * (last ? 1.6 : 1); for (let j = 0; j < k; j++) { const ang = Math.random() * 6.283, dd = (0.35 + 0.65 * Math.random()) * reach * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * (4 + 0.5 * Math.min(12, n)), a: 0.4 + Math.random() * 0.35 }); } if (arr.length > 160) arr.splice(0, arr.length - 160); }
 // the curve a reflex step's atoms follow from where they stood to where they go: wind-up, then a fast committed swing
 function k(K, morph) { if (morph.fk) return morph.fk(K); return K; }
 // a reagent's change: quick with a small overshoot
@@ -244,11 +288,17 @@ function hit(morph, t) {
   S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: (n % 2 ? 1 : -1) * d.yaw * (0.5 + 0.5 * Math.min(1, n / 8)) * (c.last ? 2.2 : 1), hz: d.recHz, z0: d.recZ });
   // late in the run (madness) every hit shakes the page a little more and throws a few drops of ink
   { const mm = api.st.madness || 0; if (mm > 0.4) { addShake(0.3 * mm); try { const mol = api.center(), A = c.ja || c.a; if (A && mol && mol.balls.has(A)) { const q = inkOf(worldOf(mol, A)), arr = api.st.splats || (api.st.splats = []); for (let j = 0; j < Math.round(3 + mm * 6); j++) { const ang = Math.random() * 6.28, dd = (30 + Math.random() * 110) * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * 6 * mm, a: 0.35 + Math.random() * 0.3 }); } if (arr.length > 120) arr.splice(0, arr.length - 120); } } catch (e) { /* no splatter */ } } }
+  // impact: a flash and lines of force at the join, ink thrown on the paper, the molecule swells for a moment; all of it grows with the chain
+  rungDone(c.act);
+  try { const mol = api.center(), Aa = (c.act && c.act.A) || c.ja || c.a, Bb = (c.act && c.act.B) || Aa; if (Aa && mol.balls.has(Aa)) { const w = worldOf(mol, Aa); if (Bb && mol.balls.has(Bb)) w.add(worldOf(mol, Bb)).multiplyScalar(0.5); const sp = toScreen(w); { const pg = Math.max(0, ((api.g() && api.g().page) || 1) - 1); (S.fx || (S.fx = [])).push({ t, x: sp[0], y: sp[1], n: n + 2 * pg, last: c.last }); splat(inkOf(w), n + 3 * pg, c.last); } } } catch (e) { /* no flash */ }
+  const turnK = 1 + 0.3 * Math.max(0, ((api.g() && api.g().page) || 1) - 1);
+  S.swHit = { t, a: Math.min(0.09, (0.03 + 0.006 * n) * turnK) * (c.last ? 1.4 : 1) };
+  mus('step', n);
   // the page
-  if (n > 2 || c.last) addShake(0.25 + 0.03 * n + (c.last ? 0.4 : 0));
+  addShake((0.34 + 0.06 * Math.min(12, n)) * turnK + (c.last ? 0.3 : 0));
   const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 2.2 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
   if (mode === 2) S.cam.push = Math.min(0.18, 0.015 * n);
-  if (d.pullAfter && !c.last) setTimeout(() => { if (F.seq === S && S.cur === c) camTo(null, 1, Math.max(250, 0.6 * Tn(n) / S.speed)); }, c.ph.hold);
+  if (d.cam === 'half' && !c.last) setTimeout(() => { if (F.seq === S && S.cur === c) S.swT = 0.94; }, c.ph.hold + 120);
   if (c.change) { S.recoils.push({ t: t + c.ph.hold, x: 0, z: 0, yaw: (n % 2 ? -1 : 1) * 6, hz: 3, z0: 0.4 }); addShake(0.3); S.drops.push({ t, a: 0.035, ms: 240 }); }
   // sound on the frame of contact; the bell rings through the freeze
   const fast = mode === 2 && (c.ph.T || 999) < 200;
@@ -292,7 +342,7 @@ function camTo(target, z, ms) { const S = F.seq; if (!S) return; const c = S.cam
 function unlock(o, L) {
   const S = F.seq; if (!S) return L.unlock; const d = S.d, sp = S.speed, plan = S.plan; S.ev++;
   const next = plan.ev[S.ev];
-  if (o.casc) { const c = S.cur; if (!c) return L.unlock; F.log.push(['unlock', c.n, Math.round(Math.max(c.ph.wind + c.ph.swing + c.ph.hold, Tn(c.n) / sp)), Math.round(L.unlock)]); if (c.last) return c.ph.wind + c.ph.swing + c.ph.hold + 600; return Math.max(c.ph.wind + c.ph.swing + c.ph.hold + 40, Tn(c.n) / sp) + (d.gap || 0) / sp + (c.change ? 140 / sp : 0); }
+  if (o.casc) { const c = S.cur; if (!c) return L.unlock; F.log.push(['unlock', c.n, Math.round(Math.max(c.ph.wind + c.ph.swing + c.ph.hold, Tn(c.n) / sp)), Math.round(L.unlock)]); if (c.last) return c.ph.wind + c.ph.swing + c.ph.hold + 600; return Math.max(c.ph.wind + c.ph.swing + c.ph.hold + 40, Tn(c.n) / sp) + (d.gap || 0) / sp + (c.change ? (d.kindBeat || 140) / sp : 0); }
   // after a reagent: the next throw, or the first reflex after a breath
   if (next && next.k === 's') return Math.max(L.unlock, d.firstWait / sp);
   return Math.max(120, (d.throwGap - d.throwMs) / sp + 60);
@@ -317,9 +367,8 @@ function pageEnd(next) {
 // (direction 3: the camera pulls back to the whole page first and holds a second in silence)
 function finalWords() {
   const S = F.seq, vals = flagVals(); if (!vals.length) return 0; const fin = P_made(), k4 = vals.length >= 4 && fin >= vals[3];
-  if (B3() && S.start) S.sketchT = now() + 300;
-  if (k4 && !S.words.some(w => w.k === 3)) { const pre = B3() ? 900 : 250; setTimeout(() => { if (F.seq === S) { writeWord(3); S.wordBusy = now() + 340; snd('flag', 4); } }, pre); return pre + 340; }
-  return B3() ? 700 : 0;
+  if (k4 && !S.overDone) { S.overDone = true; const pre = 420; setTimeout(() => { if (F.seq === S) { S.wordBusy = now() + OVMS; overStart(); } }, pre); return pre + OVMS + 200; }
+  return 300;
 }
 function finish() { const st = api.st, S = F.seq; st.want = P_made(); st.shown = st.want; F.seq = null; S && (S.dead = true); }
 
@@ -333,12 +382,49 @@ function passFlag(k, final) {
   if (k === 3) return; // written in finalWords
   // two flags passed together fire in order
   const last = Object.values(S.flagged).filter(v => v && now() - v < 300).length - 1, delay = Math.max(0, last) * (mode === 2 ? 180 : 280);
-  setTimeout(() => { if (F.seq !== S) return; snd('flag', k + 1); writeWord(k); }, delay + (B3() ? 150 : 0));
-  if (B3() && D().count !== 'race') { S.count.holdTill = now() + 260; }
+  setTimeout(() => { if (F.seq !== S) return; snd('flag', k + 1); S.burnT = now(); }, delay);
 }
 
+// ---------- the overlay above everything: the flash and lines of force of a hit, and OVERREACT ----------
+// OVERREACT is the one word of the game. It is drawn over the whole frame, above the molecule, fitted inside the frame with a margin:
+// a white flash, the word slammed down from far too big, an ink burst behind it, the page shaking, a held beat, then torn away.
+const OVMS = 2300;
+function overStart() { const t = now(), S = F.seq; F.ov = { t, seed: Math.random() * 100 }; if (S) F.log.push(['over', 0, Math.round(t - S.t0)]); if (S) { S.shake = 0.9; S.shakeT = t; S.drops.push({ t, a: 0.06, ms: 320 }); S.recoils.push({ t, x: 0, z: 0, yaw: 9, hz: 3, z0: 0.35 }); S.swHit = { t, a: 0.07 }; S.burnT = t; }
+  try { const c = api.center(), b = molWorldBox(c); for (let j = 0; j < 4; j++) splat(inkOf(new T.Vector3(b.cx + (Math.random() - 0.5) * b.w, 0.4, b.cz + (Math.random() - 0.5) * b.d)), 12, true); } catch (e) { /* no splatter */ }
+  snd('flag', 4); mus('state', 'overreact'); }
+function drawOver(t) {
+  F.ovN = (F.ovN || 0) + 1; F.ovT = t; if (F.ov || F.ovDirty) (F.ovL || (F.ovL = [])).push([Math.round(t), F.ov ? Math.round(t - F.ov.t) : -1, F.ovDirty ? 1 : 0, api.over.cv.width]);
+  const o = api.over; if (!o) return; const x = o.x, W = o.cv.width, H = o.cv.height, S = F.seq, k = W / 1280;
+  const fx = S && S.fx ? (S.fx = S.fx.filter(q => t - q.t < 360)) : [];
+  const wipe = () => { o.cv.width = W; x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; };
+  if (!F.ov && !fx.length) { if (F.ovDirty) { wipe(); F.ovDirty = false; } return; }
+  wipe(); F.ovDirty = true;
+  fx.forEach(q => { const u = clamp((t - q.t) / 360, 0, 1), m = Math.min(12, q.n), R = (95 + 26 * m) * k * (q.last ? 1.6 : 1) * (0.45 + 0.9 * E.outCubic(u)), a = (1 - u) * Math.min(1, 0.8 + 0.03 * m);
+    const g = x.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, 'rgba(255,255,255,' + a.toFixed(3) + ')'); g.addColorStop(0.45, 'rgba(255,244,214,' + (a * 0.6).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = g; x.beginPath(); x.arc(q.x, q.y, R, 0, 6.3); x.fill();
+    const nl = 10 + m, r1 = (40 + 12 * m) * k * (0.6 + 1.6 * E.outCubic(u)), len = (34 + 9 * m) * k * (1 - u); x.save(); x.strokeStyle = 'rgba(34,37,44,' + (0.85 * (1 - u)).toFixed(3) + ')'; x.lineWidth = (3.4 + 0.3 * m) * k; x.lineCap = 'round';
+    for (let i = 0; i < nl; i++) { const an = i / nl * 6.283 + q.t * 0.01, c = Math.cos(an), s = Math.sin(an), jj = 1 + 0.25 * Math.sin(i * 7.3 + q.t); x.beginPath(); x.moveTo(q.x + c * r1 * jj, q.y + s * r1 * jj); x.lineTo(q.x + c * (r1 * jj + len), q.y + s * (r1 * jj + len)); x.stroke(); } x.restore(); });
+  if (F.ov) { const age = t - F.ov.t; if (age > OVMS) { F.ov = null; wipe(); F.ovDirty = false; return; }
+    const out = clamp((OVMS - age) / 320, 0, 1), inn = clamp(age / 90, 0, 1), sd = F.ov.seed, R = i => { const v = Math.sin(i * 127.1 + sd) * 43758.5453; return v - Math.floor(v); };
+    // the page blanched under it
+    x.fillStyle = 'rgba(246,244,238,' + (0.62 * inn * out).toFixed(3) + ')'; x.fillRect(0, 0, W, H);
+    if (age < 110) { x.fillStyle = 'rgba(255,255,255,' + (0.9 * (1 - age / 110)).toFixed(3) + ')'; x.fillRect(0, 0, W, H); }
+    const jam = age < 800 ? (1 - age / 800) : 0, jx = 16 * k * jam * nz(t / 1000 * 60, 1.1), jy = 12 * k * jam * nz(t / 1000 * 60, 3.7), cx = W / 2 + jx, cy = H / 2 + jy;
+    // the ink burst behind the word
+    { const u = E.outCubic(clamp(age / 300, 0, 1)); x.save(); x.globalAlpha = 0.9 * out;
+      for (let i = 0; i < 54; i++) { const an = R(i) * 6.283, far = (0.16 + 0.4 * R(i + 60)) * W * u, bx = cx + Math.cos(an) * far * 1.25, by = cy + Math.sin(an) * far * 0.62, r = (4 + 22 * R(i + 120) * R(i + 180)) * k; x.fillStyle = i % 5 ? '#b83a2c' : '#22252c'; x.beginPath(); x.ellipse(bx, by, r, r * (0.6 + 0.4 * R(i + 240)), an, 0, 6.3); x.fill();
+        if (i % 3 === 0) { x.strokeStyle = x.fillStyle; x.lineWidth = Math.max(1.5, r * 0.35); x.lineCap = 'round'; x.beginPath(); x.moveTo(cx + Math.cos(an) * far * 0.8, cy + Math.sin(an) * far * 0.4); x.lineTo(bx, by); x.stroke(); } }
+      x.restore(); }
+    // the word: slammed down from far too big, a beat held, then torn off
+    let sz = 100 * k; const w0 = AA.rxPen.measure('OVERREACT', sz, 'heavy').width; sz *= Math.min(0.86 * W / Math.max(1, w0), 0.46 * H / (100 * k));
+    const slam = age < 140 ? 2.4 - 1.46 * E.inCubic(age / 140) : age < 240 ? 0.94 + 0.06 * (age - 140) / 100 : 1, exit = age > OVMS - 320 ? 1 + 0.18 * E.inCubic(1 - out) : 1, sc = slam * exit;
+    x.save(); x.translate(cx, cy); x.rotate(-0.035 + 0.02 * jam * nz(t / 1000 * 40, 7)); x.scale(sc, sc); x.globalAlpha = Math.min(1, inn * 1.4) * out;
+    AA.rxPen.write(x, 'OVERREACT', 7 * k, sz * 0.36 + 8 * k, sz, { weight: 'heavy', color: '#22252c', align: 'center', extra: 5 * k });
+    AA.rxPen.write(x, 'OVERREACT', 0, sz * 0.36, sz, { weight: 'heavy', color: '#d2301f', align: 'center', extra: 5 * k });
+    x.restore(); }
+}
 // ---------- every frame ----------
 function frame(t, dt) {
+  if (api) drawOver(t);
   const S = F.seq; if (!S || !api) return; const st = api.st, c = api.center(), d = S.d; if (!c) return; api.dirty();
   st.sq = 0; st.pop = 0; st.shake = 0; st.flash = 0;
   // the count
@@ -354,17 +440,13 @@ function frame(t, dt) {
   const vals = flagVals(); vals.forEach((v, k) => { if (!S.flagged[k] && st.shown >= v) passFlag(k, S.done || (S.cur && S.cur.last && S.finaleAt)); });
   // the molecule: framed large in the free part of the page for the action, knocked and turned as one piece
   // two free boxes: the whole width above the left column, or the part right of it reaching lower; the one that frames it larger
-  const sc0 = c.group.scale.x, gp = c.group.position.clone(), wb = molWorldBox(c), lw = wb.w + 2.4, ld = wb.d + 2.4, zmax = d.zoomMax * (mode === 2 ? 1 + Math.min(0.25, 0.022 * (S.steps || 0)) : 1);
-  const LK = api.LOOKAT, CB = { x0: LK.x - 22, x1: LK.x + 22, z0: LK.z - 7.5, z1: LK.z + 7.5 }, fitIn = B => Math.min((B.x1 - B.x0) / lw, (B.z1 - B.z0) / ld, zmax), zW = fitIn(CB), zR = zW, BOX = CB;
-  const zA = clamp(Math.max(zW, zR), 0.7, 2.4);
-  S.zA += (zA - S.zA) * Math.min(1, dt / 0.18); if (S.zA > zA) S.zA = zA;
-  const kIn = E.inOutCubic(clamp((t - S.t0) / 260, 0, 1)), kOut = S.restT && !d.fitM ? E.inOutSine(clamp((t - S.restT) / 600, 0, 1)) : 0, fk = kIn * (1 - kOut); S.fk = fk;
-  const Z = 1 + (S.zA - 1) * fk, s1 = sc0 * Z, tcx = wb.cx + ((BOX.x0 + BOX.x1) / 2 - wb.cx) * fk, tcz = wb.cz + ((BOX.z0 + BOX.z1) / 2 - wb.cz) * fk;
-  const px0 = tcx - Z * (wb.cx - gp.x), pz0 = tcz - Z * (wb.cz - gp.z); S.zoom = Z;
+  const hm = api.home(), bx = c.box || molLocalBox(c); { const hs = S.swHit ? (t - S.swHit.t) / 1000 : 9, bump = hs < 0.7 ? S.swHit.a * ring(hs, 5.5, 0.4) : 0, want = (S.done ? 1 : (S.swT || 1)); S.swE = (S.swE || 1) + (want - (S.swE || 1)) * Math.min(1, dt * 7); S.sw = Math.min(S.swE + bump, Math.max(S.swE, swellCap(c))); }
+  const s1 = hm.s * S.sw, px0 = hm.x - (S.sw - 1) * hm.s * bx.cx, pz0 = hm.z - (S.sw - 1) * hm.s * bx.cz; S.zoom = S.sw; S.fk = 1;
   c.group.scale.setScalar(s1);
   // recoil
   let rx = 0, rz = 0, ry = 0; S.recoils = S.recoils.filter(r => { const s = (t - r.t) / 1000; if (s > 2.5) return false; if (s < 0) return true; const kk = kick(s, r.hz, r.z0); rx += r.x * kk; rz += r.z * kk; ry += r.yaw * Math.PI / 180 * kk; return true; });
   let sy = 0; if (mode === 1 && S.lastHitT) { const s = (t - S.lastHitT) / 1000; sy = -0.9 * Math.min(1, 0.3 + 0.07 * (S.hitN || 1)) * (s < 0.05 ? s / 0.05 : Math.max(0, ring(s - 0.05, 3.5, 0.5))); }
+  rx = clamp(rx, -1.2, 1.2); rz = clamp(rz, -0.7, 0.7); { const a = t / 1000 * 2 * Math.PI * 0.5; rx += 0.15 * Math.sin(a); rz += 0.15 * Math.cos(a); }
   c.group.position.set(px0 + rx, 0.25 + sy, pz0 + rz); c.group.rotation.set(0, ry, 0);
   // the joined group: a tremor through the freeze, then the overshoot rings down
   const se = S.settle; if (se && se.m === c) {
@@ -380,26 +462,16 @@ function frame(t, dt) {
   S.drops = S.drops.filter(q => { const s = t - q.t; if (s > q.ms * 2.4) return false; if (s < 0) return true; const W = molWorldBox(c).w; const u = s < 60 ? E.outCubic(s / 60) : Math.max(0, 1 - E.outBack(clamp((s - 60) / q.ms, 0, 1), 1.2)); oz -= q.a * W * u; return true; });
   decayShake(); const sh = S.shake * S.shake * d.shakeGain, Wd = molWorldBox(c).w * d.shakePeak; ox += sh * Wd * nz(t / 1000 * d.shakeHz * 6.283 / 4, 1.3); oz += sh * Wd * nz(t / 1000 * d.shakeHz * 6.283 / 4, 4.1);
   // the page never moves so far that its edge shows
-  ox = clamp(ox, -2.2, 2.2); oz = clamp(oz, -3.2, 2.4);
-  let look = LOOK.clone(), dist = 1;
-  if (false && d.cam === 'push') { const pk = S.done && S.restT ? 0 : Math.min(0.18, 0.015 * (S.steps || 0)), want = S.breath && t > S.breath.t0 ? pk : pk; S.cam.pz = (S.cam.pz || 0) + (want - (S.cam.pz || 0)) * Math.min(1, dt * (S.landed ? 4 : 6)); dist = 1 - S.cam.pz; const b = molWorldBox(c); look.x += (b.cx - look.x) * S.cam.pz * 2; look.z += (b.cz - look.z) * S.cam.pz * 2; }
-  if (d.cam !== 'lock' && d.cam !== 'push') { const cm = S.cam; if (cm.to) { const u = E.inOutCubic(clamp((t - cm.mt0) / cm.mdur, 0, 1)), b = molWorldBox(c), tp = cm.to.p ? cm.to.p.clone().add(new T.Vector3(0, 0, 3.2 / Math.max(1, cm.to.z))) : new T.Vector3(b.cx, 0, b.cz), mid = { x: b.cx + (tp.x - b.cx) * (cm.panK != null ? cm.panK : 0.75), z: b.cz + (tp.z - b.cz) * (cm.panK != null ? cm.panK : 0.75) }; cm.z = cm.from.z + (cm.to.z - cm.from.z) * u; const fx = cm.from.tx, fz = cm.from.tz; cm.tx = fx + (mid.x - LOOK.x - fx) * u; cm.tz = fz + (mid.z - LOOK.z - fz) * u; if (cm.to.z === 1 && !cm.to.p) { cm.tx = fx * (1 - u); cm.tz = fz * (1 - u); } } dist = 1 / Math.max(1, cm.z); const Zc = Math.max(1, cm.z); look.x = clamp(look.x + cm.tx, -20 + 20 / Zc, 20 - 20 / Zc); look.z = clamp(look.z + cm.tz, -13 + 13 / Zc, 11 - 11 / Zc); }
+  ox = clamp(ox, -1.6, 1.6); oz = clamp(oz, -0.45, 0.6);
+  // the camera never travels: the page is seen whole, and only jolts (the shake and the drop above) and a short punch on a hit
+  let look = LOOK.clone(), dist = 1; if (S.punchT) { const s = (t - S.punchT) / 1000; dist = 1 - (S.punchA || 0.02) * Math.max(0, ring(s, 5, 0.5)) * (s < 0.8 ? 1 : 0); }
   const setCam = () => { const off = CAM.clone().sub(LOOK).multiplyScalar(dist); cam.position.set(look.x + off.x + ox, look.y + off.y, look.z + off.z + oz); cam.lookAt(look.x + ox, look.y, look.z + oz); cam.updateMatrixWorld(true); };
   setCam();
-  // the frame never cuts the molecule: its box is fitted to the screen with a margin, by moving the look point and, if it still does not fit, backing off
-  if (d.fitM && S.fk > 0.05) { const M = d.fitM, My = 0.5, v = _v(); let ok = false;
-    const box = () => { let x0 = 9, x1 = -9, y0 = 9, y1 = -9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; bb.mesh.getWorldPosition(v); const q = v.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }); return [x0, x1, y0, y1]; };
-    for (let it = 0; it < 8; it++) { const [x0, x1, y0, y1] = box(), w = x1 - x0, h = y1 - y0;
-      if (w > 2 * M || h > 2 * My) { dist = Math.min(1, dist * Math.max(w / (2 * M), h / (2 * My)) * 1.02); setCam(); if (dist >= 1) { ok = true; } continue; }
-      const dx = (x0 + x1) / 2, dy = (y0 + y1) / 2; if (Math.abs(dx) < 0.015 && Math.abs(dy) < 0.015) { ok = true; break; }
-      const p0 = new T.Vector3(look.x, 0, look.z).project(cam), px1 = new T.Vector3(look.x + 1, 0, look.z).project(cam), pz1 = new T.Vector3(look.x, 0, look.z + 1).project(cam), ax = px1.x - p0.x || 1e-3, az = pz1.y - p0.y || 1e-3;
-      look.x += dx / ax; look.z += dy / az; { const Zc = Math.max(1, 1 / dist); look.x = clamp(look.x, -20 + 20 / Zc, 20 - 20 / Zc); look.z = clamp(look.z, -13 + 13 / Zc, 11 - 11 / Zc); } setCam(); }
-    if (!ok) { const [x0, x1, y0, y1] = box(); if (x1 > M + 0.02 || x0 < -M - 0.02 || y1 > My + 0.02 || y0 < -My - 0.02) { dist = 1; look.copy(LOOK); setCam(); } } }
   // the yield flags on the track: the pole jolts back and rings when its flag fills
   (S.poles || []).forEach(p => { const fl = st.flags3 && st.flags3[p.k]; if (!fl || !fl.on) return; const s = (t - p.t) / 1000, lean = (mode === 1 ? 0.105 : 0.06) * ring(s, mode === 1 ? 2.5 : 3.3, 0.25) * (s < 1.5 ? 1 : 0); fl.on.rotation.z = lean; });
-  if (AA.rxFeel.probe) { const pj = v => { const p = v.clone().project(cam); return [Math.round((p.x + 1) * 640), Math.round((1 - p.y) * 360)]; }, cu = S.cur, wbx = molWorldBox(c), mc = new T.Vector3(wbx.cx, 0.6, wbx.cz);
+  if (AA.rxFeel.probe) { const pj = v => { const p = v.clone().project(cam); return [Math.round((p.x + 1) * 64000) / 100, Math.round((1 - p.y) * 36000) / 100]; }, cu = S.cur, wbx = molWorldBox(c), mc = new T.Vector3(wbx.cx, 0.6, wbx.cz);
     const row = { t: Math.round(t - S.t0), n: cu ? cu.n : 0, Z: +S.zoom.toFixed(3), c: pj(mc), rec: pj(mc.clone().sub(new T.Vector3(rx, 0, rz))), cam: [Math.round(ox * 24.4), Math.round(oz * 24.4)], shown: Math.round(S.count.shown) };
-    if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); row.bb = [x0, x1, y0, y1]; return x1 - x0; })(); F.probeRows.push(row); }
+    if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }); row.bb = [x0, x1, y0, y1]; return x1 - x0; })(); { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; const sc = c.group.scale.x, v2 = new T.Vector3(); c.balls.forEach((bb, a) => { bb.mesh.getWorldPosition(v2); const q = pj(v2), r = Math.abs(pj(v2.clone().add(new T.Vector3((bb.R || 0.4) * sc, 0, 0)))[0] - q[0]) + 1; x0 = Math.min(x0, q[0] - r); x1 = Math.max(x1, q[0] + r); y0 = Math.min(y0, q[1] - r); y1 = Math.max(y1, q[1] + r); }); row.bbr = [x0, x1, y0, y1]; } F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
   st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), SM()); } });
 }
@@ -409,52 +481,27 @@ function ink(x, t) {
   const S = F.seq; if (!S || !api) return; const st = api.st, c = api.center(), d = S.d, ips = inkPerScreen();
   // while the camera is pushed in the yield would leave the shot: it keeps its place on the screen (bottom left) and its size on the screen
   const Y0 = api.px(api.MADE), wz = clamp((1.3 - ips) / 0.2, 0, 1), YA = wz > 0 ? inkAtScreen(60, 690) : Y0, Y = [Y0[0] + (YA[0] - Y0[0]) * wz, Y0[1] + (YA[1] - Y0[1]) * wz], yf = 1 + (Math.min(1, ips / 1.6) - 1) * wz;
-  // the yield: set down on each hit (never scaled), green once the spec is met
-  { const dropT = S.yDrop ? (t - S.yDrop) / 1000 : 9, dy = dropT < 0.5 ? (mode === 1 ? 10 : 6) * ips * kick(dropT, 5, 0.45) : 0, txt = api.fmt(st.shown), beaten = st.quota && st.shown >= st.quota;
-    const big = (112 + Math.min(28, 7 * Object.keys(S.flagged).length)) * yf; api.marker(x, big); let sz = big; const w = x.measureText(txt).width; if (w > 420 * yf) sz = big * 420 * yf / w; api.marker(x, sz);
-    x.textAlign = 'left'; x.fillStyle = beaten ? api.GREEN : api.INK; x.fillText(txt, Y[0], Y[1] + dy); st.madeW = x.measureText(txt).width; }
-  // what joined or parted at each step, drawn on the paper at the join: a closing arc for a ring, drops rising for water, crossed bars for a weld,
-  // an arrow for a shift, a hook for a tuck, a double arrow for a flip, a crack for a snap. Faint, gone in a second.
-  if (S.marks) S.marks = S.marks.filter(mk => t - mk.t < 1100 / S.speed), S.marks.forEach(mk => { try {
-    const mol = api.center(); if (!mol || mol !== mk.m || !mol.balls.has(mk.a) || !mol.balls.has(mk.b)) return; const A = inkOf(worldOf(mol, mk.a)), B = inkOf(worldOf(mol, mk.b)), u = clamp((t - mk.t) * S.speed / 1100, 0, 1), al = u < 0.15 ? u / 0.15 : 1 - Math.pow((u - 0.15) / 0.85, 2);
-    const dx = B[0] - A[0], dy = B[1] - A[1], dd = Math.max(20 * ips, Math.hypot(dx, dy)), ux = dx / dd, uy = dy / dd, nx = -uy, ny = ux, mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, k = mk.kind || '';
-    const fam = /lactol|aldol|ring|ether|close/.test(k) ? 'ring' : /enone|dry|open/.test(k) ? 'dry' : /weld|knit|seal/.test(k) ? 'weld' : /taut|shift/.test(k) ? 'shift' : /tuck|cap/.test(k) ? 'tuck' : /flip|fold/.test(k) ? 'flip' : /snap/.test(k) ? 'snap' : ['ring', 'dry', 'weld', 'shift', 'tuck', 'flip', 'snap'][(k.length + (k.charCodeAt(0) || 0)) % 7];
-    x.save(); x.globalAlpha = 0.75 * al; x.strokeStyle = api.INK; x.fillStyle = api.INK; x.lineWidth = 5 * ips; x.lineCap = 'round'; x.lineJoin = 'round'; const r = Math.max(26 * ips, dd * 0.5), bulge = 0.7 * dd;
-    const ah = (px, py, qx, qy) => { const a = Math.atan2(qy - py, qx - px); x.beginPath(); x.moveTo(qx - 14 * ips * Math.cos(a - 0.5), qy - 14 * ips * Math.sin(a - 0.5)); x.lineTo(qx, qy); x.lineTo(qx - 14 * ips * Math.cos(a + 0.5), qy - 14 * ips * Math.sin(a + 0.5)); x.stroke(); };
-    if (fam === 'ring') { x.beginPath(); x.moveTo(A[0], A[1]); x.quadraticCurveTo(mx + nx * bulge, my + ny * bulge, B[0], B[1]); x.stroke(); }
-    else if (fam === 'dry') { for (let j = 0; j < 3; j++) { const px = mx + (j - 1) * 22 * ips + nx * 10 * ips, py = my + ny * 10 * ips - (30 + u * 90 + j * 12) * ips; x.beginPath(); x.moveTo(px, py - 12 * ips); x.quadraticCurveTo(px + 9 * ips, py, px, py + 8 * ips); x.quadraticCurveTo(px - 9 * ips, py, px, py - 12 * ips); x.stroke(); } }
-    else if (fam === 'weld') { [-1, 1].forEach(sg => { x.beginPath(); x.moveTo(mx + nx * 26 * ips + ux * sg * 10 * ips, my + ny * 26 * ips + uy * sg * 10 * ips); x.lineTo(mx - nx * 26 * ips + ux * sg * 10 * ips, my - ny * 26 * ips + uy * sg * 10 * ips); x.stroke(); }); for (let j = 0; j < 4; j++) { const a = j * 1.571 + 0.78; x.beginPath(); x.moveTo(mx + Math.cos(a) * 36 * ips, my + Math.sin(a) * 36 * ips); x.lineTo(mx + Math.cos(a) * 50 * ips, my + Math.sin(a) * 50 * ips); x.stroke(); } }
-    else if (fam === 'shift') { x.beginPath(); x.moveTo(A[0] + nx * 22 * ips, A[1] + ny * 22 * ips); x.quadraticCurveTo(mx + nx * 60 * ips, my + ny * 60 * ips, B[0] + nx * 22 * ips, B[1] + ny * 22 * ips); x.stroke(); ah(mx + nx * 60 * ips, my + ny * 60 * ips, B[0] + nx * 22 * ips, B[1] + ny * 22 * ips); }
-    else if (fam === 'tuck') { x.beginPath(); for (let j = 0; j <= 24; j++) { const a = j * 0.33, rr = (6 + j * 1.5) * ips, px = mx + nx * 30 * ips + Math.cos(a) * rr, py = my + ny * 30 * ips + Math.sin(a) * rr; j ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); }
-    else if (fam === 'flip') { [-1, 1].forEach(sg => { x.beginPath(); x.moveTo(mx - ux * 30 * ips * sg + nx * 14 * ips * sg, my - uy * 30 * ips * sg + ny * 14 * ips * sg); x.quadraticCurveTo(mx + nx * 46 * ips * sg, my + ny * 46 * ips * sg, mx + ux * 30 * ips * sg + nx * 14 * ips * sg, my + uy * 30 * ips * sg + ny * 14 * ips * sg); x.stroke(); ah(mx + nx * 46 * ips * sg, my + ny * 46 * ips * sg, mx + ux * 30 * ips * sg + nx * 14 * ips * sg, my + uy * 30 * ips * sg + ny * 14 * ips * sg); }); }
-    else { x.beginPath(); for (let j = 0; j <= 6; j++) { const f = j / 6, off = (j % 2 ? 1 : -1) * 14 * ips; const px = A[0] + dx * f + nx * off, py = A[1] + dy * f + ny * off; j ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); [-1, 1].forEach(sg => { x.beginPath(); x.moveTo(mx + nx * sg * 22 * ips, my + ny * sg * 22 * ips); x.lineTo(mx + nx * sg * 40 * ips, my + ny * sg * 40 * ips); x.stroke(); }); }
-    x.restore(); } catch (e) { /* a mark that cannot be drawn is left out */ } });
+  // the yield: it jumps with every gain, shakes harder the longer the chain, and burns as the marks are passed
+  { const dropT = S.yDrop ? (t - S.yDrop) / 1000 : 9, nf = Object.keys(S.flagged).length, heat = Math.min(1, nf / 4), txt = api.fmt(st.shown), ns = Math.min(10, S.steps || 0);
+    const pop = dropT < 0.5 ? 1 + (0.08 + 0.02 * ns) * Math.max(0, ring(dropT, 5, 0.42)) : 1, jit = (ns > 1 && dropT < 0.45 ? (1 - dropT / 0.45) * ns * 1.3 : 0) + heat * 1.6, jx = jit * nz(t / 1000 * 75, 2.2), jy = jit * nz(t / 1000 * 75, 5.1);
+    let sz = (100 + 9 * nf) * pop * yf; api.marker(x, sz); let w = x.measureText(txt).width; const maxW = 400 * yf; if (w > maxW) { sz *= maxW / w; api.marker(x, sz); w = x.measureText(txt).width; }
+    const bt = S.burnT ? (t - S.burnT) / 1000 : 9, burn = nf ? Math.max(0.22 + 0.2 * heat, bt < 1.1 ? 1 - bt / 1.1 : 0) * (0.5 + 0.5 * heat + (bt < 1.1 ? 0.3 : 0)) : 0, bx0 = Y[0] + jx, by0 = Y[1] + jy;
+    if (burn > 0.02) { x.save(); const nt = Math.max(5, Math.round(w / 34)); for (let pass = 0; pass < 2; pass++) { x.fillStyle = pass ? 'rgba(255,190,40,0.85)' : 'rgba(226,74,22,0.8)'; for (let i = 0; i < nt; i++) { const fxp = bx0 + (i + 0.5) / nt * w, hgt = sz * (0.42 + 0.5 * burn) * (0.6 + 0.4 * nz(t / 1000 * 9 + i * 1.9, i * 2.3 + pass)) * (pass ? 0.55 : 1), wd = w / nt * (pass ? 0.55 : 0.95), top = by0 - sz * 0.62 - hgt, sway = wd * 0.5 * nz(t / 1000 * 6 + i, i * 1.3);
+          x.beginPath(); x.moveTo(fxp - wd, by0 - sz * 0.3); x.quadraticCurveTo(fxp - wd * 0.9, by0 - sz * 0.6 - hgt * 0.4, fxp + sway, top); x.quadraticCurveTo(fxp + wd * 0.9, by0 - sz * 0.6 - hgt * 0.4, fxp + wd, by0 - sz * 0.3); x.closePath(); x.fill(); } } x.restore(); }
+    const mixc = (a, b, k2) => 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * k2)).join(',') + ')';
+    api.marker(x, sz); x.textAlign = 'left'; x.fillStyle = nf ? mixc([34, 37, 44], [150, 22, 10], Math.min(1, 0.45 + 0.55 * heat)) : api.INK; x.fillText(txt, bx0, by0); st.madeW = w; }
   // tokens in flight
   S.tokens.forEach(tk => { const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);
     x.save(); x.fillStyle = 'rgb(' + tk.col.join(',') + ')'; x.strokeStyle = api.INK; x.lineWidth = 5; x.beginPath(); x.ellipse(cx, cy, r, r * 0.86, 0, 0, 6.3); x.fill(); x.stroke(); x.restore(); });
-  // numerals and gains: written outside the molecule's outline on the line from its middle through the join
-  const bx = c ? inkBox(c) : null, lim = [api.px({ x: -6, z: 0 })[0], api.px({ x: 23.5, z: 0 })[0]], latest = S.nums[S.nums.length - 1];
-  S.nums.forEach((q, qi) => {
-    const age = t - q.t; if (age < 0 || !bx) return; const nx = S.nums[qi + 1], fade = nx ? (t >= nx.t ? 1 : 0) : S.done && S.restT ? clamp((t - S.restT) / 300, 0, 1) : 0;
-    const room = (Y0[1] - 100 * ips) - (bx.b + 14 * ips), sz = Math.max(40 * ips, Math.min(Math.min(190, 42 + 11 * q.n) * ips * (B3() ? 1.3 : 1) * (q.last ? 1.3 : 1), room / 0.74)), wr = clamp(age / 70, 0, 1);
-    { if (q.jx == null) { let jx = bx.cx; if (q.join && c.balls.has(q.join)) jx = inkOf(worldOf(c, q.join))[0]; q.jx = clamp(jx, lim[0] + sz * 0.6, lim[1] - sz * 0.6); } q.at = [q.jx, Math.max(q.at ? q.at[1] : 0, bx.b + 14 * ips + sz * 0.74)]; q.nw = AA.rxPen.measure(String(q.n), sz, 'heavy').width; }
-    if (fade < 1) { x.save(); x.globalAlpha = 1 - fade; AA.rxPen.write(x, String(q.n), q.at[0], q.at[1], sz, { weight: 'heavy', color: api.INK, align: 'center', t: wr, extra: q.w > 2 ? (q.w - 2) * 1.8 : 0 }); x.restore(); }
-    if (q.gain > 0 && d.count !== 'race') { const gsz = Math.max(40 * ips, Math.min(sz * 0.62, 90 * ips)), ft = age - q.hold, u = clamp(ft / q.fly, 0, 1); if (u >= 1 && mode !== 3) { q.gone = true; return; } if (mode === 3) { const u3 = clamp(ft / 420, 0, 1); if (u3 >= 1) { q.gone = true; return; } x.save(); x.globalAlpha = 1 - E.inCubic(Math.max(0, u3)); AA.rxPen.write(x, '+' + api.fmt(q.gain), q.at[0] + q.nw / 2 + 24 * ips, q.at[1], gsz, { weight: 'heavy', color: api.INK, align: 'left', t: clamp(age / 80, 0, 1) }); x.restore(); return; }
-      const e = E.inCubic(Math.max(0, u)), A = [q.at[0] + q.nw / 2 + 24 * ips + AA.rxPen.measure('+' + api.fmt(q.gain), gsz, 'heavy').width / 2, q.at[1]], B = [Y[0] + (st.madeW || 200) * 0.5, Y[1] - 70 * ips], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 50 * ips * Math.sin(Math.PI * Math.max(0, u));
-      x.save(); AA.rxPen.write(x, '+' + api.fmt(q.gain), cx, cy, gsz * (1 - 0.25 * e), { weight: 'heavy', color: api.INK, align: 'center', t: clamp(age / 80, 0, 1) }); x.restore(); } else q.gone = true; });
+  // the step numeral has its own place in the left margin, clear of the molecule and of the yield; it grows with the chain, and each gain drops from it into the yield
+  { const NP = api.px({ x: -20.3, z: 9.5 }), GP = api.px({ x: -14.7, z: 8.3 });
+    S.nums.forEach((q, qi) => { const age = t - q.t; if (age < 0) return; const nxq = S.nums[qi + 1], fade = nxq ? clamp((t - nxq.t) / 70, 0, 1) : S.done && S.restT ? clamp((t - S.restT) / 300, 0, 1) : 0;
+      const sz = Math.min(150, 78 + 10 * q.n) * (q.last ? 1.1 : 1), pop = 1 + 0.3 * Math.max(0, ring(age / 1000, 6, 0.4)) * (age < 500 ? 1 : 0);
+      if (fade < 1) { x.save(); x.globalAlpha = 1 - fade; AA.rxPen.write(x, String(q.n), NP[0], NP[1], sz * pop, { weight: 'heavy', color: api.INK, align: 'center', t: clamp(age / 60, 0, 1), extra: q.w > 2 ? (q.w - 2) * 1.8 : 0 }); x.restore(); }
+      if (q.gain > 0 && d.count !== 'race') { const ft = age - q.hold, u = clamp(ft / q.fly, 0, 1); if (u >= 1) { q.gone = true; return; } const e = E.inCubic(Math.max(0, u)), A = GP, B = [Y[0] + (st.madeW || 200) * 0.5, Y[1] - 70], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e;
+        AA.rxPen.write(x, '+' + api.fmt(q.gain), cx, cy, 46 * (1 - 0.2 * e), { weight: 'heavy', color: api.INK, align: 'center', t: clamp(age / 80, 0, 1) }); } else q.gone = true; }); }
   // direction 2: a tally in the margin, one stroke per step, bundled in fives
   if (mode === 2 && S.tally) { const o = api.px({ x: 9.5, z: 9.6 }), h = 64 * ips, gap = 16 * ips; x.save(); x.strokeStyle = api.INK; x.lineCap = 'round'; x.lineWidth = 6; for (let i = 0; i < S.tally; i++) { const b = Math.floor(i / 5), j = i % 5, x0 = o[0] + b * (5 * gap + 34 * ips) + j * gap; x.beginPath(); if (j < 4) { x.moveTo(x0, o[1]); x.lineTo(x0 + 3, o[1] - h); } else { const xb = o[0] + b * (5 * gap + 34 * ips); x.moveTo(xb - 10, o[1] - h * 0.2); x.lineTo(xb + 4 * gap + 10, o[1] - h * 0.8); } x.stroke(); } x.restore(); }
-  // the words, each written once and kept: one line with the yield, the newest the largest
-  if (S.words.length) { let xx = Y[0] + (st.madeW || 300) + 46 * ips; const ws = S.words.slice().sort((a, b) => a.k - b.k), top = ws[ws.length - 1];
-    const top3 = ws.filter(w => w.k < 3), tk = top3[top3.length - 1];
-    ws.forEach(w => { const u = clamp((t - w.t) / (w.k === 3 ? 140 : 150), 0, 1);
-      if (w.k === 3) { // OVERREACT takes the whole screen: the paper washed over, the word as wide as the frame, written once
-        const TL = inkAtScreen(0, 0), BR = inkAtScreen(1280, 720), ML = inkAtScreen(0, 360), MR = inkAtScreen(1280, 360), cx = (ML[0] + MR[0]) / 2, cy = (TL[1] + BR[1]) / 2, sw = (MR[0] - ML[0]), age = t - w.t, wash = clamp(age / 220, 0, 1) * 0.62;
-        x.save(); x.globalAlpha = wash; x.fillStyle = '#f6f5f0'; x.fillRect(TL[0] - 40, TL[1] - 40, sw + 80, BR[1] - TL[1] + 80); x.restore();
-        let sz = 400 * ips, tw = AA.rxPen.measure(WORDS[3], sz, 'heavy').width; sz *= (sw * 0.8) / Math.max(1, tw); const kk = age < 120 ? 1 + 0.06 * (1 - age / 120) : 1;
-        AA.rxPen.write(x, WORDS[3], cx, cy + sz * 0.2, sz * kk, { weight: 'heavy', color: api.REDINK, align: 'center', t: clamp(age / 260, 0, 1), extra: 3 }); return; }
-      return;
-      const base = WSZ[w.k] * d.wordK * ips * (w === tk ? 1 : 0.6); AA.rxPen.write(x, WORDS[w.k], xx, Y[1], base, { weight: 'heavy', color: api.GREEN, align: 'left', t: u }); xx += AA.rxPen.measure(WORDS[w.k], base, 'heavy').width + 24 * ips; }); }
   // direction 3: the molecule as it stood, drawn small beside the finished one
   if (B3() && S.sketchT && S.start) { const u = clamp((t - S.sketchT) / 600, 0, 1), sk = S.start, o = api.px({ x: 21, z: 2.4 }); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; sk.pts.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }); const s = Math.min(340 / Math.max(1, x1 - x0), 150 / Math.max(1, z1 - z0)), m = p => [o[0] + (p.x - (x0 + x1) / 2) * s, o[1] + (p.z - (z0 + z1) / 2) * s];
     x.save(); x.strokeStyle = api.PENCIL; x.lineWidth = 4; x.lineCap = 'round'; const nb = Math.floor(sk.bonds.length * u); sk.bonds.slice(0, nb).forEach(b => { const A = m(b[0]), B = m(b[1]); x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke(); }); x.fillStyle = api.REDINK; sk.pts.forEach((p, i) => { if (p.el === 'O' && i / sk.pts.length <= u) { const q = m(p); x.beginPath(); x.arc(q[0], q[1], 6, 0, 6.3); x.fill(); } }); x.restore(); }
@@ -470,7 +517,9 @@ AA.rxFeel = {
   on, owns: () => on() && !!F.seq,
   get mode() { return mode; },
   set(n) { mode = Math.max(0, Math.min(6, n | 0)); try { root.localStorage.setItem(KEY, String(mode)); } catch (e) { /* storage blocked */ } return mode; },
-  fire, throwThen, onReact, hit, k, ease, unlock, pageEnd, frame, ink, Tn, phases,
+  reset() { if (F.seq) { F.seq.dead = true; F.seq = null; } },
+  fire, throwThen, onReact, hit, k, ease, pose, unlock, pageEnd, frame, ink, Tn, phases,
+  dbg: () => [F.ovN, F.ovT, F.ov && F.ov.t, now(), !!F.seq, F.ovL],
   stepMs: n => Tn(n), log: F.log, probeRows: F.probeRows, probe: false,
   state: () => F.seq && { steps: F.seq.steps, N: F.seq.plan.N, shown: F.seq.count.shown, zoom: F.seq.zoom, shake: F.seq.shake, words: F.seq.words.map(w => w.k), speed: F.seq.speed, done: F.seq.done, plan: F.seq.plan.ev.map(e => e.k + (e.n || '')).join('') }
 };

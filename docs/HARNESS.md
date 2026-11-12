@@ -51,7 +51,25 @@ AK2. "We also need a soundtrack" (12 November). The game has its own music, made
 
 AI2. Of the three notebook pages (ruled, graph, aged) the owner picked 3, the aged one with tape and a scorch (12 November). It must still not read yellow.
 
+AL2. On the look4 videos (12 November): "Let's default to 2 on speed but let the speed be modular. Some issues, the reactions are very difficult to see in some instances, the bonds are being stretched very far, lots of overlapping atoms". Pace 2 is the default and the player can change the speed. Every reaction must be easy to see; bonds are never stretched; atoms never overlap.
+
+AL3. "I don't like shitty looking clip art like a water droplet that's blue signifying dehydration and stuff. The overreact clip art stuff is fine, though I worry about how short the cycles are on the game and how those might lead to less play" (12 November). No symbolic icons for a reaction or for what leaves; show the real atoms. Open worry: a run may be too short to keep people playing.
+
+AL4. "Maybe when we break bonds we can snap them idk it could scale with the strength of the bond? Dont assume that is gospel. And there were definitely overlapping atoms on screen for sure. We should allow the option to twist the compound in 3D space so people can see it" (12 November). The player can rotate the molecule in 3D. Overlapping atoms are a real fault. The bond snap is an idea to build and show, not a ruling.
+
+AF2. "Rarer elements should become more common as the rounds get deeper." (12 November)
+
+AN. "you should be able to use rdkit to do massive compute scaling to investigate every combination of things quickly including our elemental additions, homunculus, and sigils (which break rules or change a rule right, like carbons can have 5 bonds or other fun 'alchemy' things)" (12 November). Testing runs on every core and covers every combination. A sigil breaks or changes one rule.
+
+W3. "I would say even 2% success rate out of 100 without any unlocks is too high still btw." (12 November). This replaces the 2-in-100 figure of W2: a bare nine-round run with no unlocks is won less often than 2 in 100.
+
+AO. "I want the molecule to potentially start vibrating when we're winning. I want the overreact effects to be a visual and auditory dopamine hit" (12 November).
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
+
+AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
+
+AK4. "Do mad scientist funk but we want several sound tracks and I like the gothic hybrid just tweak it a little. Let's also add in other genres like an edm one, a metal one, etc." (12 November). The game has several soundtracks: mad science funk, the gothic hybrid lightly tweaked, an EDM one, a metal one, and more.
 
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
