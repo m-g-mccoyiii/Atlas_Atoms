@@ -43,6 +43,8 @@ AG. After the camera-mix videos (2026-11-12): "the compound needs to be more cen
 AH. "The sounds aren't exciting enough."
 AI. The parchment "looks pee yellow instead of being lab notes with perhaps a stain or two". The page is a lab notebook page: pale, not yellow, with a stain or two. The owner also floated, unsure: "it would be very fun to have the potential notes of things that are insane in the marginalia. Not sure about the last one though." Build it as an option and show it; do not assume it.
 
+AJ. The words that pop as the yield climbs: "Let's have no react and then just OVERREACT the whole thing even it hits the stretch goal post" (12 November). No word at the lower marks. OVERREACT alone, over the whole screen, when the yield reaches the top (stretch) mark. Every earlier word set (stable, unstable, volatile and the rest) is dropped.
+
 ## The lines broken most often
 
 1. Plain wording only. No jargon, no "Claude speak", no AI-slop or twee writing, no game words the owner has not learned. Said at least 17 times. "Okay stop talking in the jargon of the game. For the final fucking time." [O28, O37, O42, O52, O62, N87, N119, N127, N130, N136, N143, N144, N202, N206, N215, N247, N249]
