@@ -710,11 +710,11 @@ function synTake(g, o, free) {
 // ---------- the page lined up, then fired ----------
 // The state of a round is saved, something is tried, and the state is put back.
 function snap(g) {
-  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest, lastOn: g.lastOn };
+  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest, lastOn: g.lastOn, rec: g.rec, spec: g.spec };
   c.seen = new Set(c.seen); return s;
 }
 function back(g, s) {
-  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest; g.lastOn = s.lastOn;
+  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest; g.lastOn = s.lastOn; g.rec = s.rec; g.spec = s.spec;
 }
 const BANKID = '#bank';
 // The next step of a cascade: the first reaction the molecule has with itself as it stands, or nothing. Every kind
@@ -1526,29 +1526,35 @@ function specPick(molecule, round, carried, rnd, tier, hist, run) {
   for (const a of order(names.filter(n => !last.includes(SPEC_TABLE[n].fam))).slice(0, 10)) {
     const na = nOf(a, t1); tries++; if (na < 1) continue;
     if (!pair) { const proof = reach([mk(a, na)]); if (proof) { got = { parts: [mk(a, na)], proof }; break; } continue; }
-    for (const b of order(names.filter(n => !specClash(a, n))).slice(0, 6)) { const nb = nOf(b, t1); tries++; if (nb < 1) continue; const ps = [mk(a, na), mk(b, nb)], proof = reach(ps); if (proof) { got = { parts: ps, proof }; break; } }
+    for (const b of order(names.filter(n => !specClash(a, n) && !last.includes(SPEC_TABLE[n].fam))).slice(0, 6)) { const nb = nOf(b, t1); tries++; if (nb < 1) continue; const ps = [mk(a, na), mk(b, nb)], proof = reach(ps); if (proof) { got = { parts: ps, proof }; break; } }
     if (got) break;
   }
   let fell = false;
-  if (!got) { fell = true; for (const nm of ['off_total', 'growth', 'branch']) { if (!SPEC_TABLE[nm]) continue; const n = Math.max(1, nOf(nm, target)); got = { parts: [mk(nm, n)], proof: 0 }; if (reach(got.parts)) break; } if (!got) got = { parts: [mk('off_total' in SPEC_TABLE ? 'off_total' : Object.keys(SPEC_TABLE)[0], 1)], proof: 0 }; }
+  if (!got) { fell = true; for (const nm of ['off_total', 'growth', 'branch'].filter(x => SPEC_TABLE[x] && !last.includes(SPEC_TABLE[x].fam)).concat(['off_total', 'growth', 'branch'])) { if (!SPEC_TABLE[nm]) continue; const n = Math.max(1, nOf(nm, target)); got = { parts: [mk(nm, n)], proof: 0 }; if (reach(got.parts)) break; } if (!got) got = { parts: [mk('off_total' in SPEC_TABLE ? 'off_total' : Object.keys(SPEC_TABLE)[0], 1)], proof: 0 }; }
   const a = got.parts[0];
   return { kind: a.mark, n: a.n, mark: a.mark, name: a.name, text: got.parts.map(p => p.text).join(' and '), family: a.family, families: got.parts.map(p => p.family), parts: got.parts, fell, tries, proof: got.proof };
 }
 // The end of a round (the page and the rig call this once). The round is won by the spec (roundWon); yield is separate: it pays
 // gold at the four marks (runEarn) whenever it passes the number to beat, and letters the words, spec met or not. A won round
 // counts toward the run; a lost round ends it (run.over). Returns what the end screen needs.
+const WORDS = ['stable', 'unstable', 'volatile', 'overreact'];
 function roundEnd(g, run) {
-  const won = roundWon(g, run), ypass = g.total >= run.quota, earn = runEarn(run, g.total, run.quota), marks = marksHit(g.total, run.quota);
+  if (run.endedRound === (run.round || 1) && run.endedFor === g) return run.endedRes;
+  const won = roundWon(g, run), ypass = g.total >= run.quota, extra = run.payCoins || 0, earn = runEarn(run, g.total, run.quota), marks = marksHit(g.total, run.quota);
+  // a round won by the spec with a low yield still pays what the harder molecule promised
+  if (won && !ypass && RULE.coins && extra) { run.coins = (run.coins || 0) + extra; earn.extra = extra; }
   if (!run.log) run.log = [];
-  run.log.push({ round: run.round || 1, won, total: g.total, quota: run.quota, marks, gold: earn.marks + earn.interest + (earn.extra || 0), spec: g.spec ? { name: g.spec.name, n: g.spec.n, value: specValue(g, false), parts: specParts(g, false) } : null });
+  const word = ypass ? WORDS[Math.min(WORDS.length - 1, marks)] : null;
+  run.log.push({ round: run.round || 1, won, ypass, word, total: g.total, quota: run.quota, marks, gold: earn.marks + earn.interest + (earn.extra || 0), spec: g.spec ? { name: g.spec.name, n: g.spec.n, value: specValue(g, false), parts: specParts(g, false) } : null });
   if (won && !run.over) run.beaten = (run.beaten || 0) + 1; if (!won) run.over = true;
-  return { won, ypass, marks, earn, spec: g.spec, runWon: runWon(run), last: (run.round || 1) >= runLast(run), run: run.len };
+  const res = { won, ypass, word, marks, earn, spec: g.spec, runWon: runWon(run), last: (run.round || 1) >= runLast(run), run: run.len };
+  run.endedRound = run.round || 1; run.endedFor = g; run.endedRes = res; return res;
 }
 // What a run earned, won or lost, for the end screen: rounds cleared, gold, the word reached in each round, credit, and the
 // length it opens. Findings are not built: the counters they will read are in by.
 function runResult(run) {
   const won = runWon(run), log = run.log || [];
-  return { len: run.len, rounds: runLast(run), cleared: run.beaten || 0, won, lostAt: won ? null : Math.min(runLast(run), (run.beaten || 0) + 1), gold: run.coins || 0, goldFromMarks: log.reduce((t, r) => t + r.gold, 0), words: log.map(r => r.marks), credit: (run.beaten || 0) + (run.bonus || 0), opens: won && run.tierNo < 3 ? lengthOf(run.tierNo + 1).name : null, by: Object.assign({}, run.by), log };
+  return { len: run.len, rounds: runLast(run), cleared: run.beaten || 0, won, lostAt: won ? null : Math.min(runLast(run), (run.beaten || 0) + 1), gold: log.reduce((t, r) => t + r.gold, 0), coins: run.coins || 0, words: log.map(r => r.word), credit: (run.beaten || 0) + (run.bonus || 0), opens: won && run.tierNo < 3 ? lengthOf(run.tierNo + 1).name : null, by: Object.assign({}, run.by), log };
 }
 // the highest length opened after a run: a won run opens the next
 const reachAfter = (reach, run) => Math.max(Math.max(1, Math.min(3, reach | 0)), runWon(run) ? Math.min(3, (run.tierNo || 3) + 1) : 1);
