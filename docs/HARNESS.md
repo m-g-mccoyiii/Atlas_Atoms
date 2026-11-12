@@ -39,6 +39,9 @@ AC. The action, after the owner watched the three directions (2026-11-12): "I li
 AD. Close across the fold: "why aren't atoms across the chain reacting? We can keep it simple by having the snaking structure be our proximity agent rather than across the entire molecule." A long molecule is drawn folded like a snake; two groups that face each other across the fold are close and can change each other. What is drawn close is close. Not any two atoms anywhere on the molecule.
 AE. "I've repeatedly said ring formation shouldn't be the only self reaction occurring." Several different reflexes must be seen in play from early on, in every demo and video, not ring-closing alone.
 AF. "We really seem to be focusing on oxygen and carbon but I've asked for lots of things." Nitrogen, sulfur, halogens, acid groups, benzene rings and more belong in the molecules, the reagents and the reflexes that a player actually meets, early, not only on paper.
+AG. After the camera-mix videos (2026-11-12): "the compound needs to be more centered than it is." "I'm seeing the exact same reactions despite me telling you to add many more." Every video and demo must show several different kinds of thing the molecule does, on different molecules; a video that shows only ring-closing is not to be sent.
+AH. "The sounds aren't exciting enough."
+AI. The parchment "looks pee yellow instead of being lab notes with perhaps a stain or two". The page is a lab notebook page: pale, not yellow, with a stain or two. The owner also floated, unsure: "it would be very fun to have the potential notes of things that are insane in the marginalia. Not sure about the last one though." Build it as an option and show it; do not assume it.
 
 ## The lines broken most often
 
