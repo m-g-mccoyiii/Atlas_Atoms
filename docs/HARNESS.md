@@ -47,6 +47,8 @@ AJ. The words that pop as the yield climbs: "Let's have no react and then just O
 
 AK. Sound (12 November): "the more that the reaction proceeds, the longer it goes on, there's an element of some kind of bass or chanting that goes on. A deeper sound that gets louder or something." A deep layer (bass, chant or similar) that comes in and grows the longer a chain runs. "The sound needs to be generated for the whole game": every screen and act has sound, not only the reaction. Of the three styles: "I kind of liked arcade (2) but I feel like it needs to be less child game sounding." Arcade is the base; it must not sound like a children's game.
 
+AK2. "We also need a soundtrack" (12 November). The game has its own music, made by us so it is ours to sell.
+
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
 ## The lines broken most often
