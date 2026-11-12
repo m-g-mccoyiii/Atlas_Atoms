@@ -632,7 +632,7 @@ try { root.addEventListener('pointerdown', twDown, true); root.addEventListener(
 
 // ---------- the two small controls, drawn by hand above the page: the speed row and the way home ----------
 const UI = { cv: null, x: null, hit: [], dirty: true, arm: false, pulse: 0, key: '', hov: '' };
-function uiInit() { if (UI.cv || !root.document) return; const app = root.document.getElementById('schemeapp'); if (!app || !hostCv()) return; const cv = root.document.createElement('canvas'); cv.className = 'veil'; app.append(cv); UI.cv = cv; UI.x = cv.getContext('2d'); try { hostCv().style.touchAction = 'none'; } catch (e) { /* no style */ } }
+function uiInit() { if (UI.cv || !root.document) return; const app = root.document.getElementById('schemeapp'); if (!app || !hostCv()) return; const cv = root.document.createElement('canvas'); cv.className = 'veil'; if (api && api.over && api.over.cv && api.over.cv.parentNode === app) app.insertBefore(cv, api.over.cv); else app.append(cv); UI.cv = cv; UI.x = cv.getContext('2d'); try { hostCv().style.touchAction = 'none'; } catch (e) { /* no style */ } }
 const uiHit = (x, y) => UI.hit.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) || null;
 function uiAct(h) { if (h.act === 'home') return twistHome(); if (h.act === 'skip') { if (F.seq && !F.seq.done) skipNow(); else if (!F.seq) { armSkip(); snd('click'); } UI.pulse = now(); return; } setPace(h.act); }
 // a loop of ink drawn twice, a little off itself, the way a pen goes round a word
