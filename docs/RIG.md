@@ -4,6 +4,42 @@ Built 2026-11-10. The newest measure is the first section below (the seventh of 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-12, eighth: the revised spec table, the engine, motifs, offers, counters
+
+Measured headless, awaiting review. Tools: `docs/tools_parity.py`, `docs/tools_spec_bake.py`, `docs/tools_offer_bake.py`; jobs `parity.js`, `parity_game.js`, `motif.js`, `offers.js`, `kinds.js`, `lines.js`.
+
+### 1. Revised spec table (24 specs and the held-back rider)
+Bachelor's, 500 unseen runs (seeds 1,001 to 500) per player, code before the engine. Clear rate in rounds 1, 2, 3 and runs won:
+
+| Player, specEase | Clear 1, 2, 3 | Wins all three |
+|---|---|---|
+| novice 0 | 51, 23, 32 | 3.8 |
+| novice 0.1 and 0.2 (the same N chosen) | 60, 28, 36 | 5.0 |
+| greedy 0 | 81, 51, 54 | 20.6 |
+| greedy 0.1 and 0.2 | 88, 59, 62 | 31.4 |
+| median 0 | 94, 81, 82 | 62.0 |
+| median 0.1 and 0.2 | 98, 86, 85 | 70.8 |
+
+Ease 0.1 and 0.2 give the same table row because only one or two N are usable per round; the step is in N, not in ease. The planner was not run (it is the median player's line). Rounds are not close: the median player ends at twice N or more in 34 to 56 percent of rounds; the new-player target (75, 65, 55) is met only in round 1 by the median. Novice round 2 (23 to 28 percent) is far under 65. The JS readers against Python: 0 mismatches against the graph version, the same cage differences against RDKit.
+
+### 2 to 4. Engine against RDKit (2,140 cases, `tools_parity.py`)
+Reagents 540 (every one of the 18 on 30 molecules): 519 agree, 21 are ties. Reflexes 520 (every one of the 13 on 40): 498 agree, 22 ties. Settled to the end 300: 281 agree, 19 ties. Whole turns of three reagents 150 (engine functions): 129 agree, 20 ties, 1 unresolved. A tie is a case where the engine's own answer changes with the order the molecule is read in or the choice among equal places, and the game's answer is one the engine can give. The same 150 turns played through the game's own round (`parity_game.js`): see the reviewer below; a reviewer found 40 real divergences (queue and per-page counting) and the runoff kind lost in `react` (fixed in 2cabbb2). Not closed.
+
+### 5. Motifs
+Counts of the twelve on the game's graph against `traits.py`: 4,584 of 4,584 on 382 molecules (the 82 CASES and 300 of the pool). Pay is a multiplier on the step's places (`RULE.motifs`). Yield by round and the refit of Par were NOT done.
+
+### 6. Offers
+300 careers a length (all twelve unlocked, reader picker): different carried sets 117 (3 rounds), 252 (6), 167 (9). Every reagent stocked in 24 to 48 percent of runs; seen and taken counts are in `out/of3.json` and so on (taken 73 to 145 of 300 for the 6 best, chlorination and cyanohydrin 17 to 76). The Par fit was not redone.
+
+### 7. Counters
+`countersUpdate`, `countersRun`, `findingsProgress` are in; not measured on a run.
+
+### Reflex kinds in a first run
+Round 1 to 3 molecules, random lines of the six: holding ring and dry only, 93 percent of steps are ring; holding the seven (ring, dry, weld, shift, tuck, flip, snap) ring is 24 percent (best-of-20 lines 11 percent), the rest weld 29, dry 27, tuck 15, shift 3, snap 3. Flip never fired on those molecules.
+
+### Not done
+Item 5 yield refit; item 6 cost in the page; findings triggers; the fold (hook `ENG.NEAR` only); N, S, Cl molecules in the table (waiting for MOLECULES.md); clamps and protected atoms in the engine; turn-level reconciliation of the game's loop with the engine; the rig runs about three times slower (15 s a median run).
+
 ## The measure of 2026-11-11, seventh, part two: the spec, run lengths, the preview removed
 
 Measured, awaiting review. Headless, tier one (`{ tierNo: 1, tier: 0, all: true, rule: { co2: false } }`), `RULE.spec` on, every player plays for the spec first and the yield second. Tools: `docs/tools_deal.py <tag>`, `docs/tools_spec_check.py`. Tags: g0 (seeds 1 to 300, `RULE.specEase` 0), u4 (unseen seeds 1,001 to 1,500, the default, ease 0.2), L1b (novice, one line looked at, seeds 1,001 to 1,300). The first measures of this part (tags s2, f0, f0.1, f0.2, u3, L1) were made while a trial line the aiming player played and took back could leave a page in the round record (`snap` and `back` did not keep `g.rec`); a reviewer found it, it was fixed in commit after c774b4e, and g0, u4 and L1b were made again. The old numbers are not used below except where said.
