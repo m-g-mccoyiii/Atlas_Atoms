@@ -10,6 +10,7 @@ const rgb = c => 'rgb(' + c.join(',') + ')';
 const bright = c => { const m = Math.max(c[0], c[1], c[2], 1), k = Math.max(1, 190 / m); return c.map(q => Math.min(255, Math.round(q * k + 20))); };
 const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return ((x >>> 0) % 1000) / 1000; };
 const fmt = n => Math.round(n).toLocaleString('en-US');
+  const fmtK = n => { const t = v => String(Math.round(v * 10) / 10).replace(/\.0$/, ''); return n >= 1e9 ? t(n / 1e9) + 'B' : n >= 1e6 ? t(n / 1e6) + 'M' : n >= 1e5 ? t(n / 1e3) + 'K' : fmt(n); };
 const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
 const BALL = el => Math.min(0.62, 0.2 + 0.36 * E[el].cov);
 const INK = '#2b2622', PENCIL = '#5a564e', FAINT = 'rgba(90,86,78,0.35)', REDINK = '#c8261c', GREEN = '#1c8a4a', HILITE = 'rgba(255,214,0,0.6)';
@@ -474,6 +475,15 @@ function start(app) {
   let kitObjs = [], heldObjs = [];
   const clearPicks = () => { clearHoms(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; heldObjs.forEach(k => scene.remove(k.grp)); heldObjs = []; };
   const GLASS = AA.rxKit.mat(T, 0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
+  // the four yield flags on the track are the kit's: drawn as outline until the total passes them, then filled
+  function buildFlags() { const out = []; ['stable', 'unstable', 'volatile', 'overreact'].forEach(nm => { const mk = suf => { const grp = new T.Group(), inner = new T.Group(); if (!AA.rxKit.build('mark_' + nm + suf, T, inner, new T.Color(0xffffff))) return null; const bb = new T.Box3().setFromObject(inner), sz = bb.getSize(new T.Vector3()), k = Math.min(1.5, 2.6 / Math.max(sz.x, sz.z), 3.3 / sz.y); inner.scale.setScalar(k); inner.position.set(-(bb.min.x + bb.max.x) / 2 * k, -bb.min.y * k, -(bb.min.z + bb.max.z) / 2 * k); grp.add(inner); grp.rotation.x = -0.8; grp.visible = false; scene.add(grp); return grp; }; out.push({ on: mk(''), off: mk('_off') }); }); return out.every(o => o.on && o.off) ? out : null; }
+  function updateFlags() {
+    const show = g && st.quota > 0 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || st.mode === 'done');
+    if (!st.flags3 && show && !st.flags3Tried) { st.flags3Tried = true; try { st.flags3 = buildFlags(); } catch (e) { st.flags3 = null; } }
+    if (!st.flags3) return;
+    const marks = show ? P.runMarks(st.quota) : [], vals = [st.quota].concat(marks), n = marks.length, fr = k => (k === 0 ? 0.5 : 0.5 + 0.5 * k / Math.max(1, n));
+    st.flags3.forEach((o, k) => { const ok = show && k < vals.length, passed = ok && (st.mode === 'done' ? g.total >= vals[k] : !!st.passT[k]); [o.on, o.off].forEach(q => { q.visible = false; }); if (!ok) return; const q = passed ? o.on : o.off; q.visible = true; q.position.set(TRK.x0 + (TRK.x1 - TRK.x0) * fr(k) + 0.2, 0, TRK.z - 0.4); dirty = true; });
+  }
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
     if (!AA.rxKit.build(id, T, inner, liq)) add(new T.BoxGeometry(2, 1.2, 2), std({ color: lin(0x3b3e42), roughness: 0.5 }), 0, 0.6, 0, inner);
@@ -1227,16 +1237,16 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode === 'shop') {
-      const h = px({ x: 0, z: -13 }); marker(x, 100); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('suppliers', h[0], h[1]);
-      { hand(x, 46); x.fillStyle = PENCIL; const ww = x.measureText('+' + shop.earned + '    ' + meta.credit).width; coin(x, h[0] - ww / 2 - 34, h[1] + 50, 18); x.fillText('+' + shop.earned + '    ' + meta.credit, h[0], h[1] + 64); }
+      const h = px({ x: 0, z: -13 }); hand(x, 96); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('bench', h[0], h[1]);
+      { marker(x, 52); x.fillStyle = INK; x.textAlign = 'left'; const lab = '+' + shop.earned + '   ' + meta.credit, ww = x.measureText(lab).width; coin(x, h[0] - ww / 2 - 30, h[1] + 52, 20); x.fillText(lab, h[0] - ww / 2, h[1] + 70); }
       P.SUPPLY.forEach((sp, i) => { if (i > Math.min(meta.tier + 1, shopMax())) return;
         const c = px({ x: -20, z: -9.2 + i * 3.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
         if (open) swipe(x, [c[0] - 6, c[1] + 14], [c[0] + x.measureText(sp.name).width * 1.5 + 60, c[1] + 10], 6, GREEN);
-        marker(x, 50); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
-        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open && nextUp) { coin(x, c[0] + 540, c[1] - 20, 16); x.fillText(String(sp.cost), c[0] + 566, c[1] - 6); }
+        hand(x, 50); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
+        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open && nextUp) { for (let k = 0; k < Math.min(6, sp.cost); k++) AA.rxKit.drawCoin(x, c[0] + 1250 + k * 36, c[1] - 12, 16, { alpha: can ? 1 : 0.5 }); if (sp.cost > 6) { marker(x, 40); x.fillStyle = can ? INK : PENCIL; x.fillText(String(sp.cost), c[0] + 1680, c[1] - 0); } }
         hand(x, 38); x.fillStyle = open || nextUp ? PENCIL : FAINT;
         const things = (sp.kin || []).map(k => k + ' molecules').concat(sp.reagents.map(id => RX.CARDS[id].verb.toLowerCase())).concat(sp.gear.map(id => P.GEARS[id].name)).concat(sp.rare ? ['rare versions of reagents'] : []);
-        if (nextUp) { hand(x, 30); wrap(x, (things.length ? things.join(',  ') : ''), 800).slice(0, 1).forEach((ln, j) => x.fillText(ln, c[0], c[1] + 40 + j * 30)); }
+        if (open || nextUp) sp.reagents.slice(0, 5).forEach((id, k) => { const tl = TILE[id]; if (!tl) return; x.save(); x.translate(c[0] + 420 + k * 150, c[1] - 8); x.scale(0.9, 0.9); fragOrChip(x, tl[0], -42, 0, nextUp || open); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-14, 0); x.lineTo(6, 0); x.stroke(); fragOrChip(x, tl[1], 44, 0, nextUp || open); x.restore(); });
         if (hov) ring(x, [c[0] + 400, c[1] + 6], 470, 86, 5, INK, 0.01);
       });
       P.FAMILIES.forEach((f, i) => { if (meta.tier < 1) return;
@@ -1248,7 +1258,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         if (hov) ring(x, [c[0] + 250, c[1] + 6], 300, 86, 5, INK, 0.01);
       });
       { const found = Object.keys(meta.found).filter(k => meta.found[k]), c = px({ x: 8, z: 2.6 }); if (found.length) { marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('found', c[0], c[1]); hand(x, 30); x.fillStyle = PENCIL; x.fillText(found.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), c[0], c[1] + 40); } }
-      const n0 = px({ x: 0, z: 12.4 }); marker(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('new run', n0[0], n0[1]);
+      const n0 = px({ x: 0, z: 12.4 }); hand(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('new run', n0[0], n0[1]);
       if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 110); x.fillStyle = st.call.col; x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, c[0], c[1] + 500); x.fillText(st.call.text, c[0], c[1] + 500); }
       ink.t.needsUpdate = true; return;
     }
@@ -1298,14 +1308,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'pick') {
-      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('take one', h[0], h[1]);
+      
       picks.forEach((o, i) => {
         const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase() + (o.kind === 'reagent' && P.PAIR[o.id] ? ' + ' + RX.CARDS[P.PAIR[o.id]].verb.toLowerCase() : ''), hov = st.hover === i;
         const kind = o.kind === 'reagent' ? 'new' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger' : 'more';
-        if (!isGear) { const t0 = px({ x: PICKX[i], z: -2 }); fit(x, title, 96, 440, marker); x.textAlign = 'center'; x.fillStyle = rgb(colOf(o.id)); x.fillText(title, t0[0], t0[1]); swipe(x, [t0[0] - 150, t0[1] + 22], [t0[0] + 150, t0[1] + 16], 20, rgb(colOf(o.id))); }
-        hand(x, 40); x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 190, c[1] - 56); if (o.kind === 'reagent') { hand(x, 36); x.fillText('new', c[0], c[1] - 56); }
+        if (!isGear) { const t0 = px({ x: PICKX[i], z: -1.2 }), tl = TILE[o.id], z0 = hov ? 2.0 : 1.8; if (tl) { x.save(); x.translate(t0[0], t0[1]); x.scale(z0, z0); fragOrChip(x, tl[0], -62, 0, true); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, 0); x.lineTo(0, 0); x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); x.stroke(); fragOrChip(x, tl[1], 46, 0, true); x.restore(); } if (hov) { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(title, c[0], c[1] + 110); } }
         if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
-        if (isGear) inkLine(x, P.GEARS[o.id].tok || '', c[0], c[1] + 52, 40, INK); else { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(P.pickText(run, o), c[0], c[1] + 52); }
+        if (isGear) inkLine(x, P.GEARS[o.id].tok || '', c[0], c[1] + 52, 40, INK); else if (o.kind === 'bottle') { for (let d = 0; d < 3; d++) drop(x, c[0] - 70 + d * 70, c[1] + 36, 18, INK, true); marker(x, 56); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - 100, c[1] + 54); } else if (o.kind === 'strong') { marker(x, 84); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(P.pickText(run, o)).split(' ')[0], c[0], c[1] + 66); }
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
       if (P.RULE.coins) {
@@ -1402,6 +1411,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.globalAlpha = 0.92; flick(x, a, b, tail, head, 22, q.col, bow);
       if (age >= q.dur) { const k = (age - q.dur) / 260; x.globalAlpha = 0.85 * (1 - k); splat(x, b, 16 + 26 * Math.sqrt(k), q.col, String(Math.round(q.t))); }
       x.globalAlpha = 1; });
+    if (play && g && g.nextHand && g.nextHand.length) { const n0 = px({ x: 20.6, z: 12.4 }), nn = Math.min(5, g.nextHand.length), cw = 62; for (let j = 0; j < nn; j++) { const tl = TILE[g.nextHand[j]]; if (!tl) continue; x.save(); x.translate(n0[0] - (nn - 1) * cw / 2 + j * cw + 0, n0[1]); x.scale(0.36, 0.36); fragOrChip(x, tl[0], -50, 0, false); x.strokeStyle = FAINT; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(-8, 0); x.lineTo(14, 0); x.stroke(); fragOrChip(x, tl[1], 78, 0, false); x.restore(); }
+      const cx0 = px({ x: 25.5, z: 12.6 }); x.fillStyle = 'rgba(120,100,70,0.22)'; x.beginPath(); x.moveTo(cx0[0] + 30, cx0[1] - 70); x.lineTo(cx0[0] + 30, cx0[1] + 30); x.lineTo(cx0[0] - 70, cx0[1] + 30); x.closePath(); x.fill(); x.strokeStyle = PENCIL; x.lineWidth = 3; x.stroke(); }
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     if (play) slots.forEach((s, i) => {
       if (!s) return;
@@ -1413,7 +1424,6 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         
         fragOrChip(x, tl[0], -78, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
         if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 86, -2); }
-        { const nid = g.nextHand && g.nextHand[i], nt = nid && TILE[nid]; if (nt) { x.save(); x.translate(-205, -4); x.scale(0.5, 0.5); fragOrChip(x, nt[0], -78, -8, false); x.strokeStyle = FAINT; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, nt[1], 46, -8, false); x.restore(); } }
         if (hov) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? INK : FAINT; x.fillText(verb, -20, 46); }
         if (o && g && st.mode === 'play' && !P.RULE.queue) { const key = g.page + ':' + g.trail.length; if (s.gk !== key) { s.gk = key; try { s.gv = P.peek(g, o).gain; } catch (e) { s.gv = null; } } if (s.gv != null) { marker(x, o.cont ? 40 : 32); x.textAlign = 'right'; x.fillStyle = o.cont ? INK : PENCIL; x.fillText('+' + fmt(s.gv), -186, 6); if (g.ring && !(g.ringSet || []).includes(o.id)) { const w0 = x.measureText('+' + fmt(s.gv)).width; x.strokeStyle = '#b88a00'; x.lineWidth = 5; x.lineJoin = 'round'; x.beginPath(); x.moveTo(-186 - w0 - 26, -18); x.lineTo(-186 - w0 - 12, 6); x.lineTo(-186 - w0 - 40, 6); x.closePath(); x.stroke(); } } }
         // uses left: one drop each, on the reagent's own chip. One placed in a circle is an empty drop
@@ -1452,15 +1462,15 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 44); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
+    if (st.mode !== 'done') { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 44); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
     { const hh = g.spec || g.hurdle || st.hurdle; if (hh) { const hp = px({ x: 20.2, z: -8.6 }); drawHurdle(g, hp[0], hp[1], hh); } }
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
-    if (!FEWER) for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
+    if (!FEWER && st.mode !== 'done') for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
-    for (let k = 1; k < tr.length; k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * STEPD, z: STEP.z }), b0 = px({ x: STEP.x + k * STEPD, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
+    for (let k = 1; k < (st.mode === 'done' ? 1 : tr.length); k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * STEPD, z: STEP.z }), b0 = px({ x: STEP.x + k * STEPD, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
     const cross = (c, col) => { x.strokeStyle = col; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 15, c[1] - 13); x.lineTo(c[0] + 15, c[1] + 13); x.moveTo(c[0] + 15, c[1] - 13); x.lineTo(c[0] - 15, c[1] + 13); x.stroke(); };
-    for (let k = 0; k < P.stepsOf(g); k++) { const c = px({ x: STEP.x + k * STEPD, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
+    for (let k = 0; k < (st.mode === 'done' ? 0 : P.stepsOf(g)); k++) { const c = px({ x: STEP.x + k * STEPD, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
       if (k < g.pageSteps) { const t = tr[k]; if (t && t.wasted) cross(c, PENCIL); else if (t && t.bank) tray(x, c[0], c[1] - 2, 0.5, INK, 5); else { x.strokeStyle = t ? rgb(colOf(t.id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
       else if (qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.5, INK, 5);
       else if (qid) { const kd = st.view && st.view.kinds[qi], cc = rgb(colOf(qid)), hi = g.kinds.indexOf(qid); x.fillStyle = cc; x.globalAlpha = 0.9; x.beginPath(); x.ellipse(c[0] + 1, c[1], 21, 19, 0.2, 0, 6.3); x.fill(); x.globalAlpha = 1; if (qid === P.SYN.finish) { marker(x, 30); x.textAlign = 'center'; x.fillStyle = '#fbf8ee'; x.fillText('F', c[0] + 1, c[1] + 11); } }
@@ -1477,9 +1487,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       // the track: the round's total runs along it as a line of ink toward the red flag, which is the number to beat; the flags past it are the marks, each with the coin it pays
       x.lineCap = 'round'; x.strokeStyle = FAINT; x.lineWidth = 5; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * (n ? 1 : 0.5), y - 3); x.stroke();
       if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 11; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
-      vals.forEach((v, k) => { const fx = T0[0] + W * fr(k), on = done ? top >= v : !!st.passT[k], tx = fmt(v);
-        if (k === 0) { flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
-        else { flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
+      if (done && !st.pass) { const gx0 = T0[0] + W * f + 8, gx1 = T0[0] + W * fr(0) - 16, kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 300) / 500)); if (gx1 > gx0 && kk > 0) { const ge = gx0 + (gx1 - gx0) * kk; x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(gx0, y - 4); x.lineTo(ge, y - 4); x.moveTo(gx0, y - 22); x.lineTo(gx0, y + 14); x.moveTo(ge, y - 22); x.lineTo(ge, y + 14); x.stroke(); if (kk < 1) dirty = true; } }
+      vals.forEach((v, k) => { const fx = T0[0] + W * fr(k), on = done ? top >= v : !!st.passT[k], tx = fmtK(v);
+        if (k === 0) { if (!st.flags3) flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
+        else { if (!st.flags3) flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
       if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest + (st.earn.extra || 0) : 0; purse(x, T1[0] + 86, y - 4, run.coins || 0, 17, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
@@ -1496,7 +1507,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     // The bank: a tray with an arrow into it, and what banking the open row would add now.
     if (g && play && P.RULE.bank && P.RULE.queue) { const c = px(BANK), placed = lineUp && g.queue.includes(P.BANKID), can = lineUp ? !placed && P.queueRoom(g) && !!st.view && st.view.bank : P.canBank(g), hov = st.mark === 'bank' && can;
-      if (lineUp || can) { tray(x, c[0], c[1], 0.72, can ? INK : FAINT, hov ? 8 : 6); } }
+      if (can) { if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, c[0], c[1] - 46, 17, {}); tray(x, c[0], c[1], 0.72, INK, hov ? 8 : 6); } }
     if (g && play && P.RULE.bank && !P.RULE.queue) {
       const c = px(BANK), can = P.canBank(g), hov = st.mark === 'bank', col = can ? INK : FAINT;
       if (can || g.cur.path.length > 0) {
@@ -1603,7 +1614,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (done) {
       const c = px({ x: 0, z: -11.4 }), ratio = g.total / st.quota;
       marker(x, 130); x.textAlign = 'center'; x.lineWidth = 16; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.fillStyle = st.pass ? GREEN : REDINK;
-      const txt = st.pass ? '' : fmt(st.quota - g.total) + ' short', tw = st.pass ? (st.wordW || 0) : x.measureText(txt).width, n = Math.floor(ratio);
+      const txt = '', tw = st.pass ? (st.wordW || 0) : x.measureText(txt).width, n = Math.floor(ratio);
       if (txt) { x.fillText(txt, c[0], c[1]); }
       { const t0 = st.doneT || now, nC = st.pass ? Math.min(12, st.paid || 0) : Math.min(12, run.beaten + (run.bonus || 0)), baseX = st.pass ? c[0] + tw / 2 + 80 : c[0] - tw / 2 - 90; for (let n = 0; n < nC; n++) { const kk = Math.max(0, Math.min(1, (now - t0 - 450 - n * 190) / 300)); if (kk <= 0) { dirty = true; continue; } const dy = (1 - kk) * (1 - kk) * 260, bx2 = st.pass ? baseX + n * 54 : baseX, by2 = st.pass ? c[1] - 36 : c[1] - 8 - n * 12; if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, bx2, by2 - dy, 24, { turn: kk < 1 ? kk : 0 }); if (kk < 1) dirty = true; } }
       if (st.won || !st.pass) { const nF = P.runLast ? P.runLast(run) : 9, wF = 70, x0F = c[0] - (nF - 1) * wF / 2, yF = c[1] + 96; for (let n = 0; n < nF; n++) { const kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 200 - n * 120) / 260)); if (kk < 1) dirty = true; flag(x, x0F + n * wF, yF - (1 - kk) * 30, 44, n < run.beaten ? GREEN : FAINT, n < run.beaten); } }
@@ -1720,6 +1731,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * (now - (st.tickT || 0) < 260 ? 50 : 16)); dirty = true; }
     // the number to beat, and each mark above it, is passed at the frame the total shown crosses it
     if (g && st.quota > 0 && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop' && st.mode !== 'terms') [st.quota].concat(P.runMarks(st.quota)).forEach((m, k) => { if (!st.passT[k] && st.shown >= m) { st.passT[k] = now; if (k < 4 && AA.sfx && AA.sfx.flag) AA.sfx.flag(k + 1); else if (k === 0) sfx.quota(); else sfx.lock(8 + k); dirty = true; } });
+    updateFlags();
     pickObjs.forEach(k => { const age = (now - (k.born || 0)) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), drop = u < 1 ? (1 - u) * (1 - u) * 9 : 0, sq = u >= 1 && age < 0.75 ? Math.sin((age - 0.45) / 0.3 * Math.PI) * 0.18 : 0; k.grp.visible = age >= 0; k.grp.rotation.y += dt * 0.6; k.grp.position.y = drop + (st.hover === k.slot ? 0.8 + 0.15 * Math.sin(now / 140) : 0); k.grp.scale.set(1.7 * (1 + sq * 0.6), 1.7 * (1 - sq), 1.7 * (1 + sq * 0.6)); });
     // equipment is moved further down, once the heat of the round is known
     if (st.multBump > 0) { st.multBump = Math.max(0, st.multBump - dt * 3.5); dirty = true; }
