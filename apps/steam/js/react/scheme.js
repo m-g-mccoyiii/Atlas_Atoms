@@ -1306,16 +1306,17 @@ function start(app) {
     // turned so that its hydrogens point away from the atom it leaves
     let dx = 0, dz = -1; if (pa) { const L = Math.hypot(p.x - pa.x, p.z - pa.z); if (L > 0.05) { dx = (p.x - pa.x) / L; dz = (p.z - pa.z) / L; } }
     const grp = new T.Group(), mats = [], mk = {}, mat = (f, el) => { const k = (f === ballMat ? 'b' : 's') + el; if (!mk[k]) { mk[k] = f(el).clone(); mk[k].transparent = true; mats.push(mk[k]); } return mk[k]; };
-    const pts = shape.a.map(q => new T.Vector3(-q[1] * dz - q[2] * dx, 0, q[1] * dx - q[2] * dz)), hs = [], cd = camDir.clone();
+    const pts = shape.a.map(q => new T.Vector3(-q[1] * dz - q[2] * dx, 0, q[1] * dx - q[2] * dz)), hs = [], sprites = [], cd = camDir.clone();
     shape.b.forEach(q => { const A = pts[q[0]], B = pts[q[1]], u = B.clone().sub(A), len = u.length(), mid = A.clone().add(B).multiplyScalar(0.5), perp = new T.Vector3().crossVectors(u.clone().normalize(), cd).normalize(), qt = new T.Quaternion().setFromUnitVectors(UP, u.clone().normalize());
       (q[2] > 1 ? [-0.5, 0.5] : [0]).forEach(f => [0, 1].forEach(h => { const fr = h ? mid : A, to = h ? B : mid, m = add(CYL, mat(stickMat, shape.a[q[h]][0]), 0, 0, 0, grp), rr = q[2] > 1 ? 0.06 : 0.09; m.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(perp, f * 0.36); m.quaternion.copy(qt); m.scale.set(rr, fr.distanceTo(to), rr); if (shape.a[q[0]][0] === 'H' || shape.a[q[1]][0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.a[q[0]][0] === 'H' ? q[1] : q[0]].clone(), p: m.position.clone() }); })); });
     shape.a.forEach((q, i) => { const R = realRad(q[0]), m = add(SPH, mat(ballMat, q[0]), pts[i].x, 0, pts[i].z, grp); m.scale.setScalar(R); if (q[0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.b.length ? (shape.b.find(k => k[1] === i) || [0])[0] : 0].clone(), p: m.position.clone() });
-      else if (q[0] !== 'C') { const sm = letterMat(q[0]).clone(); sm.transparent = true; mats.push(sm); const sp = new T.Sprite(sm); sp.position.copy(pts[i]).addScaledVector(cd, -R * 1.04); sp.scale.setScalar(R * (q[0] === 'N' || q[0] === 'S' || q[0] === 'Cl' ? 2.0 : 1.6)); grp.add(sp); } });
+      else if (q[0] !== 'C') { const sm = letterMat(q[0]).clone(); sm.transparent = true; mats.push(sm); const sp = new T.Sprite(sm); sp.position.copy(pts[i]).addScaledVector(cd, -R * 1.04); sp.scale.setScalar(R * (q[0] === 'N' || q[0] === 'S' || q[0] === 'Cl' ? 2.0 : 1.6)); grp.add(sp); sprites.push({ sp, c: pts[i].clone(), d: R * 1.04 }); } });
     const wp = srcA && prev.balls.has(srcA) ? prev.balls.get(srcA).mesh.getWorldPosition(new T.Vector3()) : new T.Vector3(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc), ws = prev.group ? prev.group.scale.x : st.sc;
     grp.position.copy(wp); grp.scale.setScalar(ws); scene.add(grp);
-    const kOn = !P.RULE.bare && JARK.includes(kind) && !!jarPos(kind);
-    st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: byTarget(kind), t0: performance.now() + 200, dur: 400, spin: 0,
-      real: { mats, hs, anchor: anc, off: pa ? new T.Vector3(p.x - pa.x, p.y - pa.y, p.z - pa.z) : null, dir: new T.Vector3(dx, 0, dz), els: [ancOld ? ancOld.el : 'C', main], order, jar: kOn, shape, stick: anc ? [CYL, stickMat(ancOld.el), stickMat(main)] : null } });
+    // what it is counted as (the step says, as path.js counts it), and whether a jar on the page is collecting that
+    const kind2 = grp0.off ? ({ water: 'water', hydrogen: 'h2', carbon_dioxide: 'co2', acid_fumes: 'chloride' })[Object.keys(grp0.off)[0]] || kind : kind, kOn = !P.RULE.bare && meta.stage >= 2 && JARK.includes(kind2) && !!jarPos(kind2);
+    st.flyers.push({ grp, gi, kind: kind2, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: byTarget(kind2), t0: performance.now() + 200, dur: 400, spin: 0,
+      real: { mats, hs, sprites, anchor: anc, off: pa ? new T.Vector3(p.x - pa.x, p.y - pa.y, p.z - pa.z) : null, dir: new T.Vector3(dx, 0, dz), els: [ancOld ? ancOld.el : 'C', main], order, jar: kOn, shape, stick: anc ? [CYL, stickMat(ancOld.el), stickMat(main)] : null } });
     return p;
   }
   // the next thing in the queue has its turn. When the queue is empty the page overreacts if its row held, or turns
