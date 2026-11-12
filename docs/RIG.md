@@ -4,6 +4,40 @@ Built 2026-11-10. The newest measure is the first section below (the seventh of 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-12, ninth: N, S and Cl in a new game, the turn parity closed, locks, Par refit
+
+Measured headless, awaiting review. Commits: 2a8ae35, tools_parity, Par refit, hetero ring molecules.
+
+### 1. Nitrogen, sulfur, chlorine in the first rounds (ruling AF)
+The six are now hydrate, oxidize, grow, thiolene (S), dehydrate, ritter (N); hydroborate and reduce left the six. A new game holds ten reflexes: ring, dry, weld, shift, tuck, flip, snap, knit (N), cap (S), close (Cl). The chain and ring molecules of up to 19 heavy atoms are replaced by 16 chain and 7 ring molecules holding N, S or Cl (`FEED_HET`, `FEED_HET_RING`, interim until MOLECULES.md; `AA.rxFeedOld = true` keeps the old table). Steps by kind, random lines of three of the six, round 1 to 3 pool (960 lines, 1,985 steps, chain molecules): ring 24, knit 16, weld 15, close 15, cap 13, dry 11, tuck 2, snap 2, shift 2 percent; no kind above 35, six kinds above 5, 44 percent of steps touch N, S or Cl (bar: 25). Flip and snap are rare here. Reviewer (fresh Sonnet): conditional pass; it found the ring-kin molecules had no N, S, Cl (fixed: 7 hetero ring molecules), hydroborate and reduce now cannot be had in a new game (the offer excludes them and the card ids differ from the offer ids; the wood spirit and slime homunculi, the findings capped, jar_slime and oxidize-then-reduce cannot be earned; OPEN), OFFER_STATS is stale for the new six (OPEN), MOTIF_START omits amine, sulfur, acid (OPEN), no benzene ring in rounds 1 to 3 (OPEN).
+
+### 2. The 40 of 150 turns that diverged
+Cause found: the test, not the game. A round opens its loose rings first (`synBegin` reopens; engine `play_round` reopens); the Python turn cases started from unsettled products that still had loose rings. With the cases reopened (`tools_parity.py make`): 126 of 150 turns agree exactly (same steps, structure, hits, reopened result), 22 are ties, 2 unresolved (a raised search cap puts both inside the engine's set). Reviewer: the method is sound; the tie test is lenient (equal places count as ties when the engine step has no choice function, runoff is not compared inside a tie set, structure-only fallbacks exist) so "150 match" means 126 exact, 22 ties, 2 unproven.
+
+### 3. Locks
+Reagents leave prot, cure and clamp atoms alone; the molecule's own reflexes leave only prot alone (a cured C=O still takes the ring). A protected site is filtered before the order is decided, so it cannot stall the cascade (reviewer confirmed). Not done: tools, `dropPieces` and mirror ignore locks; no test case holds a locked atom.
+
+### 4. Page notes
+SPEC_NOTES.md: N, S, Cl colors and labels, runoff kinds, one line per reflex kind.
+
+### 5. The fold
+FOLD.md landed late. NOT ported (ENG.NEAR is still the hook, via 'chain' only). Needs the fold of fold.py (rows of 8, rungs, anchor) and twelve across reflexes.
+
+### 6. Par and clear rates
+Par for rounds 1 to 3 refitted (greedy median of the round total, 75 runs): 6,069, 5,872, 9,599 (were 4,500, 5,600, 10,000). Bachelor's, 120 unseen runs (seeds 1,001 to 1,120) a player (not 500: the run takes 15 to 30 s now), code of commit 2a8ae35 plus Par (before the hetero ring molecules):
+
+| Player, specEase | Clear rounds 1, 2, 3 | Wins all three |
+|---|---|---|
+| novice 0 | 30, 5, 57 | 0.8 |
+| greedy 0 | 51, 32, 67 | 10.0 |
+| median 0 | 78, 51, 76 | 23.3 |
+| median 0.2 (default) | 83, 58, 70 | 31.7 |
+
+Before this pass (500 runs, old six and molecules): median 94, 81, 82 and 62 percent wins; so the median player no longer walks over it, and round 2 is a wall for the novice (5 percent) and half the greedy players. Round 1 teaches little: the novice clears only 30 percent of round 1. The bare nine-round run (ruling W2, 2 in 100) was not measured.
+
+### Not done
+Fold port; 500-run cells; the bare nine-round measure; refit of OFFER_STATS and motif yield; the unlock path for hydroborate and reduce; reviewers for items 4 and 6 (no reviewer was run for the page notes or the Par refit).
+
 ## The measure of 2026-11-12, eighth: the revised spec table, the engine, motifs, offers, counters
 
 Measured headless, awaiting review. Tools: `docs/tools_parity.py`, `docs/tools_spec_bake.py`, `docs/tools_offer_bake.py`; jobs `parity.js`, `parity_game.js`, `motif.js`, `offers.js`, `kinds.js`, `lines.js`.
