@@ -65,6 +65,8 @@ AM. On the margin notes and the feel of the page (12 November): "It should becom
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
 
+AK4. "Do mad scientist funk but we want several sound tracks and I like the gothic hybrid just tweak it a little. Let's also add in other genres like an edm one, a metal one, etc." (12 November). The game has several soundtracks: mad science funk, the gothic hybrid lightly tweaked, an EDM one, a metal one, and more.
+
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
 ## The lines broken most often
