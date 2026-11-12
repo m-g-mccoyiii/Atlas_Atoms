@@ -1,170 +1,193 @@
 # Overreact music
 
-One file: `apps/steam/js/music.js`, exposed as `AA.music`. Web Audio only. No audio files, no samples, no libraries, nothing downloaded: every sound is made by our own code, so the music is ours to sell.
+One file: `apps/steam/js/music.js`, exposed as `AA.music`. Web Audio only. No audio files, no samples downloaded, no libraries: every sound is made by our own code, so the music is ours to sell.
 
-**No human has listened to any of this.** It was built and judged from the written notes, measurements and spectrogram pictures only. The owner's ears decide.
+The owner chose theme 3, **Fuse** (12 November: "I like 3 but it's too Arcade-y can we use more than just 8 bit noise"). Fuse was rebuilt on made instruments in three arrangements for the owner to choose between. Themes 1 (Burner) and 2 (Athanor) are still in the file, on raw oscillators, shelved.
 
-## The three themes
+**No human has listened to the rebuilt Fuse.** It was built and judged from the written notes, measurements and spectrogram pictures only.
 
-All three are in D minor, the key of the effects. `AA.music.theme(1 | 2 | 3)` picks one (saved; `?music=1..3` in the address also works).
+## Fuse
 
-| | Name | In one line | Beat |
-|---|---|---|---|
-| 1 | Burner | Driving dark synth: a pumping bass, a running arpeggio, a saw lead with a rising riff. | 4/4, 108 a minute in round 1 to 124 in round 9 |
-| 2 | Athanor | Alchemical and strange: a slow swaying chant of low voices, with bells, a frame drum, an anvil and a drone. | 6/8, 58 to 68 |
-| 3 | Fuse | Tense and bare: a ticking pulse and a short figure that waits, then brass and drums blow up. | 4/4, 92 to 108 |
+A clock ticks and wood knocks on strings in threes and twos while a tune waits to start; then it blows up into timpani, low brass, choir and an anvil. D minor (the key of the effects), 4/4, 92 beats a minute in round 1 to 108 in round 9.
 
-Each theme has two written 8-bar tunes (A and B) and chords for them, in the `TH` table at the top of the file. The tune comes back as written about two sections in five; the rest of the time single bars are turned, delayed, thinned, left open or end on another note, and the instrument and octave change.
+The tune is two written 8-bar halves (`TH[3]` at the top of the file). A: a three-note figure that starts off the beat (D F E, then D F C sharp), climbs to B flat, half-closes on A, is repeated a fourth up, and closes on D. B: a long singing line over B flat, C, D minor. The tune comes back as written about two sections in five; otherwise single bars are turned, delayed, thinned or left open.
+
+### The three arrangements
+
+`AA.music.arrange('a' | 'b' | 'c')` (saved; `?fuse=a..c` in the address also works). The default is c.
+
+| | Name | Who plays |
+|---|---|---|
+| a | Chamber | a clock, col legno and pizzicato strings, piano, a solo cello on the tune, shivering strings, bass clarinet, timpani; the blow-up is strings, piano, prepared piano, timpani, bass drum |
+| b | Gothic | a clock, organ pedal, a choir, harp, tubular bells, a horn and the choir on the tune; the blow-up is trombones and horns, choir, timpani, bass drum, anvil, tam-tam |
+| c | Hybrid | a's clock, wood, pizzicato, piano and cello, with b's brass, choir and bells joining as it gets louder, plus a soft low sine and a restrained kick and field drum |
+
+### How the instruments are made
+
+Each instrument is a short recording worked out by code the first time it is needed, kept in memory, and played back like a sample (`INST` table, section "MADE INSTRUMENTS").
+
+- Held tones (cello, string section, double basses, horn, trombones, choir "ah" and "oh", organ, bass clarinet): the instrument's spectrum (harmonics smeared as a group of players smears them, shaped by the body or the mouth, breath or bow noise underneath) is written into a frequency table and turned into a 1.5 s loop by one inverse FFT. Solo tones also get a steady line under each harmonic so a held note does not swell by itself. A cello note starts with a short bow-on-string noise; an organ note with a puff.
+- Plucked (pizzicato, harp, col legno): a string model (noise going round a damped delay line) through a small body.
+- Struck (piano, prepared piano, celesta, tubular bell, glass, timpani, bass drum, field drum, anvil, tam-tam, clock tick and tock): a sum of ringing modes at each instrument's real mode ratios, each with its own decay, plus the noise of the blow.
+- Things that repeat fast (clock, col legno, pizzicato, timpani, piano) are made in two or three slightly different takes, chosen at random.
+- Playing: every note is a few milliseconds early or late and a little louder or softer (the clock is exact); struck harder is brighter; held tones are played twice, panned apart; everything goes to one made hall (a convolution reverb whose impulse is generated: 25 ms gap, a few early walls, a darkening tail; smaller for the chamber).
+
+Cost of making them: about 0.5 to 0.9 s of work for one arrangement, 1.3 s and 64 MB of memory if all three are used in one session (about 40 MB for one). `warm()` makes the first set a little at a time when the music starts.
 
 ## The states
 
-`AA.music.state(name)`. A new state starts on the next bar line (at most one bar, 2.1 to 2.6 s, plus 0.35 s), with a soft swell into it. The six marked "at once" cut in at the call.
+`AA.music.state(name)`. A new state starts on the next bar line (at most one bar, 2.6 s, plus 0.35 s) with a soft timpani roll into it. Those marked "at once" cut in at the call.
 
 | State | When | What plays |
 |---|---|---|
-| `title` | title screen | two bars of opening, then the full tune with everything |
-| `bench` | between runs | pieces of the tune over a held bass note, light drums |
-| `shop` | the shop | the B tune first, bass and arpeggio forward, light drums |
-| `pick` | choosing a molecule | the tune bent onto hanging chords, a question with no answer, ticking |
-| `plan` | a round in play, the player is choosing | calm: bass, pad, pieces of the tune; leaves room for the queue and fire sounds |
-| `chain` | from fire, while the molecule reacts (at once) | no beat of its own: a held bed that grows with intensity (see below) |
-| `overreact` | the OVERREACT moment (at once) | the tune in octaves with everything, fading in over about a second so the effect's own hit is heard first; after 8 bars it eases off |
+| `title` | title screen | two bars of clock and bass, then the full tune |
+| `bench` | between runs | pieces of the tune over a held bass note |
+| `shop` | the shop | the B half first, lighter |
+| `pick` | choosing a molecule | the tune bent onto hanging chords, a question with no answer |
+| `plan` | a round in play, the player is choosing | clock, wood, pizzicato, pieces of the tune; leaves room for the queue and fire sounds |
+| `chain` | from fire, while the molecule reacts (at once) | no beat of its own: see below |
+| `overreact` | the OVERREACT moment (at once) | tam-tam and bass drum, then the tune in octaves with everything, fading in over about a second so the effect's own hit is heard first; eases off after 8 bars |
 | `won` | round won (at once) | a three-bar close (Gm, A, open D), then a lighter loop |
 | `lost` | round lost (at once) | a falling phrase that does not resolve, then a drone |
 | `runwon` | run won (at once) | a rising phrase to D major, then the tune at full strength; eases off after 12 bars |
-| `runlost` | run lost (at once) | the tune slow, sung low, with a bell |
+| `runlost` | run lost (at once) | the tune slow, sung low by the choir |
 
-Each state starts at its own intensity. `AA.music.intensity(0..1)` moves it: layers (drums, arpeggio, low voices, bells or stabs) come in at set levels.
+`AA.music.intensity(0..1)` moves the level within a state: timpani, piano figures, choir, bells or brass come in at set levels.
 
 ### The chain
 
-The effects play each step on the game's own timing (the gaps shrink from 0.93 s to 0.57 s), so there is no fixed tempo to share. In a chain the music therefore drops its beat and holds a bed: fifths through a filter that opens, a pulse that speeds up, a choir that gains one voice at a time (seven by the end), shivering high strings, rising noise, and near the top a note a semitone off. `AA.music.step(n)` at each hit sets the intensity to n/12, moves the bed to the effects' chord (Dm, Bb, Gm, A, three steps each, read from `sfx.js`), and sings one note of the theme's tune low, bent to that chord. So every step lands in key.
+The effects play each step on the game's own timing (gaps shrink from 0.93 s to 0.57 s), so there is no fixed tempo to share. In a chain the music drops its beat: the clock speeds up, shivering strings open, a choir gains one voice at a time, low brass (cello and bass clarinet in the chamber) swells, wood knocks crowd in, a timpani roll grows, and near the top one string note sits a semitone off. `AA.music.step(n)` at each hit sets intensity to n/12, moves the bed to the effects' chord (Dm, Bb, Gm, A, three steps each, read from `sfx.js`), and plays one note of the tune on piano and pizzicato (harp and a bell in the gothic one), bent to that chord.
 
 ### Rounds: sane to unhinged (HARNESS line AM)
 
-`AA.music.round(1..9)`. Round 1 is in tune and in time. By round 9: 15 to 19 percent faster and the tempo runs away through each 8 bars then snaps back; voices detune (twice as wide, each note drifting up to 15 cents); notes slip late; from round 4 every E in the tune falls to E flat, from round 6 the short A's fall to A flat, from round 8 the last bar of a section is doubled a tritone up and the bass steps to the tritone; a few random wrong notes (6 in 100 short tune notes, 7 in 100 arpeggio notes at round 9); the low voices come in sooner and up to three more join, the last a semitone off; drums, bass, lead and voices are driven harder. Loudness is held level (within 0.5 dB of round 1) so the room for the effects does not shrink.
+`AA.music.round(1..9)`. Round 1 is in tune and in time. By round 9: 18 percent faster, and the tempo runs away through each 8 bars then snaps back; every note drifts up to 17 cents and slips late; from round 4 each E in the tune falls to E flat, from round 6 the short A's fall to A flat, from round 8 the last bar of a section is doubled a tritone up and the bass steps to the tritone; a few random wrong notes; more and more piano notes are played on the prepared piano (bolts in the strings); the choir comes in sooner (in the chamber, where there is no choir, one creeps in from round 6) and up to three more voices join, one a semitone off every other bar; everything is driven harder. Loudness is held within 1.4 dB of round 1.
 
 ## The API
 
 ```
 AA.music.state(name)        // see the table; no argument reads it
-AA.music.intensity(0..1)    // how hard the current state plays
+AA.music.intensity(0..1)
 AA.music.step(n)            // a chain step, 1 and up, at the hit
-AA.music.round(1..9)        // later rounds faster and more unhinged
-AA.music.theme(1|2|3)       // saved in localStorage 'overreact.music'
+AA.music.round(1..9)
+AA.music.arrange('a'|'b'|'c')   // Fuse's arrangement; saved
+AA.music.theme(1|2|3)       // 3 is Fuse and the default; 1 and 2 are shelved
 AA.music.volume(0..1)       // music only; saved
 AA.music.seed(n)            // the run's seed: same seed, same choices
-AA.music.duck(depth, ms)    // push the music down for a moment (only needed without the shared bus)
+AA.music.duck(depth, ms)    // only needed without the shared bus
 AA.music.stop()
-AA.music.info()             // theme, state, intensity, round, shared bus or not, nodes made
-AA.music.THEMES, AA.music.STATES
-AA.music._renderTimeline(events, secs, opts)             // offline: [{ t: ms, n: 'state'|'intensity'|'step'|'round'|'theme'|'volume'|'duck'|'stop', a: [...] }] -> { l, r, bars, nodes, peak, ms }
-AA.music._renderWithSfx(events, sfxEvents, secs, opts, sfxOpts)   // music and effects through the effects' bus -> { l, r }
-AA.music._score(events, secs, opts)                      // no sound: the bar log, for counting repeats
+AA.music.info()
+AA.music._renderTimeline(events, secs, opts)   // offline; opts: theme, arr, seed, round, volume, solo
+AA.music._renderWithSfx(events, sfxEvents, secs, opts, sfxOpts)
+AA.music._score(events, secs, opts)            // no sound: the bar log
 ```
 
 ## What the page builder must call, and where
 
-1. Load `js/music.js` right after `js/sfx.js` (it must load before the first sound, see "the bus").
-2. Title screen shown: `AA.music.state('title')`. Sound starts on the first click or key, as the effects do.
+1. Load `js/music.js` right after `js/sfx.js`, before the first sound.
+2. Title screen: `AA.music.state('title')`. Sound starts on the first click or key, as the effects do.
 3. Bench: `state('bench')`. Shop: `state('shop')`. Choosing between two molecules: `state('pick')`.
 4. Run starts: `AA.music.seed(runSeed)`. Round n begins: `AA.music.round(n)` then `state('plan')`.
 5. The line fires: `state('chain')`.
 6. Each reflex hit, where `AA.sfx.reflex(kind, n, ...)` is called: `AA.music.step(n)`.
 7. OVERREACT pops: `state('overreact')`, at the same moment as the effect.
-8. Round ends: `state('won')` or `state('lost')`. Next page of the same round with no ending: `state('plan')`.
+8. Round ends: `state('won')` or `state('lost')`. Next page of the same round: `state('plan')`.
 9. Run ends: `state('runwon')` or `state('runlost')`.
-10. Stop calling the old `AA.sfx.startMusic()` / `setMusic` / `setIntensity`. If `AA.sfx.ambience(...)` is used on the same screen, the two beds play together; that mix has not been checked.
-11. Settings: a music slider calls `AA.music.volume(v)`. On the shared bus the effects' volume and mute also act on the music (they are the master).
+10. Stop calling the old `AA.sfx.startMusic()` / `setMusic` / `setIntensity`.
+11. Settings: a music slider calls `AA.music.volume(v)`. On the shared bus the effects' volume and mute also act on the music.
 
 ## The bus
 
-`sfx.js` keeps its audio context private, so `music.js` catches it by wrapping `AudioContext` when it loads, and plugs into the effects' ducked bed (`ctx.__ovsb.bed`) as soon as that exists. Then every effect hit pushes the music down, the held breath before the last hit silences it too, and both go through one limiter. If there is no effects bus (style 0, or `sfx.js` absent) the music uses its own limiter. A one-line getter in `sfx.js` (for example `AA.sfx.bus()`) would replace the catch; that file belongs to the sound builder.
+`sfx.js` keeps its audio context private, so `music.js` catches it by wrapping `AudioContext` when it loads, and plugs into the effects' ducked bed (`ctx.__ovsb.bed`) as soon as that exists. Then every effect hit pushes the music down, the held breath before the last hit silences it too, and both share one limiter. With no effects bus the music uses its own limiter. A one-line getter in `sfx.js` would replace the catch; that file belongs to the sound builder.
 
-## Measurements
+## Measurements (Fuse, after the second director's fixes)
 
-Offline renders in headless Edge through the real code (`.claude/music/`, not in git: `render.sh`, `man.py`, `segs.py`, `fxan.py`, `rounds.py`, `rep.py`, `mkclips.py`). Loudness is K-weighted and gated like LUFS, computed by our own script (not a certified meter). All at volume 0.7, round 1.
+Offline renders in headless Edge through the real code (`.claude/music/`, not in git). Loudness is K-weighted and gated like LUFS, by our own script. Volume 0.7, round 1.
 
 Loudness per state (LUFS), share of energy under 120 Hz, level lost through a phone speaker (300 Hz high-pass):
 
-| State | 1 Burner | 2 Athanor | 3 Fuse |
+| State | a chamber | b gothic | c hybrid |
 |---|---|---|---|
-| title | -19.1, 28%, 3.0 dB | -19.3, 29%, 4.6 dB | -21.2, 36%, 3.8 dB |
-| bench | -24.2, 25%, 2.6 dB | -26.0, 34%, 5.0 dB | -24.0, 24%, 2.8 dB |
-| pick | -25.8, 18%, 2.3 dB | -26.4, 22%, 3.8 dB | -25.6, 18%, 2.6 dB |
-| plan | -25.9, 42%, 4.6 dB | -27.3, 53%, 6.5 dB | -25.6, 30%, 3.5 dB |
-| chain (steps 1 to 12) | -24.0, 11%, 3.9 dB | -26.2, 13%, 2.8 dB | -27.7, 9%, 1.8 dB |
-| overreact | -14.3, 26%, 2.4 dB | -14.7, 31%, 5.0 dB | -14.4, 37%, 3.7 dB |
-| won | -20.5, 28%, 3.0 dB | -20.2, 33%, 4.4 dB | -21.7, 18%, 2.3 dB |
-| shop | -22.5, 31%, 2.6 dB | -22.2, 36%, 4.8 dB | -21.8, 19%, 1.5 dB |
-| lost | -25.3, 24%, 3.5 dB | -25.9, 31%, 4.1 dB | -24.8, 13%, 3.8 dB |
-| runwon | -15.4, 27%, 2.7 dB | -15.4, 28%, 3.7 dB | -15.5, 37%, 3.6 dB |
-| runlost | -22.9, 16%, 3.0 dB | -22.7, 22%, 4.2 dB | -21.1, 8%, 2.1 dB |
+| title | -20.1, 9%, 2.4 dB | -19.6, 12%, 2.4 dB | -19.1, 16%, 2.1 dB |
+| bench | -24.2, 7%, 1.7 dB | -25.2, 14%, 1.9 dB | -25.3, 17%, 2.0 dB |
+| pick | -26.7, 9%, 2.3 dB | -27.5, 13%, 2.4 dB | -26.9, 13%, 2.3 dB |
+| plan | -26.0, 22%, 3.4 dB | -27.6, 22%, 2.9 dB | -27.4, 36%, 3.8 dB |
+| chain (steps 1 to 12) | -26.8, 23%, 3.3 dB | -27.1, 15%, 2.6 dB | -25.6, 13%, 2.3 dB |
+| overreact | -15.3, 26%, 3.8 dB | -15.2, 18%, 2.5 dB | -14.5, 20%, 2.2 dB |
+| won | -21.5, 9%, 2.6 dB | -20.1, 12%, 2.5 dB | -21.6, 18%, 2.4 dB |
+| shop | -22.2, 4%, 1.4 dB | -21.5, 12%, 2.1 dB | -23.4, 20%, 2.1 dB |
+| lost | -26.6, 9%, 3.3 dB | -24.8, 9%, 2.0 dB | -26.4, 17%, 2.9 dB |
+| runwon | -16.4, 18%, 3.0 dB | -15.8, 14%, 2.2 dB | -15.4, 18%, 2.1 dB |
+| runlost | -23.7, 6%, 3.9 dB | -21.4, 6%, 1.7 dB | -23.5, 11%, 3.0 dB |
 
-Clipping: no sample at full scale in any take. Highest peak, music alone: -1.5 dBFS (overreact).
+No sample at full scale in any take. Highest peak, music alone: -2.2 dBFS.
 
 With the effects (arcade a, chant layer on, the logged 12-step chain, both through the effects' bus):
 
-| | 1 | 2 | 3 |
+| | a | b | c |
 |---|---|---|---|
-| Least room under an effect hit (hit level minus music level in the same 0.3 s) | 8.3 dB | 8.7 dB | 11.7 dB |
-| Room at the last hit | 14.8 dB | 15.9 dB | 18.1 dB |
-| Chain loudness: effects alone / music alone | -15.6 / -24.9 | -15.6 / -27.0 | -15.6 / -28.3 |
-| First second of OVERREACT: effect / music | -10.6 / -19.1 dB | -10.6 / -20.2 | -10.6 / -21.4 |
+| Least room under an effect hit (hit level minus music level in the same 0.3 s) | 9.7 dB | 11.8 dB | 8.3 dB |
+| Chain loudness: effects alone / music alone | -16.0 / -27.1 | -16.0 / -27.7 | -16.0 / -25.6 |
+| First second of OVERREACT: effect / music | -10.5 / -22.7 dB | -10.5 / -22.8 | -10.5 / -21.5 |
 | Peak of the two together, clipped samples | -0.8 dBFS, 0 | -0.8, 0 | -0.8, 0 |
 
-The same eight bars at round 1, 5, 9: length 17.8 / 16.3 / 14.9 s (Burner), 16.6 / 15.0 / 13.6 (Athanor), 20.9 / 18.9 / 17.2 (Fuse); loudness -18.6 / -18.5 / -18.9, -19.0 / -18.6 / -19.0, -20.4 / -20.2 / -20.9 LUFS.
+Fullness against the Fuse the owner heard (all eleven states, 176 s):
 
-Repeats, twelve minutes held in one state (the hardest case), counted on the notes written, not on the sound:
+| | old Fuse (oscillators) | a | b | c |
+|---|---|---|---|---|
+| Share of energy over 4 kHz, whole / title | 0.55% / 0.07% | 1.9% / 2.7% | 1.1% / 1.3% | 1.3% / 1.2% |
+| Separate partials within 40 dB of the strongest, per frame | 47 | 154 | 162 | 145 |
+| Flatness of the spectrum (0 = a few bare tones) | 0.0036 | 0.027 | 0.026 | 0.025 |
+| Stereo side level under the middle | -14.4 dB | -10.7 | -9.0 | -9.4 |
+| Layer of the tune over the next loudest layer, title | (not measured) | +5.1 dB | +3.6 dB | +6.1 dB |
 
-| | 1 | 2 | 3 |
+A first build had 3.5 to 4.7% over 4 kHz, but the director showed most of that was hiss from the noise put under the choir and strings, not overtones. The hiss was cut, so the figure fell. The top is still thin.
+
+The same eight bars at round 1, 5, 9: 20.9 / 18.8 / 17.2 s in all three; loudness a -19.0 / -19.4 / -19.7, b -18.7 / -19.2 / -20.1, c -19.1 / -18.8 / -20.0 LUFS.
+
+Repeats, twelve minutes held in one state, counted on the notes written: 8 bars never come back note for note in any arrangement or state; 4 bars come back once in b (shop at 5 min, title at 11.7 min) and never in a or c; the tune alone first comes back as written after 84 s or more (meant to); 0 to 4% of bars equal another seed's bar at the same place.
+
+Cost (30 s takes written a second ahead as the live clock does, best of three on a shared machine):
+
+| | a | b | c |
 |---|---|---|---|
-| First time any 8 bars come back note for note, all instruments (title) | never in 12 min | never | never |
-| Worst state for that | never | bench, at 11 min | never |
-| First time 8 bars of the tune alone come back (title); meant to, it is the tune | 93 s | 120 s | 89 s |
-| Different 8-bar tune sections out of all played (title) | 35 of 40 | 42 of 43 | 34 of 34 |
-| Bars equal to another seed's bar at the same place | 0 to 1.2% | 0 to 1.1% | 0% |
+| Render time per second of sound, title / overreact | 0.054 / 0.080 s | 0.050 / 0.079 s | 0.071 / 0.090 s |
+| Nodes made per second, title / overreact | 57 / 108 | 51 / 85 | 80 / 133 |
+| Most nodes alive at once, title / overreact | 141 / 253 | 156 / 240 | 214 / 321 |
 
-Cost (30 s takes, written a second ahead as the live clock does, best of three because the machine was shared):
+No AudioWorklet was needed. Live load in the game was not measured (the browser's load meter is absent in headless Edge). The live player was run in headless Edge in all three arrangements in title, overreact and chain: it starts, plays and switches.
 
-| | 1 | 2 | 3 |
-|---|---|---|---|
-| Render time per second of sound, title / overreact | 0.070 / 0.080 s | 0.072 / 0.085 s | 0.049 / 0.077 s |
-| Nodes made per second, title / overreact | 150 / 183 | 114 / 159 | 63 / 129 |
-| Most nodes alive at once, title / overreact | 142 / 193 | 200 / 220 | 112 / 194 |
+## The second director's judgement
 
-A voice that has ended is taken off the graph at once; before that fix the same takes cost four times as much. Live load in the game was not measured (the browser's load meter is not available in headless Edge). The live player was run in headless Edge for all three themes in title, overreact and chain: it starts, plays and switches.
+One fresh sub-agent, asked "does any of this still sound like an arcade or 8-bit game". It could not hear either. Judged before the last fixes:
 
-## The music director's judgement
+- Arcade, 8-bit, mobile-puzzle: pass for all three arrangements in every state, music alone. No bare oscillator is left in Fuse's path except the hybrid's soft low sine and its kick.
+- The new risk is different: "1990s sound module". Struck and plucked things (pizzicato, piano, timpani, bass drum, tubular bell, clock) are likely close. Sections (strings, choir, trombones) are likely recognisable. Solo bowed and blown lines (the cello and horn on the tune) stay synthetic, because the life of those is in how notes start and join, which a steady loop does not have.
+- **During a chain the effects, not the music, will still sound arcade.** `sfx.js` has 88 saw, square and triangle voices and sits about 10 dB over the music there. That file is the sound builder's and was not touched.
+- The tune: a real, hummable 8-bar tune; one sour bar (fixed).
+- It would put forward c (hybrid): the most convincing wait (clock, wood, pizzicato) and the only blow-up with real weight. Fallback: a with c's blow-up. b leans hardest on the weakest sounds (choir and organ loops).
 
-One fresh sub-agent read the harness, the code, the measurements and the pictures. It could not hear either. Before the fixes:
+Fixed after its report: choir hiss cut; solo tones steadied so tune notes are even; a bow noise under each cello start and a puff under organ notes; the tune 3 dB up, pad down, the hybrid's calm pad thinned; the sour bar; strings changed from a bright pad towards a section; bass clarinet no longer a filtered-square spectrum; two or three takes of the fast-repeating instruments; struck harder is brighter; a gap before the hall's tail, a smaller hall for the chamber, less of the tune in it; the middle rounds made odder; the off choir voice only every other bar; piano rings longer; timpani thud; tam-tam blooms; anvil at one pitch; the gothic clock in eighths; the cello never sent an octave up. Not done from its list: true legato joins on the tune (each note is still struck afresh); a second, brassier horn set. The fixed version was measured again but not sent back to the director.
 
-| | 1 Burner | 2 Athanor | 3 Fuse |
-|---|---|---|---|
-| Passes as a Steam soundtrack for adults | pass (a guess) | pass only if the chant reads as voices (a guess) | fail when calm, pass in OVERREACT |
-| Fits a lab going wrong | half: a chase, not a notebook | pass, the most alchemical | pass: tick, wait, blow up |
-| Childish | no | no; many high bells in OVERREACT could read as a music box | calm states: woodblock and high pings read as mobile-puzzle music |
-| Tiresome | narrowly no; title and OVERREACT flat and busy | same register in every state | a held high string through six states |
+## How close synthesis gets, and what a licensed sample set would add
 
-Its pick: Athanor, if a human confirms the chant sounds like voices; otherwise Burner.
+Judged from recipes and measurements, not by ear: this tops out at about "a good 1990s sound module in a nice hall". It is not chip music, and it is not a recorded orchestra.
 
-All twelve of its fixes were made: the pick state bends the tune onto its own chords; the unhinged curve bites from the middle rounds and uses set changes rather than mostly random errors; Fuse's held string only plays in the second half of a section or when loud and at half level, its pings are an octave lower and quieter, its calm states are 3 dB up with a low pad; one clashing bar each in Athanor, Burner and Fuse rewritten (Fuse no longer shares a bar with Burner); the chain's low note is an octave up and grows to step 12; the title opening is 2 bars, not 4; OVERREACT and run-won ease off after their first statement; Burner's OVERREACT has a brass lead the title lacks; Athanor's calm states are barer and its OVERREACT bells are three a bar an octave lower; the extra drive is oversampled.
-
-The fixed version was measured again (the tables above) but was not sent back to the director.
+A licensed sample set would add: real bow noise, bow changes and true legato on cello and horn; three to five loudness layers where the tone itself changes (brass that turns brassy, piano that hardens); several real takes of each note; real choir vowels with breath and consonants; a real room and real release tails; true col legno, timpani rolls and tam-tam bloom. The biggest gain would be the solo cello and horn that carry the tune, and the choir. Piano, pizzicato, bells, timpani and the clock could stay made by code. A set would add download size (hundreds of MB for an orchestral one unless trimmed to these few instruments) and a licence to check for a commercial game.
 
 ## Not done
 
-- Nobody has listened. Whether the chant sounds like voices or like a buzz, whether the tunes are good, whether round 9 sounds mad or broken: unknown.
+- Nobody has listened to the rebuilt Fuse.
 - Not wired into any game page. No page calls `AA.music` yet.
-- The three chain beds are the same build with a different mix per theme.
-- The mid-chain bed has little energy between 60 and 120 Hz of its own; the deep sound in a chain is mostly the effects' chant layer.
-- Almost nothing above 4 kHz; it may sound muffled.
-- A state change that is not a cut waits for the bar line (up to about 3 s in Fuse).
-- No separate mute for music on the shared bus; no fade on window blur; no pause when the game pauses.
+- The sound effects still sound arcade in a chain; that is `sfx.js`.
+- No legato between tune notes; one loudness layer per instrument (brightness is a filter).
+- Little energy over 4 kHz (1 to 2%).
+- A state change that is not a cut waits for the bar line (up to about 3 s).
+- 40 MB of memory for one arrangement, 64 MB if all three are used; the first bar of a new state can wait up to about 0.1 s for a low piano note to be made if `warm()` has not reached it.
+- No separate music mute on the shared bus; no pause or window-blur handling.
 - Live CPU load not measured; only offline render time.
 - `AA.sfx.ambience` and the music together not checked.
-- Catching the effects' audio context by wrapping `AudioContext` is a stopgap until `sfx.js` offers its bus.
+- Themes 1 and 2 are untouched oscillator versions; their measurements are in git history of this file.
 
 ## Clips
 
-In `C:\Work\atlas-atoms\.claude\shots`: `music-theme-1.mp4`, `-2`, `-3` (title, planning, chain, OVERREACT, round won, shop, then the same eight bars at round 1, 5, 9), `music-compare.mp4` (30 s of each), `music-with-effects-1.mp4`, `-2`, `-3` (under the effects on the 12-step chain).
+In `C:\Work\atlas-atoms\.claude\shots`: `fuse-a.mp4`, `fuse-b.mp4`, `fuse-c.mp4` (title, planning, chain, OVERREACT, round won, shop, then the same eight bars at round 1, 5, 9; 152 s each), `fuse-compare.mp4` (the Fuse the owner heard first, then a, b, c on the same 30 s), `fuse-with-effects.mp4` (a, b, c each under the effects on the 12-step chain). The earlier `music-*.mp4` clips are the three oscillator themes.
