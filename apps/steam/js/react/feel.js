@@ -767,7 +767,9 @@ function seeStep(o, nm, prev, act, ms) { try { seeCarry(o, nm, prev); const atom
 function seeHit(t) { let e = null; SEE.list.forEach(q => { if (!q.strike && !q.tHit) e = q; }); if (!e) return; SEE.list.forEach(q => { if (q !== e && q.tHit && !q.cut) q.cut = t; }); e.tHit = t; e.spot = null; }
 // a reflex step is never quicker than the eye: the wind-up and the swing have a floor
 function seeFloor(ph, n, last) { if (last) return ph; const sp = (F.seq && F.seq.speed) || 1, f = (PACE === '3' ? 0.7 : 1) * (n > 8 ? 0.8 : 1) / sp; ph.wind = Math.max(ph.wind, 420 * f); ph.swing = Math.max(ph.swing, 280 * f); return ph; }
+let SEE_OFF = false; try { SEE_OFF = new URLSearchParams(root.location.search).get('see') === '0'; } catch (e) { SEE_OFF = false; }   // ?see=0: no outlines, glow or names on the reacting atoms
 function seeFrame(t) {
+  if (SEE_OFF) SEE.list.length = 0;
   if (!api || !api.over || (!SEE.list.length && !SEE.dirty)) return; const cv = seeCanvas(); if (!cv) return; const oc = api.over.cv; if (cv.width !== oc.width || cv.height !== oc.height) { cv.width = oc.width; cv.height = oc.height; }
   const x = SEE.x, W = cv.width, H = cv.height, k = W / 1280; x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); SEE.dirty = false;
   const mol = api.center(); if (!mol) { SEE.list.length = 0; return; }

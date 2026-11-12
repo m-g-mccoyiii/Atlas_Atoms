@@ -519,7 +519,7 @@ function start(app) {
     hd.forEach((list, pa) => { const P0 = pos.get(pa); if (!P0) return; let mx = 0, mz = 0, n = 0; nb.get(pa).forEach(q => { const p = pos.get(q); if (p) { mx += p.x; mz += p.z; n++; } }); const dx = n ? P0.x - mx / n : 0, dz = n ? P0.z - mz / n : -1, l = Math.hypot(dx, dz) || 1, d = { x: dx / l, z: dz / l };
       list.forEach((h, k) => { const dd = rot(d, list.length === 1 ? 0 : (k - (list.length - 1) / 2) * 1.1); at.get(h).set(P0.x + dd.x * hlen.get(h), y0, P0.z + dd.z * hlen.get(h)); }); });
     at.fold = null; at.flip = null; at.unf = null;
-    return { f, rows, rk, rungSet: rungs };
+    return { f, rows, rk, rungSet: rungs, bodyOf };
   }
   // the box of what is drawn, with the atoms' own radii, in the molecule's units
   function drawnBox(m) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; m.balls.forEach((b, a) => { const p = m.at.get(a); if (!p) return; const r = (b.R || 0.4) + 0.1; x0 = Math.min(x0, p.x - r); x1 = Math.max(x1, p.x + r); z0 = Math.min(z0, p.z - r - 0.3); z1 = Math.max(z1, p.z + r); }); return { x0, x1, z0, z1, w: x1 - x0, d: z1 - z0, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2 }; }
@@ -570,7 +570,7 @@ function start(app) {
   }
   // Puts every ball and stick of a molecule where pos says its atoms are. grow(atom) runs 0 to 1 for an atom that is
   // appearing, and a stick appears with the later of its two ends.
-  const _u = new T.Vector3(), _q = new T.Quaternion(), _perp = new T.Vector3(), _mid = new T.Vector3(), _gb = new T.Vector3();
+  const _ride = new T.Vector3(), _u = new T.Vector3(), _q = new T.Quaternion(), _perp = new T.Vector3(), _mid = new T.Vector3(), _gb = new T.Vector3();
   function layout(m, pos, grow) {
     m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * (b.sk || 1.25) * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
     m.sticks.forEach(s => {
@@ -677,7 +677,7 @@ function start(app) {
   run = P.runNew(meta.tier); run.manual = true;
   const PICKX = [-15, 0, 15];
   // the molecule in the middle while it is changing from what it was to what it is
-  let morph = null;
+  let morph = null; const STAGED = (() => { try { return new URLSearchParams(root.location.search).get('staged') !== '0'; } catch (e) { return true; } })();
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
   // how near the page is to going off by itself: grows with the row and with the page's reactions used
@@ -1044,6 +1044,32 @@ function start(app) {
       U.rep.forEach(b => { const p = C[b[0]], q = C[b[1]], min = b[2] + (b[3] - b[2]) * kk; let dx = q.x - p.x, dz = q.z - p.z, d = Math.hypot(dx, dz); if (d >= min) return; if (d < 1e-4) { dx = Math.cos(b[0] * 1.3 + b[1]); dz = Math.sin(b[0] * 1.3 + b[1]); d = 1; } const f = (d - min) / d * 0.5; p.x += dx * f; p.z += dz * f; q.x -= dx * f; q.z -= dz * f; }); }
     // hydrogens that are drawn ride with their atom
     U.hs.forEach(h => { const c = mo.cur.get(h[0]), i = U.A.indexOf(h[1]); if (c && i >= 0) { c.x += C[i].x - U.pre[i].x; c.z += C[i].z - U.pre[i].z; } });
+  }
+  // A change is played in two parts so that it is seen where it happens. First the atoms that change (and the ring they are in) take their new
+  // shape in place, while everything before them stands still and everything after them is carried along as it was. Only when that is done does
+  // the rest of the drawing re-flow along the snake to its new places. stageMid gives where every atom stands between the two parts.
+  function stageMid(nm, o, from) {
+    if (!nm.fl || !nm.fl.bodyOf) return null; const at = nm.at, hv = []; nm.balls.forEach((b, a) => { if (a.el !== 'H') hv.push(a); });
+    const M = new Set(), tr = a => (o.map && o.map.get(a)) || a, addM = a => { if (a && a.el !== 'H' && nm.balls.has(a)) M.add(a); };
+    (o.atoms || []).concat(o.join || []).forEach(a => addM(tr(a))); ((o.r && o.r.made) || []).forEach(addM); hv.forEach(a => { if (!from.has(a)) M.add(a); });
+    nm.sticks.forEach(q => { if (q.old === false && !q.rung) { addM(q.a); addM(q.b); } });
+    if (!M.size) return null; Array.from(M).forEach(a => { const bd = nm.fl.bodyOf.get(a); if (bd) bd.atoms.forEach(x => M.add(x)); });
+    const dist = a => { const f = from.get(a), t = at.get(a); return f ? Math.hypot(f.x - t.x, f.z - t.z) : 0; }; if (!hv.some(a => !M.has(a) && dist(a) > 0.08)) return null;
+    const nbr = a => nm.model.neighbors(a).filter(n => n.atom.el !== 'H' && nm.balls.has(n.atom) && !n.bond.rung).map(n => n.atom), mid = new Map(), seen = new Set();
+    M.forEach(a => mid.set(a, at.get(a).clone()));
+    hv.forEach(a0 => { if (M.has(a0) || seen.has(a0)) return; const comp = [], q = [a0]; seen.add(a0); let att = null; while (q.length) { const u = q.pop(); comp.push(u); nbr(u).forEach(v => { if (M.has(v)) { if (!att) att = [u, v]; return; } if (!seen.has(v)) { seen.add(v); q.push(v); } }); }
+      const moved = Math.max.apply(null, comp.map(dist)); if (moved < 0.08 || !att || comp.length <= 3 || !from.get(att[0])) { comp.forEach(c => mid.set(c, at.get(c).clone())); return; }
+      const a = att[0], y = att[1], fa = from.get(a), fy = from.get(y), my = mid.get(y), sx = (fy ? my.x + fa.x - fy.x : my.x + at.get(a).x - at.get(y).x) - fa.x, sz = (fy ? my.z + fa.z - fy.z : my.z + at.get(a).z - at.get(y).z) - fa.z;
+      comp.forEach(c => { const f = from.get(c); mid.set(c, new T.Vector3(f.x + sx, at.get(c).y, f.z + sz)); }); });
+    nm.balls.forEach((b, h) => { if (h.el !== 'H') return; const pa = nm.model.neighbors(h).map(n => n.atom).find(x => mid.has(x)); const t = at.get(h); mid.set(h, pa ? new T.Vector3(mid.get(pa).x + t.x - at.get(pa).x, t.y, mid.get(pa).z + t.z - at.get(pa).z) : t.clone()); });
+    let need = 0; mid.forEach((p, a) => { const t = at.get(a); need = Math.max(need, Math.hypot(p.x - t.x, p.z - t.z)); }); return need > 0.08 ? mid : null;
+  }
+  // the second part: from where the first part left every atom, along the snake to where it belongs
+  function stageTwo(mo, wait) {
+    const m = mo.m, from = new Map(), start = new Map(), cur = new Map(); m.balls.forEach((b, a) => { const p = mo.mid.get(a) || m.at.get(a); from.set(a, p.clone()); start.set(a, wait); cur.set(a, p.clone()); });
+    const two = { s0: wait, ms: 0, slow: false, m, from, start, cur, t0: performance.now(), end: wait + 400, made: new Set(), stage2: true };
+    try { if (mo.prev2 && mo.fwd2) two.slide = slideSet(mo.prev2, m, mo.fwd2, from); } catch (e) { two.slide = null; }
+    m.sticks.forEach(q => { q.old = true; }); return two;
   }
   // finishes at once whatever the last reaction was still playing, so that the next one can start
   function flush() {
@@ -1494,7 +1520,7 @@ function start(app) {
     prods.forEach(m => { if (m) tween(m, { x: m.group.position.x, z: m.group.position.z }, 0.01, 0.14, () => freeMol(m)); }); prods = [];
     tweens = tweens.filter(tw => tw.m !== prev); freeMol(prev); center = nm; SC_MAIN = fitMain(nm);
     const L = land(o, before, wasOpen, nm, s.id, lab, from);
-    if (morph && morph.m === nm && o.map) { morph.bend = bendOf(prev, nm, o.map, from); if (!morph.bend) morph.slide = slideSet(prev, nm, o.map, from); }
+    if (morph && morph.m === nm && o.map) { let mid = null; try { mid = STAGED ? stageMid(nm, o, from) : null; } catch (e) { mid = null; } if (mid) { morph.mid = mid; morph.prev2 = { fl: prev.fl }; morph.fwd2 = o.map; morph.fromHit = new Map(); from.forEach((p, a) => { const md = mid.get(a), t = nm.at.get(a); morph.fromHit.set(a, md && t ? new T.Vector3(p.x + t.x - md.x, p.y, p.z + t.z - md.z) : p); }); } else { morph.bend = bendOf(prev, nm, o.map, from); if (!morph.bend) morph.slide = slideSet(prev, nm, o.map, from); } }
     if (fe() && morph && morph.m === nm) FEEL.onReact(o, nm, prev, L, morph);
     st.zoomT = performance.now();
     // the next choice opens as soon as the places have changed. Equipment goes on firing while the player looks
@@ -1510,7 +1536,7 @@ function start(app) {
       st.mode = 'play'; refresh();
       // a page with nothing left to do turns itself
       if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, Math.max(300, L.dur - L.unlock + 120)); }
-    }, fe() ? FEEL.unlock(o, L) : L.unlock);
+    }, (fe() ? FEEL.unlock(o, L) : L.unlock) + (morph && morph.m === nm && morph.mid ? 330 : 0));
     if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
     dirty = true;
   }
@@ -2092,7 +2118,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   });
 
   // the moment of play is played by feel.js (AA.rxFeel); with feel 0 or no feel.js the page plays it as before
-  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => layoutSafe(m, f, s), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
   function size() {
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
@@ -2114,12 +2140,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     ended.forEach(f => f());
     if (morph) { const el = now - morph.t0, ease = k => 1 - Math.pow(1 - k, 3), back = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2), kOf = (a, d) => Math.max(0, Math.min(1, (el - morph.start.get(a)) / d));
       const FOLD_MS = morph.ms || (st.firing ? Math.max(150, 330 * Math.pow(0.86, st.chainN || 0)) : 460), slowDone = morph.slow && !morph.scrub && el - morph.s0 >= FOLD_MS;
-      if (morph.slow ? slowDone : el > morph.end) { if (morph.slow && morph.fk && fe()) FEEL.hit(morph, now); else if (morph.slow) { st.pop = 1; st.sq = 1; st.hold = now + 90; st.shake = Math.max(st.shake, 0.55); sfx.bond(); sfx.good(); } else { st.pop = Math.max(st.pop, 0.4); st.sq = Math.max(st.sq, 0.35); } layout(morph.m, a => morph.m.at.get(a), null); morph = null; }
+      if (morph.slow ? slowDone : el > morph.end) { const mo1 = morph; if (morph.slow && morph.fk && fe()) FEEL.hit(morph.mid ? Object.assign({}, morph, { from: morph.fromHit || morph.from }) : morph, now); else if (morph.slow) { st.pop = 1; st.sq = 1; st.hold = now + 90; st.shake = Math.max(st.shake, 0.55); sfx.bond(); sfx.good(); } else { st.pop = Math.max(st.pop, 0.4); st.sq = Math.max(st.sq, 0.35); } if (mo1.mid) { layoutSafe(mo1.m, a => mo1.mid.get(a) || mo1.m.at.get(a), null); morph = stageTwo(mo1, mo1.slow ? 110 : 40); } else { layout(morph.m, a => morph.m.at.get(a), null); morph = null; } }
       else if (morph.slow) {
         let K = Math.max(0, Math.min(1, (el - morph.s0) / FOLD_MS)); if (morph.scrub) { K = Math.max(morph.kHeld || 0, Math.min(0.9, morph.kDrag || 0)); morph.kHeld = K; } morph.K = K;
         // slow to start, then quick: the two ends are drawn together as if they pulled on each other
         const k = morph.fk && fe() ? FEEL.k(K, morph) : K < 0.3 ? 0.12 * Math.pow(K / 0.3, 2) : 0.12 + 0.88 * (1 - Math.pow(1 - (K - 0.3) / 0.7, 3));
-        morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a), to = morph.m.at.get(a), c = morph.cur.get(a); if (fr) c.copy(fr).lerp(to, k); else c.copy(to); });
+        morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a), to = (morph.mid && morph.mid.get(a)) || morph.m.at.get(a), c = morph.cur.get(a); if (fr) c.copy(fr).lerp(to, k); else c.copy(to); });
         if (morph.slide) slideEval(morph, k);
         if (morph.bend) bendEval(morph.bend, Math.max(0, k), morph);
         for (let it = 0; it < 10; it++) morph.m.sticks.forEach(q => { const fa = morph.from.get(q.a), fb = morph.from.get(q.b); if (!fa || !fb) return; const ca = morph.cur.get(q.a), cb = morph.cur.get(q.b), rest = fa.distanceTo(fb) * (1 - k) + morph.m.at.get(q.a).distanceTo(morph.m.at.get(q.b)) * k; _u.copy(cb).sub(ca); const len = _u.length() || 1e-4, df = (len - rest) / len * 0.5; ca.addScaledVector(_u, df); cb.addScaledVector(_u, -df); });
@@ -2131,8 +2157,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         layout(morph.m, a => (morph.from.has(a) ? morph.cur.get(a) : morph.m.at.get(a)), a => (morph.from.has(a) ? 1 : kb)); }
       else if (morph.slide) { const s0 = morph.s0 < 1e8 ? morph.s0 : 0, ks = ease(Math.max(0, Math.min(1, (el - s0) / Math.max(260, morph.end - s0 - 60)))); morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a); if (fr) morph.cur.get(a).copy(fr).lerp(morph.m.at.get(a), ks); }); slideEval(morph, ks); if (morph.m.fl) untangle(morph, ks);
         layout(morph.m, a => (morph.from.has(a) ? morph.cur.get(a) : morph.m.at.get(a)), a => (morph.from.has(a) ? 1 : ks)); }
-      else { let ksum = 0, kn = 0; morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a), to = morph.m.at.get(a), c = morph.cur.get(a); if (!c) return; if (fr) { const kq = Math.max(0, Math.min(1.12, morph.feelEase && fe() ? FEEL.ease(kOf(a, 240)) : ease(kOf(a, 240)))); c.copy(fr).lerp(to, kq); ksum += kq; kn++; } else c.copy(to); }); if (morph.m.fl) untangle(morph, kn ? ksum / kn : 1);
-        layoutSafe(morph.m, a => morph.cur.get(a) || morph.m.at.get(a), a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.28 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; }); }
+      else { let ksum = 0, kn = 0; morph.m.balls.forEach((b, a) => { const fr = morph.from.get(a), to = (morph.mid && morph.mid.get(a)) || morph.m.at.get(a), c = morph.cur.get(a); if (!c) return; if (fr) { const kq = Math.max(0, Math.min(1.12, morph.feelEase && fe() ? FEEL.ease(kOf(a, 240)) : ease(kOf(a, 240)))); c.copy(fr).lerp(to, kq); ksum += kq; kn++; } else c.copy(to); }); if (morph.m.fl) untangle(morph, kn ? ksum / kn : 1);
+        layoutSafe(morph.m, a => morph.cur.get(a) || morph.m.at.get(a), a => { const d = el - morph.start.get(a), bump = morph.made.has(a) && d >= 0 ? 0.08 * Math.max(0, 1 - d / 420) : 0; return morph.from.has(a) ? 1 + bump : kOf(a, 300) <= 0 ? 0 : back(kOf(a, 300)) + bump; }); }
       dirty = true; }
     if (st.flyers.length) { st.flyers = st.flyers.filter(f => {
       if (!f.to) f.to = byTarget(f.kind, f.at); if (!f.t0) f.t0 = now; const age = now - f.t0; if (age < 0) return true;
