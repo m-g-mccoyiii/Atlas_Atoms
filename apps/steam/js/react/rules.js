@@ -101,7 +101,7 @@ function hydroxyl(m, o) {
 }
 function oxidisable(m, o) {
   const s = hydroxyl(m, o);
-  if (!s || !Hs(m, s.c).length || otherHetero(m, s.c, o)) return null;
+  if (!s || !Hs(m, s.c).length || otherHetero(m, s.c, o) || lk(s.c) || lk(o)) return null;
   return { o, c: s.c, ho: s.ho, atoms: [s.c, o] };
 }
 function swappable(m, o) {                                  // C-OH that thionyl chloride turns into C-Cl
@@ -115,11 +115,11 @@ const zaitsev = (m, c, betas) => {
 };
 function eliminable(m, o) {
   const s = hydroxyl(m, o);
-  if (!s) return null;
+  if (!s || lk(s.c) || lk(o)) return null;
   if (MODE.zip && otherHetero(m, s.c, o)) return null;     // the OH a zip leaves on its last ring stays: a zip can always open again
   const cn = carbonsOf(m, s.c);
   if (cn.some(x => hasO(m, x))) return null;              // 1,2-diols and alpha-hydroxy ketones rearrange instead; left out
-  const betas = cn.filter(x => isSp3(m, x) && Hs(m, x).length && !hetero(m, x));
+  const betas = cn.filter(x => isSp3(m, x) && Hs(m, x).length && !hetero(m, x) && !lk(x));
   if (!betas.length) return null;
   const beta = zaitsev(m, s.c, betas);
   return { o, c: s.c, ho: s.ho, beta, atoms: [s.c, beta, o] };
@@ -1199,19 +1199,19 @@ function shapeOf(m) {
 // apply takes what leaves out of the model and returns it as groups of atoms, so the page can show it going.
 const heavyNb = (m, a) => nbs(m, a).map(n => n.atom).filter(b => b.el !== 'H' && !b.fly);
 const sideOf = (m, a, b) => { const S = new Set([a]), st = [a]; while (st.length) { const u = st.pop(); nbs(m, u).forEach(n => { const v = n.atom; if (S.has(v) || (u === a && v === b)) return; S.add(v); st.push(v); }); } return S; };
-const plainCH2 = (m, c) => c.el === 'C' && !c.fly && !c.clamp && Hs(m, c).length === 2 && heavyNb(m, c).length === 2 && heavyNb(m, c).every(q => q.el === 'C') && isSp3(m, c);
+const plainCH2 = (m, c) => c.el === 'C' && !c.fly && !lk(c) && Hs(m, c).length === 2 && heavyNb(m, c).length === 2 && heavyNb(m, c).every(q => q.el === 'C') && isSp3(m, c);
 const gapRuns = m => { const seen = new Set(), out = []; m.atoms.forEach(c => { if (seen.has(c) || !plainCH2(m, c)) return; const run = [c]; seen.add(c); for (let end = 0; end < 2; end++) for (let cur = c, prev = null; ;) { const nx = heavyNb(m, cur).find(q => q !== prev && !seen.has(q) && plainCH2(m, q)); if (!nx) break; seen.add(nx); if (end) run.unshift(nx); else run.push(nx); prev = cur; cur = nx; if (run.length > 40) break; } if (run.length >= 4 && !run.some(q => ringAtom(m, q))) out.push(run); }); return out; };
 // the C=C the burner can change, each as [the carbon that gets the O, the other carbon]
-const burnPairs = m => { const ar = aromaticAtoms(m), out = []; m.bonds.forEach(k => { if (k.order !== 2 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || k.a.clamp || k.b.clamp || (ar.has(k.a) && ar.has(k.b))) return; const ha = Hs(m, k.a).length, hb = Hs(m, k.b).length; let cx = ha <= hb ? k.a : k.b, ch = cx === k.a ? k.b : k.a; if (Hs(m, cx).length > 1 || nbs(m, cx).some(n => n.atom !== ch && n.bond.order > 1)) return; if (!Hs(m, cx).length) { if (Hs(m, ch).length !== 1) return; const t = cx; cx = ch; ch = t; } out.push([cx, ch]); }); return out; };
+const burnPairs = m => { const ar = aromaticAtoms(m), out = []; m.bonds.forEach(k => { if (k.order !== 2 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || lk(k.a) || lk(k.b) || (ar.has(k.a) && ar.has(k.b))) return; const ha = Hs(m, k.a).length, hb = Hs(m, k.b).length; let cx = ha <= hb ? k.a : k.b, ch = cx === k.a ? k.b : k.a; if (Hs(m, cx).length > 1 || nbs(m, cx).some(n => n.atom !== ch && n.bond.order > 1)) return; if (!Hs(m, cx).length) { if (Hs(m, ch).length !== 1) return; const t = cx; cx = ch; ch = t; } out.push([cx, ch]); }); return out; };
 const lk = a => !!(a.clamp || a.prot || a.cure);   // a locked atom: out of reach of every instrument too
 const tools = {
   spots(m, id, limit) {
     const out = [];
-    if (id === 'mirror') m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || lk(k.a) || lk(k.b) || ringBond(m, k.a, k.b)) return; [[k.a, k.b], [k.b, k.a]].forEach(q => { let n = 0; sideOf(m, q[0], q[1]).forEach(x => { if (x.el !== 'H') n++; }); if (n >= 3 && (!limit || 2 * n <= limit - 6)) out.push({ a: q[0], b: q[1], n }); }); });
+    if (id === 'mirror') m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || lk(k.a) || lk(k.b) || ringBond(m, k.a, k.b)) return; [[k.a, k.b], [k.b, k.a]].forEach(q => { let n = 0; sideOf(m, q[0], q[1]).forEach(x => { if (x.el !== 'H') n++; }); if (n >= 3 && (!limit || 2 * n <= limit - 6) && !Array.from(sideOf(m, q[1], q[0])).some(lk)) out.push({ a: q[0], b: q[1], n }); }); });
     else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !lk(o)) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !lk(k.a) && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
     else if (id === 'crystal') m.atoms.forEach(c => { if (c.el === 'C' && !c.fly && !lk(c) && isSp3(m, c) && Hs(m, c).length && heavyNb(m, c).every(q => q.el === 'C')) out.push({ c }); });
     else if (id === 'magnet') { const runs = gapRuns(m); if (runs.length) out.push({ runs }); }
-    else if (id === 'balance') { const ols = m.atoms.filter(o => !o.fly && !lk(o) && oxidisable(m, o)), ones = carbonyls(m).filter(q => !lk(q.o) && !q.o.fly).map(q => q.o); if (ols.length && ones.length) out.push({ ols, ones }); }
+    else if (id === 'balance') { const ols = m.atoms.filter(o => !o.fly && !lk(o) && oxidisable(m, o)), ones = carbonyls(m).filter(q => !lk(q.o) && !lk(q.c) && !q.o.fly).map(q => q.o); if (ols.length && ones.length) out.push({ ols, ones }); }
     else if (id === 'mortar') { const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || lk(k.a) || lk(k.b) || (ar.has(k.a) && ar.has(k.b)) || !ringBond(m, k.a, k.b)) return; out.push({ ra: k.a, rb: k.b }); }); }
     else if (id === 'burette') { const pairs = burnPairs(m); if (pairs.length) out.push({ pairs }); }
     else if (id === 'bunsen') { const ohs = m.atoms.filter(o => o.el === 'O' && !o.fly && !lk(o) && eliminable(m, o)); if (ohs.length) out.push({ ohs }); }
@@ -1225,7 +1225,7 @@ const tools = {
       const a = sp.a, b = sp.b, gone = sideOf(m, b, a), keep = Array.from(sideOf(m, a, b)); gone.forEach(x => m.removeAtom(x));
       let ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z; const d = Math.hypot(ux, uy, uz) || 1; ux /= d; uy /= d; uz /= d;
       const copy = new Map(); keep.forEach(x => { const t = 2 * ((a.x + ux * 0.77 - x.x) * ux + (a.y + uy * 0.77 - x.y) * uy + (a.z + uz * 0.77 - x.z) * uz), c = m.addAtom(x.el, x.x + t * ux, x.y + t * uy, x.z + t * uz); if (x.iso) c.iso = x.iso; if (x.clamp) c.clamp = true; if (x.prot) c.prot = true; if (x.cure) c.cure = true; if (x.frz) c.frz = true; copy.set(x, c); });
-      m.bonds.slice().forEach(k => { if (copy.has(k.a) && copy.has(k.b)) m.bonds.push({ a: copy.get(k.a), b: copy.get(k.b), order: k.order }); });
+      m.bonds.slice().forEach(k => { if (copy.has(k.a) && copy.has(k.b)) { const nb = { a: copy.get(k.a), b: copy.get(k.b), order: k.order }; if (k.rung) nb.rung = true; m.bonds.push(nb); } });
       m.bond(a, copy.get(a)); return { made: Array.from(copy.values()) };
     }
     if (id === 'clamp') { sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }
