@@ -38,16 +38,16 @@ The first comparison video was delivered early at `C:\Work\atlas-atoms\.claude\s
 | idea | the molecule is heavy; every join is a hammer blow on the page | it runs away faster and faster with the count racing, holds one breath, then lands once | the camera directs: it dives to each join and pulls back as the count climbs |
 | T1, r, Tmin (ms) | 600, 0.90, 240 | 480, 0.82, 167 | 600, 0.86, 200 |
 | wind-up, swing (share of T) | 0.38, 0.22 (ease-in power 5) | 0.20, 0.40 (power 3) | 0.30, 0.25 (power 3) |
-| hit-stop (frames) | min(3 + n, 10), last 14 | 1, last 12 | min(2 + n, 8), last 12 |
+| hit-stop (frames) | min(3 + n, 10), last 20 | 1, last 16 | min(2 + n, 8), last 16 |
 | draw-back (share of W) | 0.06 + 0.004 n | 0.035 | 0.05 |
 | overshoot, spring | 4 percent, 9 Hz, damping 0.55 (hard stop) | 6 percent, 6 Hz, 0.35 | 12 percent, 6 Hz, 0.35 |
 | recoil (share of W), turn | 4.5 rising to 8.5 percent, 3.5 degrees | 2.5 rising to 5 percent, 2 degrees | 3 rising to 6.5 percent, 2.5 degrees |
 | page | drops 2.5 to 5.3 percent of W on each hit, the molecule is slammed down onto the paper | still; the molecule grows 2.2 percent a step | still; the camera moves |
-| shake | gain 1.3, 12 Hz, peak 3 percent of W | gain 0.8, 18 Hz | gain 0.5 |
+| shake | gain 1.3, 12 Hz, peak 3 percent of W | gain 1.1, 18 Hz; a 5 percent drop on the landing | gain 0.5 |
 | throws | 340 ms apart, 240 ms flight, 120 px arc | 200 ms apart, 200 ms flight | 360 ms apart, 260 ms flight, the camera rides each throw in at 1.6 times |
 | first reflex waits | 300 ms | 150 ms | 250 ms |
 | count | set down on each gain | races toward each new value, faster every 3 steps; freezes in the held breath; jumps the rest on the landing | set down on each gain; holds 260 ms at each flag |
-| last step | 600 ms wind-up held 200 ms at full draw, then the slam | 520 ms held breath (drone cut, count frozen), 180 ms swing | 500 ms wind-up held 150 ms, the camera pulls back first; after the hit a second of silence, then the word |
+| last step | 600 ms wind-up held 200 ms at full draw, then the slam (recoil 2.6 times, drop 2.2 times) | 520 ms held breath (drone cut, count frozen), 180 ms swing | the camera pushes in again for the last three joins (1.7, 1.85, 2.0 times) and holds the last hit close; then it pulls back to the whole page, 0.9 s of quiet, the word |
 | extra | heavier numerals each step (pen stroke weight 2 to 5) | a pen tally in the margin, one stroke a step, bundled in fives | the molecule as it started drawn small beside the finished one; bells with a small room echo; a swish with each camera move |
 | sound | snap weight 1.6 from step 2, low drone | fast bells, snap 0.8, drone up a note every 2 steps, a quiet draw swell from step 8 | snap 1.0, drone from step 6 |
 
@@ -66,7 +66,7 @@ The lines recorded (the spec number is set for the recording so the flags fall o
 
 - short: `C=CCCC(=O)CCC(=O)CCC(=O)C`, allyl, bh3, pcc; three reagents then 3 steps; stable passed on the last step.
 - mid: `C=CCCCC(O)CCCC(=O)CCCC(=O)CCC(O)CCC(=O)CC(=O)CC(=O)CCCC(=O)CCC(O)CCC=CCCC(O)C=O`, pcc, nabh4, bh3; three reagents then 8 steps; volatile passed on the last step.
-- long: `C=CCCC(=O)CCCC(=O)CCC(O)CCC(=O)CCC(O)CCC(=O)CCCC(=O)CCCC(=O)CCC(O)CCC(=O)CCC(O)CCC(=O)C`, pcc, hydrate; 12 steps after the second reagent; overreact passed on the last step. 12 was the longest found: a search of 2,300 made-up chains under the hand of five found no line of three reagents followed by more than 12 steps; a third reagent on this molecule finds nothing left to act on, so the long page is fired with two.
+- long: `C=CCCC(=O)CCCC(=O)CCC(O)CCC(=O)CCC(O)CCC(=O)CCCC(=O)CCCC(=O)CCC(O)CCC(=O)CCC(O)CCC(=O)C`, pcc, hydrate; 12 steps after the second reagent; overreact passed on the last step. 12 was the longest found: a search of 2,300 made-up chains under the hand of five found no line of three reagents followed by 11 or more steps; a third reagent on this molecule finds nothing left to act on, so the long page is fired with two.
 
 ## What scheme.html needs (not committed)
 
@@ -83,3 +83,38 @@ Add before the `scheme.js` line, and bump the two edited scripts:
 ## The hooks in scheme.js
 
 One `attach` line before `size()`, and guarded calls: `FEEL.fire` in `doFire`; `FEEL.throwThen` for each reagent in `fireNext`; `FEEL.pageEnd` where the page would turn; `FEEL.onReact` after `land`; `FEEL.unlock` for when the next thing starts; `FEEL.k` for the step's curve; `FEEL.hit` on the frame of contact; `FEEL.ease` for a reagent's change; `FEEL.frame` once a frame; `FEEL.ink` at the end of `drawInk`; `stepMs` asks `FEEL.stepMs`. While feel plays a page (`fe()`), the old tile, lane gains, step numeral, join bars, yield drawing, word, flag sounds, beat sounds, reward sounds and the beat's freeze are skipped.
+
+## Measured (the takes in `.claude/shots`, 30 frames a second)
+
+Per step on the long line: period from one step's start to the next (ms), hit-stop frames, travel of a joining atom over the wind-up and swing (screen px), recoil of the whole molecule (px), camera shake and drop (px).
+
+| step | 1 Mass | 2 Runaway | 3 Close-up |
+|---|---|---|---|
+| 1 | 600 ms, 4 f, 32 / 30 / 21 px | 500, 1, 32 / 16 / 0 | 600, 3, 296 / 50 / 0 |
+| 4 | 467, 7, 27 / 34 / 29 | 266, 1, 27 / 19 / 11 | 400, 6, 114 / 42 / 1 |
+| 8 | 334, 6, 243 / 87 / 76 | 200, 1, 229 / 41 / 23 | 233, 4, 281 / 73 / 7 |
+| 11 | 300, 5, 105 / 65 / 51 | 200, 1, 72 / 38 / 19 | 233, 4, 123 / 97 / 8 |
+| 12 (last) | 20 f, 131 / 192 / 81 | 16 f, 95 / 121 / 52 | 16 f, 336 / 268 / 8 |
+| fire to first reflex hit | 1.50 s | 1.13 s | 1.43 s |
+| last hit | 6.60 s | 4.67 s | 5.73 s |
+| fire to page turn | 9.10 s | 6.53 s | 8.97 s |
+
+Mid line (8 steps): first hit 1.97 / 1.47 / 1.87 s, last hit 5.83 / 4.07 / 5.23 s, page turn 7.67 / 5.33 / 8.20 s. Short line (3 steps): first hit 1.97 / 1.47 / 1.87 s, page turn 5.47 / 3.97 / 6.37 s. The old sequence turned the long page 3.0 s after fire while its count was still running.
+
+In direction 3 the travel is large because the camera is close (zoom up to 2.4 times). The molecule is framed 1.23 to 1.37 times its rest size in 1 and 2.
+
+Sound: the early steps sit near -25 dB RMS and climb to about -15 dB; the last hit, the boom and flag(4) are the loudest; the whole take peaks at -0.6 to -1.0 dB under the bus limiter. Every sound call is stamped with the page clock of the first frame that shows it, so the track is in step with the frames by construction. Measured independently (the frame where the joining atom arrives against the sharpest rise in the rendered track), the median offset is 8 to 12 ms in direction 1, 8 to 43 ms in direction 2; in direction 3 the detector is fooled by the bell's room echo (median 70 ms), and a few single steps in every take read up to 190 ms off where a neighbor sound has the sharper rise.
+
+## The director's review and what was done
+
+A fresh reviewer judged the takes cold. Its verdict: "direction 3 has the only real shot and the best sound, but the finale is flat in all three. Make the last hit bigger and held, fix the digit collisions and the cropped yield number, and it is a clip." Done after it: the last hit held 6 more frames and its recoil 2.6 times; the step numerals 3 times larger by step 12 and kept below the molecule as it moves; the numeral before is gone the moment the next is written; the gain twice as large and written beside the numeral; the overreact word written in 140 ms right after the last hit lands (0.25 s; 0.9 s in direction 3); direction 3 pushes in again for the last three joins and keeps the numeral in the shot; in direction 3 the gain fades where it was written instead of flying off the frame; the page never moves far enough to show its edge.
+
+## Not done
+
+- The yield number is out of the shot while direction 3 is close in; that is the direction's character, but the count is not readable for about 3 s of the long page.
+- The hydrogen runoff (`ro_h2`) is two white balls with an ink outline; the reviewer read them as loose circles near the molecule in the close-up. They are the art's object; a darker or smaller one would need the art side.
+- The page turn itself (the old curl, a grey wedge across the page) is not touched.
+- The words are written in 150 ms; in a single frame mid-write they read cut off ("sta").
+- No fourth direction was built.
+- The bare game has one kind of reflex, so the separate sounds and moves for a water loss and a C=C shift are built but not seen in these takes.
+- Sound was judged by measured levels only; nobody has listened to it.

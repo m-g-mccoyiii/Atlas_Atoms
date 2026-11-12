@@ -17,7 +17,7 @@ const KEY = 'overreact.feel';
 // Sizes are shares of the molecule's drawn width W. Times are ms. H is hit-stop in frames (1/60 s).
 const DIR = {
   1: { name: 'mass',
-    T1: 600, r: 0.90, Tmin: 240, wind: 0.38, swing: 0.22, swingPow: 5, H: n => Math.min(3 + n, 10), Hlast: 14,
+    T1: 600, r: 0.90, Tmin: 240, wind: 0.38, swing: 0.22, swingPow: 5, H: n => Math.min(3 + n, 10), Hlast: 20,
     draw: n => 0.06 + 0.004 * Math.min(n, 10), ov: 0.04, settleHz: 9, settleZ: 0.55,
     recoil: n => 0.045 + 0.04 * Math.min(1, (n - 1) / 7), yaw: 3.5, recHz: 4, recZ: 0.45,
     drop: n => 0.025 + 0.004 * Math.min(n, 7), dropMs: 200,
@@ -27,17 +27,17 @@ const DIR = {
     snapW: 1.6, snapFrom: 2, bell: 0.8, droneFrom: 3, droneLow: true, echo: false,
     wordK: 1.2, hold: 700, finale: 'slam' },
   2: { name: 'runaway',
-    T1: 480, r: 0.82, Tmin: 167, wind: 0.20, swing: 0.40, swingPow: 3, H: () => 1, Hlast: 12,
+    T1: 480, r: 0.82, Tmin: 167, wind: 0.20, swing: 0.40, swingPow: 3, H: () => 1, Hlast: 16,
     draw: n => 0.035, ov: 0.06, settleHz: 6, settleZ: 0.35,
     recoil: n => 0.025 + 0.025 * Math.min(1, (n - 1) / 8), yaw: 2, recHz: 5, recZ: 0.5,
-    drop: () => 0, dropMs: 0, landDrop: 0.03,
-    shakeGain: 0.8, shakeHz: 18, shakePeak: 0.03,
+    drop: () => 0, dropMs: 0, landDrop: 0.05,
+    shakeGain: 1.1, shakeHz: 18, shakePeak: 0.03,
     throwGap: 200, throwMs: 200, arc: 80, throwRec: [0.025, 0.035, 0.05], firstWait: 150, lastWind: 180, fullDraw: 0,
     cam: 'push', count: 'race', zoomMax: 1.3, numW: () => 2,
     snapW: 0.8, snapFrom: 3, bell: 1.0, droneFrom: 2, droneLow: false, echo: false, fastBell: true,
     wordK: 1.0, hold: 600, finale: 'breath' },
   3: { name: 'closeup',
-    T1: 600, r: 0.86, Tmin: 200, wind: 0.30, swing: 0.25, swingPow: 3, H: n => Math.min(2 + n, 8), Hlast: 12,
+    T1: 600, r: 0.86, Tmin: 200, wind: 0.30, swing: 0.25, swingPow: 3, H: n => Math.min(2 + n, 8), Hlast: 16,
     draw: n => 0.05, ov: 0.12, settleHz: 6, settleZ: 0.35,
     recoil: n => 0.03 + 0.035 * Math.min(1, (n - 1) / 7), yaw: 2.5, recHz: 4, recZ: 0.45,
     drop: () => 0, dropMs: 0,
@@ -47,7 +47,7 @@ const DIR = {
     snapW: 1.0, snapFrom: 3, bell: 1.0, droneFrom: 6, droneLow: false, echo: true,
     wordK: 1.3, hold: 900, finale: 'pull' }
 };
-const WORDS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [48, 56, 66, 110];
+const WORDS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [54, 64, 76, 130];
 
 let mode = 0;
 try { const q = new URLSearchParams(root.location.search).get('feel'); if (q !== null && q !== '') mode = Math.max(0, Math.min(3, +q || 0)); else { const s = root.localStorage.getItem(KEY); if (s !== null) mode = Math.max(0, Math.min(3, +s || 0)); else mode = 1; } } catch (e) { mode = 1; }
@@ -176,7 +176,7 @@ function onReact(o, nm, prev, L, morph) {
   morph.fk = K => { if (K < wf) return -back * E.outSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
   if (morph.bend) morph.fk0 = morph.fk;
   // the camera
-  if (d.cam === 'dive') { const p = S.cur.a ? worldOf(nm, S.cur.a) : null; const z = n >= 9 ? 1.15 : clamp(2.4 - (2.4 - 1.15) * (n - 1) / 7, 1.15, 2.4); camTo(last ? null : p, last ? 1.25 : z, Math.max(120, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
+  if (d.cam === 'dive') { const p = S.cur.a ? worldOf(nm, S.cur.a) : null; const N = S.plan.N || n, late = N >= 6 && n >= N - 2, z = late ? 1.7 + 0.15 * (n - N + 2) : n >= 9 ? 1.15 : clamp(2.4 - (2.4 - 1.15) * (n - 1) / 7, 1.15, 2.4); camTo(p, last ? 2.0 : z, Math.max(120, ph.wind)); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
   if (last && d.finale === 'breath') { S.breath = { t0: now() + ph.wind, ms: breathMs() }; S.count.frozen = true; }
   // a marker of the hand-off: the molecule takes over
   if (n === 1) snd('handoff');
@@ -215,11 +215,11 @@ function hit(morph, t) {
   S.settle = { m: nm, vecs, t0: t + c.ph.hold, hold: c.ph.hold, ov: d.ov * (c.last ? 1.6 : 1), hz: d.settleHz, z: d.settleZ, a: c.a, b: c.b, ms: 700 };
   // the rest of the molecule is knocked the other way and turns, as one piece
   let dir = { x: 0, z: 1 }; if (c.b && vecs.get(c.b)) { const v = vecs.get(c.b); const l = Math.hypot(v.x, v.z) || 1; dir = { x: v.x / l, z: v.z / l }; }
-  const wsc = (api.center().group.scale.x || 1), W = c.W * wsc, rec = d.recoil(n) * W * (c.last ? 1.6 : 1);
-  S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: (n % 2 ? 1 : -1) * d.yaw * (0.5 + 0.5 * Math.min(1, n / 8)) * (c.last ? 1.5 : 1), hz: d.recHz, z0: d.recZ });
+  const wsc = (api.center().group.scale.x || 1), W = c.W * wsc, rec = d.recoil(n) * W * (c.last ? 2.6 : 1);
+  S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: (n % 2 ? 1 : -1) * d.yaw * (0.5 + 0.5 * Math.min(1, n / 8)) * (c.last ? 2.2 : 1), hz: d.recHz, z0: d.recZ });
   // the page
   if (n > 2 || c.last) addShake(0.25 + 0.03 * n + (c.last ? 0.4 : 0));
-  const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 1.6 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
+  const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 2.2 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
   if (mode === 2) S.cam.push = Math.min(0.18, 0.015 * n);
   // sound on the frame of contact; the bell rings through the freeze
   const fast = mode === 2 && (c.ph.T || 999) < 200;
@@ -289,7 +289,7 @@ function pageEnd(next) {
 function finalWords() {
   const S = F.seq, vals = flagVals(); if (!vals.length) return 0; const fin = P_made(), k4 = vals.length >= 4 && fin >= vals[3];
   if (mode === 3 && S.start) S.sketchT = now() + 300;
-  if (k4 && !S.words.some(w => w.k === 3)) { const pre = mode === 3 ? 1600 : 300; setTimeout(() => { if (F.seq === S) { writeWord(3); S.wordBusy = now() + 340; snd('flag', 4); } }, pre); return pre + 340; }
+  if (k4 && !S.words.some(w => w.k === 3)) { const pre = mode === 3 ? 900 : 250; setTimeout(() => { if (F.seq === S) { writeWord(3); S.wordBusy = now() + 340; snd('flag', 4); } }, pre); return pre + 340; }
   return mode === 3 ? 700 : 0;
 }
 function finish() { const st = api.st, S = F.seq; st.want = P_made(); st.shown = st.want; F.seq = null; S && (S.dead = true); }
@@ -350,9 +350,11 @@ function frame(t, dt) {
   const cam = api.cam, CAM = api.CAM, LOOK = api.LOOKAT; let ox = 0, oz = 0;
   S.drops = S.drops.filter(q => { const s = t - q.t; if (s > q.ms * 2.4) return false; if (s < 0) return true; const W = molWorldBox(c).w; const u = s < 60 ? E.outCubic(s / 60) : Math.max(0, 1 - E.outBack(clamp((s - 60) / q.ms, 0, 1), 1.2)); oz -= q.a * W * u; return true; });
   decayShake(); const sh = S.shake * S.shake * d.shakeGain, Wd = molWorldBox(c).w * d.shakePeak; ox += sh * Wd * nz(t / 1000 * d.shakeHz * 6.283 / 4, 1.3); oz += sh * Wd * nz(t / 1000 * d.shakeHz * 6.283 / 4, 4.1);
+  // the page never moves so far that its edge shows
+  ox = clamp(ox, -2.2, 2.2); oz = clamp(oz, -3.2, 2.4);
   let look = LOOK.clone(), dist = 1;
   if (false && d.cam === 'push') { const pk = S.done && S.restT ? 0 : Math.min(0.18, 0.015 * (S.steps || 0)), want = S.breath && t > S.breath.t0 ? pk : pk; S.cam.pz = (S.cam.pz || 0) + (want - (S.cam.pz || 0)) * Math.min(1, dt * (S.landed ? 4 : 6)); dist = 1 - S.cam.pz; const b = molWorldBox(c); look.x += (b.cx - look.x) * S.cam.pz * 2; look.z += (b.cz - look.z) * S.cam.pz * 2; }
-  if (d.cam === 'dive' || mode === 3) { const cm = S.cam; if (cm.to) { const u = E.inOutCubic(clamp((t - cm.mt0) / cm.mdur, 0, 1)), b = molWorldBox(c), tp = cm.to.p || new T.Vector3(b.cx, 0, b.cz), mid = { x: b.cx + (tp.x - b.cx) * 0.75, z: b.cz + (tp.z - b.cz) * 0.75 }; cm.z = cm.from.z + (cm.to.z - cm.from.z) * u; const fx = cm.from.tx, fz = cm.from.tz; cm.tx = fx + (mid.x - LOOK.x - fx) * u; cm.tz = fz + (mid.z - LOOK.z - fz) * u; if (cm.to.z === 1 && !cm.to.p) { cm.tx = fx * (1 - u); cm.tz = fz * (1 - u); } } dist = 1 / Math.max(1, cm.z); const Zc = Math.max(1, cm.z); look.x = clamp(look.x + cm.tx, -26 + 26 / Zc, 26 - 26 / Zc); look.z = clamp(look.z + cm.tz, -18 + 18.6 / Zc, 15 - 14.4 / Zc); }
+  if (d.cam === 'dive' || mode === 3) { const cm = S.cam; if (cm.to) { const u = E.inOutCubic(clamp((t - cm.mt0) / cm.mdur, 0, 1)), b = molWorldBox(c), tp = cm.to.p ? cm.to.p.clone().add(new T.Vector3(0, 0, 3.2 / Math.max(1, cm.to.z))) : new T.Vector3(b.cx, 0, b.cz), mid = { x: b.cx + (tp.x - b.cx) * 0.75, z: b.cz + (tp.z - b.cz) * 0.75 }; cm.z = cm.from.z + (cm.to.z - cm.from.z) * u; const fx = cm.from.tx, fz = cm.from.tz; cm.tx = fx + (mid.x - LOOK.x - fx) * u; cm.tz = fz + (mid.z - LOOK.z - fz) * u; if (cm.to.z === 1 && !cm.to.p) { cm.tx = fx * (1 - u); cm.tz = fz * (1 - u); } } dist = 1 / Math.max(1, cm.z); const Zc = Math.max(1, cm.z); look.x = clamp(look.x + cm.tx, -26 + 26 / Zc, 26 - 26 / Zc); look.z = clamp(look.z + cm.tz, -18 + 18.6 / Zc, 15 - 14.4 / Zc); }
   const off = CAM.clone().sub(LOOK).multiplyScalar(dist);
   cam.position.set(look.x + off.x + ox, look.y + off.y, look.z + off.z + oz); cam.lookAt(look.x + ox, look.y, look.z + oz);
   // the yield flags on the track: the pole jolts back and rings when its flag fills
@@ -361,7 +363,7 @@ function frame(t, dt) {
     const row = { t: Math.round(t - S.t0), n: cu ? cu.n : 0, Z: +S.zoom.toFixed(3), c: pj(mc), rec: pj(mc.clone().sub(new T.Vector3(rx, 0, rz))), cam: [Math.round(ox * 24.4), Math.round(oz * 24.4)], shown: Math.round(S.count.shown) };
     if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); }); return x1 - x0; })(); F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
-  st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), mode); } });
+  st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0 / Math.max(1, (S.cam && S.cam.z) || 1)); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), mode); } });
 }
 
 // ---------- the ink: the count, the step numerals, the gains, the words, the throw, the tally ----------
@@ -378,18 +380,19 @@ function ink(x, t) {
   // numerals and gains: written outside the molecule's outline on the line from its middle through the join
   const bx = c ? inkBox(c) : null, lim = [api.px({ x: -6, z: 0 })[0], api.px({ x: 23.5, z: 0 })[0]], latest = S.nums[S.nums.length - 1];
   S.nums.forEach((q, qi) => {
-    const age = t - q.t; if (age < 0 || !bx) return; const nx = S.nums[qi + 1], fade = nx ? clamp((t - nx.t) / 160, 0, 1) : S.done && S.restT ? clamp((t - S.restT) / 300, 0, 1) : 0;
-    const sz = Math.min(120, 46 + 6 * q.n) * ips * (mode === 3 ? 1.6 : 1) * (q.last ? 1.25 : 1), wr = clamp(age / 90, 0, 1);
-    if (!q.at) { let jx = bx.cx; if (q.join && c.balls.has(q.join)) jx = inkOf(worldOf(c, q.join))[0]; q.at = [clamp(jx, lim[0], lim[1]), bx.b + 10 * ips + sz * 0.74]; }
+    const age = t - q.t; if (age < 0 || !bx) return; const nx = S.nums[qi + 1], fade = nx ? (t >= nx.t ? 1 : 0) : S.done && S.restT ? clamp((t - S.restT) / 300, 0, 1) : 0;
+    const room = (Y[1] - 100 * ips) - (bx.b + 14 * ips), sz = Math.max(40 * ips, Math.min(Math.min(190, 42 + 11 * q.n) * ips * (mode === 3 ? 1.3 : 1) * (q.last ? 1.3 : 1), room / 0.74)), wr = clamp(age / 70, 0, 1);
+    { if (q.jx == null) { let jx = bx.cx; if (q.join && c.balls.has(q.join)) jx = inkOf(worldOf(c, q.join))[0]; q.jx = clamp(jx, lim[0] + sz * 0.6, lim[1] - sz * 0.6); } q.at = [q.jx, Math.max(q.at ? q.at[1] : 0, bx.b + 14 * ips + sz * 0.74)]; q.nw = AA.rxPen.measure(String(q.n), sz, 'heavy').width; }
     if (fade < 1) { x.save(); x.globalAlpha = 1 - fade; AA.rxPen.write(x, String(q.n), q.at[0], q.at[1], sz, { weight: 'heavy', color: api.INK, align: 'center', t: wr, extra: q.w > 2 ? (q.w - 2) * 1.8 : 0 }); x.restore(); }
-    if (q.gain > 0 && d.count !== 'race') { const gsz = Math.max(30 * ips, sz * 0.55), ft = age - q.hold, u = clamp(ft / q.fly, 0, 1); if (u >= 1) { q.gone = true; return; } const e = E.inCubic(Math.max(0, u)), A = [q.at[0], q.at[1] + gsz * 1.15], B = [Y[0] + (st.madeW || 200) * 0.5, Y[1] - 70 * ips], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 50 * ips * Math.sin(Math.PI * Math.max(0, u));
+    if (q.gain > 0 && d.count !== 'race') { const gsz = Math.max(40 * ips, Math.min(sz * 0.62, 90 * ips)), ft = age - q.hold, u = clamp(ft / q.fly, 0, 1); if (u >= 1 && mode !== 3) { q.gone = true; return; } if (mode === 3) { const u3 = clamp(ft / 420, 0, 1); if (u3 >= 1) { q.gone = true; return; } x.save(); x.globalAlpha = 1 - E.inCubic(Math.max(0, u3)); AA.rxPen.write(x, '+' + api.fmt(q.gain), q.at[0] + q.nw / 2 + 24 * ips, q.at[1], gsz, { weight: 'heavy', color: api.INK, align: 'left', t: clamp(age / 80, 0, 1) }); x.restore(); return; }
+      const e = E.inCubic(Math.max(0, u)), A = [q.at[0] + q.nw / 2 + 24 * ips + AA.rxPen.measure('+' + api.fmt(q.gain), gsz, 'heavy').width / 2, q.at[1]], B = [Y[0] + (st.madeW || 200) * 0.5, Y[1] - 70 * ips], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 50 * ips * Math.sin(Math.PI * Math.max(0, u));
       x.save(); AA.rxPen.write(x, '+' + api.fmt(q.gain), cx, cy, gsz * (1 - 0.25 * e), { weight: 'heavy', color: api.INK, align: 'center', t: clamp(age / 80, 0, 1) }); x.restore(); } else q.gone = true; });
   // direction 2: a tally in the margin, one stroke per step, bundled in fives
   if (mode === 2 && S.tally) { const o = api.px({ x: 9.5, z: 9.6 }), h = 64 * ips, gap = 16 * ips; x.save(); x.strokeStyle = api.INK; x.lineCap = 'round'; x.lineWidth = 6; for (let i = 0; i < S.tally; i++) { const b = Math.floor(i / 5), j = i % 5, x0 = o[0] + b * (5 * gap + 34 * ips) + j * gap; x.beginPath(); if (j < 4) { x.moveTo(x0, o[1]); x.lineTo(x0 + 3, o[1] - h); } else { const xb = o[0] + b * (5 * gap + 34 * ips); x.moveTo(xb - 10, o[1] - h * 0.2); x.lineTo(xb + 4 * gap + 10, o[1] - h * 0.8); } x.stroke(); } x.restore(); }
   // the words, each written once and kept: one line with the yield, the newest the largest
   if (S.words.length) { let xx = Y[0] + (st.madeW || 300) + 46 * ips; const ws = S.words.slice().sort((a, b) => a.k - b.k), top = ws[ws.length - 1];
     const top3 = ws.filter(w => w.k < 3), tk = top3[top3.length - 1];
-    ws.forEach(w => { const u = clamp((t - w.t) / (w.k === 3 ? 320 : 220), 0, 1);
+    ws.forEach(w => { const u = clamp((t - w.t) / (w.k === 3 ? 140 : 150), 0, 1);
       if (w.k === 3) { const o = api.px({ x: mode === 3 ? 2 : 6, z: 3.6 }); AA.rxPen.write(x, WORDS[3], o[0], o[1], WSZ[3] * ips, { weight: 'heavy', color: api.INK, align: 'center', t: u }); return; }
       const base = WSZ[w.k] * d.wordK * ips * (w === tk ? 1 : 0.6); AA.rxPen.write(x, WORDS[w.k], xx, Y[1], base, { weight: 'heavy', color: api.GREEN, align: 'left', t: u }); xx += AA.rxPen.measure(WORDS[w.k], base, 'heavy').width + 24 * ips; }); }
   // direction 3: the molecule as it stood, drawn small beside the finished one
