@@ -255,6 +255,7 @@ def pick_spec(molecule, round_number, carried, rng, tier=3, history=(), rules=No
     cands = candidates(round_number, carried, rules, tier, history, f0)
     corr = pair_corr(round_number)
     used = Counter(nm for p in history for nm in p.names)
+    last_fams = set(history[-1].families) if history else set()
     for _ in range(20):
         if not cands:
             break
@@ -270,7 +271,7 @@ def pick_spec(molecule, round_number, carried, rng, tier=3, history=(), rules=No
         a = _draw(cands, [math.exp(-YIELD_PENALTY * c[3]) / (1.0 + 2 * used[c[0].name]) for c in cands], rng)
         cands = [c for c in cands if c is not a]
         rid = table().get('riders', {}).get('held_back')
-        if rid and rng.random() < RIDER_SHARE:
+        if rid and 'restraint' not in last_fams and rng.random() < RIDER_SHARE:
             # a spec taken a little easier, and one turn held back
             rn = rid.get(str(round_number), 1)
             ok = _weights([a], history, tgt, 0.06, scale=rider_factor(round_number), y_with=0.0)
@@ -300,6 +301,8 @@ def pick_spec(molecule, round_number, carried, rng, tier=3, history=(), rules=No
         pk = None
         for name in ('off_total', 'growth', 'opener'):
             sp = H.SPECS[name]
+            if sp.family in last_fams:
+                continue
             c = _cell(name, round_number)
             nn = c['ref'] if c and c.get('ref') else 1
             if sp.cap:

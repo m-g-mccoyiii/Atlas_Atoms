@@ -435,9 +435,9 @@ S('unsaturation', 'makeup', 'bonds', 'unsat', 'gain', 'at least {N} more rings a
   'ring outlines and double lines counted together',
   'rings plus double bonds (an aromatic ring counts 1 ring and 3 bonds), minus start; best turn')
 for _g, _lab in (('OH', 'OH'), ('C=O', 'C=O'), ('C=C', 'C=C')):
-    _add('end_' + _g.replace('=', ''), 'makeup', 'keep', 'at least {N} more ' + _lab + ' at the finish', 'keep_' + _lab,
+    _add('end_' + _g.replace('=', ''), 'makeup', 'keep', 'at least {N} more ' + _lab + ' at the finish', 'keep_' + _g.replace('=', ''),
          'the group drawn in a box that stays lit to the end of the round',
-         _struct_group(_g, 'lastgain'), 'count of the group on the molecule after the last turn minus the count at the start',
+         _struct_group(_g, 'lastgain'), 'count of ' + _lab + ' groups on the molecule after the last turn minus the count at the start (never below 0)',
          kind='structure', reading='lastgain', grain=True, plain=2)
 
 
