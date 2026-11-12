@@ -5,6 +5,8 @@
 (function () {
   const q = new URLSearchParams(location.search), mode = q.get('shot'); if (!mode) return;
   const realST = window.setTimeout.bind(window);
+  window.addEventListener('error', e => { new Image().src = '/__log?m=' + encodeURIComponent('ERR ' + e.message + ' ' + (e.filename || '').split('/').pop() + ':' + e.lineno + ':' + e.colno); });
+  window.addEventListener('unhandledrejection', e => { new Image().src = '/__log?m=' + encodeURIComponent('REJ ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
   let vnow = 1000, tid = 1, rafs = []; const timers = [];
   performance.now = () => vnow;
   window.setTimeout = (fn, ms, ...a) => { const id = tid++; timers.push({ id, t: vnow + Math.max(0, ms || 0), fn, a }); return id; };
@@ -19,12 +21,15 @@
   }
   const yieldReal = () => new Promise(r => realST(r, 0));
   async function run(ms, onEnd) { const end = vnow + ms; let k = 0; while (vnow < end) { step(Math.min(33, end - vnow)); if (vnow < end && ++k % 10 === 0) await yieldReal(); } if (onEnd) onEnd(); }
+  const pend = [];
   function save(name) {
-    const cvs = document.querySelector('#schemeapp canvas'), url = cvs.toDataURL('image/jpeg', 0.88), n = Math.ceil(url.length / 20000);
-    for (let i = 0; i < n; i++) { const im = new Image(); im.src = '/__save?name=' + encodeURIComponent(name) + '&i=' + i + '&n=' + n + '&d=' + encodeURIComponent(url.slice(i * 20000, (i + 1) * 20000)); }
+    const cvs = document.querySelector('#schemeapp canvas'), url = cvs.toDataURL('image/jpeg', 0.88), n = Math.ceil(url.length / 8000), sid = Math.random().toString(36).slice(2);
+    // the parts go one after another, each when the last has arrived, so none is lost
+    pend.push((async () => { for (let i = 0; i < n; i++) await new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = '/__save?name=' + encodeURIComponent(name) + '&s=' + sid + '&i=' + i + '&n=' + n + '&d=' + encodeURIComponent(url.slice(i * 8000, (i + 1) * 8000)); }); })());
   }
   window.addEventListener('load', () => realST(async () => {
     const S = AA.rxScheme, P = AA.rxPath, base = q.get('name') || 'shot', at = (q.get('at') || '300').split(',').map(Number);
+    if (q.get('script')) { await new Promise(r => { const sc = document.createElement('script'); sc.src = q.get('script'); sc.onload = r; sc.onerror = r; document.head.append(sc); }); if (window.SHOT) await window.SHOT({ S, P, run, save, now: () => vnow, base, q }); await Promise.all(pend); new Image().src = '/__log?m=' + encodeURIComponent('flushed ' + base); document.title = 'done'; return; }
     if (q.get('next')) P.RULE.next = true; if (q.get('free')) P.RULE.usesFree = true; P.seed(+(q.get('seed') || 3)); S.debugBare(true); S.debugRound(+(q.get('round') || 1));
     await run(1500); S.takePick(0); await run(1200); S.chooseBrief(0); await run(2500);
     if (q.get('rack') || mode === 'water') { S.debugRack((q.get('rack') || 'dehydrate,hydrate,pcc,bh3,nabh4').split(',')); await run(900); }

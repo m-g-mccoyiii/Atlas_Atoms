@@ -13,7 +13,45 @@ const fmt = n => Math.round(n).toLocaleString('en-US');
   const fmtK = n => { const t = v => String(Math.round(v * 10) / 10).replace(/\.0$/, ''); return n >= 1e9 ? t(n / 1e9) + 'B' : n >= 1e6 ? t(n / 1e6) + 'M' : n >= 1e5 ? t(n / 1e3) + 'K' : fmt(n); };
 const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
 const BALL = el => Math.min(0.62, 0.2 + 0.36 * E[el].cov);
-const INK = '#2b2622', PENCIL = '#5a564e', FAINT = 'rgba(90,86,78,0.35)', REDINK = '#c8261c', GREEN = '#1c8a4a', HILITE = 'rgba(255,214,0,0.6)';
+let INK = '#2b2622', PENCIL = '#5a564e', FAINT = 'rgba(90,86,78,0.35)', REDINK = '#c8261c', GREEN = '#1c8a4a'; const HILITE = 'rgba(255,214,0,0.6)';
+// Five sheets for the page to sit on (?paper=1..5, remembered). Each has its own ink colors, the color of the soft shadow under
+// the molecule, the table beyond the sheet and the wash laid over the whole view. The sheet itself is drawn in paperDraw.
+const PAPERS = {
+  1: { name: 'notebook', ink: '#2b2622', pencil: '#5a564e', faint: 'rgba(90,86,78,0.35)', red: '#c8261c', green: '#1c8a4a', sh: '90,70,40', sha: 0.2, bg: '#e9e2d0', veil: ['rgba(255,236,190,0.14)', 'rgba(110,80,40,0.10)'] },
+  2: { name: 'parchment', ink: '#2a1f14', pencil: '#5b4a35', faint: 'rgba(80,60,40,0.35)', red: '#9c2a1c', green: '#2f6b3a', sh: '70,45,15', sha: 0.26, bg: '#c9b385', veil: ['rgba(255,230,170,0.12)', 'rgba(90,55,20,0.14)'] },
+  3: { name: 'blotter', ink: '#23302a', pencil: '#4f5f55', faint: 'rgba(60,80,70,0.35)', red: '#c0301f', green: '#1c7d46', sh: '40,70,50', sha: 0.18, bg: '#c5d3bb', veil: ['rgba(240,255,225,0.12)', 'rgba(40,80,50,0.08)'] },
+  4: { name: 'slate', ink: '#f3eee2', pencil: '#cfc8b8', faint: 'rgba(235,228,212,0.35)', red: '#f08c78', green: '#8fd6a0', sh: '0,0,0', sha: 0.5, bg: '#26211d', veil: ['rgba(255,225,180,0.05)', 'rgba(0,0,0,0.18)'] },
+  5: { name: 'kraft', ink: '#2a1e12', pencil: '#4a3a28', faint: 'rgba(60,40,20,0.35)', red: '#a8231a', green: '#1d6b3a', sh: '60,35,10', sha: 0.28, bg: '#a98657', veil: ['rgba(255,225,170,0.10)', 'rgba(70,40,10,0.14)'] } };
+let PAPERN = 1; try { const qp = new URLSearchParams(window.location.search).get('paper'); if (qp && PAPERS[+qp]) { PAPERN = +qp; window.localStorage.setItem('aa_paper', qp); } else { const sv = +window.localStorage.getItem('aa_paper'); if (PAPERS[sv]) PAPERN = sv; } } catch (e) { /* no storage */ }
+{ const P0 = PAPERS[PAPERN]; INK = P0.ink; PENCIL = P0.pencil; FAINT = P0.faint; REDINK = P0.red; GREEN = P0.green; }
+const SHADE = PAPERS[PAPERN].sh, SHADA = PAPERS[PAPERN].sha;
+function paperDraw(x, w, h, n, SW0) {
+  let sd = n * 7919 + 13; const R = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296, u = w / SW0, P0 = PAPERS[n];
+  x.fillStyle = P0.base; x.fillRect(0, 0, w, h);
+  const blotch = (cnt, rad, col, a) => { for (let i = 0; i < cnt; i++) { const cx = R() * w, cy = R() * h, r = rad * (0.4 + R()), g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(' + col + ',' + (a * (0.4 + R() * 0.6)).toFixed(3) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)'); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); } };
+  const fibers = (cnt, len, col, a, lw, ang0, spread) => { x.lineWidth = lw; x.lineCap = 'round'; for (let i = 0; i < cnt; i++) { const cx = R() * w, cy = R() * h, a0 = ang0 + (R() - 0.5) * spread, l = len * (0.4 + R()), bx = (R() - 0.5) * l * 0.4, by = (R() - 0.5) * l * 0.4; x.strokeStyle = 'rgba(' + col + ',' + (a * (0.3 + R() * 0.7)).toFixed(3) + ')'; x.beginPath(); x.moveTo(cx, cy); x.quadraticCurveTo(cx + Math.cos(a0) * l * 0.5 + bx, cy + Math.sin(a0) * l * 0.5 + by, cx + Math.cos(a0) * l, cy + Math.sin(a0) * l); x.stroke(); } };
+  const specks = (cnt, col, a) => { for (let i = 0; i < cnt; i++) { x.fillStyle = 'rgba(' + col + ',' + (R() * a).toFixed(3) + ')'; x.fillRect(R() * w, R() * h, 1 + R() * 2, 1 + R() * 2); } };
+  const edges = (col, a, depth) => { [[0, 0, 0, depth, 1], [0, h, 0, h - depth, 1], [0, 0, depth, 0, 0], [w, 0, w - depth, 0, 0]].forEach(q => { const g = x.createLinearGradient(q[0], q[1], q[2], q[3]); g.addColorStop(0, 'rgba(' + col + ',' + a + ')'); g.addColorStop(1, 'rgba(' + col + ',0)'); x.fillStyle = g; if (q[4]) x.fillRect(0, Math.min(q[1], q[3]), w, depth); else x.fillRect(Math.min(q[0], q[2]), 0, depth, h); }); };
+  const lines = (step, col, lw, vert, horz) => { x.strokeStyle = col; x.lineWidth = lw; if (vert) for (let i = 0; i * step <= w; i++) { x.beginPath(); x.moveTo(i * step, 0); x.lineTo(i * step, h); x.stroke(); } if (horz) for (let j = 0; j * step <= h; j++) { x.beginPath(); x.moveTo(0, j * step); x.lineTo(w, j * step); x.stroke(); } };
+  if (n === 1) { // aged notebook paper: ruled lines, a faint margin, soft staining at the edges
+    specks(40000, '120,100,60', 0.05); blotch(26, 260, '170,125,60', 0.045); lines(u * 1.5, 'rgba(70,120,170,0.2)', 1.4, false, true);
+    x.strokeStyle = 'rgba(200,80,80,0.26)'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(u * 4.2, 0); x.lineTo(u * 4.2, h); x.stroke(); x.beginPath(); x.moveTo(u * 4.5, 0); x.lineTo(u * 4.5, h); x.stroke();
+    edges('150,105,55', 0.2, 150); blotch(7, 190, '150,100,40', 0.07);
+  } else if (n === 2) { // parchment: uneven, fibrous, darker where it has been handled
+    blotch(46, 360, '150,105,40', 0.07); blotch(36, 220, '255,245,210', 0.09); specks(30000, '90,60,30', 0.08); fibers(9000, 46, '110,80,40', 0.12, 1.1, 0, 6.3); fibers(2500, 80, '255,245,220', 0.1, 1, 0.6, 3); edges('110,70,25', 0.36, 220); blotch(10, 160, '100,60,20', 0.1);
+  } else if (n === 3) { // pale green blotter with a fine graph grid
+    specks(40000, '60,100,70', 0.05); fibers(4500, 14, '255,255,255', 0.14, 1, 0, 6.3); blotch(14, 320, '100,150,110', 0.05);
+    lines(u * 0.5, 'rgba(50,110,80,0.2)', 1, true, true); lines(u * 2.5, 'rgba(40,100,70,0.4)', 1.8, true, true); edges('70,110,80', 0.14, 120);
+  } else if (n === 4) { // a dark bench top in warm grey-brown, with dust and scratches
+    blotch(54, 300, '20,14,10', 0.2); blotch(30, 260, '130,112,92', 0.05); specks(50000, '230,220,200', 0.07); fibers(420, 280, '215,205,185', 0.07, 1.2, 0.3, 3.2); blotch(7, 420, '235,230,215', 0.035); edges('0,0,0', 0.4, 220);
+  } else { // kraft paper, a mid tan, fibers, soft creases, chalk lines
+    blotch(40, 320, '120,80,40', 0.07); specks(40000, '70,45,20', 0.08); fibers(14000, 60, '90,60,30', 0.12, 1, 0.1, 1.2); fibers(5000, 50, '245,225,185', 0.1, 1, 0.1, 1.4);
+    x.strokeStyle = 'rgba(80,50,20,0.12)'; x.lineWidth = 3; for (let k = 0; k < 5; k++) { const y0 = R() * h; x.beginPath(); x.moveTo(0, y0); x.quadraticCurveTo(w / 2, y0 + (R() - 0.5) * 160, w, y0 + (R() - 0.5) * 80); x.stroke(); }
+    x.strokeStyle = 'rgba(255,250,235,0.17)'; x.lineWidth = 2.4; x.lineCap = 'round'; for (let i = 1; i * u * 4 < w; i++) for (let j = 0; j * 90 < h; j++) if (R() > 0.12) { x.beginPath(); x.moveTo(i * u * 4 + (R() - 0.5) * 2, j * 90 + 4); x.lineTo(i * u * 4 + (R() - 0.5) * 2, j * 90 + 78); x.stroke(); }
+    edges('90,55,20', 0.28, 200);
+  }
+}
+Object.assign(PAPERS[1], { base: '#f3eddc' }); Object.assign(PAPERS[2], { base: '#e6d5aa' }); Object.assign(PAPERS[3], { base: '#dfe9d3' }); Object.assign(PAPERS[4], { base: '#3a342f' }); Object.assign(PAPERS[5], { base: '#c9a273' });
 const SW = 64, SH = 44, IW = 2048, IH = 1408, U = IW / SW;
 // The page, near to far: a band along the bottom for the count, the molecule in the middle, and the molecules it
 // can become in one row along the top. The round and its pages run down the left edge, equipment down the right.
@@ -35,7 +73,7 @@ function start(app) {
   ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
   // a look being tried, see kitart.js
   const LOOK = (() => { try { return new URLSearchParams(root.location.search).get('look') || 'toy'; } catch (e) { return 'toy'; } })(); AA.rxKit.K.look = LOOK;
-  const scene = new T.Scene(); scene.background = lin('#e9e2d0');
+  const scene = new T.Scene(); scene.background = lin(PAPERS[PAPERN].bg);
   const cam = new T.PerspectiveCamera(34, 1, 0.5, 200), CAM = new T.Vector3(0, 43, 22.6), LOOKAT = new T.Vector3(0, 0, 0.6);
   const camDir = LOOKAT.clone().sub(CAM).normalize();
   scene.add(new T.HemisphereLight(0xfff6e6, 0xcabf9f, LOOK === 'clay' ? 1.0 : LOOK === 'desk' ? 0.55 : 0.8));
@@ -53,11 +91,10 @@ function start(app) {
 
   // ---------- the page, and the layer of ink over it ----------
   const paper = canvasTex(2048, 1408);
-  (() => { const x = paper.x, w = 2048, h = 1408, u = w / SW; x.fillStyle = '#f3eddc'; x.fillRect(0, 0, w, h); noise(x, w, h, 50000, 0.05, '120,100,60');
-    x.strokeStyle = 'rgba(70,120,170,0.2)'; x.lineWidth = 1.4; for (let i = 0; i <= SW; i++) { x.beginPath(); x.moveTo(i * u, 0); x.lineTo(i * u, h); x.stroke(); } for (let j = 0; j <= SH; j++) { x.beginPath(); x.moveTo(0, j * u); x.lineTo(w, j * u); x.stroke(); }
-    paper.t.needsUpdate = true; })();
+  paperDraw(paper.x, 2048, 1408, PAPERN, SW); paper.t.needsUpdate = true;
   add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), std({ map: paper.t, roughness: 0.95 }), 0, 0, 0).castShadow = false;
   const ink = canvasTex(IW, IH);
+  { const st0 = ink.x.strokeText.bind(ink.x); ink.x.strokeText = function (t, a, b) { const c = ink.x.strokeStyle; if (c === '#f3eddc' || c === '#fbf8ee') return; st0(t, a, b); }; } // no paper-colored cut-out behind lettering: it leaves a pale fringe on the grain
   const inkMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: ink.t, transparent: true, depthWrite: false }), 0, 0.02, 0); inkMesh.castShadow = false; inkMesh.receiveShadow = false;
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
 
@@ -473,7 +510,8 @@ function start(app) {
 
   // ---------- equipment: objects standing on the page, each with its name and what it does pencilled under it ----------
   let kitObjs = [], heldObjs = [];
-  const clearPicks = () => { clearHoms(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; heldObjs.forEach(k => scene.remove(k.grp)); heldObjs = []; };
+  let heldShelf = null, offerShelves = [];
+  const clearPicks = () => { clearHoms(); pickObjs.forEach(k => scene.remove(k.grp)); pickObjs = []; heldObjs.forEach(k => scene.remove(k.grp)); heldObjs = []; if (heldShelf) { scene.remove(heldShelf); heldShelf = null; } offerShelves.forEach(q => scene.remove(q)); offerShelves = []; };
   const GLASS = AA.rxKit.mat(T, 0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
   // the four yield flags on the track are the kit's: drawn as outline until the total passes them, then filled
   function buildFlags() { const out = []; ['stable', 'unstable', 'volatile', 'overreact'].forEach(nm => { const mk = suf => { const grp = new T.Group(), inner = new T.Group(); if (!AA.rxKit.build('mark_' + nm + suf, T, inner, new T.Color(0xffffff))) return null; const bb = new T.Box3().setFromObject(inner), sz = bb.getSize(new T.Vector3()), k = Math.min(1.5, 2.6 / Math.max(sz.x, sz.z), 3.3 / sz.y); inner.scale.setScalar(k); inner.position.set(-(bb.min.x + bb.max.x) / 2 * k, -bb.min.y * k, -(bb.min.z + bb.max.z) / 2 * k); grp.add(inner); grp.rotation.x = -0.8; grp.visible = false; scene.add(grp); return grp; }; out.push({ on: mk(''), off: mk('_off') }); }); return out.every(o => o.on && o.off) ? out : null; }
@@ -517,11 +555,16 @@ function start(app) {
     }
     // arriving: a drop from above, a squash on landing
     { const a0 = (now - (k.born || 0)) / 1000; G.visible = a0 >= 0; if (a0 >= 0 && a0 < 0.8) { const u = Math.min(1, a0 / 0.38); y += (1 - u) * (1 - u) * 11; if (a0 >= 0.38) { const w = Math.sin((a0 - 0.38) / 0.42 * Math.PI) * (1 - (a0 - 0.38) / 0.42); sy *= 1 - 0.3 * w; sx *= 1 + 0.18 * w; } } }
+    { const inner = G.children[0]; if (inner && AA.rxKit.use) AA.rxKit.use(inner, age < 0.7 ? Math.sin(Math.min(1, age / 0.7) * Math.PI) : 0); }
     G.position.set(k.hx + x, y, k.hz + z); G.rotation.y = yaw; G.rotation.z = rz; G.scale.set(B * sx, B * sy, B * sx);
   }
+  // the instruments of the run stand on the kit's wooden shelf, five places, at one scale
+  let kitShelf = null; const shelfAt = (n, x, z, K) => { const grp = new T.Group(), sh = AA.rxKit.shelf(T, n); if (!sh) return null; grp.add(sh); grp.rotation.x = -0.8; grp.scale.setScalar(K); grp.position.set(x, 0, z); scene.add(grp); return grp; };
   function buildKit() {
+    if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
     st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.05) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    if (KITV === 'back' && meta.stage >= 2 && !run.noGear && !P.RULE.bare) { const q2 = KITP(2); kitShelf = shelfAt(5, q2.x, q2.z + 0.3, 1.8); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
@@ -551,19 +594,14 @@ function start(app) {
   const BEAK = { x: -21.6 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, BALN = { x: -17.4 + SX, z: KITV === 'back' ? -9.6 : -7.6 }, TALLY = { x: -13.4 + SX, z: KITV === 'back' ? -8.6 : -6.4 };
   // one jar for each creature that is built (P.HOMS). A jar stands on the page once its substance has first come off;
   // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
-  const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed' };
+  const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f, ammonia: 0xbcd6dc, brimstone: 0xc9a227 }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f', ammonia: '#6f9aa4', brimstone: '#9c7f12' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed', ammonia: 'homammonia', brimstone: 'hombrimstone' };
   const jarSeen = k => !P.RULE.bare && (k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0);
   const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
-  const JGLASS = std({ color: lin(0xdfe9ee), roughness: 0.08, transparent: true, opacity: 0.3, depthWrite: false });
-  const jars = (() => { const KM = AA.rxKit.mat, out = {};
-    JARK.forEach(k => { const grp = new T.Group(), shell = new T.Group(); grp.add(shell);
-      add(new T.CylinderGeometry(1.0, 1.05, 0.14, 24), KM(T, 0x8a5a2b, 0.7), 0, 0.07, 0, shell); { const gl = add(new T.CylinderGeometry(0.92, 0.92, 2.1, 24, 1, true), JGLASS, 0, 1.19, 0, shell); gl.renderOrder = 3; gl.userData.plain = true; gl.castShadow = false; gl.receiveShadow = false; const rim = add(new T.TorusGeometry(0.93, 0.035, 6, 28), new T.MeshBasicMaterial({ color: lin(0x2b2622) }), 0, 0.16, 0, shell); rim.rotation.x = Math.PI / 2; rim.userData.plain = true; }
-      const lid = add(new T.CylinderGeometry(0.98, 0.98, 0.16, 24), KM(T, 0x2c2f34, 0.55, 0.3), 0, 2.32, 0, shell); AA.rxKit.finish(T, shell);
-      const fill = add(new T.CylinderGeometry(0.85, 0.85, 1, 24), std({ color: lin(JARC[k]), roughness: 0.3, transparent: true, opacity: k === 'h2' ? 0.4 : 0.5, depthWrite: false }), 0, 0.64, 0, grp); fill.renderOrder = 2; fill.userData.plain = true; fill.castShadow = false;
-      const speck = add(new T.SphereGeometry(0.14, 12, 10), KM(T, k === 'h2' ? 0xf8e3dc : k === 'co2' ? 0xf2f8fb : k === 'water' ? 0x7fc0ea : JARC[k], 0.4), 0.1, 0.5, 0.3, grp), small = homFig(k), full = homFig(k); small.scale.setScalar(0.42); small.position.set(0, 0.16, 0.3); full.scale.setScalar(0.74); full.position.set(0, 0.16, 0.12); grp.add(small); grp.add(full);
-      grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, fill, lid, figs: [speck, small, full] }; });
+
+  const jars = (() => { const out = {};
+    JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
   const HOMP = { x: 13.0, z: 13.7 }; let homObj = null, homObjs = [], homOpts = [];
@@ -601,7 +639,7 @@ function start(app) {
     { z: 'r', say: 'row', when: () => g.cur.path.length >= 2 },
     { z: 'pages', say: 'three pages', when: () => g.page >= 2 }
   ];
-  const clearKit = () => { kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; };
+  const clearKit = () => { kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; if (kitShelf) { scene.remove(kitShelf); kitShelf = null; } };
 
   // what stands on the page: one slot for each reagent on offer, and on the last page one for the finishing reagent
   function refresh() {
@@ -622,7 +660,7 @@ function start(app) {
     });
     st.hover = -1; setHover(-1); dirty = true;
   }
-  function clearRound() { st.flyers.forEach(f => scene.remove(f.grp)); st.flyers = []; morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
+  function clearRound() { clearBench(); st.flyers.forEach(f => scene.remove(f.grp)); st.flyers = []; morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
     st.tok++; st.mode = 'play'; st.firing = false; st.starting = false; st.rezip = false; st.tool = null; st.toolList = null; st.toolSpot = null; st.view = null; st.paid = ''; st.shown = 0; st.gains = []; st.passT = []; st.pass = false; st.won = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
@@ -644,8 +682,9 @@ function start(app) {
     st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = []; st.pings = [];
     clearPicks(); st.mark = '';
     picks = list || P.runPicks(run);
-    if (P.RULE.coins) run.gear.forEach((id, i) => { const k = piece(id), q = HELD(i); k.grp.position.set(q.x, 0, q.z); k.grp.scale.setScalar(0.62 * sizeOf(id)); heldObjs.push(k); });
+    if (P.RULE.coins) run.gear.forEach((id, i) => { const k = piece(id), q = HELD(i); k.grp.position.set(q.x, 0, q.z); k.grp.scale.setScalar(0.62 * sizeOf(id)); heldObjs.push(k); }); if (run.gear.length) heldShelf = shelfAt(5, HELD(2).x, HELD(0).z + 0.2, 1.1);
     picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') { const k = piece(o.id); k.grp.position.set(PICKX[i], 0, -2.2); k.grp.scale.setScalar(1.7); k.slot = i; k.born = performance.now() + 120 + i * 130; k.grp.visible = false; pickObjs.push(k); } });
+    offerShelves = []; picks.forEach((o, i) => { if (o.kind === 'gear' || o.kind === 'level') offerShelves.push(shelfAt(5, PICKX[i], -2.2, 0.85)); });
     sfx.feed(); dirty = true;
   }
   function takePick(i) {
@@ -683,21 +722,30 @@ function start(app) {
   const shopMax = () => (meta.stage >= 3 ? P.SUPPLY.length - 1 : 3);
   const sigOpen = t => t.id === 'plain' || (occultOpen() && !!(meta.sig && meta.sig[t.id]));
   // ?seed=N plays the run whose draws all come from N. Without it the draws are the system's, as before.
-  function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR(), { tierNo: Math.max(1, Math.min(3, meta.reach || 1)) }); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && JARK.some(k => meta.hatched[k])) showHoms(); else runOpen(); }
+  function newRun() { try { const sd = new URLSearchParams(root.location.search).get('seed'); if (sd != null && sd !== '' && isFinite(+sd)) P.seed(+sd); } catch (e) { /* unseeded */ } run = P.runNew(meta.tier, extraR(), { tierNo: Math.max(1, Math.min(3, meta.reach || 1)) }); run.manual = true; run.single = !meta.taught; if (!meta.sig) meta.sig = {}; if (meta.stage < 2) run.noGear = true; if (P.RULE.bare) { run.noGear = true; run.hom = null; } homStand(); if (!P.RULE.bare && meta.stage >= 2 && JARK.some(jarSeen) && !run.noHom && !P.bareRun(run)) showHoms(); else runOpen(); }
   function runOpen() { if (P.TERMS.filter(sigOpen).length < 2) { P.runTerm(run, 'plain'); showPicks(); } else showTerms(); }
   // Before a run, once a homunculus has hatched: those that have stand on the page with an empty jar, and one is
   // taken into the run, or none
-  const clearHoms = () => { homObjs.forEach(k => scene.remove(k.grp)); homObjs = []; };
+  // Before a run the jars stand in a row on the kit's shelf, each at its saved fill and growth. A jar not yet seen is absent; one
+  // outline stands for the next to earn, with its count. Picking up a ready jar lets its homunculus step out and stand by the page.
+  let homShelf = null, homWalk = null; const HNOTE = { x: 20, z: 13.2 }, HSHELF = { z: 3.5 };
+  const clearHoms = () => { if (homShelf) { scene.remove(homShelf.grp); if (homShelf.note) scene.remove(homShelf.note); } homShelf = null; if (homWalk) scene.remove(homWalk.grp); homWalk = null; st.homPick = null; homOpts = []; homObjs = []; };
+  function jarShelf(cx, cz, wMax, kMax) {
+    const seen = JARK.filter(jarSeen), nxt = JARK.find(k => !jarSeen(k)), n = seen.length + (nxt ? 1 : 0), per = n > 5 ? 10 : 5, W = per * 3 + 0.6, K = Math.min(kMax, wMax / W), grp = new T.Group(), shelf = AA.rxKit.shelf(T, n); grp.add(shelf);
+    const slots = seen.map((k, i) => { const j = AA.rxKit.jar(T, k), lx = (i - (n - 1) / 2) * 3, ready = !!meta.hatched[k], fl = ready ? 1 : Math.min(1, (meta.jar[k] || 0) / P.JAR.full[k]); j.userData.set(fl, ready ? 2 : undefined); j.position.set(lx, 0, 0); grp.add(j); return { k, g: j, lx, ready, i }; });
+    let ghost = null; if (nxt) { const lx = (seen.length - (n - 1) / 2) * 3, gg = new T.Group(), im = new T.MeshBasicMaterial({ color: lin(0x8f897b) }), ring = y => { const r = new T.Mesh(new T.TorusGeometry(0.94, 0.045, 6, 28), im); r.rotation.x = Math.PI / 2; r.position.y = y; gg.add(r); }; ring(0.17); ring(2.3); ring(2.5); [-1, 1].forEach(q => { const r = new T.Mesh(new T.CylinderGeometry(0.045, 0.045, 2.3, 6), im); r.position.set(q * 0.94, 1.33, 0); gg.add(r); }); gg.position.set(lx, 0, 0); grp.add(gg); ghost = { k: nxt, lx }; }
+    grp.rotation.x = -0.8; grp.scale.setScalar(K); grp.position.set(cx, 0, cz); scene.add(grp); return { grp, slots, ghost, K, n, cx, cz };
+  }
   function showHoms() { st.tok++; st.mode = 'hom'; clearRound(); clearBriefs(); clearKit(); clearPicks(); clearHoms(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1;
-    homOpts = JARK.filter(k => meta.hatched[k]).concat([null]); const n = homOpts.length;
-    homOpts.forEach((k, i) => { const hold = new T.Group(); if (k) hold.add(homFig(k)); else { const KM = AA.rxKit.mat; add(new T.CylinderGeometry(1.0, 1.05, 0.14, 24), KM(T, 0x8a5a2b, 0.7), 0, 0.07, 0, hold); { const gl = add(new T.CylinderGeometry(0.92, 0.92, 2.1, 24, 1, true), JGLASS, 0, 1.19, 0, hold); gl.renderOrder = 3; gl.userData.plain = true; gl.castShadow = false; gl.receiveShadow = false; [0.16, 2.24].forEach(y => { const rim = add(new T.TorusGeometry(0.93, 0.035, 6, 28), new T.MeshBasicMaterial({ color: lin(0x2b2622) }), 0, y, 0, hold); rim.rotation.x = Math.PI / 2; rim.userData.plain = true; }); } AA.rxKit.finish(T, hold); }
-      { const q = HOMPOS(i, n); hold.rotation.x = -0.8; hold.position.set(q.x, 0, q.z); hold.scale.setScalar(k ? q.s : q.s * 0.62); } scene.add(hold); homObjs.push({ grp: hold, id: k, slot: i, born: performance.now() + 120 + i * 130 }); });
+    homShelf = jarShelf(0, HSHELF.z, 54, 3.3);
+    homOpts = slots.map(q => (q.ready ? q.k : -1)); { const nb = new T.Group(), inner = new T.Group(); AA.rxKit.build('logbook', T, inner, new T.Color(0x1d1c1c)); nb.add(inner); nb.rotation.x = -0.8; nb.scale.setScalar(1.5); nb.position.set(HNOTE.x, 0, HNOTE.z); scene.add(nb); homShelf.note = nb; }
     sfx.feed(); dirty = true; }
   // where each stands on the page before a run: up to three as on the take-one page, up to six in one row, more in two rows
-  const HOMPOS = (i, n) => { if (n <= 3) return { x: n === 2 ? [-8, 8][i] : n === 1 ? 0 : PICKX[i], z: -1.6, s: 2.4, tz: 4.6, ts: 1 }; if (n <= 6) return { x: (i - (n - 1) / 2) * (44 / n), z: -1.2, s: 1.9, tz: 3.9, ts: 0.72 }; const cols = Math.ceil(n / 2), row = i < cols ? 0 : 1, k = row ? i - cols : i, m = row ? n - cols : cols; return { x: (k - (m - 1) / 2) * (46 / cols), z: row ? 5.6 : -5.2, s: 1.5, tz: row ? 9.2 : -1.6, ts: 0.56 }; };
-  const HOMX = (i, n) => HOMPOS(i, n).x;
-  function chooseHom(i) { if (st.mode !== 'hom' || i < 0 || i >= homOpts.length) return; run.hom = homOpts[i]; clearHoms(); homStand(); if (run.hom === 'water') sfx.squish(); else if (run.hom) sfx.drift(); sfx.stamp(); st.shake = 0.6; runOpen(); }
-  function homPageAt(e) { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; let best = -1, bd = 1e9; const n = homOpts.length; homOpts.forEach((k, i) => { const q = HOMPOS(i, n), dx = Math.abs(hit.x - q.x), w = n <= 3 ? 6 : n <= 6 ? 22 / n : 23 / Math.ceil(n / 2); if (dx < w && hit.z > q.z - 2.8 * q.s && hit.z < q.tz + 4.6 * q.ts && dx < bd) { bd = dx; best = i; } }); return best; }
+  // where a slot of the shelf stands in world space, and what a pointer over the page is touching: a jar (its slot) or the notebook (99)
+  const jarSlotAt = q => ({ x: homShelf.cx + homShelf.K * q.lx, z: homShelf.cz });
+  function chooseHom(i) { if (st.mode !== 'hom' || !homShelf || st.homPick) return; if (i === 99) { run.hom = null; clearHoms(); homStand(); sfx.stamp(); st.shake = 0.4; runOpen(); return; } const q = homShelf.slots[i]; if (!q) return; if (!q.ready) { sfx.bad(); st.homBad = { i, t: performance.now() }; return; } st.homPick = { i, k: q.k, t0: performance.now() }; sfx.stamp(); }
+  function homFinish() { const k = st.homPick.k; st.hover = -1; run.hom = k; clearHoms(); homStand(); if (k === 'water') sfx.squish(); else sfx.drift(); st.shake = 0.5; runOpen(); }
+  function homPageAt(e) { if (!homShelf) return -1; const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam); if (!ray.ray.intersectPlane(ground, hit)) return -1; if (Math.abs(hit.x - HNOTE.x) < 3.2 && hit.z > HNOTE.z - 6 && hit.z < HNOTE.z + 3) return 99; const K = homShelf.K; let best = -1, bd = 1e9; homShelf.slots.forEach((q, i) => { const c = jarSlotAt(q), dx = Math.abs(hit.x - c.x); if (dx < 1.3 * K && hit.z > c.z - 5.8 * K && hit.z < c.z + 1.2 * K && dx < bd) { bd = dx; best = i; } }); return best; }
   // before a run: six sigils on the page, one is taken as the terms of the run
   const TERMP = i => ({ x: PICKX[i % 3], z: i < 3 ? -3.2 : 6.2 });
   function showTerms() { st.tok++; st.mode = 'terms'; clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
@@ -720,10 +768,32 @@ function start(app) {
     else { const q = pt(0, 0, 0); x.beginPath(); x.ellipse(c[0], c[1], r * 0.08, r * 0.05, 0, 0, 6.3); x.stroke(); }
   }
 
-  function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.tier < 1 || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name + ' opened', '', '#8a6a00'); dirty = true; }
+  function openFamily(i) { const f = P.FAMILIES[i]; if (st.mode !== 'shop' || !f || meta.tier < 1 || meta.fam[f.id] || meta.credit < f.cost) { sfx.bad(); return; } meta.credit -= f.cost; meta.fam[f.id] = true; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(f.name, '', '#8a6a00'); benchBuild(); dirty = true; }
   // between runs: what the run paid, and the suppliers that can be opened with it
-  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -1; sfx.feed(); dirty = true; }
-  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name + ' opened', '', '#8a6a00'); dirty = true; }
+  // The bench between runs: one place. The jars on their shelf, the instruments kept on theirs, the reagents known as before and
+  // after pictures, the coins. For each kind exactly one outline stands for the next thing to earn, with its count.
+  let bench = null;
+  function clearBench() { if (!bench) return; bench.objs.forEach(o => scene.remove(o)); bench = null; }
+  const fade = o => { o.traverse(m => { if (m.isMesh) { m.material = m.material.clone(); m.material.transparent = true; m.material.opacity = 0.3; m.material.depthWrite = false; } }); return o; };
+  const supplyNext = () => (meta.tier + 1 <= shopMax() ? P.SUPPLY[meta.tier + 1] : null);
+  const famNext = () => (meta.tier >= 1 ? P.FAMILIES.findIndex(f => !meta.fam[f.id]) : -1);
+  const knownR = () => { const o = []; P.SUPPLY.forEach((sp, i) => { if (i <= meta.tier) sp.reagents.forEach(id => { if (!o.includes(id)) o.push(id); }); }); extraR().forEach(id => { if (!o.includes(id)) o.push(id); }); return o.filter(id => TILE[id]); };
+  const BENCH = { jar: { x: -15.2, z: -2.8 }, gear: { x: 15.2, z: -2.8 }, rx: { z0: 6.2, dz: 3.4, dx: 10.4 } };
+  function benchBuild() {
+    clearBench(); const objs = []; bench = { objs, hover: null };
+    const J = jarShelf(BENCH.jar.x, BENCH.jar.z, 25.5, 1.9); bench.jars = J; objs.push(J.grp);
+    const nx = supplyNext(), owned = []; P.SUPPLY.forEach((sp, i) => { if (i <= meta.tier) sp.gear.forEach(id => { if (!owned.includes(id)) owned.push(id); }); });
+    const items = owned.slice(0, nx ? 9 : 10), n = items.length + (nx ? 1 : 0), W = n * 3 + 0.6, K = Math.min(1.9, 25.5 / W), grp = new T.Group(), shelf = AA.rxKit.shelf(T, Math.max(1, n)); grp.add(shelf);
+    const mk = id => { const inner = new T.Group(); AA.rxKit.build(id, T, inner, new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5)); return inner; };
+    items.forEach((id, i) => { const m = mk(id); m.position.x = (i - (n - 1) / 2) * 3; grp.add(m); });
+    let ghost = null; if (nx) { const lx = (items.length - (n - 1) / 2) * 3, gm = fade(mk(nx.gear[0])); gm.position.x = lx; grp.add(gm); const tg = AA.rxKit.tag(T, nx.cost <= 5 ? nx.cost : 0); if (tg) { tg.position.set(lx, 3.4, 0.9); grp.add(tg); } ghost = { lx, obj: gm, cost: nx.cost }; }
+    grp.rotation.x = -0.8; grp.scale.setScalar(K); grp.position.set(BENCH.gear.x, 0, BENCH.gear.z); scene.add(grp); objs.push(grp); bench.gear = { grp, K, n, ghost };
+    const nb = new T.Group(), inner = new T.Group(); AA.rxKit.build('logbook', T, inner, new T.Color(0x1d1c1c)); nb.add(inner); nb.rotation.x = -0.8; nb.scale.setScalar(1.4); nb.position.set(HNOTE.x, 0, HNOTE.z); scene.add(nb); objs.push(nb); bench.note = nb;
+    bench.rx = knownR().slice(0, nx || famNext() >= 0 ? 9 : 10);
+  }
+  const benchGhostAt = () => { const G = bench && bench.gear; return G && G.ghost ? { x: BENCH.gear.x + G.K * G.ghost.lx, z: BENCH.gear.z, K: G.K } : null; };
+  function showSuppliers() { st.tok++; st.mode = 'shop'; shop.earned = (run.beaten + (run.bonus || 0)) * (run.payMul || 1); meta.credit += shop.earned; saveMeta(); clearRound(); clearBriefs(); clearKit(); clearPicks(); st.call = null; st.floats = []; st.blots = []; st.pings = []; st.hover = -2; benchBuild(); sfx.feed(); dirty = true; }
+  function openSupplier(i) { const sp = P.SUPPLY[i]; if (st.mode !== 'shop' || i !== meta.tier + 1 || i > shopMax() || !sp || meta.credit < sp.cost) { sfx.bad(); return; } meta.credit -= sp.cost; meta.tier = i; saveMeta(); sfx.fanfare(); st.shake = 1.2; st.flash = 1; st.flashC = '255,214,0'; callout(sp.name, '', '#8a6a00'); benchBuild(); dirty = true; }
   // Pointing at a reaction works out what it would do, so the page can show it before the click
   function setHover(i) {
     st.hover = i; st.peek = null; st.willFire = null;
@@ -827,7 +897,7 @@ function start(app) {
         else if (e.src === 'collect') { st.bump.p = 0; }
         else if (e.src === 'short' && big) ping({ x: last.x, z: last.z - 2.2 }, txt, PART.p, 64, PART.p);
         else if (e.src === 'family' && e.kin === 'resonance') { /* shown by the extra number and the label */ }
-        else if (e.src === 'family' && !PLAIN) { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, (K ? K.name + ' ' : '') + txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
+        else if (e.src === 'family' && !PLAIN) { const K = P.KIN[e.kin]; ping({ x: last.x + 3.4, z: last.z - 5.2 }, txt, K ? K.col : PART[e.part], 60, K ? K.col : PART[e.part]); }
         else if (e.src === 'tally') { ping({ x: TALLY.x + 1, z: TALLY.z - 1.5 }, txt, PART.p, 60, PART.p); st.struck = performance.now(); }
         else if (e.src === 'homunculus') ping({ x: last.x, z: last.z - 1.6 }, 'again', PART.p, 56, PART.p);
         if (e.src === 'circle') { st.ringT = performance.now(); callout('transmute', '', '#8a6a00'); }
@@ -997,7 +1067,7 @@ function start(app) {
   // one thing that has left the molecule, as a small molecule of its own standing where it left from
   function flyer(grp0, gi, kind, back, prev, nm) {
     const grp = new T.Group(), els = kind === 'water' ? ['O', 'H', 'H'] : kind === 'h2' ? ['H', 'H'] : grp0.map(a => a.el).sort((a, b) => (a === 'H') - (b === 'H')).slice(0, 3), hub = els[0] !== 'H';
-    els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
+    const RO = { water: 'ro_water', h2: 'ro_h2', co2: 'ro_co2', chloride: 'ro_acid', acid: 'ro_acid', nh3: 'ro_nh3', ammonia: 'ro_nh3', sulfur: 'ro_sulfur' }[kind], roIn = RO ? new T.Group() : null; if (roIn && AA.rxKit.build(RO, T, roIn, new T.Color(0xffffff))) { roIn.scale.setScalar(0.5); roIn.position.y = 0.6; grp.add(roIn); } else els.forEach((el, k) => { const side = k % 2 ? -1 : 1, px0 = hub ? (k ? side * 0.78 : 0) : side * 0.36, py = hub && k ? 0.5 : 0; add(SPH, ballMat(el), px0, py, 0, grp).scale.setScalar(BALL(el)); });
     const srcA = grp0.map(back).find(a => a && prev.balls.has(a)), p = srcA ? prev.at.get(srcA) : nm && nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 };
     grp.position.set(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc); grp.scale.setScalar(st.sc); scene.add(grp);
     st.flyers.push({ grp, gi, kind, at: { x: p.x, z: p.z }, from: grp.position.clone(), to: byTarget(kind), t0: performance.now() + 200, dur: 400, spin: gi % 2 ? 1.2 : -1.2 });
@@ -1237,38 +1307,28 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode === 'shop') {
-      const h = px({ x: 0, z: -13 }); hand(x, 96); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('bench', h[0], h[1]);
-      { marker(x, 52); x.fillStyle = INK; x.textAlign = 'left'; const lab = '+' + shop.earned + '   ' + meta.credit, ww = x.measureText(lab).width; coin(x, h[0] - ww / 2 - 30, h[1] + 52, 20); x.fillText(lab, h[0] - ww / 2, h[1] + 70); }
-      P.SUPPLY.forEach((sp, i) => { if (i > Math.min(meta.tier + 1, shopMax())) return;
-        const c = px({ x: -20, z: -9.2 + i * 3.6 }), open = i <= meta.tier, nextUp = i === meta.tier + 1, can = nextUp && meta.credit >= sp.cost, hov = st.hover === i && nextUp;
-        if (open) swipe(x, [c[0] - 6, c[1] + 14], [c[0] + x.measureText(sp.name).width * 1.5 + 60, c[1] + 10], 6, GREEN);
-        hand(x, 50); x.textAlign = 'left'; x.fillStyle = open ? INK : nextUp ? INK : FAINT; x.fillText(sp.name, c[0], c[1]);
-        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open && nextUp) { for (let k = 0; k < Math.min(6, sp.cost); k++) AA.rxKit.drawCoin(x, c[0] + 1250 + k * 36, c[1] - 12, 16, { alpha: can ? 1 : 0.5 }); if (sp.cost > 6) { marker(x, 40); x.fillStyle = can ? INK : PENCIL; x.fillText(String(sp.cost), c[0] + 1680, c[1] - 0); } }
-        hand(x, 38); x.fillStyle = open || nextUp ? PENCIL : FAINT;
-        const things = (sp.kin || []).map(k => k + ' molecules').concat(sp.reagents.map(id => RX.CARDS[id].verb.toLowerCase())).concat(sp.gear.map(id => P.GEARS[id].name)).concat(sp.rare ? ['rare versions of reagents'] : []);
-        if (open || nextUp) sp.reagents.slice(0, 5).forEach((id, k) => { const tl = TILE[id]; if (!tl) return; x.save(); x.translate(c[0] + 420 + k * 150, c[1] - 8); x.scale(0.9, 0.9); fragOrChip(x, tl[0], -42, 0, nextUp || open); x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-14, 0); x.lineTo(6, 0); x.stroke(); fragOrChip(x, tl[1], 44, 0, nextUp || open); x.restore(); });
-        if (hov) ring(x, [c[0] + 400, c[1] + 6], 470, 86, 5, INK, 0.01);
-      });
-      P.FAMILIES.forEach((f, i) => { if (meta.tier < 1) return;
-        const c = px({ x: 8, z: -9.2 + i * 3.6 }), open = !!meta.fam[f.id], can = !open && meta.credit >= f.cost, hov = st.hover === 100 + i && !open;
-        if (open) swipe(x, [c[0] - 6, c[1] + 14], [c[0] + 330, c[1] + 10], 6, GREEN);
-        marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(f.name, c[0], c[1]);
-        hand(x, 40); x.fillStyle = open ? GREEN : can ? REDINK : PENCIL; if (!open) { coin(x, c[0] + 370, c[1] - 20, 16); x.fillText(String(f.cost), c[0] + 396, c[1] - 6); }
-        hand(x, 30); x.fillStyle = PENCIL; x.fillText(f.reagents.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), c[0], c[1] + 40); f.reagents.forEach((id, k) => dots(x, id, c[0] + 380 + k * 70, c[1] + 32, 6));
-        if (hov) ring(x, [c[0] + 250, c[1] + 6], 300, 86, 5, INK, 0.01);
-      });
-      { const found = Object.keys(meta.found).filter(k => meta.found[k]), c = px({ x: 8, z: 2.6 }); if (found.length) { marker(x, 50); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('found', c[0], c[1]); hand(x, 30); x.fillStyle = PENCIL; x.fillText(found.map(id => RX.CARDS[id].verb.toLowerCase()).join(',  '), c[0], c[1] + 40); } }
-      const n0 = px({ x: 0, z: 12.4 }); hand(x, 70); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('new run', n0[0], n0[1]);
-      if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 110); x.fillStyle = st.call.col; x.lineWidth = 14; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(st.call.text, c[0], c[1] + 500); x.fillText(st.call.text, c[0], c[1] + 500); }
+      if (bench) { const B = bench, nx = supplyNext(), fi = famNext(), can = nx && meta.credit >= nx.cost, hovG = st.hover === meta.tier + 1, held = Math.max(0, meta.credit - shop.earned);
+        // the coins: what the run just paid, apart from what was held
+        { const c0 = px({ x: -3, z: -14.4 }), n1 = Math.min(18, shop.earned); marker(x, 44); x.fillStyle = GREEN; x.textAlign = 'right'; if (shop.earned) x.fillText('+', c0[0] - 22, c0[1] + 14); for (let k = 0; k < n1; k++) AA.rxKit.drawCoin(x, c0[0] + k * 40, c0[1], 17, {}); if (shop.earned > 18) { x.fillStyle = INK; x.textAlign = 'left'; x.fillText(String(shop.earned), c0[0] + 18 * 40, c0[1] + 14); }
+          const c1 = px({ x: -3, z: -12.6 }), n2 = Math.min(24, held); for (let k = 0; k < n2; k++) AA.rxKit.drawCoin(x, c1[0] + k * 30, c1[1], 13, { alpha: 0.9 }); if (held > 24) { marker(x, 40); x.fillStyle = INK; x.textAlign = 'left'; x.fillText(String(held), c1[0] + 24 * 30, c1[1] + 12); } }
+        // the jars: the next one to earn, with its count
+        if (B.jars.ghost) { const hs = B.jars, gk = hs.ghost.k, c = px({ x: hs.cx + hs.K * hs.ghost.lx, z: hs.cz + 2.8 * hs.K }); drop(x, c[0] - 30, c[1] - 6, 14, JARINK[gk], false); marker(x, 46); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText(String(P.JAR.full[gk]), c[0] - 6, c[1] + 10); }
+        // the instruments: the next one on offer, its price in coins
+        { const G = benchGhostAt(); if (G) { const c = px({ x: G.x, z: G.z + 2.8 * G.K }), k = Math.min(5, nx.cost); for (let q = 0; q < k; q++) AA.rxKit.drawCoin(x, c[0] - (k - 1) * 14 + q * 28, c[1], 12, { alpha: can ? 1 : 0.45 }); marker(x, 44); x.textAlign = 'center'; x.fillStyle = can ? GREEN : PENCIL; x.fillText(String(nx.cost), c[0], c[1] + 52); if (hovG) ring(x, [c[0], c[1] - 80], 90, 130, 5, INK, 0.01); } }
+        // the reagents known, each as what it changes before and after; one outline for the next
+        { const per = 5, cell = k => px({ x: -20.8 + (k % per) * BENCH.rx.dx, z: BENCH.rx.z0 + Math.floor(k / per) * BENCH.rx.dz }), pair = (id, k, on) => { const c = cell(k), tl = TILE[id]; if (!tl) return; x.save(); x.translate(c[0], c[1]); x.scale(0.8, 0.8); fragOrChip(x, tl[0], -62, 0, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, 0); x.lineTo(0, 0); x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); x.stroke(); fragOrChip(x, tl[1], 46, 0, on); x.restore(); };
+          B.rx.forEach((id, k) => pair(id, k, true));
+          const gid = fi >= 0 ? P.FAMILIES[fi].reagents.find(id => TILE[id]) : nx ? nx.reagents.find(id => TILE[id]) : null, cost = fi >= 0 ? P.FAMILIES[fi].cost : nx ? nx.cost : 0;
+          if (gid) { pair(gid, B.rx.length, false); const c = cell(B.rx.length), ok = meta.credit >= cost, hv = st.hover === 100 + Math.max(0, fi); AA.rxKit.drawCoin(x, c[0] - 20, c[1] + 62, 12, { alpha: ok ? 1 : 0.45 }); marker(x, 40); x.textAlign = 'left'; x.fillStyle = ok ? GREEN : PENCIL; x.fillText(String(cost), c[0] - 2, c[1] + 74); if (hv) ring(x, [c[0], c[1]], 190, 70, 5, INK, 0.01); } }
+      }
+      if (st.call && now - st.call.t < 1400) { const c = px(CALL); marker(x, 90); x.fillStyle = st.call.col; x.textAlign = 'center'; x.fillText(st.call.text, c[0], c[1] + 500); }
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'hom') {
-      const h = px({ x: 0, z: -11 }); marker(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('homunculus', h[0], h[1]);
-      homOpts.forEach((k, i) => { const q = HOMPOS(i, homOpts.length), u = q.ts, c = px({ x: q.x, z: q.tz }), hov = st.hover === i, H = k ? P.HOMS[k] : null;
-        if (u === 1) { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(i + 1), c[0] - 190, c[1] - 56); }
-        marker(x, (hov ? 66 : 58) * u); x.textAlign = 'center'; x.fillStyle = k ? JARINK[k] : INK; x.fillText(k ? H.name : 'none', c[0], c[1]);
-        if (H) { String(H.tok).split('|').forEach((ln, li) => inkLine(x, ln, c[0], c[1] + (52 + li * 40) * u, 38 * u, INK)); for (let n = 0; n < H.need; n++) drop(x, c[0] + (n - (H.need - 1) / 2) * 30 * u, c[1] + 150 * u, 10 * u, JARINK[k], true); }
-        if (hov) swipe(x, [c[0] - 150 * u, c[1] + 16 * u], [c[0] + 150 * u, c[1] + 10 * u], 16 * u); });
+      if (homShelf) { const hs = homShelf, K = hs.K;
+        hs.slots.forEach((q, i) => { if (st.hover !== i || st.homPick) return; const c = px({ x: hs.cx + K * q.lx, z: hs.cz + 2.6 * K }); marker(x, 56); x.textAlign = 'center'; x.fillStyle = JARINK[q.k]; x.fillText(P.HOMS[q.k].name, c[0], c[1]); });
+        if (hs.ghost) { const c = px({ x: hs.cx + K * hs.ghost.lx, z: hs.cz + 2.8 * K }), gk = hs.ghost.k; drop(x, c[0] - 34, c[1] - 8, 17, JARINK[gk], false); marker(x, 58); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText(String(P.JAR.full[gk]), c[0] - 4, c[1] + 12); }
+      }
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'terms') {
@@ -1285,14 +1345,14 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const c = px({ x: BX(i), z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         if (b.ease != null) {
           // one of two molecules: its family, the number to beat, and the coins the harder one pays on top
-          { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.6 }); if (K && meta.stage >= 2 && !b.assay) { marker(x, 58); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); } }
+          { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.6 }); if (false && K && meta.stage >= 2 && !b.assay) { marker(x, 58); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); } }
                     const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
           if (b.spec || b.hurdle) { const hp = px({ x: BX(i) + 7.5, z: 5.5 }); drawHurdle(g, hp[0], hp[1], b.spec || b.hurdle); }
           if (b.coins) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
           if (hov) swipe(x, [c[0] - 150, y + 24], [c[0] + 150, y + 19], 6, INK);
           return;
         }
-                { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.3 }); if (K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok, k1[0], k1[1] + 44, 34, INK); } }
+                { const K = P.KIN[b.kin], k1 = px({ x: BX(i), z: -8.3 }); if (false && K) { marker(x, 66); x.textAlign = 'center'; x.fillStyle = K.col; x.fillText(K.name, k1[0], k1[1]); inkLine(x, K.tok, k1[0], k1[1] + 44, 34, INK); } }
         fit(x, B.name, hov ? 76 : 68, 350, marker); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, c[0], c[1]);
         if (B.note) inkLine(x, B.note, c[0], c[1] + 62, 40, INK);
         const y = c[1] + 150; marker(x, 62); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0], y);
@@ -1313,8 +1373,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase() + (o.kind === 'reagent' && P.PAIR[o.id] ? ' + ' + RX.CARDS[P.PAIR[o.id]].verb.toLowerCase() : ''), hov = st.hover === i;
         const kind = o.kind === 'reagent' ? 'new' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger' : 'more';
         if (!isGear) { const t0 = px({ x: PICKX[i], z: -1.2 }), tl = TILE[o.id], z0 = hov ? 2.0 : 1.8; if (tl) { x.save(); x.translate(t0[0], t0[1]); x.scale(z0, z0); fragOrChip(x, tl[0], -62, 0, true); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, 0); x.lineTo(0, 0); x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); x.stroke(); fragOrChip(x, tl[1], 46, 0, true); x.restore(); } if (hov) { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(title, c[0], c[1] + 110); } }
-        if (isGear) { marker(x, hov ? 66 : 58); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
-        if (isGear) inkLine(x, P.GEARS[o.id].tok || '', c[0], c[1] + 52, 40, INK); else if (o.kind === 'bottle') { for (let d = 0; d < 3; d++) drop(x, c[0] - 70 + d * 70, c[1] + 36, 18, INK, true); marker(x, 56); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - 100, c[1] + 54); } else if (o.kind === 'strong') { marker(x, 84); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(P.pickText(run, o)).split(' ')[0], c[0], c[1] + 66); }
+        if (isGear && hov) { marker(x, 66); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
+        if (isGear) { /* the object is the description */ } else if (o.kind === 'bottle') { for (let d = 0; d < 3; d++) drop(x, c[0] - 70 + d * 70, c[1] + 36, 18, INK, true); marker(x, 56); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - 100, c[1] + 54); } else if (o.kind === 'strong') { marker(x, 84); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(P.pickText(run, o)).split(' ')[0], c[0], c[1] + 66); }
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
       if (P.RULE.coins) {
@@ -1388,7 +1448,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       
       { const bx2 = molBox(); if (bx2 && el > 80) { const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, lx = Math.max(bx2.l + 30, Math.min(bx2.r - 30, mx)); x.lineWidth = 4; x.lineCap = 'round'; x.strokeStyle = PENCIL; x.globalAlpha = fade * 0.8; x.beginPath(); x.moveTo(mx, my + 74); x.lineTo(lx, bx2.b + 16); x.stroke(); } }
       x.restore(); dirty = true; }
-    if (g && center && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done')) { const bx = molBox(); if (bx) { const rx = (bx.r - bx.l) / 2 + 36, gr = x.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(90,70,40,0.18)'); gr.addColorStop(1, 'rgba(90,70,40,0)'); x.save(); x.translate((bx.l + bx.r) / 2, bx.b - 14); x.scale(1, 0.13); x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.3); x.fill(); x.restore(); } }
+    if (g && center && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done')) { const bx = molBox(); if (bx) { const rx = (bx.r - bx.l) / 2 + 36, gr = x.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(' + SHADE + ',' + SHADA + ')'); gr.addColorStop(1, 'rgba(' + SHADE + ',0)'); x.save(); x.translate((bx.l + bx.r) / 2, bx.b - 14); x.scale(1, 0.13); x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.3); x.fill(); x.restore(); } }
     // a piece picked up: a short ink tick under each place it can go. The place under the pointer shows what would happen in
     // lines and letters only: what goes is drawn over heavy in red, what comes is a ghost of bonds, a new group is its word
     if (st.tool && st.toolList && center && lining()) { const sc = center.group.scale.x, P2 = q => px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }), r = 1.0 * sc * U, seg = (a, b) => { x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -1454,7 +1514,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (now - (k.born || 0) < 380) { dirty = true; return; }
       const q = P.GEARS[k.id], kp = KITP(i), sideK = KITV === 'side', c = px(sideK ? { x: kp.x + 2.3, z: kp.z + 0.9 } : { x: kp.x, z: kp.z + (KITV === 'back' ? 2.9 : 3.6) }), f = st.fired[k.id], age = f ? (now - f.t) / 1000 : 9, lv = run.lv[k.id] || 1;
       const tokNow = k.id === 'paw' ? (3 - (run.wishes || 0)) + ' wishes' : k.id === 'orb' && g && g.fore ? (g.fore.filter(id => !g.kinds.includes(id)).map(id => '+' + RX.CARDS[id].verb.toLowerCase()).concat(g.kinds.filter(id => !g.fore.includes(id)).map(id => '-' + RX.CARDS[id].verb.toLowerCase())).slice(0, 3).join(' ') || 'same') : q.tok || '';
-      const spent = q.tool && g && ((g.tools || {})[k.id] || 0) >= P.TOOLUSES, tl2 = String(tokNow).split('|'); let tw = 0; tl2.forEach((ln, li) => { tw = Math.max(tw, inkLine(x, ln, c[0], c[1] + li * 27, sideK ? 28 : 26, spent ? FAINT : INK, sideK ? 'left' : undefined)); }); if (st.tool === k.id) { x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 62, c[1] + 36); x.lineTo(c[0] + 62, c[1] + 33); x.stroke(); } fit(x, q.name, sideK ? 26 : 28, 148, hand); x.textAlign = sideK ? 'left' : 'center'; x.fillStyle = PENCIL; x.fillText(q.name, c[0], c[1] - (sideK ? 34 : 40));
+      const spent = q.tool && g && ((g.tools || {})[k.id] || 0) >= P.TOOLUSES, tl2 = String(tokNow).split('|'); let tw = 0; [].forEach((ln, li) => { tw = Math.max(tw, inkLine(x, ln, c[0], c[1] + li * 27, sideK ? 28 : 26, spent ? FAINT : INK, sideK ? 'left' : undefined)); }); if (st.tool === k.id) { x.strokeStyle = INK; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 62, c[1] + 36); x.lineTo(c[0] + 62, c[1] + 33); x.stroke(); }
       for (let n = 1; n < lv; n++) { x.fillStyle = INK; x.beginPath(); x.arc(c[0] + tw / 2 + 18 + (n - 1) * 20, c[1] - 12, 6, 0, 6.3); x.fill(); }
       if (st.kitHover === i) { const h0 = px(sideK ? { x: kp.x + 9, z: kp.z - 1.2 } : KITV === 'back' ? { x: kp.x, z: kp.z + 5 } : { x: kp.x, z: kp.z - 6.4 }); x.lineJoin = 'round'; x.textAlign = 'center'; x.strokeStyle = '#f3eddc';
         hand(x, 40); x.lineWidth = 14; x.strokeText(q.name, h0[0], h0[1]); x.fillStyle = INK; x.fillText(q.name, h0[0], h0[1]);
@@ -1560,7 +1620,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (g && P.RULE.cascade && g.self && g.self.length > 1 && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'zip', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'snap', snap6: 'snap', weld: 'weld' }, c = px({ x: EDGE + 0.9, z: 13.2 }); let dx = 0; hand(x, 26); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
       g.self.forEach(id => { const t = TOK[id] || id, on = st.selfK.on.includes(id); x.fillStyle = on ? rgb(colOf(id)) : FAINT; x.fillText(t, c[0] + dx, c[1]); dx += x.measureText(t).width + 26; }); }
     // the family of the round's molecule and its rule, above the round
-    if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; P.kinsOf(g.m).forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = 0; dx += Math.max(w1, w2) + 34; }); }
+    if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; [].forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = 0; dx += Math.max(w1, w2) + 34; }); }
     // a molecule that could react with itself: the atoms that would meet are lit, and a click on the molecule folds it
     { const o = twistOpt(); if (o && center && center.model === g.m) { const key = st.twC.key; if (!st.twM || st.twM.key !== key) st.twM = { key, marks: marksOf(center, o.atoms || [], 0.01, 0.2) };
         const sc = center.group.scale.x, hov = twistAt(); x.fillStyle = '#2f8f6a'; x.globalAlpha = (hov ? 0.62 : 0.32) + 0.08 * Math.sin(now / 320);
@@ -1583,7 +1643,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       else { fragOrChip(x, F.tl[0], -92, -8, false); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(2, -8); x.moveTo(-10, -20); x.lineTo(2, -8); x.lineTo(-10, 4); x.stroke(); fragOrChip(x, F.tl[1], 56, -8, true); }
       x.restore(); x.globalAlpha = 1; dirty = true; } }
     // the jars: how much each holds of what fills it. A full one carries the name of what hatched
-    if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
+    if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j || !meta.hatched[k] || (run && run.hom === k)) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
     // the homunculus of the run: its name, a drop for each time it has been fed, and when the page waits on it what it would do
     if (g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
       { const key = g.trail.length + ':' + g.hom.fed + ':' + g.hom.used + ':' + g.page; if (st.litK !== key) { st.litK = key; try { st.lit = P.homLit(g); } catch (e) { st.lit = false; } } }
@@ -1643,9 +1703,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function shopAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     if (!ray.ray.intersectPlane(ground, hit)) return -2;
-    for (let i = 0; i < P.SUPPLY.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x > -24 && hit.x < 6.5) return i; }
-    for (let i = 0; i < P.FAMILIES.length; i++) { const z = -9.2 + i * 3.6; if (hit.z > z - 1.7 && hit.z < z + 1.9 && hit.x >= 6.5) return 100 + i; }
-    return hit.z > 9.5 ? -1 : -2;
+    if (!bench) return -2;
+    if (Math.abs(hit.x - HNOTE.x) < 3 && hit.z > HNOTE.z - 6.5 && hit.z < HNOTE.z + 3) return -1;
+    const G = benchGhostAt(); if (G && Math.abs(hit.x - G.x) < 1.5 * G.K + 0.6 && hit.z > G.z - 5.5 * G.K && hit.z < G.z + 2.4 * G.K) return meta.tier + 1;
+    const fi = famNext(), nx = supplyNext(), n = bench.rx.length; if (fi >= 0 || nx) { const k = n, per = 5, gx = -20.8 + (k % per) * BENCH.rx.dx, gz = BENCH.rx.z0 + Math.floor(k / per) * BENCH.rx.dz; if (Math.abs(hit.x - gx) < 5 && Math.abs(hit.z - gz) < 1.8) return fi >= 0 ? 100 + fi : meta.tier + 1; }
+    return -2;
   }
   cv.addEventListener('pointermove', e => { if (st.mode === 'hom') { const i = homPageAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'terms') { const i = termAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i >= 0 ? 'pointer' : ''; return; } if (st.mode === 'brief') { const i = pickAt(e, briefs), mk = i < 0 && pairAt() ? 'pair' : ''; if (i !== st.hover || mk !== st.mark) { st.hover = i; st.mark = mk; dirty = true; } cv.style.cursor = i >= 0 || mk ? 'pointer' : ''; return; } if (st.mode === 'shop') { const i = shopAt(e); if (i !== st.hover) { st.hover = i; dirty = true; } cv.style.cursor = i === -1 || i === meta.tier + 1 ? 'pointer' : ''; return; } if (st.mode === 'pick') { const i = pickAt(e), mk = i < 0 ? pickMark() : ''; if (i !== st.hover || mk !== st.mark) { st.hover = i; st.mark = mk; dirty = true; } cv.style.cursor = i >= 0 || mk ? 'pointer' : ''; return; } const s = slotAt(e); if (s !== st.hover) setHover(s); toolHover(); homPoint(); { const mk = bankAt() ? 'bank' : drawAt() ? 'draw' : fireAt() || homTurnAt() ? 'fire' : circleAt() >= 0 ? 'circle' : pagesAt() ? 'pages' : ''; if (mk !== st.mark) { st.mark = mk; dirty = true; } } { let kh = -1; kitObjs.forEach((k, i) => { const kp = KITP(i); if (Math.abs(hit.x - kp.x) < 2.4 && hit.z > kp.z - 4.5 && hit.z < kp.z + 3.8) kh = i; }); if (kh !== st.kitHover) { st.kitHover = kh; dirty = true; } if (NAMEV === 'hover' || NAMEV === 'both') { let tip = null; zones().forEach(q => { if (q.r && Math.hypot(hit.x - q.x, hit.z - q.z) < q.r) tip = q.id; }); if (tip !== st.tip) { st.tip = tip; dirty = true; } } } cv.style.cursor = s >= 0 || st.mark || st.mode === 'done' || st.toolSpot || toolAt() || (st.homWait && (st.homSpot || homAt())) ? 'pointer' : ''; });
   cv.addEventListener('pointerleave', () => setHover(-1));
@@ -1670,7 +1732,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
 
   function size() {
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
-    veil.width = w; veil.height = h; const x = veil.getContext('2d'), gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, 'rgba(255,236,190,0.16)'); gr.addColorStop(1, 'rgba(60,50,90,0.14)'); x.fillStyle = gr; x.fillRect(0, 0, w, h); noise(x, w, h, w * h / 30, 0.05, '80,60,30');
+    veil.width = w; veil.height = h; const x = veil.getContext('2d'), gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, PAPERS[PAPERN].veil[0]); gr.addColorStop(1, PAPERS[PAPERN].veil[1]); x.fillStyle = gr; x.fillRect(0, 0, w, h); noise(x, w, h, w * h / 30, 0.05, '80,60,30');
   }
   function frame(now) {
     requestAnimationFrame(frame);
@@ -1712,16 +1774,25 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (f.keep) { st.by[f.keep] = Math.min(g ? g.by[f.keep] || 0 : 9, (st.by[f.keep] || 0) + 1); st.byBump[f.keep] = 1; }
       st.by.gauge = (st.by.gauge + 1) % P.BY.tally; st.byBump.gauge = 1; dirty = true; return false; }); dirty = true; }
     JARK.concat(['gauge']).forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
-    { const on = meta.stage >= 2 && ((!!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse')) || (st.mode === 'hom' && JARK.filter(jarSeen).length <= 5)), tq = now / 1000;
-      JARK.forEach((k, ji) => { const J = jars[k], jp = on ? jarPos(k) : null; J.grp.visible = !!jp; if (!jp) return; J.grp.position.set(jp.x, 0, jp.z); const f = jarOf(k) / P.JAR.full[k], out = !!(run && run.hom === k) && st.mode !== 'hom', stage = meta.hatched[k] ? 3 : f >= P.JAR.stages[1] ? 2 : f >= P.JAR.stages[0] ? 1 : 0, lv = 0.06 + 1.9 * Math.min(1, f);
-        J.fill.scale.y = lv; J.fill.position.y = 0.16 + lv / 2; J.fill.visible = f > 0 && !meta.hatched[k]; J.figs.forEach((m, n) => { m.visible = !out && stage === n + 1; });
-        const bump = st.byBump[k] || 0, hb = st.hatched === k && st.hatchT ? Math.max(0, 1 - (now - st.hatchT) / 600) : 0, s0 = jp.s * (1 + 0.1 * bump * Math.cos(bump * 9)); J.grp.scale.set(s0, s0 * (1 + 0.16 * hb * Math.cos(hb * 10)), s0); J.grp.rotation.z = 0.02 * Math.sin(tq * 1.2 + ji * 2);
-        if (stage === 2 || stage === 3) { const m = J.figs[stage - 1]; m.rotation.y = 0.5 * Math.sin(tq * 0.8 + ji); m.position.y = 0.16 + (k === 'h2' ? 0.08 + 0.06 * Math.sin(tq * 1.7) : 0); } if (hb) dirty = true; }); }
+    { const on = meta.stage >= 2 && !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'), tq = now / 1000;
+      JARK.forEach((k, ji) => { const J = jars[k], out = !!(run && run.hom === k), jp = on && !out ? jarPos(k) : null; J.grp.visible = !!jp; if (!jp) return; J.grp.position.set(jp.x, 0, jp.z); const f = Math.min(1, jarOf(k) / P.JAR.full[k]), tg = meta.hatched[k] ? 'r' : f.toFixed(3); if (J.last !== tg) { J.last = tg; J.set(meta.hatched[k] ? 1 : f, meta.hatched[k] ? 2 : undefined); }
+        const bump = st.byBump[k] || 0, hb = st.hatched === k && st.hatchT ? Math.max(0, 1 - (now - st.hatchT) / 600) : 0, s0 = jp.s * (1 + 0.1 * bump * Math.cos(bump * 9)); J.grp.scale.set(s0, s0 * (1 + 0.16 * hb * Math.cos(hb * 10)), s0); J.grp.rotation.z = 0.02 * Math.sin(tq * 1.2 + ji * 2); if (hb) dirty = true; }); }
+
+
     if (homObj) { const on = !!g && !!g.hom && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), G = homObj.grp; G.visible = on;
       if (on) { const tq = now / 1000, A = st.homAct, age = A ? now - A.t : 1e9, floaty = homObj.id === 'h2', ease = u => u * u * (3 - 2 * u); let hx = HOMP.x, hz = HOMP.z, y = floaty ? 0.3 + 0.22 * Math.sin(tq * 1.7) : 0, sy = floaty ? 1 : 1 + 0.03 * Math.sin(tq * 2.3), rz = floaty ? 0.09 * Math.sin(tq * 1.1) : 0.02 * Math.sin(tq * 1.5);
         if (age < 470) { const k = ease(Math.min(1, age / 190)) * (1 - ease(Math.max(0, Math.min(1, (age - 270) / 200)))); hx += (A.to.x - HOMP.x) * k; hz += (A.to.z - HOMP.z) * k; y += Math.sin(k * Math.PI) * (floaty ? 1.2 : 0.5); if (homObj.id === 'water') { sy *= 1 - 0.18 * Math.abs(Math.sin(age / 38)); if (!A.pd || now - A.pd > 36) { A.pd = now; st.puddles.push({ x: hx + 0.5 * Math.sin(age / 20), z: hz + 1.1, r: 13 + 9 * Math.abs(Math.sin(age / 31)), t: now }); } } else if (floaty) rz += 0.25 * Math.sin(age / 60); else rz += 0.12 * Math.sin(age / 45); dirty = true; } else if (A) st.homAct = null;
         if (st.lit) y += 0.1 + 0.05 * Math.sin(tq * 3); if (st.homWait) y += 0.12 + (st.homHover ? 0.3 : 0);
-        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.45, 1.45 * sy, 1.45); } }
+        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.45, 1.45 * sy, 1.45);
+        { const fg = G.children[0], Hh = P.HOMS[homObj.id], fedF = g && g.hom ? Math.min(1, g.hom.fed / Math.max(1, Hh.need)) : 0, rdy = !!st.lit || !!st.homWait; if (fg && AA.rxKit.pose) { if (A && age < 470) AA.rxKit.poseToward(fg, T, new T.Vector3(A.to.x, 0, A.to.z), Math.min(1, age / 190), 0.3 * Math.sin(age / 90), tq); else AA.rxKit.pose(fg, { lean: [0, -0.35 * fedF * (rdy ? 0.4 : 1)], reach: rdy ? 0.45 + 0.1 * Math.sin(tq * 2.2) : 0, squash: rdy ? -0.35 : 0.25 * fedF, t: tq }); } } } }
+    if (st.mode === 'hom' && homShelf) { const hs = homShelf, K = hs.K, pk = st.homPick, bad = st.homBad && now - st.homBad.t < 450 ? st.homBad : null;
+      hs.slots.forEach((q, i) => { const hov = st.hover === i && !pk; let y = hov && q.ready ? 0.45 : 0, rz = q.ready ? 0.025 * Math.sin(now / 900 + i) : 0, vis = true;
+        if (bad && bad.i === i) { rz += 0.06 * Math.sin((now - bad.t) / 28) * (1 - (now - bad.t) / 450); dirty = true; }
+        if (pk && pk.i === i) { const a = (now - pk.t0) / 1000; y = Math.min(a * 5, 1) * 2.2 + 0.2; rz = -0.3 * Math.min(1, a * 3); vis = a < 0.55; if (!homWalk) { const hold = new T.Group(); hold.add(homFig(q.k)); hold.rotation.x = -0.8; const c0 = jarSlotAt(q); hold.position.set(c0.x, 0, c0.z); hold.scale.setScalar(K * 0.6); scene.add(hold); homWalk = { grp: hold, from: c0, k: q.k }; } }
+        q.g.visible = vis; q.g.position.y = y; q.g.rotation.z = rz; });
+      if (hs.note) hs.note.scale.setScalar(st.hover === 99 ? 1.7 : 1.5);
+      if (pk && homWalk) { const a = (now - pk.t0) / 1000, u = Math.max(0, Math.min(1, (a - 0.3) / 0.8)), e = u * u * (3 - 2 * u), f = homWalk.from, G = homWalk.grp; G.visible = a > 0.3; G.position.set(f.x + (HOMP.x - f.x) * e, Math.sin(u * Math.PI) * 1.6, f.z + (HOMP.z - f.z) * e); G.scale.setScalar(K * 0.6 + (1.45 - K * 0.6) * e); const fg = G.children[0]; if (AA.rxKit.pose) AA.rxKit.pose(fg, { squash: Math.sin(a * 14) * 0.25 * (1 - u), lean: [(HOMP.x - f.x) > 0 ? 0.3 : -0.3, 0], reach: 0, t: a }); dirty = true; if (a > 1.3) homFinish(); }
+      dirty = true; }
     homObjs.forEach(k => { const age = (now - k.born) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), dropY = u < 1 ? (1 - u) * (1 - u) * 9 : 0, hov = st.hover === k.slot; k.grp.visible = age >= 0; k.grp.position.y = dropY + (k.id === 'h2' ? 0.3 + 0.2 * Math.sin(now / 600) : 0) + (hov ? 0.6 : 0); k.grp.rotation.z = k.id === 'h2' ? 0.08 * Math.sin(now / 900) : 0.02 * Math.sin(now / 700 + k.slot); });
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
     if (st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom') dirty = true;
@@ -1762,9 +1833,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
-  AA.rxScheme = { toolArm: id => toolArm(id), toolSpots: () => (st.toolList || []).map(q => { const sc = center.group.scale.x; return { x: C0.x + q.x * sc, z: C0.z + q.z * sc, whole: q.whole }; }), toolPx: () => (st.toolList || []).map(q => { const sc = center.group.scale.x; return px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }); }), toolUse: i => { st.toolSpot = st.toolList && st.toolList[i]; if (st.toolSpot) doTool(); }, toolPeek: i => { st.toolSpot = st.toolList && st.toolList[i]; if (st.toolSpot && st.toolSpot.sp.b && st.toolSpot.ghost === undefined) st.toolSpot.ghost = ghostOf(st.toolSpot); dirty = true; }, toolWorths: () => (st.toolList || []).map(q => q.worth), toolGhost: () => st.toolSpot && st.toolSpot.ghost, debugMorph: () => morph && { bend: !!morph.bend, f: morph.bend && [morph.bend.f0, morph.bend.f1, morph.bend.F.x1, morph.bend.F.r, morph.bend.F.dir, morph.bend.F.cx, morph.bend.F.cz], n: morph.bend && morph.bend.bodies.length, u0: morph.bend && morph.bend.U0.size, end: morph.end, pts: Array.from(morph.cur.entries()).filter(e => e[0].el !== 'H').map(e => [+e[1].x.toFixed(1), +e[1].z.toFixed(1), morph.from.has(e[0]) ? 1 : 0]) }, debugFold: () => center && center.at.fold && { r: center.at.fold.r, dir: center.at.fold.dir }, debugShape: (smi, o) => { o = o || {}; let m = RX.fromSmiles(smi); RX.reopen(m); let spots = 0; if (o.tool) { const sp = RX.tools.spots(m, o.tool, P.RULE.atoms); spots = sp.length; if (!sp.length) return { none: true, spots: 0 }; const t = P.toolTry(m, o.tool, sp[Math.min(sp.length - 1, o.spot || 0)]); if (!t) return { none: true, spots }; m = t; } if (o.hom) { const hs = P.HOMS[o.hom].spots(m, { m, self: P.SELF0, kinds: [], left: {} }); if (!hs.length) return { none: true, spots: 0 }; const t = P.homTry(m, o.hom, hs[Math.min(hs.length - 1, o.spot || 0)]); if (!t) return { none: true, spots: hs.length }; m = t; spots = hs.length; } let z = 0; for (let i = 0; i < (o.zips || 0); i++) { const c = RX.CARDS.lactol; if (!c.find(m).length) break; c.apply(m); z++; } const cg = caged(m, archesOf(m)); if (cg && m.settle) m.settle(300); setAlign(m); const t0 = performance.now(), mm = buildMol(m, null, false), ms = performance.now() - t0, hv = []; mm.balls.forEach((b, a) => { if (a.el !== 'H') hv.push(a); }); let worst = 1, near = 9, lo = 1e9, hi = -1e9, zl = 1e9, zh = -1e9; const bd = new Set(); mm.sticks.forEach(q => { if (q.a.el === 'H' || q.b.el === 'H') return; const A = mm.at.get(q.a), B = mm.at.get(q.b), r = Math.hypot(A.x - B.x, A.z - B.z) / 1.55; if (Math.abs(r - 1) > Math.abs(worst - 1)) worst = r; bd.add(q.a); }); const bonded = (a, b) => mm.sticks.some(q => (q.a === a && q.b === b) || (q.a === b && q.b === a)); for (let i = 0; i < hv.length; i++) { const A = mm.at.get(hv[i]); lo = Math.min(lo, A.x); hi = Math.max(hi, A.x); zl = Math.min(zl, A.z); zh = Math.max(zh, A.z); for (let j = i + 1; j < hv.length; j++) { const B = mm.at.get(hv[j]), d = Math.hypot(A.x - B.x, A.z - B.z) / 1.55; if (d < near && !bonded(hv[i], hv[j])) near = d; } } const sc = fitMain(mm); if (o.show) { freeMol(center); center = mm; SC_MAIN = sc; st.sc = sc; place(mm, C0, sc); mm.groups = groupsOf(mm); mm.ghosts = []; mm.hot = []; dirty = true; } else freeMol(mm); const un = { lo: 1e9, hi: -1e9, zl: 1e9, zh: -1e9 }; if (mm.at.unf) mm.at.unf.forEach(v => { un.lo = Math.min(un.lo, v.x); un.hi = Math.max(un.hi, v.x); un.zl = Math.min(un.zl, v.z); un.zh = Math.max(un.zh, v.z); }); return { uw: +(un.hi - un.lo).toFixed(1), ud: +(un.zh - un.zl).toFixed(1), fr: mm.at.fold ? +mm.at.fold.r.toFixed(1) : 0, worst: +worst.toFixed(3), near: +near.toFixed(3), w: +(hi - lo).toFixed(1), d: +(zh - zl).toFixed(1), sc: +sc.toFixed(2), caged: cg, zips: z, spots, n: hv.length, ms: +ms.toFixed(1) }; }, debugLay: (smi, n) => { const m = RX.fromSmiles(smi); RX.reopen(m); for (let i = 0; i < n; i++) { const c = RX.CARDS.lactol; if (!c.find(m).length) break; c.apply(m); } setAlign(m); const mm = buildMol(m, null, false), out = []; mm.at.forEach((v, a) => { if (a.el !== 'H') out.push((a.bead || a.el) + ' ' + v.x.toFixed(1) + ' ' + v.z.toFixed(1) + ' ' + v.y.toFixed(1)); }); const info = { caged: caged(m, archesOf(m)), arches: archesOf(m).length, flat: mm.flat, beads: mm.beads.length }; freeMol(mm); return { info, out }; }, st, load, pick, next, setHover, takePick, chooseTerm, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugBare: on => { P.RULE.bare = on !== false; newRun(); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, debugHom: id => { run.hom = id && P.HOMS[id] ? id : null; if (st.mode === 'play' || st.mode === 'move') load(); else homStand(); }, debugJar: o => { JARK.forEach(k => { if (o && o[k] != null) { meta.jar[k] = Math.max(0, Math.min(P.JAR.full[k], o[k] | 0)); meta.hatched[k] = meta.jar[k] >= P.JAR.full[k]; } }); saveMeta(); dirty = true; return { jar: Object.assign({}, meta.jar), hatched: Object.assign({}, meta.hatched) }; }, debugFeedHom: n => { if (g && g.hom) { g.hom = Object.assign({}, g.hom, { fed: n }); dirty = true; } }, homState: () => ({ hom: g && g.hom ? Object.assign({}, g.hom) : null, wait: !!st.homWait, spots: (st.homList || []).map(q => { const sc = center.group.scale.x; return { x: C0.x + q.x * sc, z: C0.z + q.z * sc, worth: q.worth }; }), at: HOMP, jar: { water: jarOf('water'), h2: jarOf('h2') }, by: Object.assign({}, st.by), opts: homOpts.slice() }), homUse: i => { const it = (st.homList || [])[i || 0]; if (st.homWait && it) doHom(it); }, homTap: () => { if (lining() && g.hom && P.HOMS[g.hom.id].before && !st.homWait && center && center.model === g.m && P.homLit(g)) { homPre(); return true; } return false; }, homSkip: () => homSkip(), chooseHom: i => chooseHom(i), showHoms: () => showHoms(),
+  AA.rxScheme = { toolArm: id => toolArm(id), toolSpots: () => (st.toolList || []).map(q => { const sc = center.group.scale.x; return { x: C0.x + q.x * sc, z: C0.z + q.z * sc, whole: q.whole }; }), toolPx: () => (st.toolList || []).map(q => { const sc = center.group.scale.x; return px({ x: C0.x + q.x * sc, z: C0.z + q.z * sc }); }), toolUse: i => { st.toolSpot = st.toolList && st.toolList[i]; if (st.toolSpot) doTool(); }, toolPeek: i => { st.toolSpot = st.toolList && st.toolList[i]; if (st.toolSpot && st.toolSpot.sp.b && st.toolSpot.ghost === undefined) st.toolSpot.ghost = ghostOf(st.toolSpot); dirty = true; }, toolWorths: () => (st.toolList || []).map(q => q.worth), toolGhost: () => st.toolSpot && st.toolSpot.ghost, debugMorph: () => morph && { bend: !!morph.bend, f: morph.bend && [morph.bend.f0, morph.bend.f1, morph.bend.F.x1, morph.bend.F.r, morph.bend.F.dir, morph.bend.F.cx, morph.bend.F.cz], n: morph.bend && morph.bend.bodies.length, u0: morph.bend && morph.bend.U0.size, end: morph.end, pts: Array.from(morph.cur.entries()).filter(e => e[0].el !== 'H').map(e => [+e[1].x.toFixed(1), +e[1].z.toFixed(1), morph.from.has(e[0]) ? 1 : 0]) }, debugFold: () => center && center.at.fold && { r: center.at.fold.r, dir: center.at.fold.dir }, debugShape: (smi, o) => { o = o || {}; let m = RX.fromSmiles(smi); RX.reopen(m); let spots = 0; if (o.tool) { const sp = RX.tools.spots(m, o.tool, P.RULE.atoms); spots = sp.length; if (!sp.length) return { none: true, spots: 0 }; const t = P.toolTry(m, o.tool, sp[Math.min(sp.length - 1, o.spot || 0)]); if (!t) return { none: true, spots }; m = t; } if (o.hom) { const hs = P.HOMS[o.hom].spots(m, { m, self: P.SELF0, kinds: [], left: {} }); if (!hs.length) return { none: true, spots: 0 }; const t = P.homTry(m, o.hom, hs[Math.min(hs.length - 1, o.spot || 0)]); if (!t) return { none: true, spots: hs.length }; m = t; spots = hs.length; } let z = 0; for (let i = 0; i < (o.zips || 0); i++) { const c = RX.CARDS.lactol; if (!c.find(m).length) break; c.apply(m); z++; } const cg = caged(m, archesOf(m)); if (cg && m.settle) m.settle(300); setAlign(m); const t0 = performance.now(), mm = buildMol(m, null, false), ms = performance.now() - t0, hv = []; mm.balls.forEach((b, a) => { if (a.el !== 'H') hv.push(a); }); let worst = 1, near = 9, lo = 1e9, hi = -1e9, zl = 1e9, zh = -1e9; const bd = new Set(); mm.sticks.forEach(q => { if (q.a.el === 'H' || q.b.el === 'H') return; const A = mm.at.get(q.a), B = mm.at.get(q.b), r = Math.hypot(A.x - B.x, A.z - B.z) / 1.55; if (Math.abs(r - 1) > Math.abs(worst - 1)) worst = r; bd.add(q.a); }); const bonded = (a, b) => mm.sticks.some(q => (q.a === a && q.b === b) || (q.a === b && q.b === a)); for (let i = 0; i < hv.length; i++) { const A = mm.at.get(hv[i]); lo = Math.min(lo, A.x); hi = Math.max(hi, A.x); zl = Math.min(zl, A.z); zh = Math.max(zh, A.z); for (let j = i + 1; j < hv.length; j++) { const B = mm.at.get(hv[j]), d = Math.hypot(A.x - B.x, A.z - B.z) / 1.55; if (d < near && !bonded(hv[i], hv[j])) near = d; } } const sc = fitMain(mm); if (o.show) { freeMol(center); center = mm; SC_MAIN = sc; st.sc = sc; place(mm, C0, sc); mm.groups = groupsOf(mm); mm.ghosts = []; mm.hot = []; dirty = true; } else freeMol(mm); const un = { lo: 1e9, hi: -1e9, zl: 1e9, zh: -1e9 }; if (mm.at.unf) mm.at.unf.forEach(v => { un.lo = Math.min(un.lo, v.x); un.hi = Math.max(un.hi, v.x); un.zl = Math.min(un.zl, v.z); un.zh = Math.max(un.zh, v.z); }); return { uw: +(un.hi - un.lo).toFixed(1), ud: +(un.zh - un.zl).toFixed(1), fr: mm.at.fold ? +mm.at.fold.r.toFixed(1) : 0, worst: +worst.toFixed(3), near: +near.toFixed(3), w: +(hi - lo).toFixed(1), d: +(zh - zl).toFixed(1), sc: +sc.toFixed(2), caged: cg, zips: z, spots, n: hv.length, ms: +ms.toFixed(1) }; }, debugLay: (smi, n) => { const m = RX.fromSmiles(smi); RX.reopen(m); for (let i = 0; i < n; i++) { const c = RX.CARDS.lactol; if (!c.find(m).length) break; c.apply(m); } setAlign(m); const mm = buildMol(m, null, false), out = []; mm.at.forEach((v, a) => { if (a.el !== 'H') out.push((a.bead || a.el) + ' ' + v.x.toFixed(1) + ' ' + v.z.toFixed(1) + ' ' + v.y.toFixed(1)); }); const info = { caged: caged(m, archesOf(m)), arches: archesOf(m).length, flat: mm.flat, beads: mm.beads.length }; freeMol(mm); return { info, out }; }, st, load, pick, next, setHover, takePick, chooseTerm, chooseHom, showHoms, debugTerm: i => { P.runTerm(run, P.TERMS[i].id); }, debugBare: on => { P.RULE.bare = on !== false; newRun(); }, debugStage: n => { meta.stage = n; if (n < 2) run.noGear = true; }, debugRound: n => { run.round = n; run.beaten = n - 1; showPicks(); }, meta, newRun, showSuppliers, frame, wish: () => doWish(), douse: () => doDouse(), debugKit: ids => { run.gear = ids.slice(); load(); }, debugHom: id => { run.hom = id && P.HOMS[id] ? id : null; if (st.mode === 'play' || st.mode === 'move') load(); else homStand(); }, debugJar: o => { JARK.forEach(k => { if (o && o[k] != null) { meta.jar[k] = Math.max(0, Math.min(P.JAR.full[k], o[k] | 0)); meta.hatched[k] = meta.jar[k] >= P.JAR.full[k]; } }); saveMeta(); dirty = true; return { jar: Object.assign({}, meta.jar), hatched: Object.assign({}, meta.hatched) }; }, debugFeedHom: n => { if (g && g.hom) { g.hom = Object.assign({}, g.hom, { fed: n }); dirty = true; } }, homState: () => ({ hom: g && g.hom ? Object.assign({}, g.hom) : null, wait: !!st.homWait, spots: (st.homList || []).map(q => { const sc = center.group.scale.x; return { x: C0.x + q.x * sc, z: C0.z + q.z * sc, worth: q.worth }; }), at: HOMP, jar: { water: jarOf('water'), h2: jarOf('h2') }, by: Object.assign({}, st.by), opts: homOpts.slice() }), homUse: i => { const it = (st.homList || [])[i || 0]; if (st.homWait && it) doHom(it); }, homTap: () => { if (lining() && g.hom && P.HOMS[g.hom.id].before && !st.homWait && center && center.model === g.m && P.homLit(g)) { homPre(); return true; } return false; }, homSkip: () => homSkip(), chooseHom: i => chooseHom(i), showHoms: () => showHoms(),
     debugG: () => g, debugCenter: () => center, debugMorph2: () => morph, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, redrawPair: doPair, debugCoined: v => { meta.coined = !!v; dirty = true; }, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
-    openSupplier, meta,
+    openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
     chooseBrief,
     state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom' ? { mode: st.mode, hom: run.hom || null, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), pair: briefs.map(b => ({ src: b.src, ease: b.ease, coins: b.coins || 0, quota: b.quota })), pairCost: P.pairCost(run), coined: !!meta.coined, pairAt: PAIR, pairX: briefs.map((b, i) => BX(i)), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, queue: (g.queue || []).slice(), lining: lining(), firing: !!st.firing, room: P.stepsOf(g) - g.pageSteps, will: st.view ? st.view.kinds.slice() : [], casc: g.casc || 0, self: (g.self || []).slice(), charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
   size(); newRun(); requestAnimationFrame(frame);

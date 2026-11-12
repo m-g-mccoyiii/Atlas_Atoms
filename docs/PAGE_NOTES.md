@@ -70,3 +70,38 @@ Frames: `.claude/shots/page3-1.jpg` (pair page with two hurdle marks), 2 (ring 1
 - End screens: the round end and the run end show the word reached, the coins dropping in one at a time (the single coin), one flag per round of the run (green for beaten), `next` or `new run`. Seen won (page7-4) and lost (page7-5).
 - Test hook: shot.js takes `round`, `quota`, `lose`, `end`, `pre`, `spec`, `next`, `free` in the address.
 - Not done: the jars and creatures with the new kitart calls, the 3D coin, the left stack still draws on the end screens, the multiplier object, the ink stroke to what a change sets off.
+
+
+## Second builder
+
+Branch `worktree-agent-a91f980f51482bfbf`, reset to `steam` first. Frames are in `C:\Work\atlas-atoms\.claude\shots` (`page9-*`, `paper-*`). Test rig: `?shot=x&script=/dev/<file>.js` in shot.js loads a script that defines `window.SHOT({ S, P, run, save, now, base, q })` and drives the page on the hand-stepped clock; the files are in `dev/` (`s1.js` jar screen, `s2.js` bench, `s3.js` round page with a homunculus and three instruments, `paper.js` the three frames for a paper look). Frames are posted to a local server that writes them (a Python static server with a `/__save` and a `/__log` route; not in git). Run one Edge at a time: three at once lost frames and a script.
+
+### Done and seen
+
+1. Jars and homunculus (`page9-jar-1` to `-5`). The screen before a run is the kit's shelf with the kit's jars (`AA.rxKit.jar`) at their saved fill and growth (speck, half grown, ready). A jar not yet seen is absent. One outline jar stands after the last, with a drop and the count it takes (50 in the frame). Picking up a ready jar lifts it, its homunculus steps out and walks to the place beside the stage, and the run begins with it. A jar that is not ready shakes. No word "none": the notebook object at the lower right starts the run with no homunculus. Names show on hover. The screen is shown only to a run that has creatures (`run.noHom` false, tier 3); the corner jars on the round page now use the kit's jars too, without the "n/N" text. Ammonia and brimstone are in the color and id tables (`JARC`, `JARINK`, `HOMID`); `JAR.full` has no entry for them and `homOn` leaves them out, so no jar for them shows yet.
+2. The homunculus in play (`page9-play-2`, `-3`). It stands at the lower right beside the stage with the kit's model; the pose hook leans it by how fed it is, stretches it tall and reaches when it is ready, and `poseToward` reaches it toward the place when it is set off. How fed it is: the drops under it, filled or empty (as before; no number). Seen: standing, not the reach (the pane did not catch a tap).
+3. Runoff. `flyer` builds the art's `ro_water`, `ro_h2`, `ro_co2`, `ro_acid` (for `chloride`) in place of the three balls. The flight and the destination are the feel builder's; the jar position (`byTarget`) is the one the shelf-free corner uses. Not seen in flight. Wanted from the feel builder: let `byKind` in path.js return `nh3` and `sulfur` (the objects `ro_nh3`, `ro_sulfur` are mapped already), fly the object upright and not spun on its side (they were made to be read upright), and scale it near 0.5 of the molecule's scale (it is built in a 2.5 box).
+4. Instruments (`page9-play-0`, `-2`). Held instruments stand on the kit's shelf (five places) on the round page and on the pick page; an offered instrument stands on a short plank. The text under every instrument (what it does) and its name under it are gone; the name is shown on hover only. A used instrument gets `AA.rxKit.use` with a rise and fall over the 0.7 s of its act (in `animKit`). No price: the rules give no price to an instrument (the pick is free; coins pay for a redraw, a skip and the bin). The tag appears only on the bench, for the next supplier.
+5. The bench (`page9-bench-1`, `-2`). One place: coins paid by the run (green plus) and held coins; the jar shelf with its one outline and count; a shelf of the instruments of the suppliers opened with one faded instrument of the next supplier, hung with the kit's price tag and its price in coins; the reagents known as before and after pictures with one faded picture of the next (a family, else the supplier's) and its price; the notebook to start the run. Buying is a press on the faded instrument or the faded picture. No supplier rows. Not done: the instruments cut at ten of the supplier's thirteen; the hover ring on the faded instrument is only a ring.
+6. Whole first run by real play. Not done as a whole. I saw the pick of one of two (`paper-*-b`), a round in play (`paper-*-a`), a round end with a word (`paper-*-c`), the jar screen, the bench. I did not play rounds two and three or a run end to the bench in one pass.
+
+### The five paper looks (owner picks)
+
+`?paper=1` to `5`, remembered in `aa_paper`; default 1. Drawn in code in `paperDraw` (noise, fibers, stains, grid): 1 aged notebook with ruled lines, a margin and stained edges; 2 parchment; 3 pale green blotter with a fine grid; 4 dark warm bench top with chalk-white ink; 5 kraft with white chalk lines. Each sets its own ink colors, the color of the molecule's contact shadow, the table beyond the sheet and the wash over the view (`PAPERS`). `paper-<n>-a.jpg`, `-b.jpg`, `-c.jpg` are the same three frames for each; `paper-compare.jpg` puts them side by side. On the dark one the molecule's atoms stay as they are (carbon slate blue), and read well.
+
+### White fringes (item B)
+
+- Paper-colored cut-outs behind lettering. 16 `strokeText` calls drew a round stroke in the sheet color behind numbers and words. On a paper with grain, ruling or a grid the stroke cut a flat patch out of it, and on any other sheet it was the wrong color. Fixed at the cause: the ink canvas ignores any stroke in those two colors, so nothing is cut out. No before and after crop was taken.
+- The old jars were white cylinders; they are the kit's jars now.
+- Not mine and not fixed: some kit models have a white highlight bar that reads as a sliver at the edge (the belly of the water homunculus, the glass of a jar). The ghost jar on the bench is paler than the sheet inside.
+- Not found: a canvas sprite cut square, a premultiplied-alpha fringe on the ink texture, a model clipped by the frame.
+
+### Family words (item C)
+
+`ring 2`, `sugar` and the like are not lettered on any screen: the names on the pair page, the line on the round page and the word beside the page's family gain are off.
+
+### Not done
+
+- The three frames were taken for each look with a seeded run, not by a full run through every page.
+- Item 6 as a whole run, the 3D coin, the multiplier object.
+- Merge notes: `scheme.html` is not committed; version lines to set are `scheme.js?v=361` and `shot.js?v=12`. Lines I touched inside the feel builder's area: `flyer` (the model of what leaves), `animKit` (one `use` line), `land` (family name removed from the ping), the hom block in `frame` (a pose line).
