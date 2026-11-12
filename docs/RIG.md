@@ -4,6 +4,66 @@ Built 2026-11-10. The newest measure is the first section below (the seventh of 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-12, tenth: the fold, molecules v2, the opening, oxidize
+
+Measured headless, awaiting review. Commits e2e9c8a (fold), d2d2d3c (across paid as two), affcf72 (molecules v2), the Par and scale commits, 97e4eec (review fixes). Tools: `tools_foldpar.py`, `tools_mol2_bake.py`, jobs `foldpar.js`, `foldx.js`, `locks.js`, `oxbest2.js`.
+
+### 1. The fold
+`ENG.foldOf`, `faces`, `acrossPairs` and the twelve across reflexes (rules.js), `P.foldOf(m)` for the page, anchor flag on the atom and rung flag on the bond (carried by cloneMap and the mirror), across steps only when no near reflex fits (rare groups first, ring across last, nearest first, once a kind a turn), held from round 4 and only with their near twin (bridge, stitch, link without), step record `kind`, `join` (the two anchor atom ids), `via: 'fold'`. Against fold.py (ties to the lower atom index in both): 1,500 molecules, 0 mismatches in anchor, path, row and column of every atom, and facing pairs; the twelve across reflexes on 876 first places: 876 agree. Test of paying an across step as two chain steps (median player, bare nine rounds, 60 runs a row, mean log of the round total over rounds 4 to 9): no fold 11.197; fold, one step each 10.915; fold, two steps each 11.249. Kept (`RULE.foldPay2`, on). Wins of the nine rounds in these 60 runs: 10, 9, 6 (noise). Not done: screens (`easeOf`, the spec proof) do not hold the across kinds; the page's drawing of the fold is the page builder's.
+
+### 2. Speed
+A median run went from 19 s to 3.9 s: the signature (`sigOf`, 6.3 s of 19) is an integer hash now, and the aromatic search is skipped below three C=C. Orphan Edge processes were killed by hand after batches (hl.sh leaves some when a page fails); hl.sh was not changed.
+
+### 3. Hydroborate and reduce, feeds
+The offer works in the statistics' names and returns card ids (bh3, nabh4); the pass-over key is by name. OFFER_STATS: only the held flags were rebaked (the worth numbers are from the old six; reagent_stats.py has to be run again, hours). Ammonia and sulfur now reach the page record (cyanohydrin and chugaev); the ammonia and brimstone creatures stay unoffered. The finding `reflux` was removed (its counter never existed).
+
+### 4. Rebake
+MOTIF_START holds amine, sulfur, acid; benzene rings are in 4 of 24 pool molecules from round 1 in molecules v2.
+
+### 5. Locks
+Reagents leave prot, cure, clamp alone; reflexes leave prot alone; the instruments (mirror, burette, bunsen, balance, magnet, acid, crystal, mortar) and the cut piece honour all three. `locks.js`: 19 cases, among them 6,468 per-atom trials (lock one atom with each flag, use every reagent and instrument, the atom and its bonds must not change): all pass. Not done: the clamp tool on a locked second atom of a C=C.
+
+### 6. Molecules v2 and the opening
+The 216 pool and 360 bank molecules replace the old and interim ones (deal: pool with chance 0.9, 0.85, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.5, else bank; exact round; fused and spiro count as ring). `RULE.filter` does not apply to them. Par for rounds 1 to 9 fitted on them (greedy median of the round total, 120 bare nine-round runs): 4770, 3500, 4118, 7340, 10295, 16248, 20038, 25187, 27028, made to rise 1.15 a round at least (4770, 5486, 6309, 7340, 10295, 16248, 20038, 25187, 28965). The molecule factors (MOLF, 42 keys of the old table) are cleared. Bachelor's, 300 unseen runs a player (seeds 1,001 to 1,300), spec N times a scale per round (0.15, 0.36, 0.7), the spec `opener` not offered, ease 0:
+
+| Player | Clear rounds 1, 2, 3 | Wins all three |
+|---|---|---|
+| novice | 72, 58, 30 | 10.0 |
+| greedy | 78, 81, 48 | 31.0 |
+| median | 93, 91, 75 | 63.7 |
+
+Targets (novice 75 to 85, 50, 35; median wins 25 to 35): the novice is near them; the median player is not (64 percent). The gap between the simulated novice and the median player is wide, and a spec hard enough to hold the median at 30 percent would leave the novice nothing; the greedy player (31) sits at the target. An earlier scale (0.2, 0.3, 0.55) on the same molecules gave 70, 58, 45 / 77, 81, 64 / 93, 92, 83. Reviewer: scaling N and flooring it at 1 makes most round 1 specs "do any one thing" and breaks the table's rate-to-N link; a rate-based ease would be better (recorded, not done).
+
+### 7. The bare nine-round run (ruling W2, about 2 in 100), molecules v2, 120 runs (seeds 5,001 on)
+| Player | Wins all nine | Clear rate by round, 1 to 9 |
+|---|---|---|
+| novice | 0 of 120 | 30, 17, 54, 50, 58, 40, 42, 41, 36 |
+| greedy | 2 of 120 | 50, 39, 59, 68, 76, 55, 61, 54, 53 |
+| median | 18 of 120 | 74, 62, 79, 92, 96, 93, 88, 83, 82 |
+| planner | not finished (about 100 s a run) | |
+Before molecules v2 (old table, 150 runs): novice 0, greedy 2, planner 26 of 150. Greedy is at the target; the median and planner players are at 15 to 17 percent, far above it. Not tuned (ruling: do not make it easier).
+
+### 8. Oxidize (owner: should it be worth less?)
+Method: `oxbest2.js`, molecules v2 rounds 1 to 6, 24 pool molecules a round, 2 hands of five from the six per molecule, every line of three, pay proxy 50 a place plus 25 k(k+1) for k reflex steps; "in a best line" counts any tied best line, so a filler reagent sits near 40 (thiolene 38, ritter 36) and the every-best-line baseline is about 0 to 5. It is not look-ahead and not the game's real pay (reviewer: the proxy overstates place pay about 2.5 times against chain pay, and scores the first page only); real greedy and look-ahead yield by real play were NOT measured. Percent of hands holding the reagent in which it is in a best line (in every best line):
+
+| Variant | oxidize | hydrate | grow | dehydrate | thiolene | ritter | kinds per chain | mean pay |
+|---|---|---|---|---|---|---|---|---|
+| baseline | 89 (81) | 78 (61) | 95 (87) | 59 (43) | 38 (5) | 36 (3) | 2.31 | 582 |
+| (a) oxPay 0.75 | 82 (80) | 78 | 94 | 59 | 38 | 36 | 2.30 | 557 |
+| (a) oxPay 0.5 | 80 (74) | 80 | 94 | 65 | 40 | 37 | 2.25 | 534 |
+| (a) oxPay 0.25 | 74 (71) | 81 | 94 | 68 | 41 | 37 | 2.20 | 512 |
+| (b) secondary OH only | 88 (79) | 79 (61) | 95 | 61 | 40 | 37 | 2.25 | 566 |
+| (b) one place only | 84 (74) | 73 (47) | 95 | 65 | 44 | 42 | 2.20 | 545 |
+| (b') no chain-end cleavage (`oxNoCleave`; the bare rounds do this anyway) | 79 (65) | 97 (82) | 95 (86) | 63 (49) | 44 | 45 | 2.03 | 536 |
+| (b'') secondary only and no cleavage | 75 (61) | 99 (84) | 94 | 66 | 46 | 47 | 1.97 | 523 |
+| (c) hydrate as a Wacker (`hydrateKetone`) | 80 (57) | 84 (64) | 98 (95) | 58 | 39 | 35 | 2.65 | 616 |
+| (c) + oxPay 0.5 | 62 (51) | 91 | 97 | 62 | 38 | 35 | 2.62 | 585 |
+
+Findings: (1) oxidize's lead in this proxy comes from its second step, the chain-end C=C cut to an aldehyde with carbon dioxide; without it oxidize falls from 89 to 79 and hydrate rises to 97. (2) Paying oxidize's own step less barely moves it, because its value is the C=O it sets up (oxPay 0.25: 74). (3) Narrowing the sites does little. (4) The reagent in the most best lines in every variant is grow (94 to 98), not oxidize. (5) The target (none above 55 in rounds 1 to 6) is met by no variant; with three slots from five a reagent is in a line about 40 percent by chance and the useful ones are always more, so this proxy cannot meet it. (6) `hydrateKetone` raises kinds and pay but turns hydrate's alcohol into a ketone, which breaks "named things do what the real thing does" (hydrate is aqueous acid): I would not ship it. I would take the cleavage switch (b'), `RULE.oxNoCleave`, as the evidence-based one, with oxPay left at 1 or mild. All switches are off by default (`RULE.oxPay`, `RULE.oxNarrow`, `RULE.oxNoCleave`, `RULE.hydrateKetone`) for the owner's pick.
+
+### Not done
+Real-play look-ahead and yield for the oxidize variants; the planner nine-round cell; refit of MOLF and of the OFFER_STATS worth numbers; a rate-based ease; screens holding the across kinds; 500-run cells for the final scales (300 runs). One reviewer was run for each of: the fold; feeds and locks; molecules v2 with the opening and Par; the oxidize experiment. Their findings were fixed where listed above.
+
 ## The measure of 2026-11-12, ninth: N, S and Cl in a new game, the turn parity closed, locks, Par refit
 
 Measured headless, awaiting review. Commits: 2a8ae35, tools_parity, Par refit, hetero ring molecules.

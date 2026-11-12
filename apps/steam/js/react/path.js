@@ -436,7 +436,7 @@ RULE.spec = true;
 // on the Python engine with an aiming player; the game's players clear less (RIG.md, seventh measure, part two), so a new player's
 // first run is eased. 0.2 gives the novice a win in about 3 tries. The longer runs are never eased (HARNESS W2).
 RULE.specEase = 0;
-// the bachelor's rounds are tuned for the new player (ruling W2, tenth pass): N of the table times a scale per round, and the chain spec 'opener' (cleared by 92 percent of novices) is not offered. Measured: novice clears 68, 52, 41 percent.
+// the bachelor's rounds are tuned for the new player (ruling W2, tenth pass): N of the table times a scale per round, and the chain spec 'opener' (cleared by 92 percent of novices) is not offered. Measured on molecules v2 (300 runs, scales 0.15, 0.36, 0.7): novice clears 72, 58, 30 percent.
 RULE.foldPay2 = true;   // an across step is paid as two chain steps: median-player yield in rounds 4 to 9 (mean log total) 11.249 with, 11.197 without the fold, 10.915 with the fold and one step each (60 runs)
 RULE.specScale = { 1: 0.15, 2: 0.36, 3: 0.7 }; RULE.specBan = ['opener'];
 const LASTX = { mul: 2 };
