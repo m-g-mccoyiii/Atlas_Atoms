@@ -844,8 +844,8 @@ function comboHit(S) {
   if (c) { const b = molWorldBox(c), w = new T.Vector3(b.cx, 0.6, b.cz), sp = toScreen(w); (S.fx || (S.fx = [])).push({ t, x: sp[0], y: sp[1], n: Math.min(12, N + 3), last: true }); splat(inkOf(w), N + 3, true); }
   addShake(N ? 0.75 : 0.3); S.drops.push({ t, a: N ? 0.045 : 0.02, ms: 260 }); S.swHit = { t, a: N ? 0.09 : 0.04 }; S.recoils.push({ t, x: 0, z: 0, yaw: N ? 7 : 3, hz: 3, z0: 0.4 });
   if (N) { snd('reflex', kind, N, { bell: d.bell * 1.4, fast: false, echo: true, last: true }); snd('snap', N, d.snapW * 1.5); snd('boom', SM()); mus('step', N); } else snd('strike', 2, 1);
-  if (N) S.nums.push({ n: N, gain, y: fin, t, hold: 420, fly: 160, join: null, last: true, w: d.numW(N), arrived: true });
-  ct.frozen = false; ct.holdTill = 0; ct.from = ct.shown; ct.to = fin; ct.t0 = t + 120; ct.dur = 320; ct.ease = 'outQuart'; ct.target = fin; S.yDrop = t + 120; S.landed = t + 460;
+  if (N) S.nums.push({ n: N, gain, y: fin, t, hold: 420, fly: 160, join: null, last: true, w: d.numW(N), arrived: true, combo: true });
+  S.finY = fin; ct.frozen = false; ct.holdTill = 0; ct.from = ct.shown; ct.to = fin; ct.t0 = t + 120; ct.dur = 320; ct.ease = 'outQuart'; ct.target = fin; S.yDrop = t + 120; S.landed = t + 460;
   F.log.push(['skip', N, Math.round(t - S.t0)]);
 }
 
@@ -979,7 +979,9 @@ function uiFrame(t) {
     x.save(); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.arc(cx, cy, r - 3, -0.4, 4.3); x.stroke(); const ax = cx + (r - 3) * Math.cos(-0.4), ay = cy + (r - 3) * Math.sin(-0.4); x.beginPath(); x.moveTo(ax + 6, ay - 6); x.lineTo(ax - 5, ay - 3); x.lineTo(ax + 3, ay + 6); x.closePath(); x.fill(); x.restore();
     pen.write(x, 'lay flat', cx, cy + 45, 17, { color: INK, align: 'center' }); UI.hit.push({ x: cx - 34, y: cy - 30, w: 68, h: 84, act: 'home' }); }
 }
-function frameC(t, dt) { frame(t, dt); if (F.mute && !F.seq) F.mute = false; try { twistFrame(t, dt); uiFrame(t); } catch (e) { if (!F.cErr) { F.cErr = String((e && e.stack) || e); try { console.error(e); } catch (e2) { /* no console */ } } } }
+// after a skip nothing left over from the step that was under way may pull the count or the numeral back
+function skipGuard(S) { const ct = S.count, t = now(); if (S.nums.some(q => !q.combo)) S.nums = S.nums.filter(q => q.combo); if (ct.to !== S.finY || ct.target !== S.finY) { ct.frozen = false; ct.from = ct.shown; ct.to = S.finY; ct.t0 = t; ct.dur = 200; ct.ease = 'outQuart'; ct.target = S.finY; S.landed = Math.max(S.landed || 0, t + 220); } }
+function frameC(t, dt) { if (F.seq && F.seq.skipHit && F.seq.finY != null) skipGuard(F.seq); frame(t, dt); if (F.mute && !F.seq) F.mute = false; try { twistFrame(t, dt); uiFrame(t); } catch (e) { if (!F.cErr) { F.cErr = String((e && e.stack) || e); try { console.error(e); } catch (e2) { /* no console */ } } } }
 
 AA.rxFeel = {
   DIR, WORDS,
