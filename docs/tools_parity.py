@@ -161,6 +161,7 @@ def make(seed=1, out=None):
         c = Counter(line)
         if any(v > 3 for v in c.values()):
             continue
+        smi = ENGINE.reopen(smi)[0]        # a round opens its loose rings first (engine.play_round, the game's synBegin)
         t = ENGINE.run_line(smi, line, ALL_SELF)
         if aromatic(t.smi) or not any(p for _, p in t.fired):
             continue
