@@ -402,7 +402,7 @@ const ENG = (() => {
       else if (k.a.el === 'H' && ib != null) hc[ib]++;
       else if (k.b.el === 'H' && ia != null) hc[ia]++;
     });
-    const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null };
+    const G = { m, atoms, idx, nb, hc, n: atoms.length, cd: new Map(), rb: null, lock: atoms.map(a => !!(a.prot || a.cure || a.clamp)) };
     const ar = aromaticAtoms(m); G.ar = atoms.map(a => ar.has(a));
     return G;
   }
@@ -459,6 +459,8 @@ const ENG = (() => {
     while (layer.length) { const nx = []; for (const a of layer) { const cn = cnb(G, a); if (cn.length <= 1) return d; cn.forEach(x => { if (!seen.has(x)) { seen.add(x); nx.push(x); } }); } layer = nx; d++; }
     return d;
   }
+  // a site that touches a protected, cured or clamped atom (prot, cure, clamp) is left out: the engine honours them, and a protected site never stalls the cascade
+  const free = (G, s) => { for (const f of ['t', 'k', 'oh', 'c', 'A', 'B']) { const v = s[f]; if (v && v.some(i => G.lock[i])) return false; } return true; };
   const lex = (a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; };
   // ---------- groups (each is a list of tuples of atom indices, the numbered atoms of the SMARTS) ----------
   const KC = (G, c) => CX3(G, c) && dblO(G, c) >= 0 && !G.nb[c].some(q => q.o === 1 && el(G, q.j) !== 'C');    // [CX3;!$(C(=O)-[!#6])] with its =O
@@ -638,7 +640,7 @@ const ENG = (() => {
   // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
   function nextReflex(m, held, cnt, G0) {
     const G = G0 || snapG(m), rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
-    rules.forEach((k, ri) => { const sites = R[k].find(G); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
+    rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
     cands.sort((a, b) => lex(a.key, b.key));
     return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G } : null;
   }
@@ -757,7 +759,7 @@ const ENG = (() => {
     steps.forEach(st => {
       if (st.when && !st.when()) return;
       for (let guard = 0; guard < 64; guard++) {
-        const G = snapG(m), sites = st.find(G); if (!sites.length) break;
+        const G = snapG(m), sites = st.find(G).filter(s => free(G, s)); if (!sites.length) break;
         REMOVED.length = 0; const r = st.edit(G, m, sites[0]); const grp = r.leaving.reduce((a, g) => a.concat(g), []).concat(REMOVED); r.leaving.forEach(g => g.forEach(a => m.removeAtom(a)));
         if (st.off || r.leaving.length) { grp.off = st.off || null; res.gone.push(grp); }
         r.focus.concat(r.incoming).forEach(a => res.made.push(a)); res.n++; mergeOff(res.off, st.off);
@@ -784,7 +786,7 @@ const ENG = (() => {
     }
     return parts.join('.');
   }
-  return { NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
+  return { free, NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
 })();
 // ---------- the cards: the twelve reagents and the thirteen reflexes as the page and the rules read them ----------
 // MODE.eng (path.js RULE.engine, on) switches the engine's version of a reflex on; off, the older version of the card is used.
@@ -810,18 +812,18 @@ Object.keys(REFLEXES).forEach(kind => {
   const P = REFLEXES[kind], old = CARDS[P.id], lf = old ? { find: old.find, ok: old.ok, apply: old.apply } : null;
   const c = old || { id: P.id, verb: P.verb, formula: '', chem: 'by itself', rgb: P.rgb, cls: 'self', ghs: [], rule: P.rule, from: P.from, to: P.to };
   c.kind = kind; c.legacy = lf;
-  c.find = m => { if (!MODE.eng && lf) return lf.find(m); const G = ENG.snapG(m), s = ENG.R[kind].find(G, m.reach); return s.length ? [{ atoms: siteAtoms(G, s[0]), d: s[0].dist, kind, join: siteAnch(G, s[0]), via: s[0].via || 'chain' }] : []; };
+  c.find = m => { if (!MODE.eng && lf) return lf.find(m); const G = ENG.snapG(m), s = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); return s.length ? [{ atoms: siteAtoms(G, s[0]), d: s[0].dist, kind, join: siteAnch(G, s[0]), via: s[0].via || 'chain' }] : []; };
   c.ok = (m, s) => ((!MODE.eng && lf) ? lf.ok(m, s) : c.find(m).length > 0);
-  c.apply = (m, s) => { if (!MODE.eng && lf) return lf.apply(m, s); const G = ENG.snapG(m), sites = ENG.R[kind].find(G, m.reach); if (!sites.length) return { focus: [], incoming: [], leaving: [], tag: '' }; ENG.removed.length = 0; const r = ENG.R[kind].edit(G, m, sites[0]); r.tag = P.tag; r.off = ENG.R[kind].off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; };
+  c.apply = (m, s) => { if (!MODE.eng && lf) return lf.apply(m, s); const G = ENG.snapG(m), sites = ENG.R[kind].find(G, m.reach).filter(x => ENG.free(G, x)); if (!sites.length) return { focus: [], incoming: [], leaving: [], tag: '' }; ENG.removed.length = 0; const r = ENG.R[kind].edit(G, m, sites[0]); r.tag = P.tag; r.off = ENG.R[kind].off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; };
   CARDS[P.id] = c;
 });
 const SIXMAP = { hydrate: 'hydrate', pcc: 'oxidize', nabh4: 'reduce', dehydrate: 'dehydrate', bh3: 'hydroborate', allyl: 'grow' };
 Object.keys(SIXMAP).forEach(cid => {
   const c = LIST.find(x => x.id === cid), eid = SIXMAP[cid], steps = ENG.REAG[eid], lf = { find: c.find, ok: c.ok, apply: c.apply };
   c.legacy = lf; c.eid = eid;
-  c.find = m => { if (!MODE.eng) return lf.find(m); const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => { if (st.when && !st.when()) return; st.find(G).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); }); }); return out; };
-  c.ok = (m, s) => { if (!MODE.eng) return lf.ok(m, s); const G = ENG.snapG(m); return steps.some(st => (!st.when || st.when()) && st.find(G).length > 0); };
-  c.apply = (m, s) => { if (!MODE.eng) return lf.apply(m, s); const G = ENG.snapG(m); for (const st of steps) { if (st.when && !st.when()) continue; const sites = st.find(G); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = c.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
+  c.find = m => { if (!MODE.eng) return lf.find(m); const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => { if (st.when && !st.when()) return; st.find(G).filter(x => ENG.free(G, x)).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); }); }); return out; };
+  c.ok = (m, s) => { if (!MODE.eng) return lf.ok(m, s); const G = ENG.snapG(m); return steps.some(st => (!st.when || st.when()) && st.find(G).filter(x => ENG.free(G, x)).length > 0); };
+  c.apply = (m, s) => { if (!MODE.eng) return lf.apply(m, s); const G = ENG.snapG(m); for (const st of steps) { if (st.when && !st.when()) continue; const sites = st.find(G).filter(x => ENG.free(G, x)); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = c.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
   c.all = m => (MODE.eng ? ENG.fire(m, eid) : null);
 });
 const NEWR = {
@@ -841,9 +843,9 @@ const NEWR = {
 Object.keys(NEWR).forEach(id => {
   const steps = ENG.REAG[id], P = NEWR[id];
   const c = Object.assign({ id }, P);
-  c.find = m => { const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => st.find(G).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); })); return out; };
-  c.ok = m => { const G = ENG.snapG(m); return steps.some(st => st.find(G).length > 0); };
-  c.apply = (m, s) => { const G = ENG.snapG(m); for (const st of steps) { const sites = st.find(G); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = P.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
+  c.find = m => { const G = ENG.snapG(m), seen = new Set(), out = []; steps.forEach(st => st.find(G).filter(x => ENG.free(G, x)).forEach(s => { const t = s.t.slice().sort((a, b) => a - b).join(','); if (seen.has(t)) return; seen.add(t); out.push({ kind: 'eng', atoms: s.t.map(i => G.atoms[i]) }); })); return out; };
+  c.ok = m => { const G = ENG.snapG(m); return steps.some(st => st.find(G).filter(x => ENG.free(G, x)).length > 0); };
+  c.apply = (m, s) => { const G = ENG.snapG(m); for (const st of steps) { const sites = st.find(G).filter(x => ENG.free(G, x)); if (sites.length) { ENG.removed.length = 0; const r = st.edit(G, m, sites[0]); r.tag = P.verb; r.off = st.off || null; if (r.off && !r.leaving.length && ENG.removed.length) r.leaving = [ENG.removed.slice()]; if (r.off) r.leaving.forEach(g => { g.off = r.off; }); return r; } } return { focus: [], incoming: [], leaving: [], tag: '' }; };
   // every place at once, as the engine does it (the molecule is changed in place; what left is already removed)
   c.all = m => ENG.fire(m, id);
   c.reagent = true; LIST.push(c); CARDS[id] = c;

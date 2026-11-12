@@ -55,6 +55,10 @@ const FEED = [
   ['cage', 'CC(C)(O)CCC=CCCC=CCCC=CCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2'], ['cage', 'C=CCCC(=O)CCC(O)CCC(=O)CCCCCC(=O)C12C3C4C1C5C2C3C45'], ['cage', 'CC(C)(O)C=CC=CCCCC=CC(=O)CCC(=O)CCC(=O)C12C3C4C1C5C2C3C45'],
   ['cage', 'CC(=O)CCC(=O)CCCCCC(=O)CCC(O)CCC(=O)CCC(O)C12CC3CC(CC(C3)C1)C2']
 ];
+// INTERIM MOLECULES (owner's ruling AF, 2026-11-12): until docs/tools_chem/MOLECULES.md lands, the chain molecules of up to 19 heavy atoms are replaced by these, which hold N, S and Cl
+// at the distances the reflexes work at (checked with RDKit and with the engine, jobs/cand.js). Set AA.rxFeedOld = true before the scripts load to keep the older table.
+const FEED_HET = ["C=CCCC(=O)C(S)C(Cl)C=O", "C=CCC(N)C(=O)CCC=O", "C=CCC(N)C(=O)C(N)CC=O", "C=CCC(Cl)C(=O)CCC(C)(O)CC=C", "C=CCCC(=O)C(Cl)C1CCCC1=O", "C=CCCC(=O)CC(S)C1(O)CCCC1", "C=CCCC(=O)CC(N)C1(O)CCCC1", "C=CCCC(=O)C(N)C1CCCC1=O", "C=CCCC(=O)CCC(=O)C(S)CCC=O", "C=CCCC(=O)CC(N)C(=O)C(Cl)CCC=O", "C=CCCC(=O)C(Cl)CC(C)(O)CCC=O", "C=CC(N)CC(=O)CCC(=O)C(Cl)C1CCCC1=O", "C=CCCC(=O)C(Cl)CC(=O)CC1CCCC1=O", "C=CCC(Cl)C(=O)C(Cl)CC(=O)CCC=O", "C=CCCC(=O)CCC(C)(O)C(Cl)CC=C", "C=CCCC(=O)CC(S)C(=O)CC1CCCC1=O"];
+if (!AA.rxFeedOld) { const heavyOf = s => (s.match(/Cl|[A-Z]/g) || []).length, keep = FEED.filter(q => !(q[0] === 'chain' && heavyOf(q[1]) <= 19)); FEED.length = 0; FEED_HET.forEach(s => FEED.push(['chain', s])); keep.forEach(q => FEED.push(q)); }
 const FEEDS = FEED.map(q => q[1]);
 // heavy atoms of a molecule as it is dealt, read off its formula; what a round asks for; and how far off a molecule may be
 const feedSize = smi => smi.replace(/Cl/g, 'X').replace(/[^A-Za-z]/g, '').length;
@@ -84,9 +88,9 @@ const MOTIF_START = ['sugar', 'resonance', 'ring', 'branch', 'chain'];
 //   repeats; one not shown comes back likelier (pity), one turned down twice less so. Only unlocked reagents are ever offered (P.unlocked(meta);
 //   RULE.unlockAll unlocks all twelve for testing). RULE.offers (on) turns the whole thing on.
 const OFFER_K = { u: 0.30, k: 2.5, t: 1, kappa: 2, pLo: 0.5, pHi: 2, pity: 0.20, decay: 0.6, shelfK: 0.4, c0: 2, c1: 7, step: 1, stock: { 3: 4, 6: 5, 9: 5 }, pityRun: 0.5 };
-const OFFER_SIX = ['hydrate', 'bh3', 'dehydrate', 'pcc', 'nabh4', 'allyl'], OFFER_ID = { bh3: 'hydroborate', pcc: 'oxidize', nabh4: 'reduce', allyl: 'grow' };
+const OFFER_SIX = ['hydrate', 'thiolene', 'dehydrate', 'pcc', 'ritter', 'allyl'], OFFER_ID = { bh3: 'hydroborate', pcc: 'oxidize', nabh4: 'reduce', allyl: 'grow' };
 const offerName = id => OFFER_ID[id] || id, offerBand = r => (r <= 3 ? 0 : r <= 6 ? 1 : 2);
-const OFFER_REAGENTS = Object.keys(OFFER_STATS).filter(x => !OFFER_STATS[x].held);
+const OFFER_REAGENTS = Object.keys(OFFER_STATS).filter(x => !OFFER_STATS[x].held && !OFFER_SIX.includes(x) && x !== 'hydroborate' && x !== 'reduce');
 // the saved state of the bench that decides what can be offered: meta.unlocked = { reagents: [...], reflexes: [...], motifs: [...] }
 function unlocked(meta) {
   const u = (meta && meta.unlocked) || {};
@@ -256,8 +260,8 @@ RUN.TUNE.chain = 0.1; RUN.TUNE.route = 0.25; RUN.TUNE.siteBatch = 0;
 // docs/CASCADES.md: zip (the card lactol) is the first and only cascade a new player has. snap (the card snap6)
 // comes with the research supplier and weld with the instrument maker. The other kinds (fold, run, link) are not built.
 // the thirteen reflexes (docs/tools_chem/FINAL.md): the card ids are the page's older names for ring (lactol), dry (enone), flip (taut), snap (snap6), close (ether).
-// A new game holds ring, dry, weld, shift, tuck, flip and snap (every reflex that works on carbon, hydrogen and oxygen alone and that a first-round molecule can set off, owner's ruling AD); the rest are opened by findings (UNLOCKS), in this order. RULE.holdAll holds all of them (for testing).
-const SELF = [{ id: 'lactol', tier: 0 }, { id: 'enone', tier: 0 }, { id: 'weld', tier: 0 }, { id: 'shift', tier: 0 }, { id: 'tuck', tier: 0 }, { id: 'taut', tier: 0 }, { id: 'snap6', tier: 0 }, { id: 'open', tier: 2 }, { id: 'fold', tier: 2 }, { id: 'ether', tier: 2 }, { id: 'cap', tier: 3 }, { id: 'knit', tier: 3 }, { id: 'seal', tier: 3 }];
+// A new game holds ring, dry, weld, shift, tuck, flip, snap and the three that work on N, S and Cl (knit, cap, close): owner's rulings AE (several kinds at once) and AF (more than carbon and oxygen); open, fold and seal need an epoxide or an acid and are opened by findings (UNLOCKS), in this order. RULE.holdAll holds all of them (for testing).
+const SELF = [{ id: 'lactol', tier: 0 }, { id: 'enone', tier: 0 }, { id: 'weld', tier: 0 }, { id: 'shift', tier: 0 }, { id: 'tuck', tier: 0 }, { id: 'taut', tier: 0 }, { id: 'snap6', tier: 0 }, { id: 'open', tier: 2 }, { id: 'fold', tier: 2 }, { id: 'ether', tier: 0 }, { id: 'cap', tier: 0 }, { id: 'knit', tier: 0 }, { id: 'seal', tier: 3 }];
 const SELF0 = SELF.filter(q => q.tier === 0).map(q => q.id);
 const reflexesHeld = run => { if (RULE.holdAll) return SELF.map(q => q.id); const un = (run && run.unlocked) || []; return SELF.filter(q => q.tier === 0 || un.includes(q.id)).map(q => q.id); };
 // The cascade. Step n of a page is worth n times the first: it adds place for its one place and that counts n times,
@@ -1160,7 +1164,7 @@ function screenRound(feed, pool, self, R, pages) {
 // Each round has a number to beat that is set by the round and not by what the player holds, so a better build
 // beats it by more.
 // growth, late, knee, first and ask belonged to the old number to beat and are no longer read: see PAR
-const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'bh3', 'dehydrate', 'nabh4'] };
+const RUNG = { slots: 5, growth: 1.75, late: 1.5, knee: 3, first: 0.6, ask: 1, start: ['hydrate', 'pcc', 'allyl', 'thiolene', 'dehydrate', 'ritter'] };   // ruling AF: thiolene (S) and ritter (N) replace hydroborate and reduce; RULE.oldSix is not kept
 // The deal of the first rounds. Two of the starting reagents wreck a chain when they are fired at it open: dehydrate
 // takes off the OH a zip starts from and grow turns every C=O into an OH. A player who does not yet read the page fires
 // them first half the time. So round one is dealt from the other four, dehydrate joins the deal in round two and grow
