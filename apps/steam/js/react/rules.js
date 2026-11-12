@@ -1212,7 +1212,7 @@ const tools = {
   spots(m, id, limit) {
     const out = [];
     if (id === 'mirror') m.bonds.forEach(k => { if (k.order !== 1 || k.a.el !== 'C' || k.b.el !== 'C' || k.a.fly || k.b.fly || lk(k.a) || lk(k.b) || ringBond(m, k.a, k.b)) return; [[k.a, k.b], [k.b, k.a]].forEach(q => { let n = 0; sideOf(m, q[0], q[1]).forEach(x => { if (x.el !== 'H') n++; }); if (n >= 3 && (!limit || 2 * n <= limit - 6) && !Array.from(sideOf(m, q[1], q[0])).some(lk)) out.push({ a: q[0], b: q[1], n }); }); });
-    else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !lk(o)) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !lk(k.a) && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
+    else if (id === 'clamp') { m.atoms.forEach(o => { if (o.el === 'O' && !o.fly && !lk(o)) out.push({ part: [o] }); }); const ar = aromaticAtoms(m); m.bonds.forEach(k => { if (k.order === 2 && k.a.el === 'C' && k.b.el === 'C' && !k.a.fly && !k.b.fly && !lk(k.a) && !lk(k.b) && !(ar.has(k.a) && ar.has(k.b))) out.push({ part: [k.a, k.b] }); }); }
     else if (id === 'crystal') m.atoms.forEach(c => { if (c.el === 'C' && !c.fly && !lk(c) && isSp3(m, c) && Hs(m, c).length && heavyNb(m, c).every(q => q.el === 'C')) out.push({ c }); });
     else if (id === 'magnet') { const runs = gapRuns(m); if (runs.length) out.push({ runs }); }
     else if (id === 'balance') { const ols = m.atoms.filter(o => !o.fly && !lk(o) && oxidisable(m, o)), ones = carbonyls(m).filter(q => !lk(q.o) && !lk(q.c) && !q.o.fly).map(q => q.o); if (ols.length && ones.length) out.push({ ols, ones }); }
@@ -1232,7 +1232,7 @@ const tools = {
       m.bonds.slice().forEach(k => { if (copy.has(k.a) && copy.has(k.b)) { const nb = { a: copy.get(k.a), b: copy.get(k.b), order: k.order }; if (k.rung) nb.rung = true; m.bonds.push(nb); } });
       m.bond(a, copy.get(a)); return { made: Array.from(copy.values()) };
     }
-    if (id === 'clamp') { sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }
+    if (id === 'clamp') { if (!sp.part || sp.part.some(lk)) return null; sp.part.forEach(a => { a.clamp = true; }); return { made: sp.part }; }   // a C=C with either carbon locked, or a locked O, is left as it is
     if (id === 'crystal') { const h = Hs(m, sp.c)[0]; if (!h) return null; cut(m, sp.c, h); const o = attach(m, 'O', sp.c, 2.8); m.bond(o, h); return { made: [o] }; }
     if (id === 'magnet') { const made = []; sp.runs.forEach(run => { run.slice(1, -1).forEach(c => { Hs(m, c).forEach(h => m.removeAtom(h)); m.removeAtom(c); }); m.bond(run[0], run[run.length - 1]); made.push(run[0], run[run.length - 1]); }); return { made }; }
     if (id === 'balance') { const ols = sp.ols.map(o => oxidisable(m, o)).filter(Boolean), ones = sp.ones.map(o => carbonyls(m).find(q => q.o === o)).filter(Boolean); if (!ols.length || !ones.length) return null;
