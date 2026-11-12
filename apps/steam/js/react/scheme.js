@@ -1508,8 +1508,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (st.noteRun == null) { st.noteRun = (Math.random() * 1e6) | 0; st.noteUsed = []; st.noteTick = 0; }
     const m = madLevel(); st.madness = m; const key = (st.noteTick | 0) + ':' + Math.floor(m * 6);
     if (!st.noteSet || st.noteSet.key !== key) st.noteSet = { key, cv: buildMargin(m, st.noteTick | 0) };
+    if (AA.rxFeel && AA.rxFeel.noteKick && AA.rxFeel.noteKick(now0)) return noteStrips(c, now0);
     c.drawImage(st.noteSet.cv, 0, 0);
   }
+  // while the OVERREACT shockwave crosses the page the margin is drawn in pieces, each kicked outward as the ring passes under it
+  function noteStrips(c, now0) { const cv = st.noteSet.cv, nx = 16, ny = 8, w = IW / nx, h = IH / ny; for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) { const q = AA.rxFeel.noteKick(now0, (i + 0.5) * w, (j + 0.5) * h) || [0, 0]; c.drawImage(cv, i * w, j * h, w, h, i * w + q[0], j * h + q[1], w, h); } }
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode !== 'shop') marginalia(x, now);
