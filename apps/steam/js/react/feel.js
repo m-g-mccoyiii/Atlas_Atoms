@@ -18,31 +18,31 @@ const KEY = 'overreact.feel';
 const DIR = {
   1: { name: 'mass',
     T1: 600, r: 0.90, Tmin: 240, wind: 0.38, swing: 0.22, swingPow: 5, H: n => Math.min(3 + n, 10), Hlast: 14,
-    draw: n => 0.035 + 0.003 * Math.min(n, 10), ov: 0.03, settleHz: 9, settleZ: 0.55,
-    recoil: n => 0.02 + 0.03 * Math.min(1, (n - 1) / 7), yaw: 2.5, recHz: 4, recZ: 0.45,
-    drop: n => 0.012 + 0.0019 * Math.min(n, 7), dropMs: 180,
-    shakeGain: 1.3, shakeHz: 12, shakePeak: 0.02,
-    throwGap: 340, throwMs: 240, arc: 120, throwRec: [0.02, 0.03, 0.05], firstWait: 300, lastWind: 600, fullDraw: 200,
+    draw: n => 0.06 + 0.004 * Math.min(n, 10), ov: 0.04, settleHz: 9, settleZ: 0.55,
+    recoil: n => 0.045 + 0.04 * Math.min(1, (n - 1) / 7), yaw: 3.5, recHz: 4, recZ: 0.45,
+    drop: n => 0.025 + 0.004 * Math.min(n, 7), dropMs: 200,
+    shakeGain: 1.3, shakeHz: 12, shakePeak: 0.03,
+    throwGap: 340, throwMs: 240, arc: 120, throwRec: [0.035, 0.05, 0.08], firstWait: 300, lastWind: 600, fullDraw: 200,
     cam: 'lock', count: 'stamp', zoomMax: 1.55, numW: n => 2 + Math.min(3, n * 0.35),
     snapW: 1.6, snapFrom: 2, bell: 0.8, droneFrom: 3, droneLow: true, echo: false,
     wordK: 1.2, hold: 700, finale: 'slam' },
   2: { name: 'runaway',
     T1: 480, r: 0.82, Tmin: 167, wind: 0.20, swing: 0.40, swingPow: 3, H: () => 1, Hlast: 12,
-    draw: n => 0.02, ov: 0.05, settleHz: 6, settleZ: 0.35,
-    recoil: n => 0.012 + 0.014 * Math.min(1, (n - 1) / 8), yaw: 1.2, recHz: 5, recZ: 0.5,
+    draw: n => 0.035, ov: 0.06, settleHz: 6, settleZ: 0.35,
+    recoil: n => 0.025 + 0.025 * Math.min(1, (n - 1) / 8), yaw: 2, recHz: 5, recZ: 0.5,
     drop: () => 0, dropMs: 0, landDrop: 0.03,
-    shakeGain: 0.7, shakeHz: 18, shakePeak: 0.02,
-    throwGap: 200, throwMs: 200, arc: 80, throwRec: [0.012, 0.018, 0.026], firstWait: 150, lastWind: 180, fullDraw: 0,
+    shakeGain: 0.8, shakeHz: 18, shakePeak: 0.03,
+    throwGap: 200, throwMs: 200, arc: 80, throwRec: [0.025, 0.035, 0.05], firstWait: 150, lastWind: 180, fullDraw: 0,
     cam: 'push', count: 'race', zoomMax: 1.3, numW: () => 2,
     snapW: 0.8, snapFrom: 3, bell: 1.0, droneFrom: 2, droneLow: false, echo: false, fastBell: true,
     wordK: 1.0, hold: 600, finale: 'breath' },
   3: { name: 'closeup',
     T1: 600, r: 0.86, Tmin: 200, wind: 0.30, swing: 0.25, swingPow: 3, H: n => Math.min(2 + n, 8), Hlast: 12,
-    draw: n => 0.03, ov: 0.10, settleHz: 6, settleZ: 0.35,
-    recoil: n => 0.015 + 0.025 * Math.min(1, (n - 1) / 7), yaw: 1.5, recHz: 4, recZ: 0.45,
+    draw: n => 0.05, ov: 0.12, settleHz: 6, settleZ: 0.35,
+    recoil: n => 0.03 + 0.035 * Math.min(1, (n - 1) / 7), yaw: 2.5, recHz: 4, recZ: 0.45,
     drop: () => 0, dropMs: 0,
     shakeGain: 0.5, shakeHz: 16, shakePeak: 0.02,
-    throwGap: 360, throwMs: 260, arc: 90, throwRec: [0.015, 0.025, 0.04], firstWait: 250, lastWind: 500, fullDraw: 150,
+    throwGap: 360, throwMs: 260, arc: 90, throwRec: [0.03, 0.045, 0.07], firstWait: 250, lastWind: 500, fullDraw: 150,
     cam: 'dive', count: 'beat', zoomMax: 1.5, numW: () => 3,
     snapW: 1.0, snapFrom: 3, bell: 1.0, droneFrom: 6, droneLow: false, echo: true,
     wordK: 1.3, hold: 900, finale: 'pull' }
@@ -53,7 +53,7 @@ let mode = 0;
 try { const q = new URLSearchParams(root.location.search).get('feel'); if (q !== null && q !== '') mode = Math.max(0, Math.min(3, +q || 0)); else { const s = root.localStorage.getItem(KEY); if (s !== null) mode = Math.max(0, Math.min(3, +s || 0)); else mode = 1; } } catch (e) { mode = 1; }
 
 let api = null, T = null;
-const F = { log: [], seq: null, BOX: { x0: -11.5, x1: 25, z0: -17.2, z1: -1.4 }, BOXW: { x0: -23.5, x1: 25, z0: -17.4, z1: -4.8 } };
+const F = { log: [], probeRows: [], seq: null, BOX: { x0: -11.5, x1: 25, z0: -17.2, z1: -1.4 }, BOXW: { x0: -23.5, x1: 25, z0: -17.4, z1: -4.8 } };
 const D = () => DIR[mode] || DIR[1];
 const on = () => !!api && mode > 0;
 const now = () => performance.now();
@@ -156,6 +156,8 @@ function throwThen(h, react) {
 function onReact(o, nm, prev, L, morph) {
   const S = F.seq; if (!S || !morph) return;
   const st = api.st, g = api.g(); st.sq = 0; st.pop = 0; st.shake = 0;
+  // the new drawing is turned and moved, as one piece, to lie as close as it can on the old: only what changed moves
+  try { if (!morph.bend && !(nm.at && nm.at.fold) && !(prev && prev.at && prev.at.fold)) align(nm, morph.from); } catch (e) { /* drawn as laid out */ }
   // runoff leaves as the art's runoff objects, kicked out and falling
   try { st.flyers.forEach(f => { if (f.feel) return; f.feel = true; f.kick = { x: (Math.random() - 0.5) * 0.6, z: -1 }; f.dur = (mode === 2 ? 420 : mode === 1 ? 480 : 560); dressFlyer(f); }); } catch (e) { /* plain flyer */ }
   if (!o.casc) { morph.feelEase = true; return; }
@@ -182,6 +184,12 @@ function onReact(o, nm, prev, L, morph) {
   // the drone: one held voice per step, cut before the last step lands
   if (n >= d.droneFrom && !last) { const lvl = clamp((n - d.droneFrom) / 8, 0, 1); snd('drone', lvl, Math.floor((n - d.droneFrom) / (mode === 2 ? 2 : 3)), Math.max(0.15, (ph.T || 300) / 1000 + 0.05), d.droneLow ? 1 : 0); }
   if (mode === 2 && n >= 8 && !last) snd('draw', n, ph.wind / 1000);
+}
+function align(nm, from) {
+  let n = 0, px = 0, pz = 0, qx = 0, qz = 0; const pr = []; from.forEach((q, a) => { const p = nm.at.get(a); if (!p || a.el === 'H') return; pr.push([p, q]); px += p.x; pz += p.z; qx += q.x; qz += q.z; n++; });
+  if (n < 3) return; px /= n; pz /= n; qx /= n; qz /= n; let sn = 0, cs = 0; pr.forEach(([p, q]) => { const ax = p.x - px, az = p.z - pz, bx = q.x - qx, bz = q.z - qz; sn += ax * bz - az * bx; cs += ax * bx + az * bz; });
+  const th = Math.atan2(sn, cs), c = Math.cos(th), si = Math.sin(th);
+  nm.at.forEach(p => { const x = p.x - px, z = p.z - pz; p.x = qx + x * c - z * si; p.z = qz + x * si + z * c; });
 }
 const breathMs = () => Math.min(520, 80 + 40 * ((F.seq && F.seq.plan.N) || 6));
 const P_made = () => { try { return api.P.made(api.g()); } catch (e) { return 0; } };
@@ -227,7 +235,7 @@ function hit(morph, t) {
 }
 function spawnNumeral(n, gain, y, c) {
   const S = F.seq; if (!S) return; const t = now(), d = S.d;
-  const T0 = (c.ph.T || 600); const holdMs = c.last ? 300 : T0 < 400 / S.speed ? 0 : 250;
+  const T0 = (c.ph.T || 600); const holdMs = c.last ? 150 : T0 < 400 / S.speed ? 0 : 250;
   const num = { n, gain, y, t, hold: holdMs, fly: 160, join: c.a || c.b, last: c.last, w: d.numW(n), arrived: false };
   S.nums.push(num);
   if (d.count === 'race') { S.count.target = y; if (c.last) { setTimeout(() => land(y), 0); } }
@@ -290,7 +298,7 @@ function finish() { const st = api.st, S = F.seq; st.want = P_made(); st.shown =
 function flagVals() { const st = api.st; if (!st.quota) return []; return [st.quota].concat(api.P.runMarks(st.quota)); }
 function writeWord(k) { const S = F.seq; if (!S || S.words.some(w => w.k === k)) return; S.words.push({ k, t: now() }); S.wordBusy = now() + 260; }
 function passFlag(k, final) {
-  const S = F.seq; if (S.flagged[k]) return; S.flagged[k] = now();
+  const S = F.seq; if (S.flagged[k]) return; S.flagged[k] = now(); api.st.passT[k] = now();
   const fl = api.st.flags3 && api.st.flags3[k]; if (fl) S.poles = (S.poles || []).concat([{ k, t: now() }]);
   if (k === 3 && !final) { snd('flagSoft', 4); return; }
   if (k === 3) return; // written in finalWords
@@ -308,7 +316,7 @@ function frame(t, dt) {
   const ct = S.count; let shown = ct.shown;
   if (d.count === 'race' && !ct.frozen && ct.ease !== 'back') {
     const n = Math.max(1, S.steps || 1), rate = 3 * Math.pow(2, (n - 1) / 3), dv = ct.target - shown; if (Math.abs(dv) < 1) shown = ct.target; else shown += dv * Math.min(1, dt * rate);
-  } else if (!ct.frozen && !(ct.holdTill && t < ct.holdTill)) {
+  } else if (ct.holdTill && t < ct.holdTill) { ct.t0 += dt * 1000; } else if (!ct.frozen) {
     const u = clamp((t - ct.t0) / Math.max(1, ct.dur), 0, 1), e = ct.ease === 'back' ? E.outBack(u, 2.0) : E.outQuart(u); shown = ct.from + (ct.to - ct.from) * e; if (u >= 1) shown = ct.to;
   }
   if (Math.round(shown) !== Math.round(ct.shown) && t - S.tick > 45 / S.speed) { S.tick = t; snd('tick', S.steps || 0); }
@@ -327,7 +335,8 @@ function frame(t, dt) {
   c.group.scale.setScalar(s1);
   // recoil
   let rx = 0, rz = 0, ry = 0; S.recoils = S.recoils.filter(r => { const s = (t - r.t) / 1000; if (s > 2.5) return false; if (s < 0) return true; const kk = kick(s, r.hz, r.z0); rx += r.x * kk; rz += r.z * kk; ry += r.yaw * Math.PI / 180 * kk; return true; });
-  c.group.position.set(px0 + rx, 0.25, pz0 + rz); c.group.rotation.set(0, ry, 0);
+  let sy = 0; if (mode === 1 && S.lastHitT) { const s = (t - S.lastHitT) / 1000; sy = -0.9 * Math.min(1, 0.3 + 0.07 * (S.hitN || 1)) * (s < 0.05 ? s / 0.05 : Math.max(0, ring(s - 0.05, 3.5, 0.5))); }
+  c.group.position.set(px0 + rx, 0.25 + sy, pz0 + rz); c.group.rotation.set(0, ry, 0);
   // the joined group: a tremor through the freeze, then the overshoot rings down
   const se = S.settle; if (se && se.m === c) {
     const s = (t - se.t0) / 1000, W = S.cur ? S.cur.W : 10;
@@ -348,8 +357,11 @@ function frame(t, dt) {
   cam.position.set(look.x + off.x + ox, look.y + off.y, look.z + off.z + oz); cam.lookAt(look.x + ox, look.y, look.z + oz);
   // the yield flags on the track: the pole jolts back and rings when its flag fills
   (S.poles || []).forEach(p => { const fl = st.flags3 && st.flags3[p.k]; if (!fl || !fl.on) return; const s = (t - p.t) / 1000, lean = (mode === 1 ? 0.105 : 0.06) * ring(s, mode === 1 ? 2.5 : 3.3, 0.25) * (s < 1.5 ? 1 : 0); fl.on.rotation.z = lean; });
+  if (AA.rxFeel.probe) { const pj = v => { const p = v.clone().project(cam); return [Math.round((p.x + 1) * 640), Math.round((1 - p.y) * 360)]; }, cu = S.cur, wbx = molWorldBox(c), mc = new T.Vector3(wbx.cx, 0.6, wbx.cz);
+    const row = { t: Math.round(t - S.t0), n: cu ? cu.n : 0, Z: +S.zoom.toFixed(3), c: pj(mc), rec: pj(mc.clone().sub(new T.Vector3(rx, 0, rz))), cam: [Math.round(ox * 24.4), Math.round(oz * 24.4)], shown: Math.round(S.count.shown) };
+    if (cu && cu.a && c.balls.has(cu.a)) row.a = pj(worldOf(c, cu.a)); if (cu && cu.b && c.balls.has(cu.b)) row.b = pj(worldOf(c, cu.b)); row.w = (() => { let x0 = 1e9, x1 = -1e9; c.balls.forEach((bb, a) => { if (a.el === 'H') return; const q = pj(bb.mesh.getWorldPosition(new T.Vector3())); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); }); return x1 - x0; })(); F.probeRows.push(row); }
   // runoff: kicked out from where it left, falling under gravity to where it is kept, and landing
-  st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 1.25); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), mode); } });
+  st.flyers.forEach(f => { if (!f.feel || !f.t0 || !f.to) return; const age = t - f.t0; if (age < 0) return; const u = clamp(age / f.dur, 0, 1), g0 = mode === 1 ? 1.4 : mode === 2 ? 0.7 : 1.0, from = f.from, to = f.to; const x = from.x + (to.x - from.x) * u, z = from.z + (to.z - from.z) * u - Math.sin(u * Math.PI) * (2.2 + 2 * g0) * (1 - u * 0.3), y = from.y + (to.y - from.y) * u + Math.sin(u * Math.PI) * 2.0; f.grp.position.set(x, y, z); f.grp.rotation.set(0, 0, 0); f.grp.scale.setScalar(Math.max(0.6, api.st.sc) * 2.0); if (u >= 1 && !f.clinked) { f.clinked = true; snd('clink', (S.runoffN = (S.runoffN || 0) + 1), mode); } });
 }
 
 // ---------- the ink: the count, the step numerals, the gains, the words, the throw, the tally ----------
@@ -367,7 +379,7 @@ function ink(x, t) {
   const bx = c ? inkBox(c) : null, lim = [api.px({ x: -6, z: 0 })[0], api.px({ x: 23.5, z: 0 })[0]], latest = S.nums[S.nums.length - 1];
   S.nums.forEach((q, qi) => {
     const age = t - q.t; if (age < 0 || !bx) return; const nx = S.nums[qi + 1], fade = nx ? clamp((t - nx.t) / 160, 0, 1) : S.done && S.restT ? clamp((t - S.restT) / 300, 0, 1) : 0;
-    const sz = Math.min(96, 28 + 5 * q.n) * ips * (mode === 3 ? 1.6 : 1) * (q.last ? 1.25 : 1), wr = clamp(age / 90, 0, 1);
+    const sz = Math.min(120, 46 + 6 * q.n) * ips * (mode === 3 ? 1.6 : 1) * (q.last ? 1.25 : 1), wr = clamp(age / 90, 0, 1);
     if (!q.at) { let jx = bx.cx; if (q.join && c.balls.has(q.join)) jx = inkOf(worldOf(c, q.join))[0]; q.at = [clamp(jx, lim[0], lim[1]), bx.b + 10 * ips + sz * 0.74]; }
     if (fade < 1) { x.save(); x.globalAlpha = 1 - fade; AA.rxPen.write(x, String(q.n), q.at[0], q.at[1], sz, { weight: 'heavy', color: api.INK, align: 'center', t: wr, extra: q.w > 2 ? (q.w - 2) * 1.8 : 0 }); x.restore(); }
     if (q.gain > 0 && d.count !== 'race') { const gsz = Math.max(30 * ips, sz * 0.55), ft = age - q.hold, u = clamp(ft / q.fly, 0, 1); if (u >= 1) { q.gone = true; return; } const e = E.inCubic(Math.max(0, u)), A = [q.at[0], q.at[1] + gsz * 1.15], B = [Y[0] + (st.madeW || 200) * 0.5, Y[1] - 70 * ips], cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - 50 * ips * Math.sin(Math.PI * Math.max(0, u));
@@ -396,7 +408,7 @@ AA.rxFeel = {
   get mode() { return mode; },
   set(n) { mode = Math.max(0, Math.min(3, n | 0)); try { root.localStorage.setItem(KEY, String(mode)); } catch (e) { /* storage blocked */ } return mode; },
   fire, throwThen, onReact, hit, k, ease, unlock, pageEnd, frame, ink, Tn, phases,
-  stepMs: n => Tn(n), log: F.log,
+  stepMs: n => Tn(n), log: F.log, probeRows: F.probeRows, probe: false,
   state: () => F.seq && { steps: F.seq.steps, N: F.seq.plan.N, shown: F.seq.count.shown, zoom: F.seq.zoom, shake: F.seq.shake, words: F.seq.words.map(w => w.k), speed: F.seq.speed, done: F.seq.done, plan: F.seq.plan.ev.map(e => e.k + (e.n || '')).join('') }
 };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
