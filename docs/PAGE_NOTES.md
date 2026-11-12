@@ -123,3 +123,44 @@ Yes. Real page headless, parchment (PAPERN 2) by default, no console error and n
 
 ### scheme.html
 Add before the feel.js line: `<script src="js/react/marks.js?v=1"></script>`; bump `scheme.js?v=369`, `feel.js?v=2`, `shot.js?v=13`.
+
+### Third builder, second part (camera mixes, centering, notebook page, marginalia, kinds of reflex)
+
+Frames and videos are in `C:\Work\atlas-atoms\.claude\shots`. Recorder: `.claude/feel` of the page3 worktree (copied from the feel builder's, ports 8821 and 8822, `recall2.sh` records again when frames are lost, `center.py` prints the centering numbers, `j_kinds.js` scouts lines with several kinds of reflex, `j_runb.js` records a whole run).
+
+- Directions 4, 5, 6 in feel.js (data beside 1 to 3): 4 keeps the whole molecule in shot with a slight drift to the join (pan 0.15), the page jolts on each hit as in 2, one push-in (1.8 times) on the last hit only; 5 pushes in 1.4 times easing to 1.2 and pulls back over the settle; 6 stays wide with the count racing and goes close for the last three hits (1.7, 1.85, 2.0). `?pace=new` gives any direction the new pace. New pace: first step about 800 ms, 8 percent shorter each step, never under 420 ms, a 150 ms breath between steps; measured periods 967, 1033, 1000, 934, 866 ms and so on (the longest line 967 down to 600 in the earlier long take).
+- Framing: the molecule is laid in a box centered on the camera's look point and the camera is fitted to its box each frame (margin 0.78 of half the frame, the look point clamped so the page edge never shows; if it does not fit, the camera goes back to the rest framing). Measured on ten frames of each take (center of the atoms' box, share of frame): x 0.46 to 0.56, y 0.33 to 0.55 over all six final takes (the low y values are in the first 700 ms while the molecule moves into the frame); during the action mostly within 0.40 to 0.55.
+- Zoom (camera) ranges measured: 4 long 0.79 to 1.30, 4 mid 1.12 to 1.30, 5 long 1.16 to 1.30, 5 mid 0.96 to 1.30, 6 long 1.29 to 1.30, 6 mid 0.74 to 1.30 (the push-ins of 4, 5, 6 are held back when the molecule is wide, so on long chains they stay near 1).
+- A mark at each join (what joined or parted), by kind: closing arc (ring, close), drops rising (dry, enone, open), crossed bars with rays (weld, knit, seal), a curved arrow (shift, taut), a hook (tuck, cap), a double arrow (flip, fold), a crack (snap). Drawn from the step's `join`. A change of kind adds a 150 ms beat, a twist, a drop of the page and a louder bell. The runoff kinds nh3, tma, amine, sulfur, sulfide, so2, fumes, hcl are mapped to the art's objects.
+- Lab notebook paper: `?paper=6` (ruled, red margin), 7 (graph grid, blue margin), 8 (aged: three punched holes, a taped corner). Pale off-white with a quiet blue-grey, a coffee ring and a reagent drip placed away from the middle. Default 6. The stored choice is now `aa_paper2`, so a saved parchment choice does not hold.
+- Marginalia: `?notes=0|1|2` (stored in `aa_notes`; default 1): 1 sketches and numbers only, 2 adds short notes. Seeded, a different set on each screen, none repeated in a run, only in the strip along the top, the corner at the bottom right and the left margin.
+- Not done: the fold layout of FOLD.md (rows of eight, rungs across the fold) is not built; the page still folds a long molecule into a U when it is too wide. N, S and Cl atoms are drawn with the elements' colors from data.js; I did not check their labels in a frame.
+
+### The animations of a turn (written for the owner's ruling AL; values from feel.js, direction 4 at the new pace unless said)
+
+Times are in ms. T(n) is the step's period: 800 at step 1, 8 percent shorter each step, never under 420, plus the 150 ms breath (and 140 more when the kind of reflex changes). A click doubles the speed of everything below.
+
+| Animation | Duration | Easing | Overlaps |
+|---|---|---|---|
+| fire: the page dips, the molecule eases into the centered frame | 450 in, held to the page turn | in-out cubic | the first throw |
+| reagent strike: a token flies from its circle to the atoms it changes | 260 (200 in direction 2) | ease-in (it arrives hard), an arc of 90 px | the next throw starts 360 after the last (direction 3) |
+| strike on the molecule: the molecule is knocked along the throw | spring 4 Hz, damping 0.45, about 600 | damped spring | the next reagent |
+| hand-off between reagents | 120 to 350 wait (350 before the first reflex) | none (a pause) | nothing |
+| reflex wind-up (atoms draw back along their path) | 26 percent of T(n): 208 at step 1, 109 at the floor | ease-out sine | the settle of the step before |
+| reflex swing (the committed move) | 20 percent of T(n): 160 down to 84 | ease-in, power 3 | none |
+| hit-stop (the joined pair tremble, all else holds) | 2 + n frames (3 to 8 frames, 50 to 133), the last hit 16 frames | none | none |
+| settle (the joined group carries past and rings down) | about 500 | damped spring 6 Hz, damping 0.62, 8 percent overshoot | the breath and the next wind-up |
+| recoil and turn of the whole molecule | about 600 | damped spring 4 Hz | the settle |
+| page jolt (direction 4 to 6) | 200 drop, then 18 Hz shake decaying | out-back | the hit |
+| step numeral and gain (beside the molecule) | written in 70 ms, held 250, the gain flies 160 to the yield | ease-in cubic | the next step |
+| each kind of reflex: the mark at the join (closing arc, rising drops, crossed bars, an arrow, a hook, a double arrow, a crack) | 1100, faded in over 15 percent | none | the next step |
+| change of kind: an extra beat, a twist, a page drop, a louder bell | +150 at full draw, +140 in the period | spring 3 Hz | none |
+| across-the-fold rung | not built (FOLD.md): the rows are not laid out by the rule yet | | |
+| runoff leaving | 560 flight, falls under gravity, clink on landing | parabola | the next step |
+| jar landing | the clink at the end of the flight | none | |
+| yield count | 260 to 400 per gain, set down on each arrival | out-quart | the next numeral |
+| camera moves (direction 4: drift 0.15 toward the join over wind-up and swing; 5: push to 1.4 over the wind-up, pull back over the settle; 6: wide, then 1.7, 1.85, 2.0 for the last three) | wind-up length, never under 150 to 250 | in-out cubic | the wind-up |
+| OVERREACT over the whole screen | paper wash 220, word written in 260, held 900 | linear write, a 6 percent overshoot | after the last hit has landed |
+| page turn | the old curl, 0.7 s | not touched | |
+
+Not measured by frame stepping: the dead frames, the velocity jumps and the camera moving against the molecule (the owner's list in AL). I measured only the step periods (967, 1033, 1000, 934, 866 ms and down to 600) and the centering. The `windup(n, ms, last)` call is made at each step start. Pace switch `?pace=1|2|3` (unhurried: T1 1000, ratio 0.94, floor 560, breath 220; brisk: 700, 0.9, 360, 100; fast-building: 900, 0.8, 300, 90) is built; `pace-compare.mp4` is recorded only if listed in the report.
