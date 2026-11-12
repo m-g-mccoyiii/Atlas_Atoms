@@ -44,14 +44,14 @@ function paperDraw(x, w, h, n, SW0) {
     if (n === 7) { lines(22, 'rgba(100,140,200,0.3)', 1, true, true); lines(110, 'rgba(95,135,200,0.55)', 1.7, true, true); }
     else { const st = n === 8 ? 40 : 44; x.strokeStyle = n === 8 ? 'rgba(115,145,190,0.5)' : 'rgba(105,145,205,0.58)'; x.lineWidth = 1.8; for (let yy = 196; yy < h; yy += st) { x.beginPath(); x.moveTo(0, yy); x.lineTo(w, yy); x.stroke(); } }
     // the red margin line down one side
-    x.strokeStyle = 'rgba(205,60,52,0.72)'; x.lineWidth = 2.6; x.beginPath(); x.moveTo(n === 7 ? 340 : 360, 0); x.lineTo(n === 7 ? 340 : 360, h); x.stroke(); if (n === 6) { x.beginPath(); x.moveTo(372, 0); x.lineTo(372, h); x.stroke(); }
+    x.strokeStyle = 'rgba(205,60,52,0.72)'; x.lineWidth = 2.6; x.beginPath(); x.moveTo(n === 7 ? 340 : n === 8 && PGE.on ? PGE.linePx : 360, 0); x.lineTo(n === 7 ? 340 : n === 8 && PGE.on ? PGE.linePx : 360, h); x.stroke(); if (n === 6) { x.beginPath(); x.moveTo(372, 0); x.lineTo(372, h); x.stroke(); }
     // the printed header strip along the top: experiment, date, page
     x.strokeStyle = 'rgba(70,80,105,0.5)'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(0, 176); x.lineTo(w, 176); x.stroke();
     if (n === 7) { [[480, 760, 'Expt.'], [800, 1160, 'Date'], [1200, 1520, 'Page 47']].forEach(q => { x.strokeStyle = 'rgba(70,80,105,0.5)'; x.lineWidth = 1.8; x.strokeRect(q[0], 112, q[1] - q[0], 56); pen(q[2], q[0] + 12, 154, 30); }); }
     else { pen('Expt. no.', 520, 158, 32); x.strokeStyle = 'rgba(70,80,105,0.4)'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(690, 160); x.lineTo(860, 160); x.stroke(); pen('Date', 930, 158, 32); x.beginPath(); x.moveTo(1010, 160); x.lineTo(1210, 160); x.stroke(); pen('Page 47', n === 8 ? 1450 : 1330, 158, 32); }
     // the binding: punched holes, or a spiral
     if (n === 7) { for (let yy = 200; yy < h * 0.78; yy += 54) { x.fillStyle = 'rgba(60,62,72,0.55)'; x.beginPath(); x.arc(272, yy, 11, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(95,100,115,0.85)'; x.lineWidth = 6; x.beginPath(); x.ellipse(250, yy - 4, 38, 11, -0.15, 0, 6.3); x.stroke(); } }
-    else { [0.22, 0.42, 0.62].forEach(f => { const cx = 262, cy = h * f; x.fillStyle = 'rgba(0,0,0,0.14)'; x.beginPath(); x.arc(cx + 2, cy + 3, 32, 0, 6.3); x.fill(); x.fillStyle = P0.bg; x.beginPath(); x.arc(cx, cy, 29, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(0,0,0,0.22)'; x.lineWidth = 3.5; x.beginPath(); x.arc(cx, cy, 29, 0.6, 3.6); x.stroke(); }); }
+    else { [0.22, 0.42, 0.62].forEach(f => { const cx = n === 8 && PGE.on ? -999 : 262, cy = h * f; x.fillStyle = 'rgba(0,0,0,0.14)'; x.beginPath(); x.arc(cx + 2, cy + 3, 32, 0, 6.3); x.fill(); x.fillStyle = P0.bg; x.beginPath(); x.arc(cx, cy, 29, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(0,0,0,0.22)'; x.lineWidth = 3.5; x.beginPath(); x.arc(cx, cy, 29, 0.6, 3.6); x.stroke(); }); }
     // stains, whole and inside the page, under the ink
     const ring = (cx, cy, r, a1) => { x.fillStyle = 'rgba(150,105,60,' + (a1 * 0.3).toFixed(3) + ')'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (a1 * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = 11 - k * 3; x.beginPath(); x.arc(cx + R() * 5, cy + R() * 5, r * (1 + k * 0.012), 0.1 + k * 0.5, 5.9 + k * 0.2); x.stroke(); } x.strokeStyle = 'rgba(95,65,35,' + (a1 * 0.9).toFixed(3) + ')'; x.lineWidth = 13; x.beginPath(); x.arc(cx, cy, r * 1.01, 2.4, 3.7); x.stroke(); };
     if (n === 6) { ring(1560, 1030, 90, 0.34); ring(1660, 1075, 64, 0.22); }
@@ -90,6 +90,26 @@ const CM = { balance: 35, spatula: 30, schlenk: 60, stopper: 20, mirror: 30, mor
   stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 38, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
 const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+// ---- builder E: the page drawn back, a true margin column, and the play area as one rectangle (?air=0 puts the old framing back) ----
+// All in page units. The sheet runs on ext units further to the left than before; line is the red margin line; the margin column is everything
+// to the left of it. play is the one rectangle nothing is ever written in; top, left, home, reag and band are the things inside it.
+// The molecule's home is centred in the play rectangle, not in the frame.
+const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
+function pageE() {
+  let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
+  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2, hw = 14.4, bz = 11.5;
+  return { on, k: 1.13, cx: -2.6, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
+    top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
+    home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
+}
+// the camera drawn back along its own line of sight and set to the left, so the page's bound edge and its margin are in the frame
+function camE(CAM, LOOKAT) { if (!PGE.on) return; CAM.sub(LOOKAT).multiplyScalar(PGE.k).add(LOOKAT); CAM.x += PGE.cx; LOOKAT.x += PGE.cx; CAM.z += PGE.cz; LOOKAT.z += PGE.cz; }
+// the molecule's home is the middle of the play rectangle; it may be drawn as large on the screen as before the camera drew back
+function homeE(HOME) { if (!PGE.on) return; const h = PGE.home; HOME.x = (h.x0 + h.x1) / 2; HOME.z = (h.z0 + h.z1) / 2; HOME.w = h.x1 - h.x0; HOME.d = h.z1 - h.z0; HOME.smax *= PGE.k; }
+// the reagents stand a little further right, to give the molecule's home the room the wider view asks for
+function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.rx; LAB[i].x += PGE.rx; }); }
+// the pencil no longer lies across the margin, where the notes are written
+function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 
 function start(app) {
@@ -101,6 +121,7 @@ function start(app) {
   const LOOK = (() => { try { return new URLSearchParams(root.location.search).get('look') || 'toy'; } catch (e) { return 'toy'; } })(); AA.rxKit.K.look = LOOK;
   const scene = new T.Scene(); scene.background = lin(PAPERS[PAPERN].bg);
   const cam = new T.PerspectiveCamera(34, 1, 0.5, 200), CAM = new T.Vector3(0, 43, 22.6), LOOKAT = new T.Vector3(0, 0, 0.6);
+  camE(CAM, LOOKAT);
   const camDir = LOOKAT.clone().sub(CAM).normalize();
   scene.add(new T.HemisphereLight(0xfff6e6, 0xcabf9f, LOOK === 'clay' ? 1.0 : LOOK === 'desk' ? 0.55 : 0.8));
   const sun = new T.DirectionalLight(0xfff0d6, LOOK === 'clay' ? 0.6 : LOOK === 'desk' ? 1.1 : 0.85); sun.position.set(-16, 18, 4); sun.castShadow = false; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.radius = LOOK === 'toy' ? 1.5 : LOOK === 'now' ? 7 : 11;
@@ -128,6 +149,7 @@ function start(app) {
 
   // a pencil lying across the margin
   add(new T.CylinderGeometry(0.2, 0.2, 9, 6), std({ color: lin(0xf0b21c), roughness: 0.5 }), -28, 0.2, 2).rotation.set(Math.PI / 2, 0, 0.12);
+  pencilE(scene);
 
   // Three ways of keeping a large molecule readable, being tried side by side with ?fold= on the page.
   //   bead: an arm or ring that nothing can act on folds into one lettered bead (Me, Et, Ph)
@@ -576,6 +598,7 @@ function start(app) {
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
   const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
   const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 1.7 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, homeNow = () => (st.mode === 'done' ? HOMED : HOME);
+  homeE(HOME);
   const flScale = m => { const H = homeNow(), b = m.box; return Math.min(H.smax, H.w / b.w, H.d / b.d); };
   // the folded molecule keeps its start end where it is; the whole is slid, never jumped, so that its box stays in the middle of its home
   // the box that is centred is the box of what is drawn at this moment (not of where the atoms are going), and the scale does not grow while a line is playing
@@ -584,7 +607,8 @@ function start(app) {
   const camRest = (() => { const c = new T.PerspectiveCamera(34, 16 / 9, 0.5, 200); c.position.copy(CAM); c.lookAt(LOOKAT); c.updateMatrixWorld(true); c.updateProjectionMatrix(); return c; })(), _sv = new T.Vector3();
   const scrY = z => { _sv.set(0, 0.45, z).project(camRest); return (1 - _sv.y) / 2; };
   const zFor = (d, yc) => { let lo = -12, hi = 10; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (scrY(mid - d / 2) + scrY(mid + d / 2) < 2 * yc) lo = mid; else hi = mid; } return (lo + hi) / 2; };
-  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), 0.534 - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, busy = !snap && (st.firing || (morph && morph.m === m)), b = snap ? m.box : liveBox(m), fit = Math.min(H.smax, H.w / Math.max(b.w, m.box.w), H.d / Math.max(b.d, m.box.d)), s = busy ? Math.min(st.sc, fit) : fit; if (snap || st.bcx == null) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; if (snap) st.sc = s; } else { const k = Math.min(1, dt * 7); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * Math.min(1, dt * (s < st.sc ? 8 : 3)); } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
+  if (PGE.on) HOME.yc = (scrY(PGE.home.z0) + scrY(PGE.home.z1)) / 2 + 0.011;
+  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, busy = !snap && (st.firing || (morph && morph.m === m)), b = snap ? m.box : liveBox(m), fit = Math.min(H.smax, H.w / Math.max(b.w, m.box.w), H.d / Math.max(b.d, m.box.d)), s = busy ? Math.min(st.sc, fit) : fit; if (snap || st.bcx == null) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; if (snap) st.sc = s; } else { const k = Math.min(1, dt * 7); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * Math.min(1, dt * (s < st.sc ? 8 : 3)); } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
   const fitMain = m => m.fl ? flScale(m) : Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -618,6 +642,7 @@ function start(app) {
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
   const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -21.9, z: 13.55 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -12.4 + i * 5.4, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
@@ -782,7 +807,7 @@ function start(app) {
     const fin = view ? (view.fin && !g.queue.includes(P.SYN.finish) ? view.fin : null) : live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(3.0, 13.4 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -3.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 21.8, z: z + 0.4 }; SCS[i] = 0.4; }); } }
+      if (SIDE) { const gap = Math.min(3.0, 13.4 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -3.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 21.8, z: z + 0.4 }; SCS[i] = 0.4; }); reagE(ids); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
@@ -1199,7 +1224,7 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 21.2, z: 10.6 };
+  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 21.2 + (PGE.on ? PGE.rx : 0), z: 10.6 };
   const lining = () => P.RULE.queue && st.mode === 'play' && !!g && !g.over && !g.chain && !g.shot;
   const bankAt = () => st.mode === 'play' && g && (lining() || P.canBank(g)) && hit.x > BANK.x - 1.4 && hit.x < BANK.x + 5 && Math.abs(hit.z - BANK.z) < 1.2;
   // the reaction arrow after the circles fires the page; a click on a filled circle takes its reagent back
@@ -1547,6 +1572,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // a flag on a pole, drawn by hand: the number to beat, and each mark past it
   function flag(x, cx, by, h, col, full) { x.strokeStyle = col; x.lineWidth = Math.max(4, h * 0.075); x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(cx + 1, by); x.lineTo(cx - 2, by - h); x.stroke(); x.beginPath(); x.moveTo(cx - 2, by - h); x.lineTo(cx + h * 0.56, by - h * 0.76); x.lineTo(cx - 1, by - h * 0.5); x.closePath(); x.fillStyle = full ? col : '#fbf8ee'; x.fill(); x.stroke(); }
   const TRK = { x0: -9.5, x1: 14.5, z: 12.2 }, FORM = { x: EDGE + 0.3, z: 9.45 };
+  if (PGE.on) TRK.z += PGE.dz;
   function strike(x, x0, y0, x1, y1, k, lw, col) { k = Math.max(0, Math.min(1, k)); if (k <= 0) return; if (k < 1) dirty = true; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); const n = 10; for (let i = 0; i <= n; i++) { const t = k * i / n, j = Math.sin(t * 7 + x0 * 0.03) * lw * 0.35; if (i) x.lineTo(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + j); else x.moveTo(x0, y0 + j); } x.stroke(); }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
   function ends(i) { const p = SPOT[i], dx = p.x - C0.x, dz = p.z + 3 - C0.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d; return { a: { x: p.x - ux * 3.2, z: p.z + 2.9 - uz * 2.6 }, b: { x: p.x - ux * 0.6, z: p.z + 2.9 } }; }
@@ -1606,6 +1632,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     return cv;
   }
   function marginalia(c, now0) {
+    if (PGE.on) return;
     if (!NOTES || !AA.rxPen) return;
     if (st.noteRun == null) { st.noteRun = (Math.random() * 1e6) | 0; st.noteUsed = []; st.noteTick = 0; }
     const m = madLevel(); st.madness = m; const key = (st.noteTick | 0) + ':' + Math.floor(m * 6);
@@ -1615,6 +1642,133 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   // while the OVERREACT shockwave crosses the page the margin is drawn in pieces, each kicked outward as the ring passes under it
   function noteStrips(c, now0) { const cv = st.noteSet.cv, nx = 16, ny = 8, w = IW / nx, h = IH / ny; for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) { const q = AA.rxFeel.noteKick(now0, (i + 0.5) * w, (j + 0.5) * h) || [0, 0]; c.drawImage(cv, i * w, j * h, w, h, i * w + q[0], j * h + q[1], w, h); } }
+  // ---- builder E: the margin (rulings AI, AM, AM3) ----
+  // The sheet runs on to the left of the old one (marginMeshE): a wide margin column on the left of the red line, with its own layer of ink.
+  // Notes, doodles and their crossings-out are written only there, outside the play rectangle (PGE.play); late in a run they grow, crowd the
+  // column and creep a little over the red line where nothing stands. Every note has a box measured
+  // from its own ink; a note is only set down where its box is in the frame, clear of the other notes and clear of the top bar, the molecule's home, the
+  // reagents, the left column and the yield band. One note is written in, stroke by stroke, at the start of each page; none while a chain runs, when
+  // the whole margin dims to a quarter. Round 1 has one neat note; the deeper the round, the more there are, the larger and the wilder.
+  // Lines come from AA.notesPick (notes_data.js) when it is loaded, else from the three lists above. ?unlocks=0..1 overrides the share of unlocks owned.
+  const mE = { list: [], used: {}, dim: 1, sv: null, svKey: '', key: '', tick: -1, tags: [], lastT: 0, w: {}, tmp: null, mesh: null, sig: '', dbg: { room: 0, lines: 0, fit: 0, fit2: 0, none: 0 } };
+  const inkR = r => { const a = px({ x: r.x0, z: r.z0 }), b = px({ x: r.x1, z: r.z1 }); return [a[0], a[1], b[0], b[1]]; };
+  const keepE = () => ({ top: inkR(PGE.top), home: inkR(PGE.home), band: inkR(PGE.band), reagents: inkR(PGE.reag), left: inkR(PGE.left) });
+  const seenE = (ix, iy) => { _sv.set(ix / U - SW / 2, 0.02, iy / U - SH / 2).project(camRest); return Math.abs(_sv.x) < 0.972 && Math.abs(_sv.y) < 0.95; };
+  const hitE = (a, b, pad) => a[0] < b[2] + pad && a[2] > b[0] - pad && a[1] < b[3] + pad && a[3] > b[1] - pad;
+  const holeXE = () => (PGE.holeX + SW / 2) * U, holesE = () => [0.22, 0.42, 0.62].map(f => [holeXE() - 32, IH * f - 32, holeXE() + 34, IH * f + 36]);
+  const rndE = s => { let sd = s >>> 0; return () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296; };
+  const capE = r => [1, 2, 3, 4, 5, 6, 8, 9, 11][Math.max(1, Math.min(9, r)) - 1];
+  const penW = (s, sz) => { const q = AA.rxPen.measure(s, sz, 'thin'); return q.advance || q.width || 0; };
+  // the share of everything that can be unlocked that this player owns, 0..1
+  function unlocksE() {
+    try { const q = new URLSearchParams(root.location.search).get('unlocks'); if (q != null && q !== '' && isFinite(+q)) return Math.max(0, Math.min(1, +q)); } catch (e) { /* no window */ }
+    let have = 0, all = 0; try { all += P.SUPPLY.length - 1; have += meta.tier | 0; all += P.FAMILIES.length; have += P.FAMILIES.filter(f => meta.fam[f.id]).length; all += 10; have += Math.min(10, Object.keys(meta.hatched || {}).filter(k => meta.hatched[k]).length); } catch (e) { /* rules not there */ }
+    return all ? Math.max(0, Math.min(1, have / all)) : 0;
+  }
+  // a line of text into letters: ~struck~ is crossed out, _under_ is underlined, a lone ~ at the end crosses the whole line out
+  function parseE(t) { t = String(t); let s = false, u = false; if (/^[^~]*~$/.test(t)) { s = true; t = t.slice(0, -1); } const out = []; for (const ch of t) { if (ch === '~') { s = !s; continue; } if (ch === '_') { u = !u; continue; } out.push({ ch, s, u }); } return out; }
+  function wrapE(chars, sz, maxW) { const words = [[]]; chars.forEach(q => { if (q.ch === ' ') words.push([]); else words[words.length - 1].push(q); }); const lines = [[]], wd = a => penW(a.map(q => q.ch).join(''), sz) * 1.06;
+    words.filter(w => w.length).forEach(w => { const cur = lines[lines.length - 1], tr = cur.length ? cur.concat([{ ch: ' ', s: cur[cur.length - 1].s && w[0].s, u: cur[cur.length - 1].u && w[0].u }], w) : w.slice(); if (cur.length && wd(tr) > maxW) lines.push(w.slice()); else lines[lines.length - 1] = tr; }); return lines; }
+  // one note in ink: its lines in one of three hands (mh: neat under 0.3, shaky, frantic), then its crossings-out and underlinings; k is how much of it is written (0..1)
+  function inkNoteE(c, n, k) {
+    const col = n.col, sz = n.sz, mh = n.mh; c.save(); c.translate(n.ax, n.ay); c.rotate(n.rot); c.strokeStyle = col; c.fillStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+    if (n.doodle) { c.lineWidth = 3.2 + mh * 2; if (k < 1) { c.beginPath(); c.rect(-n.s * 1.2, -n.s * 1.3, n.s * 2.6 * k, n.s * 2.6); c.clip(); } MS[n.doodle](c, n.s, Math.max(22, n.s * 0.42)); c.restore(); return; }
+    const tot = n.lines.reduce((a, l) => a + l.length + 3, 0); let done = 0;
+    n.lines.forEach((ln, li) => { const R = rndE(n.seed + li * 977 + 5), y = li * sz * n.lh, txt = ln.map(q => q.ch).join(''), lk = Math.max(0, Math.min(1, (k * tot - done) / ln.length)); done += ln.length;
+      if (lk > 0) { if (mh < 0.3) AA.rxPen.write(c, txt, 0, y, sz, { weight: 'thin', color: col, align: 'left', t: lk });
+        else for (let i = 0; i < ln.length; i++) { const pre = penW(txt.slice(0, i), sz), jx = (R() - 0.5) * mh * 3, jy = (R() - 0.5) * mh * 9, rot = (R() - 0.5) * mh * 0.4 + mh * 0.06, zz = sz * (0.92 + R() * 0.2 + mh * 0.1), ck = Math.max(0, Math.min(1, lk * ln.length - i)); if (ck <= 0 || ln[i].ch === ' ') continue; c.save(); c.translate(pre + jx, y + jy); c.rotate(rot); AA.rxPen.write(c, ln[i].ch, 0, 0, zz, { weight: mh > 0.75 ? 'heavy' : 'thin', color: col, align: 'left', t: ck }); c.restore(); } }
+      const sk = Math.max(0, Math.min(1, (k * tot - done) / 3)); done += 3; if (sk <= 0) return;
+      c.lineWidth = Math.max(2.6, sz * 0.085) * (1 + mh * 0.5); let i = 0;
+      while (i < ln.length) { const f = ln[i].s ? 's' : ln[i].u ? 'u' : ''; if (!f) { i++; continue; } let j = i; while (j < ln.length && (f === 's' ? ln[j].s : ln[j].u && !ln[j].s)) j++;
+        const x0 = penW(txt.slice(0, i), sz) - 4, x1 = penW(txt.slice(0, j), sz) + 4, yy = f === 's' ? y - sz * 0.3 : y + sz * 0.2, tilt = f === 's' ? -sz * 0.1 : 0; c.beginPath(); c.moveTo(x0, yy); c.lineTo(x0 + (x1 - x0) * sk, yy + tilt * sk); c.stroke();
+        if (mh > 0.6) { c.beginPath(); c.moveTo(x0, yy + sz * 0.13); c.lineTo(x0 + (x1 - x0) * sk, yy + sz * 0.13 + tilt * 0.3 * sk); c.stroke(); } i = j; } });
+    c.restore();
+  }
+  // the note drawn once by itself, to find the box of its ink (relative to where its first letter starts) and to keep its picture
+  function boundsE(n) { const W = 760, H = 560, OX = 150, OY = 150, cv = mE.tmp || (mE.tmp = document.createElement('canvas')); cv.width = W; cv.height = H; const c = cv.getContext('2d'), ax = n.ax, ay = n.ay; n.ax = OX; n.ay = OY; inkNoteE(c, n, 1); n.ax = ax; n.ay = ay;
+    const d = c.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) { const row = y * W * 4 + 3; for (let x = 0; x < W; x++) if (d[row + x * 4] > 4) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+    if (x1 < 0 || x0 <= 1 || y0 <= 1 || x1 >= W - 2 || y1 >= H - 2) return null;
+    x0 -= 3; y0 -= 3; x1 += 4; y1 += 4; const img = document.createElement('canvas'); img.width = x1 - x0; img.height = y1 - y0; img.getContext('2d').drawImage(cv, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0); n.img = img; return [x0 - OX, y0 - OY, x1 - OX, y1 - OY]; }
+  // where a note's box may lie: wholly in the frame, on the paper, clear of everything kept and of the other notes, and outside the play rectangle
+  // (late in a run it may reach a little over the red line, from the margin side, beside the molecule's home and above the left column)
+  function fitsE(n, ax, ay, r, edges) { const b = n.b, q = [ax + b[0], ay + b[1], ax + b[2], ay + b[3]], K = keepE(), P0 = inkR(PGE.play), creep = r >= 6 ? 22 + (r - 5) * 11 : 0;
+    if (q[0] < 8 - PGE.ext * U || q[1] < 8 || q[2] > (PGE.inkW - PGE.ext) * U - 8 || q[3] > IH - 8) return null;
+    if (!seenE(q[0], q[1]) || !seenE(q[2], q[1]) || !seenE(q[0], q[3]) || !seenE(q[2], q[3])) return null;
+    if (Object.keys(K).some(k => hitE(q, K[k], 12)) || holesE().some(h => hitE(q, h, 2)) || mE.list.some(o => hitE(q, o.box, r >= 7 ? 4 : 9))) return null;
+    if (hitE(q, P0, 0)) { if (!(creep && q[0] < P0[0] - 40 && q[2] <= P0[0] + creep && q[1] > K.top[3] + 12 && q[3] < K.left[1] - 12)) return null; }
+    else if (q[2] > P0[0] && !edges) return null;
+    return q; }
+  // the words of the next note: from notes_data.js by depth, unlocks and what has just happened; else from the three lists by depth. None is used twice in a run.
+  function pickE(m, r, R) { const hand0 = m < 0.34 ? 'neat' : m < 0.67 ? 'shaky' : 'frantic';
+    if (AA.notesPick) { try { const hs = run && run.hom ? [String(run.hom)] : []; for (let k = 0; k < 3; k++) { const tag = k === 0 && mE.tags.length ? mE.tags.pop() : undefined, l = AA.notesPick({ depth: m, unlocks: unlocksE(), round: r, tag, homs: hs, used: Object.keys(mE.used) }).filter(o => o && o.t && !mE.used[o.t]); if (l.length) { const o = l[Math.floor(R() * l.length)]; mE.used[o.t] = 1; return { t: o.t, hand: o.hand || hand0, big: !!o.big, when: o.when }; } } } catch (e) { /* fall back to the lists */ } }
+    const pool = m < 0.34 ? TIER0 : m < 0.67 ? TIER1 : TIER2; let f = pool.filter(t => !mE.used[t]); if (!f.length) { pool.forEach(t => { delete mE.used[t]; }); f = pool; } const t = f[Math.floor(R() * f.length)]; mE.used[t] = 1; return { t, hand: hand0, big: /[A-Z]{3}/.test(t) }; }
+  // the left end of what the frame shows of the page at ink height iy
+  function leftE(iy) { const L = -PGE.ext * U; if (seenE(L + 4, iy)) return L + 12; let lo = L, hi = PGE.linePx; for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (seenE(mid, iy)) hi = mid; else lo = mid; } return hi; }
+  // the room in the margin for something whose ink runs from y0 to y1: from the frame's edge (or a punched hole) to the red line, and late in a run a little over the line where nothing stands
+  function roomE(y0, y1, r) { const K = keepE(), P0 = inkR(PGE.play); let xl = Math.max(leftE(y0), leftE(y1)) + 6; holesE().forEach(h => { if (y0 < h[3] + 4 && y1 > h[1] - 4) xl = Math.max(xl, h[2] + 6); });
+    const creep = r >= 6 && y0 > K.top[3] + 16 && y1 < K.left[1] - 16 ? 22 + (r - 5) * 11 : 0; let xr = P0[0] - 12 + creep; if (y0 < K.top[3] + 14) xr = Math.min(xr, K.top[0] - 14); return [xl, xr]; }
+  // make one more note or doodle and set it down; when it is not instant it is written in over about a second
+  function makeE(r, R, instant, now0) { const m = (r - 1) / 8, i = mE.list.length, HV = { neat: 0.1, shaky: 0.5, frantic: 0.95 };
+    const doodle = r >= 3 && i % 3 === 2, red = m > 0.6 && R() < 0.16, col = red ? 'rgba(168,38,34,0.86)' : 'rgba(38,48,80,' + (0.76 + m * 0.14).toFixed(2) + ')', seed = (R() * 1e9) | 0;
+    let n = null;
+    if (doodle) { const sk = m < 0.3 ? SKETCH_EARLY : m < 0.62 ? SKETCH_MID : SKETCH_LATE, name = sk[Math.floor(R() * sk.length)], s0 = 50 + m * 30 + R() * 16, rot = (R() - 0.5) * m * 0.6;
+      for (let a = 0; a < 40 && !n; a++) { const s = s0 * (1 - (a >> 3) * 0.12), ay = 330 + R() * (IH - 420), rm = roomE(ay - s * 1.1, ay + s * 0.8, r), q = { doodle: name, s, mh: 0.2 + m * 0.7, rot, col, seed, ax: 0, ay: 0, sz: 30 }; if (rm[1] - rm[0] < s * 1.7) continue;
+        q.b = [-s * 0.85, -s * 1.1, s * 0.85, s * 0.8]; const ax = rm[0] + s * 0.85 + R() * Math.max(0, rm[1] - rm[0] - s * 1.7); if (!fitsE(q, ax, ay, r, false)) continue; q.b = boundsE(q); const box = q.b && fitsE(q, ax, ay, r, false); if (box) { q.ax = ax; q.ay = ay; q.box = box; n = q; } } }
+    else for (let p = 0; p < 4 && !n; p++) { const pk = pickE(m, r, R), chars = parseE(pk.t), neat = pk.hand === 'neat', mh = (HV[pk.hand] || 0.1) * (neat ? 1 : 0.7 + 0.3 * m), strikeAll = m > 0.2 && !neat && R() < 0.24; if (strikeAll) chars.forEach(q => { q.s = true; });
+      const sz0 = Math.min(60, 35 + m * 9 + R() * m * 8 + (pk.big && r >= 6 ? 6 + R() * 8 : 0)), lh = 1.12 + mh * 0.12, rot = neat ? 0 : (R() - 0.5) * (0.04 + m * 0.16), k0 = Math.floor(R() * 6);
+      for (let a = 0; a < 48 && !n; a++) { const sz = Math.max(30, sz0 * (1 - (a >> 3) * 0.06)), ay = neat ? 196 + 40 * (3 + ((k0 + a * 4) % 25)) - 5 : 300 + R() * (IH - 400), est = Math.max(1, Math.ceil(penW(pk.t, sz) * 1.1 / Math.max(120, roomE(ay - sz, ay + sz, r)[1] - roomE(ay - sz, ay + sz, r)[0] - 30))), rm = roomE(ay - sz, ay + (est + 0.6) * sz * lh, r), maxW = rm[1] - rm[0]; if (maxW < 130) { mE.dbg.room++; continue; }
+        const lines = wrapE(chars, sz, maxW - 12 - mh * 14); if (lines.length > 7 || lines.length > est + 1) { mE.dbg.lines++; continue; } const lw = Math.max.apply(null, lines.map(l => penW(l.map(c => c.ch).join(''), sz))), q = { lines, sz, lh, mh, rot, col, seed, ax: 0, ay: 0, t: pk.t };
+        q.b = [-8, -sz * 1.05, lw + 10 + mh * 14, (lines.length - 1) * sz * lh + sz * 0.45]; const ax = rm[0] + 8 + (neat ? 0 : R() * Math.max(0, maxW - lw - 22)); if (!fitsE(q, ax, ay, r, false)) { mE.dbg.fit++; continue; } q.b = boundsE(q); const box = q.b && fitsE(q, ax, ay, r, false); if (box) { q.ax = ax; q.ay = ay; q.box = box; n = q; } else mE.dbg.fit2++; } }
+    if (!n) { mE.dbg.none++; return null; } const len = n.doodle ? 14 : n.lines.reduce((a, l) => a + l.length, 0); n.t0 = instant ? -1e12 : now0 + 500; n.dur = Math.max(900, Math.min(1900, 520 + 48 * len)); n.done = !!instant; mE.list.push(n); return n; }
+  // what has just happened, for the next note's words
+  function tagsE() { const w = mE.w, tag = t => { if (mE.tags[mE.tags.length - 1] !== t) mE.tags.push(t); if (mE.tags.length > 6) mE.tags.shift(); };
+    try { const cr = meta.credit | 0, un = (meta.tier | 0) + Object.keys(meta.fam || {}).length + Object.keys(meta.found || {}).length + Object.keys(meta.hatched || {}).length, co = (run && run.coins) || 0;
+      if (st.mode === 'shop' && w.mode !== 'shop') tag('shop'); if (w.cr != null && cr < w.cr) tag('buy'); if (w.un != null && un > w.un) tag('unlock'); if (w.co != null && co > w.co) tag('gold');
+      if (st.mode === 'done' && w.mode !== 'done') tag(st.pass ? 'win' : 'loss');
+      const ov = AA.rxFeel && AA.rxFeel.dbg && AA.rxFeel.dbg()[2]; if (ov && !w.ov) tag('overreact'); w.ov = !!ov;
+      const busy = !!st.firing; if (w.busy && !busy && g) { if ((g.casc || 0) >= 6) tag('chain'); else if (w.made != null && P.made(g) <= w.made) tag('waste'); } if (busy && !w.busy && g) w.made = P.made(g); w.busy = busy;
+      w.cr = cr; w.un = un; w.co = co; w.mode = st.mode; } catch (e) { /* nothing to tell */ } }
+  const busyE = () => !!(st.firing || st.starting || (AA.rxFeel && AA.rxFeel.owns && AA.rxFeel.owns()));
+  // the notes kept in step with the game: a new page of the notebook each round, one note more at the start of each page, none while a chain runs
+  function syncE(now0) { const r = Math.max(1, Math.min(9, (run && run.round) || 1)), playing = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), busy = busyE(), key = st.noteRun + ':' + r;
+    if (mE.runKey !== st.noteRun) { mE.runKey = st.noteRun; mE.used = {}; mE.tags.push('start'); }
+    if (!playing) return;
+    if (mE.key !== key) { mE.key = key; mE.list = []; mE.R = rndE((st.noteRun | 0) * 2654435761 + r * 40503 + 17); const base = Math.max(0, capE(r) - 3); for (let k = 0; k < base; k++) makeE(r, mE.R, true, now0); mE.tick = -1;
+      try { if (run.hom && mE.R() < 0.5) mE.tags.push('hom:' + run.hom); const rare = g.m && g.m.atoms && g.m.atoms.find(a => !/^(C|H|O)$/.test(a.el)); if (rare) mE.tags.push('el:' + rare.el); } catch (e) { /* no molecule yet */ } }
+    if (mE.tick !== (st.noteTick | 0) && !busy && !mE.list.some(n => !n.done)) { mE.tick = st.noteTick | 0; if (mE.list.length < capE(r)) makeE(r, mE.R, false, now0); } }
+  // the sheet runs on to the left: a strip of the same paper with the punched holes in it, and over the whole margin column a layer of ink of its own
+  function marginMeshE() { const EW = PGE.ext * U, ex = canvasTex(EW, IH), c = ex.x, MW = PGE.inkW * U, mk = canvasTex(MW, IH);
+    paper.x.drawImage(paper.c, 290, 0, 120, IH, 0, 0, 120, IH); paper.t.needsUpdate = true; c.drawImage(paper.c, 290, 0, EW, IH, 0, 0, EW, IH);
+    const g0 = c.createLinearGradient(0, 0, 90, 0); g0.addColorStop(0, 'rgba(120,110,100,0.2)'); g0.addColorStop(1, 'rgba(120,110,100,0)'); c.fillStyle = g0; c.fillRect(0, 0, 90, IH);
+    [0.22, 0.42, 0.62].forEach(f => { const hx = holeXE() + EW, hy = IH * f; c.fillStyle = 'rgba(0,0,0,0.14)'; c.beginPath(); c.arc(hx + 2, hy + 3, 31, 0, 6.3); c.fill(); c.fillStyle = PAPERS[PAPERN].bg; c.beginPath(); c.arc(hx, hy, 28, 0, 6.3); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.22)'; c.lineWidth = 3.5; c.beginPath(); c.arc(hx, hy, 28, 0.6, 3.6); c.stroke(); });
+    ex.t.needsUpdate = true; add(new T.PlaneGeometry(PGE.ext, SH).rotateX(-Math.PI / 2), std({ map: ex.t, roughness: 0.95 }), -SW / 2 - PGE.ext / 2, 0, 0).castShadow = false;
+    const m = add(new T.PlaneGeometry(PGE.inkW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: mk.t, transparent: true, depthWrite: false }), -SW / 2 - PGE.ext + PGE.inkW / 2, 0.024, 0); m.castShadow = false; m.receiveShadow = false;
+    return { cv: mk.c, x: mk.x, t: mk.t, ox: EW, w: MW }; }
+  // called every frame: follows what happens, keeps the notes in step, dims the margin while a chain runs, and redraws the margin's ink only when it has changed
+  function marginBusyE(now0) { if (!PGE.on) return false; if (!mE.mesh) mE.mesh = marginMeshE(); tagsE();
+    const show = !!NOTES && !!AA.rxPen && st.mode !== 'shop', dt = Math.min(0.1, Math.max(0, (now0 - (mE.lastT || now0)) / 1000)), tg = busyE() ? 0.25 : 1; mE.lastT = now0;
+    mE.dim += (tg - mE.dim) * Math.min(1, dt * (tg < mE.dim ? 9 : 4)); if (Math.abs(tg - mE.dim) < 0.01) mE.dim = tg;
+    if (show) { if (st.noteRun == null) { st.noteRun = (Math.random() * 1e6) | 0; st.noteUsed = []; st.noteTick = 0; } st.madness = madLevel(); syncE(now0); }
+    const playing = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), sig = [show, playing, mE.key, mE.list.length, Math.round(mE.dim * 200)].join('|');
+    if (sig !== mE.sig || mE.list.some(n => !n.done)) { mE.sig = sig; paintE(now0, show, playing); }
+    return false; }
+  // the paper going wrong with depth, under the ink and only in the margin: rings, scorches and blots, and ruled lines that wobble
+  function stainsE(r) { const m = (r - 1) / 8, key = st.noteRun + ':' + r, M = mE.mesh; if (mE.sv && mE.svKey === key) return mE.sv; const cv = mE.sv || (mE.sv = document.createElement('canvas')); cv.width = M.w; cv.height = IH; mE.svKey = key; const c = cv.getContext('2d'), R = rndE((st.noteRun | 0) * 31 + r * 7 + 3), lx = PGE.linePx;
+    const spots = [[30, 1040], [-40, 420], [120, 660], [-70, 1240], [90, 300], [-20, 820]], cnt = Math.min(spots.length, Math.floor(m * 5.5));
+    c.save(); c.translate(M.ox, 0); c.beginPath(); c.rect(-M.ox, 0, M.ox + lx - 6, IH); c.clip();
+    for (let k = 0; k < cnt; k++) { const q = spots[k], kind = k % 3; if (kind === 0) { c.strokeStyle = 'rgba(120,82,42,0.22)'; c.lineWidth = 8; c.beginPath(); c.arc(q[0], q[1], 46 + R() * 24, 0.2, 5.8); c.stroke(); } else if (kind === 1) { const g2 = c.createRadialGradient(q[0], q[1], 6, q[0], q[1], 80); g2.addColorStop(0, 'rgba(60,35,15,0.3)'); g2.addColorStop(1, 'rgba(150,100,50,0)'); c.fillStyle = g2; c.beginPath(); c.ellipse(q[0], q[1], 86, 60, R(), 0, 6.3); c.fill(); } else { c.fillStyle = 'rgba(25,30,60,0.45)'; c.beginPath(); c.ellipse(q[0], q[1], 12 + R() * 12, 9 + R() * 9, R() * 3, 0, 6.3); c.fill(); for (let j = 0; j < 6; j++) { c.beginPath(); c.arc(q[0] + (R() - 0.5) * 90, q[1] + (R() - 0.5) * 70, 2 + R() * 4, 0, 6.3); c.fill(); } } }
+    if (m > 0.6) { c.strokeStyle = 'rgba(105,145,205,0.3)'; c.lineWidth = 1.8; for (let yy = 196; yy < IH; yy += 40) { c.beginPath(); for (let xx = -M.ox; xx <= lx; xx += 12) { const yv = yy + Math.sin(xx * 0.03 + yy) * (m - 0.55) * 16 * (1 - (xx + M.ox) / (lx + M.ox)); xx > -M.ox ? c.lineTo(xx, yv) : c.moveTo(xx, yv); } c.stroke(); } }
+    c.restore(); return cv; }
+  // the margin's ink: the stains, then every note (dimmed while a chain runs; the one being written drawn as far as the pen has got)
+  function paintE(now0, show, playing) { const M = mE.mesh, c = M.x; c.clearRect(0, 0, M.w, IH); M.t.needsUpdate = true; if (!show) return;
+    const r = Math.max(1, Math.min(9, (run && run.round) || 1)); c.drawImage(stainsE(r), 0, 0); c.save(); c.translate(M.ox, 0); c.globalAlpha = mE.dim;
+    mE.list.forEach(n => { if (!playing && n.box[2] > PGE.linePx - 6) return; if (!n.done) { const k = (now0 - n.t0) / n.dur; if (k >= 1) n.done = true; else { if (k > 0) inkNoteE(c, n, k); return; } } c.drawImage(n.img, n.ax + n.b[0], n.ay + n.b[1]); });
+    c.restore(); }
+  // for the record: every note's box, the kept rectangles, and how many inked pixels of the notes fall inside each (it must be none)
+  function measureE() { const ox = PGE.ext * U, cv = document.createElement('canvas'); cv.width = IW + ox; cv.height = IH; const c = cv.getContext('2d'); c.translate(ox, 0); mE.list.forEach(n => inkNoteE(c, n, 1)); const K = keepE(), P0 = inkR(PGE.play), out = { round: run && run.round, notes: mE.list.filter(n => !n.doodle).length, doodles: mE.list.filter(n => n.doodle).length, texts: mE.list.map(n => n.doodle || n.t), sizes: mE.list.map(n => Math.round(n.doodle ? n.s : n.sz)), boxes: mE.list.map(n => n.box.map(Math.round)), keep: K, play: P0, inkPx: {}, boxPx: {}, dim: mE.dim, unlocks: unlocksE(), tags: mE.tags.slice(), data: !!AA.notesPick, dbg: mE.dbg };
+    const count = q => { const x0 = Math.max(0, Math.round(q[0] + ox)), y0 = Math.max(0, Math.round(q[1])), x1 = Math.min(IW + ox, Math.round(q[2] + ox)), y1 = Math.min(IH, Math.round(q[3])); if (x1 <= x0 || y1 <= y0) return 0; const d = c.getImageData(x0, y0, x1 - x0, y1 - y0).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) k++; return k; };
+    Object.keys(K).forEach(k => { out.inkPx[k] = count(K[k]); out.boxPx[k] = mE.list.reduce((s, n) => s + Math.max(0, Math.min(n.box[2], K[k][2]) - Math.max(n.box[0], K[k][0])) * Math.max(0, Math.min(n.box[3], K[k][3]) - Math.max(n.box[1], K[k][1])), 0); });
+    out.inkPx.play = count(P0); out.inkAll = count([-ox, 0, IW, IH]); return out; }
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
     if (st.mode !== 'shop') marginalia(x, now);
@@ -2156,6 +2310,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (heat > 0.2) dirty = true;
     if (FEEL) FEEL.frame(now, dt);
     stepParts(dt);
+    marginBusyE(now);
     if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; }
     ren.render(scene, cam);
   }
@@ -2174,6 +2329,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
     chooseBrief,
     state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom' ? { mode: st.mode, hom: run.hom || null, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), pair: briefs.map(b => ({ src: b.src, ease: b.ease, coins: b.coins || 0, quota: b.quota })), pairCost: P.pairCost(run), coined: !!meta.coined, pairAt: PAIR, pairX: briefs.map((b, i) => BX(i)), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, queue: (g.queue || []).slice(), lining: lining(), firing: !!st.firing, room: P.stepsOf(g) - g.pageSteps, will: st.view ? st.view.kinds.slice() : [], casc: g.casc || 0, self: (g.self || []).slice(), charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
+  AA.rxScheme.marginE = measureE; AA.rxScheme.pageE = PGE;
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
