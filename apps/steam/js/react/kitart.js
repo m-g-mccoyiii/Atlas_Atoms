@@ -16,7 +16,7 @@ function mat(T, color, rough, metal, more) {
   const lin = h => new T.Color(h).convertSRGBToLinear(), m = more || {}, glassy = m.transparent && (m.opacity || 1) < 0.6;
   if (K.look === 'toy') {
     if (!ramp) { ramp = new T.DataTexture(new Uint8Array([120, 200, 255]), 3, 1, T.LuminanceFormat); ramp.minFilter = ramp.magFilter = T.NearestFilter; ramp.needsUpdate = true; }
-    const o = { color: lin(glassy ? 0xcfe3ee : snap(T, color)), gradientMap: ramp }; if (glassy) { o.transparent = true; o.opacity = 0.5; } if (m.emissive) { o.emissive = m.emissive; o.emissiveIntensity = 0.6; }
+    const o = { color: lin(glassy ? (m.glass || 0xcfe3ee) : snap(T, color)), gradientMap: ramp }; if (m.exact) o.color = lin(color); if (glassy) { o.transparent = true; o.opacity = m.op || 0.5; } if (m.emissive) { o.emissive = m.emissive; o.emissiveIntensity = 0.6; }
     return new T.MeshToonMaterial(o);
   }
   if (K.look === 'clay') return new T.MeshStandardMaterial({ color: lin(glassy ? 0xbfd6e2 : snap(T, color)), roughness: 1, metalness: 0, emissive: m.emissive || new T.Color(0), emissiveIntensity: m.emissive ? 0.5 : 0 });
@@ -24,24 +24,26 @@ function mat(T, color, rough, metal, more) {
   return new T.MeshStandardMaterial(Object.assign({ color: lin(color), roughness: rough == null ? 0.6 : rough, metalness: metal || 0 }, m));
 }
 // what a look does to a finished object: an ink line round each part, or the unevenness of clay
-function finish(T, grp) {
+function finish(T, grp, tk) {
   if (K.look !== 'toy' && K.look !== 'clay') return;
-  const parts = []; grp.traverse(o => { if (o.isMesh && !o.userData.plain) parts.push(o); });
+  const parts = []; grp.traverse(o => { if (o.isMesh && !o.userData.plain && !o.userData.inked) parts.push(o); });
   parts.forEach(m => {
     if (K.look === 'clay') { const p = m.geometry.attributes.position, a = 0.035; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x + a * Math.sin(y * 6.1 + z * 4.3 + 1), y + a * Math.sin(z * 5.7 + x * 4.9 + 2), z + a * Math.sin(x * 6.7 + y * 5.3 + 3)); } p.needsUpdate = true; m.geometry.computeVertexNormals(); return; }
-    m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new T.Vector3()), t = 0.05, o = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x2b2622).convertSRGBToLinear(), side: T.BackSide }));
-    o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.set(m.scale.x * (1 + 2 * t / Math.max(0.05, sz.x * m.scale.x)), m.scale.y * (1 + 2 * t / Math.max(0.05, sz.y * m.scale.y)), m.scale.z * (1 + 2 * t / Math.max(0.05, sz.z * m.scale.z))); o.userData.plain = true; m.parent.add(o);
+    m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new T.Vector3()), t = tk || 0.05, o = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x2b2622).convertSRGBToLinear(), side: T.BackSide }));
+    o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.set(m.scale.x * (1 + 2 * t / Math.max(0.05, sz.x * m.scale.x)), m.scale.y * (1 + 2 * t / Math.max(0.05, sz.y * m.scale.y)), m.scale.z * (1 + 2 * t / Math.max(0.05, sz.z * m.scale.z))); o.userData.plain = true; m.userData.inked = true; m.parent.add(o);
   });
 }
-function build(id, T, grp, tint) {
+const HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', ammonia: 'homammonia', seedling: 'homseed', brimstone: 'hombrimstone' };
+function build(id, T, grp, tint, extra) {
   const lin = h => new T.Color(h).convertSRGBToLinear();
+  let cur = null;
   const M = (color, rough, metal, more) => mat(T, color, rough, metal, more);
   const steel = M(0x9aa3ad, 0.3, 0.8), dark = M(0x2c2f34, 0.55, 0.3), brass = M(0xc9a23a, 0.35, 0.8), wood = M(0x8a5a2b, 0.7), paper = M(0xf4efe0, 0.9), white = M(0xf2f2ee, 0.4);
   const red = M(0xc8261c, 0.5), black = M(0x16161a, 0.6), rubber = M(0x7a3b2e, 0.8), gold = M(0xe2b23a, 0.25, 0.9), lead = M(0x6b7078, 0.5, 0.6);
   const glass = M(0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.42 });
   const liq = mat(T, tint.getHex(), 0.3);
   const glow = c => mat(T, c, 0.4, 0, { emissive: lin(c), emissiveIntensity: 0.8 });
-  const put = (geo, mat, x, y, z, rot, scl) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0], rot[1], rot[2]); if (scl) m.scale.set(scl[0], scl[1], scl[2]); m.castShadow = true; m.receiveShadow = true; grp.add(m); return m; };
+  const put = (geo, mat, x, y, z, rot, scl) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0], rot[1], rot[2]); if (scl) m.scale.set(scl[0], scl[1], scl[2]); m.castShadow = true; m.receiveShadow = true; (cur || grp).add(m); return m; };
   const box = (w, h, d, mat, x, y, z, rot) => put(new T.BoxGeometry(w, h, d), mat, x, y, z, rot);
   const cyl = (rt, rb, h, mat, x, y, z, rot, seg) => put(new T.CylinderGeometry(rt, rb, h, seg || 20), mat, x, y, z, rot);
   const sph = (r, mat, x, y, z, scl) => put(new T.SphereGeometry(r, 20, 14), mat, x, y, z, null, scl);
@@ -51,6 +53,39 @@ function build(id, T, grp, tint) {
   // a hand of bones lying on the page, fingers away from the viewer
   const bones = (x, y, z) => { sph(0.2, bone, x, y, z, [1, 0.35, 1.1]); [-1.5, -0.5, 0.5, 1.5].forEach(k => { rod([x + k * 0.1, y, z - 0.15], [x + k * 0.17, y + 0.02, z - 0.62], 0.04, bone); sph(0.05, bone, x + k * 0.17, y + 0.02, z - 0.62); }); rod([x + 0.2, y, z], [x + 0.44, y, z - 0.25], 0.04, bone); rod([x, y, z + 0.15], [x - 0.1, y, z + 0.8], 0.07, bone); };
   const H = Math.PI / 2, PI = Math.PI, side = [-1, 1];
+  // creatures: body() starts the part that squashes and leans from the feet, arm() hangs an arm on a pivot, into() puts parts inside a pivot, floor() keeps what lies on the page out of a jar
+  const R = { T, body: null, arms: [], extra: [], lean0: [0, 0] }, jarMode = !!(extra && extra.jar);
+  const body = () => { R.body = new T.Group(); grp.add(R.body); cur = R.body; return R.body; };
+  const into = (g, f) => { const p = cur; cur = g; f(); cur = p; };
+  const floor = f => { if (!jarMode) { const p = cur; cur = null; f(); cur = p; } };
+  const arm = (sx, sy, sz, len, r, m, hm, hr, ang, stretch) => { const pv = new T.Group(); pv.position.set(sx, sy, sz); (cur || grp).add(pv); into(pv, () => { rod([0, 0, 0], [0, -len, 0], r, m); if (hm) sph(hr, hm, 0, -len, 0); }); const q = new T.Quaternion().setFromEuler(new T.Euler(0, 0, (sx < 0 ? -1 : 1) * ang)); pv.quaternion.copy(q); R.arms.push({ g: pv, rest: q, stretch: stretch || 0 }); return pv; };
+  const eyes = (y, z, gap, r, dy) => side.forEach(q => { sph(r || 0.055, black, q * gap, y + (q > 0 ? (dy || 0) : 0), z).userData.plain = true; });
+  const shine = (x, y, z, w, h, rz) => box(w, h, 0.02, M(0xffffff, 0.2), x, y, z, [0, 0, rz || 0.3]).userData.plain = true;
+  const legs = (y, gap, m, spread) => side.forEach(q => { rod([q * gap, y, 0], [q * (gap + (spread || 0.06)), 0.07, 0.04], 0.05, m); sph(0.1, m, q * (gap + (spread || 0.06)), 0.06, 0.1, [1, 0.55, 1.5]); });
+  // a jar for one creature: glass on a wooden foot, a dark lid, the substance as a level, the creature growing in it
+  // (stage 0 a speck, 1 half grown, 2 ready). The returned group has userData.set(fill 0..1, stage) and userData.fill, userData.stage
+  const JC = { homunculus: [0x3a6fd0, 0.9], water: [0x3a6fd0, 0.9], h2: [0xe58a7c, 0.8], co2: [0xbcd8e6, 0.9], acid: [0x3c9a5f, 0.9], wood: [0x8a5a2b, 0.9], salt: [0xd9d3bf, 1], slime: [0x7fd14a, 0.9], ammonia: [0xdfe0b0, 0.9], seedling: [0x3a2a1e, 1], brimstone: [0xf0b93a, 1] };
+  const HOMID2 = Object.assign({ homunculus: 'homclay' }, HOMID);
+  const JW = { homunculus: 1, salt: 0.72, brimstone: 0.85, slime: 0.9, h2: 0.9 };
+  const mkJar = (k, fill, stage, at) => {
+    const g = new T.Group(), jc = JC[k] || [0x3a6fd0, 0.9], ink = new T.MeshBasicMaterial({ color: lin(0x2b2622) }), pl = (m, c) => { m.userData.plain = true; if (c) m.castShadow = false; return m; };
+
+    const n0 = grp.children.length;
+    cyl(1.0, 1.05, 0.14, wood, 0, 0.07, 0, null, 28);
+    pl(put(new T.CylinderGeometry(0.94, 0.94, 2.15, 28, 1, true), M(0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.1, op: 0.12 }), 0, 1.22, 0), 1).renderOrder = 3;
+    pl(tor(0.94, 0.035, ink, 0, 0.17, 0, [H, 0, 0]), 1); pl(tor(0.94, 0.035, ink, 0, 2.3, 0, [H, 0, 0]), 1);
+    cyl(0.99, 0.99, 0.2, dark, 0, 2.4, 0, null, 28); shine(-0.6, 1.3, 0.72, 0.06, 0.9, 0.0);
+    const parts = grp.children.splice(n0); parts.forEach(p => g.add(p));
+    const col = new T.Color(jc[0]).convertSRGBToLinear(), cfl = mat(T, jc[0]).color.clone();
+    const lq = pl(new T.Mesh(new T.CylinderGeometry(0.88, 0.88, 1, 28, 1, true), new T.MeshBasicMaterial({ color: cfl, side: T.BackSide }))); g.add(lq);
+    const sf = pl(new T.Mesh(new T.CircleGeometry(0.88, 28).rotateX(-H), new T.MeshBasicMaterial({ color: cfl.clone().lerp(new T.Color(0xffffff), 0.25), transparent: true, opacity: 0.35, depthWrite: false }))); g.add(sf);
+    const lv = pl(new T.Mesh(new T.TorusGeometry(0.89, 0.03, 6, 28).rotateX(H), ink)); g.add(lv);
+    const sp = new T.Group(); g.add(sp); const dot = new T.Mesh(new T.SphereGeometry(0.16, 12, 10), mat(T, k === 'water' ? 0x3a6fd0 : jc[0], 0.4)); dot.position.set(0.12, 0.34, 0.2); dot.castShadow = true; sp.add(dot);
+    const cs = (sc, y) => { sc *= JW[k] || 1; const c = new T.Group(); build(HOMID2[k], T, c, tint, { jar: true, ink: 0.04 / sc }); c.scale.setScalar(sc); c.position.set(0, y, 0.05); g.add(c); return c; };
+    const mid = cs(0.42, 0.2), big = cs(0.7, 0.2);
+    g.userData.set = (f, st) => { f = Math.max(0, Math.min(1, f)); st = st == null ? (f < 0.34 ? 0 : f < 1 ? 1 : 2) : st; const h = 0.05 + f * 1.8; lq.scale.y = h; lq.position.y = 0.17 + h / 2; sf.position.y = lv.position.y = 0.17 + h; lq.visible = sf.visible = lv.visible = f > 0.001; sp.visible = st === 0; mid.visible = st === 1; big.visible = st === 2; g.userData.fill = f; g.userData.stage = st; };
+    g.userData.set(fill, stage); if (at) g.position.set(at, 0, 0); grp.add(g); return g;
+  };
   const B = {
     balance() { box(2.6, 0.3, 1.2, wood, 0, 0.15, 0); cyl(0.13, 0.19, 1.8, brass, 0, 1.2, 0); sph(0.21, brass, 0, 2.16, 0); rod([-1.3, 1.84, 0], [1.3, 2.14, 0], 0.075, brass); [[-1.3, 1.84, 0.92], [1.3, 2.14, 1.22]].forEach(q => { [-0.46, 0.46].forEach(dx => rod([q[0], q[1], 0], [q[0] + dx, q[2] + 0.08, 0], 0.035, brass)); cyl(0.66, 0.42, 0.18, brass, q[0], q[2], 0); }); box(0.42, 0.36, 0.42, wood, -1.3, 1.18, 0); },
     spatula() { cyl(0.1, 0.1, 1.6, steel, 0, 0.14, 0, [0, 0, H]); box(0.9, 0.04, 0.55, steel, 1.2, 0.14, 0); sph(0.32, steel, -1.05, 0.14, 0, [1.3, 0.25, 1]); sph(0.2, liq, -1.05, 0.26, 0, [1.2, 0.5, 1]); cyl(0.14, 0.14, 0.6, wood, 0, 0.14, 0, [0, 0, H]); },
@@ -68,7 +103,7 @@ function build(id, T, grp, tint) {
     cards() { const tin = M(0x2f8a6a, 0.6), tabs = [red, M(0xf2c41a, 0.6), M(0x2f6fd0, 0.6)]; box(1.9, 0.9, 1.1, tin, 0, 0.45, 0); box(1.7, 0.1, 0.9, dark, 0, 0.9, 0).userData.plain = true; [-0.32, -0.1, 0.12, 0.34].forEach((z, k) => { box(1.6, 1.0, 0.05, paper, 0, 1.15 + (k % 2) * 0.05, z, [0.12, 0, 0]); if (k < 3) box(0.4, 0.22, 0.06, tabs[k], -0.5 + k * 0.5, 1.75 + (k % 2) * 0.05, z + 0.08, [0.12, 0, 0]); }); [0.2, 0.0].forEach(q => box(1.2, 0.03, 0.02, dark, 0, 1.3 + q, 0.4, [0.12, 0, 0]).userData.plain = true); box(0.5, 0.2, 0.04, paper, 0, 0.45, 0.57); },
     logbook() { const cov = M(0x1d1c1c, 0.7), pencil = M(0xf2c41a, 0.5); box(1.7, 2.2, 0.36, cov, 0, 1.2, 0); box(1.62, 2.1, 0.3, paper, 0.08, 1.2, 0); box(1.7, 2.2, 0.05, cov, 0, 1.2, 0.19); box(0.26, 2.22, 0.42, red, -0.74, 1.2, 0); [[-0.3, 2.0], [0.4, 1.9], [0.55, 1.1], [-0.2, 0.5], [0.35, 0.4], [-0.45, 1.0], [0.1, 0.75], [0.6, 0.6], [0.2, 2.1], [-0.4, 0.25]].forEach(q => sph(0.05, white, q[0], q[1], 0.22, [1.4, 1, 0.3]).userData.plain = true); box(1.0, 0.6, 0.03, white, 0.1, 1.5, 0.22).userData.plain = true; [1.62, 1.44].forEach(y => box(0.8, 0.04, 0.02, dark, 0.1, y, 0.24).userData.plain = true); rod([0.95, 0.12, 0.5], [-0.6, 0.12, 0.75], 0.07, pencil); put(new T.CylinderGeometry(0, 0.07, 0.2, 8), wood, -0.7, 0.12, 0.77, [0, 0, H], null); },
     crystal() { const c = new T.MeshStandardMaterial({ color: tint.clone().convertSRGBToLinear(), roughness: 0.1, transparent: true, opacity: 0.85, flatShading: true }); cyl(1.0, 0.7, 0.12, glass, 0, 0.06, 0); put(new T.OctahedronGeometry(0.7), c, 0, 1.15, 0, [0, 0.4, 0], [1, 1.5, 1]); put(new T.OctahedronGeometry(0.3), c, 0.65, 0.5, 0.2, [0.3, 0, 0.5]); put(new T.OctahedronGeometry(0.25), c, -0.55, 0.45, -0.2, [0, 0.6, 0.3]); },
-    scalepan() { const br = M(0xa9801f, 0.35, 0.8); box(2.7, 0.16, 1.0, wood, 0, 0.08, 0); [[-0.85, 0.75, 0.42], [0.1, 0.55, 0.33], [0.9, 0.38, 0.25]].forEach(q => { cyl(q[2], q[2], q[1], br, q[0], 0.16 + q[1] / 2, 0, null, 24); cyl(q[2] * 0.3, q[2] * 0.3, 0.14, br, q[0], 0.16 + q[1] + 0.07, 0); sph(q[2] * 0.42, br, q[0], 0.16 + q[1] + 0.22, 0, [1, 0.6, 1]); tor(q[2] + 0.01, 0.02, dark, q[0], 0.16 + q[1] * 0.7, 0, [H, 0, 0]); }); },
+    scalepan() { const br = M(0xf0b93a, 0.35, 0.8); box(2.7, 0.16, 1.0, wood, 0, 0.08, 0); [[-0.85, 0.75, 0.42], [0.1, 0.55, 0.33], [0.9, 0.38, 0.25]].forEach(q => { cyl(q[2], q[2], q[1], br, q[0], 0.16 + q[1] / 2, 0, null, 24); cyl(q[2] * 0.3, q[2] * 0.3, 0.14, br, q[0], 0.16 + q[1] + 0.07, 0); sph(q[2] * 0.42, br, q[0], 0.16 + q[1] + 0.22, 0, [1, 0.6, 1]); tor(q[2] + 0.01, 0.02, dark, q[0], 0.16 + q[1] * 0.7, 0, [H, 0, 0]); }); },
     coldtrap() { const ice = M(0xa9d8f2, 0.2); cyl(1.15, 0.85, 0.6, steel, 0, 0.3, 0); [[-0.8, 0.2], [-0.35, 0.75], [0.4, 0.8], [0.85, 0.25], [0.6, -0.6], [-0.55, -0.65]].forEach((q, k) => box(0.4, 0.4, 0.4, ice, q[0], 0.68 + (k % 2) * 0.1, q[1], [0.3 * k, 0.6 * k, 0.2])); sph(0.62, white, 0, 1.15, 0); cyl(0.2, 0.2, 0.9, white, 0, 2.0, 0); cyl(0.26, 0.26, 0.12, dark, 0, 2.48, 0); sph(0.5, liq, 0, 1.05, 0.14, [1, 0.7, 1]); },
     bunsen() { const hose = M(0xd8402c, 0.7); cyl(0.85, 1.0, 0.22, dark, 0, 0.11, 0); cyl(0.26, 0.3, 1.3, steel, 0, 0.85, 0); cyl(0.36, 0.36, 0.3, brass, 0, 0.55, 0); sph(0.1, black, 0, 0.55, 0.34, [1, 1.2, 0.4]).userData.plain = true; cyl(0.3, 0.3, 0.1, brass, 0, 1.52, 0); put(new T.CylinderGeometry(0, 0.34, 1.5, 14), glow(0x2f86ff), 0, 2.3, 0); put(new T.CylinderGeometry(0, 0.17, 0.8, 12), glow(0xc8ecff), 0, 1.98, 0.12).userData.plain = true; rod([0.3, 0.32, 0], [1.0, 0.25, 0.2], 0.1, hose); rod([1.0, 0.25, 0.2], [1.5, 0.12, 0.7], 0.1, hose); sph(0.1, hose, 1.0, 0.25, 0.2); cyl(0.12, 0.12, 0.2, brass, -0.42, 0.5, 0, [0, 0, H]); },
     litmus() { const pink = M(0xe0304a, 0.8), blue = M(0x2f5fd0, 0.8), shell = M(0xe6f1f8, 0.2); box(1.3, 0.3, 0.6, wood, 0.6, 0.15, 0); [-0.7, -0.35, 0, 0.35, 0.7].forEach((a, k) => { const c = Math.cos(a), sn = Math.sin(a), top = k % 2 ? pink : blue; box(0.22, 0.9, 0.04, paper, 0.6 + sn * 0.6, 0.3 + c * 0.6, 0.02 * k, [0, 0, -a]); box(0.22, 0.75, 0.05, top, 0.6 + sn * 1.38, 0.3 + c * 1.38, 0.02 * k, [0, 0, -a]); }); cyl(0.5, 0.42, 0.7, shell, -0.95, 0.35, 0); cyl(0.51, 0.44, 0.34, liq, -0.95, 0.19, 0).userData.plain = true; box(0.2, 1.3, 0.04, paper, -0.85, 1.0, 0, [0, 0, -0.2]); box(0.2, 0.5, 0.05, pink, -0.98, 0.42, 0.02, [0, 0, -0.2]); },
@@ -78,63 +113,133 @@ function build(id, T, grp, tint) {
     dropper() { const amber = M(0x7a4a1e, 0.2, 0, { transparent: true, opacity: 0.82 }); cyl(0.56, 0.56, 1.0, amber, 0, 0.5, 0); cyl(0.27, 0.56, 0.32, amber, 0, 1.16, 0); cyl(0.31, 0.31, 0.24, black, 0, 1.44, 0); sph(0.28, red, 0, 1.9, 0, [1, 1.7, 1]); cyl(0.05, 0.05, 1.1, glass, 0, 0.75, 0); box(0.66, 0.44, 0.03, paper, 0, 0.5, 0.56); },
     loupe() { tor(0.75, 0.1, brass, -0.3, 0.2, 0, [H, 0, 0]); cyl(0.72, 0.72, 0.06, glass, -0.3, 0.2, 0); rod([0.35, 0.2, 0.3], [1.5, 0.2, 0.95], 0.13, wood); },
     timer() { cyl(0.75, 0.75, 0.12, wood, 0, 0.06, 0); cyl(0.75, 0.75, 0.12, wood, 0, 2.3, 0); cyl(0.08, 0.6, 1.0, glass, 0, 0.65, 0); cyl(0.6, 0.08, 1.0, glass, 0, 1.7, 0); cyl(0.02, 0.45, 0.5, liq, 0, 0.4, 0); cyl(0.4, 0.06, 0.5, liq, 0, 1.55, 0); for (let k = 0; k < 3; k++) { const a = k * 2.094; cyl(0.05, 0.05, 2.2, wood, Math.cos(a) * 0.65, 1.18, Math.sin(a) * 0.65); } },
-    stone() { const gem = glow(0xd0162a); cyl(0.75, 0.9, 0.5, lead, 0, 0.25, 0, null, 6); put(new T.OctahedronGeometry(0.7, 0), gem, 0, 1.45, 0, [0, 0.4, 0], [0.9, 1.35, 0.9]); box(0.07, 0.5, 0.03, white, -0.18, 1.7, 0.42, [0, 0, 0.5]).userData.plain = true; },
-    transmute() { box(1.1, 0.5, 0.75, lead, -0.55, 0.25, 0.3); box(1.1, 0.5, 0.75, gold, 0.55, 0.25, 0.3); box(0.06, 0.52, 0.77, dark, 0, 0.25, 0.3); box(1.5, 0.45, 0.7, gold, 0.35, 0.23, -0.6, [0, 0.25, 0]); box(1.5, 0.45, 0.7, gold, 0.2, 0.7, -0.45, [0, -0.3, 0]); },
+    // philosopher's stone: a big red gem held in a gold cup by four prongs
+    stone() { const gem = M(0xd6453a, 0.25), cup = M(0xf0b93a, 0.35, 0.8);
+      cyl(0.5, 0.8, 0.22, cup, 0, 0.11, 0, null, 12); cyl(0.22, 0.5, 0.4, cup, 0, 0.42, 0, null, 12);
+      put(new T.CylinderGeometry(0.0, 0.62, 0.9, 8), gem, 0, 1.1, 0, [PI, 0, 0]); put(new T.CylinderGeometry(0.62, 0.62, 0.16, 8), gem, 0, 1.63, 0); put(new T.CylinderGeometry(0.34, 0.62, 0.22, 8), gem, 0, 1.82, 0);
+      [0, 1, 2, 3].forEach(k => { const a = k * H + 0.8; rod([Math.cos(a) * 0.55, 0.62, Math.sin(a) * 0.55], [Math.cos(a) * 0.7, 1.4, Math.sin(a) * 0.7], 0.04, cup); });
+      box(0.07, 0.4, 0.03, white, -0.28, 1.65, 0.55, [0, 0, 0.5]).userData.plain = true; },
+    // transmutation: a grey lead bar, a red arrow, a stack of gold bars
+    transmute() { const lead2 = M(0x8d949c, 0.5), gold2 = M(0xf0b93a, 0.3, 0.6), redm = M(0xd6453a, 0.5);
+      const ing = (x, y, z, m, ry) => put(new T.CylinderGeometry(0.42, 0.62, 0.5, 4).rotateY(PI / 4), m, x, y, z, [0, ry || 0, 0], [1.9, 1, 1.05]);
+      ing(-1.7, 0.25, 0.3, lead2, 0.1); ing(1.1, 0.25, 0.5, gold2, 0); ing(1.1, 0.25, -0.65, gold2, 0); ing(1.1, 0.75, -0.05, gold2, 0.0); ing(1.1, 1.25, -0.05, gold2, 0.0);
+      box(0.9, 0.12, 0.32, redm, -0.35, 0.2, 1.0); put(new T.ConeGeometry(0.34, 0.5, 3), redm, 0.3, 0.2, 1.0, [0, 0, -H], [1, 1, 0.4]); shine(0.7, 1.45, 0.45, 0.3, 0.06, 0.2); },
     regia() { const fume = M(0xe8a23a, 0.9, 0, { transparent: true, opacity: 0.5 }); box(1.3, 1.7, 1.3, glass, 0, 0.85, 0); box(1.15, 1.1, 1.15, M(0xe0661a, 0.3), 0, 0.6, 0); cyl(0.25, 0.25, 0.4, glass, 0, 1.9, 0); sph(0.3, glass, 0, 2.25, 0); sph(0.16, fume, 0.25, 2.7, 0); box(0.9, 0.9, 0.02, white, 0, 0.8, 0.67); rod([-0.3, 0.5, 0.69], [0.3, 1.0, 0.69], 0.05, black); rod([0.3, 0.5, 0.69], [-0.3, 1.0, 0.69], 0.05, black); sph(0.2, black, 0, 0.92, 0.69, [1, 0.9, 0.3]); side.forEach(s => sph(0.05, white, s * 0.08, 0.95, 0.76)); },
-    ouroboros() { const green = M(0x2f8a4e, 0.45, 0.1), band = M(0x1f5f36, 0.5), eye = M(0xf2c230, 0.4); box(1.5, 0.14, 0.7, dark, 0, 0.07, 0); tor(0.95, 0.22, green, 0, 1.3, 0, null, PI * 1.78); for (let k = 1; k < 10; k++) { const an = k * 0.56; tor(0.235, 0.035, band, Math.cos(an) * 0.95, 1.3 + Math.sin(an) * 0.95, 0, [0, H, an]); } rod([0.73, 0.7, 0], [0.88, 1.0, 0], 0.12, green); rod([0.88, 1.0, 0], [0.95, 1.22, 0], 0.07, green); put(new T.CylinderGeometry(0.2, 0.36, 0.75, 12), green, 0.98, 1.5, 0, null, [1, 1, 0.8]); sph(0.2, green, 0.98, 1.88, 0, [1, 0.8, 0.8]); sph(0.08, eye, 1.02, 1.62, 0.27); box(0.03, 0.11, 0.02, black, 1.02, 1.62, 0.35); },
-    // the two homunculi that hatch from the jars (docs/JARS.md): free-standing little figures in the manner of the one in the jar below
-    // water: soaking wet, standing in its own puddle, drops hanging off it
-    homwater() { const skin = M(0x49a6ee, 0.22), shade = M(0x2468c4, 0.3), wet = M(0x3a6fd0, 0.08, 0, { transparent: true, opacity: 0.55 }), drop = M(0xbfe3f7, 0.1);
-      cyl(0.95, 1.0, 0.03, wet, 0, 0.015, 0).userData.plain = true; cyl(0.34, 0.38, 0.03, wet, 0.95, 0.015, 0.45).userData.plain = true;
-      sph(0.42, skin, 0, 0.8, 0, [1, 1.25, 0.9]); sph(0.37, skin, 0, 1.52, 0.02); sph(0.13, shade, 0.04, 1.9, 0, [1, 1.7, 1]);
-      side.forEach(q => { rod([q * 0.3, 1.0, 0.02], [q * 0.64, 0.62, 0.12], 0.07, shade); sph(0.1, skin, q * 0.66, 0.56, 0.13); sph(0.055, drop, q * 0.66, 0.4, 0.13, [1, 1.6, 1]); rod([q * 0.17, 0.48, 0], [q * 0.21, 0.1, 0.05], 0.08, shade); sph(0.14, shade, q * 0.23, 0.08, 0.14, [1, 0.6, 1.4]); sph(0.05, black, q * 0.14, 1.58, 0.34); });
-      sph(0.06, drop, 0.3, 1.22, 0.3, [1, 1.6, 1]); sph(0.05, drop, -0.26, 1.1, 0.3, [1, 1.6, 1]); sph(0.05, drop, 0.02, 1.3, 0.38, [1, 1.5, 1]); sph(0.07, drop, -0.1, 0.34, 0.36, [1, 1.6, 1]); },
-    // hydrogen: light, floating over the page, held down by a string tied to a small brass weight
-    homh2() { const skin = M(0xf8e3dc, 0.5), shade = M(0xeaa99b, 0.5), cord = M(0x7d838c, 0.7);
-      cyl(0.16, 0.2, 0.14, brass, 0, 0.07, 0); tor(0.07, 0.02, brass, 0, 0.19, 0);
-      rod([0, 0.2, 0], [0.12, 0.6, 0], 0.022, cord); rod([0.12, 0.6, 0], [-0.1, 1.0, 0], 0.022, cord); rod([-0.1, 1.0, 0], [0.0, 1.34, 0], 0.022, cord);
-      sph(0.56, skin, 0, 1.92, 0, [1, 1.12, 0.95]); sph(0.09, shade, 0, 1.33, 0, [1, 0.8, 1]); sph(0.2, M(0xffffff, 0.2), -0.2, 2.2, 0.36, [0.7, 1.2, 0.4]);
-      side.forEach(q => { rod([q * 0.5, 1.9, 0.05], [q * 0.82, 2.12, 0.08], 0.05, shade); sph(0.08, skin, q * 0.85, 2.15, 0.08); rod([q * 0.2, 1.42, 0.05], [q * 0.3, 1.2, 0.1], 0.05, shade); sph(0.08, shade, q * 0.31, 1.17, 0.12, [1, 0.7, 1.3]); sph(0.05, black, q * 0.17, 2.02, 0.5); }); },
-    // carbon dioxide: a block of dry ice on two thin legs, standing in its own mist
-    homco2() { const ice = M(0xeef6fa, 0.18, 0, { transparent: true, opacity: 0.9 }), edge = M(0xa9d8ee, 0.3), mist = M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.6 }), leg = M(0x2b2622, 0.6);
-      [[-0.75, 0.2, 0.5], [-0.25, 0.3, 0.42], [0.3, -0.1, 0.5], [0.8, 0.25, 0.4], [0.05, 0.55, 0.36]].forEach(q => { sph(q[2], mist, q[0], 0.1, q[1], [1.3, 0.3, 1]).userData.plain = true; });
-      side.forEach(q => { rod([q * 0.26, 0.95, 0], [q * 0.34, 0.12, 0.06], 0.045, leg); sph(0.09, leg, q * 0.36, 0.08, 0.14, [1, 0.6, 1.5]); });
-      box(1.15, 1.05, 0.9, ice, 0, 1.5, 0, [0, 0.12, 0.03]); box(1.02, 0.1, 0.8, edge, 0, 2.0, 0, [0, 0.12, 0.03]).userData.plain = true; box(0.2, 0.42, 0.04, M(0xffffff, 0.1), -0.32, 1.62, 0.47, [0, 0.12, 0.3]).userData.plain = true;
-      side.forEach(q => { sph(0.06, black, q * 0.2 + 0.06, 1.55, 0.47); rod([q * 0.58, 1.5, 0.05], [q * 0.84, 1.22, 0.12], 0.04, leg); });
-      sph(0.1, mist, 0.5, 1.2, 0.6, [1.4, 0.6, 1]).userData.plain = true; },
-    // acid: half melted, green, dripping into its own pool
-    homacid() { const skin = M(0x76a83a, 0.25), shade = M(0x4f7d22, 0.35), goo = M(0x8fc43e, 0.12, 0, { transparent: true, opacity: 0.7 });
-      cyl(0.85, 0.95, 0.03, goo, 0, 0.015, 0).userData.plain = true;
-      sph(0.62, skin, 0, 1.25, 0, [1, 1.05, 0.9]); sph(0.5, skin, 0.05, 0.72, 0, [1.15, 0.9, 0.95]); sph(0.16, shade, 0.3, 1.84, 0, [1.2, 0.5, 1]);
-      [[-0.5, 0.2, 0.5], [-0.2, 0.42, 0.7], [0.15, 0.45, 0.55], [0.48, 0.2, 0.75], [0, -0.3, 0.4]].forEach(q => { rod([q[0], 1.0, q[1]], [q[0], 1.0 - q[2], q[1]], 0.09, skin); sph(0.11, skin, q[0], 0.98 - q[2], q[1], [1, 1.4, 1]); });
-      side.forEach(q => { sph(0.06, black, q * 0.2 + 0.03, 1.4, 0.52); rod([q * 0.55, 1.2, 0.05], [q * 0.8, 0.8, 0.15], 0.07, shade); sph(0.09, skin, q * 0.82, 0.72, 0.16, [1, 1.5, 1]); }); },
-    // wood spirit: blind drunk, leaning, crosses for eyes, a cork for a hat, a spill beside it
-    homwood() { const skin = M(0xb98a52, 0.6), shade = M(0x8a5a2b, 0.65), cork = M(0xd9c7a0, 0.8), wet = M(0xcdb98a, 0.2, 0, { transparent: true, opacity: 0.5 });
-      cyl(0.5, 0.55, 0.03, wet, 0.55, 0.015, 0.3).userData.plain = true;
-      sph(0.42, skin, 0.08, 0.8, 0, [1, 1.25, 0.9]).rotation.z = -0.2; sph(0.36, skin, 0.3, 1.5, 0.02); cyl(0.14, 0.18, 0.22, cork, 0.42, 1.92, 0).rotation.z = -0.35;
-      side.forEach(q => { box(0.13, 0.03, 0.02, black, 0.3 + q * 0.15, 1.56, 0.37, [0, 0, 0.78]); box(0.13, 0.03, 0.02, black, 0.3 + q * 0.15, 1.56, 0.37, [0, 0, -0.78]); });
-      rod([-0.05, 0.5, 0], [-0.4, 0.08, 0.1], 0.08, shade); sph(0.13, shade, -0.44, 0.07, 0.16, [1, 0.6, 1.4]); rod([0.2, 0.5, 0], [0.3, 0.1, 0.05], 0.08, shade); sph(0.13, shade, 0.34, 0.07, 0.14, [1, 0.6, 1.4]);
-      rod([-0.25, 1.05, 0.02], [-0.7, 1.35, 0.1], 0.06, shade); sph(0.09, skin, -0.74, 1.39, 0.1); rod([0.45, 1.0, 0.02], [0.75, 0.6, 0.12], 0.06, shade); sph(0.09, skin, 0.78, 0.55, 0.13);
-      box(0.16, 0.03, 0.02, black, 0.3, 1.36, 0.36, [0, 0, 0.3]); },
-    // salt: a crusty white pillar on two thin legs, crystals growing off it
-    homsalt() { const salt = M(0xf4f1e8, 0.85), crust = M(0xcfc9b6, 0.95), leg = M(0x2b2622, 0.6);
-      cyl(0.8, 0.9, 0.03, crust, 0, 0.015, 0).userData.plain = true;
-      side.forEach(q => { rod([q * 0.22, 0.6, 0], [q * 0.3, 0.1, 0.06], 0.05, leg); sph(0.09, leg, q * 0.32, 0.07, 0.14, [1, 0.6, 1.5]); });
-      box(0.8, 1.5, 0.7, salt, 0, 1.3, 0, [0, 0.2, 0.02]);
-      [[-0.3, 2.1, 0.1, 0.26], [0.25, 2.15, -0.1, 0.22], [0.42, 1.2, 0.3, 0.19], [-0.44, 0.9, 0.25, 0.21], [0.05, 0.64, 0.36, 0.17], [-0.38, 1.75, 0.3, 0.15]].forEach(q => box(q[3], q[3], q[3], crust, q[0], q[1], q[2], [0.5, 0.6, 0.3]));
-      side.forEach(q => { sph(0.06, black, q * 0.17 + 0.05, 1.6, 0.39); rod([q * 0.42, 1.3, 0.05], [q * 0.7, 1.05, 0.12], 0.04, leg); }); },
-    // slime: a green see-through blob with two round eyes and sticky feet
-    homslime() { const goo = M(0x7fd14a, 0.1, 0, { transparent: true, opacity: 0.8 }), deep = M(0x4fa52a, 0.2), shine = M(0xe8ffd0, 0.1);
-      cyl(1.0, 1.05, 0.03, goo, 0, 0.015, 0).userData.plain = true;
-      sph(0.75, goo, 0, 0.55, 0, [1.2, 0.75, 1.05]); sph(0.5, goo, 0.05, 1.15, 0, [1, 0.9, 0.95]); sph(0.3, deep, 0, 0.5, 0, [1.2, 0.8, 1]); sph(0.14, shine, -0.25, 1.35, 0.35, [0.7, 1.2, 0.4]);
-      side.forEach(q => { sph(0.11, white, q * 0.2 + 0.03, 1.25, 0.4); sph(0.055, black, q * 0.2 + 0.04, 1.25, 0.49); rod([q * 0.7, 0.6, 0.1], [q * 1.0, 0.2, 0.2], 0.09, goo); sph(0.13, goo, q * 1.02, 0.14, 0.2, [1.2, 0.6, 1.2]); }); },
-    // seedling: a brown seed on root legs with a stalk and two leaves
-    homseed() { const seed = M(0x9a6b3a, 0.7), stem = M(0x3f9a4f, 0.5), leaf = M(0x5fc04f, 0.4), root = M(0xd9c7a0, 0.7);
-      sph(0.42, seed, 0, 0.62, 0, [1, 1.25, 0.9]);
-      side.forEach(q => { rod([q * 0.15, 0.3, 0], [q * 0.3, 0.05, 0.08], 0.045, root); sph(0.07, root, q * 0.33, 0.04, 0.14, [1, 0.6, 1.5]); sph(0.055, black, q * 0.15 + 0.03, 0.72, 0.36); rod([q * 0.3, 0.6, 0.05], [q * 0.55, 0.4, 0.12], 0.035, root); });
-      rod([0, 1.1, 0], [0.06, 1.75, 0], 0.05, stem); rod([0.06, 1.75, 0], [0, 2.1, 0], 0.045, stem);
-      sph(0.3, leaf, -0.3, 2.2, 0, [1.25, 0.28, 0.7]).rotation.z = 0.5; sph(0.34, leaf, 0.34, 2.25, 0, [1.25, 0.28, 0.7]).rotation.z = -0.5; sph(0.12, leaf, 0, 2.3, 0, [0.8, 1.3, 0.8]); },
-    homunculus() { const skin = M(0xe8704c, 0.8), shade = M(0xd2552f, 0.8), shell = M(0xe6f1f8, 0.2); cyl(0.9, 0.9, 0.1, steel, 0, 0.05, 0); cyl(0.85, 0.85, 1.6, liq, 0, 0.9, 0); cyl(0.85, 0.85, 0.42, shell, 0, 1.9, 0); cyl(0.92, 0.92, 0.2, dark, 0, 2.2, 0); for (let k = 0; k < 5; k++) cyl(0.06, 0.06, 0.03, white, Math.cos(k * 1.257) * 0.5, 2.31, Math.sin(k * 1.257) * 0.5); sph(0.3, skin, 0.05, 1.3, 0.86, [1, 1, 0.5]); sph(0.26, shade, -0.02, 0.82, 0.88, [1, 1.3, 0.45]); side.forEach(q => { rod([q * 0.2, 0.98, 0.95], [q * 0.5, 1.22, 0.92], 0.06, shade); sph(0.1, skin, q * 0.52, 1.28, 0.92, [1, 1.2, 0.5]); rod([q * 0.1, 0.56, 0.95], [q * 0.24, 0.3, 0.95], 0.06, shade); box(0.09, 0.025, 0.02, black, 0.05 + q * 0.11, 1.36, 1.02, [0, 0, 0.78]); box(0.09, 0.025, 0.02, black, 0.05 + q * 0.11, 1.36, 1.02, [0, 0, -0.78]); }); box(0.6, 0.26, 0.03, paper, 0, 1.92, 0.86, [0, 0, 0.06]); },
+    // ouroboros: a green snake eating its tail, standing as a medal on a plate
+    ouroboros() { const gr = M(0x3c9a5f, 0.45), yl = M(0xf0b93a, 0.5), redm = M(0xd6453a, 0.6);
+      box(1.7, 0.18, 0.9, dark, 0, 0.09, 0); cyl(0.12, 0.12, 0.55, dark, 0, 0.4, 0); cyl(1.45, 1.45, 0.18, dark, 0, 1.95, 0, [H, 0, 0], 36);
+      const N = 26, cx = 0, cy = 1.95, Rr = 1.0; for (let i = 0; i < N; i++) { const f = i / (N - 1), a = 0.55 + f * (PI * 2 - 1.0), r = 0.29 - 0.2 * f * f, x = cx + Math.cos(a) * Rr, y = cy + Math.sin(a) * Rr;
+        sph(r, gr, x, y, 0.2 + r * 0.4, [1, 1, 1]); if (i % 3 === 1) sph(r * 0.45, yl, x * 1.0, y * 1.0 - (y - cy) * 0.0, 0.2 + r * 1.2).userData.plain = true; }
+      const ha = 0.55, hx = Math.cos(ha) * Rr, hy = cy + Math.sin(ha) * Rr; sph(0.38, gr, hx - 0.05, hy + 0.05, 0.35, [1.3, 1.0, 0.9]); sph(0.06, black, hx + 0.05, hy + 0.28, 0.7).userData.plain = true;
+      rod([hx + 0.3, hy - 0.05, 0.6], [hx + 0.62, hy - 0.12, 0.62], 0.03, redm); shine(-0.5, 2.9, 0.4, 0.25, 0.07, 0.6); },
+    // a faceless little man of red clay, used in the homunculus jar
+    homclay() { const clay = M(0xd6453a, 0.7); body(); legs(0.55, 0.2, clay, 0.12); sph(0.48, clay, 0, 1.0, 0, [1, 1.2, 0.8]); sph(0.36, clay, 0, 1.85, 0); side.forEach(q => arm(q * 0.5, 1.3, 0, 0.8, 0.09, clay, clay, 0.12, 2.0)); shine(-0.2, 1.15, 0.42, 0.1, 0.4); },
+    // the coin: one gold coin lying face up on the page, with a ring and a diamond engraved in it. Used for every coin
+    coin() { const gd = M(0xf0b93a, 0.3, 0.6), ink = new T.MeshBasicMaterial({ color: lin(0x2b2622) });
+      cyl(1.0, 1.0, 0.16, gd, 0, 0.08, 0, null, 40); tor(0.66, 0.03, ink, 0, 0.165, 0, [H, 0, 0]).userData.plain = true; box(0.3, 0.02, 0.3, ink, 0, 0.17, 0, [0, PI / 4, 0]).userData.plain = true;
+      box(0.5, 0.02, 0.08, M(0xffffff, 0.2), -0.45, 0.17, -0.5, [0, -0.7, 0]).userData.plain = true; },
+    // methanol, CH3OH, standing on its three hydrogens
+    methanol() { const C = M(0x5b667d, 0.5, 0, { exact: 1 }), O = M(0xff4d4d, 0.5, 0, { exact: 1 }), Hh = M(0xf1f5f9, 0.5, 0, { exact: 1 }), st = M(0xdad4c0, 0.6, 0, { exact: 1 });
+      cyl(1.2, 1.3, 0.1, wood, 0, 0.05, 0, null, 28); const c = [0, 1.25, 0];
+      [0, 1, 2].forEach(k => { const a = k * 2.094 + 0.3, h = [Math.cos(a) * 0.85, 0.4, Math.sin(a) * 0.85]; rod(c, h, 0.07, st); sph(0.26, Hh, h[0], h[1], h[2]); });
+      const o = [0, 2.3, 0.1]; rod(c, o, 0.07, st); sph(0.42, C, c[0], c[1], c[2]); sph(0.4, O, o[0], o[1], o[2]); rod(o, [0.55, 2.6, 0.2], 0.07, st); sph(0.25, Hh, 0.55, 2.6, 0.2); shine(-0.15, 1.45, 0.38, 0.08, 0.3, 0.4); },
+    // ethylene, C2H4: a flat molecule standing up with the double bond across it
+    ethylene() { const C = M(0x5b667d, 0.5, 0, { exact: 1 }), Hh = M(0xf1f5f9, 0.5, 0, { exact: 1 }), st = M(0xdad4c0, 0.6, 0, { exact: 1 });
+      cyl(1.2, 1.3, 0.1, wood, 0, 0.05, 0, null, 28); const a = [-0.72, 1.2, 0], b = [0.72, 1.2, 0];
+      [-0.07, 0.07].forEach(d => rod([a[0], a[1] + d, 0], [b[0], b[1] + d, 0], 0.05, st));
+      [[-1.3, 0.45], [-1.3, 1.95], [1.3, 0.45], [1.3, 1.95]].forEach(q => { rod(q[0] < 0 ? a : b, [q[0], q[1], 0], 0.07, st); sph(0.26, Hh, q[0], q[1], 0); });
+      sph(0.42, C, a[0], a[1], 0); sph(0.42, C, b[0], b[1], 0); shine(-0.8, 1.4, 0.38, 0.08, 0.3, 0.4); },
+    // ---- the ten creatures (docs/ART_NOTES.md). Each stands on its own feet, feet at y = 0, about 2.4 tall. Rest pose is what build() leaves.
+    // body() starts the part that squashes and leans from the feet; arm() makes an arm on a pivot; AA.rxKit.pose(group, {lean, reach, squash, t}) moves them
+    // water: a soaking wet little figure with a drop for a head, standing in its own puddle
+    homwater() { const sk = M(0x3a6fd0, 0.3), wet = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.5 }), drop = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.55 });
+      floor(() => { cyl(1.2, 1.25, 0.03, wet, 0.05, 0.015, 0.1, null, 32).userData.plain = true; cyl(0.5, 0.55, 0.03, wet, 1.05, 0.015, 0.55, null, 24).userData.plain = true; cyl(0.3, 0.33, 0.03, wet, -1.0, 0.015, 0.6, null, 20).userData.plain = true; });
+      body(); legs(0.5, 0.22, sk, 0.04);
+      sph(0.55, sk, 0, 1.0, 0, [1, 1.15, 0.9]); sph(0.44, sk, 0, 1.85, 0, [1, 0.95, 0.92]); put(new T.ConeGeometry(0.2, 0.55, 14), sk, 0, 2.42, 0);
+      eyes(1.88, 0.38, 0.16, 0.055, 0); shine(-0.24, 1.1, 0.48, 0.1, 0.42);
+      side.forEach(q => { const pv = arm(q * 0.58, 1.3, 0, 0.8, 0.09, sk, sk, 0.12, 0.5); into(pv, () => sph(0.07, drop, 0, -1.02, 0, [1, 1.6, 1])); });
+      sph(0.08, drop, 0.46, 1.55, 0.2, [1, 1.6, 1]); sph(0.06, drop, -0.42, 1.42, 0.3, [1, 1.6, 1]); sph(0.07, drop, 0.05, 0.62, 0.5, [1, 1.6, 1]); },
+    // hydrogen: a light balloon of a figure on tiptoe, held down by a string to a small brass weight
+    homh2() { const sk = M(0xd6453a, 0.4), cord = M(0x2c2f34, 0.7);
+      floor(() => { cyl(0.2, 0.25, 0.16, brass, 0.55, 0.08, 0.45); tor(0.08, 0.025, brass, 0.55, 0.2, 0.45); });
+      body(); const zig = [[0.0, 1.12], [0.18, 0.85], [-0.02, 0.6], [0.3, 0.38], [0.55, 0.22]];
+      for (let k = 0; k < 4; k++) rod([zig[k][0], zig[k][1], 0.1 + k * 0.1], [zig[k + 1][0], zig[k + 1][1], 0.2 + k * 0.1], 0.022, cord);
+      put(new T.ConeGeometry(0.1, 0.2, 10), sk, 0, 1.22, 0, [PI, 0, 0]);
+      sph(0.66, sk, 0, 1.85, 0, [1, 1.2, 0.95]); shine(-0.28, 2.15, 0.56, 0.12, 0.5, 0.35);
+      side.forEach(q => { rod([q * 0.2, 1.3, 0], [q * 0.3, 0.08, 0.05], 0.05, black); sph(0.1, black, q * 0.3, 0.05, 0.12, [1, 0.55, 1.5]); });
+      side.forEach(q => arm(q * 0.62, 1.8, 0, 0.7, 0.05, black, sk, 0.09, 2.3)); },
+    // carbon dioxide: a block of dry ice on two thin legs, standing in a cloud of its own mist
+    homco2() { const ice = M(0xf4efe0, 0.3), fleck = M(0x3a6fd0, 0.3), leg = black, mist = M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.55 });
+      floor(() => { [[-0.8, 0.25, 0.5], [-0.3, 0.55, 0.42], [0.35, 0.5, 0.5], [0.85, 0.2, 0.42], [0.1, -0.2, 0.55]].forEach(q => sph(q[2], mist, q[0], 0.14, q[1], [1.3, 0.35, 1]).userData.plain = true); });
+      body(); legs(0.8, 0.28, leg, 0.05);
+      box(1.2, 1.1, 1.0, ice, 0, 1.45, 0, [0, 0.12, 0]); box(0.34, 0.2, 0.34, ice, 0.52, 2.08, 0.1, [0.3, 0.5, 0.2]);
+      [[0.3, 1.2, 0.52, 0.2], [-0.35, 1.75, 0.52, 0.16], [0.4, 1.8, 0.52, 0.12]].forEach(q => box(q[3], q[3] * 0.5, 0.03, fleck, q[0], q[1], q[2], [0, 0.12, 0.5]).userData.plain = true);
+      shine(-0.42, 1.65, 0.53, 0.1, 0.5, 0.1);
+      side.forEach(q => arm(q * 0.64, 1.8, 0, 0.7, 0.045, leg, null, 0, 0.6));
+      sph(0.2, mist, 0.2, 2.35, 0, [1.3, 0.7, 1]).userData.plain = true; sph(0.14, mist, 0.35, 2.65, 0.05, [1.2, 0.7, 1]).userData.plain = true; },
+    // acid: half melted, green, the legs gone into its own pool, drips hanging from every edge
+    homacid() { const sk = M(0x3c9a5f, 0.3), goo = M(0xbfe8c8, 0.1, 0, { transparent: true, opacity: 0.55 });
+      floor(() => { cyl(1.0, 1.05, 0.03, goo, 0, 0.015, 0.1, null, 32).userData.plain = true; [[0.7, 0.5, 0.12], [-0.6, 0.55, 0.09], [0.2, 0.85, 0.07]].forEach(q => sph(q[2], goo, q[0], 0.07, q[1], [1, 0.8, 1]).userData.plain = true); });
+      body(); side.forEach(q => { sph(0.14, sk, q * 0.3, 0.1, 0.35, [1, 0.55, 1.4]); });
+      cyl(0.42, 0.82, 0.85, sk, 0, 0.5, 0, null, 24); sph(0.55, sk, 0, 1.3, 0, [1, 1.1, 0.9]); sph(0.4, sk, 0.08, 2.05, 0, [1, 0.9, 0.9]);
+      eyes(2.08, 0.34, 0.16, 0.055, -0.12); shine(-0.26, 1.5, 0.46, 0.1, 0.4);
+      [[-0.4, 0.78, 0.45, 0.4], [0.15, 0.7, 0.55, 0.62], [0.55, 0.5, 0.35, 0.3], [-0.1, 1.78, 0.3, 0.32]].forEach(q => { rod([q[0], q[1] + 0.3, q[2]], [q[0], q[1] - q[3] + 0.3, q[2]], 0.045, sk); sph(0.1, sk, q[0], q[1] - q[3] + 0.2, q[2], [1, 1.5, 1]); });
+      arm(0.62, 1.5, 0, 0.7, 0.1, sk, sk, 0.13, 0.4); const l = arm(-0.62, 1.5, 0, 0.45, 0.1, sk, null, 0, 0.3); into(l, () => { rod([0, -0.45, 0], [0, -0.95, 0], 0.07, sk); sph(0.1, sk, 0, -1.0, 0, [1, 1.6, 1]); }); },
+    // wood spirit: a tipsy little bottle on crossed legs, leaning, a cork in its neck, a spill beside it
+    homwood() { const br = M(0x8a5a2b, 0.5), cork = M(0xf4efe0, 0.8), lab = M(0xf4efe0, 0.8), wet = M(0xe6d3a8, 0.2, 0, { transparent: true, opacity: 0.5 });
+      floor(() => { cyl(0.55, 0.6, 0.03, wet, 0.7, 0.015, 0.4, null, 24).userData.plain = true; sph(0.1, wet, 1.1, 0.06, 0.8, [1, 0.5, 1]).userData.plain = true; });
+      body(); R.lean0 = [0.06, 0.24];
+      rod([-0.18, 0.55, 0], [0.22, 0.07, 0.05], 0.06, black); rod([0.18, 0.55, 0], [-0.24, 0.07, 0.1], 0.06, black); sph(0.11, black, 0.24, 0.05, 0.12, [1, 0.55, 1.5]); sph(0.11, black, -0.26, 0.05, 0.18, [1, 0.55, 1.5]);
+      cyl(0.52, 0.56, 1.15, br, 0, 1.1, 0, null, 24); cyl(0.2, 0.52, 0.42, br, 0, 1.88, 0, null, 24); cyl(0.2, 0.2, 0.34, br, 0, 2.25, 0, null, 18); cyl(0.26, 0.26, 0.1, br, 0, 2.45, 0, null, 18);
+      cyl(0.17, 0.2, 0.32, cork, 0.04, 2.62, 0, [0, 0, -0.35]);
+      box(0.78, 0.5, 0.06, lab, 0, 0.95, 0.55, [0, 0, 0.04]); [0.82, 0.95, 1.08].forEach((y, i) => box(0.46 - i * 0.08, 0.04, 0.02, black, 0, y, 0.59, [0, 0, 0.04]).userData.plain = true);
+      eyes(1.62, 0.44, 0.17, 0.055, 0.1); shine(-0.34, 1.35, 0.5, 0.08, 0.5, 0);
+      arm(0.56, 1.45, 0, 0.75, 0.06, black, null, 0, 2.4); arm(-0.56, 1.45, 0, 0.7, 0.06, black, null, 0, 0.9); },
+    // salt: a crusted white crab, sideways on four legs, claws up, eyes on short stalks
+    homsalt() { const sa = M(0xd6d2c4, 0.85, 0, { exact: 1 }), cream = M(0xf4efe0, 0.85), grit = M(0x8d949c, 0.8), pile = M(0xd6d2c4, 0.9, 0, { exact: 1 });
+      floor(() => { cyl(1.15, 1.2, 0.03, pile, 0, 0.015, 0.1, null, 24).userData.plain = true; [[0.9, 0.5], [-0.8, 0.6], [0.5, 0.9], [-0.4, 0.95]].forEach(q => box(0.12, 0.12, 0.12, pile, q[0], 0.06, q[1], [0.4, 0.6, 0.2]).userData.plain = true); });
+      body(); side.forEach(q => [0, 1, 2].forEach(k => { const z = -0.3 + k * 0.32; rod([q * 0.7, 0.75, z], [q * (1.2 + k * 0.05), 0.08, z + 0.05], 0.065, black); sph(0.08, black, q * (1.2 + k * 0.05), 0.05, z + 0.08, [1, 0.5, 1.4]); }));
+      sph(1.0, sa, 0, 0.95, 0, [1.25, 0.8, 1.0]);
+      [[-0.55, 1.5, 0.1, 0.3], [0.45, 1.52, -0.05, 0.34], [0.0, 1.6, -0.3, 0.26], [-0.2, 1.5, 0.5, 0.22], [0.85, 1.12, 0.45, 0.28], [-1.0, 1.1, 0.2, 0.28], [0.15, 1.45, 0.3, 0.2], [-0.8, 1.35, -0.2, 0.2], [0.7, 1.4, -0.45, 0.22]].forEach((q, i) => box(q[3], q[3], q[3], i % 3 ? cream : grit, q[0], q[1], q[2], [0.5, 0.6 + i, 0.3]));
+      side.forEach(q => { rod([q * 0.28, 1.5, 0.45], [q * 0.33, 1.85, 0.5], 0.05, sa); sph(0.08, black, q * 0.33, 1.88, 0.52).userData.plain = true; });
+      side.forEach(q => { const pv = arm(q * 1.1, 1.05, 0.35, 0.6, 0.12, sa, sa, 0.27, 1.9); into(pv, () => { [-1, 1].forEach(p => put(new T.ConeGeometry(0.1, 0.42, 8), sa, p * 0.12, -0.8, 0, [0, 0, p * 0.15])); }); }); },
+    // slime: a green blob with two round dots for eyes, two stretchy arms and sticky little feet
+    homslime() { const gr = M(0x7fd14a, 0.2), gd = M(0x3c9a5f, 0.3), goo = M(0x7fd14a, 0.1, 0, { transparent: true, opacity: 0.5 });
+      floor(() => { cyl(1.0, 1.1, 0.03, goo, 0, 0.015, 0.1, null, 28).userData.plain = true; });
+      body(); side.forEach(q => sph(0.2, gr, q * 0.4, 0.1, 0.6, [1.1, 0.5, 1.3]));
+      sph(0.85, gr, 0, 0.68, 0, [1.15, 0.85, 1]); sph(0.5, gr, 0.1, 1.45, 0, [1, 0.9, 0.95]); sph(0.2, gr, -0.55, 1.15, 0.2);
+      eyes(1.5, 0.45, 0.2, 0.06, 0); shine(-0.28, 1.65, 0.4, 0.12, 0.3, 0.5);
+      side.forEach(q => arm(q * 0.85, 0.95, 0.1, 0.7, 0.1, gr, gr, 0.2, 0.9, 1.4));
+      sph(0.1, gr, 0.65, 0.3, 0.6, [1, 1.6, 1]); },
+    // ammonia: a stoppered bottle of smelling salts on two legs, white crystals rattling inside, fumes coming off the neck
+    homammonia() { const gl = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.4, glass: 0xbfe6fa, op: 0.55, emissive: new T.Color(0x5a8ca0) }), cr = M(0xf4efe0, 0.5), cork = M(0xd6453a, 0.7), lab = M(0x3a6fd0, 0.5), fume = M(0xf0e9a8, 0.9, 0, { transparent: true, opacity: 0.5 });
+      body(); legs(0.6, 0.26, black, 0.05);
+      cyl(0.62, 0.72, 0.95, gl, 0, 1.05, 0, null, 24); cyl(0.26, 0.62, 0.38, gl, 0, 1.7, 0, null, 24); cyl(0.24, 0.24, 0.3, gl, 0, 2.0, 0, null, 18); cyl(0.3, 0.3, 0.08, gl, 0, 2.2, 0, null, 18);
+      [[-0.25, 0.75, 0.1, 0.3], [0.25, 0.7, -0.05, 0.26], [0.0, 0.88, 0.3, 0.22], [-0.2, 1.1, -0.1, 0.2], [0.28, 1.05, 0.2, 0.17]].forEach((q, i) => box(q[3], q[3], q[3], cr, q[0], q[1], q[2], [0.5 + i, 0.6, 0.3]));
+      cyl(0.2, 0.24, 0.3, cork, 0, 2.38, 0, null, 14); box(0.8, 0.3, 0.05, lab, 0, 1.1, 0.7, [0, 0, 0]).userData.plain = true; shine(-0.5, 1.2, 0.66, 0.07, 0.5, 0);
+      [[0.15, 2.8, 0.55], [-0.25, 3.15, 0.45], [0.2, 3.5, 0.4]].forEach((q, i) => sph(q[2] * 0.45, fume, q[0], q[1], 0.05, [1.3, 0.9, 1]).userData.plain = true);
+      side.forEach(q => arm(q * 0.78, 1.2, 0, 0.6, 0.045, black, null, 0, 0.5)); },
+    // seedling: a shoot in a clay pot, two leaves, two dots for eyes on the pot, little legs under it
+    homseed() { const clay = M(0xc26a3a, 0.7), soil = M(0x3a2a1e, 0.9), lf = M(0x3c9a5f, 0.4), lf2 = M(0x7fd14a, 0.4);
+      body(); legs(0.45, 0.28, black, 0.05);
+      cyl(0.85, 0.6, 0.85, clay, 0, 0.88, 0, null, 24); cyl(0.95, 0.95, 0.24, clay, 0, 1.42, 0, null, 24); cyl(0.78, 0.78, 0.04, soil, 0, 1.52, 0, null, 24).userData.plain = true;
+      eyes(0.95, 0.66, 0.2, 0.055, 0); shine(-0.55, 1.0, 0.62, 0.08, 0.4, -0.1);
+      side.forEach(q => arm(q * 0.82, 0.95, 0, 0.55, 0.045, black, null, 0, 0.6));
+      const sh = new T.Group(); sh.position.set(0, 1.54, 0); R.body.add(sh); const pc = cur; cur = sh;
+      rod([0, 0, 0], [0.03, 0.55, 0], 0.06, lf); sph(0.38, lf2, -0.36, 0.78, 0, [1.25, 0.3, 0.8]).rotation.z = 0.45; sph(0.42, lf, 0.4, 0.7, 0, [1.25, 0.3, 0.8]).rotation.z = -0.45; sph(0.13, lf2, 0.03, 0.72, 0, [0.8, 1.3, 0.8]);
+      cur = pc; R.shoot = sh; R.extra.push(o => { const m = Math.hypot(o.lean ? o.lean[0] : 0, o.lean ? o.lean[1] : 0) || 0; sh.rotation.set(o.lean ? o.lean[1] * 0.6 * (o.reach || 0) : 0, 0, o.lean ? -o.lean[0] * 0.6 * (o.reach || 0) : 0); }); },
+    // brimstone: a steaming lump of sulfur on a smouldering stone, glowing cracks, little legs under the stone
+    hombrimstone() { const sul = M(0xf0b93a, 0.6), stn = M(0x2c2f34, 0.7), ember = glow(0xd6453a), steam = M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.5 });
+      body(); legs(0.5, 0.36, black, 0.05);
+      cyl(1.05, 1.15, 0.55, stn, 0, 0.75, 0, null, 7);
+      [[-0.55, 1.03, 0.15, 0.32, 0.08], [0.2, 1.03, 0.5, 0.45, 0.07], [0.6, 1.03, -0.1, 0.3, 0.06]].forEach(q => box(q[3], 0.04, q[4], ember, q[0], q[1], q[2], [0, 0.5, 0]).userData.plain = true);
+      put(new T.DodecahedronGeometry(0.7, 0), sul, 0, 1.6, 0, [0.3, 0.4, 0.1], [1, 0.95, 1]); put(new T.DodecahedronGeometry(0.42, 0), sul, -0.6, 1.3, 0.2, [0.5, 0.2, 0.3]); put(new T.DodecahedronGeometry(0.46, 0), sul, 0.62, 1.34, -0.05, [0.2, 0.9, 0.2]);
+      [[-0.5, 0.72, 0.98], [0.1, 0.8, 1.02], [0.6, 0.7, 0.9]].forEach(q => sph(0.1, ember, q[0], q[1], q[2], [1.2, 0.8, 0.5]).userData.plain = true);
+      eyes(1.62, 0.6, 0.2, 0.055, 0); shine(-0.3, 1.9, 0.5, 0.1, 0.3, 0.4);
+      [[0.1, 2.5, 0.28], [-0.3, 2.9, 0.22], [0.2, 3.3, 0.18]].forEach(q => sph(q[2], steam, q[0], q[1], 0.05, [1.3, 0.8, 1]).userData.plain = true);
+      side.forEach(q => arm(q * 1.0, 0.85, 0, 0.5, 0.07, stn, null, 0, 0.7)); },
+    // the homunculus in its jar: a faceless little man of red clay floating in blue liquid
+    homunculus() { mkJar('homunculus', 0.92, 2); },
     elixir() { const shell = M(0xe6f1f8, 0.2), gl = glow(0xf2c020); tor(0.5, 0.09, brass, 0, 0.09, 0, [H, 0, 0]); sph(0.75, gl, 0, 0.85, 0); cyl(0.17, 0.17, 0.9, shell, 0, 1.9, 0); cyl(0.175, 0.175, 0.3, gl, 0, 1.6, 0); cyl(0.22, 0.19, 0.28, wood, 0, 2.45, 0); [[0.2, 1.0, 0.7], [-0.25, 0.75, 0.68], [0.05, 0.5, 0.72], [-0.1, 1.2, 0.6]].forEach(q => sph(0.08, white, q[0], q[1], q[2])); rod([0.17, 2.0, 0.05], [0.7, 1.55, 0.3], 0.015, black); box(0.38, 0.24, 0.02, paper, 0.8, 1.42, 0.32, [0, 0, 0.35]); },
     tower() { const sky = M(0x3b2a5c, 0.85), stone = M(0xb9b4a8, 0.9), bolt = glow(0xf6d020), fire = glow(0xf27a1a); box(1.3, 0.22, 0.6, wood, 0, 0.11, 0); box(1.8, 2.8, 0.08, paper, 0, 1.6, 0); box(1.5, 2.5, 0.02, sky, 0, 1.6, 0.05).userData.plain = true; box(1.5, 0.28, 0.03, black, 0, 0.5, 0.06).userData.plain = true; box(0.52, 1.25, 0.06, stone, -0.1, 1.2, 0.09); box(0.66, 0.16, 0.07, stone, -0.1, 1.86, 0.09); [-0.32, -0.1, 0.12].forEach(q => box(0.13, 0.13, 0.07, stone, q, 2.0, 0.09).userData.plain = true); [[-0.1, 1.55], [-0.1, 1.15], [-0.1, 0.78]].forEach(q => box(0.14, 0.2, 0.03, fire, q[0], q[1], 0.13).userData.plain = true); box(1.8, 2.8, 0.22, M(0xcdb98a, 0.8), 0, 1.6, -0.14); [[0.68, 2.8, 0.34, 2.45], [0.34, 2.45, 0.6, 2.38], [0.6, 2.38, 0.16, 2.0]].forEach(q => rod([q[0], q[1], 0.12], [q[2], q[3], 0.12], 0.03, bolt).userData.plain = true); put(new T.CylinderGeometry(0, 0.13, 0.36, 8), fire, -0.22, 2.2, 0.12).userData.plain = true; sph(0.11, white, 0.42, 1.62, 0.1).userData.plain = true; rod([0.42, 1.52, 0.1], [0.52, 1.14, 0.1], 0.05, white).userData.plain = true; rod([0.28, 1.3, 0.1], [0.62, 1.46, 0.1], 0.04, white).userData.plain = true; rod([0.52, 1.14, 0.1], [0.4, 0.92, 0.1], 0.04, white).userData.plain = true; rod([0.52, 1.14, 0.1], [0.66, 0.96, 0.1], 0.04, white).userData.plain = true; },
     duck() { const yel = M(0xf2c41a, 0.35), deep = M(0xe0a80e, 0.4), bill = M(0xf07a12, 0.4); sph(0.8, yel, -0.05, 0.62, 0, [1.2, 0.78, 1]); sph(0.32, yel, -0.95, 0.95, 0, [1, 0.7, 0.8]); sph(0.4, deep, -0.15, 0.72, 0.62, [1.25, 0.6, 0.4]); sph(0.5, yel, 0.5, 1.45, 0); sph(0.22, bill, 1.02, 1.36, 0, [1.3, 0.42, 1.1]); sph(0.075, black, 0.72, 1.62, 0.4).userData.plain = true; sph(0.03, white, 0.74, 1.65, 0.46).userData.plain = true; },
@@ -156,22 +261,83 @@ function build(id, T, grp, tint) {
     intern() { const skin = M(0xe2b48c, 0.8), hair = M(0x6b3a16, 0.8), badge = M(0x2f6fd0, 0.6), shell = M(0xe6f1f8, 0.2); cyl(0.42, 0.58, 1.3, white, 0, 0.65, 0); sph(0.4, skin, 0, 1.7, 0); sph(0.42, hair, 0, 1.8, -0.06, [1, 0.8, 1]); side.forEach(q => { sph(0.045, black, q * 0.15, 1.68, 0.37).userData.plain = true; rod([q * 0.03, 1.3, 0.3], [q * 0.2, 1.3, 0.3], 0.012, red).userData.plain = true; }); rod([-0.14, 1.32, 0.3], [0, 0.95, 0.42], 0.015, red).userData.plain = true; rod([0.14, 1.32, 0.3], [0, 0.95, 0.42], 0.015, red).userData.plain = true; box(0.24, 0.3, 0.03, badge, 0, 0.82, 0.46); rod([-0.4, 1.15, 0], [-0.75, 0.75, 0.2], 0.1, white); rod([0.4, 1.15, 0], [0.85, 1.35, 0.2], 0.1, white); put(new T.CylinderGeometry(0.08, 0.28, 0.5, 12), shell, 1.0, 1.55, 0.2, [0, 0, -1.9]); sph(0.09, liq, 1.3, 1.25, 0.2, [1, 1.6, 1]).userData.plain = true; sph(0.07, liq, 1.36, 0.95, 0.2, [1, 1.6, 1]).userData.plain = true; sph(0.3, liq, 1.35, 0.03, 0.2, [1.2, 0.1, 0.9]); },
     orb() { const ball = glow(0x8f5cf0), mist = M(0xf2ecff, 0.4); cyl(0.7, 0.8, 0.16, brass, 0, 0.08, 0); cyl(0.3, 0.5, 0.3, brass, 0, 0.3, 0); [0.4, 2.5, 4.6].forEach(an => rod([Math.cos(an) * 0.3, 0.4, Math.sin(an) * 0.3], [Math.cos(an) * 0.55, 0.9, Math.sin(an) * 0.55], 0.06, brass)); sph(0.8, ball, 0, 1.45, 0); tor(0.32, 0.07, mist, -0.05, 1.45, 0.62, [0, 0, 0.6], PI * 1.4).userData.plain = true; sph(0.1, mist, 0.2, 1.3, 0.72, [1.5, 0.8, 0.4]).userData.plain = true; sph(0.13, white, -0.36, 1.86, 0.55, [1, 1.5, 0.4]).userData.plain = true; },
     voodoo() { const sack = M(0xb8894a, 0.95), pin = M(0xd8dee6, 0.2, 0.9); sph(0.55, sack, 0, 1.0, 0, [1, 1.25, 0.7]); sph(0.42, sack, 0, 1.95, 0, [1, 1, 0.75]); side.forEach(q => { rod([q * 0.4, 1.3, 0], [q * 1.0, 1.55, 0], 0.16, sack); rod([q * 0.25, 0.5, 0], [q * 0.45, 0.1, 0], 0.17, sack); box(0.16, 0.035, 0.02, black, q * 0.16, 2.0, 0.32, [0, 0, 0.78]); box(0.16, 0.035, 0.02, black, q * 0.16, 2.0, 0.32, [0, 0, -0.78]); }); for (let k = 0; k < 4; k++) box(0.03, 0.1, 0.02, black, -0.15 + k * 0.1, 1.72, 0.3); put(new T.SphereGeometry(0.16, 12, 10), red, 0.12, 1.15, 0.36, null, [1, 1, 0.4]); [[-0.3, 1.25, 0.5, -0.9, 1.9, 1.1], [0.35, 0.85, 0.5, 1.0, 1.3, 1.2], [0.05, 2.25, 0.3, 0.3, 2.9, 0.8]].forEach(q => { rod([q[0], q[1], q[2] * 0.6], [q[3], q[4], q[5]], 0.025, pin); sph(0.09, red, q[3], q[4], q[5]); }); },
-    ouija() { const bd = M(0x9a6230, 0.7), face = M(0xc98f4c, 0.7); box(3.0, 0.12, 2.0, bd, 0, 0.06, 0); box(2.75, 0.03, 1.75, face, 0, 0.13, 0); for (let k = 0; k < 12; k++) box(0.11, 0.02, 0.17, black, (k - 5.5) * 0.2, 0.16, -0.5 + (k - 5.5) * (k - 5.5) * 0.012, [0, -(k - 5.5) * 0.05, 0]); for (let k = 0; k < 10; k++) box(0.11, 0.02, 0.17, black, (k - 4.5) * 0.2, 0.16, -0.18 + (k - 4.5) * (k - 4.5) * 0.012, [0, -(k - 4.5) * 0.05, 0]); cyl(0.17, 0.17, 0.02, gold, -1.12, 0.16, -0.62); tor(0.15, 0.045, white, 1.12, 0.17, -0.62, [H, 0, 0.6], PI * 1.2); cyl(0.5, 0.5, 0.1, M(0x4a2a12, 0.6), 0.25, 0.22, 0.42, [0, 0.52, 0], 3); tor(0.14, 0.045, brass, 0.25, 0.29, 0.36, [H, 0, 0]); bones(0.3, 0.34, 0.98); },
-    candle() { sph(0.62, bone, 0, 0.75, 0, [1, 0.92, 1.05]); box(0.62, 0.34, 0.55, bone, 0, 0.22, 0.12); side.forEach(s => sph(0.16, black, s * 0.23, 0.8, 0.5)); cyl(0, 0.08, 0.14, black, 0, 0.58, 0.6, [H, 0, 0]); for (let k = 0; k < 4; k++) box(0.03, 0.2, 0.03, black, -0.2 + k * 0.13, 0.25, 0.4); sph(0.3, black, 0, 1.33, 0, [1.6, 0.35, 1.6]); sph(0.1, black, 0.4, 1.1, 0.3, [1, 2, 1]); cyl(0.2, 0.22, 1.0, black, 0, 1.85, 0); cyl(0.02, 0.02, 0.2, black, 0, 2.4, 0); cyl(0, 0.14, 0.5, glow(0xff9a2a), 0, 2.7, 0); },
-    goat() { const horn = M(0x4a3d2e, 0.6), white = M(0xd9d0bd, 0.8); sph(0.8, white, 0, 1.25, 0, [1.25, 0.75, 0.7]); side.forEach(sx => side.forEach(sz => { cyl(0.09, 0.07, 0.9, white, sx * 0.6, 0.5, sz * 0.3); cyl(0.09, 0.09, 0.12, black, sx * 0.6, 0.06, sz * 0.3); })); rod([0.8, 1.4, 0], [1.15, 1.9, 0], 0.2, white); sph(0.32, white, 1.25, 2.0, 0, [1.3, 0.9, 0.85]); side.forEach(s => { rod([1.1, 2.25, s * 0.15], [0.75, 2.6, s * 0.27], 0.06, horn); sph(0.1, white, 1.05, 2.05, s * 0.32, [1, 0.5, 1.6]); box(0.12, 0.05, 0.03, black, 1.36, 2.1, s * 0.27); }); cyl(0.08, 0, 0.3, white, 1.5, 1.72, 0); sph(0.12, white, -1.0, 1.55, 0); box(1.2, 0.07, 0.34, M(0xd5dbe2, 0.25, 0.6), 0.75, 0.06, 1.75, [0, 0.25, 0]); box(0.6, 0.13, 0.22, wood, -0.12, 0.08, 1.97, [0, 0.25, 0]); put(new T.CylinderGeometry(0, 0.5, 0.6, 12), M(0xd8338a, 0.6), 1.2, 2.5, 0);  grp.children.forEach(c => { c.position.y += 0.55; }); box(3.7, 0.55, 2.7, lead, 0.25, 0.275, 0.45); box(3.9, 0.12, 2.9, lead, 0.25, 0.06, 0.45); [[-1.35, 1.45], [1.85, -0.55]].forEach(q => { cyl(0.13, 0.13, 0.8, black, q[0], 0.95, q[1]); put(new T.CylinderGeometry(0, 0.11, 0.3, 8), glow(0xf2c020), q[0], 1.5, q[1]); }); },
+    // ouija board: a wooden board with a sun, a moon, two arcs of marks and a planchette with a round window
+    ouija() { const bd = M(0x8a5a2b, 0.7), face = M(0xf4efe0, 0.8), sun = M(0xf0b93a, 0.5), plan = M(0x8a5a2b, 0.7);
+      box(3.0, 0.14, 2.1, bd, 0, 0.07, 0); box(2.75, 0.05, 1.85, face, 0, 0.16, 0).userData.plain = true;
+      cyl(0.27, 0.27, 0.05, sun, -1.0, 0.2, -0.6).userData.plain = true; for (let k = 0; k < 8; k++) { const a = k * 0.785; box(0.05, 0.03, 0.2, sun, -1.0 + Math.cos(a) * 0.42, 0.2, -0.6 + Math.sin(a) * 0.42, [0, -a, 0]).userData.plain = true; }
+      cyl(0.27, 0.27, 0.05, black, 1.0, 0.2, -0.6).userData.plain = true; cyl(0.23, 0.23, 0.06, face, 1.1, 0.205, -0.6).userData.plain = true;
+      for (let k = 0; k < 11; k++) { const u = (k - 5) / 5; box(0.1, 0.03, 0.16, black, u * 1.1, 0.2, -0.1 + u * u * 0.3).userData.plain = true; box(0.1, 0.03, 0.16, black, u * 1.1, 0.2, 0.3 + u * u * 0.3).userData.plain = true; }
+      put(new T.CylinderGeometry(0.5, 0.5, 0.1, 3, 1).rotateY(PI), plan, 0.1, 0.25, 0.7, [0, 0.15, 0], [1.3, 1, 1.5]); tor(0.17, 0.04, brass, 0.1, 0.32, 0.72, [H, 0, 0]); cyl(0.15, 0.15, 0.05, face, 0.1, 0.31, 0.72).userData.plain = true; },
+    // skull candle: a skull with a red candle burning on its head, wax running down its face
+    candle() { const wax = M(0xd6453a, 0.7), flame = glow(0xf0b93a);
+      sph(0.72, bone, 0, 1.0, 0, [1, 0.95, 1.05]); box(0.66, 0.36, 0.55, bone, 0, 0.42, 0.14);
+      side.forEach(q => sph(0.2, black, q * 0.27, 1.05, 0.58, [1, 1.1, 0.5]).userData.plain = true); put(new T.ConeGeometry(0.09, 0.2, 3), black, 0, 0.8, 0.7, [PI, 0, 0]).userData.plain = true;
+      for (let k = 0; k < 5; k++) box(0.04, 0.2, 0.02, black, (k - 2) * 0.12, 0.4, 0.43).userData.plain = true;
+      cyl(0.24, 0.26, 0.85, wax, 0, 1.95, 0, null, 18); [[0.3, 0.35], [-0.18, 0.5], [0.08, 0.6]].forEach(q => { rod([q[0], 1.6, q[1]], [q[0], 1.15 - q[1] * 0.3, q[1] + 0.05], 0.07, wax); sph(0.09, wax, q[0], 1.1 - q[1] * 0.3, q[1] + 0.05, [1, 1.4, 1]); });
+      rod([0, 2.35, 0], [0, 2.5, 0], 0.02, black); sph(0.17, flame, 0, 2.7, 0, [0.85, 1.5, 0.85]).userData.plain = true; put(new T.ConeGeometry(0.12, 0.3, 8), flame, 0, 3.0, 0).userData.plain = true; shine(-0.3, 1.3, 0.62, 0.1, 0.35, 0.5); },
+    // goat: a white goat in profile on a round slab with a red star and two candles
+    goat() { const wh = M(0xf4efe0, 0.85), horn = M(0x8a5a2b, 0.6), hoof = black, redm = M(0xd6453a, 0.6), wax = M(0xd6453a, 0.7), flame = glow(0xf0b93a);
+      cyl(1.55, 1.65, 0.14, dark, 0, 0.07, 0, null, 36); tor(1.3, 0.035, redm, 0, 0.16, 0, [H, 0, 0]);
+      for (let k = 0; k < 5; k++) { const a = H + k * 1.2566, b = H + ((k + 2) % 5) * 1.2566; rod([Math.cos(a) * 1.3, 0.17, -Math.sin(a) * 1.3], [Math.cos(b) * 1.3, 0.17, -Math.sin(b) * 1.3], 0.035, redm); }
+      [[-1.25, 0.9], [1.3, 0.8]].forEach(q => { cyl(0.11, 0.11, 0.45, wax, q[0], 0.37, q[1]); sph(0.09, flame, q[0], 0.72, q[1], [0.8, 1.5, 0.8]).userData.plain = true; });
+      sph(0.62, wh, -0.1, 1.2, 0, [1.4, 0.78, 0.72]); rod([0.55, 1.3, 0], [0.95, 1.85, 0], 0.2, wh); sph(0.3, wh, 1.05, 1.95, 0, [1.35, 1.0, 0.9]); sph(0.12, wh, 1.45, 1.85, 0, [1, 0.8, 0.9]);
+      side.forEach(q => { rod([0.95, 2.1, q * 0.14], [0.45, 2.45, q * 0.22], 0.075, horn); put(new T.ConeGeometry(0.075, 0.3, 6), horn, 0.3, 2.52, q * 0.24, [0, 0, 1.2]); });
+      put(new T.ConeGeometry(0.1, 0.35, 8), wh, 1.1, 1.5, 0, [PI, 0, 0]);
+      [[-0.6, 0.3], [-0.6, -0.3], [0.3, 0.3], [0.3, -0.3]].forEach(q => { rod([q[0], 1.0, q[1]], [q[0], 0.2, q[1]], 0.075, wh); cyl(0.09, 0.1, 0.1, hoof, q[0], 0.2, q[1]); });
+      put(new T.ConeGeometry(0.12, 0.35, 6), wh, -0.85, 1.55, 0, [0, 0, 0.9]); sph(0.05, black, 1.28, 2.0, 0.26).userData.plain = true; shine(-0.4, 1.45, 0.45, 0.35, 0.07, 0.1); },
     dryer() { const shell = M(0xe6f1f8, 0.2), cot = M(0xc9b081, 0.95), gran = M(0x6fa3e8, 0.7); box(1.9, 0.12, 0.95, dark, 0, 0.06, 0); cyl(0.06, 0.06, 2.6, steel, 0, 1.3, -0.3); box(0.9, 0.1, 0.14, steel, 0, 1.6, -0.2); tor(0.6, 0.2, shell, 0, 1.0, 0, [0, 0, PI], PI); side.forEach(q => { cyl(0.2, 0.2, 1.3, shell, q * 0.6, 1.65, 0); cyl(0.215, 0.215, 0.8, gran, q * 0.6, 1.45, 0); sph(0.24, cot, q * 0.6, 2.32, 0, [1, 0.8, 1]); }); tor(0.6, 0.215, gran, 0, 1.0, 0, [0, 0, PI + 0.5], PI - 1.0); },
     sieves() { const bead = M(0xe6d9b8, 0.7); cyl(0.82, 0.82, 1.3, glass, 0, 0.65, 0); for (let k = 0; k < 44; k++) { const a = k * 2.399, r = 0.62 * Math.sqrt((k % 11) / 11 + 0.05); sph(0.12, bead, Math.cos(a) * r, 0.14 + Math.floor(k / 11) * 0.24 + (k % 3) * 0.03, Math.sin(a) * r); } cyl(0.88, 0.88, 0.22, dark, 0, 1.42, 0); },
     hood() { const cab = M(0x5f86b8, 0.6), sash = M(0x7fc4ee, 0.25, 0, { transparent: true, opacity: 0.6 }), warn = M(0xf2c41a, 0.5), fume = M(0xf4f4ee, 0.9); box(2.5, 1.0, 1.5, cab, 0, 0.5, 0); side.forEach(q => { box(1.1, 0.8, 0.04, M(0x4a6c98, 0.6), q * 0.6, 0.5, 0.76).userData.plain = true; sph(0.07, steel, q * 0.14, 0.55, 0.8); box(0.14, 1.7, 1.5, white, q * 1.18, 1.95, 0); }); box(2.6, 0.12, 1.6, dark, 0, 1.06, 0); box(2.5, 1.7, 0.1, white, 0, 1.95, -0.7); box(2.5, 0.3, 1.5, white, 0, 2.95, 0); cyl(0.2, 0.5, 0.55, M(0xe6f1f8, 0.2), -0.3, 1.4, 0); cyl(0.4, 0.5, 0.22, liq, -0.3, 1.24, 0); [[-0.3, 1.9, 0.16], [-0.18, 2.2, 0.2], [-0.36, 2.5, 0.17]].forEach(q => sph(q[2], fume, q[0], q[1], 0)); box(2.24, 0.8, 0.05, sash, 0, 2.4, 0.72); box(2.3, 0.14, 0.1, warn, 0, 1.98, 0.74); cyl(0.32, 0.32, 0.6, steel, 0.5, 3.4, -0.2); rod([0.5, 3.6, -0.2], [1.3, 3.75, -0.2], 0.3, steel); },
     scrubber() { const shell = M(0xbfe3f2, 0.12, 0, { transparent: true, opacity: 0.55 }), tube = M(0xe6f1f8, 0.2), bung = M(0x9a3a2a, 0.8); cyl(0.7, 0.8, 0.16, dark, 0, 0.08, 0); cyl(0.6, 0.6, 2.0, shell, 0, 1.16, 0); cyl(0.61, 0.61, 0.95, liq, 0, 0.64, 0).userData.plain = true; cyl(0.34, 0.5, 0.3, shell, 0, 2.3, 0); cyl(0.36, 0.3, 0.34, bung, 0, 2.55, 0); rod([-0.14, 0.4, 0.3], [-0.14, 3.1, 0.3], 0.07, tube); rod([-0.14, 3.1, 0.3], [-0.95, 3.1, 0.3], 0.07, tube); rod([0.16, 2.4, 0.3], [0.16, 3.0, 0.3], 0.07, tube); rod([0.16, 3.0, 0.3], [0.95, 3.0, 0.3], 0.07, tube); [[0.0, 0.5, 0.1], [0.2, 0.75, 0.08], [-0.02, 0.95, 0.12], [0.26, 1.02, 0.07], [0.1, 0.3, 0.07]].forEach(q => sph(q[2], white, q[0], q[1], 0.62, [1, 1, 0.4]).userData.plain = true); },
     pact() { const paper = M(0xe0c88c, 0.9); box(1.6, 0.03, 2.0, paper, 0, 0.1, 0, [0, 0.12, 0]); [-1.05, 1.05].forEach(z => cyl(0.16, 0.16, 1.75, paper, z * 0.12, 0.16, z, [0, 0.12, H])); cyl(0.26, 0.26, 0.08, red, 0.45, 0.15, 0.5); for (let k = 0; k < 3; k++) box(1.0, 0.012, 0.05, black, -0.1, 0.125, -0.6 + k * 0.28, [0, 0.12, 0]); box(0.7, 0.012, 0.04, black, -0.3, 0.125, 0.45, [0, 0.12, 0]); bones(-0.75, 0.3, 0.75); rod([-0.6, 0.25, 0.5], [-0.25, 1.5, -0.2], 0.03, black); box(0.3, 0.8, 0.02, white, -0.33, 1.25, -0.06, [0.5, 0, -0.27]); },
   };
+  Object.keys(HOMID).forEach(k => { B['jar_' + k] = () => { mkJar(k, 0.6, 1); }; B['jars_' + k] = () => { [[0.08, 0], [0.5, 1], [1, 2]].forEach((q, i) => mkJar(k, q[0], q[1], (i - 1) * 2.4)); }; });
+  if (id === '__list') return Object.keys(B);
   if (!B[id]) return false;
   B[id]();
+  let inkK = 1;
+  if (R.body) { grp.userData.rig = R; pose(grp, {}); }
+  else if (!/^(jar|hom)/.test(id) && id !== 'coin' && !(extra && extra.raw)) { // every piece fits the same box: 2.5 wide and 3.1 tall, flat ones 2.9 wide
+    const w = new T.Group(); grp.children.slice().forEach(c => w.add(c)); const bb = new T.Box3().setFromObject(w), sz = bb.getSize(new T.Vector3());
+    let k = FLAT[id] ? 2.9 / Math.max(sz.x, sz.z, 0.1) : Math.min(2.5 / Math.max(sz.x, sz.z, 0.1), 3.1 / Math.max(sz.y, 0.1)); k = Math.max(0.25, Math.min(2.4, k)); inkK = k;
+    w.scale.setScalar(k); w.position.set(-(bb.min.x + bb.max.x) / 2 * k, -bb.min.y * k, -(bb.min.z + bb.max.z) / 2 * k); grp.add(w); }
   // every piece stands centered on its own place, so the words under it sit under its middle
-  { const bb = new T.Box3().setFromObject(grp), cx = (bb.min.x + bb.max.x) / 2; if (isFinite(cx)) grp.children.forEach(c => { c.position.x -= cx; }); }
-  finish(T, grp); return true;
+  { const bb = new T.Box3().setFromObject(grp), cx = (bb.min.x + bb.max.x) / 2; if (isFinite(cx) && !R.body && inkK === 1) grp.children.forEach(c => { c.position.x -= cx; }); }
+  finish(T, grp, (extra && extra.ink) || 0.05 / inkK); return true;
+}
+// Posing a creature without knowing its parts. o = { lean: [dx, dz], reach: 0..1, squash: -1..1, t: seconds }.
+// lean is a direction on the page in the creature's own frame (x to the right, z toward the viewer); the body tips that way from its feet
+// and the arms swing toward it as far as reach says. squash 1 is flat and wide (a step), -1 tall and thin (a stretch). t adds a slow breath.
+function pose(grp, o) {
+  const R = grp && grp.userData && grp.userData.rig; if (!R) return false; o = o || {};
+  const lx = o.lean ? o.lean[0] : 0, lz = o.lean ? o.lean[1] : 0, m = Math.hypot(lx, lz), k = Math.min(1, m), rc = Math.max(0, Math.min(1, o.reach || 0)), sq = Math.max(-1, Math.min(1, o.squash || 0)), t = o.t || 0, T = R.T;
+  const br = 1 + 0.015 * Math.sin(t * 2.4);
+  R.body.scale.set(1 + 0.16 * sq, (1 - 0.3 * sq) * br, 1 + 0.16 * sq);
+  R.body.rotation.set(R.lean0[0] + (m ? lz / m * k * 0.42 : 0), 0, R.lean0[1] - (m ? lx / m * k * 0.42 : 0));
+  const dx = m ? lx / m : 0, dz = m ? lz / m : -1;
+  R.arms.forEach(a => { const q = new T.Quaternion().setFromAxisAngle(new T.Vector3(-dz, 0, dx), 0.6 + rc * 1.7); a.g.quaternion.copy(a.rest); if (rc > 0) a.g.quaternion.slerp(q, rc); a.g.scale.y = 1 + a.stretch * rc; });
+  R.extra.forEach(f => f(o)); return true;
+}
+// the same toward a point in world space: the page says where the thing to reach for is
+function poseToward(grp, T, world, reach, squash, t) {
+  const p = grp.worldToLocal(world.clone()), m = Math.hypot(p.x, p.z) || 1, d = Math.min(1, m / 6);
+  return pose(grp, { lean: [p.x / m * d, p.z / m * d], reach, squash, t });
+}
+// a creature, or the jar of one. key: water, h2, co2, acid, wood, salt, slime, ammonia, seedling, brimstone
+function creature(T, key, tint) { const g = new T.Group(); return build(HOMID[key], T, g, tint || new T.Color(0x3a6fd0)) ? g : null; }
+function jar(T, key, fill, stage) { const g = new T.Group(); if (!build('jar_' + key, T, g, new T.Color(0x3a6fd0))) return null; const j = g.children[0]; j.userData.set(fill == null ? 0.6 : fill, stage); return j; }
+// The coin on the ink canvas, the same coin as the 3D one: gold disc, thick ink edge, an engraved ring and diamond, one highlight.
+// drawCoin(ctx, x, y, r, { turn: 0..1 spins it about its height, alpha })
+function drawCoin(c, x, y, r, o) {
+  o = o || {}; const sx = o.turn == null ? 1 : Math.max(0.12, Math.abs(Math.cos(o.turn * Math.PI))), ink = '#2b2622';
+  c.save(); c.translate(x, y); c.scale(sx, 1); if (o.alpha != null) c.globalAlpha = o.alpha;
+  c.beginPath(); c.arc(0, 0, r, 0, 6.2832); c.fillStyle = '#f0b93a'; c.fill(); c.lineWidth = Math.max(2, r * 0.16); c.strokeStyle = ink; c.stroke();
+  c.beginPath(); c.arc(0, 0, r * 0.64, 0, 6.2832); c.lineWidth = Math.max(1.2, r * 0.07); c.stroke();
+  const d = r * 0.17; c.beginPath(); c.moveTo(0, -d); c.lineTo(d, 0); c.lineTo(0, d); c.lineTo(-d, 0); c.closePath(); c.fillStyle = ink; c.fill();
+  c.beginPath(); c.moveTo(-r * 0.62, -r * 0.42); c.lineTo(-r * 0.34, -r * 0.66); c.lineWidth = Math.max(1.5, r * 0.1); c.lineCap = 'round'; c.strokeStyle = '#fffaf0'; c.stroke();
+  c.restore();
 }
 // pieces that lie flat on the page and are seen from on top
-const FLAT = { spatula: 1, loupe: 1, ouija: 1, pact: 1, stopwatch: 1, magnet: 1, transmute: 1 };
-AA.rxKit = { build, FLAT, K, mat, finish, snap, PAL };
+const FLAT = { coin: 1, spatula: 1, loupe: 1, ouija: 1, pact: 1, stopwatch: 1, magnet: 1 };
+AA.rxKit = { build, FLAT, K, mat, finish, snap, PAL, drawCoin, pose, poseToward, creature, jar, HOMID, list: T => { const g = {}; return build('__list', T, { add() {}, traverse() {}, children: [] }, new T.Color(0)); } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
