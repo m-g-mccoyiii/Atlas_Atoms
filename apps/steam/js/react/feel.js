@@ -50,7 +50,7 @@ const DIR = {
 const WORDS = ['stable', 'unstable', 'volatile', 'overreact'], WSZ = [54, 64, 76, 130];
 
 let mode = 0;
-try { const q = new URLSearchParams(root.location.search).get('feel'); if (q !== null && q !== '') mode = Math.max(0, Math.min(3, +q || 0)); else { const s = root.localStorage.getItem(KEY); if (s !== null) mode = Math.max(0, Math.min(3, +s || 0)); else mode = 1; } } catch (e) { mode = 1; }
+try { const q = new URLSearchParams(root.location.search).get('feel'); if (q !== null && q !== '') mode = Math.max(0, Math.min(3, +q || 0)); else { const s = root.localStorage.getItem(KEY); if (s !== null) mode = Math.max(0, Math.min(3, +s || 0)); else mode = 3; } } catch (e) { mode = 3; }
 
 let api = null, T = null;
 const F = { log: [], probeRows: [], seq: null, BOX: { x0: -11.5, x1: 25, z0: -17.2, z1: -1.4 }, BOXW: { x0: -23.5, x1: 25, z0: -17.4, z1: -4.8 } };

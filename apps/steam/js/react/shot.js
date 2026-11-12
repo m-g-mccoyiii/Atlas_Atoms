@@ -7,6 +7,7 @@
   const realST = window.setTimeout.bind(window);
   window.addEventListener('error', e => { new Image().src = '/__log?m=' + encodeURIComponent('ERR ' + e.message + ' ' + (e.filename || '').split('/').pop() + ':' + e.lineno + ':' + e.colno); });
   window.addEventListener('unhandledrejection', e => { new Image().src = '/__log?m=' + encodeURIComponent('REJ ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
+  ['error', 'warn'].forEach(k => { const o = console[k].bind(console); console[k] = (...a) => { try { new Image().src = '/__log?m=' + encodeURIComponent('CON.' + k + ' ' + a.map(x => (x && x.stack) || String(x)).join(' ').slice(0, 400)); } catch (e) {} o(...a); }; });
   let vnow = 1000, tid = 1, rafs = []; const timers = [];
   performance.now = () => vnow;
   window.setTimeout = (fn, ms, ...a) => { const id = tid++; timers.push({ id, t: vnow + Math.max(0, ms || 0), fn, a }); return id; };
