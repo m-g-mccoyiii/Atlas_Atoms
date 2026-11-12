@@ -5,10 +5,13 @@ import io, json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, 'tools_chem'))
 import offer_formula as O
+# the game's starting six (ruling AF): thiolene and ritter replace hydroborate and reduce. The worth numbers are those measured with the old six on the engine
+# (reagent_stats.json) and were NOT measured again for the new six: that needs reagent_stats.py (hours).
+GAME_SIX = ('hydrate', 'dehydrate', 'oxidize', 'grow', 'thiolene', 'ritter')
 out = {}
 for x in O.ALL:
     i = O.IN[x]
-    out[x] = {'held': bool(x in O.SIX), 'worth': round(i['worth'], 4), 'band': [round(i['band'][b], 4) for b in O.BANDS], 'mean': round(i['band_mean'], 4),
+    out[x] = {'held': bool(x in GAME_SIX), 'worth': round(i['worth'], 4), 'band': [round(i['band'][b], 4) for b in O.BANDS], 'mean': round(i['band_mean'], 4),
               'reach': round(i['reach'], 4), 'bonus': {y: round(v, 3) for y, v in i['bonus'].items()}}
 txt = 'const OFFER_STATS = ' + json.dumps(out, separators=(',', ':')) + ';'
 f = os.path.join(HERE, '..', 'apps', 'steam', 'js', 'react', 'path.js')
