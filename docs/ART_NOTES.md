@@ -70,3 +70,35 @@ The page must call these in place of its three coin drawings.
 - Not redrawn (still hard to read at 70 px): `schlenk`, `cannula`, `reflux`, `recycler`, `sieves`, `scrubber`. They are tangles of glass and pipe; a tidy silhouette needs a decision on what each should be.
 - Not seen in the real page, only on the test page (headless Edge, software GL, 1280 by 720). The test page has no shadows on the objects themselves (the page has none either), only a soft shadow on the ground.
 - The idle breath and a hop are not animated here; the page drives `pose` over time.
+
+## Second pass (names: instrument, homunculus, runoff, gold)
+
+Pictures: `.claude/shots/art2-*.png`.
+
+### Hooks
+
+- `AA.rxKit.pose(fig, { lean, reach, squash, t, tuck })`: `tuck: true` folds a creature's arms in and gives it the character it has in a jar (crab hunched low, balloon rising and bobbing with `t`, string coiled, bottle leaning, ammonia leaning the other way, slime slumped, acid slumped forward).
+- `AA.rxKit.use(group, s)`: the in-use pose of an instrument, `s` 0 (rest) to 1 (in use), any value between. No parts needed. Calling `use(g, 0)` returns to rest; a built instrument is already at 0.
+  - mirror: 1 tilts back to face the work. crystal: 0 is the seed, 1 grown. magnet: 1 leans in. bunsen: 0 flame low, 1 flame high.
+  - burette: 0 to 0.5 a drop forms, 0.5 to 1 it falls into the flask. voodoo: 0 to 0.5 the first pin goes in, 0.5 to 1 the second.
+  - paw: the fingers curl one at a time, thumb first (0.2 per finger). recycler: 1 is a third of a turn (turn it again for a loop).
+  - cannula: 0 to 1 a drop runs along the needle from the left flask to the right.
+- `AA.rxKit.jarReport(T)`: for every creature at the speck, half and ready stages, how far from the jar's axis it reaches and its lowest and highest point, against the glass (kept to 0.84 of 0.9) and the lid (kept to 2.2 of 2.3). All 30 rows pass; the table is `art2-jars-table.png`. Ready creatures press toward the glass (wood and ammonia lean to 0.78, the crab to 0.8) but never touch it.
+- Jar ids for looking: `jar_<key>` (half full), `jarr_<key>` (ready), `jarh_<key>` (half grown), `jars_<key>` (all three).
+
+### New or redrawn ids
+
+- Redrawn to be bold: `schlenk` (three taps, three flasks), `cannula` (long needle arching between two flasks), `reflux` (flask over a flame, water jacket, a red arrow up and a blue arrow down), `recycler` (three green arrows chasing round a triangle), `sieves` (a wire sieve with a drop in it), `scrubber` (wash bottle with bubbles), `stopper` (flask, big cork, arrow), `coldtrap` (ice bucket with a drop falling in), `hood` (cabinet with an arrow up the duct), `transmute` (lead bar, arrow, three gold bars), `spatula` and `crystal` (bigger), `burette` (thicker tube, bigger drop).
+- Instruments with an in-use pose: `mirror`, `crystal` (the seed crystal), `magnet`, `bunsen` (the burner), `burette`, `voodoo`, `paw`, `recycler`, `cannula`.
+- Runoff, each one bold shape readable at 24 px: `ro_water` (drop), `ro_h2` (two hydrogens bonded), `ro_co2` (O=C=O), `ro_acid` (green fumes), `ro_nh3` (pale puff with two pungent dashes), `ro_sulfur` (crumb). Like other pieces they are fitted to the same box; the page scales them.
+- Yield marks, flags on poles: `mark_stable` (blue, a disc), `mark_unstable` (yellow, saw edge), `mark_volatile` (red, a flame), `mark_overreact` (black, a hot center, a second flag). `coin` / `drawCoin` at 16 and 24 px is in `art2-coin-16-24px.png`.
+
+### The audit at 70 and 140 px (all pages, `art2-audit-*.png`)
+
+A first-time player could name (from the shape alone): balance, mortar and pestle, mirror, clamp stand, magnet, hot plate, card box, notebook, burner, thermometer, stopwatch, magnifier, hourglass (and timer), dropper, coin, methanol, ethylene, goat, ouija board, skull candle, snake ring, crystal ball, duck, cat, coffee cup, lab coat, milk carton, raven, goggles, clipboard, extinguisher, voodoo doll, grimoire, scroll, recycle arrows, flasks joined by a needle, row of flasks, sieve, wash bottle, flask and cork, ice bucket, U tube, and the five runoff and four marks.
+
+Could not (at first sight): spatula, litmus fan, carousel, poison bottle, idol, glory hand, intern, mystery bottle, elixir flask, tower picture, hood, the paw as a paw, and two hourglasses that look the same (`timer` and `hourglass`). Redrawn from that list: spatula, crystal, transmute, hood, burette. Not redrawn: litmus, carousel, regia, idol, glory, intern, mystery, elixir, tower, paw (a hand with the fingers up reads as a hand, the in-use curl makes it a paw), and the timer and hourglass pair, which still need one of them dropped or changed. The honest limit: a name needs the page's label under it at 70 px for the pieces that are ideas more than objects (litmus, carousel, stopper).
+
+### What the page builder does
+
+Call `AA.rxKit.use(group, s)` where an instrument is used (the group is the one passed to `build`, not its parent). The `ro_*` ids are for the things that fly to a jar; `mark_*` for the track.

@@ -34,6 +34,18 @@ function finish(T, grp, tk) {
   });
 }
 const HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', ammonia: 'homammonia', seedling: 'homseed', brimstone: 'hombrimstone' };
+// how each creature stands when tucked in its jar: its own character (pose with tuck: true; t makes the balloon bob)
+const CHAR = {
+  homwood: R => { R.body.rotation.z = 0.42; R.body.rotation.x = 0.05; },
+  homh2: (R, o) => { R.body.position.y = 0.45 + 0.06 * Math.sin((o.t || 0) * 2.2); R.body.rotation.z = 0.08; },
+  homsalt: R => { R.body.scale.y *= 0.82; R.body.scale.x *= 1.04; R.body.rotation.x = 0.12; },
+  homslime: R => { R.body.scale.y *= 0.85; R.body.rotation.z = -0.2; },
+  homammonia: R => { R.body.rotation.z = -0.38; },
+  homacid: R => { R.body.scale.y *= 0.92; R.body.rotation.x = 0.18; },
+  homco2: R => { R.body.rotation.y = 0.5; },
+  homwater: R => { R.body.rotation.z = 0.12; },
+  homseed: R => { R.body.rotation.z = -0.08; }
+};
 function build(id, T, grp, tint, extra) {
   const lin = h => new T.Color(h).convertSRGBToLinear();
   let cur = null;
@@ -88,10 +100,12 @@ function build(id, T, grp, tint, extra) {
     const meas = (obj, root, cx, cz) => { obj.updateMatrixWorld(true); root.updateMatrixWorld(true); const inv = new T.Matrix4().copy(root.matrixWorld).invert(), v = new T.Vector3(), b = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9, y0: 1e9, y1: -1e9, r: 0 };
       obj.traverse(m => { if (!m.isMesh || !m.visible) return; const pa = m.geometry.attributes.position; for (let i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); b.x0 = Math.min(b.x0, v.x); b.x1 = Math.max(b.x1, v.x); b.z0 = Math.min(b.z0, v.z); b.z1 = Math.max(b.z1, v.z); b.y0 = Math.min(b.y0, v.y); b.y1 = Math.max(b.y1, v.y); b.r = Math.max(b.r, Math.hypot(v.x - (cx || 0), v.z - (cz || 0))); } }); return b; };
     // the creature with its arms tucked in, measured once: the biggest it can be and still clear the glass all round and the lid
+    const JPRESS = { wood: [-1, 0], slime: [1, 0], ammonia: [1, 0], salt: [0, 1] };
     const probe = new T.Group(); build(HOMID2[k], T, probe, tint, { jar: true, ink: 0.05 }); pose(probe, { tuck: 1 }); const hold = new T.Group(); hold.add(probe);
     let mb = meas(probe, hold); const ccx = (mb.x0 + mb.x1) / 2, ccz = (mb.z0 + mb.z1) / 2; mb = meas(probe, hold, ccx, ccz);
     const S2 = Math.min(0.78 / mb.r, 1.95 / (mb.y1 - mb.y0), 1.2);
-    const cs = sc => { const c = new T.Group(); build(HOMID2[k], T, c, tint, { jar: true, ink: 0.04 / sc }); pose(c, { tuck: 1 }); c.scale.setScalar(sc); c.position.set(-ccx * sc, 0.21 - mb.y0 * sc, -ccz * sc); g.add(c); return c; };
+    const cs = sc => { const c = new T.Group(); build(HOMID2[k], T, c, tint, { jar: true, ink: 0.04 / sc }); pose(c, { tuck: 1 }); c.scale.setScalar(sc); c.position.set(-ccx * sc, 0.21 - mb.y0 * sc, -ccz * sc); g.add(c);
+      const pr = JPRESS[k]; if (pr) { const r0 = meas(c, g).r, sl = Math.max(0, 0.8 - r0); c.position.x += pr[0] * sl; c.position.z += pr[1] * sl; } return c; };
     const mid = cs(S2 * 0.62), big = cs(S2);
     g.userData.report = () => { const o = {}; [['speck', sp], ['half', mid], ['ready', big]].forEach(q => { const b = meas(q[1], g); o[q[0]] = { r: +b.r.toFixed(2), y0: +b.y0.toFixed(2), y1: +b.y1.toFixed(2), ok: b.r <= 0.84 && b.y0 >= 0.14 && b.y1 <= 2.2 }; }); return o; };
     g.userData.set = (f, st) => { f = Math.max(0, Math.min(1, f)); st = st == null ? (f < 0.34 ? 0 : f < 1 ? 1 : 2) : st; const h = 0.05 + f * 1.8; lq.scale.y = h; lq.position.y = 0.17 + h / 2; sf.position.y = lv.position.y = 0.17 + h; lq.visible = sf.visible = lv.visible = f > 0.001; sp.visible = st === 0; mid.visible = st === 1; big.visible = st === 2; g.userData.fill = f; g.userData.stage = st; };
@@ -99,14 +113,17 @@ function build(id, T, grp, tint, extra) {
   };
   const B = {
     balance() { box(2.6, 0.3, 1.2, wood, 0, 0.15, 0); cyl(0.13, 0.19, 1.8, brass, 0, 1.2, 0); sph(0.21, brass, 0, 2.16, 0); rod([-1.3, 1.84, 0], [1.3, 2.14, 0], 0.075, brass); [[-1.3, 1.84, 0.92], [1.3, 2.14, 1.22]].forEach(q => { [-0.46, 0.46].forEach(dx => rod([q[0], q[1], 0], [q[0] + dx, q[2] + 0.08, 0], 0.035, brass)); cyl(0.66, 0.42, 0.18, brass, q[0], q[2], 0); }); box(0.42, 0.36, 0.42, wood, -1.3, 1.18, 0); },
-    spatula() { cyl(0.1, 0.1, 1.6, steel, 0, 0.14, 0, [0, 0, H]); box(0.9, 0.04, 0.55, steel, 1.2, 0.14, 0); sph(0.32, steel, -1.05, 0.14, 0, [1.3, 0.25, 1]); sph(0.2, liq, -1.05, 0.26, 0, [1.2, 0.5, 1]); cyl(0.14, 0.14, 0.6, wood, 0, 0.14, 0, [0, 0, H]); },
+    spatula() { const pw = M(0xf4efe0, 0.9); cyl(0.15, 0.15, 2.0, steel, 0.2, 0.16, 0, [0, 0, H]); cyl(0.22, 0.22, 0.9, wood, 1.0, 0.16, 0, [0, 0, H]); sph(0.58, steel, -1.1, 0.16, 0, [1.4, 0.3, 1.1]); sph(0.42, pw, -1.1, 0.36, 0, [1.2, 0.8, 1]); },
     // schlenk line: one glass pipe on two posts with three taps and three flasks hanging from it, so a thing happens in several places at once
     schlenk() { const pipe = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.45, op: 0.45 }), fc = [M(0xf0b93a, 0.3), M(0x3a6fd0, 0.3), M(0xd6453a, 0.3)];
       box(3.9, 0.16, 1.0, dark, 0, 0.08, 0); side.forEach(q => cyl(0.1, 0.1, 2.5, steel, q * 1.75, 1.3, 0));
       cyl(0.26, 0.26, 3.9, pipe, 0, 2.6, 0, [0, 0, H], 16);
       [-1.2, 0, 1.2].forEach((x, i) => { cyl(0.12, 0.12, 0.7, pipe, x, 2.1, 0); cyl(0.2, 0.2, 0.3, red, x, 2.3, 0, [H, 0, 0]); box(0.5, 0.12, 0.14, red, x, 2.3, 0.28); sph(0.52, fc[i], x, 1.1, 0); cyl(0.2, 0.26, 0.3, fc[i], x, 1.65, 0); });
       shine(-1.7, 2.8, 0.3, 0.7, 0.07, 0.0); },
-    stopper() { cyl(0.45, 1.05, 0.9, glass, 0, 0.45, 0); cyl(0.55, 0.95, 0.5, liq, 0, 0.27, 0); cyl(0.45, 0.45, 0.6, glass, 0, 1.2, 0); cyl(0.55, 0.42, 0.6, rubber, 0, 1.75, 0); cyl(0.09, 0.09, 1.3, glass, 0, 2.3, 0); },
+    // stopper: a conical flask of yellow with a big cork pressed into its neck and an arrow pointing at the cork
+    stopper() { const gl = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.4, op: 0.4 }), yl = M(0xf0b93a, 0.3), ck = M(0xc9a36a, 0.8, 0, { exact: 1 });
+      cyl(0.5, 1.15, 1.5, gl, 0, 0.75, 0, null, 24); cyl(0.7, 1.1, 0.7, yl, 0, 0.4, 0, null, 24); cyl(0.5, 0.5, 0.5, gl, 0, 1.75, 0);
+      cyl(0.62, 0.45, 0.8, ck, 0, 2.2, 0, null, 20); [0, 1].forEach(k => box(0.5, 0.05, 0.05, black, 0, 2.05 + k * 0.3, 0.55).userData.plain = true); arrow(0, 3.9, 0, 2.85, 0, M(0xd6453a, 0.5), 0.3); },
     // mirror: a hand mirror hung in a stand; in use (1) it tilts back to face the work
     mirror() { const gl = M(0x8d949c, 0.4), fr = M(0xf0b93a, 0.35, 0.8);
       cyl(0.8, 0.95, 0.16, fr, 0, 0.08, 0, null, 24); side.forEach(q => rod([q * 0.98, 0.1, 0], [q * 0.98, 1.9, 0], 0.09, fr));
@@ -122,9 +139,9 @@ function build(id, T, grp, tint, extra) {
     // burette: a tall tube of green on a stand with a red tap; a drop forms (0 to 0.5) and falls (0.5 to 1) into the flask below
     burette() { const gr = M(0x3c9a5f, 0.3), tube = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.4, op: 0.4 }), fl2 = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.4, op: 0.4 });
       box(1.9, 0.16, 1.1, dark, 0, 0.08, 0); cyl(0.07, 0.07, 3.9, steel, -0.75, 2.0, 0); box(0.95, 0.12, 0.2, steel, -0.35, 3.0, 0);
-      cyl(0.22, 0.22, 2.4, tube, 0.1, 2.5, 0); cyl(0.15, 0.15, 1.6, gr, 0.1, 2.2, 0); box(0.5, 0.16, 0.16, red, 0.1, 1.2, 0); put(new T.ConeGeometry(0.1, 0.3, 8), steel, 0.1, 1.0, 0, [PI, 0, 0]);
+      cyl(0.32, 0.32, 2.4, tube, 0.1, 2.5, 0); cyl(0.24, 0.24, 1.6, gr, 0.1, 2.2, 0); box(0.5, 0.16, 0.16, red, 0.1, 1.2, 0); put(new T.ConeGeometry(0.1, 0.3, 8), steel, 0.1, 1.0, 0, [PI, 0, 0]);
       cyl(0.5, 0.5, 0.45, fl2, 0.1, 0.4, 0); cyl(0.16, 0.5, 0.35, fl2, 0.1, 0.75, 0); cyl(0.46, 0.46, 0.1, gr, 0.1, 0.28, 0).userData.plain = true;
-      const dp = drop(0.1, 0.88, 0, 0.13, gr); act(v => { if (v < 0.5) { const k = v * 2; dp.scale.setScalar(0.1 + 0.9 * k); dp.position.y = 0.88 - 0.05 * k; dp.visible = true; } else { const f = (v - 0.5) * 2; dp.scale.set(1, 1 + 0.6 * f, 1); dp.position.y = 0.83 - f * 0.4; dp.visible = f < 0.95; } }); },
+      const dp = drop(0.1, 0.88, 0, 0.2, gr); act(v => { if (v < 0.5) { const k = v * 2; dp.scale.setScalar(0.1 + 0.9 * k); dp.position.y = 0.88 - 0.05 * k; dp.visible = true; } else { const f = (v - 0.5) * 2; dp.scale.set(1, 1 + 0.6 * f, 1); dp.position.y = 0.83 - f * 0.4; dp.visible = f < 0.95; } }); },
     clamp() { box(1.5, 0.12, 1.0, dark, -0.3, 0.06, 0); cyl(0.07, 0.07, 3.0, steel, -0.6, 1.5, 0); box(0.3, 0.3, 0.3, dark, -0.6, 2.2, 0); rod([-0.6, 2.2, 0], [0.5, 2.2, 0], 0.05, steel); tor(0.35, 0.07, steel, 0.85, 2.2, 0, [H, 0, 0], PI * 1.5); cyl(0.1, 0.1, 0.3, brass, -0.6, 2.2, 0.3, [H, 0, 0]); },
     // magnet: a red horseshoe with silver tips, standing; in use (1) it leans in toward the work
     magnet() { const mg = pivot(0, 0, 0); into(mg, () => { tor(0.75, 0.26, red, 0, 1.4, 0, null, PI); side.forEach(q => { cyl(0.26, 0.26, 0.9, red, q * 0.75, 0.95, 0); cyl(0.27, 0.27, 0.5, steel, q * 0.75, 0.3, 0); }); shine(-0.55, 1.9, 0.27, 0.1, 0.35, 0.8); });
@@ -135,11 +152,15 @@ function build(id, T, grp, tint, extra) {
     logbook() { const cov = M(0x1d1c1c, 0.7), pencil = M(0xf2c41a, 0.5); box(1.7, 2.2, 0.36, cov, 0, 1.2, 0); box(1.62, 2.1, 0.3, paper, 0.08, 1.2, 0); box(1.7, 2.2, 0.05, cov, 0, 1.2, 0.19); box(0.26, 2.22, 0.42, red, -0.74, 1.2, 0); [[-0.3, 2.0], [0.4, 1.9], [0.55, 1.1], [-0.2, 0.5], [0.35, 0.4], [-0.45, 1.0], [0.1, 0.75], [0.6, 0.6], [0.2, 2.1], [-0.4, 0.25]].forEach(q => sph(0.05, white, q[0], q[1], 0.22, [1.4, 1, 0.3]).userData.plain = true); box(1.0, 0.6, 0.03, white, 0.1, 1.5, 0.22).userData.plain = true; [1.62, 1.44].forEach(y => box(0.8, 0.04, 0.02, dark, 0.1, y, 0.24).userData.plain = true); rod([0.95, 0.12, 0.5], [-0.6, 0.12, 0.75], 0.07, pencil); put(new T.CylinderGeometry(0, 0.07, 0.2, 8), wood, -0.7, 0.12, 0.77, [0, 0, H], null); },
     // seed crystal: a cluster of blue crystals in a dish; in use (1) it has grown
     crystal() { const c = M(0x3a6fd0, 0.2), dish = M(0x8d949c, 0.5);
-      cyl(1.1, 0.9, 0.2, dish, 0, 0.1, 0, null, 24); const cg = pivot(0, 0.2, 0);
+      cyl(0.9, 0.7, 0.2, dish, 0, 0.1, 0, null, 24); const cg = pivot(0, 0.2, 0);
       [[0, 0, 1.0, 0], [-0.6, 0.2, 0.65, 0.35], [0.6, -0.1, 0.6, -0.4], [0.2, 0.55, 0.42, 0.15]].forEach(q => { const g2 = new T.Group(); g2.position.set(q[0], 0, q[1]); g2.rotation.z = q[3]; cg.add(g2); const h = q[2] * 1.5, r = 0.3 * q[2] + 0.1; into(g2, () => { cyl(r, r, h, c, 0, h / 2, 0, null, 6); put(new T.ConeGeometry(r, r * 1.2, 6), c, 0, h + r * 0.6, 0); }); });
-      into(cg, () => shine(-0.14, 1.0, 0.3, 0.07, 0.6, 0.0)); act(v => cg.scale.setScalar(0.4 + 0.6 * v)); },
+      into(cg, () => shine(-0.14, 1.0, 0.3, 0.07, 0.6, 0.0)); act(v => cg.scale.setScalar(0.6 + 0.5 * v)); },
     scalepan() { const br = M(0xf0b93a, 0.35, 0.8); box(2.7, 0.16, 1.0, wood, 0, 0.08, 0); [[-0.85, 0.75, 0.42], [0.1, 0.55, 0.33], [0.9, 0.38, 0.25]].forEach(q => { cyl(q[2], q[2], q[1], br, q[0], 0.16 + q[1] / 2, 0, null, 24); cyl(q[2] * 0.3, q[2] * 0.3, 0.14, br, q[0], 0.16 + q[1] + 0.07, 0); sph(q[2] * 0.42, br, q[0], 0.16 + q[1] + 0.22, 0, [1, 0.6, 1]); tor(q[2] + 0.01, 0.02, dark, q[0], 0.16 + q[1] * 0.7, 0, [H, 0, 0]); }); },
-    coldtrap() { const ice = M(0xa9d8f2, 0.2); cyl(1.15, 0.85, 0.6, steel, 0, 0.3, 0); [[-0.8, 0.2], [-0.35, 0.75], [0.4, 0.8], [0.85, 0.25], [0.6, -0.6], [-0.55, -0.65]].forEach((q, k) => box(0.4, 0.4, 0.4, ice, q[0], 0.68 + (k % 2) * 0.1, q[1], [0.3 * k, 0.6 * k, 0.2])); sph(0.62, white, 0, 1.15, 0); cyl(0.2, 0.2, 0.9, white, 0, 2.0, 0); cyl(0.26, 0.26, 0.12, dark, 0, 2.48, 0); sph(0.5, liq, 0, 1.05, 0.14, [1, 0.7, 1]); },
+    // cold trap: a steel flask packed with ice and frost; a blue drop falls into it
+    coldtrap() { const ice = M(0xbfe6fa, 0.3, 0, { exact: 1 }), bl = M(0x3a6fd0, 0.3), fr = M(0xf4efe0, 0.5);
+      cyl(0.95, 0.75, 1.6, steel, 0, 0.8, 0, null, 24); cyl(1.0, 1.0, 0.18, fr, 0, 1.65, 0, null, 24); cyl(0.4, 0.4, 0.5, dark, 1.1, 0.5, 0.4, [0, 0, H]);
+      [[-0.55, 0.3], [0.1, -0.35], [0.6, 0.25], [-0.1, 0.4]].forEach((q, k) => box(0.5, 0.5, 0.5, ice, q[0], 2.0 + (k % 2) * 0.1, q[1], [0.3 * k, 0.6 + k, 0.2]));
+      drop(0, 3.4, 0, 0.22, bl); arrow(0, 4.3, 0, 3.7, 0, bl, 0.2); },
     // burner: a bunsen burner; the flame is low (0) or high (1)
     bunsen() { const hose = M(0xd6453a, 0.7), fo = M(0xf0b93a, 0.4, 0, { emissive: new T.Color(0x6a4a10) }), fi = M(0x3a6fd0, 0.4, 0, { emissive: new T.Color(0x102a6a) });
       cyl(0.85, 1.0, 0.22, dark, 0, 0.11, 0); cyl(0.26, 0.3, 1.3, steel, 0, 0.85, 0); cyl(0.36, 0.36, 0.3, brass, 0, 0.55, 0); cyl(0.3, 0.3, 0.1, brass, 0, 1.55, 0); sph(0.1, black, 0, 0.55, 0.34, [1, 1.2, 0.4]).userData.plain = true;
@@ -160,10 +181,11 @@ function build(id, T, grp, tint, extra) {
       [0, 1, 2, 3].forEach(k => { const a = k * H + 0.8; rod([Math.cos(a) * 0.55, 0.62, Math.sin(a) * 0.55], [Math.cos(a) * 0.7, 1.4, Math.sin(a) * 0.7], 0.04, cup); });
       box(0.07, 0.4, 0.03, white, -0.28, 1.65, 0.55, [0, 0, 0.5]).userData.plain = true; },
     // transmutation: a grey lead bar, a red arrow, a stack of gold bars
+    // transmutation: a grey lead bar, a red arrow, a stack of five gold bars
     transmute() { const lead2 = M(0x8d949c, 0.5), gold2 = M(0xf0b93a, 0.3, 0.6), redm = M(0xd6453a, 0.5);
-      const ing = (x, y, z, m, ry) => put(new T.CylinderGeometry(0.42, 0.62, 0.5, 4).rotateY(PI / 4), m, x, y, z, [0, ry || 0, 0], [1.9, 1, 1.05]);
-      ing(-1.7, 0.25, 0.3, lead2, 0.1); ing(1.1, 0.25, 0.5, gold2, 0); ing(1.1, 0.25, -0.65, gold2, 0); ing(1.1, 0.75, -0.05, gold2, 0.0); ing(1.1, 1.25, -0.05, gold2, 0.0);
-      box(0.9, 0.12, 0.32, redm, -0.35, 0.2, 1.0); put(new T.ConeGeometry(0.34, 0.5, 3), redm, 0.3, 0.2, 1.0, [0, 0, -H], [1, 1, 0.4]); shine(0.7, 1.45, 0.45, 0.3, 0.06, 0.2); },
+      const ing = (x, y, z, m) => put(new T.CylinderGeometry(0.4, 0.62, 0.55, 4).rotateY(PI / 4), m, x, y, z, [0, H, 0], [1.5, 1.8, 0.8]);
+      ing(-1.8, 0.5, 0, lead2); arrow(-1.0, 0.5, 0.0, 0.5, 0.9, redm, 0.4);
+      ing(0.9, 0.5, 0.0, gold2); ing(2.1, 0.5, 0.0, gold2); ing(1.5, 1.55, 0.0, gold2); shine(1.2, 1.9, 0.9, 0.3, 0.07, 0.2); },
     regia() { const fume = M(0xe8a23a, 0.9, 0, { transparent: true, opacity: 0.5 }); box(1.3, 1.7, 1.3, glass, 0, 0.85, 0); box(1.15, 1.1, 1.15, M(0xe0661a, 0.3), 0, 0.6, 0); cyl(0.25, 0.25, 0.4, glass, 0, 1.9, 0); sph(0.3, glass, 0, 2.25, 0); sph(0.16, fume, 0.25, 2.7, 0); box(0.9, 0.9, 0.02, white, 0, 0.8, 0.67); rod([-0.3, 0.5, 0.69], [0.3, 1.0, 0.69], 0.05, black); rod([0.3, 0.5, 0.69], [-0.3, 1.0, 0.69], 0.05, black); sph(0.2, black, 0, 0.92, 0.69, [1, 0.9, 0.3]); side.forEach(s => sph(0.05, white, s * 0.08, 0.95, 0.76)); },
     // ouroboros: a green snake eating its tail, standing as a medal on a plate
     ouroboros() { const gr = M(0x3c9a5f, 0.45), yl = M(0xf0b93a, 0.5), redm = M(0xd6453a, 0.6);
@@ -363,7 +385,11 @@ function build(id, T, grp, tint, extra) {
       cyl(0.8, 0.95, 0.16, dark, 0, 0.08, 0); side.forEach(q => rod([q * 0.3, 0.1, 0], [q * 0.85, 1.2, 0], 0.1, steel)); tor(1.05, 0.14, wire, 0, 2.1, 0);
       for (let k = -3; k <= 3; k++) { const x = k * 0.3, h = Math.sqrt(Math.max(0, 1.05 * 1.05 - x * x)); rod([x, 2.1 - h, 0], [x, 2.1 + h, 0], 0.045, steel); rod([-h, 2.1 + x, 0], [h, 2.1 + x, 0], 0.045, steel); }
       drop(-0.3, 2.45, 0.1, 0.22, bl); drop(0.35, 1.8, 0.1, 0.16, bl); drop(0.0, 3.55, 0, 0.18, bl); },
-    hood() { const cab = M(0x5f86b8, 0.6), sash = M(0x7fc4ee, 0.25, 0, { transparent: true, opacity: 0.6 }), warn = M(0xf2c41a, 0.5), fume = M(0xf4f4ee, 0.9); box(2.5, 1.0, 1.5, cab, 0, 0.5, 0); side.forEach(q => { box(1.1, 0.8, 0.04, M(0x4a6c98, 0.6), q * 0.6, 0.5, 0.76).userData.plain = true; sph(0.07, steel, q * 0.14, 0.55, 0.8); box(0.14, 1.7, 1.5, white, q * 1.18, 1.95, 0); }); box(2.6, 0.12, 1.6, dark, 0, 1.06, 0); box(2.5, 1.7, 0.1, white, 0, 1.95, -0.7); box(2.5, 0.3, 1.5, white, 0, 2.95, 0); cyl(0.2, 0.5, 0.55, M(0xe6f1f8, 0.2), -0.3, 1.4, 0); cyl(0.4, 0.5, 0.22, liq, -0.3, 1.24, 0); [[-0.3, 1.9, 0.16], [-0.18, 2.2, 0.2], [-0.36, 2.5, 0.17]].forEach(q => sph(q[2], fume, q[0], q[1], 0)); box(2.24, 0.8, 0.05, sash, 0, 2.4, 0.72); box(2.3, 0.14, 0.1, warn, 0, 1.98, 0.74); cyl(0.32, 0.32, 0.6, steel, 0.5, 3.4, -0.2); rod([0.5, 3.6, -0.2], [1.3, 3.75, -0.2], 0.3, steel); },
+    // fume hood: a blue cabinet with a glass sash, a yellow flask under it and a fat arrow carrying the fumes up the duct
+    hood() { const cab = M(0x3a6fd0, 0.6), sash = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.4, op: 0.4 }), yl = M(0xf0b93a, 0.3), wh = M(0xf4efe0, 0.5);
+      box(2.6, 0.9, 1.5, cab, 0, 0.45, 0); box(2.6, 1.7, 0.2, cab, 0, 1.75, -0.65); side.forEach(q => box(0.2, 1.7, 1.5, cab, q * 1.2, 1.75, 0)); box(2.6, 0.2, 1.5, cab, 0, 2.7, 0);
+      sph(0.42, yl, 0, 1.45, 0); cyl(0.14, 0.18, 0.4, yl, 0, 1.9, 0); box(2.1, 1.3, 0.06, sash, 0, 1.75, 0.72); cyl(0.55, 0.55, 0.9, steel, 0, 3.2, -0.4, null, 18);
+      arrow(0, 1.2, 0, 3.9, 0.9, wh, 0.42); },
     // scrubber: a wash bottle, a pipe taking gas down into blue liquid and fat bubbles rising out of it
     scrubber() { const shell = M(0xdfe9ee, 0.1, 0, { transparent: true, opacity: 0.4, op: 0.4 }), bl = M(0x3a6fd0, 0.3), cr = M(0xf4efe0, 0.4), cap = M(0x2c2f34, 0.5);
       cyl(0.95, 0.95, 2.2, shell, 0, 1.2, 0, null, 24); cyl(0.9, 0.9, 1.3, bl, 0, 0.8, 0, null, 24).userData.plain = false; cyl(0.97, 0.97, 0.22, cap, 0, 2.4, 0, null, 24);
@@ -377,6 +403,7 @@ function build(id, T, grp, tint, extra) {
   B[id]();
   let inkK = 1;
   if (U.length) { grp.userData.use = v => U.forEach(f => f(v)); grp.userData.use(0); }
+  if (R.body && CHAR[id]) R.extra.push(o => { if (o.tuck) CHAR[id](R, o); });
   if (R.body) { grp.userData.rig = R; pose(grp, {}); }
   else if (!/^(jar|hom)/.test(id) && id !== 'coin' && !(extra && extra.raw)) { // every piece fits the same box: 2.5 wide and 3.1 tall, flat ones 2.9 wide
     const w = new T.Group(); grp.children.slice().forEach(c => w.add(c)); const bb = new T.Box3().setFromObject(w), sz = bb.getSize(new T.Vector3());
@@ -393,6 +420,7 @@ function pose(grp, o) {
   const R = grp && grp.userData && grp.userData.rig; if (!R) return false; o = o || {};
   const lx = o.lean ? o.lean[0] : 0, lz = o.lean ? o.lean[1] : 0, m = Math.hypot(lx, lz), k = Math.min(1, m), rc = Math.max(0, Math.min(1, o.reach || 0)), sq = Math.max(-1, Math.min(1, o.squash || 0)), t = o.t || 0, T = R.T;
   const br = 1 + 0.015 * Math.sin(t * 2.4);
+  R.body.position.y = 0;
   R.body.scale.set(1 + 0.16 * sq, (1 - 0.3 * sq) * br, 1 + 0.16 * sq);
   const tk = o.tuck ? 1 : 0;
   R.body.rotation.set(R.lean0[0] * (1 - 0.7 * tk) + (m ? lz / m * k * 0.42 : 0), 0, R.lean0[1] * (1 - 0.7 * tk) - (m ? lx / m * k * 0.42 : 0));
