@@ -57,6 +57,8 @@ AL3. "I don't like shitty looking clip art like a water droplet that's blue sign
 
 AL4. "Maybe when we break bonds we can snap them idk it could scale with the strength of the bond? Dont assume that is gospel. And there were definitely overlapping atoms on screen for sure. We should allow the option to twist the compound in 3D space so people can see it" (12 November). The player can rotate the molecule in 3D. Overlapping atoms are a real fault. The bond snap is an idea to build and show, not a ruling.
 
+AF2. "Rarer elements should become more common as the rounds get deeper." (12 November)
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
