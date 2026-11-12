@@ -398,7 +398,7 @@ const ENG = (() => {
     const nb = atoms.map(() => []), hc = atoms.map(() => 0);
     m.bonds.forEach(k => {
       const ia = idx.get(k.a), ib = idx.get(k.b);
-      if (ia != null && ib != null) { nb[ia].push({ j: ib, o: k.order }); nb[ib].push({ j: ia, o: k.order }); }
+      if (ia != null && ib != null) { nb[ia].push({ j: ib, o: k.order, r: !!k.rung }); nb[ib].push({ j: ia, o: k.order, r: !!k.rung }); }
       else if (k.a.el === 'H' && ib != null) hc[ib]++;
       else if (k.b.el === 'H' && ia != null) hc[ia]++;
     });
@@ -634,15 +634,153 @@ const ENG = (() => {
     },
     edit(G, m, s) { const A = i => G.atoms[i], c1 = A(s.t[0]), o = A(s.t[1]), c3 = A(s.t[2]); cut(m, c1, o); setBond(m, c3, o, 2); normH(m, [c1, c3, o]); return { focus: [c1, c3, o], incoming: [], leaving: [] }; }
   };
+  // =================================================================================================================
+  // THE FOLD (docs/tools_chem/FOLD.md, fold.py): a long molecule is drawn like a snake, rows of K = 8 backbone atoms from the anchor, each row turning back;
+  // two groups that FACE each other across the fold (neighbouring rows, columns at most one apart) and are 6 or more bonds apart along the molecule are close.
+  // foldOf(G) is one deterministic function of the molecule; the page draws from the same answer (P.foldOf). Ties go to the lower atom index (fold.py: lower rank).
+  // Memory on the molecule: atom.anchor (the line starts there) and bond.rung (a bond an across join made; the layout leaves it out).
+  // =================================================================================================================
+  const FOLD = { K: 8, SMALL: 8, SHORT_ARM: 3, TAIL: 2, MIN_D: 6, mode: 'W' };
+  const keyLess = (a, b) => lex(a, b) < 0;
+  function distFrom(G, s) { const d = new Array(G.n).fill(-1); d[s] = 0; const q = [s]; for (let k = 0; k < q.length; k++) for (const w of G.nb[q[k]]) if (d[w.j] < 0) { d[w.j] = d[q[k]] + 1; q.push(w.j); } return d; }
+  function defaultAnchor(G) {
+    let ok = []; for (let i = 0; i < G.n; i++) if (!(G.nb[i].length === 1 && el(G, i) !== 'C')) ok.push(i); if (!ok.length) ok = G.atoms.map((_, i) => i); if (!ok.length) return 0;
+    const far = from => { const d = distFrom(G, from); let best = ok[0]; ok.forEach(i => { if (d[i] > d[best]) best = i; }); return best; };
+    const a = far(ok[0]), b = far(a); return a <= b ? a : b;
+  }
+  function anchorOf(G) { const i = G.atoms.findIndex(x => x.anchor); if (i >= 0) return i; const d = defaultAnchor(G); if (G.atoms[d]) G.atoms[d].anchor = true; return d; }
+  function foldOf(G, K, mode) {
+    if (G._fold && G._fold.K === (K || FOLD.K) && G._fold.mode === (mode || FOLD.mode)) return G._fold;
+    K = K || FOLD.K; mode = mode || FOLD.mode; const n = G.n, anchor = anchorOf(G);
+    const L = G.nb.map(l => l.filter(q => !q.r).map(q => q.j)), rungs = []; G.nb.forEach((l, a) => l.forEach(q => { if (q.r && q.j > a) rungs.push([a, q.j]); }));
+    // rings of up to SMALL atoms are bodies: the shortest cycle through each layout bond
+    const rsets = new Map();
+    for (let a = 0; a < n; a++) for (const b of L[a]) { if (b < a) continue; const prev = new Map([[a, -1]]), q = [a]; let found = false;
+      for (let k = 0; k < q.length && !found; k++) { const u = q[k]; for (const v of L[u]) { if (u === a && v === b) continue; if (prev.has(v)) continue; prev.set(v, u); if (v === b) { found = true; break; } q.push(v); } }
+      if (!found) continue; const cyc = []; for (let u = b; u !== -1; u = prev.get(u)) cyc.push(u); if (cyc.length <= FOLD.SMALL) rsets.set(cyc.slice().sort((x, y) => x - y).join(','), cyc); }
+    let systems = []; rsets.forEach(r => { let s = new Set(r); systems.filter(t => r.some(x => t.has(x))).forEach(t => { systems.splice(systems.indexOf(t), 1); t.forEach(x => s.add(x)); }); systems.push(s); });
+    const nodeOf = G.atoms.map((_, i) => i), members = new Map(); for (let i = 0; i < n; i++) members.set(i, [i]);
+    systems.forEach((s, k) => { const nid = n + k; members.set(nid, [...s].sort((x, y) => x - y)); s.forEach(a => { nodeOf[a] = nid; }); });
+    for (let i = 0; i < n; i++) if (nodeOf[i] !== i) members.delete(i);
+    const edges = []; for (let a = 0; a < n; a++) for (const b of L[a]) if (b > a && nodeOf[a] !== nodeOf[b]) edges.push([nodeOf[a], nodeOf[b], a, b]);
+    const nodes = [...members.keys()];
+    const comps = es => { const adj = new Map(); nodes.forEach(x => adj.set(x, [])); es.forEach(e => { adj.get(e[0]).push(e[1]); adj.get(e[1]).push(e[0]); }); const seen = new Set(); let c = 0; nodes.slice().sort((x, y) => x - y).forEach(s0 => { if (seen.has(s0)) return; c++; seen.add(s0); const st = [s0]; while (st.length) { const u = st.pop(); adj.get(u).forEach(v => { if (!seen.has(v)) { seen.add(v); st.push(v); } }); } }); return c; };
+    const mkAdj = es => { const adj = new Map(); nodes.forEach(x => adj.set(x, [])); es.forEach(e => { adj.get(e[0]).push([e[1], e[2], e[3]]); adj.get(e[1]).push([e[0], e[3], e[2]]); }); return adj; };
+    const innerPath = (memb, entry, goal) => {
+      if (memb.length === 1) return [entry]; const ms = new Set(memb), prev = new Map([[entry, null]]), dist = new Map([[entry, 0]]), q = [entry];
+      for (let k = 0; k < q.length; k++) { const u = q[k]; L[u].filter(v => ms.has(v)).sort((x, y) => x - y).forEach(v => { if (!prev.has(v)) { prev.set(v, u); dist.set(v, dist.get(u) + 1); q.push(v); } }); }
+      if (goal == null) { let best = entry; dist.forEach((d, i) => { if (d > dist.get(best) || (d === dist.get(best) && i < best)) best = i; }); goal = best; }
+      const p = []; for (let u = goal; u != null; u = prev.get(u)) p.push(u); return p.reverse();
+    };
+    const longest = adj => {
+      const cache = new Map(), size = (node, parent) => { let s = members.get(node).length; adj.get(node).forEach(([v]) => { if (v !== parent) s += size(v, node); }); return s; };
+      const best = (node, entry, parent) => {
+        const ck = node + ',' + entry + ',' + parent; if (cache.has(ck)) return cache.get(ck); const cands = [];
+        adj.get(node).forEach(([v, x, y]) => { if (v === parent) return; const inner = innerPath(members.get(node), entry, x), r2 = best(v, y, node); cands.push([[inner.length + r2[0], size(v, node), -y], inner.concat(r2[1])]); });
+        let res; if (!cands.length) { if (members.get(node).length === 1 && parent != null && el(G, entry) !== 'C' && L[entry].length === 1) res = [0, []]; else { const p = innerPath(members.get(node), entry, null); res = [p.length, p]; } }
+        else { let bst = cands[0]; cands.forEach(c => { if (lex(c[0], bst[0]) > 0) bst = c; }); res = [bst[0][0], bst[1]]; }
+        cache.set(ck, res); return res; };
+      return best(nodeOf[anchor], anchor, null)[1];
+    };
+    const c0 = comps(edges), cn = edges.length - nodes.length + c0; let cut = [];
+    if (cn > 0) {
+      const cand = edges.filter(e => comps(edges.filter(x => x !== e)) === c0); let bestK = null, count = 0;
+      const rec = (start, chosen) => { if (count > 4000) return; if (chosen.length === cn) { count++; const rest = edges.filter(e => !chosen.includes(e)); if (rest.length !== nodes.length - c0 || comps(rest) !== c0) return;
+          const p = longest(mkAdj(rest)), key = [-p.length].concat(chosen.reduce((a, e) => a.concat([e[2], e[3]]), []).sort((x, y) => x - y)); if (!bestK || keyLess(key, bestK[0])) bestK = [key, chosen.slice()]; return; }
+        for (let i = start; i < cand.length; i++) { chosen.push(cand[i]); rec(i + 1, chosen); chosen.pop(); } };
+      rec(0, []); cut = bestK ? bestK[1] : edges.slice(cand.length ? 0 : 0, cn);
+    }
+    const adj = mkAdj(edges.filter(e => !cut.includes(e))), path = longest(adj);
+    // rows
+    const body = new Map(); systems.forEach((s, k) => s.forEach(a => body.set(a, k)));
+    const stretches = []; path.forEach(a => { const b = body.get(a), lastS = stretches[stretches.length - 1]; if (lastS && b != null && body.get(lastS[lastS.length - 1]) === b) lastS.push(a); else stretches.push([a]); });
+    let p = 0; const placed = []; stretches.forEach(st => { if (st.length <= K && (p % K) + st.length > K) p += K - (p % K); st.forEach(a => { placed.push([a, p]); p++; }); });
+    const last = placed.length ? Math.floor(placed[placed.length - 1][1] / K) : 0; let rj = placed.map(([a, q]) => [a, Math.floor(q / K), q % K]);
+    const tail = rj.filter(x => x[1] === last);
+    if (last >= 1 && tail.length <= FOLD.TAIL && !tail.some(x => body.get(x[0]) != null)) rj = rj.map(([a, r, j]) => [a, r < last ? r : last - 1, r < last ? j : K + j]);
+    const pos = new Map(), down = new Map(); rj.forEach(([a, r, j]) => { const col = r % 2 === 0 ? j : K - 1 - j; pos.set(a, [r, col]); down.set(a, (col + r + K - 1) % 2 === 0); });
+    // hosts: backbone atoms and the atoms of short arms with no ring
+    const host = new Map(), on = new Set(path), inbody = new Set(); systems.forEach(s => s.forEach(a => inbody.add(a))); path.forEach(a => host.set(a, a));
+    const isRung = (u, v) => rungs.some(r => (r[0] === u && r[1] === v) || (r[0] === v && r[1] === u)) || cut.some(e => (e[2] === u && e[3] === v) || (e[2] === v && e[3] === u));
+    path.forEach(a => { L[a].forEach(j => { if (on.has(j)) return; if (rungs.some(r => (r[0] === a && r[1] === j) || (r[0] === j && r[1] === a)) || cut.some(e => (e[2] === a && e[3] === j) || (e[2] === j && e[3] === a))) return;
+      const seen = new Set([j]), q = [j]; let ring = false; while (q.length) { const u = q.pop(); if (inbody.has(u)) ring = true; L[u].forEach(w => { if (on.has(w) || seen.has(w) || isRung(u, w)) return; seen.add(w); q.push(w); }); }
+      if (seen.size <= FOLD.SHORT_ARM && !ring) seen.forEach(x => host.set(x, a)); }); });
+    const hostpos = new Map(); host.forEach((h, a) => hostpos.set(a, pos.get(h)));
+    const f = { K, mode, anchor, path, pos, down, host, hostpos, rung: rungs.concat(cut.map(e => [e[2], e[3]])), rows: pos.size ? Math.max(...[...pos.values()].map(v => v[0])) + 1 : 0, dm: new Map() };
+    G._fold = f; return f;
+  }
+  function foldDist(G, f, a, b) { if (!f.dm.has(a)) f.dm.set(a, distFrom(G, a)); return f.dm.get(a)[b]; }
+  function faces(f, a, b) {
+    const pa = f.hostpos.get(a), pb = f.hostpos.get(b); if (!pa || !pb) return false;
+    if (Math.abs(pa[0] - pb[0]) !== 1) return false;
+    if (f.mode === 'E') { if (pa[1] !== pb[1]) return false; const up = pa[0] < pb[0] ? a : b; return f.down.get(f.host.get(up)); }
+    return Math.abs(pa[1] - pb[1]) <= 1;
+  }
+  // the pairs of atoms that face each other across the fold and are MIN_D or more bonds apart: [[a, b, bonds apart]] with a < b
+  function acrossPairs(G, K, mode) { const f = foldOf(G, K, mode), atoms = [...f.hostpos.keys()].sort((x, y) => x - y), out = []; atoms.forEach((a, i) => atoms.slice(i + 1).forEach(b => { if (faces(f, a, b)) { const d = foldDist(G, f, a, b); if (d >= FOLD.MIN_D) out.push([a, b, d]); } })); return out; }
+  // ---------- the twelve across forms ----------
+  const rungBond = (m, a, b) => { const k = m.findBond(a, b); if (k) k.rung = true; };
+  function farPairs(G, As, Bs, aa, bb, same) {
+    const f = foldOf(G), out = [];
+    As.forEach((a, ia) => Bs.forEach((b, ib) => { if (same && ib <= ia) return; const ca = a[aa], cb = b[bb]; if (ca === cb || a.some(x => b.includes(x))) return; if (!faces(f, ca, cb)) return; const d = foldDist(G, f, ca, cb); if (d < FOLD.MIN_D) return; out.push({ A: a, B: b, dist: d, tie: [ia, ib], anch: [ca, cb], via: 'fold' }); }));
+    return out.sort(byDist);
+  }
+  const shs = G => { const out = []; for (let s = 0; s < G.n; s++) if (el(G, s) === 'S' && X(G, s) === 2 && G.hc[s] === 1 && G.nb[s].length === 1 && G.nb[s][0].o === 1 && CX4(G, G.nb[s][0].j)) out.push([s, G.nb[s][0].j]); return out; };
+  const nh2s = G => { const out = []; for (let n = 0; n < G.n; n++) if (el(G, n) === 'N' && X(G, n) === 3 && G.hc[n] === 2 && G.nb[n].length === 1 && G.nb[n][0].o === 1 && CX4(G, G.nb[n][0].j)) out.push([n, G.nb[n][0].j]); return out; };
+  const ohs1 = G => hydroxyls(G, false).filter(b => oneHet(G, b[1]));
+  const acids = G => { const As = []; for (let c = 0; c < G.n; c++) { if (!CX3(G, c)) continue; const o = dblO(G, c); if (o < 0) continue; const oh = G.nb[c].find(q => q.o === 1 && isOH(G, q.j)); if (!oh) continue; if (!G.nb[c].some(q => q.o === 1 && el(G, q.j) === 'C')) continue; As.push([c, o, oh.j]); } return As; };
+  const dbonds = (G, noRing) => { const out = []; G.nb.forEach((l, a) => l.forEach(q => { if (q.j > a && q.o === 2 && el(G, a) === 'C' && el(G, q.j) === 'C' && !G.ar[a] && !G.ar[q.j] && !(noRing && bondInRing(G, a, q.j))) out.push([a, q.j]); })); return out; };
+  const X_R = {};
+  X_R.ring_far = { grp: 2, twin: 'ring', find: G => farPairs(G, ketones(G), ohs1(G), 0, 1),
+    edit(G, m, s) { const A = i => G.atoms[i], c = A(s.A[0]), o = A(s.A[1]), oh = A(s.B[0]); setBond(m, c, o, 1); m.bond(oh, c); rungBond(m, oh, c); normH(m, [oh, c, o]); return { focus: [oh, c, o], incoming: [], leaving: [] }; } };
+  X_R.cap_far = { grp: 0, twin: 'cap', find: G => farPairs(G, shs(G), ketones(G), 1, 0),
+    edit(G, m, s) { const A = i => G.atoms[i], sf = A(s.A[0]), c = A(s.B[0]), o = A(s.B[1]); setBond(m, c, o, 1); m.bond(sf, c); rungBond(m, sf, c); normH(m, [c, o, sf]); return { focus: [sf, c, o], incoming: [], leaving: [] }; } };
+  X_R.knit_far = { grp: 0, twin: 'knit', off: { water: 1 }, find: G => farPairs(G, ketones(G), nh2s(G), 0, 1),
+    edit(G, m, s) { const A = i => G.atoms[i], c = A(s.A[0]), o = A(s.A[1]), n = A(s.B[0]), g = take(m, o); cut(m, c, o); setBond(m, n, c, 2); rungBond(m, n, c); normH(m, [c, n]); return { focus: [c, n], incoming: [], leaving: [g] }; } };
+  X_R.weld_far = { grp: 1, twin: 'weld', find: G => { const As = [], Bs = []; ketones(G).forEach(k => { G.nb[k[0]].forEach(q => { const c3 = q.j; if (q.o === 1 && CX4(G, c3) && !inRing(G, c3) && G.hc[c3] >= 1) As.push([k[0], k[1], c3]); }); if (!inRing(G, k[0])) Bs.push([k[0], k[1]]); }); return farPairs(G, As.sort(lex), Bs, 2, 0); },
+    edit(G, m, s) { const A = i => G.atoms[i], a = A(s.A[2]), c2 = A(s.B[0]), o2 = A(s.B[1]); setBond(m, c2, o2, 1); m.bond(a, c2); rungBond(m, a, c2); normH(m, [a, c2, o2]); return { focus: [a, c2, o2], incoming: [], leaving: [] }; } };
+  X_R.seal_far = { grp: 0, twin: 'seal', off: { water: 1 }, find: G => farPairs(G, acids(G), donors(G), 0, 1),
+    edit(G, m, s) { const A = i => G.atoms[i], c = A(s.A[0]), oh = A(s.A[2]), x = A(s.B[0]), g = take(m, oh); cut(m, c, oh); m.bond(x, c); rungBond(m, x, c); normH(m, [c, x]); return { focus: [c, x], incoming: [], leaving: [g] }; } };
+  X_R.close_far = { grp: 0, twin: 'close', off: { acid_fumes: 1 }, find: G => { const As = []; for (let c = 0; c < G.n; c++) if (el(G, c) === 'Cl' && G.nb[c].length === 1 && CX4(G, G.nb[c][0].j) && G.nb[c][0].o === 1) As.push([c, G.nb[c][0].j]); if (!As.length) return [];
+      const Bacid = []; for (let o = 0; o < G.n; o++) if (isOH(G, o)) { const q = G.nb[o][0]; if (q.o === 1 && CX3(G, q.j) && dblO(G, q.j) >= 0) Bacid.push([o, q.j]); } return farPairs(G, As, donors(G), 1, 1).concat(farPairs(G, As, Bacid, 1, 1)).sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], cl = A(s.A[0]), c = A(s.A[1]), x = A(s.B[0]), g = take(m, cl); cut(m, cl, c); m.bond(x, c); rungBond(m, x, c); normH(m, [c, x]); return { focus: [x, c], incoming: [], leaving: [g] }; } };
+  X_R.open_far = { grp: 0, twin: 'open', find: G => { const f = foldOf(G), out = [], eps = []; for (let o = 0; o < G.n; o++) { if (el(G, o) !== 'O' || G.nb[o].length !== 2 || G.hc[o] !== 0 || G.nb[o].some(q => q.o !== 1 || !aC(G, q.j))) continue; const a = G.nb[o][0].j, b = G.nb[o][1].j; if (bo(G, a, b) === 1) { eps.push([a, o, b]); eps.push([b, o, a]); } } eps.sort(lex);
+      const Bs = ohs1(G); eps.forEach((a, ia) => Bs.forEach((b, ib) => { if (a.includes(b[0])) return; let best = null; [a[0], a[2]].forEach(ca => { if (faces(f, ca, b[1])) { const d = foldDist(G, f, ca, b[1]); if (d >= FOLD.MIN_D && (!best || d < best[0])) best = [d, ca]; } }); if (best) out.push({ A: a, B: b, hit: best[1], dist: best[0], tie: [ia, ib], anch: [best[1], b[1]], via: 'fold' }); })); return out.sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], ca = A(s.hit), oe = A(s.A[1]), oh = A(s.B[0]); cut(m, ca, oe); m.bond(oh, ca); rungBond(m, oh, ca); normH(m, [ca, oe, oh]); return { focus: [ca, oh, oe], incoming: [], leaving: [] }; } };
+  X_R.tuck_far = { grp: 1, twin: 'tuck', find: G => { const As = []; ketones(G).forEach(k => { const c1 = k[0]; G.nb[c1].forEach(q3 => { if (q3.o !== 1 || !aC(G, q3.j)) return; G.nb[q3.j].forEach(q4 => { if (q4.o === 2 && aC(G, q4.j) && q4.j !== c1) As.push([c1, k[1], q3.j, q4.j]); }); }); }); return farPairs(G, As.sort(lex), ohs1(G), 3, 1); },
+    edit(G, m, s) { const A = i => G.atoms[i], c3 = A(s.A[2]), c4 = A(s.A[3]), o = A(s.B[0]); setBond(m, c3, c4, 1); m.bond(o, c4); rungBond(m, o, c4); normH(m, [c3, c4, o]); return { focus: [o, c4, c3], incoming: [], leaving: [] }; } };
+  X_R.snap_far = { grp: 1, twin: 'snap', find: G => { const f = foldOf(G), out = [], dbls = dbonds(G, false); if (dbls.length < 3) return out;
+      dbls.forEach(([x, y], ia) => [[x, y], [y, x]].forEach(([c1, c2]) => { cnb(G, c2).forEach(c3 => { if (c3 === c1 || bo(G, c2, c3) === 2) return; cnb(G, c3).forEach(c4 => { if (c4 === c2 || c4 === c1 || bo(G, c3, c4) !== 2) return;
+        dbls.forEach(([u, v], ib) => { if (ib === ia || [u, v].some(w => w === c1 || w === c2 || w === c3 || w === c4)) return; let hit = null;
+          for (const [ca, cb] of [[u, v], [v, u]]) { if (bo(G, c1, cb) || bo(G, c4, ca)) continue; const ps = [c1, c2, c3, c4], qs = [ca, cb]; if (!ps.some(p => qs.some(q => faces(f, p, q)))) continue; let d = 99; ps.forEach(p => qs.forEach(q => { d = Math.min(d, foldDist(G, f, p, q)); })); if (d < FOLD.MIN_D) continue; hit = [d, [c1, c2, c3, c4, ca, cb]]; break; }
+          if (hit) out.push({ dist: hit[0], tie: [ia, ib], c: hit[1], anch: [c4, hit[1][4]], via: 'fold' }); }); }); }); })); return out.sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], [c1, c2, c3, c4, ca, cb] = s.c.map(A); setBond(m, c1, c2, 1); setBond(m, c3, c4, 1); setBond(m, c2, c3, 2); setBond(m, ca, cb, 1); m.bond(c1, cb); rungBond(m, c1, cb); m.bond(c4, ca); rungBond(m, c4, ca); normH(m, [c1, c2, c3, c4, ca, cb]); return { focus: [c1, c4, ca, cb], incoming: [], leaving: [] }; } };
+  X_R.bridge = { grp: 0, off: { hydrogen: 1 }, find: G => farPairs(G, shs(G), shs(G), 1, 1, true),
+    edit(G, m, s) { const A = i => G.atoms[i], s1 = A(s.A[0]), s2 = A(s.B[0]); m.bond(s1, s2); rungBond(m, s1, s2); normH(m, [s1, s2]); return { focus: [s1, s2], incoming: [], leaving: [] }; } };
+  X_R.stitch = { grp: 1, find: G => { const f = foldOf(G), out = [], dbls = dbonds(G, true);
+      for (let ia = 0; ia < dbls.length; ia++) for (let ib = ia + 1; ib < dbls.length; ib++) { const p = dbls[ia], q = dbls[ib]; if (p.some(x => q.includes(x))) continue; if (!p.some(x => q.some(y => faces(f, x, y)))) continue; let d = 99; p.forEach(x => q.forEach(y => { d = Math.min(d, foldDist(G, f, x, y)); })); if (d < FOLD.MIN_D) continue;
+        const opts = []; p.forEach(x => q.forEach(y => { if (faces(f, x, y)) { const ox = x === p[0] ? p[1] : p[0], oy = y === q[0] ? q[1] : q[0]; opts.push([foldDist(G, f, ox, oy), x, y, ox, oy]); } })); opts.sort(lex); const o = opts[0]; if (bo(G, o[3], o[4])) continue;
+        out.push({ dist: d, tie: [ia, ib], c: [o[1], o[3], o[2], o[4]], anch: [o[1], o[2]], via: 'fold' }); } return out.sort(byDist); },
+    edit(G, m, s) { const A = i => G.atoms[i], [x, ox, y, oy] = s.c.map(A); setBond(m, x, ox, 1); setBond(m, y, oy, 1); m.bond(x, y); rungBond(m, x, y); m.bond(ox, oy); rungBond(m, ox, oy); normH(m, [x, ox, y, oy]); return { focus: [x, y, ox, oy], incoming: [], leaving: [] }; } };
+  X_R.link = { grp: 1, off: { water: 1 }, find: G => farPairs(G, ohs1(G), ohs1(G), 1, 1, true),
+    edit(G, m, s) { const A = i => G.atoms[i]; let [o1, c1, o2, c2] = [A(s.A[0]), A(s.A[1]), A(s.B[0]), A(s.B[1])]; const nc = c => m.neighbors(c).filter(q => q.atom.el === 'C').length; if (nc(c1) > nc(c2)) [o1, c1, o2, c2] = [o2, c2, o1, c1]; const g = take(m, o2); cut(m, o2, c2); m.bond(o1, c2); rungBond(m, o1, c2); normH(m, [o1, c1, c2]); return { focus: [o1, c2], incoming: [], leaving: [g] }; } };
+  Object.keys(X_R).forEach(k => { X_R[k].far = true; X_R[k].per = 1; X_R[k].prio = 3; R[k] = X_R[k]; });
+  const FAR_ORDER = ['seal_far', 'close_far', 'knit_far', 'cap_far', 'open_far', 'bridge', 'weld_far', 'tuck_far', 'snap_far', 'stitch', 'link', 'ring_far'], FAR_IDS = FAR_ORDER.slice();
   const ORDER = ['seal', 'close', 'knit', 'cap', 'open', 'fold', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'ring'];
   // the game's card ids for the reflexes it already had (the page draws them by these names); the kind is the name in the record
   const KIND = { lactol: 'ring', enone: 'dry', taut: 'flip', weld: 'weld', snap6: 'snap', ether: 'close', shift: 'shift', tuck: 'tuck', knit: 'knit', seal: 'seal', cap: 'cap', open: 'open', fold: 'fold' };
+  FAR_IDS.forEach(k => { KIND[k] = k; });
   const CARDID = {}; Object.keys(KIND).forEach(k => { CARDID[KIND[k]] = k; });
   // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
   function nextReflex(m, held, cnt, G0) {
     const G = G0 || snapG(m); G.self = true; const rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
     rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
     cands.sort((a, b) => lex(a.key, b.key));
+    if (!cands.length && held.some(k => R[k] && R[k].far)) {
+      // only when no near reflex fits: one across step, rare groups first, ring across last, nearest first; each once a turn
+      const fc = []; FAR_ORDER.forEach((k, ri) => { if (!held.includes(k) || (cnt[k] || 0) >= 1) return; const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) fc.push({ key: [R[k].grp, sites[0].dist, ri], k, sites }); });
+      fc.sort((a, b) => lex(a.key, b.key)); if (fc.length) return { id: fc[0].k, site: fc[0].sites[0], sites: fc[0].sites, G };
+    }
     return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G } : null;
   }
   const mergeOff = (to, off) => { if (off) Object.keys(off).forEach(k => { to[k] = (to[k] || 0) + off[k]; }); };
@@ -787,7 +925,7 @@ const ENG = (() => {
     }
     return parts.join('.');
   }
-  return { free, NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
+  return { foldOf, faces, acrossPairs, anchorOf, defaultAnchor, FOLD, FAR_IDS, FAR_ORDER, foldDist, free, NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
 })();
 // ---------- the cards: the twelve reagents and the thirteen reflexes as the page and the rules read them ----------
 // MODE.eng (path.js RULE.engine, on) switches the engine's version of a reflex on; off, the older version of the card is used.
@@ -807,6 +945,18 @@ const REFLEXES = {
   seal: { id: 'seal', verb: 'Seal', tag: 'seals a ring', rgb: [120, 120, 60], rule: 'A COOH and an OH, NH2 or SH join into a ring. Water leaves.', from: 'ol', to: 'ring' },
   cap: { id: 'cap', verb: 'Cap', tag: 'caps a ring', rgb: [200, 170, 30], rule: 'An SH and a C=O close a ring.', from: 'one', to: 'ring' },
   open: { id: 'open', verb: 'Open', tag: 'opens an epoxide', rgb: [60, 110, 170], rule: 'An OH opens an epoxide and closes a ring.', from: 'ol', to: 'ring' },
+  ring_far: { id: 'ring_far', verb: 'Zip across', tag: 'closes a loop', rgb: [47, 120, 160], rule: 'An OH and a C=O facing each other across the fold close a loop.', from: 'ol', to: 'ring' },
+  cap_far: { id: 'cap_far', verb: 'Cap across', tag: 'caps a loop', rgb: [200, 170, 30], rule: 'An SH and a C=O facing across the fold close a loop.', from: 'one', to: 'ring' },
+  knit_far: { id: 'knit_far', verb: 'Knit across', tag: 'knits a loop', rgb: [80, 90, 200], rule: 'An NH2 and a C=O facing across the fold join as C=N; water leaves.', from: 'one', to: 'ring' },
+  weld_far: { id: 'weld_far', verb: 'Weld across', tag: 'welds a loop', rgb: [168, 92, 36], rule: 'Two C=O facing across the fold join and close a loop.', from: 'one', to: 'ring' },
+  seal_far: { id: 'seal_far', verb: 'Seal across', tag: 'seals a loop', rgb: [120, 120, 60], rule: 'A COOH and an OH, NH2 or SH facing across the fold join; water leaves.', from: 'ol', to: 'ring' },
+  close_far: { id: 'close_far', verb: 'Close across', tag: 'closes a loop', rgb: [60, 154, 95], rule: 'A Cl and an OH, NH2, SH or COOH facing across the fold close a loop; acid fumes leave.', from: 'cl', to: 'ring' },
+  open_far: { id: 'open_far', verb: 'Open across', tag: 'opens across', rgb: [60, 110, 170], rule: 'An epoxide and an OH facing across the fold close a loop.', from: 'ol', to: 'ring' },
+  tuck_far: { id: 'tuck_far', verb: 'Tuck across', tag: 'tucks across', rgb: [30, 140, 140], rule: 'An OH facing the far end of a C=C beside a C=O adds to it.', from: 'ol', to: 'ring' },
+  snap_far: { id: 'snap_far', verb: 'Snap across', tag: 'snaps across', rgb: [200, 38, 28], rule: 'A diene and a C=C facing across the fold close a six-ring.', from: 'ene', to: 'ring' },
+  bridge: { id: 'bridge', verb: 'Bridge', tag: 'bridges', rgb: [214, 178, 26], rule: 'Two SH facing across the fold join as S-S; hydrogen leaves.', from: 'one', to: 'ring' },
+  stitch: { id: 'stitch', verb: 'Stitch', tag: 'stitches', rgb: [140, 90, 190], rule: 'Two C=C facing across the fold join into a four-ring.', from: 'ene', to: 'ring' },
+  link: { id: 'link', verb: 'Link', tag: 'links', rgb: [170, 70, 100], rule: 'Two OH facing across the fold join as an ether; water leaves.', from: 'ol', to: 'ring' },
   fold: { id: 'fold', verb: 'Fold', tag: 'folds over', rgb: [170, 70, 100], rule: 'An epoxide turns into a C=O.', from: 'ene', to: 'one' }
 };
 Object.keys(REFLEXES).forEach(kind => {
@@ -933,8 +1083,8 @@ const label = m => nameOf(m) || describe(m).formula;
 // cloneMap also returns the map from each atom of m to its copy
 function cloneMap(m) {
   const n = new AA.Model(), map = new Map();
-  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.frz) c.frz = true; if (a.cure) c.cure = true; if (a.slime) c.slime = true; if (a.seed) c.seed = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
-  m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) n.bonds.push({ a: map.get(b.a), b: map.get(b.b), order: b.order }); });
+  m.atoms.forEach(a => { if (a.fly) return; const c = n.addAtom(a.el, a.x, a.y, a.z); if (a.keep) c.keep = true; if (a.anchor) c.anchor = true; if (a.prot) c.prot = true; if (a.clamp) c.clamp = true; if (a.frz) c.frz = true; if (a.cure) c.cure = true; if (a.slime) c.slime = true; if (a.seed) c.seed = true; if (a.iso) c.iso = a.iso; if (a.poly) c.poly = a.poly; if (a.tail) c.tail = true; map.set(a, c); });
+  m.bonds.forEach(b => { if (map.has(b.a) && map.has(b.b)) { const nb = { a: map.get(b.a), b: map.get(b.b), order: b.order }; if (b.rung) nb.rung = true; n.bonds.push(nb); } });
   if (m.reach) n.reach = m.reach;
   return { model: n, map };
 }
