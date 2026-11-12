@@ -315,13 +315,13 @@ function clearAngle(c, anchor, aw, a0, L, sc) {
   for (let j = -8; j <= 8; j++) { const an = a0 + j * Math.PI / 8, x = aw.x + Math.cos(an) * L, z = aw.z + Math.sin(an) * L; let md = 9; pts.forEach(p => { md = Math.min(md, Math.hypot(p.x - x, p.z - z)); }); const sco = Math.min(md, 2.4 * sc) - 0.16 * sc * Math.abs(j); if (sco > bs) { bs = sco; best = an; } }
   return best;
 }
-// where a group that has broken off goes: the nearest point on the top or the upper sides of the play area that it can reach without crossing the molecule
+// where a group that has broken off goes: the nearest point on the top or the sides of the play area (the higher the better) that it can reach without crossing the molecule
 function freeEdge(from, dir, c, sc) {
-  const H = api.HOME, x0 = H.x - H.w / 2 + 1.5, x1 = H.x + H.w / 2 - 1.5, z0 = H.z - H.d / 2 + 1.8, zm = H.z - H.d * 0.12, cands = [], pts = [];
-  for (let i = 0; i <= 10; i++) cands.push([x0 + (x1 - x0) * i / 10, z0]); for (let i = 1; i <= 4; i++) { const z = z0 + (zm - z0) * i / 4; cands.push([x0, z], [x1, z]); }
+  const H = api.HOME, x0 = H.x - H.w / 2 + 1.5, x1 = H.x + H.w / 2 - 1.5, z0 = H.z - H.d / 2 + 1.8, zm = H.z + H.d * 0.3, cands = [], pts = [];
+  for (let i = 0; i <= 10; i++) cands.push([x0 + (x1 - x0) * i / 10, z0]); for (let i = 1; i <= 7; i++) { const z = z0 + (zm - z0) * i / 7; cands.push([x0, z, i * 0.5], [x1, z, i * 0.5]); }
   c.balls.forEach(b => pts.push(b.mesh.getWorldPosition(new T.Vector3())));
-  let best = cands[0], bs = 1e9; cands.forEach(q => { const dx = q[0] - from.x, dz = q[1] - from.z, L = Math.hypot(dx, dz) || 1; let cost = L - 2.5 * (dx / L * dir.x + dz / L * dir.z);
-    [0.2, 0.4, 0.6, 0.8, 1].forEach(k => { const x = from.x + dx * k, z = from.z + dz * k; if (pts.some(p => Math.hypot(p.x - x, p.z - z) < 1.5 * sc)) cost += 7; }); if (cost < bs) { bs = cost; best = q; } });
+  let best = cands[0], bs = 1e9; cands.forEach(q => { const dx = q[0] - from.x, dz = q[1] - from.z, L = Math.hypot(dx, dz) || 1; let cost = L + (q[2] || 0) - 2.5 * (dx / L * dir.x + dz / L * dir.z);
+    [0.2, 0.4, 0.6, 0.8, 1].forEach(k => { const x = from.x + dx * k, z = from.z + dz * k; if (pts.some(p => Math.hypot(p.x - x, p.z - z) < 1.5 * sc)) cost += 12; }); if (cost < bs) { bs = cost; best = q; } });
   return new T.Vector3(best[0], from.y + 1.2, best[1]);
 }
 // one leaving group drawn as its atoms, every frame
