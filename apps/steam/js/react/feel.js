@@ -496,7 +496,7 @@ function drawOver(t) {
 // ---------- the molecule trembles when the round is being won (?vibe=0|1, on unless 0) ----------
 // Once the yield has passed the round's target the atoms themselves tremble about their places, finely and fast: more with each mark
 // passed and with each step of the chain. From the second mark on the bonds glow with heat. It is dead still in the held breath
-// before the last hit. The most an atom moves is 0.17 of its own radius, so atoms never touch and bonds are not stretched.
+// before the last hit. The most an atom moves is 0.26 of its own radius, so atoms never touch and bonds are not stretched.
 let VIBE = 1; try { if (new URLSearchParams(root.location.search).get('vibe') === '0') VIBE = 0; } catch (e) { VIBE = 1; }
 const roundNow = () => { try { const r = AA.rxScheme && AA.rxScheme.debugRun && AA.rxScheme.debugRun(); return clamp((r && r.round) || 1, 1, 9); } catch (e) { return 1; } };
 const bell = (v, mid, half) => { const u = (v - mid) / half; return Math.abs(u) >= 1 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * u); };
@@ -521,8 +521,8 @@ function vibeApply(t, c) {
   // each ball is moved from where the page last laid it; if nobody has laid it out since the last frame, the last offset is taken off first
   c.balls.forEach(b => { const m = b.mesh.position; if (!b.vo) { b.vo = new T.Vector3(); b.vp = new T.Vector3(1e9, 0, 0); }
     if (_same(m, b.vp)) { m.sub(b.vo); if (b.sprite) b.sprite.position.sub(b.vo); if (b.collar) b.collar.position.sub(b.vo); }
-    // a blend of three sines per atom on the play clock, each atom with its own phase: an even shiver, never a jump; at most 0.17 of the atom's radius
-    const A = lv * 0.17 * (b.R || 0.4), s = (i++) * 2.399;
+    // a blend of three sines per atom on the play clock, each atom with its own phase: an even shiver, never a jump; at most 0.26 of the atom's radius
+    const A = lv * 0.26 * (b.R || 0.4), s = (i++) * 2.399;
     b.vo.set(A * (0.6 * Math.sin(tt * 11 + s) + 0.4 * Math.sin(tt * 13.7 + s * 1.9)), A * 0.25 * Math.sin(tt * 9.3 + s * 1.3), A * (0.6 * Math.cos(tt * 12.1 + s * 0.7) + 0.4 * Math.sin(tt * 14.3 + s * 2.3)));
     m.add(b.vo); if (b.sprite) b.sprite.position.add(b.vo); if (b.collar) b.collar.position.add(b.vo); b.vp.copy(m); });
   c.sticks.forEach(s => { const ba = c.balls.get(s.a), bb = c.balls.get(s.b); if (!ba || !bb || !ba.vo || !bb.vo) return;
