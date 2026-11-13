@@ -304,7 +304,7 @@ function snapFrame(t) {
     const pa = A.mesh.position, pb = B.mesh.position, d = pa.distanceTo(pb), u = _v().copy(pb).sub(pa).normalize(), side = q.part ? new T.Vector3(-u.z, 0, u.x).multiplyScalar(0.3) : null;
     if (!q.stick) { q.mats = [A, B].map(x => new T.MeshStandardMaterial({ color: x.mesh.material.color.clone(), roughness: 0.35 })); q.cols = q.mats.map(m => m.color.clone()); q.stick = snapStick(c.group, q.mats, q.part ? 0.06 : 0.09); }
     // held on through the step; in the last moments it is strained thin and pale (longer for a stronger bond); never past 1.3 times its length
-    if (!hit && d <= 1.3 * q.L0) { const sv = clamp((t - (q.hitAt - STR)) / STR, 0, 1) * (0.3 + 0.7 * w); q.stick.set(pa, pb, side, q.stick.r * (1 - 0.55 * sv)); q.mats.forEach((m, i) => m.color.copy(q.cols[i]).lerp(_white, 0.7 * sv * w)); return true; }
+    if (!hit && d <= 1.3 * q.L0) { const sv = clamp((t - (q.hitAt - STR)) / STR, 0, 1) * (0.3 + 0.7 * w); q.stick.set(pa, pb, side, q.stick.r * (1 - 0.55 * sv)); q.mats.forEach((m, i) => m.color.copy(q.cols[i]).lerp(_white || (_white = new T.Color(0xffffff)), 0.7 * sv * w)); return true; }
     q.stick.free(); q.mats.forEach(m => m.dispose()); const mid = _v().copy(pa).add(pb).multiplyScalar(0.5); c.group.localToWorld(mid); crack(mid, q.e, c.group.scale.x, u); nudge(c, q.a, u.clone().negate(), q.e); nudge(c, q.b, u, q.e); return false; });
   api.dirty();
 }
