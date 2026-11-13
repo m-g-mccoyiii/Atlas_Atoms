@@ -990,6 +990,8 @@ const uiHit = (x, y) => UI.hit.find(h => x >= h.x && x <= h.x + h.w && y >= h.y 
 function uiAct(h) { if (h.act === 'home') return twistHome(); if (h.act === 'skip') { if (F.seq && !F.seq.done) skipNow(); else if (!F.seq) { armSkip(); snd('click'); } UI.pulse = now(); return; } setPace(h.act); }
 // a loop of ink drawn twice, a little off itself, the way a pen goes round a word
 function uiLoop(x, cx, cy, rx, ry, col, lw) { x.save(); x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.beginPath(); x.ellipse(cx, cy, rx, ry, -0.05, 0.5, 6.6); x.stroke(); x.globalAlpha = 0.6; x.beginPath(); x.ellipse(cx + 1.5, cy - 1, rx * 1.03, ry * 0.94, 0.04, 2.6, 7.4); x.stroke(); x.restore(); }
+// builder E: with the page drawn back the red margin line stands further in, and the speed row starts to the right of it
+function pageX0E() { const p = AA.rxScheme && AA.rxScheme.pageE; return p && p.on ? p.speedX : 66; }
 function uiFrame(t) {
   uiInit(); if (!UI.cv || !api) return; const host = hostCv(), dpr = Math.min(2, root.devicePixelRatio || 1), W = Math.round((host.clientWidth || 1280) * dpr), H = Math.round((host.clientHeight || 720) * dpr), st = api.st, S = F.seq;
   const show = !!api.center() && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), pulsing = t - UI.pulse < 420, skipping = !!(S && S.skipAll) || UI.arm;
@@ -997,7 +999,7 @@ function uiFrame(t) {
   if (UI.cv.width !== W || UI.cv.height !== H) { UI.cv.width = W; UI.cv.height = H; } const x = UI.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); UI.hit = []; if (!show || !AA.rxPen) return;
   x.setTransform(W / 1280, 0, 0, H / 720, 0, 0); const pen = AA.rxPen, INK = api.INK, PEN = api.PENCIL, RED = api.REDINK;
   // the speed row, in the left margin under the queue
-  { const X0 = 66, Y = 452, sz = 23, gap = 19; let wx = X0; pen.write(x, 'speed', X0, Y - 30, 15, { color: PEN }); x.save(); x.strokeStyle = PEN; x.globalAlpha = 0.5; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X0 + 46, Y - 34); x.lineTo(X0 + 262, Y - 36); x.stroke(); x.restore();
+  { const X0 = pageX0E(), Y = 452, sz = 23, gap = 19; let wx = X0; pen.write(x, 'speed', X0, Y - 30, 15, { color: PEN }); x.save(); x.strokeStyle = PEN; x.globalAlpha = 0.5; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X0 + 46, Y - 34); x.lineTo(X0 + 262, Y - 36); x.stroke(); x.restore();
     [['slow', '1'], ['normal', '2'], ['fast', '3'], ['skip', 'skip']].forEach(w => { const on = w[1] === 'skip' ? skipping : (PACE === w[1] && !(S && S.skipAll)), ww = pen.width(w[0], sz, on ? 'heavy' : 'thin'), hov = UI.hov === w[1], pop = on && pulsing ? 1 + 0.16 * Math.max(0, ring((t - UI.pulse) / 1000, 6, 0.45)) : 1;
       x.save(); x.translate(wx + ww / 2, Y - 7); x.scale(pop, pop); pen.write(x, w[0], -ww / 2, 7, sz, { weight: on ? 'heavy' : 'thin', color: on ? (w[1] === 'skip' ? RED : INK) : hov ? INK : PEN }); x.restore();
       if (on) uiLoop(x, wx + ww / 2, Y - 8, (ww / 2 + 9) * pop, 15 * pop, w[1] === 'skip' ? RED : INK, 2.4);
