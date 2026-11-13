@@ -1114,7 +1114,7 @@ function uiFrame(t) {
   if (UI.cv.width !== W || UI.cv.height !== H) { UI.cv.width = W; UI.cv.height = H; } const x = UI.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); UI.hit = []; if (!show || !AA.rxPen) return;
   x.setTransform(W / 1280, 0, 0, H / 720, 0, 0); const pen = AA.rxPen, INK = api.INK, PEN = api.PENCIL, RED = api.REDINK;
   // the speed row, in the left margin under the queue
-  { const sp0 = AA.rxScheme && AA.rxScheme.speedAt ? seenFlat(AA.rxScheme.speedAt()) : null, X0 = sp0 ? sp0[0] : pageX0E() + 24, Y = sp0 ? sp0[1] + 8 : 296, gap = 20; let wx = X0;
+  { const sp0 = AA.rxScheme && AA.rxScheme.speedAt ? seenFlat(AA.rxScheme.speedAt()) : null, X0 = sp0 ? sp0[0] : pageX0E() + 24, Y = sp0 ? sp0[1] + 8 : 296, gap = (AA.rxScheme && AA.rxScheme.speedAt && AA.rxScheme.speedAt() && AA.rxScheme.speedAt().gap) || 20; let wx = X0;
     [['1', 1], ['2', 2], ['3', 3], ['skip', 2]].forEach(w => { const on = w[0] === 'skip' ? skipping : (PACE === w[0] && !(S && S.skipAll)), ww = 12 + w[1] * 11 + (w[0] === 'skip' ? 8 : 0), hov = UI.hov === w[0], pop = on && pulsing ? 1 + 0.16 * Math.max(0, ring((t - UI.pulse) / 1000, 6, 0.45)) : 1, col = on ? (w[0] === 'skip' ? RED : INK) : hov ? INK : PEN;
       x.save(); x.translate(wx + ww / 2, Y - 8); x.scale(pop, pop); x.strokeStyle = col; x.lineWidth = on ? 3.6 : 2.4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); for (let k = 0; k < w[1]; k++) { const cx = -ww / 2 + 8 + k * 11; x.moveTo(cx - 4, -8); x.lineTo(cx + 4, 0); x.lineTo(cx - 4, 8); } if (w[0] === 'skip') { x.moveTo(ww / 2 - 5, -9); x.lineTo(ww / 2 - 5, 9); } x.stroke(); x.restore();
       if (on) uiLoop(x, wx + ww / 2, Y - 8, (ww / 2 + 9) * pop, 15 * pop, w[0] === 'skip' ? RED : INK, 2.4);
