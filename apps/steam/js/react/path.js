@@ -297,7 +297,7 @@ const DIAL = { keep: 3, steps: 3 };
 //   queue: a page is lined up and then fired. Reagents (and the bank) are placed in the page's circles in order, and
 //         the molecule then runs through them. One that finds nothing to act on when its turn comes is wasted and
 //         still spends its use. The redraw is allowed only before firing. Off: one click, one reaction, as before.
-const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [2, 4, 8], coins: true, queue: true };
+const RULE = { atoms: 32, chain: 6, loops: 2, loopsAll: true, ground: 2, uses: 3, fork: true, hand: 5, redraw: true, bank: 1.5, bankMin: 2, tiers: [1.41, 2, 2.83], coins: true, queue: true };
 RULE.bank = 2; RULE.bankMin = 3; RULE.cascade = 'each';
 //   reopen: a ring closed by a zip is loose. When a page is turned (and when a round starts) every such ring opens
 //         again, so the next page begins with the chain as it was set up and can be set off again, longer if the
@@ -504,7 +504,7 @@ const FEED_CL = {1: ['C=CC(Cl)C(O)(CCCl)CCC(C)=O', 'C=C(C)CC(Cl)C(Cl)C(=O)CCC=O'
 // needPar (ruling AP 1, RIG.md twelfth): in the runs past the bachelor's a round is cleared only when the spec is met AND the yield
 // passes this share of the number to beat, by round (the last entry stands for every later round). null: the spec alone clears a
 // round. needParB: the same for the bachelor's. P.needYield(run) is the yield a round must reach (0: none), for the page.
-RULE.needPar = [0.74, 0.90, 0.78, 1.36, 2.57, 1.07, 1.25, 1.59, 1.35, 0.96, 0.60, 0.27]; RULE.needParB = null;
+RULE.needPar = [0.86, 0.95, 0.88, 1.17, 1.60, 1.03, 1.12, 1.26, 1.16, 0.98, 0.77, 0.52]; RULE.needParB = null;
 // aimPar: the simulated players count the yield still missing to that mark as part of what they play for (not in a proof)
 RULE.aimPar = true;
 // homAim: the simulated players weigh the creature's tap when they choose a line (homPeek)
@@ -512,7 +512,9 @@ RULE.homAim = true;
 // needParBy (ruling AR, RIG.md thirteenth, part 1): the pass marks by run length; where a length is listed it replaces needPar. The first
 // rounds are gentle (the casual player clears round 1 about 80 times in 100) and the marks rise so that the last third of each length is the
 // wall. Fitted on the simulator (docs/tools_chem/sweep_career.py fit) and confirmed on other deals.
-RULE.needParBy = { master: [0.13, 0.28, 0.15, 0.40, 1.6, 1.2], doctorate: [0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75], postdoc: [0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75, 1.46, 1.21, 0.84] };
+// FLAT (fourteenth measure, part 1): these are the square roots of the thirteenth's marks (0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75; master 1.6, 1.2;
+// postdoc 1.46, 1.21, 0.84), so the same rounds clear.
+RULE.needParBy = { master: [0.36, 0.53, 0.39, 0.63, 1.26, 1.10], doctorate: [0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18], postdoc: [0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18, 1.21, 1.10, 0.92] };
 // specBanByLong: the specs a casual player seldom clears are not set in rounds 1 and 2 of the long runs either (as specBanBy in the bachelor's)
 RULE.specBanByLong = { 1: ['cut_down', 'double_bonds', 'unsaturation', 'lean_turns'], 2: ['end_CO', 'off_hydrogen'] };
 // pairFrom: two specs from this round on. specShiftLong: { round: change } to the spec's target share in the runs past the bachelor's.
@@ -746,7 +748,17 @@ const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish && i
 // RULE.pages n: n more turns in every round (run-length option). RULE.stepsMore n: n more circles in every turn.
 const pagesOf = g => SYN.pages + (RULE.pages || 0) + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.includes('hourglass') ? 1 : 0) + (g.termPages || 0) - (g.brief === 'short' ? 1 : 0);
 // everything made so far: what closed rows made plus the open row, all times extra
-const made = g => Math.round((g.bank + g.P * g.R) * g.E * (g.lift || 1));    // g.lift: the sign (signLift), 1 without it
+// FLAT (ruling AT: flatter chain bonuses, docs/RIG.md fourteenth, part 1). What a round makes is still places times row times extra, but the
+// yield is that product raised to FLAT.pow (0.5: its square root), scaled so a product of FLAT.pivot stays FLAT.pivot. Every multiplier in the
+// game (a longer chain, the last-reagent double, a motif, a row, an instrument, a creature) therefore counts at its square root: ten times the
+// product is 3.2 times the yield. The order of any two lines is unchanged, so the best line is the same line; what changes is how far apart
+// yields land. The number to beat (PAR), the pass marks (needParBy), the inspections' factors (ASSAYF) and the marks above (RULE.tiers) were
+// moved by the same rule, so the same rounds are won and lost as before. pow 1 is the old rule.
+const FLAT = { pow: 0.5, pivot: 4770 };
+const flat = raw => (FLAT.pow === 1 ? raw : Math.pow(FLAT.pivot, 1 - FLAT.pow) * Math.pow(Math.max(0, raw), FLAT.pow));
+// yx(k): what extra must be multiplied by for the YIELD to be multiplied by k (a creature's "yield times k" is on the yield the player reads)
+const yx = k => (FLAT.pow === 1 ? k : Math.pow(k, 1 / FLAT.pow));
+const made = g => Math.round(flat((g.bank + g.P * g.R) * g.E) * (g.lift || 1));    // g.lift: the sign (signLift), 1 without it
 const held = g => Math.round(g.P * g.R * g.E);
 const mult = g => g.R * g.E;
 const rowStart = g => (g.gear.includes('magnet') && !RULE.five ? 2.5 : 1);
@@ -945,7 +957,7 @@ function chainNext(g) {
 // The bank: the open row is closed on purpose and pays RULE.bank times what it holds. It takes one of the page's
 // reactions. At a fork of a chain it takes none and ends the chain.
 const canBank = g => !!RULE.bank && !!g.syn && !g.over && g.cur.path.length >= RULE.bankMin && g.P > 0 && (g.chain || g.pageSteps < stepsOf(g));
-const bankGain = g => Math.round(g.P * g.R * (RULE.bank - 1) * g.E);
+const bankGain = g => Math.round(flat((g.bank + g.P * g.R * RULE.bank) * g.E) - flat((g.bank + g.P * g.R) * g.E));
 function bank(g) {
   if (!canBank(g)) return false;
   const len = g.cur.path.length, v = g.P * g.R * (RULE.bank - 1), fork = !!g.chain; g.bank += v; close(g);
@@ -1610,14 +1622,15 @@ function runTerm(run, id) {
 // PAR.rounds: the number for a plain round on a molecule of average size in rounds one to nine, each fitted to the
 // pass rate and the margin in docs/BALANCE.md together (docs/tools_par.py). after: the step for every round past nine.
 // greedy median of the round total on molecules v2 (120 bare nine-round runs: 4770, 3500, 4118, 7340, 10295, 16248, 20038, 25187, 27028), made to rise by at least 1.15 a round
-const PAR = { rounds: [4770, 5486, 6309, 7340, 10295, 16248, 20038, 25187, 28965], after: 1.71, last: 1 };
+// FLAT (fourteenth measure): each is the square root rule applied to the table above it (4770, 5486, 6309, 7340, 10295, 16248, 20038, 25187, 28965; after 1.71)
+const PAR = { rounds: [4770, 5115, 5486, 5917, 7008, 8804, 9777, 10961, 11754], after: 1.308, last: 1 };
 // MOLF: what the median simulated player makes on each molecule inside runs, over the average of all the molecules.
 // KINDF: what each kind of round makes against a plain one. ASSAYF: the same for the kind of an assay, for each of
 // the three acts, over the average of the four kinds. Fitted together by docs/tools_factors.py. The number to beat is
 // multiplied by all of them, so every kind of round and every molecule is beaten by a like margin.
 const MOLF = {};   // the molecule factors were fitted on the old table (42 keys); molecules v2 have none until they are fitted again (tools_factors.py), so every molecule counts 1
 const KINDF = {"plain":1.0,"carry":1.0,"broad":1.0,"loose":1.0,"each":1.0,"back":1.0,"scarce":1.0,"short":1.0};
-const ASSAYF = {"scarce":[0.688,1.138,0.854],"short":[0.625,0.309,0.527],"each":[1.533,1.745,1.339],"loose":[1.519,1.632,1.66]};
+const ASSAYF = {"scarce":[0.829,1.067,0.924],"short":[0.791,0.556,0.726],"each":[1.238,1.321,1.157],"loose":[1.232,1.278,1.288]};   // FLAT: the square roots of the fitted factors
 const MOLD = { lo: 0.1, hi: 10, pow: 1 };
 // Tier one (rounds one to three) baked again on 2026-11-12 after commit 3a7f800 (docs/tools_tier1_bake.py). ninth
 // END GENERATED

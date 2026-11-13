@@ -139,6 +139,9 @@ FEED_CL = {int(k): re.findall(r"'([^']+)'", v) for k, v in re.findall(r'(\d): \[
 _HETRE = re.compile(r'[^CcOoHh0-9()=#\[\]@+\-/.%:]')
 _c = re.search(r'const CASC = \{ step: ([\d.]+), place: (\d+), row: ([\d.]+), mul: false, most: (\d+), old: ([\d.]+) \}', _JS)
 CASC = {'step': float(_c.group(1)), 'place': float(_c.group(2)), 'row': float(_c.group(3)), 'most': int(_c.group(4)), 'old': float(_c.group(5))}
+_f = re.search(r'const FLAT = \{(.*?)\}', _JS)
+FLAT = {k: float(v) for k, v in re.findall(r'(\w+): ([\d.]+)', _f.group(1))} if _f else {}   # ruling AT: flatter chain bonuses
+FLAT_POW = [float(os.environ.get('SWEEP_FLAT_POW') or FLAT.get('pow', 1.0))]
 _s = re.search(r'const SYN = \{.*?finishExtra: ([\d.]+).*?place: (\d+), row: ([\d.]+) \}', _JS)
 SYN = {'finishExtra': float(_s.group(1)), 'place': float(_s.group(2)), 'row': float(_s.group(3))}
 SPEC_SCALE = {int(k): float(v) for k, v in re.findall(r'(\d): ([\d.]+)', re.search(r'RULE.specScale = \{(.*?)\}', _JS).group(1))}
@@ -238,7 +241,9 @@ DEFAULTS = dict(
     spec_shift=None,         # RULE.specShiftLong: {round: change of the spec's target share} for the runs past the bachelor's
     aim_par=False,           # the player counts the yield still missing to the pass mark as part of what it plays for
     par_mul=1.0,             # the number to beat times this (the sign: SIGN.bar for each time it was taken)
-    yield_mul=1.0)           # every round's yield times this (the sign: 1.2 for each time it was taken)
+    yield_mul=1.0,           # every round's yield times this (the sign: 1.2 for each time it was taken)
+    chain_pow=1.0, chain_knee=0, chain_add=False,   # trials of the fourteenth measure (see chain_n); not in the game
+    motif_pow=1.0)           # trial: the motif multiplier of a step raised to this; not in the game
 DBL_REAGENTS = {'hydrate', 'hydroborate', 'grow', 'reduce', 'hwe', 'dihydroxylation', 'ozonolysis', 'ritter', 'thiolene',
                 'cyanohydrin', 'hydroformylation', 'epoxidation', 'finish'}
 DBL_REFLEX = {'ring', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'knit', 'cap', 'ring_far', 'cap_far', 'knit_far', 'weld_far',
@@ -427,8 +432,29 @@ class Round:
         return o
 
 
+def flat(raw):
+    """path.js flat(): the yield is the product raised to FLAT.pow, a product of FLAT.pivot staying where it is."""
+    g = FLAT_POW[0]
+    return raw if g == 1 else FLAT.get('pivot', 4770.0) ** (1 - g) * max(0.0, raw) ** g
+
+
+def yx(k):
+    """path.js yx(): what extra is multiplied by for the yield to be multiplied by k."""
+    g = FLAT_POW[0]
+    return k if g == 1 else k ** (1.0 / g)
+
+
 def made(R):
-    return int(round((R.bank + R.P * R.Rr) * R.E))
+    return int(math.floor(flat((R.bank + R.P * R.Rr) * R.E) + 0.5))
+
+
+def chain_n(n, p):
+    """What step n of a page's chain counts as (path.js chainN): n itself up to CASC.knee, and past it only the power CASC.pow
+    of the steps beyond, so a long chain still pays more with every step but no longer by its square."""
+    a, k = p['chain_pow'], p['chain_knee']
+    if a == 1 or n <= k:
+        return float(n)
+    return k + (n - k) ** a
 
 
 class Game:
@@ -730,13 +756,17 @@ class Game:
         for _ in range(nrp):
             R.casc += 1
             w = 1.0 if (not p['fresh'] or R.casc > R.best) else p['old']
+            cn = chain_n(R.casc, p)
             if R.casc > 1:
-                f = 1 + (R.casc - 1) * w
-                R.P += h * (f - 1)
-                h *= f
-            R.E += p['step'] * R.casc * w * lx
+                f = 1 + (cn - 1) * w
+                if p['chain_add']:           # CASC.add: a step's places are its own count, not the product of the counts before it
+                    R.P += h * (f - 1)
+                else:
+                    R.P += h * (f - 1)
+                    h *= f
+            R.E += p['step'] * cn * w * lx
         if p['motifs']:
-            m = self.mult(smi)
+            m = self.mult(smi) ** p['motif_pow']
             if m > 1:
                 R.P += h * (m - 1)
         if R.brief != 'loose':
@@ -802,7 +832,7 @@ class Game:
             h = per * sg.n
             R.P += h
             if p['motifs']:
-                m = self.mult(sg.smi1)
+                m = self.mult(sg.smi1) ** p['motif_pow']
                 if m > 1:
                     R.P += h * (m - 1)
             R.path.append(rid)
