@@ -200,25 +200,29 @@ function countersRun(meta, run) {
 // rungs marked closed cannot be earned while the twelve-round run is switched off.) ladderDue(meta) gives the rungs newly earned and writes them into meta.ladder (called by
 // runResult, which hands them to the end screen as `earned`). ladderState(meta) gives every rung with its count and target for the bench.
 const LADDER = [
-  { id: 'deep1', kind: 'depth', n: 1, gives: 'instrument', thing: 'crystal' }, { id: 'deep2', kind: 'depth', n: 2, gives: 'reagent', thing: 'hydroborate' }, { id: 'deep3', kind: 'depth', n: 3, gives: 'instrument', thing: 'bunsen' },
-  { id: 'deep4', kind: 'depth', n: 4, gives: 'reflex', thing: 'open' }, { id: 'deep5', kind: 'depth', n: 5, gives: 'instrument', thing: 'burette' }, { id: 'deep6', kind: 'depth', n: 6, gives: 'soundtrack', thing: 'baroque' },
-  { id: 'deep7', kind: 'depth', n: 7, gives: 'instrument', thing: 'mirror' }, { id: 'deep8', kind: 'depth', n: 8, gives: 'reagent', thing: 'cyanohydrin' }, { id: 'deep9', kind: 'depth', n: 9, gives: 'credit', credit: 10 },
+  { id: 'deep1', kind: 'depth', n: 1, gives: 'instrument', thing: 'crystal' }, { id: 'deep2', kind: 'depth', n: 2, gives: 'credit', credit: 2 }, { id: 'deep3', kind: 'depth', n: 3, gives: 'instrument', thing: 'bunsen' },
+  { id: 'deep4', kind: 'depth', n: 4, gives: 'credit', credit: 2 }, { id: 'deep5', kind: 'depth', n: 5, gives: 'instrument', thing: 'burette' }, { id: 'deep6', kind: 'depth', n: 6, gives: 'soundtrack', thing: 'baroque' },
+  { id: 'deep7', kind: 'depth', n: 7, gives: 'instrument', thing: 'mirror' }, { id: 'deep8', kind: 'depth', n: 8, gives: 'credit', credit: 5 }, { id: 'deep9', kind: 'depth', n: 9, gives: 'credit', credit: 10 },
   { id: 'deep10', kind: 'depth', n: 10, gives: 'closed' }, { id: 'deep11', kind: 'depth', n: 11, gives: 'closed' }, { id: 'deep12', kind: 'depth', n: 12, gives: 'closed' },
-  { id: 'chain4', kind: 'deed', counter: 'max_chain_page', n: 4, gives: 'reagent', thing: 'reduce' }, { id: 'chain6', kind: 'deed', counter: 'max_chain_page', n: 6, gives: 'instrument', thing: 'magnet' }, { id: 'chain9', kind: 'deed', counter: 'max_chain_page', n: 9, gives: 'motif', thing: 'spiro' },
-  { id: 'mark2', kind: 'deed', counter: 'max_mark', n: 2, gives: 'motif', thing: 'arene' }, { id: 'mark3', kind: 'deed', counter: 'max_mark', n: 3, gives: 'reagent', thing: 'chlorination' }, { id: 'mark4', kind: 'deed', counter: 'max_mark', n: 4, gives: 'soundtrack', thing: 'metal' },
-  { id: 'kinds3', kind: 'deed', counter: 'max_kinds_round', n: 3, gives: 'reagent', thing: 'epoxidation' }, { id: 'kinds5', kind: 'deed', counter: 'max_kinds_round', n: 5, gives: 'reagent', thing: 'hydroformylation' }, { id: 'allsix', kind: 'deed', counter: 'max_kinds_run', n: 6, gives: 'instrument', thing: 'carousel' },
-  { id: 'narrow', kind: 'deed', counter: 'narrow_rounds', n: 1, gives: 'instrument', thing: 'dropper' }, { id: 'near', kind: 'deed', counter: 'near_rounds', n: 1, gives: 'reagent', thing: 'ozonolysis' }, { id: 'big10', kind: 'deed', counter: 'bigger10_rounds', n: 1, gives: 'reagent', thing: 'hwe' },
-  { id: 'rounds10', kind: 'count', counter: 'rounds', n: 10, gives: 'credit', credit: 1 }, { id: 'rounds30', kind: 'count', counter: 'rounds', n: 30, gives: 'reagent', thing: 'dihydroxylation' }, { id: 'rounds100', kind: 'count', counter: 'rounds', n: 100, gives: 'sigil', thing: 'clepsydra' },
-  { id: 'won5', kind: 'count', counter: 'rounds_won', n: 5, gives: 'credit', credit: 1 }, { id: 'won20', kind: 'count', counter: 'rounds_won', n: 20, gives: 'instrument', thing: 'timer' }, { id: 'won60', kind: 'count', counter: 'rounds_won', n: 60, gives: 'reagent', thing: 'hofmann' },
-  { id: 'won150', kind: 'count', counter: 'rounds_won', n: 150, gives: 'reagent', thing: 'chugaev' }, { id: 'lost3', kind: 'count', counter: 'runs_lost', n: 3, gives: 'soundtrack', thing: 'gothic' }, { id: 'lost10', kind: 'count', counter: 'runs_lost', n: 10, gives: 'reagent', thing: 'permanganate' },
+  { id: 'chain4', kind: 'deed', counter: 'max_chain_page', n: 4, gives: 'credit', credit: 1 }, { id: 'chain6', kind: 'deed', counter: 'max_chain_page', n: 6, gives: 'instrument', thing: 'magnet' }, { id: 'chain9', kind: 'deed', counter: 'max_chain_page', n: 9, gives: 'motif', thing: 'spiro' },
+  { id: 'mark2', kind: 'deed', counter: 'max_mark', n: 2, gives: 'motif', thing: 'arene' }, { id: 'mark3', kind: 'deed', counter: 'max_mark', n: 3, gives: 'credit', credit: 2 }, { id: 'mark4', kind: 'deed', counter: 'max_mark', n: 4, gives: 'soundtrack', thing: 'metal' },
+  { id: 'kinds3', kind: 'deed', counter: 'max_kinds_round', n: 3, gives: 'reagent', thing: 'epoxidation' }, { id: 'kinds5', kind: 'deed', counter: 'max_kinds_round', n: 5, gives: 'credit', credit: 2 }, { id: 'allsix', kind: 'deed', counter: 'max_kinds_run', n: 6, gives: 'instrument', thing: 'carousel' },
+  { id: 'narrow', kind: 'deed', counter: 'narrow_rounds', n: 1, gives: 'instrument', thing: 'dropper' }, { id: 'near', kind: 'deed', counter: 'near_rounds', n: 1, gives: 'credit', credit: 2 }, { id: 'big10', kind: 'deed', counter: 'bigger10_rounds', n: 1, gives: 'reagent', thing: 'hwe' },
+  { id: 'rounds10', kind: 'count', counter: 'rounds', n: 10, gives: 'credit', credit: 1 }, { id: 'rounds30', kind: 'count', counter: 'rounds', n: 30, gives: 'credit', credit: 1 }, { id: 'rounds100', kind: 'count', counter: 'rounds', n: 100, gives: 'sigil', thing: 'clepsydra' },
+  { id: 'won5', kind: 'count', counter: 'rounds_won', n: 5, gives: 'credit', credit: 1 }, { id: 'won20', kind: 'count', counter: 'rounds_won', n: 20, gives: 'instrument', thing: 'timer' }, { id: 'won60', kind: 'count', counter: 'rounds_won', n: 60, gives: 'credit', credit: 2 },
+  { id: 'won150', kind: 'count', counter: 'rounds_won', n: 150, gives: 'credit', credit: 3 }, { id: 'lost3', kind: 'count', counter: 'runs_lost', n: 3, gives: 'soundtrack', thing: 'gothic' }, { id: 'lost10', kind: 'count', counter: 'runs_lost', n: 10, gives: 'reagent', thing: 'permanganate' },
   { id: 'lost30', kind: 'count', counter: 'runs_lost', n: 30, gives: 'credit', credit: 3 }, { id: 'steps50', kind: 'count', counter: 'reflex_steps', n: 50, gives: 'credit', credit: 1 }, { id: 'steps200', kind: 'count', counter: 'reflex_steps', n: 200, gives: 'soundtrack', thing: 'surf' },
   { id: 'steps600', kind: 'count', counter: 'reflex_steps', n: 600, gives: 'sigil', thing: 'solve' }, { id: 'steps2000', kind: 'count', counter: 'reflex_steps', n: 2000, gives: 'credit', credit: 5 }, { id: 'rings100', kind: 'count', counter: 'ring_steps', n: 100, gives: 'reflex', thing: 'seal' },
   { id: 'rings400', kind: 'count', counter: 'ring_steps', n: 400, gives: 'motif', thing: 'fusion' }, { id: 'rings1000', kind: 'count', counter: 'ring_steps', n: 1000, gives: 'motif', thing: 'cage' }, { id: 'rounds20', kind: 'count', counter: 'rounds', n: 20, gives: 'credit', credit: 1 },
   { id: 'rounds200', kind: 'count', counter: 'rounds', n: 200, gives: 'credit', credit: 3 }, { id: 'won10', kind: 'count', counter: 'rounds_won', n: 10, gives: 'credit', credit: 1 }, { id: 'won100', kind: 'count', counter: 'rounds_won', n: 100, gives: 'credit', credit: 3 },
   { id: 'lost6', kind: 'count', counter: 'runs_lost', n: 6, gives: 'credit', credit: 1 }, { id: 'steps100', kind: 'count', counter: 'reflex_steps', n: 100, gives: 'credit', credit: 1 }, { id: 'steps1000', kind: 'count', counter: 'reflex_steps', n: 1000, gives: 'credit', credit: 3 },
-  { id: 'rings200', kind: 'count', counter: 'ring_steps', n: 200, gives: 'reflex', thing: 'fold' }, { id: 'sig_phlogiston', kind: 'count', counter: 'oxidize_acted', n: 150, gives: 'sigil', thing: 'phlogiston' }, { id: 'sig_via', kind: 'count', counter: 'hydrate_fired', n: 60, gives: 'sigil', thing: 'via_humida' },
+  { id: 'rings200', kind: 'count', counter: 'ring_steps', n: 200, gives: 'credit', credit: 2 }, { id: 'sig_phlogiston', kind: 'count', counter: 'oxidize_acted', n: 150, gives: 'sigil', thing: 'phlogiston' }, { id: 'sig_via', kind: 'count', counter: 'hydrate_fired', n: 60, gives: 'sigil', thing: 'via_humida' },
   { id: 'sig_aqua', kind: 'count', counter: 'water5_pages', n: 30, gives: 'sigil', thing: 'aqua_permanens' }, { id: 'sig_tetractys', kind: 'count', counter: 'one_reagent_lines', n: 5, gives: 'sigil', thing: 'tetractys' }, { id: 'sig_respiratio', kind: 'count', counter: 'dry_steps', n: 100, gives: 'sigil', thing: 'respiratio' },
-  { id: 'sig_gemini', kind: 'count', counter: 'dehydrate_fired', n: 50, gives: 'sigil', thing: 'gemini' }, { id: 'sig_mask', kind: 'count', counter: 'sh_made', n: 25, gives: 'sigil', thing: 'sulphurs_mask' }
+  { id: 'sig_gemini', kind: 'count', counter: 'dehydrate_fired', n: 50, gives: 'sigil', thing: 'gemini' }, { id: 'sig_mask', kind: 'count', counter: 'sh_made', n: 25, gives: 'sigil', thing: 'sulphurs_mask' },
+  { id: 'r_hydroborate', kind: 'count', counter: 'hydrate_acted', n: 40, gives: 'reagent', thing: 'hydroborate' }, { id: 'x_open', kind: 'count', counter: 'epoxidation_acted', n: 10, gives: 'reflex', thing: 'open' }, { id: 'r_cyanate', kind: 'count', counter: 'hydrate_then_oxidize', n: 30, gives: 'reagent', thing: 'cyanohydrin' },
+  { id: 'r_reduce', kind: 'count', counter: 'oxidize_acted', n: 40, gives: 'reagent', thing: 'reduce' }, { id: 'r_chlorinate', kind: 'count', counter: 'off_acid_fumes', n: 20, gives: 'reagent', thing: 'chlorination' }, { id: 'r_formylate', kind: 'count', counter: 'grow_acted', n: 60, gives: 'reagent', thing: 'hydroformylation' },
+  { id: 'r_cleave', kind: 'count', counter: 'smaller_rounds', n: 10, gives: 'reagent', thing: 'ozonolysis' }, { id: 'r_dihydroxylate', kind: 'count', counter: 'hydrate_acted', n: 120, gives: 'reagent', thing: 'dihydroxylation' }, { id: 'r_eliminate_n', kind: 'count', counter: 'ritter_acted', n: 60, gives: 'reagent', thing: 'hofmann' },
+  { id: 'r_eliminate_s', kind: 'count', counter: 'thiolene_acted', n: 60, gives: 'reagent', thing: 'chugaev' }, { id: 'x_fold', kind: 'count', counter: 'epoxidation_acted', n: 30, gives: 'reflex', thing: 'fold' }
 ];
 // LADDER_CAP: a run hands over this many rungs at most (the depth rungs first, then the order of the table); a rung earned beyond that is handed
 // over by the next run, so a good run pays into the runs after it and most runs give something.
@@ -232,39 +236,41 @@ function ladderDue(meta) { if (!meta || RULE.ladder === false) return []; const 
 // got; count and target are given where the way is a count. The page hides `does` for a thing not owned (owner's pick). docs/REFERENCE.md is the
 // same table written out. What is NOT in it, and why, is at the foot of that file.
 const RUNG_TXT = { max_chain_page: n => 'Set off a chain of ' + n + ' reflex steps on one page.', max_mark: n => (n >= 4 ? 'End a round at OVERREACT (2.83 times the number to beat).' : n === 3 ? 'End a round at 2 times the number to beat.' : 'End a round at 1.41 times the number to beat.'),
-  max_kinds_round: n => 'Set off ' + n + ' different kinds of reflex in one round.', max_kinds_run: () => 'Fire all six starting reagents in one run.', narrow_rounds: () => 'Clear a round having fired three kinds of reagent or fewer.',
+  max_kinds_round: n => 'Set off ' + n + ' different kinds of reflex in one round.', max_kinds_run: () => 'Fire six different reagents in one run.', narrow_rounds: () => 'Clear a round having fired three kinds of reagent or fewer.',
   near_rounds: () => 'Lose a round of a six-round or nine-round run by under 15 in 100.', bigger10_rounds: () => 'End a round with the molecule 10 or more atoms bigger than it was dealt.', rounds: n => 'Play ' + n + ' rounds.', rounds_won: n => 'Clear ' + n + ' rounds.',
   runs_lost: n => 'Lose ' + n + ' runs.', reflex_steps: n => 'Set off ' + n + ' reflex steps.', ring_steps: n => 'Close ' + n + ' rings.', oxidize_acted: n => 'Have oxidize act ' + n + ' times.', hydrate_fired: n => 'Fire hydrate ' + n + ' times.',
-  water5_pages: n => 'Drive off 5 or more waters on a page, ' + n + ' times.', one_reagent_lines: n => 'Line up one reagent in all three circles, ' + n + ' times.', dry_steps: n => 'Set off dry ' + n + ' times.', dehydrate_fired: n => 'Fire dehydrate ' + n + ' times.', sh_made: n => 'Put on ' + n + ' SH.' };
+  water5_pages: n => 'Drive off 5 or more waters on a page, ' + n + ' times.', one_reagent_lines: n => 'Line up one reagent in all three circles, ' + n + ' times.', dry_steps: n => 'Set off dry ' + n + ' times.', dehydrate_fired: n => 'Fire dehydrate ' + n + ' times.', sh_made: n => 'Put on ' + n + ' SH.', hydrate_acted: n => 'Have hydrate act ' + n + ' times.', epoxidation_acted: n => 'Have epoxidize act ' + n + ' times.', hydrate_then_oxidize: n => 'Fire hydrate and then oxidize on one page, both acting, ' + n + ' times.',
+  off_acid_fumes: n => 'Drive off acid fumes ' + n + ' times (a Cl closing a ring gives them off).', grow_acted: n => 'Have grow act ' + n + ' times.', smaller_rounds: n => 'End ' + n + ' rounds with the molecule smaller than it was dealt.', ritter_acted: n => 'Have aminate act ' + n + ' times.', thiolene_acted: n => 'Have thiolate act ' + n + ' times.' };
 const rungHow = r => (r.kind === 'depth' ? 'Clear round ' + r.n + (r.n > 6 ? ' of a nine-round run.' : ' of a six-round or nine-round run.') : (RUNG_TXT[r.counter] || (n => r.counter + ' ' + n))(r.n));
 const REF_REFLEX = { open: ['Open', 'An OH 3 or 4 carbons from an epoxide opens it and closes a ring. Across the fold too, from round 4.'], fold: ['Fold', 'An epoxide with a carbon on both ends turns into a C=O.'], seal: ['Seal', 'A COOH and an OH, NH2 or SH 3 or 4 carbons apart join in a ring; water comes off. Across the fold too, from round 4.'] };
 const REF_MOTIF = { arene: ['Benzene ring', 'Each benzene ring on the molecule: every step has its places counted 30 in 100 more.'], fusion: ['Shared side', 'Each pair of rings that share a side: every step has its places counted 15 in 100 more.'], cage: ['Cage', 'Each ring tied into a cage: every step has its places counted 3 in 100 more.'], spiro: ['Spiro centre', 'Each atom that two rings share and nothing else: every step has its places counted 10 in 100 more.'] };
+const REF_GEAR = { crystal: 'Put on a carbon: one hydrogen there becomes an OH, and the reflexes run from it.', bunsen: 'Every OH that can lose water does, and becomes a C=C.', burette: 'Every C=C outside a benzene ring becomes a C=O.', magnet: 'Every stretch of four or more plain CH2 in a row is pulled shut to two carbons.', mirror: 'Put on a bond: one side of the bond goes and the other is copied across it.', carousel: 'One more reagent is dealt on the first page of every round.', dropper: 'Two more uses of every reagent.', timer: 'A fourth circle on every page: four reagents fire.' };
 const REF_TRACK = { gothic: 'Gothic hybrid', metal: 'Chain Lightning', surf: 'Monster-movie lab', baroque: 'Harpsichord unhinged' };
 const REF_CARD = { hydroborate: 'bh3', reduce: 'nabh4' };
 const REF_FEED = { water: 'waters driven off', h2: 'hydrogens driven off', co2: 'carbon dioxides driven off', acid: 'times hydrate or dehydrate acts', wood: 'times reduce acts', salt: 'times oxidize acts on an OH at the end of a chain', slime: 'times hydroborate acts', seedling: 'times grow acts', ammonia: 'ammonias driven off', brimstone: 'sulfurs driven off' };
 // what a creature does, one plain line each (the numbers are read from HOMS2K; a multiplier is given as the player reads it on the yield)
 const REF_HOM = { water: K => 'When a page drives off ' + K.need + ' waters or more: yield times ' + homK(K.k) + ', then every C=C becomes C-OH and the rings run again.',
-  h2: K => 'When oxidize is fired last and lands and the page has a chain of ' + K.need + ' or more: the next page counts its chain on from this one. If the next chain is shorter, yield times ' + homK(K.pop) + '.',
-  co2: K => 'On the last page, if carbon dioxide came off this round: yield times ' + homK(K.k) + ' for each reagent that never acted in the round, up to ' + K.most + '.',
+  h2: K => 'Not on the last page. When oxidize is fired last and lands and the page has a chain of ' + K.need + ' or more: the next page counts its chain on from this one. If the next chain is shorter, yield times ' + homK(K.pop) + '.',
+  co2: K => 'On the last page, if carbon dioxide came off this round and ' + K.least + ' of the reagents never acted in it: yield times ' + homK(Math.pow(K.k, K.most)) + '.',
   acid: K => 'When the molecule ends a page ' + K.loss + ' atoms smaller or more: yield times ' + homK(K.k) + '.',
   wood: K => 'When the first reagent lined up finds nothing to act on: he pours every dealt reagent that was not lined up, free; if one lands, yield times ' + homK(K.k) + '.',
   salt: K => 'When the line is the line of the page before again: yield times ' + homK(K.k) + ' and the three reagents get their use back.',
   slime: K => 'When two of the page\'s reagents each set off a reflex: yield times ' + homK(K.k2) + '; all three: times ' + homK(K.k) + '. The reagents he stuck are shut on the next page.',
-  ammonia: () => 'When nitrogen goes on the molecule this page: the page\'s three reagents fire again in the same order, no use spent.',
+  ammonia: () => 'When nitrogen goes on the molecule this page (aminate lands, or a knit closes): the page\'s three reagents fire again in the same order, no use spent.',
   seedling: K => 'When the molecule ends a page ' + K.gain + ' atoms bigger or more: yield times ' + homK(K.k) + ', more for each page in a row. A later page that grows less: yield times ' + homK(K.wilt) + '.',
   brimstone: K => 'When sulfur goes on the molecule, not on the last page: the round ends now and the task counts as met; yield times ' + homK(K.k) + ' after page one, ' + homK(K.k2) + ' after page two.' };
 const homK = k => (HOMS2K.asRead ? k : Math.round(Math.pow(k, FLAT.pow) * 100) / 100);      // a creature's k multiplies extra; the player reads its square root (FLAT)
-const REF_TERM = { glass: ['Glass', 'A run in which every round starts with extra at 3 (the yield reads 1.73 times) and the first reagent that does not follow on from the last ends the round.', 'Beat the number in a round of 6 or more steps with no broken row.'], occult: ['Occult', 'A run that starts with one instrument drawn at random; every number to beat is 1.22 times.', 'Clear 5 rounds in one run.'],
+const REF_TERM = { glass: ['Glass', 'A run in which every round starts with extra at 3 (the yield reads 1.73 times) and the first reagent that does not follow on from the last ends the round.', 'Beat the number in a round of 6 or more steps with no broken row.'], occult: ['Occult', 'A run that starts with one of the eight instruments drawn at random, held or not; every number to beat is 1.22 times.', 'Clear 5 rounds in one run.'],
   lean: ['Lean', 'A run with three of the starting reagents and one more use of each.', 'Beat the number in a round having fired two kinds of reagent or fewer.'], long: ['Long', 'A run with four circles a page and two pages a round.', 'Make a row of 10 in one round.'], hoard: ['Hoard', 'A run that starts with three instruments drawn at random and is offered no more.', 'Hold five instruments in one run.'] };
 // thingOf(category, id): the name and the one line of what it does, from the rules' own tables
 function thingOf(cat, id) {
-  if (cat === 'reagent') { const c = RX.CARDS[REF_CARD[id] || id] || {}; return { name: c.verb || id, does: c.rule || c.note || '' }; }
+  if (cat === 'reagent') { const c = RX.CARDS[REF_CARD[id] || id] || {}; return { name: c.verb || id, does: (c.rule || c.note || '') + (id === 'chugaev' ? ' Sulfur comes off.' : '') }; }
   if (cat === 'reflex') return { name: REF_REFLEX[id][0], does: REF_REFLEX[id][1] };
   if (cat === 'motif') return { name: REF_MOTIF[id][0], does: REF_MOTIF[id][1] };
-  if (cat === 'instrument') { const G = GEARS[id] || {}; return { name: G.name || id, does: (G.note || '') + (G.tool ? '. Used on the molecule once a round.' : '.') }; }
+  if (cat === 'instrument') { const G = GEARS[id] || {}, n = REF_GEAR[id] || G.note || ''; return { name: G.name || id, does: n + (G.tool ? ' Used on the molecule once a round.' : '') }; }
   if (cat === 'soundtrack') return { name: REF_TRACK[id], does: 'A soundtrack to play the game to.' };
   if (cat === 'sigil') return { name: SIGILS[id].name, does: SIGILS[id].does };
-  if (cat === 'homunculus') return { name: HOMS[id].name, does: REF_HOM[id](HOMS2K[id] || {}) };
+  if (cat === 'homunculus') { const b = HOMS[id].brings, bc = b && RX.CARDS[b]; return { name: HOMS[id].name, does: REF_HOM[id](HOMS2K[id] || {}) + (bc ? ' While held, ' + (bc.verb || b).toLowerCase() + ' is on the rack too.' : '') }; }
   return { name: id, does: '' };
 }
 // owned(meta): what the saved profile holds, by category. The ladder's rungs are read from meta.ladder; the rest from where the page keeps them
@@ -273,7 +279,7 @@ function owned(meta) {
   const m = meta || {}, L = m.ladder || {}, o = { reagent: [], reflex: [], motif: [], instrument: [], soundtrack: [], sigil: [], homunculus: [], term: [], length: [], sign: [] };
   LADDER.forEach(r => { if (r.thing && L[r.id] && o[r.gives]) o[r.gives].push(r.thing); });
   Object.keys(HOMS).forEach(id => { if (m.hatched && m.hatched[id]) o.homunculus.push(id); });
-  FAMILIES.forEach(f => { if (m.fam && m.fam[f.id]) f.reagents.forEach(x => o.reagent.push(x)); }); Object.keys(FOUND).forEach(k => { if (m.found && m.found[k]) o.reagent.push(FOUND[k]); });
+  FAMILIES.forEach(f => { if (m.fam && m.fam[f.id]) f.reagents.forEach(x => o.reagent.push(x)); }); Object.keys(FOUND).forEach(k => { if (m.found && (m.found[k] || m.found[FOUND[k]])) o.reagent.push(FOUND[k]); });      // the page saves meta.found by the reagent's id
   Object.keys(REF_TERM).forEach(id => { if (m.sig && m.sig[id]) o.term.push(id); });
   const reach = Math.max(1, m.reach || 1, (m.counters && m.counters.won_master) ? 3 : (m.counters && m.counters.won_bachelor) ? 2 : 1); if (reach >= 2) o.length.push('master'); if (reach >= 3) o.length.push('doctorate');
   for (let k = 1; k <= signOf(m); k++) o.sign.push('sign' + k);
@@ -282,16 +288,17 @@ function owned(meta) {
 function reference(meta) {
   const m = meta || {}, own = owned(m), c = m.counters || {}, out = [], has = (cat, id) => own[cat].includes(id);
   const add = (category, id, name, does, how, count, target) => out.push({ id, category, name, does, how, owned: has(category, id), count: target ? Math.min(target, count || 0) : null, target: target || null });
-  LADDER.forEach(r => { if (!r.thing) return; const t = thingOf(r.gives, r.thing); add(r.gives, r.thing, t.name, t.does, rungHow(r), ladderCount(m, r), r.n); });
+  // a deed that is a mark reached has no count to show: 0 or 1
+  LADDER.forEach(r => { if (!r.thing) return; const t = thingOf(r.gives, r.thing), mark = r.counter === 'max_mark'; add(r.gives, r.thing, t.name, t.does, rungHow(r), mark ? (ladderCount(m, r) >= r.n ? 1 : 0) : ladderCount(m, r), mark ? 1 : r.n); });
   FAMILIES.forEach(f => f.reagents.forEach(x => { const t = thingOf('reagent', x); add('reagent', x, t.name, t.does, 'Buy the ' + f.name + ' at the bench for ' + f.cost + ' credit (the trade supplier must be open).', Math.min(f.cost, m.credit || 0), f.cost); }));
-  add('reagent', 'wacker', thingOf('reagent', 'wacker').name, thingOf('reagent', 'wacker').does, 'Fire hydrate or hydroborate and then oxidize so that the second follows on from the first, once.', m.found && m.found.ketone ? 1 : 0, 1);
-  add('reagent', 'wolff', thingOf('reagent', 'wolff').name, thingOf('reagent', 'wolff').does, 'Fire reduce or hydroborate, then dehydrate, then the finishing hydrogen, each following on from the last, once.', m.found && m.found.removal ? 1 : 0, 1);
+  add('reagent', 'wacker', thingOf('reagent', 'wacker').name, thingOf('reagent', 'wacker').does, 'Fire hydrate or hydroborate and then oxidize so that the second follows on from the first, once.', has('reagent', 'wacker') ? 1 : 0, 1);
+  add('reagent', 'wolff', thingOf('reagent', 'wolff').name, thingOf('reagent', 'wolff').does, 'Fire reduce or hydroborate, then dehydrate, then the finishing hydrogen, each following on from the last, once.', has('reagent', 'wolff') ? 1 : 0, 1);
   Object.keys(HOMS).forEach(id => { const t = thingOf('homunculus', id), full = JAR.full[id]; add('homunculus', id, t.name, t.does, 'Fill its jar: ' + full + ' ' + REF_FEED[id] + ', over all runs.', (m.jar && m.jar[id]) || 0, full); });
-  Object.keys(REF_TERM).forEach(id => add('term', id, REF_TERM[id][0], REF_TERM[id][1], REF_TERM[id][2], m.sig && m.sig[id] ? 1 : 0, 1));
+  Object.keys(REF_TERM).forEach(id => add('term', id, REF_TERM[id][0], REF_TERM[id][1], REF_TERM[id][2] + ' It counts once two runs have each cleared six rounds.', m.sig && m.sig[id] ? 1 : 0, 1));
   add('length', 'master', 'Master\'s', 'A run of six rounds. Instruments can be held. A round is cleared by the task and a pass mark on the yield.', 'Win a three-round run.', c.won_bachelor || (has('length', 'master') ? 1 : 0), 1);
   add('length', 'doctorate', 'Doctorate', 'A run of nine rounds. Instruments and one homunculus can be held.', 'Win a six-round run.', c.won_master || (has('length', 'doctorate') ? 1 : 0), 1);
   const total = out.length + SIGN.laps;
-  for (let k = 1; k <= SIGN.laps; k++) add('sign', 'sign' + k, 'The sign, ' + (k === 1 ? 'first' : k === 2 ? 'second' : 'third') + ' time', 'Everything in this book is given up and earned again; the yield is ' + (1 + SIGN.lift * k).toFixed(1) + ' times for good and the number to beat ' + Math.pow(SIGN.bar, k).toFixed(2) + ' times.', (k > 1 ? 'After the sign has been taken ' + (k - 1) + ' time' + (k > 2 ? 's' : '') + ': h' : 'H') + 'old nine tenths of everything in this book.', null, null);
+  for (let k = 1; k <= SIGN.laps; k++) add('sign', 'sign' + k, 'The sign, ' + (k === 1 ? 'first' : k === 2 ? 'second' : 'third') + ' time', 'Everything in this book but the two reagents found by a row is given up and earned again; the yield is ' + (1 + SIGN.lift * k).toFixed(1) + ' times for good and the number to beat ' + Math.pow(SIGN.bar, k).toFixed(2) + ' times.', (k > 1 ? 'After the sign has been taken ' + (k - 1) + ' time' + (k > 2 ? 's' : '') + ': h' : 'H') + 'old nine tenths of everything in this book.', null, null);
   const n = out.filter(x => x.category !== 'sign' && x.owned).length, need = Math.ceil(SIGN.share * (total - SIGN.laps));
   out.forEach(x => { if (x.category === 'sign') { x.count = Math.min(need, n); x.target = need; } });
   return out;
@@ -483,8 +490,8 @@ const GEAR = [
   { id: 'stopwatch', tok: '{e} +0.35', fam: 'extra', note: 'last reaction on a page: extra +0.35', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.35) : null) },
   { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
   // pieces that change a rule of the round
-  { id: 'carousel', tok: '+1 reagent', fam: 'rule', rule: true, note: 'one more reagent on every page', name: 'carousel', shape: 'round' },
-  { id: 'dropper', tok: '+1 use', fam: 'rule', rule: true, note: 'one more use of every reagent', name: 'dropper', shape: 'funnel' },
+  { id: 'carousel', tok: '+1 reagent', fam: 'rule', rule: true, note: 'one more reagent on the first page of a round', name: 'carousel', shape: 'round' },
+  { id: 'dropper', tok: '+1 use', fam: 'rule', rule: true, note: 'two more uses of every reagent', name: 'dropper', shape: 'funnel' },
   { id: 'loupe', tok: 'rare', fam: 'rule', rule: true, note: 'rare reagents twice as often', name: 'loupe', shape: 'flask' },
   { id: 'timer', tok: '+1 reaction', fam: 'rule', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
   // From the alchemist. These do things chemistry does not allow.
@@ -536,6 +543,12 @@ function fifthSet(id) {
 fifthSet('burette');
 // how many times a round a piece can be used on the molecule
 const TOOLUSES = 1;
+// Fourteenth measure, part 2 (pick AT: each instrument about 1.2 times): every instrument was measured as it is and these were set.
+// toolPay: the reflex steps a piece sets off count this many times (their places and what they add to extra). passive.dropper: the uses it adds.
+// carouselFirst: the carousel's extra reagent is dealt on the first page of a round only (on every page it was worth six instruments).
+RULE.toolPay = { bunsen: 2, magnet: 3, crystal: 0.5, burette: 0.5 };
+RULE.passive = { dropper: 2 };
+RULE.carouselFirst = true;
 RULE.five = true;
 // RULE.bare: the bare game (docs/ORDER.md, layers 1 to 4): no piece is offered or held and no creature is taken
 RULE.bare = false;
@@ -648,7 +661,7 @@ const SIGILS = {
   phlogiston: { name: 'Phlogiston', where: 'engine', does: 'Oxidize also takes two hydrogens from the carbons beside every C=O: a C=C appears there and hydrogen comes off.', how: 'Oxidize acts 150 times.', counter: 'oxidize_acted', n: 150 },
   clepsydra: { name: 'Clepsydra', where: 'round', does: 'A round has four pages, not three.', how: 'Play 100 rounds.', counter: 'rounds', n: 100 },
   via_humida: { name: 'Via Humida', where: 'engine', does: 'A ring closes by counting its 3 or 4 steps through any atom, so an OH reaches a C=O past an O, N or S in the chain.', how: 'Fire hydrate 60 times.', counter: 'hydrate_fired', n: 60 },
-  solve: { name: 'Solve', where: 'engine', does: 'No reflex has a limit a page: dry (once), weld (twice) and ring (twice) go on for as long as they fit.', how: 'Set off 600 reflex steps.', counter: 'reflex_steps', n: 600 },
+  solve: { name: 'Solve', where: 'engine', does: 'No reflex along the chain has a limit a page: dry (once), weld (twice) and ring (twice) go on for as long as they fit. Across the fold each still goes once.', how: 'Set off 600 reflex steps.', counter: 'reflex_steps', n: 600 },
   aqua_permanens: { name: 'Aqua Permanens', where: 'engine', does: 'Water never leaves: dehydrate finds nothing, and the reflexes that give off water (dry, seal, link) do not happen.', how: 'Drive off 5 or more waters on a page, 30 times.', counter: 'water5_pages', n: 30 },
   tetractys: { name: 'Tetractys', where: 'round', does: 'A page has four circles, not three: four reagents fire, and the double pay is after the fourth.', how: 'Line up one reagent in all three circles, 5 times.', counter: 'one_reagent_lines', n: 5 },
   respiratio: { name: 'Respiratio', where: 'round', does: 'The limits of dry, weld and ring start again after every reagent, not once for the page.', how: 'Set off dry 100 times.', counter: 'dry_steps', n: 100 },
@@ -857,8 +870,8 @@ const mult = g => g.R * g.E;
 const rowStart = g => (g.gear.includes('magnet') && !RULE.five ? 2.5 : 1);
 // how many times a reagent can be used in a round
 const usesOf = (g, id) => Math.max(1, usesOf0(g, id) - (signHas(g.runRef, 'uses') ? 1 : 0));
-const usesOf0 = (g, id) => (RULE.usesBy && RULE.usesBy[id] != null) ? RULE.usesBy[id] : (g.brief === 'scarce' ? Math.ceil(RULE.uses / 2) : TIER[id] === 'rare' ? Math.max(1, RULE.uses - 1) : RULE.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0);
-const handOf = g => (RULE.hand || SYN.offer) + (g.gear.includes('carousel') ? 1 : 0) - (signHas(g.runRef, 'hand') ? 1 : 0);
+const usesOf0 = (g, id) => (RULE.usesBy && RULE.usesBy[id] != null) ? RULE.usesBy[id] : (g.brief === 'scarce' ? Math.ceil(RULE.uses / 2) : TIER[id] === 'rare' ? Math.max(1, RULE.uses - 1) : RULE.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? ((RULE.passive && RULE.passive.dropper) || 1) : 0) + (g.usesAll || 0);
+const handOf = g => (RULE.hand || SYN.offer) + (g.gear.includes('carousel') && (!RULE.carouselFirst || (g.page || 1) <= 1) ? 1 : 0) - (signHas(g.runRef, 'hand') ? 1 : 0);
 // n reagents from the rack. With a hand, reagents that still have uses come first and those in skip come last, and
 // nothing is dealt again: a hand on which nothing acts is a hand the player has to deal with.
 function draw(g, R, rack, n, skip) {
@@ -875,7 +888,7 @@ function dealHand(g, R, rack, offer, again) {
   if (!RULE.uses) g.left = {};
   if (!again && g.gear.includes('mystery')) { const all = RUNG.start.concat(...SUPPLY.map(q => q.reagents)).filter((id, i, a) => a.indexOf(id) === i && RX.CARDS[id] && !PAIR[id] && !g.kinds.includes(id) && !rack.includes(id) && RX.CARDS[id].find(g.m).length); if (all.length) { const id = all[Math.floor(R() * all.length)]; g.kinds.push(id); if (RULE.uses) g.left[id] = 1; } }
   if (!again) { if (g.back && RX.CARDS[g.back] && !g.kinds.includes(g.back)) g.kinds.push(g.back); g.back = null; }
-  if (!RULE.uses) g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? 1 : 0) + (g.usesAll || 0); });
+  if (!RULE.uses) g.kinds.forEach(id => { g.left[id] = (g.brief === 'scarce' || TIER[id] === 'rare' ? 1 : SYN.uses) + ((g.usesPlus && g.usesPlus[id]) || 0) + (g.gear.includes('dropper') ? ((RULE.passive && RULE.passive.dropper) || 1) : 0) + (g.usesAll || 0); });
   else g.kinds.forEach(id => { if (g.left[id] == null) g.left[id] = 1; });
   // plenty: with a budget of uses, a reagent that is plenty on a page spends none while that page is open
   const plenty = id => { g.rare[id] = 'plenty'; if (RULE.uses) g.free[id] = true; else g.left[id] = 9; };
@@ -998,6 +1011,7 @@ function scoreRound(g, o, free) {
   let oxMul = 1, cascMul = 1;
   if (!o.casc) { oxMul = (id === 'pcc' && RULE.oxPay != null ? RULE.oxPay : 1) * (RULE.ownPay && RULE.ownPay[id] != null ? RULE.ownPay[id] : 1) * repOf(id, g.trail.length); }
   else if ((RULE.repeat && RULE.repeat.chain) || RULE.setPay) { let li = -1; for (let i = g.trail.length - 1; i >= 0; i--) { const t = g.trail[i]; if (!t.free && !t.bank) { li = i; break; } } if (li >= 0) { const rid = g.trail[li].id; cascMul = (RULE.repeat && RULE.repeat.chain ? repOf(rid, li) : 1) * (RULE.setPay && RULE.setPay[rid] != null ? RULE.setPay[rid] : 1); } }
+  if (o.casc && g.toolPay) cascMul *= g.toolPay;      // RULE.toolPay: the steps a piece set off
   for (let i = 0; i < r.hits; i++) { c.hit = i; if (per) emit('bottle', A('p', per * oxMul * (o.casc ? cascMul : 1))); pieces('site'); }
 const HETKIND = ['knit', 'cap', 'bridge'];   // the reflexes that join through N or S
   // RULE.hetPay n: a reflex step that joins through N or S counts n more times. RULE.kindFresh n: the first step of each kind of reflex in a round counts n more times.
@@ -1090,7 +1104,7 @@ function synTake(g, o, free) {
   // doubled count (Gemini), a fourth circle (Tetractys), a fourth page (Clepsydra)
   const sigs = []; if (o.sig) sigs.push(o.sig); if (!o.self && RX.MODE.eng) { const sr = RX.ENG.sigOf(g.m, ENGID[o.id] || o.id); if (sr) sigs.push(sr); } if (g.sigNow) { sigs.push(g.sigNow); g.sigNow = null; }
   if (sigOn('tetractys') && !free && g.pageSteps + 1 >= stepsOf(g)) sigs.push('tetractys'); if (sigOn('clepsydra') && g.page >= pagesOf(g)) sigs.push('clepsydra');
-  g.m = o.model; if (!free) { g.pageSteps++; g.lastOn = !o.self && g.pageSteps >= stepsOf(g); } else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
+  g.m = o.model; if (!free) { g.toolPay = 0; g.pageSteps++; g.lastOn = !o.self && g.pageSteps >= stepsOf(g); } else if (g.chain) g.chainLen = (g.chainLen || 0) + 1; g.best = Math.max(g.best, cur.path.length);
   const set = false;
   g.trail.push(Object.assign({ id: o.id, hits: o.r.hits, cont: o.cont, held: hold, ev: sc.ev, rare: sc.rare, set, free: !!free, sig: sigs.length ? sigs : null, kind: o.kind, join: o.join ? o.join.map(a => a.id) : null, via: o.via || (o.kind ? 'chain' : null) }, bd || {}));
   if (shatter) synEnd(g);
@@ -1156,7 +1170,7 @@ function toolUse(g, id, spot) {
   cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made: res.made || [], gone: res.leaving || [] };
   // what a piece drives off is collected as a reagent's by-product is
   (res.leaving || []).forEach(grp => { const kind = kindOf(grp); if (kind === 'water' || kind === 'h2' || kind === 'co2') homEvent(g, kind); tallyOff(g, grp, kind); g.by.gauge++; });
-  g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = id !== 'clamp';
+  g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = id !== 'clamp'; g.toolPay = (RULE.toolPay && RULE.toolPay[id]) || 0;
   return true;
 }
 // A piece that changes the molecule sets the zip off at once, as a reagent that acted does (the clamp changes

@@ -7,7 +7,7 @@ import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref14.json')))['result']
+o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref14.json'), encoding='utf-8'))['result']
 ref, cats = o['ref'], o['cats']
 INVENTED = {
     'reagent': 'The twelve earned by a deed are new ways: until now the game handed all of them to any long run, or (hydroborate, reduce) only with a creature. The three bought with credit and the two found by a row are as the game already had them.',
@@ -37,7 +37,7 @@ for cid, cname in cats:
         L.append('| %s | %s | %s | %s |' % (x['name'][0].upper() + x['name'][1:], x['does'], x['how'], x['target'] if x['target'] and x['target'] > 1 else ''))
     L.append('')
 L += ['## The ladder: what each rung hands over', '',
-      'A run hands over two rungs at most; what is earned beyond that comes with the next runs. 40 of the 56 rungs open one named thing (they are in the tables above). 13 pay credit, because the game holds fewer things than the ladder has rungs: clear round 9 of a nine-round run (10 credit); 2,000 reflex steps (5); 200 rounds played, 100 rounds cleared, 30 runs lost, 1,000 reflex steps (3 each); 10 and 20 rounds played, 5 and 10 rounds cleared, 6 runs lost, 50 and 100 reflex steps (1 each). 3 rungs (clearing rounds 10, 11 and 12) are closed while the twelve-round run is switched off.', '',
+      'A run hands over two rungs at most; what is earned beyond that comes with the next runs. The ladder has 67 rungs. 40 open one named thing (they are in the tables above). 24 pay credit, 1 to 10 each, because the game holds fewer things than the ladder has rungs: these are the plain counts of rounds played and cleared, runs lost and reflex steps, clearing rounds 2, 4, 8 and 9 of a long run, and the deeds whose thing was moved to a count that fits it better after review (a chain of 4, the 2-times mark, 5 kinds of reflex, a round lost by a little). 3 rungs (clearing rounds 10, 11 and 12) are closed while the twelve-round run is switched off.', '',
       '## What is not in the book, and why', '',
       '- The suppliers (five, bought with credit at the bench). Until now a supplier put its instruments on offer. Once the page starts a run from the profile (`P.profileOpts`), instruments come from the book and a supplier gates only the three bought reagents (the trade supplier). Whether suppliers stay is for the owner.',
       '- The 53 older instruments in the code (balance, stir plate, the occult pieces and the rest): none is on offer in the game as it stands.',
@@ -45,7 +45,10 @@ L += ['## The ladder: what each rung hands over', '',
       '- Inspections: all four are dealt from the first run; there is nothing to unlock.',
       '- The twelve across-the-fold reflexes: each comes by itself from round 4 when its near twin is held.',
       '- The twelve-round run: switched off.',
-      '- Credit and gold: they are spent, not held.', '',
+      '- Credit and gold: they are spent, not held.',
+      '- Second ways that exist beside the one in the book: a homunculus held in a run puts its own reagent on the rack whether that reagent is owned or not (the wood spirit reduce, the slime hydroborate, ammonia cyanate, brimstone eliminate S).',
+      '- The page\'s own gate `meta.stage` (it rises after three rounds are beaten, and again after two runs that clear six rounds): until it has risen the page offers no instruments, homunculi or terms. It is the page\'s, not the rules\', and should go or be shown once the book is in.',
+      '- The three bought reagents and the two found by a row reach a run through the page (`extra`), and once any earned reagent is owned they are seldom offered. Not fixed.', '',
       '## What the page still has to do', '',
       '- Start a run with `P.runNew(tier, extra, Object.assign({ tierNo }, P.profileOpts(meta)))`. Until it does, the counts are not kept and no rung is handed over.',
       '- Save `meta.ladder`, `meta.counters`, `meta.deep`, `meta.reach` and `meta.sign` with the profile (`reach` and `sign` are not restored on load today).',
