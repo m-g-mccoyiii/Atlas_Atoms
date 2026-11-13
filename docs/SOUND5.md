@@ -7,6 +7,120 @@ Two files: `apps/steam/js/sfx.js` (effects, `AA.sfx`) and `apps/steam/js/music.j
 What the owner asked for (12 November): the sounds "aren't exciting enough"; "the building up needs to be way longer"; "I need the sound to be more majestic with the buildup to reactions building. It's a bit flat. Needs to hit the dopamine", leaning on "Drums and a riser"; "several sound tracks", funk as the main one, "the gothic hybrid just tweak it a little", "an edm one, a metal one, etc."; "I said several sound options and never got them".
 
 <!-- builder7 -->
+<!-- builder8 -->
+## 000. Builder 8 (13 November): a beat, a build and a drop, heavier sounds
+
+The owner listened to whole-run videos and said the EDM soundtrack was "not EDM": "No real beat", "No build and drop"; of the ending: "too loud all at once", "the music changes too abruptly", "the silence before it". Then, on the first clip of this builder: "Still no": "Sounds thin or cheap", "No bass"; asked which EDM: "All of these". This section is the newest; where anything below disagrees with it, this wins.
+
+**Every earlier section judged the sound by loudness tables, and the owner's ears said it had failed on exactly what the tables called fine.** The numbers below say what was measured, not that it feels right. Only the owner can confirm any of it. Nobody but the owner has listened.
+
+### 000.1 What changed
+
+- **A beat in every state that has drums** (title, planning, picking, shop, round won, the drop): a kick on every beat, a clap on 2 and 4, a hat on every off-beat, at 126 to 128 bpm, steady (the tempo no longer runs away inside a section; the half-time and dropped-beat bars of the later rounds are gone). Kick, clap and hats have buses of their own past the layer levels, the heat filter and the state's level, so they are the same in every state. Calm is made by thinning what is around the drums (bass filtered, no lead), not by taking drums out. Planning is a groove, no longer the breakdown.
+- **Heavier sounds.** The kick is layered (a 2 to 5 kHz click, a body sweeping from about 180 Hz to 50 in 70 ms with second and third harmonics, a short sub tail, saturated). The clap has a 200 Hz body. The bass is a **line** (root, octave, fifth, seventh; four sets of patterns by heat) played by two voices: a clean sine sub and a mid-bass of three beating saws, a square and an octave above, driven hard. Plucks are seven saws wide. Pads, lead, plucks and stabs each go through a chorus (two wandering delays, one a side). Pads, bass, lead and plucks duck under every kick.
+- **A master chain for this track** (`edmMaster`): low shelf (+1.5 dB at 95 Hz), high shelf (+3 dB at 8.5 kHz), everything under 120 Hz mono, a glue compressor, a soft clipper; the EDM track no longer goes through the tape. Its way out leans up through a build (to +1.6 dB) and is highest in the drop (+2.6 dB): the proportion of groove, build and drop is set in one place (`EDMM`).
+- **The build is the music's own, on the grid** (it was the effects', tied to the arrows, with the music ducked 10 dB under it). As a chain climbs: the kick loses its low end, then leaves; the clap gives way to a snare roll that doubles (4, 8, 16, 32 to the bar) and climbs in pitch; white noise and two saws rise; the pad filter opens; the bass is pulled away. The effects keep the sweep into each hit, the one climbing tone, the hits and the kinds, and now duck the music by 2 dB, not 10. How high a build goes depends on the chain: 3 steps only lean in (the kick never leaves), 9 or more go to the top.
+- **After the last hit the build hangs at its top for a bar.** If OVERREACT is called: see below. If not, it resolves: the hiss falls away and the beat is back, with no crash and no drop.
+- **The drop.** On the call (`AA.sfx.flag(4)` and `AA.music.state('overreact')`, either first) the build stops; the drop lands on the music's next eighth at least 0.26 s on (so 0.26 to 0.5 s later: `Engine.dropAt`). In that breath: the hall's tail and the echo of the riser, a clap with a long tail on the call (the word lands on it), a cymbal backwards and a hiss swelling, one held high D opening. Then the first bar of OVERREACT is the drop: full kick, the bass line, the hook, the effects' impact (above 95 Hz), on the same instant. The old sequence (a blow past the limiter, 2 s of riser, a hole at -60 dB, the drop 2.95 s after the call) is gone when the EDM track plays; it remains for the other soundtracks.
+- **The held breath before the last hit** is 0.32 s and no longer dead: the bus goes 9 dB down, not 38, so the build is heard through it. The last hit goes through the bus like the rest (nothing past the limiter) at 1.3 times an ordinary top hit, with half its old tail.
+- **Every change of state is led into, in time** (`edmLeadIn`, `edmOut`): an ending (won, lost, run won, run lost) starts on the next beat at least 0.4 s on; planning, picking, shop and title start on the next half bar; each with a rising hiss and four snare strokes into the line (into a lost round: a falling hiss and three low knocks). The old state's drums and bass stop on the line; its pads, plucks and lead ring out under the new state for about a second. Nothing cuts in at once any more: a change comes 0.4 to 1.2 s after the page asks.
+- **Four styles, one track** (the owner: "All of these"): house while planning in rounds 1 to 6; the festival build and drop for OVERREACT; in rounds 7 and 8, half time at 140 (kick on one, a heavy snare on three, a growling bass whose filter wobbles in eighths and sixteenths over a sine sub); in round 9, drum and bass at 172 (kick on one and the and of three, snare on two and four, sixteenth hats, long reese notes). Prestige laps and the postdoc have no call yet, so nothing changes for them.
+- **A turn as three builds** (owner's ruling on pace, 13 November): `AA.music.run(k, of)` and `AA.sfx.reagent(k, of)` mark "reagent k of 3 starts its run". The build lets go (its hiss falls away) and starts again a little higher than the last one started (floor 0, 0.1, 0.2); runs before the last top out at 0.7 (the kick thins but the roll never reaches thirty-seconds) and get no held breath and no big last hit; only the last run can climb to the top and take the breath and the drop. The one climbing tone is let go over a twentieth of a second and made again on the next arrow. Steps are counted from 1 again whether or not the page restarts its numbers. (`AA.sfx.runStart` was already the name of the run-start act, so the effects' call is `reagent`.) **The page does not call these yet.**
+
+### 000.2 Measured
+
+Takes: `p1` 60 s of planning at three heats; `bd` planning, a 9-step chain, OVERREACT, planning, a 4-step chain; `rd` a whole round (title, three turns with chains of 3, 5 and 9, the drop, round won, shop, next round, a lost round). Music and effects together unless said. "Before" is the code as it was this morning, same events.
+
+The beat (60 s of planning):
+
+| | Before | Now |
+| --- | --- | --- |
+| Tempo found by autocorrelation of the onset envelope, bpm | 124.0 (but see next row) | 126.0 |
+| Beats with a kick (a sharp click followed by low end) | 1 of 123 | 124 of 124 |
+| Of the 40 loudest transients, on a beat | 9 | 36 |
+| Level on the beat against the three sixteenths after it, dB (calm bars) | none to speak of | -9 against -12, -14, -13 |
+| Loudness, calm / warm / hot, LUFS | -23.8 / -19.6 / -15.8 | -12.5 / -11.4 / -10.5 |
+
+The kick's timing is written exactly on the grid; the measure of "within 5 ms" in the sound could not be made clean (claps, stabs and lead notes land on the same beats and blur which onset is the kick's), so it rests on the written times. The tempo detector is steady over 60 s but unsteady on 20 s stretches and should not be leaned on.
+
+Bass (the bass layer alone, warm planning): 100 to 400 Hz: -22.4 dB (before -33.2); 400 Hz to 1 kHz: -31.0 (before -39.1). Whole mix, warm planning: 35 to 70 Hz -20.0 dB, 100 to 400 Hz -17.3, 400 Hz to 1 kHz -23.0; a phone (mono, 300 Hz high-pass) keeps all but 5.9 dB (calm 7.6, hot 4.7). Under 120 Hz the sides are 40 dB under the mix (mono).
+
+The build and the drop (`bd`, round 1):
+
+| Bar of the build | 1 | 2 | 3 | 4 | 5 | 6 (the last hit) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Loudness, LUFS | -12.4 | -12.4 | -12.1 | -11.7 | -11.0 | -9.7 |
+| Spectral centroid, Hz | 551 | 536 | 824 | 762 | 1544 | 4996 |
+| Low end (35 to 120 Hz), dB | -18.6 | -19.4 | -19.3 | -19.4 | -20.0 | -26.3 |
+
+(That table is from the render before the master's lean-up was added; with it the 1 s loudness through the build reads -12.5, -12.0, -11.4, -10.5, -10.1, -9.0.) Loudness and brightness climb; the low end leaves in the last bar. The onset rate does not climb cleanly by this measure (22 to 26 a second throughout: the hats and plucks of the groove already fill the sixteenths), so the roll's doubling is in the writing, not shown by the number.
+
+| | Before | Now |
+| --- | --- | --- |
+| From the call to the drop, s | 2.95 | 0.31 (`bd`), 0.40 (`rd`) |
+| Quietest 50 ms in it, dB | -62.9 | -26.3 (the second before: -14.0) |
+| Loudest second of the build, LUFS | -7.0 | -8.4 |
+| Second around the last hit, LUFS | -7.2 | -8.5 |
+| First second of the drop, LUFS | -8.4 | -8.0 |
+| Drop over the loudest second of the build, dB | -1.5 | +0.4 |
+| 2 to 6 kHz, first second of the drop against the second before the call, dB | -0.1 | +0.5 |
+| Low end, first half second of the drop against the half second before the call, dB | +3.6 | +8.4 |
+| Low end at half its level after the bar line, ms | 13 | 39 |
+| Loudness, groove before / drop held, LUFS | -16 / -11 | -12 / -8.7 |
+| Peak, dBFS; clipped samples | +0.11; 1 | -0.9; 0 |
+
+The 4-step chain of `bd` rises to -9.8 LUFS at its last hit and is back at -11 a second later, with no drop.
+
+Changes of state (`rd`): the spectrum of the 200 ms after the change against the 200 ms one beat earlier (0 = the same, 1 = nothing in common), and when the change came after the page asked:
+
+| Into | Before: flux, level jump dB, s after the call | Now |
+| --- | --- | --- |
+| planning (from title) | 0.83, -10.2, 2.25 | 0.22, -0.5, 1.18 |
+| OVERREACT | 0.89, +10.8, 0.03 | 0.82, +5.2, 0.40 |
+| round won | 0.65, -0.1, 0.03 | 0.35, -0.8, 0.45 |
+| shop | 0.62, -0.1, 1.27 | 0.21, -0.2, 0.62 |
+| planning (next round) | 0.65, -5.2, 0.51 | 0.26, -1.1, 0.69 |
+| a lost round | 0.64, +4.2, 0.03 | 0.75, +2.3, 0.87 |
+
+Measured against the 200 ms just before the change instead, the new version reads worse (0.6 to 1.3 against 0.6 to 0.9): a kick now lands on every change and the window before it has none. The table above compares like with like within the beat. The drop is meant to be a change. **The lost round is not smoother by this measure** (0.75 against 0.64): the drums stop there.
+
+### 000.3 Calls (new or changed)
+
+```
+AA.music.run(k, of)        // reagent k of `of` (1 to 3) starts its run of steps: the build starts again; only the last run can reach the top
+AA.sfx.reagent(k, of)      // the same for the effects: the tone, the sweep and the count start again without a click
+AA.sfx.arrow / reflex / flag(4), AA.music.state / step      // unchanged; flag(4) and state('overreact') still in the same moment
+AA.sfx.ownsBuild()         // now means only: the effects are in the EDM palette (the EDM soundtrack plays the build itself)
+```
+
+The drop now lands 0.26 to 0.5 s after the call, not 2.95 s: anything on the page timed to the old 2.95 s (the word, the count) should be looked at.
+
+### 000.4 Not done, and what failed
+
+- Nobody but the owner has listened; the owner has heard only the first clip (the beat, before the new sounds) and said "Still no".
+- The steps of a chain land where the game puts them, off the beat; only the build around them is on the grid. A kick within 50 ms of a hit is taken out; otherwise hit and kick both sound.
+- The thirteen kinds, the room under each hit and the phone loss of each hit were not measured again. The music is now 8 dB less ducked under a chain, so the kinds very likely read less clearly than in section 00's tables.
+- The acts of the other screens were not levelled again against the louder music; title, run start, lost and round won were rendered inside the round clip but not measured one by one; redraw, run won, run lost, unlock, finding, creature, instrument are still unrendered.
+- Rounds 5 to 9 were not rendered as whole chains; the dubstep and drum-and-bass styles were rendered only as planning. The build and the drop in rounds 7 to 9 play at those tempos with the festival patterns; unheard and unmeasured.
+- "Plate-style reverb": the hall is still the made impulse of before (decaying noise, darker towards the end); no new reverb was written.
+- The live game was not run: the page's real timing of calls, live CPU (each deck now has eight more nodes for the chorus and the track a master chain), and the look-ahead (a drop 0.26 s after the call is inside the 0.35 s the live clock writes ahead: it should hold, not checked).
+- Only the EDM track has the beat, the build, the lead-ins and the master. The other five soundtracks are as they were.
+- Tried and dropped: the first heavier mix (kick at 0.44 with a 75 ms tail: 75% of the energy under 120 Hz, every heat the same loudness to 0.1 dB because the clipper was doing all the work); the log-energy tempo detector (it locked to the dotted pluck figure at 84 bpm).
+
+### 000.5 Clips (builder 8)
+
+In `C:\Work\atlas-atoms\.claude\shots` (960-wide copies under `small\`, a `.txt` beside each). Music and effects together.
+
+- `snd8-01-beat.mp4`: planning at three heats (the beat, before the new sounds; the owner: "Still no").
+- `snd8-05-heavier.mp4`: the same with the new kick, bass line, chorus and master; then as a phone plays it.
+- `snd8-02-build-and-drop.mp4`: a 9-step chain to OVERREACT, then a 4-step chain that resolves with no drop.
+- `snd8-06-three-runs.mp4`: one turn as three builds (runs of 3, 4, 6), the third to the drop.
+- `snd8-07-house.mp4`, `snd8-08-festival.mp4`, `snd8-09-dubstep.mp4`, `snd8-10-dnb.mp4`: the four styles.
+- `snd8-03-a-round.mp4`: a whole round, 88 s.
+- `snd8-04-before-after.mp4`: the same 20 s of events, this morning's and now.
+
+<!-- /builder8 -->
+
 ## 00. Builder 7 (13 November): one clock, one world
 
 The owner, late on 12 November: "I want the EDM soundtrack for sure but for everything", and, asked what the effects should be, "Sound matched to EDM". This section is the newest; where anything below disagrees with it, this wins.
