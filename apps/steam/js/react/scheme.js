@@ -14,7 +14,11 @@ const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = M
 const fmt = n => Math.round(n).toLocaleString('en-US');
   const fmtK = n => { const t = v => String(Math.round(v * 10) / 10).replace(/\.0$/, ''); return n >= 1e9 ? t(n / 1e9) + 'B' : n >= 1e6 ? t(n / 1e6) + 'M' : n >= 1e5 ? t(n / 1e3) + 'K' : fmt(n); };
 const fmtB = n => (n < 100 ? String(Math.round(n * 10) / 10) : fmt(n));
-const BALL = el => Math.min(0.62, 0.2 + 0.36 * E[el].cov);
+// ?hyd=a|b|c: how a shown hydrogen stands by its atom. a: smaller (0.6 of the radius), the bond as long as before; b: full size, further out;
+// c (the default until the owner picks): smaller and further out. 0 is the old way (for a before picture).
+const HYD = (() => { try { const v = new URLSearchParams(root.location.search).get('hyd'); return v === 'a' || v === 'b' || v === 'c' || v === '0' ? v : 'c'; } catch (e) { return 'c'; } })();
+const HYDR = HYD === 'a' || HYD === 'c' ? 0.6 : 1, hydGap = Rp => (HYD === 'a' ? 0.32 : Math.max(0.5, Rp));
+const BALL = el => Math.min(0.62, 0.2 + 0.36 * E[el].cov) * (el === 'H' ? HYDR : 1);
 let INK = '#2b2622', PENCIL = '#5a564e', FAINT = 'rgba(90,86,78,0.35)', REDINK = '#c8261c', GREEN = '#1c8a4a'; const HILITE = 'rgba(255,214,0,0.6)';
 // Five sheets for the page to sit on (?paper=1..5, remembered). Each has its own ink colors, the color of the soft shadow under
 // the molecule, the table beyond the sheet and the wash laid over the whole view. The sheet itself is drawn in paperDraw.
@@ -668,13 +672,32 @@ function start(app) {
   // Puts every ball and stick of a molecule where pos says its atoms are. grow(atom) runs 0 to 1 for an atom that is
   // appearing, and a stick appears with the later of its two ends.
   const _ride = new T.Vector3(), _u = new T.Vector3(), _q = new T.Quaternion(), _perp = new T.Vector3(), _mid = new T.Vector3(), _gb = new T.Vector3();
-  function layout(m, pos, grow) {
+  // Shown hydrogens are set here, on every frame, whatever moved the atoms: each stands on a circle round its own atom (its ball clear of that
+  // atom's ball by the gap, measured as the camera sees it), in the direction it was given unless something is in the way; then it is turned
+  // round its atom, by the least turn, to a direction where it touches nothing. The turn is remembered so it does not flick back and forth.
+  const _hc = new T.Vector3();
+  function hydFix(m, pos) {
+    let L = m._hl; if (!L) { L = m._hl = []; m.balls.forEach((b, a) => { if (a.el !== 'H') return; const pa = m.model.neighbors(a).map(q => q.atom).find(q => q.el !== 'H' && m.balls.has(q)); if (pa) L.push({ h: a, pa, b, pb: m.balls.get(pa), off: 0, v: new T.Vector3() }); }); m._hm = new Map(); L.forEach(e => m._hm.set(e.h, e.v)); m._hv = []; m.balls.forEach((b, a) => { if (a.el !== 'H') m._hv.push([a, b]); }); }
+    if (!L.length) return null;
+    const cx = camDir.x, cy = camDir.y, cz = camDir.z, hv = m._hv, HP = hv.map(e => pos(e[0]));
+    const pd = (dx, dy, dz) => { const t = dx * cx + dy * cy + dz * cz; return Math.sqrt(Math.max(0, dx * dx + dy * dy + dz * dz - t * t)); };
+    const done = [];
+    L.forEach(e => { const P = pos(e.pa), H0 = pos(e.h), Rp = e.pb.R, Rh = e.b.R; if (!P || !H0) return; let dx = H0.x - P.x, dz = H0.z - P.z, d = Math.hypot(dx, dz); if (d < 1e-4) { dx = 0; dz = -1; d = 1; } const a0 = Math.atan2(dz, dx), need = Rp + Rh + hydGap(Rp);
+      const at = an => { const ux = Math.cos(an), uz = Math.sin(an), pf = Math.sqrt(Math.max(0.3, 1 - (ux * cx + uz * cz) * (ux * cx + uz * cz))), l = need / pf; return _hc.set(P.x + ux * l, P.y, P.z + uz * l); };
+      const clear = an => { const c = at(an); let w = 9; for (let j = 0; j < hv.length; j++) { if (hv[j][0] === e.pa) continue; const q = HP[j]; if (!q) continue; const r = pd(c.x - q.x, c.y - q.y, c.z - q.z) / (hv[j][1].R + Rh); if (r < w) w = r; } for (let j = 0; j < done.length; j++) { const q = done[j].v, r = pd(c.x - q.x, c.y - q.y, c.z - q.z) / (done[j].b.R + Rh); if (r < w) w = r; } return w; };
+      let best = e.off, bw = clear(a0 + e.off);
+      if (bw < 1.22 || (e.off && clear(a0) >= 1.3)) { best = null; let fb = 0, fw = -1; for (let k = 0; k <= 12 && best == null; k++) for (const sg of (k ? [1, -1] : [1])) { const o = sg * k * 0.2618, w = clear(a0 + o); if (w >= 1.3) { best = o; break; } if (w > fw) { fw = w; fb = o; } } if (best == null) best = fb; }
+      e.off = best; e.v.copy(at(a0 + best)); done.push(e); });
+    return m._hm;
+  }
+  function layout(m, pos0, grow) {
+    const hf = HYD !== '0' ? hydFix(m, pos0) : null, pos = hf ? (a => hf.get(a) || pos0(a)) : pos0;
     m.balls.forEach((b, a) => { const p = pos(a), k = grow ? grow(a) : 1; b.mesh.position.copy(p); b.mesh.scale.setScalar(Math.max(0.0001, b.R * k)); if (b.sprite) { b.sprite.position.copy(p).addScaledVector(camDir, -b.R * 1.04); b.sprite.scale.setScalar(Math.max(0.0001, b.R * (b.sk || 1.25) * k)); } if (b.collar) { b.collar.position.copy(p); b.collar.scale.setScalar(Math.max(0.0001, k)); } });
     m.sticks.forEach(s => {
       const A = pos(s.a), B0 = pos(s.b), k0 = grow ? Math.min(grow(s.a), grow(s.b)) : 1, B = s.gk != null && s.gk < 1 ? _gb.copy(A).lerp(B0, Math.max(0.02, s.gk)) : B0; _u.copy(B).sub(A); const len = _u.length(); if (len < 1e-4) return; _u.divideScalar(len);
       // a bond between atoms that are still far apart is not drawn until they have come near: it grows in as a fold closes
       if (!s.rest) { const fa = m.at.get(s.a), fb = m.at.get(s.b); s.rest = fa && fb ? Math.max(0.3, fa.distanceTo(fb)) : len; }
-      const k = s.rung || s.gk != null || s.old ? k0 : k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.05) / 0.1));
+      const k = s.rung || s.gk != null || s.old || s.a.el === 'H' || s.b.el === 'H' ? k0 : k0 * Math.max(0, Math.min(1, 1 - (len / s.rest - 1.05) / 0.1));
       _q.setFromUnitVectors(UP, _u); _perp.crossVectors(_u, camDir).normalize(); _mid.copy(A).add(B).multiplyScalar(0.5);
       s.parts.forEach(pt => { const fr = pt.h ? _mid : A, to = pt.h ? B : _mid; const many = s.parts.length > 2, rr = s.r * k * (many ? 0.7 : 1); pt.mesh.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(_perp, pt.f * (s.parts.length > 4 ? 0.34 : 0.36)); pt.mesh.quaternion.copy(_q); pt.mesh.scale.set(Math.max(0.0001, rr), fr.distanceTo(to), Math.max(0.0001, rr)); pt.mesh.visible = k > 0.01; }); s.len = len; s.vis = k > 0.01;
     });
