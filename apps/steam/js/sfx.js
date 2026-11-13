@@ -935,7 +935,7 @@ function dir4(lo) { const k = lo ? 'dirLo' : 'dir'; if (!SB[k]) { const w = C.cr
 function L4(o) {
   const c = C, w = madW(), j1 = rnd(), j2 = rnd(), j3 = rnd(); let name = o.i; if (name === 'bow') return; if (name === 'pizz') name = (o.m || 60) < 50 ? 'ebass' : 'marimba'; if (!o.raw) name = SWAP4[name] || name;
   const sp = LAB.INST[name]; if (!sp || !(o.g > 0)) return;
-  const m = o.m === undefined || o.m === null ? (sp.fix === undefined ? sp.lo : sp.fix) : o.m, bz = labBuf(c, name, m, Math.floor(j3 * 3)); if (!bz.b) return;
+  const m = o.m === undefined || o.m === null ? (sp.fix === undefined ? sp.lo : sp.fix) : o.m, bz = labBuf(c, name, m, o.take !== undefined ? o.take : Math.floor(j3 * 3)); if (!bz.b) return;
   const t = Math.max(0, o.t + (o.strict ? 0 : (j1 - 0.5) * 0.006)), vel = o.g * G4 * (o.strict ? 1 : 0.9 + 0.2 * j3);
   const cents = (sp.fix === undefined ? (m - bz.z) * 100 : 0) + (o.det || 0) + (o.strict ? 0 : (j1 - 0.5) * 2 * (sp.fix === undefined ? 3 + (o.bed ? 9 : 24) * w : 6 + 14 * w)), rate = Math.pow(2, cents / 1200);
   if (!o.strict && sp.fix === undefined) { MST.notes++; MST.cents += Math.abs((j1 - 0.5) * 2 * (3 + (o.bed ? 9 : 24) * w)); }
@@ -1315,7 +1315,7 @@ function warm4(sync) {
 // cymbal played backwards. Notes: the chain chord's root on the kettledrums; everything else D, E, G, A.
 // ====================================================================================================================
 let BLD = '';
-const H5 = LAB.H, BREATH5 = 0.32, B5HIT = 0.45, B5LAST = 0.56, B5RISE = 5;   // B5RISE: decibels from the first hit of a cold 12-step chain to its last ordinary hit
+const H5 = LAB.H, BREATH5 = 0.32, B5HIT = 0.52, B5LAST = 0.72, B5RISE = 6.5;   // B5RISE: decibels from the first hit of a cold 12-step chain to its last ordinary hit
 Object.assign(LAB.INST, {
   taiko: { rr: 2, lo: 26, hi: 41, gen: m => { const f = mf(m), x = H5.modal([[f, 1, 0.95], [f * 1.59, 0.55, 0.5], [f * 2.14, 0.4, 0.34], [f * 2.65, 0.25, 0.24], [f * 3.16, 0.16, 0.18], [f * 3.6, 0.1, 0.14]], 1.3); H5.chirp(x, 0, f * 2.2, f, 0.09, 0.9); H5.burst(x, 0, 0.035, 60, 500, 1.5, 501 + m); H5.burst(x, 0, 0.006, 1200, 5200, 0.8, 502 + m); return H5.norm(H5.fade(x, 0.2), 0.9); } },
   ka:    { rr: 3, fix: 60, gen: () => { const x = H5.modal([[1080, 1, 0.035], [1630, 0.6, 0.028], [2290, 0.4, 0.02], [610, 0.5, 0.045]], 0.15); H5.burst(x, 0, 0.002, 2000, 9000, 0.9, 511); return H5.norm(x, 0.85); } },
@@ -1323,9 +1323,9 @@ Object.assign(LAB.INST, {
   boom:  { fix: 30, gen: () => { const n = Math.floor(2.8 * 44100), x = new Float32Array(n); let ph = 0; for (let i = 0; i < n; i++) { const t = i / 44100; ph += 2 * Math.PI * (31 + 70 * Math.exp(-t / 0.07)) / 44100; x[i] = Math.tanh(2.2 * Math.sin(ph) * (0.35 + 0.65 * Math.exp(-t / 0.12))) * Math.exp(-t / 0.75) * Math.min(1, i / 40); } H5.burst(x, 0, 0.09, 30, 200, 1.6, 521); H5.burst(x, 0, 0.02, 300, 2400, 0.9, 522); H5.burst(x, 0, 0.008, 1500, 7000, 0.5, 524); H5.burst(x, 0.01, 0.6, 25, 110, 0.6, 523); return H5.norm(H5.fade(x, 0.4), 0.9); } },
   rcym:  { rr: 2, fix: 60, gen: () => { const r = H5.RNG(531), P = []; for (let i = 0; i < 110; i++) { const f = 300 * Math.pow(40, r()); P.push([f, Math.pow(f / 300, 0.2) * (0.4 + r()), clamp(3.2 - 0.55 * Math.log2(f / 300), 0.6, 3.2)]); } const x = H5.modal(P, 3.2); H5.burst(x, 0, 0.5, 3500, 14000, 1.6, 532); H5.burst(x, 0, 0.01, 2000, 12000, 1.2, 533); H5.norm(x, 0.85); x.reverse(); const k = 220; for (let i = 0; i < k; i++) x[x.length - 1 - i] *= i / k; return x; } }
 });
-const R5 = (i, m, t, g, x) => L4(Object.assign({ i, m, t, g, raw: true, strict: true }, x));
+const R5 = (i, m, t, g, x) => L4(Object.assign({ i, m, t, g, raw: true, strict: true, take: 0 }, x));   // the same take every time, so a hit is never smaller than the last by chance
 // a roll: strokes from t0 to t1, r0 to r1 strokes a second, level g0 to g1, hand to hand
-function roll5(i, m, t0, t1, g0, g1, r0, r1, x) { let t = t0, k = 0; const D = Math.max(0.02, t1 - t0); while (t < t1 - 0.012) { const u = (t - t0) / D; R5(i, m, t, (g0 + (g1 - g0) * Math.pow(u, 1.6)) * (0.88 + 0.24 * rnd()), Object.assign({ pan: k % 2 ? 0.14 : -0.14 }, x)); t += 1 / (r0 + (r1 - r0) * u); k++; } }
+function roll5(i, m, t0, t1, g0, g1, r0, r1, x) { let t = t0, k = 0; const D = Math.max(0.02, t1 - t0); while (t < t1 - 0.012) { const u = (t - t0) / D; R5(i, m, t, (g0 + (g1 - g0) * Math.pow(u, 1.6)) * (0.88 + 0.24 * rnd()), Object.assign({ pan: k % 2 ? 0.14 : -0.14, take: k % 3 }, x)); t += 1 / (r0 + (r1 - r0) * u); k++; } }
 // a rising whoosh of d seconds that stops dead at its top
 const whoosh5 = (t, d, g, top) => { R5('steam', NO, t, g, { dur: d, a: d * 0.97, ax: true, cut: true, wide: 0.6, bp: 280, bp1: top, bpt: d, bq: 0.8, rev: 0.12 }); R5('roar', NO, t, g * 0.55, { dur: d, a: d * 0.97, ax: true, cut: true, lp: 140, lp1: Math.max(300, top * 0.4), lpt: d }); };
 // a cymbal played backwards from t0, swelling to end exactly at t1
@@ -1334,7 +1334,8 @@ const pc5 = (ix, lo) => { const r = roots4()[ix]; return lo + (((r - lo) % 12) +
 // ---- a: timpani and toms ----
 function arrA(t, n, d, u, last) {
   const m = pc5(chordIx(n, false), 36), end = last ? Math.max(0.1, d - BREATH5) : d;
-  roll5('timp', m, t, t + end, 0.10 + 0.1 * u, 0.5 + 0.5 * u, 11, 15 + 4 * u, { rev: 0.3, lp: 900 + 4000 * u, dur: 0.5, r: 0.2 });
+  roll5('timp', m, t, t + end, 0.2 + 0.1 * u, 0.5 + 0.5 * u, 11, 15 + 4 * u, { rev: 0.3, lp: 1800 + 4000 * u, dur: 0.5, r: 0.2 });
+  R5('horn', pc5(chordIx(n, false), 45), t, 0.1 + 0.2 * u, { dur: end, a: end * 0.95, ax: true, cut: true, gl: [-700, 0, end * 0.93, 0], lp: 600, lp1: 2500 + 5000 * u, lpt: end, wide: 0.4, rev: 0.25 });   // a pitched riser under the roll: a horn sliding up a fifth into the chord's root
   whoosh5(t, end, 0.3 + 0.7 * u, 2200 + 7000 * u);
   if (n >= 3) { const K = 3 + Math.round(4 * u); for (let j = 0; j < K; j++) { const x = (j + 1) / (K + 1); R5('tom', 43 + Math.round(14 * x), t + end * (0.35 + 0.6 * x), (0.2 + 0.5 * x) * (0.5 + 0.5 * u), { pan: (x - 0.5) * 1.2, rev: 0.25 }); } }
   if (u > 0.5 || last) roll5('cym', NO, t + end * 0.3, t + end, 0.02, 0.12 + 0.25 * u, 14, 20, { hp: 2500, dur: 0.25, r: 0.15, rev: 0.2 });
@@ -1345,8 +1346,8 @@ function hitA(t, n, u, last, tNA) {
   R5('tom', 57 - Math.round(12 * u), t, 0.75, { rev: 0.3, pan: -0.25 }); R5('tom', 52 - Math.round(12 * u), t + 0.004, 0.55, { rev: 0.3, pan: 0.25 });
   R5('timp', m, t, (n === 1 ? 0.5 : 0.8 + 0.4 * u) * big, { rev: 0.4 }); if (u > 0.45) R5('timp', m - 12, t, (0.3 + 0.7 * (u - 0.45)) * big, { rev: 0.4 });
   if (u > 0.2) R5('bdrum', NO, t, (0.3 + 1.0 * (u - 0.2)) * big, { rev: 0.3 });
-  R5('snr', NO, t, 0.3 + 0.5 * u, { rev: 0.3, hp: 300 });
-  if (u > 0.2) R5('cym', NO, t, (0.2 + 0.9 * (u - 0.2)) * big, { pan: 0.3, rev: 0.4, hp: 1500 });
+  R5('snr', NO, t, 0.3 + 0.9 * u, { rev: 0.3, hp: 300 });
+  if (u > 0.1) R5('cym', NO, t, (0.12 + 0.9 * (u - 0.1)) * big, { pan: 0.3, rev: 0.4, hp: 1500 });
   if (u > 0.7 || last) R5('tam', NO, t, last ? 0.9 : 0.35 + (u - 0.7), { rev: 0.4 });
   if (last) R5('boom', NO, t, 0.8, { rev: 0.2 });
   if (n >= 5 && !last && tNA > t + 0.2) roll5('timp', m, t + 0.14, tNA, 0.07 + 0.08 * u, 0.1 + 0.12 * u, 11, 13, { rev: 0.3, lp: 1200, dur: 0.4, r: 0.2 });
@@ -1357,11 +1358,11 @@ function arrB(t, n, d, u, last) {
   for (let k = 0; k < NV; k++) { const q = r + 12 * k; R5(q < 57 ? 'horn' : 'pad', q, t, (0.3 + 0.35 * u) / (1 + 0.25 * k), { dur: end, a: end * 0.95, ax: true, cut: true, gl: [-700, 0, end * 0.93, 0], lp: 500 + 1500 * u, lp1: 2500 + 6000 * u, lpt: end, wide: 0.4, pan: (k - (NV - 1) / 2) * 0.3, rev: 0.25 }); }
   whoosh5(t, end, 0.25 + 0.6 * u, 2000 + 7000 * u);
   { const K = 4 + Math.round(4 * u); for (let j = 0; j < K; j++) { const x = (j + 1) / (K + 1); R5('ka', NO, t + end * Math.pow(x, 0.6), (0.15 + 0.5 * x) * (0.5 + 0.5 * u), { pan: j % 2 ? 0.5 : -0.5, rev: 0.2 }); } }
-  if (n === 1) R5('taiko', 31, t, 0.5, { rev: 0.3 });
+  R5('taiko', 31, t, 0.3 + 0.4 * u, { rev: 0.3 });
   if (last) { rcym5(t, t + end, 0.9); roll5('taiko', 31, t, t + end, 0.15, 0.9, 10, 16, { rev: 0.3 }); roll5('snr', NO, t, t + end, 0.05, 0.5, 15, 22, { rev: 0.25, pan: 0.2 }); }
 }
 function hitB(t, n, u, last, tNA, tNH) {
-  const P = Math.min(n, 9), big = (last ? 1.2 : 1) * (1 + Math.max(0, 4 - P) / 6), h = () => (rnd() - 0.5) * 0.012;   // few players: each plays harder
+  const P = Math.min(n, 9), big = last ? 1.2 : 1, h = () => (rnd() - 0.5) * 0.012;
   R5('taiko', 31, t, 0.9 * big, { rev: 0.35 }); if (P >= 2) R5('ka', NO, t, 0.8, { pan: 0.4, rev: 0.2 }); if (P >= 3) R5('taiko', 38, t + 0.006, 0.7 * big, { pan: -0.55, rev: 0.35 }); if (P >= 4) R5('snr', NO, t, 0.6, { pan: 0.2, rev: 0.3 }); if (P >= 5) R5('taiko', 36, t + 0.009, 0.7 * big, { pan: 0.55, rev: 0.35 });
   if (P >= 6) { R5('tom', 45, t, 0.6, { pan: -0.3, rev: 0.3 }); R5('tom', 50, t + 0.005, 0.5, { pan: 0.3, rev: 0.3 }); } if (P >= 7) R5('bdrum', NO, t, 1.0 * big, { rev: 0.3 }); if (P >= 8) R5('cym', NO, t, 0.6 * big, { pan: -0.3, rev: 0.4, hp: 1500 });
   if (P >= 9 || last) { R5('taiko', 26, t, 0.9, { rev: 0.4 }); R5('boom', NO, t, 0.7, {}); R5('tam', NO, t, 0.5, { rev: 0.4 }); }
@@ -1378,18 +1379,18 @@ function hitB(t, n, u, last, tNA, tNH) {
 // ---- c: cinematic ----
 const TONE5 = [45, 50, 52, 55, 57, 62, 64, 67, 69, 74, 76, 79, 81, 86];
 function arrC(t, n, d, u, last, gap) {
-  const end = last ? Math.max(0.1, d - BREATH5) : d, from = TONE5[Math.min(n - 1, 12)], to = TONE5[Math.min(n, 13)], len = last ? end : gap + 0.06, g = 0.16 + 0.3 * u;
+  const end = last ? Math.max(0.1, d - BREATH5) : d, from = TONE5[Math.min(n - 1, 12)], to = TONE5[Math.min(n, 13)], len = last ? end : gap + 0.06, g = 0.07 + 0.2 * u;
   const X = x => Object.assign({ dur: len, a: 0.07, r: 0.14, gl: [(from - to) * 100, 0, Math.min(d, end) * 0.9, 0], wide: 0.4, rev: 0.25, cut: last }, x);
   R5(to < 62 ? 'horn' : 'pad', to, t, g, X({ lp: 700 + 5000 * u })); R5('drone', Math.min(60, to - 12), t, g * 0.8, X({})); if (u > 0.45) R5('pad', to + 12, t, g * 0.5, X({ lp: 1500 + 6000 * u, pan: 0.3 }));
-  const hb = (tt, gg) => { R5('kick', NO, tt, gg, { det: -500, lp: 220 }); R5('kick', NO, tt + 0.15, gg * 0.6, { det: -700, lp: 200 }); };
-  for (let tt = t; tt < t + end - 0.2; tt += u > 0.55 ? 0.3 : 0.42) hb(tt, 0.6 + 0.5 * u);
+  const hb = (tt, gg) => { R5('kick', NO, tt, gg, { det: -500, lp: 500 }); R5('kick', NO, tt + 0.15, gg * 0.6, { det: -700, lp: 450 }); };
+  for (let tt = t; tt < t + end - 0.2; tt += u > 0.55 ? 0.3 : 0.42) hb(tt, 0.45 + 0.5 * u);
   if (n >= 3) roll5('snr', NO, t + (n < 5 ? end * 0.4 : 0), t + end, 0.03, 0.2 + 0.45 * u, 15, 21, { rev: 0.2, pan: 0.15 });
   if (last) { rcym5(t, t + end, 1.0); whoosh5(t, end, 0.9, 9000); }
 }
 function hitC(t, n, u, last, tNA, tNH) {
   const big = last ? 1.25 : 1;
-  R5('boom', NO, t, (0.45 + 0.4 * u) * big, { det: -300 * u, rev: 0.25 }); R5('crack', NO, t, 0.3 + 0.5 * u, { pan: 0.4, rev: 0.3 }); R5('kick', NO, t, 0.6, {}); R5('taiko', 28, t, (0.3 + 0.5 * u) * big, { rev: 0.4, lp: 400 + 3000 * u });
-  R5('snr', NO, t, 0.35 + 0.5 * u, { rev: 0.5, pan: -0.2 }); if (u > 0.25) R5('cym', NO, t, (0.2 + 0.8 * (u - 0.25)) * big, { pan: 0.3, rev: 0.4, hp: 1200 }); if (u > 0.8 || last) R5('tam', NO, t, last ? 0.9 : 0.4, { rev: 0.4 });
+  R5('boom', NO, t, (0.38 + 0.3 * u) * big, { rev: 0.25 }); R5('crack', NO, t, 0.4 + 0.6 * u, { pan: 0.4, rev: 0.3 }); R5('kick', NO, t, 0.6, {}); R5('taiko', 28, t, (0.3 + 0.5 * u) * big, { rev: 0.4, lp: 400 + 3000 * u });
+  R5('snr', NO, t, 0.45 + 0.6 * u, { rev: 0.5, pan: -0.2 }); if (u > 0.25) R5('cym', NO, t, (0.2 + 0.8 * (u - 0.25)) * big, { pan: 0.3, rev: 0.4, hp: 1200 }); if (u > 0.8 || last) R5('tam', NO, t, last ? 0.9 : 0.4, { rev: 0.4 });
   if (!last && tNH > t + 0.3) rcym5(t + 0.06, tNH, 0.3 + 0.6 * u, { pan: n % 2 ? 0.35 : -0.35, hp: 900, fin: 0.08 });
 }
 // ---- the arrow, the hit, OVERREACT ----
@@ -1400,7 +1401,7 @@ function arrow5(n, ms, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of); G4 = B5HIT * dB(-B5RISE * (1 - u)) * (last ? 1.15 : 0.8); OUT4 = shelf5(1 + 9 * u); SB.duck.gain.setTargetAtTime(0.6, t, d / 3);
+  const u = u5(n, b.of); G4 = B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(1 + 9 * u); SB.duck.gain.setTargetAtTime(0.6, t, d / 3);
   try { (BLD === 'b' ? arrB : BLD === 'c' ? arrC : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
@@ -1409,7 +1410,7 @@ function hit5(kind, n, o) {
   duck(t, 0.3, 0.5, 0.06); G4 = last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(2 + 9 * u);
   try { (BLD === 'b' ? hitB : BLD === 'c' ? hitC : hitA)(t, n, u, last, tNA, tNH);
     // the kind keeps its own voice on top of the drums, climbing D, E, G, A
-    G4 *= 0.9; OUT4 = shelf5((KSH4[kd] || 0) + 2 + 6 * u); (K4[kd] || K4.lactol)(t, mel5(n) + 12, 0.7 * (KLV4[kd] || 1), 0);
+    G4 *= 0.6; OUT4 = shelf5((KSH4[kd] || 0) + 2 + 6 * u); (K4[kd] || K4.lactol)(t, mel5(n) + 12, 0.7 * (KLV4[kd] || 1), 0);
   } finally { G4 = 1; OUT4 = null; }
 }
 // OVERREACT with the drums on it: weight on the strike; through the swell a roll on A, a snare roll, a cymbal backwards and brass
@@ -1420,10 +1421,10 @@ function over6(t0, o) {
   R5('boom', NO, t, 1.3, DL({})); R5('bdrum', NO, t, 1.0, DL({})); R5('timp', 38, t, 0.9, DL({ rev: 0.3 })); R5('tam', NO, t, 0.8, D({ rev: 0.4 })); if (B) R5('taiko', 26, t, 1.0, DL({ rev: 0.3 }));
   roll5(B ? 'taiko' : 'timp', B ? 33 : 45, sw, rs - 0.03, 0.08, 0.9, 11, 18, { rev: 0.35, dur: 0.5, r: 0.2 }); roll5('snr', NO, sw + L * 0.4, rs - 0.03, 0.03, 0.5, 15, 22, { rev: 0.25 }); rcym5(sw, rs, 0.8, { fin: 0.1 });
   [45, 52, 57, 62, 64].forEach((q, i) => R5('horn', q, sw, 0.3, { dur: L, a: L * 0.97, ax: true, cut: true, pan: (i - 2) * 0.3, wide: 0.3, rev: 0.4, lp: 600, lp1: 6000, lpt: L }));
-  R5('timp', 38, rs, 1.1, { rev: 0.4 }); R5('bdrum', NO, rs, 1.0, { rev: 0.3 }); R5('boom', NO, rs, 0.6, {}); R5('tam', NO, rs, 0.5, { rev: 0.4 }); R5('cym', NO, rs, 0.8, { pan: 0.3, rev: 0.4 }); if (B) { R5('taiko', 26, rs, 1.0, { rev: 0.35 }); R5('taiko', 38, rs, 0.7, { pan: -0.5, rev: 0.35 }); }
-  [38, 45, 50, 57, 62, th ? 62 + th : 64, 69].forEach((q, i) => R5('horn', q, rs, 0.34, { dur: 2.4, a: 0.03, r: 2.6, pan: (i - 3) * 0.25, wide: 0.3, rev: 0.45, lp: 6500, lp1: 2200, lpt: 4 }));
-  R5('timp', 45, rs + 0.46, 0.5, { rev: 0.4 }); R5('horn', 74, rs + 0.46, 0.4, { dur: 1.6, a: 0.03, r: 2, rev: 0.45, wide: 0.3 });
-  R5('timp', 38, rs + 0.92, 0.9, { rev: 0.4 }); R5('bdrum', NO, rs + 0.92, 0.7, { rev: 0.3 }); R5('pad', 81, rs + 0.92, 0.4, { dur: 1.4, a: 0.03, r: 2.4, rev: 0.5, wide: 0.4 }); R5('cym', NO, rs + 0.92, 0.5, { pan: -0.3, rev: 0.4, hp: 2000 });
+  R5('timp', 38, rs, 1.1, { rev: 0.4 }); R5('bdrum', NO, rs, 1.0, { rev: 0.3 }); R5('tam', NO, rs, 0.5, { rev: 0.4 }); R5('cym', NO, rs, 0.8, { pan: 0.3, rev: 0.4 }); if (B) { R5('taiko', 26, rs, 1.0, { rev: 0.35 }); R5('taiko', 38, rs, 0.7, { pan: -0.5, rev: 0.35 }); }
+  [38, 45, 50, 57, 62, th ? 62 + th : 64, 69].forEach((q, i) => R5('horn', q, rs, 0.5, { dur: 2.4, a: 0.03, r: 2.6, pan: (i - 3) * 0.25, wide: 0.3, rev: 0.45, lp: 6500, lp1: 2200, lpt: 4 }));
+  R5('timp', 45, rs + 0.46, 0.5, { rev: 0.4 }); R5('horn', 74, rs + 0.46, 0.7, { dur: 1.6, a: 0.03, r: 2, rev: 0.45, wide: 0.3 });
+  R5('timp', 38, rs + 0.92, 0.9, { rev: 0.4 }); R5('bdrum', NO, rs + 0.92, 0.7, { rev: 0.3 }); R5('pad', 81, rs + 0.92, 0.7, { dur: 1.4, a: 0.03, r: 2.4, rev: 0.5, wide: 0.4 }); R5('cym', NO, rs + 0.92, 0.5, { pan: -0.3, rev: 0.4, hp: 2000 });
   for (let i = 0; i < 12; i++) R5('glass', safeUp(74 + i * 2), rs + 0.02 + i * 0.028, 0.32, { pan: (i / 11 - 0.5) * 1.6, rev: 0.45 });
   for (let i = 0; i < 8; i++) R5('coin', safeUp(93 + i), rs + 0.94 + i * 0.03, 0.3, { pan: (0.5 - i / 7) * 1.4, rev: 0.4 });
 }
