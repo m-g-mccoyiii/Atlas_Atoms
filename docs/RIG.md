@@ -8,6 +8,49 @@ The rules of a round were changed later the same day (bounds, a budget of uses, 
 
 One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.
 
+### 2. The sign: three laps
+
+**As built** (`path.js`: `SIGN`, `RULE.prestige` now on; tests in the game `sign13.js`, 73 of 73).
+
+- The sign can be taken three times (`meta.sign` 0 to 3). Each gives 20 in 100 more yield for good, added: 1.2, 1.4, 1.6 times. The collection starts over each time.
+- It can be taken when 9 tenths of everything is held. It is offered, never forced.
+- With each sign the number to beat, and the pass mark with it, rises 1.15 times (it was 1.12).
+- `P.signState(meta, owned, total)` gives the page all of it: the level, the lift now and after the next sign, how far the number to beat has risen, whether it can be taken now and how many things that needs, what is kept aside and what starts over.
+- Kept aside: the count of signs, the catalog, what the first game taught, the lifetime counts. Starts over: reagents, reflexes, instruments, homunculi, sigils, notebooks, the longer runs, the ladder of part 1 and the counts that earn things.
+- With the switch on and no sign taken nothing in play changes; the page has to offer it and hand the saved profile to a new run (`runNew` takes `meta`) before a player meets it.
+
+**What should rise, by the numbers.** A nine-round run, wins of 100, read off the same 2,000 rounds a round (careful player) and 750 (the player who reads two hands), yields lifted and marks raised. "Nothing held" is the start of a lap; "collection back" is five instruments and a homunculus as the career model of part 1 counts them (2.3 times the yield).
+
+| What rises with each sign | Careful, nothing held, laps 0 to 3 | Two-hand reader, nothing held | Careful, collection back | Two-hand reader, collection back |
+|---|---|---|---|---|
+| Nothing | 0.21, 0.42, 0.77, 1.13 | 0.97, 1.74, 2.65, 3.52 | 2.9, 4.3, 6.1, 7.5 | 7.2, 9.8, 12.3, 14.6 |
+| The number to beat 1.12 times (as it was) | 0.21, 0.27, 0.33, 0.35 | 0.97, 1.21, 1.40, 1.47 | 2.9, 3.5, 3.7, 3.9 | 7.2, 8.2, 8.7, 9.1 |
+| The number to beat 1.15 times (built) | 0.21, 0.24, 0.25, 0.25 | 0.97, 1.10, 1.14, 1.12 | 2.9, 3.2, 3.3, 3.3 | 7.2, 7.8, 8.0, 8.0 |
+| The number to beat as much as the lift | 0.21 at every lap | 0.97 | 2.9 | 7.2 |
+
+- If nothing rises, a start with nothing is five times easier by the third sign and the two-hand reader wins a bare run 3.5 times in 100, over the limit of 2.
+- At 1.15 a start with nothing is within a fifth of the first at every lap for both players. What the sign really gives is small and said plainly: 4, 6 and 5 in 100 more yield against the mark, and a tenth more wins once the collection is back. The yield shown on the page is the full 1.2, 1.4, 1.6 times.
+- At 1.12 the gain is a little more real and the bare run of the two-hand reader stays under 2 at every lap, but with less room.
+
+**Laps with the collection built again** (`sweep_career.py laps`, 200 careers a row; the collection here is the ladder of part 1, 56 things, the sign taken when 51 are held; the game's 166 things were not modelled):
+
+| Player | Signs taken | Runs until the sign can be taken again | First six-round win in the lap (run) | First nine-round win in the lap (run) |
+|---|---|---|---|---|
+| Casual | 0, 1, 2, 3 | 297, 314, 299, 289 | 44, 37, 37, 31 | none in 600 runs |
+| Careful | 0, 1, 2, 3 | 67, 65, 65, 66 | 5, 5, 5, 5 | 33, 35, 31, 36 |
+
+Each lap is the same climb: no lap is shorter or longer than the first. The casual player takes about 300 runs a lap, so three signs are about 900 runs for that player.
+
+**The story** (`STORY.md`, rewritten where it said gold or "nothing is reset"): the sign is never paid in gold; it takes the shelves, three times; the face is seen on the first OVERREACT after the third sign, not at everything unlocked. A new section says what the page and the notes show at 0, 1, 2 and 3 signs. The three endings are kept as options; the one that fits three laps best is the next tenant (each sign ends a tenancy, which is why the shelves are empty and what is kept is what a tenant leaves behind).
+
+**Not done.** The page does not offer or draw the sign. The laps were laid over rounds played once (a round carries nothing to the next), not played again with a sign in the simulator's own run. The game's rig was run with a sign only in the 73 tests.
+
+**Choices for the owner**
+
+1. What rises. (a) As built, 1.15: every lap as hard as the first, the real gain small. (b) 1.12: a little more real gain. (c) Nothing rises: each lap clearly easier, and the bare run goes over 2 in 100 for the strongest player.
+2. The ending. (a) The next tenant (fits the reset best). (b) The second hand (cheapest, one chemist). (c) The refusal.
+3. When it can be taken. (a) At 9 tenths, as built. (b) Only with everything. (c) At 3 quarters.
+
 ### 4. Chlorine in the first rounds
 
 **What was wrong.** No molecule of rounds 1 and 2 held a chlorine at all (0 of 64 each), and round 3 had two. The reflex was never the fault: in the reference chemistry a Cl closes a ring with an OH, NH2 or SH three to five carbons away, and four of the six starting reagents make such a partner (hydrate and grow an OH, thiolene an SH, ritter an NH2). On a molecule that holds a chlorine, `close` fires on about 9 lines in 10.
