@@ -83,6 +83,7 @@ const ring = (t, hz, z) => { const w = 2 * Math.PI * hz, wd = w * Math.sqrt(Math
 const kick = (t, hz, z) => { const w = 2 * Math.PI * hz, wd = w * Math.sqrt(Math.max(0.01, 1 - z * z)), tp = Math.atan(wd / (z * w)) / wd, pk = Math.exp(-z * w * tp) * Math.sin(wd * tp); return t <= 0 ? 0 : Math.exp(-z * w * t) * Math.sin(wd * t) / pk; };
 // smooth noise from a few sines with fixed phases
 const nz = (t, s) => (Math.sin(t * 1.0 + s) * 0.5 + Math.sin(t * 2.31 + s * 1.7) * 0.3 + Math.sin(t * 4.13 + s * 2.9) * 0.2);
+try { if (AA.sfx && AA.sfx.build && !AA.sfx.build()) AA.sfx.build('c'); } catch (e) { /* no build-ups in this sound engine */ }
 const snd = (name, ...a) => { if (F.mute) return; try { if (AA.sfx && AA.sfx[name]) AA.sfx[name](...a); } catch (e) { /* sound never breaks play */ } };
 
 // T(n): wind-up plus swing plus hit-stop; the settle overlaps the next step. Never under ten frames.
@@ -145,16 +146,16 @@ function throwThen(h, react) {
   const g = api.g(), d = S.d, i = S.throwN++, c = api.center(), sp = S.speed;
   const from = api.px({ x: api.STEP.x + g.pageSteps * api.STEPD, z: api.STEP.z });
   // the atoms it changes, on the molecule as it stands
-  let tgt = null; try { const inv = new Map(); (h.o.map || new Map()).forEach((na, oa) => inv.set(na, oa)); const made = (h.o.r && h.o.r.made) || []; const v = _v(); let n = 0, sx = 0, sy = 0, sz = 0; made.forEach(a => { const oa = inv.get(a); if (oa && c.balls.has(oa)) { worldOf(c, oa, v); sx += v.x; sy += v.y; sz += v.z; n++; } }); if (n) tgt = new T.Vector3(sx / n, sy / n, sz / n); } catch (e) { tgt = null; }
+  let tgt = null; try { const inv = new Map(); (h.o.map || new Map()).forEach((na, oa) => inv.set(na, oa)); const made = (h.o.r && h.o.r.made) || []; const v = _v(); let n = 0, sx = 0, sy = 0, sz = 0; const sites = [], near = 2.6 * c.group.scale.x; made.forEach(a => { const oa = inv.get(a); if (oa && c.balls.has(oa)) { worldOf(c, oa, v); sx += v.x; sy += v.y; sz += v.z; n++; let q = sites.find(k => Math.hypot(k.x / k.n - v.x, k.z / k.n - v.z) < near); if (!q) { q = { x: 0, y: 0, z: 0, n: 0 }; sites.push(q); } q.x += v.x; q.y += v.y; q.z += v.z; q.n++; } }); if (n) { tgt = new T.Vector3(sx / n, sy / n, sz / n); tgt.sites = sites.map(k => new T.Vector3(k.x / k.n, k.y / k.n, k.z / k.n)); } } catch (e) { tgt = null; }
   if (!tgt) { const b = molWorldBox(c); tgt = new T.Vector3(b.cx, 0.6, b.cz); }
-  const dur = d.throwMs * (i === 2 && mode === 1 ? 1.15 : 1) / sp, col = api.colOf(h.id);
+  const dur = (api.pourMs || d.throwMs) * (i === 2 && mode === 1 ? 1.15 : 1) / sp, col = api.colOf(h.id);
   const tok = { t0: now(), dur, from, tgt, col, i, id: h.id, arc: d.arc };
   try { tok.poured = !!(api.pour && api.pour(h.id, tgt, dur)); } catch (e) { tok.poured = false; }
   S.tokens.push(tok); seeAim(h, c, dur, col);
   if (d.throwZ) camTo(tgt, d.throwZ, Math.max(120, dur * 0.9));
   later(() => {
     S.tokens = S.tokens.filter(q => q !== tok);
-    try { if (api.lit) api.lit(tgt, col); } catch (e) { /* no light */ }
+    try { if (api.lit) (tgt.sites && tgt.sites.length ? tgt.sites : [tgt]).forEach(q => api.lit(q, col)); } catch (e) { /* no light */ }
     // impact: the change starts as the token touches
     const dir = (() => { const a = inkOf(tgt); const dx = a[0] - from[0], dy = a[1] - from[1], l = Math.hypot(dx, dy) || 1; return { x: dx / l, z: dy / l }; })();
     const W = molWorldBox(c).w, rec = 0 * (d.throwRec[Math.min(2, i)] || 0.03) * W;
@@ -203,7 +204,9 @@ function onReact(o, nm, prev, L, morph) {
   try { realTime(morph); } catch (e) { /* leaves when the page says */ }
   if (last && d.finale === 'breath') { S.breath = { t0: now() + ph.wind, ms: breathMs() }; S.count.frozen = true; }
   // a marker of the hand-off: the molecule takes over
-  snd('windup', n, morph.ms, last);
+  // the build-up the owner picked (the cinematic one): told when this step's pencil arrow starts, how long until its hit, how many steps the chain has
+  // and how long until the next arrow; silent when the sound engine has no build-ups
+  if (AA.sfx && AA.sfx.arrow) snd('arrow', n, morph.ms, { last: !!last, of: Math.max(n, Np || n), gap: last ? undefined : Math.round(morph.ms + (d.breath || 150)) }); else snd('windup', n, morph.ms, last);
   if (n === 1) snd('handoff');
   if (d.count === 'race') S.count.target = P_made();
   // the drone: one held voice per step, cut before the last step lands

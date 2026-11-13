@@ -156,5 +156,27 @@ function motif(ctx, id, cx, cy, level, size, o) {
   if (o.drop && o.drop.f < 1) { c.save(); c.globalAlpha = 1 - o.drop.f; c.translate(0, o.drop.f * 40); const f0 = o.drop.f; D(n + 1, (i, px0, py0, fn) => { if (i === n) { c.save(); c.translate(px0, py0); fn(); c.restore(); } }, col); c.restore(); }
   ctx.restore(); return true;
 }
+// ---- the four yield marks (the owner's pick, 12 November): our own alchemy marks, each adding a stroke to the last, building to our sign ----
+// 0 a ring; 1 the ring with a stem rising from it; 2 a ray either side of the stem; 3 our sign: a bar through the ring with a point at its heart and a
+// crack of lightning from the stem. (Never the three-armed Yellow Sign.)
+// AA.rxMarks.yieldMark(ctx, k, cx, cy, r, o)   cx, cy the ring's centre, r its radius; o: { pencil, ink, lw, t }  t 0..1: how much of it is inked in
+// (the empty mark is a thin pencil line; the ink is laid over it stroke by stroke, the newest stroke of the mark last)
+const YS = [
+  r => { const p = []; for (let i = 0; i <= 28; i++) { const a = -Math.PI / 2 + 0.25 + i / 28 * (2 * Math.PI + 0.12); p.push([r * Math.cos(a) * (1 + 0.03 * Math.sin(i * 1.7)), r * Math.sin(a)]); } return [p]; },
+  r => [[[0, -r], [0.04 * r, -2.05 * r]]],
+  r => [[[-0.22 * r, -1.12 * r], [-0.78 * r, -1.85 * r]], [[0.22 * r, -1.12 * r], [0.78 * r, -1.85 * r]]],
+  r => [[[-1.42 * r, 0.04 * r], [1.42 * r, -0.04 * r]], [[0.04 * r, -2.05 * r], [-0.34 * r, -2.5 * r], [0.3 * r, -2.72 * r], [-0.12 * r, -3.25 * r]], [[-0.07 * r, 0.02 * r], [0.07 * r, -0.02 * r]]]
+];
+function yieldMark(ctx, k, cx, cy, r, o) {
+  o = o || {}; const strokes = []; for (let j = 0; j <= Math.min(3, k); j++) YS[j](r).forEach(p => strokes.push(p));
+  const len = p => { let l = 0; for (let i = 1; i < p.length; i++) l += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return l; };
+  const run = (p, upto) => { ctx.beginPath(); let l = 0; ctx.moveTo(cx + p[0][0], cy + p[0][1]); for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); if (l + d > upto) { const f = Math.max(0, (upto - l) / (d || 1)); ctx.lineTo(cx + p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, cy + p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f); break; } ctx.lineTo(cx + p[i][0], cy + p[i][1]); l += d; } ctx.stroke(); };
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash([]);
+  ctx.strokeStyle = o.pencil || 'rgba(90,86,78,0.6)'; ctx.lineWidth = o.plw || Math.max(1.6, r * 0.09); strokes.forEach(p => run(p, 1e9));
+  const t = o.t == null ? 0 : Math.max(0, Math.min(1, o.t));
+  if (t > 0) { const L = strokes.map(len), tot = L.reduce((a, b) => a + b, 0); let left = tot * t; ctx.strokeStyle = o.ink || '#2a2118'; ctx.lineWidth = o.lw || Math.max(3, r * 0.26); strokes.forEach((p, i) => { if (left <= 0) return; run(p, left); left -= L[i]; }); }
+  ctx.restore();
+}
+AA.rxMarks.yieldMark = yieldMark;
 AA.rxMarks.motif = motif; AA.rxMarks.MOTIFS = MOT; AA.rxMarks.motifIds = Object.keys(MOT);
 })(window);
