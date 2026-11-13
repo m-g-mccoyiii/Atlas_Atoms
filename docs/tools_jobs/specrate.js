@@ -5,6 +5,7 @@
 // Params: round=1 n=200 from=30001 tier=1|3 players=novice,greedy,median specs=a,b (default: all good for the round) rule={...}
 // Result: { round, tier, specs: { name: { player: [count of rounds ending with value 0, 1, 2, ...] } }, n }
 HL.job = async function (q) {
+  ["rule", "opts"].forEach(function (k) { if (q[k + "64"]) q[k] = atob(q[k + "64"]); });   // JSON arguments come base64-coded (quotes do not survive the shells)
   const P = AA.rxPath, r = +(q.round || 1), n = +(q.n || 200), from = +(q.from || 30001), tier = +(q.tier || 3), players = (q.players || 'novice,greedy,median').split(',');
   const LOOK = { novice: 4, greedy: 12, median: null, planner: null }, rule = q.rule ? JSON.parse(q.rule) : {};
   Object.assign(P.RULE, rule); const T = P.SPEC_TABLE;
