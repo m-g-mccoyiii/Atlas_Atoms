@@ -75,6 +75,8 @@ AL6. On the first whole-run video (12 November): "I don't know what's going on o
 
 AL7. "I don't want [any] words in a video game. What do you mean the cost! That makes no sense for a fucking starting run" (12 November, after I proposed replacing icons with written labels). No written labels in the UI: it reads by pictures. Nothing that looks like a cost or reward on the starting selection.
 
+AL8. "Why are some reactions crossed off on the right? And the gray line around it colliding with it. The shelf doesn't really make sense on the paper, but I like the idea. I still don't know why certain parts of the molecules are wobbling. We should potentially extend the workspace to be a paper on a lab bench and the objects are sitting on it, but we'd have to turn the perspective some." (12 November). Idea to show, not yet a ruling: the page lies on a lab bench and the objects stand on the bench around it. Coffee stains: "shouldn't obscure gameplay but I would like for them to randomly appear".
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
