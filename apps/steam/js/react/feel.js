@@ -110,6 +110,7 @@ function planPage(g) {
     out.q0 = q0;
   } catch (e) { out.err = String(e && e.message); }
   P.back(g, s);
+  out.S = out.ev.filter(e => e.k === 's').length;
   out.N = out.ev.reduce((m, e) => (e.k === 's' ? Math.max(m, e.n || 0) : m), 0) || out.ev.filter(e => e.k === 's').length; out.yEnd = out.ev.length ? out.ev[out.ev.length - 1].y : out.y0;
   return out;
 }
@@ -182,19 +183,21 @@ function onReact(o, nm, prev, L, morph) {
   const n = g.casc || 1, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(n, last), d = S.d;
   const kindNow = o.kind || o.kindName || o.id, change = !!S.prevKind && S.prevKind !== kindNow && !last; S.prevKind = kindNow;
   const fm = last ? KIND_FEEL.ring : KIND_FEEL[famOf(kindNow)]; ph.wind *= fm.w; ph.swing *= fm.s; ph.hold = Math.max(16, ph.hold * fm.h); seeFloor(ph, n, last);
-  S.steps = n; S.cur = { n, last, ph, t0: now(), kind: kindNow, change, fm }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
+  const far = o.via === 'fold', spd = S.speed || 1; if (far && !last) { ph.wind = Math.max(ph.wind, 760 / spd); ph.swing = Math.max(ph.swing, 1250 / spd); } else if (far) ph.swing = Math.max(ph.swing, 900 / spd);
+  S.sn = (S.sn || 0) + 1; const sn = S.sn, sOf = Math.max(sn, (S.plan && S.plan.S) || 0, last ? sn : sn + 1);
+  S.steps = n; S.cur = { n, sn, sOf, last, ph, t0: now(), kind: kindNow, change, fm }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
   // the two atoms that join, on the new drawing
   const ids = o.atoms || [], mp = o.map || new Map(), A = mp.get(ids[0]), B = mp.get(ids[3] || ids[ids.length - 1]);
   S.cur.a = A && nm.balls.has(A) ? A : null; S.cur.b = B && nm.balls.has(B) ? B : null;
   try { const jn = o.join; if (jn && jn.length >= 2) { const a2 = mp.get(jn[0]) || jn[0], b2 = mp.get(jn[1]) || jn[1]; if (nm.balls.has(a2) && nm.balls.has(b2)) { S.cur.ja = a2; S.cur.jb = b2; } } } catch (e) { /* the join is only drawn when the rules give it */ }
   // how far each atom travels this step, in the molecule's own units
   let maxT = 0; const W = molLocalBox(nm).w; morph.from.forEach((p, a) => { const q = nm.at.get(a); if (q && a.el !== 'H') maxT = Math.max(maxT, p.distanceTo(q)); });
-  const back = clamp(d.draw(n) * W / Math.max(0.2, maxT), 0.05, 0.4) * (last ? 1.5 : 1);
+  const back = far ? 0 : clamp(d.draw(n) * W / Math.max(0.2, maxT), 0.05, 0.4) * (last ? 1.5 : 1);
   S.cur.W = W; S.cur.back = back;
   const held = last ? (d.finale === 'breath' ? breathMs() : d.fullDraw || 0) : (change ? (d.kindBeat || 150) : 0);
   morph.slow = true; morph.s0 = 0; morph.ms = ph.wind + held + ph.swing;
   const wf = ph.wind / morph.ms, bf = (ph.wind + held) / morph.ms, pw = last ? d.swingPow : (S.cur.fm ? S.cur.fm.pow : d.swingPow);
-  morph.fk = K => { if (K < wf) return -back * E.inOutSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
+  if (far) morph.fk = K => (K < bf ? 0 : E.inOutCubic((K - bf) / Math.max(1e-6, 1 - bf))); else morph.fk = K => { if (K < wf) return -back * E.inOutSine(K / wf); if (K < bf) return -back; const u = (K - bf) / Math.max(1e-6, 1 - bf); return -back + (1 + back) * Math.pow(u, pw); };
   if (morph.bend) morph.fk0 = morph.fk;
   // the three directions, without ever moving the camera: 4 holds the molecule still, 5 leans in on every step and lets go, 6 waits and leans in for the last three
   const Np = S.plan.N || n, c = S.cur; { const cap = swellCap(nm); let z = 1; if (d.cam === 'half') z = last ? 1.1 : 1.05; else if (d.cam === 'late') { const k3 = Np - n; z = k3 <= 2 && Np >= 4 ? [1.1, 1.03, 0.96][k3] : 0.88; } else z = last ? 1.05 : 1; S.swT = Math.min(cap, z); if (n > 1) snd('swish', Math.max(0.12, ph.wind / 1000)); }
@@ -206,7 +209,7 @@ function onReact(o, nm, prev, L, morph) {
   // a marker of the hand-off: the molecule takes over
   // the build-up the owner picked (the cinematic one): told when this step's pencil arrow starts, how long until its hit, how many steps the chain has
   // and how long until the next arrow; silent when the sound engine has no build-ups
-  if (AA.sfx && AA.sfx.arrow) snd('arrow', n, morph.ms, { last: !!last, of: Math.max(n, Np || n), gap: last ? undefined : Math.round(morph.ms + (d.breath || 150)) }); else snd('windup', n, morph.ms, last);
+  if (AA.sfx && AA.sfx.arrow) snd('arrow', sn, morph.ms, { last: !!last, of: sOf, gap: last ? undefined : Math.round(morph.ms + (d.breath || 150)) }); else snd('windup', n, morph.ms, last);
   if (n === 1) snd('handoff');
   if (d.count === 'race') S.count.target = P_made();
   // the drone: one held voice per step, cut before the last step lands
@@ -375,7 +378,7 @@ function actOf(o, nm, kind) {
   const site = (o.atoms || []).map(tr).filter(has), jn = (o.join || []).map(tr).filter(has);
   const act = { fam: kfam(kind), far: o.via === 'fold', A: jn[0] || site[0] || null, B: jn[1] || site[site.length - 1] || null, site, kind };
   if (act.far) { let rs = nm.sticks.filter(s => !s.old && s.rung); if (!rs.length && act.A && act.B) rs = nm.sticks.filter(s => (s.a === act.A && s.b === act.B) || (s.a === act.B && s.b === act.A)); act.rung = rs;
-    if (!_rungMat) _rungMat = new T.MeshBasicMaterial({ color: 0xd8401c }); rs.forEach(s => { s.gk = 0; s.parts.forEach(pt => { if (!pt.m0) pt.m0 = pt.mesh.material; pt.mesh.material = _rungMat; }); }); }
+    if (!_rungMat) _rungMat = new T.MeshBasicMaterial({ color: 0xd8401c }); rs.forEach(s => { if (s.rung) s.gk = 0; s.parts.forEach(pt => { if (!pt.m0) pt.m0 = pt.mesh.material; pt.mesh.material = _rungMat; }); }); }
   return act;
 }
 function rungDone(act) { if (act && act.rung) act.rung.forEach(s => { s.gk = null; s.parts.forEach(pt => { if (pt.m0) { pt.mesh.material = pt.m0; pt.m0 = null; } }); }); }
@@ -386,7 +389,7 @@ function pose(morph, K) {
   const wf = morph.wf || 0.5, bf = morph.bf || 0.5, uw = clamp(K / Math.max(1e-6, wf), 0, 1), us = clamp((K - bf) / Math.max(1e-6, 1 - bf), 0, 1), sw = Math.sin(Math.PI * us), W = E.inOutSine(uw) * (1 - E.inQuad(us));
   let dx = 0, dz = 1; if (B) { dx = B.x - A.x; dz = B.z - A.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl; } const nx = -dz, nz2 = dx;
   const mv = (p, a, b, y) => { if (!p) return; p.x += dx * a + nx * b; p.z += dz * a + nz2 * b; if (y) p.y += y; };
-  if (act.far) { const lean = 0.5 * W + 0.25 * sw; mv(A, lean, 0, 0.3 * sw); mv(B, -lean, 0, 0.3 * sw); if (act.rung) act.rung.forEach(s => { s.gk = E.inOutCubic(us); }); return; }
+  if (act.far) { if (act.rung && act.rung.some(s => s.rung)) { const lean = 0.5 * W + 0.25 * sw; mv(A, lean, 0, 0.3 * sw); mv(B, -lean, 0, 0.3 * sw); act.rung.forEach(s => { s.gk = E.inOutCubic(us); }); } return; }
   switch (act.fam) {
     case 'ring': mv(A, -0.42 * W, 0.6 * sw); mv(B, 0.3 * W, -0.25 * sw); break;                                   // drawn apart like a bow, then round in an arc
     case 'weld': mv(A, -0.55 * W, 0, 0.8 * W); mv(B, 0.55 * W, 0, 0.8 * W); break;                                  // both lifted and drawn back, then hammered together
@@ -434,7 +437,7 @@ function hit(morph, t) {
   try { const mol = api.center(), Aa = (c.act && c.act.A) || c.ja || c.a, Bb = (c.act && c.act.B) || Aa; if (Aa && mol.balls.has(Aa)) { const w = worldOf(mol, Aa); if (Bb && mol.balls.has(Bb)) w.add(worldOf(mol, Bb)).multiplyScalar(0.5); const sp = toScreen(w); { const pg = Math.max(0, ((api.g() && api.g().page) || 1) - 1); (S.fx || (S.fx = [])).push({ t, x: sp[0], y: sp[1], n: n + 2 * pg, last: c.last }); splat(inkOf(w), n + 3 * pg, c.last); } } } catch (e) { /* no flash */ }
   const turnK = 1 + 0.3 * Math.max(0, ((api.g() && api.g().page) || 1) - 1);
   S.swHit = { t, a: Math.min(0.09, (0.03 + 0.006 * n) * turnK) * (c.last ? 1.4 : 1) };
-  mus('step', n);
+  mus('step', c.sn || n, c.sOf || n);
   // the page
   addShake((0.34 + 0.06 * Math.min(12, n)) * turnK + (c.last ? 0.3 : 0));
   const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 2.2 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
@@ -443,7 +446,7 @@ function hit(morph, t) {
   if (c.change) { S.recoils.push({ t: t + c.ph.hold, x: 0, z: 0, yaw: 0, hz: 3, z0: 0.4 }); addShake(0.3); S.drops.push({ t, a: 0.035, ms: 240 }); }
   // sound on the frame of contact; the bell rings through the freeze
   const fast = mode === 2 && (c.ph.T || 999) < 200;
-  snd('reflex', c.kind, n, { bell: d.bell * (c.last ? 1.4 : c.change ? 1.35 : 1), fast, echo: d.echo || c.change, last: c.last });
+  snd('reflex', c.kind, c.sn || n, { bell: d.bell * (c.last ? 1.4 : c.change ? 1.35 : 1), fast, echo: d.echo || c.change, last: c.last });
   if (n >= d.snapFrom || c.last) snd('snap', n, d.snapW * (c.last ? 1.5 : 1));
   if (c.last) snd('boom', SM());
   // the numeral and the gain are born at the join after the freeze
@@ -532,11 +535,11 @@ function passFlag(k, final) {
 // ---------- the overlay above everything: the flash and lines of force of a hit, and OVERREACT ----------
 // OVERREACT is the one word of the game. It is drawn over the whole frame, above the molecule, fitted inside the frame with a margin:
 // a white flash, the word slammed down from far too big, an ink burst behind it, the page shaking, a held beat, then torn away.
-const OVMS = 3000;
+const OVMS = 3700;   // the word stays until the drop has landed (the sound puts the drop 2.95 s after the call)
 function drawOver(t) {
   F.ovN = (F.ovN || 0) + 1; F.ovT = t; if (F.ov || F.ovDirty) (F.ovL || (F.ovL = [])).push([Math.round(t), F.ov ? Math.round(t - F.ov.t) : -1, F.ovDirty ? 1 : 0, api.over.cv.width]);
   const o = api.over; if (!o) return; const x = o.x, W = o.cv.width, H = o.cv.height, S = F.seq, k = W / 1280;
-  const fx = S && S.fx ? (S.fx = S.fx.filter(q => t - q.t < 360)) : [];
+  const fx = S && S.fx ? (S.fx = S.fx.filter(q => t - q.t < 240)) : [];
   const wipe = () => { o.cv.width = W; x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; };
   const heat = heatLevel(t);
   if (!F.ov && !fx.length && heat < 0.01) { if (F.ovDirty) { wipe(); F.ovDirty = false; } return; }
@@ -544,9 +547,9 @@ function drawOver(t) {
   if (heat >= 0.01) heatDraw(x, t, k, heat);
   // the flash of a hit stays inside the molecule's own rectangle and never whitens the rest of the page
   x.save(); if (fx.length) { const ip = AA.rxScheme && AA.rxScheme.inPlay && AA.rxScheme.inPlay(); if (ip) { x.beginPath(); x.rect(ip.play[0] * k, ip.play[1] * k, (ip.play[2] - ip.play[0]) * k, (ip.play[3] - ip.play[1]) * k); x.clip(); } }
-  fx.forEach(q => { const u = clamp((t - q.t) / 360, 0, 1), m = Math.min(12, q.n), R = (95 + 26 * m) * k * (q.last ? 1.6 : 1) * (0.45 + 0.9 * E.outCubic(u)), a = (1 - u) * Math.min(1, 0.8 + 0.03 * m) * 0.5;
+  fx.forEach(q => { const u = clamp((t - q.t) / 240, 0, 1), m = Math.min(12, q.n), R = (44 + 5 * m) * k * (q.last ? 1.3 : 1) * (0.45 + 0.9 * E.outCubic(u)), a = (1 - u) * 0.34;
     const g = x.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, 'rgba(255,255,255,' + a.toFixed(3) + ')'); g.addColorStop(0.45, 'rgba(255,244,214,' + (a * 0.6).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = g; x.beginPath(); x.arc(q.x, q.y, R, 0, 6.3); x.fill();
-    const nl = 10 + m, r1 = (40 + 12 * m) * k * (0.6 + 1.6 * E.outCubic(u)), len = (34 + 9 * m) * k * (1 - u); x.save(); x.strokeStyle = 'rgba(34,37,44,' + (0.85 * (1 - u)).toFixed(3) + ')'; x.lineWidth = (3.4 + 0.3 * m) * k; x.lineCap = 'round';
+    const nl = 8 + Math.round(m / 2), r1 = (30 + 5 * m) * k * (0.6 + 1.2 * E.outCubic(u)), len = (20 + 4 * m) * k * (1 - u); x.save(); x.strokeStyle = 'rgba(34,37,44,' + (0.85 * (1 - u)).toFixed(3) + ')'; x.lineWidth = (2.6 + 0.15 * m) * k; x.lineCap = 'round';
     for (let i = 0; i < nl; i++) { const an = i / nl * 6.283 + q.t * 0.01, c = Math.cos(an), s = Math.sin(an), jj = 1 + 0.25 * Math.sin(i * 7.3 + q.t); x.beginPath(); x.moveTo(q.x + c * r1 * jj, q.y + s * r1 * jj); x.lineTo(q.x + c * (r1 * jj + len), q.y + s * (r1 * jj + len)); x.stroke(); } x.restore(); });
   x.restore();
   if (F.ov) overDraw(x, t, W, H, k, wipe);
@@ -816,7 +819,7 @@ const SEE = { list: [], cv: null, x: null, dirty: false, paper: '246,244,238', p
 const seeRgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
 function seeCanvas() { if (SEE.cv || !api || !api.over) return SEE.cv; const o = api.over.cv, c = root.document.createElement('canvas'); c.className = 'veil'; o.parentNode.insertBefore(c, o); SEE.cv = c; SEE.x = c.getContext('2d'); return c; }
 // the name the game gives a reflex kind; the across-the-fold form says so
-function seeName(kind, far) { const raw = String(kind || ''), base = kfam(raw); return /_far$/.test(raw) || (far && !/^(bridge|stitch|link)$/.test(base)) ? base + ' across' : base; }
+function seeName(kind) { return kfam(String(kind || '')); }   // an across step carries its kind's own name
 const seeHeavy = (m, a) => a && a.el !== 'H' && m.balls.has(a);
 const seeHas = (b, a) => b[0] === a || b[1] === a;
 // what the step did, read off the two molecules: bonds made, bonds cut (both atoms still there), bonds gone up or down in order, and the hydrogens each atom had and has
@@ -866,7 +869,7 @@ function seeStep(o, nm, prev, act, ms, morph) { try { seeCarry(o, nm, prev); con
     // the hydrogens: carbons show the ones they hide; one that moves is seen moving to the atom that gets it
     const hs = [], gain = atoms.filter(a => (D.hNow.get(a) || 0) > (D.hWas.get(a) || 0)); atoms.forEach(a => { if (a.el !== 'C') return; const w = D.hWas.get(a) || 0, n2 = D.hNow.get(a) || 0; hs.push({ a, was: w, now: n2, to: w > n2 ? (gain.length ? gain[hs.filter(h => h.to).length % gain.length] : null) : null, lost: w > n2 }); });
     const base = kfam(act.kind), main = D.made[0] || D.up[0] || D.cut[0] || D.down[0] || [act.A, act.B || act.A], S = F.seq;
-    const e = { strike: false, t0: now(), tHit: null, m: nm, morph, K: 0, atoms, marks: D.made.slice(), rings: D.made.map(b => seeRing(nm, b)).filter(r => r), arrows, hs, col: SEE_COL[base] || SEE_COL.ring, name: seeName(act.kind, act.far), far: act.far, A: main[0], B: main[1], fam: base, n: S && S.cur ? S.cur.n : 0, D };
+    const e = { strike: false, t0: now(), tHit: null, m: nm, morph, K: 0, atoms, marks: D.made.slice(), rings: D.made.map(b => seeRing(nm, b)).filter(r => r && r.length <= 7 && !act.far), arrows, hs, col: SEE_COL[base] || SEE_COL.ring, name: seeName(act.kind, act.far), far: act.far, A: main[0], B: main[1], fam: base, n: S && S.cur ? S.cur.n : 0, D };
     SEE.list.forEach(q => { if (q.strike && !q.cut) q.cut = now(); }); SEE.list.push(e);
     // for the rules side: does the step record's join name the two atoms of the bond that was made?
     const jn = (o.join || []).map(a => (o.map ? o.map.get(a) : a) || a), same = D.made.some(b => (b[0] === jn[0] && b[1] === jn[1]) || (b[0] === jn[1] && b[1] === jn[0])); SEE.joinLog.push([act.kind, D.made.length, same ? 1 : 0, jn.map(a => a && a.el).join(''), D.made.map(b => b[0].el + b[1].el).join(','), D.up.length, D.down.length, D.cut.length]);
@@ -877,6 +880,7 @@ function seeK(morph, K) { for (let i = SEE.list.length - 1; i >= 0; i--) { const
 function seeHit(t) { let e = null; SEE.list.forEach(q => { if (!q.strike && !q.tHit) e = q; }); if (!e) return; SEE.list.forEach(q => { if (q !== e && q.tHit && !q.cut) q.cut = t; }); e.tHit = t; e.K = 1; e.spot = null; if (F.seq) F.log.push(['bond', e.n, Math.round(t - F.seq.t0)]); }
 // a reflex step is never quicker than the eye: the wind-up and the swing have a floor
 function seeFloor(ph, n, last) { if (last) return ph; const sp = (F.seq && F.seq.speed) || 1, f = (PACE === '3' ? 0.7 : 1) * (n > 8 ? 0.8 : 1) / sp; ph.wind = Math.max(ph.wind, 420 * f); ph.swing = Math.max(ph.swing, 280 * f); return ph; }
+const SEE_WASH = false;   // the wash of paper over the rest of the molecule blanched the page on every step: off
 let SEE_OFF = false; try { SEE_OFF = new URLSearchParams(root.location.search).get('see') === '0'; } catch (e) { SEE_OFF = false; }   // ?see=0: no pencil arrows, hydrogens or names on the reacting atoms
 // the page is over: nothing of the last step is left standing on the next page
 function seeEnd() { SEE.list.length = 0; SEE.dirty = false; if (SEE.cv && SEE.x) { SEE.x.setTransform(1, 0, 0, 1, 0, 0); SEE.x.clearRect(0, 0, SEE.cv.width, SEE.cv.height); } }
@@ -895,7 +899,7 @@ function seeFrame(t) {
   // where each thing is in its step: uw through the wind-up, us through the swing, ah the time since the hit
   let dim = 0; SEE.list.forEach(e => { const wf = e.wf || 0.5, bf = e.bf || 0.5; e.uw = clamp(e.K / Math.max(1e-6, wf), 0, 1); e.us = clamp((e.K - bf) / Math.max(1e-6, 1 - bf), 0, 1); e.ah = e.tHit && t >= e.tHit ? (t - e.tHit) * sp : -1; e.fc = e.cut ? 1 - clamp((t - e.cut) / 220, 0, 1) : 1; e.g = e.strike ? 0 : (e.ah >= 0 ? 1 - clamp(e.ah / 320, 0, 1) : clamp(e.uw / 0.25, 0, 1)) * e.fc; dim = Math.max(dim, e.g); });
   // the rest of the molecule dims a little: a wash of paper over it, cut away round the atoms of the step
-  if (dim > 0.01) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; mol.balls.forEach((b, a) => { if (a.el === 'H') return; const q = at(a); if (!q) return; x0 = Math.min(x0, q.x - q.r); x1 = Math.max(x1, q.x + q.r); y0 = Math.min(y0, q.y - q.r); y1 = Math.max(y1, q.y + q.r); });
+  if (SEE_WASH && dim > 0.01) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; mol.balls.forEach((b, a) => { if (a.el === 'H') return; const q = at(a); if (!q) return; x0 = Math.min(x0, q.x - q.r); x1 = Math.max(x1, q.x + q.r); y0 = Math.min(y0, q.y - q.r); y1 = Math.max(y1, q.y + q.r); });
     if (x1 > x0) { const pad = 14 * k; x.save(); x.shadowBlur = 44 * k; x.shadowOffsetX = 3 * W; x.shadowColor = 'rgba(' + SEE.paper + ',' + (0.42 * dim).toFixed(3) + ')'; x.fillStyle = '#000'; x.fillRect(x0 - pad - 3 * W, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad); x.restore();
       x.save(); x.globalCompositeOperation = 'destination-out'; SEE.list.forEach(e => { if (e.g <= 0.01) return; const set = new Set(e.atoms);
         mol.sticks.forEach(s => { if (!set.has(s.a) || !set.has(s.b)) return; const A = at(s.a), B = at(s.b); if (!A || !B) return; x.strokeStyle = 'rgba(0,0,0,' + e.g.toFixed(3) + ')'; x.lineCap = 'round'; x.lineWidth = Math.min(A.r, B.r) * 1.5; x.beginPath(); x.moveTo(A.x, A.y); x.lineTo(B.x, B.y); x.stroke(); });
@@ -906,8 +910,8 @@ function seeFrame(t) {
     const end = s => { if (s.h) { const h = e.hs.find(z => z.a === s.a); return hAt(s.a, h ? Math.max(0, h.was - 1) : 0, h ? Math.max(1, h.was) : 1) || at(s.a); } const A = at(s.a); if (!A) return null; if (!s.b) return A; const B = at(s.b); return B ? { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, r: 0 } : null; };
     // the hydrogens of the atoms involved, as small white atoms; one that moves is carried across during the swing
     const ha = e.strike ? 0 : (ah >= 0 ? 1 - clamp((ah - 450) / 350, 0, 1) : clamp(e.uw / 0.2, 0, 1)) * e.fc;
-    if (ha > 0.01) { const dot = (p, a2) => { if (!p) return; const gr = x.createRadialGradient(p.x - p.r * 0.3, p.y - p.r * 0.35, p.r * 0.1, p.x, p.y, p.r); gr.addColorStop(0, 'rgba(255,255,255,' + a2.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(226,226,230,' + a2.toFixed(3) + ')'); x.fillStyle = gr; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.3); x.fill(); x.strokeStyle = seeRgba(SEE.pencil, 0.85 * a2); x.lineWidth = 2 * k; x.stroke(); x.strokeStyle = seeRgba(SEE.pencil, 0.8 * a2); x.lineWidth = 1.6 * k; x.stroke(); };
-      e.hs.forEach(h => { const n = ah >= 0 ? h.now : h.was, q = at(h.a); if (!q) return; for (let i = 0; i < n; i++) { if (ah < 0 && h.lost && i === h.was - 1) continue; const p = hAt(h.a, i, n); if (p) { x.strokeStyle = seeRgba(SEE.pencil, 0.6 * ha); x.lineWidth = 2 * k; x.beginPath(); x.moveTo(q.x, q.y); x.lineTo(p.x, p.y); x.stroke(); } }
+    if (ha > 0.01) { const dot = (p, a2) => { if (!p) return; const gr = x.createRadialGradient(p.x - p.r * 0.3, p.y - p.r * 0.35, p.r * 0.1, p.x, p.y, p.r); gr.addColorStop(0, 'rgba(255,255,255,' + a2.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(226,226,230,' + a2.toFixed(3) + ')'); x.fillStyle = 'rgba(34,37,44,' + a2.toFixed(3) + ')'; x.beginPath(); x.arc(p.x, p.y, p.r + 1.7 * k, 0, 6.3); x.fill(); x.fillStyle = gr; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.3); x.fill(); };
+      e.hs.forEach(h => { const n = ah >= 0 ? h.now : h.was, q = at(h.a); if (!q) return; for (let i = 0; i < n; i++) { if (ah < 0 && h.lost && i === h.was - 1) continue; const p = hAt(h.a, i, n); if (p) { /* the stick: white with the same dark outline as the ball, one lollipop; it starts at the atom's rim so nothing is drawn over the atom */ const l9 = Math.hypot(p.x - q.x, p.y - q.y) || 1, sx9 = q.x + (p.x - q.x) / l9 * q.r * 0.96, sy9 = q.y + (p.y - q.y) / l9 * q.r * 0.96; x.lineCap = 'butt'; x.strokeStyle = 'rgba(34,37,44,' + ha.toFixed(3) + ')'; x.lineWidth = p.r * 0.62 + 3.4 * k; x.beginPath(); x.moveTo(sx9, sy9); x.lineTo(p.x, p.y); x.stroke(); x.fillStyle = 'rgba(34,37,44,' + ha.toFixed(3) + ')'; x.beginPath(); x.arc(p.x, p.y, p.r + 1.7 * k, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(240,240,242,' + ha.toFixed(3) + ')'; x.lineWidth = p.r * 0.62; x.beginPath(); x.moveTo(sx9, sy9); x.lineTo(p.x, p.y); x.stroke(); } }
         for (let i = 0; i < n; i++) { if (ah < 0 && h.lost && i === h.was - 1) continue; dot(hAt(h.a, i, n), ha); }
         if (h.lost && ah < 0) { const p0 = hAt(h.a, h.was - 1, h.was), u = E.inOutCubic(e.us); let p1 = null; if (h.to) { const qt = at(h.to); if (qt) p1 = { x: qt.x + (p0.x > qt.x ? 1 : -1) * qt.r * 1.1, y: qt.y - qt.r * 1.1 }; } if (!p1 && p0) p1 = { x: p0.x + (p0.x - q.x) * 1.6, y: p0.y + (p0.y - q.y) * 1.6 }; if (p0) dot({ x: p0.x + (p1.x - p0.x) * u, y: p0.y + (p1.y - p0.y) * u - Math.sin(Math.PI * u) * 14 * k, r: p0.r }, ha * (h.to ? 1 : 1 - u)); } }); }
     // the curly arrows: each is drawn stroke by stroke during the wind-up, is whole before the swing, and fades after the hit
@@ -932,10 +936,10 @@ function seeFrame(t) {
         seePencil(x, pts, clamp((ah - 60) / 380, 0, 1), PW * 1.15, pa * 0.9, i + 3); }); }
     if (e.strike || !e.name || !AA.rxPen) return;
     // its name, lettered beside the new bond where the molecule leaves the most room
-    const A = at(e.A), B = at(e.B) || A; if (!A) return; const jx = (A.x + B.x) / 2, jy = (A.y + B.y) / 2, size = 64 * k, tw = AA.rxPen.measure(e.name, size, 'heavy').width;
-    if (!e.spot) { let best = null; for (let i = 0; i < 12; i++) { const an = -Math.PI / 2 + i * Math.PI / 6, dd = (70 + 0.5 * Math.abs(Math.cos(an)) * tw / k) * k + Math.max(A.r, B.r), cx = clamp(jx + Math.cos(an) * dd, tw / 2 + 24 * k, W - tw / 2 - 24 * k), cy = clamp(jy + Math.sin(an) * dd * 0.8, 96 * k, H - 190 * k); let free = 1e9; mol.balls.forEach((b, a) => { if (a.el === 'H') return; const q = at(a); if (!q) return; const ex = Math.max(0, Math.abs(q.x - cx) - tw / 2), ey = Math.max(0, Math.abs(q.y - cy) - size * 0.4); free = Math.min(free, Math.hypot(ex, ey) - q.r); }); const sc2 = Math.min(free, 60 * k) - 0.05 * Math.hypot(cx - jx, cy - jy) - (Math.sin(an) > 0.3 ? 4 * k : 0); if (!best || sc2 > best.s) best = { s: sc2, dx: cx - jx, dy: cy - jy }; } e.spot = best; }
-    const na = (ah < 1050 ? 1 : 1 - clamp((ah - 1050) / 350, 0, 1)) * e.fc, wt = clamp((ah - 90) / 260, 0, 1), px2 = jx + e.spot.dx, py2 = jy + e.spot.dy + size * 0.3;
-    if (na > 0.01) { x.save(); x.globalAlpha = na; AA.rxPen.write(x, e.name, px2, py2, size, { weight: 'heavy', color: 'rgb(' + SEE.paper + ')', align: 'center', t: wt, extra: 9 * k }); AA.rxPen.write(x, e.name, px2, py2, size, { weight: 'heavy', color: seeRgba(e.col, 1), align: 'center', t: wt }); x.restore(); } });
+    const A = at(e.A), B = at(e.B) || A; if (!A) return; const jx = (A.x + B.x) / 2, jy = (A.y + B.y) / 2, size = 25 * k, tw = AA.rxPen.measure(e.name, size).width;
+    if (!e.spot) { let best = null; for (let i = 0; i < 12; i++) { const an = -Math.PI / 2 + i * Math.PI / 6, dd = (34 + 0.5 * Math.abs(Math.cos(an)) * tw / k) * k + Math.max(A.r, B.r), cx = clamp(jx + Math.cos(an) * dd, tw / 2 + 24 * k, W - tw / 2 - 24 * k), cy = clamp(jy + Math.sin(an) * dd * 0.8, 96 * k, H - 190 * k); let free = 1e9; mol.balls.forEach((b, a) => { if (a.el === 'H') return; const q = at(a); if (!q) return; const ex = Math.max(0, Math.abs(q.x - cx) - tw / 2), ey = Math.max(0, Math.abs(q.y - cy) - size * 0.4); free = Math.min(free, Math.hypot(ex, ey) - q.r); }); const sc2 = Math.min(free, 26 * k) - 0.05 * Math.hypot(cx - jx, cy - jy) - (Math.sin(an) > 0.3 ? 4 * k : 0); if (!best || sc2 > best.s) best = { s: sc2, dx: cx - jx, dy: cy - jy }; } e.spot = best; }
+    const na = (ah < 760 ? 1 : 1 - clamp((ah - 760) / 240, 0, 1)) * e.fc * (F.ov ? 0 : 1), wt = clamp((ah - 60) / 220, 0, 1), px2 = jx + e.spot.dx, py2 = jy + e.spot.dy + size * 0.3;
+    if (na > 0.01) { x.save(); x.globalAlpha = na; AA.rxPen.write(x, e.name, px2, py2, size, { color: 'rgb(' + SEE.paper + ')', align: 'center', t: wt, extra: 5 * k }); AA.rxPen.write(x, e.name, px2, py2, size, { color: seeRgba(SEE.pencil, 0.9), align: 'center', t: wt }); x.restore(); } });
 }
 
 // ---------- a click while it plays: twice as fast ----------
