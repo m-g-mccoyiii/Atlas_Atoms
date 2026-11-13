@@ -26,6 +26,7 @@ TOOL_PAY = {k: float(v) for k, v in SC.re.findall(r'(\w+): ([\d.]+)', _tp.group(
 _tu = SC.re.search(r'RULE\.toolUses = (\{.*?\});', SC._JS)
 TOOL_USES = {k: int(v) for k, v in SC.re.findall(r'(\w+): (\d+)', _tu.group(1))} if _tu else {}
 _ps = SC.re.search(r'RULE\.passive = (\{.*?\});', SC._JS)
+BENCH = [None]      # path.js RULE.bench: instruments used on the molecule in one round at most (params tool_cap)
 CAROUSEL_FIRST = bool(SC.re.search(r'RULE\.carouselFirst = true', SC._JS))
 PASSIVE = {k: int(v) for k, v in SC.re.findall(r'(\w+): (\d+)', _ps.group(1))} if _ps else {}
 
@@ -96,8 +97,21 @@ class Tool(SP.Perk):
         self.uses = TOOL_USES.get(self.name, 1)
         self.pay = TOOL_PAY.get(self.name, 1.0)
 
+    task = False              # True: it helps the task, not the yield (the counter, the condenser)
+
     def ready(self, R):
-        return R.x.get('used_n_' + self.name, 0) < self.uses
+        if R.x.get('used_n_' + self.name, 0) >= self.uses:
+            return False
+        cap = BENCH[0]
+        if cap is None:
+            return True
+        used = R.x.get('bench', 0)
+        if used >= cap:
+            return False
+        # the last use of the round is kept for a piece that helps the task while the task is not met and one is still to hand
+        if not self.task and used >= cap - 1 and R.x.get('task_tools') and not R.x.get('task_done'):
+            return False
+        return True
 
     def fed(self, R):
         return 1
@@ -116,7 +130,19 @@ class Tool(SP.Perk):
     def _do(self, G, R, s):
         self._apply(G, R, s)
         R.x['used_n_' + self.name] = R.x.get('used_n_' + self.name, 0) + 1
+        R.x['bench'] = R.x.get('bench', 0) + 1
         self.taps += 1 if G.real else 0
+
+    def round_start(self, G, R, rng):
+        SP.Perk.round_start(self, G, R, rng)
+        BENCH[0] = G.p.get('tool_cap')
+        if self.task:
+            R.x['task_tools'] = R.x.get('task_tools', 0) + 1
+
+    def after_page(self, G, R, rng, player):
+        if R.spec and G.met(R):
+            R.x['task_done'] = True
+        SP.Perk.after_page(self, G, R, rng, player)
 
     def ok(self, G, s, R):
         return bool(s) and s != R.smi and _heavy(s) <= max(G.p['max_heavy'], _heavy(R.smi))
@@ -156,6 +182,84 @@ class Magnet(Tool):
         return [s] if self.ok(G, s, R) else []
 
 
+class Counter(Tool):
+    """The tally counter.  Set on a page: what that page adds toward the task counts twice.  Here it is set on the page just
+    fired (the simulated players know what a line will do, so before or after is the same to them)."""
+    name = 'counter'
+    task = True
+
+    def after_page(self, G, R, rng, player):
+        if not R.spec or not self.ready(R) or len(R.rec) < 1:
+            return
+        if G.met(R):
+            R.x['task_done'] = True
+            return
+        bon = {}
+        for name, n in R.spec:
+            d = G.spec_value(name, R.f0, R.rec) - G.spec_value(name, R.f0, R.rec[:-1])
+            if d > 0:
+                bon[name] = d
+        if not bon:
+            return
+        self.lit += 1 if G.real else 0
+        base = G.prog(R, R.rec)
+        R2 = R.copy()
+        R2.x['bonus'] = bon
+        gain = G.prog(R2, R.rec) - base
+        last = R.page >= R.pages
+        # used when it meets the task; on the last page when it only brings it nearer; the novice half the time it could
+        if not (G.met(R2) or (last and gain > 0)):
+            return
+        if player == 'novice' and rng.random() < 0.5:
+            return
+        R.x['bonus'] = bon
+        R.x['used_n_' + self.name] = R.x.get('used_n_' + self.name, 0) + 1
+        R.x['bench'] = R.x.get('bench', 0) + 1
+        self.taps += 1 if G.real else 0
+        if G.met(R):
+            R.x['task_done'] = True
+
+
+class Condenser(Tool):
+    """The reflux condenser.  After the last page one more page is played; nothing it makes is weighed (the yield stays as it
+    was), it counts toward the task only."""
+    name = 'condenser'
+    task = True
+
+    def after_page(self, G, R, rng, player):
+        if R.spec and G.met(R):
+            R.x['task_done'] = True
+
+    def round_last(self, G, R, rack, hrng, mrng, player, pol):
+        if not R.spec or not self.ready(R) or G.met(R):
+            return None
+        self.lit += 1 if G.real else 0
+        import random as _r
+        prng = _r.Random(mrng.random())
+        R1 = R.copy()
+        R1.rec = list(R.rec)
+        keep = (R1.P, R1.Rr, R1.E, R1.bank, R1.casc, R1.best)
+        G.turn(R1)
+        hand = SC.deal_hand(rack, R1, prng, G.p['hand'])
+        aim = G.p.get('aim_par')
+        G.p['aim_par'] = False
+        try:
+            line, R2, page = G.choose(R1, hand, pol['look'], prng, None, False, peek=False, mrng=mrng)
+        finally:
+            G.p['aim_par'] = aim
+        if R2 is None:
+            return None
+        R2.rec = R1.rec + [G.page_rec(page)]
+        R2.P, R2.Rr, R2.E, R2.bank, R2.casc, R2.best = keep
+        R2.over = False
+        if G.prog(R2, R2.rec) <= G.prog(R, R.rec):
+            return None
+        R2.x['used_n_' + self.name] = R2.x.get('used_n_' + self.name, 0) + 1
+        R2.x['bench'] = R2.x.get('bench', 0) + 1
+        self.taps += 1 if G.real else 0
+        return R2
+
+
 class Passive(SC.Mod):
     key, by = '', 1
     kind = 'passive'
@@ -181,9 +285,9 @@ class Timer(Passive):
     name, key = 'timer', 'circles'
 
 
-TOOLS = {c.name: c for c in (Crystal, Bunsen, Burette, Magnet, Carousel, Dropper, Timer)}
+TOOLS = {c.name: c for c in (Crystal, Bunsen, Burette, Magnet, Carousel, Dropper, Timer, Counter, Condenser)}
 ORDER = ('crystal', 'bunsen', 'burette', 'magnet', 'carousel', 'dropper', 'timer')
-LABEL = {'crystal': 'Seed crystal', 'bunsen': 'Burner', 'burette': 'Burette', 'magnet': 'Magnet', 'carousel': 'Carousel', 'dropper': 'Dropper', 'timer': 'Timer'}
+LABEL = {'counter': 'Tally counter', 'condenser': 'Condenser', 'crystal': 'Seed crystal', 'bunsen': 'Burner', 'burette': 'Burette', 'magnet': 'Magnet', 'carousel': 'Carousel', 'dropper': 'Dropper', 'timer': 'Timer'}
 
 
 def make(name):

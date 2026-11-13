@@ -1013,14 +1013,16 @@ class Game:
         if R.x.get('burnt'):
             return float(len(R.spec))        # brimstone: the task was burned, it counts as met
         t = 0.0
+        bon = R.x.get('bonus') or {}
         for name, n in R.spec:
-            t += min(self.spec_value(name, R.f0, pages), n) / float(n)
+            t += min(self.spec_value(name, R.f0, pages) + bon.get(name, 0), n) / float(n)
         return round(t, 9)
 
     def met(self, R):
         if R.x.get('burnt'):
             return bool(R.spec)
-        return bool(R.spec) and all(self.spec_value(name, R.f0, R.rec) >= n for name, n in R.spec)
+        bon = R.x.get('bonus') or {}       # the tally counter: what one page added toward the task counts twice
+        return bool(R.spec) and all(self.spec_value(name, R.f0, R.rec) + bon.get(name, 0) >= n for name, n in R.spec)
 
     # --- lines and players ----------------------------------------------------------------------------------------
     def lines(self, R, hand):
@@ -1033,7 +1035,7 @@ class Game:
             fin = self.sites(R.smi, 'finish')[0] > 0
         if fin:
             ids = ids + ['finish']
-        short = bool(R.spec) and any(n == 'held_back' for n, _ in R.spec)
+        short = (bool(R.spec) and any(n == 'held_back' for n, _ in R.spec)) or bool(self.p.get('short_lines'))     # short_lines: hydrogen (fifteenth) pays for a page of two
         out = []
 
         def rec(cur):
@@ -1235,6 +1237,9 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
             break                        # a proof: the spec is met and cannot be lost again, the later pages change nothing
         G.turn(R)
         hand = nxt
+    for m in mods:                       # the condenser: one more page that is not weighed
+        if hasattr(m, 'round_last') and not R.over:
+            R = m.round_last(G, R, rack, hrng, mrng, player, pol) or R
     R.x['total'] = G.end(R)
     R.x['met'] = G.met(R) if R.spec else None
     R.x['prog'] = round(G.prog(R, R.rec) / max(1, len(R.spec)), 4) if R.spec else None      # share of the spec reached, 0 to 1

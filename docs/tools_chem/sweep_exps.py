@@ -631,3 +631,57 @@ def help14(arg='none,median,200'):
 
 
 EXPERIMENTS['help14'] = help14
+
+
+# --- the fifteenth measure, item 1: helpers that help the task (the tally counter, the condenser) and the bench's limit ------
+TOOLS15 = TOOLS14 + ('counter', 'condenser')
+
+
+def help15(arg='none,median,200'):
+    """Fifteenth: as help14, with the two task instruments in the draw and the bench's limit.
+    arg: set,player,runs[,seed letter[,length[,cap]]].  set as help14 (kNhM draws from all nine modelled instruments).
+    cap: instruments used on the molecule in one round at most (path.js RULE.bench); empty: the game's own."""
+    import random as _r
+    ps = arg.split(',')
+    st, pl, n = ps[0], ps[1], int(ps[2])
+    sd = ps[3] if len(ps) > 3 and ps[3] else 'p'
+    ln = ps[4] if len(ps) > 4 and ps[4] else 'doctorate'
+    cap = ps[5] if len(ps) > 5 and ps[5] else ''
+    par = dict(T13)
+    if cap == '':
+        _b = re.search(r'RULE\.bench = (\d+)', SC._JS)
+        cap = _b.group(1) if _b else '0'
+    if int(cap) > 0:
+        par['tool_cap'] = int(cap)
+    jobs = []
+    for i in range(n // 10):
+        if re.match(r'k\d+h\d+$', st):
+            rg = _r.Random('%s/%s/%d' % (st, sd, i))
+            k, h = int(st[1:st.index('h')]), int(st[st.index('h') + 1:])
+            mods = ['tool:' + t for t in rg.sample(TOOLS15, k)] + ['hom:' + x for x in rg.sample(HOMS2, h)]
+        elif st == 'none':
+            mods = []
+        else:
+            mods = [x if ':' in x else 'tool:' + x for x in st.split('+')]
+        jobs.append({'id': 'h15_%s_%s_%s_%s_c%s_%d' % (st, pl, sd, ln, cap, i), 'rack': START, 'length': ln, 'player': pl, 'mods': mods, 'params': dict(par),
+                     'full': True, 'seeds': ['%s/%d' % (sd, i * 10 + k) for k in range(10)], 'tag': '%s/%s/c%s' % (st, pl, cap)})
+    return jobs
+
+
+EXPERIMENTS['help15'] = help15
+
+
+def hom15(arg='200'):
+    """Fifteenth, item 2: creatures alone under the game's rule, nine rounds, every round played.  arg: runs,player,names;names
+    (a name may carry a trial of its numbers: seedling@1.6/gain=12)."""
+    ps = arg.split(',')
+    n = int(ps[0])
+    pl = ps[1] if len(ps) > 1 else 'median'
+    sets = [tuple(x.split('+')) if x != 'none' else () for x in ps[2].split(';')] if len(ps) > 2 else [()] + [(h,) for h in HOMS2]
+    jobs = hom_jobs(sets, n, player=pl, seed='k', extra=T13)
+    for j in jobs:
+        j['id'] = 'h15' + j['id']
+    return jobs
+
+
+EXPERIMENTS['hom15'] = hom15

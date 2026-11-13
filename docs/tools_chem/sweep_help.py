@@ -18,14 +18,20 @@ import sweep_core as SC
 MS = C.MARKS['doctorate']
 
 
+EXP = [os.environ.get('SWEEP_HELP') or 'help14']       # help15: the fifteenth's runs (tags set/player/cap; the set is read as set@cap)
+
+
 def load():
     by = {}
-    fp = os.path.join(SC.SWEEP_DIR, 'help14', 'rows.jsonl')
+    fp = os.path.join(SC.SWEEP_DIR, EXP[0], 'rows.jsonl')
     for line in open(fp, encoding='utf-8'):
         r = json.loads(line) if line.strip() else None
         if not r or 'error' in r or not r.get('full'):
             continue
-        st, pl = r['tag'].split('/')
+        tg = r['tag'].split('/')
+        st, pl = tg[0], tg[1]
+        if len(tg) > 2 and st != 'none':
+            st = st + '@' + tg[2]
         d = by.setdefault(pl, {}).setdefault(st, {'runs': [], 'mod': {}})
         d['runs'].extend(r['full'])
         for nm, m in (r.get('mod') or {}).items():
@@ -91,7 +97,8 @@ def career_real(pools, by_b, n_runs=300, rng=None, carry=5):
     one for the count of instruments on the shelf (up to `carry`) and, in the nine-round run, a creature if one is held."""
     rng = rng or random.Random(1)
     reach, cnt, got, deep = 1, {}, [], 0
-    out = {'first': None, 'tenth': None, 'master': None, 'doctorate': None, 'bachelor': None, 'held': {}, 'gave': [], 'deep': {}}
+    out = {'first': None, 'tenth': None, 'master': None, 'doctorate': None, 'bachelor': None, 'held': {}, 'gave': [], 'deep': {}, 'by': {}}
+    surv = 1.0          # the chance that no nine-round run has been won yet, by the clear rates of the pool each such run was drawn from
     shelf = {}
     ks = sorted({k for k, h in pools})
     for i in range(1, n_runs + 1):
@@ -116,6 +123,8 @@ def career_real(pools, by_b, n_runs=300, rng=None, carry=5):
             pool = pools[(k, h)]
             r = pool[rng.randrange(len(pool))]
             ms = C.MARKS[ln]
+            if ln == 'doctorate':
+                surv *= 1.0 - _pwin(pools, (k, h))
             cl, played = [], []
             for j, rd in enumerate(r[:len(ms)]):
                 played.append(rd)
@@ -127,6 +136,8 @@ def career_real(pools, by_b, n_runs=300, rng=None, carry=5):
             won = len(cl) == len(ms) and all(cl)
             deep = max(deep, sum(cl))
         c = C.run_counts(played, cl, mk, nr)
+        # fifteenth: a round of a long run lost on the task alone, the yield past its mark (path.js task_lost_rounds: the condenser's rung)
+        c['task_lost_rounds'] = 1 if (ln != 'bachelor' and not cl[-1] and not played[-1][C.MET] and C.ratio(played[-1]) >= ms[len(cl) - 1]) else 0
         for kk, v in c.items():
             cnt[kk] = max(cnt.get(kk, 0), v) if kk.startswith('max_') else cnt.get(kk, 0) + v
         if won:
@@ -147,7 +158,19 @@ def career_real(pools, by_b, n_runs=300, rng=None, carry=5):
         if i in (10, 30, 100, 300):
             out['held'][i] = (len(got), shelf.get('instrument', 0), shelf.get('homunculus', 0))
             out['deep'][i] = deep
+        if i in (25, 40, 100, 300):
+            out['by'][i] = 1.0 - surv
     return out
+
+
+_PW = {}
+
+
+def _pwin(pools, key):
+    k = (id(pools), key)
+    if k not in _PW:
+        _PW[k] = win(pools[key]) / 100.0
+    return _PW[k]
 
 
 def career_table(by, n=300, n_runs=300, real=True):
@@ -161,7 +184,12 @@ def career_table(by, n=300, n_runs=300, real=True):
             print(pl, 'no first-game runs (sweep_run.py flat14 --arg now_b,%s,600,g,bachelor)' % pl)
             continue
         pools = {(0, 0): by[pl]['none']['runs']}
+        cap = os.environ.get('SWEEP_CAP')
         for st, d in by[pl].items():
+            if '@' in st:                       # help15: kNhM@c<cap>; only the pools of the bench limit asked for
+                st, _, c_ = st.partition('@')
+                if cap is None or c_ != 'c' + cap:
+                    continue
             if st[0] == 'k' and 'h' in st and st[1].isdigit():
                 pools[(int(st[1:st.index('h')]), int(st[st.index('h') + 1:]))] = d['runs']
         if not real:
@@ -173,7 +201,10 @@ def career_table(by, n=300, n_runs=300, real=True):
         print('| %s | %s | %s | %s | %s | %.0f in 100 | pools %s' % (C.LABEL[pl], ', '.join('%.0f' % (sum(c['held'][k][0] for c in cs) / float(n)) for k in (10, 30, 100)),
                                                            ', '.join('%.1f' % (sum(c['deep'][k] for c in cs) / float(n)) for k in (10, 30, 100)),
                                                            s(f('master')), s(f('doctorate')), 100.0 * sum(1 for c in cs if c['doctorate'] is not None) / n,
-                                                           sorted((k, len(v)) for k, v in pools.items())))
+                                                           sorted((k, len(v), round(win(v), 3)) for k, v in pools.items())))
+        print('    by the clear rates, careers of 100 with a nine-round win by run 25, 40, 100, 300: %s; instruments held after 10, 30, 100: %s' % (
+            ', '.join('%.0f' % (100.0 * sum(c['by'][k] for c in cs) / n) for k in (25, 40, 100, 300)),
+            ', '.join('%.1f' % (sum(c['held'][k][1] for c in cs) / float(n)) for k in (10, 30, 100))))
 
 
 if __name__ == '__main__':
