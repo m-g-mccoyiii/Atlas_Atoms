@@ -1654,19 +1654,23 @@ const ACTS7 = {
   fire: A7((t, s) => { kick7(t, 55, 0.9, { d: 0.3 }); up7(t, 3 * s, 0.4); saw7(t, [38, 50], 0.5, { d: 0.25, lp: 2500, lp1: 300, lpt: 0.2 }); })
 };
 // ---- the arrow, the hit, OVERREACT ----
+// (builder 8) a reagent's run within a turn: the climb of run k starts a little higher than the last one's and only the last run reaches the top
+const run8 = (b, u) => { if (!b.k) return u; const f = Math.min(0.3, 0.1 * (b.k - 1)), top = b.k < b.kof ? 0.75 : 1; return f + (top - f) * u; };
 function st5() { return SB.b5 || (SB.b5 = { la: -99, gap: 1.5, d: 0.4, n: 0, of: 0 }); }
 const u5 = (n, of) => { const i0 = 0.3 * INT4; return clamp(i0 + (1 - i0) * (n - 1) / Math.max(1, (of || 12) - 1), 0, 1); };
 // an arrow starts: step n will hit in ms. o: last (the held breath before the hit), of (steps in this chain, if known), gap (ms to the next arrow, if known)
 function arrow5(n, ms, o) {
-  const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
+  const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last && !(b.k && b.k < b.kof);   // (builder 8) only the last reagent's run of a turn gets the held breath and the big last hit
+  b.raw = n; if (b.off && n > b.off) { n -= b.off; if (o.of > b.off) o = Object.assign({}, o, { of: o.of - b.off }); } else b.off = 0;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); const m8 = c && mb8(); SB.duck.gain.setTargetAtTime(c ? (m8 ? 0.78 : EDM7 ? 0.3 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
+  const u = run8(b, u5(n, b.of)), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); const m8 = c && mb8(); SB.duck.gain.setTargetAtTime(c ? (m8 ? 0.78 : EDM7 ? 0.3 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
   try { (BLD === 'b' ? arrB : BLD === 'c' ? (EDM7 ? arrE : arrC) : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); if (m8) { const p = SB.breath.gain; p.setTargetAtTime(0.35, e, 0.03); p.setValueAtTime(1, t + d); } else breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
-  const t = begin(); if (t == null) return; o = o || {}; const b = st5(), last = !!o.last, kd = kindOf(kind), had = b.n === n && t - b.la < 3, tNA = had ? b.la + b.gap : t + Math.max(0.5, b.gap * 0.91) - b.d, tNH = tNA + b.d;
-  if (o.of) b.of = o.of | 0; const u = u5(n, b.of);
+  const t = begin(); if (t == null) return; o = o || {}; const b = st5(), last = !!o.last && !(b.k && b.k < b.kof), kd = kindOf(kind); if (b.off && n > b.off) { n -= b.off; if (o.of > b.off) o = Object.assign({}, o, { of: o.of - b.off }); }
+  const had = b.n === n && t - b.la < 3, tNA = had ? b.la + b.gap : t + Math.max(0.5, b.gap * 0.91) - b.d, tNH = tNA + b.d;
+  if (o.of) b.of = o.of | 0; const u = run8(b, u5(n, b.of));
   const c = BLD === 'c', m8 = c && mb8(); if (c) { if (m8) duck(t, 0.6, 0.3, 0.08); else duck(t, 0.25, 0.5, 0.2); if (last && m8) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.3, t); bp.setValueAtTime(0.3, t + 0.06); bp.linearRampToValueAtTime(1, t + 0.3); } else if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); if (EDM7) { bp.linearRampToValueAtTime(0.3, t + 0.18); bp.linearRampToValueAtTime(0.85, t + 0.32); } else { bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); } bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? (m8 ? C5HIT * 1.3 : C5LAST) : C5HIT * dB(-C5RISE * (1 - u)) * (EDM7 ? 0.84 : 1)) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? (EDM7 ? 5 + 6 * u : 1 + 8 * u) : 2 + 9 * u);
   try { (BLD === 'b' ? hitB : BLD === 'c' ? (EDM7 ? hitE : hitC) : hitA)(t, n, u, last, tNA, tNH);
     // the kind keeps its own voice on top of the drums, climbing D, E, G, A
@@ -1941,6 +1945,12 @@ const fx = {
 });
 // the build-up options: build('a' | 'b' | 'c') chooses one, build('') goes back to style 4's own chain, build() reads it (also ?build=a)
 // (builder 7) the palette of build c: 'edm' (synthesisers, on the soundtrack's beat) or 'orch' (builder 6's drums and brass). ownsBuild: the effects are making a chain's roll, kick and risers themselves
+// (builder 8) AA.sfx.reagent(k, of): a new reagent's run of steps starts (k = 1, 2, 3 of `of`). The one climbing tone is let go over a twentieth of a
+// second (no click) and made again on the next arrow from its low note; the roll, the kick and the sweep start from the bottom again (a little
+// higher each run); steps are counted from 1 again whether or not the page restarts its numbers. Only the last run gets the held breath and the big hit.
+fx.reagent = function (k, of) { const t = begin(); if (t == null) return; const b = st5(); b.k = Math.max(1, k | 0); b.kof = Math.max(b.k, (of | 0) || 3); b.off = b.k > 1 ? b.raw || 0 : 0; b.of = 0; b.hbTo = 0; b.pumpTo = 0; b.la = -99;
+  const L = b.lead; if (L && L.c === C && L.dead > t) { L.g.gain.cancelScheduledValues(t); L.g.gain.setTargetAtTime(0, t, 0.05); L.dead = t; L.os.forEach(o => { try { o.stop(t + 0.5); } catch (x) { /* gone */ } }); }
+  SB.duck.gain.setTargetAtTime(1, t, 0.1); };
 fx.palette = function (id) { if (id !== undefined) EDM7 = id !== 'orch'; return EDM7 ? 'edm' : 'orch'; };
 fx.ownsBuild = function () { return BLD === 'c' && STY === 4 && EDM7 && !muted; };   // (builder 8) now means: the effects are playing in the EDM palette (their hits, their share of the drop); the EDM soundtrack plays a chain's roll, kick and risers itself
 fx._sched = true; fx._beatlog = () => (SB && SB.blog ? SB.blog.slice() : []);   // test hook: when the heartbeats of the last context were written
