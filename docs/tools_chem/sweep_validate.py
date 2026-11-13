@@ -102,7 +102,7 @@ def turns(verbose=False):
     return out
 
 
-def rig(n=300, workers=int(os.environ.get('SWEEP_WORKERS', '12'))):
+def rig(n=300, workers=int(os.environ.get('SWEEP_WORKERS', '8'))):
     """The cells of RIG.md's tenth measure played here: bachelor's 300 runs a player, the bare nine rounds 120 runs a player.
     The tenth measure was made before RULE.hetCurve was switched on, so these cells deal without it (het False)."""
     import sweep_run as SR

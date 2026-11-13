@@ -320,7 +320,7 @@ def rep_c():
         return
     P('### c. Homunculi, each alone (median player; start six and the eight; paired with the same seeds and no creature)')
     P('')
-    hd = ['Creature', 'Tapped, share of rounds', 'Bachelor: rounds cleared of 3', 'Master: of 6', 'Doctorate: of 9', 'Wins: bachelor, master, doctorate', 'Yield times (median of round ratios)',
+    hd = ['Creature', 'Tapped, share of rounds', 'Bachelor: rounds cleared of 3', 'Master: of 6', 'Doctorate: of 9', 'Wins: bachelor, master, doctorate', 'Yield times: middle round, and average (geometric)',
           'Biggest round over Par', 'Line changed for it, share of pages']
     tb = []
     for nm in ('none',) + SP.ORDER:
@@ -340,7 +340,7 @@ def rep_c():
             if nm == 'none':
                 cells.append('%.2f' % cl)
             else:
-                d, s, k = _paired(rs, bs, lambda r: r['cleared'] / r['n'])
+                d, s, k = _paired2(rs, bs, lambda r: r['cleared'] / r['n'])
                 cells.append('%.2f (%+.2f, +-%.2f)' % (cl, d, 1.96 * s))
             wins.append(pct(sum(r['won'] for r in rs) / n))
             taps += sum(r['taps'] for r in rs)
@@ -356,7 +356,7 @@ def rep_c():
                 dec[1] += r['dec'][1]
         ratio.sort()
         tb.append([SP.LABEL.get(nm, 'none'), pct(taps / max(1, rounds)) if nm != 'none' else ''] + cells + [', '.join(wins),
-                  '%.2f' % ratio[len(ratio) // 2] if ratio and nm != 'none' else '', '%.0f' % rmax, pct(dec[0] / max(1, dec[1]), 1) if nm != 'none' else ''])
+                  '%.2f, %.2f' % (ratio[len(ratio) // 2], math.exp(mean(math.log(x) for x in ratio))) if ratio and nm != 'none' else '', '%.0f' % rmax, pct(dec[0] / max(1, dec[1]), 1) if nm != 'none' else ''])
     table(hd, tb)
     P('The same by reagent set, master\'s (rounds cleared of 6, and taps a run):')
     P('')
@@ -421,7 +421,7 @@ def rep_d(shortlist=True):
     for r in by.get('none|start|master', []) + by.get('none|eight|master', []):
         base_used.update(r['used'])
     info = {}
-    hd = ['Sigil', 'Rule', 'Bachelor: rounds cleared of 3', 'Master: of 6', 'Wins: bachelor, master', 'Yield times', 'Biggest round over Par', 'Steps a turn', 'Kinds a run',
+    hd = ['Sigil', 'Rule', 'Bachelor: rounds cleared of 3', 'Master: of 6', 'Wins: bachelor, master', 'Yield times: middle round, average', 'Biggest round over Par', 'Steps a turn', 'Kinds a run',
           'Play shifted']
     tb = []
     for sid in ('none',) + S2.ORDER:
@@ -465,7 +465,9 @@ def rep_d(shortlist=True):
         shift = 0.5 * sum(abs(used.get(k, 0) / su - base_used.get(k, 0) / sb) for k in set(used) | set(base_used))
         info[sid] = {'d6': d6, 'yield': ym, 'rmax': rmax, 'steps': mean(st), 'kinds': mean(kd), 'shift': shift}
         c = S2.SIGILS.get(sid)
-        tb.append([c.title if c else 'none', c.rule if c else '', cells[0], cells[1], ', '.join(wins), '%.2f' % ym if sid != 'none' else '', '%.0f' % rmax,
+        gm = math.exp(mean(math.log(x) for x in ratio)) if ratio else 1.0
+        info[sid]['gm'] = gm
+        tb.append([c.title if c else 'none', c.rule if c else '', cells[0], cells[1], ', '.join(wins), '%.2f, %.2f' % (ym, gm) if sid != 'none' else '', '%.0f' % rmax,
                    '%.2f' % mean(st), '%.2f' % mean(kd), '%.2f' % shift if sid != 'none' else ''])
     table(hd, tb)
     P('Yield times: the middle of (round yield with the sigil) over (the same round without).  Play shifted: how far the mix of reagents fired moves from the mix with no sigil (0 the same, 1 nothing shared).')

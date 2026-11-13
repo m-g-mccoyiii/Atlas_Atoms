@@ -462,9 +462,9 @@ class Game:
         for e in self._engs.values():
             if len(e._fire) > 20000:
                 e.clear()
-        if len(self._segs) > 1500000:
+        if len(self._segs) > 400000:
             self._segs.clear()
-        if len(self._sites) > 1500000:
+        if len(self._sites) > 400000:
             self._sites.clear()
 
     # --- chemistry, cached by canonical SMILES ----------------------------------------------------------------------
@@ -1427,7 +1427,7 @@ def _read_frames(fh, pos):
 
 
 class Store(MemStore):
-    LIMIT = 2500000
+    LIMIT = 1000000
     EVERY = 6.0
 
     def __init__(self, d=None):

@@ -30,6 +30,7 @@ if HERE not in sys.path:
 import sweep_core as SC
 
 OUT = SC.SWEEP_DIR
+MAX_WORKERS = 8
 CACHE_LIMIT = 2500000
 _GAMES = {}
 _LAST_SAVE = [time.time()]
@@ -37,8 +38,16 @@ _LAST_SAVE = [time.time()]
 
 def low_priority():
     """Workers run below normal priority so the page builders and the browser rig keep the machine."""
-    if os.environ.get('SWEEP_LOW') != '1':
-        return          # at below-normal priority the workers got 2 to 4 percent of a core each while other programs filled the machine
+    # Owner's ruling (13 November): the machine froze under twelve workers at normal priority.  Every worker runs below normal
+    # and a pool has eight workers at most (MAX_WORKERS).  The cost: when other programs fill the machine the workers wait.
+    if os.environ.get('SWEEP_LOW') == '0':
+        return
+    try:
+        import psutil
+        psutil.Process().nice(psutil.BELOW_NORMAL_PRIORITY_CLASS if os.name == 'nt' else 10)
+        return
+    except Exception:
+        pass
     try:
         if os.name == 'nt':
             import ctypes
@@ -251,6 +260,7 @@ def rows_of(name):
 def run(name, jobs, workers=12, waves=None, quiet=False, keep_errors=False, chunk=None, every=30, seconds=None):
     """Run the jobs not yet done on one pool of workers that lives for the whole call.  The workers share what they learn
     through the sqlite store as they go (sweep_core.Store), so there are no waves and nothing is merged.  Returns the stats."""
+    workers = max(1, min(MAX_WORKERS, workers))
     d = os.path.join(OUT, name)
     os.makedirs(d, exist_ok=True)
     done = {r['id'] for r in rows_of(name) if 'error' not in r or keep_errors}
@@ -338,7 +348,7 @@ def bench(workers=12, n=24):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('experiment')
-    ap.add_argument('--workers', type=int, default=int(os.environ.get('SWEEP_WORKERS', '12')))
+    ap.add_argument('--workers', type=int, default=int(os.environ.get('SWEEP_WORKERS', '8')))
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--fresh', action='store_true')
     ap.add_argument('--arg', default='')

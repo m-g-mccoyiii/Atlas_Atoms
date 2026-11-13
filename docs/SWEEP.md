@@ -9,7 +9,7 @@ This page says how fast it is, how closely it agrees with the game, and what the
 
 | | Before | Now |
 |---|---|---|
-| 12 workers, turns a second | 1 to 3 | 100 to 250 on new ground; more as the store fills |
+| 12 workers, turns a second | 1 to 3 | 100 to 250 on new ground; 336 and 810 on the two big jobs as the store filled |
 | One core, molecules already met | 9 | 700 to 2,400 |
 | The check against the game's rig (17,588 turns, four player models) | 3,411 seconds | 70 seconds |
 
@@ -54,6 +54,8 @@ This machine: Ryzen with 8 cores and 16 threads, 64 GB. Greedy player, nine-roun
 | Sharing as built: each worker appends what it learns to its own log and reads the others' logs every 6 seconds; one process alone folds the logs into the sqlite file that all read. One pool for the whole job, small chunks, small rows back, normal priority. | | 84 over the first four minutes from an empty store, 157 by the end of them |
 | The rig check (all four player models, three- and nine-round runs), store part full | 29 | 250 |
 | The sweep of 25 sigils (median player, each sigil its own chemistry, so little is shared) | 10 | 119 |
+| 60,000 bare runs for the win rate (three player models, up to 12 rounds) | 28 | 336 |
+| Every starting six: 18,564 sets, three player models, 967,653 turns in 20 minutes | 68 | 810 |
 
 ### The target, and the floor
 
@@ -102,4 +104,41 @@ Where it does not agree:
 - One turn in six differs in some detail. The cause is known: "follows on" is tracked by atoms in the game and by a count of places here; and where two places tie, the game and RDKit number atoms in a different order.
 - Not in the simulator: isotopes, rare versions of a reagent, instruments, the redraw, the shop between rounds, the family weights of the molecule draw.
 
-The results of the sweeps follow below as they are finished.
+Since 13 November the pool is held to 8 workers at below-normal priority, because the machine froze under 12 at normal priority. The numbers above were measured before that, with 12. With 8 low-priority workers expect about two thirds of them on a free machine, and far less while other programs fill it.
+
+## 1. Can the bare game be won? (ruling: clearly under 2 in 100)
+
+The starting six, no instrument, no creature, no sigil. Each run goes on until a round is not cleared, up to twelve rounds. Clearing nine is the nine-round run won; clearing twelve is the "postdoc" won (rounds 10 to 12 use round nine's molecules and tasks; the number to beat goes up 1.71 times a round). The deal is the game's as it stands, with the rising share of other elements. The same 20,000 deals for every player.
+
+| Player | Runs | Clears rounds 1 to 3 | Clears 1 to 6 | Wins all nine | Wins all twelve |
+|---|---|---|---|---|---|
+| Novice (looks at 4 lines, picks a molecule at random) | 20,000 | 1.9% | 0.16% | 1 run (0.01%) | 0 |
+| Greedy (looks at 12 lines) | 20,000 | 12.6% | 3.9% | 146 (0.73%; 0.62 to 0.86) | 26 (0.13%) |
+| Median (reads every line of the hand) | 20,000 | 42.0% | 28.7% | 3,303 (16.5%; 16.0 to 17.0) | 1,852 (9.3%) |
+| Planner (reads every line and the next hand) | 3,000 | 56.3% | 44.5% | 904 (30.1%; 28.5 to 31.8) | 621 (20.7%) |
+
+Of the runs still alive, the share that clear each round:
+
+| Player | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Novice | 33 | 10 | 55 | 44 | 47 | 41 | 31 | 3 of 10 | 1 of 3 | 1 of 1 | 0 of 1 | |
+| Greedy | 56 | 31 | 74 | 65 | 73 | 64 | 58 | 55 | 60 | 51 | 63 | 55 |
+| Median | 77 | 65 | 85 | 87 | 91 | 86 | 85 | 83 | 82 | 85 | 83 | 79 |
+| Planner | 86 | 74 | 89 | 92 | 93 | 92 | 91 | 88 | 85 | 89 | 89 | 87 |
+
+What it says:
+
+- A new or casual player (novice, greedy) wins the bare nine rounds less than 1 time in 100. The ruling holds for them.
+- A player who reads every line of every hand wins 16 in 100, and one who also reads the next hand wins 30 in 100. The ruling does not hold for them. The planner had 3,000 runs, not 20,000: it is the slowest player, and its rate is nowhere near the line, so more runs would not change the answer.
+- The wall is round 2, for every player. Rounds 4 to 9 are easier than rounds 1 and 2 for the two careful players: once past round 3 the median player clears each later round 82 to 91 times in 100. Nine rounds at 85 each is still 23 in 100.
+- The postdoc adds little: rounds 10 to 12 are cleared as often as round 9. Only the number to beat grows, and a run is won by the task, not by the number.
+- How far to trust it: the simulator's median player won 20 of 120 where the game's own rig won 18 of 120 (see Agreement).
+
+Choices for the owner:
+
+1. Who the "under 2 in 100" is for. (a) The casual player: then nothing needs to change. (b) A player who reads every line: then rounds 4 to 9 must each be cleared about 65 times in 100, not 85. (c) Somewhere between: say which player and what rate.
+2. If (b) or (c), how to make the late rounds harder. (a) Bigger task numbers in rounds 4 to 9. (b) Two tasks from round 4, not round 6. (c) The number to beat must also be passed to clear a round (today only the task counts).
+3. Round 2. (a) Leave it as the wall. (b) Ease it so that the difficulty climbs round by round (today round 2 is harder than round 6 for every player).
+4. The postdoc. (a) Keep it as three more rounds like round nine. (b) Give rounds 10 to 12 their own bigger molecules and tasks, since as built they hardly thin the field.
+
+The sections that follow are added as each sweep is written up.

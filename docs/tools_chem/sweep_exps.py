@@ -290,13 +290,13 @@ PHASE1 = ('d_sig1', 'c_hom1', 'e_last', 'a_six', 'b_elem', 'd_base4', 'c_hom23',
 if __name__ == '__main__':
     import sweep_run as SR
     if sys.argv[1] == 'phase1':
-        workers = int(os.environ.get('SWEEP_WORKERS', '12'))
+        workers = int(os.environ.get('SWEEP_WORKERS', '8'))
         for name in sys.argv[2:] or PHASE1:
             st = SR.run(name, phase1(name, EXPERIMENTS[name]()), workers)
             print('DONE', name, json.dumps(st), flush=True)
         sys.exit(0)
     which = sys.argv[2:] or ORDER_ALL
-    workers = int(os.environ.get('SWEEP_WORKERS', '12'))
+    workers = int(os.environ.get('SWEEP_WORKERS', '8'))
     for name in which:
         st = SR.run(name, EXPERIMENTS[name](), workers)
         print('DONE', name, json.dumps(st), flush=True)
