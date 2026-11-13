@@ -73,11 +73,23 @@ With each of the ten homunculi (250 cells, four rounds, 4 runs a cell, so only b
 
 ## 3. Pairs of sigils
 
-All 300 pairs were played on the starting six, rounds 1 to 4. This section is being re-run with three times the runs and is filled in below when done. From the first pass (4 runs a pair), what is already certain:
+All 300 pairs, starting six, rounds 1 to 4, 12 runs a pair (3,600 runs). With no sigil the same 12 deals clear 2.50 rounds of 4. Twelve runs show only big effects: a pair has to move by about 0.8 of a round to be clear of chance.
 
-- Every runaway has Multiplicatio or Distillatio in it. Multiplicatio with The Serpent: 140,094 times Par. Multiplicatio with Distillatio: 127,081. Solve with Distillatio: 21,131.
-- Every pair in the bottom six has Coagula or Mortificatio in it.
-- No pair without Multiplicatio or Distillatio went past 200 times Par.
+| What was asked | Answer |
+|---|---|
+| Pairs that clear the most | The top ten all hold Pansophia: +0.8 to +1.3 rounds of 4. Solve with Pansophia is first (+1.33, 92 wins in 100, a round of 294 times Par). |
+| The best without Pansophia | Phlogiston with Via Humida (+0.58), Clepsydra with Via Humida (+0.50), Phlogiston with Tetractys (+0.33). None is clear of chance. |
+| A sigil's average over the 24 pairs it is in | Pansophia +0.69, Phlogiston +0.08, Clepsydra +0.04. Every other sigil -0.2 to -0.5, which is the noise of the 12 deals. Coagula -1.11, Mortificatio -0.90, Alkahest -0.75, Quintessence -0.71. |
+| Pairs that clear the least | All eight at the bottom hold Coagula (-1.5 to -1.6 rounds). A ring that stays shut blocks whatever the other sigil adds. |
+| Pairs that do more together than apart | Only pairs with Mortificatio, and only because it is so bad alone: Pansophia undoes its limit of one use (+1.25 together, against -1.67 for Mortificatio alone). No pair of two good sigils did clearly more than the two added. |
+| Runaway numbers | The ten biggest rounds all hold Multiplicatio or Distillatio: Multiplicatio with The Serpent 140,094 times Par, with Distillatio 127,081, with Hexad 34,094; Solve with Distillatio 21,131. |
+| Biggest round with neither of those two | Rebis with Solve: 1,173 times Par. Then Solve with The Serpent 664, with Gemini 580, with Renovatio 406. Solve is in all of them: with no limit a turn, anything that adds steps stacks on it. |
+
+What it says for the shortlist:
+
+- Two sigils held together do not break the game unless one of them is Multiplicatio, Distillatio or Pansophia. The other nine of the shortlist can be mixed freely.
+- Solve is the one to watch in pairs. It is the source of every big round that is not a scoring bug, which is what it is for, but with Rebis it reached 1,173 times Par.
+- Coagula should not be offered as it is: it spoils every pair.
 
 ## 4. The ranked shortlist of twelve
 
