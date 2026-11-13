@@ -233,7 +233,7 @@ function start(app) {
   if (SIDE) { C0.x = -0.6; C0.z = 0.2; }
   const isoMat = a => { const k = a.el + a.iso; return mIso[k] || (mIso[k] = std({ color: new T.Color(E[a.el].color).lerp(new T.Color(ISOC[a.iso]), 0.55).convertSRGBToLinear(), emissive: lin(ISOC[a.iso]), emissiveIntensity: 0.45, roughness: 0.3 })); };
   const slimeMat = std({ color: lin(0x7fd14a), roughness: 0.15 }), cureMat = std({ color: lin(0xf4f1e8), roughness: 0.95 });
-  const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x2b2622), side: T.BackSide }), hEdge = new T.MeshBasicMaterial({ color: lin(0x4a4640), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
+  const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x2b2622), side: T.BackSide }), hEdge = new T.MeshBasicMaterial({ color: lin(0x22252c), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
   function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); AA.rxPen.write(c.x, txt, 64, 64, txt.length > 2 ? 50 : 66, { weight: 'heavy', color: '#2b2420', align: 'center', base: 'middle' }); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
   function liveAtoms(md, ar) {
@@ -497,6 +497,7 @@ function start(app) {
   // are kept in the frame of the start end, so nothing that has not changed moves when the far end grows or shrinks. A bond made across the
   // fold (a rung) is left out of the layout and drawn as a long bond from row to row.
   const CAGE3D = (() => { try { return new URLSearchParams(root.location.search).get('cage') === '1'; } catch (e) { return false; } })();   // ?cage=1: cages drawn from their shape in space with depth cues (a trial; not good enough yet, so off)
+  const HOUT = 0.17;   // the dark outline round a shown hydrogen and its stick, as a share of the hydrogen's radius
   const FL = { L: 1.55, DX: 1.36, ZA: 0.4, RG: 5.0, LEAN: -0.3 };
   const ACROSS = (() => { try { return new URLSearchParams(root.location.search).get('across') === 'rung' ? 'rung' : 'ring'; } catch (e) { return 'ring'; } })();   // ?across=rung: the old long bond from row to row
   // how far apart two atoms that are not bonded must stand, in the molecule's own units, so that their balls never touch on screen
@@ -679,7 +680,7 @@ function start(app) {
       if (skip.has(a)) return;
       if (a.poly) { const e = { R: radius(a), sk: 1.6, mesh: add(SPH, polyMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat('n' + a.poly)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(a, e); return; }
       const R = radius(a), b = { R, mesh: add(SPH, pale.has(a) ? paleMat : a.slime ? slimeMat : a.cure && a.el === 'O' ? cureMat : ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
-      if (a.el === 'H' && !pale.has(a)) { const ed = new T.Mesh(SPH, hEdge); ed.scale.setScalar(1.13); ed.castShadow = false; b.mesh.add(ed); } // a shown hydrogen has a thin dark outline, so the white ball reads on the pale paper
+      if (a.el === 'H' && !pale.has(a)) { const ed = new T.Mesh(SPH, hEdge); ed.scale.setScalar(1 + HOUT); ed.castShadow = false; b.mesh.add(ed); } // a shown hydrogen has a thin dark outline, so the white ball reads on the pale paper
       if (a.clamp) b.collar = collar(grp, new T.Vector3(), R, 0x39435c);
       if (!pale.has(a) && (!(lean || flat) || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); b.sk = a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 2.0 : 1.6; }
       balls.set(a, b);
@@ -687,8 +688,10 @@ function start(app) {
     beads.forEach(b => { const e = { R: 0.82, sk: 1.75, mesh: add(SPH, beadMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat(b.txt)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(b.pa, e); sticks.push({ a: b.anchor, b: b.pa, r: 0.09, parts: [0, 1].map(h => ({ f: 0, h, mesh: add(CYL, h ? beadMat : stickMat(b.anchor.el), 0, 0, 0, grp) })) }); });
     model.bonds.forEach(bd => {
       if (!balls.has(bd.a) || !balls.has(bd.b)) return;
-      const far = pale.has(bd.a) && pale.has(bd.b), parts = []; (bd.order === 1 ? [0] : bd.order >= 3 ? [-1, 0, 1] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
-      { const da = dOf(bd.a), db = dOf(bd.b), dm = da == null || db == null ? null : (da + db) / 2; if (dm != null && dm < 0.34) parts.forEach(pt => { pt.mesh.material = paleMat; }); sticks.push({ a: bd.a, b: bd.b, r: (bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1) * (dm == null ? 1 : 0.62 + 0.55 * dm), parts }); }
+      const far = pale.has(bd.a) && pale.has(bd.b), isH = bd.a.el === 'H' || bd.b.el === 'H', parts = []; (bd.order === 1 ? [0] : bd.order >= 3 ? [-1, 0, 1] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : isH ? ballMat('H') : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
+      // a hydrogen and its stick are one shape: the stick is white like the ball and wears the same dark outline, the same weight all round
+      if (isH && !far) parts.forEach(pt => { const ed = new T.Mesh(CYL, hEdge), fq = 1 + HOUT * BALL('H') / 0.125; ed.scale.set(fq, 1, fq); ed.castShadow = false; pt.mesh.add(ed); });
+      { const da = dOf(bd.a), db = dOf(bd.b), dm = da == null || db == null ? null : (da + db) / 2; if (dm != null && dm < 0.34) parts.forEach(pt => { pt.mesh.material = paleMat; }); sticks.push({ a: bd.a, b: bd.b, r: (isH ? 0.125 : bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1) * (dm == null ? 1 : 0.62 + 0.55 * dm), parts }); }
     });
     scene.add(grp);
     const m = { group: grp, at, model, balls, sticks, beads, flat, hover: [], marks: [], hot: [] };
@@ -1562,11 +1565,11 @@ function start(app) {
     const p = srcA ? prev.at.get(srcA) : nm && nm.marks[0] ? { x: nm.marks[0].x, y: 0.6, z: nm.marks[0].z } : { x: 0, y: 0.6, z: 0 }, pa = ancOld ? prev.at.get(ancOld) : null;
     // turned so that its hydrogens point away from the atom it leaves
     let dx = 0, dz = -1; if (pa) { const L = Math.hypot(p.x - pa.x, p.z - pa.z); if (L > 0.05) { dx = (p.x - pa.x) / L; dz = (p.z - pa.z) / L; } }
-    const grp = new T.Group(), mats = [], mk = {}, mat = (f, el) => { const k = (f === ballMat ? 'b' : 's') + el; if (!mk[k]) { mk[k] = f(el).clone(); mk[k].transparent = true; mats.push(mk[k]); } return mk[k]; };
+    const grp = new T.Group(), mats = [], mk = {}, mat = (f, el) => { const k = (f === ballMat ? 'b' : 's') + el; if (!mk[k]) { mk[k] = f(el).clone(); mk[k].transparent = true; mats.push(mk[k]); } return mk[k]; }, edgeM = () => { if (!mk.edge) { mk.edge = hEdge.clone(); mk.edge.transparent = true; mats.push(mk.edge); } return mk.edge; };
     const pts = shape.a.map(q => new T.Vector3(-q[1] * dz - q[2] * dx, 0, q[1] * dx - q[2] * dz)), hs = [], sprites = [], cd = camDir.clone();
     shape.b.forEach(q => { const A = pts[q[0]], B = pts[q[1]], u = B.clone().sub(A), len = u.length(), mid = A.clone().add(B).multiplyScalar(0.5), perp = new T.Vector3().crossVectors(u.clone().normalize(), cd).normalize(), qt = new T.Quaternion().setFromUnitVectors(UP, u.clone().normalize());
-      (q[2] > 1 ? [-0.5, 0.5] : [0]).forEach(f => [0, 1].forEach(h => { const fr = h ? mid : A, to = h ? B : mid, m = add(CYL, mat(stickMat, shape.a[q[h]][0]), 0, 0, 0, grp), rr = q[2] > 1 ? 0.06 : 0.09; m.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(perp, f * 0.36); m.quaternion.copy(qt); m.scale.set(rr, fr.distanceTo(to), rr); if (shape.a[q[0]][0] === 'H' || shape.a[q[1]][0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.a[q[0]][0] === 'H' ? q[1] : q[0]].clone(), p: m.position.clone() }); })); });
-    shape.a.forEach((q, i) => { const R = realRad(q[0]), m = add(SPH, mat(ballMat, q[0]), pts[i].x, 0, pts[i].z, grp); m.scale.setScalar(R); if (q[0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.b.length ? (shape.b.find(k => k[1] === i) || [0])[0] : 0].clone(), p: m.position.clone() });
+      (q[2] > 1 ? [-0.5, 0.5] : [0]).forEach(f => [0, 1].forEach(h => { const fr = h ? mid : A, to = h ? B : mid, hq = shape.a[q[0]][0] === 'H' || shape.a[q[1]][0] === 'H', m = add(CYL, hq ? mat(ballMat, 'H') : mat(stickMat, shape.a[q[h]][0]), 0, 0, 0, grp), rr = q[2] > 1 ? 0.06 : 0.09; if (hq) { const ed = new T.Mesh(CYL, edgeM()), fq = 1 + HOUT * realRad('H') / rr; ed.scale.set(fq, 1, fq); ed.castShadow = false; m.add(ed); } m.position.copy(fr).add(to).multiplyScalar(0.5).addScaledVector(perp, f * 0.36); m.quaternion.copy(qt); m.scale.set(rr, fr.distanceTo(to), rr); if (shape.a[q[0]][0] === 'H' || shape.a[q[1]][0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.a[q[0]][0] === 'H' ? q[1] : q[0]].clone(), p: m.position.clone() }); })); });
+    shape.a.forEach((q, i) => { const R = realRad(q[0]), m = add(SPH, mat(ballMat, q[0]), pts[i].x, 0, pts[i].z, grp); m.scale.setScalar(R); if (q[0] === 'H') { const ed = new T.Mesh(SPH, edgeM()); ed.scale.setScalar(1 + HOUT); ed.castShadow = false; m.add(ed); } if (q[0] === 'H') hs.push({ mesh: m, s: m.scale.clone(), at: pts[shape.b.length ? (shape.b.find(k => k[1] === i) || [0])[0] : 0].clone(), p: m.position.clone() });
       else if (q[0] !== 'C') { const sm = letterMat(q[0]).clone(); sm.transparent = true; mats.push(sm); const sp = new T.Sprite(sm); sp.position.copy(pts[i]).addScaledVector(cd, -R * 1.04); sp.scale.setScalar(R * (q[0] === 'N' || q[0] === 'S' || q[0] === 'Cl' ? 2.0 : 1.6)); grp.add(sp); sprites.push({ sp, c: pts[i].clone(), d: R * 1.04 }); } });
     const wp = srcA && prev.balls.has(srcA) ? prev.balls.get(srcA).mesh.getWorldPosition(new T.Vector3()) : new T.Vector3(C0.x + p.x * st.sc, p.y * st.sc, C0.z + p.z * st.sc), ws = prev.group ? prev.group.scale.x : st.sc;
     grp.position.copy(wp); grp.scale.setScalar(ws); scene.add(grp);
@@ -2443,7 +2446,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (st.won || !st.pass) { const nF = P.runLast ? P.runLast(run) : 9, wF = 70, x0F = c[0] - (nF - 1) * wF / 2, yF = c[1] + 96; for (let n = 0; n < nF; n++) { const kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 200 - n * 120) / 260)); if (kk < 1) dirty = true; flag(x, x0F + n * wF, yF - (1 - kk) * 30, 44, n < run.beaten ? GREEN : FAINT, n < run.beaten); } }
       
       if (st.newSig) { const sc = px({ x: -12, z: 3.5 }), T0 = P.TERMS.find(q => q.id === st.newSig); sigil(x, sc, 120, st.newSig, '#b88a00', 10); marker(x, 50); x.textAlign = 'center'; x.fillStyle = '#b88a00'; x.fillText(T0.name, sc[0], sc[1] + 136); hand(x, 28); x.fillStyle = PENCIL; x.fillText('new sigil', sc[0], sc[1] - 96); }
-      { const nx = px({ x: 17.5, z: 8.6 }), wd = st.pass && !st.won ? 'next' : 'new run'; hand(x, 58); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(wd, nx[0], nx[1]); const w2 = x.measureText(wd).width / 2 + 26; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
+      { const nx = px({ x: 17.5, z: 8.6 }), again = !(st.pass && !st.won), w2 = -30; /* no words: an arrow goes on; a round arrow before it starts again */ if (again) { const cx9 = nx[0] - 78, cy9 = nx[1] - 18; x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.arc(cx9, cy9, 24, 0.9, 6.0); x.stroke(); const ex = cx9 + 24 * Math.cos(6.0), ey = cy9 + 24 * Math.sin(6.0); x.beginPath(); x.moveTo(ex - 16, ey - 6); x.lineTo(ex, ey); x.lineTo(ex + 6, ey - 17); x.stroke(); } x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(nx[0] + w2, nx[1] - 18); x.lineTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] - 38); x.moveTo(nx[0] + w2 + 60, nx[1] - 18); x.lineTo(nx[0] + w2 + 38, nx[1] + 2); x.stroke(); }
     }
     if (fe()) FEEL.ink(x, now);
     ink.t.needsUpdate = true;
