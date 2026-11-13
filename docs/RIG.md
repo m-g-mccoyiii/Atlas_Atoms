@@ -122,11 +122,23 @@ Owner's pick: "Build the nine ready ones now". Until now the sigils were in the 
 | Sulphur's Mask | `O=C1CC=CC1CCCO` | hydrate, oxidize, dehydrate | dry, tuck | ring goes first |
 
 **Not done, said plainly.**
-- The yield of a turn in this job is the same in the game and the simulator in only 3 turns in 10, with or without a sigil. In 64 turns of 100 the game's yield is the higher one; in the middle it is 1.24 times the simulator's, and in 1 turn in 10 over 1.8 times. The molecules and the reflexes agree; the yields do not. The cause was not found here. It may be this job's own setup (it starts a round as the older whole-turn check does) and not the runs the tables are made from, which were checked against the game by clear rates and yields (`SWEEP.md`); it has to be looked at before the yields of any simulator table are leaned on to the last tenth.
+- The yield of a turn in this job is the same in the game and the simulator in only 3 turns in 10, with or without a sigil. In 64 turns of 100 the game's yield is the higher one; in the middle it is 1.24 times the simulator's, and in 1 turn in 10 over 1.8 times. The molecules and the reflexes agree; the yields do not. The simulator leaves out, by its own account (`sweep_core.py`, the note at its top), the isotope marks on a dealt molecule and the rare versions of a reagent, both of which add yield in the game; whether that is the whole gap was not measured here. The runs the tables are made from were checked against the game by clear rates and yields (`SWEEP.md`).
 - The O-O join of Sulphur's Mask is an across-the-fold step; no whole-turn check covers those, for this or any other.
 - With Aqua Permanens the flag is on a reagent that would have driven water off; a dry that did not happen leaves no step to flag.
 - Nothing unlocks a sigil for the career yet and the page neither offers nor draws one.
 - How sigils affect each other, how they are got and the cap of three are measured in their own part.
+
+### The cup's re-deal, and the marks for the page
+
+**Why `P.canRedraw` said no.** A re-deal is paid with one use of the reagent that has the most uses left. In a first game the uses are free (`g.usesFree`), so no reagent can pay, the cost came back empty, and the answer was no on every page of every first game. It was never `g.pageSteps < stepsOf(g)`.
+
+**Fixed** (`path.js`: `canRedraw`, `redraw`, new `redrawInfo`). In a round with free uses the re-deal is free of charge. It is still once a page. In the longer runs it costs one use, as before. Checked in the game (`cup14.js`): first game, start of a page: yes, the hand changes, no use is taken; six-round run: yes, one use of the fullest reagent is taken.
+
+`P.redrawInfo(g)` gives the page: `can`; `why` when not (`off`, `over`, `chain` a reagent of this page has fired, `done` already re-dealt this page, `shot`, `rack`, `full`, `uses` nothing left to pay with); `cost` (the reagent that pays, null when free); `left` (the pages of this round on which a re-deal can still be made, for the level of the cup) and `of` (the pages of the round).
+
+The simulator has no re-deal at all (it never had), so no table in this file counts it. In the game's rig the first game is a little easier for it; not measured.
+
+**The marks for the page.** `P.marksOf(run)` gives `{ marks: [1, 1.41, 2, 2.83], top: 2.83, pass, pow: 0.5 }`: the four marks as multiples of the number to beat (they were 1, 2, 4, 8), the round's pass mark as the same kind of multiple (0 where the task alone clears the round), and the power of the flat rule. The page's heat and overshoot should read these.
 
 ## The measure of 2026-11-13, thirteenth: the rulings of AR
 
