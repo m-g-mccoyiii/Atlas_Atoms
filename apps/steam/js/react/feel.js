@@ -729,7 +729,8 @@ function overDraw(x, t, W, H, k, wipe) {
 function frame(t, dt) {
   clkSample(t);
   if (api) drawOver(t);
-  if (!F.seq) seeFrame(t);
+  // (builder 15) no pencil trace is left on the page after a step: once the line has come to rest, whatever is still traced is let go at once
+  if (!F.seq) { SEE.list.forEach(q => { if (q.tHit && t > q.tHit + 250 && !q.cut) q.cut = t; }); seeFrame(t); }
   const S = F.seq; if (!S || !api) return; const st = api.st, c = api.center(), d = S.d; if (!c) return; api.dirty();
   st.sq = 0; st.pop = 0; st.shake = 0; st.flash = 0;
   // the count
