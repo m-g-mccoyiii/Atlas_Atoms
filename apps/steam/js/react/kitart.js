@@ -99,6 +99,7 @@ function build(id, T, grp, tint, extra) {
   // a jar for one creature: glass on a wooden foot, a dark lid, the substance as a level, the creature growing in it
   // (stage 0 a speck, 1 half grown, 2 ready). The returned group has userData.set(fill 0..1, stage) and userData.fill, userData.stage
   const JC = { homunculus: [0x3a6fd0, 0.9], water: [0x3a6fd0, 0.9], h2: [0xe58a7c, 0.8], co2: [0xbcd8e6, 0.9], acid: [0x3c9a5f, 0.9], wood: [0x8a5a2b, 0.9], salt: [0xd9d3bf, 1], slime: [0x7fd14a, 0.9], ammonia: [0xdfe0b0, 0.9], seedling: [0x3a2a1e, 1], brimstone: [0xf0b93a, 1] };
+  JC.acid = [0xd4e21a, 0.9]; JC.slime = [0x8a5ad0, 0.9];   // (builder 14) acid is yellow-green, slime is violet
   const HOMID2 = Object.assign({ homunculus: 'homclay' }, HOMID);
   const JW = { homunculus: 1, salt: 0.72, brimstone: 0.85, slime: 0.9, h2: 0.9 };
   const mkJar = (k, fill, stage, at) => {
@@ -108,7 +109,7 @@ function build(id, T, grp, tint, extra) {
     cyl(1.0, 1.05, 0.14, wood, 0, 0.07, 0, null, 28);
     pl(put(new T.CylinderGeometry(0.94, 0.94, 2.15, 28, 1, true), M(0xdfe9ee, 0.08, 0, { transparent: true, opacity: 0.1, op: 0.12 }), 0, 1.22, 0), 1).renderOrder = 3;
     pl(tor(0.94, 0.035, ink, 0, 0.17, 0, [H, 0, 0]), 1); pl(tor(0.94, 0.035, ink, 0, 2.3, 0, [H, 0, 0]), 1);
-    if (!K.nolid) cyl(0.99, 0.99, 0.2, dark, 0, 2.4, 0, null, 28); shine(-0.6, 1.3, 0.72, 0.06, 0.9, 0.0);
+    if (!K.nolid) cyl(0.99, 0.99, 0.2, dark, 0, 2.4, 0, null, 28); pl(put(new T.CylinderGeometry(0.95, 0.95, 1.5, 6, 1, true, -1.42, 0.2), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, depthWrite: false, side: T.DoubleSide }), 0, 1.35, 0), 1).renderOrder = 4; pl(put(new T.CylinderGeometry(0.95, 0.95, 0.35, 4, 1, true, -1.42, 0.12), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false, side: T.DoubleSide }), 0, 0.42, 0), 1).renderOrder = 4;
     const parts = grp.children.splice(n0); parts.forEach(p => g.add(p));
     const col = new T.Color(jc[0]).convertSRGBToLinear(), cfl = mat(T, jc[0]).color.clone();
     const lq = pl(new T.Mesh(new T.CylinderGeometry(0.88, 0.88, 1, 28, 1, true), new T.MeshBasicMaterial({ color: cfl, side: T.BackSide }))); g.add(lq);
@@ -486,6 +487,23 @@ function build(id, T, grp, tint, extra) {
   };
   B.shelf5 = () => shelf(5); B.shelf10 = () => shelf(10); [0, 1, 2, 3, 4, 5].forEach(n => { B[n ? 'tag_' + n : 'tag_more'] = () => tag(n); }); ['stable', 'unstable', 'volatile', 'overreact'].forEach((nm, i) => { B['mark_' + nm + '_off'] = () => markFlag(i, false); });
   Object.keys(HOMID).forEach(k => { B['jar_' + k] = () => { mkJar(k, 0.6, 1); }; B['jarr_' + k] = () => { mkJar(k, 1, 2); }; B['jarh_' + k] = () => { mkJar(k, 0.5, 1); }; B['jars_' + k] = () => { [[0.08, 0], [0.5, 1], [1, 2]].forEach((q, i) => mkJar(k, q[0], q[1], (i - 1) * 2.4)); }; });
+  // (builder 14, the owner: acid and slime were both green blobs) the two are made again so that no two of the ten share an outline or a colour:
+  // acid is a sharp yellow-green shard that smokes and has eaten a pit into what it stands on; slime is a soft violet ooze, see-through, sagging to one side, teal specks inside it
+  B.homacid = () => { const sk = M(0xd4e21a, 0.25, 0, { exact: 1 }), dk = M(0x7a8a10, 0.4, 0, { exact: 1 }), pit = M(0x2c2f34, 0.9), fume = M(0xe8f0a0, 0.9, 0, { transparent: true, opacity: 0.5, exact: 1 }), wh = M(0xffffff, 0.4);
+    floor(() => { cyl(1.0, 1.08, 0.03, pit, 0, 0.015, 0.1, null, 7).userData.plain = true; [[0.9, 0.6, 0.14], [-0.8, 0.5, 0.1]].forEach(q => cyl(q[2], q[2], 0.03, pit, q[0], 0.015, q[1], null, 6).userData.plain = true); });
+    body(); cyl(0.78, 0.9, 0.24, dk, 0, 0.14, 0, null, 6);
+    put(new T.ConeGeometry(0.78, 2.15, 5), sk, 0, 1.3, 0, [0, 0.3, 0]); put(new T.ConeGeometry(0.3, 0.95, 4), sk, -0.52, 1.05, 0, [0, 0, 0.75]); put(new T.ConeGeometry(0.27, 0.85, 4), sk, 0.55, 1.3, 0, [0, 0, -0.85]); put(new T.ConeGeometry(0.2, 0.6, 4), sk, 0.22, 2.1, -0.1, [0, 0, -0.5]);
+    eyes(1.22, 0.42, 0.17, 0.06, 0); side.forEach(q => { box(0.24, 0.06, 0.03, black, q * 0.18, 1.38, 0.43, [0, 0, q * 0.55]).userData.plain = true; });
+    box(0.36, 0.13, 0.03, black, 0, 0.9, 0.56).userData.plain = true; [-1, 0, 1].forEach(k => put(new T.ConeGeometry(0.05, 0.11, 4), wh, k * 0.1, 0.93, 0.58, [PI, 0, 0]).userData.plain = true);
+    sph(0.2, fume, 0.12, 2.75, 0, [1.3, 0.8, 1]).userData.plain = true; sph(0.14, fume, -0.2, 3.05, 0.05, [1.3, 0.8, 1]).userData.plain = true;
+    side.forEach(q => arm(q * 0.52, 1.2, 0.1, 0.6, 0.07, dk, sk, 0.1, 0.7)); sph(0.08, sk, 0.5, 0.42, 0.5, [1, 1.6, 1]); };
+  B.homslime = () => { const gr = M(0x8a5ad0, 0.15, 0, { transparent: true, opacity: 0.8, exact: 1 }), in2 = M(0x2fd0c4, 0.3, 0, { exact: 1 }), goo = M(0x8a5ad0, 0.1, 0, { transparent: true, opacity: 0.45, exact: 1 });
+    floor(() => { cyl(1.15, 1.25, 0.03, goo, 0, 0.015, 0.1, null, 28).userData.plain = true; });
+    body(); sph(0.95, gr, 0, 0.56, 0, [1.25, 0.62, 1.05]); sph(0.5, gr, 0.48, 1.02, 0, [1, 0.8, 0.9]); sph(0.3, gr, -0.72, 0.72, 0.1, [1, 0.7, 1]);
+    [[-0.25, 0.55, 0.3, 0.16], [0.3, 0.45, 0.5, 0.1], [0.55, 1.05, 0.2, 0.09], [-0.6, 0.6, 0.35, 0.07]].forEach(q => { sph(q[3], in2, q[0], q[1], q[2]).userData.plain = true; });
+    eyes(0.8, 0.86, 0.42, 0.075, -0.07); side.forEach(q => { box(0.22, 0.055, 0.03, black, q * 0.42, 0.91 - (q > 0 ? 0.07 : 0), 0.9, [0, 0, -q * 0.3]).userData.plain = true; });
+    tor(0.1, 0.03, black, 0, 0.62, 1.0, [0, 0, PI], PI).userData.plain = true;
+    side.forEach(q => arm(q * 1.02, 0.7, 0.1, 0.6, 0.12, gr, gr, 0.22, 0.9, 1.6)); rod([0.8, 1.0, 0.3], [0.95, 0.4, 0.5], 0.045, gr); sph(0.1, gr, 0.95, 0.36, 0.5, [1, 1.5, 1]); };
   if (id === '__list') return Object.keys(B);
   if (!B[id]) return false;
   B[id]();
@@ -500,13 +518,13 @@ function build(id, T, grp, tint, extra) {
       // dry ice: two square slabs, frosted, with a fleck each
       homco2: () => { const ice = M(0xf4efe0, 0.3); side.forEach(q => { box(0.46, 0.46, 0.16, ice, q * 0.27 - 0.06, 1.2, -0.54, [0, 0.12, q * 0.06]); box(0.14, 0.07, 0.03, M(0x3a6fd0, 0.3), q * 0.27 - 0.06, 1.3, -0.64, [0, 0.12, 0.5]).userData.plain = true; }); },
       // acid: sagging, half melted, a drip hanging from each cheek
-      homacid: () => { const sk = M(0x3c9a5f, 0.3); cheeks(sk, 0.62, 0.52, 0.34, 0.24, [1, 0.8, 0.8]); side.forEach(q => { rod([q * 0.26, 0.5, -0.72], [q * 0.26, 0.22, -0.72], 0.04, sk); sph(0.08, sk, q * 0.26, 0.2, -0.72, [1, 1.5, 1]); }); },
+      homacid: () => { const sk = M(0xd4e21a, 0.25, 0, { exact: 1 }); cheeks(sk, 0.62, 0.42, 0.3, 0.22, [1, 0.9, 0.8], r => new T.OctahedronGeometry(r * 1.15, 0)); },
       // wood spirit: two bumps moulded in the glass and a torn back label
       homwood: () => { const br = M(0x8a5a2b, 0.5); cheeks(br, 0.86, 0.42, 0.27, 0.19, [1, 1, 0.75]); box(0.5, 0.3, 0.05, M(0xf4efe0, 0.8), 0.04, 1.45, -0.53, [0, 0, -0.12]); box(0.3, 0.035, 0.02, black, 0.04, 1.45, -0.565, [0, 0, -0.12]).userData.plain = true; },
       // salt: the crab's folded tail flap between two crusted lumps
       homsalt: () => { const sa = M(0xd6d2c4, 0.85, 0, { exact: 1 }), cream = M(0xf4efe0, 0.85); cheeks(sa, 0.82, 0.74, 0.36, 0.3, [1.1, 0.85, 0.7]); put(new T.ConeGeometry(0.2, 0.42, 3), cream, 0, 0.56, -0.98, [PI, 0, 0], [1.2, 1, 0.35]); [[-0.42, 1.05], [0.38, 1.1], [0.5, 0.7]].forEach((q, i) => box(0.15, 0.15, 0.15, cream, q[0], q[1], -0.92, [0.4, 0.6 + i, 0.3])); },
       // slime: the biggest of the ten, glossy, and a sticky thread from it to the ground
-      homslime: () => { const gr = M(0x7fd14a, 0.2); cheeks(gr, 0.52, 0.62, 0.46, 0.33, [1, 0.9, 0.8]); rod([0.5, 0.3, -0.85], [0.62, 0.04, -1.0], 0.035, gr); shine(-0.42, 0.72, -1.02, 0.08, 0.2, -0.4); },
+      homslime: () => { const gr = M(0x8a5ad0, 0.15, 0, { transparent: true, opacity: 0.85, exact: 1 }); cheeks(gr, 0.5, 0.72, 0.46, 0.34, [1, 0.85, 0.8]); rod([0.5, 0.3, -0.95], [0.62, 0.04, -1.1], 0.035, gr); },
       // ammonia: two bumps in the glass with crystals packed into them
       homammonia: () => { const gl = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.4, glass: 0xbfe6fa, op: 0.55, emissive: new T.Color(0x5a8ca0) }), cr = M(0xf4efe0, 0.5); cheeks(gl, 0.86, 0.52, 0.3, 0.22, [1, 1, 0.75]); side.forEach(q => box(0.2, 0.2, 0.2, cr, q * 0.22, 0.86, -0.5, [0.5, 0.6 * q, 0.3])); },
       // seedling: the pot's rounded back, with a root that has found its way out between
@@ -514,6 +532,25 @@ function build(id, T, grp, tint, extra) {
       // brimstone: two lumps of the stone and an ember glowing in the crack between them
       hombrimstone: () => { const stn = M(0x2c2f34, 0.7); cheeks(stn, 0.74, 0.86, 0.38, 0.3, [1, 0.85, 0.8], r => new T.DodecahedronGeometry(r, 0)); box(0.07, 0.42, 0.06, glow(0xd6453a), 0, 0.72, -1.08).userData.plain = true; sph(0.14, M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.5 }), 0, 1.15, -1.2, [1.3, 0.8, 1]).userData.plain = true; }
     };
+    const mouth = (x, y, z, w, kind) => { const m = kind === 'o' ? sph(w, black, x, y, z, [1, 1.25, 0.4]) : kind === 'flat' ? box(w * 2, 0.045, 0.03, black, x, y, z) : tor(w, 0.03, black, x, y, z, [0, 0, kind === 'frown' ? 0 : PI], PI); m.userData.plain = true; return m; }, wh2 = M(0xffffff, 0.4), dot = (x, y, z, r, m) => { sph(r, m, x, y, z).userData.plain = true; };
+    const FACE = {
+      homwater: () => { mouth(0, 1.74, 0.4, 0.09); },
+      // the balloon is nervous: wide eyes and a small round mouth
+      homh2: () => { eyes(2.0, 0.6, 0.2, 0.065, 0); side.forEach(q => dot(q * 0.2 + 0.02, 2.02, 0.66, 0.022, wh2)); mouth(0, 1.72, 0.63, 0.06, 'o'); },
+      // dry ice shivers: eyes and chattering teeth
+      homco2: () => { eyes(1.62, 0.53, 0.22, 0.06, 0); box(0.42, 0.17, 0.02, black, 0, 1.25, 0.535, [0, 0.12, 0]).userData.plain = true; box(0.36, 0.11, 0.02, wh2, 0, 1.25, 0.55, [0, 0.12, 0]).userData.plain = true; [-1, 0, 1].forEach(k => box(0.02, 0.11, 0.02, black, k * 0.09, 1.25, 0.565, [0, 0.12, 0]).userData.plain = true); },
+      // the wood spirit is drunk: one lid down, red cheeks, a hiccup of a mouth
+      homwood: () => { mouth(0.05, 1.36, 0.56, 0.075, 'o'); side.forEach(q => { sph(0.1, M(0xe58a7c, 0.6), q * 0.33, 1.5, 0.47, [1, 0.7, 0.4]).userData.plain = true; }); box(0.17, 0.06, 0.03, black, 0.17, 1.76, 0.47, [0, 0, -0.3]).userData.plain = true; },
+      // salt is a grumpy crusted lump: heavy brows over the stalks and a frown
+      homsalt: () => { side.forEach(q => { box(0.28, 0.08, 0.06, black, q * 0.33, 2.0, 0.56, [0, 0, q * 0.5]).userData.plain = true; }); mouth(0, 0.82, 1.0, 0.2, 'frown'); },
+      // ammonia holds its own nose: eyes screwed up on the shoulder of the bottle, a red nose, one hand on it
+      homammonia: () => { eyes(1.74, 0.46, 0.15, 0.055, 0); side.forEach(q => { box(0.16, 0.045, 0.03, black, q * 0.15, 1.84, 0.44, [0, 0, q * 0.45]).userData.plain = true; }); sph(0.1, M(0xd6453a, 0.6), 0, 1.56, 0.6); rod([0.62, 1.25, 0.25], [0.12, 1.56, 0.68], 0.045, black); sph(0.085, black, 0.1, 1.56, 0.72); mouth(0, 1.36, 0.69, 0.1, 'flat'); },
+      // the seedling is eager: a wide smile on the pot, bright eyes, and it leans toward the lamp
+      homseed: () => { mouth(0, 0.8, 0.72, 0.15); side.forEach(q => dot(q * 0.2 + 0.02, 0.975, 0.705, 0.022, wh2)); R.lean0 = [0.08, -0.14]; },
+      // brimstone grins, two small fangs
+      hombrimstone: () => { mouth(0, 1.4, 0.68, 0.17); side.forEach(q => { put(new T.ConeGeometry(0.04, 0.1, 4), wh2, q * 0.09, 1.3, 0.7, [PI, 0, 0]).userData.plain = true; }); }
+    };
+    if (FACE[id]) FACE[id]();
     if (BUTT[id]) BUTT[id](); cur = pc; }
   let inkK = 1;
   if (U.length) { grp.userData.use = v => U.forEach(f => f(v)); grp.userData.use(0); }
