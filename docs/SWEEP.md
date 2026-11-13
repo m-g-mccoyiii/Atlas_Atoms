@@ -141,4 +141,51 @@ Choices for the owner:
 3. Round 2. (a) Leave it as the wall. (b) Ease it so that the difficulty climbs round by round (today round 2 is harder than round 6 for every player).
 4. The postdoc. (a) Keep it as three more rounds like round nine. (b) Give rounds 10 to 12 their own bigger molecules and tasks, since as built they hardly thin the field.
 
-The sections that follow are added as each sweep is written up.
+## 2. Sigils
+
+In `docs/SIGILS2.md`: 25 sigils that each break one rule, alone, in pairs and with each homunculus; a ranked shortlist of twelve; and the last sigil that takes gold.
+
+## 3. The ten homunculi
+
+Each creature is fed inside a round by what `HOMUNCULI.md` names and can be tapped once a round. The simulated player taps it only where the task or the yield goes up. Every creature met exactly the same deals and tasks as the run with none, so a change of 0.00 means no run went differently. Two reagent sets: the starting six, and the six with reduce and hydroborate (which feed the wood spirit and the slime). 192 three-round runs, 96 six-round runs and 48 nine-round runs a creature.
+
+| Creature | Fed, share of rounds | Tapped, share of rounds | Rounds cleared: three-round run | six | nine | Wins of 100: three, six, nine | Yield times, average | The line was chosen for it, share of pages |
+|---|---|---|---|---|---|---|---|---|
+| none | | | 2.36 | 2.28 | 2.46 | 57, 25, 8 | | |
+| Seedling | 98 | 93 | 2.71 (+0.35) | 3.97 (+1.69) | 4.60 (+2.15) | 79, 54, 23 | 5.38 | 20.5 |
+| Water | 68 | 41 | 2.34 (-0.02) | 2.40 (+0.11) | 2.48 (+0.02) | 55, 27, 8 | 1.05 | 7.7 |
+| Acid | over 100 | 42 | 2.35 (-0.01) | 2.28 (0.00) | 2.35 (-0.10) | 56, 23, 6 | 1.09 | 9.3 |
+| Hydrogen | 27 | 24 | 2.37 (+0.01) | 2.27 (-0.01) | 2.42 (-0.04) | 58, 24, 6 | 1.09 | 4.1 |
+| Salt | 29 | 16 | 2.35 (-0.01) | 2.23 (-0.05) | 2.42 (-0.04) | 56, 22, 8 | 1.04 | 3.0 |
+| Dry ice | 17 | 17 | 2.36 (0.00) | 2.10 (-0.18) | 2.23 (-0.23) | 57, 21, 8 | 0.99 | 0.9 |
+| Ammonia | 11 | 7 | 2.36 (0.00) | 2.28 (0.00) | 2.46 (0.00) | 57, 25, 8 | 1.06 | 0.0 |
+| Slime | 9 (18 with hydroborate carried, 0 without) | 9 | 2.36 (0.00) | 2.28 (0.00) | 2.46 (0.00) | 57, 25, 8 | 1.01 | 1.9 |
+| Wood spirit | 9 (17 with reduce carried, 0 without) | 0 | 2.36 (0.00) | 2.28 (0.00) | 2.46 (0.00) | 57, 25, 8 | 1.00 | 0.0 |
+| Brimstone | under 1 | 0 | 2.36 (0.00) | 2.28 (0.00) | 2.42 (-0.04) | 57, 25, 6 | 1.00 | 0.1 |
+
+Pairs and triples (all 45 pairs and all 120 triples, six-round runs, 8 runs each):
+
+- Every pair and triple with the Seedling clears about 3.9 rounds more than no creature. Every one without it clears about the same as no creature.
+- No pair or triple did more than its members do alone, once the Seedling is counted.
+- The biggest single round in any pair or triple was 58 times Par (Salt, Slime and Seedling). Nothing ran away.
+
+What it says:
+
+- **Dominant: the Seedling.** It is fed by one grow, which is in nearly every hand, so it is tapped in 93 of 100 rounds. It triples the nine-round win rate (8 to 23) and multiplies yield by 5. One player in five turns chose a different line because of it. It is the only creature that changes which play is best in a big way, and it is the best pick in every pair and triple.
+- **Dead as built: Brimstone and the Wood spirit.** Brimstone is almost never fed (it needs two sulfurs from oxidize on an SH, which the molecules and reagents rarely give). The Wood spirit is fed in 17 of 100 rounds when reduce is carried and is never worth tapping: five reagents in a random order never beat the three the player would choose.
+- **Rare: Ammonia and Slime.** Fed in about one round in ten. When tapped they add a little yield and clear no more rounds.
+- **Alive but weak: Water, Acid, Hydrogen, Salt.** Tapped in 16 to 42 of 100 rounds, yield up 4 to 9 percent, no more rounds cleared. Water and Acid do change the line chosen on 8 to 9 pages in 100.
+- **Slightly harmful: Dry ice.** Freezing rings shut costs a fifth of a round in the longer runs: a shut ring cannot take part in the next chain.
+- `HOMUNCULI.md` guessed 1.5 to 2.3 times the yield for each. Measured: 1.0 to 1.1 for nine of them and 5.4 for the Seedling.
+
+The limits of this: the simulated player taps a creature only for a gain it can see at once. A real player who plans a round around a creature will get more from Salt, Slime and Dry ice than this shows.
+
+Choices for the owner:
+
+1. The Seedling. (a) Cut it down: 6 carbons with 2 C=O as it was first, or fed by 3 grows not 1. (b) Keep it strong and make it the slowest jar to fill. (c) Leave it.
+2. The eight weak ones. (a) Make each about as strong as `HOMUNCULI.md` meant (1.5 to 2 times the yield), then test again. (b) Leave them small and make them cheap and early. (c) Mix: strong ones in slow jars, small ones in fast jars, as the jar speeds already suggest.
+3. Brimstone and Ammonia, which are almost never fed. (a) Feed them from what the reagents make often (any sulfur or nitrogen put on the molecule). (b) Do as `HOMUNCULI.md` says and always deal a molecule that carries the group while the creature is held; this was not simulated. (c) Leave them rare on purpose.
+4. The Wood spirit. (a) Give the drunk page something a chosen line cannot have: all five reagents and each one pays double. (b) Let it spend no uses. (c) Replace it.
+5. Dry ice. (a) Frozen rings still count for the next chain. (b) Leave it as a creature for yield only and say so on the card.
+
+Sections 4 and 5 follow.
