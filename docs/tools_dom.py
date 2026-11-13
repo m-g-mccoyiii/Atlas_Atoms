@@ -11,7 +11,7 @@ ORDER = ['oxidize', 'hydrate', 'grow', 'dehydrate', 'thiolene', 'ritter']
 def run(name, pol, n, rule, extra, rounds=range(1, 10), tmo=5400):
     ps = []
     for r in rounds:
-        cmd = ['bash', './hl.sh', 'dom.js', 'dom_%s_r%d' % (name, r), str(tmo), '', 'rounds=%d' % r, 'n=%s' % n, 'pol=%s' % pol] + (['rule=' + rule] if rule else []) + list(extra)
+        cmd = ['bash', './hl.sh', 'dom.js', 'dom_%s_r%d' % (name, r), str(tmo), '', 'rounds=%d' % r, 'n=%s' % n, 'pol=%s' % pol] + (['rule64=' + __import__('base64').b64encode(rule.encode()).decode()] if rule else []) + list(extra)
         ps.append(subprocess.Popen(cmd, cwd=HL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
     for p in ps:
         p.wait()

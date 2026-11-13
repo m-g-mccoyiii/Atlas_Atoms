@@ -10,6 +10,7 @@
 // hands holding it of 1 - best line without it / best line).
 // Params: rounds=1,2,3 n=300 from=20001 pol=greedy|look rule={...} opts={...runNew opts} rack=a,b (extra reagents held)
 HL.job = async function (q) {
+  ["rule", "opts"].forEach(function (k) { if (q[k + "64"]) q[k] = atob(q[k + "64"]); });   // JSON arguments come base64-coded (quotes do not survive the shells)
   const P = AA.rxPath, S = SIM, RX = AA.rx;
   const rule = q.rule ? JSON.parse(q.rule) : {}, rounds = (q.rounds || '1,2,3').split(',').map(Number), n = +(q.n || 300), from = +(q.from || 20001), pol = q.pol || 'greedy';
   const ropts = q.opts ? JSON.parse(q.opts) : { tierNo: 3 };
