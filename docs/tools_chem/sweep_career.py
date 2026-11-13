@@ -32,6 +32,8 @@ def _marks():
 
 
 MARKS = _marks()
+# the thirteenth measure's marks, for the rows played before the square root rule (FLAT)
+MARKS13 = {'master': [0.13, 0.28, 0.15, 0.40, 1.6, 1.2], 'doctorate': [0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75]}
 
 # full row of a round: [mol, met, total, par, prog, steps by page, kinds, used, spec names, end]
 MOL, MET, TOT, PAR, PROG, STEPS, KINDS, USED, SPEC, END = range(10)
@@ -347,7 +349,7 @@ if __name__ == '__main__':
             acc.setdefault(r['tag'], []).extend(r['full'])
         for tag in sorted(acc):
             ln = tag.split('/')[0]
-            ms = MARKS[ln]
+            ms = MARKS[ln] if 'ver=14' in tag else MARKS13.get(ln, MARKS[ln])     # rows without ver=14 were played under the old rule
             runs = acc[tag]
             n = len(runs)
             wins = sum(1 for r in runs if len(r) == len(ms) and cleared(r[-1], ms[-1]))

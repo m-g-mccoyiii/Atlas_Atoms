@@ -1,8 +1,73 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the thirteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the fourteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-13, fourteenth: the picks of AT
+
+One part for each of the owner's picks of midday 13 November, written as each was finished. Each ends with the choices left for the owner.
+
+### 1. Close calls: flatter bonuses
+
+Pick AT: "flatter chain bonuses so yields bunch closer to the mark".
+
+**What was found first.** Flattening the chain's own bonus is not enough. Four trials on the simulator (`sweep_run.py flat14`, 200 nine-round runs each, careful player): a step of the chain counting as the square root of its number, counting as 1 whatever its number, and the same with the motif multipliers at their square root. The tenth-best round in a hundred over the tenth-worst, rounds 1 to 9:
+
+| Rule | Spread by round |
+|---|---|
+| As it was | 13, 18, 23, 26, 28, 34, 22, 48, 27 |
+| Step n counts as the square root of n | 10, 12, 18, 15, 16, 21, 16, 31, 17 |
+| Every step counts as 1 | 11, 12, 15, 15, 13, 19, 14, 20, 12 |
+| Every step counts as 1, motifs at their square root | 9, 10, 14, 13, 13, 19, 12, 16, 14 |
+
+The cause: a round's yield is three numbers multiplied (places, row, extra), and the count of steps and the count of places feed all three. With every bonus of the chain taken away the spread is still 9 to 19 times, and the chain is no longer worth chasing. So the rule built flattens the product, not the chain.
+
+**The rule as built** (`path.js`: `FLAT`, `flat`, `made`; the simulator reads the same line). A round still makes places times row times extra. The yield is the square root of that product, scaled so 4,770 stays 4,770. Every multiplier in the game therefore counts at its square root: ten times the product is 3.2 times the yield.
+
+- The best line is the same line as before: the order of any two lines does not change. A long chain still beats a short one on every page.
+- The number to beat, the pass marks, the inspections' factors and the three marks above were moved by the same rule, so a round played the same way is won or lost as before. The simulated players do not play quite the same way (they weigh the yield still missing against the task, and that weighing moved): of the same deals, 26 runs in 1,000 of the casual player, 108 in 2,000 of the careful and 190 in 600 of the two-hand reader end at another round than before. The number to beat by round is now 4770, 5115, 5486, 5917, 7008, 8804, 9777, 10961, 11754. The pass marks of a nine-round run are 0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18 of it (six rounds: 0.36, 0.53, 0.39, 0.63, 1.26, 1.10).
+- The marks above the number to beat are 1.41, 2 and 2.83 times it (they were 2, 4, 8). OVERREACT is at 2.83.
+
+**What a long chain is worth now.** A round whose pages each set off three steps, six steps, ten steps, against a round with no chain: it was 3, 7 and 17 times; it is 1.7, 2.6 and 4.1 times.
+
+**The spread, before and after** (2,000 nine-round runs of the careful player, 1,000 of the others, round 7): careful 27 times before, 5.2 after. Casual 21 to 4.6. Novice 15 to 3.9.
+
+**A long run with nothing unlocked, under the new rule**, on deals the marks were not fitted on, stopped at the first round not cleared (`sweep_run.py final13 --arg <player>,<runs>,doctorate,ver=14`, `sweep_career.py final`):
+
+| Player | Runs | Wins all nine, of 100 (before) | Of the runs still alive, clear rounds 1 to 9 | Lost rounds within 15 in 100 of passing (before) | Within 25 in 100 | Won rounds within 15 in 100 above (before) |
+|---|---|---|---|---|---|---|
+| Casual | 1,000 | 0 (0) | 82, 70, 63, 47, 42, 38, 4 | 15 (8) | 26 | 7 (4) |
+| Careful | 2,000 | 0.20 (0.18) | 93, 92, 83, 83, 79, 67, 32, 14, 14 | 18 (10) | 30 | 3 (2) |
+| Reads two hands | 600 | 0.83 (1.04) | 97, 94, 92, 90, 90, 75, 36, 34, 14 | 18 (11) | 30 | 4 (2) |
+
+The shape of the run and the bare win rates hold: casual clears round 1 82 times in 100, every player wins under 2 in 100.
+
+**OVERREACT.** Rounds at the top mark in a bare nine-round run, stopped at the first loss: careful 0.50 a run before and 0.48 after (38 runs in 100 see it at least once, before and after); the two-hand reader 0.92 and 0.94; casual 0.02 and 0.02. It is as reachable as it was. What is smaller is the number: the round that made 8 times the number to beat now reads 2.83 times.
+
+**The aim is not met.** The aim was a third of lost rounds within 15 in 100 of passing and a like share of wins. Lost rounds went from 8 to 11 in 100 up to 15 to 18; wins from 2 to 4 up to 3 to 7. Two things cap it, both measured:
+
+- About half of all lost rounds are lost on the task, not the yield (casual: 35 in 100 on the task alone, 18 on both). A round lost on the task is almost never close (1 to 4 in 100), because a task is counted in whole things: one ring short of two is half way.
+- At the wall 7 to 9 rounds in 10 are lost. With that many lost, a third within 15 in 100 would need a spread of about 1.5 times, which no rule of multiplied numbers gives.
+
+A stronger flattening laid over the same runs (the cube root in place of the square root; every round played): the first lost round of a run is within 15 in 100 for 19 (novice), 24 (casual), 25 (careful), 31 (two hands) runs in 100; the spread is 2.5 to 3 times; a round of tens is then 2.6 times a round with no chain, not 4.1.
+
+**What else moved, said plainly.**
+- A creature's multiplier is on the product, so "times 2.5" in `HOMUNCULI.md` now reads on the page as times 1.58. Its strength in wins is what it was. Parts 2 and 3 restate the creatures' numbers as the player reads them.
+- The sign's 1.2 times is on the yield as read, and the number to beat rises 1.15 times as read. On the product that is a little more than before (9 in 100 more against the mark at the first sign, not 4), so each lap is a little easier than the thirteenth measure said. Not measured again.
+- Four old pieces that raise the number to beat (the pact, the idol, the hourglass, the occult supplier) were moved to the square roots too (1.41, 1.22, 1.12, 1.22), so each costs what it did; the pact's "times 3" reads as times 1.73.
+- The page's own heat and overshoot (in `scheme.js`, not the rules' file) still scale by the old ratios of 2, 4, 8.
+- Instruments that add to row or extra count at the square root like everything else. Part 2 measures them as they now are.
+
+**Checked in the game.** One nine-round run of the careful player in the game's own rig ran through under the new rule; the sign's 73 tests and the ladder job pass. The simulator's runs above read `path.js` itself.
+
+**Not done.** No count in the game's rig of yields against the simulator's for the same lines (the single-step and whole-turn checks compare molecules, not yields). The six-round and twelve-round runs were not run again (their marks are the same square roots). The page's own text of a creature's token still shows the old multipliers.
+
+**Choices for the owner**
+
+1. How flat. (a) As built, the square root: spread about 5 times, 15 to 18 lost rounds in 100 are close. (b) The cube root: spread about 3 times, about 25 close, and a blow-out round reads about 2 times the number to beat. (c) Back to the old rule.
+2. The lost task. (a) Leave it: half of lost rounds are lost on the task and are seldom close. (b) Count a task one thing short as a close call on the page and in the ladder. (c) Make tasks count in parts, which needs new rules for each task.
+3. The top mark. (a) As built: 2.83 times the number to beat, reached as often as before. (b) Higher, so OVERREACT is rarer and reads bigger. (c) Lower.
 
 ## The measure of 2026-11-13, thirteenth: the rulings of AR
 

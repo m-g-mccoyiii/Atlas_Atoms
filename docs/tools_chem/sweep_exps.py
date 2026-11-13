@@ -302,7 +302,7 @@ EXPERIMENTS['diff'] = diff
 
 # The clear rule of the twelfth measure (path.js RULE.needPar, RULE.specScaleLong): the spec met AND the yield past this share of
 # the number to beat, by round; rounds 1 and 2 of the long runs with smaller spec numbers.
-NEED12 = [0.74, 0.90, 0.78, 1.36, 2.57, 1.07, 1.25, 1.59, 1.35, 0.96, 0.60, 0.27]
+NEED12 = [0.86, 0.95, 0.88, 1.17, 1.60, 1.03, 1.12, 1.26, 1.16, 0.98, 0.77, 0.52]      # the twelfth measure's marks under the square root rule (FLAT)
 T12 = {'need_par': NEED12, 'spec_scale_long': {1: 0.7, 2: 0.5}, 'aim_par': True}
 assert SC.NEED_PAR is None or SC.NEED_PAR == NEED12, 'path.js RULE.needPar and NEED12 differ'
 
@@ -564,3 +564,37 @@ def hompair13(arg='40'):
 
 EXPERIMENTS['hom13'] = hom13
 EXPERIMENTS['hompair13'] = hompair13
+
+
+# --- the fourteenth measure, part 1: flatter chain bonuses (ruling AT) ------------------------------------------------------
+# Each variant is the scoring rule only; the tasks are the game's (g1).  'now' reads path.js as it stands.
+FLAT14 = {
+    'old': {'chain_pow': 1.0, 'chain_knee': 0, 'motif_pow': 1.0},          # the rule of the thirteenth measure
+    'p50': {'chain_pow': 0.5, 'chain_knee': 0, 'motif_pow': 1.0},
+    'p25': {'chain_pow': 0.25, 'chain_knee': 0, 'motif_pow': 1.0},
+    'p0': {'chain_pow': 0.0, 'chain_knee': 0, 'motif_pow': 1.0},
+    'p50m': {'chain_pow': 0.5, 'chain_knee': 0, 'motif_pow': 0.5},
+    'p25m': {'chain_pow': 0.25, 'chain_knee': 0, 'motif_pow': 0.5},
+    'p0m': {'chain_pow': 0.0, 'chain_knee': 0, 'motif_pow': 0.5},
+    'p0m0': {'chain_pow': 0.0, 'chain_knee': 0, 'motif_pow': 0.0},
+    'now': {},
+}
+
+
+def flat14(arg='now,median,300'):
+    """Fourteenth: every round of nine played, cleared or not, written out in full, under one scoring variant of FLAT14.
+    arg: variant,player,runs[,seed letter[,length[,key=value;...]]]."""
+    ps = arg.split(',')
+    var, pl, n = ps[0], ps[1], int(ps[2])
+    sd = ps[3] if len(ps) > 3 and ps[3] else 'g'
+    ln = ps[4] if len(ps) > 4 and ps[4] else 'doctorate'
+    par = dict(GENTLE['g1'])
+    par.update(FLAT14[var])
+    for x in ps[5:]:
+        k, v = x.split('=', 1)
+        par[k] = json.loads(v.replace(';', ','))
+    return [{'id': 'fl_%s_%s_%s_%s_%d' % (var, pl, sd, ln, i), 'rack': START, 'length': ln, 'player': pl, 'params': par, 'full': True,
+             'seeds': ['%s/%d' % (sd, i * 10 + k) for k in range(10)], 'tag': '%s/%s' % (var, pl)} for i in range(n // 10)]
+
+
+EXPERIMENTS['flat14'] = flat14
