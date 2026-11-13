@@ -9,7 +9,7 @@ import sys
 
 import sweep_career as C
 
-TOP = 8.0      # OVERREACT: the top mark is this many times the number to beat (path.js RULE.tiers)
+TOP = 8.0      # OVERREACT under the old rule; the `pow` command moves it with the power (path.js RULE.tiers is 8 to the power 0.5)
 
 
 def spread(by, pl):

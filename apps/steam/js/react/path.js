@@ -430,16 +430,16 @@ const GEAR = [
   { id: 'tower', tok: '{r} times 2', kin: 'occult', fam: 'row', note: 'the first time a row would break each round, it holds and doubles', name: 'the Tower', shape: 'box', at: 'step', fx: c => (c.saved ? M('r', 2) : null) },
   { id: 'cat', tok: '{e} +0.13', kin: 'occult', fam: 'extra', note: 'crosses the path: a row that breaks leaves extra +0.13 for every reaction that was in it', name: 'black cat', shape: 'round', at: 'step', fx: c => (c.was > 0 ? A('e', 0.13 * c.was) : null) },
   { id: 'paw', tok: 'wish', kin: 'occult', fam: 'rule', rule: true, note: 'three wishes a run, one a round. a wish doubles the round and takes a reagent for good', name: "monkey's paw", shape: 'round' },
-  { id: 'idol', tok: 'twice', kin: 'occult', fam: 'rule', rule: true, note: 'every other occult piece fires twice. every number to beat: times 1.5', name: 'cursed idol', shape: 'round' },
+  { id: 'idol', tok: 'twice', kin: 'occult', fam: 'rule', rule: true, note: 'every other occult piece fires twice. every number to beat: times 1.22', name: 'cursed idol', shape: 'round' },
   { id: 'grimoire', tok: '{p} twice', kin: 'occult', fam: 'places', note: 'the last reaction on each page counts twice', name: 'grimoire', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? M('h', 2) : null) },
-  { id: 'hourglass', tok: '+1 page', kin: 'occult', fam: 'rule', rule: true, note: 'sand from a grave: one more page. every number to beat: times 1.25', name: 'hourglass', shape: 'column' },
+  { id: 'hourglass', tok: '+1 page', kin: 'occult', fam: 'rule', rule: true, note: 'sand from a grave: one more page. every number to beat: times 1.12', name: 'hourglass', shape: 'column' },
   { id: 'raven', tok: 'again', kin: 'occult', fam: 'rule', rule: true, note: 'nevermore: the last reagent used on a page comes back on the next', name: 'raven', shape: 'round' },
   { id: 'glory', tok: '{r} lit', kin: 'occult', fam: 'row', rule: true, note: 'hand of glory: on a broken row, equipment still fires as if the row held', name: 'hand of glory', shape: 'column' },
   { id: 'orb', tok: 'next', kin: 'occult', fam: 'rule', rule: true, note: 'crystal ball: shows which reagents the next page adds and drops', name: 'crystal ball', shape: 'round' },
   { id: 'ouija', tok: 'endless', kin: 'occult', fam: 'rule', rule: true, note: 'one reagent on every page does not run out', name: 'ouija board', shape: 'box' },
   { id: 'candle', tok: '{e} times 2', kin: 'occult', fam: 'extra', note: 'every 13th reaction of a round: extra times 2. lights hydrogen that leaves: extra +0.25', name: 'black candle', shape: 'column', at: 'step', fx: c => (c.nth % 13 === 0 ? M('e', 2) : null) },
   { id: 'goat', tok: '{e} times 1.07', kin: 'occult', fam: 'extra', note: 'every reaction: extra times 1.07. takes a reagent use each page', name: 'goat sacrifice', shape: 'round', at: 'step', fx: () => M('e', 1.07) },
-  { id: 'pact', tok: 'times 3', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 3. every number to beat: times 2', name: 'a signed pact', shape: 'box' }
+  { id: 'pact', tok: 'times 3', kin: 'occult', fam: 'rule', rule: true, note: 'everything made: times 1.73. every number to beat: times 1.41', name: 'a signed pact', shape: 'box' }
 ];
 const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 // The pieces on offer (docs/PIECES.md). The sixty were made for the game before the cascade and most add a number.
@@ -751,9 +751,10 @@ const pagesOf = g => SYN.pages + (RULE.pages || 0) + (g.gear.includes('elixir') 
 // FLAT (ruling AT: flatter chain bonuses, docs/RIG.md fourteenth, part 1). What a round makes is still places times row times extra, but the
 // yield is that product raised to FLAT.pow (0.5: its square root), scaled so a product of FLAT.pivot stays FLAT.pivot. Every multiplier in the
 // game (a longer chain, the last-reagent double, a motif, a row, an instrument, a creature) therefore counts at its square root: ten times the
-// product is 3.2 times the yield. The order of any two lines is unchanged, so the best line is the same line; what changes is how far apart
+// product is 3.2 times the yield. The order of any two lines is unchanged, so the best line by yield is the same line; what changes is how far apart
 // yields land. The number to beat (PAR), the pass marks (needParBy), the inspections' factors (ASSAYF) and the marks above (RULE.tiers) were
-// moved by the same rule, so the same rounds are won and lost as before. pow 1 is the old rule.
+// moved by the same rule, so a round played the same way is won or lost as before (the simulated players, who weigh the yield
+// still missing against the task, choose a little differently). pow 1 is the old rule.
 const FLAT = { pow: 0.5, pivot: 4770 };
 const flat = raw => (FLAT.pow === 1 ? raw : Math.pow(FLAT.pivot, 1 - FLAT.pow) * Math.pow(Math.max(0, raw), FLAT.pow));
 // yx(k): what extra must be multiplied by for the YIELD to be multiplied by k (a creature's "yield times k" is on the yield the player reads)
@@ -1608,7 +1609,7 @@ function deeds(g, run, pass) {
 function runTerm(run, id) {
   run.term = id; run.stake = 1; run.payMul = 1;
   if (id === 'glass') run.glass = true;
-  else if (id === 'occult') { const occ = RULE.five ? Object.keys(FIVE) : Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(rand() * occ.length)]); run.stake = 1.5; }
+  else if (id === 'occult') { const occ = RULE.five ? Object.keys(FIVE) : Object.keys(GEARS).filter(k => GEARS[k].kin === 'occult' && k !== 'idol' && k !== 'pact'); run.gear.push(occ[Math.floor(rand() * occ.length)]); run.stake = 1.22; }
   else if (id === 'lean') { run.rack = RUNG.start.slice(0, 3); run.usesAll = 1; }
   else if (id === 'long') { run.steps = 1; run.pages = -1; }
   else if (id === 'hoard') { const pool = stock(run.tier).gear.slice(); for (let k = 0; k < 3 && pool.length; k++) run.gear.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]); run.noGear = true; }
@@ -1639,7 +1640,8 @@ const MOLD = { lo: 0.1, hi: 10, pow: 1 };
 const parOf = round => { const r = Math.max(1, round | 0); return r <= 9 ? PAR.rounds[r - 1] * (r === 9 ? PAR.last : 1) : PAR.rounds[8] * PAR.last * Math.pow(PAR.after, r - 9); };
 const molSize = key => Math.pow(Math.min(MOLD.hi, Math.max(MOLD.lo, MOLF[key] || 1)), MOLD.pow);
 const kindSize = (run, brief, round) => { const r = round || run.round, a = assayOf(run, r) && ASSAYF[brief]; return a ? a[Math.min(2, Math.max(0, Math.floor(r / 3) - 1))] : KINDF[brief] || 1; };
-const stakeOf = run => (run.gear.includes('pact') ? 2 : 1) * (run.gear.includes('idol') ? 1.5 : 1) * (run.gear.includes('hourglass') ? 1.25 : 1) * (run.stake || 1);
+// FLAT: these were 2, 1.5, 1.25 (and 1.5 for the occult supplier) on the old yield; they are the square roots, so each piece costs what it did
+const stakeOf = run => (run.gear.includes('pact') ? 1.41 : 1) * (run.gear.includes('idol') ? 1.22 : 1) * (run.gear.includes('hourglass') ? 1.12 : 1) * (run.stake || 1);
 // feed is the molecule's SMILES. A molecule carried on from the last round counts as the one it started as.
 // A round that carries the last molecule on has no molecule factor: what it starts from is not what the factor measured.
 const quotaParts = (run, feed, brief) => { const b = brief || run.brief || 'plain', st = stakeOf(run); return { par: parOf(run.round) * signBar(run), stake: st, mult: (b === 'carry' ? 1 : molSize(typeof feed === 'string' ? feed : run.src)) * kindSize(run, b) * st }; };

@@ -171,7 +171,8 @@ SPEC_JARS = ['water', 'hydrogen', 'carbon_dioxide', 'acid_fumes', 'ammonia', 'su
 P_POOL = [0.9, 0.85, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.5]
 ASSAYS = ['scarce', 'short', 'each', 'loose']
 LENGTHS = {'bachelor': (3, 1), 'master': (6, 2), 'doctorate': (9, 3), 'postdoc': (12, 4)}   # postdoc: path.js POSTDOC (RULE.postdoc)
-MARKS = (1, 2, 4, 8)
+TIERS = tuple(float(x) for x in re.search(r'tiers: \[(.*?)\]', _JS).group(1).split(','))    # path.js RULE.tiers
+MARKS = (1,) + TIERS
 # the game's ids for the engine's names (spec `need`, named rows)
 JSID = {'pcc': 'oxidize', 'allyl': 'grow', 'bh3': 'hydroborate', 'nabh4': 'reduce', 'socl2': 'chlorination', 'lactol': 'ring',
         'enone': 'dry', 'taut': 'flip', 'snap6': 'snap', 'ether': 'close'}
@@ -1471,7 +1472,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         ok = bool(R.x['met']) and total >= need * par
         earned = 0
         if total >= par:
-            earned = COIN['mark'] * sum(1 for k in (2, 4, 8) if total >= nice(par * k)) + min(COIN['cap'], run['gold'] // COIN['per'])
+            earned = COIN['mark'] * sum(1 for k in TIERS if total >= nice(par * k)) + min(COIN['cap'], run['gold'] // COIN['per'])
         for m in G.mods:
             earned = m.round_end(G, R, run, earned)
         run['gold'] += earned
