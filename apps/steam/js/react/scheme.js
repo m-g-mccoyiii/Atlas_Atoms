@@ -111,6 +111,8 @@ function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.r
 // the pencil no longer lies across the margin, where the notes are written
 function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
+// the bench view's camera: what it looks at on the bench (x, z), how far it stands back, its lean from straight down in degrees, its field of view
+const BCAM = [3.5, -2.2, 85, 20];
 
 function start(app) {
   const cv = document.createElement('canvas'); app.append(cv);
@@ -146,16 +148,28 @@ function start(app) {
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
   // above everything, in the frame's own pixels: the flash of a hit and OVERREACT (feel.js draws on it)
   const overC = document.createElement('canvas'); overC.className = 'veil'; app.append(overC); const overX = overC.getContext('2d');
-  const BENCHV = (() => { try { return new URLSearchParams(root.location.search).get('bench') || ''; } catch (e) { return ''; } })();
-  if (BENCHV) { // a wooden bench top under the page, a coffee cup, and the camera turned and raised for each mock view
-    const wc = canvasTex(1024, 1024); wc.x.fillStyle = '#8a5f38'; wc.x.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 260; i++) { wc.x.strokeStyle = 'rgba(' + (i % 3 ? '60,36,18' : '190,140,90') + ',' + (0.05 + Math.random() * 0.1).toFixed(3) + ')'; wc.x.lineWidth = 1 + Math.random() * 5; const y0 = Math.random() * 1024; wc.x.beginPath(); wc.x.moveTo(0, y0); wc.x.bezierCurveTo(340, y0 + Math.random() * 30 - 15, 680, y0 + Math.random() * 30 - 15, 1024, y0 + Math.random() * 20 - 10); wc.x.stroke(); } wc.t.needsUpdate = true; wc.t.wrapS = wc.t.wrapT = T.RepeatWrapping; wc.t.repeat.set(3, 3);
-    const bench = add(new T.PlaneGeometry(420, 320).rotateX(-Math.PI / 2), std({ map: wc.t, roughness: 0.75 }), 0, -0.25, 0); bench.castShadow = false;
-    const sh = add(new T.PlaneGeometry(SW + 2.4, SH + 2.4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }), 0.9, -0.2, 1.1); sh.castShadow = false;
-    const cup = new T.Group(); add(new T.CylinderGeometry(2.3, 1.9, 3.6, 28, 1, true), std({ color: lin(0xf2efe6), roughness: 0.35, side: T.DoubleSide }), 0, 1.8, 0, cup); add(new T.CircleGeometry(2.1, 28).rotateX(-Math.PI / 2), std({ color: lin(0x3a2212), roughness: 0.2 }), 0, 3.0, 0, cup); { const hd = add(new T.TorusGeometry(1.3, 0.3, 10, 20, Math.PI), std({ color: lin(0xf2efe6), roughness: 0.35 }), 2.3, 1.9, 0, cup); hd.rotation.z = -Math.PI / 2; } cup.position.set(BENCHV === 'c' ? 37 : 38, -0.2, BENCHV === 'a' ? -27 : -6); scene.add(cup);
-    scene.background = lin(0x2a2420);
-    if (BENCHV === 'a') { CAM.set(CAM.x, CAM.y * 1.32, CAM.z * 1.32 - 3); LOOKAT.z -= 4.5; }
+  // The bench: the page lies on a wooden bench top under a lamp and the objects stand on the wood around it. This is the game's view
+  // (?bench=0 puts the flat page back; b and c are the two other mock views).
+  const BENCHV = (() => { try { const v = new URLSearchParams(root.location.search).get('bench'); return v === '0' ? '' : (v || 'a'); } catch (e) { return 'a'; } })();
+  let benchTop = null;
+  if (BENCHV) {
+    const wc = canvasTex(2048, 1536), wx = wc.x, WR = (() => { let sd = 77; return () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296; })();
+    wx.fillStyle = '#6b4526'; wx.fillRect(0, 0, 2048, 1536);
+    for (let b = 0; b < 7; b++) { const y0 = b * 220 + (b % 2 ? 6 : 0); wx.fillStyle = 'rgba(' + (b % 2 ? '70,44,22' : '150,108,66') + ',' + (0.10 + WR() * 0.10).toFixed(3) + ')'; wx.fillRect(0, y0, 2048, 220); wx.fillStyle = 'rgba(40,24,12,0.5)'; wx.fillRect(0, y0, 2048, 2.5); }
+    for (let i = 0; i < 900; i++) { wx.strokeStyle = 'rgba(' + (i % 3 ? '58,34,16' : '196,150,100') + ',' + (0.04 + WR() * 0.09).toFixed(3) + ')'; wx.lineWidth = 0.8 + WR() * 3.2; const y0 = WR() * 1536, x0 = WR() * 2048 - 300, len = 300 + WR() * 1500; wx.beginPath(); wx.moveTo(x0, y0); wx.bezierCurveTo(x0 + len / 3, y0 + WR() * 14 - 7, x0 + 2 * len / 3, y0 + WR() * 14 - 7, x0 + len, y0 + WR() * 10 - 5); wx.stroke(); }
+    for (let i = 0; i < 9; i++) { const kx = WR() * 2048, ky = WR() * 1536, r = 10 + WR() * 16; for (let q = 0; q < 6; q++) { wx.strokeStyle = 'rgba(48,28,14,' + (0.22 - q * 0.03).toFixed(2) + ')'; wx.lineWidth = 1.6; wx.beginPath(); wx.ellipse(kx, ky, r * (1 + q * 0.55) * 1.9, r * (1 + q * 0.5) * 0.55, 0, 0, 6.3); wx.stroke(); } }
+    // the lamp: a warm pool over the page, the far corners of the bench in shade
+    { const gr = wx.createRadialGradient(900, 700, 150, 980, 760, 1250); gr.addColorStop(0, 'rgba(255,226,170,0.20)'); gr.addColorStop(0.45, 'rgba(255,226,170,0.0)'); gr.addColorStop(0.7, 'rgba(20,10,4,0.20)'); gr.addColorStop(1, 'rgba(20,10,4,0.62)'); wx.fillStyle = gr; wx.fillRect(0, 0, 2048, 1536); }
+    wc.t.needsUpdate = true;
+    benchTop = add(new T.PlaneGeometry(200, 150).rotateX(-Math.PI / 2), std({ map: wc.t, roughness: 0.78 }), 4, -0.25, -4); benchTop.castShadow = false;
+    // the page's own small shadow, soft at the edge
+    const sc = canvasTex(512, 384); sc.x.shadowColor = 'rgba(0,0,0,0.55)'; sc.x.shadowBlur = 26; sc.x.fillStyle = 'rgba(0,0,0,0.5)'; sc.x.fillRect(40, 40, 432, 304); sc.t.needsUpdate = true;
+    const PWs = SW + (PGE.on ? PGE.ext : 0); const sh = add(new T.PlaneGeometry((PWs + 2) * 512 / 432, (SH + 2) * 384 / 304).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: sc.t, transparent: true, depthWrite: false }), (PGE.on ? -PGE.ext / 2 : 0) + 0.8, -0.2, 0.9); sh.castShadow = false; sh.receiveShadow = false;
+    scene.background = lin(0x1c1612);
+    if (BENCHV === 'a') { const cq = (() => { try { return (new URLSearchParams(root.location.search).get('cam') || '').split(',').map(Number); } catch (e) { return []; } })(), c = cq.length >= 4 ? cq : BCAM; LOOKAT.set(c[0], 0, c[1]); CAM.set(c[0], c[2] * Math.cos(c[3] * Math.PI / 180), c[1] + c[2] * Math.sin(c[3] * Math.PI / 180)); }
     else if (BENCHV === 'b') { CAM.set(CAM.x + 34, CAM.y * 1.12, CAM.z * 1.75); LOOKAT.x += 5; LOOKAT.z -= 1; }
-    else { CAM.set(CAM.x, CAM.y * 0.62, CAM.z * 2.7); LOOKAT.z -= 3; } }
+    else { CAM.set(CAM.x, CAM.y * 0.62, CAM.z * 2.7); LOOKAT.z -= 3; }
+    camDir.copy(LOOKAT).sub(CAM).normalize(); }
   // the title: the cover of the notebook, over everything until the first click or key (?title=0 leaves it out)
   const titleC = document.createElement('canvas'); titleC.className = 'veil'; app.append(titleC);
   const title = { on: (() => { try { return new URLSearchParams(root.location.search).get('title') !== '0'; } catch (e) { return true; } })(), out: 0, t0: 0, page: null, drawn: false };
@@ -2502,6 +2516,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let bl = 0, bp = null, rung = 0; m.sticks.forEach(q => { if (!q.vis || q.len == null || q.a.el === 'H' || q.b.el === 'H') return; const r = q.len / FL.L; if (q.rung) { rung = Math.max(rung, r); return; } if (r > bl) { bl = r; bp = [q.a.el, q.b.el]; } });
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; pts.forEach(p => { x0 = Math.min(x0, p.x - p.r); x1 = Math.max(x1, p.x + p.r); y0 = Math.min(y0, p.y - p.r); y1 = Math.max(y1, p.y + p.r); });
       return { ov: +ov.toFixed(3), ovH: +ovH.toFixed(3), op, bl: +bl.toFixed(3), bp, rung: +rung.toFixed(2), n: pts.length, box: [Math.round(x0), Math.round(x1), Math.round(y0), Math.round(y1)] }; },
+    speedAt: () => (BENCHV ? { x: -23.4, z: -13.2 } : null), keepClear: () => keepClear(),
     debugG: () => g, debugCenter: () => center, debugMorph2: () => morph, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, redrawPair: doPair, debugCoined: v => { meta.coined = !!v; dirty = true; }, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
     chooseBrief,
