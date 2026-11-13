@@ -6,6 +6,162 @@ Two files: `apps/steam/js/sfx.js` (effects, `AA.sfx`) and `apps/steam/js/music.j
 
 What the owner asked for (12 November): the sounds "aren't exciting enough"; "the building up needs to be way longer"; "I need the sound to be more majestic with the buildup to reactions building. It's a bit flat. Needs to hit the dopamine", leaning on "Drums and a riser"; "several sound tracks", funk as the main one, "the gothic hybrid just tweak it a little", "an edm one, a metal one, etc."; "I said several sound options and never got them".
 
+<!-- builder7 -->
+## 00. Builder 7 (13 November): one clock, one world
+
+The owner, late on 12 November: "I want the EDM soundtrack for sure but for everything", and, asked what the effects should be, "Sound matched to EDM". This section is the newest; where anything below disagrees with it, this wins.
+
+**Still nobody but the owner has listened.** Everything here was built and judged from measurements of offline renders. The numbers say what it measures, not that it sounds good.
+
+### 00.1 One clock
+
+- `AA.music.clock()` gives the tempo, the time of the next beat and of the next bar line (on the audio clock). Inside, the effects ask the music of their own audio context for its grid at every call (`beats(t0, t1, div)`): bars already written are exact, bars to come are worked out the way the music will write them. When no music with a beat plays, the effects keep a grid of their own at the round's tempo.
+- **The heartbeat** is a kick on the beat and its echo a sixteenth later; from half way up the build it also beats on the off-beat. It runs on between the arrows and leaves before the last hit (it stops 45% of the way through the last arrow).
+- **The snare roll** is on the grid: eighths, then sixteenths, then thirty-seconds as the build climbs.
+- **The riser** (white noise swept up, and on the last arrow two saws climbing) is not quantised: it ends on the hit, wherever the hit falls.
+- **The boom of a hit is on the hit.** When the arrow starts the effects tell the music when the hit will land; the music's drums and bass step back 24 dB around it, and the heartbeat leaves out any beat within 0.11 s of a hit. So a kick and a boom never land a few hundredths apart.
+- **One build, not two.** While build c is on with the synth palette (`AA.sfx.ownsBuild()`), the EDM track writes no snare roll, no kick and no riser of its own in a chain: the effects' are the build. The music keeps its pads (the filter opening), plucks, hats, the hammered chord and the bass. Without the effects (muted, another build, another style) the music plays its own build as before.
+- **Before the last hit** the kick is gone, the lows of the soundtrack are swept out (a high-pass on the music's bus, 20 to 420 Hz across the last arrow) and both stop for the held silence, which is the same silence: the music passes through the same gate.
+- **The drop.** Whichever of `AA.sfx.flag(4)` and `AA.music.state('overreact')` is called first says when the drop is (2.95 s after the call) and the other lands on it: the music's first bar of the drop starts on the very time the effects' impact is written.
+- Offline renders now call the effects when their time comes, between the music's bars, as the game does (they used to be written all at once before the music existed).
+
+### 00.2 The palette: synthesisers, in the soundtrack's key
+
+All made by our own code, as before; nothing downloaded.
+
+- **A hit**: a kick tuned to the chain chord's root (D, G, C, A) with a sub under it whose tail lengthens with the build and a low rumble in the hall; a short supersaw stab on root and fifth and a knock in the middle (what reads over the music and on a phone); a clap with a snare's body from the first step; a hiss and a white-noise crash that come in by degrees; one clink of lab glass.
+- **The one tone** is a supersaw lead (eight saws, three octaves). It is made on the first arrow and lives until the held silence before the last hit: it glides to each step's note (D, E, G, A), swells through each arrow, opens its filter as the build climbs and pumps on the beat. It is never started again.
+- **The thirteen kinds** are thirteen synth voices on D, E, G, A: a bell (lactol), falling hiss and a closing stab (enone), two square plucks there and back (taut), a driven low stab and a clang (weld), a rim shot and a blip (snap6), a gated supersaw chord (ether), a sliding saw lead (shift), a tuned tom (tuck), four plucks running up (knit), a thud and a falling zap (seal), a hard metal key (cap), rising hiss and a rising sine (open), a wide soft fifth (fold). Each is levelled by measurement. Glass is kept in three of them.
+- **OVERREACT**: 90 ms of silence; the strike, one blow past the limiter (kick, a sub falling an octave and a half, claps, hiss, D in seven octaves of supersaw snapping shut, glass breaking); the riser and the roll into the drop while the music holds its chord; a hole of a fifth of a second; the drop: the effects' impact (above 95 Hz only), crash, clap and D across the octaves on the same instant as the music's kick, sub and hook. **The pay-out is no longer glass and coins**: a gated arpeggio climbs in sixteenths on the music's grid with a stab on each beat, as long as the yield counts (rounded to whole bars), and lands on a bar line with the chord, a clap and a crash. A far clink of glass every half bar is all that is left of the lab.
+- **Low end**: at the strike the music has no kick or bass and is held 16 dB down; at the drop the effects stay above 95 Hz and the music's kick and sub have the bottom; in a chain the music's bass and drums step back around every hit. Table below.
+- **Rounds**: deeper in the run the heartbeat skips beats, the lead wavers, the boom sags and echoes off the beat, the clap flams, glass falls, the pay-out jumps octaves, a clap lands off the beat after the drop. Level is not raised.
+- `AA.sfx.palette('orch')` brings back builder 6's orchestra for build c (and the music's own build with it); `AA.sfx.palette('edm')` is the default. Not saved between sessions.
+
+### 00.3 Every screen
+
+In style 4 with the synth palette, the acts of the other screens are plucks, stabs, claps and sweeps in D. Each starts on the music's next sixteenth (at most about an eighth of a second after the call) and what follows inside it is counted in the music's sixteenths. Hover and click sound at once.
+
+| Act | What plays |
+| --- | --- |
+| title | a kick, a wide D chord, a crash, one high pluck a beat later |
+| runStart | a sweep up for a beat, then kick, clap and chord |
+| pick (a molecule) | a kick, a short chord, a pluck an eighth later |
+| fire (the line fires) | a kick on the grid and a sweep up out of it |
+| shopOpen | three plucks up, a clink of glass |
+| buy | a small kick and pluck, then a higher pluck with a clap and a coin far back |
+| cantBuy | two low square notes |
+| hover, click | a tiny high tick; a short pluck with a click |
+| redraw | hiss falling, two plucks |
+| roundWon | three plucks up to the beat, then kick, clap, crash and the D chord |
+| lost | four plucks falling, filter closing, a low note sinking |
+| runWon | G, A sus, D major, a beat each, an arpeggio running up out of it |
+| runLost | the lead falls and its filter closes onto a low D |
+| unlock | a sweep and four plucks up to a clap and chord, a flask ringing |
+| finding, creature, instrument | two plucks and glass; a wet low growl; a sweep into kick and chord |
+
+Left as they were (lab glass and bench sounds, as texture): a reagent set down (`queue`), a reagent landing (`strike`), `handoff`, the yield tick, runoff into its jar (`clink`), `gold`, `wasted`, the tremble, the room ambience.
+
+Checked in the 90 s walk (round 1): the quantised acts start within a few thousandths of a second of a grid point; pick, fire, buy, roundWon, shopOpen, cantBuy, click and hover were then set against the music by level. **Not rendered at all**: title, runStart, redraw, lost, runWon, runLost, unlock, finding, creature, instrument. Their levels are guesses from the acts that were.
+
+### 00.4 Measured
+
+The 9-step chain to OVERREACT over EDM, round 1. "Effects alone" is the same calls with the music silent (its clock still running).
+
+| Step (round 1, effects alone unless said) | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 (last) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Hit, dB | -25.1 | -21.0 | -21.6 | -18.9 | -18.8 | -18.5 | -16.5 | -17.0 | -12.1 |
+| Arrow, dB | -23.3 | -22.9 | -20.7 | -21.2 | -20.9 | -20.2 | -19.9 | -17.8 | -16.7 |
+| Centre of the hit, Hz | 872 | 614 | 553 | 1622 | 1017 | 1291 | 2134 | 3547 | 7169 |
+| Share of the hit over 2 kHz, % | 4.6 | 4.9 | 3.4 | 30.7 | 10.7 | 16.8 | 20.3 | 53.9 | 67.5 |
+| Share of the hit from 300 Hz to 2 kHz, % | 80.4 | 47.1 | 52.9 | 38.0 | 15.9 | 37.8 | 59.3 | 15.2 | 13.7 |
+| Hit lost through a phone speaker, dB | 0.8 | 3.1 | 2.3 | 2.0 | 3.5 | 2.2 | 1.1 | 1.0 | 1.8 |
+| Room under the hit, ducked, dB | 18.6 | 20.0 | 20.7 | 24.4 | 25.0 | 21.7 | 22.3 | 22.2 | 43.8 |
+| Room under the hit, un-ducked, dB | 4.2 | 9.1 | 7.8 | 9.9 | 10.6 | 9.3 | 10.7 | 10.1 | 15.1 |
+| Room under the arrow, ducked, dB | 11.9 | 14.4 | 15.2 | 14.8 | 16.8 | 14.8 | 15.0 | 16.6 | 19.5 |
+| Room under the arrow, un-ducked, dB | 4.1 | 7.0 | 8.8 | 7.7 | 8.3 | 7.9 | 7.5 | 9.5 | 10.6 |
+| Builder 6: share of the hit over 2 kHz, % | 1.0 | 1.5 | 2.1 | 3.7 | 5.7 | 12.3 | 11.6 | 16.1 | 24.8 |
+| Builder 6: hit lost through a phone speaker, dB | 9.4 | 8.0 | 7.7 | 7.7 | 7.4 | 5.8 | 5.6 | 4.0 | 3.0 |
+| Builder 6: room under the hit, un-ducked, dB | 2.9 | 3.4 | 3.4 | 3.7 | 5.2 | 5.2 | 6.0 | 6.0 | 13.0 |
+
+Every take:
+
+| Take | Rise, hit 1 to 8, dB | Steps 1 to 8, dB | Steps not louder | Last hit over hit 8, dB | First four hits lost on a phone, dB | Room under the first arrow, dB | Least room under a hit, ducked / un-ducked, dB | Held silence before the last hit, dB | Peak, dBFS | Clipped samples |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| round 1 | 8.1 | 4.1 -0.6 2.7 0.1 0.3 2.0 -0.5 | 2 | 4.9 | 0.8 3.1 2.3 2.0 | 11.9 | 18.6 / 4.2 | -70.5 | -0.12 | 0 |
+| round 5 | 8.6 | 3.5 -0.8 2.8 1.1 -0.4 2.0 0.4 | 2 | 4.1 | 1.4 5.0 1.8 2.5 | 7.8 | 18.2 / 1.3 | -69.3 | -0.06 | 0 |
+| round 9 | 9.6 | 6.0 -1.3 2.5 1.0 -0.8 2.5 -0.3 | 3 | 4.2 | 1.4 5.5 1.9 2.3 | 7.7 | 14.1 / 0.1 | -66.6 | -0.11 | 0 |
+| round 1, hot planning (the chain of 9 of the walk) | 8.5 | 3.0 0.1 1.3 2.1 0.0 1.7 0.3 | 1 | 3.5 | 3.1 3.4 2.3 1.4 | 7.0 | 15.4 / 1.7 | -68.2 | -0.1 | 0 |
+| builder 6, round 1 (before) | 8.0 | 1.2 1.3 0.5 1.5 1.0 1.5 1.0 | 0 | 6.2 | 9.4 8.0 7.7 7.7 | 6.9 | 14.7 / 2.9 | -63.8 | -0.35 | 0 |
+
+One clock:
+
+| Take | Heartbeats written | Furthest from the music's grid, ms | Music's bar line at the drop, ms from the effect's drop | Music's kick heard (30 to 100 Hz), ms after | Effect's impact heard (over 1 kHz), ms after | Gap, ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| round 1 | 21 | 0.4 | 0.0 | 22.1 | 10.1 | 12.0 |
+| round 5 | 19 | 0.5 | 0.0 | 22.3 | 10.2 | 12.2 |
+| round 9 | 22 | 0.4 | 0.0 | 22.4 | 10.2 | 12.2 |
+| round 1, hot planning (the chain of 9 of the walk) | 46 | 0.4 | 0.0 | 22.1 | 10.2 | 11.9 |
+| builder 6, round 1 (before) | 0 | None | 0.0 | 16.0 | -150.0 | 166.0 |
+
+OVERREACT:
+
+| Take | Silence before the strike, dB | Strike, first 100 ms, dB | Strike, 50 ms steps to 0.8 s, dB | Fallen after 300 ms, dB | The hole before the drop, dB | Second before the drop, dB | Drop, first 100 ms, dB | Drop, first 2 s, dB | Pay-out: effects / music, dB | 30 to 60 Hz at the strike: effects / music, dB | 30 to 60 Hz at the drop: effects / music, dB | LUFS, chain / drop |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| round 1 | -45.9 | -7.7 | -7.3 -8.2 -8.8 -14.2 -16.9 -18.3 -26.5 | -9.6 | -60.7 | -18.2 | -12.4 | -14.2 | -17.9 / -17.1 | -15.4 / -103.1 | -41.7 / -34.4 | -14.7 / -11.2 |
+| round 5 | -45.7 | -7.7 | -7.3 -8.1 -9.1 -14.0 -17.0 -18.4 -26.1 | -9.7 | -59.8 | -18.7 | -12.3 | -13.7 | -17.6 / -16.8 | -15.7 / -95.1 | -40.9 / -34.1 | -14.6 / -10.9 |
+| round 9 | -45.6 | -7.6 | -7.4 -7.8 -8.9 -14.7 -17.2 -18.3 -26.0 | -9.8 | -60.8 | -18.2 | -12.7 | -13.9 | -16.6 / -17.7 | -15.7 / -95.4 | -42.5 / -34.2 | -14.5 / -11.3 |
+| round 1, hot planning (the chain of 9 of the walk) | -47.3 | -7.6 | -7.0 -8.3 -10.0 -14.0 -17.5 -19.1 -27.1 | -10.5 | -61.2 | -18.5 | -12.7 | -13.9 | -17.7 / -16.6 | -15.9 / -103.4 | -44.9 / -36.6 | -14.4 / -11.3 |
+| builder 6, round 1 (before) | -41.2 | -5.7 | -5.5 -5.9 -7.2 -7.7 -10.9 -14.5 -18.7 | -5.4 | -12.5 | -13.0 | -10.6 | -10.5 | -10.5 / -23.9 | -12.2 / -92.4 | -21.1 / -24.6 | -17.2 / -9.8 |
+
+The thirteen kinds, mean and smallest difference of their level-normalised third-octave spectra, dB (alone: mean, closest (19.2, 5.8); in a step-6 hit: mean, closest (10.0, 1.1)). Wanted: at least 9.4 in a step-6 hit.
+
+What the numbers say, and do not:
+
+- **One clock**: every heartbeat was written within half a millisecond of the music's grid (the half millisecond is the rounding of the bar log). The drop: the music's bar line and the effects' impact are written on the same time (0.0 ms apart). In the sound, the music's kick passes 10% of its level 22 ms after that time and the effects' impact 10 ms after: 12 ms apart, under the 20 asked for, but the two are measured in different bands (a kick's body rises slower than noise), and about 6 ms of both is the limiter's own delay. Whether the heartbeats are on the grid *in the sound* could not be measured cleanly (a low thump has no sharp start); it rests on the written times.
+- **The first hits**: 3 to 5% of the first hits is over 2 kHz in round 1 (it was 1 to 2%), and 47 to 80% is between 300 Hz and 2 kHz. Each of the first four hits loses 0.8 to 5.5 dB on a phone (it was 7.7 to 9.4): under 6 in every take. Un-ducked, the first hit is 4.2 dB over the music in round 1 but only 0.1 to 1.7 dB over it in round 9 and after hot planning: the first hit still leans on the duck there.
+- **Brightness and size still climb, but not evenly.** The rise from hit 1 to hit 8 is 8.1 to 9.6 dB. One to three of the seven steps in each take are flat or slightly down (by 0.3 to 1.3 dB): each kind's own voice is now loud enough to be told apart, and it sets the level and the brightness of its step more than the step does. Builder 6's climb was even; its kinds were buried. This is a trade and the owner should hear it.
+- **The first arrow** has 7.0 to 11.9 dB of room (asked: 6).
+- **The last hit is 3.5 to 4.9 dB over the hit before** (asked: 6; builder 6: 6.2). Not reached: the blow is already at its ceiling and the ordinary hits were kept up for the sake of room.
+- **The strike is a blow**: 10 dB down 300 ms after it starts, 19 dB down after 800 ms (builder 6: 5 and 13). It is 1.6 to 2 dB quieter at its top than builder 6's (-7.7 against -5.7 dB): driven harder the two ceilings clipped.
+- **The drop** is 4 to 5 dB over the second before it and comes out of a hole at -60 dB. It is quieter overall than builder 6's (-11 against -9.8 LUFS): the glass, coins, brass and drums that filled it are gone, and the music's own drop is what plays. The pay-out's arpeggio is level with the music (within 1 dB). Whether that reads as a reward or as thin is unheard.
+- **Low end**: from 30 to 60 Hz the effects are alone at the strike (the music 80 dB under) and 7 to 8 dB under the music at the drop.
+- **Clipping**: see the table; the last change (the bus opening more slowly behind the last hit) was made to remove one to three clipped samples 0.22 s after the last hit.
+- **Kinds**: the mean distance in a step-6 hit meets the 9.4 asked; the closest pair is only about 1 dB apart in this measure, so at least two kinds are near twins inside a hit (alone, the closest pair is 5.8 dB apart).
+
+### 00.5 Calls (new or changed)
+
+```
+AA.music.clock()            // { bpm, spu (seconds a sixteenth), upb, beat, bar, state } or null
+AA.sfx.ownsBuild()          // true while the effects make a chain's roll, kick and risers (the music then leaves its own out)
+AA.sfx.palette('edm'|'orch')// the palette of build c; 'edm' by default
+AA.sfx.arrow(n, ms, { last, of, gap })   // unchanged, and now more important: `of` and `gap` let the heartbeat and the tone be written up to the next arrow
+AA.music.step(n, of)        // unchanged
+```
+
+Order does not matter between `AA.sfx.flag(4)` and `AA.music.state('overreact')`, but both must be called within the same moment (the drop is 2.95 s after the first of them).
+
+### 00.6 Not done, and what failed
+
+- Nobody has listened. The synth voices are oscillators through filters, written blind: whether the lead reads as a club lead or as a toy, whether the claps are claps, whether the kinds are pleasant, is unheard.
+- The last hit is under 6 dB over the hit before; some steps of the climb are flat; un-ducked, the first hit is level with hot music (all above).
+- The heartbeat is quantised only if the page passes `gap` or the arrows come at a steady pace; a hit that comes later than its arrow said lands where the page puts it, and the heartbeat's gap around it was cut for the time the arrow gave.
+- In rounds 5 to 9 the music's tempo drifts inside a section; the effects follow bars not yet written by working them out, and a bar that starts a new section could be off by a few milliseconds. Not measured beyond the heartbeats above (0.5 ms at rounds 5 and 9).
+- Only EDM answers the effects (leaves out its own roll, kick and riser; ducks drums and bass around a hit). Over funk, gothic, metal, surf and baroque the effects still follow the grid, but both builds play.
+- A live game was not run: the page's order and timing of calls, live CPU (the lead is nine oscillators for the length of a chain; a hit is about forty short voices), and the half-second look-ahead of the live music clock were not checked.
+- Ten acts were never rendered (00.3). `queue`, `strike`, `clink`, `gold` and the rest of the bench sounds are still builder 4's lab sounds.
+- Tried and dropped: both blows driven as hard as builder 6's (the sum of the two ceilings clipped by 1.2 dB); the kinds at half the level of the hit's drums (mean distance 5.2 dB: they could not be told apart); a heavy sub on every hit (9 to 12 dB lost on a phone); letting `ac()` resume an offline render (the first arrow of every render went missing).
+
+### 00.7 Clips (builder 7)
+
+In `C:\Work\atlas-atoms\.claude\shots` (960-wide copies under `small\`, a two-line `.txt` beside each). Every clip is effects and EDM together.
+
+- `snd7-01-one-clock.mp4`: a 9-step chain to OVERREACT, (1) as builder 6 left it, (2) now.
+- `snd7-02-overreact-drop.mp4`: three OVERREACTs: rounds 1, 5 and 9.
+- `snd7-03-a-round.mp4`: about 90 s: planning over three turns, chains of 3, 5 and 9, the drop, round won, shop, with the acts of the screens.
+- `snd7-04-kinds.mp4`: the thirteen kinds, each at step 6 of 9, over EDM.
+
+<!-- /builder7 -->
+
 <!-- builder6 -->
 ## 0. Builder 6 (12 November, late): the owner's two picks, finished
 

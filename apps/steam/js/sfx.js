@@ -929,7 +929,7 @@ function hall4() {
 }
 // past the limiter and the bus, through its own soft clip with a ceiling of -1.5 dB: only the blow of OVERREACT goes this way, so it can stand far over everything before it
 // two of them, the low voices and the bright ones, each with its own ceiling (-5.4 and -8.1 dB, -0.6 dB together), so the thump does not grind the glass
-function dir4(lo) { const k = lo ? 'dirLo' : 'dir'; if (!SB[k]) { const w = C.createWaveShaper(), out = C.createGain(); w.curve = softCurve(); w.oversample = EDM7 ? 'none' : '2x'; out.gain.value = (lo ? 0.55 : 0.40) * (EDM7 ? 0.94 : 1);   /* the synth blows drive the shapers squarer; oversampled, their filters overshot full scale (+1.3 dB), so for the synth palette the two ceilings are plain */ SB[k] = C.createGain(); SB[k].connect(w); w.connect(out); out.connect(C.destination); } SB[k].gain.value = 1.3 * SLV * level(); return SB[k]; }
+function dir4(lo) { const k = lo ? 'dirLo' : 'dir'; if (!SB[k]) { const w = C.createWaveShaper(), out = C.createGain(); w.curve = softCurve(); w.oversample = EDM7 ? 'none' : '2x'; out.gain.value = (lo ? 0.55 : 0.40) * (EDM7 ? 0.9 : 1);   /* the synth blows drive the shapers squarer; oversampled, their filters overshot full scale (+1.3 dB), so for the synth palette the two ceilings are plain */ SB[k] = C.createGain(); SB[k].connect(w); w.connect(out); out.connect(C.destination); } SB[k].gain.value = 1.3 * SLV * level(); return SB[k]; }
 // play one made instrument. o: i (instrument), m (note), t, g, pan, rev (hall send), bed (the ducked bus), det (cents),
 // gl [from cents, to cents, seconds, delay] (a slide), lp/lp1/lpt, hp, bp/bq, vib (cents), trem { f, d }, strict (no looseness);
 // held tones: dur, a (attack), r (release), ax (swell in from nothing), g1 (level at the end, times g), cut (stop dead), wide;
@@ -1483,7 +1483,7 @@ function lead7(t, n, d, u, last, end, gap) {
     [[-19, -0.7, 0, 1], [-7, -0.3, 0, 1], [0, 0, 0, 1.1], [8, 0.35, 0, 1], [18, 0.7, 0, 1], [-11, 0.5, 1200, 0.55], [12, -0.5, 1200, 0.55], [3, 0, -1200, 0.5]].forEach(q => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.value = mf(45); o.__d = q[0] + q[2]; o.detune.setValueAtTime((L.note - 45) * 100 + o.__d, t); L.vg.connect(o.detune); g.gain.value = q[3] * 0.38; o.connect(g);
       if (HASPAN) { const p = c.createStereoPanner(); p.pan.value = q[1]; g.connect(p); p.connect(L.f); } else g.connect(L.f); o.start(t); L.os.push(o); });
   }
-  const gA = (0.15 + 0.13 * u) * C7LEAD, fq = 650 * Math.pow(2, 3.4 * u), gp = L.g.gain, fp = L.f.frequency;
+  const gA = (0.2 + 0.1 * u) * C7LEAD, fq = 650 * Math.pow(2, 3.4 * u), gp = L.g.gain, fp = L.f.frequency;
   L.os.forEach(o => { if (o.__d === undefined) return; o.detune.cancelScheduledValues(t); o.detune.setTargetAtTime((to - 45) * 100 + o.__d, t, Math.min(d, end) * 0.28); }); L.note = to;
   gp.cancelScheduledValues(t); fp.cancelScheduledValues(t); gp.setTargetAtTime(gA * (last ? 1.6 : 1), t, d * 0.35); fp.setTargetAtTime(fq * 2.4, t, d * 0.4);
   if (last) { gp.setTargetAtTime(0, t + end - 0.012, 0.004); L.dead = t + end; }
@@ -1497,7 +1497,7 @@ function arrE(t, n, d, u, last, gap) {
   if (e && e.fxHit) { try { e.fxHit(tH); } catch (x) { /* the music is not EDM */ } }
   lead7(t, n, d, u, last, end, gap);
   // the riser: white noise swept up into the hit, stopping dead on it; wider and brighter each step
-  [-0.6, 0.6].forEach(pan => n7({ t, ft: 'bandpass', f: 350 + 500 * u, f1: 2200 + 9000 * u, fT: end, q: 0.9, g: (0.36 + 0.3 * u) * (last ? 1.5 : 1), a: end * 0.97, ax: true, d: Math.max(0.006, end * 0.03), cut: true, pan, hall: 0.2 }));
+  [-0.6, 0.6].forEach(pan => n7({ t, ft: 'bandpass', f: 350 + 500 * u, f1: 2200 + 9000 * u, fT: end, q: 0.9, g: (0.52 + 0.2 * u) * (last ? 1.5 : 1), a: end * 0.97, ax: true, d: Math.max(0.006, end * 0.03), cut: true, pan, hall: 0.2 }));
   // the roll, on the grid: eighths, then sixteenths, then thirty-seconds as the build climbs; each stroke a little higher
   if (n >= 2 || last) { const div = last || u >= 0.75 ? 0.5 : u >= 0.35 ? 1 : 2; grid7(t, t + end - 0.03, div).forEach(x => { const k = (x.t - t) / end; snr7(x.t, (0.1 + 0.34 * u) * (0.35 + 0.65 * k * k) * (x.u % 4 === 0 ? 1.15 : 1), 55 + 7 * u + (last ? 9 : 5) * k, { pan: (x.u * 2) % 2 ? 0.15 : -0.15, d: div < 1 ? 0.035 : 0.06 }); }); }
   // the heartbeat, on the beat: a kick and its echo a sixteenth later; from half way up it beats on the off-beat too. It runs on
@@ -1528,9 +1528,9 @@ function hitE(t, n, u, last, tNA, tNH) {
   if (!last) crash7(t, 0.6 * br * u, 0.5 + 1.3 * u, { pan: 0.25 });
   R5('clink', safeUp(88 + (n % 5) * 2), t, 0.2, { pan: n % 2 ? 0.5 : -0.5, rev: 0.3 });   // lab glass, kept as texture
   if (last) {   // the tail of the last hit, on the bus as it opens behind the blow
-    kick7(t, fr, 0.9, { d: 0.5, top: 5 }); v7({ t, f: fs * 2, f1: fs, ft: 0.1, g: 0.9, a: 0.003, h: 0.1, d: 1.6, sat: 1.5 });
-    crash7(t, 1.3, 2.4, { pan: 0.3 }); crash7(t + 0.01, 0.9, 1.8, { pan: -0.3, f: 3500 }); clap7(t, 1.2, { d: 0.3 }); clap7(t + 0.07, 0.6, { d: 0.2, pan: 0.3 });
-    saw7(t, [38, 50, 57, 62, 69, 74], 1.5, { h: 0.5, d: 1.4, a: 0.006, lp: 7000, lp1: 900, lpt: 1.4, n: 3, sp: 18, w: 0.5, hall: 0.5 });
+    kick7(t, fr, 1.1, { d: 0.5, top: 5 }); v7({ t, f: fs * 2, f1: fs, ft: 0.1, g: 1.1, a: 0.003, h: 0.1, d: 1.6, sat: 1.5 });
+    crash7(t, 1.6, 2.4, { pan: 0.3 }); crash7(t + 0.01, 1.1, 1.8, { pan: -0.3, f: 3500 }); clap7(t, 1.5, { d: 0.3 }); clap7(t + 0.07, 0.6, { d: 0.2, pan: 0.3 });
+    saw7(t, [38, 50, 57, 62, 69, 74], 1.9, { h: 0.5, d: 1.4, a: 0.006, lp: 7000, lp1: 900, lpt: 1.4, n: 3, sp: 18, w: 0.5, hall: 0.5 });
     R5('shatter', NO, t + 0.06, 0.6, { dur: 0.5, r: 0.4, rev: 0.4, hp: 1500 });
   }
   // deeper rounds: the boom echoes off the beat, a flam on the clap, glass falls
@@ -1612,6 +1612,8 @@ function overE(t0, o) {
 // ---- the other screens and acts in the same world: plucks, stabs, claps and sweeps in D, starting on the music's next sixteenth
 // (never more than an eighth of a second late); what follows in each is counted in the music's sixteenths. Hover and click are at once. ----
 const A7 = f => (t, a) => f(q7(t, 1), spu7(), a);
+// each act's level against the others, set from a walk through a round over the soundtrack (the acts not in that walk are set by their likeness to those that are)
+const A7G = { fire: 0.65, pick: 0.5, title: 0.6, runStart: 0.6, instrument: 0.7, roundWon: 2.4, runWon: 2, click: 2, hover: 4, unlock: 1.3, lost: 1.5, runLost: 1.5 };
 const up7 = (t, d, g) => n7({ t, ft: 'bandpass', f: 600, f1: 8000, fT: d, g, a: d * 0.97, ax: true, d: 0.012, cut: true, hall: 0.2 });
 const ACTS7 = {
   title: A7((t, s) => { kick7(t, 55, 0.9, { d: 0.4 }); saw7(t, [38, 50, 57, 62, 69], 0.9, { a: 0.005, h: 0.3, d: 1.2, lp: 6000, lp1: 900, lpt: 1.5, hall: 0.6, w: 0.5 }); crash7(t, 0.35, 1.8); pl7(t + 4 * s, 74, 0.4, { hall: 0.5 }); }),
@@ -1645,16 +1647,16 @@ function arrow5(n, ms, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? (EDM7 ? 0.36 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
+  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? (EDM7 ? 0.3 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
   try { (BLD === 'b' ? arrB : BLD === 'c' ? (EDM7 ? arrE : arrC) : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), last = !!o.last, kd = kindOf(kind), had = b.n === n && t - b.la < 3, tNA = had ? b.la + b.gap : t + Math.max(0.5, b.gap * 0.91) - b.d, tNH = tNA + b.d;
   if (o.of) b.of = o.of | 0; const u = u5(n, b.of);
-  const c = BLD === 'c'; if (c) { duck(t, 0.25, 0.5, 0.2); if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? C5LAST : C5HIT * dB(-C5RISE * (1 - u))) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? (EDM7 ? 5 + 6 * u : 1 + 8 * u) : 2 + 9 * u);
+  const c = BLD === 'c'; if (c) { duck(t, 0.25, 0.5, 0.2); if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); if (EDM7) { bp.linearRampToValueAtTime(0.3, t + 0.18); bp.linearRampToValueAtTime(0.85, t + 0.32); } else { bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); } bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? C5LAST : C5HIT * dB(-C5RISE * (1 - u)) * (EDM7 ? 0.84 : 1)) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? (EDM7 ? 5 + 6 * u : 1 + 8 * u) : 2 + 9 * u);
   try { (BLD === 'b' ? hitB : BLD === 'c' ? (EDM7 ? hitE : hitC) : hitA)(t, n, u, last, tNA, tNH);
     // the kind keeps its own voice on top of the drums, climbing D, E, G, A
-    if (c && EDM7) { G4 *= K7G; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 3500 * Math.pow(2, 1.9 * u); lp.connect(shelf5(2)); OUT4 = lp; (K7[kd] || K7.lactol)(t, mel5(n) + 12, 0.7 * (KLV7[kd] || 1), 0); return; }
+    if (c && EDM7) { G4 *= last ? 1 : K7G; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 3500 * Math.pow(2, 1.9 * u); lp.connect(shelf5(2)); OUT4 = lp; (K7[kd] || K7.lactol)(t, mel5(n) + 12, 0.7 * (KLV7[kd] || 1), 0); return; }
     if (c) { G4 *= 0.38; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 700 * Math.pow(2, 3.4 * u); lp.connect(shelf5((KSH4[kd] || 0) + 2)); OUT4 = lp; }   // the kind's top opens with the build, so the step sets the brightness
     else { G4 *= 0.6; OUT4 = shelf5((KSH4[kd] || 0) + 2 + 6 * u); } (K4[kd] || K4.lactol)(t, mel5(n) + 12, 0.7 * (KLV4[kd] || 1), 0);
   } finally { G4 = 1; OUT4 = null; }
@@ -1699,7 +1701,7 @@ function sty(name, args) {
   if ((name === 'reflex' || name === 'ring') && S.step) { S.step(name === 'ring' ? 'lactol' : args[0], Math.max(1, Math.round(name === 'ring' ? args[0] : args[1]) || 1), name === 'ring' ? {} : args[2]); return true; }
   if (name === 'reflex' || name === 'ring') { stepLayers(S, name === 'ring' ? 'lactol' : args[0], name === 'ring' ? args[0] : args[1], name === 'ring' ? {} : args[2]); return true; }
   if (name === 'ambience') { ambience(args[0], args[1]); return true; }
-  if (STY === 4 && EDM7 && ACTS7[name]) { const t = begin(); if (t == null) return true; G4 = name === 'fire' ? 0.6 : ACT4; try { ACTS7[name](t, args[0]); } finally { G4 = 1; OUT4 = null; } return true; }
+  if (STY === 4 && EDM7 && ACTS7[name]) { const t = begin(); if (t == null) return true; G4 = ACT4 * (A7G[name] || 1); try { ACTS7[name](t, args[0]); } finally { G4 = 1; OUT4 = null; } return true; }
   if (STY === 4 && ACTS[name] && !ACTS4[name]) return true;
   if (STY === 4 && ACTS4[name]) { const t = begin(); if (t == null) return true; G4 = ACT4; try { ACTS4[name](t, args[0]); } finally { G4 = 1; } return true; }
   if (ACTS[name]) { const t = begin(); if (t == null) return true; G4 = ACT4; try { ACTS[name](STY === 2 && ARCV ? PAL.d : PAL[STY], t, args[0]); } finally { G4 = 1; } return true; }
