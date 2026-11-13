@@ -2905,6 +2905,16 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const scan = (x0, y0, w, h, depth, name) => { if (w <= 0 || h <= 0) return; const d = ink.x.getImageData(x0, y0, w, h).data; for (let j = 0; j < h; j += 2) for (let i = 0; i < w; i += 2) { const o4 = (j * w + i) * 4, r = d[o4], gg = d[o4 + 1], b = d[o4 + 2]; if (d[o4 + 3] <= 60 || (Math.min(r, gg, b) > 185 && Math.max(r, gg, b) - Math.min(r, gg, b) < 45)) continue; /* paper laid over a page is not ink */ const dp = depth(i, j); if (dp > worst) { worst = dp; wx = x0 + i; wy = y0 + j; why = name; } } };
     scan(gx0, ty, gx1 - gx0, by - ty, (i, j) => Math.min(i + 1, gx1 - gx0 - i), 'crease'); scan(rx, ty, IW - rx, by - ty, (i, j) => i + 1, 'right edge'); scan(0, 0, IW, ty, (i, j) => ty - j, 'top edge'); scan(0, by, IW, pb - by, (i, j) => j + 1, 'foot');
     INKW.frames++; const w = +(worst * K).toFixed(1); if (w > 0.9) { INKW.bad++; { const key = st.mode + ':' + why, o = INKW.by[key]; if (!o || w > o[0]) INKW.by[key] = [w, +(wx / U - SW / 2).toFixed(1), +(wy / U - SH / 2).toFixed(1)]; } if (w > INKW.worst) { INKW.worst = w; try { const cc = document.createElement('canvas'); cc.width = 400; cc.height = 400; const c2 = cc.getContext('2d'); c2.fillStyle = '#fff'; c2.fillRect(0, 0, 400, 400); c2.drawImage(ink.cv || ink.x.canvas, wx - 400, wy - 400, 800, 800, 0, 0, 400, 400); INKW.img = cc.toDataURL('image/jpeg', 0.6); } catch (e) { INKW.img = String(e); } INKW.at = { mode: st.mode, why, x: +(wx / U - SW / 2).toFixed(1), z: +(wy / U - SH / 2).toFixed(1), round: run && run.round }; } } }
+  // (builder 13) LIFE ON THE BENCH that is not the molecule: everything along the top turns a little toward the molecule while a line runs (a spring, so it
+  // overshoots and settles), is jogged by every hit, and shifts slowly while nothing happens; the lamp's light breathes. The molecule is never touched here.
+  const LIFE = { yaw: 0, v: 0, casc: 0, sun0: null, hemi: null, hemi0: 0 };
+  function lifeFrame(now, dt) { if (!BENCHV) return; dt = Math.min(0.05, dt || 0.016); const busy = !!st.firing && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'), tg = busy ? 1 : 0, cn = (g && g.casc) || 0;
+    if (cn !== LIFE.casc) { if (cn > LIFE.casc) LIFE.v += 2.6 * (cn % 2 ? 1 : -1); LIFE.casc = cn; }
+    LIFE.v += (38 * (tg - LIFE.yaw) - 5.2 * LIFE.v) * dt; LIFE.yaw += LIFE.v * dt; const moving = Math.abs(LIFE.v) > 0.004 || Math.abs(tg - LIFE.yaw) > 0.002;
+    const turn = (grp, x, ph, amt) => { if (!grp) return; grp.rotation.y = Math.atan2(15 - x, 22) * 0.55 * LIFE.yaw * amt + 0.035 * Math.sin(now / (2300 + 370 * ph) + ph * 1.7) + 0.02 * Math.sin(now / (5100 + 200 * ph) + ph); };
+    kitObjs.forEach((k, i) => turn(k.grp, k.hx || 0, i + 1, k.id === 'duck' ? 1.3 : 0.6)); JARK.forEach((k, i) => { if (jars[k] && jars[k].grp) turn(jars[k].grp, jars[k].grp.position.x, i + 5, 1); }); if (homObj && homObj.grp) turn(homObj.grp, homObj.grp.position.x, 9, 1.2);
+    if (!title.on) { if (LIFE.sun0 == null) { LIFE.sun0 = sun.intensity; scene.children.forEach(c => { if (c.isHemisphereLight && !LIFE.hemi) { LIFE.hemi = c; LIFE.hemi0 = c.intensity; } }); } const br = 0.028 * Math.sin(now / 1900) + 0.012 * Math.sin(now / 430 + 1.3) + 0.05 * Math.max(0, LIFE.yaw); sun.intensity = LIFE.sun0 * (1 + br); if (LIFE.hemi) LIFE.hemi.intensity = LIFE.hemi0 * (1 + 0.5 * br); }
+    if (moving || st.mode === 'play' || st.mode === 'brief' || st.mode === 'pick' || st.mode === 'done') LIFE.wake = true; }
   const FITW = { frames: 0, bad: 0, worst: 0, at: null };
   function fitWatch() { const m = center; if (SHAPE !== 'a' || !m || !(st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') || title.on || (FEEL && FEEL.twistState && FEEL.twistState().ang > 0.01)) return; m.group.updateMatrixWorld(true); const v = _iv, w = _iw, right = _ir.setFromMatrixColumn(cam.matrixWorld, 0), sxOf = (x, z) => { w.set(x, 0, z).project(cam); return (w.x + 1) * 640; }, syOf = z => { w.set(15, 0, z).project(cam); return (1 - w.y) * 360; }; let over = 0;
     const yT = syOf(SAFE.R.z0), yB = syOf(TRK.z - 1.9); m.balls.forEach(b => { if (!b.mesh.visible) return; b.mesh.getWorldPosition(v); const wz = v.z, rw = b.mesh.scale.x * m.group.scale.x; w.copy(v).addScaledVector(right, rw).project(cam); const ex = (w.x + 1) * 640; v.project(cam); const sx = (v.x + 1) * 640, sy = (1 - v.y) * 360, rr = Math.abs(ex - sx); over = Math.max(over, sxOf(SAFE.R.x0, wz) - (sx - rr), (sx + rr) - sxOf(SAFE.R.x1, wz), yT - (sy - rr), (sy + rr) - yB); });
@@ -3284,7 +3294,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     stepParts(dt);
     marginBusyE(now);
     if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; if (INKW.on) inkWatch(); }
-    keepSeen(); fitWatch(); bottleFrame(now, dt); goldFrame(now, dt); cupFrame(now);
+    keepSeen(); fitWatch(); bottleFrame(now, dt); goldFrame(now, dt); cupFrame(now); try { lifeFrame(now, dt); } catch (e) { /* idle life never breaks a frame */ }
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
