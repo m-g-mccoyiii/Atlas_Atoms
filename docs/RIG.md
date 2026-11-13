@@ -101,6 +101,53 @@ N, S and Cl doing things by themselves, share of all reflex steps in the three r
 2. More N, S and Cl molecules in rounds 1 to 3 of the long runs too. (a) No, as built. (b) Yes (the marks of part 1 then need fitting again).
 3. Chlorine. (a) Leave it as a thing seen on molecules. (b) Swap one starting reagent for chlorination (the sweep had it at +1.5 to +3.9 points of win rate). (c) Give the Cl reflex a wider reach.
 
+### 3. The ten homunculi, second design ("reward gameplay not averages")
+
+What each one is now is in `docs/HOMUNCULI.md` (one table). In short: a homunculus is lit by how the page was played, not by a count; the player taps it; each asks for something back. Built in `path.js` behind `RULE.homs2` (on; the old ten come back with it off), amounts in `HOMS2K`. A test job in the game (`.claude/headless/jobs/homs2.js`) passes 117 of 117 cases and found no difference between the game's "lit" and the rule on 57,344 pages. That was before the last change of amounts and of the Wood spirit (last page only); the job has to be brought up to those and run again.
+
+Each alone, the player who reads every line, 300 nine-round runs each on the same deals, every round played, the rule of part 1. The win rate is the nine round rates multiplied (a round carries nothing to the next). "No creature" wins 0.54 in 100.
+
+| Creature | The page that lights it comes up, share of pages | Tapped, share of rounds | Wins nine, of 100 | Against none | Yield times | The line was chosen for it, share of pages | The line of play it makes best |
+|---|---|---|---|---|---|---|---|
+| Hydrogen | 31 | 61 | 1.37 | 2.5 times | 1.75 | 5 | oxidize put last, and a big page after it |
+| Ammonia | 43 | 55 | 1.18 | 2.2 | 1.41 | 22 | the nitrogen reagent in the line: fired in 37 of 100 hands, not 23 |
+| Dry ice | 21 (the last page of 6 rounds in 10) | 59 | 1.14 | 2.1 | 1.28 | 23 | a round played with few reagents; hydrate and dehydrate left shut more often |
+| Salt | 14 | 31 | 1.07 | 2.0 | 1.29 | 11 | page two repeats page one |
+| Acid | 22 | 51 | 0.94 | 1.7 | 1.19 | 13 | cutting pages: grow fired in 69 of 100 hands, not 74 |
+| Seedling | 44 | 73 | 0.93 | 1.7 | 1.22 | 12 | growth every page; dehydrate fired 56, not 60 |
+| Water | 23 (some water comes off on 85) | 40 | 0.91 | 1.7 | 1.17 | 11 | dehydrate fired 64, not 60: set up OH and dry it in one page |
+| Brimstone | 14 | 16 | 0.77 | 1.4 | 0.94 | 5 | the sulfur reagent fired 19, not 13; the round cut short when that clears it |
+| Slime | 6 | 14 | 0.68 | 1.3 | 1.11 | 3 | three reagents that each set something off |
+| Wood spirit | 13 | 20 | 0.60 | 1.1 | 1.02 | 5 | a dud lined up last on the last page |
+| none | | | 0.54 | | 1 | | |
+
+The Seedling no longer rules: it was 5.4 times the yield in 93 of 100 rounds; it is 1.2 times. No creature is dead. Two are weak as built: the Wood spirit (his pour in the deal's order is seldom better than a third reagent chosen) and the Slime (its page comes up 6 times in 100).
+
+**Pairs and triples** (all 45 and all 120, 40 nine-round runs a set: enough for the averages, too few to rank two sets near each other):
+
+| Held | Wins nine, of 100, average | Lowest set | Highest set |
+|---|---|---|---|
+| none | 0.54 | | |
+| one | 0.95 | 0.60 | 1.37 |
+| two | 1.68 | 1.03 | 2.56 |
+| three | 2.10 | 1.22 | 3.35 |
+
+- This is the curve of win rate against helpers held, for the creatures alone: each one more adds about half again. Instruments and sigils are not in it.
+- No creature is in every top set. The five best pairs are Salt with Ammonia, Water with Ammonia, Hydrogen with Dry ice, Acid with Ammonia, Acid with Salt. Every pair and triple beat the better of its members alone.
+- Pairs that did more than their two parts multiplied: Wood spirit with Ammonia (1.77 against 1.30: when he pours the nitrogen reagent the line fires again), Acid with Brimstone (1.82 against 1.35), Acid with the Wood spirit (1.52 against 1.04), Water with Ammonia (2.48 against 1.98: six pours make four waters).
+- Sets that got in each other's way: Seedling with Ammonia and Slime or Wood spirit (1.2 to 1.3: growing every page fights firing the line again).
+- Nothing ran away: the best triple wins 3.4 in 100.
+
+**Limits.** The simulated player taps for what it can see on the page; it does not plan a round around a creature, so Dry ice, Salt and the Seedling are worth more to a person than shown. In the game's own rig the players do not yet weigh a tap when they choose a line. Twelve full runs a creature were played in the game and none threw; they were cut at 60 seconds by a busy machine, so the game's own rates are not measured.
+
+**Choices for the owner**
+
+1. How big one creature should be. (a) As built: one creature about doubles the odds of a nine-round win (0.5 to about 1 in 100), three make it 2 to 3. (b) Bigger: every amount up by half, then measure again. (c) Smaller.
+2. The Wood spirit. (a) As built: last page only, weak alone, good with Ammonia and Acid. (b) He also pays: yield times 1.5 when he pours. (c) He may pour on any page (measured: that loses rounds, because he empties the bottles).
+3. The Slime. (a) As built: rare and strong (2.5 times). (b) Easier to light: any two of the three reagents setting something off. (c) Another trick for it.
+4. Brimstone. (a) As built: a safety net, it ends a round that is already won on the task. (b) Let it be tapped at any time for the gamble.
+5. What a creature brings. (a) Nothing: drop the old rule that the Wood spirit, Slime, Ammonia and Brimstone each add a reagent to the run. (b) Keep it.
+
 ## The measure of 2026-11-12, tenth: the fold, molecules v2, the opening, oxidize
 
 Measured headless, awaiting review. Commits e2e9c8a (fold), d2d2d3c (across paid as two), affcf72 (molecules v2), the Par and scale commits, 97e4eec (review fixes). Tools: `tools_foldpar.py`, `tools_mol2_bake.py`, jobs `foldpar.js`, `foldx.js`, `locks.js`, `oxbest2.js`.
