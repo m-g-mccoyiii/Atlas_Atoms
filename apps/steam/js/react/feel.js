@@ -287,6 +287,7 @@ function snapPlan(o, nm, prev) {
   const S = F.seq; if (!S || !SNAPQ || !o.map || !prev || !prev.model || !nm.model) return;
   const has = new Map(); nm.model.bonds.forEach(b => { [[b.a, b.b], [b.b, b.a]].forEach(q => { if (!has.has(q[0])) has.set(q[0], new Map()); has.get(q[0]).set(q[1], b.order || 1); }); });
   const list = []; prev.model.bonds.forEach(b => { const a2 = o.map.get(b.a), b2 = o.map.get(b.b); if (!a2 || !b2 || a2.el === 'H' || b2.el === 'H' || !nm.balls.has(a2) || !nm.balls.has(b2)) return; const was = b.order || 1, is = (has.get(a2) && has.get(a2).get(b2)) || 0; if (is >= was) return;
+    if (is > 0) return; /* a double bond going single is drawn single at once: its second line is not kept through the step, where it read as a double bond on the atom arriving (C=S-H) */
     const pa = prev.at.get(b.a), pb = prev.at.get(b.b), L0 = pa && pb ? pa.distanceTo(pb) : 1.5; list.push({ m: nm, a: a2, b: b2, e: bondE(a2.el, b2.el, was, was - is), part: is > 0, L0, t0: now(), casc: !!o.casc, stick: null }); });
   if (list.length) S.snaps = (S.snaps || []).concat(list.slice(0, 4));
 }
@@ -871,7 +872,8 @@ function seeK(morph, K) { for (let i = SEE.list.length - 1; i >= 0; i--) { const
 function seeHit(t) { let e = null; SEE.list.forEach(q => { if (!q.strike && !q.tHit) e = q; }); if (!e) return; SEE.list.forEach(q => { if (q !== e && q.tHit && !q.cut) q.cut = t; }); e.tHit = t; e.K = 1; e.spot = null; if (F.seq) F.log.push(['bond', e.n, Math.round(t - F.seq.t0)]); }
 // a reflex step is never quicker than the eye: the wind-up and the swing have a floor
 function seeFloor(ph, n, last) { if (last) return ph; const sp = (F.seq && F.seq.speed) || 1, f = (PACE === '3' ? 0.7 : 1) * (n > 8 ? 0.8 : 1) / sp; ph.wind = Math.max(ph.wind, 420 * f); ph.swing = Math.max(ph.swing, 280 * f); return ph; }
-let SEE_OFF = false; try { SEE_OFF = new URLSearchParams(root.location.search).get('see') === '0'; } catch (e) { SEE_OFF = false; }   // ?see=0: no outlines, glow or names on the reacting atoms
+let SEE_OFF = true; try { SEE_OFF = new URLSearchParams(root.location.search).get('see') !== '1'; } catch (e) { SEE_OFF = true; }   // the pencil marks and names on the reacting atoms are off (they read as extra bonds); ?see=1 brings them back
+let SEE_NAMES = false; try { SEE_NAMES = new URLSearchParams(root.location.search).get("names") === "1"; } catch (e) { SEE_NAMES = false; }   // no words in the game: the name of a reflex is not written beside it (?names=1 brings it back)
 // the page is over: nothing of the last step is left standing on the next page
 function seeEnd() { SEE.list.length = 0; SEE.dirty = false; if (SEE.cv && SEE.x) { SEE.x.setTransform(1, 0, 0, 1, 0, 0); SEE.x.clearRect(0, 0, SEE.cv.width, SEE.cv.height); } }
 // a pencil line through points, drawn as far as f (0 to 1), with the small wander of a hand
@@ -924,7 +926,7 @@ function seeFrame(t) {
       e.rings.forEach((rg, i) => { const ps = rg.map(at); if (ps.some(p => !p)) return; let gx = 0, gy = 0; ps.forEach(p => { gx += p.x; gy += p.y; }); gx /= ps.length; gy /= ps.length; const out = ps.map(p => { const l = Math.hypot(p.x - gx, p.y - gy) || 1, d = p.r * 1.25; return [p.x + (p.x - gx) / l * d, p.y + (p.y - gy) / l * d]; }), pts = [];
         const n = out.length; for (let j = 0; j <= n; j++) { const a0 = out[(j + n - 1) % n], a1 = out[j % n], a2 = out[(j + 1) % n], m0 = [(a0[0] + a1[0]) / 2, (a0[1] + a1[1]) / 2], m1 = [(a1[0] + a2[0]) / 2, (a1[1] + a2[1]) / 2]; for (let u = 0; u < 1; u += 0.25) { const w1 = (1 - u) * (1 - u), w2 = 2 * u * (1 - u), w3 = u * u; pts.push([w1 * m0[0] + w2 * a1[0] + w3 * m1[0], w1 * m0[1] + w2 * a1[1] + w3 * m1[1]]); } }
         seePencil(x, pts, clamp((ah - 60) / 380, 0, 1), PW * 1.15, pa * 0.9, i + 3); }); }
-    if (e.strike || !e.name || !AA.rxPen) return;
+    if (e.strike || !e.name || !AA.rxPen || !SEE_NAMES) return;
     // its name, lettered beside the new bond where the molecule leaves the most room
     const A = at(e.A), B = at(e.B) || A; if (!A) return; const jx = (A.x + B.x) / 2, jy = (A.y + B.y) / 2, size = 64 * k, tw = AA.rxPen.measure(e.name, size, 'heavy').width;
     if (!e.spot) { let best = null; for (let i = 0; i < 12; i++) { const an = -Math.PI / 2 + i * Math.PI / 6, dd = (70 + 0.5 * Math.abs(Math.cos(an)) * tw / k) * k + Math.max(A.r, B.r), cx = clamp(jx + Math.cos(an) * dd, tw / 2 + 24 * k, W - tw / 2 - 24 * k), cy = clamp(jy + Math.sin(an) * dd * 0.8, 96 * k, H - 190 * k); let free = 1e9; mol.balls.forEach((b, a) => { if (a.el === 'H') return; const q = at(a); if (!q) return; const ex = Math.max(0, Math.abs(q.x - cx) - tw / 2), ey = Math.max(0, Math.abs(q.y - cy) - size * 0.4); free = Math.min(free, Math.hypot(ex, ey) - q.r); }); const sc2 = Math.min(free, 60 * k) - 0.05 * Math.hypot(cx - jx, cy - jy) - (Math.sin(an) > 0.3 ? 4 * k : 0); if (!best || sc2 > best.s) best = { s: sc2, dx: cx - jx, dy: cy - jy }; } e.spot = best; }
