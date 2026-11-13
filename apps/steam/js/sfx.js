@@ -1397,7 +1397,7 @@ function arrC(t, n, d, u, last, gap) {
   const w = madW(), end = last ? Math.max(0.1, d - BREATH5) : d, from = TONE5[Math.min(n - 1, 12)], to = TONE5[Math.min(n, 13)], len = last ? end : gap + 0.06, g = 0.2 + 0.2 * u, rt = pc5(chordIx(n, false), 33);
   // the one tone, in octaves: it slides up from the last step's note while the arrow is drawn and holds until the next arrow
   const X = x => Object.assign({ dur: len, a: 0.07, r: 0.14, gl: [(from - to) * 100, 0, Math.min(d, end) * 0.9, 0], wide: 0.4, rev: 0.3, cut: last, g1: last ? 1.6 : 1, vib: w > 0.2 ? 30 * w : 0 }, x);
-  R5(to < 67 ? 'horn' : 'pad', to, t, g, X({ lp: 1600 + 5000 * u })); R5('pad', to + 12, t, g * 0.75, X({ lp: 2200 + 6000 * u, pan: 0.3 })); R5('pad', Math.min(96, to + 24), t, g * (0.3 + 0.3 * u), X({ lp: 2500 + 7000 * u, pan: -0.3 })); if (to - 12 >= 33) R5('horn', to - 12, t, g * 0.5, X({ lp: 700 + 2500 * u })); R5('drone', clamp(to - 12, 33, 50), t, g * 0.3, X({}));
+  R5(to < 67 ? 'horn' : 'pad', to, t, g, X({ lp: 1600 + 5000 * u })); R5('pad', to + 12, t, g * 0.75, X({ lp: 2200 + 6000 * u, pan: 0.3 })); R5('pad', to + 24 > 96 ? to + 12 : to + 24, t, g * (0.3 + 0.3 * u), X({ lp: 2500 + 7000 * u, pan: -0.3 })); if (to - 12 >= 33) R5('horn', to - 12, t, g * 0.5, X({ lp: 700 + 2500 * u })); R5('drone', clamp(to - 12, 33, 50), t, g * 0.3, X({}));
   if (w > 0.4) { MST.wrong++; R5('pad', to + 6, t, g * 0.5 * w, X({ gl: [-100 - 200 * w, 100, Math.min(d, end) * 0.95, 0], lp: 2500, pan: -0.5 })); }   // deeper rounds: a wrong note leans up into the fifth
   // low brass swelling into the hit on the chain chord's root and fifth, and a cymbal roll opening under it
   const S = x => Object.assign({ dur: end, a: end * 0.96, ax: true, cut: true, lp: 500, lp1: 1800 + 5000 * u, lpt: end, wide: 0.35, rev: 0.35 }, x);
@@ -1406,7 +1406,7 @@ function arrC(t, n, d, u, last, gap) {
   // the heartbeat: a low thump with a knock a phone can play; it quickens with the build and, deeper in the run, races and skips
   const hb = (tt, gg) => { R5('kick', NO, tt, gg * 0.6, { det: -200, lp: 1600 }); R5('tom', 57, tt, gg * 0.7, { lp: 1800, dur: 0.12, r: 0.08 }); R5('kick', NO, tt + 0.14, gg * 0.35, { det: -400, lp: 1200 }); R5('tom', 55, tt + 0.14, gg * 0.4, { lp: 1500, dur: 0.1, r: 0.08 }); };
   { const iv = (0.44 - 0.16 * u) / (1 + 0.45 * w); for (let tt = t; tt < t + end - 0.2; tt += iv * (w > 0.3 && rnd() < 0.3 * w ? (rnd() < 0.5 ? 0.5 : 1.5) : 1)) hb(tt, 0.4 + 0.35 * u); }
-  if (n >= 3) roll5('snr', NO, t + end * Math.max(0, 0.5 - 0.6 * u), t + end, 0.03, 0.12 + 0.36 * u, 15 + 6 * w, 21 + 9 * w, { rev: 0.25, pan: 0.15 });
+  if (n >= 3) roll5('snr', NO, t + end * Math.max(0, 0.5 - 0.6 * u), t + end, 0.03, 0.12 + 0.36 * u, 15 + 3 * w, 21 + 4 * w, { rev: 0.25, pan: 0.15 });
   if (last) { rcym5(t, t + end, 0.9); rcym5(t, t + end, 0.5, { det: -700, pan: -0.4 }); whoosh5(t, end, 0.7, 9000); roll5('bdrum', NO, t, t + end, 0.1, 0.6, 9, 14, { rev: 0.3, dur: 0.4, r: 0.2 }); roll5('timp', pc5(0, 36) + 7, t, t + end, 0.1, 0.5, 11, 17, { rev: 0.3, dur: 0.4, r: 0.2 }); }
 }
 function hitC(t, n, u, last, tNA, tNH) {
@@ -1428,7 +1428,7 @@ function arrow5(n, ms, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? 0.33 : 0.6, t, c ? 0.05 : d / 3);
+  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? 0.33 : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
   try { (BLD === 'b' ? arrB : BLD === 'c' ? arrC : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
@@ -1456,10 +1456,10 @@ function over6(t0, o) {
   R5('timp', 38, rs + 0.92, 0.9, { rev: 0.4 }); R5('bdrum', NO, rs + 0.92, 0.7, { rev: 0.3 }); R5('pad', 81, rs + 0.92, 0.7, { dur: 1.4, a: 0.03, r: 2.4, rev: 0.5, wide: 0.4 }); R5('cym', NO, rs + 0.92, 0.5, { pan: -0.3, rev: 0.4, hp: 2000 });
   if (Cc) { const tl = rs + 0.92, dk = SB.duck.gain; dk.cancelScheduledValues(rs - 0.02); dk.setValueAtTime(0.5, rs - 0.02); dk.setValueAtTime(0.5, tl - 0.04); dk.linearRampToValueAtTime(1, tl); { const bp = SB.breath.gain; bp.setValueAtTime(0.5, rs - 0.012); bp.setValueAtTime(0.5, tl - 0.4); bp.linearRampToValueAtTime(1, tl - 0.01); }   // the resolve lands under the bus's ceiling (the whole bus half down, the soundtrack half down again) and everything is let go on the lift   // the lift: a cymbal backwards and a snare roll up to it, then a boom, a crash and the brass and pads an octave higher; then the cascade
     rcym5(rs + 0.12, tl, 0.6, { fin: 0.1 }); roll5('snr', NO, rs + 0.5, tl, 0.05, 0.4, 16, 24, { rev: 0.3 });
-    R5('boomc', NO, tl, 1.0, { rev: 0.5 }); R5('cym', NO, tl, 1.2, { pan: 0.3, rev: 0.4 }); R5('snr', NO, tl, 0.9, { rev: 0.5 }); R5('tam', NO, tl, 0.7, { rev: 0.4 }); R5('timp', 38, tl, 1.0, { rev: 0.4 });
+    R5('boomc', NO, tl, 1.0, { rev: 0.5 }); R5('cym', NO, tl, 1.2, { pan: 0.3, rev: 0.4 }); R5('snr', NO, tl, 0.9, { rev: 0.5 }); R5('tam', NO, tl, 0.7, { rev: 0.4 });
     [38, 50, 57, 62, 69, 74, th ? 74 + th : 76, 81, 86].forEach((q, i) => R5(q < 72 ? 'horn' : 'pad', q, tl, 1.3, { dur: 1.6, a: 0.02, r: 2.2, pan: (i - 4) * 0.2, wide: 0.3, rev: 0.5, lp: 8000, lp1: 2500, lpt: 3 }));
     for (let i = 0; i < 16; i++) R5(i % 2 ? 'coin' : 'glass', safeUp((i % 2 ? 105 : 96) - i), tl + 0.12 + i * 0.045, 0.3, { pan: (0.5 - i / 15) * 1.5, rev: 0.45 }); }
-  for (let i = 0; i < 12; i++) R5('glass', safeUp(74 + i * 2), rs + 0.02 + i * 0.028, 0.32, { pan: (i / 11 - 0.5) * 1.6, rev: 0.45 });
+  for (let i = 0; i < 12; i++) R5('glass', safeUp(74 + i * 2), rs + 0.02 + i * 0.028, 0.32 * rk, { pan: (i / 11 - 0.5) * 1.6, rev: 0.45 });
   for (let i = 0; i < 8; i++) R5('coin', safeUp(93 + i), rs + 0.94 + i * 0.03, 0.3, { pan: (0.5 - i / 7) * 1.4, rev: 0.4 });
 }
 // what a call does while a build is chosen (true = handled here)

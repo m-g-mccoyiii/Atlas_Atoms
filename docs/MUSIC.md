@@ -6,6 +6,22 @@ One file: `apps/steam/js/music.js`, exposed as `AA.music`. Web Audio only. No au
 
 Still in the file, shelved: themes 1 Burner and 2 Athanor (raw oscillators) and theme 3 Fuse (made orchestra, three arrangements, `AA.music.arrange('a'|'b'|'c')`).
 
+<!-- builder6 -->
+## The six soundtracks, and EDM finished (builder 6, 12 November, late)
+
+This section is newer than the rest of this page, which still describes the three grooves. Full tables: `docs/SOUND5.md`, section 0.
+
+- Six tracks on one engine: `funk` (the default), `gothic`, `edm`, `metal`, `surf`, `baroque`. `AA.music.tracks()` lists them. The owner ticked EDM to keep and finish; nothing was removed.
+- `AA.music.track(id)` now changes at once and without a click (the old track fades under the new one's first bar; a new hall rings in while the old rings out).
+- `AA.music.defaultTrack(id)`: the soundtrack for a player who has never picked one (saved; `?maintrack=id`). `'funk'` until the owner says otherwise. `AA.music.unpick()` forgets the player's own pick.
+- `AA.music.step(n, of)`: `of` (optional) is the number of steps in this chain. EDM uses it to time its build and to stop on the last hit.
+- A track may give its own tone curve (`tone: I => Hz` in its `TRACK` table): EDM runs its deck filter from 10 to 20 kHz.
+- EDM by state: planning is the breakdown; each turn opens the filter and adds layers; a chain is the build (snare roll doubling, risers, kick and bass gone for the last quarter); OVERREACT is the drop, landing on the lift of the effect 2.95 s after the call; round won is the release. Rounds 1 to 9: 124 to 134 beats a minute and wilder modulation by chance (stutters, half-time bars, filter sweeps, wrong notes, a fake drop, wobble bass).
+- Measured (round 1): cool planning -25.3 LUFS, hot planning -17.9, a chain of 9 -21.6, the drop -13.6, round won -20.1, shop -20.6; over 4 kHz 0.4% (cool) to 4.0% (drop); under 120 Hz 6% (cool) to 27% (drop); no clipping in any of the eleven states; no four or eight bars the same inside 12 minutes; 0.054 s of render per second.
+- Nobody has listened to it.
+
+<!-- /builder6 -->
+
 ## The three grooves
 
 `AA.music.groove(1 | 2 | 3)` (saved; `?groove=1..3` in the address also works). The default is 1 until the owner picks.

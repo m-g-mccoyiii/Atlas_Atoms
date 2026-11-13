@@ -923,7 +923,7 @@ function edmPreDrop(E, dk, t, ch) {
   const w = E.w(), D = dk.L.drums.in, P = dk.L.pad.in, Q = EDMG; dk.spu = Math.max(0.08, (dk.t0 + EDMLIFT - t) / 16); const sp = dk.spu, bar = 16 * sp, at = u => t + u * sp, td = t + bar;
   [-0.6, 0.6].forEach(pan => edmSweep(E, D, { t, dur: bar, f0: 500, f1: 12000, g0: 0.01, g1: 0.3, q: 0.8, pan }));
   dk.sb = -1;   // the section starts again on the drop, so the hook is heard from its first bar
-  edmSweep(E, D, { t, dur: bar, saw: 1, f0: 146.83, f1: 587.33 * Math.pow(2, 0.5 * w), g0: 0.02, g1: 0.3, pan: -0.15 });
+  edmSweep(E, D, { t, dur: bar, saw: 1, f0: 146.83, f1: 587.33 * (w > 0.5 ? 2 : 1), g0: 0.02, g1: 0.3, pan: -0.15 });
   [50, 57, 62, 64, 69, 74].forEach((m, k) => Sm(E, P, { i: 'edm_saw', m, t: t + k * 0.004, g: Q.pad * 1.1, dur: bar - 0.05, a: bar * 0.6, r: 0.04, lp: 350, lp1: 11000, lpt: bar, wide: k % 4 ? 0.5 + 0.1 * k : 0, pan: k ? 0.25 : -0.15 }));
   for (let u = 2; u < 16; u += u < 8 ? 2 : u < 12 ? 1 : 0.5) { const x = u / 16; Sm(E, D, { i: 'edm_sn', t: at(u), g: (0.12 + 0.7 * x * x) * Q.sn * 2, m: 50 + (6 + 6 * w) * x, pan: u % 1 ? 0.12 : -0.1, dur: u < 12 ? 0.07 : 0.035, r: 0.04, strict: 1 }); }
   if (w > 0.35 && dk.rng.chance(0.5 * w)) [8, 9, 10, 11].forEach((u, k) => { Sm(E, D, { i: 'edm_kickt', t: at(u), g: 0.3, m: 30 + 3 * k, strict: 1 }); Sm(E, dk.L.arp.in, { i: 'edm_pl', m: [74, 76, 78, 81][k] + (k === 3 ? 1 : 0), t: at(u), g: 0.3, strict: 1 }); });   // later rounds, a fake drop: the beat seems to start, thin and wrong, and stops again
