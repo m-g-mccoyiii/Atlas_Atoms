@@ -162,7 +162,7 @@ Ruling AP: "the yellow sign is our prestige. you start over but it gives you +20
 **As built** (`path.js`, behind `RULE.prestige`, off until the page has it; the table is `SIGN`):
 
 - When 9 tenths of everything is unlocked the player may take the sign (`P.signCan(meta, owned, total)`; the page counts what is owned).
-- Taking it (`P.signTake`) gives back a new saved profile: the collection starts over (reagents, reflexes, motifs, instruments, homunculi, sigils, lengths opened). Kept: the count of signs, the lifetime counts, the catalog of compounds made, the notes already read.
+- Taking it (`P.signTake`) gives back a new saved profile: the collection starts over (reagents, reflexes, motifs, instruments, homunculi, sigils, lengths opened). Kept: the count of signs, the catalog of compounds made, what the first game taught, and the lifetime counts (set aside: the counts that earn findings start at zero, so everything is earned again).
 - Every yield is then 20 in 100 higher for good, and each further sign adds another 20 (added, not multiplied: five signs are 2 times the yield, ten would be 3 times, not 6.2).
 - `meta.sign` is the number of signs taken (0 to 5). `P.signState(meta)` gives the page, the notes and the music the level, the lift and what has risen.
 - With each sign the number to beat rises 12 in 100, and so does the pass mark of part 1.
@@ -181,7 +181,7 @@ Ruling AP: "the yellow sign is our prestige. you start over but it gives you +20
 (Column A is read off the flat-lift table of part 1.)
 
 - A makes every lap easier than the last. By the fifth the fresh start is six times easier than a new player's. The climb back up would feel shorter each time.
-- B keeps the fresh start about level (0.5 to 0.9 in 100 at every lap), so each lap is the same climb with a bigger number on the page: yields double by lap five and so do the numbers to beat. The +20 is real against everything that does not rise: the gold marks reached, the big word, the records.
+- B keeps the fresh start about level (0.5 to 0.9 in 100 at every lap), so each lap is the same climb with bigger numbers on the page: by lap five yields are 2 times and the numbers to beat 1.76 times. Said plainly: the rising number takes back most of the +20; what is left is 7 to 14 in 100 of real gain at any lap. In whole runs won, the 800 runs of each cell had 3, 3, 6 and 5 wins (the table multiplies the nine round rates). Four signs under B was not run.
 - C gets hard fast. By the third sign a careful player with nothing unlocked wins 4 runs in 10,000. It may still be right once a full collection is back, but that was not measured. The five takes are built and switched off (`SIGN.takes` is empty; put names in it to turn them on).
 
 **How many laps.** Five. The four yield marks on the page each add a stroke and build to the sign (ruling AL10); the fifth stroke is the sign itself, drawn by taking it. After five the story is at "After" (`STORY.md`) and the lift stays at 2 times.
@@ -199,7 +199,7 @@ Ruling AP: "the yellow sign is our prestige. you start over but it gives you +20
 
 Never the three-armed sign of 1989: our own mark, built from our four yield marks (`STORY.md`, rules).
 
-**Not done.** The page does not offer or show the sign. What "everything" counts is the page's to say (166 things in `FINDINGS.md`). Laps with a rebuilt collection were not simulated, only the fresh start of each. The game's rig was not run with a sign.
+**Not done.** The page does not offer or show the sign, does not hand the saved profile to a new run (so the lift is not applied in play yet even with the switch on) and works out one yield figure of its own without the lift. `STORY.md` still says the last sigil takes gold and that nothing is reset, and its last moment needs everything unlocked while the sign can be taken at 9 tenths: the story has to be brought in line with the ruling. What "everything" counts is the page's to say (166 things in `FINDINGS.md`). Laps with a rebuilt collection were not simulated, only the fresh start of each. The game's rig was not run with a sign.
 
 **Choices for the owner**
 
@@ -207,7 +207,7 @@ Never the three-armed sign of 1989: our own mark, built from our four yield mark
 2. How the +20 stacks. (a) Added, as built: 2 times after five. (b) Multiplied: 2.5 times after five.
 3. How many times. (a) Five, as built. (b) Three. (c) No end: the sign is whole at five and the lift goes on.
 4. When it can be taken. (a) At 9 tenths of everything, as built. (b) Only with everything. (c) At 3 quarters.
-5. What is kept. (a) As built: the lifetime counts, the catalog, the notes read. (b) Also one thing of the player's choice from the old collection.
+5. What is kept. (a) As built: the catalog, what was taught, the lifetime counts set aside. (b) Also one thing of the player's choice from the old collection.
 
 ### Agreement with the reference chemistry
 

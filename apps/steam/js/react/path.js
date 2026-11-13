@@ -464,19 +464,21 @@ RULE.pairFrom = 6; RULE.specShiftLong = null; RULE.specScaleLong = { 1: 0.7, 2: 
 // sign k: 'pair4' two specs from round 4, 'tasks' every spec N a quarter bigger, 'pair1' two specs from round 1, 'uses' one use fewer of every
 // reagent, 'hand' four dealt, not five). After SIGN.laps signs it cannot be taken again.
 RULE.prestige = false;
-const SIGN = { lift: 0.2, bar: 1.12, share: 0.9, laps: 5, tasks: 1.25, takes: [], takesAll: ['pair4', 'tasks', 'uses', 'pair1', 'hand'], keep: ['sign', 'counters', 'catalog', 'notesSeen', 'signLog'] };
+const SIGN = { lift: 0.2, bar: 1.12, share: 0.9, laps: 5, tasks: 1.25, takes: [], takesAll: ['pair4', 'tasks', 'uses', 'pair1', 'hand'], keep: ['sign', 'signLog', 'found', 'taught', 'coined', 'countersAll'] };
 const signOf = x => { if (!RULE.prestige || !x) return 0; const v = x.sign != null ? x.sign : (x.meta && x.meta.sign); return Math.max(0, Math.min(SIGN.laps, v | 0)); };
 const signLift = x => 1 + SIGN.lift * signOf(x), signBar = x => Math.pow(SIGN.bar, signOf(x));
 const signHas = (x, what) => SIGN.takes.slice(0, signOf(x)).includes(what);
 const signCan = (meta, owned, total) => !!RULE.prestige && signOf(meta) < SIGN.laps && total > 0 && owned / total >= SIGN.share;
-// takes the sign: a new profile that keeps only SIGN.keep (the count of signs, the lifetime counters, the catalog of compounds made, the notes
+// takes the sign: a new profile that keeps only SIGN.keep (the count of signs, the page's catalog `found`, what was taught and coined, the lifetime counts as countersAll; the notes
 // read) and starts everything else again; null when it cannot be taken. signLog gets one entry a sign: { at, owned, total }.
 function signTake(meta, owned, total, at) {
   if (!signCan(meta, owned, total)) return null; const m = {}; SIGN.keep.forEach(k => { if (meta && meta[k] != null) m[k] = meta[k]; });
+  // the lifetime counts go on under countersAll (added up over every sign); counters starts at zero, so every finding has to be earned again
+  const all = Object.assign({}, m.countersAll || {}); Object.keys((meta && meta.counters) || {}).forEach(k => { if (typeof meta.counters[k] === 'number') all[k] = (all[k] || 0) + meta.counters[k]; }); m.countersAll = all; m.counters = countersNew();
   m.sign = signOf(meta) + 1; m.signLog = (m.signLog || []).concat([{ at: at || 0, owned, total }]); return m;
 }
 // what the page, the notes and the music read: the level, the lift, how far the number to beat has risen, what the sign has taken, what it takes next
-const signState = meta => { const n = signOf(meta); return { level: n, laps: SIGN.laps, lift: signLift(meta), bar: signBar(meta), taken: SIGN.takes.slice(0, n), next: n < SIGN.laps ? SIGN.takes[n] : null, last: n >= SIGN.laps }; };
+const signState = meta => { const n = signOf(meta); return { level: n, laps: SIGN.laps, lift: signLift(meta), bar: signBar(meta), taken: SIGN.takes.slice(0, n), next: (n < SIGN.laps && SIGN.takes[n]) || null, last: n >= SIGN.laps }; };
 const LASTX = { mul: 2 };
 // Tiers (docs/LOOP.md): a run is three rounds, then six, then nine. Tier 1 is the bare game: the six starting
 // reactions, no helper, no creature, nothing new offered between rounds. (run.tier is the supplier index, an older
