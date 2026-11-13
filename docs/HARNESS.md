@@ -85,6 +85,8 @@ AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone 
 
 AK4. "Do mad scientist funk but we want several sound tracks and I like the gothic hybrid just tweak it a little. Let's also add in other genres like an edm one, a metal one, etc." (12 November). The game has several soundtracks: mad science funk, the gothic hybrid lightly tweaked, an EDM one, a metal one, and more.
 
+AK5. "I liked the arrow pushing, but I need the sound to be more majestic with the buildup to reactions building. It's a bit flat. Needs to hit the dopamine" (12 November). Asked what majestic leans on: "Drums and a riser". And: "I said several sound options and never got them": the owner is owed sound options to hear.
+
 AL. Animation (12 November): "We also need to figure out the speed of the animations and assess them as well as the animation for the different reactions, right now it seems just a tiny bit clunky." The speed of every animation and the animation of each kind of reaction are assessed and smoothed.
 
 ## The lines broken most often
