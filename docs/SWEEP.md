@@ -171,7 +171,7 @@ Pairs and triples (all 45 pairs and all 120 triples, six-round runs, 8 runs each
 
 What it says:
 
-- **Dominant: the Seedling.** It is fed by one grow, which is in nearly every hand, so it is tapped in 93 of 100 rounds. It triples the nine-round win rate (8 to 23) and multiplies yield by 5. One player in five turns chose a different line because of it. It is the only creature that changes which play is best in a big way, and it is the best pick in every pair and triple.
+- **Dominant: the Seedling.** It is fed by one grow, which is in nearly every hand, so it is tapped in 93 of 100 rounds. It triples the nine-round win rate (8 to 23) and multiplies yield by 5. On one page in five the player chose a different line because of it. It is the only creature that changes which play is best in a big way, and it is the best pick in every pair and triple.
 - **Dead as built: Brimstone and the Wood spirit.** Brimstone is almost never fed (it needs two sulfurs from oxidize on an SH, which the molecules and reagents rarely give). The Wood spirit is fed in 17 of 100 rounds when reduce is carried and is never worth tapping: five reagents in a random order never beat the three the player would choose.
 - **Rare: Ammonia and Slime.** Fed in about one round in ten. When tapped they add a little yield and clear no more rounds.
 - **Alive but weak: Water, Acid, Hydrogen, Salt.** Tapped in 16 to 42 of 100 rounds, yield up 4 to 9 percent, no more rounds cleared. Water and Acid do change the line chosen on 8 to 9 pages in 100.
@@ -188,4 +188,126 @@ Choices for the owner:
 4. The Wood spirit. (a) Give the drunk page something a chosen line cannot have: all five reagents and each one pays double. (b) Let it spend no uses. (c) Replace it.
 5. Dry ice. (a) Frozen rings still count for the next chain. (b) Leave it as a creature for yield only and say so on the card.
 
-Sections 4 and 5 follow.
+## 4. Elements beyond C, H and O, by round
+
+Ruling AF2: "Rarer elements should become more common as the rounds get deeper."
+
+What the game deals today (its own table, measured on 1,000 deals a round): the share of dealt molecules that hold any element past C, H and O is 16 in 100 in round 1, 57 in round 5 and 95 in round 9. So the ruling is already met for N, S and Cl taken together.
+
+Ten elements were each given one real reagent, and a reflex where one exists, and played for nine rounds by the player who reads every line: 36 runs a cell. The element's reagent took the place of reduce in a set of six. "Rising" deals the element to one of the two molecules offered more often each round (common: 25 to 65 in 100; uncommon: 8 to 50; rare: 2 to 34). "Level" deals it at the same average rate every round. N, S and Cl are in the game now. The rest are candidates and are in no build.
+
+| Element | Its reagent | Its reflex | Reagent fired, share of the hands it was in | Reflex, share of all reflex steps | Molecule still holds it at the end of a round (rising deal) | Reflex steps a turn (none of it: 1.95) | Kinds of reflex a run (none: 10.6) |
+|---|---|---|---|---|---|---|---|
+| N | ritter | knit | 21 | 13 | 77 | 1.80 | 10.6 |
+| S | thiolene | cap | 12 | 9 | 55 | 1.95 | 11.4 |
+| Cl | chlorination | close | 21 | 13 | 33 | 1.82 | 10.4 |
+| Br | hydrobromination | a ring closes on C-Br | 15 | 7 | 20 | 1.87 | 11.2 |
+| P | phosphorylation | a cyclic phosphate closes | 32 | 19 | 65 | 1.87 | 10.7 |
+| B | borylation | a cyclic boronic ester closes | 29 | 16 | 59 | 1.69 | 10.6 |
+| I | iodocyclization | a ring closes on C-I | 12 | 2 | 5 | 1.92 | 10.8 |
+| F | deoxyfluorination | none (C-F is inert) | 14 | 0 | 26 | 1.93 | 10.5 |
+| Si | silylation | none (a protected OH) | 18 | 0 | 33 | 1.79 | 10.5 |
+| Se | selenoxide elimination | none (makes C=C beside C=O) | 36 | 0 | 13 | 2.30 | 11.7 |
+
+Rising against level deal: no difference that 36 runs can show in rounds cleared, chain length or kinds. The two give the same amount of the element over a run; rising only moves it later. So the choice between them is about feel, not balance.
+
+By round, on the rising deal, the share of rounds whose final molecule holds the element:
+
+| Element | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 |
+|---|---|---|---|---|---|---|---|---|---|
+| N | 61 | 61 | 69 | 61 | 81 | 89 | 86 | 92 | 89 |
+| S | 44 | 31 | 50 | 39 | 58 | 69 | 69 | 64 | 72 |
+| Cl | 36 | 14 | 28 | 28 | 33 | 39 | 47 | 31 | 39 |
+| P | 64 | 58 | 64 | 53 | 61 | 69 | 72 | 72 | 67 |
+| B | 58 | 56 | 58 | 58 | 53 | 67 | 50 | 61 | 67 |
+| Br | 14 | 11 | 28 | 11 | 14 | 25 | 28 | 22 | 31 |
+| F | 25 | 17 | 19 | 28 | 31 | 17 | 19 | 36 | 44 |
+| Si | 31 | 53 | 31 | 25 | 28 | 31 | 28 | 39 | 31 |
+| Se | 8 | 3 | 3 | 11 | 22 | 8 | 11 | 22 | 31 |
+| I | 3 | 0 | 3 | 8 | 6 | 3 | 6 | 8 | 6 |
+
+What it says:
+
+- **Lively and worth building: phosphorus and boron.** Their reagents are fired in about 30 of 100 hands, and their ring-closing reflexes make 16 to 19 of every 100 reflex steps, more than N, S or Cl manage. Boron shortens chains a little (1.69 steps a turn against 1.95).
+- **Strong, perhaps too strong: the selenium reagent.** It is fired most of all (36 of 100 hands), lengthens chains to 2.30 steps a turn and adds a kind of reflex a run. Rounds cleared rose by about 1.6 of 9 on all three deals. The selenium itself leaves at once, so the player never sees the element: it is a good reagent more than a new element.
+- **Dead as built: iodine.** Its reflex is 2 in 100 steps at best and the molecule holds iodine at the end of 5 rounds in 100. The reagent needs a C=C with an OH just the right distance away, which is rare.
+- **Quiet: fluorine and silicon.** No reflex. They cap an OH so it takes no more part. Fired in 14 to 18 of 100 hands. They are tools for a careful player, not fireworks.
+- **Middling: bromine.** It does what chlorine does, less often.
+- Rounds cleared differ between cells by up to 1.9 of 9, but with 36 runs and a different set of six in each cell, only selenium's gain is clear of chance.
+
+Choices for the owner:
+
+1. Which new elements to build. (a) Phosphorus and boron first: they do the most by themselves. (b) Also the selenium reagent, as a reagent. (c) Also fluorine and silicon as quiet "lock this OH" tools. (d) Also bromine and iodine for the look of them, knowing iodine needs a new reagent to matter.
+2. When they appear. (a) As the game does now for N, S and Cl: a few in round 1, nearly every molecule by round 9. (b) In steps: N, S, Cl from round 1; P, B, Br from round 4; F, Si, Se, I from round 7. (c) Rare elements only on molecules the player chooses to take, for a reward.
+3. Selenium. (a) Tone its reagent down (one place only). (b) Keep it strong and make it a late unlock. (c) Leave it out.
+
+## 5. Every starting six of the 18 reagents
+
+All 18,564 sets of six were played: three rounds, by the novice, the greedy player and the player who reads every line; 2 runs a set and player on 32 shared deals (111,384 runs, 967,653 turns, 20 minutes). Then the 40 best, 20 worst and 40 random sets by a straight-line fit, with the two sets the game has had, were played again on 60 new deals each.
+
+All sets together:
+
+| Player | Wins all three rounds | Clears rounds 1, 2, 3 | Kinds of reflex a run | Reflex steps a turn |
+|---|---|---|---|---|
+| Novice | 24 in 100 | 73, 72, 43 | 3.7 | 0.9 |
+| Greedy | 49 | 90, 85, 64 | 4.0 | 1.1 |
+| Reads every line | 70 | 95, 93, 79 | 4.2 | 1.4 |
+
+Each reagent, over the 6,188 sets that hold it. Win columns: points of win rate a set gains by holding it, against the average reagent. "In the line": of the hands it was dealt in, the share where the careful player fired it.
+
+| Reagent | Novice wins | Greedy wins | Careful wins | In the line | the same in the lowest and highest tenth of sets | Kinds a run | Steps a turn |
+|---|---|---|---|---|---|---|---|
+| grow | +7.9 | +8.0 | +12.3 | 72 | 50 to 93 | +0.18 | +0.41 |
+| cyanohydrin | +4.4 | +3.7 | +0.7 | 47 | 23 to 71 | -0.27 | -0.27 |
+| hydroformylation | +4.2 | +2.5 | +4.8 | 62 | 40 to 86 | +0.30 | +0.44 |
+| oxidize | +3.1 | +3.0 | +1.8 | 62 | 38 to 86 | +0.20 | +0.20 |
+| hwe | +2.6 | +2.4 | +3.9 | 61 | 33 to 88 | +0.52 | +0.45 |
+| dihydroxylation | +2.3 | +1.8 | +1.8 | 55 | 33 to 77 | +0.59 | +0.14 |
+| chlorination | +1.6 | +3.9 | +1.5 | 48 | 23 to 72 | -0.03 | -0.27 |
+| epoxidation | 0.0 | -0.1 | -2.9 | 30 | 11 to 50 | -0.43 | -0.30 |
+| hofmann | -0.3 | -0.1 | -2.5 | 42 | 15 to 71 | -0.24 | -0.15 |
+| chugaev | -0.4 | -0.4 | -0.6 | 54 | 31 to 78 | +0.09 | -0.03 |
+| permanganate | -1.2 | +1.0 | -1.1 | 46 | 23 to 69 | -0.60 | -0.38 |
+| dehydrate | -1.8 | -1.6 | -2.1 | 52 | 31 to 77 | -0.02 | -0.08 |
+| reduce | -2.9 | -1.7 | -3.3 | 38 | 14 to 64 | -0.27 | -0.19 |
+| hydroborate | -2.9 | -3.8 | -2.4 | 43 | 20 to 69 | -0.23 | -0.15 |
+| hydrate | -3.0 | -3.8 | -2.4 | 50 | 25 to 77 | -0.06 | 0.00 |
+| ozonolysis | -4.2 | -5.7 | -1.4 | 64 | 43 to 86 | +0.54 | +0.61 |
+| thiolene | -4.5 | -4.0 | -4.7 | 30 | 12 to 53 | -0.20 | -0.23 |
+| ritter | -5.0 | -5.1 | -3.4 | 45 | 21 to 71 | -0.05 | -0.18 |
+
+The picked sets on 60 new deals (wins in 100; the range is what chance allows):
+
+| Set | Novice | Greedy | Careful | Kinds a run | Fired most, share of its hands |
+|---|---|---|---|---|---|
+| The six of a new game now: hydrate, oxidize, grow, thiolene, dehydrate, ritter | 10 (5 to 20) | 33 (23 to 46) | 65 (52 to 76) | 5.2 | hydrate 78 |
+| The six before ruling AF: hydrate, hydroborate, dehydrate, oxidize, reduce, grow | 22 (13 to 34) | 55 (42 to 67) | 80 (68 to 88) | 5.2 | oxidize 83 |
+| oxidize, grow, hwe, ozonolysis, chugaev, hydroformylation | 42 (30 to 54) | 72 (59 to 81) | 90 (80 to 95) | 5.7 | grow 88 |
+| oxidize, grow, dihydroxylation, cyanohydrin, chugaev, hydroformylation | 42 (30 to 54) | 72 (59 to 81) | 98 (91 to 100) | 6.0 | grow 88 |
+| grow, hwe, dihydroxylation, chlorination, chugaev, hydroformylation | 38 (27 to 51) | 67 (54 to 77) | 88 (78 to 94) | 6.2 | hydroformylation 63 |
+| oxidize, grow, hwe, dihydroxylation, chlorination, chugaev | 37 (26 to 49) | 67 (54 to 77) | 80 (68 to 88) | 6.7 | dihydroxylation 83 |
+| The 40 best by the fit, together | 28.5 | 63.0 | 87.1 | | |
+| 40 sets at random, together | 19.0 | 49.6 | 71.1 | | |
+| The 20 worst by the fit, together | 5.4 | 24.7 | 39.1 | | |
+| Worst played: hydrate, hydroborate, reduce, ritter, thiolene, epoxidation | 0 (0 to 6) | 10 (5 to 20) | 10 (5 to 20) | 2.7 | reduce 61 |
+
+Which reflexes the player sees, all sets: dry 27 in 100 steps, ring 23, weld 23, shift 9, tuck 5, knit 3, close 3, flip 3, snap 2, cap 1.
+
+What it says:
+
+- **Is one reagent always the best play? No, but grow comes closest.** It is fired in 72 of 100 hands it is dealt in, in 50 of 100 even in the sets that use it least and 93 in those that use it most, and a set with it wins 8 to 12 points more. No other reagent passes 64. Inside one set, though, a single reagent can rule: in the starting six hydrate is in 78 of 100 lines, and in the old six oxidize was in 83.
+- **No reagent is dead.** The least used (thiolene and epoxidation, 30 of 100 hands) are still fired in 11 to 53 of 100 depending on the set.
+- **The reagents that make a first game hard are the two added for nitrogen and sulfur.** Ritter and thiolene are the worst and third worst for the novice. The starting six that holds both is won by 10 novices in 100, against 22 for the six before them and 19 for a set taken at random. The game's own rig measured 10 in 100 for the same six.
+- **The best sets win a novice 35 to 42 in 100** and show more kinds of reflex (5.7 to 6.7 a run against 5.2). They share grow, hwe, hydroformylation and dihydroxylation. None of them holds ritter or thiolene; the other elements come in through chlorination and cyanohydrin.
+- **The set matters about as much as the player.** The 20 worst sets give the careful player 39 wins in 100; the 40 best give the novice 29.
+- **Ring-closing is not all the player sees** (ruling AE): dry, ring and weld are each about a quarter of all steps. But knit, close and cap, the reflexes of N, Cl and S, are 3, 3 and 1 in 100. The other elements are on the molecules; they seldom do anything by themselves.
+- The straight-line fit explains only 5 in 100 of the spread between sets at 2 runs a set, so the per-reagent numbers are averages over thousands of sets, not a way to score one set. The second stage on 60 deals is what to trust for a named set.
+
+One more finding, from the homunculus runs: adding reduce and hydroborate to the starting six lowers the careful player's three-round wins from 71 to 42 in 100, because five are dealt from eight and the reagent wanted comes up less often. A bigger carried set is harder, not easier. (300 carried sets of eight were also played on rounds 4 to 6; the rows are kept, the table is not written up here.)
+
+Choices for the owner:
+
+1. The first game's six. (a) Keep the six with ritter and thiolene: nitrogen and sulfur from the first minute (ruling AF), a novice wins 10 in 100. (b) Swap ritter for chlorination and thiolene for cyanohydrin: still other elements, and by the fit about twice the novice wins (not yet played on 60 deals). (c) Take one of the top sets (for example oxidize, grow, hwe, dihydroxylation, chlorination, chugaev: most kinds of reflex, a novice wins 37 in 100) and bring N and S in by the molecules dealt. (d) Keep the six and ease rounds 1 to 3 instead.
+2. Grow. (a) Leave it as the reagent every set wants. (b) Take a little off it (one place a turn, or a smaller piece). (c) Put it in every set on purpose and balance the rest around it.
+3. Nitrogen and sulfur doing so little by themselves. (a) Widen knit and cap so they fire more. (b) Give ritter and thiolene more places to act. (c) Leave it and let the deal do the work.
+4. Growing the carried set past six. (a) Deal more than five when more than six are carried. (b) Leave it: a bigger set is a real cost. (c) Let the player bench reagents before a round.
