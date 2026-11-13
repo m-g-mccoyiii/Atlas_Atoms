@@ -461,7 +461,10 @@ function start(app) {
         if (bs === 1) { let dx = A.x - cc.x, dz = A.z - cc.z; const nbp = adj(r[k0]).filter(a => P2.has(a)); if (nbp.length) { dx = 0; dz = 0; nbp.forEach(a => { dx += A.x - P2.get(a).x; dz += A.z - P2.get(a).z; }); } const l = Math.hypot(dx, dz) || 1, cx = A.x + dx / l * R, cz = A.z + dz / l * R, a0 = Math.atan2(A.z - cz, A.x - cx); fresh.forEach((a, i) => P2.set(a, { x: cx + R * Math.cos(a0 + 2 * Math.PI * (i + 1) / n), z: cz + R * Math.sin(a0 + 2 * Math.PI * (i + 1) / n) })); }
         else { const mx = (A.x + B.x) / 2, mz = (A.z + B.z) / 2, ex = B.x - A.x, ez = B.z - A.z, el = Math.hypot(ex, ez) || 1; let px2 = -ez / el, pz2 = ex / el; if ((mx + px2 - cc.x) * (mx + px2 - cc.x) + (mz + pz2 - cc.z) * (mz + pz2 - cc.z) < (mx - px2 - cc.x) * (mx - px2 - cc.x) + (mz - pz2 - cc.z) * (mz - pz2 - cc.z)) { px2 = -px2; pz2 = -pz2; }
           if (bs === 2 && el < FL.L * 1.2) { const ap = R * Math.cos(Math.PI / n), cx = mx + px2 * ap, cz = mz + pz2 * ap, a0 = Math.atan2(A.z - cz, A.x - cx), a1 = Math.atan2(B.z - cz, B.x - cx); let dir = 1; { let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; dir = d > 0 ? -1 : 1; } fresh.forEach((a, i) => P2.set(a, { x: cx + R * Math.cos(a0 + dir * 2 * Math.PI * (i + 1) / n), z: cz + R * Math.sin(a0 + dir * 2 * Math.PI * (i + 1) / n) })); }
-          else { const m = fresh.length, h = Math.max(0.9, 0.55 * FL.L * Math.sqrt(m)); fresh.forEach((a, i) => { const u = (i + 1) / (m + 1); P2.set(a, { x: A.x + ex * u + px2 * h * Math.sin(Math.PI * u), z: A.z + ez * u + pz2 * h * Math.sin(Math.PI * u) }); }); } }
+          else { const m = fresh.length; let h = Math.max(0.9, 0.55 * FL.L * Math.sqrt(m));
+            // a bridge goes round the outside of what is already drawn between its two ends, on the side where less is in the way
+            { let hp = 0, hn = 0; P2.forEach(p => { const rx = p.x - A.x, rz = p.z - A.z, al = (rx * ex + rz * ez) / (el * el), pe = rx * px2 + rz * pz2; if (al < -0.15 || al > 1.15) return; if (pe > 0.05) hp = Math.max(hp, pe); else if (pe < -0.05) hn = Math.max(hn, -pe); }); if (hn + 0.3 < hp) { px2 = -px2; pz2 = -pz2; hp = hn; } if (hp > 0.05) h = Math.max(h, hp + 1.3); }
+            fresh.forEach((a, i) => { const u = (i + 1) / (m + 1); P2.set(a, { x: A.x + ex * u + px2 * h * Math.sin(Math.PI * u), z: A.z + ez * u + pz2 * h * Math.sin(Math.PI * u) }); }); } }
         done.add(r); }
       bd.atoms.forEach(a => { if (!P2.has(a)) { const s0 = src.get(a); P2.set(a, { x: s0.x, z: s0.z }); } });
       const pts = bd.atoms.map(a => P2.get(a)), n = pts.length, cs = [], rp = []; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = bd.atoms[i], b = bd.atoms[j]; if (cadj.get(a).includes(b)) cs.push([i, j]); else rp.push([i, j, apartOf(a, b) + 0.1]); }
@@ -1537,7 +1540,8 @@ function start(app) {
       // a page with nothing left to do turns itself
       if (!slots.some(q => q && q.o) && !P.canRedraw(g) && !P.canBank(g)) { st.mode = 'move'; setTimeout(() => { if (tok !== st.tok) return; st.mode = 'play'; nextPage(); }, Math.max(300, L.dur - L.unlock + 120)); }
     }, (fe() ? FEEL.unlock(o, L) : L.unlock) + (morph && morph.m === nm && morph.mid ? 330 : 0));
-    if (g.over) setTimeout(() => { if (tok === st.tok) endRound(); }, L.dur + 120);
+    // the round ends only when the play sequence has landed its count and its word (the end screen used to cut the finish short)
+    if (g.over) setTimeout(() => { if (tok !== st.tok) return; if (fe() && FEEL.owns && FEEL.owns()) FEEL.pageEnd(() => { if (tok === st.tok) endRound(); }); else endRound(); }, L.dur + 120);
     dirty = true;
   }
   const next = () => { if (st.mode === 'shop') return newRun(); if (st.mode !== 'done') return; if (st.won) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); return newRun(); } if (st.pass) { run.round++; showPicks(); } else if (meta.stage < 2) { meta.credit += run.beaten + (run.bonus || 0); saveMeta(); newRun(); } else showSuppliers(); };
