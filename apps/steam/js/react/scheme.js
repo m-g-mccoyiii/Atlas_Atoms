@@ -114,7 +114,9 @@ function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.r
 function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 // the bench view's camera: what it looks at on the bench (x, z), how far it stands back, its lean from straight down in degrees, its field of view
-const BCAM = [5, -4.4, 78, 20];
+const BCAM = [5, -6.0, 80, 20];
+// the strip of bench above the page where the jars, the instruments and the homunculus stand: the left end, the line they stand on, the step from jar to jar and from instrument to instrument
+const TOPB = { x0: -30.5, z: -26.1, jar: 6.4, kit: 8.2 };
 
 function start(app) {
   const cv = document.createElement('canvas'); app.append(cv);
@@ -760,7 +762,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? (BENCHV ? (BENCHV === 'a' ? { x: -6 + i * 6.2, z: -27.5 } : { x: 37.5, z: -20 + i * 7.5 }) : { x: -8.6 + i * 5.3, z: -10.9 }) : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? (BENCHV ? (BENCHV === 'a' ? { x: TOPB.x0 + JARK.filter(jarSeen).length * TOPB.jar + 4.2 + i * TOPB.kit, z: TOPB.z } : { x: 37.5, z: -20 + i * 7.5 }) : { x: -8.6 + i * 5.3, z: -10.9 }) : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
@@ -840,7 +842,7 @@ function start(app) {
   function buildKit() {
     if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : BENCHV ? 2.4 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : BENCHV ? 3.0 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
     if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { if (!BENCHV) kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
@@ -873,7 +875,7 @@ function start(app) {
   // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
   const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f, ammonia: 0xbcd6dc, brimstone: 0xc9a227 }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f', ammonia: '#6f9aa4', brimstone: '#9c7f12' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed', ammonia: 'homammonia', brimstone: 'hombrimstone' };
   const jarSeen = k => !P.RULE.bare && (k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0);
-  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back' && BENCHV) return BENCHV === 'a' ? { x: -30 + i * 5.2, z: -27.5, s: 2.2 } : { x: -39, z: -16 + i * 7, s: 2.2 }; if (KITV === 'back') { const sp = Math.min(4.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(2.0, sp / 2.2) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
+  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back' && BENCHV) return BENCHV === 'a' ? { x: TOPB.x0 + i * TOPB.jar, z: TOPB.z, s: 2.8 } : { x: -39, z: -16 + i * 7, s: 2.2 }; if (KITV === 'back') { const sp = Math.min(4.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(2.0, sp / 2.2) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
 
@@ -881,8 +883,8 @@ function start(app) {
     JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 24, z: -27 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
-  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
+  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 27.5, z: TOPB.z + 0.4 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
+  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(BENCHV ? 3.5 : 1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
@@ -2319,7 +2321,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       else { fragOrChip(x, F.tl[0], -92, -8, false); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(2, -8); x.moveTo(-10, -20); x.lineTo(2, -8); x.lineTo(-10, 4); x.stroke(); fragOrChip(x, F.tl[1], 56, -8, true); }
       x.restore(); x.globalAlpha = 1; dirty = true; } }
     // the jars: how much each holds of what fills it. A full one carries the name of what hatched
-    if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j || !meta.hatched[k] || (run && run.hom === k)) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
+    if (!BENCHV && meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j || !meta.hatched[k] || (run && run.hom === k)) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
     // the homunculus of the run: its name, a drop for each time it has been fed, and when the page waits on it what it would do
     if (false && g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
       { const key = g.trail.length + ':' + g.hom.fed + ':' + g.hom.used + ':' + g.page; if (st.litK !== key) { st.litK = key; try { st.lit = P.homLit(g); } catch (e) { st.lit = false; } } }
