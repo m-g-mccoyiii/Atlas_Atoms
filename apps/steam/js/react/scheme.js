@@ -133,7 +133,7 @@ const BCAM = SHP ? SHP.cam : [13.4, -8.6, 94, 20];
 // (builder 11) one scale for the things on the bench: bench units to a centimetre. The page would be 64 cm at this scale: a true 21 cm page (3 units a cm) would need a mug 26 units across and a balance as wide as the page, which the screen cannot hold.
 const UCM = 1.0, REALCM = { balance: [20, 12], scalepan: [18, 12], duck: [8, 8], stopwatch: [6, 7], timer: [7, 9], candle: [5, 12], bunsen: [8, 13], mortar: [11, 8], loupe: [9, 4], thermometer: [4, 13], burette: [6, 13], dropper: [4, 11], crystal: [6, 8], magnet: [8, 8], logbook: [12, 9], cards: [9, 6], extinguisher: [9, 13] };
 // the strip of bench above the page where the jars, the instruments and the homunculus stand: the left end, the line they stand on, the step from jar to jar and from instrument to instrument
-const BNZ = { jar: { x0: -32.6, dx: 4.6, z: -30.3, y: 0.55, s: 1.68, n: 10 }, kit: { x0: -33.2, x1: 3.2, z: -24.9, gap: 1.1, k: 0.42, h: 4.45, min: 4.2 }, hom: { x: 8.6, z: -24.6 }, fresh: { x: 17.5, z: -24.3 } };
+const BNZ = { jar: { x0: -32.6, dx: 4.6, z: -30.3, y: 0.55, s: 1.68, n: 10 }, kit: { x0: -33.2, x1: 3.2, z: -24.9, gap: 1.1, k: 0.42, h: 4.2, min: 4.2 }, hom: { x: 8.6, z: -24.6 }, fresh: { x: 17.5, z: -24.3 } };
 const TOPB = { x0: SHP ? SHP.top[0] : -32, z: SHAPE === 'a' ? -24.5 : -27.0, jar: 8.9, kit: 8.2, x1: SHP ? SHP.top[1] : 47, k: 1 };
 
 function start(app) {
@@ -996,7 +996,7 @@ function start(app) {
   function topRow() { const gear = (st && st.gear) || [], key = gear.join(',') + '|' + ((run && run.hom) || ''); if (topRow.key === key) return topRow.v; const A = SHAPE === 'a', Z = BNZ.kit, cm = gear.map(kitCm);
     // each instrument at its real size times one k; a small one (a stopwatch, a candle) is never drawn under Z.min across, and none is taller than the row; if the row is then too long, all shrink together
     let ks = cm.map(c => (A ? Math.min(Z.h / c[1], Math.max(Z.k, Z.min / Math.max(c[0], c[1]))) : 1)); const wide = () => cm.reduce((a, c, i) => a + c[0] * UCM * ks[i], 0), room = A ? Z.x1 - Z.x0 - Z.gap * Math.max(0, cm.length - 1) : TOPB.x1 - TOPB.x0 - 1.6 * cm.length; if (wide() > room) { const f = room / wide(); ks = ks.map(q => q * f); }
-    let x = A ? Z.x0 : TOPB.x0; const gap = A ? Z.gap : 1.6, kit = cm.map((c, i) => { const w = c[0] * UCM * ks[i], o = { x: x + w / 2, z: A ? Z.z : TOPB.z }; x += w + gap; return o; }), k = ks.length ? Math.min.apply(null, ks) : (A ? Z.k : 1);
+    let x = A ? Z.x0 : TOPB.x0; const gap = A ? Z.gap : 1.6, kit = cm.map((c, i) => { const w = c[0] * UCM * ks[i], o = { x: x + w / 2, z: A ? Z.z - (AA.rxKit.FLAT[gear[i]] ? 1.0 : 0) : TOPB.z }; x += w + gap; return o; }), k = ks.length ? Math.min.apply(null, ks) : (A ? Z.k : 1);
     topRow.key = key; topRow.v = { k, ks, kit, hom: A ? { x: BNZ.hom.x, z: BNZ.hom.z } : { x: x + 4.2 * k, z: TOPB.z + 0.4 } }; HOMP.x = topRow.v.hom.x; HOMP.z = topRow.v.hom.z; return topRow.v; }
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
@@ -3258,7 +3258,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     JARK.concat(['gauge']).forEach(q => { if (st.byBump[q] > 0) { st.byBump[q] = Math.max(0, st.byBump[q] - dt * 3.5); dirty = true; } });
     { const on = meta.stage >= 2 && (BENCHV ? !!run && st.mode !== 'shop' && st.mode !== 'hom' : !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse')), tq = now / 1000;
       if (!jarShelfB && BENCHV === 'a') jarShelfB = jarShelfMake(); if (jarShelfB) jarShelfB.visible = on && JARK.some(jarSeen);
-      JARK.forEach((k, ji) => { const J = jars[k], out = !!(run && run.hom === k), jp = on && !out ? jarPos(k) : null; J.grp.visible = !!jp; if (!jp) return; if (meta.hatched[k]) jarLife(k, J, tq, !!st.firing); J.grp.position.set(jp.x, jp.y || 0, jp.z); const f = Math.min(1, jarOf(k) / JFULL(k)), tg = meta.hatched[k] ? 'r' : f.toFixed(3); if (J.last !== tg) { J.last = tg; J.set(meta.hatched[k] ? 1 : f, meta.hatched[k] ? 2 : undefined); }
+      JARK.forEach((k, ji) => { const J = jars[k], out = !!(run && run.hom === k), jp = on && !out ? jarPos(k) : null; J.grp.visible = !!jp; if (!jp) return; if (meta.hatched[k]) jarLife(k, J, tq, !!st.firing); J.grp.position.set(jp.x, jp.y || 0, jp.z); const f = Math.min(1, jarOf(k) / JFULL(k)), tg = meta.hatched[k] ? 'r' : f.toFixed(3); if (J.last !== tg) { J.last = tg; J.set(meta.hatched[k] ? (BENCHV ? 0.3 : 1) : f, meta.hatched[k] ? 2 : undefined); /* (builder 14) a hatched jar keeps a third of its substance, so the creature is seen through clear glass */ }
         const bump = st.byBump[k] || 0, hb = st.hatched === k && st.hatchT ? Math.max(0, 1 - (now - st.hatchT) / 600) : 0, s0 = jp.s * (1 + 0.1 * bump * Math.cos(bump * 9)); J.grp.scale.set(s0, s0 * (1 + 0.16 * hb * Math.cos(hb * 10)), s0); J.grp.rotation.z = 0.02 * Math.sin(tq * 1.2 + ji * 2); if (hb) dirty = true; }); }
 
 
