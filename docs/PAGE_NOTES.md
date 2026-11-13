@@ -265,3 +265,20 @@ Not done in this pass: the flags do not fill with a drawn motion (they switch); 
 - Stains: `pageStains` draws a seeded set per run, round and page under all ink; `keepClear()` lists the rectangles; `AA.rxScheme.stainCheck(50)` gives the worst reach inside (0.099 of a unit). The stains baked into the aged paper and the madness stains of `buildMargin` are off.
 - `?bench=a|b|c`: mock views of the page on a wooden bench with the objects on the bench; `?cage=1`: the trial of cages drawn in space.
 - Not done: hand-made cage templates; the molecule part that meets the goal lighting the outline; jars as large as the instruments and the homunculus acting in a take; the upgrade screen's picture language; the stains clip of five pages; show6-run.mp4 re-recorded from this state (the file in shots is the first version, seed 3, from before the clear-screen pass).
+
+## Eighth builder (12 November, night)
+
+Branch `page-builder-8` (worktree `page8`). Files: `scheme.js`, `feel.js`, `marks.js`. Recorder: `.claude/f8` of the worktree (not in git; ports 8981 page, 8982 frames; `bc.sh`, `still.sh`, `sweep.ps1` as in f7; `j_bclip.js` takes `quota=` to set the target for a take and `cup=1` to force the cup's visit and print the stain check).
+
+- Hydrogens (`HYD`, `?hyd=a|b|c|0`; the owner picked b, the default): full size, further out, a stick to its atom. `hydFix` in `layout` sets every shown hydrogen on every frame, whatever moved the atoms: on a circle round its own atom (gap `hydGap`, measured as the camera sees it), in the direction it was given unless something is in the way; then turned round its atom by the least turn to a free side, tried nearer in (0.62 of the gap) and further out (1.5) when crowded. The turn is remembered per hydrogen so it does not flick. The stick to a hydrogen is always drawn.
+- Reagents (`REAG`, `?reag=cards|bottles`; default `both`, the owner's pick): one index card per reagent in a column right of the page (`bothDraw`: picture on the left, numeral of its place in a pencil ring and warm paper when it is in the line, grey when it has nothing to act on), its bottle standing on the card's right end (open when usable, stoppered when not). Firing (`bottlePour`, `pourMs` 720): the bottle leaves its card, is carried to just beside the atoms it acts on (`tgt.sites` from feel.js `throwThen`: one place per cluster of changed atoms, up to three, nearest the card first), tips, one stream falls, and it goes back.
+- Yield marks (`YMARKS`, `AA.rxMarks.yieldMark` in marks.js): four of our own marks, each adding a stroke to the last (ring; stem; two rays; bar, point and lightning). Thin outline until passed, then inked stroke by stroke (340 ms, 520 for the last); the target is larger and red; the three bonus marks have a pale gold ring that fills. The 3D flags are not built, the post, the flag drawings, the coin pictures and the purse on the track are not drawn. Coins fly to the pile from the mark that was passed.
+- `flHome` arrives on a step's last frame (it was one frame late: the logged whole-molecule move outside a step).
+- Sound: feel.js calls `AA.sfx.build('c')` once at load when no build is set, and `AA.sfx.arrow(n, ms, { last, of, gap })` where `windup` was called (falls back to `windup` when `arrow` is absent).
+- The cup goes to the ring nearest its own place.
+
+Measured (one 14 s clip each, every frame; nearest heavy pair / nearest pair with a hydrogen, as a share of the two radii): round 1 1.08 / 1.45, round 5 1.24 / 1.22, round 7 1.04 / 1.15, round 9 1.08 / 1.25. Whole molecule moved outside a step: 0 frames (19 during OVERREACT, which shakes it on purpose). Stain check on the bench: 50 pages, worst 0.091 inside.
+
+Not done: jars with shadows, the homunculus larger and acting, the turn control's place (a faint round arrow drawn at a fixed place inside the molecule's area, about 766, 314 on a 1280 frame, was not found in the code), pick, shop, round-end, run-end and title screens in the bench view, cage drawings. One recording stalled at frame 368 once and did not repeat in four re-runs of the same take.
+
+scheme.html: bump `scheme.js?v=`, `feel.js?v=`, `marks.js?v=`.
