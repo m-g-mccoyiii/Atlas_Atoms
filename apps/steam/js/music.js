@@ -97,7 +97,7 @@ function Engine(c, o) {
   // the grooves go to "tape": a slow wobble of pitch (a short delay whose length wanders), a faster flutter, a soft squash. The older themes go straight through.
   E.plain = G(E.gv ? 0 : 1); E.sum.connect(E.plain); E.plain.connect(E.duckG);
   const td = c.createDelay(0.06); td.delayTime.value = 0.014; const w1 = c.createOscillator(), w2 = c.createOscillator(), fl = G(0.00005); E.wowG = G(0.0007 * wowOf(E.th)); w1.frequency.value = 0.53; w2.frequency.value = 6.1; w1.connect(E.wowG); E.wowG.connect(td.delayTime); w2.connect(fl); fl.connect(td.delayTime); w1.start(); w2.start();
-  const tsh = c.createWaveShaper(), tcu = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; tcu[i] = Math.tanh(x * 1.5) / Math.tanh(1.5); } tsh.curve = tcu; tsh.oversample = '2x'; E.taped = G(E.gv ? 1 : 0); E.sum.connect(td); td.connect(tsh); tsh.connect(E.taped); E.taped.connect(E.duckG);
+  const tsh = c.createWaveShaper(), tcu = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; tcu[i] = Math.tanh(x * 1.5) / Math.tanh(1.5); } tsh.curve = tcu; tsh.oversample = '2x'; E.taped = G(E.gv ? 1 : 0); E.sum.connect(td); td.connect(tsh); tsh.connect(E.taped);
   // noise, made here from a seed
   const nb = c.createBuffer(1, Math.floor(c.sampleRate * 2), c.sampleRate), nd = nb.getChannelData(0), nr = RNG(4711); for (let i = 0; i < nd.length; i++) nd[i] = nr() * 2 - 1; E.noise = nb;
   // a room: a made impulse (decaying noise, darker towards the end) in a convolver
@@ -106,9 +106,11 @@ function Engine(c, o) {
   E.dlyIn = G(1); E.dl = c.createDelay(1.5); E.dl.delayTime.value = 0.4; const fb = G(0.36), dlp = c.createBiquadFilter(); dlp.type = 'lowpass'; dlp.frequency.value = 2400; const dr = G(0.5);
   E.dlyIn.connect(E.dl); E.dl.connect(dlp); dlp.connect(fb); fb.connect(E.dl); dlp.connect(dr); dr.connect(E.sum);
   E.fx = G(1); E.fx.connect(E.sum); const fr = G(0.3); E.fx.connect(fr); fr.connect(E.revIn);
-  E.sat = {}; E.fxOwn = false; c.__ovmus = E;   // fxOwn: the effects make the drums and risers of a chain themselves, on this grid (builder 7); __ovmus: so the effects can find the music of their context
+  E.route(); E.sat = {}; E.fxOwn = false; c.__ovmus = E;   // fxOwn: the effects make the drums and risers of a chain themselves, on this grid (builder 7); __ovmus: so the effects can find the music of their context
 }
 const EP = Engine.prototype;
+// (builder 8) a track may bring a master chain of its own between the tape and the way out
+EP.route = function () { const E = this, m = TK[E.th] && TK[E.th].master; try { E.taped.disconnect(); } catch (e) { /* not connected yet */ } if (!E.dir) { E.dir = E.G(0); E.sum.connect(E.dir); } E.taped.connect(E.duckG); if (m) { if (!E.mast) { E.mast = m(E); E.dir.connect(E.mast.i); } E.dir.gain.value = 1; E.taped.gain.value = 0; } else E.dir.gain.value = 0; };   // such a track goes past the tape (its own chain does the squashing)
 // ---------- one clock (builder 7): the beat grid of the music, for the effects ----------
 // beats(t0, t1, div): every grid point from t0 up to t1, div units apart (a unit is a sixteenth), as [{ t, u }] (u: the place in
 // its bar). Bars already written are exact; bars to come are worked out the way schedBar will write them. null when the music
@@ -150,7 +152,7 @@ EP.u = function () { return (this.rnd - 1) / 8; };
 // the same, bowed so the middle rounds are already plainly odd
 EP.w = function () { return Math.pow(this.u(), 0.8); };
 // the heat of a groove: the slow value the game raises turn by turn, plus the surge of a chain on top of it
-EP.setTheme = function (k) { const E = this; E.th = k; E.gv = k >= 4; E.plain.gain.value = E.gv ? 0 : 1; E.taped.gain.value = E.gv ? 1 : 0; E.wowG.gain.value = 0.0007 * wowOf(k) * (1 + 2.5 * E.w()); E.mkRoom(); E.glide = null; };
+EP.setTheme = function (k) { const E = this; E.th = k; E.gv = k >= 4; E.plain.gain.value = E.gv ? 0 : 1; E.taped.gain.value = E.gv ? 1 : 0; E.wowG.gain.value = 0.0007 * wowOf(k) * (1 + 2.5 * E.w()); E.mkRoom(); E.glide = null; E.route(); };
 EP.heat = function (t, tau) { const E = this; E.I = clamp(E.slow + (1 - E.slow) * E.sg, 0, 1); if (E.deck) E.setI(E.deck, E.I, t, tau || 0.25); if (E.gv && E.state === 'chain' && E.chainTrim) E.chainTrim(t, true); };
 // in a chain the effects are the star: the groove gets denser and brighter with the surge but steps back in level, and comes forward again after
 EP.chainTrim = function (t, on) { const dk = this.deck; if (dk && dk.sg0 && !dk.dead) dk.gs.forEach(g => g.gain.setTargetAtTime(dk.sg0 * (on ? trimOf(this.th, this.sg) : 1), t, on ? 0.12 : 0.5)); };
@@ -898,24 +900,55 @@ function edmSuper(m) {
 }
 // the kick: a click, a fast fall of pitch, then a long body tuned to A (55 Hz); top = the same without its low end (for the top of a build)
 function edmKick(top) {
-  const n = Math.floor(0.4 * SR), x = new Float32Array(n); let ph = 0;
-  for (let i = 0; i < n; i++) { const tt = i / SR; ph += 2 * Math.PI * (55 + 230 * Math.exp(-tt / 0.012) + 55 * Math.exp(-tt / 0.06)) / SR; x[i] = Math.tanh(2.2 * Math.sin(ph) * (tt < 0.05 ? 1 : Math.exp(-(tt - 0.05) / 0.1)) * Math.min(1, i / 8)); }
-  burst(x, 0, 0.0025, 2500, 10000, 0.45, 811); burst(x, 0, 0.01, 300, 2200, 0.2, 812); if (top) edmHpf(x, 420, 2); return norm(fadeEnd(x, 0.03), 0.9);
+  const n = Math.floor(0.36 * SR), x = new Float32Array(n); let ph = 0;
+  for (let i = 0; i < n; i++) { const tt = i / SR, f = 48 + 135 * Math.exp(-tt / 0.028) + 260 * Math.exp(-tt / 0.005); ph += 2 * Math.PI * f / SR;
+    const env = tt < 0.05 ? 1 : Math.exp(-(tt - 0.05) / 0.055), v = Math.sin(ph) + 0.4 * Math.sin(2 * ph + 0.4) * Math.exp(-tt / 0.06) + 0.2 * Math.sin(3 * ph) * Math.exp(-tt / 0.03);
+    x[i] = Math.tanh(2.6 * v * env) * Math.min(1, i / 6); }
+  burst(x, 0, 0.004, 2000, 5200, 0.7, 811); burst(x, 0, 0.012, 150, 900, 0.3, 812); if (top) edmHpf(x, 420, 2); return norm(fadeEnd(x, 0.03), 0.95);
+}
+// (builder 8) the mid-bass: a reese (three saws beating) and a square, through a filter that snaps half shut, then driven hard so the line has
+// strong harmonics from 100 Hz to 1 kHz (what a phone can play); its own low end is taken off: the sub is a clean sine of its own
+function edmBass(m) {
+  const f = mf(m), n = Math.floor(0.7 * SR), x = edmSaws(n, f, [-16, 0, 15], 500 + m), q = new Float32Array(n);
+  for (let h = 1; h * f < 5000; h += 2) { const a = 1 / h, w = 2 * Math.PI * h * f / SR; for (let i = 0; i < n; i++) q[i] += a * Math.sin(w * i); }
+  { const o2 = edmSaws(n, f * 2, [-9, 8], 520 + m); for (let i = 0; i < n; i++) x[i] = 0.5 * x[i] + 0.9 * q[i] + 0.55 * o2[i]; }   // an octave up as well: its harmonics sit from 400 Hz to 1 kHz
+  edmSvf(x, 4200, 1500, 0.12, 0.3);
+  for (let i = 0; i < n; i++) { const tt = i / SR; x[i] = Math.tanh(3.0 * x[i]) * Math.exp(-tt / 0.4) * Math.min(1, i / 50); }
+  return norm(fadeEnd(edmHpf(x, 85, 1), 0.04), 0.9);
+}
+// (builder 8) the growl of the deep rounds: the same reese an octave down through a band that yawns open and shut (the wobble is in the sample's own filter)
+function edmGrowl(m, rate) {
+  const f = mf(m), n = Math.floor(1.0 * SR), x = edmSaws(n, f, [-22, -7, 0, 9, 21], 560 + m), y = new Float32Array(n); let lo = 0, bd = 0;
+  for (let i = 0; i < n; i++) { const tt = i / SR, fc = 220 * Math.pow(2, 2.0 * (1 - Math.cos(2 * Math.PI * rate * tt))), c = 2 * Math.sin(Math.PI * Math.min(0.2, fc / SR)), hp = x[i] - lo - 0.18 * bd; bd += c * hp; lo += c * bd; y[i] = Math.tanh(3.2 * (0.7 * lo + 0.6 * bd)) * Math.min(1, i / 60); }
+  return norm(fadeEnd(edmHpf(y, 85, 1), 0.05), 0.9);
 }
 Object.assign(INST, {
   edm_saw:   { loop: 1, lo: 45, hi: 99, gen: m => edmSuper(m) },
-  edm_pl:    { rr: 2, lo: 50, hi: 98, gen: m => { const f = mf(m), n = Math.floor(0.75 * SR), x = edmSaws(n, f, [-9, 0, 8], 400 + m + TAKE * 17), y = edmSaws(n, f * 2, [4], 450 + m); for (let i = 0; i < n; i++) x[i] += 0.35 * y[i]; edmSvf(x, Math.min(9000, 2200 + f * 5), Math.max(350, f * 1.1), 0.06, 0.5); for (let i = 0; i < n; i++) x[i] *= Math.exp(-i / (0.2 * SR)) * Math.min(1, i / 40); return norm(fadeEnd(x, 0.05), 0.85); } },
-  edm_bass:  { lo: 31, hi: 55, gen: m => { const f = mf(m), n = Math.floor(0.6 * SR), x = edmSaws(n, f, [-11, 10], 500 + m); edmSvf(x, 3200, 260, 0.07, 0.4); for (let i = 0; i < n; i++) { const tt = i / SR; x[i] = Math.tanh(1.2 * (x[i] * 0.6 + 0.7 * Math.sin(2 * Math.PI * f * tt))) * Math.exp(-tt / 0.3) * Math.min(1, i / 60); } return norm(fadeEnd(x, 0.04), 0.85); } },
-  edm_sub:   { lo: 30, hi: 42, gen: m => { const f = mf(m), n = Math.floor(2.4 * SR), x = new Float32Array(n); for (let i = 0; i < n; i++) { const p = 2 * Math.PI * f * i / SR; x[i] = Math.tanh(1.3 * (Math.sin(p) + 0.18 * Math.sin(2 * p))) * Math.min(1, i / 300); } return norm(fadeEnd(x, 0.05), 0.8); } },
+  edm_pl:    { rr: 2, lo: 50, hi: 98, gen: m => { const f = mf(m), n = Math.floor(0.75 * SR), x = edmSaws(n, f, [-19, -12, -5, 0, 6, 13, 20], 400 + m + TAKE * 17), y = edmSaws(n, f * 2, [-7, 8], 450 + m); for (let i = 0; i < n; i++) x[i] = 0.5 * x[i] + 0.3 * y[i]; edmSvf(x, Math.min(9000, 2200 + f * 5), Math.max(350, f * 1.1), 0.06, 0.5); for (let i = 0; i < n; i++) x[i] *= Math.exp(-i / (0.2 * SR)) * Math.min(1, i / 40); return norm(fadeEnd(x, 0.05), 0.85); } },
+  edm_bass:  { lo: 40, hi: 66, gen: m => edmBass(m) },
+  edm_growl: { lo: 33, hi: 54, gen: m => edmGrowl(m, 3) },
+  edm_growl2: { lo: 33, hi: 54, gen: m => edmGrowl(m, 6) },
+  edm_sub:   { lo: 28, hi: 43, gen: m => { const f = mf(m), n = Math.floor(2.4 * SR), x = new Float32Array(n); for (let i = 0; i < n; i++) { const p = 2 * Math.PI * f * i / SR; x[i] = Math.tanh(1.15 * (Math.sin(p) + 0.08 * Math.sin(2 * p))) * Math.min(1, i / 250); } return norm(fadeEnd(x, 0.05), 0.8); } },
   edm_kick:  { fix: 30, gen: () => edmKick(false) },
   edm_kickt: { fix: 30, gen: () => edmKick(true) },
-  edm_clap:  { rr: 2, fix: 60, gen: () => { const x = modal([[195, 0.25, 0.07], [340, 0.15, 0.05]], 0.5); [0, 0.009, 0.019, 0.03].forEach((t0, i) => burst(x, t0, 0.004, 1000, 6500, 1, 861 + i)); burst(x, 0.032, 0.09, 1200, 7000, 0.9, 866); burst(x, 0.03, 0.2, 2500, 9000, 0.22, 867); return norm(fadeEnd(x, 0.03), 0.85); } },
+  edm_clap:  { rr: 2, fix: 60, gen: () => { const x = modal([[200, 1.1, 0.055], [340, 0.3, 0.05]], 0.5); [0, 0.009, 0.019, 0.03].forEach((t0, i) => burst(x, t0, 0.004, 1000, 6500, 1, 861 + i)); burst(x, 0.032, 0.09, 1200, 7000, 0.9, 866); burst(x, 0.03, 0.2, 2500, 9000, 0.22, 867); return norm(fadeEnd(x, 0.03), 0.85); } },
   edm_sn:    { rr: 3, fix: 50, gen: () => { const x = modal([[205, 1, 0.1], [352, 0.5, 0.07]], 0.32); burst(x, 0, 0.065, 1800, 11000, 1.4, 851); burst(x, 0, 0.003, 3000, 12000, 0.7, 852); return norm(fadeEnd(x, 0.02), 0.9); } },
   edm_hh:    { rr: 3, fix: 70, gen: () => { const x = modal(rndParts(841, 14, 7000, 14000, 0.015, 0.035), 0.1); burst(x, 0, 0.011, 7500, 16000, 3, 842); return norm(edmHpf(x, 6000, 1), 0.8); } },
   edm_oh:    { rr: 2, fix: 70, gen: () => { const x = modal(rndParts(843, 24, 6000, 14000, 0.1, 0.22), 0.5); burst(x, 0, 0.09, 6500, 16000, 3, 844); return norm(fadeEnd(edmHpf(x, 5000, 1), 0.05), 0.8); } },
   edm_crash: { fix: 70, gen: () => { const x = new Float32Array(Math.floor(2 * SR)); burst(x, 0, 0.4, 4000, 15000, 1, 831); burst(x, 0, 0.12, 2000, 9000, 0.7, 832); return norm(fadeEnd(x, 0.3), 0.85); } },
   edm_imp:   { fix: 30, gen: () => { const n = Math.floor(2.2 * SR), x = new Float32Array(n); let ph = 0; for (let i = 0; i < n; i++) { const tt = i / SR; ph += 2 * Math.PI * (38 + 80 * Math.exp(-tt / 0.09)) / SR; x[i] = Math.tanh(1.6 * Math.sin(ph) * Math.exp(-tt / 0.55)) * Math.min(1, i / 20); } burst(x, 0, 0.3, 50, 700, 0.9, 821); burst(x, 0, 0.05, 800, 6000, 0.5, 822); return norm(fadeEnd(x, 0.3), 0.9); } }
 });
+// (builder 8) THE MASTER, for this track only: a low shelf for weight and a high shelf for air, everything under 120 Hz made mono, a glue
+// compressor that the kick moves, then a soft clipper that brings the mix up to a dance record's loudness without hard edges
+const EDMM = { drive: 1.5, out: 0.62 };
+function edmMaster(E) {
+  const c = E.c, G = E.G, i = G(1), o = G(EDMM.out), bq = (type, f, q, db) => { const b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q) b.Q.value = q; if (db) b.gain.value = db; return b; };
+  const ls = bq('lowshelf', 95, 0, 1.5), hs = bq('highshelf', 8500, 0, 3), l1 = bq('lowpass', 120, 0.707), l2 = bq('lowpass', 120, 0.707), h1 = bq('highpass', 120, 0.707), h2 = bq('highpass', 120, 0.707), mono = G(1), sum = G(1);
+  mono.channelCount = 1; mono.channelCountMode = 'explicit'; i.connect(ls); ls.connect(hs); hs.connect(l1); l1.connect(l2); l2.connect(mono); mono.connect(sum); hs.connect(h1); h1.connect(h2); h2.connect(sum);
+  const cp = c.createDynamicsCompressor(); cp.threshold.value = -16; cp.knee.value = 8; cp.ratio.value = 2.5; cp.attack.value = 0.03; cp.release.value = 0.16;
+  const pre = G(EDMM.drive), sh = c.createWaveShaper(), n = 2048, cu = new Float32Array(n); for (let k = 0; k < n; k++) { const x = k / (n - 1) * 2 - 1, a = Math.abs(x); cu[k] = Math.sign(x) * (a < 0.5 ? a : 0.5 + 0.42 * Math.tanh((a - 0.5) / 0.42)); } sh.curve = cu; sh.oversample = '4x';
+  sum.connect(cp); cp.connect(pre); pre.connect(sh); sh.connect(o); o.connect(E.duckG); return { i, o };
+}
 // ---- live helpers ----
 // a sweep that can run on from bar to bar: noise through a band that moves (a riser, a swell, a fall) or two saws that climb
 function edmSweep(E, dst, o) {
@@ -929,16 +962,20 @@ function edmSweep(E, dst, o) {
   src.onended = () => done(tail); E.stat(n, t, end + 0.03);
 }
 // the sidechain: at a kick the bass, pads, stabs, lead and plucks dip (by dp, 0 to 1) and swell back over rel seconds
-function edmPump(dk, tk, dp, rel) { [['bassPump', 1], ['padPump', 0.92], ['voxPump', 0.8], ['leadPump', 0.45], ['arpPump', 0.5]].forEach(x => { const p = dk.L[x[0]]; if (!p) return; p.gain.setTargetAtTime(1 - dp * x[1], Math.max(0, tk - 0.014), 0.004); p.gain.setTargetAtTime(1, tk + 0.035, rel / 3); }); }
+function edmPump(dk, tk, dp, rel) { [['bassPump', 1], ['padPump', 0.95], ['voxPump', 0.85], ['leadPump', 0.6], ['arpPump', 0.65]].forEach(x => { const p = dk.L[x[0]]; if (!p) return; p.gain.setTargetAtTime(1 - dp * x[1], Math.max(0, tk - 0.014), 0.004); p.gain.setTargetAtTime(1, tk + 0.035, rel / 3); }); }
 // each layer's insert: a high-pass where wanted (pads, lead, plucks and stabs stay out of the bass), then a gain that the hits of a chain duck
-const edmIns = hz => (E, dk, k) => { const g = E.G(1); (dk.edmDuck || (dk.edmDuck = [])).push(g); if (!hz) return { i: g, o: g }; const f = E.c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hz; f.Q.value = 0.6; f.connect(g); return { i: f, o: g }; };
+const edmIns = (hz, cho) => (E, dk, k) => { const c = E.c, g = E.G(1); (dk.edmDuck || (dk.edmDuck = [])).push(g); if (!hz) return { i: g, o: g }; const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hz; f.Q.value = 0.6; f.connect(g);
+  if (cho && c.createStereoPanner && !E.dry) {   // (builder 8) a chorus: two short delays that wander, one to each side, so every chord and lead is wide and moving, never one bare voice
+    [[0.011, 0.31, -0.85], [0.017, 0.43, 0.85]].forEach(q => { const d = c.createDelay(0.05), l = c.createOscillator(), lg = E.G(0.0028), w = E.G(cho), pn = c.createStereoPanner(); d.delayTime.value = q[0]; l.frequency.value = q[1]; l.connect(lg); lg.connect(d.delayTime); l.start(Math.max(0, dk.t0 - 0.02)); dk.ends.push(l); pn.pan.value = q[2]; f.connect(d); d.connect(w); w.connect(pn); pn.connect(g); }); }
+  return { i: f, o: g }; };
 const EDMLIFT = 2.92;   // seconds from the start of OVERREACT to the lift of the effect (sfx.js: 0.09 + 0.55 + 1.35 + 0.04 + 0.92, less the deck's own lead-in): the drop lands there
 const EDMC = [[0, 2, 4, 3, 5], [0, 3, 1, 4, 2, 5], [5, 4, 2, 3, 1, 2, 0], [1, 4, 2, 6, 3], [1, 3, 5, 4, 2, 0], [0, 2, 1, 3, 2, 4, 3, 6]];   // the pluck figure: cycles of 5, 6, 7, 8 notes that drift against the bar
-const EDMG = { kick: 0.5, clap: 1.1, sn: 0.6, hh: 11, oh: 10, crash: 2.2, sub: 0.17, mid: 0.5, pad: 0.2, stab: 0.2, arp: 0.3, lead: 1, air: 0.05 };          // balance inside the layers
+const EDMG = { kick: 0.5, clap: 1.1, sn: 0.6, hh: 11, oh: 10, crash: 2.2, sub: 0.1, mid: 0.5, pad: 0.2, stab: 0.2, arp: 0.3, lead: 1, air: 0.05 };          // balance inside the layers
 // (builder 8) THE BEAT. The owner, 13 November: "No real beat". The kick, the clap and the hats have buses of their own that go past
 // the layer levels, the heat filter and the state's own level: the same kick at the same level in every state that has drums,
 // four on the floor, a clap on 2 and 4, a hat on every off-beat. Calm is made by thinning what is around the drums, never the drums.
-const EDMD = { kick: 0.31, clap: 0.5, sn: 0.21, hh: 0.8, oh: 0.65, crash: 0.4, roll: 0.7, rise: 0.7 };
+const EDML = [['..r...r...r.f.r.', '..r...r.o...r.f.'], ['..r.r.o...r.f.r.', '..rr..o.r.r.f.s.'], ['r.ro.r.fr.ro.s.f', '..rro.r.f.ro.rso'], ['r.rorrf.r.rosrfo', 'r.ro.rrfr.rorso.']];   // the bass lines: calm, warm, hot, the drop (r root, o octave, f fifth, s seventh)
+const EDMD = { kick: 0.36, clap: 0.85, sn: 0.36, hh: 1.5, oh: 1.25, crash: 0.55, roll: 0.8, rise: 0.7 };
 function edmBus(E, dk) {
   if (dk.edmB) return dk.edmB; const B = dk.edmB = {};
   [['k', 0], ['t', 0.07]].forEach(q => { const i = E.G(1), d = E.G(1), o = E.G(1 / dk.sg0); i.__n = 'drums'; i.connect(d); d.connect(o); o.connect(dk.gs[0]); if (q[1]) { const sd = E.G(q[1]); o.connect(sd); sd.connect(dk.gs[1]); } B[q[0]] = i; B[q[0] + 'd'] = d; });
@@ -1025,17 +1062,16 @@ function edmPlay(E, dk, t, b, ch, name) {
     const long = (g, rr) => Sm(E, B, { i: 'edm_sub', m: root, t: from, g, dur: left - 0.04, r: rr, strict: 1 });
     if (!drums) long(0.42 * Q.sub, 0.3);
     else {
-      const hotB = peak || K >= 0.75, bp = K < 0.6 && !peak ? '..x...x...x...x.' : ['..x...x...x...x.', '..xx..xx..xx..xx', '..x.x.x...x.x.xo', '..xo..xx..xo..x.'][(s.bv + (b >> 2)) % 4], blp = peak ? 6000 : 240 + 5300 * Math.pow(K, 1.5);
-      if (hotB) long((peak ? 0.62 : 0.5) * Q.sub, 0.08);
-      if (hotB && w > 0.3 && !re && b % 2 === 1 && r.chance(0.6 * w)) { const div = r.chance(0.5) ? 4 / 3 : r.chance(0.5) ? 2 : 1; for (let u = 0; u < 16 - 0.01; u += div) bn('edm_bass', u, root + 12 + (w > 0.6 && Math.round(u / div) % 4 === 3 ? 1 : 0), Q.mid * 1.1, div * 0.95, { lp: 250, lp1: 2500 + 4500 * w, lpt: div * sp * 0.5 }); }   // later rounds: on some bars the bass wobbles, its filter yawning open on every note (in triplets, eighths or sixteenths)
-      else
-      pat(bp, (u, c) => { bn('edm_bass', u, root + 12 + (c === 'o' ? 12 : 0), Q.mid * (u % 4 === 2 ? 1 : 0.8), bp[u + 1] === '.' || u === 15 ? 1.7 : 0.9, { lp: blp }); if (!hotB && u % 4 === 2) bn('edm_sub', u, root, 0.5 * Q.sub, 1.8); });
+      // (builder 8) a line you could hum: root, octave, fifth, seventh in a dance rhythm; under each note a clean sine sub, over it the saturated mid-bass
+      const LN = EDML[peak ? 3 : K < 0.4 ? 0 : K < 0.75 ? 1 : 2][(s.bv + (b >> 1)) % 2], blp = peak ? 7000 : 1000 + 5500 * Math.pow(K, 1.5), OFF = { r: 0, o: 12, f: 7, s: 10 };
+      pat(LN, (u, c) => { let k = u + 1; while (k < 16 && LN[k] === '.') k++; const du = Math.min(k - u, 3) * 0.92, off = OFF[c] || 0, sm = off === 12 ? root : root + off > 43 ? root + off - 12 : root + off;
+        bn('edm_bass', u, root + 12 + off, Q.mid * (u % 4 === 2 ? 1 : 0.85), du, { lp: blp }); bn('edm_sub', u, sm, Q.sub * (u % 4 === 0 ? 0.7 : 1), du, { r: 0.05 }); });
       if (mis === 1) [13, 15].forEach(u => bn('edm_bass', u, root + 24, Q.mid * 0.8, 0.8, { lp: blp }));
     }
   }
   // ---- pads: the supersaw chord through a low-pass that opens with the heat (and with the surge of a chain) ----
   if (left > 0.1) {
-    const padF = k => 700 + 7500 * Math.pow(k, 1.3); let f0 = peak ? 10000 : padF(K), f1 = f0;
+    const padF = k => 1000 + 8000 * Math.pow(k, 1.2); let f0 = peak ? 10000 : padF(K), f1 = f0;
     if (chain) { f0 = Math.min(13000, padF(K) * Math.pow(2, 3.4 * xs(Math.max(0, (from - t) / sp)))); f1 = Math.min(13000, padF(K) * Math.pow(2, 3.4 * x1)); }
     else if (intro) { f0 = b ? 1000 : 320; f1 = b ? 3600 : 1000; }
     else if (brk) { f0 = 350 * Math.pow(2, b * 0.8); f1 = f0 * 1.7; }
@@ -1157,10 +1193,10 @@ TRACK(8, 'edm', {
     runlost: { prog: ['edmG', 'edmBm', 'edmEm', 'edmA'], tune: [[[0, 16, 79]], [[0, 16, 78]], [[0, 8, 76], [8, 8, 74]], [[0, 16, 76]]] }
   },
   mix: { drums: 1, bass: 0.5, pad: 2.4, lead: 1.6, arp: 2.6, vox: 2.2, bell: 2 }, tone: I => 10000 * Math.pow(2, I),
-  lay: { drums: { rev: 0.05, dly: 0, sat: 1.2, ins: edmIns(0) }, bass: { rev: 0, dly: 0, sat: 1.3, ins: edmIns(0) }, pad: { rev: 0.3, dly: 0.04, ins: edmIns(140) }, lead: { rev: 0.26, dly: 0.2, pump: true, ins: edmIns(200) },
-         arp: { rev: 0.22, dly: 0.26, pump: true, ins: edmIns(220) }, vox: { rev: 0.3, dly: 0.12, pump: true, ins: edmIns(250) }, bell: { rev: 0.3, dly: 0.2, ins: edmIns(0) } },
-  g: 1, sg: { plan: 1.1, title: 1.11, bench: 1.48, pick: 1.33, overreact: 1.0, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.85,
-  play: edmPlay, lead: edmLead, step: edmStep, enter: edmEnter, roll: edmRoll, lead8: edmLeadIn, out8: edmOut
+  lay: { drums: { rev: 0.05, dly: 0, sat: 1.2, ins: edmIns(0) }, bass: { rev: 0, dly: 0, sat: 1.3, ins: edmIns(0) }, pad: { rev: 0.34, dly: 0.04, ins: edmIns(140, 0.6) }, lead: { rev: 0.28, dly: 0.2, pump: true, ins: edmIns(200, 0.5) },
+         arp: { rev: 0.24, dly: 0.26, pump: true, ins: edmIns(220, 0.5) }, vox: { rev: 0.3, dly: 0.12, pump: true, ins: edmIns(250, 0.5) }, bell: { rev: 0.3, dly: 0.2, ins: edmIns(0) } },
+  g: 1, sg: { plan: 2.1, title: 1.11, bench: 1.48, pick: 1.33, overreact: 1.0, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.85,
+  play: edmPlay, lead: edmLead, step: edmStep, enter: edmEnter, roll: edmRoll, lead8: edmLeadIn, out8: edmOut, master: edmMaster
 });
 // TRACK:edm>>>
 // <<<TRACK:metal
