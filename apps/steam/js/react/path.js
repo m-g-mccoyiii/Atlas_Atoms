@@ -971,8 +971,8 @@ const HOMS = {
   // The count of rings starts again, so a ring that only closes again pays a quarter until the row passes the
   // longest of the round
   water: { name: 'water', jar: 'fast', feed: ['water'], need: 3, uses: 1, tok: 'C=C to OH|rings open', whole: true, word: 'OH',
-    spots(m) { const cc = RX.CARDS.hydrate.find(m), rings = closedRings(m).length; return cc.length || rings ? [{ pairs: cc.map(q => [q.bond.a, q.bond.b]) }] : []; },
-    act(m) { RX.reopen(m); const c = RX.CARDS.hydrate, made = []; c.find(m).forEach(q => { if (c.ok(m, q)) c.apply(m, q).incoming.forEach(a => made.push(a)); }); return { made, restart: true }; } },
+    spots(m) { const cc = RX.CARDS.hydrate.find(m), rings = closedRings(m).length; return cc.length || rings ? [{ pairs: cc.map(q => (q.bond ? [q.bond.a, q.bond.b] : (q.atoms || []).slice(0, 2))).filter(p => p.length === 2) }] : []; },
+    act(m) { RX.reopen(m); const before = new Set(m.atoms); RX.runCard(m, RX.CARDS.hydrate); return { made: m.atoms.filter(a => !before.has(a) && a.el === 'O'), restart: true }; } },
   // hydrogen floats over: where the rings stopped at a stretch too long, the first C=O on the far side becomes OH
   // and the rings carry on. A place is offered only if a ring would close from it
   h2: { name: 'hydrogen', jar: 'fast', feed: ['h2'], need: 3, uses: 1, tok: 'far C=O|to OH', word: 'OH',
@@ -1001,7 +1001,7 @@ const HOMS = {
     act(m) { return RX.homs.acid(m, HOMS.acid.reach); } },
   // wood spirit, blind drunk: tapped BEFORE the page is lined up. The page fires every reaction dealt that has a use
   // left, in an order taken at random, each spending a use
-  wood: { name: 'wood spirit', jar: 'medium', feed: ['use:nabh4'], need: 1, uses: 1, tok: 'fires all five|any order', whole: true, word: '', before: true,
+  wood: { name: 'wood spirit', jar: 'medium', feed: ['use:nabh4'], need: 1, uses: 1, brings: 'nabh4', tok: 'fires all five|any order', whole: true, word: '', before: true,
     spots(m, g) { if (!g || !g.kinds) return []; return g.kinds.filter(id => (g.free && g.free[id]) || g.left[id] > 0).length >= 2 ? [{ all: true }] : []; },
     act(m, sp, g, rnd) { if (!g) return { made: [] }; const R = rnd || rand, ids = g.kinds.filter(id => (g.free && g.free[id]) || g.left[id] > 0); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = ids[i]; ids[i] = ids[j]; ids[j] = t; } return { made: [], line: ids }; } },
   // salt cures: tapped BEFORE the page is lined up, on one C=O. For the round a ring that closes on it leaves it a
@@ -1011,19 +1011,31 @@ const HOMS = {
     act(m, sp) { return RX.homs.salt(m, sp); } },
   // slime sticks: two carbons are joined by two carbons of slime, so they count as three apart for the round and the
   // rings cross from one stretch to the other. A place is offered only if a ring would close across it
-  slime: { name: 'slime', jar: 'medium', feed: ['use:bh3'], need: 1, uses: 1, tok: 'sticks two carbons|3 apart', word: 'stuck', lasting: true,
+  slime: { name: 'slime', jar: 'medium', feed: ['use:bh3'], need: 1, uses: 1, brings: 'bh3', tok: 'sticks two carbons|3 apart', word: 'stuck', lasting: true,
     spots(m, g) { const self = (g && g.self) || SELF0; return RX.homs.slimeSpots(m).filter(sp => { const t = homTry(m, 'slime', sp); return !!t && selfRun(t, self) >= 1; }).slice(0, 12); },
     act(m, sp) { const r = RX.homs.slime(m, sp); return r ? { made: r.made, over: true } : null; } },
   // the seedling grows: six carbons with two C=O grow from the carbon tapped, stay for the round, and may pass the
   // size limit. A place is offered only if a ring would close onto the new arm
-  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 1, uses: 1, arms: 3, tok: 'grows 9 carbons|3 C=O', word: '+9', lasting: true,
+  seedling: { name: 'seedling', jar: 'slow', feed: ['use:allyl'], need: 1, uses: 1, arms: 1, tok: 'grows 3 carbons|1 C=O', word: '+3', lasting: true,
     spots(m, g) { const self = (g && g.self) || SELF0; return RX.homs.seedSpots(m).filter(sp => { const t = homTry(m, 'seedling', sp); return !!t && selfRun(t, self) >= 1; }); },
     act(m, sp) { const r = RX.homs.seed(m, sp, HOMS.seedling.arms); return r ? { made: r.made, over: true } : null; } },
   // not built yet (docs/HOMUNCULI.md, "To build, in order"): each becomes one entry like those above
-  ammonia: { name: 'ammonia', jar: 'slow', feed: ['nh3'], need: 2, uses: 1, tok: 'page fires again', whole: true, offered: false },
-  brimstone: { name: 'brimstone', jar: 'slow', feed: ['sulfur'], need: 2, uses: 1, tok: 'burns 8 carbons', offered: false }
+  // ammonia, smelling salts: tapped after the page has fired. The reagents of the page that acted fire again by themselves, in the same order, and spend no use.
+  // Its food is ammonia, which only the cyanohydrin route gives off: a run that holds this homunculus holds that reagent (brings), so the food can be made.
+  ammonia: { name: 'ammonia', jar: 'slow', feed: ['nh3'], need: 1, uses: 1, tok: 'page fires again', whole: true, word: 'again', brings: 'cyanohydrin',
+    spots(m, g) { return g && g.shot && pageLine(g).length ? [{ again: true }] : []; },
+    act(m, sp, g) { return g ? { made: [], again: pageLine(g) } : { made: [] }; } },
+  // brimstone, hellfire: tap a carbon; fire runs down the next plain carbons toward the chain end (4 to 8), writes an OH on the 4th and a C=O on the 8th.
+  // Its food is sulfur, which only the Chugaev elimination gives off: a run that holds this homunculus holds that reagent.
+  brimstone: { name: 'brimstone', jar: 'slow', feed: ['sulfur'], need: 1, uses: 1, tok: 'burns 8 carbons|OH and C=O', word: 'burnt', brings: 'chugaev',
+    spots(m, g) { const self = (g && g.self) || SELF0; const sp = RX.homs.brimSpots(m), good = sp.filter(q => { const t = homTry(m, 'brimstone', q); return !!t && selfRun(t, self) >= 1; }); return (good.length ? good : sp).slice(0, 12); },
+    act(m, sp) { return RX.homs.brim(m, sp); } }
 };
 const HOMSIM = { freezeAt: 3 };
+// the reagents that acted on the page that has just fired, in order (for the ammonia homunculus)
+const pageLine = g => { const out = []; let n = g.pageSteps || 0; for (let i = g.trail.length - 1; i >= 0 && n > 0; i--) { const t = g.trail[i]; if (t.free) continue; n--; if (!t.bank && !t.wasted && t.hits > 0) out.unshift(t.id); } return out; };
+// a reagent of the hand fired once more with no use spent
+const takeFree = (g, id) => { const f = g.free; g.free = allFree(); let ok = false; try { const o = options(g, true)[id]; if (o) { synTake(g, o, true); ok = true; } } finally { g.free = f; } return ok; };
 const HOMIDS = Object.keys(HOMS), homOn = id => !!HOMS[id] && HOMS[id].offered !== false && !!HOMS[id].act;
 const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 // Something happened that may feed a creature: every offered creature it feeds has its jar count raised (g.by, banked
@@ -1048,11 +1060,12 @@ function homUse(g, spot, rnd) {
   g.hom = { id: g.hom.id, fed: 0, used: (g.hom.used || 0) + 1, frozen: (g.hom.frozen || 0) + (res.frozen || 0) }; g.tally.homs = (g.tally.homs || 0) + 1;
   if (res.restart) { g.cascBest = Math.max(g.cascBest || 0, g.casc || 0); g.casc = g.hom.frozen || 0; }
   // wood spirit: the whole hand is lined up, with a circle for each
+  g.homAgain = res.again || null;
   if (res.line) { g.queue = res.line.slice(); g.more = Math.max(0, res.line.length - (stepsOf(g) - (g.more || 0))); }
   return true;
 }
 // taps it and runs the zip that follows (for play with no page); returns the steps it added, or -1
-function homGo(g, spot, rnd) { const pre = !!homOf(g) && !!homOf(g).before; if (!homUse(g, spot, rnd)) return -1; if (pre) { const c0 = g.casc || 0; if (!g.queue.length) return 0; while (g.queue.length && !g.over) queueStep(g); return (g.casc || 0) - c0; } let n = 0; for (let o = cascadeNext(g); o; o = cascadeNext(g)) { synTake(g, o, true); n++; } return n; }
+function homGo(g, spot, rnd) { const pre = !!homOf(g) && !!homOf(g).before; if (!homUse(g, spot, rnd)) return -1; if (pre) { const c0 = g.casc || 0; if (!g.queue.length) return 0; while (g.queue.length && !g.over) queueStep(g); return (g.casc || 0) - c0; } let n = 0; if (g.homAgain) { const ids = g.homAgain; g.homAgain = null; ids.forEach(id => { if (g.over) return; if (!takeFree(g, id)) return; for (let c = cascadeNext(g); c; c = cascadeNext(g)) { synTake(g, c, true); n++; } }); } for (let o = cascadeNext(g); o; o = cascadeNext(g)) { synTake(g, o, true); n++; } return n; }
 // A new page with frozen rings on it: they are counted again and paid in full, ring n as 50 places counted n times
 // and n times 0.1 of extra and 0.1 of row, as when it closed, and the rings of the page count on from them
 function frozenPay(g) { const n = (g.hom && g.hom.frozen) || 0; if (!n || g.over) return 0; const w = (homOf(g) && homOf(g).pay) || 1; let p = 0; for (let k = 1; k <= n; k++) { p += CASC.place * k * w; g.E += CASC.step * k * w; g.R += CASC.row * w; } g.P += p; g.casc = n; return p; }
@@ -1293,7 +1306,7 @@ const pairCost = run => ((run.redraws || 0) >= CHOOSE.most ? null : 1 + (run.red
 function runRedraw(run, rnd) { const c = pairCost(run); if (!RULE.choose || !RULE.coins || c == null || (run.coins || 0) < c) return null; run.coins -= c; run.redraws = (run.redraws || 0) + 1; return runBriefs(run, rnd); }
 // the proof plays are played under the brief of the round (an assay changes the rules of the round)
 const specFor = (run, model, R, brief) => specPick(model, run.round || 1, (run.rack || []).concat(run.self || SELF0), R, run.tierNo || 3, run.specHist || [], Object.assign({}, run, { brief: brief || run.brief }));
-function runChoose(run, o) { run.spec = o.spec || null; if (o.spec) { run.specHist = (run.specHist || []).concat([o.spec.families]); } run.redraws = 0; run.payCoins = o.coins || 0; run.kin = o.kin || 'chain'; run.src = o.src || null; run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
+function runChoose(run, o) { { const H = run.hom && HOMS[run.hom]; if (H && H.brings && !bareRun(run) && !run.rack.includes(H.brings) && RX.CARDS[H.brings]) run.rack.push(H.brings); } run.spec = o.spec || null; if (o.spec) { run.specHist = (run.specHist || []).concat([o.spec.families]); } run.redraws = 0; run.payCoins = o.coins || 0; run.kin = o.kin || 'chain'; run.src = o.src || null; run.brief = o.brief; run.feed = o.model; run.quota = o.quota; run.pays = o.pays; run.carryE = 1 + ((run.lastE || 1) - 1) / 2; }
 // keeps the molecule and the extra a beaten round ended on, for carrying on
 function runKeep(run, g) { run.last = RX.cloneMap(g.m).model; run.lastE = g.E / (g.gear.includes('pact') ? 3 : 1); }
 // pays the credit the brief promised and returns how much

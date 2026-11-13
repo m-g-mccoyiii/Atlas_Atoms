@@ -1272,6 +1272,21 @@ const homs = {
     m.atoms.forEach(o => { if (o.fly || o.el !== 'O') return; const s = hydroxylAny(m, o, ar); if (!s) return; add(s.c); carbonsOf(m, s.c).forEach(add); }); return out.map(c => ({ c })); },
   seed(m, sp, arms) { const h = sp.c && Hs(m, sp.c)[0]; if (!h) return null; m.removeAtom(h); const spec = []; for (let k = 0, n = arms || 2; k < n; k++) spec.push([2, 1, ''], [2, 1, ''], [k === n - 1 ? 1 : 0, 1, '=O']); const r = grow(m, sp.c, spec); r.made.forEach(a => { a.seed = true; }); return { made: r.made }; },
   // an OH that oxidize would take at the very end of a chain (CH2-OH): what feeds the salt
+  // brimstone: from the carbon tapped, a run of plain carbons (CH2, or the CH3 that ends a chain) toward a chain end: at least 4, at most 8.
+  // The fire writes an OH on the 4th and, when the run reaches it, a C=O on the 8th. Nothing that is already a group is touched.
+  brimSpots(m) {
+    const plain = c => c.el === 'C' && !c.fly && !lk(c) && !c.slime && isSp3(m, c) && Hs(m, c).length >= 2 && heavyNb(m, c).every(q => q.el === 'C') && heavyNb(m, c).length <= 2, out = [];
+    m.atoms.forEach(c0 => { if (c0.el !== 'C' || c0.fly) return; heavyNb(m, c0).forEach(first => { if (!plain(first)) return; const path = [first]; let prev = c0, cur = first;
+      while (path.length < 8) { const nx = heavyNb(m, cur).find(q => q !== prev && plain(q) && !path.includes(q)); if (!nx) break; path.push(nx); prev = cur; cur = nx; }
+      if (path.length >= 4 && heavyNb(m, cur).length === 1) out.push({ c: c0, path }); }); });
+    return out;
+  },
+  brim(m, sp) {
+    const p = sp.path || []; if (p.length < 4) return null; const made = [], c4 = p[3], h4 = Hs(m, c4)[0]; if (!h4) return null;
+    m.removeAtom(h4); { const o = attach(m, 'O', c4, 2.8), h = attach(m, 'H', o, 1.2); made.push(o, h); }
+    if (p.length >= 8) { const c8 = p[7], hs = Hs(m, c8); if (hs.length >= 2) { m.removeAtom(hs[0]); m.removeAtom(hs[1]); const o = attach(m, 'O', c8, 2.8); m.bond(c8, o); made.push(o); } }
+    return { made };
+  },
   endOls: m => m.atoms.filter(o => { const s = !o.fly && oxidisable(m, o); return !!s && Hs(m, s.c).length === 2; })
 };
 AA.rx = { ENG, homs, tools, MODE, reopen, shapeOf, aromaticAtoms, LIST, CARDS, sigOf, probe, describe, nameOf, label, cloneModel, cloneMap, runCard, fromSmiles, keepable };

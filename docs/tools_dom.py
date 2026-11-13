@@ -8,7 +8,8 @@ NAMES = {'pcc': 'oxidize', 'allyl': 'grow', 'bh3': 'hydroborate', 'nabh4': 'redu
 ORDER = ['oxidize', 'hydrate', 'grow', 'dehydrate', 'thiolene', 'ritter']
 
 
-def run(name, pol, n, rule, extra, rounds=range(1, 10), tmo=5400):
+def run(name, pol, n, rule, extra, rounds=None, tmo=5400):
+    rounds = rounds or [int(x) for x in os.environ.get('DOM_ROUNDS', '1,2,3,4,5,6,7,8,9').split(',')]
     ps = []
     for r in rounds:
         cmd = ['bash', './hl.sh', 'dom.js', 'dom_%s_r%d' % (name, r), str(tmo), '', 'rounds=%d' % r, 'n=%s' % n, 'pol=%s' % pol] + (['rule64=' + __import__('base64').b64encode(rule.encode()).decode()] if rule else []) + list(extra)
