@@ -73,6 +73,8 @@ AL5. On the first prototype clips (12 November): "It's still not always clear wh
 
 AL6. On the first whole-run video (12 November): "I don't know what's going on on the screen. There's black dots on the paper that I don't like, some of the bond angles are confusing when it's cages, and where are the reagents and stuff? Also it says round 1 1 2 3 and that's confusing, the whole ui needs some timing and tuning. Where's the sprites?" The screen must be readable at a glance: reagents plainly visible, the round and turn shown clearly, no black specks on the paper, cages drawn so their bonds make sense, the art (homunculi, instruments, jars) on screen, and the whole UI timed and tuned.
 
+AL7. "I don't want [any] words in a video game. What do you mean the cost! That makes no sense for a fucking starting run" (12 November, after I proposed replacing icons with written labels). No written labels in the UI: it reads by pictures. Nothing that looks like a cost or reward on the starting selection.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
