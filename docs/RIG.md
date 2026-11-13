@@ -69,6 +69,65 @@ A stronger flattening laid over the same runs (the cube root in place of the squ
 2. The lost task. (a) Leave it: half of lost rounds are lost on the task and are seldom close. (b) Count a task one thing short as a close call on the page and in the ladder. (c) Make tasks count in parts, which needs new rules for each task.
 3. The top mark. (a) As built: 2.83 times the number to beat, reached as often as before. (b) Higher, so OVERREACT is rarer and reads bigger. (c) Lower.
 
+### The nine sigils in the game
+
+Owner's pick: "Build the nine ready ones now". Until now the sigils were in the simulator only (`docs/tools_chem/sigil2_rules.py`). The nine are now in the game's own rules.
+
+**How they are held.** A run holds up to three in `run.sigils` (`P.runNew(tier, extra, { sigils: [...] })`). `RULE.sigil.<id> = true` switches one on for every run. For testing, the address `?sigil=id,id` holds them. `P.SIGILS` is the table (name, one line of what it does, one line of how it is unlocked, the count that earns it); `P.sigilsOf(run)` says which are in force. Each step record of a round (`g.trail[i].sig`) lists the sigils that changed that step, or is null.
+
+| Sigil | id | The one rule it changes | Where | What the step record flags |
+|---|---|---|---|---|
+| Phlogiston | `phlogiston` | Oxidize also takes two hydrogens from the two carbons beside every C=O: a C=C appears there, hydrogen comes off | `rules.js` | the oxidize that did it |
+| Clepsydra | `clepsydra` | A round has four pages | `path.js` `pagesOf` | every step of page four |
+| Via Humida | `via_humida` | The ring reflex counts its 3 or 4 steps through any atom, so it reaches past an O, N or S | `rules.js` | a ring that plain counting would not close |
+| Solve | `solve` | No reflex has a limit a page (dry once, weld twice, ring twice) | `rules.js` | each step past the old limit |
+| Aqua Permanens | `aqua_permanens` | Water never leaves: dehydrate finds nothing; dry, seal and link do not happen | `rules.js` | the reagent that would have driven water off |
+| Tetractys | `tetractys` | A page has four circles; the double pay is after the fourth | `path.js` `stepsOf` | the fourth reagent |
+| Respiratio | `respiratio` | The limits a page start again after every reagent | `path.js` `selfCounts` | each step past the page's limit |
+| Gemini | `gemini` | A reagent or reflex that works on a C=C or C=O has its places counted twice | `path.js` `scoreRound` | every step counted twice |
+| Sulphur's Mask | `sulphurs_mask` | Oxygen behaves as sulfur: ring goes first and has no limit; two OH facing across the fold join O-O | `rules.js` | every ring step, and the O-O join |
+
+**How each is unlocked** (one count each, already counted by the game; nothing hands them over yet, that is the reference book's part): Phlogiston, oxidize acts 150 times. Clepsydra, 100 rounds played. Via Humida, hydrate fired 60 times. Solve, 600 reflex steps. Aqua Permanens, 30 pages that drove off 5 or more waters. Tetractys, one reagent in all three circles 5 times. Respiratio, dry 100 times. Gemini, dehydrate fired 50 times. Sulphur's Mask, 25 SH put on. These are first proposals; how sigils are got is the owner's open question and is measured next.
+
+**The game against the simulator, 200 turns each** (`sweep_sigcheck.py make`, the game's job `sig14.js`, `sweep_sigcheck.py compare`). A turn is a molecule from the round's deal and a line of three of the starting six (four with Tetractys), the ten reflexes of a new game, no across-the-fold reflexes. "With none" is the same 200 turns with the sigil off on both sides: the agreement to expect.
+
+| Sigil | Same molecule after, of 200 (with none) | Same reflexes in the same order (with none) | Turns the sigil changed | Of those, same molecule | Steps the game flagged |
+|---|---|---|---|---|---|
+| Phlogiston | 181 (188) | 191 (194) | 62 | 51 | 44 |
+| Clepsydra | 129, on the fourth page after three pages played | 178 | 116 | 60 | 207 |
+| Via Humida | 183 (187) | 196 (195) | 33 | 30 | 45 |
+| Solve | 179 (180) | 194 (195) | 13 | 10 | 15 |
+| Aqua Permanens | 184 (182) | 197 (195) | 95 | 84 | 74 |
+| Tetractys | 177 | 190 | 103 | 88 | 84 |
+| Respiratio | 183 (183) | 193 (193) | 12 | 11 | 13 |
+| Gemini | 182 (182) | 193 (193) | 189 | 171 | 472 |
+| Sulphur's Mask | 185 (184) | 195 (193) | 42 | 40 | 72 |
+
+- Eight of the nine agree with the simulator as often with the sigil as without it (about 9 turns in 10; the rest are the known equal-place ties). Phlogiston is 7 turns lower: where two C=O share a carbon chain the game and the simulator take the hydrogens in another order.
+- Clepsydra: all 200 rounds had four pages in the game. Its 129 is four pages of play laid end to end, each page agreeing about 9 times in 10.
+- Tetractys: the fourth reagent fired in the game in every turn where it had a use left.
+
+**Nine demos for the page builder**: a molecule and a line where the sigil visibly changes what happens. Each is a case the game plays exactly as the simulator does. Record each with and without `?sigil=<id>`.
+
+| Sigil | Molecule | Line | Without | With |
+|---|---|---|---|---|
+| Phlogiston | `O=CCCCC(=O)CCC1=CC=CC=C1O` | hydrate, oxidize, hydrate | no reflex | oxidize makes a C=C beside the C=O; ring, ring |
+| Clepsydra | `C=C(C)CC(Cl)C(Cl)C(=O)CCC=O` | page 1: hydrate, hydrate, grow; page 2: dehydrate, oxidize, grow; page 3: grow, dehydrate, oxidize; page 4: dehydrate, thiolene, thiolene | the round ends after page 3 | a fourth page is played |
+| Via Humida | `C=CCCCC(=O)CCCC=O` | oxidize, ritter, ritter | weld, dry, knit | weld, dry, knit, ring |
+| Solve | `CC(O)CCCCC(=O)CCCC=O` | thiolene, ritter, oxidize | weld, dry, weld | weld, dry, weld, dry (a second dry) |
+| Aqua Permanens | `CC(O)CCCCC(=O)CCCC=O` | dehydrate, dehydrate, grow | weld, dry | no reflex: dehydrate finds nothing and dry cannot happen |
+| Tetractys | `CCC(=O)CC(=O)CC1=CCCCC1` | thiolene, grow, hydrate, oxidize | cap (three reagents) | cap, dry, ring (the fourth reagent fires) |
+| Respiratio | `C=CCCCC(=O)CCCC=O` | thiolene, oxidize, hydrate | weld, dry | weld, dry, dry |
+| Gemini | `C=CCCC1C=CCC1=O` | ritter, ritter, thiolene | knit, yield 891 | knit, yield 1,260: the same steps, the places counted twice |
+| Sulphur's Mask | `O=C1CC=CC1CCCO` | hydrate, oxidize, dehydrate | dry, tuck | ring goes first |
+
+**Not done, said plainly.**
+- The yield of a turn in this job is the same in the game and the simulator in only 3 turns in 10, with or without a sigil. In 64 turns of 100 the game's yield is the higher one; in the middle it is 1.24 times the simulator's, and in 1 turn in 10 over 1.8 times. The molecules and the reflexes agree; the yields do not. The cause was not found here. It may be this job's own setup (it starts a round as the older whole-turn check does) and not the runs the tables are made from, which were checked against the game by clear rates and yields (`SWEEP.md`); it has to be looked at before the yields of any simulator table are leaned on to the last tenth.
+- The O-O join of Sulphur's Mask is an across-the-fold step; no whole-turn check covers those, for this or any other.
+- With Aqua Permanens the flag is on a reagent that would have driven water off; a dry that did not happen leaves no step to flag.
+- Nothing unlocks a sigil for the career yet and the page neither offers nor draws one.
+- How sigils affect each other, how they are got and the cap of three are measured in their own part.
+
 ## The measure of 2026-11-13, thirteenth: the rulings of AR
 
 One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.

@@ -160,6 +160,9 @@ const carbonyls = m => m.bonds.map(b => reducible(m, b)).filter(Boolean);
 // MODE.weld: 'ol' stops a weld before water leaves, so it leaves an OH on the new ring (an aldol); 'ene' lets the
 // water go and leaves a C=C beside the C=O that stays (the condensation).
 const MODE = { zip: false, weld: 'ol', reach: 4, co2: false };
+// MODE.sig { id: true }: the sigils in force (path.js sigSync sets it from the run and RULE.sigil). Each breaks or changes ONE rule of the
+// engine below; the ones that change a rule of the round (a fourth page, a fourth circle, the limits, the places) are in path.js.
+MODE.sig = {};
 // MODE.co2 (path.js RULE.co2, off): oxidize also cuts a C=C at the very end of a chain (CH=CH2). The end carbon
 // leaves as carbon dioxide and a C=O is left on the new end carbon.
 const endEnes = m => (MODE.co2 ? alkenes(m).map(s => { const a = s.bond.a, b = s.bond.b, end = x => Hs(m, x).length === 2 && nbs(m, x).filter(n => n.atom.el !== 'H').length === 1, ce = end(a) ? a : end(b) ? b : null, c = ce === a ? b : a; return ce && Hs(m, c).length === 1 && !c.fly && !ce.fly ? { kind: 'cleave', bond: s.bond, c, ce, atoms: [c, ce] } : null; }).filter(Boolean) : []);
@@ -390,6 +393,7 @@ SELFCARDS.forEach(c => { CARDS[c.id] = c; });
 // ===================================================================================================================
 const ENG = (() => {
   const REMOVED = [];
+  const SG = id => !!(MODE.sig && MODE.sig[id]);
   const VAL = { C: 4, N: 3, O: 2, S: 2, Cl: 1 }, DIST = { C: 3.0, N: 2.9, O: 2.8, S: 3.3, Cl: 3.0, H: 2.2 };
   // ---------- the reading ----------
   function snapG(m) {
@@ -501,6 +505,12 @@ const ENG = (() => {
     prio: 2, per: 2,
     find(G, reach) {
       const hi = Math.max(4, reach | 0), ks = ketones(G), ohs = hydroxyls(G, true), out = []; if (!ks.length || !ohs.length) return out;
+      if (SG('via_humida')) {      // the sigil Via Humida: the 3 or 4 steps are counted through any atom (O, N, S too), not along carbons only (sigil2_rules.ViaHumida)
+        ks.forEach((k, ik) => { const kc = k[0], da = distFrom(G, kc), dc = cdist(G, kc, hi); ohs.forEach((s, io) => { const sc = s[1], d = da[sc]; if (sc === kc || d < 3 || d > hi || G.nb[kc].some(q => q.j === s[0])) return;
+          const cd = dc.get(sc), plain = cd != null && cd >= 3 && cd <= hi && !((inRing(G, kc) || inRing(G, sc)) && !lactolOk(G, sc, kc, 8));
+          out.push({ dist: d, sort: [d, ik, io], k, oh: s, sig: plain ? null : 'via_humida' }); }); });
+        return out.sort((x, y) => lex(x.sort, y.sort));
+      }
       ks.forEach((k, ik) => { const dist = cdist(G, k[0], hi); ohs.forEach((s, io) => {
         const kc = k[0], sc = s[1]; if (sc === kc) return; const d = dist.get(sc); if (d == null || d < 3 || d > hi) return;
         if ((inRing(G, kc) || inRing(G, sc)) && !lactolOk(G, sc, kc, 8)) return;
@@ -764,24 +774,30 @@ const ENG = (() => {
     edit(G, m, s) { const A = i => G.atoms[i], [x, ox, y, oy] = s.c.map(A); setBond(m, x, ox, 1); setBond(m, y, oy, 1); m.bond(x, y); rungBond(m, x, y); m.bond(ox, oy); rungBond(m, ox, oy); normH(m, [x, ox, y, oy]); return { focus: [x, y, ox, oy], incoming: [], leaving: [] }; } };
   X_R.link = { grp: 1, off: { water: 1 }, find: G => farPairs(G, ohs1(G), ohs1(G), 1, 1, true),
     edit(G, m, s) { const A = i => G.atoms[i]; let [o1, c1, o2, c2] = [A(s.A[0]), A(s.A[1]), A(s.B[0]), A(s.B[1])]; const nc = c => m.neighbors(c).filter(q => q.atom.el === 'C').length; if (nc(c1) > nc(c2)) [o1, c1, o2, c2] = [o2, c2, o1, c1]; const g = take(m, o2); cut(m, o2, c2); m.bond(o1, c2); rungBond(m, o1, c2); normH(m, [o1, c1, c2]); return { focus: [o1, c2], incoming: [], leaving: [g] }; } };
+  // the sigil Sulphur's Mask (oxygen behaves as sulfur): two OH that face each other across the fold join O-O, as two SH do; hydrogen comes off
+  X_R.bridge_o = { grp: 0, off: { hydrogen: 1 }, find: G => farPairs(G, ohs1(G), ohs1(G), 1, 1, true),
+    edit(G, m, s) { const A = i => G.atoms[i], o1 = A(s.A[0]), o2 = A(s.B[0]); m.bond(o1, o2); rungBond(m, o1, o2); normH(m, [o1, o2]); return { focus: [o1, o2], incoming: [], leaving: [] }; } };
   Object.keys(X_R).forEach(k => { X_R[k].far = true; X_R[k].per = 1; X_R[k].prio = 3; R[k] = X_R[k]; });
   const FAR_ORDER = ['seal_far', 'close_far', 'knit_far', 'cap_far', 'open_far', 'bridge', 'weld_far', 'tuck_far', 'snap_far', 'stitch', 'link', 'ring_far'], FAR_IDS = FAR_ORDER.slice();
   const ORDER = ['seal', 'close', 'knit', 'cap', 'open', 'fold', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'ring'];
   // the game's card ids for the reflexes it already had (the page draws them by these names); the kind is the name in the record
   const KIND = { lactol: 'ring', enone: 'dry', taut: 'flip', weld: 'weld', snap6: 'snap', ether: 'close', shift: 'shift', tuck: 'tuck', knit: 'knit', seal: 'seal', cap: 'cap', open: 'open', fold: 'fold' };
-  FAR_IDS.forEach(k => { KIND[k] = k; });
+  FAR_IDS.forEach(k => { KIND[k] = k; }); KIND.bridge_o = 'bridge_o';
   const CARDID = {}; Object.keys(KIND).forEach(k => { CARDID[KIND[k]] = k; });
   // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
   function nextReflex(m, held, cnt, G0) {
-    const G = G0 || snapG(m); G.self = true; const rules = ORDER.filter(k => held.includes(k) && (R[k].per == null || (cnt[k] || 0) < R[k].per)), cands = [];
-    rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [R[k].prio, sites[0].dist, ri], k, sites }); });
+    // the sigils: Aqua Permanens (no reflex that gives off water), Solve (no near reflex has a limit a turn), Sulphur's Mask (ring goes first and has no limit)
+    const wet = k => SG('aqua_permanens') && !!(R[k].off && R[k].off.water), mask = k => k === 'ring' && SG('sulphurs_mask'), perOf = k => ((SG('solve') && !R[k].far) || mask(k) ? null : R[k].per), over = k => R[k].per != null && (cnt[k] || 0) >= R[k].per;
+    const G = G0 || snapG(m); G.self = true; const rules = ORDER.filter(k => held.includes(k) && !wet(k) && (perOf(k) == null || (cnt[k] || 0) < perOf(k))), cands = [];
+    rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [mask(k) ? 0 : R[k].prio, sites[0].dist, ri], k, sites, sig: sites[0].sig || (mask(k) ? 'sulphurs_mask' : over(k) ? 'solve' : null) }); });
     cands.sort((a, b) => lex(a.key, b.key));
     if (!cands.length && held.some(k => R[k] && R[k].far)) {
       // only when no near reflex fits: one across step, rare groups first, ring across last, nearest first; each once a turn
-      const fc = []; FAR_ORDER.forEach((k, ri) => { if (!held.includes(k) || (cnt[k] || 0) >= 1) return; const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) fc.push({ key: [R[k].grp, sites[0].dist, ri], k, sites }); });
-      fc.sort((a, b) => lex(a.key, b.key)); if (fc.length) return { id: fc[0].k, site: fc[0].sites[0], sites: fc[0].sites, G };
+      const fo = SG('sulphurs_mask') ? FAR_ORDER.filter(k => k !== 'link').concat(['bridge_o']) : FAR_ORDER;      // Sulphur's Mask: two OH facing across the fold bridge as O-O; link is off
+      const fc = []; fo.forEach((k, ri) => { if (!(held.includes(k) || k === 'bridge_o') || wet(k) || (cnt[k] || 0) >= 1) return; const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) fc.push({ key: [R[k].grp, sites[0].dist, ri], k, sites }); });
+      fc.sort((a, b) => lex(a.key, b.key)); if (fc.length) return { id: fc[0].k, site: fc[0].sites[0], sites: fc[0].sites, G, sig: fc[0].k === 'bridge_o' ? 'sulphurs_mask' : null };
     }
-    return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G } : null;
+    return cands.length ? { id: cands[0].k, site: cands[0].sites[0], sites: cands[0].sites, G, sig: cands[0].sig || null } : null;
   }
   const mergeOff = (to, off) => { if (off) Object.keys(off).forEach(k => { to[k] = (to[k] || 0) + off[k]; }); };
   function doReflex(m, nx, remove) {
@@ -889,6 +905,15 @@ const ENG = (() => {
     chugaev: [elimStep(isOH, true, true, { sulfur: 1 })],
     epoxidation: [{ find: G => allC(G).filter(p => p[0] < p[1]).map(t => ({ t })), edit(G, m, s) { const A = i => G.atoms[i], a = A(s.t[0]), b = A(s.t[1]); setBond(m, a, b, 1); const o = newAt(m, 'O', a, 1); m.bond(o, b); normH(m, [a, b, o]); return { focus: [a, b], incoming: [o], leaving: [] }; } }]
   };
+  // the sigil Phlogiston (hydrogen can be taken): oxidize also takes two H from the two carbons beside every C=O, a C=C appears there and
+  // hydrogen comes off (sigil2_rules.Phlogiston: [KC](=O)-[CX4;!H0]-[CX4;!H0;!$(C-[!#6])], 12 places at most)
+  const phlogSites = G => { const out = []; ketones(G).forEach(k => { const c1 = k[0]; G.nb[c1].forEach(q3 => { const c3 = q3.j; if (q3.o !== 1 || !CX4(G, c3) || G.hc[c3] < 1) return; G.nb[c3].forEach(q4 => { const c4 = q4.j; if (c4 === c1 || q4.o !== 1 || !CX4(G, c4) || G.hc[c4] < 1 || G.nb[c4].some(w => el(G, w.j) !== 'C')) return; out.push({ t: [c1, c3, c4] }); }); }); }); return out.sort((x, y) => lex(x.t, y.t)); };
+  REAG.oxidize.push({ when: () => SG('phlogiston'), sig: 'phlogiston', off: { hydrogen: 1 }, limit: () => 12, find: phlogSites,
+    edit(G, m, s) { const A = i => G.atoms[i], c3 = A(s.t[1]), c4 = A(s.t[2]); setBond(m, c3, c4, 2); normH(m, [c3, c4]); return { focus: [c3, c4], incoming: [], leaving: [] }; } });
+  // the sigil Aqua Permanens (water never leaves): no step of a reagent that gives off water can happen
+  Object.keys(REAG).forEach(id => REAG[id].forEach(st => { if (st.off && st.off.water) { const w = st.when; st.when = () => !SG('aqua_permanens') && (!w || w()); } }));
+  // which sigil, if any, would change what reagent id does on m (for the step records)
+  const sigOf = (m, id) => { const steps = REAG[id]; if (!steps) return null; const G = snapG(m); for (const st of steps) { if (st.sig && SG(st.sig) && st.find(G).filter(x => free(G, x)).length) return st.sig; } if (SG('aqua_permanens')) { MODE.sig.aqua_permanens = false; let hit = false; try { hit = steps.some(st => st.off && st.off.water && (!st.when || st.when()) && st.find(G).filter(x => free(G, x)).length > 0); } finally { MODE.sig.aqua_permanens = true; } if (hit) return 'aqua_permanens'; } return null; };
   // the heaviest piece stays when a cut makes two (ozonolysis); the others are 'piece'
   function dropPieces(m) {
     const comps = m.components ? m.components() : null; if (!comps || comps.length < 2) return 0;
@@ -929,7 +954,7 @@ const ENG = (() => {
     }
     return parts.join('.');
   }
-  return { foldOf, faces, acrossPairs, anchorOf, defaultAnchor, FOLD, FAR_IDS, FAR_ORDER, foldDist, free, NEAR, R, REAG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
+  return { foldOf, faces, acrossPairs, anchorOf, defaultAnchor, FOLD, FAR_IDS, FAR_ORDER, foldDist, free, NEAR, R, REAG, sigOf, SG, ORDER, KIND, CARDID, removed: REMOVED, snapG, nextReflex, doReflex, settle, reopen, fire, toSmiles, smilesOf: toSmiles, normH, X, el };
 })();
 // ---------- the cards: the twelve reagents and the thirteen reflexes as the page and the rules read them ----------
 // MODE.eng (path.js RULE.engine, on) switches the engine's version of a reflex on; off, the older version of the card is used.
