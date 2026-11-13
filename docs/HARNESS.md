@@ -79,6 +79,8 @@ AL8. "Why are some reactions crossed off on the right? And the gray line around 
 
 AL9. The lab bench is built (12 November): of three angles the owner picked "a: slight tilt": the notebook page almost flat-on, lying on a wooden bench, with the objects (jars and creatures, instruments, the homunculus, a coffee cup) standing on the bench along the top. Next to build, by the owner's pick: the bench for real with the reagents as bottles on it.
 
+AL10. Picks of the evening of 12 November: reagents as a note card with its bottle; the flags on the yield track replaced by alchemy marks on the page, the set of our own four marks each adding a stroke to the last, building to our sign; the build-up under reactions is the "cinematic" one (a boom on each hit, a backwards cymbal into the next, a heartbeat under the arrows, one tone that keeps climbing); of six soundtrack drafts the owner ticked EDM to keep and finish. Also: shown hydrogens have a dark outline; the goal pictures in a clean row; the speed marks at the bottom right of the paper; every molecule fills the same area; no atom clips into another.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
