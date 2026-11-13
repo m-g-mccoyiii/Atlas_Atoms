@@ -724,7 +724,7 @@ function frame(t, dt) {
   const vals = flagVals(); vals.forEach((v, k) => { if (!S.flagged[k] && st.shown >= v) passFlag(k, S.done || (S.cur && S.cur.last && S.finaleAt)); });
   // the molecule: framed large in the free part of the page for the action, knocked and turned as one piece
   // two free boxes: the whole width above the left column, or the part right of it reaching lower; the one that frames it larger
-  const hm = api.home(), bx = c.box || molLocalBox(c); { const hs = S.swHit ? (t - S.swHit.t) / 1000 : 9, bump = hs < 0.7 ? S.swHit.a * ring(hs, 5.5, 0.4) : 0, want = (S.done ? 1 : (S.swT || 1)); S.swE = (S.swE || 1) + (want - (S.swE || 1)) * Math.min(1, dt * 7); S.sw = Math.min(S.swE + bump, Math.max(S.swE, swellCap(c))); }
+  const hm = api.home(), bx = c.box || molLocalBox(c); { const hs = S.swHit ? (t - S.swHit.t) / 1000 : 9, bump = 0, want = 1; S.swE = (S.swE || 1) + (want - (S.swE || 1)) * Math.min(1, dt * 7); S.sw = Math.min(S.swE + bump, Math.max(S.swE, swellCap(c))); }
   const s1 = hm.s * S.sw, px0 = hm.x - (S.sw - 1) * hm.s * bx.cx, pz0 = hm.z - (S.sw - 1) * hm.s * bx.cz; S.zoom = S.sw; S.fk = 1;
   c.group.scale.setScalar(s1);
   // recoil

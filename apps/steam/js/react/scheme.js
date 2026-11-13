@@ -146,6 +146,16 @@ function start(app) {
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
   // above everything, in the frame's own pixels: the flash of a hit and OVERREACT (feel.js draws on it)
   const overC = document.createElement('canvas'); overC.className = 'veil'; app.append(overC); const overX = overC.getContext('2d');
+  const BENCHV = (() => { try { return new URLSearchParams(root.location.search).get('bench') || ''; } catch (e) { return ''; } })();
+  if (BENCHV) { // a wooden bench top under the page, a coffee cup, and the camera turned and raised for each mock view
+    const wc = canvasTex(1024, 1024); wc.x.fillStyle = '#8a5f38'; wc.x.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 260; i++) { wc.x.strokeStyle = 'rgba(' + (i % 3 ? '60,36,18' : '190,140,90') + ',' + (0.05 + Math.random() * 0.1).toFixed(3) + ')'; wc.x.lineWidth = 1 + Math.random() * 5; const y0 = Math.random() * 1024; wc.x.beginPath(); wc.x.moveTo(0, y0); wc.x.bezierCurveTo(340, y0 + Math.random() * 30 - 15, 680, y0 + Math.random() * 30 - 15, 1024, y0 + Math.random() * 20 - 10); wc.x.stroke(); } wc.t.needsUpdate = true; wc.t.wrapS = wc.t.wrapT = T.RepeatWrapping; wc.t.repeat.set(3, 3);
+    const bench = add(new T.PlaneGeometry(420, 320).rotateX(-Math.PI / 2), std({ map: wc.t, roughness: 0.75 }), 0, -0.25, 0); bench.castShadow = false;
+    const sh = add(new T.PlaneGeometry(SW + 2.4, SH + 2.4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }), 0.9, -0.2, 1.1); sh.castShadow = false;
+    const cup = new T.Group(); add(new T.CylinderGeometry(2.3, 1.9, 3.6, 28, 1, true), std({ color: lin(0xf2efe6), roughness: 0.35, side: T.DoubleSide }), 0, 1.8, 0, cup); add(new T.CircleGeometry(2.1, 28).rotateX(-Math.PI / 2), std({ color: lin(0x3a2212), roughness: 0.2 }), 0, 3.0, 0, cup); { const hd = add(new T.TorusGeometry(1.3, 0.3, 10, 20, Math.PI), std({ color: lin(0xf2efe6), roughness: 0.35 }), 2.3, 1.9, 0, cup); hd.rotation.z = -Math.PI / 2; } cup.position.set(BENCHV === 'c' ? 37 : 38, -0.2, BENCHV === 'a' ? -27 : -6); scene.add(cup);
+    scene.background = lin(0x2a2420);
+    if (BENCHV === 'a') { CAM.set(CAM.x, CAM.y * 1.32, CAM.z * 1.32 - 3); LOOKAT.z -= 4.5; }
+    else if (BENCHV === 'b') { CAM.set(CAM.x + 34, CAM.y * 1.12, CAM.z * 1.75); LOOKAT.x += 5; LOOKAT.z -= 1; }
+    else { CAM.set(CAM.x, CAM.y * 0.62, CAM.z * 2.7); LOOKAT.z -= 3; } }
   // the title: the cover of the notebook, over everything until the first click or key (?title=0 leaves it out)
   const titleC = document.createElement('canvas'); titleC.className = 'veil'; app.append(titleC);
   const title = { on: (() => { try { return new URLSearchParams(root.location.search).get('title') !== '0'; } catch (e) { return true; } })(), out: 0, t0: 0, page: null, drawn: false };
@@ -674,7 +684,7 @@ function start(app) {
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
   const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
-  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, benchOn = () => !!run && !P.RULE.bare && meta.stage >= 2 && (st.gear.length > 0 || JARK.some(jarSeen)), homeNow = () => (st.mode === 'done' ? HOMED : benchOn() ? { x: HOME.x, z: HOME.z + 2.7, w: HOME.w, d: HOME.d - 5.4, smax: HOME.smax } : HOME);
+  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, benchOn = () => !BENCHV && !!run && !P.RULE.bare && meta.stage >= 2 && (st.gear.length > 0 || JARK.some(jarSeen)), homeNow = () => (st.mode === 'done' ? HOMED : benchOn() ? { x: HOME.x, z: HOME.z + 2.7, w: HOME.w, d: HOME.d - 5.4, smax: HOME.smax } : HOME);
   homeE(HOME);
   const flScale = m => { const H = homeNow(), b = m.box; return Math.min(H.smax, H.w / b.w, H.d / b.d); };
   // the folded molecule keeps its start end where it is; the whole is slid, never jumped, so that its box stays in the middle of its home
@@ -685,7 +695,7 @@ function start(app) {
   const scrY = z => { _sv.set(0, 0.45, z).project(camRest); return (1 - _sv.y) / 2; };
   const zFor = (d, yc) => { let lo = -12, hi = 10; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (scrY(mid - d / 2) + scrY(mid + d / 2) < 2 * yc) lo = mid; else hi = mid; } return (lo + hi) / 2; };
   if (PGE.on) HOME.yc = (scrY(PGE.home.z0) + scrY(PGE.home.z1)) / 2 + 0.011;
-  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, busy = !snap && (st.firing || (morph && morph.m === m)), b = snap ? m.box : liveBox(m), fit = Math.min(H.smax, H.w / Math.max(b.w, m.box.w), H.d / Math.max(b.d, m.box.d)), s = busy ? Math.min(st.sc, fit) : fit; if (snap || st.bcx == null) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; if (snap) st.sc = s; } else { const k = Math.min(1, dt * 7); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * Math.min(1, dt * (s < st.sc ? 8 : 3)); } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
+  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, moving = !snap && !!morph && morph.m === m, b = m.box, fit = Math.min(H.smax, H.w / m.box.w, H.d / m.box.d), s = fit; /* the molecule slides and scales to its home only while a step is moving it, toward where the step will leave it; between steps it stands exactly still */ if (snap || st.bcx == null || !moving) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; st.sc = s; } else { const k = Math.min(1, dt * 9); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * k; } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
   const fitMain = m => m.fl ? flScale(m) : Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -718,7 +728,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -8.6 + i * 5.3, z: -10.9 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? (BENCHV ? (BENCHV === 'a' ? { x: -6 + i * 6.2, z: -27.5 } : { x: 37.5, z: -20 + i * 7.5 }) : { x: -8.6 + i * 5.3, z: -10.9 }) : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
@@ -797,8 +807,8 @@ function start(app) {
   function buildKit() {
     if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
-    if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : BENCHV ? 2.4 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { if (!BENCHV) kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
@@ -830,7 +840,7 @@ function start(app) {
   // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
   const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f, ammonia: 0xbcd6dc, brimstone: 0xc9a227 }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f', ammonia: '#6f9aa4', brimstone: '#9c7f12' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed', ammonia: 'homammonia', brimstone: 'hombrimstone' };
   const jarSeen = k => !P.RULE.bare && (k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0);
-  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back') { const sp = Math.min(3.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(1.5, sp / 2.5) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
+  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back' && BENCHV) return BENCHV === 'a' ? { x: -30 + i * 5.2, z: -27.5, s: 2.2 } : { x: -39, z: -16 + i * 7, s: 2.2 }; if (KITV === 'back') { const sp = Math.min(4.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(2.0, sp / 2.2) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
 
@@ -838,7 +848,7 @@ function start(app) {
     JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
+  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 24, z: -27 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
   function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
@@ -2086,8 +2096,6 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (false && play && g && g.nextHand && g.nextHand.length) { const n0 = px({ x: 20.6, z: 12.4 }), nn = Math.min(5, g.nextHand.length), cw = 62; for (let j = 0; j < nn; j++) { const tl = TILE[g.nextHand[j]]; if (!tl) continue; x.save(); x.translate(n0[0] - (nn - 1) * cw / 2 + j * cw + 0, n0[1]); x.scale(0.36, 0.36); fragOrChip(x, tl[0], -50, 0, false); x.strokeStyle = FAINT; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(-8, 0); x.lineTo(14, 0); x.stroke(); fragOrChip(x, tl[1], 78, 0, false); x.restore(); }
       const cx0 = px({ x: 25.5, z: 12.6 }); x.fillStyle = 'rgba(120,100,70,0.22)'; x.beginPath(); x.moveTo(cx0[0] + 30, cx0[1] - 70); x.lineTo(cx0[0] + 30, cx0[1] + 30); x.lineTo(cx0[0] - 70, cx0[1] + 30); x.closePath(); x.fill(); x.strokeStyle = PENCIL; x.lineWidth = 3; x.stroke(); }
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
-    // the reagents stand together inside one pencil bracket, so they read as one shelf of things to pick from
-    if (play && slots.some(q => q) && SIDE) { const rx0 = (PGE.on ? PGE.rx : 0), nR = slots.filter(q => q).length, a = px({ x: 15.3 + rx0, z: -7.6 }), b = px({ x: 15.3 + rx0, z: -7.4 + nR * SLOTW + 0.2 }); x.strokeStyle = PENCIL; x.lineWidth = 4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(a[0] + 46, a[1] - 4); x.quadraticCurveTo(a[0] - 6, a[1], a[0] + 2, a[1] + 40); x.lineTo(b[0] - 2, b[1] - 40); x.quadraticCurveTo(b[0] - 6, b[1] + 2, b[0] + 46, b[1] + 4); x.stroke(); }
     if (play) slots.forEach((s, i) => {
       if (!s) return;
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
@@ -2096,7 +2104,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.save(); x.translate(m[0], m[1]); { const rs = Math.min(1.62, SLOTW / 2.35) * (hov && o ? 1.08 : 1); x.scale(rs, rs); } x.translate(16, 8);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
         
-        fragOrChip(x, tl[0], -78, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
+        if (on) fragOrChip(x, tl[0], -78, -8, true); else { fragOrChip(x, tl[0], -78, -8, false); x.strokeStyle = PENCIL; x.lineWidth = 3; x.setLineDash([8, 8]); x.beginPath(); x.ellipse(-78, -8, 52, 34, 0, 0, 6.3); x.stroke(); x.setLineDash([]); } x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
 
         
         // uses left: one drop each, on the reagent's own chip. One placed in a circle is an empty drop
@@ -2104,8 +2112,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (g.free && g.free[s.id]) { x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.ellipse(-120, 26, 9, 6.5, 0, 0, 6.3); x.moveTo(-93, 26); x.ellipse(-102, 26, 9, 6.5, 0, 0, 6.3); x.stroke(); }
           else { /* uses left are not drawn as drops any more */ }
           x.globalAlpha = 1; }
-        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-110, 36); x.lineTo(80, 34); x.stroke(); }
-        if (!o) { x.strokeStyle = PENCIL; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-124, 20); x.lineTo(56, -30); x.stroke(); } }
+        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-110, 36); x.lineTo(80, 34); x.stroke(); } }
       x.restore();
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
@@ -2468,7 +2475,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0; if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
+    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { center.group.scale.setScalar(st.sc); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0;  }
     
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'); flask.grp.visible = false; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.25 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.25 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.25); if (boil) dirty = true; } }
