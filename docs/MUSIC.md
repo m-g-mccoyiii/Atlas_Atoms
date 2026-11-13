@@ -7,6 +7,20 @@ One file: `apps/steam/js/music.js`, exposed as `AA.music`. Web Audio only. No au
 Still in the file, shelved: themes 1 Burner and 2 Athanor (raw oscillators) and theme 3 Fuse (made orchestra, three arrangements, `AA.music.arrange('a'|'b'|'c')`).
 
 <!-- builder6 -->
+<!-- builder7 -->
+## One clock with the effects (builder 7, 13 November)
+
+EDM is the game's one soundtrack on every screen (HARNESS AK6), and the effects now play on its beat. Full account and tables: `docs/SOUND5.md` section 00.
+
+- `AA.music.clock()` returns `{ bpm, spu, upb, beat, bar, state }` on the audio clock (`spu`: seconds a sixteenth; `beat`, `bar`: the time of the next beat and bar line), or null when nothing with a beat plays. Inside, `Engine.beats(t0, t1, div)` lists grid points (written bars exactly, coming bars as they will be written) and `Engine.clock(t)` is what the public call reads.
+- While the effects' build c is on with its synth palette (`AA.sfx.ownsBuild()`, read every 50 ms), **EDM writes no snare roll, no kick and no riser of its own in a chain, and no riser, roll or impact in the bar before the drop**: the effects make them on this grid. Pads, plucks, hats, the hammered chord and the bass stay. With the effects muted or on another build, the music's own build plays as builder 6 left it.
+- `Engine.fxHit(t)`: the effects say a hit will land at t; EDM's drums and bass step back 24 dB around it.
+- The drop lands on one time: the effects publish theirs (`__ovlift` on the audio context) and the music its own (`__ovdrop`); whichever was called second takes the other's.
+- Offline: `_renderWithSfx` now calls the effects when their time comes, between the bars, as the game does; `opts.fxOwn` forces the music's side either way, and `_renderTimeline(events, secs, { fxOwn: true })` renders the music alone as it plays under the effects.
+- Not done: the other five tracks do not answer the effects (both builds play over them). Nobody has listened.
+
+<!-- /builder7 -->
+
 ## The six soundtracks, and EDM finished (builder 6, 12 November, late)
 
 This section is newer than the rest of this page, which still describes the three grooves. Full tables: `docs/SOUND5.md`, section 0.
