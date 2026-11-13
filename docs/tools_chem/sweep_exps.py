@@ -163,8 +163,9 @@ def d_sig2():
     import sigil2_rules as S2
     jobs = []
     for a, b in itertools.combinations(S2.ORDER, 2):
-        jobs.append({'id': 's2_%s+%s' % (a, b), 'mods': ['sigil:' + a, 'sigil:' + b], 'rack': START, 'length': 'master', 'first': 1, 'last': 4,
-                     'players': ['median'], 'seeds': list(range(1100, 1104)), 'tag': '%s+%s' % (a, b)})
+        for c in range(XM):
+            jobs.append({'id': 's2_%s+%s%s' % (a, b, '_%d' % c if c else ''), 'mods': ['sigil:' + a, 'sigil:' + b], 'rack': START, 'length': 'master',
+                         'first': 1, 'last': 4, 'players': ['median'], 'seeds': list(range(1100 + c * 4, 1104 + c * 4)), 'tag': '%s+%s' % (a, b)})
     return jobs
 
 
@@ -194,18 +195,25 @@ def d_sigsets():
 def d_base4():
     """No sigil and no creature on rounds 1 to 4, and each creature alone there: what the pairs of d_sig2 and d_sighom are held against."""
     import sigil2_rules as S2
-    jobs = [{'id': 'b4_none_start', 'mods': [], 'rack': START, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
-             'seeds': list(range(1100, 1104)), 'tag': 'none|start'},
-            {'id': 'b4_none_eight', 'mods': [], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
-             'seeds': list(range(900, 904)), 'tag': 'none|eight'}]
-    for a in S2.ORDER:
-        jobs.append({'id': 'b4_%s_start' % a, 'mods': ['sigil:' + a], 'rack': START, 'length': 'master', 'first': 1, 'last': 4,
-                     'players': ['median'], 'seeds': list(range(1100, 1104)), 'tag': '%s|start' % a})
-        jobs.append({'id': 'b4_%s_eight' % a, 'mods': ['sigil:' + a], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
-                     'players': ['median'], 'seeds': list(range(900, 904)), 'tag': '%s|eight' % a})
-    for h in HOMS:
-        jobs.append({'id': 'b4_%s_eight' % h, 'mods': ['perk:' + h], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
-                     'players': ['median'], 'seeds': list(range(900, 904)), 'tag': '%s|eight' % h})
+    jobs = []
+    for c in range(XM):
+        sx = '_%d' % c if c else ''
+        s1, s9 = list(range(1100 + c * 4, 1104 + c * 4)), list(range(900 + c * 4, 904 + c * 4))
+        jobs.append({'id': 'b4_none_start' + sx, 'mods': [], 'rack': START, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
+                     'seeds': s1, 'tag': 'none|start'})
+        for a in S2.ORDER:
+            jobs.append({'id': 'b4_%s_start%s' % (a, sx), 'mods': ['sigil:' + a], 'rack': START, 'length': 'master', 'first': 1, 'last': 4,
+                         'players': ['median'], 'seeds': s1, 'tag': '%s|start' % a})
+        if c:
+            continue
+        jobs.append({'id': 'b4_none_eight', 'mods': [], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4, 'players': ['median'],
+                     'seeds': s9, 'tag': 'none|eight'})
+        for a in S2.ORDER:
+            jobs.append({'id': 'b4_%s_eight' % a, 'mods': ['sigil:' + a], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
+                         'players': ['median'], 'seeds': s9, 'tag': '%s|eight' % a})
+        for h in HOMS:
+            jobs.append({'id': 'b4_%s_eight' % h, 'mods': ['perk:' + h], 'rack': EIGHT, 'length': 'master', 'first': 1, 'last': 4,
+                         'players': ['median'], 'seeds': s9, 'tag': '%s|eight' % h})
     return jobs
 
 
