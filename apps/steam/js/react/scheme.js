@@ -2574,7 +2574,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.restore(); }); }
   // (builder 15) THE NINE SIGILS ON THE PAGE. Each has a mark of our own (sigGlyph), drawn quietly in pencil on the left page while it is held,
   // and inked beside the molecule, with a pen ring round the atoms, at every step whose rule it bent (the step record's `sig`).
-  const SIGC = { hits: [], n: 0, g: null, at: { x: -31.6, z: 14.6, dx: 3.3, r: 1.05 } };
+  const SIGC = { hits: [], n: 0, g: null, at: { x: -7.2, z: -15.4, dx: -3.3, r: 1.05 } };
   function sigGlyph(x, id, cx, cy, r, col, lw) {
     x.save(); x.translate(cx, cy); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round';
     const L = function () { x.beginPath(); for (let i = 0; i < arguments.length; i += 2) { if (i) x.lineTo(arguments[i] * r, arguments[i + 1] * r); else x.moveTo(arguments[i] * r, arguments[i + 1] * r); } x.stroke(); };
