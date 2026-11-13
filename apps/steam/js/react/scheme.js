@@ -208,26 +208,33 @@ function start(app) {
     // the label, and the name lettered on it by the game's own pen
     x.save(); x.translate(820, 400); x.rotate(-0.012); x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(-452, -162, 916, 340); x.fillStyle = '#efe7d2'; x.fillRect(-460, -170, 920, 340); x.strokeStyle = '#3b3f4a'; x.lineWidth = 5; x.strokeRect(-438, -148, 876, 296); x.lineWidth = 2; x.strokeRect(-426, -136, 852, 272);
     try { let sz = 100; const w0 = AA.rxPen.measure('OVERREACT', sz, 'heavy').width; sz *= 760 / Math.max(1, w0); if (k > 0) { AA.rxPen.write(x, 'OVERREACT', 5, sz * 0.36 + 6, sz, { weight: 'heavy', color: 'rgba(34,37,44,0.9)', align: 'center', t: k }); AA.rxPen.write(x, 'OVERREACT', 0, sz * 0.36, sz, { weight: 'heavy', color: '#c8261c', align: 'center', t: k }); } } catch (e) { /* no pen */ }
-    x.restore(); cover.tx.t.needsUpdate = true; cover.named = k;
+    x.restore();
+    // (builder 11) the sign shows itself more each time it has been taken: our own mark (the four yield marks as one), in yellow. 1: scratched small in a corner. 2: larger, and a second one. 3: across the whole cover.
+    { const n = signN(), Y = (cx, cy, r, a, lw) => { try { x.save(); x.globalAlpha = a; x.shadowColor = 'rgba(255,214,60,0.9)'; x.shadowBlur = r * 0.5; AA.rxMarks.yieldMark(x, 3, cx, cy, r, { pencil: 'rgba(227,184,28,0.9)', plw: lw * 0.4, ink: '#e8c21e', lw, t: 1 }); x.restore(); } catch (e) { /* no marks */ } };
+      if (n === 1) Y(1390, 215, 34, 0.55, 7); if (n === 2) { Y(1340, 860, 62, 0.8, 12); Y(300, 190, 30, 0.5, 6); } if (n >= 3) { Y(820, 880, 88, 0.92, 17); Y(1400, 200, 44, 0.7, 9); Y(300, 190, 36, 0.7, 8); Y(330, 880, 30, 0.6, 7); } }
+    cover.tx.t.needsUpdate = true; cover.named = k;
   }
+  const signN = () => { try { const v = new URLSearchParams(root.location.search).get('sign'); if (v != null) return Math.max(0, Math.min(3, +v || 0)); } catch (e) { /* no window */ } return Math.max(0, Math.min(3, (meta && meta.sign) | 0)); };
+  // the sign scratched into the bench round the notebook (from the second time on), seen only while the notebook is closed
+  function signBench() { if (cover.signs) return; cover.signs = []; const n = signN(); if (n < 2) return; const c = canvasTex(256, 256); try { c.x.shadowColor = 'rgba(255,214,60,0.9)'; c.x.shadowBlur = 16; AA.rxMarks.yieldMark(c.x, 3, 128, 176, 44, { pencil: 'rgba(227,184,28,0.9)', plw: 3, ink: '#e8c21e', lw: 9, t: 1 }); } catch (e) { /* no marks */ } c.t.needsUpdate = true; (n >= 3 ? [[-62, -30, 9, 0.3], [48, 30, 12, -0.4], [58, -6, 8, 0.2], [-58, 22, 11, -0.2], [10, -42, 7, 0.5], [-20, 33, 8, 0.1]] : [[48, 28, 9, -0.3], [-60, -26, 7, 0.3]]).forEach(q => { const m = new T.Mesh(new T.PlaneGeometry(q[2], q[2]).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: c.t, transparent: true, depthWrite: false, opacity: 0.85 })); m.position.set(q[0], -0.1, q[1]); m.rotation.y = q[3]; m.renderOrder = 2; scene.add(m); cover.signs.push(m); }); }
   function coverMake() {
     const ext = PGE.on ? PGE.ext : 0, W = SW + ext + 1.4, D = SH + 1.4, tx = canvasTex(1536, 1000); cover = { tx, W, D, grp: new T.Group(), named: -1, lamp: -1 };
     const side = std({ color: lin(0x1c1410), roughness: 0.9 }), box = new T.Mesh(new T.BoxGeometry(W, 0.55, D), [side, side, std({ map: tx.t, roughness: 0.85 }), std({ color: lin(0xd9cfb8), roughness: 0.95 }), side, side]); box.position.set(W / 2, 0.3, 0); cover.grp.add(box);
     cover.grp.position.set(-SW / 2 - ext - 0.7, 0.04, 0); scene.add(cover.grp); coverDraw(0);
-    { const ac = canvasTex(256, 128), x = ac.x; x.strokeStyle = '#efe7d2'; x.lineWidth = 13; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(236, 96); x.quadraticCurveTo(150, 4, 26, 62); x.moveTo(84, 22); x.lineTo(26, 62); x.lineTo(90, 100); x.stroke(); ac.t.needsUpdate = true; cover.arrow = flatMesh(10, 5, ac.t, 0.75); cover.arrow.position.set(19, 0.75, 14.5); cover.arrow.renderOrder = 30; cover.arrow.visible = false; scene.add(cover.arrow); }
+    { const ac = canvasTex(256, 128), x = ac.x; x.strokeStyle = '#efe7d2'; x.lineWidth = 13; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(236, 96); x.quadraticCurveTo(150, 4, 26, 62); x.moveTo(84, 22); x.lineTo(26, 62); x.lineTo(90, 100); x.stroke(); ac.t.needsUpdate = true; cover.arrow = flatMesh(15, 7.5, ac.t, 0.75); cover.arrow.position.set(19, 0.75, 14.5); cover.arrow.renderOrder = 30; cover.arrow.visible = false; scene.add(cover.arrow); }
   }
   function titleBench(now) {
     const W = titleC.width, H = titleC.height, x = titleC.getContext('2d'), k = W / 1280;
     if (!title.on) { if (title.drawn) { x.clearRect(0, 0, W, H); title.drawn = false; } return; }
-    if (!cover) coverMake(); if (!title.t0) title.t0 = now; const age = now - title.t0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+    if (!cover) coverMake(); signBench(); if (cover.signN !== signN()) { cover.signN = signN(); cover.named = -1; } if (!title.t0) title.t0 = now; const age = now - title.t0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
     // the lamp comes on: dark, a flicker, then the warm pool
-    const lamp = title.out ? 1 : age < 600 ? 0 : age < 700 ? 0.5 : age < 860 ? 0.12 : age < 980 ? 0.7 : 0.7 + 0.3 * sm((age - 980) / 900), st0 = age < 600 ? 0 : age < 860 ? 1 : 2;
+    const lamp = title.out ? 1 : age < 600 ? 0 : age < 700 ? 0.5 : age < 860 ? 0.12 : age < 980 ? 0.62 : 0.62 + 0.38 * sm((age - 980) / 1900), st0 = age < 600 ? 0 : age < 860 ? 1 : 2;
     if (st0 !== cover.lamp) { cover.lamp = st0; if (st0 === 1) sfxN('click'); }
-    x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.clearRect(0, 0, W, H); title.drawn = true; if (lamp < 1) { x.fillStyle = 'rgba(6,3,1,' + (0.9 * (1 - lamp)).toFixed(3) + ')'; x.fillRect(0, 0, W, H); }
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.clearRect(0, 0, W, H); title.drawn = true; if (lamp < 1) { x.fillStyle = 'rgba(6,3,1,' + (0.93 * (1 - lamp)).toFixed(3) + ')'; x.fillRect(0, 0, W, H); } if (signN() >= 3 && !title.out) { x.fillStyle = 'rgba(236,196,40,' + (0.05 + 0.03 * Math.sin(now / 700)).toFixed(3) + ')'; x.fillRect(0, 0, W, H); } if (cover.signs) cover.signs.forEach((m, i) => { m.material.opacity = title.out ? Math.max(0, 0.85 - (now - title.out) / 900) : 0.6 + 0.25 * Math.sin(now / 600 + i * 1.7); });
     { const kn = title.out ? 1 : Math.round(sm((age - 1500) / 1500) * 40) / 40; if (kn !== cover.named) coverDraw(kn); }
     // one hand-drawn arrow at the cover's free edge: open it
     if (cover.arrow) { cover.arrow.visible = age > 3300 && !title.out; cover.arrow.position.x = 19 - 0.6 * Math.sin(now / 280); }
-    if (title.out) { const o = (now - title.out) / 1250, e = o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * Math.min(1, o) + 2, 3) / 2; cover.grp.rotation.z = Math.min(1, e) * Math.PI * 0.992; if (!title.shown && now - title.out > 480) { title.shown = true; briefMols.forEach((m, i) => { m.group.visible = true; tweens = tweens.filter(tw => tw.m !== m); m.group.scale.setScalar(0.01); tween(m, { x: m.group.position.x, z: m.group.position.z }, m.sc, 0.5 + i * 0.22); }); } if (o >= 1) { title.on = false; x.clearRect(0, 0, W, H); title.drawn = false; } }
+    if (title.out) { const o = (now - title.out) / 1250, e = o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * Math.min(1, o) + 2, 3) / 2; cover.grp.rotation.z = Math.min(1, e) * Math.PI * 0.992; if (!title.shown && now - title.out > 480) { title.shown = true; briefMols.forEach((m, i) => { m.group.visible = true; tweens = tweens.filter(tw => tw.m !== m); m.group.scale.setScalar(0.01); tween(m, { x: m.group.position.x, z: m.group.position.z }, m.sc, 0.5 + i * 0.22); }); } if (o >= 1) { title.on = false; x.clearRect(0, 0, W, H); title.drawn = false; if (cover.signs) { cover.signs.forEach(m => scene.remove(m)); cover.signs = []; } } }
     else briefMols.forEach(m => { m.group.visible = false; });
   }
   function drawTitle(now) {
@@ -3002,7 +3009,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const zk = st.zoom, hx = Math.max(-0.22, Math.min(0.22, (Math.random() - 0.5) * sh * 0.6)), hz = Math.max(-0.3, Math.min(0.3, (Math.random() - 0.5) * sh * 0.6));
     cam.position.set(CAM.x + (st.fx - CAM.x) * zk + hx, CAM.y + (16 - CAM.y) * zk, CAM.z + (st.fz + 12 - CAM.z) * zk + hz);
     { const want = BENCHV && st.mode === 'pick' && shopB ? 1 : 0; st.shopK = (st.shopK || 0) + (want - (st.shopK || 0)) * Math.min(1, dt * 3.2); if (Math.abs(want - st.shopK) < 0.002) st.shopK = want; else dirty = true; }
-    const sk = st.shopK * st.shopK * (3 - 2 * st.shopK), SHX = 26 * sk, SHB = 0.1 * sk; cam.position.x += SHX + (CAM.x - LOOKAT.x) * SHB; cam.position.y += (CAM.y - LOOKAT.y) * SHB; cam.position.z += (CAM.z - LOOKAT.z) * SHB;
+    { const want = BENCHV && title.on && (!title.out || now - title.out < 900) ? 1 : 0; st.titleK = st.titleK == null ? want : st.titleK + (want - st.titleK) * Math.min(1, dt * 2.6); if (Math.abs(want - st.titleK) < 0.002) st.titleK = want; else dirty = true; }
+    const tk9 = st.titleK * st.titleK * (3 - 2 * st.titleK), sk = st.shopK * st.shopK * (3 - 2 * st.shopK), SHX = 26 * sk - 30 * tk9, SHB = 0.1 * sk + 0.5 * tk9; cam.position.x += SHX + (CAM.x - LOOKAT.x) * SHB; cam.position.y += (CAM.y - LOOKAT.y) * SHB; cam.position.z += (CAM.z - LOOKAT.z) * SHB;
     cam.lookAt(LOOKAT.x + (st.fx - LOOKAT.x) * zk + SHX, 0.8 * zk, LOOKAT.z + (st.fz - LOOKAT.z) * zk);
     // the hotter the run, the warmer the page
     const playing = g && (st.mode === 'play' || st.mode === 'move'), heat = playing ? Math.min(1, Math.log2(Math.max(1, st.mult)) / 6) : 0;
