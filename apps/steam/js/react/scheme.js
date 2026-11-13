@@ -56,7 +56,7 @@ function paperDraw(x, w, h, n, SW0) {
     const ring = (cx, cy, r, a1) => { x.fillStyle = 'rgba(150,105,60,' + (a1 * 0.3).toFixed(3) + ')'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (a1 * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = 11 - k * 3; x.beginPath(); x.arc(cx + R() * 5, cy + R() * 5, r * (1 + k * 0.012), 0.1 + k * 0.5, 5.9 + k * 0.2); x.stroke(); } x.strokeStyle = 'rgba(95,65,35,' + (a1 * 0.9).toFixed(3) + ')'; x.lineWidth = 13; x.beginPath(); x.arc(cx, cy, r * 1.01, 2.4, 3.7); x.stroke(); };
     if (n === 6) { ring(1560, 1030, 90, 0.34); ring(1660, 1075, 64, 0.22); }
     else if (n === 7) { const cx = 1480, cy = 340; x.fillStyle = 'rgba(60,140,160,0.2)'; x.beginPath(); x.ellipse(cx, cy, 46, 38, 0.4, 0, 6.3); x.fill(); for (let k = 0; k < 16; k++) { const a = k * 0.39 + R() * 0.3, d = 62 + R() * 70, rr = 3 + R() * 9; x.fillStyle = 'rgba(60,140,160,' + (0.14 + R() * 0.12).toFixed(2) + ')'; x.beginPath(); x.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, rr, 0, 6.3); x.fill(); x.beginPath(); x.moveTo(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40); x.lineTo(cx + Math.cos(a) * (d - rr), cy + Math.sin(a) * (d - rr)); x.strokeStyle = 'rgba(60,140,160,0.12)'; x.lineWidth = 2.5; x.stroke(); } ring(380, 1110, 56, 0.28); }
-    else { const cx = 1770, cy = 455, g = x.createRadialGradient(cx, cy, 10, cx, cy, 120); g.addColorStop(0, 'rgba(70,40,15,0.42)'); g.addColorStop(0.45, 'rgba(140,90,40,0.26)'); g.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 130, 100, 0.3, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(60,35,15,0.35)'; x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, 70, 52, 0.3, 0.4, 5.6); x.stroke(); ring(205, 770, 74, 0.3);
+    else if (true) { edges('120,110,100', 0.18, 140); } else { const cx = 1770, cy = 455, g = x.createRadialGradient(cx, cy, 10, cx, cy, 120); g.addColorStop(0, 'rgba(70,40,15,0.42)'); g.addColorStop(0.45, 'rgba(140,90,40,0.26)'); g.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 130, 100, 0.3, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(60,35,15,0.35)'; x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, 70, 52, 0.3, 0.4, 5.6); x.stroke(); ring(205, 770, 74, 0.3);
       x.save(); x.translate(1880, 230); x.rotate(0.62); x.fillStyle = 'rgba(0,0,0,0.1)'; x.fillRect(-150, -26, 320, 70); x.fillStyle = 'rgba(226,225,214,0.82)'; x.fillRect(-150, -34, 320, 68); x.strokeStyle = 'rgba(140,138,125,0.45)'; x.lineWidth = 2; x.strokeRect(-150, -34, 320, 68); x.restore(); edges('120,110,100', 0.18, 140); }
   } else
   if (n === 1) { // aged notebook paper: ruled lines, a faint margin, soft staining at the edges
@@ -89,7 +89,7 @@ const KITV = (() => { try { return new URLSearchParams(root.location.search).get
 const CM = { balance: 35, spatula: 30, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 26, logbook: 30, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 30, litmus: 26, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
   stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 38, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
-const EDGE = -22.6 + SX, STEP = { x: -21.7 + SX, z: 2.3 }, STEPD = 3.3, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const EDGE = -22.6 + SX, STEP = { x: -21.5 + SX, z: 2.3 }, STEPD = 3.75, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 // ---- builder E: the page drawn back, a true margin column, and the play area as one rectangle (?air=0 puts the old framing back) ----
 // All in page units. The sheet runs on ext units further to the left than before; line is the red margin line; the margin column is everything
 // to the left of it. play is the one rectangle nothing is ever written in; top, left, home, reag and band are the things inside it.
@@ -97,7 +97,7 @@ const EDGE = -22.6 + SX, STEP = { x: -21.7 + SX, z: 2.3 }, STEPD = 3.3, PAGES = 
 const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 function pageE() {
   let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
-  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 1.0, hw = 12.9, bz = 11.5;
+  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 2.6, hw = 11.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
     home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
@@ -718,7 +718,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -21.9, z: 13.55 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -8.6 + i * 5.3, z: -10.9 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -8.6 + i * 5.3, z: -10.9 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
@@ -754,7 +754,7 @@ function start(app) {
     if (!st.flags3 && show && !st.flags3Tried) { st.flags3Tried = true; try { st.flags3 = buildFlags(); } catch (e) { st.flags3 = null; } }
     if (!st.flags3) return;
     const marks = show ? P.runMarks(st.quota) : [], vals = [st.quota].concat(marks), n = marks.length, fr = k => (k === 0 ? 0.5 : 0.5 + 0.5 * k / Math.max(1, n));
-    st.flags3.forEach((o, k) => { const ok = show && k < vals.length, passed = ok && (st.mode === 'done' ? g.total >= vals[k] : !!st.passT[k]); [o.on, o.off].forEach(q => { q.visible = false; }); if (!ok) return; const q = passed ? o.on : o.off; q.visible = true; q.position.set(TRK.x0 + (TRK.x1 - TRK.x0) * fr(k) + 0.2, 0, TRK.z - 0.4); dirty = true; });
+    st.flags3.forEach((o, k) => { const ok = show && k < vals.length, passed = ok && (st.mode === 'done' ? g.total >= vals[k] : !!st.passT[k]); [o.on, o.off].forEach(q => { q.visible = false; }); if (!ok || k === 0) return; const q = passed ? o.on : o.off; q.visible = true; q.position.set(TRK.x0 + (TRK.x1 - TRK.x0) * fr(k) + 0.2, 0, TRK.z - 0.4); dirty = true; });
   }
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
@@ -885,7 +885,7 @@ function start(app) {
     const fin = view ? (view.fin && !g.queue.includes(P.SYN.finish) ? view.fin : null) : live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(3.3, 16.0 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -5.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 20.9, z }; SCS[i] = 0.4; }); reagE(ids); } }
+      if (SIDE) { const gap = Math.min(3.9, 18.6 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -7.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 20.0, z }; SCS[i] = 0.4; }); reagE(ids); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
@@ -1261,7 +1261,11 @@ function start(app) {
     const c = ink.x, now0 = performance.now(), S = o.size || 104, n = Math.max(0, h.n | 0), val = Math.max(0, +h.value || 0), met = !!h.met, frac = n ? Math.min(1, val / n) : 0, atMost = !!h.max || key === 'few';
     let sc = 1, dy = 0; if (met && o.metT) { const a = (now0 - o.metT) / 560; if (a < 1) { sc = 1 + 0.2 * Math.exp(-5 * a) * Math.cos(a * 12); dy = 12 * Math.exp(-7 * a); dirty = true; } }
     c.save(); c.translate(cx, cy + dy); c.scale(sc, sc); c.translate(-cx, -(cy + dy));
-    const col = met ? GREEN : o.lost ? REDINK : INK; M.draw(c, key, cx, cy + dy, S, { ink: col, faint: FAINT, green: GREEN, red: REDINK, frac: o.bare ? null : frac, met });
+    const col = met ? GREEN : o.lost ? REDINK : INK; if (!(o.goal && !atMost && n >= 1 && n <= 6)) M.draw(c, key, cx, cy + dy, S, { ink: col, faint: FAINT, green: GREEN, red: REDINK, frac: o.bare ? null : frac, met });
+    if (o.goal && !atMost && n >= 1 && n <= 6) { const sz = n <= 3 ? S : S * 0.74, gap2 = sz * 1.12; st.goalT = st.goalT || {}; for (let k = 0; k < n; k++) { const have = k < val || met, gx = cx + k * gap2, key2 = key + k; if (have && !st.goalT[key2]) st.goalT[key2] = now0; if (!have) delete st.goalT[key2]; const a2 = have ? (now0 - st.goalT[key2]) / 420 : 9, pp = a2 < 1 ? 1 + 0.3 * Math.exp(-4 * a2) * Math.cos(a2 * 10) : 1; if (a2 < 1) dirty = true;
+        c.save(); c.translate(gx, cy + dy); c.scale(pp, pp); c.globalAlpha = have ? 1 : 0.8; M.draw(c, key, 0, 0, sz, { ink: have ? (met ? GREEN : INK) : PENCIL, faint: FAINT, green: GREEN, red: REDINK, frac: have ? 1 : 0, met: have && met }); c.restore();
+        if (!have) { c.strokeStyle = PENCIL; c.lineWidth = 3; c.setLineDash([9, 9]); c.beginPath(); c.ellipse(gx, cy + dy, sz * 0.56, sz * 0.5, 0, 0, 6.3); c.stroke(); c.setLineDash([]); } else { c.strokeStyle = met ? GREEN : INK; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.moveTo(gx + sz * 0.2, cy + dy + sz * 0.3); c.lineTo(gx + sz * 0.34, cy + dy + sz * 0.46); c.lineTo(gx + sz * 0.6, cy + dy + sz * 0.12); c.stroke(); } }
+      c.restore(); return; }
      marker(c, S * 0.62); c.textAlign = 'left'; c.fillStyle = col; c.fillText(String(n), cx + S * 0.62, cy + S * 0.22); const w = c.measureText(String(n)).width;
     c.strokeStyle = col; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); const ax = cx + S * 0.62 + w + 16, ay = cy - S * 0.02, cs = S * 0.1; c.lineWidth = 6; if (atMost) { c.moveTo(ax - cs, ay - cs * 0.7); c.lineTo(ax, ay + cs * 0.7); c.lineTo(ax + cs, ay - cs * 0.7); } else { c.moveTo(ax - cs, ay + cs * 0.7); c.lineTo(ax, ay - cs * 0.7); c.lineTo(ax + cs, ay + cs * 0.7); } c.stroke();
     if (!o.bare) { const y = cy + S * 0.66, x0 = cx - S * 0.5, x1 = cx + S * 0.62 + w + 34;
@@ -1339,11 +1343,11 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 18.6 + (PGE.on ? PGE.rx : 0), z: -7.0 };
+  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 16.6 + (PGE.on ? PGE.rx : 0), z: -9.0 };
   const lining = () => P.RULE.queue && st.mode === 'play' && !!g && !g.over && !g.chain && !g.shot;
   const bankAt = () => st.mode === 'play' && g && (lining() || P.canBank(g)) && hit.x > BANK.x - 1.4 && hit.x < BANK.x + 5 && Math.abs(hit.z - BANK.z) < 1.2;
   // the reaction arrow after the circles fires the page; a click on a filled circle takes its reagent back
-  const FIREP = () => ({ x: STEP.x + STEPD + 0.6, z: STEP.z + 3.5 });
+  const FIREP = () => ({ x: STEP.x + STEPD + 0.2, z: STEP.z + 3.9 });
   const fireAt = () => lining() && Math.abs(hit.x - FIREP().x) < 3.4 && Math.abs(hit.z - FIREP().z) < 1.4;
   const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * STEPD)) < 1.5 && Math.abs(hit.z - STEP.z) < 1.5) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
@@ -1691,7 +1695,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // a line struck through by hand: it wanders a little, and only the first k of its length is drawn while it is being struck
   // a flag on a pole, drawn by hand: the number to beat, and each mark past it
   function flag(x, cx, by, h, col, full) { x.strokeStyle = col; x.lineWidth = Math.max(4, h * 0.075); x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(cx + 1, by); x.lineTo(cx - 2, by - h); x.stroke(); x.beginPath(); x.moveTo(cx - 2, by - h); x.lineTo(cx + h * 0.56, by - h * 0.76); x.lineTo(cx - 1, by - h * 0.5); x.closePath(); x.fillStyle = full ? col : '#fbf8ee'; x.fill(); x.stroke(); }
-  const TRK = { x0: -9.5, x1: 14.5, z: 12.2 }, FORM = { x: EDGE + 0.3, z: 9.45 };
+  const TRK = { x0: -15.2, x1: 14.0, z: 12.0 }, FORM = { x: EDGE + 0.3, z: 9.45 };
   if (PGE.on) TRK.z += PGE.dz;
   function strike(x, x0, y0, x1, y1, k, lw, col) { k = Math.max(0, Math.min(1, k)); if (k <= 0) return; if (k < 1) dirty = true; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); const n = 10; for (let i = 0; i <= n; i++) { const t = k * i / n, j = Math.sin(t * 7 + x0 * 0.03) * lw * 0.35; if (i) x.lineTo(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + j); else x.moveTo(x0, y0 + j); } x.stroke(); }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -1733,7 +1737,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     let sd = (st.noteRun * 2654435761 + tick * 40503 + 17) >>> 0; const R = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
     const cv = document.createElement('canvas'); cv.width = IW; cv.height = IH; const c = cv.getContext('2d');
     // the paper going wrong: stains, scorch, blots, a torn corner, tape, ruled lines that wobble (only at the edges and under everything else)
-    const stains = Math.floor(m * 7.5);
+    const stains = 0;   // the page's stains are drawn by pageStains, on free paper only
     const spots = [[1860, 1000], [250, 330], [1560, 250], [1890, 640], [150, 600], [140, 440], [1700, 300], [430, 290]];
     for (let k = 0; k < stains && k < spots.length; k++) { const q = spots[k], kind = k % 3; if (kind === 0) { c.strokeStyle = 'rgba(120,82,42,0.3)'; c.lineWidth = 9; c.beginPath(); c.arc(q[0], q[1], 60 + R() * 30, 0.2, 5.8); c.stroke(); } else if (kind === 1) { const g2 = c.createRadialGradient(q[0], q[1], 6, q[0], q[1], 90); g2.addColorStop(0, 'rgba(60,35,15,0.4)'); g2.addColorStop(1, 'rgba(150,100,50,0)'); c.fillStyle = g2; c.beginPath(); c.ellipse(q[0], q[1], 100, 70, R(), 0, 6.3); c.fill(); } else { c.fillStyle = 'rgba(25,30,60,0.55)'; c.beginPath(); c.ellipse(q[0], q[1], 14 + R() * 16, 10 + R() * 12, R() * 3, 0, 6.3); c.fill(); for (let j = 0; j < 7; j++) { c.beginPath(); c.arc(q[0] + (R() - 0.5) * 120, q[1] + (R() - 0.5) * 80, 2 + R() * 5, 0, 6.3); c.fill(); } } }
     if (m > 0.55) { c.fillStyle = 'rgba(40,40,44,0.85)'; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1760, 1130); c.lineTo(1760, 1230); c.closePath(); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 5; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1672, 1196); c.lineTo(1712, 1204); c.lineTo(1760, 1130); c.stroke(); }
@@ -1894,8 +1898,24 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const count = q => { const x0 = Math.max(0, Math.round(q[0] + ox)), y0 = Math.max(0, Math.round(q[1])), x1 = Math.min(IW + ox, Math.round(q[2] + ox)), y1 = Math.min(IH, Math.round(q[3])); if (x1 <= x0 || y1 <= y0) return 0; const d = c.getImageData(x0, y0, x1 - x0, y1 - y0).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) k++; return k; };
     Object.keys(K).forEach(k => { out.inkPx[k] = count(K[k]); out.boxPx[k] = mE.list.reduce((s, n) => s + Math.max(0, Math.min(n.box[2], K[k][2]) - Math.max(n.box[0], K[k][0])) * Math.max(0, Math.min(n.box[3], K[k][3]) - Math.max(n.box[1], K[k][1])), 0); });
     out.inkPx.play = count(P0); out.inkAll = count([-ox, 0, IW, IH]); return out; }
+  // Stains: a different set on every page (seeded by the run, the round and the page, so a recording repeats), more and messier as the run goes on.
+  // They lie under all ink, pale, and only on free paper: never inside a keep-clear rectangle (page units), give or take a hair at its edge.
+  const keepClear = () => { const H = homeNow(), out = [[H.x - H.w / 2 - 1.2, H.z - H.d / 2 - 1.6, H.x + H.w / 2 + 1.2, H.z + H.d / 2 + 1.6], [14.4, -10.4, 30, 12.2], [-24.3, -8.4, -11.6, 8.2], [-29.5, -20.5, -12.5, -12.6], [-24.3, 9.2, 22, 18]]; if (benchOn()) out.push([-24.4, -15.2, 18.6, -8.0]); return out; };
+  const stainRand = seed => { let sd = seed >>> 0; return () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296; };
+  function stainSet(seed, mad) { const R = stainRand(seed), rects = keepClear(), out = [], want = 2 + Math.round(mad * 4) + (R() < 0.5 ? 1 : 0), kinds = ['ring', 'ring', 'splash', 'scorch', 'thumb', 'tape'];
+    for (let tries = 0; tries < 400 && out.length < want; tries++) { const kind = kinds[Math.floor(R() * kinds.length)], r = kind === 'tape' ? 1.9 : kind === 'thumb' ? 1.0 : 1.1 + R() * (1.2 + mad), x0 = -33 + R() * 61, z0 = -20.5 + R() * 36; if (x0 + r > 28.5 || x0 - r < -35.5 || z0 - r < -21.5 || z0 + r > 15.8) continue;
+      let pen = 0; rects.forEach(q => { const dx = Math.max(q[0] - x0, 0, x0 - q[2]), dz = Math.max(q[1] - z0, 0, z0 - q[3]), d = Math.hypot(dx, dz); pen = Math.max(pen, r - d); }); if (pen > 0.1) continue; if (out.some(o => Math.hypot(o.x - x0, o.z - z0) < o.r + r + 0.3)) continue; out.push({ kind, x: x0, z: z0, r, rot: R() * 6.283, a: 0.5 + R() * 0.5, sd: Math.floor(R() * 1e9), pen }); }
+    return out; }
+  function pageStains(x) { if (!run || st.mode === 'shop') return; const key = (st.noteRun || 1) + ':' + run.round + ':' + (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || st.mode === 'done') ? g.page : 0) + ':' + st.mode.charAt(0) + (benchOn() ? 'b' : ''); if (st.stainKey !== key) { st.stainKey = key; let hsh = 2166136261; for (let i = 0; i < key.length; i++) hsh = Math.imul(hsh ^ key.charCodeAt(i), 16777619); st.stainList = st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || st.mode === 'done' ? stainSet(hsh, madLevel()) : []; }
+    (st.stainList || []).forEach(q => { const c = px(q), r = q.r * U, R = stainRand(q.sd); x.save(); x.translate(c[0], c[1]); x.rotate(q.rot);
+      if (q.kind === 'ring') { x.fillStyle = 'rgba(150,105,60,' + (0.05 * q.a).toFixed(3) + ')'; x.beginPath(); x.arc(0, 0, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (0.2 * q.a * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = (0.13 - k * 0.035) * r; x.beginPath(); x.arc(R() * 4, R() * 4, r * (0.93 + k * 0.012), 0.1 + k * 0.5, 5.6 + k * 0.2); x.stroke(); } }
+      else if (q.kind === 'splash') { x.fillStyle = 'rgba(120,90,55,' + (0.14 * q.a).toFixed(3) + ')'; x.beginPath(); x.ellipse(0, 0, r * 0.45, r * 0.36, 0, 0, 6.3); x.fill(); for (let k = 0; k < 9; k++) { const an = R() * 6.283, d = r * (0.5 + R() * 0.5), rr = r * (0.04 + R() * 0.09); x.beginPath(); x.arc(Math.cos(an) * d, Math.sin(an) * d, rr, 0, 6.3); x.fill(); } }
+      else if (q.kind === 'scorch') { const gr = x.createRadialGradient(0, 0, r * 0.1, 0, 0, r); gr.addColorStop(0, 'rgba(70,40,15,' + (0.3 * q.a).toFixed(3) + ')'); gr.addColorStop(0.5, 'rgba(140,90,40,' + (0.16 * q.a).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = gr; x.beginPath(); x.ellipse(0, 0, r, r * 0.8, 0, 0, 6.3); x.fill(); }
+      else if (q.kind === 'thumb') { x.strokeStyle = 'rgba(70,75,95,' + (0.16 * q.a).toFixed(3) + ')'; x.lineWidth = 2.5; for (let k = 1; k <= 6; k++) { x.beginPath(); x.ellipse(0, k * 1.5, r * k / 6 * 0.72, r * k / 6, 0, 3.4 + R() * 0.3, 6.0 + R() * 0.3); x.stroke(); } }
+      else { x.fillStyle = 'rgba(226,225,214,0.75)'; x.fillRect(-r, -r * 0.24, r * 2, r * 0.48); x.strokeStyle = 'rgba(140,138,125,0.4)'; x.lineWidth = 2; x.strokeRect(-r, -r * 0.24, r * 2, r * 0.48); }
+      x.restore(); }); }
   function drawInk(now) {
-    const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
+    const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; pageStains(x);
     if (st.mode !== 'shop') marginalia(x, now);
     if (st.splats && st.splats.length && st.mode !== 'shop') { x.save(); st.splats.forEach(d => { x.fillStyle = 'rgba(28,34,66,' + d.a.toFixed(2) + ')'; x.beginPath(); x.arc(d.x, d.y, d.r, 0, 6.3); x.fill(); }); x.restore(); }
     if (st.mode === 'shop') {
@@ -2067,13 +2087,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       const cx0 = px({ x: 25.5, z: 12.6 }); x.fillStyle = 'rgba(120,100,70,0.22)'; x.beginPath(); x.moveTo(cx0[0] + 30, cx0[1] - 70); x.lineTo(cx0[0] + 30, cx0[1] + 30); x.lineTo(cx0[0] - 70, cx0[1] + 30); x.closePath(); x.fill(); x.strokeStyle = PENCIL; x.lineWidth = 3; x.stroke(); }
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     // the reagents stand together inside one pencil bracket, so they read as one shelf of things to pick from
-    if (play && slots.some(q => q) && SIDE) { const rx0 = (PGE.on ? PGE.rx : 0), nR = slots.filter(q => q).length, a = px({ x: 17.5 + rx0, z: -5.6 }), b = px({ x: 17.5 + rx0, z: -5.4 + nR * SLOTW + 0.2 }); x.strokeStyle = PENCIL; x.lineWidth = 4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(a[0] + 46, a[1] - 4); x.quadraticCurveTo(a[0] - 6, a[1], a[0] + 2, a[1] + 40); x.lineTo(b[0] - 2, b[1] - 40); x.quadraticCurveTo(b[0] - 6, b[1] + 2, b[0] + 46, b[1] + 4); x.stroke(); }
+    if (play && slots.some(q => q) && SIDE) { const rx0 = (PGE.on ? PGE.rx : 0), nR = slots.filter(q => q).length, a = px({ x: 15.3 + rx0, z: -7.6 }), b = px({ x: 15.3 + rx0, z: -7.4 + nR * SLOTW + 0.2 }); x.strokeStyle = PENCIL; x.lineWidth = 4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(a[0] + 46, a[1] - 4); x.quadraticCurveTo(a[0] - 6, a[1], a[0] + 2, a[1] + 40); x.lineTo(b[0] - 2, b[1] - 40); x.quadraticCurveTo(b[0] - 6, b[1] + 2, b[0] + 46, b[1] + 4); x.stroke(); }
     if (play) slots.forEach((s, i) => {
       if (!s) return;
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
       if (o && !SIDE) { arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
       
-      x.save(); x.translate(m[0], m[1]); { const rs = Math.min(1.12, SLOTW / 2.6) * (hov && o ? 1.08 : 1); x.scale(rs, rs); } x.translate(16, 8);
+      x.save(); x.translate(m[0], m[1]); { const rs = Math.min(1.62, SLOTW / 2.35) * (hov && o ? 1.08 : 1); x.scale(rs, rs); } x.translate(16, 8);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
         
         fragOrChip(x, tl[0], -78, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
@@ -2084,7 +2104,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (g.free && g.free[s.id]) { x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.ellipse(-120, 26, 9, 6.5, 0, 0, 6.3); x.moveTo(-93, 26); x.ellipse(-102, 26, 9, 6.5, 0, 0, 6.3); x.stroke(); }
           else { /* uses left are not drawn as drops any more */ }
           x.globalAlpha = 1; }
-        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-110, 36); x.lineTo(80, 34); x.stroke(); } }
+        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-110, 36); x.lineTo(80, 34); x.stroke(); }
+        if (!o) { x.strokeStyle = PENCIL; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-124, 20); x.lineTo(56, -30); x.stroke(); } }
       x.restore();
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
@@ -2121,7 +2142,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       for (let k = 0; k < np; k++) { const bx = bx0 + k * 62, by = r0[1] - 38, on = k < used, cur = k === g.page - 1; x.strokeStyle = on || cur ? INK : PENCIL; x.lineWidth = cur ? 5 : 3.5; x.lineJoin = 'round'; x.lineCap = 'round'; x.beginPath(); x.moveTo(bx + jit(k * 3.1, 2), by + jit(k * 1.7, 2)); x.lineTo(bx + 38, by + 2 + jit(k * 2.3, 2)); x.lineTo(bx + 36 + jit(k * 4.1, 2), by + 38); x.lineTo(bx + 1, by + 36 + jit(k * 5.3, 2)); x.closePath(); x.stroke();
         if (on) { const tk = k === used - 1 ? Math.max(0, Math.min(1, (now - (st.tickT || 0)) / 260)) : 1, e1 = Math.min(1, tk / 0.4), e2 = Math.max(0, (tk - 0.4) / 0.6); if (tk < 1) dirty = true; x.strokeStyle = GREEN; x.lineWidth = 7; x.beginPath(); x.moveTo(bx + 6, by + 18); x.lineTo(bx + 6 + 10 * e1, by + 18 + 13 * e1); if (e2 > 0) x.lineTo(bx + 16 + 30 * e2, by + 31 - 44 * e2); x.stroke(); } }
     }
-    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px({ x: -26.6, z: -17.2 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 150 }); } }
+    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px({ x: -26.0, z: -16.6 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 170, goal: true }); } }
     if (st.mode !== 'done' && LEGEND) drawMotifs(g);
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (false && !FEWER && st.mode !== 'done') for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
@@ -2134,13 +2155,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       // a reagent that has just been chosen drops into its place
       const key = 'q' + k + ':' + (qid || ''); st.slotT = st.slotT || {}; if (qid && st.slotT.key !== undefined && !st.slotT[key]) st.slotT[key] = now; if (!qid) Object.keys(st.slotT).forEach(q => { if (q.indexOf('q' + k + ':') === 0) delete st.slotT[q]; }); st.slotT.key = 1;
       const age = qid && st.slotT[key] ? (now - st.slotT[key]) / 260 : 9, pop = age < 1 ? 1 + 0.35 * (1 - age) * Math.cos(age * 7) : 1; if (age < 1) dirty = true;
-      ring(x, c, 46, 42, id ? 6 : 5, id || qi === (g.queue ? g.queue.length : 0) ? INK : PENCIL, 0.1 * k);
-      { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(k + 1), c[0] - 40, c[1] - 40); }
+      ring(x, c, 54, 50, id ? 6 : 5, id || qi === (g.queue ? g.queue.length : 0) ? INK : PENCIL, 0.1 * k);
+      { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(k + 1), c[0] - 46, c[1] - 48); }
       if (tdone && tdone.wasted) cross(c, PENCIL); else if ((tdone && tdone.bank) || qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.7, INK, 5);
       else if (id && qid && age < 0.85 && TILE[id] && slots.findIndex(q => q && q.id === id) >= 0) { // the picture flies from the shelf to its place: 220 ms, eased, landing with a small pop
-        const li = slots.findIndex(q => q && q.id === id), fr = px(LAB[li]), u = Math.min(1, age / 0.85), e = 1 - Math.pow(1 - u, 3), fxp = fr[0] + (c[0] - fr[0]) * e, fyp = fr[1] + (c[1] - fr[1]) * e - 60 * Math.sin(Math.PI * u), sc2 = 1.1 + (0.62 - 1.1) * e; x.save(); x.translate(fxp, fyp); x.scale(sc2, sc2); fragOrChip(x, TILE[id][1], 0, 6, true); x.restore(); dirty = true; }
-      else if (id) { const fits = !qid || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(id)), tl = TILE[id]; x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = (fits ? 0.28 : 0.12) * (tdone ? 0.6 : 1); x.fillStyle = cc; x.beginPath(); x.ellipse(1, 0, 38, 34, 0.2, 0, 6.3); x.fill(); x.globalAlpha = fits ? (tdone ? 0.55 : 1) : 0.35;
-        if (id === P.SYN.finish) { marker(x, 40); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('F', 1, 14); } else if (tl) { x.save(); x.scale(0.62, 0.62); fragOrChip(x, tl[1], 0, 6, true); x.restore(); }
+        const li = slots.findIndex(q => q && q.id === id), fr = px(LAB[li]), u = Math.min(1, age / 0.85), e = 1 - Math.pow(1 - u, 3), fxp = fr[0] + (c[0] - fr[0]) * e, fyp = fr[1] + (c[1] - fr[1]) * e - 60 * Math.sin(Math.PI * u), sc2 = 1.5 + (0.82 - 1.5) * e; x.save(); x.translate(fxp, fyp); x.scale(sc2, sc2); fragOrChip(x, TILE[id][1], 0, 6, true); x.restore(); dirty = true; }
+      else if (id) { const fits = !qid || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(id)), tl = TILE[id]; x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = (fits ? 0.28 : 0.12) * (tdone ? 0.6 : 1); x.fillStyle = cc; x.beginPath(); x.ellipse(1, 0, 46, 42, 0.2, 0, 6.3); x.fill(); x.globalAlpha = fits ? (tdone ? 0.55 : 1) : 0.35;
+        if (id === P.SYN.finish) { marker(x, 40); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('F', 1, 14); } else if (tl) { x.save(); x.scale(0.82, 0.82); fragOrChip(x, tl[1], 0, 6, true); x.restore(); }
         x.restore();
         if (tdone) { x.strokeStyle = GREEN; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] + 14, c[1] + 16); x.lineTo(c[0] + 24, c[1] + 30); x.lineTo(c[0] + 46, c[1] - 6); x.stroke(); } }
     }
@@ -2154,11 +2175,16 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let f = 0.5 * top / Math.max(1, st.quota); if (top >= st.quota) { f = fr(vals.length - 1); for (let k = 0; k + 1 < vals.length; k++) if (top < vals[k + 1]) { f = fr(k) + (fr(k + 1) - fr(k)) * (top - vals[k]) / (vals[k + 1] - vals[k]); break; } }
       // the track: the round's total runs along it as a line of ink toward the red flag, which is the number to beat; the flags past it are the marks, each with the coin it pays
       x.lineCap = 'round'; x.strokeStyle = FAINT; x.lineWidth = 5; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * (n ? 1 : 0.5), y - 3); x.stroke();
-      if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 11; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
+      x.strokeStyle = FAINT; x.lineWidth = 22; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * 0.5, y - 1.5); x.stroke();
+      if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 18; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
+      // the finish post: a bold red bar across the track with a chequered head; it turns green and rings out once when the yield crosses it
+      { const fx = T0[0] + W * 0.5, on0 = done ? top >= st.quota : !!st.passT[0], col = on0 ? GREEN : REDINK, age0 = st.passT[0] ? (now - st.passT[0]) / 700 : 9; x.strokeStyle = col; x.lineWidth = 12; x.lineCap = 'butt'; x.beginPath(); x.moveTo(fx, y - 74); x.lineTo(fx, y + 26); x.stroke(); x.lineCap = 'round';
+        for (let r = 0; r < 2; r++) for (let q2 = 0; q2 < 3; q2++) { x.fillStyle = (r + q2) % 2 ? col : 'rgba(255,255,255,0.9)'; x.fillRect(fx + 6 + q2 * 16, y - 74 + r * 16, 16, 16); } x.strokeStyle = col; x.lineWidth = 3; x.strokeRect(fx + 6, y - 74, 48, 32);
+        if (age0 < 1) { x.globalAlpha = 1 - age0; x.strokeStyle = GREEN; x.lineWidth = 10 * (1 - age0) + 2; x.beginPath(); x.ellipse(fx, y - 20, 60 + 260 * age0, 44 + 150 * age0, 0, 0, 6.3); x.stroke(); x.globalAlpha = 1; dirty = true; } }
       if (done && !st.ypass) { const gx0 = T0[0] + W * f + 8, gx1 = T0[0] + W * fr(0) - 16, kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 300) / 500)); if (gx1 > gx0 && kk > 0) { const ge = gx0 + (gx1 - gx0) * kk; x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(gx0, y - 4); x.lineTo(ge, y - 4); x.moveTo(gx0, y - 22); x.lineTo(gx0, y + 14); x.moveTo(ge, y - 22); x.lineTo(ge, y + 14); x.stroke(); if (kk < 1) dirty = true; } }
       vals.forEach((v, k) => { const fx = T0[0] + W * fr(k), on = done ? top >= v : !!st.passT[k], tx = fmtK(v);
-        if (k === 0) { if (!st.flags3) flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
-        else { if (!st.flags3) flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
+        if (k === 0) { marker(x, 64); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 4, y + 72); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
+        else { if (!st.flags3) flag(x, fx, y, 40, on ? GREEN : PENCIL, on); hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 40); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
       if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest + (st.earn.extra || 0) : 0; purse(x, T1[0] + 86, y - 4, run.coins || 0, 17, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
@@ -2462,6 +2488,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     debugLayOf: (model, keep) => { const mm = buildMol(model, null, false), hv = []; mm.balls.forEach((b, a) => { if (a.el !== 'H') hv.push(a); }); let ov = 9, bl = 0, op = null, bp = null; const bonded = new Set(); mm.sticks.forEach(q => { bonded.add(q.a.id + '_' + q.b.id); bonded.add(q.b.id + '_' + q.a.id); if (q.a.el === 'H' || q.b.el === 'H' || q.rung) return; const A = mm.at.get(q.a), B = mm.at.get(q.b), r = A.distanceTo(B) / FL.L; if (r > bl) { bl = r; bp = [hv.indexOf(q.a), hv.indexOf(q.b)]; } });
       for (let i = 0; i < hv.length; i++) for (let j = i + 1; j < hv.length; j++) { const A = mm.at.get(hv[i]), B = mm.at.get(hv[j]), d = Math.hypot(A.x - B.x, (A.z - B.z) * 0.87) / (radOf(hv[i]) + radOf(hv[j])); if (d < ov) { ov = d; op = [i, j, hv[i].el, hv[j].el]; } }
       const out = { ov: +ov.toFixed(2), bl: +bl.toFixed(2), op, bp, n: hv.length, fl: !!mm.fl, rows: mm.fl ? mm.fl.rows : 0, w: mm.box ? +mm.box.w.toFixed(1) : 0, d: mm.box ? +mm.box.d.toFixed(1) : 0 }; if (keep) out.pts = hv.map(a => [a.el, +mm.at.get(a).x.toFixed(2), +mm.at.get(a).z.toFixed(2)]); freeMol(mm); return out; },
+    stainCheck: n => { let worst = -9, count = 0; for (let i = 0; i < (n || 50); i++) { const L = stainSet(1000 + i * 7919, (i % 9) / 8); L.forEach(q => { worst = Math.max(worst, q.pen); count++; }); } return { pages: n || 50, stains: count, worstInside: +worst.toFixed(3) }; },
     titleGo, titleOn: () => title.on, debugCam: () => cam, measure: () => { const m = center; if (!m || !m.balls) return null; m.group.updateMatrixWorld(true); const sc = m.group.scale.x, pts = [], v = new T.Vector3(), w = new T.Vector3(), right = new T.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
       m.balls.forEach((b, a) => { if (!b.mesh.visible) return; const r = b.mesh.scale.x * sc; if (r < 0.05 * sc) return; b.mesh.getWorldPosition(v); w.copy(v).addScaledVector(right, r); const p = v.clone().project(cam), q = w.project(cam); pts.push({ a, x: (p.x + 1) * 640, y: (1 - p.y) * 360, r: Math.hypot((q.x - p.x) * 640, (q.y - p.y) * 360), h: a.el === 'H' }); });
       let ov = 9, ovH = 9, op = null; for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) { const A = pts[i], B = pts[j], d = Math.hypot(A.x - B.x, A.y - B.y) / (A.r + B.r); if (A.h || B.h) { if (d < ovH) ovH = d; } else if (d < ov) { ov = d; op = [A.a.el, B.a.el, Math.round((A.x + B.x) / 2), Math.round((A.y + B.y) / 2)]; } }
