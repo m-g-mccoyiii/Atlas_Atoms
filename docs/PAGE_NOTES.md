@@ -203,3 +203,26 @@ Add after the sfx.js line: `<script src="js/music.js?v=1"></script>`. Bump `sche
 - Notes: the top one is under the printed header, the right one under the column of numerals; frantic lettering keeps its letters in order. `next` and `new run` stand above the marks row. The gain stands up and to the right of the step numeral.
 - A play sequence now ends with its round (`AA.rxFeel.reset()` from `load` and `endRound`); before, a round that ended in the middle of a page left its yield and numeral on the next round's page.
 - Not fixed from the judge's list: a molecule can still be drawn tangled for a moment while it changes, and after a ring forms near the start end the whole drawing re-flows (the fold rule moves everything after the change); on the last page of a round the end screen can cut the finish of the sequence short.
+
+## Sixth builder
+
+Branch `page-builder-5` (worktree `page5`; builder 5 left nothing). Scope after the split into five builders: the clean molecule (layout and motion), the showable run, leftovers. Files: `scheme.js` (layout, motion, title), `feel.js` (two small lines). Recorder and measuring tools: `.claude/f6` of the page5 worktree (not in git; ports 8961 page server, 8962 frames): `take.sh <name> <query>` records a line and prints the measures, `JOBN=run6 take.sh` records a whole run from the title, `lay.sh <tag>` checks the layout of dealt molecules and what random lines make of them with no drawing (30 s), `rsearch.sh <seeds>` plays whole runs without recording to find a seed, `pts.py` draws one layout, `make4.py` encodes (stereo now).
+
+### The clean molecule
+
+- Measured on every recorded frame (`AA.rxScheme.measure()`, summed by the recorder): the nearest two heavy atoms in screen pixels as a share of their two radii (under 0.9 is an overlap), and the longest drawn bond that is not a rung as a share of a normal bond (over 1.3 is stretched). Builder 4's look4-c line: nearest 0.06, 435 of 554 frames overlapping, longest bond 1.72, every frame over. Now on the same line: nearest 0.95, longest 1.35 before the last guard and 1.23 after it.
+- The turn: the last two atoms of a row droop into the gap and the first two of the next row rise, so the bond across the turn is a normal bond (it was 1.55 times normal on every folded molecule). Rows are 5.0 apart (`FL.RG`); where something in one row would touch something in the next, the rows below are moved down.
+- Ring bodies are drawn from scratch as a chemist draws them (first ring a regular polygon, each next ring on the edge or atom it shares, on the free side; a bridge strung between its ends), then set down where they land on nothing; a body too big for its row is set on its first row's places and the line carries on from where it lets out.
+- After placing, bonds are evened and atoms nearer than their balls allow are pushed apart (`apartOf`), with each atom drawn back to its place.
+- Motion: on every frame of a change `untangle` keeps every old bond its length and pushes apart what comes too near; new atoms ride with the atom they hang from. `layoutSafe` is the last guard for everything drawn, also for what feel.js moves (settle, tremble, snap, pose): no drawn bond over 1.22, no balls touching.
+- Two parts (`stageMid`, `stageTwo`; `?staged=0` turns it off): first the atoms that change, and the ring they are in, take their new shape in place while everything before stands still and everything after is carried along as it was; only then does the rest re-flow along the snake. The next step waits 330 ms more when there is a re-flow.
+- The molecule is larger: scale up to 2.3 (was 1.7) in a slightly larger home.
+- A title cover (`titleC`, `?title=0` leaves it out): the notebook page with the name and a drawn snake; click or key opens it.
+- `?see=0` (feel.js) switches off the outlines, glow and names on reacting atoms.
+
+### Not done
+- Big fused ring systems (steroid-like, spiro pairs) in rounds 5 to 9 can still crowd in the static layout: `lay.sh` reports the count.
+- Recording the music: the states `overreact`, `won`, `lost`, `runwon`, `runlost` make `AA.music._renderWithSfx` hang offline, so the recorder leaves those states out (the groove plays on through them). Live play was not checked.
+
+### scheme.html
+No new script. Bump `scheme.js?v=` and `feel.js?v=`.
