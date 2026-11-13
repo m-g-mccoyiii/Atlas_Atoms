@@ -34,16 +34,20 @@ Bigger and doubled tasks hardly bite, because a task is only set when a hidden p
 
 | Player | Wins all nine | Wins all twelve (postdoc) | Of the runs still alive, clear rounds 1 to 9 |
 |---|---|---|---|
-| Novice (looks at 4 lines) | 0 of 20,000 | 0 | 15, 13, 13, 8 |
-| Greedy (looks at 12 lines) | 0 of 20,000 | 0 | 37, 35, 32, 16, 13 |
+| Novice (looks at 4 lines) | 0 of 20,000 | 0 | 14, 12, 11, 7 |
+| Greedy (looks at 12 lines) | 0 of 20,000 | 0 | 37, 35, 31, 18, 17 |
 | Reads every line of the hand | 103 (0.52 in 100; 0.42 to 0.61) | 3 (0.01) | 75, 75, 63, 56, 51, 50, 49, 46, 45 |
 | Reads every line and the next hand | 71 of 3,000 (2.4; 1.8 to 2.9) | 8 (0.27) | 85, 84, 77, 68, 61, 59, 61, 57, 50 |
 
-Skill is rewarded at every step (0, 0, 0.5, 2.4) and the careful player is under 1 in 100. The planner, who reads more than a person can, is at "about 2". Before the rule: 0.7, 16.5 and 30.
+The careful player is under 1 in 100. The player who also reads every line of the next hand, which is more than a person can, wins 2.4 in 100: above the limit of ruling W3 (choice 1 below). The two casual players never win, but skill still shows in how far they get. Before the rule: 0.7, 16.5 and 30.
+
+The six-round master's has the same rule and the same first six rounds. From the rates above the careful player wins it about 5 in 100 and the player who reads two hands about 13. It was not run by itself.
+
+Round 1 of a long run is hard on a casual player: the greedy player meets its task 72 times in 100 but clears it 37, because of the yield mark. In the bachelor's the same player clears round 1 90 times in 100. The long runs are opened by winning the bachelor's, but the step up is steep (choice 5 below).
 
 **What a helper is worth.** The same kind of runs with every yield lifted by a flat amount, which is what a helper does at its plainest (2,000 and 600 runs on the fitting deals, players not yet aiming at the mark, so the first row reads a little lower than the table above):
 
-| Yield times | Reads every line: wins nine | Planner: wins nine | Planner: wins twelve |
+| Yield times | Reads every line: wins nine | Reads two hands: wins nine | Reads two hands: wins twelve |
 |---|---|---|---|
 | 1 | 0.35 | 1.5 | 0.2 |
 | 1.2 (one sign) | 0.85 | 2.8 | 0.2 |
@@ -56,14 +60,20 @@ Each step up about doubles the odds and none makes the run safe: with five times
 
 **Is a lost round a close call?** Partly. Of the rounds the careful player loses, about 3 in 10 are lost on the task and 7 in 10 on the yield; 12 to 22 in 100 of all lost rounds had the task met and the yield within a quarter of the mark (17 to 26 for the planner). The yield of a round is spread wide (the middle half of rounds runs from about 0.6 to 4 times the number to beat), so most misses are not near ones. Narrowing that spread would mean flattening the chain multipliers, which is the game's best moment; not done.
 
-**Not done.** The marks are shares of the number to beat as it stands and are uneven (round 5 is 2.57) because the number to beat was fitted on another player and other molecules.
+**Not done.**
+- The page does not draw the mark yet. Until it does, a player can meet the task, pass the number shown and still lose the round. `P.needYield(run)` gives the page the yield to draw. Setting `RULE.needPar = null` turns the rule off.
+- The marks are shares of the number to beat as it stands and are uneven (round 5 is 2.57) because the number to beat was fitted on another player and other molecules.
+- The marks were fitted three times (first on the older chemistry with no carbon dioxide, then a tenth harder, then on the game's real long-run chemistry). The table is from the third set, on deals that set was not fitted on.
+- The postdoc is still switched off in the game (`RULE.postdoc`); its column is from the simulator. Rounds 10 to 12 are set round nine's tasks in both.
+- The simulator applies the rule only when a run asks for it (`T12` in `sweep_exps.py`); the older experiments still measure the old rule.
 
 **Choices for the owner**
 
-1. Who the limit is for. (a) As built: the careful player wins 0.5 in 100, the planner 2.4. (b) A tenth harder marks: by the table about 0.4 and 1.9. (c) Easier: say the rate.
+1. Who the limit is for. (a) As built: the careful player wins 0.5 in 100, the player who reads two hands 2.4. (b) A tenth harder marks: by the table about 0.4 and 1.9. (c) Easier: say the rate.
 2. One number or two on the page. (a) Move the number to beat itself to the mark, so there is one line to pass (the gold marks then move with it). (b) Keep the number to beat for gold and the big word, and draw the pass mark as a second, plain line.
 3. The bachelor's. (a) As built: the task alone clears a round there, the yield rule arrives with the master's. (b) A low mark in the bachelor's too, so the rule is learned early.
-4. The postdoc. (a) As built: rounds 10 to 12 with their own marks, careful player 1 run in 10,000, planner 3 in 1,000. (b) Bigger molecules of its own for rounds 10 to 12 (not built).
+4. The postdoc. (a) As measured: rounds 10 to 12 with their own marks, careful player 1 run in 10,000, the two-hand reader 3 in 1,000. (b) Bigger molecules of its own for rounds 10 to 12 (not built).
+5. Rounds 1 to 3 of a long run. (a) As built: the marks start high, a casual player clears round 1 about 37 times in 100. (b) Lower marks in rounds 1 to 3 and higher ones later, the same win rate, a gentler start.
 
 ### 2. The opening
 

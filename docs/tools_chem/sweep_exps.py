@@ -378,6 +378,48 @@ def hom23(arg='40'):
 EXPERIMENTS['hom1'] = hom1
 EXPERIMENTS['hom23'] = hom23
 
+# --- the sign (ruling AP 4; path.js SIGN) -------------------------------------------------------------------------------
+SIGN = {'lift': 0.2, 'bar': 1.12, 'tasks': 1.25, 'takes': ['pair4', 'tasks', 'uses', 'pair1', 'hand']}
+
+
+def sign_params(level, opt='takes'):
+    """The run of a player who has taken the sign `level` times.  opt: 'lift' the lift alone, 'bar' the number to beat rises
+    too, 'takes' the sign also takes one thing a level (as path.js)."""
+    par = dict(T12, yield_mul=1 + SIGN['lift'] * level)
+    if opt in ('bar', 'takes'):
+        par['par_mul'] = SIGN['bar'] ** level
+    if opt == 'takes':
+        tk = SIGN['takes'][:level]
+        if 'pair4' in tk:
+            par['pair_from'] = 4
+        if 'pair1' in tk:
+            par['pair_from'] = 1
+        if 'tasks' in tk:
+            sl = dict(par['spec_scale_long'])
+            par['spec_scale_long'] = {r: sl.get(r, 1.0) * SIGN['tasks'] for r in range(1, 10)}
+        if 'uses' in tk:
+            par['uses'] = 2
+        if 'hand' in tk:
+            par['hand'] = 4
+    return par
+
+
+def sign(arg='800'):
+    """Nine-round runs with nothing unlocked at each level of the sign, every round played.  arg: runs[,player]."""
+    ps = arg.split(',')
+    n, pl = int(ps[0]), ps[1] if len(ps) > 1 else 'median'
+    jobs = []
+    for opt, levels in (('bar', (1, 2, 3, 5)), ('takes', (1, 2, 3, 4, 5))):
+        for lv in levels:
+            for i in range(n // 10):
+                jobs.append({'id': 'sg_%s_%d_%s_%d' % (opt, lv, pl, i), 'rack': START, 'length': 'doctorate', 'player': pl,
+                             'params': sign_params(lv, opt), 'seeds': ['h/%d' % (i * 10 + k) for k in range(10)],
+                             'tag': '%s %d|doctorate|%s' % (opt, lv, pl)})
+    return jobs
+
+
+EXPERIMENTS['sign'] = sign
+
 # --- the opening (ruling AP 3): the bachelor's for a beginner -------------------------------------------------------------
 HET_EARLY = [0.35, 0.40, 0.45, 0.50, 0.58, 0.70, 0.80, 0.90, 0.95]
 OPEN = {

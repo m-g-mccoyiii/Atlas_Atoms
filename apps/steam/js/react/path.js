@@ -1091,7 +1091,7 @@ const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 // g.hom carries the state of the round and is replaced, never changed in place (snap and back keep it): v2, tp (tapped on this page), a0 (heavy
 // atoms when the page began), w0 (waters off when it began), t0 and t1 (where the page before and this page begin in g.trail), float (the chain
 // count to carry over the turn), streak and wpage (seedling), end (brimstone: turn() says the round is over).
-const HOMS2K = { water: { k: 1.5, need: 4 }, h2: {}, co2: { k: 1.3, most: 3, least: 2 }, acid: { k: 1.5, loss: 1 }, wood: {}, salt: { k: 2 }, slime: { k: 1.6 }, ammonia: {}, seedling: { k: 1.2, gain: 5, wilt: 0.8 }, brimstone: { k: 2.5, k2: 1.75 } };
+const HOMS2K = { water: { k: 1.5, need: 4 }, h2: {}, co2: { k: 1.3, most: 3, least: 2 }, acid: { k: 1.6, loss: 1 }, wood: {}, salt: { k: 2.5 }, slime: { k: 2.5 }, ammonia: {}, seedling: { k: 1.2, gain: 5, wilt: 0.8 }, brimstone: { k: 3, k2: 2 } };
 const HOMS1 = Object.assign({}, HOMS);
 const hom2On = g => !!RULE.homs2 && !!g && !!g.hom && !!g.hom.v2;
 // what a stretch of the trail was: the circles in order ({ id, places, set: reflex steps it set off }) and the reflex kinds
@@ -1107,7 +1107,7 @@ const HOM2LIT = {
   h2: (g, p) => { const c = p.circ[p.circ.length - 1]; return !!c && c.id === 'pcc' && c.places > 0 && (g.casc || 0) > 0 && g.page < pagesOf(g); },
   co2: (g, p, K) => g.page >= pagesOf(g) && (g.tally.off_carbon_dioxide || 0) >= 1 && hom2Shut(g) >= K.least,
   acid: (g, p, K) => g.hom.a0 - heavy(g.m) >= K.loss,
-  wood: (g, p) => { const c = p.circ[p.circ.length - 1]; return p.circ.length >= 3 && c.id !== SYN.finish && c.id !== BANKID && c.places === 0 && hom2Rest(g).length >= 1; },
+  wood: (g, p) => { const c = p.circ[p.circ.length - 1]; return p.circ.length >= 3 && c.id !== SYN.finish && c.id !== BANKID && c.places === 0 && g.page >= pagesOf(g) && hom2Rest(g).length >= 1; },   // only on the round's last page
   salt: (g, p) => { if (g.hom.t0 < 0 || p.circ.length < 3) return false; const a = hom2Line(p), b = hom2Line(hom2Circ(g, g.hom.t0, g.hom.t1)); return b.length === 3 && a.every((x, i) => x === b[i]); },
   slime: (g, p) => p.circ.length >= 3 && p.circ.slice(0, 3).every(c => c.id !== SYN.finish && c.id !== BANKID && c.places > 0 && c.set > 0),
   ammonia: (g, p) => p.circ.some(c => c.id === 'ritter' && c.places > 0) || p.chain.includes('knit'),
@@ -1119,7 +1119,7 @@ const hom2Open = g => hom2On(g) && !!g.syn && !g.over && !!g.shot && !(g.queue |
 const hom2Lit = g => hom2Open(g) && !!HOM2LIT[g.hom.id] && !!HOM2LIT[g.hom.id](g, hom2Rec(g), HOMS2K[g.hom.id] || {});
 const HOM2TOK = {
   water: K => K.need + ' waters off|yield x' + K.k, h2: () => 'oxidize last|chain goes on', co2: K => 'at the end x' + K.k + '|each unused', acid: K => 'molecule shrinks|yield x' + K.k,
-  wood: () => 'last one a dud|pours the rest', salt: K => 'same line again|x' + K.k + ', uses back', slime: K => 'all three chain|yield x' + K.k, ammonia: () => 'nitrogen goes on|line fires again',
+  wood: () => 'last page, a dud|pours the rest', salt: K => 'same line again|x' + K.k + ', uses back', slime: K => 'all three chain|yield x' + K.k, ammonia: () => 'nitrogen goes on|line fires again',
   seedling: K => 'grows ' + K.gain + ' atoms|x' + K.k + ' and rising', brimstone: K => 'sulfur goes on|ends round x' + K.k
 };
 const HOMS2 = {};
@@ -1931,6 +1931,7 @@ const specClash = (a, b) => SPEC_TABLE[a].fam === SPEC_TABLE[b].fam || SPEC_TABL
 // player reached it in SPEC_REACH plays on this molecule (a bounded search: plays, not the full beam of hurdle_gen.py).
 const SPEC_REACH = { plays: 3, look: 30 };
 function specPick(molecule, round, carried, rnd, tier, hist, run) {
+  round = Math.max(1, Math.min(9, round | 0));     // rounds past nine (the postdoc) are set round nine's specs, as the simulator does
   const R = rnd || rand, model = molecule && molecule.atoms ? RX.cloneModel(molecule) : RX.fromSmiles(molecule); RX.reopen(model);
   carried = carried || []; hist = hist || []; const last = hist.length ? hist[hist.length - 1] : [], recent = {}; hist.slice(-4).forEach(f => f.forEach(x => { recent[x] = (recent[x] || 0) + 1; }));
   const target = Math.max(0.05, Math.min(0.99, SPEC_TARGET[Math.max(1, Math.min(9, round))] + (run && run.tierNo === 1 ? (RULE.specEase || 0) + ((RULE.specShift || {})[round] || 0) : ((RULE.specShiftLong || {})[round] || 0)))), pair = round >= (signHas(run, 'pair1') ? 1 : signHas(run, 'pair4') ? Math.min(4, RULE.pairFrom || 6) : (RULE.pairFrom || 6)), rider = pair && SPEC_TABLE.held_back && SPEC_TABLE.held_back.good.includes(round) && !last.includes('restraint') && R() < SPEC_RIDER.p, t1 = pair ? Math.min(0.97, Math.sqrt(target / 0.9)) : target, t1r = Math.min(0.97, target / SPEC_RIDER.factor);

@@ -10,7 +10,7 @@ A name may carry its own strength: 'water@1.8'.
     co2        carbon dioxide was made this round and at least two reagents were never fired in it.  At the end of the
                round every reagent never fired is a frozen bottle: the yield times K for each (three at most).
     acid       the molecule ends the page smaller than it began (it was eaten).  The yield times K.
-    wood       the last reagent of the line found nothing to act on.  He drinks it and pours every dealt reagent that was
+    wood       on the round's last page, the last reagent of the line found nothing to act on.  He drinks it and pours every dealt reagent that was
                not lined up, left to right, each spending a use.
     salt       the line is the line of the page before, reagent for reagent.  The yield times K and the line spends no use.
     slime      every one of the three reagents lands and sets off at least one reflex.  It sticks the three chains
@@ -222,7 +222,7 @@ class DryIce(Hom):
 
 class Acid(Hom):
     name = 'acid'
-    K = 1.5
+    K = 1.6
     LOSS = 1
 
     def lit(self, G, R):
@@ -247,7 +247,7 @@ class Wood(Hom):
         return any(c[1] == 0 for c in R.rec[-1]['circ'])
 
     def lit(self, G, R):
-        return self.dud(R) and not R.over and len(self.rest(R)) >= 1
+        return self.dud(R) and not R.over and R.page >= R.pages and len(self.rest(R)) >= 1      # the round's last page only
 
     def apply(self, G, R):
         more_circles(G, R, self.rest(R))
@@ -260,7 +260,7 @@ class Wood(Hom):
 
 class Salt(Hom):
     name = 'salt'
-    K = 2.0
+    K = 2.5
 
     def lit(self, G, R):
         return len(R.rec) >= 2 and len(R.rec[-1]['circ']) >= 3 and line_of(R.rec[-1])[:3] == line_of(R.rec[-2])[:3]
@@ -275,7 +275,7 @@ class Salt(Hom):
 
 class Slime(Hom):
     name = 'slime'
-    K = 1.6
+    K = 2.5
 
     def lit(self, G, R):
         c = R.rec[-1]['circ']
@@ -343,8 +343,8 @@ class Seedling(Hom):
 
 class Brimstone(Hom):
     name = 'brimstone'
-    K = 2.5
-    K2 = 1.75
+    K = 3.0
+    K2 = 2.0
     last_page = False
 
     def lit(self, G, R):

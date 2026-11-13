@@ -908,7 +908,7 @@ class Game:
     def need_abs(self, R):
         """The yield the round must reach to be cleared (RULE.needPar), 0 when there is none; before the sign's lift."""
         np_ = self.p.get('need_par')
-        if not np_:
+        if not np_ or R.tierNo == 1:        # the bachelor's keeps the task alone (path.js needParB is null)
             return 0.0
         nd = np_[min(R.rnd, len(np_)) - 1] if isinstance(np_, (list, tuple)) else float(np_)
         return nd * quota_of(R.rnd, R.brief, self.p.get('par_mul') or 1.0) / (self.p.get('yield_mul') or 1.0)
@@ -1400,7 +1400,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
             total = int(round(total * G.p['yield_mul']))
         par = quota_of(r, brief, G.p.get('par_mul') or 1.0)
         np_ = G.p.get('need_par')
-        need = (np_[min(r, len(np_)) - 1] if isinstance(np_, (list, tuple)) else float(np_)) if np_ else 0.0
+        need = (np_[min(r, len(np_)) - 1] if isinstance(np_, (list, tuple)) else float(np_)) if (np_ and tierNo != 1) else 0.0
         ok = bool(R.x['met']) and total >= need * par
         earned = 0
         if total >= par:
