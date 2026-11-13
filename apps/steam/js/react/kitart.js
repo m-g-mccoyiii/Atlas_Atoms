@@ -489,6 +489,32 @@ function build(id, T, grp, tint, extra) {
   if (id === '__list') return Object.keys(B);
   if (!B[id]) return false;
   B[id]();
+  // (builder 14, the owner: "give all the homunculi butts") every creature is modelled all the way round: each has a backside of its own, seen when it is turned or turns its back in its jar.
+  // cheeks(material, height, how far back, size, half gap, squash) puts two cheeks and the crease between them on the body
+  if (R.body && /^hom/.test(id) && id !== 'homunculus') { const pc = cur; cur = R.body;
+    const cheeks = (m, y, z, r, dx, scl, geo) => { side.forEach(q => { if (geo) put(geo(r), m, q * dx, y, -z, [0.3, q * 0.5, 0.2], scl); else sph(r, m, q * dx, y, -z, scl || [1, 1.05, 0.8]); }); box(0.035, r * 1.5, 0.05, black, 0, y - r * 0.05, -z - r * 0.62 * ((scl && scl[2]) || 0.8)).userData.plain = true; };
+    const BUTT = {
+      homwater: () => { const sk = M(0x3a6fd0, 0.3); cheeks(sk, 0.72, 0.36, 0.3, 0.2); const d = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.55 }); sph(0.07, d, 0, 0.36, -0.5, [1, 1.7, 1]); },
+      // the balloon: two round bulges low at the back, and a square patch stuck over an old puncture
+      homh2: () => { const sk = M(0xd6453a, 0.4); cheeks(sk, 1.5, 0.42, 0.33, 0.22, [1, 1, 0.85]); box(0.26, 0.26, 0.03, M(0xf4efe0, 0.8), 0.3, 2.2, -0.6, [0.25, 0.3, 0.2]); [-1, 1].forEach(k => box(0.2, 0.03, 0.02, black, 0.3, 2.2, -0.62, [0.25, 0.3, 0.2 + k * 0.78]).userData.plain = true); },
+      // dry ice: two square slabs, frosted, with a fleck each
+      homco2: () => { const ice = M(0xf4efe0, 0.3); side.forEach(q => { box(0.46, 0.46, 0.16, ice, q * 0.27 - 0.06, 1.2, -0.54, [0, 0.12, q * 0.06]); box(0.14, 0.07, 0.03, M(0x3a6fd0, 0.3), q * 0.27 - 0.06, 1.3, -0.64, [0, 0.12, 0.5]).userData.plain = true; }); },
+      // acid: sagging, half melted, a drip hanging from each cheek
+      homacid: () => { const sk = M(0x3c9a5f, 0.3); cheeks(sk, 0.62, 0.52, 0.34, 0.24, [1, 0.8, 0.8]); side.forEach(q => { rod([q * 0.26, 0.5, -0.72], [q * 0.26, 0.22, -0.72], 0.04, sk); sph(0.08, sk, q * 0.26, 0.2, -0.72, [1, 1.5, 1]); }); },
+      // wood spirit: two bumps moulded in the glass and a torn back label
+      homwood: () => { const br = M(0x8a5a2b, 0.5); cheeks(br, 0.86, 0.42, 0.27, 0.19, [1, 1, 0.75]); box(0.5, 0.3, 0.05, M(0xf4efe0, 0.8), 0.04, 1.45, -0.53, [0, 0, -0.12]); box(0.3, 0.035, 0.02, black, 0.04, 1.45, -0.565, [0, 0, -0.12]).userData.plain = true; },
+      // salt: the crab's folded tail flap between two crusted lumps
+      homsalt: () => { const sa = M(0xd6d2c4, 0.85, 0, { exact: 1 }), cream = M(0xf4efe0, 0.85); cheeks(sa, 0.82, 0.74, 0.36, 0.3, [1.1, 0.85, 0.7]); put(new T.ConeGeometry(0.2, 0.42, 3), cream, 0, 0.56, -0.98, [PI, 0, 0], [1.2, 1, 0.35]); [[-0.42, 1.05], [0.38, 1.1], [0.5, 0.7]].forEach((q, i) => box(0.15, 0.15, 0.15, cream, q[0], q[1], -0.92, [0.4, 0.6 + i, 0.3])); },
+      // slime: the biggest of the ten, glossy, and a sticky thread from it to the ground
+      homslime: () => { const gr = M(0x7fd14a, 0.2); cheeks(gr, 0.52, 0.62, 0.46, 0.33, [1, 0.9, 0.8]); rod([0.5, 0.3, -0.85], [0.62, 0.04, -1.0], 0.035, gr); shine(-0.42, 0.72, -1.02, 0.08, 0.2, -0.4); },
+      // ammonia: two bumps in the glass with crystals packed into them
+      homammonia: () => { const gl = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.4, glass: 0xbfe6fa, op: 0.55, emissive: new T.Color(0x5a8ca0) }), cr = M(0xf4efe0, 0.5); cheeks(gl, 0.86, 0.52, 0.3, 0.22, [1, 1, 0.75]); side.forEach(q => box(0.2, 0.2, 0.2, cr, q * 0.22, 0.86, -0.5, [0.5, 0.6 * q, 0.3])); },
+      // seedling: the pot's rounded back, with a root that has found its way out between
+      homseed: () => { const clay = M(0xc26a3a, 0.7), root = M(0xe9e4d2, 0.6); cheeks(clay, 0.78, 0.5, 0.3, 0.21, [1, 1, 0.8]); rod([0, 0.5, -0.68], [0.1, 0.3, -0.86], 0.035, root); rod([0.1, 0.3, -0.86], [-0.04, 0.14, -0.94], 0.028, root); },
+      // brimstone: two lumps of the stone and an ember glowing in the crack between them
+      hombrimstone: () => { const stn = M(0x2c2f34, 0.7); cheeks(stn, 0.74, 0.86, 0.38, 0.3, [1, 0.85, 0.8], r => new T.DodecahedronGeometry(r, 0)); box(0.07, 0.42, 0.06, glow(0xd6453a), 0, 0.72, -1.08).userData.plain = true; sph(0.14, M(0xdcecf4, 0.9, 0, { transparent: true, opacity: 0.5 }), 0, 1.15, -1.2, [1.3, 0.8, 1]).userData.plain = true; }
+    };
+    if (BUTT[id]) BUTT[id](); cur = pc; }
   let inkK = 1;
   if (U.length) { grp.userData.use = v => U.forEach(f => f(v)); grp.userData.use(0); }
   if (R.body && CHAR[id]) R.extra.push(o => { if (o.tuck) CHAR[id](R, o); });
