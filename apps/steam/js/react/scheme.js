@@ -102,19 +102,19 @@ function pageE() {
   const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 2.6, hw = 11.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
-    home: BENCH0 ? { x0: -10.6, x1: 24.4, z0: -12.2, z1: 9.6 } : { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
+    home: BENCH0 ? { x0: -12.0, x1: 26.4, z0: -13.3, z1: 10.2 } : { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
 }
 // the camera drawn back along its own line of sight and set to the left, so the page's bound edge and its margin are in the frame
 function camE(CAM, LOOKAT) { if (!PGE.on) return; CAM.sub(LOOKAT).multiplyScalar(PGE.k).add(LOOKAT); CAM.x += PGE.cx; LOOKAT.x += PGE.cx; CAM.z += PGE.cz; LOOKAT.z += PGE.cz; }
 // the molecule's home is the middle of the play rectangle; it may be drawn as large on the screen as before the camera drew back
-function homeE(HOME) { if (!PGE.on) return; const h = PGE.home; HOME.x = (h.x0 + h.x1) / 2; HOME.z = (h.z0 + h.z1) / 2; HOME.w = h.x1 - h.x0; HOME.d = h.z1 - h.z0; HOME.smax *= PGE.k * (BENCH0 ? 1.42 : 1); }
+function homeE(HOME) { if (!PGE.on) return; const h = PGE.home; HOME.x = (h.x0 + h.x1) / 2; HOME.z = (h.z0 + h.z1) / 2; HOME.w = h.x1 - h.x0; HOME.d = h.z1 - h.z0; HOME.smax *= PGE.k * (BENCH0 ? 2.0 : 1); }
 // the reagents stand a little further right, to give the molecule's home the room the wider view asks for
 function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.rx; LAB[i].x += PGE.rx; }); }
 // the pencil no longer lies across the margin, where the notes are written
 function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 // the bench view's camera: what it looks at on the bench (x, z), how far it stands back, its lean from straight down in degrees, its field of view
-const BCAM = [7.2, -6.0, 80, 20];
+const BCAM = [7.2, -5.6, 84, 20];
 // the strip of bench above the page where the jars, the instruments and the homunculus stand: the left end, the line they stand on, the step from jar to jar and from instrument to instrument
 const TOPB = { x0: -29.5, z: -26.1, jar: 6.4, kit: 8.2 };
 
@@ -221,7 +221,7 @@ function start(app) {
   if (SIDE) { C0.x = -0.6; C0.z = 0.2; }
   const isoMat = a => { const k = a.el + a.iso; return mIso[k] || (mIso[k] = std({ color: new T.Color(E[a.el].color).lerp(new T.Color(ISOC[a.iso]), 0.55).convertSRGBToLinear(), emissive: lin(ISOC[a.iso]), emissiveIntensity: 0.45, roughness: 0.3 })); };
   const slimeMat = std({ color: lin(0x7fd14a), roughness: 0.15 }), cureMat = std({ color: lin(0xf4f1e8), roughness: 0.95 });
-  const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x2b2622), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
+  const beadMat = std({ color: lin(0xf0d9a0), roughness: 0.7 }), polyMat = std({ color: lin(0xf08aa8), roughness: 0.6 }), beadEdge = new T.MeshBasicMaterial({ color: lin(0x2b2622), side: T.BackSide }), hEdge = new T.MeshBasicMaterial({ color: lin(0x4a4640), side: T.BackSide }), paleMat = std({ color: lin(0xd9d6cc), roughness: 0.8 }), mWord = {};
   function wordMat(txt) { if (mWord[txt]) return mWord[txt]; const c = canvasTex(128, 128); AA.rxPen.write(c.x, txt, 64, 64, txt.length > 2 ? 50 : 66, { weight: 'heavy', color: '#2b2420', align: 'center', base: 'middle' }); c.t.needsUpdate = true; return (mWord[txt] = new T.SpriteMaterial({ map: c.t, depthWrite: false })); }
   // the atoms a reagent could act on, or that carry something: the ends of C=C and C=O, O and Cl with their carbon, heavy atoms
   function liveAtoms(md, ar) {
@@ -601,7 +601,7 @@ function start(app) {
       for (let it = 0; it < 90; it++) pass(true); for (let it = 0; it < 30; it++) pass(false); }
     // write back: heavy atoms, then the hydrogens that are drawn, each a short way out from its atom
     const hd = new Map(), hlen = new Map(); md.atoms.forEach(a => { if (a.el !== 'H' || skip.has(a) || !at.has(a)) return; const pa = md.neighbors(a).map(q => q.atom).find(q => hs.has(q)); if (pa) { if (!hd.has(pa)) hd.set(pa, []); hd.get(pa).push(a); } });
-    hd.forEach((list, pa) => { const p0 = at.get(pa); list.forEach(h => { hlen.set(h, Math.max(0.7, Math.min(1.1, Math.hypot(at.get(h).x - p0.x, at.get(h).z - p0.z) || 0.95))); }); });
+    hd.forEach((list, pa) => { const p0 = at.get(pa); list.forEach(h => { hlen.set(h, Math.max(0.96, Math.min(1.2, Math.hypot(at.get(h).x - p0.x, at.get(h).z - p0.z) || 0.95))); }); });
     heavy.forEach(a => { const p = pos.get(a); if (p) at.get(a).set(p.x, y0, p.z); });
     hd.forEach((list, pa) => { const P0 = pos.get(pa); if (!P0) return; let mx = 0, mz = 0, n = 0; nb.get(pa).forEach(q => { const p = pos.get(q); if (p) { mx += p.x; mz += p.z; n++; } }); const dx = n ? P0.x - mx / n : 0, dz = n ? P0.z - mz / n : -1, l = Math.hypot(dx, dz) || 1, d = { x: dx / l, z: dz / l };
       list.forEach((h, k) => { const dd = rot(d, list.length === 1 ? 0 : (k - (list.length - 1) / 2) * 1.1); at.get(h).set(P0.x + dd.x * hlen.get(h), y0, P0.z + dd.z * hlen.get(h)); }); });
@@ -639,6 +639,7 @@ function start(app) {
       if (skip.has(a)) return;
       if (a.poly) { const e = { R: radius(a), sk: 1.6, mesh: add(SPH, polyMat, 0, 0, 0, grp), sprite: new T.Sprite(wordMat('n' + a.poly)), collar: null }; e.mesh.add(new T.Mesh(SPH, beadEdge)).scale.setScalar(1.09); grp.add(e.sprite); balls.set(a, e); return; }
       const R = radius(a), b = { R, mesh: add(SPH, pale.has(a) ? paleMat : a.slime ? slimeMat : a.cure && a.el === 'O' ? cureMat : ballMat(a.el), 0, 0, 0, grp), sprite: null, collar: null };
+      if (a.el === 'H' && !pale.has(a)) { const ed = new T.Mesh(SPH, hEdge); ed.scale.setScalar(1.13); ed.castShadow = false; b.mesh.add(ed); } // a shown hydrogen has a thin dark outline, so the white ball reads on the pale paper
       if (a.clamp) b.collar = collar(grp, new T.Vector3(), R, 0x39435c);
       if (!pale.has(a) && (!(lean || flat) || (a.el !== 'C' && a.el !== 'H'))) { b.sprite = new T.Sprite(letterMat(a.el)); grp.add(b.sprite); b.sk = a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 2.0 : 1.6; }
       balls.set(a, b);
@@ -675,15 +676,18 @@ function start(app) {
   function layoutSafe(m, pos, grow) {
     if (!m.fl) return layout(m, pos, grow);
     let G = m._sg; if (!G) { const A = []; m.balls.forEach((b, a) => { if (a.el !== 'H' && m.at.get(a)) A.push(a); }); const ix = new Map(); A.forEach((a, i) => ix.set(a, i)); const bs = [], bset = new Set(); m.sticks.forEach(q => { const i = ix.get(q.a), j = ix.get(q.b); if (i == null || j == null) return; bset.add(i * 1000 + j); bset.add(j * 1000 + i); if (!q.rung) bs.push([i, j, m.at.get(q.a).distanceTo(m.at.get(q.b)), q]); });
-      const rp = []; for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) { if (bset.has(i * 1000 + j)) continue; const ta = m.at.get(A[i]), tb = m.at.get(A[j]); rp.push([i, j, Math.min(Math.hypot(ta.x - tb.x, ta.z - tb.z), 1.06 * (radOf(A[i]) + radOf(A[j])) + 0.03)]); }
+      const rp = []; for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) { if (bset.has(i * 1000 + j)) continue; const ta = m.at.get(A[i]), tb = m.at.get(A[j]); rp.push([i, j, 1.06 * (radOf(A[i]) + radOf(A[j])) + 0.03]); }
       const hs = []; m.balls.forEach((b, a) => { if (a.el !== 'H') return; const pa = m.model.neighbors(a).map(q => q.atom).find(q => ix.has(q)); hs.push([a, pa ? ix.get(pa) : -1]); });
       G = m._sg = { A, bs, rp, hs, P: A.map(() => new T.Vector3()), P0: A.map(() => new T.Vector3()), H: hs.map(() => new T.Vector3()), map: new Map() }; A.forEach((a, i) => G.map.set(a, G.P[i])); hs.forEach((h, i) => G.map.set(h[0], G.H[i])); }
     G.A.forEach((a, i) => { G.P[i].copy(pos(a)); G.P0[i].copy(G.P[i]); }); G.hs.forEach((h, i) => G.H[i].copy(pos(h[0])));
     for (let it = 0; it < 5; it++) { let moved = false;
-      const mid = !!morph && morph.m === m; G.bs.forEach(b => { const q = b[3]; if (q.vis === false || (q.gk != null && q.gk < 1) || (mid && q.old === false)) return; const p = G.P[b[0]], r = G.P[b[1]], dx = r.x - p.x, dy = r.y - p.y, dz = r.z - p.z, d = Math.hypot(dx, dy, dz), max = b[2] * 1.22; if (d <= max) return; const f = (d - max) / d * 0.5; p.x += dx * f; p.y += dy * f; p.z += dz * f; r.x -= dx * f; r.y -= dy * f; r.z -= dz * f; moved = true; });
+      const mid = !!morph && morph.m === m; G.bs.forEach(b => { const q = b[3]; if (q.vis === false || (q.gk != null && q.gk < 1) || (mid && q.old === false)) return; const p = G.P[b[0]], r = G.P[b[1]], dx = r.x - p.x, dy = r.y - p.y, dz = r.z - p.z, d = Math.hypot(dx, dy, dz), max = b[2] * 1.22, min = 1.03 * (radOf(G.A[b[0]]) + radOf(G.A[b[1]])); if (d < min && d > 1e-4) { const f0 = (d - min) / d * 0.5; p.x += dx * f0; p.z += dz * f0; r.x -= dx * f0; r.z -= dz * f0; moved = true; return; } if (d <= max) return; const f = (d - max) / d * 0.5; p.x += dx * f; p.y += dy * f; p.z += dz * f; r.x -= dx * f; r.y -= dy * f; r.z -= dz * f; moved = true; });
       G.rp.forEach(b => { const p = G.P[b[0]], r = G.P[b[1]]; let dx = r.x - p.x, dz = r.z - p.z; const d = Math.hypot(dx, dz); if (d >= b[2]) return; if (d < 1e-4) { dx = 1; dz = 0; } const f = (d - b[2]) / Math.max(d, 1e-4) * 0.5; p.x += dx * f; p.z += dz * f; r.x -= dx * f; r.z -= dz * f; moved = true; });
       if (!moved) break; }
     G.hs.forEach((h, i) => { if (h[1] >= 0) { G.H[i].x += G.P[h[1]].x - G.P0[h[1]].x; G.H[i].y += G.P[h[1]].y - G.P0[h[1]].y; G.H[i].z += G.P[h[1]].z - G.P0[h[1]].z; } });
+    G.hs.forEach((h, i) => { const H = G.H[i], rh = radOf(h[0]); if (h[1] >= 0) { const p = G.P[h[1]], need = radOf(G.A[h[1]]) + rh + 0.1; let dx = H.x - p.x, dz = H.z - p.z, d = Math.hypot(dx, dz); if (d < 1e-4) { dx = 0; dz = -1; d = 1; } if (d < need) { H.x = p.x + dx / d * need; H.z = p.z + dz / d * need; } }
+      G.P.forEach((p, j) => { if (j === h[1]) return; const need = radOf(G.A[j]) + rh + 0.04, dx = H.x - p.x, dz = H.z - p.z, d = Math.hypot(dx, dz); if (d < need && d > 1e-4) { H.x = p.x + dx / d * need; H.z = p.z + dz / d * need; } }); });
+    for (let i = 0; i < G.H.length; i++) for (let j = i + 1; j < G.H.length; j++) { const A = G.H[i], B = G.H[j], need = 2 * radOf(G.hs[i][0]) + 0.05, dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < need && d > 1e-4) { const f = (need - d) / d * 0.5; A.x -= dx * f; A.z -= dz * f; B.x += dx * f; B.z += dz * f; } }
     return layout(m, a => G.map.get(a) || pos(a), grow);
   }
   // Where to circle a set of atoms on the page. Each atom is carried down to the page along the line of sight, so
@@ -1308,7 +1312,7 @@ function start(app) {
     let sc = 1, dy = 0; if (met && o.metT) { const a = (now0 - o.metT) / 560; if (a < 1) { sc = 1 + 0.2 * Math.exp(-5 * a) * Math.cos(a * 12); dy = 12 * Math.exp(-7 * a); dirty = true; } }
     c.save(); c.translate(cx, cy + dy); c.scale(sc, sc); c.translate(-cx, -(cy + dy));
     const col = met ? GREEN : o.lost ? REDINK : INK; if (!(o.goal && !atMost && n >= 1 && n <= 6)) M.draw(c, key, cx, cy + dy, S, { ink: col, faint: FAINT, green: GREEN, red: REDINK, frac: o.bare ? null : frac, met });
-    if (o.goal && !atMost && n >= 1 && n <= 6) { const sz = n <= 3 ? S : S * 0.74, gap2 = sz * 1.12; st.goalT = st.goalT || {}; for (let k = 0; k < n; k++) { const have = k < val || met, gx = cx + k * gap2, key2 = key + k; if (have && !st.goalT[key2]) st.goalT[key2] = now0; if (!have) delete st.goalT[key2]; const a2 = have ? (now0 - st.goalT[key2]) / 420 : 9, pp = a2 < 1 ? 1 + 0.3 * Math.exp(-4 * a2) * Math.cos(a2 * 10) : 1; if (a2 < 1) dirty = true;
+    if (o.goal && !atMost && n >= 1 && n <= 6) { const sz = o.gsz || (n <= 3 ? S : S * 0.74), gap2 = sz * (o.gsz ? 1.34 : 1.12); st.goalT = st.goalT || {}; for (let k = 0; k < n; k++) { const have = k < val || met, gx = cx + k * gap2, key2 = key + k; if (have && !st.goalT[key2]) st.goalT[key2] = now0; if (!have) delete st.goalT[key2]; const a2 = have ? (now0 - st.goalT[key2]) / 420 : 9, pp = a2 < 1 ? 1 + 0.3 * Math.exp(-4 * a2) * Math.cos(a2 * 10) : 1; if (a2 < 1) dirty = true;
         c.save(); c.translate(gx, cy + dy); c.scale(pp, pp); c.globalAlpha = have ? 1 : 0.8; M.draw(c, key, 0, 0, sz, { ink: have ? (met ? GREEN : INK) : PENCIL, faint: FAINT, green: GREEN, red: REDINK, frac: have ? 1 : 0, met: have && met }); c.restore();
         if (!have) { c.strokeStyle = PENCIL; c.lineWidth = 3; c.setLineDash([9, 9]); c.beginPath(); c.ellipse(gx, cy + dy, sz * 0.56, sz * 0.5, 0, 0, 6.3); c.stroke(); c.setLineDash([]); } else { c.strokeStyle = met ? GREEN : INK; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.moveTo(gx + sz * 0.2, cy + dy + sz * 0.3); c.lineTo(gx + sz * 0.34, cy + dy + sz * 0.46); c.lineTo(gx + sz * 0.6, cy + dy + sz * 0.12); c.stroke(); } }
       c.restore(); return; }
@@ -1320,7 +1324,9 @@ function start(app) {
     c.restore();
   }
   // a spec of one part or two (from round 6): each part is drawn as one, side by side
-  function drawSpec(g0, cx, cy, sp, o) { if (!sp) return; const ps = sp.parts && sp.parts.length > 1 ? sp.parts : [sp], sz = (o && o.size) || 104, gap = sz * 2.35; ps.forEach((p, i) => drawHurdle(g0, cx + i * gap, cy, Object.assign({ kind: p.mark || p.kind, name: p.name || (i ? '' : sp.name) }, p), Object.assign({}, o, { metT: o && o.metT && o.metT[i] }))); }
+  function drawSpec(g0, cx, cy, sp, o) { if (!sp) return; const ps = sp.parts && sp.parts.length > 1 ? sp.parts : [sp], sz = (o && o.size) || 104, gap = sz * 2.35;
+    if (o && o.goal && BENCHV) { /* one row with air between the pictures; they shrink together when there are many, and never reach the printed header */ const row = h => !(h.max) && (h.n | 0) >= 1 && (h.n | 0) <= 6, units = ps.reduce((t, h) => t + (row(h) ? (h.n | 0) * 1.34 : 2.9), 0) + (ps.length - 1) * 0.5, gsz = Math.min(150, (o.room || 500) / units); let x0 = cx;
+      ps.forEach(h => { const w = (row(h) ? (h.n | 0) * 1.34 : 2.9) * gsz; drawHurdle(g0, x0 + gsz * 0.67, cy, Object.assign({ kind: h.mark || h.kind }, h), Object.assign({}, o, { gsz, size: gsz * 1.05 })); x0 += w + gsz * 0.5; }); return; } ps.forEach((p, i) => drawHurdle(g0, cx + i * gap, cy, Object.assign({ kind: p.mark || p.kind, name: p.name || (i ? '' : sp.name) }, p), Object.assign({}, o, { metT: o && o.metT && o.metT[i] }))); }
   // The motifs the molecule holds (docs/tools_chem/TRAITS.md "For the page"): g.motifs = { id: level } or { id: { level, pct } }, g.motifMult the product.
   // A column of marks stands at the far side of the stage, never on the molecule: the picture is the count, the level in numerals, the percent under it,
   // and at the head the product as one figure. A level that rises puts a piece on the picture and the numeral bumps; one that falls lets a piece drop away.
@@ -2185,7 +2191,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       for (let k = 0; k < np; k++) { const bx = bx0 + k * 62, by = r0[1] - 38, on = k < used, cur = k === g.page - 1; x.strokeStyle = on || cur ? INK : PENCIL; x.lineWidth = cur ? 5 : 3.5; x.lineJoin = 'round'; x.lineCap = 'round'; x.beginPath(); x.moveTo(bx + jit(k * 3.1, 2), by + jit(k * 1.7, 2)); x.lineTo(bx + 38, by + 2 + jit(k * 2.3, 2)); x.lineTo(bx + 36 + jit(k * 4.1, 2), by + 38); x.lineTo(bx + 1, by + 36 + jit(k * 5.3, 2)); x.closePath(); x.stroke();
         if (on) { const tk = k === used - 1 ? Math.max(0, Math.min(1, (now - (st.tickT || 0)) / 260)) : 1, e1 = Math.min(1, tk / 0.4), e2 = Math.max(0, (tk - 0.4) / 0.6); if (tk < 1) dirty = true; x.strokeStyle = GREEN; x.lineWidth = 7; x.beginPath(); x.moveTo(bx + 6, by + 18); x.lineTo(bx + 6 + 10 * e1, by + 18 + 13 * e1); if (e2 > 0) x.lineTo(bx + 16 + 30 * e2, by + 31 - 44 * e2); x.stroke(); } }
     }
-    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px({ x: -26.0, z: -16.6 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 170, goal: true }); } }
+    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px(BENCHV ? { x: -29.6, z: -17.3 } : { x: -26.0, z: -16.6 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 170, goal: true, room: 17.2 * U }); } }
     if (st.mode !== 'done' && LEGEND) drawMotifs(g);
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
     if (false && !FEWER && st.mode !== 'done') for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
@@ -2668,7 +2674,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; pts.forEach(p => { x0 = Math.min(x0, p.x - p.r); x1 = Math.max(x1, p.x + p.r); y0 = Math.min(y0, p.y - p.r); y1 = Math.max(y1, p.y + p.r); });
       return { ov: +ov.toFixed(3), ovH: +ovH.toFixed(3), op, bl: +bl.toFixed(3), bp, rung: +rung.toFixed(2), n: pts.length, box: [Math.round(x0), Math.round(x1), Math.round(y0), Math.round(y1)] }; },
     playRect: () => playRect(), inPlay: () => { const q = seenIn(center); return q ? { out: +q.out.toFixed(1), box: q.box.map(Math.round), play: q.play.map(Math.round) } : null; },
-    speedAt: () => (BENCHV ? { x: -23.4, z: -13.2 } : null), keepClear: () => keepClear(),
+    speedAt: () => (BENCHV ? { x: 15.6, z: 17.0 } : null), keepClear: () => keepClear(),
     debugG: () => g, debugCenter: () => center, debugMorph2: () => morph, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, redrawPair: doPair, debugCoined: v => { meta.coined = !!v; dirty = true; }, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
     chooseBrief,
