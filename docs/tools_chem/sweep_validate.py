@@ -103,16 +103,17 @@ def turns(verbose=False):
 
 
 def rig(n=300, workers=int(os.environ.get('SWEEP_WORKERS', '12'))):
-    """The cells of RIG.md's tenth measure played here: bachelor's 300 runs a player, the bare nine rounds 120 runs a player."""
+    """The cells of RIG.md's tenth measure played here: bachelor's 300 runs a player, the bare nine rounds 120 runs a player.
+    The tenth measure was made before RULE.hetCurve was switched on, so these cells deal without it (het False)."""
     import sweep_run as SR
     jobs = []
     for pl in ('novice', 'greedy', 'median', 'planner'):
-        for i in range(n // 10):
+        for i in range(n // 10 if pl != 'planner' else 3):
             jobs.append({'id': 'bach_%s_%d' % (pl, i), 'length': 'bachelor', 'rack': list(SC.START_SIX), 'player': pl,
-                         'seeds': list(range(1001 + i * 10, 1011 + i * 10)), 'tag': 'bach'})
-        for i in range(12 if pl != 'planner' else 6):
+                         'params': {'het': False}, 'seeds': list(range(1001 + i * 10, 1011 + i * 10)), 'tag': 'bach'})
+        for i in range(int(os.environ.get('SWEEP_NINE', '12')) if pl != 'planner' else 0):
             jobs.append({'id': 'nine_%s_%d' % (pl, i), 'length': 'doctorate', 'rack': list(SC.START_SIX), 'player': pl,
-                         'params': {'co2': False}, 'seeds': list(range(5001 + i * 10, 5011 + i * 10)), 'tag': 'nine'})
+                         'params': {'co2': False, 'het': False}, 'seeds': list(range(5001 + i * 10, 5011 + i * 10)), 'tag': 'nine'})
     st = SR.run('validate_rig', jobs, workers)
     rows = SR.rows_of('validate_rig')
     res = {}

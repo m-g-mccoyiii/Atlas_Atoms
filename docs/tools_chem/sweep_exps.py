@@ -16,6 +16,7 @@ POOL = SC.POOL18
 START = list(SC.START_SIX)
 OLD = ['hydrate', 'hydroborate', 'dehydrate', 'oxidize', 'reduce', 'grow']
 EIGHT = START + ['reduce', 'hydroborate']
+XM = int(os.environ.get('SWEEP_X', '1'))          # more seed blocks in every cell of the small grids (the ids of the first blocks stay)
 HOMS = ('water', 'h2', 'co2', 'acid', 'wood', 'salt', 'slime', 'ammonia', 'seedling', 'brimstone')
 
 
@@ -98,7 +99,7 @@ def b_elem():
     import sweep_elements as SE
     jobs = []
     base4 = ['hydrate', 'oxidize', 'grow', 'dehydrate']
-    for c in range(3):
+    for c in range(3 * XM):
         seeds = list(range(700 + c * 4, 704 + c * 4))
         jobs.append({'id': 'el_control_%d' % c, 'mods': [], 'rack': base4 + ['reduce', 'hydroborate'], 'length': 'doctorate',
                      'players': ['median'], 'seeds': seeds, 'tag': 'control'})
@@ -125,7 +126,7 @@ def c_hom1():
         mods = [] if nm == 'none' else ['perk:' + nm]
         for rk, rack in racks.items():
             for length, n in (('bachelor', 8), ('master', 4), ('doctorate', 2)):
-                for c in range(n):
+                for c in range(n * XM):
                     jobs.append({'id': 'h1_%s_%s_%s_%d' % (nm, rk, length, c), 'mods': mods, 'rack': rack, 'length': length,
                                  'players': ['median'], 'seeds': list(range(900 + c * 4, 904 + c * 4)), 'tag': '%s|%s|%s' % (nm, rk, length)})
     return jobs
@@ -151,7 +152,7 @@ def d_sig1():
         mods = [] if sid == 'none' else ['sigil:' + sid]
         for rk, rack in (('start', START), ('eight', EIGHT)):
             for length, n in (('bachelor', 6), ('master', 3)):
-                for c in range(n):
+                for c in range(n * XM):
                     jobs.append({'id': 's1_%s_%s_%s_%d' % (sid, rk, length, c), 'mods': mods, 'rack': rack, 'length': length,
                                  'players': ['median'], 'seeds': list(range(1100 + c * 4, 1104 + c * 4)), 'tag': '%s|%s|%s' % (sid, rk, length)})
     return jobs
@@ -215,7 +216,7 @@ def e_last():
     for cell in ('none',) + SL.CELLS:
         mods = [] if cell == 'none' else ['sigil:last_' + cell]
         for length, n in (('master', 5), ('doctorate', 4)):
-            for c in range(n):
+            for c in range(n * XM):
                 jobs.append({'id': 'last_%s_%s_%d' % (cell.replace(':', '-'), length, c), 'mods': mods, 'rack': START, 'length': length,
                              'players': ['median', 'greedy'], 'seeds': list(range(1500 + c * 4, 1504 + c * 4)), 'tag': '%s|%s' % (cell, length)})
     return jobs
@@ -235,6 +236,24 @@ def speed(arg='greedy'):
 
 
 EXPERIMENTS['speed'] = speed
+
+
+def wins(arg='greedy'):
+    """The bare run (the starting six, no instrument, no creature, no sigil): 20,000 runs a player of up to twelve rounds, stopped
+    at the first round not cleared.  Clearing nine is a doctorate won, clearing twelve a postdoc.  The same seeds for every player.
+    arg: player[,runs]."""
+    ps = (arg or 'greedy').split(',')
+    pl, n = ps[0], int(ps[1]) if len(ps) > 1 else 20000
+    return [{'id': 'win_%s_%d' % (pl, i), 'rack': START, 'length': 'postdoc', 'player': pl, 'stop': True, 'params': {'co2': False},
+             'seeds': ['w/%d' % (i * 10 + k) for k in range(10)], 'tag': pl} for i in range(n // 10)]
+
+
+def wins_all():
+    return wins('novice') + wins('greedy') + wins('median')
+
+
+EXPERIMENTS['wins'] = wins
+EXPERIMENTS['wins_all'] = wins_all
 
 
 def phase1(name, jobs):

@@ -195,9 +195,86 @@ class Refire(Last):
         self.pay(G, R, price)
 
 
-VERSIONS = {c.vid: c for c in (Crown, Tatters, Pledge, Refire)}
-CELLS = ('crown:need', 'crown:always', 'tatters:early', 'tatters:late', 'pledge:3', 'pledge:6', 'refire:need', 'refire:always')
-TITLE = {'crown': 'The Open Crown', 'tatters': 'The Tatters', 'pledge': 'The Pledge', 'refire': 'The Second Act'}
+class Mask(Last):
+    """The Mask (docs/NOTES_WRITING.md, concept 2).  At the start of a round: pay to have one group on the molecule read as
+    another until the round ends (a C=O as an OH, an OH as a C=O, a Cl as an NH2, an OH as an SH or an NH2, an NH2 or SH as an
+    OH).  Simulated as the group being the other group for the round: reflexes, the spec and the reagents all read it so.
+    When the round ends: pay the same gold again to keep what the round made, or keep the gold and the round's yield is
+    halved (the yield "made through it" is taken as the whole round's, which is the dearest reading of the concept).
+    Price 2, one more each use in a run.
+    Policies:  need   masks only when the first page then gets further on the spec than it does unmasked; pays again when it can
+               always masks whenever the first page is better in any way (spec progress, then yield); pays again when it can
+               half   as need, but never pays the second time (takes the halved yield)"""
+    vid = 'mask'
+    OPTS = (('[CX3:1]=[OX1:2]', '[C:1]-[O:2]'), ('[CX4;!H0:1]-[OX2H:2]', '[C:1]=[O:2]'), ('[Cl:1]-[CX4:2]', '[N:1]-[C:2]'),
+            ('[OX2H:1]-[CX4:2]', '[S:1]-[C:2]'), ('[OX2H:1]-[CX4:2]', '[N:1]-[C:2]'), ('[NX3H2:1]-[CX4:2]', '[O:1]-[C:2]'),
+            ('[SX2H:1]-[CX4:2]', '[O:1]-[C:2]'))
+
+    def round_start(self, G, R, rng):
+        run = G.run
+        price = 2 + run.get('mask_n', 0)
+        R.x['mask'] = 0
+        if not G.real or run['gold'] < price or not R.spec:
+            return
+        import sweep_perks as SP
+        rack = run.get('rack') or SC.START_SIX
+        r0 = random.Random(rng.random())
+        hand = SC.deal_hand(rack, R, r0, G.p['hand'])
+        full = float(len(R.spec))
+
+        def first_page(smi):
+            R1 = R.copy()
+            R1.smi = smi
+            R1.f0 = G.feat(smi)
+            R1.seen = frozenset([smi])
+            _l, R2, pg = G.choose(R1, hand, 30, random.Random(7))
+            if R2 is None:
+                return (0.0, 0)
+            return (G.prog(R1, [G.page_rec(pg)]), SC.made(R2))
+        v0 = first_page(R.smi)
+        if self.policy in ('need', 'half') and v0[0] >= full:
+            return
+        best = None
+        for a, b in self.OPTS:
+            for s in SP.products(R.smi, a + '>>' + b, 6)[:2]:
+                if G.has_far(R.rules):
+                    import fold as F
+                    s = F.with_anchor(s)
+                v = first_page(s)
+                if best is None or v > best[0]:
+                    best = (v, s)
+        if best is None:
+            return
+        ok = best[0] > v0 if self.policy == 'always' else best[0][0] > v0[0]
+        if not ok:
+            return
+        R.smi = best[1]
+        R.x['mask'] = price
+        R.x['tap'] = R.x.get('tap', 0) + 1
+        run['mask_n'] = run.get('mask_n', 0) + 1
+        self.pay(G, R, price)
+
+    def round_end(self, G, R, run, earned):
+        price = R.x.get('mask', 0)
+        if not price:
+            return earned
+        if self.policy != 'half' and run['gold'] + earned >= price:
+            run['gold'] -= price                 # paid the second time: the yield is kept
+            run['spent'] += price
+            run['kept'] = run.get('kept', 0) + 1
+            return earned
+        total = R.x['total'] // 2                # the mask comes off unpaid: half the yield is lost, and the gold it would have earned
+        par = SC.quota_of(R.rnd, R.brief)
+        e2 = 0
+        if total >= par:
+            e2 = SC.COIN['mark'] * sum(1 for k in (2, 4, 8) if total >= SC.nice(par * k)) + min(SC.COIN['cap'], run['gold'] // SC.COIN['per'])
+        R.x['total'] = total
+        return min(earned, e2)
+
+
+VERSIONS = {c.vid: c for c in (Crown, Mask, Tatters, Pledge, Refire)}
+CELLS = ('crown:need', 'crown:always', 'mask:need', 'mask:always', 'mask:half', 'tatters:early', 'tatters:late', 'pledge:3', 'pledge:6', 'refire:need', 'refire:always')
+TITLE = {'crown': 'The Open Crown', 'mask': 'The Mask', 'tatters': 'The Tatters', 'pledge': 'The Pledge', 'refire': 'The Second Act'}
 
 
 def make(arg):

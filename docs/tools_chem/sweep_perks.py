@@ -49,6 +49,7 @@ class Perk(SC.Mod):
     when = 'after'            # 'after' the page fired, or 'before' it is lined up
     restart = False
     last_page = True          # may it be tapped on the last page
+    in_proof = False          # the game's proof that a spec can be reached plays lines only: no creature is tapped in it
 
     def __init__(self):
         self.reset()

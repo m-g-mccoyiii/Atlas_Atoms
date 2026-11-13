@@ -104,6 +104,10 @@ SPEC_TARGET = {int(k): float(v) for k, v in re.findall(r'(\d): ([\d.]+)', re.sea
 MOTIF_RATE = {k: float(v) for k, v in re.findall(r'(\w+): \{ rate: ([\d.]+) \}', re.search(r'const MOTIFS = \{(.*?)\};', _JS).group(1))}
 MOTIF_START = re.findall(r"'(\w+)'", re.search(r'const MOTIF_START = \[(.*?)\]', _JS).group(1))
 PAR = [float(x) for x in re.search(r'const PAR = \{ rounds: \[(.*?)\]', _JS).group(1).split(',')]
+PAR_AFTER = float(re.search(r'const PAR = \{ rounds: \[.*?\], after: ([\d.]+)', _JS).group(1))       # the step for every round past nine
+_h = re.search(r'RULE\.hetCurve = \[(.*?)\]', _JS)
+HET_CURVE = [float(x) for x in _h.group(1).split(',')] if _h else None     # ruling AF2: share of dealt molecules with an element past C, H, O
+_HETRE = re.compile(r'[^CcOoHh0-9()=#\[\]@+\-/.%:]')
 _c = re.search(r'const CASC = \{ step: ([\d.]+), place: (\d+), row: ([\d.]+), mul: false, most: (\d+), old: ([\d.]+) \}', _JS)
 CASC = {'step': float(_c.group(1)), 'place': float(_c.group(2)), 'row': float(_c.group(3)), 'most': int(_c.group(4)), 'old': float(_c.group(5))}
 _s = re.search(r'const SYN = \{.*?finishExtra: ([\d.]+).*?place: (\d+), row: ([\d.]+) \}', _JS)
@@ -122,7 +126,8 @@ def nice(q):
 def quota_of(rnd, brief):
     """The number to beat (path.js runQuota): Par of the round, times the assay's factor in rounds 3, 6, 9."""
     f = ASSAYF[brief][min(2, max(0, rnd // 3 - 1))] if brief in ASSAYF else 1.0
-    return nice(PAR[rnd - 1] * f)
+    par = PAR[rnd - 1] if rnd <= 9 else PAR[8] * PAR_AFTER ** (rnd - 9)          # path.js parOf
+    return nice(par * f)
 
 
 SPEC_FAMILY_TIER = {'chain': 0, 'runoff': 0, 'off': 0, 'restraint': 0, 'size': 1, 'makeup': 1, 'shape': 2, 'timing': 2}
@@ -133,7 +138,7 @@ SPEC_REACH = {'plays': 3, 'look': 30}
 SPEC_JARS = ['water', 'hydrogen', 'carbon_dioxide', 'acid_fumes', 'ammonia', 'sulfur', 'trimethylamine', 'other']
 P_POOL = [0.9, 0.85, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.5]
 ASSAYS = ['scarce', 'short', 'each', 'loose']
-LENGTHS = {'bachelor': (3, 1), 'master': (6, 2), 'doctorate': (9, 3)}
+LENGTHS = {'bachelor': (3, 1), 'master': (6, 2), 'doctorate': (9, 3), 'postdoc': (12, 4)}   # postdoc: path.js POSTDOC (RULE.postdoc)
 MARKS = (1, 2, 4, 8)
 # the game's ids for the engine's names (spec `need`, named rows)
 JSID = {'pcc': 'oxidize', 'allyl': 'grow', 'bh3': 'hydroborate', 'nabh4': 'reduce', 'socl2': 'chlorination', 'lactol': 'ring',
@@ -194,7 +199,8 @@ DEFAULTS = dict(
     runoff_step=0,           # sigil: each thing that comes off pays as this many reflex steps
     dbl_places=1.0,          # sigil: a reagent or reflex that works on a double bond has its places counted this many times
     casc_mul=1.0,            # sigil: every reflex step's places times this
-    spec_scale=None, spec_ban=None, uses_free=None)
+    spec_scale=None, spec_ban=None, uses_free=None,
+    het=True)                # RULE.hetCurve: the deal's rising share of molecules with an element past C, H, O
 DBL_REAGENTS = {'hydrate', 'hydroborate', 'grow', 'reduce', 'hwe', 'dihydroxylation', 'ozonolysis', 'ritter', 'thiolene',
                 'cyanohydrin', 'hydroformylation', 'epoxidation', 'finish'}
 DBL_REFLEX = {'ring', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'knit', 'cap', 'ring_far', 'cap_far', 'knit_far', 'weld_far',
@@ -204,6 +210,7 @@ DBL_REFLEX = {'ring', 'dry', 'flip', 'shift', 'tuck', 'weld', 'snap', 'knit', 'c
 class Mod:
     """Hooks for a perk or a sigil.  Every method may be left out."""
     name = ''
+    in_proof = True     # False: it takes no part when a spec is proved reachable (a creature: the game's proof taps none)
 
     def setup(self, G):
         """Change G.p, G.reactions, G.self_rules, G.near, G.far once, before play."""
@@ -412,11 +419,15 @@ class Game:
         self.real = True                # False while a proof round is played (perks do not count their taps there)
         self.modkey = '+'.join(getattr(m, 'name', '') for m in mods) + '|' + json.dumps(params or {}, sort_keys=True)
         self.mods = list(mods)
+        self.proof_mods = [m for m in self.mods if getattr(m, 'in_proof', True)]
+        self.proofkey = '+'.join(getattr(m, 'name', '') for m in self.proof_mods) + '|' + json.dumps(params or {}, sort_keys=True)
         for m in self.mods:
             m.setup(self)
         self._engs = {}
         self.store = cache if isinstance(cache, MemStore) else (MemStore() if cache is None else MemStore(cache))
         self._segs = {}                 # (smi, reagent, used, rules, co2) -> Seg, this process only (built from the kept parts)
+        self._rid = {}                  # a list of held reflexes -> a short name for it in the keys
+        self._sites = {}                # (smi, reagent, co2) -> places, this process only (cheap to work out again)
         self.stats = Counter()
 
     # --- engines -------------------------------------------------------------------------------------------------
@@ -453,6 +464,8 @@ class Game:
                 e.clear()
         if len(self._segs) > 1500000:
             self._segs.clear()
+        if len(self._sites) > 1500000:
+            self._sites.clear()
 
     # --- chemistry, cached by canonical SMILES ----------------------------------------------------------------------
     def rules_for(self, rnd):
@@ -521,7 +534,10 @@ class Game:
 
     def cands(self, smi, rules):
         """The reflexes that fit smi, in the engine's order (engine._next_self: priority, nearest pair, place in the list)."""
-        k = ('x', self.key, smi, rules)
+        rid_ = self._rid.get(rules)
+        if rid_ is None:
+            rid_ = self._rid[rules] = hashlib.blake2b(','.join(rules).encode(), digest_size=5).hexdigest()
+        k = ('x', self.key, smi, rid_)
         v = self.store.get(k)
         if v is None:
             self.stats['cand_miss'] += 1
@@ -616,12 +632,11 @@ class Game:
 
     def sites(self, smi, rid, co2=True):
         """How many places each step of a reagent fits, for the follows-on proxy."""
-        k = ('n', self.key, smi, rid, co2)
-        v = self._get(k)
+        k = (smi, rid, co2)
+        v = self._sites.get(k)
         if v is None:
             mol = parse(smi)
-            v = tuple(len(mol.GetSubstructMatches(st.query, maxMatches=40)) for st in self.eng(co2).reactions[rid].steps if hasattr(st, 'query'))
-            self._put(k, v)
+            v = self._sites[k] = tuple(len(mol.GetSubstructMatches(st.query, maxMatches=40)) for st in self.eng(co2).reactions[rid].steps if hasattr(st, 'query'))
         return v
 
     # --- a round -------------------------------------------------------------------------------------------------
@@ -953,11 +968,12 @@ class Game:
         rec([])
         return out
 
-    def choose(self, R, hand, look, rng, next_hand=None, plan=False, peek=False):
+    def choose(self, R, hand, look, rng, next_hand=None, plan=False, peek=False, mrng=None):
         """path.js specLine: spec progress first, yield to break a tie, a further tie at random.  look None: every line."""
         lines = self.lines(R, hand)
         if not lines:
             return (), None, None
+        self.store.keep = R.page <= self.p.get('keep_pages', 2)     # the chemistry of the last page is rarely met again: not logged
         if look is None and len(lines) > 250:
             look = 250                  # four circles or a hand of eight: the reader looks at 250 lines drawn at random
         if look and len(lines) > look:
@@ -979,7 +995,7 @@ class Game:
                 if not R2.over:
                     R2.rec = R.rec + [self.page_rec(page)]
                     for m in self.mods:
-                        w = m.peek(self, R2, rng)
+                        w = m.peek(self, R2, mrng or rng)
                         if w is not None and w > v:
                             v = w
             if plan:
@@ -1063,31 +1079,46 @@ def deal_hand(rack, R, rng, n):
     return [r for r in rack if r in pick]
 
 
-def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=1, log=None):
+def _only_rises(spec):
+    """True when every part of the spec, once met on a page, stays met to the end of the round (a gain, a loss, a count)."""
+    for name, _n in spec or ():
+        d = SPEC_TABLE[name]
+        if d['read'] == 'e':
+            if d['key'] in ('pure_water', 'pure_gas'):
+                return False
+        elif d['mode'] not in ('gain', 'loss', 'abs', 'range'):
+            return False
+    return bool(spec)
+
+
+def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=1, log=None, quit_met=False):
     """One round.  Returns the Round at its end (R.x['total'] the yield, R.x['met'] the spec)."""
     pol = PLAYERS[player]
     R = G.begin(smi, rnd, rack, brief, spec, tierNo)
-    for m in G.mods:
-        m.round_start(G, R, rng)
-    if G.mods:
+    mods = G.mods if G.real else G.proof_mods
+    mrng = random.Random(rng.random())       # what a perk or sigil rolls never moves the deal: with and without it the hands are the same
+    for m in mods:
+        m.round_start(G, R, mrng)
+    if mods:
         R.f0 = G.feat(R.smi)
         R.seen = frozenset([R.smi])
     nh = G.p['hand']
-    hand = deal_hand(rack, R, rng, nh)
+    hrng = random.Random(rng.random())       # the hands have their own dice too: a tie broken another way does not move the next deal
+    hand = deal_hand(rack, R, hrng, nh)
     steps_page, kinds, dealt, usedc = [], Counter(), Counter(), Counter()
     while True:
         dealt.update(hand)
-        nxt = deal_hand(rack, R, rng, nh) if R.page < R.pages else None
+        nxt = deal_hand(rack, R, hrng, nh) if R.page < R.pages else None
         forced = None
-        for m in G.mods:
-            f = m.before_page(G, R, rng, player, hand)
+        for m in mods:
+            f = m.before_page(G, R, mrng, player, hand)
             if f:
                 forced = f
         if forced:
             R2, page = G.run_line(R, forced)
             line = tuple(forced)
         else:
-            line, R2, page = G.choose(R, hand, pol['look'], rng, nxt, pol['plan'], peek=(player in ('median', 'planner', 'greedy')))
+            line, R2, page = G.choose(R, hand, pol['look'], rng, nxt, pol['plan'], peek=(player in ('median', 'planner', 'greedy')), mrng=mrng)
         if R2 is not None:
             rec = R.rec + [G.page_rec(page)]
             ev0 = R.ev
@@ -1100,13 +1131,15 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
             usedc.update(set(line))
         else:
             R.rec = R.rec + [G.page_rec({'circ': [], 'chain': [], 'off': {}, 'smi': R.smi})]
-        for m in G.mods:
+        for m in mods:
             if not R.over:
-                m.after_page(G, R, rng, player)
+                m.after_page(G, R, mrng, player)
         steps_page.append(len(R.rec[-1]['chain']))
         kinds.update(R.rec[-1]['chain'])
         if R.over or R.page >= R.pages:
             break
+        if quit_met and G.met(R):
+            break                        # a proof: the spec is met and cannot be lost again, the later pages change nothing
         G.turn(R)
         hand = nxt
     R.x['total'] = G.end(R)
@@ -1143,6 +1176,7 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
     p = G.p
     scale = (p['spec_scale'] if p['spec_scale'] is not None else SPEC_SCALE) if tierNo == 1 else {}
     ban = (p['spec_ban'] if p['spec_ban'] is not None else SPEC_BAN) if tierNo == 1 else ()
+    rnd_true, rnd = rnd, max(1, min(9, rnd))          # rounds past nine use round nine's specs (path.js POSTDOC)
     target = max(0.05, min(0.99, SPEC_TARGET[max(1, min(9, rnd))]))
     pair = rnd >= 6
     rider = pair and rnd in SPEC_TABLE['held_back']['good'] and 'restraint' not in last and rng.random() < SPEC_RIDER['p']
@@ -1178,20 +1212,24 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
         # a later run with the same three reuses the draw, which leaves the rates as they are and saves most of the work.
         if not proof:
             return 1
-        ck = ('p', G.key, G.modkey, G.extra_key, smi, rnd, tuple(rack), tuple(parts), brief, tierNo, co2)
+        ck = ('p', G.key, G.proofkey, G.extra_key, smi, rnd, tuple(rack), tuple(parts), brief, tierNo, co2)
         v = G._get(ck)
         if v is None:
             v = 0
             G.real = False
             G.stats['proofs'] += 1
-            prng = random.Random(repr(ck))       # the proof has its own dice: a run is the same whether or not the proof was kept
+            # the proof has its own dice: a run is the same whether or not the proof was kept, and the dice do not depend on
+            # the perks and sigils held, so a run with one and the run without meet the same proof where the chemistry is the same
+            prng = random.Random(repr(('p', smi, rnd, tuple(rack), tuple(parts), brief, tierNo, co2)))
+            qm = _only_rises(parts)
             try:
                 for k in range(SPEC_REACH['plays']):
-                    if play_round(G, smi, rnd, rack, 'aim30', prng, spec=parts, brief=brief, tierNo=tierNo).x['met']:
+                    if play_round(G, smi, rnd, rack, 'aim30', prng, spec=parts, brief=brief, tierNo=tierNo, quit_met=qm).x['met']:
                         v = k + 1
                         break
             finally:
                 G.real = True
+            G.store.keep = True
             G._put(ck, v if v else -1)
         return max(v, 0)
 
@@ -1246,12 +1284,24 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
 # a run
 # ---------------------------------------------------------------------------------------------------------------
 
-def deal_two(rnd, rng, extra=None):
+def deal_two(rnd, rng, extra=None, het=True):
     """Two different molecules of the round: the pool with the game's chance, else the bank (path.js feedsFor, P_POOL).
+    RULE.hetCurve (on in the game): each molecule is first decided to hold an element other than C, H, O or not, with the
+    round's share, and is then drawn from the molecules of the round that fit.  Rounds past nine deal round nine's.
     extra(rnd, rng) may return a SMILES to deal in place of the first (the rarity curve of sweep_elements.py)."""
+    r9 = max(1, min(9, rnd))
+    hc = HET_CURVE[min(len(HET_CURVE), r9) - 1] if (het and HET_CURVE) else None
     out = []
     while len(out) < 2:
-        src = FEED_POOL[rnd] if (rng.random() < P_POOL[rnd - 1] or not FEED_BANK[rnd]) else FEED_BANK[rnd]
+        use_pool = rng.random() < P_POOL[r9 - 1]
+        pl, bk = FEED_POOL[r9], FEED_BANK[r9]
+        if hc is not None:
+            want = rng.random() < hc
+            pl2 = [x for x in pl if bool(_HETRE.search(x)) == want and x not in out]
+            bk2 = [x for x in bk if bool(_HETRE.search(x)) == want and x not in out]
+            if pl2 or bk2:
+                pl, bk = pl2, bk2
+        src = pl if ((use_pool or not bk) and pl) else (bk or pl)
         s = rng.choice(src)
         if extra is not None and not out:
             s = extra(rnd, rng) or s
@@ -1265,6 +1315,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
     """A whole run.  racks: {round: rack} when the carried set changes.  Every round is played (as the rig's `all`) unless stop.
     Returns a dict: won, cleared, rounds: [{r, mol, brief, spec, met, total, par, marks, steps, kinds, ...}]."""
     n_rounds, tierNo = LENGTHS[length]
+    tierNo = min(tierNo, 3)             # a postdoc is a doctorate that goes on: rounds 1 to 9 are the same run
     rng0 = random.Random('run/%s' % seed)
     assay = ASSAYS[:]
     rng0.shuffle(assay)
@@ -1281,8 +1332,8 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         rng = random.Random('run/%s/%d' % (seed, r))
         rk = tuple(racks[r]) if racks else tuple(rack)
         brief = assay[(r // 3 - 1) % 3] if r % 3 == 0 else 'plain'
-        two = deal_two(r, rng, extra)
-        opts = [(s, spec_pick(G, s, r, rk, rng, tierNo, hist, brief)) for s in two]
+        two = deal_two(r, rng, extra, G.p.get('het', True))
+        opts = [(s, spec_pick(G, s, r, rk, random.Random('run/%s/%d/spec%d' % (seed, r, i)), tierNo, hist, brief)) for i, s in enumerate(two)]
         if PLAYERS[player]['pick'] == 'random':
             smi, sp = opts[rng.randrange(2)]
         else:
@@ -1292,6 +1343,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         if run['spec_up'] > 1.0:
             sp = dict(sp, parts=[(nm, int(math.ceil(n * run['spec_up'] - 1e-9))) for nm, n in sp['parts']])
         run['round'] = r
+        run['rack'] = rk
         lg = [] if logs else None
         R = play_round(G, smi, r, rk, player, rng, spec=sp['parts'], brief=brief, tierNo=tierNo, log=lg)
         total = R.x['total']
@@ -1316,6 +1368,8 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
             if stop:
                 break
         G.trim()
+        G.store.keep = True
+        G.store.flush()
     out['won'] = out['cleared'] >= n_rounds
     for m in G.mods:
         out['won'] = m.run_won(G, run, out['won'])
@@ -1324,11 +1378,18 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# the store shared by every worker and every later run: one sqlite file, read on a miss, written in batches
+# the store shared by every worker and every later run
 # ---------------------------------------------------------------------------------------------------------------
+# Three layers.  (1) A dict in the worker.  (2) One append-only log file per worker: a worker writes what it learns to its own
+# log every few seconds and reads the other workers' logs every few seconds, so a molecule worked out by one is known to all
+# within seconds and nobody waits on a lock.  (3) One sqlite file, read by every worker on a miss and written by ONE process
+# only (the parent of the pool, sweep_run.run), which folds the logs into it in key order.  A first version let all twelve
+# workers write the sqlite file: random-key inserts dirtied a page each, the write-ahead file grew to 690 MB in fifteen
+# minutes and the workers spent 97 percent of their time waiting.
 
 class MemStore:
     """The store of one process (tests, a cold bench)."""
+    keep = True
 
     def __init__(self, d=None):
         self.mem = d if d is not None else {}
@@ -1343,64 +1404,119 @@ class MemStore:
         return 0
 
 
-class Store(MemStore):
-    """A dict in memory in front of one sqlite file (WAL, so twelve workers read and write at once).  A key is the 12-byte
-    blake2b of repr(key tuple); a value is a pickle.  New answers wait in a list and are written every few seconds."""
-    LIMIT = 2500000
+def _hkey(k):
+    return hashlib.blake2b(repr(k).encode(), digest_size=12).digest()
 
-    def __init__(self, path=None):
+
+CACHE_DIR = os.path.join(SWEEP_DIR, 'cache')
+
+
+def _read_frames(fh, pos):
+    """Whole frames of a log from pos: [(key, value), ...] lists, and the new position.  A frame half written is left."""
+    out = []
+    fh.seek(0, 2)
+    end = fh.tell()
+    while pos + 8 <= end:
+        fh.seek(pos)
+        n = int.from_bytes(fh.read(8), 'little')
+        if pos + 8 + n > end:
+            break
+        out.append(fh.read(n))
+        pos += 8 + n
+    return out, pos
+
+
+class Store(MemStore):
+    LIMIT = 2500000
+    EVERY = 6.0
+
+    def __init__(self, d=None):
         MemStore.__init__(self)
-        self.path = path or os.path.join(SWEEP_DIR, 'cache', 'store.sqlite')
-        os.makedirs(os.path.dirname(self.path), exist_ok=True)
-        self.db = sqlite3.connect(self.path, timeout=120, isolation_level=None)
-        self.db.execute('PRAGMA journal_mode=WAL')
-        self.db.execute('PRAGMA synchronous=OFF')
-        self.db.execute('PRAGMA cache_size=-200000')
-        self.db.execute('CREATE TABLE IF NOT EXISTS kv (k BLOB PRIMARY KEY, v BLOB) WITHOUT ROWID')
+        self.dir = d or CACHE_DIR
+        os.makedirs(self.dir, exist_ok=True)
+        self.path = os.path.join(self.dir, 'store.sqlite')
+        self.db = None
+        self.db_tried = 0.0
         self.pend = []
         self.last = time.time()
-        self.disk_hits = 0
+        self.last_tail = 0.0
+        self.mine = os.path.join(self.dir, 'log_%d_%d.bin' % (os.getpid(), int(time.time() * 1000) % 100000000))
+        self.fh = None
+        self.pos = {}                   # other workers' logs: file name -> bytes read
+        self.keep = True                # False: what is learned now stays in this process (deep pages are rarely met again)
+        self.disk_hits = self.log_in = 0
+
+    def _base(self):
+        if self.db is None and time.time() - self.db_tried > 20:
+            self.db_tried = time.time()
+            if os.path.exists(self.path):
+                try:
+                    self.db = sqlite3.connect('file:%s?mode=ro' % self.path.replace('\\', '/'), uri=True, timeout=30, isolation_level=None)
+                    self.db.execute('PRAGMA cache_size=-100000')
+                except Exception:
+                    self.db = None
+        return self.db
 
     def get(self, k):
         v = self.mem.get(k)
         if v is None:
-            h = hashlib.blake2b(repr(k).encode(), digest_size=12).digest()
-            row = self.db.execute('SELECT v FROM kv WHERE k=?', (h,)).fetchone()
-            if row is not None:
-                v = pickle.loads(row[0])
-                self.disk_hits += 1
-                if len(self.mem) > self.LIMIT:
-                    self.mem.clear()
-                self.mem[k] = v
+            db = self._base()
+            if db is not None:
+                try:
+                    row = db.execute('SELECT v FROM kv WHERE k=?', (_hkey(k),)).fetchone()
+                except sqlite3.Error:
+                    row = None
+                if row is not None:
+                    v = pickle.loads(row[0])
+                    self.disk_hits += 1
+                    self.mem[k] = v
         return v
 
     def put(self, k, v):
-        if len(self.mem) > self.LIMIT:
-            self.mem.clear()
         self.mem[k] = v
-        self.pend.append((hashlib.blake2b(repr(k).encode(), digest_size=12).digest(), pickle.dumps(v, pickle.HIGHEST_PROTOCOL)))
-        if len(self.pend) >= 20000:
-            self.flush(True)
+        if self.keep:
+            self.pend.append((k, v))
 
     def flush(self, force=False):
-        if not self.pend or (not force and time.time() - self.last < 5):
-            return 0
-        n = len(self.pend)
-        for _ in range(5):
+        """Write what is new to this worker's log, read what the others wrote.  Called often; does its work every few seconds."""
+        now = time.time()
+        n = 0
+        if self.pend and (force or now - self.last >= self.EVERY or len(self.pend) >= 20000):
+            blob = pickle.dumps(self.pend, pickle.HIGHEST_PROTOCOL)
+            if self.fh is None:
+                self.fh = open(self.mine, 'ab')
+            self.fh.write(len(blob).to_bytes(8, 'little') + blob)
+            self.fh.flush()
+            n = len(self.pend)
+            self.pend = []
+            self.last = now
+        if now - self.last_tail >= self.EVERY:
+            self.last_tail = now
+            self.tail()
+        return n
+
+    def tail(self):
+        if len(self.mem) > self.LIMIT:
+            self.mem.clear()                         # the folded part is still in the sqlite file
+        me = os.path.basename(self.mine)
+        try:
+            names = [f for f in os.listdir(self.dir) if f.startswith('log_') and f.endswith('.bin') and f != me]
+        except OSError:
+            return
+        mem = self.mem
+        for f in names:
             try:
-                self.db.execute('BEGIN IMMEDIATE')
-                self.db.executemany('INSERT OR IGNORE INTO kv VALUES (?,?)', self.pend)
-                self.db.execute('COMMIT')
-                break
-            except sqlite3.OperationalError:
+                with open(os.path.join(self.dir, f), 'rb') as fh:
+                    frames, self.pos[f] = _read_frames(fh, self.pos.get(f, 0))
+            except OSError:
+                continue
+            for blob in frames:
                 try:
-                    self.db.execute('ROLLBACK')
+                    for k, v in pickle.loads(blob):
+                        mem[k] = v
+                        self.log_in += 1
                 except Exception:
                     pass
-                time.sleep(0.5)
-        self.pend = []
-        self.last = time.time()
-        return n
 
 
 _STORE = [None]
@@ -1410,6 +1526,62 @@ def shared_store():
     if _STORE[0] is None:
         _STORE[0] = Store()
     return _STORE[0]
+
+
+class Folder:
+    """The one writer of the sqlite file: folds the workers' logs into it, in key order, in big transactions."""
+
+    def __init__(self, d=None):
+        self.dir = d or CACHE_DIR
+        os.makedirs(self.dir, exist_ok=True)
+        self.db = sqlite3.connect(os.path.join(self.dir, 'store.sqlite'), timeout=120, isolation_level=None)
+        self.db.execute('PRAGMA journal_mode=WAL')
+        self.db.execute('PRAGMA synchronous=OFF')
+        self.db.execute('PRAGMA cache_size=-400000')
+        self.db.execute('CREATE TABLE IF NOT EXISTS kv (k BLOB PRIMARY KEY, v BLOB) WITHOUT ROWID')
+        self.pos = {}
+        self.rows = 0
+
+    def fold(self, final=False):
+        """Read the new part of every log and put it in the file.  final: the workers are gone, so the logs are removed."""
+        names = [f for f in os.listdir(self.dir) if f.startswith('log_') and f.endswith('.bin')]
+        batch = {}
+        for f in names:
+            try:
+                with open(os.path.join(self.dir, f), 'rb') as fh:
+                    frames, self.pos[f] = _read_frames(fh, self.pos.get(f, 0))
+            except OSError:
+                continue
+            for blob in frames:
+                try:
+                    for k, v in pickle.loads(blob):
+                        batch[_hkey(k)] = pickle.dumps(v, pickle.HIGHEST_PROTOCOL)
+                except Exception:
+                    pass
+        if batch:
+            rows = sorted(batch.items())
+            self.db.execute('BEGIN IMMEDIATE')
+            self.db.executemany('INSERT OR IGNORE INTO kv VALUES (?,?)', rows)
+            self.db.execute('COMMIT')
+            self.rows += len(rows)
+        if final:
+            try:
+                self.db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+            except sqlite3.Error:
+                pass
+            for f in names:
+                try:
+                    os.remove(os.path.join(self.dir, f))
+                    self.pos.pop(f, None)
+                except OSError:
+                    pass
+        return len(batch)
+
+    def count(self):
+        return self.db.execute('SELECT count(*) FROM kv').fetchone()[0]
+
+    def close(self):
+        self.db.close()
 
 
 if __name__ == '__main__':

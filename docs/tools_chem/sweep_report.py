@@ -471,11 +471,12 @@ def rep_d(shortlist=True):
     P('Yield times: the middle of (round yield with the sigil) over (the same round without).  Play shifted: how far the mix of reagents fired moves from the mix with no sigil (0 the same, 1 nothing shared).')
     P('')
     by2 = _cells('d_sig2')
-    base = by.get('none|start|master', [])
+    b4 = _cells('d_base4')
+    base = b4.get('none|start', [])
     bcl = sum(r['cleared'] for r in base) / max(1, sum(r['n'] for r in base))
     single = {}
     for sid in S2.ORDER:
-        rs = by.get('%s|start|master' % sid, [])
+        rs = b4.get('%s|start' % sid, [])
         single[sid] = sum(r['cleared'] for r in rs) / max(1, sum(r['n'] for r in rs)) - bcl
     pair_stats = defaultdict(list)
     if by2:
@@ -488,11 +489,11 @@ def rep_d(shortlist=True):
             res.append(x)
             pair_stats[a].append(x)
             pair_stats[b].append(x)
-        P('### d. Every pair of sigils (%d pairs; start six, master\'s, median player, 4 runs a pair; no sigil clears %.2f of 6)' % (len(res), bcl))
+        P('### d. Pairs of sigils (%d of 300 pairs played; start six, rounds 1 to 4, median player, 4 runs a pair; no sigil clears %.2f of 4)' % (len(res), bcl))
         P('')
         T = lambda t: ' + '.join(S2.SIGILS[x].title for x in t.split('+'))
         fmt = lambda x: [T(x[0]), '%+.2f' % x[1], '%+.2f' % x[2], pct(x[5]), '%.2f' % x[4], '%.0f' % x[3]]
-        hd = ['Pair', 'Lift (rounds of 6)', 'Beyond the sum', 'Wins', 'Yield over Par, median', 'Biggest round over Par']
+        hd = ['Pair', 'Lift (rounds of 4)', 'Beyond the sum', 'Wins', 'Yield over Par, median', 'Biggest round over Par']
         P('Highest lift:')
         P('')
         table(hd, [fmt(x) for x in sorted(res, key=lambda x: -x[1])[:10]])
@@ -505,10 +506,9 @@ def rep_d(shortlist=True):
     by3 = _cells('d_sighom')
     hom_stats = defaultdict(list)
     if by3:
-        hb = _cells('c_hom1')
-        nb = hb.get('none|eight|master', [])
+        nb = b4.get('none|eight', [])
         ncl = sum(r['cleared'] for r in nb) / max(1, sum(r['n'] for r in nb))
-        P('### d. Each sigil with each homunculus (the eight, master\'s, median player, 4 runs a cell): rounds cleared of 6 over no sigil and no creature (%.2f)' % ncl)
+        P('### d. Sigil with homunculus (%d of 250 cells played; the eight, rounds 1 to 4, median player, 4 runs a cell): rounds cleared of 4 over no sigil and no creature (%.2f)' % (len(by3), ncl))
         P('')
         tb = []
         for sid in S2.ORDER:
@@ -582,11 +582,69 @@ def rep_thr():
     table(['Experiment', 'Jobs', 'Turns', 'Wall seconds', 'Turns a second, 12 workers', 'Turns a second a core'], tb)
 
 
+def rep_last():
+    import sigil2_last as SL
+    by = _cells('e_last')
+    if not by:
+        return
+    P('### The last sigil: four versions (start six, median and greedy player, the same seeds as no sigil)')
+    P('')
+    for length, nr in (('master', 6), ('doctorate', 9)):
+        if not by.get('none|%s' % length):
+            continue
+        tb = []
+        for cell in ('none',) + SL.CELLS:
+            rs = by.get('%s|%s' % (cell, length), [])
+            if not rs:
+                continue
+            row = [cell.replace(':', ', ')]
+            for pl in ('median', 'greedy'):
+                n = sum(S(r, pl)['n'] for r in rs)
+                row += ['%.2f' % (sum(S(r, pl)['cleared'] for r in rs) / n), pct(sum(S(r, pl)['won'] for r in rs) / n),
+                        pct(sum(S(r, pl).get('used_runs', 0) for r in rs) / n), '%.1f' % mean(S(r, pl).get('uses', 0) for r in rs),
+                        '%.1f' % mean(S(r, pl).get('spent', 0) for r in rs), '%.1f' % mean(S(r, pl).get('gold', 0) for r in rs)]
+            at = [a for r in rs for a in S(r, 'median').get('at', [])]
+            row.append(', '.join('%d gold: %d' % (g, c) for g, c in sorted(Counter(min(a[1], 9) for a in at).items())) if at else '')
+            row.append('%.1f' % mean(a[0] for a in at) if at else '')
+            tb.append(row)
+        P('%s (%d rounds), %d runs a cell and player:' % (length, nr, sum(S(r, 'median')['n'] for r in by['none|%s' % length])))
+        P('')
+        table(['Version, policy', 'Median: rounds cleared', 'wins', 'runs that used it', 'uses a run', 'gold given up a run', 'gold left',
+               'Greedy: rounds cleared', 'wins', 'runs that used it', 'uses a run', 'gold given up a run', 'gold left',
+               'Gold held when used (median): times', 'Mean round of use'], tb)
+
+
+def rep_wins():
+    rows = good('wins') + good('wins_all')
+    if not rows:
+        return
+    P('### The bare run: the starting six, no instrument, no creature, no sigil (stopped at the first round not cleared)')
+    P('')
+    tb, tb2 = [], []
+    for pl in ('novice', 'greedy', 'median', 'planner'):
+        rs = [r for r in rows if r.get('tag') == pl]
+        n = sum(r['n'] for r in rs)
+        if not n:
+            continue
+        met = [sum(r['met'][i] for r in rs) for i in range(12)]
+        cells = []
+        for k in (met[2], met[5], met[8], met[11]):
+            lo, hi = wilson(k, n)
+            cells.append('%d (%s; %s to %s)' % (k, pct(k / n, 2), pct(lo, 2), pct(hi, 2)))
+        tb.append([pl, n] + cells)
+        prev = [n] + met[:-1]
+        tb2.append([pl] + [pct(met[i] / prev[i]) if prev[i] >= 20 else ('%d of %d' % (met[i], prev[i]) if prev[i] else '') for i in range(12)])
+    table(['Player', 'Runs', 'Clear rounds 1 to 3', 'Clear 1 to 6', 'Win all nine (doctorate)', 'Win all twelve (postdoc)'], tb)
+    P('Share of the runs still alive that clear each round (a count where fewer than 20 runs were left):')
+    P('')
+    table(['Player'] + ['R%d' % i for i in range(1, 13)], tb2)
+
+
 if __name__ == '__main__':
-    which = sys.argv[1:] or ['a', 'a2', 'a8', 'b', 'c', 'd', 'thr']
+    which = sys.argv[1:] or ['a', 'a2', 'a8', 'b', 'c', 'd', 'last', 'thr']
     for w in which:
         del OUT[:]
-        r = {'a': rep_a, 'a2': rep_a2, 'a8': rep_a8, 'b': rep_b, 'c': rep_c, 'd': rep_d, 'thr': rep_thr}[w]()
+        r = {'a': rep_a, 'a2': rep_a2, 'a8': rep_a8, 'b': rep_b, 'c': rep_c, 'd': rep_d, 'thr': rep_thr, 'last': rep_last, 'wins': rep_wins}[w]()
         with open(os.path.join(SR.OUT, 'report_%s.md' % w), 'w', encoding='utf-8') as f:
             f.write('\n'.join(OUT) + '\n')
         if w == 'd' and r:

@@ -37,6 +37,8 @@ _LAST_SAVE = [time.time()]
 
 def low_priority():
     """Workers run below normal priority so the page builders and the browser rig keep the machine."""
+    if os.environ.get('SWEEP_LOW') != '1':
+        return          # at below-normal priority the workers got 2 to 4 percent of a core each while other programs filled the machine
     try:
         if os.name == 'nt':
             import ctypes
@@ -201,6 +203,7 @@ def do_job(job):
                 row.setdefault('mod', {}).update(m.report())
         row['miss'] = G.stats['seg_miss'] - miss0
         row['proofs'] = G.stats['proofs'] - pr0
+        G.store.keep = True
         G.store.flush()
         row['id'] = job['id']
         row['secs'] = round(time.time() - t0, 3)
@@ -264,6 +267,9 @@ def run(name, jobs, workers=12, waves=None, quiet=False, keep_errors=False, chun
         chunk = max(1, min(4, len(todo) // (workers * 20) or 1))
     parts = [todo[i:i + chunk] for i in range(0, len(todo), chunk)]
     n_done, t_last, turns_last = 0, t0, 0
+    folder = SC.Folder()
+    folder.fold(final=True)              # logs left by a run that was stopped
+    t_fold = time.time()
     with open(fp, 'a', encoding='utf-8') as f, mp.Pool(workers, initializer=low_priority) as pool:
         for rows in pool.imap_unordered(do_chunk, parts, chunksize=1):
             for row in rows:
@@ -279,6 +285,9 @@ def run(name, jobs, workers=12, waves=None, quiet=False, keep_errors=False, chun
                     stats['proofs'] += row.get('proofs', 0)
                 stats['core_secs'] += row.get('secs', 0)
             now = time.time()
+            if now - t_fold >= 90:
+                folder.fold()
+                t_fold = time.time()
             if not quiet and now - t_last >= every:
                 f.flush()
                 print('[%s] %d/%d jobs, %d turns, wall %.0f s, %.0f turns/s all cores (%.0f in the last %.0f s), %.1f turns/s a core, new pairs %d, proofs %d' % (
@@ -292,6 +301,9 @@ def run(name, jobs, workers=12, waves=None, quiet=False, keep_errors=False, chun
                 break
         else:
             pool.map(_flush, range(workers), chunksize=1)
+    folder.fold(final=True)
+    stats['store'] = folder.count()
+    folder.close()
     stats['wall'] = time.time() - t0
     if not quiet:
         print('[%s] done: %d jobs, %d turns, wall %.0f s, %.0f turns/s all cores, %.1f turns/s a core, new pairs %d, proofs %d' % (
