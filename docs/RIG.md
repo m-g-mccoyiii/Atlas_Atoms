@@ -140,6 +140,27 @@ The simulator has no re-deal at all (it never had), so no table in this file cou
 
 **The marks for the page.** `P.marksOf(run)` gives `{ marks: [1, 1.41, 2, 2.83], top: 2.83, pass, pow: 0.5 }`: the four marks as multiples of the number to beat (they were 1, 2, 4, 8), the round's pass mark as the same kind of multiple (0 where the task alone clears the round), and the power of the flat rule. The page's heat and overshoot should read these.
 
+### 4. For the notes: the facts, and the reference book
+
+**The seven facts and the counter** (`path.js`: `facts`, `countersUpdate`; checked in the game by `facts14.js`). `P.facts(g, run)` gives the page, at any moment of a round:
+
+| Fact | What it is |
+|---|---|
+| `gap` | how far apart the two groups of the last reflex were, counted along the molecule from one group's carbon to the other's (3 or 4 for a ring along the chain, 2 for a dry, 6 or more across the fold). Every reflex step carries its own: `g.trail[i].gap` |
+| `roundbest` | the longest chain a page of this round has made so far |
+| `runbest` | the same over the run |
+| `careerbest` | the same over every round finished before this one; a new record is `roundbest` above it |
+| `molseen` | how many earlier rounds of the career dealt this molecule |
+| `molbest` | its best yield in them |
+| `loose` | loose rings standing now (the ones that open again when the page turns) |
+| `overreacts` | rounds ended at the top mark, over the career |
+
+`molseen`, `molbest`, `careerbest` and `overreacts` come from the saved profile, so they are 0 until the page starts a run with it (`P.profileOpts(meta)`). The molecule's history is kept in `meta.mols` and is kept through the sign.
+
+**The reference book** (owner: "some kind of reference notebook that shows all potential unlocks by category and how to unlock them. Also what they do so a player could theoretically plan"). `P.reference(meta)` is one table of the 65 things a new game does not hold; `docs/REFERENCE.md` is the same table written out, with what is not in it and why. The ladder now names the thing each rung opens, and `runResult().earned` says it (`name`, `how`). Checked in the game (`ref14.js`): nothing is owned in a new profile; a profile that holds every rung starts a run that holds the reflexes, opens the motifs, can be dealt every earned reagent and is offered each of the eight instruments; a new profile is offered none.
+
+A fresh reviewer failed the first version on five counts; fixed since: eleven lines that did not say what the code does (dry ice, the carousel, hydrogen, ammonia, Solve and others), the two reagents found by a row could never read as owned, and eleven things whose way had nothing to do with them now have a count of their own chemistry. Still open, from the review and from the owner ("More deeds, fewer counts"): the ways are to be reworked into deeds, each with the simulated number of runs it takes; ammonia's and brimstone's jars fill only from reagents earned very late; the page's own gate (`meta.stage`) still stands in front of instruments, homunculi and terms; the across-the-fold rings are not counted as rings closed.
+
 ## The measure of 2026-11-13, thirteenth: the rulings of AR
 
 One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.
