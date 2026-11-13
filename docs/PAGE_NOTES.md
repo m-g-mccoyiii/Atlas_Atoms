@@ -226,3 +226,42 @@ Branch `page-builder-5` (worktree `page5`; builder 5 left nothing). Scope after 
 
 ### scheme.html
 No new script. Bump `scheme.js?v=` and `feel.js?v=`.
+
+### Sixth builder, the clear-screen pass (12 November, after the owner watched show6-run)
+
+The owner's rulings applied here: no words in the game (only numerals, the margin notes and OVERREACT are writing); no ink specks on ordinary hits; no coloured outlines or glow; nothing moves that is not part of the step; no drops, plus signs or prices on the first choice; the round as a numeral with boxes that get ticked; the art (jars, creatures, instruments) on the play screen.
+
+- Play screen (`drawInk`, play mode): the spec mark and its count at the top left; the round numeral and three boxes (ticked in green as each turn is used); the speed control as chevrons (one, two, three; two and a bar is skip; drawn in feel.js `uiDraw`); three large numbered places (`STEP`, `STEPD` 3.3) that fill with the reagent's after-picture; the fire arrow under them (`FIREP`); the yield numeral at the bottom left; the flags track along the bottom; the reagents as one shelf in a pencil bracket at the right (`LAB`, `SPOT`, rows up to 3.3 apart), each a before -> after picture (`TILE`, `FRAG`: every reagent has one now, with N, S, acid, epoxide, aldehyde). Removed: reagent names (also on hover), the row of kinds along the top and the column of multipliers (`?legend=1` brings both back), the faint next-reagents strip, the dark page corner, the use drops, the names under jars and instruments, the word and drops beside the homunculus.
+- First choice: `showPicks` goes straight to the two molecules before round 1 (`run.picked1`); the coin marks, the purse and the re-deal are not drawn on the round 1 choice. On later rounds the upgrade screen shows the pictures only (no drops, no +40).
+- The bench: `benchOn()`; a ten-place shelf across the top of the play area (`shelfAt(10, -3, -10.5, 1.42)`), jars in a row at its left end (`jarPos`), instruments from x -8.6 every 5.3 at scale 1.55 (`KITP`), the homunculus at the right end at scale 1.9 (`HOMP`). The molecule's home gives up its top 5.4 units while the bench shows (`homeNow`).
+- feel.js: `splat` throws ink only when called from OVERREACT; `VIBE` is off unless `?vibe=1`; the idle float, the knock and turn of the whole molecule on a strike or a hit, and the ringing after arrival are removed (`rec`, `yaw`, `ov` set to 0).
+- Layout: a ring that the fold rule moves to the next row (it never splits a ring across a turn) is drawn where the row ran on (`turnIn`), the rest of the line turning under it; a ring keeps the handedness it had on the page; a cage that cannot be drawn ring by ring is spread as a flat net (`?cage=1` is a trial of a view in space with depth cues; off).
+
+Timing of everything that appears, changes or leaves on the play screen (ms; the action itself is in the table above):
+
+| Thing | Motion | Time | Easing |
+|---|---|---|---|
+| title cover leaving | slides left, turns, fades | 520 | quadratic in |
+| a reagent chosen | its picture flies from the shelf to its place on a low arc | 220 | cubic out |
+| the place filling | pops 35 percent and settles | 260 | damped cosine |
+| a turn's box ticked | the tick is drawn, down stroke then up stroke | 260 | linear in two parts |
+| reagent thrown at the molecule | token on an arc | 260 | quadratic in |
+| the yield counting | counts to each gain | 260 to 400 | quartic out |
+| a flag passed | the pole jolts back and rings | 1500 | spring 3.3 Hz |
+| a new atom | grows in with a 10 percent overshoot | 300 | back out |
+| a change in place, then the re-flow | two parts | step time, then 400 | the step's curve, then cubic out |
+| an instrument firing | rise and fall | 700 | sine |
+| page turn | the old curl | 700 | not touched |
+| speed mark chosen | pulses once | 420 | spring 6 Hz |
+
+Not done in this pass: the flags do not fill with a drawn motion (they switch); the upgrade screen of later rounds has no picture for what a choice gives; the end screens were not retimed.
+
+### Sixth builder, last additions
+
+- Nothing moves between steps: `flHome` slides and scales the molecule only while a morph is moving it (toward the box of the layout the step ends in) and sets it exactly between steps; the charge shake, the squash and pop, the swell on a hit are removed. The recorder logs it (`V.wobSum()`: atoms moved outside a step, whole molecule moved outside a step); before 212 of 454 idle frames, after 0.
+- Reagents: no bracket, no strike. `slots[i].o` is null when the reagent has no place to act on the molecule as it stands: its left picture is drawn pale in a dashed outline.
+- The target is a finish post drawn in ink (the first 3D flag is hidden), the bar is 18 wide and starts at the yield numeral (`TRK`, `MADE`).
+- The goal (`drawHurdle` with `goal`): the mark drawn once per one needed (up to 6), dashed outline until had, filled and ticked after.
+- Stains: `pageStains` draws a seeded set per run, round and page under all ink; `keepClear()` lists the rectangles; `AA.rxScheme.stainCheck(50)` gives the worst reach inside (0.099 of a unit). The stains baked into the aged paper and the madness stains of `buildMargin` are off.
+- `?bench=a|b|c`: mock views of the page on a wooden bench with the objects on the bench; `?cage=1`: the trial of cages drawn in space.
+- Not done: hand-made cage templates; the molecule part that meets the goal lighting the outline; jars as large as the instruments and the homunculus acting in a take; the upgrade screen's picture language; the stains clip of five pages; show6-run.mp4 re-recorded from this state (the file in shots is the first version, seed 3, from before the clear-screen pass).

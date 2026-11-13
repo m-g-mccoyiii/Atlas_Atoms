@@ -56,7 +56,7 @@ function paperDraw(x, w, h, n, SW0) {
     const ring = (cx, cy, r, a1) => { x.fillStyle = 'rgba(150,105,60,' + (a1 * 0.3).toFixed(3) + ')'; x.beginPath(); x.arc(cx, cy, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (a1 * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = 11 - k * 3; x.beginPath(); x.arc(cx + R() * 5, cy + R() * 5, r * (1 + k * 0.012), 0.1 + k * 0.5, 5.9 + k * 0.2); x.stroke(); } x.strokeStyle = 'rgba(95,65,35,' + (a1 * 0.9).toFixed(3) + ')'; x.lineWidth = 13; x.beginPath(); x.arc(cx, cy, r * 1.01, 2.4, 3.7); x.stroke(); };
     if (n === 6) { ring(1560, 1030, 90, 0.34); ring(1660, 1075, 64, 0.22); }
     else if (n === 7) { const cx = 1480, cy = 340; x.fillStyle = 'rgba(60,140,160,0.2)'; x.beginPath(); x.ellipse(cx, cy, 46, 38, 0.4, 0, 6.3); x.fill(); for (let k = 0; k < 16; k++) { const a = k * 0.39 + R() * 0.3, d = 62 + R() * 70, rr = 3 + R() * 9; x.fillStyle = 'rgba(60,140,160,' + (0.14 + R() * 0.12).toFixed(2) + ')'; x.beginPath(); x.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, rr, 0, 6.3); x.fill(); x.beginPath(); x.moveTo(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40); x.lineTo(cx + Math.cos(a) * (d - rr), cy + Math.sin(a) * (d - rr)); x.strokeStyle = 'rgba(60,140,160,0.12)'; x.lineWidth = 2.5; x.stroke(); } ring(380, 1110, 56, 0.28); }
-    else { const cx = 1770, cy = 455, g = x.createRadialGradient(cx, cy, 10, cx, cy, 120); g.addColorStop(0, 'rgba(70,40,15,0.42)'); g.addColorStop(0.45, 'rgba(140,90,40,0.26)'); g.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 130, 100, 0.3, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(60,35,15,0.35)'; x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, 70, 52, 0.3, 0.4, 5.6); x.stroke(); ring(205, 770, 74, 0.3);
+    else if (true) { edges('120,110,100', 0.18, 140); } else { const cx = 1770, cy = 455, g = x.createRadialGradient(cx, cy, 10, cx, cy, 120); g.addColorStop(0, 'rgba(70,40,15,0.42)'); g.addColorStop(0.45, 'rgba(140,90,40,0.26)'); g.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, 130, 100, 0.3, 0, 6.3); x.fill(); x.strokeStyle = 'rgba(60,35,15,0.35)'; x.lineWidth = 6; x.beginPath(); x.ellipse(cx, cy, 70, 52, 0.3, 0.4, 5.6); x.stroke(); ring(205, 770, 74, 0.3);
       x.save(); x.translate(1880, 230); x.rotate(0.62); x.fillStyle = 'rgba(0,0,0,0.1)'; x.fillRect(-150, -26, 320, 70); x.fillStyle = 'rgba(226,225,214,0.82)'; x.fillRect(-150, -34, 320, 68); x.strokeStyle = 'rgba(140,138,125,0.45)'; x.lineWidth = 2; x.strokeRect(-150, -34, 320, 68); x.restore(); edges('120,110,100', 0.18, 140); }
   } else
   if (n === 1) { // aged notebook paper: ruled lines, a faint margin, soft staining at the edges
@@ -89,7 +89,7 @@ const KITV = (() => { try { return new URLSearchParams(root.location.search).get
 const CM = { balance: 35, spatula: 30, schlenk: 60, stopper: 20, mirror: 30, mortar: 12, cannula: 25, reflux: 45, burette: 70, clamp: 60, magnet: 5, recycler: 30, stirrer: 16, cards: 26, logbook: 30, crystal: 7, scalepan: 35, coldtrap: 30, bunsen: 30, litmus: 26, stopwatch: 7, thermometer: 30, carousel: 25, dropper: 12, loupe: 12, timer: 15,
   stone: 22, transmute: 30, regia: 18, ouroboros: 25, homunculus: 25, elixir: 14, ouija: 38, voodoo: 26, tower: 30, duck: 22, cat: 26, paw: 28, idol: 28, grimoire: 30, hourglass: 30, poster: 30, coffee: 22, coat: 32, milk: 26, mystery: 24, raven: 30, glory: 30, goggles: 28, grant: 30, extinguisher: 30, intern: 30, orb: 26, candle: 38, goat: 80, pact: 30, dryer: 30, sieves: 14, hood: 55, scrubber: 35 };
 const sizeOf = id => Math.max(0.86, Math.min(1.55, Math.pow((CM[id] || 25) / 28, 0.42)));
-const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
+const EDGE = -22.6 + SX, STEP = { x: -21.5 + SX, z: 2.3 }, STEPD = 3.75, PAGES = { x: -17.3 + SX, z: -2.9 }, HIST = { x: 6, z: 6.6 };
 // ---- builder E: the page drawn back, a true margin column, and the play area as one rectangle (?air=0 puts the old framing back) ----
 // All in page units. The sheet runs on ext units further to the left than before; line is the red margin line; the margin column is everything
 // to the left of it. play is the one rectangle nothing is ever written in; top, left, home, reag and band are the things inside it.
@@ -97,7 +97,7 @@ const EDGE = -22.6 + SX, STEP = { x: -22.2 + SX, z: 0.9 }, STEPD = 2.2, PAGES = 
 const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 function pageE() {
   let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
-  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2, hw = 14.4, bz = 11.5;
+  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 2.6, hw = 11.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
     home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
@@ -146,6 +146,16 @@ function start(app) {
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
   // above everything, in the frame's own pixels: the flash of a hit and OVERREACT (feel.js draws on it)
   const overC = document.createElement('canvas'); overC.className = 'veil'; app.append(overC); const overX = overC.getContext('2d');
+  const BENCHV = (() => { try { return new URLSearchParams(root.location.search).get('bench') || ''; } catch (e) { return ''; } })();
+  if (BENCHV) { // a wooden bench top under the page, a coffee cup, and the camera turned and raised for each mock view
+    const wc = canvasTex(1024, 1024); wc.x.fillStyle = '#8a5f38'; wc.x.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 260; i++) { wc.x.strokeStyle = 'rgba(' + (i % 3 ? '60,36,18' : '190,140,90') + ',' + (0.05 + Math.random() * 0.1).toFixed(3) + ')'; wc.x.lineWidth = 1 + Math.random() * 5; const y0 = Math.random() * 1024; wc.x.beginPath(); wc.x.moveTo(0, y0); wc.x.bezierCurveTo(340, y0 + Math.random() * 30 - 15, 680, y0 + Math.random() * 30 - 15, 1024, y0 + Math.random() * 20 - 10); wc.x.stroke(); } wc.t.needsUpdate = true; wc.t.wrapS = wc.t.wrapT = T.RepeatWrapping; wc.t.repeat.set(3, 3);
+    const bench = add(new T.PlaneGeometry(420, 320).rotateX(-Math.PI / 2), std({ map: wc.t, roughness: 0.75 }), 0, -0.25, 0); bench.castShadow = false;
+    const sh = add(new T.PlaneGeometry(SW + 2.4, SH + 2.4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22 }), 0.9, -0.2, 1.1); sh.castShadow = false;
+    const cup = new T.Group(); add(new T.CylinderGeometry(2.3, 1.9, 3.6, 28, 1, true), std({ color: lin(0xf2efe6), roughness: 0.35, side: T.DoubleSide }), 0, 1.8, 0, cup); add(new T.CircleGeometry(2.1, 28).rotateX(-Math.PI / 2), std({ color: lin(0x3a2212), roughness: 0.2 }), 0, 3.0, 0, cup); { const hd = add(new T.TorusGeometry(1.3, 0.3, 10, 20, Math.PI), std({ color: lin(0xf2efe6), roughness: 0.35 }), 2.3, 1.9, 0, cup); hd.rotation.z = -Math.PI / 2; } cup.position.set(BENCHV === 'c' ? 37 : 38, -0.2, BENCHV === 'a' ? -27 : -6); scene.add(cup);
+    scene.background = lin(0x2a2420);
+    if (BENCHV === 'a') { CAM.set(CAM.x, CAM.y * 1.32, CAM.z * 1.32 - 3); LOOKAT.z -= 4.5; }
+    else if (BENCHV === 'b') { CAM.set(CAM.x + 34, CAM.y * 1.12, CAM.z * 1.75); LOOKAT.x += 5; LOOKAT.z -= 1; }
+    else { CAM.set(CAM.x, CAM.y * 0.62, CAM.z * 2.7); LOOKAT.z -= 3; } }
   // the title: the cover of the notebook, over everything until the first click or key (?title=0 leaves it out)
   const titleC = document.createElement('canvas'); titleC.className = 'veil'; app.append(titleC);
   const title = { on: (() => { try { return new URLSearchParams(root.location.search).get('title') !== '0'; } catch (e) { return true; } })(), out: 0, t0: 0, page: null, drawn: false };
@@ -168,7 +178,8 @@ function start(app) {
       x.save(); x.translate(W / 2, H * 0.36); x.rotate(-0.04); x.scale(slam, slam); x.globalAlpha *= Math.min(1, age / 80);
       AA.rxPen.write(x, 'OVERREACT', 7 * k, sz * 0.36 + 8 * k, sz, { weight: 'heavy', color: '#22252c', align: 'center', extra: 5 * k });
       AA.rxPen.write(x, 'OVERREACT', 0, sz * 0.36, sz, { weight: 'heavy', color: '#d2301f', align: 'center', extra: 5 * k }); x.restore(); }
-    if (age > 900 && !title.out) { x.globalAlpha = 0.55 + 0.35 * Math.sin(now / 380); AA.rxPen.write(x, 'click to open the notebook', W / 2, H * 0.93, 34 * k, { color: '#3b4252', align: 'center' }); }
+    // no words but the name: a small hand-drawn arrow at the page corner asks for the page to be turned
+    if (age > 900 && !title.out) { const bob = 6 * k * Math.sin(now / 300), ax = W * 0.9 + bob, ay = H * 0.9; x.globalAlpha = 0.75; x.strokeStyle = '#3b4252'; x.lineWidth = 6 * k; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(ax - 70 * k, ay); x.lineTo(ax, ay); x.moveTo(ax - 22 * k, ay - 18 * k); x.lineTo(ax, ay); x.lineTo(ax - 22 * k, ay + 18 * k); x.stroke(); }
     x.restore();
   }
 
@@ -455,6 +466,7 @@ function start(app) {
   // whole where the line passes through it; short arms are groups that stand off their atom; long arms and side rings hang outside. Positions
   // are kept in the frame of the start end, so nothing that has not changed moves when the far end grows or shrinks. A bond made across the
   // fold (a rung) is left out of the layout and drawn as a long bond from row to row.
+  const CAGE3D = (() => { try { return new URLSearchParams(root.location.search).get('cage') === '1'; } catch (e) { return false; } })();   // ?cage=1: cages drawn from their shape in space with depth cues (a trial; not good enough yet, so off)
   const FL = { L: 1.55, DX: 1.36, ZA: 0.4, RG: 5.0, LEAN: -0.3 };
   // how far apart two atoms that are not bonded must stand, in the molecule's own units, so that their balls never touch on screen
   const radOf = a => BALL(a.el) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1), apartOf = (a, b) => Math.max(1.2, 1.12 * (radOf(a) + radOf(b)) + 0.12);
@@ -492,6 +504,26 @@ function start(app) {
       const pts = bd.atoms.map(a => P2.get(a)), n = pts.length, cs = [], rp = []; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = bd.atoms[i], b = bd.atoms[j]; if (cadj.get(a).includes(b)) cs.push([i, j]); else rp.push([i, j, apartOf(a, b) + 0.1]); }
       for (let it = 0; it < 120; it++) { cs.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const k = (d - FL.L) / d * 0.5; A.x += dx * k; A.z += dz * k; B.x -= dx * k; B.z -= dz * k; });
         rp.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d >= w[2]) return; if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const k = (d - w[2]) / d * 0.5; A.x += dx * k; A.z += dz * k; B.x -= dx * k; B.z -= dz * k; }); }
+      // a cage or a crowded ring system cannot be drawn ring by ring: when the result still has atoms on each other or bonds off their length, the body is
+      // spread out instead, every pair of atoms drawn toward a distance that grows with how many bonds lie between them (a flat net, bonds may cross, balls never touch)
+      { const bad = () => { for (const w of cs) { const d = Math.hypot(pts[w[0]].x - pts[w[1]].x, pts[w[0]].z - pts[w[1]].z); if (d > FL.L * 1.14 || d < FL.L * 0.8) return true; } for (const w of rp) { if (Math.hypot(pts[w[0]].x - pts[w[1]].x, pts[w[0]].z - pts[w[1]].z) < w[2] - 0.12) return true; } return false; };
+        let done3 = false;
+        if (CAGE3D && n >= 5 && bad()) { const P3 = bd.atoms.map(a => at.get(a)); let mx = 0, my = 0, mz = 0; P3.forEach(q => { mx += q.x; my += q.y; mz += q.z; }); mx /= n; my /= n; mz /= n; const Q = P3.map(q => [q.x - mx, q.y - my, q.z - mz]);
+          const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; Q.forEach(q => { for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) C[i][j] += q[i] * q[j]; });
+          const mul = v => [C[0][0] * v[0] + C[0][1] * v[1] + C[0][2] * v[2], C[1][0] * v[0] + C[1][1] * v[1] + C[1][2] * v[2], C[2][0] * v[0] + C[2][1] * v[1] + C[2][2] * v[2]], nrm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }, dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+          let e1 = nrm([1, 0.3, 0.2]); for (let it = 0; it < 40; it++) e1 = nrm(mul(e1)); let e2 = nrm([0.2, 0.4, 1]); for (let it = 0; it < 40; it++) { let v = mul(e2); const d1 = dot(v, e1); v = [v[0] - d1 * e1[0], v[1] - d1 * e1[1], v[2] - d1 * e1[2]]; e2 = nrm(v); }
+          const e3 = nrm([e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]), dep = Q.map(q => dot(q, e3)), dlo = Math.min.apply(null, dep), dhi = Math.max.apply(null, dep);
+          if (dhi - dlo > 0.8) { const raw = Q.map((q, i) => ({ x: dot(q, e1) + 0.42 * dep[i], z: dot(q, e2) + 0.3 * dep[i] })); let bl = 0; cs.forEach(w => { bl += Math.hypot(raw[w[0]].x - raw[w[1]].x, raw[w[0]].z - raw[w[1]].z); }); const k3 = FL.L / Math.max(0.3, bl / Math.max(1, cs.length)) * 1.08; raw.forEach((q, i) => { pts[i].x = q.x * k3; pts[i].z = q.z * k3; });
+            const home = pts.map(q => ({ x: q.x, z: q.z }));
+            for (let it = 0; it < 220; it++) { cs.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const t = d > FL.L * 1.16 ? FL.L * 1.16 : d < FL.L * 0.82 ? FL.L * 0.82 : d; if (t === d) return; const f = (d - t) / d * 0.5; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; });
+              rp.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); const t = w[2] - 0.06; if (d >= t) return; if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const f = (d - t) / d * 0.5; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; });
+              if (it < 180) pts.forEach((q, i) => { q.x += (home[i].x - q.x) * 0.04; q.z += (home[i].z - q.z) * 0.04; }); }
+            bd.depth = new Map(); bd.atoms.forEach((a, i) => bd.depth.set(a, (dep[i] - dlo) / (dhi - dlo))); done3 = true; } }
+        if (!done3 && n >= 5 && bad()) { const gd = bd.atoms.map(() => new Array(n).fill(99)), ixb = new Map(); bd.atoms.forEach((a, i) => ixb.set(a, i)); for (let i = 0; i < n; i++) { gd[i][i] = 0; const q = [i]; for (let qi = 0; qi < q.length; qi++) { const u = q[qi]; cadj.get(bd.atoms[u]).forEach(b => { const v = ixb.get(b); if (v != null && gd[i][v] > gd[i][u] + 1) { gd[i][v] = gd[i][u] + 1; q.push(v); } }); } }
+          const tg = g => (g <= 1 ? FL.L : g === 2 ? FL.L * 1.72 : FL.L * (1.72 + 0.8 * (g - 2)));
+          for (let it = 0; it < 400; it++) { const soft = it < 320; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const g = gd[i][j], A = pts[i], B = pts[j]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(i * 1.3 + j); dz = Math.sin(i * 1.3 + j); d = 1; } let t, k; if (g <= 1) { t = FL.L; k = 0.5; } else if (soft) { t = tg(g); k = 0.5 / (g * g); } else { t = Math.max(apartOf(bd.atoms[i], bd.atoms[j]) + 0.15, 1.45); if (d >= t) continue; k = 0.5; } const f = (d - t) / d * k; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; } } } }
+      // the new shape keeps the handedness the ring had on the page before (it is never flipped over between two drawings): compare the turn of its first ring
+      if (rings.length) { const r0 = rings[0], area = get => { let A2 = 0; r0.forEach((a, i) => { const p = get(a), q = get(r0[(i + 1) % r0.length]); A2 += p.x * q.z - q.x * p.z; }); return A2; }, was = area(a => src.get(a)), is = area(a => P2.get(a)); if (Math.abs(was) > 0.5 && was * is < 0) { pts.forEach(p => { p.z = -p.z; }); bd.flipped = true; } }
       bd.atoms.forEach((a, i) => src.set(a, { x: pts[i].x, z: pts[i].z })); });
     const rows = f.rows || 1, pos = new Map(), grid = new Map(), onPath = new Set(f.path);
     const rowAt = i => { const a = f.path[i]; return a ? f.pos.get(a)[0] : null; }, loose = new Set();
@@ -503,14 +535,19 @@ function start(app) {
     // a body in the line: its own regular shape, turned and set down on the places its line atoms take; what is off the line bulges to the outside
     bodies.forEach(bd => { bd.W = f.path.filter(a => bodyOf.get(a) === bd); bd.i0 = bd.W.length ? f.path.indexOf(bd.W[0]) : 1e9; });
     bodies.slice().sort((a, b) => a.i0 - b.i0).forEach(bd => { const W = bd.W; if (!W.length) return; const r0 = grid.get(W[0]).r, side = r0 === 0 && rows > 1 ? -1 : r0 === rows - 1 && rows > 1 ? 1 : (r0 % 2 ? 1 : -1), off = bd.atoms.filter(a => !onPath.has(a)), W0 = W.filter(a => grid.get(a).r === r0);
-      const tryFit = (mir, Wl) => { const S = Wl.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; }), Gp = Wl.map(a => grid.get(a)), cs = cen(S), cg = cen(Gp); let ang; if (Wl.length >= 2) { let sn = 0, co = 0; S.forEach((s, i) => { const ax = s.x - cs.x, az = s.z - cs.z, bx = Gp[i].x - cg.x, bz = Gp[i].z - cg.z; sn += ax * bz - az * bx; co += ax * bx + az * bz; }); ang = Math.atan2(sn, co); } else { const all = cen(bd.atoms.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; })); ang = Math.atan2(side, 0) - Math.atan2(all.z - cs.z, all.x - cs.x); }
+      const tryFit = (mir, Wl, Gq) => { const S = Wl.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; }), Gp = Gq || Wl.map(a => grid.get(a)), cs = cen(S), cg = cen(Gp); let ang; if (Wl.length >= 2) { let sn = 0, co = 0; S.forEach((s, i) => { const ax = s.x - cs.x, az = s.z - cs.z, bx = Gp[i].x - cg.x, bz = Gp[i].z - cg.z; sn += ax * bz - az * bx; co += ax * bx + az * bz; }); ang = Math.atan2(sn, co); } else { const all = cen(bd.atoms.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; })); ang = Math.atan2(side, 0) - Math.atan2(all.z - cs.z, all.x - cs.x); }
         return { ang, cs: { x: cs.x, z: mir ? -cs.z : cs.z }, cg, mir }; };
       // of the ways to set it down (on all its places in the line, or only on those of its first row; either face up), the one that lands on nothing else
       const others = []; f.path.forEach(a => { if (bodyOf.get(a) !== bd) others.push(pos.get(a) || grid.get(a)); }); pos.forEach((p, a) => { if (!onPath.has(a) && bodyOf.get(a) !== bd) others.push(p); });
-      let best = null; (W0.length < W.length ? [W, W0] : [W]).forEach((Wl, wi) => [false, true].forEach(mir => { const t = tryFit(mir, Wl); rigid(bd, t.ang, t.cs, t.cg, mir); let sc = 0, clash = 0; off.forEach(a => { sc += (pos.get(a).z - t.cg.z) * side; }); W.forEach(a => { const p = pos.get(a), q = grid.get(a); sc -= 0.5 * Math.hypot(p.x - q.x, p.z - q.z); }); bd.atoms.forEach(a => { const p = pos.get(a); others.forEach(o => { if (Math.hypot(o.x - p.x, o.z - p.z) < 1.2) clash++; }); }); if (!best || clash < best.clash || (clash === best.clash && sc > best.sc)) best = { t, sc, clash, wi }; }));
+      // a ring that had to start a new row (the rule never splits a ring across a turn) leaves places empty behind it. It is drawn where it would stand if the
+      // row simply ran on (so the bond into it is a normal bond and it does not jump when the rule moves it); the rest of the line turns under it.
+      const pvA = f.path[bd.i0 - 1], gpv = pvA && !bodyOf.get(pvA) ? grid.get(pvA) : null, sgP = gpv ? (gpv.r % 2 === 0 ? 1 : -1) : 1, turnIn = gpv && gpv.r < r0 && W.length >= 2 ? W.map((a, k2) => ({ x: gpv.x + sgP * (k2 + 1) * FL.DX, z: gpv.r * FL.RG + ((k2 % 2 === 0) === gpv.dn ? -FL.ZA : FL.ZA) })) : null;
+      let best = null; (turnIn ? [W] : W0.length < W.length ? [W, W0] : [W]).forEach((Wl, wi) => [false, true].forEach(mir => { const t = tryFit(mir, Wl, turnIn); rigid(bd, t.ang, t.cs, t.cg, mir); let sc = 0, clash = 0; off.forEach(a => { sc += (pos.get(a).z - t.cg.z) * side; }); W.forEach((a, k2) => { const p = pos.get(a), q = turnIn ? turnIn[k2] : grid.get(a); sc -= 0.5 * Math.hypot(p.x - q.x, p.z - q.z); }); bd.atoms.forEach(a => { const p = pos.get(a); others.forEach(o => { if (!turnIn && Math.hypot(o.x - p.x, o.z - p.z) < 1.2) clash++; }); }); if (mir) sc -= 4; if (!best || clash < best.clash || (clash === best.clash && sc > best.sc)) best = { t, sc, clash, wi: turnIn ? 2 : wi }; }));
       rigid(bd, best.t.ang, best.t.cs, best.t.cg, best.t.mir); bd.c = cen(bd.atoms.map(a => pos.get(a)));
       // set down on its first row only: the rest of the line carries on from where the body lets it out
-      if (best.wi === 1) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, dz = pl.z - gl.z, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i >= i1 || bodyOf.get(a) === bd) { const gq = grid.get(a); gq.x += dx; gq.z += dz; } }); } });
+      if (best.wi === 1) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, dz = pl.z - gl.z, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i >= i1 || bodyOf.get(a) === bd) { const gq = grid.get(a); gq.x += dx; gq.z += dz; } }); }
+      // drawn on in its old row: what follows keeps its own row but is moved along so that it starts under the place the ring lets it out
+      if (best.wi === 2) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i > i1) { grid.get(a).x += dx; if (i <= i1 + 2) loose.add(a); } }); bd.atoms.forEach(a => { const gq = grid.get(a); if (gq) { gq.r = gpv.r; } }); } });
     f.path.forEach(a => { if (!pos.has(a)) pos.set(a, { x: grid.get(a).x, z: grid.get(a).z }); });
     // everything off the line: groups stand off their atom (leaning aside inside a gap, so two that face do not touch), longer arms zigzag on, side rings keep their shape
     const rowOf = new Map(); f.path.forEach(a => rowOf.set(a, grid.get(a).r)); bodies.forEach(bd => { if (bd.W && bd.W.length) bd.atoms.forEach(a => rowOf.set(a, grid.get(bd.W[0]).r)); });
@@ -544,7 +581,7 @@ function start(app) {
     hd.forEach((list, pa) => { const P0 = pos.get(pa); if (!P0) return; let mx = 0, mz = 0, n = 0; nb.get(pa).forEach(q => { const p = pos.get(q); if (p) { mx += p.x; mz += p.z; n++; } }); const dx = n ? P0.x - mx / n : 0, dz = n ? P0.z - mz / n : -1, l = Math.hypot(dx, dz) || 1, d = { x: dx / l, z: dz / l };
       list.forEach((h, k) => { const dd = rot(d, list.length === 1 ? 0 : (k - (list.length - 1) / 2) * 1.1); at.get(h).set(P0.x + dd.x * hlen.get(h), y0, P0.z + dd.z * hlen.get(h)); }); });
     at.fold = null; at.flip = null; at.unf = null;
-    return { f, rows, rk, rungSet: rungs, bodyOf };
+    const depth = new Map(); bodies.forEach(bd => { if (bd.depth) bd.depth.forEach((d, a) => depth.set(a, d)); }); return { f, rows, rk, rungSet: rungs, bodyOf, depth };
   }
   // the box of what is drawn, with the atoms' own radii, in the molecule's units
   function drawnBox(m) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; m.balls.forEach((b, a) => { const p = m.at.get(a); if (!p) return; const r = (b.R || 0.4) + 0.1; x0 = Math.min(x0, p.x - r); x1 = Math.max(x1, p.x + r); z0 = Math.min(z0, p.z - r - 0.3); z1 = Math.max(z1, p.z + r); }); return { x0, x1, z0, z1, w: x1 - x0, d: z1 - z0, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2 }; }
@@ -569,7 +606,8 @@ function start(app) {
     { const arch = flat ? archesOf(model) : []; if (flat && !caged(model, arch)) tidy(model, at, skip, beads, seed, arch); }
     let fl = null; if (flat && !beads.length && !NOFOLD) { try { fl = foldLay(model, at, skip); } catch (e) { fl = null; } }
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
-    const radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1));
+    const dOf = a => (fl && fl.depth && fl.depth.has(a) ? fl.depth.get(a) : null), radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1) * (dOf(a) == null ? 1 : 0.78 + 0.3 * dOf(a)));
+    if (fl && fl.depth && fl.depth.size) fl.depth.forEach((d, a) => { const q = at.get(a); if (q) q.y += 1.1 * d; });
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
     at.forEach(p => { p.y += 0.5 - low; });
     model.atoms.forEach(a => {
@@ -584,7 +622,7 @@ function start(app) {
     model.bonds.forEach(bd => {
       if (!balls.has(bd.a) || !balls.has(bd.b)) return;
       const far = pale.has(bd.a) && pale.has(bd.b), parts = []; (bd.order === 1 ? [0] : bd.order >= 3 ? [-1, 0, 1] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
-      sticks.push({ a: bd.a, b: bd.b, r: (bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1), parts });
+      { const da = dOf(bd.a), db = dOf(bd.b), dm = da == null || db == null ? null : (da + db) / 2; if (dm != null && dm < 0.34) parts.forEach(pt => { pt.mesh.material = paleMat; }); sticks.push({ a: bd.a, b: bd.b, r: (bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1) * (dm == null ? 1 : 0.62 + 0.55 * dm), parts }); }
     });
     scene.add(grp);
     const m = { group: grp, at, model, balls, sticks, beads, flat, hover: [], marks: [], hot: [] };
@@ -646,7 +684,7 @@ function start(app) {
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
   const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
-  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, homeNow = () => (st.mode === 'done' ? HOMED : HOME);
+  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, benchOn = () => !BENCHV && !!run && !P.RULE.bare && meta.stage >= 2 && (st.gear.length > 0 || JARK.some(jarSeen)), homeNow = () => (st.mode === 'done' ? HOMED : benchOn() ? { x: HOME.x, z: HOME.z + 2.7, w: HOME.w, d: HOME.d - 5.4, smax: HOME.smax } : HOME);
   homeE(HOME);
   const flScale = m => { const H = homeNow(), b = m.box; return Math.min(H.smax, H.w / b.w, H.d / b.d); };
   // the folded molecule keeps its start end where it is; the whole is slid, never jumped, so that its box stays in the middle of its home
@@ -657,7 +695,7 @@ function start(app) {
   const scrY = z => { _sv.set(0, 0.45, z).project(camRest); return (1 - _sv.y) / 2; };
   const zFor = (d, yc) => { let lo = -12, hi = 10; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (scrY(mid - d / 2) + scrY(mid + d / 2) < 2 * yc) lo = mid; else hi = mid; } return (lo + hi) / 2; };
   if (PGE.on) HOME.yc = (scrY(PGE.home.z0) + scrY(PGE.home.z1)) / 2 + 0.011;
-  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, busy = !snap && (st.firing || (morph && morph.m === m)), b = snap ? m.box : liveBox(m), fit = Math.min(H.smax, H.w / Math.max(b.w, m.box.w), H.d / Math.max(b.d, m.box.d)), s = busy ? Math.min(st.sc, fit) : fit; if (snap || st.bcx == null) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; if (snap) st.sc = s; } else { const k = Math.min(1, dt * 7); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * Math.min(1, dt * (s < st.sc ? 8 : 3)); } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
+  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, moving = !snap && !!morph && morph.m === m, b = m.box, fit = Math.min(H.smax, H.w / m.box.w, H.d / m.box.d), s = fit; /* the molecule slides and scales to its home only while a step is moving it, toward where the step will leave it; between steps it stands exactly still */ if (snap || st.bcx == null || !moving) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; st.sc = s; } else { const k = Math.min(1, dt * 9); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * k; } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
   const fitMain = m => m.fl ? flScale(m) : Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
@@ -690,7 +728,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -21.9, z: 13.55 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -12.4 + i * 5.4, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.9 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? (BENCHV ? (BENCHV === 'a' ? { x: -6 + i * 6.2, z: -27.5 } : { x: 37.5, z: -20 + i * 7.5 }) : { x: -8.6 + i * 5.3, z: -10.9 }) : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
@@ -705,6 +743,7 @@ function start(app) {
   run = P.runNew(meta.tier); run.manual = true;
   const PICKX = [-15, 0, 15];
   // the molecule in the middle while it is changing from what it was to what it is
+  const LEGEND = (() => { try { return new URLSearchParams(root.location.search).get('legend') === '1'; } catch (e) { return false; } })();   // ?legend=1: the small list of kinds along the top and the column of multipliers
   let morph = null; const STAGED = (() => { try { return new URLSearchParams(root.location.search).get('staged') !== '0'; } catch (e) { return true; } })();
   const tween = (m, to, sc, dur, done) => tweens.push({ m, fx: m.group.position.x, fz: m.group.position.z, fs: m.group.scale.x, to, sc, t: 0, dur, done });
   const colOf = id => bright(RX.CARDS[id].rgb);
@@ -725,7 +764,7 @@ function start(app) {
     if (!st.flags3 && show && !st.flags3Tried) { st.flags3Tried = true; try { st.flags3 = buildFlags(); } catch (e) { st.flags3 = null; } }
     if (!st.flags3) return;
     const marks = show ? P.runMarks(st.quota) : [], vals = [st.quota].concat(marks), n = marks.length, fr = k => (k === 0 ? 0.5 : 0.5 + 0.5 * k / Math.max(1, n));
-    st.flags3.forEach((o, k) => { const ok = show && k < vals.length, passed = ok && (st.mode === 'done' ? g.total >= vals[k] : !!st.passT[k]); [o.on, o.off].forEach(q => { q.visible = false; }); if (!ok) return; const q = passed ? o.on : o.off; q.visible = true; q.position.set(TRK.x0 + (TRK.x1 - TRK.x0) * fr(k) + 0.2, 0, TRK.z - 0.4); dirty = true; });
+    st.flags3.forEach((o, k) => { const ok = show && k < vals.length, passed = ok && (st.mode === 'done' ? g.total >= vals[k] : !!st.passT[k]); [o.on, o.off].forEach(q => { q.visible = false; }); if (!ok || k === 0) return; const q = passed ? o.on : o.off; q.visible = true; q.position.set(TRK.x0 + (TRK.x1 - TRK.x0) * fr(k) + 0.2, 0, TRK.z - 0.4); dirty = true; });
   }
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
@@ -768,8 +807,8 @@ function start(app) {
   function buildKit() {
     if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.05) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
-    if (KITV === 'back' && meta.stage >= 2 && !run.noGear && !P.RULE.bare) { const q2 = KITP(2); kitShelf = shelfAt(5, q2.x, q2.z + 0.3, 1.8); }
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : BENCHV ? 2.4 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { if (!BENCHV) kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
@@ -801,7 +840,7 @@ function start(app) {
   // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
   const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f, ammonia: 0xbcd6dc, brimstone: 0xc9a227 }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f', ammonia: '#6f9aa4', brimstone: '#9c7f12' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed', ammonia: 'homammonia', brimstone: 'hombrimstone' };
   const jarSeen = k => !P.RULE.bare && (k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0);
-  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
+  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back' && BENCHV) return BENCHV === 'a' ? { x: -30 + i * 5.2, z: -27.5, s: 2.2 } : { x: -39, z: -16 + i * 7, s: 2.2 }; if (KITV === 'back') { const sp = Math.min(4.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(2.0, sp / 2.2) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
 
@@ -809,8 +848,8 @@ function start(app) {
     JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = { x: 13.0, z: 13.7 }; let homObj = null, homObjs = [], homOpts = [];
-  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.45); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
+  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 24, z: -27 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
+  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
@@ -856,7 +895,7 @@ function start(app) {
     const fin = view ? (view.fin && !g.queue.includes(P.SYN.finish) ? view.fin : null) : live && !fork && g.pageSteps < P.stepsOf(g) ? P.finishOpt(g) : null; slots[FIN] = fin ? { id: fin.id, o: fin, fin: true } : null;
     { const ids = []; slots.forEach((q, i) => { if (q) ids.push(i); }); const n = ids.length, step = Math.min(10, 44 / Math.max(1, n)); SLOTW = step; LABF = Math.min(50, step * 5.4);
       ids.forEach((i, k) => { const x = (k - (n - 1) / 2) * step; SPOT[i] = { x, z: -7.4 }; LAB[i] = { x, z: -12.9 }; SCS[i] = Math.min(0.88, 0.09 * step); });
-      if (SIDE) { const gap = Math.min(3.0, 13.4 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -3.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 21.8, z: z + 0.4 }; SCS[i] = 0.4; }); reagE(ids); } }
+      if (SIDE) { const gap = Math.min(3.9, 18.6 / Math.max(1, n)); SLOTW = gap; LABF = 40; ids.forEach((i, k) => { const z = -7.4 + k * gap + gap / 2; SPOT[i] = { x: 22.6, z }; LAB[i] = { x: 20.0, z }; SCS[i] = 0.4; }); reagE(ids); } }
     slots.forEach((s, i) => {
       if (!s || !s.o) return;
       s.o.model.settle(FOLDS[s.id] ? 2200 : 160);
@@ -885,6 +924,7 @@ function start(app) {
   function doSkip() { if (st.mode !== 'pick' || !P.RULE.coins) return; P.runSkip(run); st.coinT = performance.now(); sfx.stamp(); showBriefs(); }
   function doBin(i) { const id = run.gear[i]; if (st.mode !== 'pick' || !id) return; if (!P.runBin(run, id)) { sfx.bad(); return; } st.coinT = performance.now(); sfx.stamp(); st.shake = 0.5; showPicks(picks); }
   function showPicks(list) {
+    if (!list && run && run.round === 1 && !run.picked1) { run.picked1 = true; return showBriefs(); }   // the first choice of a run is only the molecule: nothing to take, nothing to pay
     st.noteTick = (st.noteTick | 0) + 1;
     st.tok++; st.mode = 'pick'; clearRound(); clearBriefs(); clearKit(); st.call = null; st.floats = []; st.blots = []; st.pings = [];
     clearPicks(); st.mark = '';
@@ -901,7 +941,7 @@ function start(app) {
   // before each round: three rounds stand on the page, each a molecule with what the round asks and what it pays
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; }
   // an assay is one round and stands alone in the middle of the page
-  const BX = i => (briefs.length === 1 ? 0 : briefs.length === 2 ? (i ? 11 : -11) : PICKX[i]);
+  const BXC = PGE.on ? 1.2 : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (i ? 10.5 : -10.5) + BXC : PICKX[i]);
   // the pair drawn again: a turning arrow under the two molecules, and the coins it costs
   const PAIR = { x: -1.6, z: 11.6 };
   const pairOn = () => P.RULE.choose && P.RULE.coins && st.mode === 'brief' && briefs.length === 2 && !!meta.coined;
@@ -1231,7 +1271,11 @@ function start(app) {
     const c = ink.x, now0 = performance.now(), S = o.size || 104, n = Math.max(0, h.n | 0), val = Math.max(0, +h.value || 0), met = !!h.met, frac = n ? Math.min(1, val / n) : 0, atMost = !!h.max || key === 'few';
     let sc = 1, dy = 0; if (met && o.metT) { const a = (now0 - o.metT) / 560; if (a < 1) { sc = 1 + 0.2 * Math.exp(-5 * a) * Math.cos(a * 12); dy = 12 * Math.exp(-7 * a); dirty = true; } }
     c.save(); c.translate(cx, cy + dy); c.scale(sc, sc); c.translate(-cx, -(cy + dy));
-    const col = met ? GREEN : o.lost ? REDINK : INK; M.draw(c, key, cx, cy + dy, S, { ink: col, faint: FAINT, green: GREEN, red: REDINK, frac: o.bare ? null : frac, met });
+    const col = met ? GREEN : o.lost ? REDINK : INK; if (!(o.goal && !atMost && n >= 1 && n <= 6)) M.draw(c, key, cx, cy + dy, S, { ink: col, faint: FAINT, green: GREEN, red: REDINK, frac: o.bare ? null : frac, met });
+    if (o.goal && !atMost && n >= 1 && n <= 6) { const sz = n <= 3 ? S : S * 0.74, gap2 = sz * 1.12; st.goalT = st.goalT || {}; for (let k = 0; k < n; k++) { const have = k < val || met, gx = cx + k * gap2, key2 = key + k; if (have && !st.goalT[key2]) st.goalT[key2] = now0; if (!have) delete st.goalT[key2]; const a2 = have ? (now0 - st.goalT[key2]) / 420 : 9, pp = a2 < 1 ? 1 + 0.3 * Math.exp(-4 * a2) * Math.cos(a2 * 10) : 1; if (a2 < 1) dirty = true;
+        c.save(); c.translate(gx, cy + dy); c.scale(pp, pp); c.globalAlpha = have ? 1 : 0.8; M.draw(c, key, 0, 0, sz, { ink: have ? (met ? GREEN : INK) : PENCIL, faint: FAINT, green: GREEN, red: REDINK, frac: have ? 1 : 0, met: have && met }); c.restore();
+        if (!have) { c.strokeStyle = PENCIL; c.lineWidth = 3; c.setLineDash([9, 9]); c.beginPath(); c.ellipse(gx, cy + dy, sz * 0.56, sz * 0.5, 0, 0, 6.3); c.stroke(); c.setLineDash([]); } else { c.strokeStyle = met ? GREEN : INK; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.moveTo(gx + sz * 0.2, cy + dy + sz * 0.3); c.lineTo(gx + sz * 0.34, cy + dy + sz * 0.46); c.lineTo(gx + sz * 0.6, cy + dy + sz * 0.12); c.stroke(); } }
+      c.restore(); return; }
      marker(c, S * 0.62); c.textAlign = 'left'; c.fillStyle = col; c.fillText(String(n), cx + S * 0.62, cy + S * 0.22); const w = c.measureText(String(n)).width;
     c.strokeStyle = col; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); const ax = cx + S * 0.62 + w + 16, ay = cy - S * 0.02, cs = S * 0.1; c.lineWidth = 6; if (atMost) { c.moveTo(ax - cs, ay - cs * 0.7); c.lineTo(ax, ay + cs * 0.7); c.lineTo(ax + cs, ay - cs * 0.7); } else { c.moveTo(ax - cs, ay + cs * 0.7); c.lineTo(ax, ay - cs * 0.7); c.lineTo(ax + cs, ay + cs * 0.7); } c.stroke();
     if (!o.bare) { const y = cy + S * 0.66, x0 = cx - S * 0.5, x1 = cx + S * 0.62 + w + 34;
@@ -1276,7 +1320,7 @@ function start(app) {
   // gains go through one lane, one at a time: each is shown for a short while, the next waits its turn
   const laneGain = q => { if (fe()) return; const start = Math.max(q.t, st.laneFree || 0), dur = Math.max(260, Math.min(420, q.dur)); q.t0 = start; q.t = start; q.dur = dur; st.laneFree = start + dur + 40; st.gains.push(q); };
   // A reaction is drawn as what it changes: a small ball-and-stick fragment before, an arrow, and the fragment after
-  const FBALL = { C: ['#5b667d', 12], O: ['#ff4d4d', 12], Cl: ['#37d67a', 13], H: ['#f4f1e8', 8] };
+  const FBALL = { C: ['#5b667d', 12], O: ['#ff4d4d', 12], Cl: ['#37d67a', 13], H: ['#f4f1e8', 8], N: ['#3f6fe0', 13], S: ['#e8c21e', 14] };
   function fball(c, cx, cy, el, on) { const b = FBALL[el], r = b[1]; c.save(); c.globalAlpha = on ? 1 : 0.38; const gr = c.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.12, cx, cy, r); gr.addColorStop(0, '#ffffffaa'); gr.addColorStop(0.35, b[0]); gr.addColorStop(1, b[0]); c.fillStyle = b[0]; c.beginPath(); c.arc(cx, cy, r, 0, 6.3); c.fill(); if (el === 'H') { c.strokeStyle = '#a9a394'; c.lineWidth = 2.5; c.stroke(); } c.fillStyle = 'rgba(255,255,255,0.38)'; c.beginPath(); c.ellipse(cx - r * 0.32, cy - r * 0.38, r * 0.34, r * 0.22, -0.5, 0, 6.3); c.fill(); c.restore(); }
   function fbond(c, ax, ay, bx, by, n, on) { c.save(); c.globalAlpha = on ? 1 : 0.38; c.strokeStyle = '#7a8296'; c.lineWidth = 5; c.lineCap = 'round'; const dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy) || 1, nx = -dy / d * 4, ny = dx / d * 4; c.beginPath(); if (n === 2) { c.moveTo(ax + nx, ay + ny); c.lineTo(bx + nx, by + ny); c.moveTo(ax - nx, ay - ny); c.lineTo(bx - nx, by - ny); } else { c.moveTo(ax, ay); c.lineTo(bx, by); } c.stroke(); c.restore(); }
   const FRAG = {
@@ -1287,6 +1331,16 @@ function start(app) {
     'CH': (c, cx, cy, on) => { fbond(c, cx - 14, cy, cx + 18, cy, 1, on); fball(c, cx - 14, cy, 'C', on); fball(c, cx + 18, cy, 'H', on); },
     ring: (c, cx, cy, on) => { const p = []; for (let k = 0; k < 5; k++) { const a = -1.5708 + k * 1.2566; p.push([cx + 24 * Math.cos(a), cy + 24 * Math.sin(a)]); } p.forEach((q, k) => fbond(c, q[0], q[1], p[(k + 1) % 5][0], p[(k + 1) % 5][1], 1, on)); p.forEach(q => fball(c, q[0], q[1], 'C', on)); },
     arene: (c, cx, cy, on) => { const p = []; for (let k = 0; k < 6; k++) { const a = -1.5708 + k * 1.0472; p.push([cx + 26 * Math.cos(a), cy + 26 * Math.sin(a)]); } p.forEach((q, k) => fbond(c, q[0], q[1], p[(k + 1) % 6][0], p[(k + 1) % 6][1], k % 2 ? 1 : 2, on)); p.forEach(q => fball(c, q[0], q[1], 'C', on)); },
+    // the newer reagents: what each leaves on the molecule, drawn the same way
+    NH2: (c, cx, cy, on) => { fbond(c, cx - 22, cy, cx + 8, cy, 1, on); fbond(c, cx + 8, cy, cx + 26, cy - 13, 1, on); fbond(c, cx + 8, cy, cx + 26, cy + 13, 1, on); fball(c, cx - 22, cy, 'C', on); fball(c, cx + 26, cy - 13, 'H', on); fball(c, cx + 26, cy + 13, 'H', on); fball(c, cx + 8, cy, 'N', on); },
+    SH: (c, cx, cy, on) => { fbond(c, cx - 24, cy, cx + 6, cy, 1, on); fbond(c, cx + 6, cy, cx + 27, cy - 12, 1, on); fball(c, cx - 24, cy, 'C', on); fball(c, cx + 27, cy - 12, 'H', on); fball(c, cx + 6, cy, 'S', on); },
+    diol: (c, cx, cy, on) => { fbond(c, cx - 14, cy + 8, cx + 14, cy + 8, 1, on); fbond(c, cx - 14, cy + 8, cx - 26, cy - 14, 1, on); fbond(c, cx + 14, cy + 8, cx + 26, cy - 14, 1, on); fball(c, cx - 14, cy + 8, 'C', on); fball(c, cx + 14, cy + 8, 'C', on); fball(c, cx - 26, cy - 14, 'O', on); fball(c, cx + 26, cy - 14, 'O', on); },
+    '2C=O': (c, cx, cy, on) => { fbond(c, cx - 30, cy + 6, cx - 12, cy - 12, 2, on); fbond(c, cx + 30, cy + 6, cx + 12, cy - 12, 2, on); fball(c, cx - 30, cy + 6, 'C', on); fball(c, cx - 12, cy - 12, 'O', on); fball(c, cx + 30, cy + 6, 'C', on); fball(c, cx + 12, cy - 12, 'O', on); },
+    COOH: (c, cx, cy, on) => { fbond(c, cx - 26, cy, cx, cy, 1, on); fbond(c, cx, cy, cx + 16, cy - 18, 2, on); fbond(c, cx, cy, cx + 22, cy + 12, 1, on); fball(c, cx - 26, cy, 'C', on); fball(c, cx, cy, 'C', on); fball(c, cx + 16, cy - 18, 'O', on); fball(c, cx + 22, cy + 12, 'O', on); },
+    enone: (c, cx, cy, on) => { fbond(c, cx - 30, cy + 6, cx - 8, cy - 6, 2, on); fbond(c, cx - 8, cy - 6, cx + 12, cy + 6, 1, on); fbond(c, cx + 12, cy + 6, cx + 30, cy - 10, 2, on); fball(c, cx - 30, cy + 6, 'C', on); fball(c, cx - 8, cy - 6, 'C', on); fball(c, cx + 12, cy + 6, 'C', on); fball(c, cx + 30, cy - 10, 'O', on); },
+    CHO: (c, cx, cy, on) => { fbond(c, cx - 26, cy + 4, cx - 2, cy + 4, 1, on); fbond(c, cx - 2, cy + 4, cx + 20, cy - 12, 2, on); fbond(c, cx - 2, cy + 4, cx + 16, cy + 20, 1, on); fball(c, cx - 26, cy + 4, 'C', on); fball(c, cx + 16, cy + 20, 'H', on); fball(c, cx - 2, cy + 4, 'C', on); fball(c, cx + 20, cy - 12, 'O', on); },
+    epox: (c, cx, cy, on) => { fbond(c, cx - 18, cy + 10, cx + 18, cy + 10, 1, on); fbond(c, cx - 18, cy + 10, cx, cy - 16, 1, on); fbond(c, cx + 18, cy + 10, cx, cy - 16, 1, on); fball(c, cx - 18, cy + 10, 'C', on); fball(c, cx + 18, cy + 10, 'C', on); fball(c, cx, cy - 16, 'O', on); },
+    chain: (c, cx, cy, on) => { const p = [[-30, 8], [-10, -8], [10, 8], [30, -8]]; p.forEach((q, k) => { if (k) fbond(c, cx + p[k - 1][0], cy + p[k - 1][1], cx + q[0], cy + q[1], 1, on); }); p.forEach(q => fball(c, cx + q[0], cy + q[1], 'C', on)); },
     cage: (c, cx, cy, on) => { const p = [[-18, -18], [18, -18], [18, 18], [-18, 18]]; p.forEach((q, k) => fbond(c, cx + q[0], cy + q[1], cx + p[(k + 1) % 4][0], cy + p[(k + 1) % 4][1], 1, on)); fbond(c, cx - 18, cy - 18, cx + 18, cy + 18, 1, on); fbond(c, cx + 18, cy - 18, cx - 18, cy + 18, 1, on); p.forEach(q => fball(c, cx + q[0], cy + q[1], 'C', on)); }
   };
   function fragOrChip(c, tok, cx, cy, on) { if (FRAG[tok]) { c.save(); c.translate(cx, cy); c.scale(1.45, 1.45); FRAG[tok](c, 0, 0, on); c.restore(); return; } chip(c, tok, cx, cy, on); }
@@ -1299,13 +1353,13 @@ function start(app) {
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
   // The bank, the redraw and the turn of a page on which nothing acts. Each is one click on a mark on the page.
-  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 21.2 + (PGE.on ? PGE.rx : 0), z: 10.6 };
+  const BANK = { x: STEP.x + 0.2, z: STEP.z + 2.45 }, DRAW = { x: 16.6 + (PGE.on ? PGE.rx : 0), z: -9.0 };
   const lining = () => P.RULE.queue && st.mode === 'play' && !!g && !g.over && !g.chain && !g.shot;
   const bankAt = () => st.mode === 'play' && g && (lining() || P.canBank(g)) && hit.x > BANK.x - 1.4 && hit.x < BANK.x + 5 && Math.abs(hit.z - BANK.z) < 1.2;
   // the reaction arrow after the circles fires the page; a click on a filled circle takes its reagent back
-  const FIREP = () => ({ x: STEP.x + P.stepsOf(g) * STEPD + 0.9, z: STEP.z });
-  const fireAt = () => lining() && Math.abs(hit.x - FIREP().x) < 2.2 && Math.abs(hit.z - STEP.z) < 1.4;
-  const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * STEPD)) < 1.15 && Math.abs(hit.z - STEP.z) < 1.2) return k; return -1; };
+  const FIREP = () => ({ x: STEP.x + STEPD + 0.2, z: STEP.z + 3.9 });
+  const fireAt = () => lining() && Math.abs(hit.x - FIREP().x) < 3.4 && Math.abs(hit.z - FIREP().z) < 1.4;
+  const circleAt = () => { if (!lining()) return -1; for (let k = 0; k < g.queue.length; k++) if (Math.abs(hit.x - (STEP.x + (g.pageSteps + k) * STEPD)) < 1.5 && Math.abs(hit.z - STEP.z) < 1.5) return k; return -1; };
   function doUnqueue(k) { if (!lining() || !P.queueDrop(g, k < 0 ? g.queue.length - 1 : k)) return; sfx.feed(); refresh(); }
   function bankNow() { const gain = P.bankGain(g); P.bank(g); st.want = P.made(g); st.P = g.P; st.R = g.R; st.E = g.E; st.mult = P.mult(g); st.bump.p = 1; st.madeBump = 1; st.chainN = 0; if (center) center.hot = []; st.motes.push({ txt: '+' + fmt(gain), part: 'p', col: '#8a6a00', a: { x: STEP.x + (g.pageSteps - 1) * STEPD, z: STEP.z - 1 }, t: performance.now(), dur: 420 }); sfx.good(); st.shake = Math.max(st.shake, 0.5); }
   function doFire() { if (!lining()) return; if (AA.sfx.fire) AA.sfx.fire(); toolOff(); flush(); setHover(-1); st.firing = true; st.fireN = 0; st.acted = false; st.rezip = false; st.seeded = false; st.chainN = 0; g.shot = true; slots = []; prods.forEach(m => { if (m) freeMol(m); }); prods = []; if (FEEL && FEEL.on()) FEEL.fire(fireNext); else fireNext(); }
@@ -1616,9 +1670,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // What each reagent takes and what it leaves, by group. A row carries on when the next tile takes what the last one left.
   const TILE = { snap: ['C=C', 'cage'], aromatize: ['ring', 'arene'], cyclize: ['OH', 'ring'], hydrate: ['C=C', 'OH'], pcc: ['OH', 'C=O'], nabh4: ['C=O', 'OH'], dehydrate: ['OH', 'C=C'], h2: ['C=C', 'CH'], hcl: ['C=C', 'Cl'], bh3: ['C=C', 'OH'], socl2: ['OH', 'Cl'], koh: ['Cl', 'C=C'], naoh: ['Cl', 'OH'],
     memgbr: ['C=O', 'OH', '+C'], wittig: ['C=O', 'C=C', '+C'], allyl: ['C=O', 'OH', '+3C'], aibn: ['C=C', 'chain'], wacker: ['C=C', 'C=O'], wolff: ['C=O', 'CH'],
-    extend: ['C=O', 'C=O', '+C=O'], dione: ['C=O', 'C=O', '+2 C=O'], phenol: ['C=O', 'OH', '+ring'], couple: ['C=O', 'ring'], rcm: ['C=C', 'ring'] };
+    extend: ['C=O', 'C=O', '+C=O'], dione: ['C=O', 'C=O', '+2 C=O'], phenol: ['C=O', 'OH', '+ring'], couple: ['C=O', 'ring'], rcm: ['C=C', 'ring'],
+    hwe: ['C=O', 'enone'], dihydroxylation: ['C=C', 'diol'], ozonolysis: ['C=C', '2C=O'], permanganate: ['C=C', 'COOH'], ritter: ['C=C', 'NH2'], thiolene: ['C=C', 'SH'], chlorination: ['OH', 'Cl'], cyanohydrin: ['C=O', 'COOH'], hofmann: ['NH2', 'C=C'], chugaev: ['OH', 'C=C'], hydroformylation: ['C=C', 'CHO'], epoxidation: ['C=C', 'epox'] };
   const GCOL = { 'C=C': '#3a6fd0', OH: '#d6453a', 'C=O': '#e07a00', Cl: '#3c9a5f', CH: '#8d949c', chain: '#e23c6e' };
-  function chip(x, txt, cx, cy, on) { hand(x, 34); const w = Math.max(74, x.measureText(txt).width + 26); x.fillStyle = on ? GCOL[txt] || INK : 'rgba(141,148,156,0.35)'; x.beginPath(); x.ellipse(cx, cy - 11, w / 2, 25, 0, 0, 6.3); x.fill(); x.fillStyle = '#fbf8ee'; x.textAlign = 'center'; x.fillText(txt, cx, cy); return w; }
+  function chip(x, txt, cx, cy, on) { hand(x, 30); const w = Math.max(64, x.measureText(txt || '').width + 26); x.save(); x.globalAlpha = on ? 1 : 0.4; x.strokeStyle = PENCIL; x.lineWidth = 4; x.beginPath(); x.ellipse(cx, cy - 10, w / 2, 24, 0, 0, 6.3); x.stroke(); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(txt || '', cx, cy); x.restore(); return w; }
   // a coin of credit, drawn in ink
   function coin(x, cx, cy, r) { if (AA.rxKit && AA.rxKit.drawCoin) AA.rxKit.drawCoin(x, cx, cy, r, {}); }
   // A coin of the run, seen from the side so that coins stack, in copper: the credit kept between runs is the gold one.
@@ -1650,7 +1705,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // a line struck through by hand: it wanders a little, and only the first k of its length is drawn while it is being struck
   // a flag on a pole, drawn by hand: the number to beat, and each mark past it
   function flag(x, cx, by, h, col, full) { x.strokeStyle = col; x.lineWidth = Math.max(4, h * 0.075); x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(cx + 1, by); x.lineTo(cx - 2, by - h); x.stroke(); x.beginPath(); x.moveTo(cx - 2, by - h); x.lineTo(cx + h * 0.56, by - h * 0.76); x.lineTo(cx - 1, by - h * 0.5); x.closePath(); x.fillStyle = full ? col : '#fbf8ee'; x.fill(); x.stroke(); }
-  const TRK = { x0: -9.5, x1: 14.5, z: 12.2 }, FORM = { x: EDGE + 0.3, z: 9.45 };
+  const TRK = { x0: -15.2, x1: 14.0, z: 12.0 }, FORM = { x: EDGE + 0.3, z: 9.45 };
   if (PGE.on) TRK.z += PGE.dz;
   function strike(x, x0, y0, x1, y1, k, lw, col) { k = Math.max(0, Math.min(1, k)); if (k <= 0) return; if (k < 1) dirty = true; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); const n = 10; for (let i = 0; i <= n; i++) { const t = k * i / n, j = Math.sin(t * 7 + x0 * 0.03) * lw * 0.35; if (i) x.lineTo(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + j); else x.moveTo(x0, y0 + j); } x.stroke(); }
   const swipe = (x, a, b, w, col) => { x.strokeStyle = col || HILITE; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); };
@@ -1692,7 +1747,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     let sd = (st.noteRun * 2654435761 + tick * 40503 + 17) >>> 0; const R = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
     const cv = document.createElement('canvas'); cv.width = IW; cv.height = IH; const c = cv.getContext('2d');
     // the paper going wrong: stains, scorch, blots, a torn corner, tape, ruled lines that wobble (only at the edges and under everything else)
-    const stains = Math.floor(m * 7.5);
+    const stains = 0;   // the page's stains are drawn by pageStains, on free paper only
     const spots = [[1860, 1000], [250, 330], [1560, 250], [1890, 640], [150, 600], [140, 440], [1700, 300], [430, 290]];
     for (let k = 0; k < stains && k < spots.length; k++) { const q = spots[k], kind = k % 3; if (kind === 0) { c.strokeStyle = 'rgba(120,82,42,0.3)'; c.lineWidth = 9; c.beginPath(); c.arc(q[0], q[1], 60 + R() * 30, 0.2, 5.8); c.stroke(); } else if (kind === 1) { const g2 = c.createRadialGradient(q[0], q[1], 6, q[0], q[1], 90); g2.addColorStop(0, 'rgba(60,35,15,0.4)'); g2.addColorStop(1, 'rgba(150,100,50,0)'); c.fillStyle = g2; c.beginPath(); c.ellipse(q[0], q[1], 100, 70, R(), 0, 6.3); c.fill(); } else { c.fillStyle = 'rgba(25,30,60,0.55)'; c.beginPath(); c.ellipse(q[0], q[1], 14 + R() * 16, 10 + R() * 12, R() * 3, 0, 6.3); c.fill(); for (let j = 0; j < 7; j++) { c.beginPath(); c.arc(q[0] + (R() - 0.5) * 120, q[1] + (R() - 0.5) * 80, 2 + R() * 5, 0, 6.3); c.fill(); } } }
     if (m > 0.55) { c.fillStyle = 'rgba(40,40,44,0.85)'; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1760, 1130); c.lineTo(1760, 1230); c.closePath(); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 5; c.beginPath(); c.moveTo(1640, 1230); c.lineTo(1672, 1196); c.lineTo(1712, 1204); c.lineTo(1760, 1130); c.stroke(); }
@@ -1853,8 +1908,24 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const count = q => { const x0 = Math.max(0, Math.round(q[0] + ox)), y0 = Math.max(0, Math.round(q[1])), x1 = Math.min(IW + ox, Math.round(q[2] + ox)), y1 = Math.min(IH, Math.round(q[3])); if (x1 <= x0 || y1 <= y0) return 0; const d = c.getImageData(x0, y0, x1 - x0, y1 - y0).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) k++; return k; };
     Object.keys(K).forEach(k => { out.inkPx[k] = count(K[k]); out.boxPx[k] = mE.list.reduce((s, n) => s + Math.max(0, Math.min(n.box[2], K[k][2]) - Math.max(n.box[0], K[k][0])) * Math.max(0, Math.min(n.box[3], K[k][3]) - Math.max(n.box[1], K[k][1])), 0); });
     out.inkPx.play = count(P0); out.inkAll = count([-ox, 0, IW, IH]); return out; }
+  // Stains: a different set on every page (seeded by the run, the round and the page, so a recording repeats), more and messier as the run goes on.
+  // They lie under all ink, pale, and only on free paper: never inside a keep-clear rectangle (page units), give or take a hair at its edge.
+  const keepClear = () => { const H = homeNow(), out = [[H.x - H.w / 2 - 1.2, H.z - H.d / 2 - 1.6, H.x + H.w / 2 + 1.2, H.z + H.d / 2 + 1.6], [14.4, -10.4, 30, 12.2], [-24.3, -8.4, -11.6, 8.2], [-29.5, -20.5, -12.5, -12.6], [-24.3, 9.2, 22, 18]]; if (benchOn()) out.push([-24.4, -15.2, 18.6, -8.0]); return out; };
+  const stainRand = seed => { let sd = seed >>> 0; return () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296; };
+  function stainSet(seed, mad) { const R = stainRand(seed), rects = keepClear(), out = [], want = 2 + Math.round(mad * 4) + (R() < 0.5 ? 1 : 0), kinds = ['ring', 'ring', 'splash', 'scorch', 'thumb', 'tape'];
+    for (let tries = 0; tries < 400 && out.length < want; tries++) { const kind = kinds[Math.floor(R() * kinds.length)], r = kind === 'tape' ? 1.9 : kind === 'thumb' ? 1.0 : 1.1 + R() * (1.2 + mad), x0 = -33 + R() * 61, z0 = -20.5 + R() * 36; if (x0 + r > 28.5 || x0 - r < -35.5 || z0 - r < -21.5 || z0 + r > 15.8) continue;
+      let pen = 0; rects.forEach(q => { const dx = Math.max(q[0] - x0, 0, x0 - q[2]), dz = Math.max(q[1] - z0, 0, z0 - q[3]), d = Math.hypot(dx, dz); pen = Math.max(pen, r - d); }); if (pen > 0.1) continue; if (out.some(o => Math.hypot(o.x - x0, o.z - z0) < o.r + r + 0.3)) continue; out.push({ kind, x: x0, z: z0, r, rot: R() * 6.283, a: 0.5 + R() * 0.5, sd: Math.floor(R() * 1e9), pen }); }
+    return out; }
+  function pageStains(x) { if (!run || st.mode === 'shop') return; const key = (st.noteRun || 1) + ':' + run.round + ':' + (g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || st.mode === 'done') ? g.page : 0) + ':' + st.mode.charAt(0) + (benchOn() ? 'b' : ''); if (st.stainKey !== key) { st.stainKey = key; let hsh = 2166136261; for (let i = 0; i < key.length; i++) hsh = Math.imul(hsh ^ key.charCodeAt(i), 16777619); st.stainList = st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse' || st.mode === 'done' ? stainSet(hsh, madLevel()) : []; }
+    (st.stainList || []).forEach(q => { const c = px(q), r = q.r * U, R = stainRand(q.sd); x.save(); x.translate(c[0], c[1]); x.rotate(q.rot);
+      if (q.kind === 'ring') { x.fillStyle = 'rgba(150,105,60,' + (0.05 * q.a).toFixed(3) + ')'; x.beginPath(); x.arc(0, 0, r, 0, 6.3); x.fill(); for (let k = 0; k < 3; k++) { x.strokeStyle = 'rgba(125,85,45,' + (0.2 * q.a * (1 - k * 0.28)).toFixed(3) + ')'; x.lineWidth = (0.13 - k * 0.035) * r; x.beginPath(); x.arc(R() * 4, R() * 4, r * (0.93 + k * 0.012), 0.1 + k * 0.5, 5.6 + k * 0.2); x.stroke(); } }
+      else if (q.kind === 'splash') { x.fillStyle = 'rgba(120,90,55,' + (0.14 * q.a).toFixed(3) + ')'; x.beginPath(); x.ellipse(0, 0, r * 0.45, r * 0.36, 0, 0, 6.3); x.fill(); for (let k = 0; k < 9; k++) { const an = R() * 6.283, d = r * (0.5 + R() * 0.5), rr = r * (0.04 + R() * 0.09); x.beginPath(); x.arc(Math.cos(an) * d, Math.sin(an) * d, rr, 0, 6.3); x.fill(); } }
+      else if (q.kind === 'scorch') { const gr = x.createRadialGradient(0, 0, r * 0.1, 0, 0, r); gr.addColorStop(0, 'rgba(70,40,15,' + (0.3 * q.a).toFixed(3) + ')'); gr.addColorStop(0.5, 'rgba(140,90,40,' + (0.16 * q.a).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(160,110,60,0)'); x.fillStyle = gr; x.beginPath(); x.ellipse(0, 0, r, r * 0.8, 0, 0, 6.3); x.fill(); }
+      else if (q.kind === 'thumb') { x.strokeStyle = 'rgba(70,75,95,' + (0.16 * q.a).toFixed(3) + ')'; x.lineWidth = 2.5; for (let k = 1; k <= 6; k++) { x.beginPath(); x.ellipse(0, k * 1.5, r * k / 6 * 0.72, r * k / 6, 0, 3.4 + R() * 0.3, 6.0 + R() * 0.3); x.stroke(); } }
+      else { x.fillStyle = 'rgba(226,225,214,0.75)'; x.fillRect(-r, -r * 0.24, r * 2, r * 0.48); x.strokeStyle = 'rgba(140,138,125,0.4)'; x.lineWidth = 2; x.strokeRect(-r, -r * 0.24, r * 2, r * 0.48); }
+      x.restore(); }); }
   function drawInk(now) {
-    const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic';
+    const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; pageStains(x);
     if (st.mode !== 'shop') marginalia(x, now);
     if (st.splats && st.splats.length && st.mode !== 'shop') { x.save(); st.splats.forEach(d => { x.fillStyle = 'rgba(28,34,66,' + d.a.toFixed(2) + ')'; x.beginPath(); x.arc(d.x, d.y, d.r, 0, 6.3); x.fill(); }); x.restore(); }
     if (st.mode === 'shop') {
@@ -1891,7 +1962,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
-      const h = px({ x: 0, z: -11 }); hand(x, 110); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('round ' + run.round + '', h[0], h[1]);
+      const h = px({ x: PGE.on ? 1.2 : 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]);
       briefs.forEach((b, i) => {
         const c = px({ x: BX(i), z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         if (b.ease != null) {
@@ -1900,7 +1971,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
                     const y = c[1] + 80; marker(x, hov ? 84 : 74); x.textAlign = 'center'; x.fillStyle = REDINK; x.fillText(fmt(b.quota), c[0] + 30, y); flag(x, c[0] + 30 - x.measureText(fmt(b.quota)).width / 2 - 62, y + 2, 92, REDINK, true);
           if (b.spec || b.hurdle) { const hp = px({ x: BX(i) + 7.5, z: 5.5 }); drawSpec(g, hp[0], hp[1], b.spec || b.hurdle, { bare: true, size: 90 }); }
           if (b.motifs) { const mp = px({ x: BX(i), z: 8.6 }); drawMotifRow(b.motifs, mp[0], mp[1]); }
-          if (b.coins) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
+          if (b.coins && run.round > 1) { const w = (b.coins - 1) * 58; marker(x, 58); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - w / 2 - 36, y + 86); for (let n = 0; n < b.coins; n++) rcoin(x, c[0] - w / 2 + n * 58, y + 68, 25); }
           if (hov) swipe(x, [c[0] - 150, y + 24], [c[0] + 150, y + 19], 6, INK);
           return;
         }
@@ -1914,8 +1985,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (P.RULE.choose && briefs.length && briefs[0].ease != null) {
         // an assay changes one rule for both: its name and rule stand once, between the two
         if (false && briefs[0].assay) { const B = P.BRIEF[briefs[0].brief], a0 = px({ x: 0, z: -8.9 }); marker(x, 56); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(B.name, a0[0], a0[1]); if (B.note) inkLine(x, B.note, a0[0], a0[1] + 44, 32, INK); }
-        if (P.RULE.coins && (meta.coined || (run.coins || 0) > 0)) { const c = px(PURSE); purse(x, c[0], c[1], run.coins || 0, 24); }
-        if (pairOn()) { const c = px(PAIR), cost = P.pairCost(run), can = cost != null && (run.coins || 0) >= cost, hov = st.mark === 'pair', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0], c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < (cost == null ? 3 : cost); k++) rcoin(x, c[0] + 66 + k * 38, c[1] + 2, 15, can ? 1 : 0.35); if (cost == null) { x.strokeStyle = PENCIL; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 40, c[1] + 26); x.lineTo(c[0] + 160, c[1] - 22); x.stroke(); } }
+        if (P.RULE.coins && run.round > 1 && (meta.coined || (run.coins || 0) > 0)) { const c = px(PURSE); purse(x, c[0], c[1], run.coins || 0, 24); }
+        if (pairOn() && run.round > 1) { const c = px(PAIR), cost = P.pairCost(run), can = cost != null && (run.coins || 0) >= cost, hov = st.mark === 'pair', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0], c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < (cost == null ? 3 : cost); k++) rcoin(x, c[0] + 66 + k * 38, c[1] + 2, 15, can ? 1 : 0.35); if (cost == null) { x.strokeStyle = PENCIL; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 40, c[1] + 26); x.lineTo(c[0] + 160, c[1] - 22); x.stroke(); } }
       }
       ink.t.needsUpdate = true; return;
     }
@@ -1924,9 +1995,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       picks.forEach((o, i) => {
         const c = px({ x: PICKX[i], z: 3.6 }), isGear = o.kind === 'gear' || o.kind === 'level', title = isGear ? P.GEARS[o.id].name : RX.CARDS[o.id].verb.toLowerCase() + (o.kind === 'reagent' && P.PAIR[o.id] ? ' + ' + RX.CARDS[P.PAIR[o.id]].verb.toLowerCase() : ''), hov = st.hover === i;
         const kind = o.kind === 'reagent' ? 'new' : o.kind === 'gear' ? 'equipment' : o.kind === 'level' ? 'level up' : o.kind === 'strong' ? 'stronger' : 'more';
-        if (!isGear) { const t0 = px({ x: PICKX[i], z: -1.2 }), tl = TILE[o.id], z0 = hov ? 2.0 : 1.8; if (tl) { x.save(); x.translate(t0[0], t0[1]); x.scale(z0, z0); fragOrChip(x, tl[0], -62, 0, true); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, 0); x.lineTo(0, 0); x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); x.stroke(); fragOrChip(x, tl[1], 46, 0, true); x.restore(); } if (hov) { hand(x, 40); x.fillStyle = INK; x.textAlign = 'center'; x.fillText(title, c[0], c[1] + 110); } }
-        if (isGear && hov) { marker(x, 66); x.fillStyle = INK; x.fillText(title, c[0], c[1]); }
-        if (isGear) { /* the object is the description */ } else if (o.kind === 'bottle') { for (let d = 0; d < 3; d++) drop(x, c[0] - 70 + d * 70, c[1] + 36, 18, INK, true); marker(x, 56); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - 100, c[1] + 54); } else if (o.kind === 'strong') { marker(x, 84); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(P.pickText(run, o)).split(' ')[0], c[0], c[1] + 66); }
+        if (!isGear) { const t0 = px({ x: PICKX[i], z: -1.2 }), tl = TILE[o.id], z0 = hov ? 2.0 : 1.8; if (tl) { x.save(); x.translate(t0[0], t0[1]); x.scale(z0, z0); fragOrChip(x, tl[0], -62, 0, true); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, 0); x.lineTo(0, 0); x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); x.stroke(); fragOrChip(x, tl[1], 46, 0, true); x.restore(); } }
+
+        if (isGear || true) { /* the picture is the description: nothing is written or counted under a choice */ } else if (o.kind === 'bottle') { for (let d = 0; d < 3; d++) drop(x, c[0] - 70 + d * 70, c[1] + 36, 18, INK, true); marker(x, 56); x.textAlign = 'right'; x.fillStyle = GREEN; x.fillText('+', c[0] - 100, c[1] + 54); } else if (o.kind === 'strong') { marker(x, 84); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(P.pickText(run, o)).split(' ')[0], c[0], c[1] + 66); }
         if (hov) ring(x, [c[0], c[1] - 10], 300, 150, 6, INK, 0.02);
       });
       if (P.RULE.coins) {
@@ -2022,7 +2093,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       x.globalAlpha = 0.92; flick(x, a, b, tail, head, 22, q.col, bow);
       if (age >= q.dur) { const k = (age - q.dur) / 260; x.globalAlpha = 0.85 * (1 - k); splat(x, b, 16 + 26 * Math.sqrt(k), q.col, String(Math.round(q.t))); }
       x.globalAlpha = 1; });
-    if (play && g && g.nextHand && g.nextHand.length) { const n0 = px({ x: 20.6, z: 12.4 }), nn = Math.min(5, g.nextHand.length), cw = 62; for (let j = 0; j < nn; j++) { const tl = TILE[g.nextHand[j]]; if (!tl) continue; x.save(); x.translate(n0[0] - (nn - 1) * cw / 2 + j * cw + 0, n0[1]); x.scale(0.36, 0.36); fragOrChip(x, tl[0], -50, 0, false); x.strokeStyle = FAINT; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(-8, 0); x.lineTo(14, 0); x.stroke(); fragOrChip(x, tl[1], 78, 0, false); x.restore(); }
+    if (false && play && g && g.nextHand && g.nextHand.length) { const n0 = px({ x: 20.6, z: 12.4 }), nn = Math.min(5, g.nextHand.length), cw = 62; for (let j = 0; j < nn; j++) { const tl = TILE[g.nextHand[j]]; if (!tl) continue; x.save(); x.translate(n0[0] - (nn - 1) * cw / 2 + j * cw + 0, n0[1]); x.scale(0.36, 0.36); fragOrChip(x, tl[0], -50, 0, false); x.strokeStyle = FAINT; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(-8, 0); x.lineTo(14, 0); x.stroke(); fragOrChip(x, tl[1], 78, 0, false); x.restore(); }
       const cx0 = px({ x: 25.5, z: 12.6 }); x.fillStyle = 'rgba(120,100,70,0.22)'; x.beginPath(); x.moveTo(cx0[0] + 30, cx0[1] - 70); x.lineTo(cx0[0] + 30, cx0[1] + 30); x.lineTo(cx0[0] - 70, cx0[1] + 30); x.closePath(); x.fill(); x.strokeStyle = PENCIL; x.lineWidth = 3; x.stroke(); }
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
     if (play) slots.forEach((s, i) => {
@@ -2030,18 +2101,18 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
       if (o && !SIDE) { arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
       
-      x.save(); x.translate(m[0], m[1]);
+      x.save(); x.translate(m[0], m[1]); { const rs = Math.min(1.62, SLOTW / 2.35) * (hov && o ? 1.08 : 1); x.scale(rs, rs); } x.translate(16, 8);
       { const tl = TILE[s.id] || ['', ''], on = !!o;
         
-        fragOrChip(x, tl[0], -78, -8, on); x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
-        if (tl[2]) { hand(x, 30); x.textAlign = 'left'; x.fillStyle = on ? '#8a5a2b' : FAINT; x.fillText(tl[2], 86, -2); }
-        if (hov) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? INK : FAINT; x.fillText(verb, -20, 46); }
+        if (on) fragOrChip(x, tl[0], -78, -8, true); else { fragOrChip(x, tl[0], -78, -8, false); x.strokeStyle = PENCIL; x.lineWidth = 3; x.setLineDash([8, 8]); x.beginPath(); x.ellipse(-78, -8, 52, 34, 0, 0, 6.3); x.stroke(); x.setLineDash([]); } x.strokeStyle = on ? INK : FAINT; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-26, -8); x.lineTo(-2, -8); x.moveTo(-14, -18); x.lineTo(-2, -8); x.lineTo(-14, 2); x.stroke(); fragOrChip(x, tl[1], 46, -8, on);
+
+        
         // uses left: one drop each, on the reagent's own chip. One placed in a circle is an empty drop
         if (!s.fin && !usesHidden()) { const qd = P.queued(g, s.id), nL = Math.min(6, Math.max(0, (g.left[s.id] || 0) - qd)); x.globalAlpha = on ? 1 : 0.5;
-          if (g.free && g.free[s.id]) { x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.ellipse(-120, 30, 9, 6.5, 0, 0, 6.3); x.moveTo(-93, 30); x.ellipse(-102, 30, 9, 6.5, 0, 0, 6.3); x.stroke(); }
-          else { for (let k = 0; k < nL; k++) drop(x, -124 + k * 17, 30, 7.5, INK, true); for (let k = 0; k < Math.min(3, qd); k++) drop(x, -124 + (nL + k) * 17, 30, 7.5, INK, false); }
+          if (g.free && g.free[s.id]) { x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.ellipse(-120, 26, 9, 6.5, 0, 0, 6.3); x.moveTo(-93, 26); x.ellipse(-102, 26, 9, 6.5, 0, 0, 6.3); x.stroke(); }
+          else { /* uses left are not drawn as drops any more */ }
           x.globalAlpha = 1; }
-        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-120, 46); x.lineTo(112, 44); x.stroke(); } }
+        if (hov && o) { x.strokeStyle = INK; x.lineWidth = 5; x.beginPath(); x.moveTo(-110, 36); x.lineTo(80, 34); x.stroke(); } }
       x.restore();
     });
     // the three numbers that multiply into what is made: places, row and extra. Each jumps when it changes
@@ -2072,23 +2143,37 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (age < 0.7 && !PLAIN) { const up = px(sideK ? { x: kp.x + 7.5 + 1.2 * age, z: kp.z - 0.6 } : KITV === 'back' ? { x: kp.x, z: kp.z + 4.6 + (i % 2) * 1.2 + 1.2 * age } : { x: kp.x, z: kp.z - 4.2 - (i % 2) * 1.5 - 1.2 * age }); fit(x, f.txt, 58 * (age < 0.08 ? 1.3 : 1), 160, marker); x.textAlign = 'center'; x.globalAlpha = 1 - age / 0.7; x.lineWidth = 12; x.lineJoin = 'round'; x.strokeStyle = '#f3eddc'; x.strokeText(f.txt, up[0], up[1]); x.fillStyle = f.col || k.col; x.fillText(f.txt, up[0], up[1]); x.globalAlpha = 1; }
     });
     // the round of the run, the pages, and a circle for each reaction on this page
-    if (st.mode !== 'done') { const r0 = px({ x: EDGE, z: PAGES.z + 0.45 }); hand(x, 44); x.textAlign = 'left'; x.fillStyle = INK; x.fillText('round ' + run.round, r0[0], r0[1]); }
-    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px({ x: -26.6, z: -17.2 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 150 }); } }
-    if (st.mode !== 'done') drawMotifs(g);
+    // the round, and a box for each turn of it: ticked as the turn is used, like a checklist in a notebook
+    if (st.mode !== 'done') { const r0 = px({ x: STEP.x - 1.3, z: -6.0 }); marker(x, 78); x.textAlign = 'left'; x.fillStyle = INK; const rt = String(run.round); x.fillText(rt, r0[0], r0[1] + 6); const bx0 = r0[0] + x.measureText(rt).width + 34, np = P.pagesOf(g), used = g.page - 1 + (st.firing || g.pageSteps > 0 ? 1 : 0); if (st.tickN !== used) { st.tickN = used; st.tickT = now; }
+      const jit = (q, a) => Math.sin(q * 12.9898 + 1.3) * a;
+      for (let k = 0; k < np; k++) { const bx = bx0 + k * 62, by = r0[1] - 38, on = k < used, cur = k === g.page - 1; x.strokeStyle = on || cur ? INK : PENCIL; x.lineWidth = cur ? 5 : 3.5; x.lineJoin = 'round'; x.lineCap = 'round'; x.beginPath(); x.moveTo(bx + jit(k * 3.1, 2), by + jit(k * 1.7, 2)); x.lineTo(bx + 38, by + 2 + jit(k * 2.3, 2)); x.lineTo(bx + 36 + jit(k * 4.1, 2), by + 38); x.lineTo(bx + 1, by + 36 + jit(k * 5.3, 2)); x.closePath(); x.stroke();
+        if (on) { const tk = k === used - 1 ? Math.max(0, Math.min(1, (now - (st.tickT || 0)) / 260)) : 1, e1 = Math.min(1, tk / 0.4), e2 = Math.max(0, (tk - 0.4) / 0.6); if (tk < 1) dirty = true; x.strokeStyle = GREEN; x.lineWidth = 7; x.beginPath(); x.moveTo(bx + 6, by + 18); x.lineTo(bx + 6 + 10 * e1, by + 18 + 13 * e1); if (e2 > 0) x.lineTo(bx + 16 + 30 * e2, by + 31 - 44 * e2); x.stroke(); } }
+    }
+    { const hh = g.spec || g.hurdle || st.hurdle; if (hh && st.mode !== 'done') { const hp = px({ x: -26.0, z: -16.6 }); drawSpec(g, hp[0], hp[1], hh, { metT: st.specMetT, size: 170, goal: true }); } }
+    if (st.mode !== 'done' && LEGEND) drawMotifs(g);
     if (false && g.brief !== 'plain') { const B = P.BRIEF[g.brief], b0 = px({ x: EDGE, z: PAGES.z - 2.0 }); hand(x, 36); x.textAlign = 'left'; x.fillStyle = INK; x.fillText(B.name, b0[0], b0[1]); inkLine(x, B.note, b0[0] + x.measureText(B.name).width + 22, b0[1], 30, PENCIL, 'left'); }
-    if (!FEWER && st.mode !== 'done') for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
+    if (false && !FEWER && st.mode !== 'done') for (let k = 1; k <= P.pagesOf(g); k++) { const c = px({ x: PAGES.x + (k - 1) * 1.8, z: PAGES.z }); hand(x, 46); x.textAlign = 'center'; x.fillStyle = k === g.page ? INK : k < g.page ? PENCIL : FAINT; x.fillText(String(k), c[0], c[1] + 14); if (k === g.page) ring(x, [c[0], c[1]], 28, 26, 4, INK); }
     // one circle for each reaction on this page. A done one is filled with the color of its reagent, and yellow joins those in a row
     const tr = g.trail.slice(st.pageStart).filter(t => !t.free);
     for (let k = 1; k < (st.mode === 'done' ? 1 : tr.length); k++) if (tr[k].cont) { const a0 = px({ x: STEP.x + (k - 1) * STEPD, z: STEP.z }), b0 = px({ x: STEP.x + k * STEPD, z: STEP.z }); x.strokeStyle = PART.r; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(a0[0] + 34, a0[1] + 40); x.lineTo(b0[0] - 34, b0[1] + 40); x.stroke(); }
     const cross = (c, col) => { x.strokeStyle = col; x.lineWidth = 6; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - 15, c[1] - 13); x.lineTo(c[0] + 15, c[1] + 13); x.moveTo(c[0] + 15, c[1] - 13); x.lineTo(c[0] - 15, c[1] + 13); x.stroke(); };
-    for (let k = 0; k < (st.mode === 'done' ? 0 : P.stepsOf(g)); k++) { const c = px({ x: STEP.x + k * STEPD, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null; ring(x, c, 30, 27, 5, INK, 0.1 * k);
-      if (k < g.pageSteps) { const t = tr[k]; if (t && t.wasted) cross(c, PENCIL); else if (t && t.bank) tray(x, c[0], c[1] - 2, 0.5, INK, 5); else { x.strokeStyle = t ? rgb(colOf(t.id)) : INK; x.fillStyle = x.strokeStyle; x.beginPath(); x.ellipse(c[0] + 1, c[1], 19, 17, 0.2, 0, 6.3); x.fill(); } }
-      else if (qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.5, INK, 5);
-      else if (qid) { const fits = qid === P.BANKID || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(qid)); x.fillStyle = cc; x.globalAlpha = fits ? 0.9 : 0.3; x.beginPath(); x.ellipse(c[0] + 1, c[1], 21, 19, 0.2, 0, 6.3); x.fill(); x.globalAlpha = 1; if (qid === P.SYN.finish) { marker(x, 30); x.textAlign = 'center'; x.fillStyle = '#fbf8ee'; x.fillText('F', c[0] + 1, c[1] + 11); } }
-      else if (st.mode !== 'done') { hand(x, 34); x.textAlign = 'center'; x.fillStyle = FAINT; x.fillText(String(k + 1), c[0] + 1, c[1] + 11); }
+    // the three places of this turn: large, numbered, and filled with the reagent's own picture and name as it is chosen
+    for (let k = 0; k < (st.mode === 'done' ? 0 : P.stepsOf(g)); k++) { const c = px({ x: STEP.x + k * STEPD, z: STEP.z }), qi = k - g.pageSteps, qid = st.mode !== 'done' && qi >= 0 && g.queue ? g.queue[qi] : null, tdone = k < g.pageSteps ? tr[k] : null, id = qid || (tdone && !tdone.wasted && !tdone.bank ? tdone.id : null);
+      // a reagent that has just been chosen drops into its place
+      const key = 'q' + k + ':' + (qid || ''); st.slotT = st.slotT || {}; if (qid && st.slotT.key !== undefined && !st.slotT[key]) st.slotT[key] = now; if (!qid) Object.keys(st.slotT).forEach(q => { if (q.indexOf('q' + k + ':') === 0) delete st.slotT[q]; }); st.slotT.key = 1;
+      const age = qid && st.slotT[key] ? (now - st.slotT[key]) / 260 : 9, pop = age < 1 ? 1 + 0.35 * (1 - age) * Math.cos(age * 7) : 1; if (age < 1) dirty = true;
+      ring(x, c, 54, 50, id ? 6 : 5, id || qi === (g.queue ? g.queue.length : 0) ? INK : PENCIL, 0.1 * k);
+      { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(k + 1), c[0] - 46, c[1] - 48); }
+      if (tdone && tdone.wasted) cross(c, PENCIL); else if ((tdone && tdone.bank) || qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.7, INK, 5);
+      else if (id && qid && age < 0.85 && TILE[id] && slots.findIndex(q => q && q.id === id) >= 0) { // the picture flies from the shelf to its place: 220 ms, eased, landing with a small pop
+        const li = slots.findIndex(q => q && q.id === id), fr = px(LAB[li]), u = Math.min(1, age / 0.85), e = 1 - Math.pow(1 - u, 3), fxp = fr[0] + (c[0] - fr[0]) * e, fyp = fr[1] + (c[1] - fr[1]) * e - 60 * Math.sin(Math.PI * u), sc2 = 1.5 + (0.82 - 1.5) * e; x.save(); x.translate(fxp, fyp); x.scale(sc2, sc2); fragOrChip(x, TILE[id][1], 0, 6, true); x.restore(); dirty = true; }
+      else if (id) { const fits = !qid || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(id)), tl = TILE[id]; x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = (fits ? 0.28 : 0.12) * (tdone ? 0.6 : 1); x.fillStyle = cc; x.beginPath(); x.ellipse(1, 0, 46, 42, 0.2, 0, 6.3); x.fill(); x.globalAlpha = fits ? (tdone ? 0.55 : 1) : 0.35;
+        if (id === P.SYN.finish) { marker(x, 40); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('F', 1, 14); } else if (tl) { x.save(); x.scale(0.82, 0.82); fragOrChip(x, tl[1], 0, 6, true); x.restore(); }
+        x.restore();
+        if (tdone) { x.strokeStyle = GREEN; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] + 14, c[1] + 16); x.lineTo(c[0] + 24, c[1] + 30); x.lineTo(c[0] + 46, c[1] - 6); x.stroke(); } }
     }
     // the reaction arrow after the circles fires the page
-    if (P.RULE.queue && g && !g.over && (play || st.firing) && !g.chain) { const f = FIREP(), on = lineUp || !!st.homWait, hov = st.mark === 'fire' && on; arrow(x, { x: f.x - 1.3, z: f.z }, { x: f.x + 1.7, z: f.z }, hov ? 15 : 11, on ? INK : FAINT); if (st.homWait && !st.homPre) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? PENCIL : FAINT; const fc = px({ x: f.x, z: f.z + 1.25 }); x.fillText('turn', fc[0], fc[1]); } }
+    if (P.RULE.queue && g && !g.over && (play || st.firing) && !g.chain) { const f = FIREP(), on = lineUp || !!st.homWait, hov = st.mark === 'fire' && on; arrow(x, { x: f.x - 3.6, z: f.z }, { x: f.x + 3.2, z: f.z }, hov ? 19 : 15, on ? INK : FAINT); if (st.homWait && !st.homPre) { hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? PENCIL : FAINT; const fc = px({ x: f.x, z: f.z + 1.25 }); x.fillText('turn', fc[0], fc[1]); } }
     // how much has been made, and the number to beat
     const q = px(MADE), bq = px(BEAT), beaten = st.shown >= st.quota, done = st.mode === 'done';
     if (!fe()) { const txt = fmt(st.shown), size = fit(x, txt, 112 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), 400, marker), mw = x.measureText(txt).width; st.madeW = mw; x.textAlign = 'left'; x.fillStyle = beaten ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
@@ -2097,11 +2182,16 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let f = 0.5 * top / Math.max(1, st.quota); if (top >= st.quota) { f = fr(vals.length - 1); for (let k = 0; k + 1 < vals.length; k++) if (top < vals[k + 1]) { f = fr(k) + (fr(k + 1) - fr(k)) * (top - vals[k]) / (vals[k + 1] - vals[k]); break; } }
       // the track: the round's total runs along it as a line of ink toward the red flag, which is the number to beat; the flags past it are the marks, each with the coin it pays
       x.lineCap = 'round'; x.strokeStyle = FAINT; x.lineWidth = 5; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * (n ? 1 : 0.5), y - 3); x.stroke();
-      if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 11; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
+      x.strokeStyle = FAINT; x.lineWidth = 22; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * 0.5, y - 1.5); x.stroke();
+      if (f > 0.002) { x.strokeStyle = beaten ? GREEN : INK; x.lineWidth = 18; x.beginPath(); x.moveTo(T0[0], y); x.lineTo(T0[0] + W * f, y - 3 * f); x.stroke(); }
+      // the finish post: a bold red bar across the track with a chequered head; it turns green and rings out once when the yield crosses it
+      { const fx = T0[0] + W * 0.5, on0 = done ? top >= st.quota : !!st.passT[0], col = on0 ? GREEN : REDINK, age0 = st.passT[0] ? (now - st.passT[0]) / 700 : 9; x.strokeStyle = col; x.lineWidth = 12; x.lineCap = 'butt'; x.beginPath(); x.moveTo(fx, y - 74); x.lineTo(fx, y + 26); x.stroke(); x.lineCap = 'round';
+        for (let r = 0; r < 2; r++) for (let q2 = 0; q2 < 3; q2++) { x.fillStyle = (r + q2) % 2 ? col : 'rgba(255,255,255,0.9)'; x.fillRect(fx + 6 + q2 * 16, y - 74 + r * 16, 16, 16); } x.strokeStyle = col; x.lineWidth = 3; x.strokeRect(fx + 6, y - 74, 48, 32);
+        if (age0 < 1) { x.globalAlpha = 1 - age0; x.strokeStyle = GREEN; x.lineWidth = 10 * (1 - age0) + 2; x.beginPath(); x.ellipse(fx, y - 20, 60 + 260 * age0, 44 + 150 * age0, 0, 0, 6.3); x.stroke(); x.globalAlpha = 1; dirty = true; } }
       if (done && !st.ypass) { const gx0 = T0[0] + W * f + 8, gx1 = T0[0] + W * fr(0) - 16, kk = Math.max(0, Math.min(1, (now - (st.doneT || now) - 300) / 500)); if (gx1 > gx0 && kk > 0) { const ge = gx0 + (gx1 - gx0) * kk; x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(gx0, y - 4); x.lineTo(ge, y - 4); x.moveTo(gx0, y - 22); x.lineTo(gx0, y + 14); x.moveTo(ge, y - 22); x.lineTo(ge, y + 14); x.stroke(); if (kk < 1) dirty = true; } }
       vals.forEach((v, k) => { const fx = T0[0] + W * fr(k), on = done ? top >= v : !!st.passT[k], tx = fmtK(v);
-        if (k === 0) { if (!st.flags3) flag(x, fx, y, 62, on ? GREEN : REDINK, true); marker(x, 50); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 10, y + 58); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
-        else { if (!st.flags3) flag(x, fx, y, 48, on ? GREEN : PENCIL, on); hand(x, 28); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 42); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
+        if (k === 0) { marker(x, 64); x.textAlign = 'center'; x.fillStyle = on ? GREEN : REDINK; x.fillText(tx, fx + 4, y + 72); if (false && st.passT[0]) { const qw = x.measureText(tx).width / 2 + 14; strike(x, fx + 10 - qw, y + 46, fx + 10 + qw, y + 34, (now - st.passT[0]) / 120, 7, GREEN); } }
+        else { if (!st.flags3) flag(x, fx, y, 40, on ? GREEN : PENCIL, on); hand(x, 26); x.textAlign = 'center'; x.fillStyle = on ? GREEN : PENCIL; x.fillText(tx, fx + 6, y + 40); if (false && on && st.passT[k]) { const mw = x.measureText(tx).width / 2 + 8; strike(x, fx + 6 - mw, y + 35, fx + 6 + mw, y + 28, (now - st.passT[k]) / 120, 5, GREEN); } if (P.RULE.coins) rcoin(x, fx + 50, y - 26, 15, on ? 1 : 0.6); } });
       if (P.RULE.coins) { const e = done && st.earn ? st.earn.marks + st.earn.interest + (st.earn.extra || 0) : 0; purse(x, T1[0] + 86, y - 4, run.coins || 0, 17, e); } }
     // The rest of the rack and the redraw: top right, above the hand. Each reagent that is not in the hand is a group
     // of its use dots. The redraw is a turning arrow, and beside it the one dot it costs, struck through.
@@ -2156,7 +2246,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       }
       x.restore(); x.globalAlpha = 1;
     } else if (st.call) st.call = null;
-    if (st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
+    if (false && st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
       const zs = zones(), halo = (txt, cx, cy, size, col, font) => { (font || hand)(x, size); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#fbf8ee'; x.strokeText(txt, cx, cy); x.fillStyle = col; x.fillText(txt, cx, cy); };
       if (NAMEV === 'words') zs.forEach(q => { const c = px({ x: q.lx, z: q.lz }); halo(q.name, c[0], c[1], 28, PENCIL); });
       if ((NAMEV === 'hover' || NAMEV === 'both') && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
@@ -2168,7 +2258,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (k >= 1) { const hx = from[0] + (tgt[0] - from[0]) * 0.86, hy = from[1] + (tgt[1] - from[1]) * 0.86, a = Math.atan2(tgt[1] - from[1], tgt[0] - from[0]); x.strokeStyle = REDINK; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(hx - Math.cos(a - 0.5) * 34, hy - Math.sin(a - 0.5) * 34); x.lineTo(hx, hy); x.lineTo(hx - Math.cos(a + 0.5) * 34, hy - Math.sin(a + 0.5) * 34); x.stroke(); }
           halo(cur.say, from[0] + (right ? -40 : 40), from[1] - 26, 46, REDINK, marker); x.globalAlpha = 1; dirty = true; } }
     }
-    if (g && P.RULE.cascade && g.self && g.self.length > 1 && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'zip', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'snap', snap6: 'snap', weld: 'weld' }, c = px({ x: -9.6, z: -17.95 }); let dx = 0; hand(x, 22); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
+    if (LEGEND && g && P.RULE.cascade && g.self && g.self.length > 1 && (st.mode === 'play' || st.mode === 'move')) { const TOK = { aldol: 'C=O+C=O', taut: 'C=C+OH', cyclize: 'OH+OH', lactol: 'zip', enone: 'C=O+OH', ether: 'Cl+OH', aromatize: 'ring', snap: 'snap', snap6: 'snap', weld: 'weld' }, c = px({ x: -9.6, z: -17.95 }); let dx = 0; hand(x, 22); x.textAlign = 'left'; const key = g.trail.length + ':' + g.page; if (!st.selfK || st.selfK.key !== key) st.selfK = { key, on: g.self.filter(id => RX.CARDS[id].find(g.m).length) };
       g.self.forEach(id => { if (dx > 640) return; const t = TOK[id] || id, on = st.selfK.on.includes(id); x.fillStyle = on ? rgb(colOf(id)) : FAINT; x.fillText(t, c[0] + dx, c[1]); dx += x.measureText(t).width + 26; }); }
     // the family of the round's molecule and its rule, above the round
     if (g && g.m && meta.stage >= 2 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const c = px({ x: EDGE + 0.2, z: PAGES.z - 2.5 }); let dx = 0; [].forEach(q => { const K = P.KIN[q.id], nm = K.name + (q.lv > 1 ? ' ' + q.lv : ''); marker(x, 44); x.textAlign = 'left'; x.fillStyle = K.col; x.fillText(nm, c[0] + dx, c[1]); const w1 = x.measureText(nm).width, w2 = 0; dx += Math.max(w1, w2) + 34; }); }
@@ -2196,7 +2286,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the jars: how much each holds of what fills it. A full one carries the name of what hatched
     if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j || !meta.hatched[k] || (run && run.hom === k)) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
     // the homunculus of the run: its name, a drop for each time it has been fed, and when the page waits on it what it would do
-    if (g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
+    if (false && g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
       { const key = g.trail.length + ':' + g.hom.fed + ':' + g.hom.used + ':' + g.page; if (st.litK !== key) { st.litK = key; try { st.lit = P.homLit(g); } catch (e) { st.lit = false; } } }
       hand(x, st.lit ? 30 : 26); x.textAlign = 'center'; x.fillStyle = st.lit ? col : PENCIL; x.fillText(H.name, c[0], c[1]); for (let k = 0; k < H.need; k++) drop(x, c[0] + (k - (H.need - 1) / 2) * 24, c[1] + 34, 8, col, k < fed);
       if (st.homNone && ready) strike(x, c[0] - 44, c[1] + 40, c[0] + 44, c[1] + 28, 1, 5, PENCIL);
@@ -2346,7 +2436,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (on) { const tq = now / 1000, A = st.homAct, age = A ? now - A.t : 1e9, floaty = homObj.id === 'h2', ease = u => u * u * (3 - 2 * u); let hx = HOMP.x, hz = HOMP.z, y = floaty ? 0.3 + 0.22 * Math.sin(tq * 1.7) : 0, sy = floaty ? 1 : 1 + 0.03 * Math.sin(tq * 2.3), rz = floaty ? 0.09 * Math.sin(tq * 1.1) : 0.02 * Math.sin(tq * 1.5);
         if (age < 470) { const k = ease(Math.min(1, age / 190)) * (1 - ease(Math.max(0, Math.min(1, (age - 270) / 200)))); hx += (A.to.x - HOMP.x) * k; hz += (A.to.z - HOMP.z) * k; y += Math.sin(k * Math.PI) * (floaty ? 1.2 : 0.5); if (homObj.id === 'water') { sy *= 1 - 0.18 * Math.abs(Math.sin(age / 38)); if (!A.pd || now - A.pd > 36) { A.pd = now; st.puddles.push({ x: hx + 0.5 * Math.sin(age / 20), z: hz + 1.1, r: 13 + 9 * Math.abs(Math.sin(age / 31)), t: now }); } } else if (floaty) rz += 0.25 * Math.sin(age / 60); else rz += 0.12 * Math.sin(age / 45); dirty = true; } else if (A) st.homAct = null;
         if (st.lit) y += 0.1 + 0.05 * Math.sin(tq * 3); if (st.homWait) y += 0.12 + (st.homHover ? 0.3 : 0);
-        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.45, 1.45 * sy, 1.45);
+        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.9, 1.9 * sy, 1.9);
         { const fg = G.children[0], Hh = P.HOMS[homObj.id], fedF = g && g.hom ? Math.min(1, g.hom.fed / Math.max(1, Hh.need)) : 0, rdy = !!st.lit || !!st.homWait; if (fg && AA.rxKit.pose) { if (A && age < 470) AA.rxKit.poseToward(fg, T, new T.Vector3(A.to.x, 0, A.to.z), Math.min(1, age / 190), 0.3 * Math.sin(age / 90), tq); else AA.rxKit.pose(fg, { lean: [0, -0.35 * fedF * (rdy ? 0.4 : 1)], reach: rdy ? 0.45 + 0.1 * Math.sin(tq * 2.2) : 0, squash: rdy ? -0.35 : 0.25 * fedF, t: tq }); } } } }
     if (st.mode === 'hom' && homShelf) { const hs = homShelf, K = hs.K, pk = st.homPick, bad = st.homBad && now - st.homBad.t < 450 ? st.homBad : null;
       hs.slots.forEach((q, i) => { const hov = st.hover === i && !pk; let y = hov && q.ready ? 0.45 : 0, rz = q.ready ? 0.025 * Math.sin(now / 900 + i) : 0, vis = true;
@@ -2359,7 +2449,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     homObjs.forEach(k => { const age = (now - k.born) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), dropY = u < 1 ? (1 - u) * (1 - u) * 9 : 0, hov = st.hover === k.slot; k.grp.visible = age >= 0; k.grp.position.y = dropY + (k.id === 'h2' ? 0.3 + 0.2 * Math.sin(now / 600) : 0) + (hov ? 0.6 : 0); k.grp.rotation.z = k.id === 'h2' ? 0.08 * Math.sin(now / 900) : 0.02 * Math.sin(now / 700 + k.slot); });
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
     if (st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom') dirty = true;
-    if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0.05 * Math.sin(now / 1000 * 1.3 + i * 1.7); } });
+    if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0; } });
     if (st.gains.length) { st.gains = st.gains.filter(q => { if (now < q.t + q.dur) return true; st.want = Math.max(st.want, q.to); st.madeBump = 1; st.tickT = now; return false; }); if (!st.gains.length && g && st.mode !== 'done' && !st.pending) st.want = P.made(g); dirty = true; }
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * (now - (st.tickT || 0) < 260 ? 50 : 16)); dirty = true; }
@@ -2385,8 +2475,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), st.cz + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
-    prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
+    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { center.group.scale.setScalar(st.sc); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0;  }
+    
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'); flask.grp.visible = false; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.25 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.25 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.25); if (boil) dirty = true; } }
     kitObjs.forEach((k, i) => animKit(k, i, now, heat));
@@ -2405,6 +2495,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     debugLayOf: (model, keep) => { const mm = buildMol(model, null, false), hv = []; mm.balls.forEach((b, a) => { if (a.el !== 'H') hv.push(a); }); let ov = 9, bl = 0, op = null, bp = null; const bonded = new Set(); mm.sticks.forEach(q => { bonded.add(q.a.id + '_' + q.b.id); bonded.add(q.b.id + '_' + q.a.id); if (q.a.el === 'H' || q.b.el === 'H' || q.rung) return; const A = mm.at.get(q.a), B = mm.at.get(q.b), r = A.distanceTo(B) / FL.L; if (r > bl) { bl = r; bp = [hv.indexOf(q.a), hv.indexOf(q.b)]; } });
       for (let i = 0; i < hv.length; i++) for (let j = i + 1; j < hv.length; j++) { const A = mm.at.get(hv[i]), B = mm.at.get(hv[j]), d = Math.hypot(A.x - B.x, (A.z - B.z) * 0.87) / (radOf(hv[i]) + radOf(hv[j])); if (d < ov) { ov = d; op = [i, j, hv[i].el, hv[j].el]; } }
       const out = { ov: +ov.toFixed(2), bl: +bl.toFixed(2), op, bp, n: hv.length, fl: !!mm.fl, rows: mm.fl ? mm.fl.rows : 0, w: mm.box ? +mm.box.w.toFixed(1) : 0, d: mm.box ? +mm.box.d.toFixed(1) : 0 }; if (keep) out.pts = hv.map(a => [a.el, +mm.at.get(a).x.toFixed(2), +mm.at.get(a).z.toFixed(2)]); freeMol(mm); return out; },
+    stainCheck: n => { let worst = -9, count = 0; for (let i = 0; i < (n || 50); i++) { const L = stainSet(1000 + i * 7919, (i % 9) / 8); L.forEach(q => { worst = Math.max(worst, q.pen); count++; }); } return { pages: n || 50, stains: count, worstInside: +worst.toFixed(3) }; },
     titleGo, titleOn: () => title.on, debugCam: () => cam, measure: () => { const m = center; if (!m || !m.balls) return null; m.group.updateMatrixWorld(true); const sc = m.group.scale.x, pts = [], v = new T.Vector3(), w = new T.Vector3(), right = new T.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
       m.balls.forEach((b, a) => { if (!b.mesh.visible) return; const r = b.mesh.scale.x * sc; if (r < 0.05 * sc) return; b.mesh.getWorldPosition(v); w.copy(v).addScaledVector(right, r); const p = v.clone().project(cam), q = w.project(cam); pts.push({ a, x: (p.x + 1) * 640, y: (1 - p.y) * 360, r: Math.hypot((q.x - p.x) * 640, (q.y - p.y) * 360), h: a.el === 'H' }); });
       let ov = 9, ovH = 9, op = null; for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) { const A = pts[i], B = pts[j], d = Math.hypot(A.x - B.x, A.y - B.y) / (A.r + B.r); if (A.h || B.h) { if (d < ovH) ovH = d; } else if (d < ov) { ov = d; op = [A.a.el, B.a.el, Math.round((A.x + B.x) / 2), Math.round((A.y + B.y) / 2)]; } }
