@@ -99,6 +99,8 @@ AM6. 13 November: shown five rewritten notes in the plain voice ("Balance reads 
 
 AM7. 13 November: "Some of that writing still sucks. Like the coffee cup being dry, it's bad." The bad notes are ones where nothing happens, ones trying to be poignant, and ones hinting too hard. Every note is tied to play. Shown the notes tied to play: "Thread good, plain ones dull": the ordinary notes must not be a readout of numbers already on screen; they say something the player can use. The book: "Bring a little back", late and plain. Bleed-through picked: "b: a stain from beneath".
 
+AT. Picks of 13 November, midday: the notebook is an open two-page spread (molecule and yield on the right page; goal, slots and notes on the left); near misses: flatter chain bonuses so yields bunch closer to the mark; helpers stronger (each instrument about 1.2 times, a creature about 1.5) so that a casual player who keeps at it can win a nine-round run.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
