@@ -499,6 +499,8 @@ function start(app) {
         if (n >= 5 && bad()) { const gd = bd.atoms.map(() => new Array(n).fill(99)), ixb = new Map(); bd.atoms.forEach((a, i) => ixb.set(a, i)); for (let i = 0; i < n; i++) { gd[i][i] = 0; const q = [i]; for (let qi = 0; qi < q.length; qi++) { const u = q[qi]; cadj.get(bd.atoms[u]).forEach(b => { const v = ixb.get(b); if (v != null && gd[i][v] > gd[i][u] + 1) { gd[i][v] = gd[i][u] + 1; q.push(v); } }); } }
           const tg = g => (g <= 1 ? FL.L : g === 2 ? FL.L * 1.72 : FL.L * (1.72 + 0.8 * (g - 2)));
           for (let it = 0; it < 400; it++) { const soft = it < 320; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const g = gd[i][j], A = pts[i], B = pts[j]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(i * 1.3 + j); dz = Math.sin(i * 1.3 + j); d = 1; } let t, k; if (g <= 1) { t = FL.L; k = 0.5; } else if (soft) { t = tg(g); k = 0.5 / (g * g); } else { t = Math.max(apartOf(bd.atoms[i], bd.atoms[j]) + 0.15, 1.45); if (d >= t) continue; k = 0.5; } const f = (d - t) / d * k; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; } } } }
+      // the new shape keeps the handedness the ring had on the page before (it is never flipped over between two drawings): compare the turn of its first ring
+      if (rings.length) { const r0 = rings[0], area = get => { let A2 = 0; r0.forEach((a, i) => { const p = get(a), q = get(r0[(i + 1) % r0.length]); A2 += p.x * q.z - q.x * p.z; }); return A2; }, was = area(a => src.get(a)), is = area(a => P2.get(a)); if (Math.abs(was) > 0.5 && was * is < 0) { pts.forEach(p => { p.z = -p.z; }); bd.flipped = true; } }
       bd.atoms.forEach((a, i) => src.set(a, { x: pts[i].x, z: pts[i].z })); });
     const rows = f.rows || 1, pos = new Map(), grid = new Map(), onPath = new Set(f.path);
     const rowAt = i => { const a = f.path[i]; return a ? f.pos.get(a)[0] : null; }, loose = new Set();
@@ -510,14 +512,19 @@ function start(app) {
     // a body in the line: its own regular shape, turned and set down on the places its line atoms take; what is off the line bulges to the outside
     bodies.forEach(bd => { bd.W = f.path.filter(a => bodyOf.get(a) === bd); bd.i0 = bd.W.length ? f.path.indexOf(bd.W[0]) : 1e9; });
     bodies.slice().sort((a, b) => a.i0 - b.i0).forEach(bd => { const W = bd.W; if (!W.length) return; const r0 = grid.get(W[0]).r, side = r0 === 0 && rows > 1 ? -1 : r0 === rows - 1 && rows > 1 ? 1 : (r0 % 2 ? 1 : -1), off = bd.atoms.filter(a => !onPath.has(a)), W0 = W.filter(a => grid.get(a).r === r0);
-      const tryFit = (mir, Wl) => { const S = Wl.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; }), Gp = Wl.map(a => grid.get(a)), cs = cen(S), cg = cen(Gp); let ang; if (Wl.length >= 2) { let sn = 0, co = 0; S.forEach((s, i) => { const ax = s.x - cs.x, az = s.z - cs.z, bx = Gp[i].x - cg.x, bz = Gp[i].z - cg.z; sn += ax * bz - az * bx; co += ax * bx + az * bz; }); ang = Math.atan2(sn, co); } else { const all = cen(bd.atoms.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; })); ang = Math.atan2(side, 0) - Math.atan2(all.z - cs.z, all.x - cs.x); }
+      const tryFit = (mir, Wl, Gq) => { const S = Wl.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; }), Gp = Gq || Wl.map(a => grid.get(a)), cs = cen(S), cg = cen(Gp); let ang; if (Wl.length >= 2) { let sn = 0, co = 0; S.forEach((s, i) => { const ax = s.x - cs.x, az = s.z - cs.z, bx = Gp[i].x - cg.x, bz = Gp[i].z - cg.z; sn += ax * bz - az * bx; co += ax * bx + az * bz; }); ang = Math.atan2(sn, co); } else { const all = cen(bd.atoms.map(a => { const s = src.get(a); return { x: s.x, z: mir ? -s.z : s.z }; })); ang = Math.atan2(side, 0) - Math.atan2(all.z - cs.z, all.x - cs.x); }
         return { ang, cs: { x: cs.x, z: mir ? -cs.z : cs.z }, cg, mir }; };
       // of the ways to set it down (on all its places in the line, or only on those of its first row; either face up), the one that lands on nothing else
       const others = []; f.path.forEach(a => { if (bodyOf.get(a) !== bd) others.push(pos.get(a) || grid.get(a)); }); pos.forEach((p, a) => { if (!onPath.has(a) && bodyOf.get(a) !== bd) others.push(p); });
-      let best = null; (W0.length < W.length ? [W, W0] : [W]).forEach((Wl, wi) => [false, true].forEach(mir => { const t = tryFit(mir, Wl); rigid(bd, t.ang, t.cs, t.cg, mir); let sc = 0, clash = 0; off.forEach(a => { sc += (pos.get(a).z - t.cg.z) * side; }); W.forEach(a => { const p = pos.get(a), q = grid.get(a); sc -= 0.5 * Math.hypot(p.x - q.x, p.z - q.z); }); bd.atoms.forEach(a => { const p = pos.get(a); others.forEach(o => { if (Math.hypot(o.x - p.x, o.z - p.z) < 1.2) clash++; }); }); if (!best || clash < best.clash || (clash === best.clash && sc > best.sc)) best = { t, sc, clash, wi }; }));
+      // a ring that had to start a new row (the rule never splits a ring across a turn) leaves places empty behind it. It is drawn where it would stand if the
+      // row simply ran on (so the bond into it is a normal bond and it does not jump when the rule moves it); the rest of the line turns under it.
+      const pvA = f.path[bd.i0 - 1], gpv = pvA && !bodyOf.get(pvA) ? grid.get(pvA) : null, sgP = gpv ? (gpv.r % 2 === 0 ? 1 : -1) : 1, turnIn = gpv && gpv.r < r0 && W.length >= 2 ? W.map((a, k2) => ({ x: gpv.x + sgP * (k2 + 1) * FL.DX, z: gpv.r * FL.RG + ((k2 % 2 === 0) === gpv.dn ? -FL.ZA : FL.ZA) })) : null;
+      let best = null; (turnIn ? [W] : W0.length < W.length ? [W, W0] : [W]).forEach((Wl, wi) => [false, true].forEach(mir => { const t = tryFit(mir, Wl, turnIn); rigid(bd, t.ang, t.cs, t.cg, mir); let sc = 0, clash = 0; off.forEach(a => { sc += (pos.get(a).z - t.cg.z) * side; }); W.forEach((a, k2) => { const p = pos.get(a), q = turnIn ? turnIn[k2] : grid.get(a); sc -= 0.5 * Math.hypot(p.x - q.x, p.z - q.z); }); bd.atoms.forEach(a => { const p = pos.get(a); others.forEach(o => { if (!turnIn && Math.hypot(o.x - p.x, o.z - p.z) < 1.2) clash++; }); }); if (mir) sc -= 4; if (!best || clash < best.clash || (clash === best.clash && sc > best.sc)) best = { t, sc, clash, wi: turnIn ? 2 : wi }; }));
       rigid(bd, best.t.ang, best.t.cs, best.t.cg, best.t.mir); bd.c = cen(bd.atoms.map(a => pos.get(a)));
       // set down on its first row only: the rest of the line carries on from where the body lets it out
-      if (best.wi === 1) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, dz = pl.z - gl.z, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i >= i1 || bodyOf.get(a) === bd) { const gq = grid.get(a); gq.x += dx; gq.z += dz; } }); } });
+      if (best.wi === 1) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, dz = pl.z - gl.z, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i >= i1 || bodyOf.get(a) === bd) { const gq = grid.get(a); gq.x += dx; gq.z += dz; } }); }
+      // drawn on in its old row: what follows keeps its own row but is moved along so that it starts under the place the ring lets it out
+      if (best.wi === 2) { const lastW = W[W.length - 1], pl = pos.get(lastW), gl = grid.get(lastW), dx = pl.x - gl.x, i1 = f.path.indexOf(lastW); f.path.forEach((a, i) => { if (i > i1) { grid.get(a).x += dx; if (i <= i1 + 2) loose.add(a); } }); bd.atoms.forEach(a => { const gq = grid.get(a); if (gq) { gq.r = gpv.r; } }); } });
     f.path.forEach(a => { if (!pos.has(a)) pos.set(a, { x: grid.get(a).x, z: grid.get(a).z }); });
     // everything off the line: groups stand off their atom (leaning aside inside a gap, so two that face do not touch), longer arms zigzag on, side rings keep their shape
     const rowOf = new Map(); f.path.forEach(a => rowOf.set(a, grid.get(a).r)); bodies.forEach(bd => { if (bd.W && bd.W.length) bd.atoms.forEach(a => rowOf.set(a, grid.get(bd.W[0]).r)); });
@@ -653,7 +660,7 @@ function start(app) {
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
   const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
-  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, homeNow = () => (st.mode === 'done' ? HOMED : HOME);
+  const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, benchOn = () => !!run && !P.RULE.bare && meta.stage >= 2 && (st.gear.length > 0 || JARK.some(jarSeen)), homeNow = () => (st.mode === 'done' ? HOMED : benchOn() ? { x: HOME.x, z: HOME.z + 2.7, w: HOME.w, d: HOME.d - 5.4, smax: HOME.smax } : HOME);
   homeE(HOME);
   const flScale = m => { const H = homeNow(), b = m.box; return Math.min(H.smax, H.w / b.w, H.d / b.d); };
   // the folded molecule keeps its start end where it is; the whole is slid, never jumped, so that its box stays in the middle of its home
@@ -697,7 +704,7 @@ function start(app) {
 
   // ---------- state ----------
   // the band along the bottom, left to right: the multiplier, what has been made, the number to beat, the last gain
-  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -21.9, z: 13.55 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -12.4 + i * 5.4, z: -10.4 } : { x: 0.2 + i * 4.75, z: 11.0 });
+  const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -21.9, z: 13.55 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? { x: -8.6 + i * 5.3, z: -10.9 } : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
@@ -776,8 +783,8 @@ function start(app) {
   function buildKit() {
     if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.05) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
-    if (KITV === 'back' && meta.stage >= 2 && !run.noGear && !P.RULE.bare) { const q2 = KITP(2); kitShelf = shelfAt(5, q2.x, q2.z + 0.3, 1.8); }
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
   // every doubling, and what spills stains the page under it.
@@ -809,7 +816,7 @@ function start(app) {
   // water and hydrogen stand from the start. Up to two stand full size; more share the same corner in rows of up to five
   const JARK = Object.keys(P.HOMS).filter(P.homOn), JARC = { water: 0x3a6fd0, h2: 0xe58a7c, co2: 0xa9d8ee, acid: 0x76a83a, wood: 0x9a6b3a, salt: 0xe9e4d6, slime: 0x7fd14a, seedling: 0x3f9a4f, ammonia: 0xbcd6dc, brimstone: 0xc9a227 }, JARINK = { water: '#3a6fd0', h2: '#c8604e', co2: '#4f9fc4', acid: '#5e8f2a', wood: '#8a5a2b', salt: '#8d8872', slime: '#4fa52a', seedling: '#2f7d3f', ammonia: '#6f9aa4', brimstone: '#9c7f12' }, HOMID = { water: 'homwater', h2: 'homh2', co2: 'homco2', acid: 'homacid', wood: 'homwood', salt: 'homsalt', slime: 'homslime', seedling: 'homseed', ammonia: 'homammonia', brimstone: 'hombrimstone' };
   const jarSeen = k => !P.RULE.bare && (k === 'water' || k === 'h2' || !!meta.hatched[k] || (meta.jar[k] || 0) > 0 || (st.by[k] || 0) > 0);
-  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
+  const jarPos = k => { const L = JARK.filter(jarSeen), i = L.indexOf(k), n = L.length; if (i < 0) return null; if (KITV === 'back') { const sp = Math.min(3.4, 11 / Math.max(1, n)); return { x: -22.9 + sp * (i + 0.5), z: -10.9, s: Math.min(1.5, sp / 2.5) }; } if (n <= 2) return { x: i ? BALN.x : BEAK.x, z: BEAK.z, s: 1.2 }; const cols = n <= 5 ? n : Math.ceil(n / 2), rows = n <= 5 ? 1 : 2, sp = 8.6 / cols, row = Math.floor(i / cols); return { x: BEAK.x - 2.2 + sp * (i % cols + 0.5), z: BEAK.z + (rows > 1 ? -2.5 + row * 3.9 : 0), s: Math.min(1.0, sp / 2.75) }; };
   const homFig = kind => { const grp = new T.Group(); AA.rxKit.build(HOMID[kind], T, grp, new T.Color(JARC[kind])); return grp; };
   const jarOf = k => Math.min(P.JAR.full[k], ((meta.jar && meta.jar[k]) || 0) + (st.by[k] || 0));
 
@@ -817,8 +824,8 @@ function start(app) {
     JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = { x: 13.0, z: 13.7 }; let homObj = null, homObjs = [], homOpts = [];
-  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.45); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
+  const HOMP = { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
+  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
@@ -2190,7 +2197,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       }
       x.restore(); x.globalAlpha = 1;
     } else if (st.call) st.call = null;
-    if (st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
+    if (false && st.mode !== 'done' && NAMEV !== 'none' && !FEWER) {
       const zs = zones(), halo = (txt, cx, cy, size, col, font) => { (font || hand)(x, size); x.textAlign = 'center'; x.lineJoin = 'round'; x.lineWidth = 10; x.strokeStyle = '#fbf8ee'; x.strokeText(txt, cx, cy); x.fillStyle = col; x.fillText(txt, cx, cy); };
       if (NAMEV === 'words') zs.forEach(q => { const c = px({ x: q.lx, z: q.lz }); halo(q.name, c[0], c[1], 28, PENCIL); });
       if ((NAMEV === 'hover' || NAMEV === 'both') && st.tip) { const q = zs.find(k => k.id === st.tip); if (q) { const c = px({ x: q.x, z: q.z - q.r - 0.8 }); halo(q.name, c[0], c[1] - 30, 40, INK); halo(q.line, c[0], c[1] + 4, 28, PENCIL); } }
@@ -2230,7 +2237,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the jars: how much each holds of what fills it. A full one carries the name of what hatched
     if (meta.stage >= 2 && g && st.mode !== 'pick' && st.mode !== 'brief' && st.mode !== 'shop') JARK.forEach(k => { const j = jarPos(k); if (!j || !meta.hatched[k] || (run && run.hom === k)) return; const c = px({ x: j.x, z: j.z + 1.75 * j.s / 1.2 }), n = jarOf(k), full = P.JAR.full[k], few = j.s >= 1.2; fit(x, meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), (few ? 26 : 22) * (1 + 0.25 * (st.byBump[k] || 0)), few ? 200 : 84, hand); x.textAlign = 'center'; x.fillStyle = meta.hatched[k] ? JARINK[k] : PENCIL; x.fillText(meta.hatched[k] ? P.HOMS[k].name : few ? n + '/' + full : String(n), c[0], c[1]); });
     // the homunculus of the run: its name, a drop for each time it has been fed, and when the page waits on it what it would do
-    if (g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
+    if (false && g && g.hom && homObj && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse')) { const H = P.HOMS[g.hom.id], c = px({ x: HOMP.x - 3.3, z: HOMP.z - 1.7 }), col = JARINK[g.hom.id], fed = Math.min(H.need, g.hom.fed), ready = fed >= H.need;
       { const key = g.trail.length + ':' + g.hom.fed + ':' + g.hom.used + ':' + g.page; if (st.litK !== key) { st.litK = key; try { st.lit = P.homLit(g); } catch (e) { st.lit = false; } } }
       hand(x, st.lit ? 30 : 26); x.textAlign = 'center'; x.fillStyle = st.lit ? col : PENCIL; x.fillText(H.name, c[0], c[1]); for (let k = 0; k < H.need; k++) drop(x, c[0] + (k - (H.need - 1) / 2) * 24, c[1] + 34, 8, col, k < fed);
       if (st.homNone && ready) strike(x, c[0] - 44, c[1] + 40, c[0] + 44, c[1] + 28, 1, 5, PENCIL);
@@ -2380,7 +2387,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (on) { const tq = now / 1000, A = st.homAct, age = A ? now - A.t : 1e9, floaty = homObj.id === 'h2', ease = u => u * u * (3 - 2 * u); let hx = HOMP.x, hz = HOMP.z, y = floaty ? 0.3 + 0.22 * Math.sin(tq * 1.7) : 0, sy = floaty ? 1 : 1 + 0.03 * Math.sin(tq * 2.3), rz = floaty ? 0.09 * Math.sin(tq * 1.1) : 0.02 * Math.sin(tq * 1.5);
         if (age < 470) { const k = ease(Math.min(1, age / 190)) * (1 - ease(Math.max(0, Math.min(1, (age - 270) / 200)))); hx += (A.to.x - HOMP.x) * k; hz += (A.to.z - HOMP.z) * k; y += Math.sin(k * Math.PI) * (floaty ? 1.2 : 0.5); if (homObj.id === 'water') { sy *= 1 - 0.18 * Math.abs(Math.sin(age / 38)); if (!A.pd || now - A.pd > 36) { A.pd = now; st.puddles.push({ x: hx + 0.5 * Math.sin(age / 20), z: hz + 1.1, r: 13 + 9 * Math.abs(Math.sin(age / 31)), t: now }); } } else if (floaty) rz += 0.25 * Math.sin(age / 60); else rz += 0.12 * Math.sin(age / 45); dirty = true; } else if (A) st.homAct = null;
         if (st.lit) y += 0.1 + 0.05 * Math.sin(tq * 3); if (st.homWait) y += 0.12 + (st.homHover ? 0.3 : 0);
-        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.45, 1.45 * sy, 1.45);
+        G.position.set(hx, y, hz); G.rotation.z = rz; G.scale.set(1.9, 1.9 * sy, 1.9);
         { const fg = G.children[0], Hh = P.HOMS[homObj.id], fedF = g && g.hom ? Math.min(1, g.hom.fed / Math.max(1, Hh.need)) : 0, rdy = !!st.lit || !!st.homWait; if (fg && AA.rxKit.pose) { if (A && age < 470) AA.rxKit.poseToward(fg, T, new T.Vector3(A.to.x, 0, A.to.z), Math.min(1, age / 190), 0.3 * Math.sin(age / 90), tq); else AA.rxKit.pose(fg, { lean: [0, -0.35 * fedF * (rdy ? 0.4 : 1)], reach: rdy ? 0.45 + 0.1 * Math.sin(tq * 2.2) : 0, squash: rdy ? -0.35 : 0.25 * fedF, t: tq }); } } } }
     if (st.mode === 'hom' && homShelf) { const hs = homShelf, K = hs.K, pk = st.homPick, bad = st.homBad && now - st.homBad.t < 450 ? st.homBad : null;
       hs.slots.forEach((q, i) => { const hov = st.hover === i && !pk; let y = hov && q.ready ? 0.45 : 0, rz = q.ready ? 0.025 * Math.sin(now / 900 + i) : 0, vis = true;
