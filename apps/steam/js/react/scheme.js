@@ -133,7 +133,7 @@ const BCAM = SHP ? SHP.cam : [13.4, -8.6, 94, 20];
 // (builder 11) one scale for the things on the bench: bench units to a centimetre. The page would be 64 cm at this scale: a true 21 cm page (3 units a cm) would need a mug 26 units across and a balance as wide as the page, which the screen cannot hold.
 const UCM = 1.0, REALCM = { balance: [20, 12], scalepan: [18, 12], duck: [8, 8], stopwatch: [6, 7], timer: [7, 9], candle: [5, 12], bunsen: [8, 13], mortar: [11, 8], loupe: [9, 4], thermometer: [4, 13], burette: [6, 13], dropper: [4, 11], crystal: [6, 8], magnet: [8, 8], logbook: [12, 9], cards: [9, 6], extinguisher: [9, 13] };
 // the strip of bench above the page where the jars, the instruments and the homunculus stand: the left end, the line they stand on, the step from jar to jar and from instrument to instrument
-const BNZ = { jar: { x0: -32.6, dx: 4.6, z: -30.3, y: 0.55, s: 1.68, n: 10 }, kit: { x0: -33.2, x1: 3.2, z: -24.6, gap: 1.1, k: 0.42, h: 4.45 }, hom: { x: 8.6, z: -24.6 }, fresh: { x: 17.5, z: -24.3 } };
+const BNZ = { jar: { x0: -32.6, dx: 4.6, z: -30.3, y: 0.55, s: 1.68, n: 10 }, kit: { x0: -33.2, x1: 3.2, z: -24.9, gap: 1.1, k: 0.42, h: 4.45, min: 4.2 }, hom: { x: 8.6, z: -24.6 }, fresh: { x: 17.5, z: -24.3 } };
 const TOPB = { x0: SHP ? SHP.top[0] : -32, z: SHAPE === 'a' ? -24.5 : -27.0, jar: 8.9, kit: 8.2, x1: SHP ? SHP.top[1] : 47, k: 1 };
 
 function start(app) {
@@ -993,7 +993,11 @@ function start(app) {
   // (builder 14) the bench has zones, and nothing in one zone reaches into another: the creatures' jars on a low shelf at the back left (BNZ.jar: ten places, one size at any count);
   // the instruments in the front row before the notebook's top edge (BNZ.kit: each at its real width with a gap, all five shrunk together only if they would pass the zone);
   // the creature of the run right of them (BNZ.hom); a clear place for a thing arriving from the catalog (BZ.new); the cash tin and the cup at the top right; the cards down the right
-  function topRow() { const gear = (st && st.gear) || [], key = gear.join(',') + '|' + ((run && run.hom) || ''); if (topRow.key === key) return topRow.v; const ws = gear.map(id => kitCm(id)[0] * UCM), hs = gear.map(id => kitCm(id)[1] * UCM), sum = ws.reduce((a, b) => a + b, 0), k = SHAPE === 'a' ? Math.min(BNZ.kit.k, (BNZ.kit.x1 - BNZ.kit.x0 - BNZ.kit.gap * Math.max(0, ws.length - 1)) / Math.max(1, sum), BNZ.kit.h / Math.max(1, Math.max.apply(null, hs.concat([1])))) : Math.min(1, (TOPB.x1 - TOPB.x0) / Math.max(1, sum + 1.6 * ws.length)); let x = SHAPE === 'a' ? BNZ.kit.x0 : TOPB.x0; const gap = SHAPE === 'a' ? BNZ.kit.gap : 1.6 * k; const kit = ws.map(w => { const c = { x: x + w * k / 2, z: SHAPE === 'a' ? BNZ.kit.z : TOPB.z }; x += w * k + gap; return c; }); topRow.key = key; topRow.v = { k, kit, hom: SHAPE === 'a' ? { x: BNZ.hom.x, z: BNZ.hom.z } : { x: x + 4.2 * k, z: TOPB.z + 0.4 } }; HOMP.x = topRow.v.hom.x; HOMP.z = topRow.v.hom.z; return topRow.v; }
+  function topRow() { const gear = (st && st.gear) || [], key = gear.join(',') + '|' + ((run && run.hom) || ''); if (topRow.key === key) return topRow.v; const A = SHAPE === 'a', Z = BNZ.kit, cm = gear.map(kitCm);
+    // each instrument at its real size times one k; a small one (a stopwatch, a candle) is never drawn under Z.min across, and none is taller than the row; if the row is then too long, all shrink together
+    let ks = cm.map(c => (A ? Math.min(Z.h / c[1], Math.max(Z.k, Z.min / Math.max(c[0], c[1]))) : 1)); const wide = () => cm.reduce((a, c, i) => a + c[0] * UCM * ks[i], 0), room = A ? Z.x1 - Z.x0 - Z.gap * Math.max(0, cm.length - 1) : TOPB.x1 - TOPB.x0 - 1.6 * cm.length; if (wide() > room) { const f = room / wide(); ks = ks.map(q => q * f); }
+    let x = A ? Z.x0 : TOPB.x0; const gap = A ? Z.gap : 1.6, kit = cm.map((c, i) => { const w = c[0] * UCM * ks[i], o = { x: x + w / 2, z: A ? Z.z : TOPB.z }; x += w + gap; return o; }), k = ks.length ? Math.min.apply(null, ks) : (A ? Z.k : 1);
+    topRow.key = key; topRow.v = { k, ks, kit, hom: A ? { x: BNZ.hom.x, z: BNZ.hom.z } : { x: x + 4.2 * k, z: TOPB.z + 0.4 } }; HOMP.x = topRow.v.hom.x; HOMP.z = topRow.v.hom.z; return topRow.v; }
   function piece(id) {
     const grp = new T.Group(), inner = new T.Group(), liq = new T.Color().setHSL(hash(id + 'hue'), 0.75, 0.5), yaw = (hash(id + 'yaw') - 0.5) * 0.7;
     if (!AA.rxKit.build(id, T, inner, liq)) add(new T.BoxGeometry(2, 1.2, 2), std({ color: lin(0x3b3e42), roughness: 0.5 }), 0, 0.6, 0, inner);
@@ -1035,7 +1039,7 @@ function start(app) {
   function buildKit() {
     if (kitShelf) { scene.remove(kitShelf); kitShelf = null; }
     kitObjs.forEach(k => scene.remove(k.grp)); kitObjs = []; AA.rxKit.wishes = run.wishes || 0;
-    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = BENCHV ? kitCm(id).map((c, j) => c * UCM / (j ? k.ph : k.pw)).reduce((a, b) => Math.min(a, b)) * topRow().k : (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
+    st.gear.forEach((id, i) => { const k = piece(id), q = KITP(i); k.grp.position.set(q.x, 0, q.z); k.hx = q.x; k.hz = q.z; k.born = performance.now() + 250 + i * 110; k.base = BENCHV ? kitCm(id).map((c, j) => c * UCM / (j ? k.ph : k.pw)).reduce((a, b) => Math.min(a, b)) * (topRow().ks[i] || topRow().k) : (KITV === 'bottom' ? 1.3 : KITV === 'side' ? 0.85 : 1.55) * sizeOf(id); k.grp.scale.setScalar(k.base); kitObjs.push(k); });
     if (KITV === 'back' && meta.stage >= 2 && !P.RULE.bare && (st.gear.length || JARK.some(jarSeen))) { if (!BENCHV) kitShelf = shelfAt(10, -3.0, -10.5, 1.42); }
   }
   // The flask stands by the count. Its red line is the number to beat. Past the line it boils over, harder with
@@ -1108,7 +1112,7 @@ function start(app) {
   let REFB = null;
   // the homunculus taken into the run stands beside the molecule
   const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 40, z: TOPB.z + 0.4 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
-  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(BENCHV ? 5.4 * topRow().k : 1.9); if (BENCHV) { const sh = flatMesh(1.9, 0.8, softShadow(), 0); sh.rotation.x = 0.8; sh.position.set(0.1, 0.02, 0.1); sh.renderOrder = 2; hold.add(sh); } hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
+  function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(BENCHV ? 2.2 : 1.9); if (BENCHV) { const sh = flatMesh(1.9, 0.8, softShadow(), 0); sh.rotation.x = 0.8; sh.position.set(0.1, 0.02, 0.1); sh.renderOrder = 2; hold.add(sh); } hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
   // Ways of saying what the things on the page are, tried with ?name= on the page:
@@ -3056,12 +3060,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   function bottleSync() {
     if (!BENCHV) return; const seen = new Set(), ids = []; slots.forEach((q, i) => { if (q && !(q.fin && !TILE[q.id])) ids.push(i); });
-    const both = REAG === 'both', n = ids.length, gap = both ? Math.min(7.0, 36.5 / Math.max(1, n)) : Math.min(6.2, 30 / Math.max(1, n)), z0 = (both ? -3.4 : -1.4) - (n - 1) / 2 * gap, sc = Math.min(1, gap / (both ? 7.0 : REAG === 'cards' ? 6.0 : 5.0)), now = performance.now(), qu = (g && g.queue) || [];
+    const both = REAG === 'both', n = ids.length, gap = both ? Math.min(7.0, 36.5 / Math.max(1, n)) : Math.min(6.2, 30 / Math.max(1, n)), z0 = (both ? -3.4 : -1.4) - (n - 1) / 2 * gap, sc = Math.min(1, gap / (both ? 7.0 : REAG === 'cards' ? 6.0 : 5.0)) * (both ? 0.96 : 1), now = performance.now(), qu = (g && g.queue) || [];
     ids.forEach((i, k) => { const q = slots[i], left = g && g.left && !q.fin && !usesHidden() ? (g.left[q.id] || 0) : 1; let b = BT.map.get(q.id);
       const z = z0 + k * gap + 2.2; SPOT[i] = { x: BT.x, z: z - (both ? 0 : 1.2) }; LAB[i] = { x: BT.x, z: z - (both ? 0 : 1.2) }; SLOTW = gap;
       if (left <= 0 && !(g.queue || []).includes(q.id) && !st.firing) { if (b && !b.gone) b.gone = now; if (b) seen.add(q.id); return; }
       if (!b) { b = bottleMake(q.id); BT.map.set(q.id, b); b.grp.position.set(BT.x, 0, z); } seen.add(q.id); b.gone = 0; b.slot = i;
-      b.x = BT.x + (both ? 0.2 * (k - (n - 1) / 2) * gap / 7 : REAG === 'cards' ? (k % 2 ? 0.35 : -0.35) - 0.4 : -0.9 - 0.16 * k); b.z = z; b.sc = sc; const qi = both && !st.firing ? qu.indexOf(q.id) : -1, on = !!q.o || qi >= 0, key = on + ':' + qi; b.isOn = on; if (b.on !== key) { b.on = key; b.draw(b.tx.x, q.id, on, b.W, b.H, qi); b.tx.t.needsUpdate = true; if (b.btx) { bottleDraw(b.btx.x, q.id, on, 240, 388, on); b.btx.t.needsUpdate = true; } if (b.tag) { tagDraw(b.tag.x, q.id, on, 440, 200); b.tag.t.needsUpdate = true; } } });
+      b.x = BT.x + (both ? Math.max(0, 0.2 * (k - (n - 1) / 2) * gap / 7) : REAG === 'cards' ? (k % 2 ? 0.35 : -0.35) - 0.4 : -0.9 - 0.16 * k); b.z = z; b.sc = sc; const qi = both && !st.firing ? qu.indexOf(q.id) : -1, on = !!q.o || qi >= 0, key = on + ':' + qi; b.isOn = on; if (b.on !== key) { b.on = key; b.draw(b.tx.x, q.id, on, b.W, b.H, qi); b.tx.t.needsUpdate = true; if (b.btx) { bottleDraw(b.btx.x, q.id, on, 240, 388, on); b.btx.t.needsUpdate = true; } if (b.tag) { tagDraw(b.tag.x, q.id, on, 440, 200); b.tag.t.needsUpdate = true; } } });
     BT.map.forEach((b, id) => { if (!seen.has(id)) { scene.remove(b.grp); BT.map.delete(id); } });
   }
   function bottlesClear() { BT.map.forEach(b => scene.remove(b.grp)); BT.map.clear(); BT.drops.forEach(d => scene.remove(d.m)); BT.drops = []; BT.flyers.forEach(f => scene.remove(f.m)); BT.flyers = []; BT.lights.forEach(f => scene.remove(f.m)); BT.lights = []; }
