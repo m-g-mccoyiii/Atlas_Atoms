@@ -1315,7 +1315,7 @@ function warm4(sync) {
 // cymbal played backwards. Notes: the chain chord's root on the kettledrums; everything else D, E, G, A.
 // ====================================================================================================================
 let BLD = '';
-const H5 = LAB.H, BREATH5 = 0.32, B5HIT = 0.36, B5LAST = 0.5, B5RISE = 6;   // B5RISE: decibels from the first hit of a cold 12-step chain to its last ordinary hit
+const H5 = LAB.H, BREATH5 = 0.32, B5HIT = 0.45, B5LAST = 0.56, B5RISE = 5;   // B5RISE: decibels from the first hit of a cold 12-step chain to its last ordinary hit
 Object.assign(LAB.INST, {
   taiko: { rr: 2, lo: 26, hi: 41, gen: m => { const f = mf(m), x = H5.modal([[f, 1, 0.95], [f * 1.59, 0.55, 0.5], [f * 2.14, 0.4, 0.34], [f * 2.65, 0.25, 0.24], [f * 3.16, 0.16, 0.18], [f * 3.6, 0.1, 0.14]], 1.3); H5.chirp(x, 0, f * 2.2, f, 0.09, 0.9); H5.burst(x, 0, 0.035, 60, 500, 1.5, 501 + m); H5.burst(x, 0, 0.006, 1200, 5200, 0.8, 502 + m); return H5.norm(H5.fade(x, 0.2), 0.9); } },
   ka:    { rr: 3, fix: 60, gen: () => { const x = H5.modal([[1080, 1, 0.035], [1630, 0.6, 0.028], [2290, 0.4, 0.02], [610, 0.5, 0.045]], 0.15); H5.burst(x, 0, 0.002, 2000, 9000, 0.9, 511); return H5.norm(x, 0.85); } },
@@ -1361,7 +1361,7 @@ function arrB(t, n, d, u, last) {
   if (last) { rcym5(t, t + end, 0.9); roll5('taiko', 31, t, t + end, 0.15, 0.9, 10, 16, { rev: 0.3 }); roll5('snr', NO, t, t + end, 0.05, 0.5, 15, 22, { rev: 0.25, pan: 0.2 }); }
 }
 function hitB(t, n, u, last, tNA, tNH) {
-  const P = Math.min(n, 9), big = last ? 1.2 : 1, h = () => (rnd() - 0.5) * 0.012;
+  const P = Math.min(n, 9), big = (last ? 1.2 : 1) * (1 + Math.max(0, 4 - P) / 6), h = () => (rnd() - 0.5) * 0.012;   // few players: each plays harder
   R5('taiko', 31, t, 0.9 * big, { rev: 0.35 }); if (P >= 2) R5('ka', NO, t, 0.8, { pan: 0.4, rev: 0.2 }); if (P >= 3) R5('taiko', 38, t + 0.006, 0.7 * big, { pan: -0.55, rev: 0.35 }); if (P >= 4) R5('snr', NO, t, 0.6, { pan: 0.2, rev: 0.3 }); if (P >= 5) R5('taiko', 36, t + 0.009, 0.7 * big, { pan: 0.55, rev: 0.35 });
   if (P >= 6) { R5('tom', 45, t, 0.6, { pan: -0.3, rev: 0.3 }); R5('tom', 50, t + 0.005, 0.5, { pan: 0.3, rev: 0.3 }); } if (P >= 7) R5('bdrum', NO, t, 1.0 * big, { rev: 0.3 }); if (P >= 8) R5('cym', NO, t, 0.6 * big, { pan: -0.3, rev: 0.4, hp: 1500 });
   if (P >= 9 || last) { R5('taiko', 26, t, 0.9, { rev: 0.4 }); R5('boom', NO, t, 0.7, {}); R5('tam', NO, t, 0.5, { rev: 0.4 }); }
