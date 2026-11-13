@@ -113,7 +113,7 @@ const EP = Engine.prototype;
 // beats(t0, t1, div): every grid point from t0 up to t1, div units apart (a unit is a sixteenth), as [{ t, u }] (u: the place in
 // its bar). Bars already written are exact; bars to come are worked out the way schedBar will write them. null when the music
 // has no beat (no deck, or a drone). clock(t): tempo, the next beat and the next bar line at or after t.
-EP.barSpu = function (dk, sb) { const E = this, d = (E.rnd - 1) / 8, T = dk.T, bpm = (T.bpm[0] + (T.bpm[1] - T.bpm[0]) * d) * (dk.S.tm || 1), spu = T.upb === 12 ? 60 / bpm / 6 : 60 / bpm / 4, s = dk.sec; return sb === undefined || !s || sb >= s.len ? spu : spu * (1 - 0.07 * E.w() * (sb / Math.max(1, s.len - 1))); };
+EP.barSpu = function (dk, sb) { const E = this, d = (E.rnd - 1) / 8, T = dk.T, bpm = (T.bpm[0] + (T.bpm[1] - T.bpm[0]) * d) * (dk.S.tm || 1), spu = T.upb === 12 ? 60 / bpm / 6 : 60 / bpm / 4, s = dk.sec; return sb === undefined || !s || sb >= s.len || (TK[E.th] && TK[E.th].steady) ? spu : spu * (1 - 0.07 * E.w() * (sb / Math.max(1, s.len - 1))); };
 EP.beats = function (t0, t1, div) {
   const E = this, dk = E.deck; if (!dk || dk.S.drone || dk.dead || !(t1 > t0)) return null; div = div || 4; const out = [], G = dk.grid || [];
   const seg = (t, spu, n) => { for (let u = 0; u < n - 1e-6; u += div) { const x = t + u * spu; if (x >= t0 - 1e-4 && x < t1 - 1e-4) out.push({ t: x, u }); } };
@@ -293,7 +293,7 @@ EP.schedBar = function (dk) {
   if (!dk.sec || dk.sb >= dk.sec.len) newSection(E, dk);
   if (E.gv && E.state !== 'chain' && E.sg > 0.005) { E.sg *= 0.5; E.heat(dk.nextT, 0.6); }                                       // after a chain the surge drains away over a few bars; the slow value stays
   dk.setTempo(); const s = dk.sec, b = dk.sb, t = dk.nextT, inChain = E.gv && E.state === 'chain' && dk.state === 'plan', name = inChain ? dk.T.chain[E.cix] : s.prog[b % s.prog.length], ch = CH[name], u = E.u(), w = E.w();
-  dk.spu *= 1 - 0.07 * w * (b / Math.max(1, s.len - 1));                                                     // the tempo runs away through the section, then is pulled back
+  if (!(TK[E.th] && TK[E.th].steady)) dk.spu *= 1 - 0.07 * w * (b / Math.max(1, s.len - 1));                                                     // the tempo runs away through the section, then is pulled back
   E.cur = []; E.cur.t = t; E.cur.spu = dk.spu; dk.curCh = ch;
   if (dk.bar === 0 && !dk.S.cut) { if (E.gv) { /* a groove needs no marker: its own kit is there */ } else if (E.th === 3) Sm(E, E.fx, { i: 'bdrum', t, g: 0.22 }); else { I_.kick(E, E.fx, t, 0.16, true); N(E, E.fx, { t, ft: 'highpass', f: 5000, g: 0.025, a: 0.002, d: 1.2 }); } }
   if (dk.S.settle && dk.bar === dk.S.settle) { dk.drum = 'main'; E.I = 0.72; E.setI(dk, E.I, t, 0.4); }                // a long celebration eases off after its first statement
@@ -933,6 +933,15 @@ const edmIns = hz => (E, dk, k) => { const g = E.G(1); (dk.edmDuck || (dk.edmDuc
 const EDMLIFT = 2.92;   // seconds from the start of OVERREACT to the lift of the effect (sfx.js: 0.09 + 0.55 + 1.35 + 0.04 + 0.92, less the deck's own lead-in): the drop lands there
 const EDMC = [[0, 2, 4, 3, 5], [0, 3, 1, 4, 2, 5], [5, 4, 2, 3, 1, 2, 0], [1, 4, 2, 6, 3], [1, 3, 5, 4, 2, 0], [0, 2, 1, 3, 2, 4, 3, 6]];   // the pluck figure: cycles of 5, 6, 7, 8 notes that drift against the bar
 const EDMG = { kick: 0.5, clap: 1.1, sn: 0.6, hh: 11, oh: 10, crash: 2.2, sub: 0.17, mid: 0.5, pad: 0.2, stab: 0.2, arp: 0.3, lead: 1, air: 0.05 };          // balance inside the layers
+// (builder 8) THE BEAT. The owner, 13 November: "No real beat". The kick, the clap and the hats have buses of their own that go past
+// the layer levels, the heat filter and the state's own level: the same kick at the same level in every state that has drums,
+// four on the floor, a clap on 2 and 4, a hat on every off-beat. Calm is made by thinning what is around the drums, never the drums.
+const EDMD = { kick: 0.31, clap: 0.5, sn: 0.21, hh: 0.8, oh: 0.65, crash: 0.4, roll: 0.25 };
+function edmBus(E, dk) {
+  if (dk.edmB) return dk.edmB; const B = dk.edmB = {};
+  [['k', 0], ['t', 0.07]].forEach(q => { const i = E.G(1), d = E.G(1), o = E.G(1 / dk.sg0); i.__n = 'drums'; i.connect(d); d.connect(o); o.connect(dk.gs[0]); if (q[1]) { const sd = E.G(q[1]); o.connect(sd); sd.connect(dk.gs[1]); } B[q[0]] = i; B[q[0] + 'd'] = d; });
+  return B;
+}
 // ---- the bar before the drop. OVERREACT's effect strikes, falls, swells and resolves, and 0.92 s after the resolve it lifts:
 // this one bar is stretched to end exactly on that lift, so the drop (kick, bass, the hook) lands with it. No kick, no bass:
 // a hiss and two saws climbing, the chord held with its filter opening, a snare roll that doubles into the drop ----
@@ -962,14 +971,14 @@ function edmPlay(E, dk, t, b, ch, name) {
     if (chain) { const c0 = M.on && M.bar === dk.bar - 1 ? M.s1 : xg * 0.6; x0 = c0; x1 = Math.max(c0, Math.min(1.12, Math.pow(Math.min(1.1, (nS + 2) / nN), 1.2))); M.s0 = x0; M.s1 = x1; M.bar = dk.bar; M.on = 1; }
     else { if (M.on && M.bar === dk.bar - 1) after = M.s1; M.on = 0; }
     const hot = !chain && !intro && drums && (peak || K > 0.6) && !(big && dk.bar < 2) && s.type !== 'S';
-    M.mis = hot && w > 0.15 && b % 4 === 3 && r.chance(0.5 * w) ? 1 + r.i(3) : hot && w > 0.3 && b % 4 === 1 && r.chance(0.25 * w) ? 2 : 0;   // later rounds: 1 the last beat stutters, 2 a bar at half time, 3 the last beat falls silent
+    M.mis = hot && w > 0.15 && b % 4 === 3 && r.chance(0.5 * w) ? 1 : 0;   // later rounds: 1 the last beat stutters, 2 a bar at half time, 3 the last beat falls silent
   }
   const mis = chain ? 0 : M.mis, xs = u => x0 + (x1 - x0) * u / 16, u0 = big && dk.bar === 0 ? dk.edmU0 || 4 : 0, u1 = mis === 3 ? 12 : 16, brk = !!s.brk && b < 4 && !big && !chain && !intro;
   const from = Math.max(at(u0), re ? re + 0.004 : 0), left = at(u1) - from;
   // the kick: none when cool, soft and filtered as the heat comes, open from the middle; and the pump that goes with it
   let kg = 0, klp = 0; if (drums && !intro && !brk) { if (peak) kg = 0.85; else if (K >= 0.32) { const a = clamp((K - 0.32) / 0.2, 0, 1); kg = 0.32 + 0.38 * a; klp = a < 1 ? 170 * Math.pow(2, 4.5 * a) : 0; } }
   if (chain && kg < 0.4) { kg = 0.4; klp = klp || 420; }
-  if (!re) { const dp = !drums || intro ? 0 : peak ? 0.86 : kg > 0 || brk ? 0.3 + 0.5 * clamp((K - 0.3) / 0.4, 0, 1) : 0; if (dp) [0, 4, 8, 12].forEach(u => { if (u >= u0 && u < u1 && !(mis === 2 && u % 8)) edmPump(dk, at(u), dp, sp * 3.2); }); }
+  if (!re) { const dp = !drums ? 0 : peak ? 0.86 : 0.6 + 0.2 * K; if (dp) [0, 4, 8, 12].forEach(u => { if (u >= u0 && u < u1 && !(mis === 2 && u % 8)) edmPump(dk, at(u), dp, sp * 3.2); }); }
   let HD = D; const hit = (i, u, g, o) => { if (u >= u0 && u < u1) Sm(E, HD, Object.assign({ i, t: at(u), g, strict: 1 }, o || {})); };
   const over = chain && E.stepOf > 0 && E.stepN >= E.stepOf;   // the chain's last hit has landed: the roll and the risers have stopped and stay stopped until the game moves on
   if (drums && !re) {
@@ -986,38 +995,36 @@ function edmPlay(E, dk, t, b, ch, name) {
       HD = D;
     } else if (!chain) {
       M.gate = 0;
-      if (after > 0.08) { hit('edm_crash', 0, (0.1 + 0.22 * after) * Q.crash, { pan: -0.2 }); edmSweep(E, D, { t, dur: bar * 0.6, f0: 7000, f1: 500, g0: 0.1 * after, g1: 0, q: 0.8, pan: 0.3 }); }   // the bar after a build: the beat is back, with a crash and a falling hiss
-      if (kg > 0) {
-        (mis === 2 ? [0, 8] : [0, 4, 8, 12]).forEach(u => hit('edm_kick', u, kg * Q.kick, klp ? { lp: klp } : null));
-        if (mis === 1) [13, 14, 15].forEach((u, k) => hit('edm_kick', u, kg * 0.8 * Q.kick, { m: 32 + 2 * k }));
-        else if (!klp && !peak && (s.dv % 3 === 1 ? b % 4 === 3 : s.dv % 3 === 2 && last)) hit('edm_kick', 14, kg * 0.7 * Q.kick);
-        else if (peak && b % 4 === 3 && r.chance(0.5)) hit('edm_kick', 14, 0.7 * Q.kick);
+      // (builder 8) the groove: the kick on every beat, the clap on 2 and 4, a hat on every off-beat, in every state and at every heat
+      const BS = edmBus(E, dk), kh = (i, u, g, o) => { if (u >= u0 && u < u1) Sm(E, i === 'edm_kick' ? BS.k : BS.t, Object.assign({ i, t: at(u), g, strict: 1 }, o || {})); }, Dg = EDMD;
+      if (after > 0.08) { kh('edm_crash', 0, (0.4 + 0.6 * after) * Dg.crash, { pan: -0.2 }); edmSweep(E, BS.t, { t, dur: bar * 0.6, f0: 7000, f1: 500, g0: 0.1 * after, g1: 0, q: 0.8, pan: 0.3 }); }   // the bar after a build: a crash and a falling hiss
+      [0, 4, 8, 12].forEach(u => kh('edm_kick', u, Dg.kick));
+      if (mis === 1) [13, 14, 15].forEach((u, k) => kh('edm_kick', u, Dg.kick * 0.7, { m: 32 + 2 * k }));
+      else if (!intro && K > 0.45 && (s.dv % 3 === 1 ? b % 4 === 3 : s.dv % 3 === 2 && last)) kh('edm_kick', 14, Dg.kick * 0.6);
+      if (!(intro && b === 0)) [4, 12].forEach(u => { kh('edm_clap', u, Dg.clap * (0.8 + 0.25 * K), { pan: 0.05 }); if (peak || K >= 0.6) kh('edm_sn', u, Dg.sn * (peak ? 1.2 : 1), { pan: -0.05 }); });
+      if (!intro && s.dv > 2 && b % 2 && K > 0.5 && r.chance(0.5)) kh('edm_clap', 15, Dg.clap * 0.4, { pan: -0.2 });
+      const open = peak || K >= 0.5;
+      for (let u = 0; u < 16; u++) {
+        if (u % 4 === 2) { if (open) kh('edm_oh', u, Dg.oh * (peak ? 1 : 0.75 + 0.3 * K), { pan: 0.25, dur: sp * 1.8, r: 0.05 }); else kh('edm_hh', u, Dg.hh, { pan: 0.25 }); }
+        else if (K >= 0.36 && (peak || K >= 0.7 ? r.chance(u % 2 ? 0.85 : 0.4) : u % 2 === 1 && r.chance(0.3 + 0.6 * K))) kh('edm_hh', u, Dg.hh * (u % 2 ? 0.4 : 0.28) * (0.8 + 0.4 * r()), { pan: -0.3 });
       }
-      const hK = brk ? Math.min(K, 0.5) : K;
-      if (peak || hK >= 0.7) { for (let u = 0; u < 16; u++) { if (u % 4 === 2) { if (mis === 2 && u % 8 === 2) hit('edm_hh', u, 0.16 * Q.hh, { pan: 0.3 }); else hit('edm_oh', u, 0.26 * Q.oh, { pan: 0.3, dur: sp * 1.9, r: 0.05 }); } else if (r.chance(u % 2 ? 0.8 : 0.35)) hit('edm_hh', u, (u % 2 ? 0.07 : 0.05) * (0.8 + 0.5 * r()) * Q.hh, { pan: -0.3 }); } }
-      else if (hK >= 0.55) { for (let u = 0; u < 16; u++) { if (u % 4 === 2) hit('edm_hh', u, 0.17 * Q.hh, { pan: 0.3 }); else if (r.chance(u % 2 ? 0.75 : 0.3)) hit('edm_hh', u, 0.06 * (0.8 + 0.5 * r()) * Q.hh, { pan: -0.3 }); } }
-      else if (hK >= 0.36) { [2, 6, 10, 14].forEach(u => hit('edm_hh', u, (0.1 + 0.3 * (hK - 0.36)) * Q.hh, { pan: 0.3 })); if (hK > 0.45) [3, 7, 11, 15].forEach(u => { if (r.chance(0.4)) hit('edm_hh', u, 0.05 * Q.hh, { pan: -0.3 }); }); }
-      else if (hK >= 0.25 && !intro) [2, 6, 10, 14].forEach(u => { if (r.chance(0.85)) hit('edm_hh', u, 0.05 * Q.hh, { pan: 0.3, lp: 7000 }); });
-      if (!brk && !intro && (peak || K >= 0.5)) { const cg = (peak ? 1 : 0.56 + (K - 0.5)) * Q.clap; (mis === 2 ? [8] : [4, 12]).forEach(u => { hit('edm_clap', u, cg, { pan: 0.05 }); if (peak || K >= 0.75) hit('edm_sn', u, cg * 0.5, { pan: -0.05 }); }); if (s.dv > 2 && b % 2 && r.chance(0.5)) hit('edm_clap', 15, cg * 0.4, { pan: -0.2 }); }
-      if (!intro && dk.bar > 0 && !brk && (peak ? b % 4 === 0 : K > 0.55 && (b === 0 || (s.brk && b === 4)))) hit('edm_crash', 0, (peak ? 0.22 : 0.16) * Q.crash, { pan: b ? 0.25 : -0.25 });
-      if ((peak ? last : last && s.fill && K > 0.5) && mis !== 3) [8, 10, 12, 13, 14, 15].forEach((u, k) => hit('edm_sn', u, (0.2 + 0.1 * k) * (peak ? 1.3 : 1) * Q.sn, { m: 50 + k * 0.5, pan: (k - 2.5) * 0.08 }));
-      if ((last || (brk && b === 3) || mis === 3) && K > 0.4) [-0.5, 0.5].forEach(pan => edmSweep(E, D, { t: at(8), dur: 8 * sp, f0: 800, f1: 8000, g0: 0, g1: 0.03 + 0.05 * K, q: 0.8, pan }));
-      if (intro && last) { for (let u = 0; u < 16; u++) if (u >= 8 || u % 2 === 0) hit('edm_sn', u, (0.12 + 0.03 * u) * Q.sn, { m: 50 + u * 0.25, pan: -0.1 }); [-0.5, 0.5].forEach(pan => edmSweep(E, D, { t, dur: bar, f0: 600, f1: 9000, g0: 0, g1: 0.07, q: 0.8, pan })); }
+      if (!intro && dk.bar > 0 && (peak ? b % 4 === 0 : b === 0 || (K > 0.55 && b === 4))) kh('edm_crash', 0, (peak ? 1 : 0.6) * Dg.crash, { pan: b ? 0.25 : -0.25 });
+      if (last || (peak && b % 4 === 3)) { [12, 13, 14, 15].concat(K > 0.5 || peak ? [8, 10] : []).forEach(u => kh('edm_sn', u, Dg.sn * (0.5 + 0.045 * u) * (peak ? 1.3 : 1), { m: 50 + (u - 8) * 0.5, pan: (u - 12) * 0.08 })); [-0.5, 0.5].forEach(pan => edmSweep(E, BS.t, { t: at(8), dur: 8 * sp, f0: 800, f1: 8000, g0: 0, g1: 0.05 + 0.08 * K, q: 0.8, pan })); }   // the last bar of a section: a fill and a hiss into the next
     }
   }
   // ---- bass: a sine sub under a filtered saw bass; a long sub when cool, off the beat when warm, rolling when hot; it leaves near the top of a build ----
   const root = s.pedal ? 38 : ch.r > 40 ? ch.r - 12 : ch.r, bn = (i, u, m, g, du, o) => { if (u >= u0 && u < u1 && at(u) + 0.001 >= re) Sm(E, B, Object.assign({ i, m, t: at(u), g, dur: du * sp, r: 0.06, strict: 1 }, o || {})); };
-  if (!intro && !brk && !(chain && x0 >= 0.7) && left > 0.1) {
+  if (!(chain && x0 >= 0.7) && left > 0.1) {
     const long = (g, rr) => Sm(E, B, { i: 'edm_sub', m: root, t: from, g, dur: left - 0.04, r: rr, strict: 1 });
     if (!drums) long(0.42 * Q.sub, 0.3);
-    else if (peak || K >= 0.42) {
-      const hotB = peak || K >= 0.75, bp = K < 0.6 && !peak ? '..x...x...x...x.' : ['..x...x...x...x.', '..xx..xx..xx..xx', '..x.x.x...x.x.xo', '..xo..xx..xo..x.'][(s.bv + (b >> 2)) % 4], blp = peak ? 6000 : 500 + 5000 * K;
+    else {
+      const hotB = peak || K >= 0.75, bp = K < 0.6 && !peak ? '..x...x...x...x.' : ['..x...x...x...x.', '..xx..xx..xx..xx', '..x.x.x...x.x.xo', '..xo..xx..xo..x.'][(s.bv + (b >> 2)) % 4], blp = peak ? 6000 : 240 + 5300 * Math.pow(K, 1.5);
       if (hotB) long((peak ? 0.62 : 0.5) * Q.sub, 0.08);
       if (hotB && w > 0.3 && !re && b % 2 === 1 && r.chance(0.6 * w)) { const div = r.chance(0.5) ? 4 / 3 : r.chance(0.5) ? 2 : 1; for (let u = 0; u < 16 - 0.01; u += div) bn('edm_bass', u, root + 12 + (w > 0.6 && Math.round(u / div) % 4 === 3 ? 1 : 0), Q.mid * 1.1, div * 0.95, { lp: 250, lp1: 2500 + 4500 * w, lpt: div * sp * 0.5 }); }   // later rounds: on some bars the bass wobbles, its filter yawning open on every note (in triplets, eighths or sixteenths)
       else
       pat(bp, (u, c) => { bn('edm_bass', u, root + 12 + (c === 'o' ? 12 : 0), Q.mid * (u % 4 === 2 ? 1 : 0.8), bp[u + 1] === '.' || u === 15 ? 1.7 : 0.9, { lp: blp }); if (!hotB && u % 4 === 2) bn('edm_sub', u, root, 0.5 * Q.sub, 1.8); });
       if (mis === 1) [13, 15].forEach(u => bn('edm_bass', u, root + 24, Q.mid * 0.8, 0.8, { lp: blp }));
-    } else if (K >= 0.15) long((K < 0.25 ? 0.34 : 0.45) * Q.sub, 0.2);
+    }
   }
   // ---- pads: the supersaw chord through a low-pass that opens with the heat (and with the surge of a chain) ----
   if (left > 0.1) {
@@ -1094,7 +1101,7 @@ function edmRoll(E, t, tb) { [-0.5, 0.5].forEach(pan => edmSweep(E, E.fx, { t, d
 TRACK(8, 'edm', {
   name: 'Chain Reactor', line: 'supersaw pads and plucks over a four-on-the-floor that grows turn by turn; a chain is the build, OVERREACT is the drop',
   why: 'a build and a drop is a reaction running away: pressure climbs step by step, then everything goes at once',
-  bpm: [124, 134], scale: [0, 2, 4, 5, 7, 9, 10],
+  bpm: [126, 128], steady: 1, scale: [0, 2, 4, 5, 7, 9, 10],
   chain: ['edmDs', 'edmG', 'edmC', 'edmA'],
   prog: { A: ['edmD', 'edmA', 'edmBm', 'edmG', 'edmD', 'edmA', 'edmBm', 'edmG'], B: ['edmG', 'edmG', 'edmD', 'edmD', 'edmEm', 'edmEm', 'edmA', 'edmA'], C: ['edmC', 'edmC', 'edmG', 'edmG', 'edmD', 'edmD', 'edmC', 'edmA'] },
   alt: { A: { 3: 'edmEm', 7: 'edmA' }, B: { 1: 'edmBm', 5: 'edmC' }, C: { 3: 'edmEm', 7: 'edmG' } }, forms: ['AABA', 'ABAC', 'ABCB', 'ACAB'],
@@ -1115,7 +1122,7 @@ TRACK(8, 'edm', {
   mix: { drums: 1, bass: 0.5, pad: 2.4, lead: 1.6, arp: 2.6, vox: 2.2, bell: 2 }, tone: I => 10000 * Math.pow(2, I),
   lay: { drums: { rev: 0.05, dly: 0, sat: 1.2, ins: edmIns(0) }, bass: { rev: 0, dly: 0, sat: 1.3, ins: edmIns(0) }, pad: { rev: 0.3, dly: 0.04, ins: edmIns(140) }, lead: { rev: 0.26, dly: 0.2, pump: true, ins: edmIns(200) },
          arp: { rev: 0.22, dly: 0.26, pump: true, ins: edmIns(220) }, vox: { rev: 0.3, dly: 0.12, pump: true, ins: edmIns(250) }, bell: { rev: 0.3, dly: 0.2, ins: edmIns(0) } },
-  g: 1, sg: { title: 1.11, bench: 1.48, pick: 1.33, overreact: 0.85, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.58,
+  g: 1, sg: { plan: 1.1, title: 1.11, bench: 1.48, pick: 1.33, overreact: 0.85, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.58,
   play: edmPlay, lead: edmLead, step: edmStep, enter: edmEnter, roll: edmRoll
 });
 // TRACK:edm>>>
