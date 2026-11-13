@@ -93,6 +93,8 @@ AS. 13 November: the EDM soundtrack as built does not sound like EDM to the owne
 
 AM4. "I feel like the angle of the king in yellow parts need to be peppered a bit better and can't only come from a full 3 run prestige but I do not want you to have it be Redditor stupid extra spoopy shit" (13 November). The thread is sprinkled lightly through the whole game from early on, from several sources, not only from prestige. Tone, picked by the owner: a mix of dry and offhand, matter-of-fact and wrong, and quiet and a bit sad; never loud, never trying to be scary.
 
+AM5. On a sample note I offered as "dry and offhand" ("Someone has moved my chair two inches. Moved it back. Not thinking about it."): "The dry example you gave is a classic sign of Redditor slop stop it" (13 November). The clipped quip with a wry tag, performed deadpan and parenthetical punchlines are out, as firmly as the loud spooky register. Notes read as a real chemist writing for himself: plain, specific, unperformed.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
