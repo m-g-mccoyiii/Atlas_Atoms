@@ -124,7 +124,9 @@ EP.beats = function (t0, t1, div) {
 };
 EP.clock = function (t) { const E = this, dk = E.deck; if (!dk || dk.S.drone || dk.dead) return null; const spu = E.barSpu(dk), bt = dk.upb === 12 ? 6 : 4, nb = E.beats(t, t + bt * spu * 1.3, bt) || [], br = (E.beats(t, t + dk.upb * spu * 1.3, dk.upb) || []).filter(x => x.u === 0); return { bpm: 60 / (spu * bt), spu, upb: dk.upb, beat: nb.length ? nb[0].t : t, bar: br.length ? br[0].t : t, state: dk.state }; };
 // a hit of the chain is coming at tHit (the effects know it when the arrow starts): the drums and bass step right back around it, so the hit's boom and a kick never flam
-EP.fxHit = function (tHit) { const dk = this.deck; if (!dk || !dk.edmDuck) return; [0, 1].forEach(i => { const g = dk.edmDuck[i]; if (!g) return; g.gain.setTargetAtTime(0.06, Math.max(0, tHit - 0.06), 0.012); g.gain.setTargetAtTime(1, tHit + 0.2, 0.05); }); };
+EP.fxHit = function (tHit) { const dk = this.deck; if (!dk || !dk.edmDuck) return; [dk.edmDuck[1], dk.edmB && dk.edmB.kd].forEach(g => { if (!g) return; g.gain.setTargetAtTime(0.06, Math.max(0, tHit - 0.05), 0.01); g.gain.setTargetAtTime(1, tHit + 0.09, 0.03); }); };   // (builder 8) only a kick that would flam with the boom is taken out: the beat goes on around the hit
+// (builder 8) where the drop lands for an OVERREACT called at t: the music's next eighth at least 0.26 s on (so the breath before it is a quarter to half a second, in time). The effects and the music both ask; whoever asks first decides
+EP.dropAt = function (t) { const E = this; if (E.dropT !== undefined && Math.abs(E.dropC - t) < 0.3) return E.dropT; let L = null; try { L = E.beats(t + 0.26, t + 1.5, 2); } catch (e) { L = null; } E.dropC = t; E.dropT = L && L.length ? L[0].t : t + 0.4; return E.dropT; };
 // the room of the engine: made again when a track with another hall is chosen
 EP.mkRoom = function () {
   const E = this, c = E.c, hall = hallOf(E); if (E.hall === hall) return; const first = E.hall === undefined; E.hall = hall;
@@ -936,7 +938,7 @@ const EDMG = { kick: 0.5, clap: 1.1, sn: 0.6, hh: 11, oh: 10, crash: 2.2, sub: 0
 // (builder 8) THE BEAT. The owner, 13 November: "No real beat". The kick, the clap and the hats have buses of their own that go past
 // the layer levels, the heat filter and the state's own level: the same kick at the same level in every state that has drums,
 // four on the floor, a clap on 2 and 4, a hat on every off-beat. Calm is made by thinning what is around the drums, never the drums.
-const EDMD = { kick: 0.31, clap: 0.5, sn: 0.21, hh: 0.8, oh: 0.65, crash: 0.4, roll: 0.25 };
+const EDMD = { kick: 0.31, clap: 0.5, sn: 0.21, hh: 0.8, oh: 0.65, crash: 0.4, roll: 0.7, rise: 0.7 };
 function edmBus(E, dk) {
   if (dk.edmB) return dk.edmB; const B = dk.edmB = {};
   [['k', 0], ['t', 0.07]].forEach(q => { const i = E.G(1), d = E.G(1), o = E.G(1 / dk.sg0); i.__n = 'drums'; i.connect(d); d.connect(o); o.connect(dk.gs[0]); if (q[1]) { const sd = E.G(q[1]); o.connect(sd); sd.connect(dk.gs[1]); } B[q[0]] = i; B[q[0] + 'd'] = d; });
@@ -958,46 +960,51 @@ function edmPreDrop(E, dk, t, ch) {
 }
 // ---- a bar ----
 function edmPlay(E, dk, t, b, ch, name) {
-  if (dk.state === 'overreact' && dk.bar === 0 && !E.reT) { edmPreDrop(E, dk, t, ch); return; }
   const s = dk.sec, r = dk.rng, L = dk.L, sp = dk.spu, w = E.w(), st = dk.drum || dk.S.drum, bar = 16 * sp, at = u => t + u * sp, re = E.reT || 0, Q = EDMG;
   const D = L.drums.in, B = L.bass.in, P = L.pad.in, A = L.arp.in, X = L.vox.in, G = L.bell.in;
   const chain = E.state === 'chain' && dk.state === 'plan', big = dk.state === 'overreact' || dk.state === 'runwon', peak = st === 'heavy', drums = st !== 'none', intro = s.type === 'I', last = b === s.len - 1;
   const K = dk.state === 'won' ? clamp(0.62 - 0.03 * Math.max(0, dk.bar - 3), 0.32, 0.62) : chain ? E.slow : E.I;      // the heat that decides who plays (a win eases off bar by bar)
   // the build of a chain: x runs from x0 to x1 through this bar, following the surge and a guess of where it will be at the bar's end
   const M = dk.edm || (dk.edm = { bar: -9, s0: 0, s1: 0, on: 0, mis: 0 });
-  const nN = E.stepOf || 16, nS = chain ? E.stepN || 0 : 0, xg = chain ? Math.pow(clamp(nS / nN, 0, 1), 1.2) : 0;   // how far up its build a chain is: by its own length when the game says it (step(n, of)), else as if it had 16 steps
+  const top = E.stepOf ? clamp(0.45 + 0.55 * (E.stepOf - 3) / 6, 0.45, 1) : 1;   // (builder 8) how high this chain's build goes: a chain of 3 only leans in (the kick never leaves), a chain of 9 or more climbs all the way
+  const nN = E.stepOf || 16, nS = chain ? E.stepN || 0 : 0, xg = chain ? top * Math.pow(clamp(nS / nN, 0, 1), 1.2) : 0;
+  const over = chain && E.stepOf > 0 && E.stepN >= E.stepOf;   // the chain's last hit has landed: the build hangs at its top for a bar, waiting for OVERREACT; if none comes it resolves back into the groove, with no drop   // how far up its build a chain is: by its own length when the game says it (step(n, of)), else as if it had 16 steps
   let x0 = xg, x1 = x0, after = 0;
   if (!re) {
-    if (chain) { const c0 = M.on && M.bar === dk.bar - 1 ? M.s1 : xg * 0.6; x0 = c0; x1 = Math.max(c0, Math.min(1.12, Math.pow(Math.min(1.1, (nS + 2) / nN), 1.2))); M.s0 = x0; M.s1 = x1; M.bar = dk.bar; M.on = 1; }
+    if (chain && over) { M.hang = (M.hang || 0) + 1; if (M.hang > 1) M.res = 1; } else { M.hang = 0; if (!chain || nS === 0) M.res = 0; }
+    if (chain && !M.res) { const c0 = M.on && M.bar === dk.bar - 1 ? M.s1 : xg * 0.6; x0 = c0; x1 = Math.max(c0, top * Math.pow(Math.min(1, (nS + 2) / nN), 1.2)); if (over) x0 = x1 = Math.min(c0, 0.88); M.s0 = x0; M.s1 = x1; M.bar = dk.bar; M.on = 1; }
     else { if (M.on && M.bar === dk.bar - 1) after = M.s1; M.on = 0; }
     const hot = !chain && !intro && drums && (peak || K > 0.6) && !(big && dk.bar < 2) && s.type !== 'S';
     M.mis = hot && w > 0.15 && b % 4 === 3 && r.chance(0.5 * w) ? 1 : 0;   // later rounds: 1 the last beat stutters, 2 a bar at half time, 3 the last beat falls silent
   }
-  const mis = chain ? 0 : M.mis, xs = u => x0 + (x1 - x0) * u / 16, u0 = big && dk.bar === 0 ? dk.edmU0 || 4 : 0, u1 = mis === 3 ? 12 : 16, brk = !!s.brk && b < 4 && !big && !chain && !intro;
+  if (chain && M.res) x0 = x1 = 0;
+  const bld = chain && !M.res, mis = chain ? 0 : M.mis, xs = u => x0 + (x1 - x0) * u / 16, u0 = big && dk.bar === 0 ? (dk.edmU0 === undefined ? 4 : dk.edmU0) : 0, u1 = mis === 3 ? 12 : 16, brk = !!s.brk && b < 4 && !big && !chain && !intro;
   const from = Math.max(at(u0), re ? re + 0.004 : 0), left = at(u1) - from;
   // the kick: none when cool, soft and filtered as the heat comes, open from the middle; and the pump that goes with it
   let kg = 0, klp = 0; if (drums && !intro && !brk) { if (peak) kg = 0.85; else if (K >= 0.32) { const a = clamp((K - 0.32) / 0.2, 0, 1); kg = 0.32 + 0.38 * a; klp = a < 1 ? 170 * Math.pow(2, 4.5 * a) : 0; } }
   if (chain && kg < 0.4) { kg = 0.4; klp = klp || 420; }
-  if (!re) { const dp = !drums ? 0 : peak ? 0.86 : 0.6 + 0.2 * K; if (dp) [0, 4, 8, 12].forEach(u => { if (u >= u0 && u < u1 && !(mis === 2 && u % 8)) edmPump(dk, at(u), dp, sp * 3.2); }); }
+  if (!re) { const dp = !drums ? 0 : peak ? 0.86 : 0.6 + 0.2 * K; if (dp) [0, 4, 8, 12].forEach(u => { if (u >= u0 && u < u1 && !(bld && xs(u) >= 0.75)) edmPump(dk, at(u), dp, sp * 3.2); }); }
   let HD = D; const hit = (i, u, g, o) => { if (u >= u0 && u < u1) Sm(E, HD, Object.assign({ i, t: at(u), g, strict: 1 }, o || {})); };
-  const over = chain && E.stepOf > 0 && E.stepN >= E.stepOf;   // the chain's last hit has landed: the roll and the risers have stopped and stay stopped until the game moves on
   if (drums && !re) {
-    if (chain && !over) {
-      const RZ = dk.edmRise || (dk.edmRise = (() => { const g = E.G(1); g.__n = 'drums'; g.connect(D); return g; })()); HD = RZ; if (!M.gate) { RZ.gain.cancelScheduledValues(Math.max(0, t - 0.01)); RZ.gain.setValueAtTime(1, Math.max(0, t - 0.01)); M.gate = 1; }
-      // the build: a snare roll that doubles (quarters, eighths, sixteenths, thirty-seconds) and climbs in pitch, the kick losing its low end and then leaving, a noise riser and a pitch riser
-      if (!E.fxOwn) for (let u = 0; u < 16; u++) { const x = xs(u), stp = x < 0.2 ? 4 : x < 0.45 ? 2 : 1; if (u % stp) continue; const g = Math.min(1.1, (0.3 + 0.85 * x + 0.008 * u) * Q.sn * 2), m = 50 + (5 + 7 * w) * x, cut = stp > 1 ? null : x >= 0.72 ? { m, pan: -0.1, dur: 0.035, r: 0.03 } : { m, pan: -0.1, dur: 0.07, r: 0.05 }; hit('edm_sn', u, g, cut || { m, pan: -0.1 }); if (x >= 0.72) hit('edm_sn', u + 0.5, g * 0.7, { m, pan: 0.1, dur: 0.03, r: 0.03 }); }
-      if (!E.fxOwn) [0, 4, 8, 12].forEach(u => { const x = xs(u); if (x < 0.5) hit('edm_kick', u, kg * Q.kick, klp ? { lp: klp } : null); else if (x < 0.78) hit('edm_kickt', u, (0.65 - (x - 0.5) * 1.5) * Q.kick); });   // the kick loses its low end half way up and is gone for the last quarter
-      for (let u = 0; u < 16; u++) { const x = xs(u); if (u % 4 === 2) hit('edm_hh', u, (0.1 + 0.1 * x) * Q.hh, { pan: 0.3 }); else if (x > 0.3 && u % 2) hit('edm_hh', u, (0.05 + 0.06 * x) * Q.hh, { pan: -0.3 }); }
-      if (K >= 0.5) [4, 12].forEach(u => { if (xs(u) < 0.5) hit('edm_clap', u, 0.6 * Q.clap); });
-      const nf = x => 450 * Math.pow(2, 4.7 * x), ng = x => 0.03 + 0.35 * x, pf = x => 293.66 * Math.pow(2, (2 + 1.6 * w) * x), pg = x => 0.04 + 0.3 * x;
-      if (!E.fxOwn) [-0.6, 0.6].forEach(pan => edmSweep(E, RZ, { t, dur: bar, f0: nf(x0), f1: nf(x1), g0: ng(x0), g1: ng(x1), q: 0.9, pan }));   // (builder 7) with the effects' build on, the roll, the kick and the risers of a chain are the effects' own, played on this grid: one build, not two
-      if (!E.fxOwn && x1 > 0.1) edmSweep(E, RZ, { t, dur: bar, saw: 1, f0: pf(x0), f1: pf(x1), g0: x0 > 0.1 ? pg(x0) : 0, g1: pg(x1), pan: 0.15 });
-      HD = D;
-    } else if (!chain) {
-      M.gate = 0;
+    if (bld) {
+      // (builder 8) THE BUILD, on the grid, the music's own: the kick loses its low end and then leaves; the clap gives way to a snare roll that
+      // doubles (4, 8, 16, 32 to the bar) and climbs in pitch; white noise and two saws rise; (below) the filter opens and the bass is pulled away
+      const BS = edmBus(E, dk), Dg = EDMD, kb = (i, u, g, o) => Sm(E, i === 'edm_kick' || i === 'edm_kickt' ? BS.k : BS.t, Object.assign({ i, t: at(u), g, strict: 1 }, o || {}));
+      for (let u = 0; u < 16; u++) { const x = xs(u), beat = u % 4 === 0;
+        if (beat) { if (x < 0.45) kb('edm_kick', u, Dg.kick); else if (x < 0.75) kb('edm_kickt', u, Dg.kick * (1.1 - (x - 0.45) * 2)); }
+        if (x < 0.45 && (u === 4 || u === 12)) kb('edm_clap', u, Dg.clap * (0.8 + 0.25 * K), { pan: 0.05 });
+        if (x >= 0.2) { const div = x < 0.45 ? 4 : x < 0.7 ? 2 : 1, g = Dg.roll * (0.4 + 0.75 * x) * (beat ? 1.15 : 1), m = 50 + (6 + 6 * w) * x;
+          if (u % div === 0) kb('edm_sn', u, g, div > 1 ? { m, pan: -0.08 } : { m, pan: -0.08, dur: 0.07, r: 0.05 });
+          if (x >= 0.9) kb('edm_sn', u + 0.5, g * 0.75, { m, pan: 0.1, dur: 0.03, r: 0.03 }); }
+        if (x < 0.8) { if (u % 4 === 2) kb('edm_hh', u, Dg.hh * (1 + 0.3 * x), { pan: 0.25 }); else if (x > 0.3 && u % 2) kb('edm_hh', u, Dg.hh * 0.4, { pan: -0.3 }); }
+      }
+      const nf = x => 450 * Math.pow(2, 4.7 * x), ng = x => EDMD.rise * (0.08 + 0.92 * x), pf = x => 293.66 * Math.pow(2, (2 + 1.6 * w) * x), pg = x => EDMD.rise * (0.1 + 0.7 * x);
+      [-0.6, 0.6].forEach(pan => edmSweep(E, BS.t, { t, dur: bar, f0: nf(x0), f1: nf(x1), g0: ng(x0), g1: ng(x1), q: 0.9, pan }));
+      if (x1 > 0.1) edmSweep(E, BS.t, { t, dur: bar, saw: 1, f0: pf(x0), f1: pf(x1), g0: x0 > 0.1 ? pg(x0) : 0, g1: pg(x1), pan: 0.15 });
+    } else {
       // (builder 8) the groove: the kick on every beat, the clap on 2 and 4, a hat on every off-beat, in every state and at every heat
       const BS = edmBus(E, dk), kh = (i, u, g, o) => { if (u >= u0 && u < u1) Sm(E, i === 'edm_kick' ? BS.k : BS.t, Object.assign({ i, t: at(u), g, strict: 1 }, o || {})); }, Dg = EDMD;
-      if (after > 0.08) { kh('edm_crash', 0, (0.4 + 0.6 * after) * Dg.crash, { pan: -0.2 }); edmSweep(E, BS.t, { t, dur: bar * 0.6, f0: 7000, f1: 500, g0: 0.1 * after, g1: 0, q: 0.8, pan: 0.3 }); }   // the bar after a build: a crash and a falling hiss
+      if (after > 0.08) [-0.4, 0.4].forEach(pan => edmSweep(E, BS.t, { t, dur: bar * 0.75, f0: 450 * Math.pow(2, 4.7 * after), f1: 400, g0: EDMD.rise * after * 0.8, g1: 0, q: 0.8, pan }));   // the bar after a build that found no OVERREACT: the hiss falls away and the beat is simply back; no crash, no drop
       [0, 4, 8, 12].forEach(u => kh('edm_kick', u, Dg.kick));
       if (mis === 1) [13, 14, 15].forEach((u, k) => kh('edm_kick', u, Dg.kick * 0.7, { m: 32 + 2 * k }));
       else if (!intro && K > 0.45 && (s.dv % 3 === 1 ? b % 4 === 3 : s.dv % 3 === 2 && last)) kh('edm_kick', 14, Dg.kick * 0.6);
@@ -1039,12 +1046,12 @@ function edmPlay(E, dk, t, b, ch, name) {
   // ---- air: a band of hiss over the pads that pumps with them: faint when cool, plain in the drop ----
   if (!re && !intro && left > 0.1) { const ag0 = Q.air * (peak ? 1 : brk ? 0.2 : 0.12 + K * 0.75); [-0.7, 0.7].forEach(pan => edmSweep(E, X, { t: from, dur: left, f0: 9500, f1: chain ? 9500 * (1 + 0.4 * x1) : 9500, g0: ag0, g1: ag0 * (chain ? 1 + 1.5 * x1 : 1), q: 0.5, pan })); }
   // ---- stabs: short bright chords in a dance rhythm, when it is hot ----
-  if ((peak || K >= 0.78) && !chain && !brk && !intro) {
+  if ((peak || K >= 0.78) && !bld && !brk && !intro) {
     const sp_ = mis === 1 ? 'x..x..x.x...xxxx' : ['x..x..x...x..x..', 'x..x..x..x..x.x.', 'x.....x..x....x.'][(s.av + (b >> 1)) % 3];
     pat(sp_, u => { if (u < u0 || u >= u1 || at(u) + 0.001 < re) return; ch.n.forEach((m, k) => Sm(E, X, { i: 'edm_saw', m: m + 12, t: at(u), g: Q.stab * (peak ? 1 : 0.7), dur: sp * 1.4, a: 0.005, r: 0.09, pan: (k - 1) * 0.5, strict: 1 })); });
   }
   // in a build the chord is hammered: eighths, then sixteenths, louder as the surge climbs
-  if (chain && !over && x1 >= 0.3) for (let u = 0; u < 16; u++) { const x = xs(u); if (x < 0.3 || (x < 0.6 && u % 2) || at(u) + 0.001 < re) continue; ch.n.forEach((m, k) => Sm(E, X, { i: 'edm_saw', m: m + 12, t: at(u), g: Q.stab * (0.5 + 0.9 * x), dur: sp * 0.8, a: 0.005, r: 0.06, pan: (k - 1) * 0.5, strict: 1 })); }
+  if (bld && x1 >= 0.3) for (let u = 0; u < 16; u++) { const x = xs(u); if (x < 0.3 || (x < 0.6 && u % 2) || at(u) + 0.001 < re) continue; ch.n.forEach((m, k) => Sm(E, X, { i: 'edm_saw', m: m + 12, t: at(u), g: Q.stab * (0.5 + 0.9 * x), dur: sp * 0.8, a: 0.005, r: 0.06, pan: (k - 1) * 0.5, strict: 1 })); }
   // ---- the pluck figure: a short cycle of chord notes that drifts against the bar; sparse when cool, sixteenths when hot ----
   {
     const pool = [ch.r + 24, ch.n[0], ch.n[1], ch.n[2], ch.n[0] + 12, ch.n[1] + 12, ch.n[2] + 12].sort((p, q) => p - q), cyc = EDMC[s.av % 6];
@@ -1059,7 +1066,7 @@ function edmPlay(E, dk, t, b, ch, name) {
 // ---- one note of the tune: a pluck when cool, a saw lead when warm, the big three-octave supersaw in the drop ----
 function edmLead(E, dk, t, du, m, g, mode) {
   const L = dk.L.lead.in, X = dk.L.vox.in, big = dk.state === 'overreact' || dk.state === 'runwon', chain = E.state === 'chain' && dk.state === 'plan', K = chain ? E.slow : E.I, Q = EDMG.lead;
-  if (big && dk.bar === 0 && t < dk.t0 + ((dk.edmU0 || 4) - 0.1) * dk.spu) return;                                                    // the beat of near-silence before the drop
+  if (big && dk.bar === 0 && t < dk.t0 + ((dk.edmU0 === undefined ? 4 : dk.edmU0) - 0.1) * dk.spu) return;                                                    // the beat of near-silence before the drop
   if (g < 0.9) { Sm(E, L, { i: 'edm_pl', m, t, g: g * 0.4 * Q, pan: 0.1 }); return; }
   if (chain) g *= 1 - 0.5 * E.sg;
   if (mode === 'low') { Sm(E, L, { i: 'edm_saw', m, t, g: 0.5 * Q, dur: du * 0.95, a: 0.1, r: 0.5, lp: 1100, wide: 0.4 }); Sm(E, L, { i: 'edm_pl', m, t, g: 0.35 * Q, lp: 2500, pan: -0.1 }); return; }
@@ -1080,7 +1087,6 @@ function edmLead(E, dk, t, du, m, g, mode) {
 // ---- a step of a chain: the music ducks under the hit for a quarter of a second (the effect is the star), one climbing pluck rings
 // through as it comes back (late in a long chain the effects are loud and the dip is slight); on a chord change the new root and a short stab ----
 function edmStep(E, dk, t, n) {
-  if (E.state === 'chain' && E.stepOf > 0 && n >= E.stepOf && dk.edmRise) { dk.edmRise.gain.setTargetAtTime(0, t, 0.015); if (dk.edm) dk.edm.gate = 0; }   // the last hit: the roll and the risers stop dead
   const ch = dk.curCh || CH[TH[E.th].chain[E.cix]], m = nearTone(66 + Math.min(n, 14) * 1.5, ch);
   if (E.state === 'chain' && dk.edmDuck) { const dip = n <= 6 ? 0.5 : n <= 8 ? 0.6 : 0.75; dk.edmDuck.forEach((g, i) => { if (E.fxOwn && i < 2) return; g.gain.setTargetAtTime(dip, t, 0.006); g.gain.setTargetAtTime(1, t + 0.24, 0.06); }); }
   Sm(E, dk.L.bell.in, { i: 'edm_pl', m, t, g: 0.3 + 0.02 * Math.min(n, 12), pan: n % 2 ? 0.3 : -0.3, strict: 1 });
@@ -1088,13 +1094,44 @@ function edmStep(E, dk, t, n) {
 }
 // ---- a state starts. The drop: one beat of near-silence with a rising hiss, then the impact; the deck is at full level at once (not faded in) ----
 function edmEnter(E, state, t, dk) {
-  if (state === 'overreact') { dk.edmU0 = 16; dk.gs.forEach(g => { g.gain.cancelScheduledValues(0); g.gain.setValueAtTime(dk.sg0, Math.max(0, dk.t0 - 0.01)); }); }   // the whole first bar is the climb to the drop (edmPreDrop); the deck is at full level at once
+  if (state === 'overreact') { dk.edmU0 = 0; dk.gs.forEach(g => { g.gain.cancelScheduledValues(0); g.gain.setValueAtTime(dk.sg0, Math.max(0, dk.t0 - 0.01)); });   // (builder 8) the drop is the first beat of the first bar: the kick, the bass and the hook at once, at full level
+    Sm(E, E.fx, { i: 'edm_crash', t: dk.t0, g: EDMD.crash * (E.fxOwn ? 0.5 : 1), strict: 1 }); if (!E.fxOwn) Sm(E, E.fx, { i: 'edm_imp', t: dk.t0, g: 0.3, strict: 1 }); }
   else if (state === 'runwon') {
     const g4 = 4, gap = g4 * dk.spu, th = dk.t0 + gap; dk.edmU0 = g4;
     dk.gs.forEach(g => { g.gain.cancelScheduledValues(0); g.gain.setValueAtTime(dk.sg0, Math.max(0, dk.t0 - 0.01)); });
-    [-0.6, 0.6].forEach(pan => edmSweep(E, E.fx, { t, dur: gap, f0: 1200, f1: 10000, g0: 0, g1: 0.025, q: 0.8, pan }));
-    Sm(E, E.fx, { i: 'edm_imp', t: th, g: 0.5, strict: 1 }); Sm(E, E.fx, { i: 'edm_crash', t: th, g: 0.25, strict: 1 });
-  } else if (state === 'won') { Sm(E, E.fx, { i: 'edm_crash', t, g: 0.12, strict: 1 }); Sm(E, E.fx, { i: 'edm_imp', t, g: 0.2, strict: 1 }); }
+    [-0.6, 0.6].forEach(pan => edmSweep(E, E.fx, { t, dur: gap, f0: 1200, f1: 10000, g0: 0.02, g1: 0.1, q: 0.8, pan }));
+    Sm(E, E.fx, { i: 'edm_imp', t: th, g: 0.3, strict: 1 }); Sm(E, E.fx, { i: 'edm_crash', t: th, g: EDMD.crash, strict: 1 });
+  } else if (state === 'won') Sm(E, E.fx, { i: 'edm_crash', t, g: EDMD.crash * 0.6, strict: 1 });
+}
+// (builder 8) LED INTO, IN TIME. The owner, 13 November: "the music changes too abruptly", "the silence before it". No state cuts in:
+//   OVERREACT   the build stops on the call and breathes for a quarter to half a second (to the next eighth of the grid): the hall's tail, the
+//               echo of the riser, a hiss swelling backwards into the drop and one held high voice; then the drop on that line
+//   an ending   (won, lost, run won, run lost) starts on the next beat at least 0.4 s on, with a fill into it
+//   the rest    (planning, picking, shop, title) start on the next half bar, with a fill into it
+// and the old state's pads, plucks and lead ring on under the new one's first bar while its drums and bass stop on the line (edmOut).
+function edmLeadIn(E, s, t) {
+  const dk = E.deck, sp = E.barSpu(dk), S = ST[s], B = dk.edmB; let tb;
+  if (s === 'overreact') {
+    tb = E.dropAt(t); const d = tb - t;
+    if (B) [B.kd, B.td].forEach(g => { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.006); });
+    dk.gs[0].gain.cancelScheduledValues(t); dk.gs[0].gain.setTargetAtTime(0, t, 0.02);                                               // the dry sound stops; what is already in the hall and in the echo rings through the breath
+    [-0.6, 0.6].forEach(pan => edmSweep(E, E.fx, { t, dur: d, f0: 1800, f1: 10000, g0: 0.03, g1: 0.2, q: 0.7, pan }));              // a hiss swelling into the drop, as a cymbal played backwards
+    [74, 86].forEach((m, k) => Sm(E, E.fx, { i: 'edm_saw', m, t, g: 0.1, dur: d - 0.02, a: d * 0.7, r: 0.02, lp: 900, lp1: 5000, lpt: d, wide: 0.5, pan: k ? 0.2 : -0.2, strict: 1 }));   // one held voice, high D, opening
+    if (!E.fxOwn) Sm(E, E.fx, { i: 'edm_sn', t, g: EDMD.sn * 1.6, strict: 1 });
+  } else {
+    const cut = !!S.cut, L = E.beats(t + (cut ? 0.4 : 0.45), t + 17 * sp, cut ? 4 : 8); tb = L && L.length ? L[0].t : t + 0.5;
+    const tf = Math.max(t, tb - 8 * sp), d = tb - tf, down = S.drum === 'none';
+    [-0.5, 0.5].forEach(pan => edmSweep(E, E.fx, down ? { t: tf, dur: d, f0: 6000, f1: 500, g0: 0.02, g1: 0.09, q: 0.8, pan } : { t: tf, dur: d, f0: 900, f1: 9000, g0: 0.01, g1: 0.11, q: 0.8, pan }));
+    if (down) { [0, 1, 2].forEach(k => { const tt = tb - (3 - k) * 2 * sp; if (tt >= t) Sm(E, E.fx, { i: 'edm_kickt', t: tt, g: EDMD.kick * 0.9, m: 30 - 3 * k, strict: 1 }); }); }   // into a lost round: the hiss falls and three low knocks step down
+    else for (let k = 4; k >= 1; k--) { const tt = tb - k * sp; if (tt >= t - 0.001) Sm(E, E.fx, { i: 'edm_sn', t: tt, g: EDMD.sn * (1.5 - 0.2 * k), m: 50 + (4 - k), pan: (k - 2.5) * 0.1, strict: 1 }); }                         // four snare strokes into the line
+  }
+  E.pending = s; E.pendT = tb;
+}
+// the old state leaves on the line: its drums and bass stop there (two kicks or two basses never sound at once), the rest rings out under the new state
+function edmOut(E, old, t, state) {
+  const B = old.edmB, z = g => { if (!g) return; g.gain.cancelScheduledValues(Math.max(0, t - 0.006)); g.gain.setTargetAtTime(0, Math.max(0, t - 0.006), 0.003); };
+  if (B) { z(B.kd); z(B.td); } if (old.edmDuck) z(old.edmDuck[1]);
+  E.fadeOut(old, t, state === 'overreact' ? 0.03 : 0.3);
 }
 // a state change waits for the bar line: a hiss swells up to it
 function edmRoll(E, t, tb) { [-0.5, 0.5].forEach(pan => edmSweep(E, E.fx, { t, dur: tb - t, f0: 700, f1: 7000, g0: 0, g1: 0.035, q: 0.8, pan })); }
@@ -1122,8 +1159,8 @@ TRACK(8, 'edm', {
   mix: { drums: 1, bass: 0.5, pad: 2.4, lead: 1.6, arp: 2.6, vox: 2.2, bell: 2 }, tone: I => 10000 * Math.pow(2, I),
   lay: { drums: { rev: 0.05, dly: 0, sat: 1.2, ins: edmIns(0) }, bass: { rev: 0, dly: 0, sat: 1.3, ins: edmIns(0) }, pad: { rev: 0.3, dly: 0.04, ins: edmIns(140) }, lead: { rev: 0.26, dly: 0.2, pump: true, ins: edmIns(200) },
          arp: { rev: 0.22, dly: 0.26, pump: true, ins: edmIns(220) }, vox: { rev: 0.3, dly: 0.12, pump: true, ins: edmIns(250) }, bell: { rev: 0.3, dly: 0.2, ins: edmIns(0) } },
-  g: 1, sg: { plan: 1.1, title: 1.11, bench: 1.48, pick: 1.33, overreact: 0.85, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.58,
-  play: edmPlay, lead: edmLead, step: edmStep, enter: edmEnter, roll: edmRoll
+  g: 1, sg: { plan: 1.1, title: 1.11, bench: 1.48, pick: 1.33, overreact: 1.0, shop: 1.53, lost: 1.6, runwon: 0.88, runlost: 1.46 }, wow: 0.1, hall: 4.6, leadAt: 0.16, swing: w => (u => u), trim: sg => 0.85,
+  play: edmPlay, lead: edmLead, step: edmStep, enter: edmEnter, roll: edmRoll, lead8: edmLeadIn, out8: edmOut
 });
 // TRACK:edm>>>
 // <<<TRACK:metal
@@ -2027,17 +2064,18 @@ EP.step = function (t, n, of) {
 
 // ---------- the clock ----------
 EP.start = function (state, t) {
-  const E = this, key = E.gv && state === 'chain' ? 'plan' : state, S = ST[key], old = E.deck; E.pending = null;
-  if (old) E.fadeOut(old, t, E.swapT !== undefined ? 0.07 : S.cut ? S.cut / 3 : Math.max(0.12, old.upb * old.spu / 7 || 0.2)); E.swapT = undefined;
-  E.I = S.I; if (E.gv) { E.slow = key === 'plan' ? E.playI : S.I; E.sg = 0; E.I = E.slow; } E.state = state; E.deck = E.mkDeck(key, t + (S.cut ? 0.02 : 0), S.fadeIn || (old && !S.cut ? [0.6, 0.12] : null));
+  const E = this, key = E.gv && state === 'chain' ? 'plan' : state, S = ST[key], old = E.deck, ex = !!E.exact; E.pending = null; E.pendT = undefined; E.exact = false;
+  if (old) { if (ex && TK[E.th] && TK[E.th].out8 && E.swapT === undefined) TK[E.th].out8(E, old, t, state); else E.fadeOut(old, t, E.swapT !== undefined ? 0.07 : S.cut ? S.cut / 3 : Math.max(0.12, old.upb * old.spu / 7 || 0.2)); } E.swapT = undefined;
+  E.I = S.I; if (E.gv) { E.slow = key === 'plan' ? E.playI : S.I; E.sg = 0; E.I = E.slow; } E.state = state; E.deck = E.mkDeck(key, t + (S.cut && !ex ? 0.02 : 0), ex && old ? [0.7, 0.05] : S.fadeIn || (old && !S.cut ? [0.6, 0.12] : null));
   if (E.gv && state === 'chain') E.chainTrim(t + 0.05, true);
-  if (E.gv && TK[E.th] && TK[E.th].enter) { if (!E.dry) TK[E.th].enter(E, state, t + 0.02, E.deck); } else if (state === 'overreact' && !E.dry) { if (E.gv) { Sm(E, E.fx, { i: 'crashC', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'kk', t: t + 0.02, g: 0.5 }); } else if (E.th === 3) { Sm(E, E.fx, { i: 'tam', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'bdrum', t: t + 0.02, g: 0.5 }); } else I_.crash(E, E.fx, t + 0.02, 0.07); }
+  if (E.gv && TK[E.th] && TK[E.th].enter) { if (!E.dry) TK[E.th].enter(E, state, t + (ex ? 0 : 0.02), E.deck); } else if (state === 'overreact' && !E.dry) { if (E.gv) { Sm(E, E.fx, { i: 'crashC', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'kk', t: t + 0.02, g: 0.5 }); } else if (E.th === 3) { Sm(E, E.fx, { i: 'tam', t: t + 0.02, g: 0.3 }); Sm(E, E.fx, { i: 'bdrum', t: t + 0.02, g: 0.5 }); } else I_.crash(E, E.fx, t + 0.02, 0.07); }
 };
 EP.cmd = function (t, name, a) {
   const E = this; a = a || [];
   if (name === 'state') { const s = a[0]; if (!ST[s]) return; if (E.state === s && !E.pending) return; if (E.pending === s) return;
     if (E.gv && (s === 'plan' || s === 'chain') && E.deck && E.deck.state === 'plan' && !E.pending) { E.state = s; if (s === 'chain') { E.sg = 0; E.cix = 0; E.cixWas = 0; E.stepN = 0; E.stepOf = 0; } E.chainTrim(t, s === 'chain'); return; }   // a groove does not stop for a chain: the same music carries on and the chain surges on top
     if (E.gv && s === 'chain' && E.deck) { E.pending = s; return; }
+    if (E.gv && TK[E.th] && TK[E.th].lead8 && E.deck && !E.deck.S.drone && !E.deck.dead && !E.dry) { TK[E.th].lead8(E, s, t); return; }   // (builder 8) a track that leads into every change: the new state starts on a line of the old one's grid, with a fill into it
     if (!E.deck || ST[s].cut || E.deck.S.drone) E.start(s, t + 0.01);
     else { E.pending = s; const tb = E.deck.nextT; if (tb - t > 0.45 && !E.dry) { if (E.gv && TK[E.th] && TK[E.th].roll) TK[E.th].roll(E, t, tb); else if (E.gv) { const k = Math.max(3, Math.round((tb - t) * 8)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'shaker', t: t + (tb - t) * i / k, g: 0.04 + 0.16 * i / k, pan: 0.3 }); } else if (E.th === 3) { const k = Math.max(3, Math.round((tb - t) * 11)); for (let i = 0; i < k; i++) Sm(E, E.fx, { i: 'timp', m: 50, t: t + (tb - t) * i / k, g: 0.04 + 0.14 * i / k, pan: 0.2 }); } else N(E, E.fx, { t, ft: 'bandpass', f: 500, f1: 3200, fT: tb - t, q: 1.2, g: 0.045, a: tb - t, d: 0.05 }); } } }   // a soft roll (a swell of noise in the old themes) into the bar line
   else if (name === 'intensity') { const v = clamp(+a[0] || 0, 0, 1); if (E.gv) { E.slow = v; if (E.state === 'plan' || E.state === 'chain' || !E.state) E.playI = v; E.heat(t, 0.5); } else { E.I = v; if (E.deck) E.setI(E.deck, E.I, t, 0.25); } }
@@ -2053,8 +2091,12 @@ EP.cmd = function (t, name, a) {
 // write everything that begins before `until`
 EP.advance = function (until) {
   const E = this; let guard = 0;
-  while (E.deck && E.deck.nextT < until && guard++ < 4000) {
-    if (E.pending) { const s = E.pending, tb = E.deck.nextT; if (E.thNext) { E.setTheme(E.thNext); E.thNext = 0; } const keepI = s === E.state ? E.I : null; E.state = null; E.start(s, tb); if (keepI !== null) { E.I = keepI; E.setI(E.deck, keepI, tb, 0.01); } continue; }
+  while (E.deck && guard++ < 4000) {
+    if (E.pending) { const s = E.pending, tb = E.pendT !== undefined ? E.pendT : E.deck.nextT;
+      if (E.deck.nextT < tb - 1e-4 && E.deck.nextT < until) { E.schedBar(E.deck); continue; }                                      // the old state plays on up to the line the new one starts on
+      if (tb >= until) break;
+      if (E.thNext) { E.setTheme(E.thNext); E.thNext = 0; } const keepI = s === E.state ? E.I : null; E.exact = E.pendT !== undefined; E.state = null; E.start(s, tb); if (keepI !== null) { E.I = keepI; E.setI(E.deck, keepI, tb, 0.01); } continue; }
+    if (E.deck.nextT >= until) break;
     E.schedBar(E.deck);
   }
 };

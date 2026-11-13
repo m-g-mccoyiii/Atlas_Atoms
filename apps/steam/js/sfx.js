@@ -1447,6 +1447,7 @@ let EDM7 = true;
 const C7LEAD = 1;
 const v7 = o => { o.g *= G4; V(o); }, n7 = o => { o.g *= G4; N(o); };
 const mus7 = () => { try { const e = C && C.__ovmus; return e && e.deck && e.beats ? e : null; } catch (x) { return null; } };
+const mb8 = () => { const e = mus7(); return !!(EDM7 && e && e.deck && e.deck.edmB && !e.deck.dead); };   // (builder 8) the EDM soundtrack plays the build itself, on its grid: its own kick, roll and risers
 const spu7 = () => { const e = mus7(); if (e) { try { const s = e.barSpu(e.deck); if (s > 0.03 && !e.deck.S.drone) return e.deck.upb === 12 ? s * 1.5 : s; } catch (x) { /* own tempo */ } } return 15 / (124 + 1.25 * (MAD - 1)); };
 // every grid point from t0 up to t1, div sixteenths apart: the music's if it has a beat, else our own from the first call
 function grid7(t0, t1, div) { const e = mus7(); let L = null; if (e) { try { L = e.beats(t0, t1, div); } catch (x) { L = null; } } if (L) return L;
@@ -1499,10 +1500,11 @@ function arrE(t, n, d, u, last, gap) {
   // the riser: white noise swept up into the hit, stopping dead on it; wider and brighter each step
   [-0.6, 0.6].forEach(pan => n7({ t, ft: 'bandpass', f: 350 + 500 * u, f1: 2200 + 9000 * u, fT: end, q: 0.9, g: (0.52 + 0.2 * u) * (last ? 1.5 : 1), a: end * 0.97, ax: true, d: Math.max(0.006, end * 0.03), cut: true, pan, hall: 0.2 }));
   // the roll, on the grid: eighths, then sixteenths, then thirty-seconds as the build climbs; each stroke a little higher
-  if (n >= 2 || last) { const div = last || u >= 0.75 ? 0.5 : u >= 0.35 ? 1 : 2; grid7(t, t + end - 0.03, div).forEach(x => { const k = (x.t - t) / end; snr7(x.t, (0.1 + 0.34 * u) * (0.35 + 0.65 * k * k) * (x.u % 4 === 0 ? 1.15 : 1), 55 + 7 * u + (last ? 9 : 5) * k, { pan: (x.u * 2) % 2 ? 0.15 : -0.15, d: div < 1 ? 0.035 : 0.06 }); }); }
+  const mb = mb8();   // (builder 8) the music's build is the build: the effects add the sweep into each hit and the one tone, not a second roll and kick
+  if (!mb && (n >= 2 || last)) { const div = last || u >= 0.75 ? 0.5 : u >= 0.35 ? 1 : 2; grid7(t, t + end - 0.03, div).forEach(x => { const k = (x.t - t) / end; snr7(x.t, (0.1 + 0.34 * u) * (0.35 + 0.65 * k * k) * (x.u % 4 === 0 ? 1.15 : 1), 55 + 7 * u + (last ? 9 : 5) * k, { pan: (x.u * 2) % 2 ? 0.15 : -0.15, d: div < 1 ? 0.035 : 0.06 }); }); }
   // the heartbeat, on the beat: a kick and its echo a sixteenth later; from half way up it beats on the off-beat too. It runs on
   // between the arrows and is gone before the last hit. Where a hit falls the hit's own boom is the beat
-  { const from = Math.max(b.hbTo || 0, t - 0.005), to = last ? t + end * 0.45 : t + Math.max(gap, d); b.hbTo = to;
+  if (!mb) { const from = Math.max(b.hbTo || 0, t - 0.005), to = last ? t + end * 0.45 : t + Math.max(gap, d); b.hbTo = to;
     grid7(from, to, 2).forEach(x => { const on = x.u % 4 === 0; if (!on && u < 0.5) return; if (Math.abs(x.t - tH) < 0.11 || Math.abs(x.t - b.lh) < 0.11) return; if (w > 0.3 && rnd() < 0.25 * w) return;   // deeper rounds: it skips
       const g = (on ? 1 : 0.55) * (0.3 + 0.3 * u) * (x.t < tH ? 1 : 0.7);
       (SB.blog || (SB.blog = [])).push(+x.t.toFixed(5)); kick7(x.t, on ? 52 : 62, g, { d: 0.2, top: 3.2, knock: 0.7, click: 0.2 }); if (on && Math.abs(x.t + sp - tH) > 0.09) kick7(x.t + sp, 46, g * 0.5, { d: 0.14, top: 2.6, knock: 0.6, click: 0.1 }); }); }
@@ -1513,7 +1515,7 @@ function arrE(t, n, d, u, last, gap) {
   }
 }
 function hitE(t, n, u, last, tNA, tNH) {
-  const w = madW(), b = st5(), r = roots4()[chordIx(n, last)], fr = mf(r), fs = fr > 58 ? fr / 2 : fr, br = dB(-4 * (1 - u)), k = last ? 1.0 : 1, keep = G4, DL = last ? 'lo' : undefined, DH = last ? true : undefined;
+  const w = madW(), b = st5(), r = roots4()[chordIx(n, last)], fr = mf(r), fs = fr > 58 ? fr / 2 : fr, br = dB(-4 * (1 - u)), k = last ? 1.0 : 1, keep = G4, m8 = mb8(), DL = last && !m8 ? 'lo' : undefined, DH = last && !m8 ? true : undefined;   // (builder 8) over the EDM soundtrack the last hit goes through the bus like the rest (nothing past the limiter)
   b.lh = t; if (!last) G4 *= 0.66;
   // the boom: a kick tuned to the chord's root, a sub under it whose tail lengthens with the build, a rumble into the hall
   kick7(t, fr, 0.7 * k, { d: last ? 0.12 : 0.3 + 0.2 * u, top: 3.4 + 1.2 * u, knock: 1.0, click: 0.6, dir: DL });
@@ -1528,10 +1530,11 @@ function hitE(t, n, u, last, tNA, tNH) {
   if (!last) crash7(t, 0.6 * br * u, 0.5 + 1.3 * u, { pan: 0.25 });
   R5('clink', safeUp(88 + (n % 5) * 2), t, 0.2, { pan: n % 2 ? 0.5 : -0.5, rev: 0.3 });   // lab glass, kept as texture
   if (last) {   // the tail of the last hit, on the bus as it opens behind the blow
+    if (m8) G4 *= 0.5;   // (builder 8) over the EDM soundtrack the last hit is the top of the build, not a second ending: half the tail
     kick7(t, fr, 1.1, { d: 0.5, top: 5 }); v7({ t, f: fs * 2, f1: fs, ft: 0.1, g: 1.1, a: 0.003, h: 0.1, d: 1.6, sat: 1.5 });
     crash7(t, 1.6, 2.4, { pan: 0.3 }); crash7(t + 0.01, 1.1, 1.8, { pan: -0.3, f: 3500 }); clap7(t, 1.5, { d: 0.3 }); clap7(t + 0.07, 0.6, { d: 0.2, pan: 0.3 });
     saw7(t, [38, 50, 57, 62, 69, 74], 1.9, { h: 0.5, d: 1.4, a: 0.006, lp: 7000, lp1: 900, lpt: 1.4, n: 3, sp: 18, w: 0.5, hall: 0.5 });
-    R5('shatter', NO, t + 0.06, 0.6, { dur: 0.5, r: 0.4, rev: 0.4, hp: 1500 });
+    R5('shatter', NO, t + 0.06, 0.6, { dur: 0.5, r: 0.4, rev: 0.4, hp: 1500 }); if (m8) G4 *= 2;
   }
   // deeper rounds: the boom echoes off the beat, a flam on the clap, glass falls
   if (w > 0.3) { MST.extra++; kick7(t + 0.17, fr * 0.8, 0.35 * w, { d: 0.2, click: 0 }); clap7(t + 0.035, 0.35 * w * (0.5 + u), { pan: 0.3 }); for (let i = 0; i < Math.round(5 * w); i++) R5('clink', safeUp(86 + Math.floor(rnd() * 12)), t + 0.08 + rnd() * 0.3, 0.12 * w, { pan: rnd() * 1.6 - 0.8, rev: 0.4 }); }
@@ -1571,15 +1574,25 @@ const K7 = {
 // each kind's level, set by measuring the first 300 ms of each alone (as KLV4)
 const KLV7 = { lactol: 0.7, enone: 1.58, taut: 1.35, weld: 0.75, snap6: 2.4, ether: 1.0, shift: 0.66, tuck: 0.67, knit: 1.08, seal: 1.18, cap: 1.25, open: 0.78, fold: 0.46 };
 // ---- OVERREACT, the drop ----
+const OV8 = { stop: 0.7, rev: 0.6, drop: 0.55 };   // (builder 8) levels over the EDM soundtrack: the stop on the call, the backwards cymbal of the breath, the effects' share of the drop
 function overE(t0, o) {
   const w = madW(), c = C, bp = SB.breath.gain, dk = SB.duck.gain, t = t0 + 0.09, sw = t + 0.55, cn = clamp(o && o.count ? o.count / 1000 : 2.4, 0.8, 8), e = mus7(), sp = spu7(), th = third4(), b = st5();
   // the drop: where the music lands it if the music was called first, else 2.95 s on (and the music is told)
-  let tl = t0 + 2.95; { const dr = c.__ovdrop; if (dr > t0 + 2.2 && dr < t0 + 3.8) tl = dr; else c.__ovlift = tl; }
+  const m8 = mb8();   // (builder 8) over the EDM soundtrack there is no blow and no second build: the call stops the build, a breath of a quarter to half a second, then the drop on the music's grid
+  let tl = t0 + 2.95; if (m8) { try { tl = e.dropAt(t0); } catch (x) { tl = t0 + 0.4; } } else { const dr = c.__ovdrop; if (dr > t0 + 2.2 && dr < t0 + 3.8) tl = dr; else c.__ovlift = tl; }
   const hole = tl - 0.2, L = hole - sw;
   trembleCut(t0); if (b.lead && b.lead.c === c && b.lead.dead > t0) { b.lead.g.gain.cancelScheduledValues(t0); b.lead.g.gain.setTargetAtTime(0, t0, 0.005); b.lead.dead = t0; }
+  if (m8) { bp.cancelScheduledValues(t0); bp.setTargetAtTime(1, t0, 0.01); dk.cancelScheduledValues(t0); dk.setTargetAtTime(1, t0, 0.01); } else {
   bp.cancelScheduledValues(t0); bp.setTargetAtTime(0.012, t0, 0.018); bp.setValueAtTime(0.02, t); bp.setValueAtTime(0.02, t + 0.13); bp.linearRampToValueAtTime(0.1, t + 0.24); bp.linearRampToValueAtTime(1, t + 0.5); bp.setValueAtTime(1, hole); bp.linearRampToValueAtTime(0.015, hole + 0.03); bp.setValueAtTime(0.015, tl - 0.006); bp.linearRampToValueAtTime(1, tl - 0.001);
-  dk.cancelScheduledValues(t0); dk.setTargetAtTime(0.16, t0, 0.004); dk.setValueAtTime(0.16, sw); dk.exponentialRampToValueAtTime(0.6, hole); dk.setValueAtTime(1, tl - 0.003);
+  dk.cancelScheduledValues(t0); dk.setTargetAtTime(0.16, t0, 0.004); dk.setValueAtTime(0.16, sw); dk.exponentialRampToValueAtTime(0.6, hole); dk.setValueAtTime(1, tl - 0.003); }
   if (SB.bhp) { SB.bhp.frequency.cancelScheduledValues(t0); SB.bhp.frequency.setValueAtTime(20, t0); }
+  if (m8) {
+    // the stop: the word lands on a clap and a snare's crack with a long tail in the hall (no blow); then the breath: that tail, the echo of the
+    // riser, a cymbal backwards and a rising hiss into the drop
+    clap7(t0, OV8.stop, { d: 0.2, hall: 1.2 }); snr7(t0, OV8.stop * 0.6, 62, { d: 0.07 });
+    rcym5(t0 + 0.01, tl, OV8.rev, { fin: 0.05 }); rcym5(t0 + 0.01, tl, OV8.rev * 0.6, { det: -700, pan: -0.4, fin: 0.05 });
+    n7({ t: t0 + 0.02, ft: 'bandpass', f: 1500, f1: 9000, fT: tl - t0 - 0.03, q: 0.8, g: OV8.rev * 0.5, a: (tl - t0 - 0.03) * 0.97, ax: true, d: 0.01, cut: true, hall: 0.3 });
+  } else {
   // the strike: one blow, past the limiter: a kick and a sub falling an octave and a half, claps, hiss, D in seven octaves of supersaw snapping shut, glass
   kick7(t, 55, 1.65, { d: 0.5, top: 5, knock: 1, click: 0.6, dir: 'lo' });
   v7({ t, f: 110, f1: 36.7, ft: 0.25, g: 1.35, a: 0.003, h: 0.1, d: 0.9, sat: 1.6, dir: 'lo' });
@@ -1593,7 +1606,8 @@ function overE(t0, o) {
   [-0.6, 0.6].forEach(pan => n7({ t: sw, ft: 'bandpass', f: 500, f1: 12000, fT: L, q: 0.8, g: 0.5, a: L * 0.98, ax: true, d: 0.02, cut: true, pan, hall: 0.2 }));
   [-1, 1].forEach(s => v7({ t: sw, f: 146.83, f1: 587.33 * (w > 0.5 ? 2 : 1), ft: L, type: 'sawtooth', det: s * 13, g: 0.34, a: L * 0.98, ax: true, d: 0.02, cut: true, lp: 500, lp1: 8000, lpt: L, pan: s * 0.3, hall: 0.2 }));
   { const su = (tl - t0 - 0.03) / 16; for (let q = 4; q < 16; q += q < 8 ? 2 : q < 12 ? 1 : 0.5) { const x = q / 16, tt = tl - (16 - q) * su; if (tt < sw || tt > hole - 0.02) continue; snr7(tt, 0.2 + 1.0 * x * x, 57 + (7 + 6 * w) * x, { pan: q % 1 ? 0.15 : -0.15, d: q < 12 ? 0.07 : 0.035 }); } }
-  rcym5(sw, hole, 0.8, { fin: 0.1 });
+  rcym5(sw, hole, 0.8, { fin: 0.1 }); }
+  { const k8 = m8 ? OV8.drop : 1; G4 *= k8; }
   // the drop. The impact is the effects', above 95 Hz: the kick and the sub of the music own the low end from here. A crash, a clap, D across the octaves
   n7({ t: tl, col: 'p', ft: 'lowpass', f: 1800, f1: 200, fT: 0.6, ft2: 'highpass', f2: 95, g: 1.0, a: 0.002, d: 1.2, hall: 0.6 });
   crash7(tl, 1.0, 2.8, { pan: 0.3 }); crash7(tl, 0.7, 2.0, { pan: -0.3, f: 3500 }); clap7(tl, 1.0, { d: 0.25 });
@@ -1647,13 +1661,13 @@ function arrow5(n, ms, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? (EDM7 ? 0.3 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
-  try { (BLD === 'b' ? arrB : BLD === 'c' ? (EDM7 ? arrE : arrC) : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
+  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); const m8 = c && mb8(); SB.duck.gain.setTargetAtTime(c ? (m8 ? 0.78 : EDM7 ? 0.3 : 0.33) : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
+  try { (BLD === 'b' ? arrB : BLD === 'c' ? (EDM7 ? arrE : arrC) : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); if (m8) { const p = SB.breath.gain; p.setTargetAtTime(0.35, e, 0.03); p.setValueAtTime(1, t + d); } else breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), last = !!o.last, kd = kindOf(kind), had = b.n === n && t - b.la < 3, tNA = had ? b.la + b.gap : t + Math.max(0.5, b.gap * 0.91) - b.d, tNH = tNA + b.d;
   if (o.of) b.of = o.of | 0; const u = u5(n, b.of);
-  const c = BLD === 'c'; if (c) { duck(t, 0.25, 0.5, 0.2); if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); if (EDM7) { bp.linearRampToValueAtTime(0.3, t + 0.18); bp.linearRampToValueAtTime(0.85, t + 0.32); } else { bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); } bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? C5LAST : C5HIT * dB(-C5RISE * (1 - u)) * (EDM7 ? 0.84 : 1)) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? (EDM7 ? 5 + 6 * u : 1 + 8 * u) : 2 + 9 * u);
+  const c = BLD === 'c', m8 = c && mb8(); if (c) { if (m8) duck(t, 0.6, 0.3, 0.08); else duck(t, 0.25, 0.5, 0.2); if (last && m8) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.3, t); bp.setValueAtTime(0.3, t + 0.06); bp.linearRampToValueAtTime(1, t + 0.3); } else if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); if (EDM7) { bp.linearRampToValueAtTime(0.3, t + 0.18); bp.linearRampToValueAtTime(0.85, t + 0.32); } else { bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); } bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? (m8 ? C5HIT * 1.3 : C5LAST) : C5HIT * dB(-C5RISE * (1 - u)) * (EDM7 ? 0.84 : 1)) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? (EDM7 ? 5 + 6 * u : 1 + 8 * u) : 2 + 9 * u);
   try { (BLD === 'b' ? hitB : BLD === 'c' ? (EDM7 ? hitE : hitC) : hitA)(t, n, u, last, tNA, tNH);
     // the kind keeps its own voice on top of the drums, climbing D, E, G, A
     if (c && EDM7) { G4 *= last ? 1 : K7G; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 3500 * Math.pow(2, 1.9 * u); lp.connect(shelf5(2)); OUT4 = lp; (K7[kd] || K7.lactol)(t, mel5(n) + 12, 0.7 * (KLV7[kd] || 1), 0); return; }
@@ -1928,7 +1942,7 @@ const fx = {
 // the build-up options: build('a' | 'b' | 'c') chooses one, build('') goes back to style 4's own chain, build() reads it (also ?build=a)
 // (builder 7) the palette of build c: 'edm' (synthesisers, on the soundtrack's beat) or 'orch' (builder 6's drums and brass). ownsBuild: the effects are making a chain's roll, kick and risers themselves
 fx.palette = function (id) { if (id !== undefined) EDM7 = id !== 'orch'; return EDM7 ? 'edm' : 'orch'; };
-fx.ownsBuild = function () { return BLD === 'c' && STY === 4 && EDM7 && !muted; };
+fx.ownsBuild = function () { return BLD === 'c' && STY === 4 && EDM7 && !muted; };   // (builder 8) now means: the effects are playing in the EDM palette (their hits, their share of the drop); the EDM soundtrack plays a chain's roll, kick and risers itself
 fx._sched = true; fx._beatlog = () => (SB && SB.blog ? SB.blog.slice() : []);   // test hook: when the heartbeats of the last context were written
 fx.build = function (id) { if (id === undefined) return BLD; BLD = /^[abc]$/.test(String(id)) ? String(id) : ''; try { root.localStorage.setItem(BKEY, BLD); } catch (e) { /* storage blocked */ } return BLD; };
 // an arrow starts being drawn for step n and its hit comes in ms: the anticipation. o: { last, of, gap } (see arrow5). With no build chosen it is style 4's wind-up.
