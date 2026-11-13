@@ -255,3 +255,13 @@ Timing of everything that appears, changes or leaves on the play screen (ms; the
 | speed mark chosen | pulses once | 420 | spring 6 Hz |
 
 Not done in this pass: the flags do not fill with a drawn motion (they switch); the upgrade screen of later rounds has no picture for what a choice gives; the end screens were not retimed.
+
+### Sixth builder, last additions
+
+- Nothing moves between steps: `flHome` slides and scales the molecule only while a morph is moving it (toward the box of the layout the step ends in) and sets it exactly between steps; the charge shake, the squash and pop, the swell on a hit are removed. The recorder logs it (`V.wobSum()`: atoms moved outside a step, whole molecule moved outside a step); before 212 of 454 idle frames, after 0.
+- Reagents: no bracket, no strike. `slots[i].o` is null when the reagent has no place to act on the molecule as it stands: its left picture is drawn pale in a dashed outline.
+- The target is a finish post drawn in ink (the first 3D flag is hidden), the bar is 18 wide and starts at the yield numeral (`TRK`, `MADE`).
+- The goal (`drawHurdle` with `goal`): the mark drawn once per one needed (up to 6), dashed outline until had, filled and ticked after.
+- Stains: `pageStains` draws a seeded set per run, round and page under all ink; `keepClear()` lists the rectangles; `AA.rxScheme.stainCheck(50)` gives the worst reach inside (0.099 of a unit). The stains baked into the aged paper and the madness stains of `buildMargin` are off.
+- `?bench=a|b|c`: mock views of the page on a wooden bench with the objects on the bench; `?cage=1`: the trial of cages drawn in space.
+- Not done: hand-made cage templates; the molecule part that meets the goal lighting the outline; jars as large as the instruments and the homunculus acting in a take; the upgrade screen's picture language; the stains clip of five pages; show6-run.mp4 re-recorded from this state (the file in shots is the first version, seed 3, from before the clear-screen pass).
