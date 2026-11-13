@@ -97,7 +97,7 @@ const EDGE = -22.6 + SX, STEP = { x: -21.7 + SX, z: 2.3 }, STEPD = 3.3, PAGES = 
 const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 function pageE() {
   let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
-  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 0.6, hw = 13.5, bz = 11.5;
+  const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 1.0, hw = 12.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
     home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
@@ -168,7 +168,8 @@ function start(app) {
       x.save(); x.translate(W / 2, H * 0.36); x.rotate(-0.04); x.scale(slam, slam); x.globalAlpha *= Math.min(1, age / 80);
       AA.rxPen.write(x, 'OVERREACT', 7 * k, sz * 0.36 + 8 * k, sz, { weight: 'heavy', color: '#22252c', align: 'center', extra: 5 * k });
       AA.rxPen.write(x, 'OVERREACT', 0, sz * 0.36, sz, { weight: 'heavy', color: '#d2301f', align: 'center', extra: 5 * k }); x.restore(); }
-    if (age > 900 && !title.out) { x.globalAlpha = 0.55 + 0.35 * Math.sin(now / 380); AA.rxPen.write(x, 'click to open the notebook', W / 2, H * 0.93, 34 * k, { color: '#3b4252', align: 'center' }); }
+    // no words but the name: a small hand-drawn arrow at the page corner asks for the page to be turned
+    if (age > 900 && !title.out) { const bob = 6 * k * Math.sin(now / 300), ax = W * 0.9 + bob, ay = H * 0.9; x.globalAlpha = 0.75; x.strokeStyle = '#3b4252'; x.lineWidth = 6 * k; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(ax - 70 * k, ay); x.lineTo(ax, ay); x.moveTo(ax - 22 * k, ay - 18 * k); x.lineTo(ax, ay); x.lineTo(ax - 22 * k, ay + 18 * k); x.stroke(); }
     x.restore();
   }
 
@@ -909,7 +910,7 @@ function start(app) {
   // before each round: three rounds stand on the page, each a molecule with what the round asks and what it pays
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; }
   // an assay is one round and stands alone in the middle of the page
-  const BX = i => (briefs.length === 1 ? 0 : briefs.length === 2 ? (i ? 11 : -11) : PICKX[i]);
+  const BXC = PGE.on ? 1.2 : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (i ? 10.5 : -10.5) + BXC : PICKX[i]);
   // the pair drawn again: a turning arrow under the two molecules, and the coins it costs
   const PAIR = { x: -1.6, z: 11.6 };
   const pairOn = () => P.RULE.choose && P.RULE.coins && st.mode === 'brief' && briefs.length === 2 && !!meta.coined;
@@ -1910,7 +1911,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ink.t.needsUpdate = true; return;
     }
     if (st.mode === 'brief') {
-      const h = px({ x: 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]);
+      const h = px({ x: PGE.on ? 1.2 : 0, z: -11 }); marker(x, 120); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]);
       briefs.forEach((b, i) => {
         const c = px({ x: BX(i), z: 3.2 }), B = P.BRIEF[b.brief], hov = st.hover === i;
         if (b.ease != null) {
@@ -2392,7 +2393,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     homObjs.forEach(k => { const age = (now - k.born) / 1000, u = Math.max(0, Math.min(1, age / 0.45)), dropY = u < 1 ? (1 - u) * (1 - u) * 9 : 0, hov = st.hover === k.slot; k.grp.visible = age >= 0; k.grp.position.y = dropY + (k.id === 'h2' ? 0.3 + 0.2 * Math.sin(now / 600) : 0) + (hov ? 0.6 : 0); k.grp.rotation.z = k.id === 'h2' ? 0.08 * Math.sin(now / 900) : 0.02 * Math.sin(now / 700 + k.slot); });
     prods.forEach((m, i) => { if (!m || tweens.some(tw => tw.m === m)) return; const hov = st.hover === i, want = hov ? 0.7 : 0, sc = (SCS[i] || 0.8) * (hov ? SC_HOVER : 1), k = Math.min(1, dt * 14); m.group.position.y += (want - m.group.position.y) * k; const s0 = m.group.scale.x; if (Math.abs(s0 - sc) > 0.002) { m.group.scale.setScalar(s0 + (sc - s0) * k); dirty = true; } });
     if (st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom') dirty = true;
-    if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0.05 * Math.sin(now / 1000 * 1.3 + i * 1.7); } });
+    if (st.mode === 'brief') briefMols.forEach((m, i) => { if (!tweens.some(tw => tw.m === m)) { m.group.scale.setScalar(m.sc * (st.hover === i ? 1.15 : 1)); m.group.rotation.z = 0; } });
     if (st.gains.length) { st.gains = st.gains.filter(q => { if (now < q.t + q.dur) return true; st.want = Math.max(st.want, q.to); st.madeBump = 1; st.tickT = now; return false; }); if (!st.gains.length && g && st.mode !== 'done' && !st.pending) st.want = P.made(g); dirty = true; }
     const target = st.mode === 'done' && g ? g.total : st.want;
     if (st.shown !== target) { const d = target - st.shown; st.shown = Math.abs(d) < 2 ? target : st.shown + d * Math.min(1, dt * (now - (st.tickT || 0) < 260 ? 50 : 16)); dirty = true; }
@@ -2418,8 +2419,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx + st.kx, 0.25 + 0.2 * Math.sin(tt * (1.6 + 2 * heat)), st.cz + st.kz); center.group.rotation.z = 0.035 * Math.sin(tt * 1.1) + (Math.random() - 0.5) * (0.03 * heat + 0.07 * st.fury); if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
-    prods.forEach((m, i) => { if (m) m.group.rotation.z = 0.05 * Math.sin(tt * 1.3 + i * 1.7); });
+    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { const q = st.sq * Math.cos(st.sq * 11); center.group.scale.set(st.sc * sp * (1 + 0.1 * q), st.sc * sp * (1 - 0.2 * q), st.sc * sp * (1 + 0.1 * q)); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0; if (st.ch > 0.02) { const c = st.ch, fz = st.mode === 'fuse'; center.group.scale.multiplyScalar(1 + 0.15 * c + (fz ? 0.06 * Math.sin(now / 70) : 0)); center.group.rotation.z += (Math.random() - 0.5) * 0.09 * c * c * (fz ? 1.8 : 1); center.group.position.x += (Math.random() - 0.5) * 0.25 * c * c; dirty = true; } }
+    
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'); flask.grp.visible = false; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.25 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.25 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.25); if (boil) dirty = true; } }
     kitObjs.forEach((k, i) => animKit(k, i, now, heat));

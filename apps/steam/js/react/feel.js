@@ -155,8 +155,8 @@ function throwThen(h, react) {
     S.tokens = S.tokens.filter(q => q !== tok);
     // impact: the change starts as the token touches
     const dir = (() => { const a = inkOf(tgt); const dx = a[0] - from[0], dy = a[1] - from[1], l = Math.hypot(dx, dy) || 1; return { x: dx / l, z: dy / l }; })();
-    const W = molWorldBox(c).w, rec = (d.throwRec[Math.min(2, i)] || 0.03) * W;
-    S.recoils.push({ t: now(), x: dir.x * rec, z: dir.z * rec, yaw: (i % 2 ? 1 : -1) * d.yaw * 0.5 * (i + 1) / 3, hz: d.recHz, z0: d.recZ });
+    const W = molWorldBox(c).w, rec = 0 * (d.throwRec[Math.min(2, i)] || 0.03) * W;
+    S.recoils.push({ t: now(), x: dir.x * rec, z: dir.z * rec, yaw: 0, hz: d.recHz, z0: d.recZ });
     addShake(0.25 + 0.12 * i);
     if (mode === 1) S.drops.push({ t: now(), a: 0.008 + 0.006 * i, ms: 180 });
     snd('strike', i, mode === 1 ? 1.25 : mode === 2 ? 0.8 : 1); F.log.push(['strike', i, Math.round(now() - S.t0)]);
@@ -403,7 +403,7 @@ function swellCap(m) { const b = m && m.box, hm = api.home(), H = api.HOME; retu
 const mus = (name, ...a) => { try { if (AA.music && AA.music[name]) AA.music[name](...a); } catch (e) { /* music never breaks play */ } };
 const toScreen = w => { const p = w.clone().project(api.cam), o = api.over; return [(p.x + 1) / 2 * (o ? o.cv.width : 1280), (1 - p.y) / 2 * (o ? o.cv.height : 720)]; };
 // ink thrown on the paper by a hit: more, further and bigger the longer the chain has run
-function splat(q, n, last) { const arr = api.st.splats || (api.st.splats = []), k = Math.round(4 + 1.6 * Math.min(12, n) + (last ? 10 : 0)), reach = (46 + 16 * Math.min(12, n)) * (last ? 1.6 : 1); for (let j = 0; j < k; j++) { const ang = Math.random() * 6.283, dd = (0.35 + 0.65 * Math.random()) * reach * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * (4 + 0.5 * Math.min(12, n)), a: 0.4 + Math.random() * 0.35 }); } if (arr.length > 160) arr.splice(0, arr.length - 160); }
+function splat(q, n, last, over) { if (!over) return; const arr = api.st.splats || (api.st.splats = []), k = Math.round(4 + 1.6 * Math.min(12, n) + (last ? 10 : 0)), reach = (46 + 16 * Math.min(12, n)) * (last ? 1.6 : 1); for (let j = 0; j < k; j++) { const ang = Math.random() * 6.283, dd = (0.35 + 0.65 * Math.random()) * reach * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * (4 + 0.5 * Math.min(12, n)), a: 0.4 + Math.random() * 0.35 }); } if (arr.length > 160) arr.splice(0, arr.length - 160); }
 // the curve a reflex step's atoms follow from where they stood to where they go: wind-up, then a fast committed swing
 function k(K, morph) { if (morph.fk) return morph.fk(K); return K; }
 // a reagent's change: quick with a small overshoot
@@ -416,13 +416,13 @@ function hit(morph, t) {
   (S.marks || (S.marks = [])).push({ t, kind: c.kind, a: c.ja || c.a, b: c.jb || c.b, n, m: nm }); F.log.push(['hit', n, Math.round(t - S.t0)]);
   // what moved, and how far: the overshoot carries on past the end along the same path and rings down
   const vecs = new Map(); morph.from.forEach((p, a) => { const q = nm.at.get(a); if (q) { const dv = q.clone().sub(p); if (dv.length() > 0.02) vecs.set(a, dv.clampLength(0, 1.2)); } });
-  S.settle = { m: nm, vecs, t0: t + c.ph.hold, hold: c.ph.hold, ov: d.ov * (c.last ? 1.6 : (c.fm ? c.fm.ov : 1)), hz: d.settleHz, z: d.settleZ, a: c.a, b: c.b, ms: 700 };
+  S.settle = { m: nm, vecs, t0: t + c.ph.hold, hold: c.ph.hold, ov: 0, hz: d.settleHz, z: d.settleZ, a: c.a, b: c.b, ms: 700 };
   // the rest of the molecule is knocked the other way and turns, as one piece
   let dir = { x: 0, z: 1 }; if (c.b && vecs.get(c.b)) { const v = vecs.get(c.b); const l = Math.hypot(v.x, v.z) || 1; dir = { x: v.x / l, z: v.z / l }; }
-  const wsc = (api.center().group.scale.x || 1), W = c.W * wsc, rec = d.recoil(n) * W * (c.last ? 2.6 : 1);
-  S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: (n % 2 ? 1 : -1) * d.yaw * (0.5 + 0.5 * Math.min(1, n / 8)) * (c.last ? 2.2 : 1), hz: d.recHz, z0: d.recZ });
+  const wsc = (api.center().group.scale.x || 1), W = c.W * wsc, rec = 0 * d.recoil(n) * W * (c.last ? 2.6 : 1);
+  S.recoils.push({ t: t + c.ph.hold, x: -dir.x * rec, z: -dir.z * rec, yaw: 0, hz: d.recHz, z0: d.recZ });
   // late in the run (madness) every hit shakes the page a little more and throws a few drops of ink
-  { const mm = api.st.madness || 0; if (mm > 0.4) { addShake(0.3 * mm); try { const mol = api.center(), A = c.ja || c.a; if (A && mol && mol.balls.has(A)) { const q = inkOf(worldOf(mol, A)), arr = api.st.splats || (api.st.splats = []); for (let j = 0; j < Math.round(3 + mm * 6); j++) { const ang = Math.random() * 6.28, dd = (30 + Math.random() * 110) * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * 6 * mm, a: 0.35 + Math.random() * 0.3 }); } if (arr.length > 120) arr.splice(0, arr.length - 120); } } catch (e) { /* no splatter */ } } }
+  { const mm = 0; if (mm > 0.4) { addShake(0.3 * mm); try { const mol = api.center(), A = c.ja || c.a; if (A && mol && mol.balls.has(A)) { const q = inkOf(worldOf(mol, A)), arr = api.st.splats || (api.st.splats = []); for (let j = 0; j < Math.round(3 + mm * 6); j++) { const ang = Math.random() * 6.28, dd = (30 + Math.random() * 110) * 1.6; arr.push({ x: q[0] + Math.cos(ang) * dd, y: q[1] + Math.sin(ang) * dd, r: 2 + Math.random() * 6 * mm, a: 0.35 + Math.random() * 0.3 }); } if (arr.length > 120) arr.splice(0, arr.length - 120); } } catch (e) { /* no splatter */ } } }
   // impact: a flash and lines of force at the join, ink thrown on the paper, the molecule swells for a moment; all of it grows with the chain
   rungDone(c.act);
   try { const mol = api.center(), Aa = (c.act && c.act.A) || c.ja || c.a, Bb = (c.act && c.act.B) || Aa; if (Aa && mol.balls.has(Aa)) { const w = worldOf(mol, Aa); if (Bb && mol.balls.has(Bb)) w.add(worldOf(mol, Bb)).multiplyScalar(0.5); const sp = toScreen(w); { const pg = Math.max(0, ((api.g() && api.g().page) || 1) - 1); (S.fx || (S.fx = [])).push({ t, x: sp[0], y: sp[1], n: n + 2 * pg, last: c.last }); splat(inkOf(w), n + 3 * pg, c.last); } } } catch (e) { /* no flash */ }
@@ -434,7 +434,7 @@ function hit(morph, t) {
   const dropA = c.last && d.landDrop ? d.landDrop : d.drop(n) * (c.last ? 2.2 : 1); if (dropA > 0) S.drops.push({ t, a: dropA, ms: d.dropMs || 260 });
   if (mode === 2) S.cam.push = Math.min(0.18, 0.015 * n);
   if (d.cam === 'half' && !c.last) setTimeout(() => { if (F.seq === S && S.cur === c) S.swT = 0.94; }, c.ph.hold + 120);
-  if (c.change) { S.recoils.push({ t: t + c.ph.hold, x: 0, z: 0, yaw: (n % 2 ? -1 : 1) * 6, hz: 3, z0: 0.4 }); addShake(0.3); S.drops.push({ t, a: 0.035, ms: 240 }); }
+  if (c.change) { S.recoils.push({ t: t + c.ph.hold, x: 0, z: 0, yaw: 0, hz: 3, z0: 0.4 }); addShake(0.3); S.drops.push({ t, a: 0.035, ms: 240 }); }
   // sound on the frame of contact; the bell rings through the freeze
   const fast = mode === 2 && (c.ph.T || 999) < 200;
   snd('reflex', c.kind, n, { bell: d.bell * (c.last ? 1.4 : c.change ? 1.35 : 1), fast, echo: d.echo || c.change, last: c.last });
@@ -547,7 +547,7 @@ function drawOver(t) {
 // Once the yield has passed the round's target the atoms themselves tremble about their places, finely and fast: more with each mark
 // passed and with each step of the chain. From the second mark on the bonds glow with heat. It is dead still in the held breath
 // before the last hit. The most an atom moves is 0.26 of its own radius, so atoms never touch and bonds are not stretched.
-let VIBE = 1; try { if (new URLSearchParams(root.location.search).get('vibe') === '0') VIBE = 0; } catch (e) { VIBE = 1; }
+let VIBE = 0; try { if (new URLSearchParams(root.location.search).get('vibe') === '1') VIBE = 1; } catch (e) { VIBE = 0; }
 const roundNow = () => { try { const r = AA.rxScheme && AA.rxScheme.debugRun && AA.rxScheme.debugRun(); return clamp((r && r.round) || 1, 1, 9); } catch (e) { return 1; } };
 const bell = (v, mid, half) => { const u = (v - mid) / half; return Math.abs(u) >= 1 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * u); };
 function overPending() { const S = F.seq; if (!S || S.overDone) return false; const vals = flagVals(); return vals.length >= 4 && Math.max(P_made(), (S.plan && S.plan.yEnd) || 0) >= vals[3]; }
@@ -623,7 +623,7 @@ function overStart() { const t = now(), S = F.seq, r = roundNow(), rk = (r - 1) 
 function overBeats(t) { const ov = F.ov, S = F.seq, a0 = t - ov.t - OV.pre, pw = ov.pw, once = (name, at) => { if (a0 >= at && !ov.beat[name]) { ov.beat[name] = t; return true; } return false; };
   if (once('hit', 0)) { F.log.push(['overhit', 0, S ? Math.round(t - S.t0) : 0]); snd('flag', 4); mus('state', 'overreact');
     if (S) { S.shake = Math.min(0.9, 0.55 + 0.4 * ov.rk); S.shakeT = t; S.drops.push({ t, a: 0.045 + 0.03 * ov.rk, ms: 320 }); S.recoils.push({ t, x: 0, z: 0, yaw: 7 + 5 * ov.rk, hz: 3, z0: 0.35 }); S.swHit = { t, a: 0.06 + 0.03 * ov.rk }; S.burnT = t; S.punchT = t; S.punchA = 0.02 + 0.03 * ov.rk; }
-    try { const b = ov.wb; for (let j = 0; j < 3 + Math.round(5 * ov.rk); j++) splat(inkOf(new T.Vector3(b.cx + (Math.random() - 0.5) * b.w * 1.6, 0.4, b.cz + (Math.random() - 0.5) * b.d * 1.6)), 12, true); } catch (e) { /* no splatter */ } }
+    try { const b = ov.wb; for (let j = 0; j < 3 + Math.round(5 * ov.rk); j++) splat(inkOf(new T.Vector3(b.cx + (Math.random() - 0.5) * b.w * 1.6, 0.4, b.cz + (Math.random() - 0.5) * b.d * 1.6)), 12, true, true); } catch (e) { /* no splatter */ } }
   if (once('ring', 110) && S) { S.drops.push({ t, a: 0.03 + 0.03 * ov.rk, ms: 260 }); addShake(0.25); }
   if (once('count', 150) && S) { const ct = S.count, fin = P_made(); ct.frozen = false; ct.from = ct.shown; ct.to = fin; ct.t0 = t; ct.dur = 1250; ct.ease = 'outQuart'; ct.target = fin; S.yDrop = t; ov.gold = overGold(fin); }
   if (ov.rk > 0.3 && once('third', 470) && S) { addShake(0.3 * pw); S.drops.push({ t, a: 0.03, ms: 220 }); S.swHit = { t, a: 0.04 }; }
@@ -730,7 +730,7 @@ function frame(t, dt) {
   // recoil
   let rx = 0, rz = 0, ry = 0; S.recoils = S.recoils.filter(r => { const s = (t - r.t) / 1000; if (s > 2.5) return false; if (s < 0) return true; const kk = kick(s, r.hz, r.z0); rx += r.x * kk; rz += r.z * kk; ry += r.yaw * Math.PI / 180 * kk; return true; });
   let sy = 0; if (mode === 1 && S.lastHitT) { const s = (t - S.lastHitT) / 1000; sy = -0.9 * Math.min(1, 0.3 + 0.07 * (S.hitN || 1)) * (s < 0.05 ? s / 0.05 : Math.max(0, ring(s - 0.05, 3.5, 0.5))); }
-  rx = clamp(rx, -1.2, 1.2); rz = clamp(rz, -0.7, 0.7); { const a = t / 1000 * 2 * Math.PI * 0.5; rx += 0.15 * Math.sin(a); rz += 0.15 * Math.cos(a); }
+  rx = clamp(rx, -1.2, 1.2); rz = clamp(rz, -0.7, 0.7); 
   c.group.position.set(px0 + rx, 0.25 + sy, pz0 + rz); c.group.rotation.set(0, ry, 0);
   // the joined group: a tremor through the freeze, then the overshoot rings down
   const se = S.settle; if (se && se.m === c) {
