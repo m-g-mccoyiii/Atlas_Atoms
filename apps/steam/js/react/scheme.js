@@ -2137,6 +2137,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ring(x, c, 46, 42, id ? 6 : 5, id || qi === (g.queue ? g.queue.length : 0) ? INK : PENCIL, 0.1 * k);
       { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(k + 1), c[0] - 40, c[1] - 40); }
       if (tdone && tdone.wasted) cross(c, PENCIL); else if ((tdone && tdone.bank) || qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.7, INK, 5);
+      else if (id && qid && age < 0.85 && TILE[id] && slots.findIndex(q => q && q.id === id) >= 0) { // the picture flies from the shelf to its place: 220 ms, eased, landing with a small pop
+        const li = slots.findIndex(q => q && q.id === id), fr = px(LAB[li]), u = Math.min(1, age / 0.85), e = 1 - Math.pow(1 - u, 3), fxp = fr[0] + (c[0] - fr[0]) * e, fyp = fr[1] + (c[1] - fr[1]) * e - 60 * Math.sin(Math.PI * u), sc2 = 1.1 + (0.62 - 1.1) * e; x.save(); x.translate(fxp, fyp); x.scale(sc2, sc2); fragOrChip(x, TILE[id][1], 0, 6, true); x.restore(); dirty = true; }
       else if (id) { const fits = !qid || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(id)), tl = TILE[id]; x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = (fits ? 0.28 : 0.12) * (tdone ? 0.6 : 1); x.fillStyle = cc; x.beginPath(); x.ellipse(1, 0, 38, 34, 0.2, 0, 6.3); x.fill(); x.globalAlpha = fits ? (tdone ? 0.55 : 1) : 0.35;
         if (id === P.SYN.finish) { marker(x, 40); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('F', 1, 14); } else if (tl) { x.save(); x.scale(0.62, 0.62); fragOrChip(x, tl[1], 0, 6, true); x.restore(); }
         x.restore();
