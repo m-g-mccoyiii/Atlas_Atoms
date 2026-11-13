@@ -101,6 +101,8 @@ AM7. 13 November: "Some of that writing still sucks. Like the coffee cup being d
 
 AT. Picks of 13 November, midday: the notebook is an open two-page spread (molecule and yield on the right page; goal, slots and notes on the left); near misses: flatter chain bonuses so yields bunch closer to the mark; helpers stronger (each instrument about 1.2 times, a creature about 1.5) so that a casual player who keeps at it can win a nine-round run.
 
+AM8. 13 November: the plain notes that explain what happened are "Good, but no answers": a note may say what just happened and why; it may not tell the player the best order, what to do next time, or what a creature needs before it has acted. The Carcosa invoice line: "Keep it". The coffee cup: "Make it the re-deal": the cup on the bench is how the reagents are dealt again; its level shows the re-deals left; the steam and the coffee are animated.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
