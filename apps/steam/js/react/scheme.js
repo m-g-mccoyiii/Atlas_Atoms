@@ -571,8 +571,9 @@ function start(app) {
       pairs.forEach(w => { const A = Pp[w[0]], B = Pp[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d >= w[2]) return; if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const k = (d - w[2]) / d * 0.35; A.x += dx * k; A.z += dz * k; B.x -= dx * k; B.z -= dz * k; });
       if (soft) for (let i = 0; i < n; i++) if (S[i]) { Pp[i].x += (S[i].x - Pp[i].x) * soft; Pp[i].z += (S[i].z - Pp[i].z) * soft; } }
     // is it a clean drawing
-    for (const w of eqs) { const d = Math.hypot(Pp[w[0]].x - Pp[w[1]].x, Pp[w[0]].z - Pp[w[1]].z); if (d < 0.8 * w[2] || d > 1.22 * w[2]) { EASEWHY = 'bond'; return false; } }
-    for (const w of pairs) { const d = Math.hypot(Pp[w[0]].x - Pp[w[1]].x, Pp[w[0]].z - Pp[w[1]].z); if (d < 0.78 * Math.min(w[2], 1.15 * L)) { EASEWHY = 'near'; return false; } }
+    for (const w of eqs) { const d = Math.hypot(Pp[w[0]].x - Pp[w[1]].x, Pp[w[0]].z - Pp[w[1]].z); if (d < 0.85 * w[2] || d > 1.18 * w[2]) { EASEWHY = 'bond'; return false; } }
+    if (!useR) { let bad = false; eq.forEach((d0, k) => { const i = Math.floor(k / 4096), j = k % 4096, d = Math.hypot(Pp[i].x - Pp[j].x, Pp[i].z - Pp[j].z); if (d < 0.8 * d0 || d > 1.25 * d0) bad = true; }); if (bad) { EASEWHY = 'ringshape'; return false; } }
+    for (const w of pairs) { const d = Math.hypot(Pp[w[0]].x - Pp[w[1]].x, Pp[w[0]].z - Pp[w[1]].z); if (d < 0.9 * w[2]) { EASEWHY = 'near'; return false; } }
     const cross = (a, b, c, d) => { const o = (p, q, r) => (q.x - p.x) * (r.z - p.z) - (q.z - p.z) * (r.x - p.x); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
     for (let i = 0; i < bonds.length; i++) for (let j = i + 1; j < bonds.length; j++) { const u = bonds[i], v = bonds[j]; if (u[0] === v[0] || u[0] === v[1] || u[1] === v[0] || u[1] === v[1]) continue; if (cross(Pp[u[0]], Pp[u[1]], Pp[v[0]], Pp[v[1]])) { EASEWHY = 'cross'; return false; } }
     return true; };
