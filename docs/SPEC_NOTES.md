@@ -98,3 +98,33 @@ Found headless (job `.claude/headless/jobs/lines.js`) with a new game's seven re
 - seal: a COOH and an OH, NH2 or SH join into a ring (lactone, lactam, thiolactone); the acid OH parts as water.
 - open: an OH oxygen joins one epoxide carbon, the epoxide opens, its oxygen stays as an OH on the other carbon; a ring ether closes.
 - fold: an epoxide with carbon on both ends turns into a C=O; the O stays on one carbon, an H moves to the other.
+
+## What a step really did (for the page builders), 2026-11-12
+
+Every step in `g.trail`, and so every reflex step `g.rec.pages[i].steps[j]` and every circle `g.rec.pages[i].circ[k]`, carries the bonds as they changed. They are read off the molecule before and after the step (`P.bondDiff`), not from the place's anchor atoms, so they cannot disagree with the molecule. `join` is unchanged and is still only the two anchor atoms.
+
+| Field | Entries | Meaning |
+|---|---|---|
+| `made` | `{ a, b, order, fromA, fromB, elA, elB }` | a bond that was not there before |
+| `broken` | the same | a bond that is gone |
+| `changed` | the same plus `was` | a bond whose order changed, `was` to `order` |
+| `left` | `{ id, from, el }` | an atom that left the molecule |
+| `added` | `{ id, el }` | an atom the reagent brought in |
+| `moved` | `{ from, to, el }` | a hydrogen that went from one atom to another inside the molecule. It is not in `left` or `added` |
+| `off` | `{ kind, atoms }` | what the game counts for a jar in this step, and the elements of the group that carried it |
+
+`a` and `b` are atom ids in the molecule after the step; `fromA` and `fromB` are the same atoms' ids before it (null for an atom the step added); an end that left has a null id after the step unless the molecule still carries it while it lifts. Bonds to hydrogen are listed too; skip entries with `elA` or `elB` equal to `H` if they are not drawn.
+
+What leaves the molecule and what the jar counts are not always the same atoms, because part of what comes off was the reagent's:
+- oxidize on a chain-end C=C: the end carbon and its two hydrogens leave the molecule (`left` C, H, H). The carbon dioxide counted is that carbon with two oxygens from the oxidant; those oxygens were never on the molecule.
+- Chugaev: an O and two H leave the molecule. The sulfur counted comes from the reagent (carbon disulfide and methyl iodide go in, the O leaves inside a sulfur-bearing fragment). Draw the O leaving with a yellow S from the bottle, not the O turning yellow.
+- cyanohydrin: nothing leaves the molecule; a carbon, an oxygen and hydrogens are added. The ammonia counted is the reagent's nitrogen.
+- ring, knit, cap, weld, tuck, shift, flip: no atom leaves. One hydrogen moves (`moved`).
+- dry, link, seal and dehydrate: water (`left` H, H, O). close: Cl and H. bridge: two H.
+- weld, snap and stitch are the only reflexes that make a carbon to carbon bond (checked on every step played by `stepdiff.js`).
+
+Test: `.claude/headless/jobs/stepdiff.js` (copy in `docs/tools_jobs/`). It replays each record on the bonds before the step and compares with the bonds after it.
+
+## Elements other than C, H, O in the deal (ruling AF2)
+
+`RULE.hetCurve` (on): the share of dealt molecules holding an element other than C, H and O, by round: 0.15, 0.22, 0.30, 0.40, 0.55, 0.70, 0.80, 0.90, 0.95. `runBriefs` first decides for each molecule whether it is one, then takes it from the family drawn if that family has one for the round, else from any family of the round. Set it to null for the plain deal.
