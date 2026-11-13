@@ -154,6 +154,7 @@ function throwThen(h, react) {
   if (d.throwZ) camTo(tgt, d.throwZ, Math.max(120, dur * 0.9));
   later(() => {
     S.tokens = S.tokens.filter(q => q !== tok);
+    try { if (api.lit) api.lit(tgt, col); } catch (e) { /* no light */ }
     // impact: the change starts as the token touches
     const dir = (() => { const a = inkOf(tgt); const dx = a[0] - from[0], dy = a[1] - from[1], l = Math.hypot(dx, dy) || 1; return { x: dx / l, z: dy / l }; })();
     const W = molWorldBox(c).w, rec = 0 * (d.throwRec[Math.min(2, i)] || 0.03) * W;
@@ -784,7 +785,8 @@ function ink(x, t) {
     const mixc = (a, b, k2) => 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * k2)).join(',') + ')';
     api.marker(x, sz); x.textAlign = 'left'; x.fillStyle = nf ? mixc([34, 37, 44], [150, 22, 10], Math.min(1, 0.45 + 0.55 * heat)) : api.INK; x.fillText(txt, bx0, by0); st.madeW = w; }
   // tokens in flight
-  S.tokens.forEach(tk => { if (tk.poured) return; const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);
+  S.tokens.forEach(tk => { if (tk.poured) return; if (api.reag === 'cards') { const u = clamp((t - tk.t0) / tk.dur, 0, 1), B = inkOf(tk.tgt), A = tk.from, n = 14, upto = Math.max(1, Math.round(E.outCubic(u) * n)), bend = -tk.arc * ips * 1.6; x.save(); x.strokeStyle = api.INK; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = 7 * ips; x.beginPath(); let hx = A[0], hy = A[1]; for (let j = 0; j <= upto; j++) { const v = j / n; hx = A[0] + (B[0] - A[0]) * v; hy = A[1] + (B[1] - A[1]) * v + bend * 4 * v * (1 - v) + 3 * ips * Math.sin(j * 2.3); if (j) x.lineTo(hx, hy); else x.moveTo(hx, hy); } x.stroke(); x.fillStyle = 'rgb(' + tk.col.join(',') + ')'; x.lineWidth = 4 * ips; x.beginPath(); x.arc(hx, hy, 13 * ips, 0, 6.3); x.fill(); x.stroke(); x.restore(); return; }
+    const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);
     x.save(); x.fillStyle = 'rgb(' + tk.col.join(',') + ')'; x.strokeStyle = api.INK; x.lineWidth = 5; x.beginPath(); x.ellipse(cx, cy, r, r * 0.86, 0, 0, 6.3); x.fill(); x.stroke(); x.restore(); });
   // the step numeral has its own place in the left margin, clear of the molecule and of the yield; it grows with the chain, and each gain drops from it into the yield
   { const NP = api.px({ x: -20.3, z: 9.5 }), GP = api.px({ x: -14.7, z: 8.3 });

@@ -102,7 +102,7 @@ function pageE() {
   const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 2.6, hw = 11.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
-    home: BENCH0 ? { x0: -12.5, x1: 22.5, z0: -12.2, z1: 9.6 } : { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
+    home: BENCH0 ? { x0: -10.6, x1: 24.4, z0: -12.2, z1: 9.6 } : { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
 }
 // the camera drawn back along its own line of sight and set to the left, so the page's bound edge and its margin are in the frame
 function camE(CAM, LOOKAT) { if (!PGE.on) return; CAM.sub(LOOKAT).multiplyScalar(PGE.k).add(LOOKAT); CAM.x += PGE.cx; LOOKAT.x += PGE.cx; CAM.z += PGE.cz; LOOKAT.z += PGE.cz; }
@@ -114,9 +114,9 @@ function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.r
 function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 // the bench view's camera: what it looks at on the bench (x, z), how far it stands back, its lean from straight down in degrees, its field of view
-const BCAM = [5, -6.0, 80, 20];
+const BCAM = [7.2, -6.0, 80, 20];
 // the strip of bench above the page where the jars, the instruments and the homunculus stand: the left end, the line they stand on, the step from jar to jar and from instrument to instrument
-const TOPB = { x0: -30.5, z: -26.1, jar: 6.4, kit: 8.2 };
+const TOPB = { x0: -29.5, z: -26.1, jar: 6.4, kit: 8.2 };
 
 function start(app) {
   const cv = document.createElement('canvas'); app.append(cv);
@@ -883,7 +883,7 @@ function start(app) {
     JARK.forEach(k => { const grp = new T.Group(), j = AA.rxKit.jar(T, k); grp.add(j); grp.rotation.x = -0.8; grp.position.set(BEAK.x, 0, BEAK.z); grp.scale.setScalar(1.2); grp.visible = false; scene.add(grp); out[k] = { grp, set: j.userData.set, last: '' }; });
     return out; })();
   // the homunculus taken into the run stands beside the molecule
-  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 27.5, z: TOPB.z + 0.4 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
+  const HOMP = BENCHV ? (BENCHV === 'a' ? { x: 28.5, z: TOPB.z + 0.4 } : { x: -39, z: 6 }) : { x: 14.6, z: -10.6 }; let homObj = null, homObjs = [], homOpts = [];
   function homStand() { if (homObj) { scene.remove(homObj.grp); homObj = null; } if (!run || !run.hom) return; const grp = homFig(run.hom), hold = new T.Group(); hold.add(grp); hold.rotation.x = -0.8; hold.scale.setScalar(BENCHV ? 3.5 : 1.9); hold.position.set(HOMP.x, 0, HOMP.z); hold.visible = false; scene.add(hold); homObj = { id: run.hom, grp: hold }; }
   // where a thing that has left the molecule is collected, by its kind. Everything that flies off goes here
   function byTarget(kind, from) { if (P.RULE.bare) return new T.Vector3(from && isFinite(from.x) && center ? C0.x + from.x * center.group.scale.x : C0.x, 3, -24); const j = JARK.includes(kind) ? jarPos(kind) : null; return j ? new T.Vector3(j.x, 2.0 * j.s / 1.2, j.z - 2.3 * j.s / 1.2) : new T.Vector3(TALLY.x, 1.2, TALLY.z - 0.6); }
@@ -2370,7 +2370,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function slotAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     if (!ray.ray.intersectPlane(ground, hit) || st.mode !== 'play') return -1;
-    const any = lining(); let slot = -1; slots.forEach((s, i) => { if (!s || (!s.o && !any)) return; const p = SPOT[i]; if (p && (SIDE ? hit.x > (BENCHV ? 33.5 : 12) && Math.abs(hit.z - p.z) < SLOTW / 2 : Math.abs(hit.x - p.x) < SLOTW / 2 && hit.z > -14.5 && hit.z < p.z + 3)) slot = i; });
+    const any = lining(); let slot = -1; slots.forEach((s, i) => { if (!s || (!s.o && !any)) return; const p = SPOT[i]; if (p && (SIDE ? hit.x > (BENCHV ? 33 : 12) && Math.abs(hit.z - p.z) < SLOTW / 2 : Math.abs(hit.x - p.x) < SLOTW / 2 && hit.z > -14.5 && hit.z < p.z + 3)) slot = i; });
     if (FEEL && FEEL.twistHit) FEEL.twistHit(hit, ray.ray);
     return slot;
   }
@@ -2423,79 +2423,122 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (f < 1) { G.scale.multiplyScalar(f); st.sc *= f; q = seenIn(m); if (!q) return; }
     const dx = q.box[0] < P1[0] + 1 ? P1[0] + 1 - q.box[0] : q.box[2] > P1[2] - 1 ? P1[2] - 1 - q.box[2] : 0, dy = q.box[1] < P1[1] + 1 ? P1[1] + 1 - q.box[1] : q.box[3] > P1[3] - 1 ? P1[3] - 1 - q.box[3] : 0; G.position.x += dx / q.ppu; G.position.z += dy / (q.ppu * 0.94); }
   const flashM = BENCHV ? add(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }), 0, 0.03, 0) : null; if (flashM) { flashM.castShadow = false; flashM.receiveShadow = false; flashM.visible = false; }
-  // ---------- the bench's own objects: the reagent bottles ----------
-  // Each reagent is a bottle standing on the wood to the right of the page: its before -> after picture is its label, the shape of the glass says
-  // which kind of reagent it is and the liquid has the reagent's colour. A bottle with nothing to act on is corked and dim; one used up is gone.
-  const BT = { map: new Map(), drops: [], flyers: [], x: 39.3, w: 10.7, h: 6.85, dropGeo: null };
+  // ---------- the bench's own objects: the reagents, as bottles or as note cards (?reag=bottles|cards) ----------
+  // Bottles: each reagent is a glass bottle or flask standing on the wood to the right of the page, with its before -> after picture on a paper tag tied to
+  // its neck; the shape of the glass says which kind of reagent it is and the liquid has the reagent's colour.
+  // Cards: each reagent is an index card lying on the wood, its picture drawn across it in the notebook's ink, held by a paper clip.
+  // Either way one with nothing to act on is dim, and one used up is gone.
+  const REAG = (() => { try { return new URLSearchParams(root.location.search).get('reag') === 'cards' ? 'cards' : 'bottles'; } catch (e) { return 'bottles'; } })();
+  const BT = { map: new Map(), drops: [], flyers: [], lights: [], x: 40.3, cw: 11.8, ch: 7.0, bw: 5.0, bh: 8.1, tw: 8.7, th: 4.3, dropGeo: null };
   const BSHAPE = { acid: 'square', base: 'jar', oxidant: 'cone', hydride: 'tin', metal: 'tin', grignard: 'round', radical: 'round', ylide: 'round', chloride: 'amber', light: 'cone', self: 'jar' };
-  function bottleDraw(c, id, on, W, H) {
-    const card = RX.CARDS[id] || {}, shape = BSHAPE[card.cls] || 'square', col = card.rgb ? bright(card.rgb) : [150, 150, 150], liq = 'rgb(' + col.join(',') + ')', INKC = '#22252c';
-    c.clearRect(0, 0, W, H); c.save(); c.globalAlpha = on ? 1 : 0.5; c.lineJoin = 'round'; c.lineCap = 'round';
-    const bx0 = 14, bx1 = W - 14, by1 = H - 10, by0 = 84, nw = shape === 'jar' ? 150 : shape === 'tin' ? 210 : shape === 'round' ? 48 : 66, ncx = W / 2, ny0 = 22;
-    const body = () => { c.beginPath();
-      if (shape === 'square' || shape === 'amber') { const r = shape === 'amber' ? 64 : 22; c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 22); c.quadraticCurveTo(ncx - nw / 2, by0, bx0 + r, by0); c.quadraticCurveTo(bx0, by0, bx0, by0 + r); c.lineTo(bx0, by1 - 16); c.quadraticCurveTo(bx0, by1, bx0 + 16, by1); c.lineTo(bx1 - 16, by1); c.quadraticCurveTo(bx1, by1, bx1, by1 - 16); c.lineTo(bx1, by0 + r); c.quadraticCurveTo(bx1, by0, bx1 - r, by0); c.quadraticCurveTo(ncx + nw / 2, by0, ncx + nw / 2, by0 - 22); c.lineTo(ncx + nw / 2, ny0); }
-      else if (shape === 'cone') { c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 30); c.lineTo(bx0 + 4, by1 - 26); c.quadraticCurveTo(bx0 - 4, by1, bx0 + 26, by1); c.lineTo(bx1 - 26, by1); c.quadraticCurveTo(bx1 + 4, by1, bx1 - 4, by1 - 26); c.lineTo(ncx + nw / 2, by0 - 30); c.lineTo(ncx + nw / 2, ny0); }
-      else if (shape === 'round') { c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 26); c.bezierCurveTo(bx0 - 30, by0 - 10, bx0 - 30, by1 + 4, ncx - 60, by1); c.lineTo(ncx + 60, by1); c.bezierCurveTo(bx1 + 30, by1 + 4, bx1 + 30, by0 - 10, ncx + nw / 2, by0 - 26); c.lineTo(ncx + nw / 2, ny0); }
-      else if (shape === 'tin') { c.moveTo(bx0 + 20, by0 - 20); c.lineTo(bx0 + 20, by1 - 8); c.quadraticCurveTo(bx0 + 20, by1, bx0 + 30, by1); c.lineTo(bx1 - 30, by1); c.quadraticCurveTo(bx1 - 20, by1, bx1 - 20, by1 - 8); c.lineTo(bx1 - 20, by0 - 20); }
-      else { c.moveTo(bx0 + 30, by0 - 26); c.lineTo(bx0 + 30, by0 - 10); c.quadraticCurveTo(bx0 + 4, by0, bx0 + 4, by0 + 30); c.lineTo(bx0 + 4, by1 - 18); c.quadraticCurveTo(bx0 + 4, by1, bx0 + 24, by1); c.lineTo(bx1 - 24, by1); c.quadraticCurveTo(bx1 - 4, by1, bx1 - 4, by1 - 18); c.lineTo(bx1 - 4, by0 + 30); c.quadraticCurveTo(bx1 - 4, by0, bx1 - 30, by0 - 10); c.lineTo(bx1 - 30, by0 - 26); }
-      c.closePath(); };
-    // glass, then the liquid inside it
-    body(); c.fillStyle = shape === 'tin' ? '#b9bec4' : shape === 'amber' ? 'rgba(150,92,38,0.9)' : 'rgba(226,238,240,0.9)'; c.fill();
-    if (shape !== 'tin') { c.save(); body(); c.clip(); c.fillStyle = liq; c.globalAlpha *= shape === 'amber' ? 0.55 : 0.92; const top = by0 + (shape === 'cone' ? 44 : shape === 'round' ? 30 : 22); c.beginPath(); c.moveTo(0, top + 6); c.quadraticCurveTo(W * 0.3, top - 8, W * 0.55, top + 3); c.quadraticCurveTo(W * 0.8, top + 12, W, top); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill(); c.restore(); }
-    else { c.strokeStyle = 'rgba(40,44,52,0.35)'; c.lineWidth = 3; [by0 + 2, by1 - 22].forEach(y => { c.beginPath(); c.moveTo(bx0 + 22, y); c.lineTo(bx1 - 22, y); c.stroke(); }); c.fillStyle = liq; c.fillRect(bx0 + 22, by0 + 8, bx1 - bx0 - 44, 16); }
-    body(); c.strokeStyle = INKC; c.lineWidth = 6; c.stroke();
-    // the mouth: a lid on a jar or a tin; a cork only when the reagent has nothing to act on
-    if (shape === 'jar' || shape === 'tin') { const lw = shape === 'jar' ? W - 110 : W - 60, ly = by0 - (shape === 'jar' ? 52 : 44); c.fillStyle = on ? (shape === 'jar' ? '#3a3f47' : '#8d949c') : '#6f5a40'; c.strokeStyle = INKC; c.lineWidth = 6; c.beginPath(); c.rect(W / 2 - lw / 2, ly, lw, 28); c.fill(); c.stroke(); }
-    else if (!on) { c.fillStyle = '#b08954'; c.strokeStyle = INKC; c.lineWidth = 5; c.beginPath(); c.moveTo(ncx - nw / 2 - 5, 4); c.lineTo(ncx + nw / 2 + 5, 4); c.lineTo(ncx + nw / 2 - 3, ny0 + 22); c.lineTo(ncx - nw / 2 + 3, ny0 + 22); c.closePath(); c.fill(); c.stroke(); }
-    else { c.strokeStyle = INKC; c.lineWidth = 6; c.beginPath(); c.moveTo(ncx - nw / 2 - 8, ny0); c.lineTo(ncx + nw / 2 + 8, ny0); c.stroke(); }
-    // a shine down the left of the glass
-    if (shape !== 'tin') { c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 7; c.beginPath(); c.moveTo(bx0 + 20, by0 + 40); c.lineTo(bx0 + 20, by1 - 34); c.stroke(); }
-    // the label: the reagent's picture, before -> after
-    const tl = TILE[id]; const lx0 = 44, lx1 = W - 44, ly0 = by0 + (shape === 'cone' ? 66 : 50), ly1 = by1 - 26;
-    c.fillStyle = '#f6f3ea'; c.strokeStyle = INKC; c.lineWidth = 3.5; c.beginPath(); c.rect(lx0, ly0, lx1 - lx0, ly1 - ly0); c.fill(); c.stroke();
-    if (tl) { const k = Math.min((lx1 - lx0) / 262, (ly1 - ly0) / 92); c.save(); c.translate((lx0 + lx1) / 2 + 16 * k, (ly0 + ly1) / 2 + 8 * k); c.scale(k, k); fragOrChip(c, tl[0], -78, -8, on); c.strokeStyle = on ? INK : FAINT; c.lineWidth = 6; c.beginPath(); c.moveTo(-26, -8); c.lineTo(-2, -8); c.moveTo(-14, -18); c.lineTo(-2, -8); c.lineTo(-14, 2); c.stroke(); fragOrChip(c, tl[1], 46, -8, on); c.restore(); }
+  const INKC = '#22252c';
+  const picDraw = (c, id, on, cx, cy, k) => { const tl = TILE[id]; if (!tl) return; c.save(); c.translate(cx + 16 * k, cy + 8 * k); c.scale(k, k); fragOrChip(c, tl[0], -78, -8, on); c.strokeStyle = on ? INK : FAINT; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.moveTo(-26, -8); c.lineTo(-2, -8); c.moveTo(-14, -18); c.lineTo(-2, -8); c.lineTo(-14, 2); c.stroke(); fragOrChip(c, tl[1], 46, -8, on); c.restore(); };
+  // an index card: ruled, a paper clip at its top edge, one corner lifting
+  function cardDraw(c, id, on, W, H) {
+    c.clearRect(0, 0, W, H); c.save(); const m = 8;
+    c.beginPath(); c.moveTo(m, m); c.lineTo(W - m, m); c.lineTo(W - m, H - m - 34); c.lineTo(W - m - 40, H - m); c.lineTo(m, H - m); c.closePath(); c.fillStyle = on ? '#f8f5ec' : '#d9d5ca'; c.fill(); c.save(); c.clip();
+    c.strokeStyle = 'rgba(214,69,58,' + (on ? 0.55 : 0.25) + ')'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, 58); c.lineTo(W, 58); c.stroke();
+    c.strokeStyle = 'rgba(70,110,190,' + (on ? 0.28 : 0.14) + ')'; c.lineWidth = 2; for (let y = 100; y < H; y += 42) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
+    c.restore(); c.strokeStyle = 'rgba(34,37,44,0.55)'; c.lineWidth = 2.5; c.stroke();
+    // the lifted corner: its underside, and the fold
+    c.beginPath(); c.moveTo(W - m, H - m - 34); c.lineTo(W - m - 40, H - m); c.lineTo(W - m - 34, H - m - 30); c.closePath(); c.fillStyle = '#e4dfd0'; c.fill(); c.strokeStyle = 'rgba(34,37,44,0.5)'; c.lineWidth = 2; c.stroke();
+    c.globalAlpha = on ? 1 : 0.55; picDraw(c, id, on, W / 2, H / 2 + 22, Math.min((W - 60) / 262, (H - 96) / 92));
+    // the paper clip
+    c.globalAlpha = 1; c.strokeStyle = '#8a9099'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.moveTo(74, 62); c.lineTo(74, 14); c.quadraticCurveTo(74, 2, 62, 2); c.quadraticCurveTo(50, 2, 50, 14); c.lineTo(50, 80); c.quadraticCurveTo(50, 90, 59, 90); c.quadraticCurveTo(66, 90, 66, 80); c.lineTo(66, 24); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(73, 60); c.lineTo(73, 16); c.stroke();
     c.restore();
   }
+  // a tag of brown paper with a ringed hole at its right end, tied to the bottle
+  function tagDraw(c, id, on, W, H) {
+    c.clearRect(0, 0, W, H); c.save(); const m = 6;
+    c.beginPath(); c.moveTo(m, m); c.lineTo(W - 46, m); c.lineTo(W - m, H * 0.3); c.lineTo(W - m, H * 0.7); c.lineTo(W - 46, H - m); c.lineTo(m, H - m); c.closePath(); c.fillStyle = on ? '#f6f1e2' : '#d6d1c4'; c.fill(); c.strokeStyle = INKC; c.lineWidth = 3.5; c.lineJoin = 'round'; c.stroke();
+    c.fillStyle = '#c9a36a'; c.beginPath(); c.arc(W - 30, H / 2, 13, 0, 6.3); c.fill(); c.strokeStyle = INKC; c.lineWidth = 2.5; c.stroke(); c.fillStyle = '#4a3220'; c.beginPath(); c.arc(W - 30, H / 2, 5, 0, 6.3); c.fill();
+    c.globalAlpha = on ? 1 : 0.55; picDraw(c, id, on, (W - 46) / 2 + 4, H / 2, Math.min((W - 76) / 262, (H - 30) / 92)); c.restore();
+  }
+  // a glass vessel: glass with thickness, shine and a stopper, the liquid inside with its meniscus
+  function bottleDraw(c, id, on, W, H) {
+    const card = RX.CARDS[id] || {}, shape = BSHAPE[card.cls] || 'square', col = card.rgb ? bright(card.rgb) : [150, 150, 150], rgbS = (q, a) => 'rgba(' + q.map(v => Math.round(v)).join(',') + ',' + a + ')', dark = col.map(v => v * 0.62), lite = col.map(v => Math.min(255, v * 1.15 + 30));
+    c.clearRect(0, 0, W, H); c.save(); c.globalAlpha = on ? 1 : 0.5; c.lineJoin = 'round'; c.lineCap = 'round'; const cx = W / 2, by = H - 12;
+    const body = ins => { const i = ins || 0; c.beginPath();
+      if (shape === 'square' || shape === 'amber') { const x0 = 30 + i, x1 = W - 30 - i, sh = shape === 'amber' ? 70 : 40, y0 = 132 + i; c.moveTo(cx - 27 + i, 62); c.lineTo(cx - 27 + i, y0 - sh * 0.55); c.quadraticCurveTo(cx - 27 + i, y0, x0 + sh * 0.5, y0 + (shape === 'amber' ? 8 : 0)); c.quadraticCurveTo(x0, y0 + 6, x0, y0 + sh * 0.6); c.lineTo(x0, by - 16 - i); c.quadraticCurveTo(x0, by - i, x0 + 16, by - i); c.lineTo(x1 - 16, by - i); c.quadraticCurveTo(x1, by - i, x1, by - 16 - i); c.lineTo(x1, y0 + sh * 0.6); c.quadraticCurveTo(x1, y0 + 6, x1 - sh * 0.5, y0 + (shape === 'amber' ? 8 : 0)); c.quadraticCurveTo(cx + 27 - i, y0, cx + 27 - i, y0 - sh * 0.55); c.lineTo(cx + 27 - i, 62); }
+      else if (shape === 'cone') { c.moveTo(cx - 25 + i, 62); c.lineTo(cx - 25 + i, 150); c.lineTo(20 + i * 1.6, by - 30 - i); c.quadraticCurveTo(12 + i, by - i, 44, by - i); c.lineTo(W - 44, by - i); c.quadraticCurveTo(W - 12 - i, by - i, W - 20 - i * 1.6, by - 30 - i); c.lineTo(cx + 25 - i, 150); c.lineTo(cx + 25 - i, 62); }
+      else if (shape === 'round') { const r = 100 - i, cy = by - 104; c.moveTo(cx - 23 + i, 62); c.lineTo(cx - 23 + i, cy - r * 0.94); c.arc(cx, cy, r, -Math.PI / 2 - 0.24, -Math.PI / 2 + 0.24, true); c.lineTo(cx + 23 - i, 62); }
+      else if (shape === 'tin') { c.moveTo(34 + i, 104 + i); c.lineTo(34 + i, by - 10 - i); c.quadraticCurveTo(34 + i, by - i, 46, by - i); c.lineTo(W - 46, by - i); c.quadraticCurveTo(W - 34 - i, by - i, W - 34 - i, by - 10 - i); c.lineTo(W - 34 - i, 104 + i); }
+      else { const x0 = 26 + i, x1 = W - 26 - i; c.moveTo(x0 + 16, 112 + i); c.quadraticCurveTo(x0, 116 + i, x0, 140); c.lineTo(x0, by - 20 - i); c.quadraticCurveTo(x0, by - i, x0 + 20, by - i); c.lineTo(x1 - 20, by - i); c.quadraticCurveTo(x1, by - i, x1, by - 20 - i); c.lineTo(x1, 140); c.quadraticCurveTo(x1, 116 + i, x1 - 16, 112 + i); }
+      c.closePath(); };
+    if (shape === 'round') { c.fillStyle = '#b08954'; c.strokeStyle = INKC; c.lineWidth = 4; c.beginPath(); c.ellipse(cx, by - 4, 70, 12, 0, 0, 6.3); c.fill(); c.stroke(); }
+    if (shape === 'tin') { const g0 = c.createLinearGradient(30, 0, W - 30, 0); g0.addColorStop(0, '#8f969e'); g0.addColorStop(0.25, '#e6eaee'); g0.addColorStop(0.55, '#aab0b8'); g0.addColorStop(1, '#6f767e'); body(); c.fillStyle = g0; c.fill(); c.strokeStyle = 'rgba(40,44,52,0.4)'; c.lineWidth = 3; [150, 200, by - 40].forEach(y => { c.beginPath(); c.moveTo(36, y); c.lineTo(W - 36, y); c.stroke(); }); c.fillStyle = rgbS(col, 1); c.fillRect(36, 228, W - 72, 60); body(); c.strokeStyle = INKC; c.lineWidth = 5; c.stroke();
+      c.fillStyle = '#c9ced4'; c.beginPath(); c.rect(28, 86, W - 56, 22); c.fill(); c.stroke(); c.fillStyle = '#9aa1a9'; c.beginPath(); c.rect(cx - 30, 66, 60, 22); c.fill(); c.stroke(); }
+    else {
+      // the glass itself
+      const amber = shape === 'amber', gg = c.createLinearGradient(20, 0, W - 20, 0); gg.addColorStop(0, amber ? 'rgba(120,70,24,0.92)' : 'rgba(214,232,238,0.72)'); gg.addColorStop(0.5, amber ? 'rgba(176,108,44,0.86)' : 'rgba(240,248,250,0.5)'); gg.addColorStop(1, amber ? 'rgba(96,54,18,0.94)' : 'rgba(188,212,222,0.78)'); body(); c.fillStyle = gg; c.fill();
+      // the liquid, inside the thickness of the glass
+      c.save(); body(7); c.clip(); const lv = shape === 'round' ? by - 150 : shape === 'cone' ? by - 120 : 190, lg = c.createLinearGradient(20, 0, W - 20, 0); lg.addColorStop(0, rgbS(lite, amber ? 0.5 : 0.95)); lg.addColorStop(0.6, rgbS(col, amber ? 0.5 : 0.95)); lg.addColorStop(1, rgbS(dark, amber ? 0.55 : 0.97)); c.fillStyle = lg; c.fillRect(0, lv, W, H);
+      c.fillStyle = rgbS(dark, 0.55); c.beginPath(); c.ellipse(cx, lv, W, 9, 0, 0, 6.3); c.fill(); c.fillStyle = rgbS(lite, 0.9); c.beginPath(); c.ellipse(cx, lv + 3, W, 6, 0, 0, 6.3); c.fill(); c.restore();
+      body(); c.strokeStyle = INKC; c.lineWidth = 5; c.stroke(); body(7); c.strokeStyle = 'rgba(255,255,255,0.4)'; c.lineWidth = 2.5; c.stroke();
+      // shine: a long streak down the left, a short one on the right shoulder
+      c.strokeStyle = 'rgba(255,255,255,0.78)'; c.lineWidth = 9; c.beginPath(); if (shape === 'round') c.arc(cx, by - 104, 78, Math.PI * 0.82, Math.PI * 1.22); else if (shape === 'cone') { c.moveTo(cx - 34, 190); c.lineTo(52, by - 60); } else { c.moveTo(48, 176); c.lineTo(48, by - 50); } c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 5; c.beginPath(); if (shape === 'round') c.arc(cx, by - 104, 80, -0.5, -0.2); else if (shape === 'cone') { c.moveTo(cx + 40, 214); c.lineTo(cx + 52, 246); } else { c.moveTo(W - 46, 180); c.lineTo(W - 46, 222); } c.stroke();
+      // the mouth: a lip, and its stopper
+      if (shape === 'jar') { c.fillStyle = '#343a42'; c.strokeStyle = INKC; c.lineWidth = 5; c.beginPath(); c.rect(18, 76, W - 36, 40); c.fill(); c.stroke(); c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 3; for (let x = 34; x < W - 24; x += 18) { c.beginPath(); c.moveTo(x, 82); c.lineTo(x, 110); c.stroke(); } }
+      else { c.fillStyle = amber ? 'rgba(120,70,24,0.95)' : 'rgba(226,240,244,0.9)'; c.strokeStyle = INKC; c.lineWidth = 4.5; c.beginPath(); c.rect(cx - 36, 52, 72, 14); c.fill(); c.stroke();
+        if (amber) { c.fillStyle = '#23262c'; c.beginPath(); c.rect(cx - 30, 14, 60, 40); c.fill(); c.stroke(); c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 3; c.beginPath(); c.moveTo(cx - 18, 20); c.lineTo(cx - 18, 48); c.stroke(); }
+        else if (shape === 'square') { c.fillStyle = 'rgba(214,232,238,0.95)'; c.beginPath(); c.moveTo(cx - 20, 52); c.lineTo(cx - 16, 34); c.lineTo(cx - 34, 30); c.quadraticCurveTo(cx - 40, 10, cx, 8); c.quadraticCurveTo(cx + 40, 10, cx + 34, 30); c.lineTo(cx + 16, 34); c.lineTo(cx + 20, 52); c.closePath(); c.fill(); c.stroke(); c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 4; c.beginPath(); c.moveTo(cx - 20, 20); c.lineTo(cx - 6, 14); c.stroke(); }
+        else { const g1 = c.createLinearGradient(cx - 28, 0, cx + 28, 0); g1.addColorStop(0, '#c9a36a'); g1.addColorStop(1, '#8a6436'); c.fillStyle = g1; c.beginPath(); c.moveTo(cx - 30, 12); c.lineTo(cx + 30, 12); c.lineTo(cx + 22, 54); c.lineTo(cx - 22, 54); c.closePath(); c.fill(); c.stroke(); } } }
+    c.restore();
+  }
+  const softShadow = (() => { let t = null; return () => { if (t) return t; const s = canvasTex(128, 64), g2 = s.x.createRadialGradient(64, 32, 4, 64, 32, 60); g2.addColorStop(0, 'rgba(0,0,0,0.5)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); s.x.fillStyle = g2; s.x.fillRect(0, 0, 128, 64); s.t.needsUpdate = true; t = s.t; return t; }; })();
+  const flatMesh = (w, h, tex, y) => { const m = new T.Mesh(new T.PlaneGeometry(w, h).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })); m.position.y = y; return m; };
   function bottleMake(id) {
-    const W = 544, H = 348, tx = canvasTex(W, H), grp = new T.Group(), lean = new T.Group(), mesh = new T.Mesh(new T.PlaneGeometry(BT.w, BT.h), new T.MeshBasicMaterial({ map: tx.t, transparent: true, depthWrite: false }));
-    mesh.position.set(0, BT.h / 2, 0); lean.add(mesh); lean.rotation.x = -0.8; grp.add(lean);
-    const shc = canvasTex(128, 64); { const g2 = shc.x.createRadialGradient(64, 32, 4, 64, 32, 60); g2.addColorStop(0, 'rgba(0,0,0,0.42)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); shc.x.fillStyle = g2; shc.x.fillRect(0, 0, 128, 64); shc.t.needsUpdate = true; }
-    const sh = new T.Mesh(new T.PlaneGeometry(BT.w * 1.1, 3.4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: shc.t, transparent: true, depthWrite: false })); sh.position.set(0.5, 0.02, 0.3); grp.add(sh);
-    mesh.renderOrder = 5; scene.add(grp);
-    return { id, grp, lean, mesh, tx, W, H, on: null, x: BT.x, z: 0, sc: 1, born: performance.now(), act: null, gone: 0 };
+    const grp = new T.Group(), b = { id, grp, on: null, x: BT.x, z: 0, sc: 1, born: performance.now(), act: null, gone: 0, yaw: (hash(id + 'yaw') - 0.5) * 0.16 };
+    if (REAG === 'cards') { const W = 560, H = 334; b.tx = canvasTex(W, H); b.W = W; b.H = H; b.draw = cardDraw; grp.add(Object.assign(flatMesh(BT.cw * 1.12, BT.ch * 1.2, softShadow(), -0.16), { renderOrder: 3 })); grp.children[0].position.set(0.5, -0.16, 0.5); b.mesh = flatMesh(BT.cw, BT.ch, b.tx.t, 0.05); b.mesh.renderOrder = 5; grp.add(b.mesh); grp.rotation.y = b.yaw; }
+    else { const W = 240, H = 388; b.tx = canvasTex(W, H); b.W = W; b.H = H; b.draw = bottleDraw; const bx = BT.tw / 2 + 0.2, lean = new T.Group(); b.mesh = new T.Mesh(new T.PlaneGeometry(BT.bw, BT.bh), new T.MeshBasicMaterial({ map: b.tx.t, transparent: true, depthWrite: false })); b.mesh.position.set(0, BT.bh / 2, 0); b.mesh.renderOrder = 6; lean.add(b.mesh); lean.rotation.x = -0.8; lean.position.set(bx, 0, 0); b.lean = lean; b.bx = bx;
+      const sh = flatMesh(BT.bw * 1.5, 3.2, softShadow(), -0.16); sh.position.set(bx + 0.5, -0.16, 0.4); sh.renderOrder = 3; grp.add(sh);
+      b.tag = canvasTex(440, 200); b.tagM = flatMesh(BT.tw, BT.th, b.tag.t, 0.04); b.tagM.position.set(-BT.bw / 2 - 0.1, 0.04, 0.6); b.tagM.rotation.y = b.yaw; b.tagM.renderOrder = 5; const tsh = flatMesh(BT.tw * 1.08, BT.th * 1.2, softShadow(), -0.16); tsh.position.set(-BT.bw / 2 + 0.3, -0.16, 0.95); tsh.renderOrder = 3; grp.add(tsh); grp.add(b.tagM);
+      // the string from the tag's hole up to the neck
+      const p0 = new T.Vector3(-BT.bw / 2 - 0.1 + BT.tw / 2 - 0.65, 0.1, 0.6), p1 = new T.Vector3(bx, BT.bh * 0.8 * Math.cos(0.8), -BT.bh * 0.8 * Math.sin(0.8)), mid = p0.clone().lerp(p1, 0.5); mid.y -= 0.9; const curve = new T.QuadraticBezierCurve3(p0, mid, p1); b.string = new T.Line(new T.BufferGeometry().setFromPoints(curve.getPoints(12)), new T.LineBasicMaterial({ color: 0x6b5a44 })); b.string.renderOrder = 7; grp.add(b.string); grp.add(lean); }
+    scene.add(grp); return b;
   }
   function bottleSync() {
     if (!BENCHV) return; const seen = new Set(), ids = []; slots.forEach((q, i) => { if (q && !(q.fin && !TILE[q.id])) ids.push(i); });
-    const n = ids.length, gap = Math.min(6.1, 29 / Math.max(1, n)), z0 = -0.5 - (n - 1) / 2 * gap, sc = Math.min(1, gap / 5.9), now = performance.now();
+    const n = ids.length, gap = Math.min(6.2, 30 / Math.max(1, n)), z0 = -1.4 - (n - 1) / 2 * gap, sc = Math.min(1, gap / (REAG === 'cards' ? 6.0 : 5.0)), now = performance.now();
     ids.forEach((i, k) => { const q = slots[i], left = g && g.left && !q.fin && !usesHidden() ? (g.left[q.id] || 0) : 1; let b = BT.map.get(q.id);
-      const z = z0 + k * gap + 2.2; SPOT[i] = { x: BT.x, z: z - 2.1 }; LAB[i] = { x: BT.x, z: z - 2.0 }; SLOTW = gap;
+      const z = z0 + k * gap + 2.2; SPOT[i] = { x: BT.x, z: z - 1.2 }; LAB[i] = { x: BT.x, z: z - 1.2 }; SLOTW = gap;
       if (left <= 0 && !(g.queue || []).includes(q.id) && !st.firing) { if (b && !b.gone) b.gone = now; if (b) seen.add(q.id); return; }
-      if (!b) { b = bottleMake(q.id); BT.map.set(q.id, b); b.grp.position.set(BT.x, -0.2, z); } seen.add(q.id); b.gone = 0; b.slot = i;
-      b.x = BT.x; b.z = z; b.sc = sc; const on = !!q.o; if (b.on !== on) { b.on = on; bottleDraw(b.tx.x, q.id, on, b.W, b.H); b.tx.t.needsUpdate = true; } });
+      if (!b) { b = bottleMake(q.id); BT.map.set(q.id, b); b.grp.position.set(BT.x, 0, z); } seen.add(q.id); b.gone = 0; b.slot = i;
+      b.x = BT.x + (REAG === 'cards' ? (k % 2 ? 0.35 : -0.35) - 0.4 : -0.9 - 0.16 * k); b.z = z; b.sc = sc; const on = !!q.o; if (b.on !== on) { b.on = on; b.draw(b.tx.x, q.id, on, b.W, b.H); b.tx.t.needsUpdate = true; if (b.tag) { tagDraw(b.tag.x, q.id, on, 440, 200); b.tag.t.needsUpdate = true; } } });
     BT.map.forEach((b, id) => { if (!seen.has(id)) { scene.remove(b.grp); BT.map.delete(id); } });
   }
-  function bottlesClear() { BT.map.forEach(b => scene.remove(b.grp)); BT.map.clear(); BT.drops.forEach(d => scene.remove(d.m)); BT.drops = []; BT.flyers.forEach(f => scene.remove(f.m)); BT.flyers = []; }
-  // picking: the bottle lifts and tips toward the page, and its after-picture flies to the numbered place
-  function bottlePick(id, k) { const b = BT.map.get(id); if (!b) return; const now = performance.now(); b.act = { kind: 'pick', t0: now, dur: 420 };
+  function bottlesClear() { BT.map.forEach(b => scene.remove(b.grp)); BT.map.clear(); BT.drops.forEach(d => scene.remove(d.m)); BT.drops = []; BT.flyers.forEach(f => scene.remove(f.m)); BT.flyers = []; BT.lights.forEach(f => scene.remove(f.m)); BT.lights = []; }
+  // picking. Bottles: the bottle lifts and tips toward the page and its after-picture flies to the numbered place. Cards: the card itself slides onto the page into the place.
+  function bottlePick(id, k) { const b = BT.map.get(id); if (!b) return; const now = performance.now(), to = { x: STEP.x + k * STEPD, z: STEP.z }; b.act = { kind: 'pick', t0: now, dur: 420 };
+    if (REAG === 'cards') { const tx = canvasTex(b.W, b.H); cardDraw(tx.x, id, true, b.W, b.H); tx.t.needsUpdate = true; const m = flatMesh(BT.cw, BT.ch, tx.t, 0.12); m.material.depthTest = false; m.renderOrder = 9; m.visible = false; m.rotation.y = b.yaw; scene.add(m);
+      BT.flyers.push({ m, card: true, t0: now + 40, dur: 380, from: { x: b.x, z: b.z }, to, s0: b.sc, s1: 0.34 }); st.bfly = now + 420; return; }
     const tl = TILE[id]; if (!tl) return; const tx = canvasTex(192, 144); tx.x.translate(96, 66); tx.x.scale(1.25, 1.25); fragOrChip(tx.x, tl[1], 0, 6, true); tx.t.needsUpdate = true;
-    const m = new T.Mesh(new T.PlaneGeometry(6.4, 4.8).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tx.t, transparent: true, depthWrite: false, depthTest: false })); m.renderOrder = 9; m.visible = false; scene.add(m);
-    BT.flyers.push({ m, t0: now + 90, dur: 300, from: { x: b.x - 1, z: b.z - 3 }, to: { x: STEP.x + k * STEPD, z: STEP.z } }); st.bfly = now + 390; }
-  // firing: the bottle is lifted over and its liquid goes onto the molecule where it acts
-  function bottlePour(id, tgt, dur) { const b = BT.map.get(id); if (!b || !BENCHV) return false; const now = performance.now(), col = new T.Color('rgb(' + colOf(id).join(',') + ')'); b.act = { kind: 'pour', t0: now, dur: Math.max(520, dur + 300) };
+    const m = flatMesh(6.4, 4.8, tx.t, 0.3); m.material.depthTest = false; m.renderOrder = 9; m.visible = false; scene.add(m);
+    BT.flyers.push({ m, t0: now + 90, dur: 300, from: { x: b.x - 2, z: b.z }, to, s0: 1.25, s1: 0.8 }); st.bfly = now + 390; }
+  // firing with bottles: the bottle is lifted, tipped over the page and its liquid goes onto the atoms it acts on. (With cards the pen stroke is drawn by feel.js.)
+  function bottlePour(id, tgt, dur) { const b = BT.map.get(id); if (!b || !BENCHV || REAG === 'cards') return false; const now = performance.now(), col = new T.Color('rgb(' + colOf(id).join(',') + ')'); b.act = { kind: 'pour', t0: now, dur: Math.max(560, dur + 340) };
     if (!BT.dropGeo) BT.dropGeo = new T.SphereGeometry(1, 10, 8); const mat = new T.MeshBasicMaterial({ color: col });
-    const fx = b.x - BT.w * 0.5 - 2.4, fz = b.z - 3.4, n = 26; for (let i = 0; i < n; i++) { const m = new T.Mesh(BT.dropGeo, mat); m.visible = false; m.renderOrder = 8; scene.add(m); const j = i / (n - 1);
-      BT.drops.push({ m, t0: now + 60 + j * dur * 0.55, dur: dur * 0.62, fx, fy: 4.6, fz, tx: tgt.x + (hash(id + i) - 0.5) * 0.9, ty: tgt.y || 0.6, tz: tgt.z + (hash(id + 'z' + i) - 0.5) * 0.9, r: 0.5 + 0.45 * hash('r' + i + id), arc: 5.5 + 1.2 * hash('a' + i) }); }
+    const fx = b.x + b.bx - 5.6, fz = b.z - 4.2, n = 30; for (let i = 0; i < n; i++) { const m = new T.Mesh(BT.dropGeo, mat); m.visible = false; m.renderOrder = 8; scene.add(m); const j = i / (n - 1);
+      BT.drops.push({ m, t0: now + 110 + j * dur * 0.55, dur: dur * 0.6, fx, fy: 5.2, fz, tx: tgt.x + (hash(id + i) - 0.5) * 0.8, ty: tgt.y || 0.6, tz: tgt.z + (hash(id + 'z' + i) - 0.5) * 0.8, r: 0.5 + 0.4 * hash('r' + i + id), arc: 4.6 + 1.0 * hash('a' + i) }); }
     return true; }
+  // the place a reagent lands lights up: a soft ring of its colour on the paper under the atoms
+  const lightTex = (() => { let t = null; return () => { if (t) return t; const s = canvasTex(128, 128), g2 = s.x.createRadialGradient(64, 64, 6, 64, 64, 62); g2.addColorStop(0, 'rgba(255,255,255,0.95)'); g2.addColorStop(0.35, 'rgba(255,255,255,0.55)'); g2.addColorStop(1, 'rgba(255,255,255,0)'); s.x.fillStyle = g2; s.x.fillRect(0, 0, 128, 128); s.t.needsUpdate = true; t = s.t; return t; }; })();
+  function siteLight(tgt, col) { if (!BENCHV || !tgt) return; const m = new T.Mesh(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: lightTex(), transparent: true, depthWrite: false, color: new T.Color('rgb(' + (col || [255, 240, 200]).map(v => Math.round(Math.min(255, v * 0.6 + 102))).join(',') + ')'), blending: T.NormalBlending })); m.position.set(tgt.x, 0.04, tgt.z); m.renderOrder = 2; scene.add(m); BT.lights.push({ m, t0: performance.now(), dur: 620 }); }
   function bottleFrame(now, dt) {
     if (!BENCHV) return; const playing = st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse';
-    BT.map.forEach((b, id) => { const G = b.grp; G.visible = playing; if (!playing) return; const age = (now - b.born) / 260, grow = Math.max(0, Math.min(1, age)), hov = st.hover === b.slot && b.on; let lift = 0, tip = 0, k = b.sc * (hov ? 1.07 : 1) * (1 - Math.pow(1 - grow, 3));
+    BT.map.forEach((b, id) => { const G = b.grp; G.visible = playing; if (!playing) return; const age = (now - b.born) / 260, grow = Math.max(0, Math.min(1, age)), hov = st.hover === b.slot && b.on; let lift = 0, tip = 0, k = b.sc * (hov ? 1.07 : 1) * (1 - Math.pow(1 - grow, 3)), carry = 0;
       if (b.gone) { const u = Math.min(1, (now - b.gone) / 320); k *= 1 - u * u; if (u >= 1) { G.visible = false; } }
-      if (b.act) { const u = (now - b.act.t0) / b.act.dur; if (u >= 1) b.act = null; else { const e = Math.sin(Math.PI * Math.min(1, u)); if (b.act.kind === 'pick') { lift = 1.6 * e; tip = 0.34 * e; } else { const up = Math.min(1, u / 0.25), dn = Math.max(0, (u - 0.75) / 0.25), h = up * (1 - dn); lift = 3.2 * h; tip = 1.25 * h; G.position.x = b.x - 2.4 * h; } } }
-      G.position.x += (b.x - G.position.x) * Math.min(1, dt * 12); G.position.z += (b.z - G.position.z) * Math.min(1, dt * 12); G.position.y = -0.2 + lift; G.scale.setScalar(Math.max(0.001, k)); b.mesh.rotation.z = tip; b.mesh.position.x = -tip * 2.2; });
+      if (b.act) { const u = (now - b.act.t0) / b.act.dur; if (u >= 1) b.act = null; else { const e = Math.sin(Math.PI * Math.min(1, u)); if (b.act.kind === 'pick') { lift = 1.5 * e; tip = 0.3 * e; } else { const up = Math.min(1, u / 0.22), dn = Math.max(0, (u - 0.78) / 0.22), h = up * (1 - dn), hs = h * h * (3 - 2 * h); lift = 3.4 * hs; tip = 1.75 * hs; carry = 4.6 * hs; } } }
+      G.position.x += (b.x - G.position.x) * Math.min(1, dt * 12); G.position.z += (b.z - G.position.z) * Math.min(1, dt * 12); G.scale.setScalar(Math.max(0.001, k));
+      if (REAG === 'cards') { b.mesh.position.y = 0.05 + (hov ? 0.5 : 0) + lift * 0.4; }
+      else { b.lean.position.set(b.bx - carry, lift, 0); b.mesh.rotation.z = tip; b.mesh.position.x = -tip * 1.0; b.string.visible = !b.act; } });
     if (BT.drops.length) { BT.drops = BT.drops.filter(d => { const u = (now - d.t0) / d.dur; if (u < 0) return true; if (u >= 1) { scene.remove(d.m); return false; } const e = u * u * (3 - 2 * u); d.m.visible = true; d.m.position.set(d.fx + (d.tx - d.fx) * e, d.fy + (d.ty - d.fy) * e + d.arc * 4 * u * (1 - u), d.fz + (d.tz - d.fz) * e); const r = d.r * (1 - 0.35 * u); d.m.scale.set(r, r * 1.25, r); return true; }); }
-    if (BT.flyers.length) { BT.flyers = BT.flyers.filter(f => { const u = (now - f.t0) / f.dur; if (u < 0) { f.m.visible = false; return true; } if (u >= 1) { scene.remove(f.m); dirty = true; return false; } const e = 1 - Math.pow(1 - u, 3); f.m.visible = true; f.m.position.set(f.from.x + (f.to.x - f.from.x) * e, 0.3 + 5 * Math.sin(Math.PI * u), f.from.z + (f.to.z - f.from.z) * e); f.m.scale.setScalar(1.25 - 0.45 * e); return true; }); }
+    if (BT.flyers.length) { BT.flyers = BT.flyers.filter(f => { const u = (now - f.t0) / f.dur; if (u < 0) { f.m.visible = false; return true; } if (u >= 1) { scene.remove(f.m); dirty = true; return false; } const e = f.card ? u * u * (3 - 2 * u) : 1 - Math.pow(1 - u, 3); f.m.visible = true; f.m.position.set(f.from.x + (f.to.x - f.from.x) * e, f.card ? 0.14 + 0.5 * Math.sin(Math.PI * u) : 0.3 + 5 * Math.sin(Math.PI * u), f.from.z + (f.to.z - f.from.z) * e); f.m.scale.setScalar(f.s0 + (f.s1 - f.s0) * e); if (f.card) f.m.material.opacity = u > 0.8 ? 1 - (u - 0.8) / 0.2 * 0.6 : 1; return true; }); }
+    if (BT.lights.length) { BT.lights = BT.lights.filter(f => { const u = (now - f.t0) / f.dur; if (u >= 1) { scene.remove(f.m); return false; } const e = 1 - Math.pow(1 - u, 3), s = (3 + 6.5 * e) * (center ? Math.max(1, center.group.scale.x / 2.4) : 1); f.m.scale.set(s, 1, s); f.m.material.opacity = 0.85 * (1 - u) * (1 - u); return true; }); }
   }
-  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ pour: bottlePour, T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ pour: bottlePour, lit: siteLight, reag: REAG, T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
   function size() {
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
