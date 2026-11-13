@@ -1188,9 +1188,9 @@ function start(app) {
   let briefCoins = [];
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; briefCoins.forEach(c => scene.remove(c.m)); briefCoins = []; st.choose = null; }
   // an assay is one round and stands alone in the middle of the page
-  const BXC = PGE.on ? (BENCHV ? 1.0 : 1.2) : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (i ? 1 : -1) * (BENCHV ? 12.5 : 10.5) + BXC : PICKX[i]), BZ = BENCHV ? -4.2 : -3.6;
+  const BXC = PGE.on ? (BENCHV ? 1.0 : 1.2) : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (BENCHV ? (i ? 19.25 : -5.75) : (i ? 1 : -1) * 10.5 + BXC) : PICKX[i]), BZ = BENCHV ? -4.0 : -3.6, BX2 = 6.75;
   // the pair drawn again: a turning arrow under the two molecules, and the coins it costs
-  const PAIR = { x: -1.6, z: 11.6 };
+  const PAIR = BENCH0 ? { x: 4.6, z: 19.6 } : { x: -1.6, z: 11.6 };
   const pairOn = () => P.RULE.choose && P.RULE.coins && st.mode === 'brief' && briefs.length === 2 && !!meta.coined;
   const pairAt = () => pairOn() && hit.x > PAIR.x - 1.8 && hit.x < PAIR.x + 6.2 && Math.abs(hit.z - PAIR.z) < 1.8;
   function doPair() { if (!pairOn()) return; const n = P.runRedraw(run); if (!n) { sfxN('cantBuy'); sfx.bad(); return; } sfxN('redraw'); st.drawT = performance.now(); st.coinT = performance.now(); showBriefs(n); }
@@ -1202,7 +1202,9 @@ function start(app) {
     if ((run.coins || 0) > 0 && !meta.coined) { meta.coined = true; saveMeta(); }
     briefs = list || P.runBriefs(run);
     st.choose = null; briefCoins.forEach(c => scene.remove(c.m)); briefCoins = [];
-    briefs.forEach((b, i) => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), sc = BENCHV ? (briefs.length === 2 ? Math.min(5, 21 / spanOf(m), 15 / deepOf(m)) : Math.min(4.6, 40 / spanOf(m), 15 / deepOf(m))) : briefs.length === 2 ? Math.min(2.8, 17.5 / spanOf(m), 12 / deepOf(m)) : Math.min(3.2, 44 / spanOf(m), 11 / deepOf(m)); m.sc = sc; place(m, { x: BX(i), z: BZ }, 0.01); tween(m, { x: BX(i), z: BZ }, sc, 0.45 + i * 0.22); briefMols.push(m);
+    // (builder 11) each sketch is fitted by the box of what is drawn (atoms with their radii) into its own half with air round it, and centred there by that box; both at one scale unless that would leave the larger one unreadable or the smaller one tiny
+    const pre = briefs.map(b => { const mdl = P.modelOf(b.model); setAlign(mdl); const m = buildMol(mdl, null, true), lb = liveBox(m), two = briefs.length === 2; m.lb = lb; m.fitSc = BENCHV ? Math.min(two ? 4.2 : 4.6, (two ? 21 : 40) / lb.w, (two ? 19.6 : 20) / lb.d) : two ? Math.min(2.8, 17.5 / spanOf(m), 12 / deepOf(m)) : Math.min(3.2, 44 / spanOf(m), 11 / deepOf(m)); return m; }), lo = Math.min.apply(null, pre.map(m => m.fitSc)), hi = Math.max.apply(null, pre.map(m => m.fitSc)), same = BENCHV && lo >= 1.15 && lo >= 0.55 * hi;
+    briefs.forEach((b, i) => { const m = pre[i], sc = same ? lo : BENCHV ? Math.min(m.fitSc, lo * 1.8) : m.fitSc, to = BENCHV ? { x: BX(i) - m.lb.cx * sc, z: BZ - m.lb.cz * sc } : { x: BX(i), z: BZ }; m.sc = sc; place(m, to, 0.01); tween(m, to, sc, 0.45 + i * 0.22); briefMols.push(m);
       // what the harder one pays on top stands as gold on the bench above its sketch (never on the first pick of a run: nothing there is a price or a prize)
       if (BENCHV && b.coins && run.round > 1) for (let n = 0; n < b.coins; n++) { const c = coinMesh(); c.position.set(BX(i) - (b.coins - 1) * 1.15 + n * 2.3, 0.12, -24.2); c.visible = false; scene.add(c); briefCoins.push({ m: c, i, n, t0: performance.now() + 700 + i * 220 + n * 160 }); } });
     sfx.feed(); dirty = true;
@@ -1223,21 +1225,22 @@ function start(app) {
   function briefInk(x, now) {
     const ch = st.choose, el = ch ? now - ch.t0 : 0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
     { const h = px({ x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
-    if (briefs.length === 2) { const a = px({ x: BXC, z: -12.5 }), b = px({ x: BXC + 0.3, z: 10.5 }); x.strokeStyle = FAINT; x.lineWidth = 4; x.lineCap = 'round'; x.setLineDash([18, 16]); x.beginPath(); x.moveTo(a[0], a[1]); x.quadraticCurveTo(a[0] - 14, (a[1] + b[1]) / 2, b[0], b[1]); x.stroke(); x.setLineDash([]); }
+    if (briefs.length === 2) { const a = px({ x: BX2, z: -15 }), b = px({ x: BX2 + 0.3, z: 17.5 }); x.strokeStyle = FAINT; x.lineWidth = 4; x.lineCap = 'round'; x.setLineDash([18, 16]); x.beginPath(); x.moveTo(a[0], a[1]); x.quadraticCurveTo(a[0] - 14, (a[1] + b[1]) / 2, b[0], b[1]); x.stroke(); x.setLineDash([]); }
     briefs.forEach((b, i) => {
-      const c = px({ x: BX(i), z: 8.3 }), hov = st.hover === i && !ch, lost = ch && ch.i !== i, fadeK = lost ? 1 - sm((el - 650) / 450) : 1, mc = px({ x: BX(i), z: BZ + 0.6 }), half = briefs.length === 2 ? 12.4 * U : 20 * U;
+      const c = px({ x: BX(i), z: 11.5 }), hov = st.hover === i && !ch, lost = ch && ch.i !== i, fadeK = lost ? 1 - sm((el - 650) / 450) : 1, mc = px({ x: BX(i), z: BZ }), half = briefs.length === 2 ? 12.2 * U : 20 * U;
       x.save(); x.globalAlpha = Math.max(0.0, fadeK * (lost ? 0.9 : 1));
       // the target: our first yield mark in red with the number to reach, then the goal picture
-      { const txt = fmt(b.quota); marker(x, 96); const tw = x.measureText(txt).width, sp = b.spec || b.hurdle, tot = 100 + tw + (sp ? 300 : 0), x0 = c[0] - tot / 2; try { AA.rxMarks.yieldMark(x, 0, x0 + 36, c[1] - 30, 36, { pencil: REDINK, ink: REDINK, t: 1, lw: 9 }); } catch (e) { /* no marks */ } marker(x, 96); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(txt, x0 + 92, c[1]);
-        if (sp) drawSpec(g, x0 + 100 + tw + 110, c[1] - 32, sp, { bare: true, size: 120 }); }
-      if (b.motifs) { const mp = px({ x: BX(i), z: 11.4 }); drawMotifRow(b.motifs, mp[0], mp[1]); }
-      if (hov) inkLoop(x, mc[0], mc[1], half * 0.96, 9.4 * U, 1, 4, FAINT);
+      // one line: the yield to reach (in a long run the line the round needs; else the number to beat) with our first mark; under it, on its own line, the goal picture or pictures
+      { const share = b.spec && P.needShare ? P.needShare(run) : 0, txt = fmt(share ? Math.round(share * b.quota) : b.quota); marker(x, 96); const tw = x.measureText(txt).width, sp = b.spec || b.hurdle, np = sp ? (sp.parts && sp.parts.length > 1 ? sp.parts.length : 1) : 0, one = np === 1 && tw + 400 < 22 * U, tot = 100 + tw + (one ? 300 : 0), x0 = c[0] - tot / 2; try { AA.rxMarks.yieldMark(x, 0, x0 + 36, c[1] - 30, 36, { pencil: REDINK, ink: REDINK, t: 1, lw: 9 }); } catch (e) { /* no marks */ } marker(x, 96); x.textAlign = 'left'; x.fillStyle = REDINK; x.fillText(txt, x0 + 92, c[1]);
+        if (sp && one) drawSpec(g, x0 + 100 + tw + 110, c[1] - 32, sp, { bare: true, size: 120 }); else if (sp) { const sz = Math.min(120, 21 * U / (2.35 * np)), c2 = px({ x: BX(i), z: 15.6 }); drawSpec(g, c2[0] - (np - 1) * sz * 2.35 / 2 - sz * 0.35, c2[1] - 32, sp, { bare: true, size: sz }); } }
+      if (b.motifs) { const mp = px({ x: BX(i), z: 19.2 }); drawMotifRow(b.motifs, mp[0], mp[1]); }
+      if (hov) inkLoop(x, mc[0], mc[1], half * 0.96, 11.0 * U, 1, 4, FAINT);
       x.restore();
-      if (ch && ch.i === i) inkLoop(x, mc[0], mc[1], half * 0.97, 9.6 * U, sm(el / 520), 11, INK);
+      if (ch && ch.i === i) inkLoop(x, mc[0], mc[1], half * 0.97, 11.2 * U, sm(el / 520), 11, INK);
       if (lost) { x.globalAlpha = 0.85 * (1 - sm((el - 900) / 400)); const k1 = sm((el - 300) / 260), k2 = sm((el - 520) / 260); strike(x, mc[0] - half * 0.7, mc[1] - 6 * U, mc[0] + half * 0.7, mc[1] + 6 * U, k1, 12, PENCIL); strike(x, mc[0] + half * 0.7, mc[1] - 6 * U, mc[0] - half * 0.7, mc[1] + 6 * U, k2, 12, PENCIL); x.globalAlpha = 1; }
     });
     if (ch) { const nn = (el > 0) + (el > 300) + (el > 520); if (nn !== ch.n) { ch.n = nn; if (nn > 1) sfxN('click'); } }
-    if (P.RULE.coins && pairOn() && run.round > 1 && !ch) { const c = px({ x: BXC, z: 13.2 }), cost = P.pairCost(run), can = cost != null && (run.coins || 0) >= cost, hov = st.mark === 'pair', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0] - 40, c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < (cost == null ? 0 : cost); k++) rcoin(x, c[0] + 26 + k * 38, c[1] + 2, 15, can ? 1 : 0.35); }
+    if (P.RULE.coins && pairOn() && run.round > 1 && !ch) { const c = px({ x: BENCHV ? BX2 : BXC, z: BENCHV ? 19.6 : 13.2 }), cost = P.pairCost(run), can = cost != null && (run.coins || 0) >= cost, hov = st.mark === 'pair', age = st.drawT ? (now - st.drawT) / 350 : 9; x.save(); x.translate(c[0] - 40, c[1]); if (age < 1) x.rotate(age * 6.283); turnMark(x, 0, 0, 30, can ? INK : FAINT, hov && can ? 11 : 7); x.restore(); for (let k = 0; k < (cost == null ? 0 : cost); k++) rcoin(x, c[0] + 26 + k * 38, c[1] + 2, 15, can ? 1 : 0.35); }
   }
   // what a run can turn up beyond the suppliers: families that have been opened and reactions that have been found
   const extraR = () => P.FAMILIES.filter(f => meta.fam[f.id]).reduce((a, f) => a.concat(f.reagents), []).concat(Object.keys(meta.found).filter(k => meta.found[k]));
