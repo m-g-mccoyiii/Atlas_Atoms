@@ -1,23 +1,31 @@
-// Overreact: the margin notes (rulings AI, AM, AM2, AM3, AM4; the story is docs/STORY.md; how to write more is docs/NOTES_WRITING.md).
-// One working chemist's notes to himself. Plain, specific, unperformed. Most are about the work.
-// A thread runs through them (the thin book, someone in the room, the King in Yellow). It is peppered in from the first runs,
-// lightly, from six sources, and it is written as plainly as the rest: a wrong thing recorded like a boiling point.
-//   AA.NOTES             every note: { t, band, src, depth, unlocks, hand, when, thread, rung, till, sign, round, count, by, big }
-//   AA.notesPick(state)  the notes that fit a state { depth, unlocks, round, tag, homs, used, sign, counts, since, seen, seed }
-//   AA.notesDepth(unlocks, round, rounds, chain)  the scale 0..1 the plain notes are ranged on (career 0.65, run 0.30, chain 0.05)
+// Overreact: the margin notes (rulings AI, AM, AM2, AM3, AM4, AM5, AM6; the story is docs/STORY.md; how to write more is docs/NOTES_WRITING.md).
+// A working chemist's notes to himself about what has just happened on the page: this molecule, the reagent just fired, the reflexes and
+// their order, the yield against the spec, what came off, the creature, the instrument, the gold. No scenery, no mood. Notes carry slots
+// ({reagent}, {n}, {yield} ...) that the page fills from the game.
+// A thread runs through them (a second ink, then "he", then the King in Yellow). It arrives through play as well: a result that is not
+// possible given what was fired, reported as flatly as a yield. It is peppered in from the first runs, from six sources.
+// Each lap of the sign a new tenant has the bench and the same notebook, and the earlier tenants' hands turn up in the margins.
+//   AA.NOTES             every note: { t, band, src, sign, unlocks, depth, hand, when, slots, cond, thread, rung, till, round, count, by, big, fb }
+//   AA.notesPick(state)  the notes that fit a state { depth, unlocks, round, tag, homs, used, ctx, sign, counts, since, seen, seed }
+//   AA.notesFill(note, ctx)  the note's text with its slots filled from ctx
+//   AA.notesDepth(unlocks, round, rounds, chain)  the old scale 0..1 (career 0.65, run 0.30, chain 0.05); kept for the page, no note is ranged on it now
 //   AA.notesReach(state) how far up the reveal ladder this player may read, 1..5
-//   AA.notesRate(state)  the thread budget: { rate, gap, p, c } (share of notes that are thread lines; plain notes kept between two)
+//   AA.notesRate(state)  the thread budget: { rate, gap, p, c }
 //   AA.notesParse(t)     splits ~struck~ and _under_ marks into pieces for the pen
 // What makes a note eligible is in its own data:
-//   src     'lab' (plain) or, for a thread line, where it comes from: 'run' (late rounds of any run), 'event' (something happened: its tag),
-//           'hom' (a creature owned), 'count' (a lifetime count), 'career' (share of unlocks, by the ladder), 'sign' (laps of the sign)
-//   rung    the ladder: 1 an oddity, nobody named; 2 someone, and the thin book; 3 he and his face; 4 the King; 5 the King in Yellow
-//   till    the last rung at which the line is still shown (a story beat that has passed is dropped)
-//   sign    [min, max] laps of the sign taken (meta.sign, 0 to 3)       unlocks, depth, round  [min, max]
-//   count   [key, from, to] a lifetime count (meta.counters added to meta.countersAll) inside that window
-//   when    a tag: start win loss overreact chain waste shop buy unlock instrument sigil gold spec catalog
+//   when    the event it is about (a tag): start fire reflex ring left page mark win loss overreact chain waste shop buy unlock instrument sigil gold spec catalog
 //           el:N el:S el:Cl el:Br   hom:water hom:h2 hom:co2 hom:acid hom:wood hom:salt hom:slime hom:seedling hom:ammonia hom:brimstone
-//   by      'other': written by the second hand (lap 3). The page should draw it in another hand.
+//           (no tag: a note about the molecule and the page as they stand)
+//   slots   the names in {braces} in its text; the note is only offered when state.ctx has every one. {n+1} and {n-1} are sums done here.
+//   cond    { slot: [min, max] } the number in that slot must lie in the range
+//   src     'lab' (plain) or, for a thread line: 'run' (rounds 7 to 9 of any run), 'event' (its tag), 'hom' (a creature owned),
+//           'count' (a lifetime count), 'career' (the ladder, by unlocks or runs played), 'sign' (laps of the sign)
+//   rung    the ladder: 1 an impossible result, nobody named; 2 a second ink; 3 he and his face; 4 the King; 5 the King in Yellow
+//   till    the last rung at which the line is still shown
+//   sign    [min, max] laps of the sign taken (meta.sign, 0 to 3): which tenant is writing
+//   count   [key, from, to] a lifetime count (meta.counters added to meta.countersAll) inside that window
+//   by      'tenant0' | 'tenant1' | 'tenant2': written in the margin by an earlier tenant (laps 1 to 3). The page should draw each in its own hand.
+//   fb      a rule of thumb with no slots: only offered when nothing about the present page fits (as when the page passes no ctx)
 // Sources: R. W. Chambers, The King in Yellow (1895) and Ambrose Bierce only. Nothing later. See the rights rule in NOTES_WRITING.md.
 // Every row below is one line and is valid JSON, so the check script can read it without running the file.
 (function (root) {
@@ -25,685 +33,588 @@
 const AA = root.AA = root.AA || {};
 const NOTES = [];
 function push(r, base) {
-  const o = r[2] || {}, n = Object.assign({ t: r[0] }, base);
-  if (o.d) n.depth = o.d; if (o.u) n.unlocks = o.u; if (o.hand) n.hand = o.hand; if (o.s) n.sign = o.s;
+  const o = r[2] || {}, n = Object.assign({ t: r[0] }, base), seen = {};
+  if (o.u) n.unlocks = o.u; if (o.hand) n.hand = o.hand; if (o.s) n.sign = o.s;
   if (r[1]) n.when = r[1];
-  if (o.big) n.big = true; if (o.round) n.round = o.round; if (o.till) n.till = o.till; if (o.count) n.count = o.count; if (o.by) n.by = o.by;
+  if (o.big) n.big = true; if (o.round) n.round = o.round; if (o.till) n.till = o.till; if (o.count) n.count = o.count; if (o.by) n.by = o.by; if (o.c) n.cond = o.c; if (o.fb) n.fb = true;
+  n.slots = []; n.t.replace(/\{([a-z0-9]+)(?:[+-]\d+)?\}/g, (m, k) => { if (!seen[k]) { seen[k] = 1; n.slots.push(k); } return m; });
   NOTES.push(n);
 }
-// plain notes: a depth range, a hand, rows of [text, when, overrides]
-function lab(d, hand, rows) { rows.forEach(r => push(r, { band: 1, src: 'lab', depth: d, unlocks: [0, 1], hand })); }
-// thread lines: a source, a rung of the ladder, a hand, rows of [text, when, overrides]. Rungs 2 to 4 belong to the first time through
-// (sign 0) unless a row says otherwise; rungs 1 and 5 are read on every lap.
+// plain notes: the laps they belong to, a hand, rows of [text, when, overrides]
+function lab(sign, hand, rows) { rows.forEach(r => push(r, { band: 1, src: 'lab', depth: [0, 1], unlocks: [0, 1], sign, hand })); }
+// thread lines: a source, a rung of the ladder, a hand, rows of [text, when, overrides]. Rungs 2 to 4 belong to the first tenant (sign 0)
+// unless a row says otherwise; rung 1 is read by every tenant.
 function thr(src, rung, hand, rows) {
-  rows.forEach(r => push(r, { band: rung + 1, src, thread: true, rung, till: 5, depth: [0, 1], unlocks: [0, 1], sign: rung === 1 || rung === 5 ? [0, 3] : [0, 0], hand }));
+  rows.forEach(r => push(r, { band: rung + 1, src, thread: true, rung, till: 5, depth: [0, 1], unlocks: [0, 1], sign: rung === 1 ? [0, 3] : [0, 0], hand }));
 }
 
 // ================= PLAIN NOTES (band 1). No thread. =================
 
-// ---- early in a run, or early in a career: the room, the rent, the routine ----
-lab([0, 0.7], 'neat', [
-  ["Rent is due on the 1st. Dunmore's bill on the 3rd."],
-  ["Label the clear ones first."],
-  ["Do not taste anything on the bench."],
-  ["Mr Pike came up about the smell. Opened the window."],
-  ["Wash the glassware tonight, not tomorrow."],
-  ["Cat was on the bench again. Hair in the 250 ml flask."],
-  ["Oxidize then reduce brings it back to where it started, with losses."],
-  ["Pencil for guesses, ink for results."],
-  ["Inspection is Thursday. Clear the kettle off the bench before then."],
-  ["Dehydrate drove water off onto the page. The smudge at left is that."],
-  ["Runoff goes in the jars, not down the sink. Pike's pipes are lead."],
-  ["Sugar is in the tin with the red lid."],
-  ["Owe the man next door one stopper, size 19."],
-  ["Burned the right cuff on the burner."],
-  ["Dunmore will give credit to the end of the month and not after."],
-  ["Hydroborate needs the dry flask. The one on the rack is not dry."],
-  ["Coffee cold again by ten."],
-  ["Balance reads 0.02 heavy. Subtract it until it is fixed."],
-  ["New stirrer bar is too long for the small flask."],
-  ["Fumes from the hydrate step sting. Keep the sash low."],
-  ["Ran out of clean droppers by noon."],
-  ["The lamp dips when Pike runs his gas ring downstairs."],
-  ["Ice from the fishmonger, twopence."],
-  ["Weighed the product twice. 1.84 g both times."],
-  ["Left the gas on low over lunch."],
-  ["Crystals came out long and white, like the picture in the textbook."],
-  ["The stopper is stuck in the reduce bottle. Warm it, do not force it."],
-  ["Rain got in at the sash. Moved the notebook to the dry end."],
-  ["Third reagent is nearly out. Order before Friday."],
-  ["Bench is level now. Folded card under the left leg."],
-  ["Product smells of pears."],
-  ["Slept six hours. First time this week."],
-  ["Thermometer in the bath reads 2 low against the good one."],
-  ["Bread and cheese at the bench; keep it off the page."],
-  ["Rings close better when the bath is warm. Keep it near 40."],
-  ["Chalked the three uses of each reagent on the slate."],
-  ["Room is cold until the burner has been on an hour."],
-  ["Wrote the boiling points inside the cover so I stop looking them up."],
-  ["Mother's letter came. Answer it Sunday."],
-  ["Swept under the bench. Found the missing size 14 stopper."],
-  ["Dunmore's boy brought the wrong grade of oxidize. Sent it back with him."],
-  ["Paid Pike the rent in full."]
+// ---- rules of thumb, no slots: only when nothing about the present page fits ----
+lab([0, 3], 'neat', [
+  ["Rings want five or six atoms.", null, {"fb": true}],
+  ["Check for a C=O before lining up reduce.", null, {"fb": true}],
+  ["Oxidize fired last leaves its C=O too late for the page's rings.", null, {"fb": true}],
+  ["Dehydrate straight after hydrate puts the molecule back.", null, {"fb": true}],
+  ["Third use of a reagent is the last.", null, {"fb": true}],
+  ["Hydrate puts the OH on the inner carbon, hydroborate on the end one.", null, {"fb": true}],
+  ["Dehydrate leaves a C=C where the OH was.", null, {"fb": true}],
+  ["Grow adds three carbons each time.", null, {"fb": true}],
+  ["The pair reflex needs two SH.", null, {"fb": true}],
+  ["A knit wants the nitrogen near a C=O.", null, {"fb": true}],
+  ["Strip is the only thing that takes a Cl off.", null, {"fb": true}],
+  ["A line repeated on the next page gives less.", null, {"fb": true}],
+  ["Oxidize then reduce brings it back to where it started, with losses.", null, {"fb": true}],
+  ["A reagent that acts nowhere still spends its use.", null, {"fb": true}]
 ]);
 
-// ---- any time: how the chemistry goes, written down so it is not forgotten ----
-lab([0, 1], 'neat', [
-  ["A weld needs two rings side by side. I keep forgetting that."],
-  ["Tuck then weld gave more than weld then tuck. Try again to be sure."],
-  ["Reduce only acts on C=O. Check there is one before lining it up."],
-  ["Third use of a reagent is the last. Count before lining up."],
-  ["Stable by page one, unstable by page two. Volatile takes all three pages."],
-  ["Dry first, hydrate after. The other order undoes itself."],
-  ["The long chain will not close. Rings want five or six."],
-  ["Grow adds three carbons each time. Counted them."],
-  ["Emptied the runoff jars. The water jar fills fastest."],
-  ["Burner tube is cracking near the tap. Replace it."],
-  ["Ink bottle is a third full."],
-  ["Six reagents on the shelf, five dealt each page. Rarely the same five."],
-  ["Two OH close together gave a ring without my doing anything."],
-  ["Oxidize last is too late for that page's rings."],
-  ["Filter paper: four sheets left."],
-  ["Strip took the Cl off cleanly at the second try."],
-  ["The pair reflex needs two SH. One alone does nothing."],
-  ["A knit wants the nitrogen near a C=O. Three carbons apart worked."],
-  ["Draught from the door moves the flame. Rolled a towel along the bottom."],
-  ["An OH four carbons from a C=O tucks. Five apart did not."],
-  ["Hydrate put the OH on the inner carbon. Hydroborate puts it on the end one."],
-  ["The same line gave less the second time. Fewer places left to act."],
-  ["Wrote today's best line on a card and pinned it over the bench."],
-  ["Yield is counted at the end of the page, not when the flask stops moving."],
-  ["Dehydrate leaves a C=C where the OH was. Useful for the next page."]
+// ---- the molecule and the page as they stand (no tag) ----
+lab([0, 0], 'neat', [
+  ["{atoms} heavy atoms on the molecule at the start of page {page}."],
+  ["{formula} at the start of round {round}."],
+  ["Rings on the molecule: {rings}."],
+  ["Uses left on {reagent}: {uses}."],
+  ["Round {round}, page {page}: spec {spec}, yield so far {yield}."],
+  ["Short of the spec by {short} with page {page} to play."],
+  ["Over the spec by {over} already."],
+  ["Last page: {r1}, {r2}, {r3}, for {n} reflexes.", null, {"c": {"n": [2, 999]}}],
+  ["{dud} added nothing on the last page."],
+  ["The molecule went from {atoms0} to {atoms} heavy atoms on the last page."],
+  ["Try {r2} before {r1} on the next page."],
+  ["{formula}: {rings} rings, {atoms} heavy atoms."],
+  ["Yield after page {page}: {yield} against a spec of {spec}."],
+  ["Reflexes on the last page, in order: {kinds}."],
+  ["{left} given off so far this round: {leftn}."],
+  ["Gold in the tin: {gold}."],
+  ["{r3} went last on that page; try it first."],
+  ["Rings before the last page {rings0}, after it {rings}."]
 ]);
 
-// ---- late in a run: tired, and the numbers are large ----
-lab([0.35, 1], 'shaky', [
-  ["Eleven hours at the bench. Hands smell of the dehydrate."],
-  ["Tea made at four is still on the sill."],
-  ["Spilled reduce on the left page. It dried white."],
-  ["Cannot read my own 7s from this morning. They could be 1s."],
-  ["Have not eaten since the bread."],
-  ["Lamp oil is low. One more round on what is left."],
-  ["Wrote the bath temperature twice on this page."],
-  ["Eyes sting from the fumes."],
-  ["Missed the post again."],
-  ["Pike knocked on his ceiling with the broom at midnight."],
-  ["Dropped the small flask. Swept it up. Four left."],
-  ["The spec for this round is more than the last two together."],
-  ["Stood up too fast. Sat down again for a minute."],
-  ["I have not been this far on this notebook before."],
-  ["Glassware is all in use. Rinsing between pages now."],
-  ["Counted the uses wrong. Hydrate is spent."],
-  ["Window is light again. I did not see it get dark."],
-  ["Hands shaking a little after the fourth coffee."],
-  ["Weighing by lamplight. Check these figures in the morning."],
-  ["Scorched the notebook cover on the burner."],
-  ["Cat asleep on my coat."],
-  ["Forgot to write down page two. Worked it out again from the runoff."],
-  ["Back aches from the stool. Ask Pike about a chair."],
-  ["Every reagent has one use left."],
-  ["The numbers on this page are larger than any I have written before."],
-  ["Fire is out in the grate."],
-  ["Wrote the yield in the wrong column. Corrected in ink."]
+// ---- what has just happened ----
+lab([0, 3], 'neat', [
+  ["New round; count the C=O and the OH before lining up.", "start"],
+  ["Round {round}. Spec {spec}.", "start"],
+  ["Starting molecule {formula}, {atoms} heavy atoms.", "start"],
+  ["Round {round} begins with {rings} rings on the molecule.", "start"],
+  ["Round {round} of this run, gold in the tin {gold}.", "start"],
+
+  ["{reagent} acted in {places} places.", "fire", {"c": {"places": [2, 99]}}],
+  ["{reagent} found one place only.", "fire", {"c": {"places": [1, 1]}}],
+  ["Places acted on by {reagent}: {places}.", "fire"],
+  ["{reagent} has {uses} uses left after that.", "fire", {"c": {"uses": [2, 9]}}],
+  ["Next use of {reagent} is the last.", "fire", {"c": {"uses": [1, 1]}}],
+  ["{reagent} is spent for the round.", "fire", {"c": {"uses": [0, 0]}}],
+  ["{reagent} set off {n} reflexes by itself.", "fire", {"c": {"n": [2, 999]}}],
+  ["Fired {r1}, then {r2}, then {r3}.", "fire"],
+
+  ["A {kind} fired without a reagent.", "reflex"],
+  ["First reflex of the page was a {kind}.", "reflex"],
+  ["{kind} straight after {reagent}.", "reflex"],
+  ["Reflexes so far this page: {kinds}.", "reflex"],
+
+  ["Ring number {rings} closed on this molecule.", "ring"],
+  ["{rings} rings now, from {rings0} at the start of the page.", "ring"],
+  ["The ring closed after {reagent}.", "ring"],
+  ["A ring closed by {kind}.", "ring"],
+
+  ["That page gave off {left}, {leftn} in all.", "left"],
+  ["{left} off into the jar: {leftn}.", "left"],
+  ["{left} came off at the {kind} step.", "left"],
+  ["The {left} jar took {leftn} from page {page}.", "left"],
+
+  ["Page {page} made {pageyield}.", "page"],
+  ["Page {page}: {r1}, {r2}, {r3}; yield {pageyield}.", "page"],
+  ["{n} reflexes on page {page}.", "page", {"c": {"n": [2, 999]}}],
+  ["Page {page} left the molecule at {atoms} heavy atoms and {rings} rings.", "page"],
+  ["Yield stands at {yield} of {spec} after page {page}.", "page"],
+  ["Try {r3} first on the next page.", "page"],
+
+  ["Reached {mark} on page {page}.", "mark"],
+  ["{mark} at a yield of {yield}.", "mark"],
+  ["The {mark} mark came at reflex {n}.", "mark", {"c": {"n": [1, 999]}}],
+  ["{mark} reached with {r1}, {r2}, {r3}.", "mark"],
+
+  ["Spec met; the same line again next round if the five dealt allow it.", "win"],
+  ["Met the spec by {over}.", "win"],
+  ["Round {round} met: {yield} against {spec}.", "win"],
+  ["Spec met on page {page}.", "win"],
+  ["{r1}, {r2}, {r3} on page {page} is the line that met it.", "win"],
+  ["Met it with {n} reflexes on the last page.", "win", {"c": {"n": [2, 999]}}],
+
+  ["Under spec; count the places before lining up next time.", "loss"],
+  ["Lost the round; the order on the last page was wrong.", "loss"],
+  ["Under the spec by {short}.", "loss"],
+  ["Round {round} lost at {yield} of {spec}.", "loss"],
+  ["Try {r3} before {r1} next time.", "loss"],
+  ["{dud} acted nowhere on the page that lost it.", "loss"],
+  ["Lost at round {round}, page {page}.", "loss"],
+
+  ["It went on reacting after the third reagent.", "overreact"],
+  ["Top mark, and the chain made it, not the three reagents.", "overreact"],
+  ["Overreact at a yield of {yield}.", "overreact"],
+  ["Overreact from {r1}, {r2}, {r3} on page {page}.", "overreact"],
+  ["Top mark after {n} reflexes.", "overreact", {"c": {"n": [2, 999]}}],
+  ["Overreact; {left} given off, {leftn}.", "overreact"],
+  ["Overreact on round {round}: {over} over a spec of {spec}.", "overreact"],
+
+  ["Each ring that closed set up the next.", "chain"],
+  ["The chain ran without another reagent.", "chain"],
+  ["{n} reflexes from one line.", "chain", {"c": {"n": [2, 999]}}],
+  ["Chain of {n}: {kinds}.", "chain", {"c": {"n": [2, 999]}}],
+  ["{n} reflexes after {reagent}.", "chain", {"c": {"n": [2, 999]}}],
+  ["Chain of {n} on page {page} of round {round}.", "chain", {"c": {"n": [2, 999]}}],
+
+  ["That reagent acted nowhere and the use is gone.", "waste"],
+  ["Nothing on the molecule for that reagent to act on.", "waste"],
+  ["{dud} acted nowhere.", "waste"],
+  ["{dud} had nothing to act on in {formula}.", "waste"],
+  ["Do not line up {dud} on this molecule again.", "waste"],
+  ["Check for a place before lining up {dud}.", "waste"],
+
+  ["Buy for the page that failed last round.", "shop"],
+  ["Gold {gold} at Dunmore's.", "shop"],
+  ["{gold} gold to spend before round {round}.", "shop"],
+  ["Dunmore has {item} at {price}.", "shop"],
+
+  ["New piece on the bench; try it on page one.", "buy"],
+  ["Bought {item} for {price}.", "buy"],
+  ["{item} bought; {gold} gold left.", "buy"],
+  ["{price} gold to Dunmore for {item}.", "buy"],
+  ["{item} goes on the bench for round {round}.", "buy"],
+
+  ["A finding opens the next thing on Dunmore's shelf.", "unlock"],
+  ["Finding: {finding}.", "unlock"],
+  ["{finding}, entered on round {round}.", "unlock"],
+  ["{finding}; Dunmore says it opens the next shelf.", "unlock"],
+
+  ["Instrument used; compare this page's yield with the page before.", "instrument"],
+  ["{instrument} used on page {page}.", "instrument"],
+  ["Used {instrument}; yield for the page {pageyield}.", "instrument"],
+  ["{instrument} before {r1} this time.", "instrument"],
+
+  ["Each sigil breaks one rule for the round.", "sigil"],
+  ["{sigil} drawn for round {round}.", "sigil"],
+  ["With {sigil} on, yield {yield} against {spec}.", "sigil"],
+
+  ["Gold is paid on the round's yield.", "gold"],
+  ["{gained} gold from round {round}.", "gold"],
+  ["{gained} in; tin at {gold}.", "gold"],
+  ["Tin at {gold} after round {round}.", "gold"],
+
+  ["Check whether the spec asks for a group as well as a yield.", "spec"],
+  ["Spec {spec} for round {round}.", "spec"],
+  ["Spec {spec}; yield so far {yield}.", "spec"],
+  ["{short} to go against the spec.", "spec"],
+
+  ["A real compound made, and the catalog takes it.", "catalog"],
+  ["{compound} made; catalog entry filled.", "catalog"],
+  ["{compound}: {formula}.", "catalog"],
+  ["{compound} on round {round}, page {page}.", "catalog"],
+
+  ["Nitrogen knits a ring if a C=O is near.", "el:N"],
+  ["NH2 on this molecule; plan the knit.", "el:N"],
+  ["N in {formula} this round.", "el:N"],
+  ["Two SH close together will pair.", "el:S"],
+  ["Sulfur on this one; the pair reflex is open.", "el:S"],
+  ["S in {formula} this round.", "el:S"],
+  ["Only strip takes the Cl off.", "el:Cl"],
+  ["Chlorine on this one; plan a strip.", "el:Cl"],
+  ["Cl in {formula} this round.", "el:Cl"],
+  ["Bromine on this one; check what strips it.", "el:Br"],
+  ["Br in {formula} this round.", "el:Br"]
 ]);
 
-// ---- things that happen ----
-lab([0, 1], 'neat', [
-  ["New page. Flask is clean and dry.", "start"],
-  ["Start of run. Six bottles checked, all above half.", "start"],
-  ["Lined up three and read them back before firing.", "start"],
-  ["Bench cleared. Date at the top of the page.", "start"],
-  ["New notebook from Dunmore. The paper is thinner than the last.", "start"],
-  ["Begin again. Yesterday's run stopped at round two.", "start"],
-  ["Same starting compound as Monday. Different line this time.", "start"],
-  ["Lit the burner at nine.", "start"],
-  ["Met the spec with a little over.", "win"],
-  ["Round done. Product bottled and labelled before anything else.", "win"],
-  ["Over the spec by a third. Wrote the line down so I can do it again.", "win"],
-  ["Spec met on the last page. It was close.", "win"],
-  ["Passed. Supper at eleven.", "win"],
-  ["Yield higher than I expected; balance checked.", "win"],
-  ["Round won. The next spec is on the card already.", "win"],
-  ["Good round. The second page did most of it.", "win"],
-  ["Under the spec. The yield would not come up.", "loss"],
-  ["Lost the round on page three. Nothing left to fire.", "loss"],
-  ["Failed. The second reagent was the mistake.", "loss"],
-  ["Short of the spec by a little.", "loss"],
-  ["Run over. Washed up and went to bed.", "loss"],
-  ["Under spec. I lined them up in the wrong order.", "loss"],
-  ["Lost it. Wrote down where, for next time.", "loss"],
-  ["Did not meet it.", "loss"],
-  ["It overreacted. Went on by itself long after the third reagent.", "overreact"],
-  ["Top mark. The flask was too hot to hold for ten minutes.", "overreact"],
-  ["Overreact. I have the line written down exactly.", "overreact"],
-  ["Past volatile and still going. Stood back from the bench.", "overreact"],
-  ["Overreacted. Runoff filled two jars.", "overreact"],
-  ["That is the most yield I have had from one page.", "overreact"],
-  ["One reflex set off the next. Six before it stopped.", "chain"],
-  ["Still going. Put the pen down to watch.", "chain"],
-  ["Tuck, weld, tuck. Same order as last time.", "chain"],
-  ["Long chain. Runoff came off faster than I could change jars.", "chain"],
-  ["Each ring that closed made room for another.", "chain"],
-  ["Counted nine reflexes. May have missed one.", "chain"],
-  ["That reagent acted nowhere. A use gone for nothing.", "waste"],
-  ["Nothing reacted on that page.", "waste"],
-  ["Reduce found no C=O. I should have looked.", "waste"],
-  ["Dead page. One use each off three bottles.", "waste"],
-  ["Lined up hydrate on a molecule with nothing to hydrate.", "waste"],
-  ["Wasted the second page. One left to make the spec.", "waste"],
-  ["Dunmore's prices are up again since last month.", "shop"],
-  ["Dunmore's list has two instruments under 30 gold.", "shop"],
-  ["At the supplier. He keeps the good glass behind the counter.", "shop"],
-  ["Dunmore has a better burner in his window, 60 gold.", "shop"],
-  ["Dunmore will not split a case of reagent.", "shop"],
-  ["Dunmore's shop is colder than the street.", "shop"],
-  ["Bought it. Receipt is in the back of the notebook.", "buy"],
-  ["Paid Dunmore in gold.", "buy"],
-  ["New instrument on the bench. Read the leaflet first.", "buy"],
-  ["Bought it out of the rent money.", "buy"],
-  ["Carried it home under my coat because of the rain.", "buy"],
-  ["Bought the cheaper one.", "buy"],
-  ["A finding. Entered it in ink with the date.", "unlock"],
-  ["New finding. Copied it into the back pages as well.", "unlock"],
-  ["That one took forty tries. Written up now.", "unlock"],
-  ["Something new on the shelf as of today.", "unlock"],
-  ["Finding recorded. Dunmore says it opens the next shelf.", "unlock"],
-  ["Closing two rings on one page counts as a finding.", "unlock"],
-  ["Thermometer reads two degrees over my guess; go by the thermometer.", "instrument"],
-  ["Goggles on for the hydrate step.", "instrument"],
-  ["The clamp holds if the screw is turned past where it feels tight.", "instrument"],
-  ["Used the instrument on page two. Page one would have been better.", "instrument"],
-  ["The dropper delivers a little more than it says.", "instrument"],
-  ["Cleaned the instrument and put it back in its case.", "instrument"],
-  ["Drew the sigil under the molecule in thick pencil.", "sigil"],
-  ["The sigil breaks one rule for the round. Read which one twice.", "sigil"],
-  ["The sigil takes ten minutes to draw properly.", "sigil"],
-  ["With the sigil on, the old line does not work. New line needed.", "sigil"],
-  ["Counted the gold: 41.", "gold"],
-  ["Gold from this round goes in the tin in the drawer.", "gold"],
-  ["The drawer sticks. Lift and pull.", "gold"],
-  ["More gold than last round.", "gold"],
-  ["Paid out more than came in this week.", "gold"],
-  ["Spec is on the card. Higher than last round.", "spec"],
-  ["The spec asks for a ring this time, not only yield.", "spec"],
-  ["Read the spec again. I had it wrong by one group.", "spec"],
-  ["Met it by one.", "spec"],
-  ["The spec doubled between round four and round five.", "spec"],
-  ["First catalog entry filled. A real compound; Dunmore lists it.", "catalog"],
-  ["Another for the catalog. Looked it up: it is used in perfume.", "catalog"],
-  ["Catalog entry filled today; structure drawn in ink.", "catalog"],
-  ["Made something that is in the catalog without meaning to.", "catalog"],
-  ["NH2 on today's molecule. Smells of fish.", "el:N"],
-  ["Nitrogen on this one. It knits rings if a C=O is near.", "el:N"],
-  ["The amine stains the fingers brown by evening.", "el:N"],
-  ["Sulfur on this one. Both windows open.", "el:S"],
-  ["SH group. The smell is in my coat now.", "el:S"],
-  ["Two SH on the molecule. They will pair if left close.", "el:S"],
-  ["Chlorine on the molecule. Nose runs.", "el:Cl"],
-  ["A Cl today. Strip takes it off; nothing else here does.", "el:Cl"],
-  ["Chlorine compound. Keep it off the brass.", "el:Cl"],
-  ["Bromine. Brown and heavy; it sinks in the flask.", "el:Br"],
-  ["Br on the molecule. It stained the cork.", "el:Br"],
-  ["Bromine fumes. Sash down to two inches.", "el:Br"]
-]);
-
-// ---- the creatures, as kept: what each did and what it needs ----
-lab([0, 1], 'neat', [
-  ["Water hatched from the full jar.", "hom:water"],
-  ["Water flooded the bench after the wet page. Every C=C went to OH.", "hom:water"],
-  ["Mopped up after Water.", "hom:water"],
-  ["Hydrogen floats to the ceiling if let out. Tied a string to the jar.", "hom:h2"],
-  ["Hydrogen carried the chain over the page turn. Oxidize has to go last.", "hom:h2"],
-  ["Hydrogen was on the ceiling again. Pulled it down by the string.", "hom:h2"],
-  ["Dry ice froze the tea solid in the cup.", "hom:co2"],
-  ["Left two bottles shut all round and Dry ice paid for it.", "hom:co2"],
-  ["Frost on the bench round the Dry ice jar. Wiped it before weighing.", "hom:co2"],
-  ["Acid ate the label off its own jar; relabelled.", "hom:acid"],
-  ["The molecule ended the page smaller and Acid lit up.", "hom:acid"],
-  ["Use the glass rod near Acid, not a spoon.", "hom:acid"],
+// ---- the creatures: what each is lit by and what it did ----
+lab([0, 3], 'neat', [
+  ["Water lit after four waters came off the page.", "hom:water"],
+  ["Water's flood turned every C=C to OH and the rings ran again.", "hom:water"],
+  ["Water takes the double bonds the next reagents wanted.", "hom:water"],
+  ["Hydrogen lit with oxidize last and a chain on the page.", "hom:h2"],
+  ["Hydrogen carried the chain over the page turn.", "hom:h2"],
+  ["For Hydrogen, oxidize goes last and the next page must not fizzle.", "hom:h2"],
+  ["Dry ice lit on the last page with two bottles never opened.", "hom:co2"],
+  ["Dry ice pays for each reagent left unfired, three at most.", "hom:co2"],
+  ["For Dry ice: grow, then oxidize, and leave bottles shut.", "hom:co2"],
+  ["Acid lit when the molecule ended the page smaller.", "hom:acid"],
+  ["Acid pays for a cutting page and leaves fewer places for the next.", "hom:acid"],
+  ["For Acid: dehydrate and dry, no growth.", "hom:acid"],
   ["Wood spirit drank the reagent that found nothing and poured the rest.", "hom:wood"],
-  ["Wood spirit poured them in the order they were dealt, not mine.", "hom:wood"],
-  ["Wood spirit is slow before noon.", "hom:wood"],
-  ["Played the same line twice and Salt lit. The uses came back.", "hom:salt"],
-  ["Salt has left a white crust on the shelf under its jar.", "hom:salt"],
-  ["Salt keeps to the middle of its jar.", "hom:salt"],
-  ["Slime lit when all three reagents landed and each set something off.", "hom:slime"],
-  ["Slime got on my sleeve. It does not wash out cold.", "hom:slime"],
-  ["Slime moved from one side of its jar to the other in an hour.", "hom:slime"],
-  ["Seedling wants the molecule bigger every page. Five atoms at least.", "hom:seedling"],
-  ["Ended a page smaller and Seedling wilted. The row starts again.", "hom:seedling"],
-  ["Turned Seedling's jar to the window.", "hom:seedling"],
-  ["Ammonia fired the whole page again. Same three, same order.", "hom:ammonia"],
-  ["Ammonia's jar wakes Pike downstairs if opened after ten.", "hom:ammonia"],
-  ["Ammonia only lights when nitrogen goes on. Plan the line for it.", "hom:ammonia"],
-  ["Brimstone ended the round at page one. Three times the yield.", "hom:brimstone"],
-  ["Brimstone's jar is warm to the hand. Moved it off the wooden shelf.", "hom:brimstone"],
-  ["Sulfur went on and Brimstone lit. Did not tap it; I wanted the pages.", "hom:brimstone"]
+  ["Wood spirit pours in the order dealt, not mine.", "hom:wood"],
+  ["Wood spirit wants the last reagent of the last page to find nothing.", "hom:wood"],
+  ["Salt lit on the repeated line and gave the three uses back.", "hom:salt"],
+  ["Same line as the page before, reagent for reagent, for Salt.", "hom:salt"],
+  ["For Salt the repeated line finds fewer places.", "hom:salt"],
+  ["Slime lit when all three reagents landed and each set off a reflex.", "hom:slime"],
+  ["Slime wants a reflex from each of the three reagents.", "hom:slime"],
+  ["Three small chains on one page for Slime.", "hom:slime"],
+  ["Seedling wants five more atoms on the molecule every page.", "hom:seedling"],
+  ["Seedling wilted when the page ended smaller.", "hom:seedling"],
+  ["Seedling pays more for each page in a row it is tapped.", "hom:seedling"],
+  ["Ammonia fired the page's three reagents again in the same order.", "hom:ammonia"],
+  ["Ammonia lights only when nitrogen goes on.", "hom:ammonia"],
+  ["Firing again with Ammonia can undo the page.", "hom:ammonia"],
+  ["Brimstone ended the round at page one for three times the yield.", "hom:brimstone"],
+  ["Brimstone lit when sulfur went on, and not on the last page.", "hom:brimstone"],
+  ["Brimstone costs the pages not played.", "hom:brimstone"]
+]);
+
+// ---- the later tenants' own plain notes: the second writes whole sentences, the third abbreviates, the fourth dates everything ----
+lab([1, 1], 'neat', [
+  ["The spec for round {round} is {spec}, and the yield stands at {yield}."],
+  ["I lined up {r1}, {r2} and {r3}, in that order."],
+  ["The molecule has {atoms} heavy atoms and {rings} rings at this page."],
+  ["I will try {r2} before {r1} on the next page."],
+  ["There are {uses} uses of {reagent} remaining."],
+  ["The reflexes of the last page were, in order: {kinds}."]
+]);
+lab([2, 2], 'neat', [
+  ["Rd {round} p. {page}: spec {spec}, yld {yield}."],
+  ["{r1} > {r2} > {r3}. Refl.: {n}."],
+  ["Atoms {atoms}, rings {rings}."],
+  ["Next: {r2} before {r1}."],
+  ["{reagent}: uses left {uses}."],
+  ["Refl. order: {kinds}."]
+]);
+lab([3, 3], 'neat', [
+  ["4 March. Round {round}, spec {spec}, yield {yield}."],
+  ["5 March. Fired {r1}, {r2}, {r3}; reflexes {n}."],
+  ["7 March. Heavy atoms {atoms}, rings {rings}."],
+  ["8 March. Next page, {r2} before {r1}."],
+  ["11 March. {reagent}, uses left {uses}."],
+  ["12 March. Reflexes in order: {kinds}."]
 ]);
 
 // ================= THE THREAD =================
-// Written as flatly as the rest: one wrong thing, with a number, a direction or a material in it, and no second sentence that reacts to it.
+// A result that is not possible given what was fired, reported as a figure. No line hints, comments or reacts.
 
 // ---- source (a): late in any run. Rounds 7 to 9, any player, nobody named. ----
 thr('run', 1, 'neat', [
-  ["The shadow of the retort stand falls toward the lamp.", null, {"round": [7, 9]}],
-  ["The room has smelled of the sea since page two.", null, {"round": [7, 9]}],
-  ["The clock on the shelf has read ten past three for two pages.", null, {"round": [7, 9]}],
-  ["Ten jars on the shelf and eleven lids.", null, {"round": [7, 9]}],
-  ["The stars over the roof opposite are darker than the sky.", null, {"round": [7, 9]}],
-  ["12 + 7 comes to 20 each time I add it on this page.", null, {"round": [7, 9]}],
-  ["The distillate ran uphill in the condenser for about a minute.", null, {"round": [7, 9]}],
-  ["The flame leans toward the flask with the window shut.", null, {"round": [7, 9]}],
-  ["The runoff jar was fuller after I emptied it.", null, {"round": [7, 9]}],
-  ["The flask rang for a minute after I set it down.", null, {"round": [7, 9]}],
-  ["It is light outside on the west side at 2 in the morning.", null, {"round": [7, 9]}],
-  ["The room is warmer at the door end than at the burner.", null, {"round": [7, 9]}],
-  ["Product is pale yellow after two recrystallisations.", null, {"round": [7, 9]}],
-  ["The bath has held 40 for an hour with the burner off.", null, {"round": [7, 9]}],
-  ["Ink from this pen dries yellow at the edges tonight.", null, {"round": [7, 9]}],
-  ["A marble set on the bench rolls east.", null, {"round": [7, 9]}],
-  ["The water in the cooling trough rises and falls about an inch.", null, {"round": [7, 9]}],
-  ["The lamp flame stands straight in the draught from the door.", null, {"round": [7, 9]}],
-  ["Condenser water came out warmer than the vapour going in.", null, {"round": [7, 9]}],
-  ["The burner flame has a second, paler flame inside it.", null, {"round": [7, 9]}]
+  ["Two reflexes fired at once on the same atom.", null, {"round": [7, 9]}],
+  ["The chain ran one step on after the molecule had nothing left to move.", null, {"round": [7, 9]}],
+  ["A weld formed on a molecule with one ring; a weld needs two.", null, {"round": [7, 9]}],
+  ["One carbon is in the tally with five bonds.", null, {"round": [7, 9]}],
+  ["Yield went up between pages with nothing fired.", null, {"round": [7, 9]}],
+  ["A reagent fired a fourth time this round.", null, {"round": [7, 9]}],
+  ["The molecule began this page a ring larger than it ended the last.", null, {"round": [7, 9]}],
+  ["Water came off a molecule with no OH on it.", null, {"round": [7, 9]}],
+  ["A ring opened and closed again with nothing fired.", null, {"round": [7, 9]}],
+  ["A tuck closed onto a carbon that already had four bonds.", null, {"round": [7, 9]}],
+  ["Round {round}: yield {yield+1} on the page, {yield} by my sum.", null, {"round": [7, 9]}],
+  ["Round {round}, page {page}: {n+1} reflexes in the tally, {n} on the molecule.", null, {"round": [7, 9]}]
+]);
+
+// ---- source (e), first rung: any round, from the first run ----
+thr('career', 1, 'neat', [
+  ["One ring more on the molecule than I closed."],
+  ["A use is gone from a bottle that was not dealt this page."],
+  ["Three marks are inked on the yield track and the yield has passed two."],
+  ["One more reflex in the tally than the line can give."],
+  ["The yield was entered on the page before the last reagent fired."],
+  ["A fourth reagent is entered in this page's line; three were lined up."],
+  ["The product weighs more than the atoms on the page allow."],
+  ["Runoff in the jar that nothing on the page gave off."],
+  ["A reflex fired between pages, with nothing lined up."],
+  ["The slate shows a use chalked off that I did not fire."],
+  ["{rings+1} rings counted on the molecule; {rings} were closed."],
+  ["{atoms+1} heavy atoms counted on a molecule that should have {atoms}."],
+  ["{n+1} reflexes counted from a line that gives {n}."],
+  ["The slate shows {uses} uses left on {reagent}; the bottle holds {uses+1}."],
+  ["The {left} jar holds {leftn+1}; {leftn} came off."],
+  ["Tin holds {gold+1} gold against {gold} in the ledger."],
+  ["The spec card reads {spec+3}; it read {spec} at the start of the round."],
+  ["Yield for page {page} was on the page before {r3} fired."]
 ]);
 
 // ---- source (b): something happened. Nobody named; any player. ----
 thr('event', 1, 'neat', [
-  ["At the top mark the flask rang a low note for most of a minute.", "overreact"],
-  ["At the top mark the liquid showed a pale sky for a second or two.", "overreact"],
-  ["The flame went pale and stood still when it overreacted.", "overreact"],
-  ["After the overreact the runoff in all three jars was level to a hair.", "overreact"],
-  ["The reflexes came in threes and twos, in the same order each time.", "chain"],
-  ["The lamp did not flicker once during the chain.", "chain"],
-  ["The flask kept time during the chain, a beat every two seconds.", "chain"],
-  ["The room smelled of lake water after the round was lost.", "loss"],
-  ["The page for the lost round is warm along one edge.", "loss"],
-  ["The failed product is the same pale yellow as the last three.", "loss"],
-  ["The product is faintly yellow and the melting point is right.", "win"],
-  ["The yield for this round was in the book before I weighed it.", "win"],
-  ["The clock lost four minutes during the dead page.", "waste"],
-  ["The reduce bottle is down by two uses after one firing.", "waste"],
-  ["One line on Dunmore's list has no name and no price.", "shop"],
-  ["Dunmore's scale read my gold a coin heavy.", "shop"],
-  ["Change from Dunmore included a coin with two suns on one face.", "buy"],
-  ["The new instrument was dusty inside its sealed box.", "buy"],
-  ["The finding is entered twice in the back pages.", "unlock"],
-  ["The shelf had a clean ring in the dust where the new bottle went.", "unlock"],
-  ["The thermometer showed a mark above the top of its scale for a second.", "instrument"],
-  ["The balance reads 0.3 lighter with the lamp behind it.", "instrument"],
-  ["The sigil's lines were faintly on the page before the pencil reached them.", "sigil"],
-  ["With the sigil drawn, the bench shadow fell the other way for the round.", "sigil"],
-  ["One coin more in the tin than I put in.", "gold"],
-  ["The spec card reads higher than it did at breakfast.", "spec"],
-  ["The catalog has an entry dated next week.", "catalog"],
-  ["The notebook was open at today's page when I came in.", "start"],
-  ["The match burned with a yellow flame the length of my hand.", "start"],
-  ["The yellow of the sulfur stays in the eye for a minute after.", "el:S"],
-  ["Sulfur weighed 2.1 g on the paper and 2.1 g with the paper taken off.", "el:S"],
-  ["A yellow crust has grown on the SH stopper since yesterday.", "el:S"],
-  ["Sulfur fumes settled on the bench in a ring about a foot across.", "el:S"],
+  ["The overreact mark was inked before the yield reached it.", "overreact"],
+  ["It overreacted on two reagents; the third was never fired and is spent.", "overreact"],
+  ["Top mark at {yield}, with {yield+1} already written beside it.", "overreact"],
+  ["The chain to the top mark had {n+1} steps; {n} are possible.", "overreact"],
+  ["The chain's fourth step is a weld between two rings the molecule does not have.", "chain"],
+  ["The chain closed a ring it had already closed.", "chain"],
+  ["Chain of {n+1} in the tally; the molecule shows {n}.", "chain"],
+  ["The yield stood over the spec at the last reflex and under it when the page was totalled.", "loss"],
+  ["Under spec with a reagent unfired that I had lined up.", "loss"],
+  ["Lost by {short}; the page shows a yield of {spec} in pencil.", "loss"],
+  ["The spec was ticked as met before the last page.", "win"],
+  ["Met by {over}; the entry above mine has it met by {over+1}.", "win"],
+  ["The reagent acted nowhere and the molecule changed.", "waste"],
+  ["{dud} acted nowhere; one atom fewer on the molecule after it.", "waste"],
+  ["Dunmore's list has a seventh reagent.", "shop"],
+  ["Gold counted at {gold+1} on Dunmore's scale, {gold} on mine.", "shop"],
+  ["The instrument bought today is already in my ledger, at the same price.", "buy"],
+  ["Paid {price} for {item}; the ledger shows {price-1}.", "buy"],
+  ["The finding was already entered in the back pages.", "unlock"],
+  ["{finding} is entered twice, the first before today.", "unlock"],
+  ["The instrument acted on a page I did not use it on.", "instrument"],
+  ["{instrument} shows a reading for a fourth page.", "instrument"],
+  ["The sigil was under the molecule before I drew it.", "sigil"],
+  ["The sigil broke a second rule besides its own.", "sigil"],
+  ["One coin more in the tin than the round paid.", "gold"],
+  ["{gained+1} gold in the tin from a round that paid {gained}.", "gold"],
+  ["The spec card and my copy of it differ by two.", "spec"],
+  ["Spec {spec} on the card and {spec+2} in the notebook.", "spec"],
+  ["The catalog entry was filled before the compound was made.", "catalog"],
+  ["{compound} is in the catalog twice.", "catalog"],
+  ["Page one of the round has a line entered already.", "start"],
+  ["The molecule dealt for round {round} has a ring the card does not show.", "start"],
+  ["The sulfur paired with a second SH that the molecule does not have.", "el:S"],
+  ["A yellow solid came off a page where no sulfur was fired.", "el:S"],
+  ["Sulfur count on the molecule is one over the formula.", "el:S"],
   ["The nitrogen knitted a ring before anything was fired.", "el:N"],
-  ["Chlorine fumes went along the floor and under the door, against the draught.", "el:Cl"],
-  ["Bromine vapour stood in the flask in a level line, like water.", "el:Br"]
+  ["The Cl was stripped before strip was fired.", "el:Cl"],
+  ["The Br is on a different carbon than at the start of the page.", "el:Br"],
+  ["{reagent} acted in {places+1} places on a molecule with {places}.", "fire"],
+  ["The jar shows {left} at {leftn+1} from a page that gave {leftn}.", "left"],
+  ["The {mark} mark was inked before the yield reached it.", "mark"],
+  ["A ring closed across seven atoms.", "ring"],
+  ["A {kind} fired that the molecule has no place for.", "reflex"],
+  ["Page {page} is totalled at {pageyield+1}; the steps add to {pageyield}.", "page"]
 ]);
 
-// ---- source (b), further up the ladder ----
+// ---- source (b), further up the ladder: a second ink, then he, then the King ----
 thr('event', 2, 'neat', [
-  ["At the top mark the ringing was the first bar of the song in act one.", "overreact", {"s": [0, 3]}],
-  ["The chain ran in the metre of Cassilda's song, start to stop.", "chain", {"s": [0, 3]}],
-  ["Lined up the wrong three with the book open beside the bath.", "loss", {"till": 2}],
-  ["The ribbon in the book moved on four pages during the round.", "win", {"till": 2}],
-  ["Read the cast list again while the dead page cooled.", "waste", {"till": 2}],
-  ["Dunmore keeps a copy of the play on the shelf with his ledgers.", "shop"],
-  ["Dunmore wrapped the instrument in a printed sheet from act one.", "buy", {"till": 3}],
-  ["The finding is worded like the stage directions in the play.", "unlock", {"s": [0, 3]}],
-  ["In the mirror the stool by the door has a yellow coat over it.", "instrument", {"till": 3}],
-  ["The sigil is printed small at the foot of the play's title page.", "sigil"],
-  ["The gold and the book's cover are the same yellow under the lamp.", "gold", {"till": 3}],
-  ["The spec card was between pages 12 and 13 of the book this morning.", "spec", {"till": 3}],
-  ["The catalog entry gives act two as its reference.", "catalog", {"till": 3}],
-  ["Checked the book was on the top shelf before lighting the burner.", "start", {"till": 2}],
-  ["The sulfur is the yellow of the book's cover, to the shade.", "el:S", {"till": 3}],
-  ["Wrote the chlorine down as green; it has yellow in it.", "el:Cl", {"till": 2}]
+  ["The overreact is entered at the top of the page in a second ink, with the yield.", "overreact", {"till": 3}],
+  ["The second ink has the chain's kinds in order, written before it ran.", "chain", {"till": 3}],
+  ["The second ink has this round as met.", "loss", {"till": 3}],
+  ["The second ink met this spec a page sooner.", "win", {"till": 3}],
+  ["The second ink has a different third reagent for this page.", "waste", {"till": 3}],
+  ["{item} was already in the ledger as bought.", "buy", {"till": 3}],
+  ["The ledger's gold column is added up in a second ink.", "gold", {"till": 3}],
+  ["The second ink has the sulfur fired first on this page.", "el:S", {"till": 3}],
+  ["The round's first line is entered in a second ink.", "start", {"till": 3}],
+  ["The spec is on this page twice, the second time in the second ink.", "spec", {"till": 3}]
 ]);
 thr('event', 3, 'neat', [
   ["The overreact showed a chin and the edge of a collar in the flask.", "overreact"],
   ["Today's overreact showed a sleeve, to the elbow.", "overreact"],
-  ["Towers across the lake at the overreact, lit from two sides.", "overreact", {"s": [0, 3]}],
   ["At the eighth reflex there was a shoulder in the flask.", "chain"],
-  ["Each reflex cleared a little more of the mist from the glass.", "chain", {"s": [0, 3]}],
-  ["He had turned to the window before the last page was fired.", "loss"],
-  ["The flask was dark at the end of the round and showed nothing.", "loss"],
-  ["He stayed until the product was bottled.", "win"],
-  ["Nothing showed in the flask on the dead page.", "waste"],
-  ["Ordered the two-litre flask from Dunmore, to see more in it.", "shop"],
-  ["Bought the instrument to look into the flask with.", "buy"],
-  ["Left the list of findings open on the bench for him overnight.", "unlock"],
-  ["Under the loupe the flask holds a lake shore, with a figure walking on it.", "instrument", {"s": [0, 3]}],
-  ["He came to the bench while I filled the circle and stayed until it was done.", "sigil"],
-  ["Left three coins on the sill overnight; three there in the morning.", "gold"],
-  ["Met the spec; the flask showed the lake for the rest of the page.", "spec", {"s": [0, 3]}],
-  ["Read the new catalog entry aloud to the room.", "catalog"],
-  ["Rolled my sleeves down and did up the cuffs before starting.", "start"],
-  ["Sulfur and his coat are the same yellow.", "el:S"],
-  ["The bromine stood in the flask in two layers, brown over yellow.", "el:Br", {"s": [0, 3]}]
+  ["His entry for the round reads 'met' beside my 'lost'.", "loss"],
+  ["Met the spec by {over}; his entry met it by {over+5}.", "win"],
+  ["He did not line up {dud}; his page has no dead reagent.", "waste"],
+  ["He has {item} in his column since round one.", "buy"],
+  ["His gold column stands at {gold+40}.", "gold"],
+  ["He writes the sulfur into the line first on every page.", "el:S"],
+  ["His line for page one is entered above mine.", "start"],
+  ["His spec for the round is {spec-20}.", "spec"]
 ]);
 thr('event', 4, 'shaky', [
-  ["At the top mark the King looked up from the book and I missed his face.", "overreact"],
-  ["The mark under the molecule gained a stroke at the top mark.", "overreact"],
-  ["Twenty reflexes, and the King stood at the bench for the last four.", "chain"],
-  ["Said sorry aloud when the round was lost.", "loss"],
-  ["Asked for one more run after this one was lost.", "loss"],
-  ["Met the spec with the King in the room.", "win"],
-  ["Wasted page two; the King stayed for page three.", "waste"],
-  ["Dunmore served me from the back of the shop today.", "shop"],
-  ["Dunmore gave change for the coin with two suns.", "buy"],
-  ["Entered the finding without saying it aloud.", "unlock"],
-  ["The instruments on the bench all lie pointing east this morning.", "instrument"],
-  ["The mark under the molecule has five strokes and I have drawn four sigils.", "sigil"],
-  ["Wrote out the offer of all gold in hand and left it with the tin.", "gold"],
-  ["The spec card has a second figure under mine in rounder writing.", "spec"],
-  ["One blank left in the catalog; I have not been dealt the compound in a month.", "catalog"],
-  ["Began the run at nine with the King at the window.", "start"],
-  ["Burned a little sulfur on the sill at nine.", "el:S"],
-  ["The chlorine took the green off the brass and left it yellow.", "el:Cl"]
-]);
-thr('event', 5, 'neat', [
-  ["The King nodded when it overreacted.", "overreact"],
-  ["Stopped counting the reflexes at thirty.", "chain"],
-  ["Under spec by 40, with two suns in the flask.", "loss"],
-  ["Met the spec; his figure and mine agree at 20 for 12 + 7.", "win"],
-  ["Dead page, and the flask stayed clear.", "waste"],
-  ["Dunmore asked what I had seen.", "shop"],
-  ["Dunmore took a fifth off the price without being asked.", "buy"],
-  ["The instruments lie where I leave them again.", "instrument"],
-  ["All 212 gold was back in the tin this morning.", "gold"],
-  ["Sulfur on the bench all day with the windows shut.", "el:S"]
+  ["Overreact at {yield}; the flask showed his collar for {n} reflexes.", "overreact"],
+  ["The sign under the molecule gained a stroke at the overreact.", "overreact"],
+  ["Chain of {n}; the flask showed the King's sleeve from the sixth reflex on.", "chain"],
+  ["Lost the round; the King's column has it met at {spec+9}.", "loss"],
+  ["Met the spec by {over}; entered it in the King's column as well.", "win"],
+  ["Nothing reacted on the page; the King's column shows a chain of seven for it.", "waste"],
+  ["Bought {item} for longer chains; the flask shows more of him past nine reflexes.", "buy"],
+  ["Offered {gold} gold again; the tin still holds {gold}.", "gold"],
+  ["Fired the sulfur first, as the King's line has it.", "el:S"],
+  ["Round {round} begun from the King's line, not mine.", "start"],
+  ["The spec for the round is entered in the King's column as {spec+9}.", "spec"]
 ]);
 
-// ---- source (c): what is owned. The creatures notice before he does. ----
+// ---- source (c): what is owned. A creature fed by nobody; then a creature tapped by nobody. ----
 thr('hom', 1, 'neat', [
-  ["Water has lain flat calm in its jar since Tuesday.", "hom:water"],
-  ["Hydrogen has worn a mark on the ceiling over the bench.", "hom:h2"],
-  ["The fog from the Dry ice jar goes up the glass, not down.", "hom:co2"],
-  ["Acid has not eaten since Monday.", "hom:acid"],
-  ["Wood spirit hums the same four bars each evening.", "hom:wood"],
-  ["Salt has drawn a white line round its jar on the shelf.", "hom:salt"],
-  ["Slime has kept to the east side of its jar for three days.", "hom:slime"],
-  ["Seedling leans away from the window.", "hom:seedling"],
-  ["Ammonia woke me at three and I found nothing wrong.", "hom:ammonia"],
-  ["Brimstone burns low from nine to ten each evening.", "hom:brimstone"]
+  ["Water was lit at the start of the page, before anything came off.", "hom:water"],
+  ["Hydrogen carried a chain over a page turn that had no chain.", "hom:h2"],
+  ["Dry ice paid for three unfired reagents; two were unfired.", "hom:co2"],
+  ["Acid lit on a page that ended with a larger molecule.", "hom:acid"],
+  ["Wood spirit poured a reagent that was not dealt.", "hom:wood"],
+  ["Salt gave back four uses from a line of three.", "hom:salt"],
+  ["Slime lit with two reagents landed.", "hom:slime"],
+  ["Seedling's row stands at four pages in a round of three.", "hom:seedling"],
+  ["Ammonia lit with no nitrogen on the page.", "hom:ammonia"],
+  ["Brimstone lit with no sulfur on the page.", "hom:brimstone"]
 ]);
 thr('hom', 2, 'neat', [
-  ["The surface of Water's jar shows a shore in the mornings.", "hom:water", {"till": 3}],
-  ["Hydrogen drifts to the east wall at dusk.", "hom:h2", {"till": 3}],
-  ["Dry ice froze the thin book to the bench.", "hom:co2", {"till": 3}],
-  ["Acid will not eat the thin book.", "hom:acid", {"till": 3}],
-  ["Wood spirit said a line from act one this evening.", "hom:wood", {"till": 3}],
-  ["Salt has moved its line out to take in the book.", "hom:salt", {"till": 3}],
-  ["Slime has stuck pages 12 and 13 of the book together.", "hom:slime", {"till": 3}],
-  ["Seedling has put out a yellow leaf each day since the book came.", "hom:seedling", {"till": 3}],
-  ["Ammonia does not light with the book on the bench.", "hom:ammonia", {"till": 3}],
-  ["Brimstone's flame dips at the end of each round.", "hom:brimstone", {"till": 3}]
-]);
-thr('hom', 3, 'neat', [
-  ["Water held still long enough today to show the far shore.", "hom:water"],
-  ["Cut Hydrogen's string and it stayed at the east wall.", "hom:h2"],
-  ["The frost on the Dry ice jar had towers in it this morning; copied on page 40.", "hom:co2"],
-  ["Acid left the spoon I put in for it.", "hom:acid"],
-  ["Wood spirit has left its reduce untouched for a week.", "hom:wood"],
-  ["Salt was wet through this morning.", "hom:salt"],
-  ["Slime steadies the pen when my hand shakes.", "hom:slime"],
-  ["Seedling flowered yellow overnight.", "hom:seedling"],
-  ["Ammonia has stopped waking me at three.", "hom:ammonia"],
-  ["Brimstone went out and relit three times at even intervals.", "hom:brimstone"]
-]);
-// the creatures after the sign: hatched again
-thr('hom', 1, 'neat', [
-  ["The new Water went still within the hour.", "hom:water", {"s": [1, 3]}],
-  ["Hydrogen hatched and went to the old mark on the ceiling.", "hom:h2", {"s": [1, 3]}],
-  ["The new Dry ice sends its fog up the glass from the first day.", "hom:co2", {"s": [1, 3]}],
-  ["Acid hatched on Monday and has not touched the book.", "hom:acid", {"s": [1, 3]}],
-  ["The new Wood spirit hums the same four bars.", "hom:wood", {"s": [1, 3]}],
-  ["Salt drew its line the first night, in the old place.", "hom:salt", {"s": [1, 3]}],
-  ["Slime took hold of the pen on its first morning.", "hom:slime", {"s": [1, 3]}],
-  ["Seedling came up leaning away from the window.", "hom:seedling", {"s": [1, 3]}],
-  ["The new Ammonia is quieter than the last.", "hom:ammonia", {"s": [1, 3]}],
-  ["Brimstone burns low from nine to ten, as the last one did.", "hom:brimstone", {"s": [1, 3]}]
+  ["Water's tap is in the tally for page two with no tap made.", "hom:water", {"s": [0, 3]}],
+  ["Hydrogen's tap for this page is entered above my line.", "hom:h2", {"s": [0, 3]}],
+  ["Dry ice paid for a round that had not ended.", "hom:co2", {"s": [0, 3]}],
+  ["Acid lit before the reagent that shrank the molecule was fired.", "hom:acid", {"s": [0, 3]}],
+  ["Wood spirit poured in an order written at the foot of the page beforehand.", "hom:wood", {"s": [0, 3]}],
+  ["Salt repeated a line from a page I have not played.", "hom:salt", {"s": [0, 3]}],
+  ["Slime lit for a line of three entered in a second ink.", "hom:slime", {"s": [0, 3]}],
+  ["Seedling grew the molecule by five atoms between pages.", "hom:seedling", {"s": [0, 3]}],
+  ["Ammonia fired the page a third time.", "hom:ammonia", {"s": [0, 3]}],
+  ["Brimstone ended a round the tally shows as already ended.", "hom:brimstone", {"s": [0, 3]}]
 ]);
 
 // ---- source (d): lifetime counts. Each is shown once, inside its window (the page passes `seen`). ----
 thr('count', 1, 'neat', [
-  ["Page one has a ring from a cup larger than mine.", null, {"count": ["runs", 2, 5]}],
-  ["The rug no longer reaches the far wall by a foot.", null, {"count": ["runs", 10, 14]}],
-  ["Lamp oil is down a pint over the two days I was at Mother's.", null, {"count": ["runs", 25, 30]}],
-  ["The stool has worn two hollows in the floor, a pace apart.", null, {"count": ["runs", 50, 56]}],
-  ["A hundred runs, and the ink in the first notebook has gone yellow.", null, {"count": ["runs", 100, 108]}],
-  ["All six caps were loose this morning.", null, {"count": ["reagents_fired", 100, 140]}],
-  ["Five hundred reagents fired. The tally inside the back cover says 512.", null, {"count": ["reagents_fired", 500, 560]}],
-  ["The bottles weigh more than they did when new.", null, {"count": ["reagents_fired", 1000, 1080]}],
-  ["The glassware from the lost run was clean on the rack this morning.", null, {"count": ["runs_lost", 5, 8]}],
-  ["The vials from the ten lost runs are all pale yellow.", null, {"count": ["runs_lost", 10, 14]}],
-  ["The winning yield is already on a back page in pencil.", null, {"count": ["runs_won", 1, 3]}],
-  ["Ten winning yields are listed inside the back cover, in order.", null, {"count": ["runs_won", 10, 13]}],
-  ["Some rings close before the reagent reaches them now.", null, {"count": ["ring_steps", 1000, 1100]}],
-  ["The flask rings near A at every overreact.", null, {"count": ["overreacts", 10, 14]}]
+  ["Hundredth reagent fired, and 101 uses chalked off the slate.", null, {"count": ["reagents_fired", 100, 140]}],
+  ["Five hundred reagents fired; the tally inside the back cover says 512.", null, {"count": ["reagents_fired", 500, 560]}],
+  ["A thousand firings; the slate shows 1,000 uses and the bottles 994.", null, {"count": ["reagents_fired", 1000, 1080]}],
+  ["Third run in this notebook; the first run's yields are entered a second time.", null, {"count": ["runs", 2, 5]}],
+  ["Ten runs; the notebook has eleven first pages.", null, {"count": ["runs", 10, 14]}],
+  ["Ten runs lost, each at a yield ending in 7.", null, {"count": ["runs_lost", 10, 14]}],
+  ["First run won; the yield was already on the last page in pencil.", null, {"count": ["runs_won", 1, 3]}],
+  ["A thousand rings closed; the tally of rings stands at 1,003.", null, {"count": ["ring_steps", 1000, 1100]}],
+  ["Tenth overreact; the top mark has eleven strokes beside it.", null, {"count": ["overreacts", 10, 14]}]
 ]);
 thr('count', 2, 'neat', [
-  ["The ringing after an overreact runs to two bars now.", null, {"count": ["overreacts", 50, 58], "s": [0, 3]}],
-  ["Three reagents were lined up on the bench when I came in.", null, {"count": ["reagents_fired", 2500, 2650], "s": [0, 3]}]
+  ["Twenty-five runs; a second column of yields runs beside mine from run one.", null, {"count": ["runs", 25, 30], "till": 3}],
+  ["Fifty runs; the best yield of each is listed inside the back cover in a second ink.", null, {"count": ["runs", 50, 56], "till": 4}]
 ]);
 thr('count', 3, 'neat', [
-  ["He stayed through the lost run the same as through the good ones.", null, {"count": ["runs_lost", 30, 36], "s": [0, 3]}]
+  ["Thirty runs lost; his column shows the same thirty as met.", null, {"count": ["runs_lost", 30, 36]}],
+  ["Fifty overreacts; part of his face has shown in the flask at eleven of them.", null, {"count": ["overreacts", 50, 58]}]
 ]);
 
-// ---- source (e), first rung: faint oddities at any time, from the first run. Nobody named. ----
-thr('career', 1, 'neat', [
-  ["The lamp throws my shadow a little to the left of where I stand."],
-  ["Yesterday's coffee ring on the bench has moved an inch toward the wall."],
-  ["The tap ran warm for a minute on the cold side."],
-  ["The bath thermometer read 40 before the burner was lit."],
-  ["The cork from the oxidize bottle floats lower than the others."],
-  ["Filter paper from the new packet has a faint yellow edge."],
-  ["The stirrer bar turns slowly to the left with the motor off."],
-  ["The window glass is cold on the inside and warm on the outside."],
-  ["The flask hums on the bench at about the pitch of the gas."],
-  ["A drop from the burette fell slowly enough to watch."],
-  ["The crystals grew in the dish in a ring, none in the middle."],
-  ["Steam from the kettle went sideways toward the shelf."],
-  ["The bench shadow at noon was as long as at four."],
-  ["The same seven notes come up through the floor each evening."],
-  ["The ruled line on this page is not straight against the rule."],
-  ["Salt on the bench has drawn itself into a line toward the window."]
-]);
-
-// ---- source (e): the career. Rung 2: the thin book, and someone. Reached at about an eighth of everything, or eight runs. ----
+// ---- source (e): the career. Rung 2: a second ink in the notebook. An eighth of everything, or eight runs. ----
 thr('career', 2, 'neat', [
-  ["A thin book came in Dunmore's parcel with the glassware, not on the invoice.", null, {"till": 2}],
-  ["The parcel was posted from this street.", null, {"till": 2}],
-  ["The book is a play in two acts with no author on the title page.", null, {"till": 2}],
-  ["Bound in a buff yellow cloth. The dye comes off on the fingers.", null, {"till": 3}],
-  ["Read the first act over supper.", null, {"till": 2}],
-  ["Up at four after reading the first act.", null, {"till": 2}],
-  ["Put the book on the top shelf behind the acid bottles.", null, {"till": 2}],
-  ["The book was on the bench again this morning.", null, {"till": 3}],
-  ["Do not read the second act until the week's work is done.", null, {"till": 2}],
-  ["The ribbon in the book is four pages on from where I stopped.", null, {"till": 2}],
-  ["Dunmore says he packed glassware only.", null, {"till": 2}],
-  ["Pike has a copy of the play on his hall table.", null, {"till": 3}],
-  ["One name in the cast list has no lines in act one.", null, {"till": 2}],
-  ["Cassilda's song in act one goes to a tune I already knew.", null, {"till": 3}],
-  ["Ordered grey labels in place of the yellow ones.", null, {"till": 2}],
-  ["Moved the sulfur bottle to the back of the shelf.", null, {"till": 2}],
-  ["Moved the stool to the wall side of the bench.", null, {"till": 2}],
-  ["The jars hum in the evening, in more than one part.", null, {"s": [0, 3]}],
-  ["Found a loose printed page from act two under the door and burned it unread.", null, {"till": 2}],
-  ["Act one ends with Camilla being told something offstage.", null, {"till": 2}],
-  ["Someone was in the room from eleven until the titration was done.", null, {"till": 2}],
-  ["Whoever comes in the evenings stays at the far end of the room.", null, {"till": 2}],
-  ["The city in the play is on a lake, under two suns.", null, {"till": 2}],
-  ["Copied the cast list into the back pages.", null, {"till": 2}],
-  ["Pike has stopped asking for the rent.", null, {"till": 3}]
+  ["The uses for this round were chalked on the slate before page one.", null, {"till": 3}],
+  ["A second ink has the reflexes for this page in order, before they fired.", null, {"till": 3}],
+  ["The slate has two tallies of uses for this round.", null, {"till": 3}],
+  ["The second ink enters each yield one page ahead of mine.", null, {"till": 3}],
+  ["A structure is drawn beside the molecule with one ring more than it has.", null, {"till": 3}],
+  ["The reagent cards lie in the order of a line I have not played yet.", null, {"till": 3}],
+  ["The second ink totals this round at {yield+3}.", null, {"till": 3}],
+  ["A second figure under my yield for page {page}: {yield+1}.", null, {"till": 3}],
+  ["The line {r1}, {r2}, {r3} was on the page before I lined them up.", null, {"till": 3}],
+  ["The next page has a line entered: {r3}, {r1}, {r2}.", null, {"till": 3}],
+  ["The spec for round {round+1} is entered at the foot of this page.", null, {"till": 3}],
+  ["My sum for the page is corrected from {yield-2} to {yield} in a second ink.", null, {"till": 3}]
 ]);
 
-// ---- rung 3: he, and his face. Reached at about a third of everything, or twenty-five runs. ----
+// ---- rung 3: he, and his face. About a third of everything, or twenty-five runs. ----
 thr('career', 3, 'neat', [
-  ["Read the second act last night, between ten and four.", null, {"till": 3}],
-  ["Bench work from seven as usual, no sleep.", null, {"till": 3}],
-  ["He is in the room most evenings from about nine."],
-  ["He stood at the window from nine until the bath was cold."],
-  ["He was turned to the window and I did not see his face."],
-  ["The city in the play is Carcosa."],
-  ["Two suns in the flask at the top mark, setting one after the other.", null, {"s": [0, 3]}],
-  ["The lake in the play is Hali."],
-  ["Back to the yellow labels."],
-  ["A pale mask in the steam over the bath for as long as it took to read 41."],
-  ["The stars were black on a pale sky at three.", null, {"s": [0, 3]}],
-  ["At nine reflexes there was a sleeve; at six there is nothing."],
-  ["The lab coat bought in March is frayed to tatters at the hem."],
-  ["Window open from nine."],
-  ["The Hyades were over the roof opposite, six and then seven.", null, {"s": [0, 3]}],
-  ["The condenser drips in the time of Cassilda's song.", null, {"s": [0, 3]}],
-  ["Sat up until four in the chair facing the window."],
-  ["Pike's rooms are empty and the rent book is marked paid to December."],
-  ["Mist lay on the bench at dawn, an inch deep and level as water.", null, {"s": [0, 3]}],
-  ["The inspector looked into the flask for some minutes and left without signing."],
-  ["He stands a pace nearer than in March; I chalked the floor."],
-  ["Told him the yield when the round was done."]
+  ["He fired the third reagent of the page; I had lined up two."],
+  ["At the top mark the flask shows part of a face for as long as the chain runs."],
+  ["Longer chains show more: a chin at nine reflexes, nothing at six."],
+  ["At the last overreact the flask showed the back of a head."],
+  ["His page for this round has four reagents in the line."],
+  ["Tried his line for the page; it gave his yield."],
+  ["His yield for page {page} is {yield+4}; mine is {yield}."],
+  ["He lines up {r3} first where I put {r1}."],
+  ["His column in the ledger is filled to round {round+1}."],
+  ["His line for this molecule gives {n+3} reflexes to my {n}."],
+  ["He has met the spec for round {round} already, by his entry."]
 ]);
 
-// ---- rung 4: the King. The bargain, kept as a record of what was left out and what was found. Four fifths of everything. ----
+// ---- rung 4: the King. The bargain is made in yield and gold. Four fifths of everything. ----
 thr('career', 4, 'shaky', [
-  ["The cast list calls him the King.", null, {"hand": "neat"}],
-  ["Left the tin of gold on the sill overnight, 212; 212 in the morning."],
-  ["Wrote on a card what I want, one look at his face, and left it with the tin.", null, {"hand": "neat"}],
-  ["Rewrote the card to ask for less."],
-  ["Asked aloud at the end of the round."],
-  ["Sold the bed to Dunmore for reagents."],
-  ["The two suns set into the lake without steam."],
-  ["Half the bottles on the shelf have no labels. Labelled six tonight."],
-  ["Four spaces left on the shelf."],
-  ["The hem of a torn cloth lay across page three for a minute."],
-  ["Read the catalog aloud tonight as far as it goes."],
-  ["Higher yields bring the King nearer; moved the chalk mark again."],
-  ["Yesterday's note and today's are the same words."],
-  ["Watched the steam for an hour and there was no mask."],
-  ["The mark under the molecule lacks one stroke."],
-  ["Ten jars and six sigils on the shelf, and the card still on the sill."],
-  ["Bowed to the flask after the round."],
-  ["Three findings left; did none of them today."],
-  ["The sign can be taken now. Dunmore says everything on the shelf goes back.", null, {"u": [0.9, 1], "hand": "neat"}],
-  ["Changed the card to ask only for the hem."],
-  ["The card on the sill has not been moved."]
+  ["His column in the ledger is headed 'the King'.", null, {"hand": "neat"}],
+  ["Played the King's line for the page, reagent for reagent."],
+  ["Entered the round's yield in the King's column, not mine."],
+  ["The sign under the molecule has five strokes; I have drawn four sigils."],
+  ["Three overreacts this round; the flask showed the chin at each."],
+  ["The sign can be taken now; Dunmore would collect everything on the shelf.", null, {"u": [0.9, 1], "hand": "neat"}],
+  ["Offered {gold} gold at the bench for a sight of his face; the tin still holds {gold}."],
+  ["Chain of {n} for a sight of his face; the flask showed the chin from reflex nine.", null, {"c": {"n": [9, 999]}}],
+  ["The King's yield for round {round} is {yield+9}."],
+  ["Spec for round {round} is signed 'the King' under Dunmore's stamp."],
+  ["Yield {yield+9} would match the King's for the round; made {yield}."]
 ]);
 
-// ---- rung 5: the King in Yellow, written in full. Everything found, or the third lap. ----
-thr('career', 5, 'neat', [
-  ["Wrote out The King in Yellow in full on the title line."],
-  ["Saw his face at the top mark tonight.", null, {"big": true}],
-  ["Two suns this morning, the second at 7.15."],
-  ["Went to label the bottles and they were labelled."],
-  ["The cat sleeps on the bench now."],
-  ["Read the catalog aloud from start to end and he stayed for all of it."],
-  ["The rug reaches the wall again."],
-  ["The jars sing the tune through in the evenings."],
-  ["Took the card off the sill."],
-  ["Tea made at four, still warm at six."]
-]);
+// ---- source (f): the sign. Taking it ends a tenancy. Each lap a new tenant has the bench and the same notebook, ----
+// ---- with the earlier pages in it. From lap 1 the earlier tenants' hands add entries in the margins (`by`), more each lap. ----
 
-// ---- source (f): the sign. Lap 1: he knows. The shelf is bare and the voice is not. ----
+// lap 1: the second tenant. Whole sentences. He reads the first tenant's pages as one reads a previous user's log.
 thr('sign', 4, 'neat', [
-  ["Took the sign. Dunmore collected everything on Tuesday.", null, {"s": [1, 1]}],
-  ["Shelf is bare; I have chalked where each thing goes.", null, {"s": [1, 1]}],
-  ["Yield is a fifth higher on every page with the method unchanged.", null, {"s": [1, 1]}],
-  ["One pale yellow stroke shows under the molecule at the top mark.", null, {"s": [1, 1]}],
-  ["Two shadows from the stand again, as in the first notebook.", null, {"s": [1, 1]}],
-  ["The thin book stayed on the bench when the shelf was cleared.", null, {"s": [1, 2]}],
-  ["The King was at the window when Dunmore's boy carried the boxes out.", null, {"s": [1, 1]}],
-  ["The book stays on the bench.", null, {"s": [1, 1]}],
-  ["Pike is back downstairs and asking for the rent.", null, {"s": [1, 1]}],
-  ["The humming is Cassilda's song; noted on the first evening.", null, {"s": [1, 1]}],
-  ["The dust on the shelf keeps the rings of the bottles.", null, {"s": [1, 1]}],
-  ["The second cup ring is on page one of the new notebook.", null, {"s": [1, 1]}],
-  ["Started again with six bottles and the tin empty.", "start", {"s": [1, 1]}],
-  ["One stroke under the molecule at the top mark, gone at the page turn.", "overreact", {"s": [1, 1]}],
-  ["Entered the finding a second time; the first entry is in the old notebook.", "unlock", {"s": [1, 3]}],
-  ["Lost at round two, where the first notebook also stopped.", "loss", {"s": [1, 1]}],
-  ["Bought back my own burner from Dunmore; the scorch on the base is mine.", "buy", {"s": [1, 3]}],
-  ["Opened one window for the sulfur.", "el:S", {"s": [1, 1]}]
+  ["The notebook was a third full in another hand when I began on this bench.", null, {"s": [1, 1]}],
+  ["The earlier tenant's last entry is round nine, page two, yield 212.", null, {"s": [1, 1]}],
+  ["Yields on this bench run a fifth above what the method gives.", null, {"s": [1, 1]}],
+  ["One stroke of the sign shows under the molecule at the top mark.", null, {"s": [1, 1]}],
+  ["His tally of uses is still chalked on the slate, and it matches mine for this round.", null, {"s": [1, 1]}],
+  ["The earlier hand keeps a second column in his ledger from page 80, headed 'the King'.", null, {"s": [1, 1]}],
+  ["The earlier hand records a yield of {yield+6} for this compound on his page 31.", null, {"s": [1, 1]}],
+  ["His line for this molecule was {r2}, {r1}, {r3}.", null, {"s": [1, 1]}],
+  ["He records {n+1} reflexes from the line that gave me {n}.", null, {"s": [1, 1]}],
+  ["There is a correction under my yield for page {page}, in the earlier hand.", null, {"s": [1, 1]}],
+  ["The earlier hand has changed my {yield-3} to {yield}, which the tally confirms.", null, {"s": [1, 1]}],
+  ["His last full round had the same spec as my round {round}, {spec}.", null, {"s": [1, 1]}],
+  ["First run on this bench, with the earlier tenant's line for round one.", "start", {"s": [1, 1]}],
+  ["One stroke of the sign under the molecule at the overreact.", "overreact", {"s": [1, 1]}],
+  ["The finding I entered today is also on his page 9.", "unlock", {"s": [1, 1]}],
+  ["Lost at round {round}, where his first run also stopped.", "loss", {"s": [1, 1]}],
+  ["Met the spec by {over}; his entry for the same round is {over+2}.", "win", {"s": [1, 1]}],
+  ["The earlier hand fires the sulfur first on every page.", "el:S", {"s": [1, 1]}],
+  ["Rings want five or six.", null, {"s": [1, 1], "by": "tenant0"}],
+  ["{r3} should have gone before {r1}.", null, {"s": [1, 1], "by": "tenant0"}],
+  ["Chain was {n}, not {n-1}.", null, {"s": [1, 1], "by": "tenant0", "c": {"n": [2, 999]}}],
+  ["Yield {yield}. The sum above is out.", null, {"s": [1, 1], "by": "tenant0"}],
+  ["{dud} has nothing to act on here.", "waste", {"s": [1, 1], "by": "tenant0"}]
 ]);
-// ---- lap 2: he is polite about it. Shown as what he does for the other, recorded as routine. ----
+// lap 2: the third tenant. He abbreviates. Two earlier hands in the margins.
 thr('sign', 4, 'neat', [
-  ["Set the second stool at the bench end before lighting the burner.", null, {"s": [2, 2]}],
-  ["Lamp down to half at nine.", null, {"s": [2, 2]}],
-  ["Two strokes under the molecule now.", null, {"s": [2, 2]}],
-  ["The coffee ring on page one has dried in the shape of the two strokes.", null, {"s": [2, 2]}],
-  ["Yield is two fifths up on the first notebook's figures.", null, {"s": [2, 2]}],
-  ["Packed the shelf for Dunmore myself this time, in order.", null, {"s": [2, 2]}],
-  ["Read the spec aloud before the first page.", null, {"s": [2, 2]}],
-  ["Worked the round without speaking.", null, {"s": [2, 2]}],
-  ["Poured a second cup at four and emptied it cold at six.", null, {"s": [2, 2]}],
-  ["Wrote today's page out fair and left the notebook open on the bench.", null, {"s": [2, 2]}],
-  ["Closed the window after the King had gone.", null, {"s": [2, 2]}],
-  ["Stains on the page dry in the shape of the mark.", null, {"s": [2, 2]}],
-  ["Wiped down the second stool.", null, {"s": [2, 2]}],
-  ["Said good evening and lined up the first three.", "start", {"s": [2, 2]}],
-  ["Read the yield aloud when the spec was met.", "win", {"s": [2, 2]}],
-  ["Said sorry for page two when the round was lost.", "loss", {"s": [2, 2]}],
-  ["Two strokes at the top mark; I stood up for it.", "overreact", {"s": [2, 2]}],
-  ["Said beforehand that the sulfur would smell.", "el:S", {"s": [2, 2]}],
-  ["Dead page; said so aloud and lined up again.", "waste", {"s": [2, 2]}]
+  ["Notebook: two hands before mine, 140 pp.", null, {"s": [2, 2]}],
+  ["Last entries: 1st hand rd 9 p. 2, 2nd hand rd 6 p. 1.", null, {"s": [2, 2]}],
+  ["Yld 2/5 over calc., method unchanged.", null, {"s": [2, 2]}],
+  ["Two strokes of the sign under mol., all rd.", null, {"s": [2, 2]}],
+  ["Both hands keep a 2nd ledger col., headed 'the King'.", null, {"s": [2, 2]}],
+  ["This cpd: 1st hand yld {yield+6}, 2nd hand {yield+2}, mine {yield}.", null, {"s": [2, 2]}],
+  ["1st hand's line here: {r2} > {r1} > {r3}.", null, {"s": [2, 2]}],
+  ["2nd hand gets {n+1} refl. from my line.", null, {"s": [2, 2]}],
+  ["New corr. under my yld p. {page}, 1st hand.", null, {"s": [2, 2]}],
+  ["2nd hand corrected my sum to {yield}.", null, {"s": [2, 2]}],
+  ["Run 1 this bench. Line for rd 1 from 2nd hand's card.", "start", {"s": [2, 2]}],
+  ["Spec met w. 1st hand's line.", "win", {"s": [2, 2]}],
+  ["Under spec by {short}. 2nd hand lost same rd.", "loss", {"s": [2, 2]}],
+  ["Top mark; two strokes of the sign.", "overreact", {"s": [2, 2]}],
+  ["1st hand: S first every pg.", "el:S", {"s": [2, 2]}],
+  ["Dead pg. {dud}, nothing to act on.", "waste", {"s": [2, 2]}],
+  ["{r2} first on this molecule.", null, {"s": [2, 2], "by": "tenant0"}],
+  ["Yield {yield}, not {yield+1}.", null, {"s": [2, 2], "by": "tenant0"}],
+  ["Page {page}: {dud} found nothing.", null, {"s": [2, 2], "by": "tenant0"}],
+  ["The chain could reach {n+1}.", "chain", {"s": [2, 2], "by": "tenant0"}],
+  ["The yield for page {page} should read {yield}.", null, {"s": [2, 2], "by": "tenant1"}],
+  ["{r1} is better placed third on this molecule.", null, {"s": [2, 2], "by": "tenant1"}],
+  ["The uses of {reagent} remaining are {uses}.", null, {"s": [2, 2], "by": "tenant1"}],
+  ["The spec was met on page {page}.", "win", {"s": [2, 2], "by": "tenant1"}]
 ]);
-// ---- lap 3: the notes are partly in another hand. The other hand writes as a second chemist would: corrections, with figures. ----
+// lap 3: the fourth tenant. He dates everything. Three earlier hands in the margins. The King in Yellow is written in full only here.
 thr('sign', 5, 'neat', [
-  ["Bath was 42, not 40.", null, {"s": [3, 3], "by": "other"}],
-  ["Page two: the reduce found no C=O.", null, {"s": [3, 3], "by": "other"}],
-  ["1.84 g. The sum above is out by 0.2.", null, {"s": [3, 3], "by": "other"}],
-  ["Oxidize should go last on page one.", null, {"s": [3, 3], "by": "other"}],
-  ["The third flask on the sill has no label.", null, {"s": [3, 3], "by": "other"}],
-  ["The figures after midnight are poor.", null, {"s": [3, 3], "by": "other"}],
-  ["The window was shut at nine.", null, {"s": [3, 3], "by": "other"}],
-  ["Page three, the weld: right place.", null, {"s": [3, 3], "by": "other"}],
-  ["Hydrate first here; he has it the other way.", null, {"s": [3, 3], "by": "other"}],
-  ["Cat hair in the 250 ml flask.", null, {"s": [3, 3], "by": "other"}],
-  ["Lamp oil is low.", null, {"s": [3, 3], "by": "other"}],
-  ["Met with 12 over; page two did it.", "win", {"s": [3, 3], "by": "other"}],
-  ["Lost on the order of page two.", "loss", {"s": [3, 3], "by": "other"}],
-  ["Top mark at the fourteenth reflex.", "overreact", {"s": [3, 3], "by": "other"}],
-  ["Nine reflexes; a tenth was there to be had.", "chain", {"s": [3, 3], "by": "other"}],
-  ["Hydrate had nothing to act on.", "waste", {"s": [3, 3], "by": "other"}],
-  ["Start with the grow; the chain is short.", "start", {"s": [3, 3], "by": "other"}],
-  ["There is writing under mine this morning, rounder and neater.", null, {"s": [3, 3]}],
-  ["Three strokes under the molecule, and they stay for the whole round.", null, {"s": [3, 3]}],
-  ["The other hand was right about page two.", null, {"s": [3, 3]}],
-  ["I leave the lower half of the margin clear.", null, {"s": [3, 3]}],
-  ["The sum on page four is corrected in the other hand to 1.84.", null, {"s": [3, 3]}],
-  ["Third time the shelf is bare.", null, {"s": [3, 3]}],
-  ["Tried dehydrate first against the note; the note was right.", null, {"s": [3, 3]}],
-  ["Have not sat up past midnight this week.", null, {"s": [3, 3]}],
-  ["Yield is three fifths up on the first notebook.", null, {"s": [3, 3]}],
-  ["The jars face the mark during a long chain.", null, {"s": [3, 3]}],
-  ["The sign is whole under the molecule from the first page.", "sigil", {"s": [3, 3]}]
+  ["2 March. Notebook in three hands before mine, 210 pages.", null, {"s": [3, 3]}],
+  ["4 March. Last entries of the three hands: round 9, round 6, round 8.", null, {"s": [3, 3]}],
+  ["6 March. Three strokes of the sign under the molecule for the whole round.", null, {"s": [3, 3]}],
+  ["7 March. Yield three fifths over the method.", null, {"s": [3, 3]}],
+  ["15 March. Each earlier hand keeps a second column of yields, headed 'the King'.", null, {"s": [3, 3]}],
+  ["21 March. In the first hand's ledger the second column is headed The King in Yellow.", null, {"s": [3, 3]}],
+  ["27 March. The sign is whole under the molecule from page one.", null, {"s": [3, 3]}],
+  ["3 March. Yields for this compound: {yield+6}, {yield+2}, {yield+1}, and mine {yield}.", null, {"s": [3, 3]}],
+  ["9 March. The third hand's line for this molecule: {r3}, {r1}, {r2}.", null, {"s": [3, 3]}],
+  ["12 March. New entry in the first hand under my page {page}.", null, {"s": [3, 3]}],
+  ["14 March. The second hand has corrected my sum to {yield}.", null, {"s": [3, 3]}],
+  ["29 March. The King's column and mine agree for round {round}.", null, {"s": [3, 3]}],
+  ["23 March. Round {round} begun, spec {spec}.", "start", {"s": [3, 3]}],
+  ["24 March. The sign whole under the molecule.", "sigil", {"s": [3, 3]}],
+  ["25 March. Spec met by {over}.", "win", {"s": [3, 3]}],
+  ["26 March. Under spec by {short}.", "loss", {"s": [3, 3]}],
+  ["28 March. Saw his face in the flask at the top mark.", "overreact", {"s": [3, 3], "big": true}],
+  ["1 April. Chain of {n}; the face stayed for all of it.", "chain", {"s": [3, 3], "c": {"n": [2, 999]}}],
+  ["Hydrate first on this one.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["{r3} before {r1} here.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["Yield {yield}.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["The chain can reach {n+1}.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["Met by {over}.", "win", {"s": [3, 3], "by": "tenant0"}],
+  ["The spec for this round is {spec}.", null, {"s": [3, 3], "by": "tenant1"}],
+  ["{reagent} has {uses} uses remaining.", null, {"s": [3, 3], "by": "tenant1"}],
+  ["The round was lost by {short}.", "loss", {"s": [3, 3], "by": "tenant1"}],
+  ["The top mark came at reflex {n}.", "overreact", {"s": [3, 3], "by": "tenant1", "c": {"n": [1, 999]}}],
+  ["Yld p. {page} = {yield}.", null, {"s": [3, 3], "by": "tenant2"}],
+  ["{r2} > {r1} next pg.", null, {"s": [3, 3], "by": "tenant2"}],
+  ["Refl. {n}, poss. {n+1}.", null, {"s": [3, 3], "by": "tenant2"}],
+  ["{dud}: nothing to act on.", "waste", {"s": [3, 3], "by": "tenant2"}],
+  ["Rd {round}. Spec {spec}.", "start", {"s": [3, 3], "by": "tenant2"}]
 ]);
 
 AA.NOTES = NOTES;
 const THREAD_T = {}; NOTES.forEach(n => { if (n.thread) THREAD_T[n.t] = n; });
 const clamp = v => Math.max(0, Math.min(1, v || 0));
 
-// the scale the plain notes are ranged on: the career (unlocks) carries most of it, the run and the chain the rest
+// the old scale: the career (unlocks) carries most of it, the run and the chain the rest. No note is ranged on it now.
 AA.notesDepth = function (unlocks, round, rounds, chain) {
   const u = clamp(unlocks), n = Math.max(2, rounds || 9), r = clamp(((round || 1) - 1) / (n - 1));
   const c = clamp((chain || 0) / 14);
   return clamp(u * 0.65 + r * 0.3 + c * 0.05);
 };
 
-// The reveal ladder. 1: oddities, from the first run. 2: someone, and the thin book (an eighth of everything, or eight runs).
-// 3: he and his face (a third of everything, or twenty-five runs). 4: the King (four fifths, or any lap of the sign).
-// 5: the King in Yellow (everything, or the third lap, or the second lap with four fifths again).
+// The reveal ladder. 1: impossible results, from the first run. 2: a second ink (an eighth of everything, or eight runs).
+// 3: he and his face (35 in 100 of everything, or twenty-five runs). 4: the King (four fifths, or any lap of the sign).
+// 5: the King in Yellow, in full (the third lap only).
 AA.notesReach = function (state) {
   const s = state || {}, u = clamp(s.unlocks), g = Math.max(0, Math.min(3, s.sign | 0)), runs = (s.counts && s.counts.runs) || 0;
-  if (u >= 0.97 || g >= 3 || (g === 2 && u >= 0.8)) return 5;
+  if (g >= 3) return 5;
   if (u >= 0.8 || g >= 1) return 4;
   if (u >= 0.35 || runs >= 25) return 3;
   if (u >= 0.12 || runs >= 8) return 2;
@@ -712,7 +623,7 @@ AA.notesReach = function (state) {
 
 // The thread budget. rate is the share of notes that may be thread lines: about 1 in 10 for a new player, 1 in 5 by mid-career,
 // 1 in 3 late. c is how far along the player is, taken from the share of unlocks, the runs played and the laps of the sign
-// (a lap does not put the voice back). Rounds 7 to 9 of a run add a little. gap is the fewest plain notes between two thread lines
+// (a lap does not put it back). Rounds 7 to 9 of a run add a little. gap is the fewest plain notes between two thread lines
 // (3 early, then 2, then 1: never back to back). p is the chance at each note once the gap has passed.
 AA.notesRate = function (state) {
   const s = state || {}, u = clamp(s.unlocks), g = Math.max(0, Math.min(3, s.sign | 0)), runs = (s.counts && s.counts.runs) || 0;
@@ -724,48 +635,64 @@ AA.notesRate = function (state) {
 
 function hash01(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; return ((h >>> 0) % 100000) / 100000; }
 
-// is a thread line due at this note? `used` is this run's notes in the order shown; the plain notes since the last thread line are counted
-// from it. A new run starts as if three plain notes had passed (or state.since, if the page carries the count across runs).
+// is a thread line due at this note? `used` is this run's notes (their texts as in the data, slots unfilled) in the order shown; the plain
+// notes since the last thread line are counted from it. A new run starts as if two plain notes had passed (or state.since, if the page
+// carries the count across runs).
+const OWED = 9;
 function threadDue(s, used) {
   let last = -1; for (let i = used.length - 1; i >= 0; i--) if (THREAD_T[used[i]]) { last = i; break; }
-  const since = last >= 0 ? used.length - 1 - last : used.length + (s.since == null ? 3 : s.since), b = AA.notesRate(s);
+  const since = last >= 0 ? used.length - 1 - last : used.length + (s.since == null ? 2 : s.since), b = AA.notesRate(s);
   if (!used.length || since < b.gap) return false;                       // never the first note of a run, never inside the gap
-  if (last < 0 && used.length >= 5) return true;                         // a run of five notes with none yet: one is owed
+  if (last < 0 && used.length >= OWED) return true;                      // a run of that many notes with none yet: one is owed
   const seen = s.seen, runs = (s.counts && s.counts.runs) || 0;
   if (seen && runs >= 1 && !Object.keys(THREAD_T).some(t => (Array.isArray(seen) ? seen.indexOf(t) >= 0 : seen[t]))) return true;  // none ever, by the second run
   return hash01((s.seed || 0) + '|' + used.length + '|' + (used[used.length - 1] || '') + '|' + (s.round || 0)) < b.p;
 }
 
-// state: { depth 0..1, unlocks 0..1, round, tag (a string or a list), homs (keys of the creatures owned), used (texts shown this run, in order),
-//          sign (laps taken, 0..3), counts (lifetime counts), since (plain notes since the last thread line, across runs), seen (thread texts
-//          ever shown: a list or a map), seed }
-// Only depth, unlocks, tag, homs and used are needed; the rest make the thread better paced and are safe to leave out.
+// state: { depth, unlocks 0..1, round, tag (a string or a list), homs (keys of the creatures owned), used (texts shown this run, in order),
+//          ctx (what the slots are filled from: see NOTES_WRITING.md, "What the page must pass"), sign (laps taken, 0..3), counts (lifetime
+//          counts), since (plain notes since the last thread line, across runs), seen (thread texts ever shown: a list or a map), seed }
+// Only unlocks, tag, homs and used are needed; without ctx only notes with no slots come back.
 // Returns the notes that fit, and decides by the budget whether this note is a thread line or a plain one: the list is all one or the other.
 // With a tag that has notes here, only those. Otherwise the untagged notes and the notes of owned creatures. Never returns an empty list.
+// The page shows AA.notesFill(note, ctx) and keeps note.t in `used`.
 AA.notesPick = function (state) {
-  const s = state || {}, d = clamp(s.depth), u = clamp(s.unlocks), g = Math.max(0, Math.min(3, s.sign | 0));
+  const s = state || {}, u = clamp(s.unlocks), g = Math.max(0, Math.min(3, s.sign | 0)), ctx = s.ctx || {};
   const tags = s.tag == null ? [] : [].concat(s.tag), homs = (s.homs || []).map(h => 'hom:' + h), used = s.used || [], counts = s.counts || {};
   const seen = s.seen, wasSeen = t => !!seen && (Array.isArray(seen) ? seen.indexOf(t) >= 0 : !!seen[t]);
-  const inR = (v, r, pad) => v >= r[0] - pad && v <= r[1] + pad;
+  const inR = (v, r) => v >= r[0] && v <= r[1];
   const okRound = n => !n.round || (s.round != null && s.round >= n.round[0] && s.round <= n.round[1]);
   const okWhen = n => tags.length ? (n.when && tags.indexOf(n.when) >= 0) : (!n.when || homs.indexOf(n.when) >= 0);
+  const okSlots = n => n.slots.every(k => ctx[k] != null && ctx[k] !== '') && (!n.cond || Object.keys(n.cond).every(k => ctx[k] >= n.cond[k][0] && ctx[k] <= n.cond[k][1]));
   const unused = n => used.indexOf(n.t) < 0;
+  const key = (s.seed || 0) + '|' + used.length + '|' + (used[used.length - 1] || '');
+  // notes about the present page (with slots) come before the ones without, four times in five
+  const present = l => { const w = l.filter(n => n.slots.length); return w.length >= 2 && hash01('w|' + key) < 0.8 ? w : l; };
   if (threadDue(s, used)) {
     const reach = AA.notesReach(s);
-    const ok = n => n.thread && n.rung <= reach && reach <= n.till && inR(g, n.sign, 0) && inR(u, n.unlocks, 0) && inR(d, n.depth, 0) && okRound(n) && unused(n);
+    const ok = n => n.thread && n.rung <= reach && reach <= n.till && inR(g, n.sign) && inR(u, n.unlocks) && okRound(n) && okSlots(n) && unused(n);
     const due = NOTES.filter(n => ok(n) && n.count && (counts[n.count[0]] || 0) >= n.count[1] && (counts[n.count[0]] || 0) <= n.count[2] && !wasSeen(n.t));
     if (due.length && !tags.length) return due;                          // a lifetime count comes first, once
     const l = NOTES.filter(n => ok(n) && !n.count && okWhen(n));
-    if (l.length) {                                                      // seven times in ten the newest rungs, the late-run lines and the lap's own lines; else anything that fits
-      const top = l.filter(n => n.rung >= reach - 1 || n.src === 'sign' || n.src === 'run'), near = top.length >= 4 && hash01('t|' + (s.seed || 0) + '|' + used.length + '|' + (used[used.length - 1] || '')) < 0.7;
-      const f = near ? top : l, nw = f.filter(n => !wasSeen(n.t)); return nw.length ? nw : f; }
+    if (l.length) {                                                      // seven times in ten the newest rungs, the late-run lines and the tenant's own; else anything that fits
+      const top = l.filter(n => n.rung >= reach - 1 || n.src === 'sign' || n.src === 'run'), near = top.length >= 4 && hash01('t|' + key) < 0.7;
+      const f = near ? top : l, nw = f.filter(n => !wasSeen(n.t)); return present(nw.length ? nw : f); }
   }
-  const plain = (dp, up) => NOTES.filter(n => !n.thread && inR(d, n.depth, dp) && inR(u, n.unlocks, up));
+  const plain = NOTES.filter(n => !n.thread && inR(g, n.sign) && inR(u, n.unlocks) && okSlots(n));
   const fresh = l => { const f = l.filter(unused); return f.length ? f : l; };
-  const steps = [[0, 0], [0.15, 1], [1, 1]];
-  if (tags.length) for (let i = 0; i < steps.length; i++) { const l = plain(steps[i][0], steps[i][1]).filter(n => n.when && tags.indexOf(n.when) >= 0); if (l.length) return fresh(l); }
-  for (let i = 0; i < steps.length; i++) { const l = plain(steps[i][0], steps[i][1]).filter(n => !n.when || homs.indexOf(n.when) >= 0); if (l.length) return fresh(l); }
-  return fresh(NOTES.filter(n => !n.thread));
+  const live = l => { const f = l.filter(n => !n.fb); return f.length ? f : l; };   // rules of thumb only when nothing else fits
+  if (tags.length) { const l = plain.filter(n => n.when && tags.indexOf(n.when) >= 0); if (l.length) return present(fresh(l)); }
+  const l = plain.filter(n => !n.when || homs.indexOf(n.when) >= 0);
+  if (g && hash01('own|' + key) < 0.5) { const own = l.filter(n => !n.when && n.sign[0] === g && unused(n)); if (own.length) return present(own); }   // on a lap, half the plain notes are the tenant's own
+  if (l.length) return present(live(fresh(live(l))));
+  return fresh(NOTES.filter(n => !n.thread && !n.slots.length && inR(g, n.sign)));
+};
+
+// the note's text with its slots filled: {name}, and {name+2} or {name-1} for a number. A slot that opens the note is given a capital.
+AA.notesFill = function (note, ctx) {
+  const c = ctx || {}, t = typeof note === 'string' ? note : note.t;
+  const out = t.replace(/\{([a-z0-9]+)(?:([+-])(\d+))?\}/g, (m, k, sg, d) => { const v = c[k]; if (v == null) return m; return sg ? String(Number(v) + (sg === '+' ? 1 : -1) * Number(d)) : String(v); });
+  return t.charAt(0) === '{' ? out.charAt(0).toUpperCase() + out.slice(1) : out;
 };
 
 // '~struck~ and _under_' to [{ s, struck, under }] so the pen can draw a line through or under a piece
@@ -775,5 +702,5 @@ AA.notesParse = function (t) {
   return out;
 };
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { NOTES, notesPick: AA.notesPick, notesDepth: AA.notesDepth, notesReach: AA.notesReach, notesRate: AA.notesRate, notesParse: AA.notesParse };
+if (typeof module !== 'undefined' && module.exports) module.exports = { NOTES, notesPick: AA.notesPick, notesFill: AA.notesFill, notesDepth: AA.notesDepth, notesReach: AA.notesReach, notesRate: AA.notesRate, notesParse: AA.notesParse };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1,62 +1,62 @@
 # Overreact: writing the margin notes
 
-2026-11-13, second writing. Rulings AI, AM, AM2, AM3, AM4, AM5 in `HARNESS.md`. The notes are in `apps/steam/js/react/notes_data.js`. The story they carry is in `STORY.md`. The first writing (12 November, 335 notes in six bands, the thread locked to the share of unlocks) is replaced: every note was rewritten after AM5.
+2026-11-13, third writing. Rulings AI, AM, AM2, AM3, AM4, AM5 and the owner's ruling of the same day that every note is tied to play (below). The notes are in `apps/steam/js/react/notes_data.js`. The story they carry is in `STORY.md`. The first writing (12 November, 335 notes) and the second (13 November, plain voice with room and weather in it) are both replaced.
 
 ## What the notes are
 
-One working chemist's notes to himself in the margin of a lab notebook. There are 556. 220 are plain notes about the work. 336 are thread lines: the thin book, someone in the room, the King in Yellow.
+A working chemist's jottings in the margin of his notebook about what has just happened in the game. There are 442. 190 are plain notes about the work. 252 are thread lines.
 
-The owner's words:
+The owner's words, in order:
 
-- "things that are insane in the marginalia"; "more unhinged the deeper into chemistry as we go" (AM).
-- "gradually more and more desperate about seeing HIS FACE, the thing being the king in yellow" (AM3).
+- "more unhinged the deeper into chemistry as we go" (AM); "gradually more and more desperate about seeing HIS FACE, the thing being the king in yellow" (AM3).
 - "I feel like the angle of the king in yellow parts need to be peppered a bit better and can't only come from a full 3 run prestige but I do not want you to have it be Redditor stupid extra spoopy shit" (AM4).
-- On a clipped, wry sample line: "The dry example you gave is a classic sign of Redditor slop stop it" (AM5).
+- "The dry example you gave is a classic sign of Redditor slop stop it" (AM5).
+- On the plain voice: "Yes, that's it." Then, on lines about a coffee cup: "Some of that writing still sucks. Like the coffee cup being dry, it's bad". What is wrong with the bad ones, all three ticked: nothing happens in them; trying to be poignant; hinting too hard. The fix chosen: tie every note to play.
 
-## Tone
+## The rule
 
-The rule, from AM4 and AM5: not "Redditor stupid extra spoopy shit", and not "Redditor slop" of the dry kind either. Two registers are out, equally:
+Every note is about something that has just happened on the page or the bench in the game: this molecule (its atoms, rings, size), the reagent just fired and what it did, the reflexes and their order, the chain's length, the yield against the spec and the mark, what came off, the creature that acted, the instrument, gold gained or spent, what was bought, the round and how it ended.
 
-1. **Trying to be spooky.** Runs of capitals, "he is coming" lines, a word repeated for effect, eyes and watching, something behind him, a reveal held to the end of the line, a second sentence that proves the first is impossible, breakage of the text for effect, anything that nudges the reader to feel a chill.
-2. **Trying to be witty.** The clipped quip with a wry tag on the end, performed deadpan, cute understatement, a punchline in brackets, mock formality, three-beat joke rhythm, a struck-out word as a gag, an aphorism, any line that could end with "lol".
+It is written as a chemist would jot it: an observation, a number, a correction, a next step. "Try {r3} before {r1} next time." is the register.
 
-What is written instead: a real chemist's notebook margin. The notes are for the writer, not for an audience: plain, specific, unperformed. Quantities, times, colours, smells, what was tried and what it did, reminders, small complaints, a name, a date. Whole ordinary sentences or honest fragments. If a line is funny it is because of what happened, stated flatly, and most lines are not jokes.
+Four things are out:
 
-The thread arrives the same way. A wrong thing is recorded as plainly as a boiling point, with no comment and no reaction, and the next note is about glassware. The late part of the story is quiet: he leaves a card and a tin of gold on the sill and records that neither was moved.
+1. **Trying to be spooky.** Capitals, a reveal held to the end of a line, watching and behind-him lines, anything that nudges the reader to feel a chill.
+2. **Trying to be witty.** The clipped quip with a wry tag, performed deadpan, mock formality, anything that could end with "lol".
+3. **Filler and scenery.** Lines where nothing happens. Cups, taps, chairs, windows, weather, sleep, the landlord, the cat. A note that only says something was written down.
+4. **Poignant, or hinting.** Wistful moments written to sound meaningful. Coy "something is off" lines. A line reports; it does not hint.
 
-The test for every line: would a person alone at a bench at 2 in the morning write this for himself, or is it written to be liked? Cut the second kind.
-
-What the two cold readers found makes a good line: one observation with a number, a direction or a material in it; no second sentence that reacts; any action recorded is a bench action; usually one sentence.
+The thread arrives through play as well. It is a result that is not possible given what was fired, stated as flatly as a yield: a count that is one too many, a ring nobody closed, a mark inked before the yield reached it, a reagent used that was not dealt, a creature lit by nothing. Later it is a second ink in the notebook with its own figures, then "he" with a column of yields of his own, then the King.
 
 ### Ten lines kept
 
-| Line | Why it stays |
-|---|---|
-| Balance reads 0.02 heavy. Subtract it until it is fixed. | A reminder to himself, with a figure. |
-| Hydroborate needs the dry flask. The one on the rack is not dry. | What the work needs today. |
-| Sulfur weighed 2.1 g on the paper and 2.1 g with the paper taken off. | A wrong thing, measured, no remark. |
-| The distillate ran uphill in the condenser for about a minute. | Direction and time; he does not react. |
-| The runoff jar was fuller after I emptied it. | One sentence, a bench action, nothing added. |
-| Chlorine fumes went along the floor and under the door, against the draught. | A lab condition, recorded. |
-| Five hundred reagents fired. The tally inside the back cover says 512. | Two numbers that do not agree. |
-| Bound in a buff yellow cloth. The dye comes off on the fingers. | The book described as a material. |
-| Ordered grey labels in place of the yellow ones. | An order to the supplier; the reason is not given. |
-| Left the tin of gold on the sill overnight, 212; 212 in the morning. | The bargain, as a count. |
+| Line | The event | Why it stays |
+|---|---|---|
+| Try {r3} before {r1} next time. | a round lost | A next step, about the line played. |
+| {reagent} set off {n} reflexes by itself. | a reagent fired | An observation with a number. |
+| {dud} acted nowhere on the page that lost it. | a round lost | Says what went wrong. |
+| One carbon is in the tally with five bonds. | rounds 7 to 9 | An impossible result, as a tally entry. |
+| A ring closed across seven atoms. | a ring closed | Rings want five or six. No comment. |
+| Lost by {short}; the page shows a yield of {spec} in pencil. | a round lost | Two figures that cannot both be true. |
+| It overreacted on two reagents; the third was never fired and is spent. | an overreact | A use gone with no firing. |
+| Seedling's row stands at four pages in a round of three. | Seedling owned | The creature's own count, one too many. |
+| His entry for the round reads 'met' beside my 'lost'. | a round lost, rung 3 | "He" arrives as a ledger entry. |
+| Offered {gold} gold at the bench for a sight of his face; the tin still holds {gold}. | rung 4 | The bargain, as a count of gold. |
 
 ### Ten lines cut
 
-| Line (first writing, or my first draft of this one) | Why it went |
-|---|---|
-| HIS FACE HIS FACE HIS... ran out of margin | Capitals and repetition for effect, then a joke about it. |
-| OVERREACT. AND HE LOOKED UP | Loud. A sting in capitals. |
-| Carcosa Carcosa Carcosa. Is that how one knocks? | A word repeated to be eerie, with a quip on the end. |
-| Do not lick. (See Tuesday.) | Punchline in brackets. |
-| Coffee is NOT a reagent. Tested twice. | Clipped quip with a wry tag. |
-| Dear Sir: I enclose one (1) soul, slightly used. Kindly appear. | Comic formality, written for a reader. |
-| Someone below is humming. Pike is away until Friday. | The second sentence is there to prove the first is impossible. |
-| The cat will not come past the door tonight. | The animal that senses it: a stock chill. |
-| Spec met. I hope that was satisfactory. | Politeness played as a bit. |
-| I was a good chemist. I am still a careful one. | A polished sentence. Nobody writes that to himself. |
+| Line | From | Why it went |
+|---|---|---|
+| HIS FACE HIS FACE HIS... ran out of margin | first writing | Capitals and repetition for effect. |
+| Do not lick. (See Tuesday.) | first writing | Punchline in brackets. |
+| Dear Sir: I enclose one (1) soul, slightly used. Kindly appear. | first writing | Comic formality, written for a reader. |
+| Someone below is humming. Pike is away until Friday. | second writing | The second sentence proves the first impossible: a sting. |
+| Poured a second cup at four and emptied it cold at six. | second writing | Nothing to do with play; written to be poignant. |
+| Page one has a ring from a cup larger than mine. | second writing | Scenery, hinting. |
+| I would like to see his face. | second writing | A feeling, not a result. |
+| Finding entered in ink, with the date. | this writing | Only says something was written down. |
+| The catalog gives the source of this compound as Carcosa. | this writing | A name dropped as a wink; nothing happened. |
+| Overreact three pages running, and still only the chin. | this writing | A wry tag on the end. |
 
 ## The data
 
@@ -64,193 +64,185 @@ What the two cold readers found makes a good line: one observation with a number
 
 | Field | What it is |
 |---|---|
-| `t` | the text. `~word~` is struck out and `_word_` underlined (the pen supports both; no note uses either now). |
-| `src` | `lab` for a plain note. For a thread line, the source it comes from: `run`, `event`, `hom`, `count`, `career`, `sign` (below). |
-| `band` | 1 for a plain note; for a thread line, its rung plus 1 (2 to 6). |
+| `t` | the text, with slots in braces: `{reagent}`, `{n}`, `{yield+1}` |
+| `slots` | the slot names in the text (worked out when the file loads). The note is only offered when the page has passed every one. |
+| `cond` | `{ slot: [min, max] }`: the number in that slot must lie in the range (so "{n} reflexes" is not shown for one) |
+| `when` | the event the note is about (a tag). No tag: a note about the molecule and the page as they stand. |
+| `src` | `lab` for a plain note. For a thread line, the source: `run`, `event`, `hom`, `count`, `career`, `sign`. |
+| `band` | 1 for a plain note; for a thread line, its rung plus 1 |
 | `thread`, `rung`, `till` | a thread line; the rung of the ladder it needs; the last rung at which it is still shown |
-| `depth` | `[min, max]` on the scale of `AA.notesDepth`, 0 to 1. Used by the plain notes (fresh early, tired late). |
-| `unlocks` | `[min, max]` share of all unlocks owned |
-| `sign` | `[min, max]` laps of the sign taken (`meta.sign`, 0 to 3) |
-| `round` | `[min, max]` round of the run |
+| `sign` | `[min, max]` laps of the sign taken (`meta.sign`): which tenant is writing |
+| `unlocks`, `round` | `[min, max]` share of unlocks owned; round of the run |
 | `count` | `[key, from, to]`: a lifetime count inside that window |
-| `when` | optional tag: the note answers something that happened, an element dealt, or a creature owned |
-| `hand` | `neat` or `shaky`. Nothing is `frantic` now. |
-| `by` | `other`: written by the second hand (17 notes, lap 3) |
-| `big` | written large, alone. One note has it. |
+| `by` | `tenant0`, `tenant1` or `tenant2`: written in the margin by an earlier tenant. 27 notes. |
+| `fb` | a rule of thumb with no slots, offered only when nothing about the present page fits. 14 notes. |
+| `hand` | `neat` or `shaky` |
+| `big` | written large, alone. One note. |
 
-`AA.notesPick(state)` returns the notes that fit. `state` is `{ depth, unlocks, round, tag, homs, used, sign, counts, since, seen, seed }`. Only the first six are sent by the page today, and the function works with those alone. The list it returns is all thread lines or all plain notes: the budget decides which.
+`AA.notesPick(state)` returns the notes that fit; the list is all thread lines or all plain notes, as the budget decides. `AA.notesFill(note, ctx)` returns the text with the slots filled; `{n+1}` and `{n-1}` are sums it does itself, and a slot that opens a note gets a capital. `AA.notesReach`, `AA.notesRate`, `AA.notesDepth` and `AA.notesParse` are as before (no note is ranged on depth now).
 
-- `tag` is one tag or a list. If any note with that tag fits, only those come back.
-- With no tag, the untagged notes come back, plus the notes of the creatures named in `homs`.
-- `used` is the texts already shown this run, in the order shown. Nothing is repeated while anything else is left, and the plain notes since the last thread line are counted from it.
-- `sign` is `meta.sign`. `counts` is the lifetime counts (`meta.countersAll` and `meta.counters` added up; the keys used are `runs`, `runs_won`, `runs_lost`, `reagents_fired`, `ring_steps` and `overreacts`, the last of which the rules do not count yet).
-- `since` is the plain notes shown since the last thread line, carried from the run before. `seen` is every thread text ever shown (a list or a map). `seed` varies the dice.
-- It never comes back empty.
+## What the page must pass
 
-`AA.notesReach(state)` gives the rung of the ladder the player may read (1 to 5). `AA.notesRate(state)` gives the budget. `AA.notesDepth(unlocks, round, rounds, chain)` is unchanged (0.65 career, 0.30 run, 0.05 chain). `AA.notesParse(t)` is unchanged.
+`state` for `AA.notesPick`:
 
-### Tags
+| Field | What | Passed today |
+|---|---|---|
+| `unlocks` | share of all unlocks owned, 0 to 1 | yes |
+| `round` | round of the run | yes |
+| `tag` | the event (below), one or a list | yes, the old tags |
+| `homs` | keys of the creatures owned | yes |
+| `used` | texts (`note.t`, slots unfilled) shown this run, in order | yes |
+| `ctx` | the slot values (below) | **no** |
+| `sign` | `meta.sign`, 0 to 3 | **no** |
+| `counts` | lifetime counts: `runs`, `runs_won`, `runs_lost`, `reagents_fired`, `ring_steps` (from `meta.counters` added to `meta.countersAll`) and `overreacts` (not counted by the rules yet) | **no** |
+| `seen` | every thread text ever shown (a list or a map), kept in the profile | **no** |
+| `since` | plain notes shown since the last thread line, carried across runs | **no** |
+| `seed` | any number that differs from run to run | **no** |
 
-| Tag | Shown when |
-|---|---|
-| `start` | a run or round begins |
-| `win`, `loss` | the spec is met, or not |
-| `overreact` | the yield reaches the top mark |
-| `chain` | a long run of reflexes is going |
-| `waste` | a reagent acts nowhere, or a page sets nothing off |
-| `shop`, `buy` | in the shop; something is bought |
-| `unlock` | a finding is made |
-| `instrument`, `sigil` | one is used |
-| `gold`, `spec`, `catalog` | gold changes hands; the spec is shown; a catalog entry fills |
-| `el:N`, `el:S`, `el:Cl`, `el:Br` | that element is on the molecule dealt |
-| `hom:<key>` | that creature is owned or tapped |
+The page must show `AA.notesFill(note, ctx)` and keep `note.t` in `used`.
+
+`state.ctx`: pass what is known at the moment; leave out what is not. A note needing a missing slot is not offered.
+
+| Slot | Value | Example |
+|---|---|---|
+| `round`, `page` | round of the run; page of the round (1 to 3) | 4, 2 |
+| `formula` | the molecule's formula now | C8H14O2 |
+| `atoms`, `atoms0` | heavy atoms now; at the start of the last page fired | 10, 7 |
+| `rings`, `rings0` | rings now; at the start of the last page fired | 2, 1 |
+| `r1`, `r2`, `r3` | the three reagents of the last page fired, in order, by their game names | oxidize, grow, hydrate |
+| `reagent` | the reagent that fired last | reduce |
+| `places` | how many places that reagent acted in | 3 |
+| `uses` | uses that reagent has left this round | 2 |
+| `dud` | a reagent of the last page that acted nowhere; leave out if none | reduce |
+| `kind` | the reflex that fired last, by its name | tuck |
+| `kinds` | the reflexes of the page so far, in order, as one string | tuck, weld, tuck |
+| `n` | reflexes on the page (the chain's length) | 9 |
+| `yield` | the round's yield so far | 166 |
+| `pageyield` | the yield of the last page alone | 64 |
+| `spec` | the number to beat this round | 180 |
+| `over`, `short` | yield minus spec when it is positive; spec minus yield when it is positive. Pass only the one that applies. | 22; 14 |
+| `mark` | the yield mark just reached: stable, unstable or volatile | volatile |
+| `left`, `leftn` | what came off, and how many | water, 4 |
+| `gold`, `gained` | gold held now; gold the round paid | 41, 12 |
+| `item`, `price` | the thing bought or offered (with "the" if it needs it); its price | the clamp, 30 |
+| `finding` | the finding's name | Dry 100 times |
+| `compound` | the catalog compound's name | menthol |
+| `instrument`, `sigil` | the one used, by name | the dropper |
+
+New tags the page should raise, each with its slots: `fire` (a reagent has acted), `reflex`, `ring` (a ring closed), `left` (something came off), `page` (a page ended), `mark` (a yield mark reached). The old tags stand: `start win loss overreact chain waste shop buy unlock instrument sigil gold spec catalog`, `el:N el:S el:Cl el:Br`, `hom:<key>`.
+
+Without `ctx` only the 213 notes with no slots come back, and for a note with no tag the plain ones are the 14 rules of thumb. That is too few for a long run: `ctx` is needed before these notes go on the page.
 
 ## The thread: six sources
 
-A thread line can come from six places, so no one clock holds it back.
-
 | Source (`src`) | When it can show | Lines | Example |
 |---|---|---|---|
-| `run` | rounds 7 to 9 of any run, any player | 20 | The shadow of the retort stand falls toward the lamp. |
-| `event` | something happened: an overreact, a long chain, a lost round, a purchase, sulfur on the molecule (every tag) | 100 | Sulfur fumes settled on the bench in a ring about a foot across. |
-| `hom` | a creature is owned. The creatures notice first. | 40 | The fog from the Dry ice jar goes up the glass, not down. |
-| `count` | a lifetime count is reached: the hundredth reagent, the tenth lost run, the third run | 17 | All six caps were loose this morning. |
-| `career` | the share of unlocks, or runs played: the rungs of the ladder | 94 | The tap ran warm for a minute on the cold side. |
-| `sign` | the laps of the sign, 1 to 3 | 65 | Lamp down to half at nine. |
+| `run` | rounds 7 to 9 of any run, any player | 12 | A reagent fired a fourth time this round. |
+| `event` | something happened (every tag) | 76 | {dud} acted nowhere; one atom fewer on the molecule after it. |
+| `hom` | a creature is owned | 20 | Brimstone lit with no sulfur on the page. |
+| `count` | a lifetime count is reached | 13 | Five hundred reagents fired; the tally inside the back cover says 512. |
+| `career` | the share of unlocks, or runs played: the rungs of the ladder | 52 | {rings+1} rings counted on the molecule; {rings} were closed. |
+| `sign` | the laps of the sign: the later tenants and the margins | 79 | The earlier hand records a yield of {yield+6} for this compound on his page 31. |
 
-Sulfur has ten thread lines, more than any other tag except the overreact: it is yellow and it is dealt early.
+Sulfur has eight thread lines; the other three elements have one each.
 
 ### The ladder
 
 | Rung | What may be written | Reached when | Band |
 |---|---|---|---|
-| 1 | An oddity. Nobody is named. | from the first run | 2 |
-| 2 | The thin book; someone in the room | an eighth of everything unlocked, or 8 runs played | 3 |
-| 3 | "he"; his face (never described); Carcosa, Hali, the two suns, the pale mask | 35 in 100 unlocked, or 25 runs played | 4 |
-| 4 | "the King"; the card and the gold on the sill | four fifths unlocked, or any lap of the sign | 5 |
-| 5 | "The King in Yellow", in full | 97 in 100 unlocked, or the third lap, or the second lap at four fifths | 6 |
+| 1 | A result that is not possible. Nobody is named. | from the first run | 2 |
+| 2 | A second ink in the notebook: figures and lines he did not enter | an eighth of everything unlocked, or 8 runs played | 3 |
+| 3 | "he": his line, his yield, his column. His face in the flask at an overreact (a chin, a collar, a sleeve; never described) | 35 in 100 unlocked, or 25 runs | 4 |
+| 4 | "the King": the column is headed so. Gold offered and not taken. Chains run long for a sight of his face. | four fifths unlocked, or any lap of the sign | 5 |
+| 5 | "The King in Yellow", in full | the third lap only | 6 |
 
-- Rungs 2 and 3 can be reached on runs played alone, so a player who unlocks slowly still reads them within a few hours.
-- A story beat that has passed is dropped (`till`): once he has read act two, "Do not read the second act until the week's work is done" is no longer shown.
-- Rungs 2 to 4 belong to the first time through. On a lap he does not find the book again; the lap's own lines carry it.
-- His face is never described. Capitals are not used for him: he is "he", then "the King".
+No capitals are used for him. Carcosa, Hali and the play are not named in the notes now: a name with no event behind it was cut as hinting.
 
-### The laps of the sign
+### The tenants
 
-Taking the sign empties the shelves and the share of unlocks falls to nothing. The voice does not go back.
+Taking the sign ends a tenancy. How is never said: "The sign can be taken now; Dunmore would collect everything on the shelf." A new chemist has the bench and the same notebook.
 
-| Laps taken | The voice | Lines | Example |
-|---|---|---|---|
-| 1 | He knows. He records what comes back without surprise. | 18, and 10 for creatures hatched again | The thin book stayed on the bench when the shelf was cleared. |
-| 2 | He is polite about it. Shown only as what he does: a second stool, the lamp turned down, the page written out fair. | 19 | Poured a second cup at four and emptied it cold at six. |
-| 3 | The notes are partly in another hand. It writes as a second chemist would: corrections, with figures. | 28, of which 17 in the other hand | Bath was 42, not 40. |
+| Laps taken | Who writes | His voice | Earlier hands in the margins (`by`) | Lines |
+|---|---|---|---|---|
+| 0 | the first chemist | fragments and short sentences | none | the ladder, rungs 1 to 4 |
+| 1 | the second tenant | whole sentences, "I" | `tenant0`: 5 entries | 23, and 6 plain |
+| 2 | the third tenant | abbreviates: "Rd {round} p. {page}: spec {spec}, yld {yield}." | `tenant0` 4, `tenant1` 4 | 24, and 6 plain |
+| 3 | the fourth tenant | dates every entry | `tenant0` 5, `tenant1` 4, `tenant2` 5 | 32, and 6 plain |
 
-The page should draw `by: 'other'` notes in a different hand. It does not yet.
+- A new tenant reads the earlier pages as a previous user's log: a predecessor's yield for the same compound, his line for the same molecule, where his last entry stands.
+- The margin entries are corrections and figures about the play just made ("{r3} should have gone before {r1}." / "Chain was {n}, not {n-1}."). Each keeps its writer's voice: `tenant2` abbreviates in the margins too. They never address anyone and never explain.
+- On a lap, the notes with no tag are the tenant's own. Notes for an event (a reagent fired, a round lost) are shared by all four and are in the first chemist's voice; a set for each tenant is not written.
+- Rung-1 results are read by every tenant. Rungs 2 to 4 belong to the first chemist.
 
 ### The thread budget
 
-`AA.notesRate(state)` sets what share of notes may be thread lines, and `AA.notesPick` keeps to it.
-
-- **How far along** (`c`, 0 to 1) is the largest of: the share of unlocks; 0.6 times runs played over 60; and, after a sign, 0.65, 0.8 or 0.95 for laps 1, 2 and 3.
-- **The rate** is 0.10 + 0.22 times `c`, plus 0.05 in rounds 7 to 9, and never over 0.36.
-- **The gap** is the fewest plain notes between two thread lines: 3 while the rate is under 0.15, then 2, then 1 from 0.28. Two thread lines never come back to back at any stage.
-- **The dice.** Once the gap has passed, each note has a fixed chance of being a thread line, set so the long-run share comes out at the rate. The dice are a hash of the run's notes so far, so the same run shows the same notes.
-- **Owed lines.** A run that has shown five notes and no thread line gets one. If the page passes `seen` and `counts`, a player who has never seen a thread line gets one in the second run.
-- **What is picked.** A lifetime count that has just been reached comes first. Otherwise seven times in ten the line is from the newest rungs, the late-run lines or the lap's own lines, and three times in ten from anything that fits.
-- The first note of a run is never a thread line.
+- **How far along** (`c`, 0 to 1): the largest of the share of unlocks; 0.6 times runs played over 60; and 0.65, 0.8 or 0.95 on laps 1, 2 and 3.
+- **The rate**: 0.10 + 0.22 times `c`, plus 0.05 in rounds 7 to 9, never over 0.36.
+- **The gap**: at least 3 plain notes between two thread lines while the rate is under 0.15, then 2, then 1. Never back to back.
+- **Owed lines**: a run that has shown nine notes and no thread line gets one (it was five; raised to bring the early rate to 1 in 10). With `seen` and `counts` passed, a player who has never seen one gets one in the second run.
+- **What is picked**: a lifetime count just reached comes first. Notes with slots come before notes without, four times in five.
 
 ### How often, for a typical player
 
-Measured with a Python copy of the picker (`notes_sim.py`, kept with the check script), 600 runs at each point. The four players are assumptions, not measurements: runs played, share unlocked, laps taken, run length, rounds reached. Notes a round are the page's own (1, 2, 3, 4, 5, 6, 8, 9, 11).
+A Python copy of the picker, 600 runs at each point, with made-up slot values. The four players are assumptions, and so is how often the page raises a tag (here, for most notes).
 
 | Hours played | The player assumed | Notes a run | Thread lines a run | One thread line in | run | event | creature | count | career | sign |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 8 runs, 4 in 100 unlocked, three-round runs | 3.3 | 0.45 | 7.4 notes | 0% | 47% | 0% | 11% | 42% | 0% |
-| 5 | 35 runs, 22 in 100, six-round runs, one creature | 10.8 | 1.96 | 5.5 | 0% | 45% | 18% | 3% | 34% | 0% |
-| 20 | 110 runs, 65 in 100, nine-round runs | 26.9 | 6.95 | 3.9 | 12% | 40% | 15% | 0% | 34% | 0% |
-| 60 | 300 runs, second lap, half unlocked again | 29.8 | 8.54 | 3.5 | 13% | 33% | 11% | 0% | 15% | 27% |
+| 1 | 8 runs, 4 in 100 unlocked, three-round runs | 3.3 | 0.34 | 9.8 notes | 0% | 84% | 0% | 6% | 10% | 0% |
+| 5 | 35 runs, 22 in 100, six-round runs, one creature | 11.4 | 2.02 | 5.6 | 0% | 75% | 15% | 2% | 8% | 0% |
+| 20 | 110 runs, 65 in 100, nine-round runs | 26.1 | 6.53 | 4.0 | 4% | 72% | 12% | 0% | 13% | 0% |
+| 60 | 300 runs, second lap, half unlocked again | 29.2 | 8.29 | 3.5 | 4% | 67% | 10% | 0% | 4% | 15% |
 
-- Back-to-back thread lines in all 2,400 runs: none.
-- Rungs shown: at 1 hour, rungs 1 and 2; at 5 hours, rungs 1 to 3; at 20 hours, rungs 1 to 3 (the King comes at four fifths); at 60 hours, mostly rungs 1 and 4.
-- At 1 hour the share is higher than the 1 in 10 asked for, because a short run that reaches its fifth note is owed a line. Raising the owed mark from five notes to eight brings it to about 1 in 9 and makes the first line later.
-- **The first line.** A new player sees a first thread line in run 1 in 43 of 100 careers, by run 2 in 81, by run 3 in 94 (page passing `counts` and `seen`). With the page as it is today (neither passed): 41, 65, 79, and 96 by run 6.
+- Back-to-back thread lines in 2,400 runs: none.
+- A new player's first thread line: in run 1 for 29 of 100, by run 2 for 77, by run 3 for 92 (page passing `counts` and `seen`). Without those and without `ctx`: 19, 34, 47, and 76 by run 6.
 
 ## How many
 
-By tag and band:
-
-| Tag | 1 plain | 2 oddity | 3 the book | 4 he | 5 the King | 6 in Yellow | All |
+| Source | 1 plain | 2 | 3 | 4 | 5 | 6 | All |
 |---|---|---|---|---|---|---|---|
-| no tag | 94 | 50 | 27 | 23 | 46 | 31 | 271 |
-| start | 8 | 2 | 1 | 1 | 3 | 1 | 16 |
-| win | 8 | 2 | 1 | 1 | 2 | 2 | 16 |
-| loss | 8 | 3 | 1 | 2 | 4 | 2 | 20 |
-| overreact | 6 | 4 | 1 | 3 | 4 | 2 | 20 |
-| chain | 6 | 3 | 1 | 2 | 1 | 2 | 15 |
-| waste | 6 | 2 | 1 | 1 | 2 | 2 | 14 |
-| shop | 6 | 2 | 1 | 1 | 1 | 1 | 12 |
-| buy | 6 | 2 | 1 | 1 | 2 | 1 | 13 |
-| unlock | 6 | 2 | 1 | 1 | 2 | 0 | 12 |
-| instrument | 6 | 2 | 1 | 1 | 1 | 1 | 12 |
-| sigil | 4 | 2 | 1 | 1 | 1 | 1 | 10 |
-| gold | 5 | 1 | 1 | 1 | 1 | 1 | 10 |
-| spec | 5 | 1 | 1 | 1 | 1 | 0 | 9 |
-| catalog | 4 | 1 | 1 | 1 | 1 | 0 | 8 |
-| the four elements | 12 | 7 | 2 | 2 | 4 | 1 | 28 |
-| the ten creatures | 30 | 20 | 10 | 10 | 0 | 0 | 70 |
-| **All** | **220** | **106** | **53** | **53** | **76** | **48** | **556** |
+| lab (plain) | 190 | | | | | | 190 |
+| run | | 12 | | | | | 12 |
+| event | | 44 | 10 | 11 | 11 | | 76 |
+| hom | | 10 | 10 | | | | 20 |
+| count | | 9 | 2 | 2 | | | 13 |
+| career | | 18 | 12 | 11 | 11 | | 52 |
+| sign | | | | | 47 | 32 | 79 |
+| **All** | **190** | **93** | **34** | **24** | **69** | **32** | **442** |
 
-By source and band:
+229 notes have slots. 13 notes have more than one sentence. 16 run past 14 words; the longest is 18.
 
-| Source | 1 | 2 | 3 | 4 | 5 | 6 | All |
-|---|---|---|---|---|---|---|---|
-| lab (plain) | 220 | | | | | | 220 |
-| run | | 20 | | | | | 20 |
-| event | | 36 | 16 | 20 | 18 | 10 | 100 |
-| hom | | 20 | 10 | 10 | | | 40 |
-| count | | 14 | 2 | 1 | | | 17 |
-| career | | 16 | 25 | 22 | 21 | 10 | 94 |
-| sign | | | | | 37 | 28 | 65 |
-
-Hands: 493 neat, 63 shaky. Mean length 10 words; 104 notes run past 12 words, 20 past 14; the longest is 18.
-
-Thin spots: bands 3 to 6 have one line for most tags; nitrogen and bromine have few thread lines; the creatures have no lines of their own at rungs 4 and 5.
+Thin spots: one thread line each for `fire`, `reflex`, `ring`, `left`, `page`, `mark`, nitrogen, chlorine and bromine; the creatures have no thread lines above rung 2.
 
 ## The rights rule
 
-- Allowed sources: Robert W. Chambers, *The King in Yellow* (1895), and Ambrose Bierce's earlier Carcosa and Hali. Both are in the public domain.
-- From them we may use: the play that harms its readers, its two acts, Carcosa, the lake of Hali, the Hyades, the Pallid Mask, the tatters of the King, the Yellow Sign as an idea, Cassilda and Camilla, twin suns, black stars.
-- Not allowed: anything from later writers or from games. No names from Lovecraft's stories. No "Hastur". Nothing from tabletop or video games.
-- Never draw, describe or point to the well-known three-armed Yellow Sign. It is a 1989 game design and is not ours to use. Our sign is our own mark, built from our four yield marks (`STORY.md`).
-- Do not quote Chambers at length. No note quotes him now; the names are the only borrowed words.
+- Allowed sources: Robert W. Chambers, *The King in Yellow* (1895), and Ambrose Bierce. Both are in the public domain.
+- Used in the notes now: the King, the King in Yellow, his face never seen, the sign as an idea, yellow.
+- Not allowed: anything from later writers or from games. No "Hastur". Never the three-armed sign of 1989: our sign is our own mark, built from our four yield marks.
+- No note quotes Chambers.
 
 ## Writing more
 
-- One sentence if it can be one. 4 to 14 words; 18 at the most.
-- One observation, with a number, a time, a colour, a direction or a material in it.
-- No second sentence that reacts to the first, proves it impossible, or shrugs. If a second sentence is needed it is a bench action or a reminder.
-- No capitals for effect, no exclamation marks, no brackets, no struck words as a joke, no modern slang.
-- People have names: Dunmore the supplier, Mr Pike the landlord downstairs. The cat has none.
-- Chemistry words are the game's own (`NAMES.md`) and must mean what they mean in the game: yield, the spec, reagent, reflex, runoff, finding, catalog, inspection, credit, gold; oxidize, reduce, hydrate, dehydrate, hydroborate, grow; tuck, weld, knit, pair, strip.
-- A creature note fits what the creature does (`HOMUNCULI.md`).
-- The cold readers found these overused; do not add more: things found changed "this morning"; "at the top mark" as an opening; two suns; one thing more than there should be; things written before he wrote them; the door and the stool; anything turning east; the King "stayed".
-- Each row of the data file is one line of valid JSON, so the check script can read it.
-
-## The sign
-
-The sign is the game's prestige (rulings AP and AR; `RIG.md`, twelfth part 4 and thirteenth): taken at 9 tenths, three times, the collection starts over, every yield is a fifth higher for good. The three ideas for a last sigil that spends gold, which stood here in the first writing, are retired. In the notes the gold is offered and not taken ("Left the tin of gold on the sill overnight, 212; 212 in the morning.").
+- Start from an event and its slots. If the line would read the same with nothing having happened, cut it.
+- One sentence. 3 to 14 words; 18 at most.
+- A label and a figure is a good shape and avoids plurals: "Places acted on by {reagent}: {places}." Use `cond` where a plural would go wrong.
+- A thread line is two figures that cannot both be true, or a thing in the tally that was not done. No second clause that reacts.
+- Chemistry words are the game's own (`NAMES.md`): yield, the spec, reagent, reflex, runoff, finding, catalog, gold; oxidize, reduce, hydrate, dehydrate, hydroborate, grow; tuck, weld, knit, pair, strip.
+- A creature note says what lights the creature or what it did (`HOMUNCULI.md`).
+- The third cold reader found these overused; do not add more: a figure and the same figure plus one (33 lines); "before" and "already" (26); "second ink" (13); "sum corrected to {yield}" (9); a chin, a sleeve, a collar (7).
+- Each row of the data file is one line of valid JSON.
 
 ## How it was checked
 
-- No node on this machine, so the JavaScript was not run. A Python script (`notes_check.py`) checks that the brackets and strings of the whole file balance, reads every data row as JSON, and counts sources, bands, tags, word lengths, repeats, runs of capitals, exclamation marks, brackets, banned names, and that "King" appears only from rung 4, "in Yellow" only at rung 5 and Carcosa, Hali and the Hyades only from rung 3. All pass. The functions at the bottom of the file were read, not run; the rate table comes from a Python copy of them, which can differ from the JavaScript if I copied wrongly.
-- Two fresh sub-agents read every note cold, each asked both questions: is it trying to be spooky, and is it trying to be witty. The first flagged 168 of 538 lines (44 in 100 of the thread). The thread was rewritten whole and 29 plain notes changed. The second flagged 85 of 540, 10 of them firmly; all 10 were rewritten, with about 40 of the borderline ones. The lines changed after the second read, and the 16 added after it, have not had a third.
-- Both scripts are in the session's scratch folder, not in the repository.
+- No node on this machine, so the JavaScript was not run. A Python script reads every data row as JSON and checks: brackets and strings of the whole file balance; every slot is one of the 33 in the table above; no scenery words; no capitals for effect, exclamation marks or brackets; "King" only from rung 4 and "in Yellow" only at rung 5; no repeats; lengths. All pass. The functions were read, not run; the rate table is from a Python copy of them and can differ if I copied wrongly.
+- Three fresh sub-agents have read the notes cold, one after each writing. The third read all 468 lines of this writing with sample figures and three questions (spooky? witty? filler, poignant or hinting?). It flagged 29 of 207 plain notes (13 firmly, all for only saying something was written down) and 49 of 261 thread lines (15 firmly, nearly all in the lines about him, the King, the face and the tenants). All 28 firm ones were cut or rewritten, with about 40 borderline ones and 20 it found unclear. The rewritten lines have not been read again.
+- The rules of thumb (`fb`) and the creature notes state rules of the game. They were taken from `HOMUNCULI.md` and the earlier notes and have not been checked against `path.js`.
+- The check and simulation scripts are in the session's scratch folder, not in the repository.
 
 ## Not done
 
-- The page (`scheme.js`) calls `AA.notesPick` but does not pass `sign`, `counts`, `since` or `seen`. Until it does: laps have no effect on the notes, lifetime-count lines never show, and rungs 2 and 3 open by unlocks only.
-- `overreacts` is not a counter in the rules yet.
-- The page has no second hand to draw `by: 'other'` notes in.
-- About 60 in 100 of the plain notes are still two short sentences. The second cold reader called that rhythm the main remaining fault of the plain block.
-- The second cold reader's borderline list was not cleared in full. Left on purpose: the lines that name Carcosa, Hali and the King plainly, the book being back on the bench, and "Saw his face at the top mark tonight."
-- The owner has not read any of it.
+- The page does not pass `ctx`, `sign`, `counts`, `seen`, `since` or `seed`, does not call `AA.notesFill`, and does not raise the six new tags. Until it does, about half the notes cannot show and the pool for a note with no tag is 14 rules.
+- The page has no other hands to draw `by` notes in.
+- `overreacts` is not counted by the rules.
+- Notes for an event are not written in each tenant's voice.
+- The about 20 label-and-figure notes ("Rings on the molecule: {rings}.") are the flattest in the file; the third reader said so. They are tied to play but say little.
+- The owner has read five lines of the second writing and none of this one.
