@@ -6,6 +6,20 @@ One file: `apps/steam/js/music.js`, exposed as `AA.music`. Web Audio only. No au
 
 Still in the file, shelved: themes 1 Burner and 2 Athanor (raw oscillators) and theme 3 Fuse (made orchestra, three arrangements, `AA.music.arrange('a'|'b'|'c')`).
 
+<!-- builder8 -->
+## The EDM track rebuilt: a beat, a build and a drop, four styles (builder 8, 13 November)
+
+The owner on the EDM soundtrack as it stood: "No real beat", "No build and drop", then "Sounds thin or cheap", "No bass", and for the kind of EDM: "All of these". Full account, measures and what is not done: `docs/SOUND5.md` section 000. Nobody but the owner has listened; the numbers there say what was measured, not that it feels right.
+
+- **Chain Reactor** (`'edm'`, the default on every screen) now has a kick on every beat, a clap on 2 and 4 and off-beat hats in every state that has drums, at a steady 126 to 128 bpm. Planning is a groove; calm thins the layers, not the drums.
+- New sounds: a layered kick, a clap with body, a bass line (sine sub plus a driven mid-bass), seven-saw plucks, a chorus on pads, lead, plucks and stabs, and a master chain of its own (`edmMaster`: shelves, mono under 120 Hz, glue compressor, soft clipper; this track goes past the tape). About -12 LUFS in the groove, -8.7 in the drop.
+- A chain is a build written by the music on its grid (kick thins and leaves, a snare roll doubling 4, 8, 16, 32 to the bar, noise and saw risers, filter opening, bass pulled away). After the last hit it hangs for a bar; without OVERREACT it resolves into the groove with no drop.
+- OVERREACT: the build stops on the call, a breath of 0.26 to 0.5 s (to the next eighth of the grid: `Engine.dropAt`), then the drop is the first bar of the state. No bar before the drop any more.
+- Every change of state starts on a line of the old state's grid with a fill into it (`lead8` / `out8` of a track; EDM's are `edmLeadIn`, `edmOut`): endings on the next beat at least 0.4 s on, the rest on the next half bar. The old state's pads ring out under the new one.
+- Styles by round: house (rounds 1 to 6), half-time growl at 140 (rounds 7 and 8), drum and bass at 172 (round 9); the drop is the festival style throughout (`tmul` of a track scales its tempo).
+- `AA.music.run(k, of)`: reagent k of `of` starts its run of steps: the build starts again from near the bottom (a little higher each run); only the last run of a turn can climb to the top. The effects' twin is `AA.sfx.reagent(k, of)`. The page does not call them yet.
+- A track may now bring: `steady` (no tempo drift inside a section), `tmul(E)`, `master(E)`, `lead8(E, state, t)`, `out8(E, oldDeck, t, state)`. Only EDM does. The other five soundtracks are unchanged.
+
 <!-- builder6 -->
 <!-- builder7 -->
 ## One clock with the effects (builder 7, 13 November)
