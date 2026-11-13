@@ -535,7 +535,7 @@ function passFlag(k, final) {
 // ---------- the overlay above everything: the flash and lines of force of a hit, and OVERREACT ----------
 // OVERREACT is the one word of the game. It is drawn over the whole frame, above the molecule, fitted inside the frame with a margin:
 // a white flash, the word slammed down from far too big, an ink burst behind it, the page shaking, a held beat, then torn away.
-const OVMS = 3000;
+const OVMS = 3700;   // the word stays until the drop has landed (the sound puts the drop 2.95 s after the call)
 function drawOver(t) {
   F.ovN = (F.ovN || 0) + 1; F.ovT = t; if (F.ov || F.ovDirty) (F.ovL || (F.ovL = [])).push([Math.round(t), F.ov ? Math.round(t - F.ov.t) : -1, F.ovDirty ? 1 : 0, api.over.cv.width]);
   const o = api.over; if (!o) return; const x = o.x, W = o.cv.width, H = o.cv.height, S = F.seq, k = W / 1280;
