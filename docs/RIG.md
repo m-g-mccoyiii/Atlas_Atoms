@@ -103,7 +103,7 @@ N, S and Cl doing things by themselves, share of all reflex steps in the three r
 
 ### 3. The ten homunculi, second design ("reward gameplay not averages")
 
-What each one is now is in `docs/HOMUNCULI.md` (one table). In short: a homunculus is lit by how the page was played, not by a count; the player taps it; each asks for something back. Built in `path.js` behind `RULE.homs2` (on; the old ten come back with it off), amounts in `HOMS2K`. A test job in the game (`.claude/headless/jobs/homs2.js`) passes 117 of 117 cases and found no difference between the game's "lit" and the rule on 57,344 pages. That was before the last change of amounts and of the Wood spirit (last page only); the job has to be brought up to those and run again.
+What each one is now is in `docs/HOMUNCULI.md` (one table). In short: a homunculus is lit by how the page was played, not by a count; the player taps it; each asks for something back. Built in `path.js` behind `RULE.homs2` (on; the old ten come back with it off), amounts in `HOMS2K`. A test job in the game (`.claude/headless/jobs/homs2.js`) brought up to the amounts as they stand, passes 127 of 127 cases, and on 7,168 pages (78,848 checks) the game's "lit" never differed from the rule.
 
 Each alone, the player who reads every line, 300 nine-round runs each on the same deals, every round played, the rule of part 1. The win rate is the nine round rates multiplied (a round carries nothing to the next). "No creature" wins 0.54 in 100.
 
@@ -121,7 +121,14 @@ Each alone, the player who reads every line, 300 nine-round runs each on the sam
 | Wood spirit | 13 | 20 | 0.60 | 1.1 | 1.02 | 5 | a dud lined up last on the last page |
 | none | | | 0.54 | | 1 | | |
 
-The Seedling no longer rules: it was 5.4 times the yield in 93 of 100 rounds; it is 1.2 times. No creature is dead. Two are weak as built: the Wood spirit (his pour in the deal's order is seldom better than a third reagent chosen) and the Slime (its page comes up 6 times in 100).
+The Seedling no longer rules: it was 5.4 times the yield in 93 of 100 rounds; it is 1.2 times. A reviewer's sample of 60 fresh runs gave the same lit, tap and yield figures.
+
+What does not yet answer the ruling, said plainly:
+- The Wood spirit is as good as dead (1.02 times the yield): his pour in the deal's order is seldom better than a third reagent chosen.
+- The Slime is too rare (its page comes up 6 times in 100).
+- Hydrogen is still close to a flat lift: lit on 31 pages in 100, always worth tapping, and the line is changed for it on only 5. It has no risk yet.
+- Brimstone is tapped only when it clears the round, so it is a safety net, not a choice.
+- Dry ice, the Seedling and Acid come up often without much change of play (Acid is lit by any dehydrate that lands).
 
 **Pairs and triples** (all 45 and all 120, 40 nine-round runs a set: enough for the averages, too few to rank two sets near each other):
 
@@ -133,20 +140,78 @@ The Seedling no longer rules: it was 5.4 times the yield in 93 of 100 rounds; it
 | three | 2.10 | 1.22 | 3.35 |
 
 - This is the curve of win rate against helpers held, for the creatures alone: each one more adds about half again. Instruments and sigils are not in it.
-- No creature is in every top set. The five best pairs are Salt with Ammonia, Water with Ammonia, Hydrogen with Dry ice, Acid with Ammonia, Acid with Salt. Every pair and triple beat the better of its members alone.
-- Pairs that did more than their two parts multiplied: Wood spirit with Ammonia (1.77 against 1.30: when he pours the nitrogen reagent the line fires again), Acid with Brimstone (1.82 against 1.35), Acid with the Wood spirit (1.52 against 1.04), Water with Ammonia (2.48 against 1.98: six pours make four waters).
-- Sets that got in each other's way: Seedling with Ammonia and Slime or Wood spirit (1.2 to 1.3: growing every page fights firing the line again).
+- Only the averages can be trusted. At 40 runs a set one set's rate is good to about 4 parts in 10 either way, so no pair or triple is named here as best or worst.
+- In the simulator only one of the held creatures can be tapped on a page, and the game itself holds one creature at a time. So a pair doing something neither does alone (the Wood spirit pouring the nitrogen reagent and Ammonia then firing the line again) is NOT built or measured. It needs a tap for each creature on a page.
 - Nothing ran away: the best triple wins 3.4 in 100.
 
 **Limits.** The simulated player taps for what it can see on the page; it does not plan a round around a creature, so Dry ice, Salt and the Seedling are worth more to a person than shown. In the game's own rig the players do not yet weigh a tap when they choose a line. Twelve full runs a creature were played in the game and none threw; they were cut at 60 seconds by a busy machine, so the game's own rates are not measured.
 
 **Choices for the owner**
 
+0. The weak five above. (a) Fix them next, one change each: Hydrogen loses a fifth of the yield if the next page's chain is shorter than the one carried; the Wood spirit's pours spend no use and he may pour on any page; Brimstone may be tapped at any time; Dry ice needs 3 bottles shut; the Slime is lit by two of three. Then measure again. (b) Leave them and tune by play.
 1. How big one creature should be. (a) As built: one creature about doubles the odds of a nine-round win (0.5 to about 1 in 100), three make it 2 to 3. (b) Bigger: every amount up by half, then measure again. (c) Smaller.
 2. The Wood spirit. (a) As built: last page only, weak alone, good with Ammonia and Acid. (b) He also pays: yield times 1.5 when he pours. (c) He may pour on any page (measured: that loses rounds, because he empties the bottles).
 3. The Slime. (a) As built: rare and strong (2.5 times). (b) Easier to light: any two of the three reagents setting something off. (c) Another trick for it.
 4. Brimstone. (a) As built: a safety net, it ends a round that is already won on the task. (b) Let it be tapped at any time for the gamble.
 5. What a creature brings. (a) Nothing: drop the old rule that the Wood spirit, Slime, Ammonia and Brimstone each add a reagent to the run. (b) Keep it.
+
+### 4. The sign
+
+Ruling AP: "the yellow sign is our prestige. you start over but it gives you +20%"; "makes the yellow sign manifest more"; "+20% yield, forever". This replaces the idea of a last sigil that spends gold.
+
+**As built** (`path.js`, behind `RULE.prestige`, off until the page has it; the table is `SIGN`):
+
+- When 9 tenths of everything is unlocked the player may take the sign (`P.signCan(meta, owned, total)`; the page counts what is owned).
+- Taking it (`P.signTake`) gives back a new saved profile: the collection starts over (reagents, reflexes, motifs, instruments, homunculi, sigils, lengths opened). Kept: the count of signs, the lifetime counts, the catalog of compounds made, the notes already read.
+- Every yield is then 20 in 100 higher for good, and each further sign adds another 20 (added, not multiplied: five signs are 2 times the yield, ten would be 3 times, not 6.2).
+- `meta.sign` is the number of signs taken (0 to 5). `P.signState(meta)` gives the page, the notes and the music the level, the lift and what has risen.
+- With each sign the number to beat rises 12 in 100, and so does the pass mark of part 1.
+- It can be taken 5 times. After the fifth it is whole.
+
+**Three ways to make a lap different, measured.** Nine rounds with nothing unlocked (which is where a player stands right after taking it), the player who reads every line, 800 runs a cell, every round played. With no sign this run is won 0.54 in 100.
+
+| Signs taken | A. The lift alone | B. The lift, and the number to beat rises 12 in 100 a sign (built) | C. As B, and the sign takes one thing a time |
+|---|---|---|---|
+| 1 | 0.85 | 0.66 | 0.49 (two tasks from round 4) |
+| 2 | about 1.3 | 0.76 | 0.18 (and every task a quarter bigger) |
+| 3 | about 1.8 | 0.86 | 0.04 (and one use fewer of each reagent) |
+| 4 | about 2.5 | | 0.01 (and two tasks from round 1) |
+| 5 | 3.2 | 0.83 | 0.00 (and four dealt, not five) |
+
+(Column A is read off the flat-lift table of part 1.)
+
+- A makes every lap easier than the last. By the fifth the fresh start is six times easier than a new player's. The climb back up would feel shorter each time.
+- B keeps the fresh start about level (0.5 to 0.9 in 100 at every lap), so each lap is the same climb with a bigger number on the page: yields double by lap five and so do the numbers to beat. The +20 is real against everything that does not rise: the gold marks reached, the big word, the records.
+- C gets hard fast. By the third sign a careful player with nothing unlocked wins 4 runs in 10,000. It may still be right once a full collection is back, but that was not measured. The five takes are built and switched off (`SIGN.takes` is empty; put names in it to turn them on).
+
+**How many laps.** Five. The four yield marks on the page each add a stroke and build to the sign (ruling AL10); the fifth stroke is the sign itself, drawn by taking it. After five the story is at "After" (`STORY.md`) and the lift stays at 2 times.
+
+**What the page, notes and music should show**
+
+| Signs | The page | Notes and music |
+|---|---|---|
+| 0 | No yellow anywhere. The sign is only the unfinished mark at the bottom of the title page, one stroke for each sigil earned. | The story as `STORY.md` has it. |
+| 1 | The first stroke of the sign, pale, under the molecule on every OVERREACT, gone when the page turns. The yield track has one yellow tick at +20. | The notes start again sane, with one line now and then in a second hand. One new quiet part in the music. |
+| 2 | Two strokes. One coffee stain in three dries in the shape of the strokes so far. | The chemist notices the stains. The new part is a little louder. |
+| 3 | Three strokes, and they stay on the page all round, very pale, under the molecule. The homunculi face it when a chain runs long. | He stops pretending not to see it. |
+| 4 | Four strokes. The reagent cards carry it small in a corner. The lamp light on the bench is a shade warmer. | The second hand writes more than he does. |
+| 5 | The sign whole, under every molecule from the first page, and on the title page in place of the unfinished mark. | The "after" notes. The tune is played outright once a run. |
+
+Never the three-armed sign of 1989: our own mark, built from our four yield marks (`STORY.md`, rules).
+
+**Not done.** The page does not offer or show the sign. What "everything" counts is the page's to say (166 things in `FINDINGS.md`). Laps with a rebuilt collection were not simulated, only the fresh start of each. The game's rig was not run with a sign.
+
+**Choices for the owner**
+
+1. What rises with the sign. (a) B, as built: the number to beat rises 12 in 100 a sign, the fresh start stays about as hard. (b) A: nothing rises, each lap is easier. (c) C: the sign also takes one thing each time (the five above, or others).
+2. How the +20 stacks. (a) Added, as built: 2 times after five. (b) Multiplied: 2.5 times after five.
+3. How many times. (a) Five, as built. (b) Three. (c) No end: the sign is whole at five and the lift goes on.
+4. When it can be taken. (a) At 9 tenths of everything, as built. (b) Only with everything. (c) At 3 quarters.
+5. What is kept. (a) As built: the lifetime counts, the catalog, the notes read. (b) Also one thing of the player's choice from the old collection.
+
+### Agreement with the reference chemistry
+
+No reaction or reflex was changed in this measure: `rules.js`, `engine.py`, `library.py`, `fold.py` and `traits.py` are as they were. The game parity job (`parity_game.js`, 150 whole turns) gives 93 exact with the rules as they stand, and the same 93 with the rules as they were before this measure (commit cf44b1c), so nothing here moved it. The ninth measure had 126 exact: the fall to 93 came with the commits of 12 November after it (the fold and what followed) and was not looked into here. `locks.js`: 24 of 24.
 
 ## The measure of 2026-11-12, tenth: the fold, molecules v2, the opening, oxidize
 

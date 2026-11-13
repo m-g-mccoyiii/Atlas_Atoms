@@ -6,6 +6,7 @@
 
 - A homunculus is lit by HOW the page just fired was played. The player taps it before turning the page. One tap a page. Any number of pages a round.
 - Each pays for one way of playing, and each asks for something in return.
+- The game holds one homunculus in a run. Two or three at once exist only in the simulator, and there only one of them can be tapped on a page.
 - Nothing is counted up across pages to feed it. Its food is what that one page made.
 - The amounts are in one table (`HOMS2K`).
 
@@ -14,14 +15,14 @@
 | Creature | Lit when | Tap | What it asks | The play it rewards |
 |---|---|---|---|---|
 | Water (floods) | the page gave off 4 or more waters | yield times 1.5; then the flood: every C=C becomes C-OH and the rings run again | the flood takes the double bonds the next reagents wanted | the wet page: set up OH, then dry it all at once |
-| Hydrogen (floats over) | the page's last reagent is oxidize and it lands; not on the last page | the chain floats over the page turn: the next page's chain counts on from this one | oxidize must go last, so its C=O comes too late for this page's rings; nothing if the next page fizzles | order: oxidize last, then a big page |
-| Dry ice (freezes) | on the last page, if carbon dioxide came off this round and at least 2 of the six reagents were never fired in it | yield times 1.3 for each reagent never fired (3 at most: 2.2 times) | a round played with three or four reagents only | the narrow round: make carbon dioxide (grow, then oxidize) and leave bottles shut |
+| Hydrogen (floats over) | the page's last reagent is oxidize, it lands, and the page has a chain; not on the last page | the chain floats over the page turn: the next page's chain counts on from this one | oxidize must go last, so its C=O comes too late for this page's rings; nothing if the next page fizzles | order: oxidize last, then a big page |
+| Dry ice (freezes) | on the last page, if carbon dioxide came off this round and at least 2 of the six reagents never acted in it | yield times 1.3 for each reagent never fired (3 at most: 2.2 times) | a round played with three or four reagents only | the narrow round: make carbon dioxide (grow, then oxidize) and leave bottles shut |
 | Acid (eats through) | the molecule ends the page smaller than it began | yield times 1.6 | a smaller molecule: fewer places for the next page | the cutting page: dehydrate and drying, no growth |
 | Wood spirit (blind drunk) | on the round's last page, the last reagent lined up found nothing to act on | he drinks it and pours every dealt reagent that was not lined up, left to right | a circle thrown away, and the order he pours in is the deal's, not the player's | the last page with two good reagents and two or three spare ones |
 | Salt (cures) | the line is the page before's line again, reagent for reagent | yield times 2.5 and the three get their use back | the same line lands on less the second time | a line that can be played twice |
 | Slime (sticks) | all three reagents land and each sets off at least one reflex | yield times 2.5 | no reagent may be lined up only to set up the next | three small chains in one page |
-| Ammonia (smelling salts) | nitrogen went on the molecule this page (the nitrogen reagent lands, or a knit) | the page's three reagents fire again, same order, no use spent | the nitrogen reagent has to be in the line; firing again can undo | nitrogen lines |
-| Seedling (grows) | the molecule ends the page at least 5 atoms bigger | yield times 1.2, then 1.4, then 1.6 for pages in a row | a page that ends smaller and it wilts: yield times 0.8, the row starts again | growing every page of the round |
+| Ammonia (smelling salts) | nitrogen went on the molecule this page (the nitrogen reagent lands, or a knit) | the page's three reagents fire again, same order, no use spent | the nitrogen reagent in the line, or a molecule that knits by itself; firing again can undo | nitrogen lines |
+| Seedling (grows) | the molecule ends the page at least 5 atoms bigger | yield times 1.2, then 1.4, then 1.6 for each page it is tapped in the round | a page that ends smaller and it wilts: yield times 0.8, the row starts again | growing every page of the round |
 | Brimstone (hellfire) | sulfur went on the molecule this page (the sulfur reagent lands, or a cap); not on the last page | the round ends now; yield times 3 after page one, times 2 after page two | the pages not played | the fast round: task met early, then burn |
 
 ## Not done, and open

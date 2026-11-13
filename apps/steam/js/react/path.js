@@ -460,11 +460,11 @@ RULE.pairFrom = 6; RULE.specShiftLong = null; RULE.specScaleLong = { 1: 0.7, 2: 
 // THE SIGN (ruling AP 4; docs/RIG.md, "The sign"). RULE.prestige on: when SIGN.share of everything is unlocked the player may take the yellow
 // sign (signCan, signTake). The collection starts over; every yield is lifted by SIGN.lift for each sign taken, for good (added, not
 // compounded: five signs are 2 times, not 2.5); meta.sign counts the signs taken and is what the page, the notes and the music read.
-// What rises with it: the number to beat goes up SIGN.bar times for each sign, and each sign takes one thing for good (SIGN.takes[k - 1] at
+// What rises with it: the number to beat goes up SIGN.bar times for each sign. Switched off (SIGN.takes is empty; SIGN.takesAll is the measured list, RIG.md twelfth, part 4): each sign may also take one thing for good (SIGN.takes[k - 1] at
 // sign k: 'pair4' two specs from round 4, 'tasks' every spec N a quarter bigger, 'pair1' two specs from round 1, 'uses' one use fewer of every
 // reagent, 'hand' four dealt, not five). After SIGN.laps signs it cannot be taken again.
 RULE.prestige = false;
-const SIGN = { lift: 0.2, bar: 1.12, share: 0.9, laps: 5, tasks: 1.25, takes: ['pair4', 'tasks', 'uses', 'pair1', 'hand'], keep: ['sign', 'counters', 'catalog', 'notesSeen', 'signLog'] };
+const SIGN = { lift: 0.2, bar: 1.12, share: 0.9, laps: 5, tasks: 1.25, takes: [], takesAll: ['pair4', 'tasks', 'uses', 'pair1', 'hand'], keep: ['sign', 'counters', 'catalog', 'notesSeen', 'signLog'] };
 const signOf = x => { if (!RULE.prestige || !x) return 0; const v = x.sign != null ? x.sign : (x.meta && x.meta.sign); return Math.max(0, Math.min(SIGN.laps, v | 0)); };
 const signLift = x => 1 + SIGN.lift * signOf(x), signBar = x => Math.pow(SIGN.bar, signOf(x));
 const signHas = (x, what) => SIGN.takes.slice(0, signOf(x)).includes(what);
