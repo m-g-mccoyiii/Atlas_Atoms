@@ -1,8 +1,31 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the seventh of 2026-11-11: the spec, run lengths, five dealt from six; part two first, part one after it). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the thirteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-13, thirteenth: the rulings of AR
+
+One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.
+
+### 5. Agreement with the reference chemistry: back to 126 of 150
+
+**The cause.** The game's chemistry did not change. The fall was in the test. The fold commit (e2e9c8a, 12 November) made a round hold the twelve across-the-fold reflexes whenever `RULE.holdAll` is set, and the parity job sets it. The 150 reference turns hold only the thirteen near reflexes (the reference's whole-turn function knows no fold), so the game took across steps the reference could not take.
+
+| Rules as of | Exact | Ties | Unproven | Real differences |
+|---|---|---|---|---|
+| ffe8723 (just before the fold) | 126 | 22 | 2 | 0 |
+| e2e9c8a (the fold) | 86 | 12 | 2 | 50 |
+| today, old job | 93 | 13 | 2 | 42 |
+| today, job with the fold off | 126 | 22 | 2 | 0 |
+
+**The fix.** `parity_game.js` now switches the fold off for its turns (`RULE.fold = false`), throws if an across reflex is still held, and `far=1` gives the old behaviour. Run again in this checkout: 126 exact. `locks.js`: 24 of 24.
+
+**The 24 turns that are not exact.** 17 take the same steps at another, equal place. 5 differ in steps but the game's answer is one the reference gives when equal places are taken another way (turns 8, 23, 33, 49, 70). 2 (turns 52 and 108) are not proven at the search limit of 4,000 states; at 60,000 both are inside the reference's set. No real difference is left.
+
+**Not done.** The across reflexes have no whole-turn check against the reference; their own check is single steps (`foldpar.js`, 876 of 876 on 12 November). Which commit after the fold moved 86 to 93 was not looked for.
+
+**Choices for the owner**: none; this was a repair.
 
 ## The measure of 2026-11-13, twelfth: the four rulings of AP
 
