@@ -109,6 +109,8 @@ AV. 13 November, on the two-page notebook: "The pages are a little small and stu
 
 AW. Sigils (13 November): the nine ready ones are built into the game now. How they are got is not decided: "I think we need to consider how they impact each other and gameplay before deciding but I'm towards buying them since it's alchemy". Up to three at work at once. Also: the cup "still looks a little cheap"; all ten homunculi to be shown (a parade and a full shelf); the sigils to be shown in effect.
 
+AX. The reference book (13 November): "The in game manual should just be pictures (both the object and what reaction it does) and then someone can click on it to bring up the object alone with a full description and a rotatable object. Give all the homunculi butts lol". Its pages are pictures only; clicking an entry shows the object alone, turnable in 3D, with a full written description. The ways things are unlocked: "More deeds, fewer counts". Also: "The homunculus jars are colliding with other items so we need to figure that out": the bench needs a real layout.
+
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
 AK3. On the rebuilt soundtrack (12 November): "Hybrid, but I feel like the tone is still a bit too toony and now it's a little dark? ... Also, the building up needs to be way longer, which I think means that the reaction speeds need to be way longer?" The hybrid shape is liked. The music must be neither cartoon-sounding nor gloomy. The build-up lasts much longer: reactions play slower and the build carries across the round.
