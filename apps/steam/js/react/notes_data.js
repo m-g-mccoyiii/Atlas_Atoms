@@ -14,7 +14,8 @@
 //   AA.notesParse(t)     splits ~struck~ and _under_ marks into pieces for the pen
 // What makes a note eligible is in its own data:
 //   when    the event it is about (a tag): start fire reflex ring left page mark win loss overreact chain waste shop buy unlock instrument sigil gold spec catalog
-//           el:N el:S el:Cl el:Br   hom:water hom:h2 hom:co2 hom:acid hom:wood hom:salt hom:slime hom:seedling hom:ammonia hom:brimstone
+//           el:N el:S el:Cl   hom:<key> (a creature is owned: thread lines only)   tap:<key> (that creature has just acted)
+//           keys: water h2 co2 acid wood salt slime seedling ammonia brimstone
 //           (no tag: a note about the molecule and the page as they stand)
 //   slots   the names in {braces} in its text; the note is only offered when state.ctx has every one. {n+1} and {n-1} are sums done here.
 //   cond    { slot: [min, max] } the number in that slot must lie in the range
@@ -26,6 +27,7 @@
 //   count   [key, from, to] a lifetime count (meta.counters added to meta.countersAll) inside that window
 //   by      'tenant0' | 'tenant1' | 'tenant2': written in the margin by an earlier tenant (laps 1 to 3). The page should draw each in its own hand.
 //   fb      a rule of the bench with no slots: only offered when nothing about the present page fits (as when the page passes no ctx)
+//   again   its text changes with the reagent or the reflex named, so it may be shown more than once a run (not within four notes)
 //   wait    it uses a slot the rules side has to work out and the page cannot pass yet; held back until it is passed
 // Sources: R. W. Chambers, The King in Yellow (1895) and Ambrose Bierce only. Nothing later. See the rights rule in NOTES_WRITING.md.
 // Every row below is one line and is valid JSON, so the check script can read it without running the file.
@@ -35,59 +37,59 @@ const AA = root.AA = root.AA || {};
 const NOTES = [];
 // Slots the page cannot fill today: the rules side has to work them out (NOTES_WRITING.md, "What the page must pass"). A note that
 // uses one is marked wait: true and is held back until the page passes it.
-const RULES_SLOTS = ['bestorder', 'bestn', 'bestsame', 'gap', 'nearkind', 'neargap', 'nearneed', 'roundbest', 'runbest', 'careerbest', 'molseen', 'molbest', 'loose', 'homlack'];
+const RULES_SLOTS = ['gap', 'roundbest', 'runbest', 'careerbest', 'molseen', 'molbest', 'loose'];
 // What the notes know about the bench themselves (docs/tools_chem/FINAL.md), so the page only has to pass a name.
-// From the reagent just fired: {does} what it leaves, {feeds} what that is good for. From a reagent that found nothing: {dudneeds}.
+// From the reagent just fired: {does} what it left, {all} what it did at every place. From a reagent that found nothing: {dudneeds} what it needs. Nothing here says what to do next.
 const REAGENT = {
-  hydrate: { needs: 'a C=C', does: 'an OH on the carbon with fewer hydrogens', feeds: 'an OH, which rings onto a C=O three or four carbons off' },
-  hydroborate: { needs: 'a C=C', does: 'an OH on the carbon with more hydrogens', feeds: 'an OH nearer the chain end than hydrate gives' },
-  dehydrate: { needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C where the OH was, and water off', feeds: 'a C=C, which shifts if a C=O is two carbons off' },
-  oxidize: { needs: 'an OH on a carbon that still has a hydrogen, or a C=C at a chain end', does: 'a C=O where the OH was, and hydrogen off', feeds: 'a C=O for a ring, weld, knit or cap to close onto' },
-  reduce: { needs: 'a C=O at the end of a chain', does: 'a CH2-OH where the end C=O was', feeds: 'an end OH, which rings onto a C=O three or four carbons off' },
-  grow: { needs: 'a C=O', does: 'an OH and a three-carbon arm ending in C=C', feeds: 'a C=C arm for hydrate or the sulfur and nitrogen reagents' },
-  thiolene: { needs: 'a C=C', does: 'an SH on the carbon with more hydrogens', feeds: 'an SH, which caps onto a C=O three or four carbons off' },
-  ritter: { needs: 'a C=C', does: 'an NH2 on the carbon with fewer hydrogens', feeds: 'an NH2, which knits onto a C=O three or four carbons off' },
-  hwe: { needs: 'an aldehyde or a methyl ketone not already beside a C=C', does: 'a C=C beside a new ketone', feeds: 'a C=C beside a C=O, which a tuck can use' },
-  dihydroxylation: { needs: 'a C=C', does: 'an OH on each carbon of the C=C', feeds: 'two OH, one of which can dry or ring' },
-  ozonolysis: { needs: 'a C=C with carbon on both sides', does: 'a C=O at each cut carbon', feeds: 'two C=O for rings and welds to close onto' },
-  permanganate: { needs: 'a chain-end C=C, an aldehyde or a chain-end CH2-OH', does: 'a COOH at the chain end', feeds: 'a COOH, which seals with an OH three or four carbons off' },
-  chlorination: { needs: 'an OH that is not on a ring and not on a carbon with three carbons', does: 'a Cl where the OH was, and acid fumes off', feeds: 'a Cl, which closes with an OH three to five carbons off' },
-  cyanohydrin: { needs: 'an aldehyde or a methyl ketone', does: 'an OH and a COOH on one carbon', feeds: 'a COOH, which seals with an OH three or four carbons off' },
-  hofmann: { needs: 'an NH2 on a carbon with no double bond', does: 'a C=C where the NH2 was', feeds: 'a C=C, which shifts if a C=O is two carbons off' },
-  chugaev: { needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C toward the neighbour with more hydrogens, and sulfur off', feeds: 'a C=C on the other side from the one dehydrate gives' },
-  hydroformylation: { needs: 'a C=C', does: 'a CHO on the carbon with more hydrogens', feeds: 'an aldehyde, one carbon longer, for an OH to ring onto' },
-  epoxidation: { needs: 'a C=C', does: 'an epoxide where the C=C was', feeds: 'an epoxide, which an OH three or four carbons off opens into a ring' }
+  hydrate: { all: 'every C=C took an OH and an H', needs: 'a C=C', does: 'an OH on the carbon with fewer hydrogens' },
+  hydroborate: { all: 'every C=C took an OH on the carbon with more hydrogens', needs: 'a C=C', does: 'an OH on the carbon with more hydrogens' },
+  dehydrate: { all: 'every OH it could take left as water', needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C where the OH was, and water off' },
+  oxidize: { all: 'every OH on a carbon with a hydrogen became C=O', needs: 'an OH on a carbon that still has a hydrogen, or a C=C at a chain end', does: 'a C=O where the OH was, and hydrogen off' },
+  reduce: { all: 'every chain-end C=O became CH2-OH', needs: 'a C=O at the end of a chain', does: 'a CH2-OH where the end C=O was' },
+  grow: { all: 'every C=O became an OH with a three-carbon arm', needs: 'a C=O', does: 'an OH and a three-carbon arm ending in C=C' },
+  thiolene: { all: 'every C=C took an SH', needs: 'a C=C', does: 'an SH on the carbon with more hydrogens' },
+  ritter: { all: 'every C=C took an NH2', needs: 'a C=C', does: 'an NH2 on the carbon with fewer hydrogens' },
+  hwe: { all: 'every aldehyde and methyl ketone became a C=C beside a new ketone', needs: 'an aldehyde or a methyl ketone not already beside a C=C', does: 'a C=C beside a new ketone' },
+  dihydroxylation: { all: 'every C=C became two OH', needs: 'a C=C', does: 'an OH on each carbon of the C=C' },
+  ozonolysis: { all: 'every C=C was cut into two C=O', needs: 'a C=C with carbon on both sides', does: 'a C=O at each cut carbon' },
+  permanganate: { all: 'every chain end it could take became COOH', needs: 'a chain-end C=C, an aldehyde or a chain-end CH2-OH', does: 'a COOH at the chain end' },
+  chlorination: { all: 'every OH it could take became Cl', needs: 'an OH that is not on a ring and not on a carbon with three carbons', does: 'a Cl where the OH was, and acid fumes off' },
+  cyanohydrin: { all: 'every aldehyde and methyl ketone became an OH and a COOH', needs: 'an aldehyde or a methyl ketone', does: 'an OH and a COOH on one carbon' },
+  hofmann: { all: 'every NH2 left and a C=C formed', needs: 'an NH2 on a carbon with no double bond', does: 'a C=C where the NH2 was' },
+  chugaev: { all: 'every OH it could take left and a C=C formed', needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C toward the neighbour with more hydrogens, and sulfur off' },
+  hydroformylation: { all: 'every C=C took a CHO', needs: 'a C=C', does: 'a CHO on the carbon with more hydrogens' },
+  epoxidation: { all: 'every C=C became an epoxide', needs: 'a C=C', does: 'an epoxide where the C=C was' }
 };
 const ALIAS = { pcc: 'oxidize', allyl: 'grow', bh3: 'hydroborate', nabh4: 'reduce', 'thiol-ene': 'thiolene', 'the sulfur reagent': 'thiolene', 'the nitrogen reagent': 'ritter', lactol: 'ring', enone: 'dry', taut: 'flip', snap6: 'snap', ether: 'close' };
-// From the reflex just fired: {why} it fired, {after} what it leaves.
+// From the reflex just fired: {why} it fired, {what} happened in it, {after} what it leaves.
 const KIND = {
-  ring: { why: 'an OH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
-  dry: { why: 'an OH was two carbons from a C=O', after: 'a C=C beside the C=O, which a tuck can use' },
-  weld: { why: 'two C=O were four or five carbons apart', after: 'a ring that stays shut, and a new OH' },
-  shift: { why: 'a C=C was two carbons from a C=O', after: 'a C=C beside the C=O, which a tuck can use' },
-  tuck: { why: 'a C=C sat beside a C=O with an OH three or four carbons past it', after: 'a ring ether that stays shut' },
-  flip: { why: 'an OH sat on a carbon of a C=C', after: 'a new C=O' },
-  snap: { why: 'two C=C lay side by side with a third near', after: 'a six-ring that stays shut' },
-  knit: { why: 'an NH2 was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
-  cap: { why: 'an SH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
-  close: { why: 'a Cl was three to five carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and acid fumes off' },
-  open: { why: 'an epoxide and an OH were three or four carbons apart', after: 'a ring ether and a new OH' },
-  fold: { why: 'an epoxide had a carbon on both ends', after: 'a new C=O' },
-  seal: { why: 'a COOH was three or four carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and water off' }
+  ring: { what: 'the OH oxygen joined the C=O carbon', why: 'an OH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
+  dry: { what: 'the OH left as water and a C=C formed beside the C=O', why: 'an OH was two carbons from a C=O', after: 'a C=C beside the C=O' },
+  weld: { what: 'the carbon beside one C=O joined the other C=O carbon', why: 'two C=O were four or five carbons apart', after: 'a ring that stays shut, and a new OH' },
+  shift: { what: 'the C=C slid one carbon toward the C=O', why: 'a C=C was two carbons from a C=O', after: 'a C=C beside the C=O' },
+  tuck: { what: 'the OH oxygen joined the far carbon of the C=C', why: 'a C=C sat beside a C=O with an OH three or four carbons past it', after: 'a ring ether that stays shut' },
+  flip: { what: 'the C=C went single and its carbon became C=O', why: 'an OH sat on a carbon of a C=C', after: 'a new C=O' },
+  snap: { what: 'three C=C closed into a six-ring with one C=C left', why: 'two C=C lay side by side with a third near', after: 'a six-ring that stays shut' },
+  knit: { what: 'the nitrogen joined the C=O carbon', why: 'an NH2 was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
+  cap: { what: 'the sulfur joined the C=O carbon', why: 'an SH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
+  close: { what: 'the Cl left and the other group joined its carbon', why: 'a Cl was three to five carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and acid fumes off' },
+  open: { what: 'the OH oxygen joined the nearer epoxide carbon', why: 'an epoxide and an OH were three or four carbons apart', after: 'a ring ether and a new OH' },
+  fold: { what: 'the epoxide became a C=O', why: 'an epoxide had a carbon on both ends', after: 'a new C=O' },
+  seal: { what: 'the acid OH left and the other group joined the acid carbon', why: 'a COOH was three or four carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and water off' }
 };
 // From what came off: {leftfrom} what gives it off.
 const LEFT = { water: 'a dehydrate or a dry step', hydrogen: 'an oxidize', 'carbon dioxide': 'oxidize cutting a chain-end C=C', 'acid fumes': 'a close', ammonia: 'the cyanohydrin route', sulfur: 'a Chugaev' };
 const low = v => { const k = String(v == null ? '' : v).toLowerCase(); return ALIAS[k] || k; };
 function derive(ctx) {
   const c = Object.assign({}, ctx || {}), r = REAGENT[low(c.reagent)], d = REAGENT[low(c.dud)], k = KIND[low(c.kind)], l = LEFT[low(c.left)];
-  if (r) { c.does = r.does; c.feeds = r.feeds; } if (d) c.dudneeds = d.needs; if (k) { c.why = k.why; c.after = k.after; } if (l) c.leftfrom = l;
+  if (r) { c.does = r.does; c.all = r.all; } if (d) c.dudneeds = d.needs; if (k) { c.why = k.why; c.after = k.after; c.what = k.what; } if (l) c.leftfrom = l;
   return c;
 }
 function push(r, base) {
   const o = r[2] || {}, n = Object.assign({ t: r[0] }, base), seen = {};
   if (o.u) n.unlocks = o.u; if (o.hand) n.hand = o.hand; if (o.s) n.sign = o.s;
   if (r[1]) n.when = r[1];
-  if (o.big) n.big = true; if (o.round) n.round = o.round; if (o.till) n.till = o.till; if (o.count) n.count = o.count; if (o.by) n.by = o.by; if (o.c) n.cond = o.c; if (o.fb) n.fb = true;
+  if (o.big) n.big = true; if (o.round) n.round = o.round; if (o.till) n.till = o.till; if (o.count) n.count = o.count; if (o.by) n.by = o.by; if (o.c) n.cond = o.c; if (o.fb) n.fb = true; if (o.again) n.again = true;
   n.slots = []; n.t.replace(/\{([a-z0-9]+)(?:[+-]\d+)?\}/g, (m, k) => { if (!seen[k]) { seen[k] = 1; n.slots.push(k); } return m; });
   if (n.cond) Object.keys(n.cond).forEach(k => { if (n.slots.indexOf(k) < 0) n.slots.push(k); });   // a condition needs its slot too
   if (n.slots.some(k => RULES_SLOTS.indexOf(k) >= 0)) n.wait = true;
@@ -102,193 +104,152 @@ function thr(src, rung, hand, rows) {
 }
 
 // ================= PLAIN NOTES (band 1). No thread. =================
-// Each says something the player can use and cannot read off the screen: why a thing happened, what would have gone further,
-// what a creature needs, a record, a plan that follows from the page. Every rule stated here is in docs/tools_chem/FINAL.md,
-// docs/HOMUNCULI.md or path.js (RULE, CASC, HOM2LIT); see NOTES_WRITING.md, "What was checked against the rules".
+// Each explains what has just happened and why, or states a record. None gives the answer: no best order, no plan for the next
+// page, no near miss, nothing about what a creature needs before it has acted. New players work the game out themselves.
+// Every rule stated here is in docs/tools_chem/FINAL.md, docs/HOMUNCULI.md or path.js (RULE, CASC, HOM2LIT).
 
-// ---- rules of the bench, no slots: only when nothing about the present page fits ----
+// ---- how the bench keeps score, no slots: only when nothing about the present page fits ----
 lab([0, 3], 'neat', [
-  ["An OH three or four carbons from a C=O closes a ring by itself.", null, {"fb": true}],
-  ["An OH two carbons from a C=O dries: water off, and a C=C beside the C=O.", null, {"fb": true}],
-  ["A C=C two carbons from a C=O shifts over to sit beside it.", null, {"fb": true}],
-  ["A C=C beside a C=O tucks if an OH is three or four carbons past it.", null, {"fb": true}],
-  ["A weld wants two C=O, four or five carbons apart.", null, {"fb": true}],
-  ["An OH on a carbon of a C=C flips to a C=O.", null, {"fb": true}],
-  ["Dehydrate is the reagent; dry is the reflex and needs a C=O two carbons from the OH.", null, {"fb": true}],
-  ["Rings from ring, knit and cap are loose and open at the page turn; others stay shut.", null, {"fb": true}],
-  ["Oxidize turns an OH into a C=O if the OH's carbon has a hydrogen.", null, {"fb": true}],
-  ["Oxidize cuts the end carbon off a chain-end C=C and gives off carbon dioxide.", null, {"fb": true}],
-  ["Hydrate puts the OH on the carbon with fewer hydrogens; beside a C=O, on the far carbon.", null, {"fb": true}],
-  ["Dehydrate will not take an OH whose next carbon carries an oxygen.", null, {"fb": true}],
-  ["Grow turns every C=O into an OH with a three-carbon arm ending in C=C.", null, {"fb": true}],
-  ["The sulfur reagent puts an SH on every C=C, on the carbon with more hydrogens.", null, {"fb": true}],
-  ["The nitrogen reagent puts an NH2 on every C=C, on the carbon with fewer hydrogens.", null, {"fb": true}],
   ["A reagent acts at every place on the molecule that fits it.", null, {"fb": true}],
   ["A reagent that finds nothing still spends its use.", null, {"fb": true}],
   ["The tenth reflex of a page pays ten times the first.", null, {"fb": true}],
   ["Chain steps up to the round's longest earlier chain pay a quarter; steps past it pay in full.", null, {"fb": true}],
-  ["The marks stand at two, four and eight times the spec; the last is the overreact.", null, {"fb": true}],
   ["Gold is paid for each mark passed, and only when the spec is met.", null, {"fb": true}],
-  ["An SH three or four carbons from a C=O caps into a ring.", null, {"fb": true}],
-  ["An NH2 three or four carbons from a C=O knits into a ring.", null, {"fb": true}],
-  ["A Cl three to five carbons from an OH closes a ring and gives off acid fumes.", null, {"fb": true}],
-  ["Two C=C side by side and a third four or five bonds off snap into a six-ring.", null, {"fb": true}]
+  ["Some rings open again when the page turns and some stay shut.", null, {"fb": true}]
 ]);
 
 // ---- the molecule and the page as they stand (no tag): the first chemist ----
 lab([0, 0], 'neat', [
-  ["No C=C on this molecule, so hydrate and the sulfur and nitrogen reagents will find nothing.", null, {"c": {"ene": [0, 0]}}],
-  ["No OH on this molecule; dehydrate needs one made first.", null, {"c": {"oh": [0, 0]}}],
-  ["No C=O here: grow has nothing to take, and no ring, weld, knit or cap can close.", null, {"c": {"co": [0, 0]}}],
-  ["Best order of the last three was {bestorder}: {bestn} reflexes to my {n}."],
-  ["Next time on this molecule: {bestorder}."],
-  ["A {nearkind} is one carbon out: the groups are {neargap} apart and it wants {nearneed}."],
-  ["{loose} loose rings will open when the page turns; a longer chain can close them again.", null, {"c": {"loose": [2, 99]}}],
+  ["{loose} loose rings on the molecule; they open when the page turns.", null, {"c": {"loose": [2, 99]}}],
   ["The loose ring opens again when the page turns.", null, {"c": {"loose": [1, 1]}}],
   ["Longest chain on an earlier page this round was {roundbest}; steps up to that pay a quarter now.", null, {"c": {"roundbest": [1, 999]}}],
   ["Longest chain this run {runbest}; longest in the notebook {careerbest}."],
-  ["{reagent} has one use left; it gives {feeds}.", null, {"c": {"uses": [1, 1]}}],
+  ["This molecule was dealt {molseen} times before; best yield with it {molbest}.", null, {"c": {"molseen": [2, 999]}}],
   ["The molecule is at {atoms} atoms, not counting hydrogen; nothing grows past 56.", null, {"c": {"atoms": [45, 56]}}],
-  ["{creature} was {homlack} short of lighting on that page."],
-  ["{dud} found nothing on the last page: it needs {dudneeds}."]
+  ["{dud} found nothing on the last page: it needs {dudneeds}.", null, {"again": true}],
+  ["{left} came off the last page, from {leftfrom}.", null, {"again": true}],
+  ["The last reflex was a {kind}: {why}.", null, {"again": true}],
+  ["The last reagent fired was {reagent}; it left {does}.", null, {"again": true}]
 ]);
 
 // ---- what has just happened ----
 lab([0, 3], 'neat', [
-  ["New round; count the carbons between each OH and each C=O before lining up.", "start"],
-  ["{co} C=O and {oh} OH at the start; look for a pair three or four carbons apart.", "start", {"c": {"co": [1, 99], "oh": [1, 99]}}],
-  ["No OH at the start; hydrate a C=C to make the first one.", "start", {"c": {"oh": [0, 0], "ene": [1, 99]}}],
-  ["No C=C at the start; grow at a C=O adds one.", "start", {"c": {"ene": [0, 0], "co": [1, 99]}}],
+  ["New round: each reagent has its uses back.", "start"],
   ["This molecule came up {molseen} times before; best yield with it {molbest}.", "start", {"c": {"molseen": [2, 999]}}],
 
-  ["{reagent} left {does}.", "fire"],
-  ["{reagent} gives {feeds}.", "fire"],
+  ["{reagent} left {does}.", "fire", {"again": true}],
   ["{reagent} set off {n} reflexes by itself.", "fire", {"c": {"n": [2, 999]}}],
-  ["{reagent} acted, but the order {bestorder} would have run {bestn} reflexes.", "fire"],
+  ["With {reagent}, {all}.", "fire", {"again": true}],
+  ["{reagent} landed at {places} places at once: {all}.", "fire", {"again": true, "c": {"places": [2, 99]}}],
 
-  ["A {kind} fired: {why}.", "reflex"],
-  ["The {kind} leaves {after}.", "reflex"],
+  ["A {kind} fired: {why}.", "reflex", {"again": true}],
+  ["The {kind} leaves {after}.", "reflex", {"again": true}],
+  ["In the {kind}, {what}.", "reflex", {"again": true}],
 
   ["The ring closed because the two groups were {gap} carbons apart.", "ring"],
-  ["{loose} loose rings standing; they open at the page turn and can close again in a longer chain.", "ring", {"c": {"loose": [2, 99]}}],
+  ["{loose} loose rings standing; they open at the page turn.", "ring", {"c": {"loose": [2, 99]}}],
   ["A ring or a weld leaves a new OH on the old C=O carbon.", "ring"],
 
-  ["{left} came off; it comes from {leftfrom}.", "left"],
-  ["{left} off that page: {leftn}; Water lights at four waters on one page.", "left", {"c": {"leftn": [1, 3]}}],
-  ["Each thing driven off makes the molecule smaller; Acid lights at two atoms.", "left"],
+  ["{left} came off; it comes from {leftfrom}.", "left", {"again": true}],
 
-  ["Best order of those three was {bestorder}: {bestn} reflexes to the {n} I got.", "page"],
-  ["That was the best order of those three.", "page", {"c": {"bestsame": [1, 1]}}],
   ["Page {page} ran {n} reflexes against {roundbest} earlier; only the steps past that paid in full.", "page", {"c": {"roundbest": [1, 999]}}],
-  ["{dud} found nothing: it needs {dudneeds}.", "page"],
-  ["A {nearkind} was one carbon out on that page: groups {neargap} apart, and it wants {nearneed}.", "page"],
+  ["{dud} found nothing: it needs {dudneeds}.", "page", {"again": true}],
+  ["Page {page} set off no reflex: no two groups stood at a distance that reacts.", "page", {"c": {"n": [0, 0]}}],
+  ["No reflex on page {page}; the three reagents alone made {pageyield}.", "page", {"c": {"n": [0, 0]}}],
 
   ["Mark {mark} is worth gold if the round is met.", "mark"],
 
   ["Spec met; anything past it counts toward the marks at two, four and eight times.", "win"],
-  ["Met it; {bestorder} would have given {bestn} reflexes on the last page.", "win"],
+  ["Met with {n} reflexes on the last page; the round's longest before was {roundbest}.", "win", {"c": {"n": [2, 999], "roundbest": [1, 999]}}],
+  ["Round met with a longest chain of {roundbest}; the run's longest is {runbest}.", "win", {"c": {"roundbest": [1, 999]}}],
 
   ["Under spec; most of a round's yield comes from the chain, not the three reagents.", "loss"],
   ["Under by {short}; {dud} was wasted, and it needs {dudneeds}.", "loss"],
-  ["Under by {short}; the order {bestorder} would have run {bestn} reflexes on the last page.", "loss"],
-  ["A {nearkind} was one carbon out on the last page: {neargap} apart, wants {nearneed}.", "loss"],
-  ["Next time on this molecule: {bestorder} on page one.", "loss"],
+  ["Under by {short}; the longest chain of the round was {roundbest}.", "loss", {"c": {"roundbest": [1, 999]}}],
 
   ["An overreact is the yield passing eight times the spec.", "overreact"],
-  ["Overreact on {r1}, {r2}, {r3}; fired again this round the same chain pays a quarter.", "overreact"],
+  ["Overreact with a chain of {n}; the notebook's longest chain is {careerbest}.", "overreact", {"c": {"n": [2, 999]}}],
 
   ["A chain is each reflex leaving what the next one needs.", "chain"],
   ["Chain of {n}; the notebook's longest is {careerbest}.", "chain", {"c": {"n": [2, 999]}}],
   ["Step {n} paid {n} times step one.", "chain", {"c": {"n": [2, 999]}}],
+  ["The chain stopped when no two groups were left at a distance that reacts.", "chain"],
 
-  ["A reagent that finds nothing in first place is what lights Wood spirit.", "waste"],
-  ["{dud} acted nowhere; it wants {dudneeds}.", "waste"],
+  ["That reagent found nothing and its use is spent.", "waste"],
+  ["{dud} acted nowhere; it wants {dudneeds}.", "waste", {"again": true}],
 
   ["Gold kept in the tin earns interest each round the spec is met.", "shop"],
-
   ["Gold spent is gold that earns no interest next round.", "buy"],
-
   ["A finding opens the next thing on its shelf.", "unlock"],
-
-
   ["Each sigil breaks one rule for the round.", "sigil"],
   ["{sigil} is on for round {round}; a line that worked before may not hold.", "sigil"],
-
   ["Gold is paid for the marks passed and as interest on what was kept.", "gold"],
   ["{gained} gold: for the marks passed, and interest on the tin.", "gold"],
-
-
-  ["A compound in the catalog stays there when everything else on the shelf goes.", "catalog"],
-
-  ["NH2 on the molecule: it knits onto a C=O three or four carbons away.", "el:N"],
-  ["A knit ring is loose and opens again at the page turn.", "el:N"],
-  ["The nitrogen reagent landing, or a knit, lights Ammonia.", "el:N"],
-  ["SH on the molecule: it caps onto a C=O three or four carbons away.", "el:S"],
-  ["The sulfur reagent wants a C=C; the SH lands on the carbon with more hydrogens.", "el:S"],
-  ["Sulfur going on lights Brimstone, except on the last page.", "el:S"],
-  ["Cl on the molecule: it closes a ring with an OH three to five carbons away.", "el:Cl"],
-  ["A close gives off acid fumes, and its ring stays shut over the page turn.", "el:Cl"],
-  ["A close can make a ring of seven, which no other reflex here can.", "el:Cl"]
+  ["A compound in the catalog stays there when everything else on the shelf goes.", "catalog"]
 ]);
 
-// ---- the creatures: what lights each and what it asks ----
+// ---- the creatures: only after one has acted (the tag tap:<key>), what lit it and what it did ----
 lab([0, 3], 'neat', [
-  ["Water lights when one page gives off four waters.", "hom:water"],
-  ["Water's flood turns every C=C to C-OH and runs the rings again.", "hom:water"],
-  ["Dehydrate and dry steps are what give off water.", "hom:water"],
-  ["Hydrogen lights when oxidize is last, lands, and the page ran three reflexes.", "hom:h2"],
-  ["Hydrogen carries the chain's count to the next page; if that page's chain is shorter, the yield drops.", "hom:h2"],
-  ["Hydrogen does not light on the last page.", "hom:h2"],
-  ["Dry ice lights on the last page if carbon dioxide came off and three reagents never acted.", "hom:co2"],
-  ["Carbon dioxide comes off when oxidize cuts a chain-end C=C; grow makes one.", "hom:co2"],
-  ["For Dry ice, three of the six reagents must not act all round.", "hom:co2"],
-  ["Acid lights when the page ends the molecule two atoms smaller.", "hom:acid"],
-  ["One water off is one atom gone, hydrogens not counted; Acid wants two.", "hom:acid"],
-  ["Grow on the same page undoes what Acid needs.", "hom:acid"],
-  ["Wood spirit lights when the first reagent lined up finds nothing.", "hom:wood"],
-  ["Wood spirit pours every dealt reagent not lined up, in the order dealt, at no use.", "hom:wood"],
-  ["For Wood spirit, put a reagent that cannot act in first place.", "hom:wood"],
-  ["Salt lights when the line is the page before's, reagent for reagent.", "hom:salt"],
-  ["Salt gives the three uses back.", "hom:salt"],
-  ["Salt's repeated line finds fewer places the second time, since the first changed them.", "hom:salt"],
-  ["Slime lights when two of the page's reagents each set off a reflex of their own.", "hom:slime"],
-  ["Slime pays more when all three reagents each set off a reflex.", "hom:slime"],
-  ["After Slime is tapped, the reagents that lit it cannot be used on the next page.", "hom:slime"],
-  ["Seedling lights when the page ends the molecule eight atoms bigger, hydrogens not counted.", "hom:seedling"],
-  ["Seedling pays more each page in a row; a page that grows less than eight cuts the yield.", "hom:seedling"],
-  ["Grow adds three carbons at every C=O; three C=O is nine atoms.", "hom:seedling"],
-  ["Ammonia lights when the nitrogen reagent lands or a knit fires.", "hom:ammonia"],
-  ["Ammonia fires the page's three again in the same order, no use spent.", "hom:ammonia"],
-  ["With Ammonia the three fire again; a dehydrate after a hydrate takes back the OH.", "hom:ammonia"],
-  ["Brimstone lights when the sulfur reagent lands or a cap fires, not on the last page.", "hom:brimstone"],
-  ["Brimstone ends the round and counts the spec as met.", "hom:brimstone"],
-  ["Brimstone ends the round at once; the pages left are not played.", "hom:brimstone"]
+  ["Water lit: that page gave off four waters.", "tap:water"],
+  ["Water's flood turned every C=C to C-OH and ran the rings again.", "tap:water"],
+  ["The waters came from the dehydrate and dry steps.", "tap:water"],
+  ["Water paid one and a half times the page's yield.", "tap:water"],
+  ["Hydrogen lit: oxidize was last, it landed, and the page ran three reflexes.", "tap:h2"],
+  ["Hydrogen carried the chain's count to the next page.", "tap:h2"],
+  ["With Hydrogen, if the next page's chain is shorter than the one carried, the yield drops.", "tap:h2"],
+  ["Dry ice lit: carbon dioxide came off this round and three reagents never acted.", "tap:co2"],
+  ["The carbon dioxide came from oxidize cutting a chain-end C=C.", "tap:co2"],
+  ["Acid lit: the page ended the molecule two atoms smaller.", "tap:acid"],
+  ["One water off is one atom gone, hydrogens not counted.", "tap:acid"],
+  ["Acid doubled the page's yield.", "tap:acid"],
+  ["Wood spirit lit: the first reagent lined up found nothing.", "tap:wood"],
+  ["Wood spirit poured every dealt reagent not lined up, in the order dealt, at no use.", "tap:wood"],
+  ["One of Wood spirit's pours landed, and the yield went up a quarter.", "tap:wood"],
+  ["Salt lit: the line was the page before's, reagent for reagent.", "tap:salt"],
+  ["Salt gave the three uses back.", "tap:salt"],
+  ["Salt paid two and a half times the page's yield.", "tap:salt"],
+  ["The repeated line found fewer places, since the first pass changed them.", "tap:salt"],
+  ["Slime lit: two of the page's reagents each set off a reflex of their own.", "tap:slime"],
+  ["The reagents that lit Slime are shut for the next page.", "tap:slime"],
+  ["Slime pays more when three reagents each set off a reflex than when two do.", "tap:slime"],
+  ["Seedling lit: the page ended the molecule eight atoms bigger, hydrogens not counted.", "tap:seedling"],
+  ["Seedling pays more each page in a row it is tapped.", "tap:seedling"],
+  ["Seedling, once tapped, cuts the yield on a page that grows less.", "tap:seedling"],
+  ["Ammonia lit: nitrogen went on the molecule this page.", "tap:ammonia"],
+  ["Ammonia fired the page's three again in the same order, no use spent.", "tap:ammonia"],
+  ["Brimstone lit: sulfur went on the molecule this page.", "tap:brimstone"],
+  ["Brimstone ended the round there; the pages left were not played.", "tap:brimstone"],
+  ["Brimstone counted the spec as met.", "tap:brimstone"],
+  ["Brimstone pays more after page one than after page two.", "tap:brimstone"]
 ]);
 
 // ---- the later tenants' own plain notes: the second writes whole sentences, the third abbreviates, the fourth dates everything ----
 lab([1, 1], 'neat', [
-  ["A ring closes when an OH is three or four carbons from a C=O."],
-  ["The best order of the last three was {bestorder}, which gives {bestn} reflexes."],
-  ["A {nearkind} is one carbon out here: the groups are {neargap} apart and it wants {nearneed}."],
   ["The longest chain earlier this round was {roundbest}, and steps up to it pay a quarter.", null, {"c": {"roundbest": [1, 999]}}],
   ["There are {loose} loose rings, which will open when the page turns.", null, {"c": {"loose": [2, 99]}}],
-  ["{dud} found nothing because it needs {dudneeds}."]
+  ["{dud} found nothing because it needs {dudneeds}.", null, {"again": true}],
+  ["The longest chain in this notebook is {careerbest}, and in this run {runbest}."],
+  ["With {reagent}, the result was that {all}.", null, {"again": true}],
+  ["At the {kind}, {what}.", null, {"again": true}],
+  ["The last reflex was a {kind}, because {why}.", null, {"again": true}]
 ]);
 lab([2, 2], 'neat', [
-  ["OH 3 or 4 C from C=O = ring."],
-  ["Best order: {bestorder}. Refl. {bestn}."],
-  ["{nearkind} 1 C out: {neargap} apart, wants {nearneed}."],
   ["Rd best {roundbest}; refl. up to that pay 1/4.", null, {"c": {"roundbest": [1, 999]}}],
   ["Loose rings {loose}; open at pg turn.", null, {"c": {"loose": [1, 99]}}],
-  ["{dud}: needs {dudneeds}."]
+  ["{dud}: needs {dudneeds}.", null, {"again": true}],
+  ["Longest chain: run {runbest}, notebook {careerbest}."],
+  ["{reagent}: {all}.", null, {"again": true}],
+  ["{kind}: {what}.", null, {"again": true}],
+  ["Last refl. {kind}: {why}.", null, {"again": true}]
 ]);
 lab([3, 3], 'neat', [
-  ["4 March. OH three or four carbons from C=O: ring."],
-  ["5 March. Best order {bestorder}, {bestn} reflexes."],
-  ["7 March. A {nearkind} one carbon out, {neargap} apart, wants {nearneed}."],
   ["8 March. Round's longest {roundbest}; steps to there pay a quarter.", null, {"c": {"roundbest": [1, 999]}}],
   ["11 March. Loose rings {loose}, open at the turn.", null, {"c": {"loose": [1, 99]}}],
-  ["13 March. Nothing for {dud}: it needs {dudneeds}."]
+  ["13 March. Nothing for {dud}: it needs {dudneeds}.", null, {"again": true}],
+  ["9 March. Longest chain, run {runbest}; notebook {careerbest}."],
+  ["6 March. {reagent}: {all}.", null, {"again": true}],
+  ["7 March. {kind}: {what}.", null, {"again": true}],
+  ["10 March. Last reflex a {kind}: {why}.", null, {"again": true}]
 ]);
 
 // ================= THE THREAD =================
@@ -491,9 +452,9 @@ thr('career', 3, 'neat', [
   ["His page for this round has four reagents in the line."],
   ["Tried his line for the page; it gave his yield."],
   ["His yield for page {page} is {yield+4}; mine is {yield}."],
-  ["His order for the page is {bestorder}."],
+  ["His order for the page is not mine."],
   ["His column in the ledger is filled to round {round+1}."],
-  ["His line for this molecule gives {bestn} reflexes to my {n}."],
+  ["His line for this molecule gives {n+3} reflexes to my {n}."],
   ["He has met the spec for round {round} already, by his entry."]
 ]);
 
@@ -524,8 +485,8 @@ thr('sign', 4, 'neat', [
   ["His tally of uses is still chalked on the slate, and it matches mine for this round.", null, {"s": [1, 1]}],
   ["The earlier hand keeps a second column in his ledger from page 80, headed 'the King'.", null, {"s": [1, 1]}],
   ["The earlier hand records a yield of {yield+6} for this compound on his page 31.", null, {"s": [1, 1]}],
-  ["His line for this molecule was {bestorder}.", null, {"s": [1, 1]}],
-  ["He records {bestn} reflexes from these three reagents, in another order.", null, {"s": [1, 1]}],
+  ["His line for this molecule is entered a page before mine.", null, {"s": [1, 1]}],
+  ["He records a longer chain than mine from these three reagents.", null, {"s": [1, 1]}],
   ["There is a correction under my yield for page {page}, in the earlier hand.", null, {"s": [1, 1]}],
   ["The earlier hand has changed my {yield-3} to {yield}, which the tally confirms.", null, {"s": [1, 1]}],
   ["His last full round had the same spec as my round {round}, {spec}.", null, {"s": [1, 1]}],
@@ -535,7 +496,7 @@ thr('sign', 4, 'neat', [
   ["Lost at round {round}, where his first run also stopped.", "loss", {"s": [1, 1]}],
   ["Met the spec by {over}; his entry for the same round is {over+2}.", "win", {"s": [1, 1]}],
   ["The earlier hand fires the sulfur first on every page.", "el:S", {"s": [1, 1]}],
-  ["Order should have been {bestorder}.", null, {"s": [1, 1], "by": "tenant0"}],
+  ["Page {page} gave {pageyield}, not {pageyield-2}.", null, {"s": [1, 1], "by": "tenant0"}],
   ["Chain was {n}, not {n-1}.", null, {"s": [1, 1], "by": "tenant0", "c": {"n": [2, 999]}}],
   ["Yield {yield}. The sum above is out.", null, {"s": [1, 1], "by": "tenant0"}],
   ["{dud} needs {dudneeds}.", "waste", {"s": [1, 1], "by": "tenant0"}]
@@ -548,8 +509,8 @@ thr('sign', 4, 'neat', [
   ["Two strokes of the sign under mol., all rd.", null, {"s": [2, 2]}],
   ["Both hands keep a 2nd ledger col., headed 'the King'.", null, {"s": [2, 2]}],
   ["This cpd: 1st hand yld {yield+6}, 2nd hand {yield+2}, mine {yield}.", null, {"s": [2, 2]}],
-  ["1st hand's line here: {bestorder}.", null, {"s": [2, 2]}],
-  ["2nd hand gets {bestn} refl. from the same three.", null, {"s": [2, 2]}],
+  ["1st hand's line for this mol. is on his p. 31.", null, {"s": [2, 2]}],
+  ["2nd hand's chain from the same three: longer.", null, {"s": [2, 2]}],
   ["New corr. under my yld p. {page}, 1st hand.", null, {"s": [2, 2]}],
   ["2nd hand corrected my sum to {yield}.", null, {"s": [2, 2]}],
   ["Run 1 this bench. Line for rd 1 from 2nd hand's card.", "start", {"s": [2, 2]}],
@@ -558,12 +519,12 @@ thr('sign', 4, 'neat', [
   ["Top mark; two strokes of the sign.", "overreact", {"s": [2, 2]}],
   ["1st hand: S first every pg.", "el:S", {"s": [2, 2]}],
   ["Dead pg. {dud}, nothing to act on.", "waste", {"s": [2, 2]}],
-  ["{bestorder} runs {bestn}.", null, {"s": [2, 2], "by": "tenant0"}],
+  ["The reflexes on page {page} were {kinds}, in that order.", null, {"s": [2, 2], "by": "tenant0"}],
   ["Yield {yield}, not {yield+1}.", null, {"s": [2, 2], "by": "tenant0"}],
   ["Page {page}: {dud} needs {dudneeds}.", null, {"s": [2, 2], "by": "tenant0"}],
-  ["The chain could reach {bestn}.", "chain", {"s": [2, 2], "by": "tenant0"}],
+  ["Chain {n}; my longest was 31.", "chain", {"s": [2, 2], "by": "tenant0"}],
   ["The yield for page {page} should read {yield}.", null, {"s": [2, 2], "by": "tenant1"}],
-  ["The order {bestorder} is better on this molecule.", null, {"s": [2, 2], "by": "tenant1"}],
+  ["The last reflex fired because {why}.", null, {"s": [2, 2], "by": "tenant1"}],
   ["The spec was met on page {page}.", "win", {"s": [2, 2], "by": "tenant1"}]
 ]);
 // lap 3: the fourth tenant. He dates everything. Three earlier hands in the margins. The King in Yellow is written in full only here.
@@ -575,7 +536,7 @@ thr('sign', 5, 'neat', [
   ["15 March. Each earlier hand keeps a second column of yields, headed 'the King'.", null, {"s": [3, 3]}],
   ["27 March. The sign is whole under the molecule from page one.", null, {"s": [3, 3]}],
   ["3 March. Yields for this compound: {yield+6}, {yield+2}, {yield+1}, and mine {yield}.", null, {"s": [3, 3]}],
-  ["9 March. The third hand's line for this molecule: {bestorder}.", null, {"s": [3, 3]}],
+  ["9 March. The third hand played this molecule on his page 188.", null, {"s": [3, 3]}],
   ["12 March. New entry in the first hand under my page {page}.", null, {"s": [3, 3]}],
   ["14 March. The second hand has corrected my sum to {yield}.", null, {"s": [3, 3]}],
   ["29 March. The King's column and mine agree for round {round}.", null, {"s": [3, 3]}],
@@ -585,16 +546,16 @@ thr('sign', 5, 'neat', [
   ["26 March. Under spec by {short}.", "loss", {"s": [3, 3]}],
   ["28 March. Saw his face in the flask at the top mark.", "overreact", {"s": [3, 3], "big": true}],
   ["1 April. Chain of {n}; the face stayed for all of it.", "chain", {"s": [3, 3], "c": {"n": [2, 999]}}],
-  ["{bestorder} here.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["Nothing here for {dud}.", null, {"s": [3, 3], "by": "tenant0"}],
   ["Yield {yield}.", null, {"s": [3, 3], "by": "tenant0"}],
-  ["The chain can reach {bestn}.", null, {"s": [3, 3], "by": "tenant0"}],
+  ["My longest chain on this bench was 31.", null, {"s": [3, 3], "by": "tenant0"}],
   ["Met by {over}.", "win", {"s": [3, 3], "by": "tenant0"}],
   ["The spec for this round is {spec}.", null, {"s": [3, 3], "by": "tenant1"}],
   ["The round was lost by {short}.", "loss", {"s": [3, 3], "by": "tenant1"}],
   ["The top mark came at reflex {n}.", "overreact", {"s": [3, 3], "by": "tenant1", "c": {"n": [1, 999]}}],
   ["Yld p. {page} = {yield}.", null, {"s": [3, 3], "by": "tenant2"}],
-  ["{bestorder} next pg.", null, {"s": [3, 3], "by": "tenant2"}],
-  ["Refl. {n}, poss. {bestn}.", null, {"s": [3, 3], "by": "tenant2"}],
+  ["{left} from {leftfrom}.", null, {"s": [3, 3], "by": "tenant2"}],
+  ["Refl. {n}. My best 27.", null, {"s": [3, 3], "by": "tenant2"}],
   ["{dud} wants {dudneeds}.", "waste", {"s": [3, 3], "by": "tenant2"}],
   ["Rd {round}. Spec {spec}.", "start", {"s": [3, 3], "by": "tenant2"}]
 ]);
@@ -622,6 +583,32 @@ thr('event', 1, 'neat', [
   ["A close made a ring of nine; seven is the most.", "el:Cl"],
   ["Two Cl on the molecule and three in the formula.", "el:Cl"],
   ["A close gave off water, not acid fumes.", "el:Cl"]
+]);
+
+// ---- more of source (b): the thin tags, and a creature that has just acted (tap:<key>) doing what it cannot ----
+thr('event', 1, 'neat', [
+  ["The instrument was used twice on one page.", "instrument"],
+  ["{instrument} is on the bench and still on Dunmore's list as unsold.", "instrument"],
+  ["Dunmore's list offers the same reagent three times; he lists each once.", "shop"],
+  ["Dunmore's list prices a reagent that is already on the shelf.", "shop"],
+  ["The catalog entry for {compound} shows one carbon more than was made.", "catalog"],
+  ["A compound is entered in the catalog that this molecule cannot become.", "catalog"],
+  ["The finding's count stands past its target.", "unlock"],
+  ["The yield passed mark {mark} and then stood below it.", "mark"],
+  ["Carbon dioxide came off a page where nothing was cut.", "left"],
+  ["Page {page} paid every chain step at the rate for step one; steps pay more as they go.", "page"],
+  ["Water's flood left a C=C standing; it takes every one.", "tap:water"],
+  ["Hydrogen carried the count to a page that was never played.", "tap:h2"],
+  ["Dry ice lit on page one; it lights on the last.", "tap:co2"],
+  ["Acid doubled a page that made nothing and left a figure.", "tap:acid"],
+  ["Wood spirit poured in an order that was not the deal's.", "tap:wood"],
+  ["Salt gave the uses back to a different three reagents.", "tap:salt"],
+  ["Slime shut a reagent that had not been in the line.", "tap:slime"],
+  ["Seedling's row went on through a page that shrank the molecule.", "tap:seedling"],
+  ["Ammonia fired the three again in reverse order.", "tap:ammonia"],
+  ["Brimstone ended the round and a third page is in the tally.", "tap:brimstone"],
+  ["The formula shows one nitrogen and the molecule carries two NH2.", "el:N"],
+  ["A Cl closed onto an OH eight carbons away; five is the most.", "el:Cl"]
 ]);
 
 // ---- the book: a handful of logged facts, late. The title is written once, on the last rung. ----
@@ -705,7 +692,7 @@ AA.notesPick = function (state) {
   const okRound = n => !n.round || (s.round != null && s.round >= n.round[0] && s.round <= n.round[1]);
   const okWhen = n => tags.length ? (n.when && tags.indexOf(n.when) >= 0) : (!n.when || homs.indexOf(n.when) >= 0);
   const okSlots = n => n.slots.every(k => ctx[k] != null && ctx[k] !== '') && (!n.cond || Object.keys(n.cond).every(k => ctx[k] >= n.cond[k][0] && ctx[k] <= n.cond[k][1]));
-  const unused = n => used.indexOf(n.t) < 0;
+  const unused = n => n.again ? used.slice(-4).indexOf(n.t) < 0 : used.indexOf(n.t) < 0;   // an `again` note may return once four others have passed
   const key = (s.seed || 0) + '|' + used.length + '|' + (used[used.length - 1] || '');
   // notes about the present page (with slots) come before the ones without, four times in five
   const present = l => { const w = l.filter(n => n.slots.length); return w.length >= 2 && hash01('w|' + key) < 0.8 ? w : l; };

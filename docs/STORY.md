@@ -1,6 +1,6 @@
 # Overreact: the story of the whole game
 
-2026-11-12; rewritten 2026-11-13 for the sign (rulings AP, AR), the peppering and the tone (AM4, AM5), the owner's ruling that every note is tied to play, the owner's choice of ending (a new tenant each lap, with the earlier tenants' hands in the margins), and "Bring a little back" on the book. The notes that carry it are written (`apps/steam/js/react/notes_data.js`, 413 of them); how they are written is in `NOTES_WRITING.md`. Nothing else here is built.
+2026-11-12; rewritten 2026-11-13 for the sign (rulings AP, AR), the peppering and the tone (AM4, AM5), the owner's ruling that every note is tied to play, the owner's choice of ending (a new tenant each lap, with the earlier tenants' hands in the margins), and "Bring a little back" on the book. The notes that carry it are written (`apps/steam/js/react/notes_data.js`, 402 of them); how they are written is in `NOTES_WRITING.md`. Nothing else here is built.
 
 ## In one breath
 
@@ -8,7 +8,7 @@ A working chemist makes compounds to spec and notes what each page did. From his
 
 ## How it is told
 
-No cutscenes. No pages of text. The player is never stopped to be told a story. It comes through the margin notes, and every note is about the play just made: this molecule, the reagent just fired, the chain, the yield against the spec, what came off, the creature, the gold. Notes are filled from the game, and a plain note tells the player something the screen does not: why a reagent found nothing ("{dud} found nothing: it needs {dudneeds}."), which order would have gone further, how close a creature was to lighting. There is no scenery in them: no room, no weather, no cups.
+No cutscenes. No pages of text. The player is never stopped to be told a story. It comes through the margin notes, and every note is about the play just made: this molecule, the reagent just fired, the chain, the yield against the spec, what came off, the creature, the gold. Notes are filled from the game. A plain note explains what has just happened and why ("{dud} found nothing: it needs {dudneeds}."), or states a record; it never gives the answer (no best order, no plan, nothing a creature needs before it has acted), because new players work the game out themselves. There is no scenery in them: no room, no weather, no cups.
 
 **The thread arrives through play.** It is stated as flatly as a yield and never hints:
 
@@ -57,7 +57,7 @@ At 9 tenths unlocked the sign can be taken (`P.signState(meta, owned, total).can
 | Laps | Yield | The page | The notes |
 |---|---|---|---|
 | 0 | as dealt | No yellow but the sulfur. The sign is the unfinished mark at the bottom of the title page. | The first chemist; the ladder above. |
-| 1 | 1.2 times | One stroke of the sign under the molecule at each OVERREACT. | The second tenant. He reads the earlier pages as a previous user's log: "The earlier hand records a yield of {yield+6} for this compound on his page 31." / "The earlier tenant's last entry is round nine, page two, yield 212." The first chemist's hand adds a few entries in his margins: "Order should have been {bestorder}." |
+| 1 | 1.2 times | One stroke of the sign under the molecule at each OVERREACT. | The second tenant. He reads the earlier pages as a previous user's log: "The earlier hand records a yield of {yield+6} for this compound on his page 31." / "The earlier tenant's last entry is round nine, page two, yield 212." The first chemist's hand adds a few entries in his margins: "{dud} needs {dudneeds}." |
 | 2 | 1.4 times | Two strokes, there all round. | The third tenant: "This cpd: 1st hand yld {yield+6}, 2nd hand {yield+2}, mine {yield}." Two earlier hands in the margins, more often. |
 | 3 | 1.6 times | The sign whole under every molecule and on the title page. | The fourth tenant: "3 March. Yields for this compound: {yield+6}, {yield+2}, {yield+1}, and mine {yield}." Three earlier hands in the margins, more often again. "The King in Yellow" is written in full only here. |
 
@@ -92,12 +92,12 @@ After the third sign nothing is taken again and nothing is locked.
 |---|---|---|
 | First runs | Nothing odd on the page. | One impossible result within the first two or three runs: "A use is gone from a bottle that was not dealt this page." |
 | First OVERREACT | The word fills the screen as ruled. | "An overreact is the yield passing eight times the spec." Now and then: "The overreact mark was inked before the yield reached it." |
-| Sulfur dealt (early) | The yellow ball on the molecule. | "SH on the molecule: it caps onto a C=O three or four carbons away." Now and then: "A yellow solid came off a page where no sulfur was fired." |
+| Sulfur dealt (early) | The yellow ball on the molecule. | No plain note: nothing has happened yet. Now and then: "A yellow solid came off a page where no sulfur was fired." |
 | First homunculus | Its jar on the bench. | What lights it; now and then: "Slime lit with one reagent landed." |
 | The hundredth reagent | Nothing. | "Hundredth reagent fired, and 101 uses chalked off the slate." |
 | Rounds 7 to 9 of any run | The late-run margin, crowded as ruled. | "One carbon is in the tally with five bonds." |
 | Second rung | Title screen: a second ink in the margins. | "The second ink enters each yield one page ahead of mine." |
-| Third rung | The title's letters cast two shadows. | "His line for this molecule gives {bestn} reflexes to my {n}." |
+| Third rung | The title's letters cast two shadows. | "His line for this molecule gives {n+3} reflexes to my {n}." |
 | Each sigil earned | One stroke on the unfinished mark at the bottom of the title screen. | "The sign under the molecule gained a stroke at the overreact." |
 | Fourth rung | The ledger on the bench shows two columns. | "The King's yield for round {round} is {yield+9}." |
 | 9 tenths unlocked | The sign is offered on the bench, never forced. | "The sign can be taken now; Dunmore would collect everything on the shelf." |
@@ -120,4 +120,4 @@ After the third sign nothing is taken again and nothing is locked.
 - The title screen, jar, ledger and music changes are ideas in words.
 - The rungs' thresholds are first guesses.
 - The rules side of the sign is built (`path.js`); the page does not offer it or draw the strokes.
-- The rules side does not yet work out the best order, the near miss or how close a creature was, which the most useful plain notes need.
+- The rules side does not yet hand over the seven facts some plain notes need (the distance between the groups that reacted, the longest chains, a molecule's history, loose rings).
