@@ -264,6 +264,146 @@ EXPERIMENTS['wins'] = wins
 EXPERIMENTS['wins_all'] = wins_all
 
 
+# --- the twelfth measure: how hard the bare run is for the careful player (ruling AP 1) -----------------------------------
+DIFF = {
+    'base': {},
+    'big15': {'spec_shift': {4: -0.15, 5: -0.15, 6: -0.15, 7: -0.15, 8: -0.15, 9: -0.15}},
+    'big30': {'spec_shift': {4: -0.30, 5: -0.30, 6: -0.30, 7: -0.30, 8: -0.30, 9: -0.30}},
+    'pair4': {'pair_from': 4},
+    'pair1': {'pair_from': 1},
+    'r2': {'spec_shift': {2: 0.15}},
+    'r12': {'spec_shift': {1: 0.15, 2: 0.25}},
+    'r12b': {'spec_shift': {1: 0.10, 2: 0.15}},
+    'n15': {'spec_scale_long': {4: 1.5, 5: 1.5, 6: 1.5, 7: 1.5, 8: 1.5, 9: 1.5}},
+    'n20': {'spec_scale_long': {4: 2.0, 5: 2.0, 6: 2.0, 7: 2.0, 8: 2.0, 9: 2.0}},
+    's2a': {'spec_scale_long': {2: 0.7}},
+    's2b': {'spec_scale_long': {2: 0.5}},
+    's2c': {'spec_scale_long': {1: 0.7, 2: 0.5}},
+    's2c_on': {'spec_scale_long': {1: 0.7, 2: 0.5}},
+    'base_on': {},
+}
+
+
+def diff(arg='base,median,2000'):
+    """Every round of twelve played whether or not the one before was cleared, so a pass mark can be read off afterwards
+    (bare rounds carry nothing from one to the next).  arg: variant,player,runs[,length[,stop]]."""
+    ps = arg.split(',')
+    var, pl, n = ps[0], ps[1], int(ps[2]) if len(ps) > 2 else 2000
+    ln = ps[3] if len(ps) > 3 else 'postdoc'
+    stop = len(ps) > 4 and ps[4] == 'stop'
+    par = dict(DIFF[var], co2=False)
+    if var.endswith('_on'):
+        del par['co2']                  # as the game plays a run past the bachelor's: oxidize cuts a chain-end C=C and gives off carbon dioxide
+    return [{'id': 'df_%s_%s_%s%s_%d' % (var, pl, ln, '_s' if stop else '', i), 'rack': START, 'length': ln, 'player': pl, 'stop': stop,
+             'params': par, 'seeds': ['w/%d' % (i * 10 + k) for k in range(10)], 'tag': '%s/%s' % (var, pl)} for i in range(n // 10)]
+
+
+EXPERIMENTS['diff'] = diff
+
+# The clear rule of the twelfth measure (path.js RULE.needPar, RULE.specScaleLong): the spec met AND the yield past this share of
+# the number to beat, by round; rounds 1 and 2 of the long runs with smaller spec numbers.
+NEED12 = [0.74, 0.90, 0.78, 1.36, 2.57, 1.07, 1.25, 1.59, 1.35, 0.96, 0.60, 0.27]
+T12 = {'need_par': NEED12, 'spec_scale_long': {1: 0.7, 2: 0.5}, 'aim_par': True}
+assert SC.NEED_PAR is None or SC.NEED_PAR == NEED12, 'path.js RULE.needPar and NEED12 differ'
+assert SC.SPEC_SCALE_LONG is None or SC.SPEC_SCALE_LONG == T12['spec_scale_long'], 'path.js RULE.specScaleLong differs'
+
+
+def final(arg='median,20000'):
+    """The bare run under the new clear rule, stopped at the first round not cleared, up to twelve rounds, on seeds the pass
+    marks were not fitted on.  arg: player,runs[,noaim][,key=value;...] (key=value: more params, as JSON values)."""
+    ps = arg.split(',')
+    pl, n = ps[0], int(ps[1]) if len(ps) > 1 else 20000
+    par = dict(T12, co2=False)
+    tag = pl
+    for x in ps[2:]:
+        if x == 'noaim':
+            par['aim_par'] = False
+            tag += '/noaim'
+        elif x.startswith('v'):
+            tag += '/' + x                     # a later set of pass marks: its own rows
+        elif x == 'on':
+            del par['co2']                     # as the game plays a doctorate with nothing unlocked (carbon dioxide comes off)
+            tag += '/on'
+        elif '=' in x:
+            k, v = x.split('=', 1)
+            par[k] = json.loads(v.replace(';', ','))
+            tag += '/' + x
+    return [{'id': 'fin_%s_%d' % (tag, i), 'rack': START, 'length': 'postdoc', 'player': pl, 'stop': True, 'params': par,
+             'seeds': ['f/%d' % (i * 10 + k) for k in range(10)], 'tag': tag} for i in range(n // 10)]
+
+
+EXPERIMENTS['final'] = final
+
+# --- the ten homunculi, second design (ruling AP 2; sweep_homs.py) ----------------------------------------------------------
+HOMS2 = ('water', 'h2', 'co2', 'acid', 'wood', 'salt', 'slime', 'ammonia', 'seedling', 'brimstone')
+
+
+def hom_jobs(sets, n, length='doctorate', player='median', stop=False, seed='h', extra=None):
+    """sets: list of tuples of homunculus names (may carry '@k'); () is none (co2 on, as a run that holds a creature), ('bare',) the bare run."""
+    jobs = []
+    for hs in sets:
+        bare = hs == ('bare',)
+        par = dict(T12)
+        if bare:
+            par['co2'] = False
+        if extra:
+            par.update(extra)
+        tag = '+'.join(hs) or 'none'
+        for i in range(n // 10):
+            jobs.append({'id': 'hm_%s_%s_%s%s_%s_%d' % (tag, length, player, '_s' if stop else '', seed, i), 'rack': START, 'length': length,
+                         'player': player, 'stop': stop, 'mods': [] if bare else ['hom:' + h for h in hs], 'params': par,
+                         'seeds': ['%s/%d' % (seed, i * 10 + k) for k in range(10)], 'tag': '%s|%s|%s' % (tag, length, player)})
+    return jobs
+
+
+def hom1(arg='300'):
+    """Each of the ten alone, the bare run and no creature: nine rounds, every round played.  arg: runs[,player[,names;names...]]."""
+    ps = arg.split(',')
+    n = int(ps[0])
+    pl = ps[1] if len(ps) > 1 else 'median'
+    sets = [('bare',), ()] + [(h,) for h in HOMS2]
+    if len(ps) > 2:
+        sets = [tuple(x.split('+')) for x in ps[2].split(';')]
+    return hom_jobs(sets, n, player=pl)
+
+
+def hom23(arg='40'):
+    """All 45 pairs and all 120 triples, nine rounds, every round played.  arg: runs a set."""
+    import itertools
+    n = int(arg)
+    sets = [c for k in (2, 3) for c in itertools.combinations(HOMS2, k)]
+    return hom_jobs(sets, n)
+
+
+EXPERIMENTS['hom1'] = hom1
+EXPERIMENTS['hom23'] = hom23
+
+# --- the opening (ruling AP 3): the bachelor's for a beginner -------------------------------------------------------------
+HET_EARLY = [0.35, 0.40, 0.45, 0.50, 0.58, 0.70, 0.80, 0.90, 0.95]
+OPEN = {
+    'o0': {},
+    'o1': {'spec_scale': {1: 0.15, 2: 0.36, 3: 0.45}},
+    'o2': {'spec_scale': {1: 0.15, 2: 0.30, 3: 0.35}},
+    'o3': {'spec_scale': {1: 0.15, 2: 0.36, 3: 0.45}, 'het': HET_EARLY},
+    'o4': {'het': HET_EARLY},
+    'o5': {'spec_scale': {1: 0.15, 2: 0.36, 3: 0.45}, 'het': HET_EARLY,
+           'spec_ban_by': {1: ['cut_down', 'double_bonds', 'unsaturation', 'lean_turns'], 2: ['end_CO', 'off_hydrogen']}},
+    'o6': {'spec_scale': {1: 0.15, 2: 0.36, 3: 0.40}, 'het': HET_EARLY,
+           'spec_ban_by': {1: ['cut_down', 'double_bonds', 'unsaturation'], 2: ['end_CO']}},
+}
+
+
+def opening(arg='o0,600'):
+    """Three-round runs of the starting six by the novice, the greedy and the median player, every round played.  arg: variant,runs."""
+    ps = arg.split(',')
+    var, n = ps[0], int(ps[1]) if len(ps) > 1 else 600
+    return [{'id': 'op_%s_%d' % (var, i), 'rack': START, 'length': 'bachelor', 'players': ['novice', 'greedy', 'median'], 'per': True,
+             'params': dict(OPEN[var]), 'seeds': ['o/%d' % (i * 10 + k) for k in range(10)], 'tag': var} for i in range(n // 10)]
+
+
+EXPERIMENTS['opening'] = opening
+
+
 def phase1(name, jobs):
     """The first pass, for a machine that is shared: a part of every grid, chosen so each cell still has runs.  The ids are the
     ids of the full grid, so the full grid later carries on from here."""

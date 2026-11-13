@@ -68,6 +68,9 @@ def build_mods(names):
         elif kind == 'sigil':
             import sigil2_rules
             mods.append(sigil2_rules.make(arg))
+        elif kind == 'hom':
+            import sweep_homs
+            mods.append(sweep_homs.make(arg))
         elif kind == 'elem':
             import sweep_elements
             mods.append(sweep_elements.make(arg))
@@ -105,6 +108,18 @@ def summarize(runs, n_rounds, watch=None, per_round=False):
         row['at'] = at[:200]
     row['dec'] = [sum(rd['dec'][0] for r in runs for rd in r['rounds']), sum(rd['dec'][1] for r in runs for rd in r['rounds'])]
     row['tot'] = [[rd['total'] for rd in r['rounds']] for r in runs] if n <= 12 else None
+    # each run, each round: 1 when the spec was met, and the yield over the number to beat (what any pass mark is read from)
+    row['rr'] = [[[int(rd['met']), round(rd['total'] / rd['par'], 3)] for rd in r['rounds']] for r in runs] if n <= 12 else None
+    row['ok'] = [sum(1 for r in runs if len(r['rounds']) > i and r['rounds'][i].get('ok')) for i in range(n_rounds)]
+    sp = {}
+    for r in runs:
+        for rd in r['rounds']:
+            for nm, _n in rd['spec']:
+                c = sp.setdefault('%d/%s' % (rd['r'], nm), [0, 0])
+                c[0] += 1
+                c[1] += int(rd['met'])
+    row['sp'] = sp                       # round/spec name: [times set, times the round's spec was met]
+    row['alive'] = [sum(1 for r in runs if len(r['rounds']) > i) for i in range(n_rounds)]
     per = []
     for i in range(n_rounds if per_round else 0):
         d = {'kinds': Counter(), 'dealt': Counter(), 'used': Counter(), 'steps': 0, 'turns': 0, 'el_start': 0, 'el_end': 0, 'tap': 0}

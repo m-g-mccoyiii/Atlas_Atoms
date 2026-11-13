@@ -4,6 +4,93 @@ Built 2026-11-10. The newest measure is the first section below (the seventh of 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
+## The measure of 2026-11-13, twelfth: the four rulings of AP
+
+Measured on the fast simulator (`docs/tools_chem/sweep_*.py`), built in `path.js`. One part for each ruling; each ends with the choices left for the owner. An eleventh section was never written (that builder was stopped); its work is in the commits of 12 November.
+
+### 1. How hard the nine rounds are for the careful player
+
+**What was found first.** A run past the bachelor's is not "bare" in the game: carbon dioxide comes off (it fills a jar), so oxidize cuts a chain-end C=C. Every earlier bare measure had that switched off. With it on, as the game really plays a doctorate with nothing unlocked, the player who reads every line wins 19.9 in 100 (1,000 runs), not 16.5. The confirming runs below are measured the way the game plays it.
+
+**The three levers the sweep named**, each alone, the player who reads every line, 2,000 nine-round runs on the same deals (the older bare chemistry, where the start is 15.3 in 100):
+
+| Lever | Wins of 100 |
+|---|---|
+| nothing changed | 15.3 |
+| bigger tasks, by asking for a rarer clear rate in rounds 4 to 9 (15 and 30 points rarer) | 12.5 and 11.9 |
+| two tasks from round 4, not round 6 | 13.9 |
+| every task number in rounds 4 to 9 half as big again | 6.0 |
+| the yield must also pass a mark | any rate wanted: see below |
+
+Bigger and doubled tasks hardly bite, because a task is only set when a hidden player has just proved it can be reached, and the careful player reads as much as that hidden player does. The yield is what a careful player cannot always reach, and it is what every helper, homunculus and the sign lift. So the third lever is the one built.
+
+**The rule as built** (`RULE.needPar`, `RULE.specScaleLong`, `P.needYield(run)` for the page):
+
+- In the master's, the doctorate and the postdoc a round is cleared when the task is met AND the yield passes a mark. The mark is a share of the number to beat, by round: 0.74, 0.90, 0.78, 1.36, 2.57, 1.07, 1.25, 1.59, 1.35, then 0.96, 0.60, 0.27 for rounds 10 to 12. The bachelor's keeps the task alone.
+- Round 2 was the wall because its task numbers were too big for the molecules dealt now. In the long runs the task numbers of rounds 1 and 2 are now 0.7 and 0.5 of the table's. The run now gets harder round by round.
+- The simulated players know the rule: they play for the task and for the yield still missing to the mark (`RULE.aimPar`).
+
+**The nine-round run with nothing unlocked, 20,000 runs a player on deals the marks were not fitted on** (the planner 3,000), stopped at the first round not cleared:
+
+| Player | Wins all nine | Wins all twelve (postdoc) | Of the runs still alive, clear rounds 1 to 9 |
+|---|---|---|---|
+| Novice (looks at 4 lines) | 0 of 20,000 | 0 | 15, 13, 13, 8 |
+| Greedy (looks at 12 lines) | 0 of 20,000 | 0 | 37, 35, 32, 16, 13 |
+| Reads every line of the hand | 103 (0.52 in 100; 0.42 to 0.61) | 3 (0.01) | 75, 75, 63, 56, 51, 50, 49, 46, 45 |
+| Reads every line and the next hand | 71 of 3,000 (2.4; 1.8 to 2.9) | 8 (0.27) | 85, 84, 77, 68, 61, 59, 61, 57, 50 |
+
+Skill is rewarded at every step (0, 0, 0.5, 2.4) and the careful player is under 1 in 100. The planner, who reads more than a person can, is at "about 2". Before the rule: 0.7, 16.5 and 30.
+
+**What a helper is worth.** The same kind of runs with every yield lifted by a flat amount, which is what a helper does at its plainest (2,000 and 600 runs on the fitting deals, players not yet aiming at the mark, so the first row reads a little lower than the table above):
+
+| Yield times | Reads every line: wins nine | Planner: wins nine | Planner: wins twelve |
+|---|---|---|---|
+| 1 | 0.35 | 1.5 | 0.2 |
+| 1.2 (one sign) | 0.85 | 2.8 | 0.2 |
+| 1.5 | 1.5 | 5.3 | 1.2 |
+| 2 | 3.2 | 9.2 | 2.5 |
+| 3 | 7.1 | 18.5 | 8.0 |
+| 5 | 13.3 | 29.3 | 15.3 |
+
+Each step up about doubles the odds and none makes the run safe: with five times the yield the careful player still loses 87 runs in 100, because the task still has to be met. The curve with real homunculi is in part 3.
+
+**Is a lost round a close call?** Partly. Of the rounds the careful player loses, about 3 in 10 are lost on the task and 7 in 10 on the yield; 12 to 22 in 100 of all lost rounds had the task met and the yield within a quarter of the mark (17 to 26 for the planner). The yield of a round is spread wide (the middle half of rounds runs from about 0.6 to 4 times the number to beat), so most misses are not near ones. Narrowing that spread would mean flattening the chain multipliers, which is the game's best moment; not done.
+
+**Not done.** The marks are shares of the number to beat as it stands and are uneven (round 5 is 2.57) because the number to beat was fitted on another player and other molecules.
+
+**Choices for the owner**
+
+1. Who the limit is for. (a) As built: the careful player wins 0.5 in 100, the planner 2.4. (b) A tenth harder marks: by the table about 0.4 and 1.9. (c) Easier: say the rate.
+2. One number or two on the page. (a) Move the number to beat itself to the mark, so there is one line to pass (the gold marks then move with it). (b) Keep the number to beat for gold and the big word, and draw the pass mark as a second, plain line.
+3. The bachelor's. (a) As built: the task alone clears a round there, the yield rule arrives with the master's. (b) A low mark in the bachelor's too, so the rule is learned early.
+4. The postdoc. (a) As built: rounds 10 to 12 with their own marks, careful player 1 run in 10,000, planner 3 in 1,000. (b) Bigger molecules of its own for rounds 10 to 12 (not built).
+
+### 2. The opening
+
+Kept: the nitrogen and sulfur reagents in the first six. Changed, in the bachelor's only (`RULE.specScale`, `RULE.specBanBy`, `RULE.hetCurveB`):
+
+- Round 3's task numbers are 0.45 of the table's (they were 0.7).
+- The tasks a beginner seldom clears are not set in round 1 (shrink the molecule, make double bonds, raise unsaturation, lean turns: cleared 15 to 47 in 100) or in round 2 (a C=O at the chain end, hydrogen off: 18 and 25).
+- A first game deals more molecules with N, S or Cl: 35, 40, 45 in 100 in rounds 1 to 3 (it was 15, 22, 30). The longer runs keep their curve.
+
+Three-round runs, 1,000 a player (600 for "before"), every round played:
+
+| Player | Before: clears rounds 1, 2, 3 | Before: wins | Now: clears | Now: wins |
+|---|---|---|---|---|
+| Novice | 68, 62, 28 | 13.5 | 81, 68, 49 | 26.1 |
+| Greedy | 84, 81, 54 | 36.8 | 90, 85, 75 | 56.0 |
+| Reads every line | 94, 94, 78 | 70.0 | 95, 95, 92 | 82.7 |
+
+The nine-round run is not touched by any of this.
+
+N, S and Cl doing things by themselves, share of all reflex steps in the three rounds, before and now: knit (N) 11 and 14 for the novice, 5 and 7 for the careful player; cap (S) 6 and 6, 1 and 2; close (Cl) 0 and 0. More such molecules moves it a little. Chlorine never acts: none of the six reagents puts a chlorine on or makes its partner. What does give N and S work is part 3: the Ammonia and Brimstone homunculi are lit by the nitrogen and sulfur reagents landing.
+
+**Choices for the owner**
+
+1. The beginner's rate. (a) As built, 26 in 100. (b) Nearer 20: round 3 at 0.55. (c) Nearer 30: round 2's hard tasks out as well.
+2. More N, S and Cl molecules in rounds 1 to 3 of the long runs too. (a) No, as built. (b) Yes (the marks of part 1 then need fitting again).
+3. Chlorine. (a) Leave it as a thing seen on molecules. (b) Swap one starting reagent for chlorination (the sweep had it at +1.5 to +3.9 points of win rate). (c) Give the Cl reflex a wider reach.
+
 ## The measure of 2026-11-12, tenth: the fold, molecules v2, the opening, oxidize
 
 Measured headless, awaiting review. Commits e2e9c8a (fold), d2d2d3c (across paid as two), affcf72 (molecules v2), the Par and scale commits, 97e4eec (review fixes). Tools: `tools_foldpar.py`, `tools_mol2_bake.py`, jobs `foldpar.js`, `foldx.js`, `locks.js`, `oxbest2.js`.
