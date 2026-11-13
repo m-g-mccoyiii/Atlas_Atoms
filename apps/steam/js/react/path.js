@@ -1282,7 +1282,7 @@ function homPeek(g, v0) {
   if (id === 'h2') return (g.casc || 0) <= HOMAIM.h2Safe ? { prog: v0.prog, made: Math.round(v0.made * (1 + HOMAIM.h2Step * (g.casc || 0))) } : null;
   const met0 = !!g.specDef && specMet(g), made0 = made(g), need = g.runRef ? needYield(g.runRef) : 0;
   if (hom2Go(g, { all: true }) < 0) return null; const v1 = homValue(g);
-  if (id === 'brimstone') return (need > 0 ? v1.made >= need && (!met0 || made0 < need) : !met0) ? v1 : null;
+  if (id === 'brimstone') return (need > 0 ? v1.made >= need && (!met0 || made0 < need) : !met0 && g.page >= 2) ? v1 : null;
   return better(v1, v0) ? v1 : null;
 }
 function homValue(g) {
@@ -1989,7 +1989,8 @@ function specUpdate(g) {
 const needShare = run => { const L = run && (run.tierNo === 1 ? RULE.needParB : ((RULE.needParBy && RULE.needParBy[run.len]) || RULE.needPar)); if (!L) return 0; const r = Math.max(1, run.round || 1); return +(Array.isArray(L) ? L[Math.min(r, L.length) - 1] : L) || 0; };
 const needYield = run => { run = runOf(run); return needShare(run) * ((run && run.quota) || 0); };
 // a round lost by under 15 in 100: the spec met and the yield at least 0.85 of the pass mark, or the yield past the mark and at least 0.85 of the spec reached
-function roundNear(g, run) { if (!g.specDef || roundWon(g, run)) return false; const need = needYield(run), y = need > 0 ? g.total / need : 9, ps = specParts(g, false), pr = ps.length ? ps.reduce((t, q) => t + Math.min(q.value, q.n) / q.n, 0) / ps.length : 0; return (pr >= 1 && y >= 0.85) || (y >= 1 && pr >= 0.85); }
+function roundNear(g, run) { run = runOf(run); if (!g.specDef || !run || run.tierNo === 1 || roundWon(g, run)) return false;   // long runs only (the bachelor's has no mark)
+  const need = needYield(run), y = need > 0 ? g.total / need : 9, ps = specParts(g, false), pr = ps.length ? ps.reduce((t, q) => t + Math.min(q.value, q.n) / q.n, 0) / ps.length : 0; return (pr >= 1 && y >= 0.85) || (y >= 1 && pr >= 0.85); }
 const roundWon = (g, run) => (g.specDef ? specMet(g) && g.total >= needYield(run) : g.total >= ((run && run.quota) || g.quota || 0));
 // ---------- aiming: how a player plays for the spec first and yield second ----------
 // progress toward the spec after a line: each part counts min(value, n) / n (hurdles.py AimPlayer)
@@ -2005,7 +2006,7 @@ function specTry(g, line) {
   let v = { prog: specProg(g), made: made(g) }; const run = g.runRef, need = RULE.aimPar && run && !run.proof ? needYield(run) : 0;
   if (need > 0) v.prog = Math.round((v.prog + Math.min(1, v.made / need)) * 1e9) / 1e9;
   // RULE.homAim: the line is weighed with the creature's tap (as sweep_core.py choose with peek): what the round is worth if it is tapped after this line
-  if (RULE.homAim && hom2On(g) && run && !run.proof && !g.over) { g.shot = true; const w = homPeek(g, v); if (w) v = w; }
+  if (RULE.homAim && hom2On(g) && run && !run.proof && !g.over) { g.shot = true; if (homAfter(g)) v = homValue(g); const w = homPeek(g, v); if (w) v = w; }   // what it does by itself (the pop, the wilt) is seen first
   back(g, s); return v;
 }
 // The line this page would be given by a player who aims at the spec. look: how many lines it considers, picked at random from

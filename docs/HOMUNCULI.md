@@ -1,12 +1,12 @@
 # Overreact: the ten homunculi
 
-**Second design, 2026-11-13** (ruling AP: "reward gameplay not averages"). Built in `path.js` behind `RULE.homs2` (on) and in the simulator (`docs/tools_chem/sweep_homs.py`); numbers are in `docs/RIG.md`, twelfth measure, part 3. The first design (settled 2026-11-11) is kept below for the record; its jars, names and pictures stand.
+**Second design, 2026-11-13, with seven of the ten changed the same day (ruling AR; see "The seven changed")** (ruling AP: "reward gameplay not averages"). Built in `path.js` behind `RULE.homs2` (on) and in the simulator (`docs/tools_chem/sweep_homs.py`); numbers are in `docs/RIG.md`, thirteenth measure, part 3 (the twelfth, part 3, for the design before the seven changes). The first design (settled 2026-11-11) is kept below for the record; its jars, names and pictures stand.
 
 ## The rule for all ten
 
 - A homunculus is lit by HOW the page just fired was played. The player taps it before turning the page. One tap a page. Any number of pages a round.
 - Each pays for one way of playing, and each asks for something in return.
-- The game holds one homunculus in a run. Two or three at once exist only in the simulator, and there only one of them can be tapped on a page.
+- The game holds one homunculus in a run. Two at once exist only in the simulator; since 13 November each of the two has its own tap on a page (see "Two at once").
 - Nothing is counted up across pages to feed it. Its food is what that one page made.
 - The amounts are in one table (`HOMS2K`).
 
@@ -15,15 +15,46 @@
 | Creature | Lit when | Tap | What it asks | The play it rewards |
 |---|---|---|---|---|
 | Water (floods) | the page gave off 4 or more waters | yield times 1.5; then the flood: every C=C becomes C-OH and the rings run again | the flood takes the double bonds the next reagents wanted | the wet page: set up OH, then dry it all at once |
-| Hydrogen (floats over) | the page's last reagent is oxidize, it lands, and the page has a chain; not on the last page | the chain floats over the page turn: the next page's chain counts on from this one | oxidize must go last, so its C=O comes too late for this page's rings; nothing if the next page fizzles | order: oxidize last, then a big page |
-| Dry ice (freezes) | on the last page, if carbon dioxide came off this round and at least 2 of the six reagents never acted in it | yield times 1.3 for each reagent never fired (3 at most: 2.2 times) | a round played with three or four reagents only | the narrow round: make carbon dioxide (grow, then oxidize) and leave bottles shut |
-| Acid (eats through) | the molecule ends the page smaller than it began | yield times 1.6 | a smaller molecule: fewer places for the next page | the cutting page: dehydrate and drying, no growth |
-| Wood spirit (blind drunk) | on the round's last page, the last reagent lined up found nothing to act on | he drinks it and pours every dealt reagent that was not lined up, left to right | a circle thrown away, and the order he pours in is the deal's, not the player's | the last page with two good reagents and two or three spare ones |
+| Hydrogen (floats over) | the page's last reagent is oxidize, it lands, and the page's chain is 3 steps or more; not on the last page | the chain floats over the page turn: the next page's chain counts on from this one | a bet: if the next page's own chain is shorter than the one that floated, the balloon pops and the yield is times 0.6; and oxidize must go last | order: a chain of three with oxidize last, then a bigger page |
+| Dry ice (freezes) | on the last page, if carbon dioxide came off this round and 3 of the six reagents never acted in it | yield times 2.5 | the whole round played with three reagents | the narrow round: make carbon dioxide (grow, then oxidize) and leave three bottles shut |
+| Acid (eats through) | the molecule ends the page 2 atoms smaller or more | yield times 2 | a smaller molecule: fewer places for the next page; one water off is not enough | the cutting page: two or more things driven off and no growth |
+| Wood spirit (blind drunk) | on any page, the FIRST reagent lined up found nothing to act on | he drinks it and pours every dealt reagent that was not lined up, left to right, free of charge; if one of his pours lands the yield is times 1.25 | the first circle and one use thrown away; the order he pours in is the deal's, not the player's | a bottle that cannot act put first on purpose, two good ones after it, and two spare ones in the hand worth pouring |
 | Salt (cures) | the line is the page before's line again, reagent for reagent | yield times 2.5 and the three get their use back | the same line lands on less the second time | a line that can be played twice |
-| Slime (sticks) | all three reagents land and each sets off at least one reflex | yield times 2.5 | no reagent may be lined up only to set up the next | three small chains in one page |
+| Slime (sticks) | two or three of the page's reagents each land and each set off a reflex of their own | yield times 1.5 for two, times 2.5 for three | the bottles he stuck are shut on the next page (three bottles are always left) | several small chains in one page in place of one long one |
 | Ammonia (smelling salts) | nitrogen went on the molecule this page (the nitrogen reagent lands, or a knit) | the page's three reagents fire again, same order, no use spent | the nitrogen reagent in the line, or a molecule that knits by itself; firing again can undo | nitrogen lines |
-| Seedling (grows) | the molecule ends the page at least 5 atoms bigger | yield times 1.2, then 1.4, then 1.6 for each page it is tapped in the round | a page that ends smaller and it wilts: yield times 0.8, the row starts again | growing every page of the round |
-| Brimstone (hellfire) | sulfur went on the molecule this page (the sulfur reagent lands, or a cap); not on the last page | the round ends now; yield times 3 after page one, times 2 after page two | the pages not played | the fast round: task met early, then burn |
+| Seedling (grows) | the molecule ends the page at least 8 atoms bigger | yield times 1.4, then 1.8, then 2.2 for each page in a row | once tapped it must be fed: a later page that grows less than 8 and it wilts, yield times 0.7, the row starts again | growing hard every page of the round |
+| Brimstone (hellfire) | sulfur went on the molecule this page (the sulfur reagent lands, or a cap); not on the last page | the round ends now and whatever is left of the spec is burned: it counts as met; yield times 1.5 after page one, times 1.25 after page two | the pages not played: the yield made so far must carry the round | the fast round: sulfur and a big first page when the spec looks out of reach |
+
+## The seven changed on 2026-11-13, each with one worked example
+
+Ruling AR: fix the weak ones now. The aim for each: lit by something the player sets up with the three reagents, pays enough to aim a page at, has a cost or a risk, and changes which line is best. Not all seven are there yet: the numbers, and which ones a reviewer still fails, are in `docs/RIG.md`, thirteenth, part 3. Every example below was played on the reference chemistry.
+
+**Wood spirit.** Put a bottle that cannot act first, and he pours the two bottles you did not line up.
+Round 2, a ring ketone with two C=C and no OH (`C=C(C)C1CC=C(C)C(=O)C1`). Dealt: dehydrate, grow, hydrate, oxidize, thiolene. Lined up: dehydrate, grow, hydrate. Dehydrate finds no OH: nothing. Grow adds three carbons at the C=O. Hydrate puts an OH on three C=C. No reflex yet; the yield stands at 159. Tap: he pours oxidize, which turns an OH into a C=O, and a dry and a ring follow; then thiolene, which puts an SH on. The yield is about 1,800. Lined up the plain way, oxidize would have had to take the place of grow or hydrate.
+
+**Hydrogen.** End a page of three reflexes with oxidize, and the count carries over the page turn.
+Round 4, `O=CC=C(C=O)CCCCC=CC1CO1`. Lined up: hydrate, hydrate, oxidize. Oxidize lands last; the page's reflexes are dry, weld, weld: three. Tap: the next page starts counting at 3, so its first reflex pays as a fourth. If the next page makes fewer than 3 reflexes of its own the balloon pops and the yield is times 0.6.
+
+**Dry ice.** Play the whole round with three bottles and make carbon dioxide once.
+Round 4, `C=C1CC(O)(CC=O)C(O)C12CCCC2`. Page one: dehydrate, dehydrate, grow. Page two: dehydrate, oxidize, grow. Page three: grow, oxidize, oxidize. Carbon dioxide comes off once (oxidize cuts a chain-end C=C that grow made). Hydrate, thiolene and ritter never acted. Tap on the last page: yield times 2.5.
+
+**Acid.** Make the molecule lose two atoms or more on a page.
+Round 5, `C=C(C)C1(O)CCC2=CC(=O)CC(CO)C2(C)C1`. Lined up: dehydrate, oxidize, oxidize. Dehydrate takes two waters off; the two oxidize find nothing left to act on; the molecule ends 2 atoms smaller. Tap: yield times 2. The next page has two OH fewer to work on.
+
+**Slime.** Make each reagent start its own reflex.
+Round 4, a three-ring amine (`CCC1=C2C(CC=O)=C3CC1C(=O)C(C3)C2N`). Lined up: grow, oxidize, hydrate. Each lands and each sets off one reflex (a snap, a shift, a dry). Tap: yield times 2.5. On the next page two of the three (grow and oxidize, the first two of the line) are shut: three bottles of the five dealt always stay. With only two of the three starting a reflex it is times 1.5.
+
+**Seedling.** Grow by 8 atoms on a page, and then keep growing.
+Round 4, `C=C1CC(O)(CC=O)C(O)C12CCCC2`. Lined up: oxidize, grow, hydrate. Oxidize makes a second C=O, grow adds three carbons at each: the molecule ends 9 atoms bigger. Tap: yield times 1.4. Grow 8 or more again on page two and it is times 1.8; grow less and it wilts, times 0.7.
+
+**Brimstone.** Land sulfur early and end the round on the spot, the spec burned.
+The same molecule. Page one: thiolene, hydrate, hydrate. Thiolene puts an SH on the C=C: lit. Tap: the round ends now, the spec counts as met whatever it asked for, and the yield of that one page is times 1.5. It is worth it only if that yield passes the round's mark.
+
+## Two at once
+
+The game holds one homunculus in a run. In the simulator two can be held and each has its own tap on a page, in the order held, so two taps can follow one another on a page: the Wood spirit pours the nitrogen reagent and Ammonia then fires the three of the line again. All 45 pairs are measured in `docs/RIG.md`, thirteenth, part 3: no pair was shown to do clearly more than its two creatures multiplied, and some get in each other's way.
+
+What the game would need to hold two: the round's creature state (`g.hom`, one object: which creature, tapped this page or not, its row, its float) made a list; `homLit`, `homSpots`, `homUse` and `homGo` taking which creature is meant; the run holding two (`run.hom`); the page drawing two jars on the bench with a tap each; and the order of taps decided (left to right is what the simulator does). The rules of each creature do not change.
 
 ## Not done, and open
 

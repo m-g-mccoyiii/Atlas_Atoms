@@ -42,7 +42,7 @@ Ruling AR: "a gentle start might be best but we want them to unlock stuff to try
 
 - The casual player clears round 1 of a long run 83 times in 100 (it was 37). In the game's own rig, 80 runs of the casual player before the chlorine molecules went in: 80, 68, 66 for rounds 1 to 3.
 - The bare nine-round win is under 2 in 100 for every player: the two-hand reader is at 1.0 (it was 2.4), the careful player at 0.2.
-- Twelve rounds: no win in 4,000 runs of the careful player and 620 of the two-hand reader; laid over rounds played once the two-hand reader's rate is 3 in 10,000.
+- Twelve rounds: no win in 4,000 runs of the careful player and 620 of the two-hand reader; laid over rounds played once the two-hand reader's rate is 1 to 3 in 10,000.
 - The run for the two-hand reader's nine rounds was dealt with chlorine molecules at 0.22, the others at 0.32 (part 4); it moves rounds 1 to 3 by a point or two.
 
 **What a run earns, won or lost: the ladder** (`path.js`: `LADDER`, `LADDER_CAP`, `ladderDue`, `ladderState`; `runResult` hands the page what the run earned as `earned`).
@@ -57,7 +57,7 @@ Ruling AR: "a gentle start might be best but we want them to unlock stuff to try
 
 A run hands over two rungs at most; what is earned beyond that is handed over by the next runs. So a good run pays into the runs after it.
 
-**A career, not single runs** (`sweep_career.py career`, 300 careers a player; the player always starts the longest run open; rounds are drawn from the runs above with every round played; an instrument earned lifts the yield of later long runs 1.12 times, five carried at most, and a homunculus 1.3 times, which is the flat lift of the twelfth measure and is the weakest part of this table):
+**A career, not single runs** (`sweep_career.py career`, 300 careers a player; the player always starts the longest run open; rounds are drawn from 800 to 2,000 other runs a player in which every round was played and the player did not yet aim at the mark; an instrument earned lifts the yield of later long runs 1.12 times, five carried at most, and a homunculus 1.3 times, which is the flat lift of the twelfth measure and is the weakest part of this table):
 
 | Player | Runs to the first thing earned | To the tenth | Of the first 20 runs, earn something | Things earned after 10, 30, 100 runs | Deepest round of a long run cleared after 10, 30, 100 runs | First six-round win (run) | First nine-round win (run) | Careers with a nine-round win in 300 runs |
 |---|---|---|---|---|---|---|---|---|
@@ -65,13 +65,15 @@ A run hands over two rungs at most; what is earned beyond that is handed over by
 | Casual | 1 | 6 | 16 | 19, 34, 47 | 4.3, 5.4, 6.6 | 43 | none | 0 in 100 |
 | Careful | 1 | 5 | 19 | 20, 43, 52 | 6.6, 8.3, 8.9 | 5 | 34 | 100 in 100 |
 
-The same careers when nothing earned lifts the yield: the casual player's first six-round win comes at run 176, not 43; the careful player's first nine-round win is seen in 33 careers of 100, not 100. With stronger helpers (an instrument 1.2 times, a homunculus 1.5): casual first six-round win at run 25 and a nine-round win in 25 careers of 100; careful first nine-round win at run 18. (An earlier pass with the two-hand reader, softer wall: first nine-round win at run 18 with the ladder, 44 without.)
+The same careers when nothing earned lifts the yield: the casual player's first six-round win comes at about run 180 to 210, not 43 (a noisy figure); the careful player's first nine-round win is seen in 33 careers of 100, not 100. With stronger helpers (an instrument 1.2 times, a homunculus 1.5): casual first six-round win at run 25 and a nine-round win in 25 careers of 100; careful first nine-round win at run 18. (An earlier pass with the two-hand reader, softer wall: first nine-round win at run 18 with the ladder, 44 without.)
 
 Said plainly: with helpers as weak as the flat lift, the casual and novice players as modelled never win nine rounds. They do get further every ten runs, and 14 to 16 of their first 20 runs hand them something. Real helpers also help with the task, which this table does not count.
 
-**Near misses.** The aim was a third of lost rounds within 15 in 100 of passing. It is not met: 7 to 11 lost rounds in 100 are that close (14 to 24 within 25 in 100). The cause is measured: a round's yield is spread very wide (for one player on one round, the tenth-best round in a hundred makes 25 times what the tenth-worst makes), and nearly all of that spread is inside one molecule (hand to hand and line to line), not between molecules, so setting the mark by the molecule would not help. With that spread no fixed mark puts a third of the misses within 15 in 100. What would: flattening the chain multipliers (the game's best moment), or a mark the player can still reach after the round (choice 4).
+**Near misses.** The aim was a third of lost rounds within 15 in 100 of passing. It is not met: 6 to 13 lost rounds in 100 are that close (14 to 24 within 25 in 100). The cause is measured: a round's yield is spread very wide (for one player on one round, the tenth-best round in a hundred makes 25 times what the tenth-worst makes), and about three quarters of that spread is inside one molecule (hand to hand and line to line), not between molecules, so setting the mark by the molecule would not help. With that spread no fixed mark puts a third of the misses within 15 in 100. What would: flattening the chain multipliers (the game's best moment), or a mark the player can still reach after the round (choice 4).
 
-**Not done.** The page draws neither the pass mark nor what a run earned. The ladder's counters are counted by the game (`countersUpdate`) and were read once in the game's rig (6 runs: 16 rungs earned, 2 a run); the career table is from the simulator. The 56 rungs are not yet tied to the 166 things of `FINDINGS.md` one by one. The six-round run with the two-hand reader's 32 wins in 100 may be too easy for the best player.
+**After review.** A fresh reviewer re-ran the tables and they hold. Fixed since: a lost round of a first game was counted as a near miss by the task alone (the game now counts near misses in long runs only, as the simulator does). Said here because it was not: the page does not call `runResult` yet, so in the played game no rung is handed over and the counts of runs are not kept; rungs 10 to 12 of "getting further" cannot be earned while the twelve-round run is switched off; the marks were set by hand from several fits (`sweep_career.py fit` with its listed targets gives softer ones) and then made a tenth harder in the wall. The reviewer's objection to the design stands for the owner (choice 6): a rung opens "the next thing on a shelf", so the thing and the deed do not belong together as the findings of `FINDINGS.md` do, 32 of the 56 are plain counts, and with two a run the careful player gets exactly two a run for the first ten runs whatever was done.
+
+**Not done.** The page reads the pass mark but does not show what a run earned. The ladder's counters are counted by the game (`countersUpdate`) and were read once in the game's rig (6 runs: 16 rungs earned, 2 a run); the career table is from the simulator. The 56 rungs are not yet tied to the 166 things of `FINDINGS.md` one by one. The six-round run with the two-hand reader's 32 wins in 100 may be too easy for the best player.
 
 **Choices for the owner**
 
@@ -80,6 +82,7 @@ Said plainly: with helpers as weak as the flat lift, the casual and novice playe
 3. How strong helpers must be for a casual player to win nine rounds. (a) As modelled (never). (b) Each instrument about 1.2 times and a homunculus 1.5: one casual career in four gets there in 300 runs. (c) Stronger still.
 4. Near misses. (a) Leave it: about 1 lost round in 10 is close. (b) A round lost by under 15 in 100 can be bought through with gold. (c) Flatter chain multipliers, so yields bunch nearer the mark.
 5. Rungs a run. (a) Two at most, as built. (b) Three. (c) No limit (the first runs then hand over ten at once and later runs often nothing).
+6. What a rung gives. (a) As built: the next thing on a shelf. (b) Each rung tied to one named thing that fits the deed, in `FINDINGS.md` (more writing, truer to "the finding and the thing belong together"). (c) Rungs give gold or credit only, and things stay with their own findings.
 
 ### 2. The sign: three laps
 
@@ -124,36 +127,115 @@ Each lap is the same climb: no lap is shorter or longer than the first. The casu
 2. The ending. (a) The next tenant (fits the reset best). (b) The second hand (cheapest, one chemist). (c) The refusal.
 3. When it can be taken. (a) At 9 tenths, as built. (b) Only with everything. (c) At 3 quarters.
 
+### 3. The weak homunculi, fixed
+
+What each is now, with a worked example each, is in `docs/HOMUNCULI.md`. Built in `path.js` (`HOMS2K`, `HOM2LIT`, `hom2Use`, `homAfter`, `homPeek`) and in the simulator (`sweep_homs.py`). The game's test job (`homs2.js`) was brought up to the new rules: 133 of 133 cases, and on 7,168 pages (78,848 checks) the game's "lit" never differed from the rule.
+
+| Creature | Was | Now |
+|---|---|---|
+| Wood spirit | last page only, last reagent a dud; near dead | any page; the FIRST reagent lined up is the dud; he pours the two bottles not lined up, free; times 1.25 if a pour lands |
+| Slime | all three reagents each set off a reflex; came up on 6 pages in 100 | two of three (times 1.5) or all three (times 2.5); the bottles he stuck are shut on the next page |
+| Hydrogen | any chain, no risk | the page's chain must be 3 or more; if the next page's own chain is shorter the balloon pops, yield times 0.6 |
+| Brimstone | ended a round already won on the task | ends the round and burns the task (it counts as met); times 1.5 after page one, 1.25 after page two |
+| Dry ice | 2 bottles shut | 3 bottles shut, times 2.5 |
+| Seedling | 5 atoms; wilted only on a smaller page | 8 atoms, times 1.4, 1.8, 2.2; once tapped, any page that grows less wilts it (times 0.7) |
+| Acid | any page that ended smaller (one water was enough) | 2 atoms smaller or more, times 2 |
+
+**Each alone**, the careful player, 200 nine-round runs each on the same deals, every round played, the rule of part 1, the player weighing the tap when it picks a line. The win rate is the nine round rates multiplied. With no creature: 0.29 in 100.
+
+| Creature | Its page comes up, of 100 pages | Tapped, of 100 pages | The line was picked for it, of 100 pages | Yield times | Wins nine, of 100 | Against none | The line it makes best |
+|---|---|---|---|---|---|---|---|
+| Wood spirit | 56 | 44 | 40 | 1.22 | 0.56 | 1.9 times | a bottle that cannot act put first; thiolene fired in 30 hands of 100, not 14; hydrate 48, not 60 |
+| Hydrogen | 20 | 20 | 2 | 1.32 | 0.84 | 2.9 | oxidize last after a chain of three |
+| Brimstone | 20 | 12 | 11 | 0.80 | 0.90 | 3.1 | thiolene early (25 of 100 hands, not 14); rounds 1 to 6 cleared 80 to 100 times in 100 |
+| Dry ice | 14 | 14 | 21 | 1.22 | 0.50 | 1.7 | three bottles for the round: dehydrate 51 and hydrate 53, not 58 and 60 |
+| Acid | 11 | 11 | 8 | 1.14 | 0.60 | 2.1 | two dehydrations or more on a page |
+| Seedling | 24 | 24 | 9 | 1.13 | 0.51 | 1.8 | grow on every page |
+| Slime | 36 | 36 | 10 | 1.14 | 0.42 | 1.4 | reagents that each start something: ritter 31 and thiolene 21, not 24 and 14; grow 69, not 74 |
+| Ammonia (not changed) | 44 | 33 | 23 | 1.50 | 0.93 | 3.2 | the nitrogen reagent in the line: 38, not 24 |
+| Water (not changed) | 22 | 20 | 10 | 1.17 | 0.83 | 2.9 | dehydrate 62, not 58 |
+| Salt (not changed) | 16 | 16 | 13 | 1.32 | 0.70 | 2.4 | page two repeats page one |
+
+"The line was picked for it" is the count the ruling asks for: pages on which the player took another line than it would have with no creature, because of the tap. At 200 runs a win rate is good to about a third either way, so the order of near neighbours is not firm.
+
+What still does not answer the ruling, said plainly:
+- Hydrogen has its risk now but the line is still picked for it on only 2 pages in 100: oxidize last after a chain is what a good line often is anyway.
+- The Wood spirit went from dead to the creature that changes play most, and it comes up on more than half of all pages. At times 1.5 it won 3.9 times as often as none, so it was set to 1.25.
+- Brimstone is strong where the task is the trouble (rounds 1 to 6) and cuts the yield; it does nothing for the wall.
+- Slime comes up on a third of pages and the tap was never refused; at most two bottles can be shut (three of five always stay), so its cost is light.
+- The Seedling is lit on 24 pages and aimed at on 9.
+
+A fresh reviewer fails four of the seven against the ruling as they stand: Hydrogen, Slime and the Seedling are mostly lit by the line that was best anyway; the Wood spirit's cost (one dud) is too light for two free pours on half of all pages; Brimstone is a way to skip the task. Dry ice and Acid pass. How often the balloon popped or the Seedling wilted was not counted.
+
+**Two at once** (all 45 pairs, 40 nine-round runs a pair, each creature with its own tap on a page; `sweep_run.py hompair13`):
+
+| Held | Wins nine, of 100, average | Lowest | Highest |
+|---|---|---|---|
+| none | 0.29 | | |
+| one | 0.68 | 0.42 | 0.93 |
+| two | 0.95 | 0.37 | 1.76 |
+
+- Highest: Hydrogen with Brimstone 1.76, Hydrogen with Ammonia 1.75, Ammonia with Brimstone 1.60.
+- No pair did clearly better than its two creatures multiplied, so no pair is shown to do "what neither does alone". Some get in each other's way: the Wood spirit with the Seedling 0.37 and Ammonia with the Seedling 0.39 (pours and second firings undo the growth), the Slime with the Wood spirit 0.43.
+- At 40 runs a pair these are good to about 4 parts in 10 either way.
+- The game holds one creature. What it would take to hold two is in `HOMUNCULI.md`, "Two at once".
+
+**In the game's own rig** the players now weigh the tap when they pick a line (`RULE.homAim`, `homPeek`; before, the game's players only tapped after the line was fired). Rates from the game, nine-round runs with offers between rounds, most cut by a 30 to 42 second clock on a busy machine, so the samples are small:
+
+| Creature | Pages played | Its page came up, of 100 | Tapped, of 100 | The simulator's "came up" | Runs ended, cut by the clock, threw |
+|---|---|---|---|---|---|
+| Wood spirit | 141 | 74 | 64 | 56 | 7, 6, 0 |
+| Hydrogen | 64 | 34 | 34 | 20 | 3, 6, 0 |
+| Brimstone | 62 | 35 | 29 | 20 | 1, 5, 0 |
+| Dry ice | 86 | 7 | 7 | 14 | 3, 6, 0 |
+| Acid | 48 | 10 | 10 | 11 | 2, 4, 0 |
+| Seedling | 82 | 48 | 48 | 24 | 3, 4, 0 |
+| Slime | 164 | 32 | 32 | 36 | 3, 10, 0 |
+
+No run threw. The game's rates are higher than the simulator's for the Wood spirit, Hydrogen and Brimstone: these runs take offers between rounds, so the hand holds more kinds of bottle, and the first Wood spirit runs were at times 1.5. They show the rules work in the game's own round; they are too few to rank anything.
+
+**Not done.** The measures were run before three small repairs a reviewer asked for (the game's players now see the pop and the wilt when they pick a line; the game's Brimstone, where a run has no pass mark, burns only from page two as the simulator's does; the simulator shuts the Slime's bottles in the order of the line as the game does). Game-side win rates (the runs are too slow to finish in number). Pairs in the game. The page's pictures and tokens for the new rules beyond the two-line token text. `brings` (a reagent each of four creatures adds to the run) is as it was. The planner and the casual player were not run with creatures.
+
+**Choices for the owner**
+
+1. The Wood spirit. (a) As built: first bottle a dud, pours two free, times 1.25. (b) No multiplier: then it is worth nothing on average. (c) Only a dud put LAST lights it (rarer).
+2. Brimstone burning the task. (a) As built. (b) It only halves the task. (c) Back to yield alone, at times 3.
+3. Hydrogen. (a) As built: a real risk, seldom aimed at. (b) Also needs the chain to hold 2 kinds of reflex, so it has to be set up. (c) Leave.
+4. How big one creature should be. (a) As measured: 1.4 to 3.2 times the wins of a bare run. (b) Evened out to about 2 to 2.5 each. (c) Bigger all round.
+5. Two in the game. (a) One, as now. (b) Two, each with its own tap (the page and the saved run have to change; the rules do not).
+
 ### 4. Chlorine in the first rounds
 
 **What was wrong.** No molecule of rounds 1 and 2 held a chlorine at all (0 of 64 each), and round 3 had two. The reflex was never the fault: in the reference chemistry a Cl closes a ring with an OH, NH2 or SH three to five carbons away, and four of the six starting reagents make such a partner (hydrate and grow an OH, thiolene an SH, ritter an NH2). On a molecule that holds a chlorine, `close` fires on about 9 lines in 10.
 
 **What was built** (`path.js`: `FEED_CL`, `FEED_CL_ROWS`, `RULE.clEarly`; the simulator deals the same way). The reflex and the six reagents are untouched.
 
-- 18 chlorine molecules, six for each of rounds 1 to 3, made from the rounds' own molecules by putting a Cl on a plain carbon (`sweep_chlorine.py make` tried every such place and kept those where the reflex is set off by the player's reagents, not by itself). Four of each six carry two Cl, so chlorine can act on two pages of a round.
-- In rounds 1 to 3 each dealt molecule is one of these with chance 0.22, in every length of run. They are in no other pool, so nitrogen and sulfur molecules are dealt as before.
+- 18 chlorine molecules, six for each of rounds 1 to 3, made from the rounds' own molecules by putting a Cl on a plain carbon (`sweep_chlorine.py make` tried every such place and kept those where the first Cl needs one of the player's reagents to land before the reflex fires). Four of each six carry two Cl, so chlorine can act on two pages of a round; the second Cl was not held to that test, and on two molecules of round 3 the reflex fires whatever is played.
+- In rounds 1 to 3 each dealt molecule is one of these with chance 0.32, in every length of run. They are in no other pool, so nitrogen and sulfur molecules are dealt as before among the rest.
 
-**Measured, 1,000 runs a player, with the share at 0.22** (steps of the reflex for each 100 hands; a hand is one page. A reviewer found that two steps on one page were counted twice here, so in hands this is about 1 in 11, under the aim; the share is now 0.32 and the count by hands follows below when its runs are in):
+**Measured, 1,000 runs a player** (hands in which the reflex fired, of 100; a hand is one page; counted by the hand, so two rings shut on one page count once):
 
-| | Round 1 | Round 2 | Round 3 | Round 4 |
-|---|---|---|---|---|
-| Before, any player | 0 | 0 | 0.5 | 2.2 |
-| First game (three rounds), novice | 11.6 | 11.9 | 10.9 | |
-| First game, casual | 11.5 | 11.1 | 13.5 | |
-| First game, careful | 11.2 | 11.2 | 13.6 | |
-| Long run, casual | 10.6 | 10.0 | 12.3 | 2.2 |
+| | Round 1 | Round 2 | Round 3 |
+|---|---|---|---|
+| Before, any player | 0 | 0 | 0.5 |
+| First game (three rounds), novice | 12.6 | 13.7 | 14.9 |
+| First game, casual | 11.8 | 12.2 | 13.9 |
+| First game, careful | 11.2 | 11.9 | 13.2 |
+| Long run, casual | 11.4 | 11.5 | 13.3 |
 
-That is 1 hand in 7 to 1 in 10, about 1 in 9. A chlorine is on 21 to 30 molecules in 100. Of all reflex steps in a first game, chlorine's share went from 0 to 9 (careful) to 16 (novice) in 100; nitrogen's is 7 to 12 and sulfur's 1 to 6, as before.
+That is 1 hand in 7 to 1 in 9, about 1 in 8. A chlorine is on 29 to 39 molecules in 100 and the reflex fires in 3 rounds in 10. Of all reflex steps in a first game, chlorine's share went from 0 to 14 (careful), 20 (casual) and 23 (novice) in 100; nitrogen's is 7 to 10 and sulfur's 1 to 5, a point or two under what they were, because a chlorine molecule takes the place of another.
 
-The first game is no easier or harder for it: wins of 100 were 24, 54, 80 (novice, casual, careful) and are 27, 57, 81.
+The first game got a little easier for the novice: wins of 100 were 24, 54, 80 (novice, casual, careful) and are 30, 58, 82.
+
+A first pass dealt them with chance 0.22. A reviewer found its count was of steps, not hands; by the hand it was about 1 in 11, under the aim, so the share was raised.
 
 **Against the reference chemistry.** Each of the 18 molecules, twelve lines of three in the game's own round (`cl13.js`, `sweep_chlorine.py game`): 216 turns, the same count of `close` in all 216 (239 steps each side), the same reflexes in the same order in 214, the same molecule after in 213.
 
-**Not done.** After round 3 chlorine falls back to 6 or 7 molecules in 100 and 1 hand in 45, which is against "rarer elements become more common as the rounds get deeper". The same tool can make chlorine molecules for rounds 4 to 9; that moves the yields of the wall rounds, so the pass marks of part 1 would have to be fitted again. The page's pictures of these molecules were not looked at.
+**Not done.** After round 3 chlorine falls back to 6 or 7 molecules in 100 and about 1 hand in 50, which is against "rarer elements become more common as the rounds get deeper". The same tool can make chlorine molecules for rounds 4 to 9; that moves the yields of the wall rounds, so the pass marks of part 1 would have to be fitted again. The page's pictures of these molecules were not looked at.
 
 **Choices for the owner**
 
-1. How much chlorine early. (a) As built: about 1 molecule in 5, the reflex in 1 hand in 9. (b) More: 1 molecule in 4, about 1 hand in 8 (`RULE.clEarly` 0.25). (c) Less.
+1. How much chlorine early. (a) As built: about 1 molecule in 3, the reflex in 1 hand in 8. (b) Less: 1 molecule in 5, 1 hand in 11. (c) More.
 2. After round 3. (a) As built: it thins out to 1 molecule in 15. (b) Chlorine molecules for rounds 4 to 9 too, rising with the rounds, and the marks fitted again.
 3. Two chlorines on a molecule. (a) As built: four of each six. (b) One only, so it acts once a round.
 

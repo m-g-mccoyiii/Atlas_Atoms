@@ -315,7 +315,7 @@ class Slime(Hom):
     def apply(self, G, R):
         own = self.own(R)
         R.E *= self.K if len(own) >= 3 else self.K2
-        R.x['stuck'] = tuple(sorted(set(own)))
+        R.x['stuck'] = tuple(dict.fromkeys(own))      # in the order of the line, as the game (the measures were run with them sorted by name: at most two are ever shut, so it seldom differs)
 
     def before_page(self, G, R, rng, player, hand):
         for r in R.x.pop('stuck', ()):
