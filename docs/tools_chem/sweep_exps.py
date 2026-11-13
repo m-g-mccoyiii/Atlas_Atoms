@@ -511,6 +511,7 @@ def gentle(arg='g1,median,2000'):
 
 
 GENTLE['g3'] = dict(GENTLE['g1'])        # as g2, the chlorine molecules dealt by RULE.clEarly alone (0.22)
+GENTLE['g4'] = dict(GENTLE['g1'])        # RULE.clEarly 0.32, hands with close counted
 GENTLE['g2'] = dict(GENTLE['g1'])        # the same rule, run after the chlorine molecules went into rounds 1 to 3 (part 4)
 EXPERIMENTS['gentle'] = gentle
 

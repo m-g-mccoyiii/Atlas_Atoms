@@ -8,6 +8,79 @@ The rules of a round were changed later the same day (bounds, a budget of uses, 
 
 One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.
 
+### 1. The shape of a long run, and what a lost run earns
+
+Ruling AR: "a gentle start might be best but we want them to unlock stuff to try further". Both were built together.
+
+**The rule as built** (`path.js`: `RULE.needParBy`, `RULE.specScaleLong`, `RULE.specBanByLong`; the simulator reads the same lines).
+
+- A round of a long run is still cleared by the task AND a pass mark on the yield. The mark is now set for each length of run, as a share of the number to beat, by round:
+
+| Run | Marks by round |
+|---|---|
+| Six rounds (master's) | 0.13, 0.28, 0.15, 0.40, 1.6, 1.2 |
+| Nine rounds (doctorate) | 0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75 |
+| Twelve rounds (postdoc, still switched off) | the nine, then 1.46, 1.21, 0.84 |
+
+- The tasks of rounds 1 to 3 are smaller (0.3, 0.35, 0.7 of the table's numbers; they were 0.7, 0.5, 1), and the tasks a casual player seldom clears are not set in rounds 1 and 2, as in the first game.
+- The last third of each length is the wall. In the six-round run the wall is softer than in the nine, because winning it is what opens the nine.
+
+**A long run with nothing unlocked**, on deals the marks were not fitted on, stopped at the first round not cleared, the players aiming at the mark (`sweep_run.py final13`, `sweep_career.py final`):
+
+| Player | Runs | Wins all nine, of 100 | Of the runs still alive, clear rounds 1 to 9 |
+|---|---|---|---|
+| Novice (looks at 4 lines) | 1,000 | 0 | 64, 43, 37, 28, 31 |
+| Casual (looks at 12 lines) | 2,000 | 0 | 83, 70, 64, 48, 44, 38, 5 |
+| Careful (reads every line) | 5,000 | 0.18 (9 runs; 0.06 to 0.30) | 94, 91, 84, 83, 79, 67, 31, 18, 10 |
+| Reads every line and the next hand | 2,500 | 1.04 (26 runs; 0.64 to 1.44) | 96, 95, 90, 90, 89, 77, 43, 26, 18 |
+
+| Player | Runs | Wins all six, of 100 | Of the runs still alive, clear rounds 1 to 6 |
+|---|---|---|---|
+| Casual | 2,000 | 0.8 | 84, 69, 62, 49, 24, 19 |
+| Careful | 2,000 | 18 | 94, 91, 84, 82, 62, 49 |
+| Reads two hands | 600 | 32 | 98, 94, 90, 88, 75, 58 |
+
+- The casual player clears round 1 of a long run 83 times in 100 (it was 37). In the game's own rig, 80 runs of the casual player before the chlorine molecules went in: 80, 68, 66 for rounds 1 to 3.
+- The bare nine-round win is under 2 in 100 for every player: the two-hand reader is at 1.0 (it was 2.4), the careful player at 0.2.
+- Twelve rounds: no win in 4,000 runs of the careful player and 620 of the two-hand reader; laid over rounds played once the two-hand reader's rate is 3 in 10,000.
+- The run for the two-hand reader's nine rounds was dealt with chlorine molecules at 0.22, the others at 0.32 (part 4); it moves rounds 1 to 3 by a point or two.
+
+**What a run earns, won or lost: the ladder** (`path.js`: `LADDER`, `LADDER_CAP`, `ladderDue`, `ladderState`; `runResult` hands the page what the run earned as `earned`).
+
+56 rungs, each earned once. A rung opens the next thing on one shelf (instrument, reagent, reflex, notebook, inspection, catalog, homunculus, the circle, or a cosmetic thing); which thing is the page's to say by the rules of `FINDINGS.md`.
+
+| Kind | Rungs | Earned by |
+|---|---|---|
+| Getting further | 12 | the first time round 1, 2, ... 12 of a long run is cleared (five of them open an instrument) |
+| Something done in a run | 12 | a page with a chain of 4, 6, 9; a round at 2, 4, 8 times the number to beat; 3 and 5 kinds of reflex in a round; all six reagents fired in a run; a round cleared with three reagents; a round lost by under 15 in 100; a molecule 10 atoms bigger |
+| Lifetime counts | 32 | rounds played, rounds cleared, runs lost, reflex steps, rings, each at four to seven steps |
+
+A run hands over two rungs at most; what is earned beyond that is handed over by the next runs. So a good run pays into the runs after it.
+
+**A career, not single runs** (`sweep_career.py career`, 300 careers a player; the player always starts the longest run open; rounds are drawn from the runs above with every round played; an instrument earned lifts the yield of later long runs 1.12 times, five carried at most, and a homunculus 1.3 times, which is the flat lift of the twelfth measure and is the weakest part of this table):
+
+| Player | Runs to the first thing earned | To the tenth | Of the first 20 runs, earn something | Things earned after 10, 30, 100 runs | Deepest round of a long run cleared after 10, 30, 100 runs | First six-round win (run) | First nine-round win (run) | Careers with a nine-round win in 300 runs |
+|---|---|---|---|---|---|---|---|---|
+| Novice | 1 | 7 | 14 | 14, 27, 40 | 2.6, 3.9, 4.6 | none | none | 0 in 100 |
+| Casual | 1 | 6 | 16 | 19, 34, 47 | 4.3, 5.4, 6.6 | 43 | none | 0 in 100 |
+| Careful | 1 | 5 | 19 | 20, 43, 52 | 6.6, 8.3, 8.9 | 5 | 34 | 100 in 100 |
+
+The same careers when nothing earned lifts the yield: the casual player's first six-round win comes at run 176, not 43; the careful player's first nine-round win is seen in 33 careers of 100, not 100. With stronger helpers (an instrument 1.2 times, a homunculus 1.5): casual first six-round win at run 25 and a nine-round win in 25 careers of 100; careful first nine-round win at run 18. (An earlier pass with the two-hand reader, softer wall: first nine-round win at run 18 with the ladder, 44 without.)
+
+Said plainly: with helpers as weak as the flat lift, the casual and novice players as modelled never win nine rounds. They do get further every ten runs, and 14 to 16 of their first 20 runs hand them something. Real helpers also help with the task, which this table does not count.
+
+**Near misses.** The aim was a third of lost rounds within 15 in 100 of passing. It is not met: 7 to 11 lost rounds in 100 are that close (14 to 24 within 25 in 100). The cause is measured: a round's yield is spread very wide (for one player on one round, the tenth-best round in a hundred makes 25 times what the tenth-worst makes), and nearly all of that spread is inside one molecule (hand to hand and line to line), not between molecules, so setting the mark by the molecule would not help. With that spread no fixed mark puts a third of the misses within 15 in 100. What would: flattening the chain multipliers (the game's best moment), or a mark the player can still reach after the round (choice 4).
+
+**Not done.** The page draws neither the pass mark nor what a run earned. The ladder's counters are counted by the game (`countersUpdate`) and were read once in the game's rig (6 runs: 16 rungs earned, 2 a run); the career table is from the simulator. The 56 rungs are not yet tied to the 166 things of `FINDINGS.md` one by one. The six-round run with the two-hand reader's 32 wins in 100 may be too easy for the best player.
+
+**Choices for the owner**
+
+1. The wall of the nine. (a) As built: careful 0.2, the strongest model 1.0 in 100 with nothing unlocked. (b) Softer, nearer the limit: careful about 0.5, strongest about 1.7. (c) Harder.
+2. The six-round run. (a) As built: careful 18 in 100 bare, casual under 1. (b) Harder, like the nine: careful about 8. (c) Easier for the casual player: a lower wall still.
+3. How strong helpers must be for a casual player to win nine rounds. (a) As modelled (never). (b) Each instrument about 1.2 times and a homunculus 1.5: one casual career in four gets there in 300 runs. (c) Stronger still.
+4. Near misses. (a) Leave it: about 1 lost round in 10 is close. (b) A round lost by under 15 in 100 can be bought through with gold. (c) Flatter chain multipliers, so yields bunch nearer the mark.
+5. Rungs a run. (a) Two at most, as built. (b) Three. (c) No limit (the first runs then hand over ten at once and later runs often nothing).
+
 ### 2. The sign: three laps
 
 **As built** (`path.js`: `SIGN`, `RULE.prestige` now on; tests in the game `sign13.js`, 73 of 73).
@@ -16,21 +89,21 @@ One part for each of the owner's answers of the morning of 13 November, written 
 - It can be taken when 9 tenths of everything is held. It is offered, never forced.
 - With each sign the number to beat, and the pass mark with it, rises 1.15 times (it was 1.12).
 - `P.signState(meta, owned, total)` gives the page all of it: the level, the lift now and after the next sign, how far the number to beat has risen, whether it can be taken now and how many things that needs, what is kept aside and what starts over.
-- Kept aside: the count of signs, the catalog, what the first game taught, the lifetime counts. Starts over: reagents, reflexes, instruments, homunculi, sigils, notebooks, the longer runs, the ladder of part 1 and the counts that earn things.
+- Kept aside: the count of signs, the catalog, what the first game taught, the lifetime counts (a highest-ever count stays the highest, it is not added up). Starts over: the ladder of part 1, the counts that earn things and every other key of the saved profile. What is on the shelves (reagents, reflexes, instruments, homunculi, sigils, notebooks, the longer runs) is the page's to empty: `signState().reset` lists it.
 - With the switch on and no sign taken nothing in play changes; the page has to offer it and hand the saved profile to a new run (`runNew` takes `meta`) before a player meets it.
 
-**What should rise, by the numbers.** A nine-round run, wins of 100, read off the same 2,000 rounds a round (careful player) and 750 (the player who reads two hands), yields lifted and marks raised. "Nothing held" is the start of a lap; "collection back" is five instruments and a homunculus as the career model of part 1 counts them (2.3 times the yield).
+**What should rise, by the numbers.** A nine-round run, wins of 100, read off the same 2,000 rounds a round (careful player) and 500 (the player who reads two hands), yields lifted and marks raised. "Nothing held" is the start of a lap; "collection back" is five instruments and a homunculus as the career model of part 1 counts them (2.3 times the yield).
 
 | What rises with each sign | Careful, nothing held, laps 0 to 3 | Two-hand reader, nothing held | Careful, collection back | Two-hand reader, collection back |
 |---|---|---|---|---|
-| Nothing | 0.21, 0.42, 0.77, 1.13 | 0.97, 1.74, 2.65, 3.52 | 2.9, 4.3, 6.1, 7.5 | 7.2, 9.8, 12.3, 14.6 |
-| The number to beat 1.12 times (as it was) | 0.21, 0.27, 0.33, 0.35 | 0.97, 1.21, 1.40, 1.47 | 2.9, 3.5, 3.7, 3.9 | 7.2, 8.2, 8.7, 9.1 |
-| The number to beat 1.15 times (built) | 0.21, 0.24, 0.25, 0.25 | 0.97, 1.10, 1.14, 1.12 | 2.9, 3.2, 3.3, 3.3 | 7.2, 7.8, 8.0, 8.0 |
-| The number to beat as much as the lift | 0.21 at every lap | 0.97 | 2.9 | 7.2 |
+| Nothing | 0.21, 0.42, 0.77, 1.13 | 0.70, 1.45, 2.49, 3.50 | 2.9, 4.3, 6.1, 7.5 | 7.7, 10.8, 13.6, 15.8 |
+| The number to beat 1.12 times (as it was) | 0.21, 0.27, 0.33, 0.35 | 0.70, 0.93, 1.08, 1.16 | 2.9, 3.5, 3.7, 3.9 | 7.7, 8.7, 9.4, 10.0 |
+| The number to beat 1.15 times (built) | 0.21, 0.24, 0.25, 0.25 | 0.70, 0.87, 0.90, 0.87 | 2.9, 3.2, 3.3, 3.3 | 7.7, 8.3, 8.5, 8.4 |
+| The number to beat as much as the lift | 0.21 at every lap | 0.70 | 2.9 | 7.7 |
 
 - If nothing rises, a start with nothing is five times easier by the third sign and the two-hand reader wins a bare run 3.5 times in 100, over the limit of 2.
-- At 1.15 a start with nothing is within a fifth of the first at every lap for both players. What the sign really gives is small and said plainly: 4, 6 and 5 in 100 more yield against the mark, and a tenth more wins once the collection is back. The yield shown on the page is the full 1.2, 1.4, 1.6 times.
-- At 1.12 the gain is a little more real and the bare run of the two-hand reader stays under 2 at every lap, but with less room.
+- At 1.15 a start with nothing is within a fifth of the first at every lap for the careful player and within three tenths for the two-hand reader (0.70 against 0.87 to 0.90). These are small counts (0.21 in 100 is about 4 runs won in 2,000), so the second figure of each is not firm. What the sign really gives is small and said plainly: 4, 6 and 5 in 100 more yield against the mark, and a tenth more wins once the collection is back. The yield shown on the page is the full 1.2, 1.4, 1.6 times.
+- At 1.12 the gain is a little more real and the bare run of the two-hand reader stays under 2 at every lap, with less room.
 
 **Laps with the collection built again** (`sweep_career.py laps`, 200 careers a row; the collection here is the ladder of part 1, 56 things, the sign taken when 51 are held; the game's 166 things were not modelled):
 
@@ -43,7 +116,7 @@ Each lap is the same climb: no lap is shorter or longer than the first. The casu
 
 **The story** (`STORY.md`, rewritten where it said gold or "nothing is reset"): the sign is never paid in gold; it takes the shelves, three times; the face is seen on the first OVERREACT after the third sign, not at everything unlocked. A new section says what the page and the notes show at 0, 1, 2 and 3 signs. The three endings are kept as options; the one that fits three laps best is the next tenant (each sign ends a tenancy, which is why the shelves are empty and what is kept is what a tenant leaves behind).
 
-**Not done.** The page does not offer or draw the sign. The laps were laid over rounds played once (a round carries nothing to the next), not played again with a sign in the simulator's own run. The game's rig was run with a sign only in the 73 tests.
+**Not done.** The novice never reaches the sign (no lap in 600 runs) and about 1 casual career in 5 finishes no lap in 600 runs. `sign13.js` and the run files are under folders git does not keep. The page does not offer or draw the sign. The laps were laid over rounds played once (a round carries nothing to the next), not played again with a sign in the simulator's own run. The game's rig was run with a sign only in the 73 tests.
 
 **Choices for the owner**
 
@@ -60,7 +133,7 @@ Each lap is the same climb: no lap is shorter or longer than the first. The casu
 - 18 chlorine molecules, six for each of rounds 1 to 3, made from the rounds' own molecules by putting a Cl on a plain carbon (`sweep_chlorine.py make` tried every such place and kept those where the reflex is set off by the player's reagents, not by itself). Four of each six carry two Cl, so chlorine can act on two pages of a round.
 - In rounds 1 to 3 each dealt molecule is one of these with chance 0.22, in every length of run. They are in no other pool, so nitrogen and sulfur molecules are dealt as before.
 
-**Measured, 1,000 runs a player** (hands in which the reflex fired, of 100; a hand is one page):
+**Measured, 1,000 runs a player, with the share at 0.22** (steps of the reflex for each 100 hands; a hand is one page. A reviewer found that two steps on one page were counted twice here, so in hands this is about 1 in 11, under the aim; the share is now 0.32 and the count by hands follows below when its runs are in):
 
 | | Round 1 | Round 2 | Round 3 | Round 4 |
 |---|---|---|---|---|

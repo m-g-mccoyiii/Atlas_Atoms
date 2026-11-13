@@ -499,7 +499,7 @@ RULE.hetCurve = [0.15, 0.22, 0.30, 0.40, 0.55, 0.70, 0.80, 0.90, 0.95];
 // clEarly (ruling AR, RIG.md thirteenth, part 4): chlorine has something to do in the first rounds. In rounds 1 to 3 each dealt molecule is, with this
 // chance, one of the round's chlorine molecules (FEED_CL: a Cl three to five carbons from where hydrate, grow, thiolene or ritter put an OH, SH or
 // NH2, so the reflex `close` shuts a ring and HCl leaves; four of the six carry two Cl). Decided before the hetCurve draw. null: off.
-RULE.clEarly = [0.22, 0.22, 0.22];
+RULE.clEarly = [0.32, 0.32, 0.32];
 const FEED_CL = {1: ['C=CC(Cl)C(O)(CCCl)CCC(C)=O', 'C=C(C)CC(Cl)C(Cl)C(=O)CCC=O', 'C=CCC1C(=O)C(Cl)C=CC1Cl', 'C=CCCC(C(=O)CCCl)C(Cl)C=O', 'CCCCC(Cl)C=CC=CC=O', 'C=CCCC(Cl)C(O)CC=O'], 2: ['CC(=O)CCC=C(CCl)C(Cl)CC=C(C)C', 'C=CCCC(Cl)C(=O)C(Cl)CCC=O', 'C=CC1=CC(C(Cl)C(=O)C(Cl)CO)=CC=C1', 'C=CCCC1C(=O)C(CC=O)C(Cl)C1Cl', 'O=CC=CC(O)CCCCCCl', 'CC(=O)CC(O)C=CC1CSCCC1Cl'], 3: ['C=CC(CC1(Cl)COC(C)C1)C(Cl)C=O', 'O=CC=CC(O)C(Cl)CCCC(Cl)CCCO', 'CC(C)=CCCC(Cl)C(=O)C(Cl)CCC=O', 'C=CCCC1CC(Cl)(C(O)C(Cl)C(C)N)C1=O', 'C=CCCCCCC(Cl)CCC=CC=O', 'NC1CC2CC1CC2(O)C=CC(=O)CCl']};
 // needPar (ruling AP 1, RIG.md twelfth): in the runs past the bachelor's a round is cleared only when the spec is met AND the yield
 // passes this share of the number to beat, by round (the last entry stands for every later round). null: the spec alone clears a
@@ -525,7 +525,7 @@ RULE.pairFrom = 6; RULE.specShiftLong = null; RULE.specScaleLong = { 1: 0.3, 2: 
 // sign k: 'pair4' two specs from round 4, 'tasks' every spec N a quarter bigger, 'pair1' two specs from round 1, 'uses' one use fewer of every
 // reagent, 'hand' four dealt, not five). After SIGN.laps signs it cannot be taken again.
 // Thirteenth (ruling AR): three laps. The number to beat (and with it the pass mark) rises 1.15 times a sign, so a start with nothing is about as
-// hard at every lap (careful player, nine rounds, nothing unlocked: 0.30, 0.37, 0.39, 0.38 in 100; the two-hand reader 1.3 to 1.6, under 2).
+// hard at every lap (numbers in RIG.md, thirteenth, part 2).
 // SIGN.kept and SIGN.reset say in the profile's own keys what is kept aside and what starts over, for the page.
 RULE.prestige = true;
 const SIGN = { lift: 0.2, bar: 1.15, share: 0.9, laps: 3, tasks: 1.25, takes: [], takesAll: ['pair4', 'tasks', 'uses', 'pair1', 'hand'], keep: ['sign', 'signLog', 'found', 'taught', 'coined', 'countersAll'],
@@ -540,7 +540,7 @@ const signCan = (meta, owned, total) => !!RULE.prestige && signOf(meta) < SIGN.l
 function signTake(meta, owned, total, at) {
   if (!signCan(meta, owned, total)) return null; const m = {}; SIGN.keep.forEach(k => { if (meta && meta[k] != null) m[k] = meta[k]; });
   // the lifetime counts go on under countersAll (added up over every sign); counters starts at zero, so every finding has to be earned again
-  const all = Object.assign({}, m.countersAll || {}); Object.keys((meta && meta.counters) || {}).forEach(k => { if (typeof meta.counters[k] === 'number') all[k] = (all[k] || 0) + meta.counters[k]; }); m.countersAll = all; m.counters = countersNew();
+  const all = Object.assign({}, m.countersAll || {}); Object.keys((meta && meta.counters) || {}).forEach(k => { if (typeof meta.counters[k] === 'number') all[k] = k.indexOf('max_') === 0 ? Math.max(all[k] || 0, meta.counters[k]) : (all[k] || 0) + meta.counters[k]; }); m.countersAll = all; m.counters = countersNew();
   m.sign = signOf(meta) + 1; m.signLog = (m.signLog || []).concat([{ at: at || 0, owned, total }]); return m;
 }
 // what the page, the notes and the music read: the level, the lift, how far the number to beat has risen, what the sign has taken, what it takes next
@@ -1169,7 +1169,7 @@ const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 //   slime     two of the three reagents each set off a reflex (yield times K.k2), or all three (K.k); the bottles he stuck are shut on the next page
 //   seedling  K.gain atoms a page; once tapped it must be fed every page: a page that grows less wilts it (yield times K.wilt)
 //   brimstone the round ends now and what is left of the spec is burned (it counts as met); yield times K.k after page one, K.k2 after page two
-const HOMS2K = { water: { k: 1.5, need: 4 }, h2: { pop: 0.6, need: 3 }, co2: { k: 1.36, most: 3, least: 3 }, acid: { k: 2, loss: 2 }, wood: { first: true, k: 1.5 }, salt: { k: 2.5 }, slime: { k: 2.5, k2: 1.5, steps: 1 }, ammonia: {}, seedling: { k: 1.4, gain: 8, wilt: 0.7 }, brimstone: { k: 1.5, k2: 1.25 } };
+const HOMS2K = { water: { k: 1.5, need: 4 }, h2: { pop: 0.6, need: 3 }, co2: { k: 1.36, most: 3, least: 3 }, acid: { k: 2, loss: 2 }, wood: { first: true, k: 1.25 }, salt: { k: 2.5 }, slime: { k: 2.5, k2: 1.5, steps: 1 }, ammonia: {}, seedling: { k: 1.4, gain: 8, wilt: 0.7 }, brimstone: { k: 1.5, k2: 1.25 } };
 const HOMS1 = Object.assign({}, HOMS);
 const hom2On = g => !!RULE.homs2 && !!g && !!g.hom && !!g.hom.v2;
 // what a stretch of the trail was: the circles in order ({ id, places, set: reflex steps it set off }) and the reflex kinds

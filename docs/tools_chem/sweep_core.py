@@ -1208,6 +1208,7 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
     R.x['met'] = G.met(R) if R.spec else None
     R.x['prog'] = round(G.prog(R, R.rec) / max(1, len(R.spec)), 4) if R.spec else None      # share of the spec reached, 0 to 1
     R.x['steps'] = steps_page
+    R.x['close_pages'] = sum(1 for pg in R.rec if 'close' in pg['chain'])       # hands in which chlorine's reflex fired
     R.x['kinds'] = dict(kinds)
     R.x['dealt'] = dict(dealt)
     R.x['used'] = dict(usedc)
@@ -1446,7 +1447,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         run['gold'] += earned
         row = {'r': r, 'mol': smi, 'brief': brief, 'spec': sp['parts'], 'fell': sp['fell'], 'met': bool(R.x['met']), 'ok': ok, 'total': total,
                'par': par, 'marks': sum(1 for k in MARKS if total >= nice(par * k)), 'gold': run['gold'], 'steps': R.x['steps'], 'kinds': R.x['kinds'],
-               'lines': R.x.get('lines', ()), 'dealt': R.x['dealt'], 'used': R.x['used'], 'alive': alive, 'end': R.smi, 'tap': R.x.get('tap', 0), 'prog': R.x.get('prog'),
+               'lines': R.x.get('lines', ()), 'dealt': R.x['dealt'], 'used': R.x['used'], 'alive': alive, 'end': R.smi, 'tap': R.x.get('tap', 0), 'prog': R.x.get('prog'), 'close_pages': R.x.get('close_pages', 0),
                'dec': (R.x.get('dec_changed', 0), R.x.get('dec_pages', 0))}
         if logs:
             row['log'] = lg

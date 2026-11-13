@@ -223,7 +223,7 @@ def do_job(job):
             by[pl] = summarize(runs, nr, job.get('watch'), bool(job.get('watch') or job.get('per')))
             if job.get('full'):          # every round of every run, for the career tables (sweep_career.py)
                 by[pl]['full'] = [[[rd['mol'], int(rd['met']), rd['total'], rd['par'], rd.get('prog'), rd['steps'], rd['kinds'], rd['used'],
-                                    [n for n, _ in rd['spec']], rd['end']] for rd in r['rounds']] for r in runs]
+                                    [n for n, _ in rd['spec']], rd['end'], rd.get('close_pages', 0)] for rd in r['rounds']] for r in runs]
         row = dict(by[players[0]]) if len(players) == 1 else {'by': by, 'turns': sum(v['turns'] for v in by.values())}
         for m in G.mods:
             if hasattr(m, 'report'):

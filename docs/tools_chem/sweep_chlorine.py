@@ -92,7 +92,8 @@ def rate(tags):
         for i in range(min(9, max(len(r) for r in runs))):
             col = [r[i] for r in runs if len(r) > i]
             pages = sum(len(x[C.STEPS]) for x in col)
-            cl_pages = sum(x[C.KINDS].get('close', 0) for x in col)      # close fires once a Cl: steps are hands, nearly
+            # hands in which close fired (index 10, runs made since the count was added); older runs hold only the steps of the round
+            cl_pages = sum((x[10] if len(x) > 10 else x[C.KINDS].get('close', 0)) for x in col)
             rounds_cl = sum(1 for x in col if x[C.KINDS].get('close', 0))
             has = sum(1 for x in col if 'Cl' in x[C.MOL])
             out.append('r%d: Cl on %2.0f%% of molecules, close in %4.1f of 100 hands (1 in %s), in %2.0f%% of rounds' % (

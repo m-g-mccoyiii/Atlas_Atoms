@@ -254,7 +254,7 @@ class Wood(Hom):
     """Any page (thirteenth): a reagent lined up found nothing to act on.  He drinks it and pours every dealt reagent that was
     not lined up, left to right as dealt, and his pours spend no use."""
     name = 'wood'
-    K = 1.5             # yield times this when at least one of his pours lands
+    K = 1.25            # yield times this when at least one of his pours lands (1.5 measured: lit on 6 pages in 10 and 3.9 times the wins, too much)
 
     def rest(self, R):
         ln = set(line_of(R.rec[-1]))
