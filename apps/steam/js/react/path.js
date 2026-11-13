@@ -185,6 +185,7 @@ function countersUpdate(meta, run, g) {
   add('reflex_steps', stepsR); top('max_kinds_round', Object.keys(kindsR).length); top('max_mark', g.total >= (run.quota || g.quota || 0) ? 1 + marks : 0);
   if (won && Object.keys(firedR).length <= 3) add('narrow_rounds');
   if (!won && roundNear(g, run)) add('near_rounds');
+  if (!won && g.specDef && run.tierNo > 1 && !specMet(g) && g.total >= needYield(run)) add('task_lost_rounds');      // lost on the task alone: the yield was past the mark
   if (won && run.tierNo > 1) meta.deep = Math.max(meta.deep || 0, run.round || 1);
   return c;
 }
@@ -209,7 +210,7 @@ const LADDER = [
   { id: 'chain4', kind: 'deed', counter: 'max_chain_page', n: 4, gives: 'credit', credit: 1 }, { id: 'chain6', kind: 'deed', counter: 'max_chain_page', n: 6, gives: 'instrument', thing: 'magnet' }, { id: 'chain9', kind: 'deed', counter: 'max_chain_page', n: 9, gives: 'motif', thing: 'spiro' },
   { id: 'mark2', kind: 'deed', counter: 'max_mark', n: 2, gives: 'motif', thing: 'arene' }, { id: 'mark3', kind: 'deed', counter: 'max_mark', n: 3, gives: 'credit', credit: 2 }, { id: 'mark4', kind: 'deed', counter: 'max_mark', n: 4, gives: 'soundtrack', thing: 'metal' },
   { id: 'kinds3', kind: 'deed', counter: 'max_kinds_round', n: 3, gives: 'reagent', thing: 'epoxidation' }, { id: 'kinds5', kind: 'deed', counter: 'max_kinds_round', n: 5, gives: 'credit', credit: 2 }, { id: 'allsix', kind: 'deed', counter: 'max_kinds_run', n: 6, gives: 'instrument', thing: 'carousel' },
-  { id: 'narrow', kind: 'deed', counter: 'narrow_rounds', n: 1, gives: 'instrument', thing: 'dropper' }, { id: 'near', kind: 'deed', counter: 'near_rounds', n: 1, gives: 'credit', credit: 2 }, { id: 'big10', kind: 'deed', counter: 'bigger10_rounds', n: 1, gives: 'reagent', thing: 'hwe' },
+  { id: 'narrow', kind: 'deed', counter: 'narrow_rounds', n: 1, gives: 'instrument', thing: 'dropper' }, { id: 'near', kind: 'deed', counter: 'near_rounds', n: 1, gives: 'instrument', thing: 'counter' }, { id: 'tasklost', kind: 'deed', counter: 'task_lost_rounds', n: 2, gives: 'instrument', thing: 'condenser' }, { id: 'big10', kind: 'deed', counter: 'bigger10_rounds', n: 1, gives: 'reagent', thing: 'hwe' },
   { id: 'rounds10', kind: 'count', counter: 'rounds', n: 10, gives: 'credit', credit: 1 }, { id: 'rounds30', kind: 'count', counter: 'rounds', n: 30, gives: 'credit', credit: 1 }, { id: 'rounds100', kind: 'count', counter: 'rounds', n: 100, gives: 'sigil', thing: 'clepsydra' },
   { id: 'won5', kind: 'count', counter: 'rounds_won', n: 5, gives: 'credit', credit: 1 }, { id: 'won20', kind: 'count', counter: 'rounds_won', n: 20, gives: 'instrument', thing: 'timer' }, { id: 'won60', kind: 'count', counter: 'rounds_won', n: 60, gives: 'credit', credit: 2 },
   { id: 'won150', kind: 'count', counter: 'rounds_won', n: 150, gives: 'credit', credit: 3 }, { id: 'lost3', kind: 'count', counter: 'runs_lost', n: 3, gives: 'soundtrack', thing: 'gothic' }, { id: 'lost10', kind: 'count', counter: 'runs_lost', n: 10, gives: 'reagent', thing: 'permanganate' },
@@ -239,28 +240,28 @@ function ladderDue(meta) { if (!meta || RULE.ladder === false) return []; const 
 // same table written out. What is NOT in it, and why, is at the foot of that file.
 const RUNG_TXT = { max_chain_page: n => 'Set off a chain of ' + n + ' reflex steps on one page.', max_mark: n => (n >= 4 ? 'End a round at OVERREACT (2.83 times the number to beat).' : n === 3 ? 'End a round at 2 times the number to beat.' : 'End a round at 1.41 times the number to beat.'),
   max_kinds_round: n => 'Set off ' + n + ' different kinds of reflex in one round.', max_kinds_run: () => 'Fire six different reagents in one run.', narrow_rounds: () => 'Clear a round having fired three kinds of reagent or fewer.',
-  near_rounds: () => 'Lose a round of a six-round or nine-round run by under 15 in 100.', bigger10_rounds: () => 'End a round with the molecule 10 or more atoms bigger than it was dealt.', rounds: n => 'Play ' + n + ' rounds.', rounds_won: n => 'Clear ' + n + ' rounds.',
+  near_rounds: () => 'Lose a round of a six-round or nine-round run by under 15 in 100.', task_lost_rounds: n => 'Lose ' + n + ' rounds of a six-round or nine-round run on the task alone, with the yield past its mark.', bigger10_rounds: () => 'End a round with the molecule 10 or more atoms bigger than it was dealt.', rounds: n => 'Play ' + n + ' rounds.', rounds_won: n => 'Clear ' + n + ' rounds.',
   runs_lost: n => 'Lose ' + n + ' runs.', reflex_steps: n => 'Set off ' + n + ' reflex steps.', ring_steps: n => 'Close ' + n + ' rings.', oxidize_acted: n => 'Have oxidize act ' + n + ' times.', hydrate_fired: n => 'Fire hydrate ' + n + ' times.',
   water5_pages: n => 'Drive off 5 or more waters on a page, ' + n + ' times.', one_reagent_lines: n => 'Line up one reagent in all three circles, ' + n + ' times.', dry_steps: n => 'Set off dry ' + n + ' times.', dehydrate_fired: n => 'Fire dehydrate ' + n + ' times.', sh_made: n => 'Put on ' + n + ' SH.', hydrate_acted: n => 'Have hydrate act ' + n + ' times.', epoxidation_acted: n => 'Have epoxidize act ' + n + ' times.', hydrate_then_oxidize: n => 'Fire hydrate and then oxidize on one page, both acting, ' + n + ' times.',
   off_acid_fumes: n => 'Drive off acid fumes ' + n + ' times (a Cl closing a ring gives them off).', grow_acted: n => 'Have grow act ' + n + ' times.', smaller_rounds: n => 'End ' + n + ' rounds with the molecule smaller than it was dealt.', ritter_acted: n => 'Have aminate act ' + n + ' times.', thiolene_acted: n => 'Have thiolate act ' + n + ' times.' };
 const rungHow = r => (r.kind === 'depth' ? 'Clear round ' + r.n + (r.n > 6 ? ' of a nine-round run.' : ' of a six-round or nine-round run.') : (RUNG_TXT[r.counter] || (n => r.counter + ' ' + n))(r.n));
 const REF_REFLEX = { open: ['Open', 'An OH 3 or 4 carbons from an epoxide opens it and closes a ring. Across the fold too, from round 4.'], fold: ['Fold', 'An epoxide with a carbon on both ends turns into a C=O.'], seal: ['Seal', 'A COOH and an OH, NH2 or SH 3 or 4 carbons apart join in a ring; water comes off. Across the fold too, from round 4.'] };
 const REF_MOTIF = { arene: ['Benzene ring', 'Each benzene ring on the molecule: every step has its places counted 30 in 100 more.'], fusion: ['Shared side', 'Each pair of rings that share a side: every step has its places counted 15 in 100 more.'], cage: ['Cage', 'Each ring tied into a cage: every step has its places counted 3 in 100 more.'], spiro: ['Spiro centre', 'Each atom that two rings share and nothing else: every step has its places counted 10 in 100 more.'] };
-const REF_GEAR = { crystal: 'Put on a carbon: one hydrogen there becomes an OH, and the reflexes run from it.', bunsen: 'Every OH that can lose water does, and becomes a C=C.', burette: 'Every C=C outside a benzene ring becomes a C=O.', magnet: 'Every stretch of four or more plain CH2 in a row is pulled shut to two carbons.', mirror: 'Put on a bond: one side of the bond goes and the other is copied across it.', carousel: 'One more reagent is dealt on the first page of every round.', dropper: 'Two more uses of every reagent.', timer: 'A fourth circle on every page: four reagents fire.' };
+const REF_GEAR = { crystal: 'Put on a carbon: one hydrogen there becomes an OH, and the reflexes run from it.', bunsen: 'Every OH that can lose water does, and becomes a C=C.', burette: 'Every C=C outside a benzene ring becomes a C=O.', magnet: 'Every stretch of four or more plain CH2 in a row is pulled shut to two carbons.', mirror: 'Put on a bond: one side of the bond goes and the other is copied across it.', carousel: 'One more reagent is dealt on the first page of every round.', dropper: 'Two more uses of every reagent.', timer: 'A fourth circle on every page: four reagents fire.', counter: 'Set on a page: whatever that page adds toward the task of the round counts twice.', condenser: 'One more page is played this round. It counts toward the task and adds nothing to the yield.' };
 const REF_TRACK = { gothic: 'Gothic hybrid', metal: 'Chain Lightning', surf: 'Monster-movie lab', baroque: 'Harpsichord unhinged' };
 const REF_CARD = { hydroborate: 'bh3', reduce: 'nabh4' };
 const REF_FEED = { water: 'waters driven off', h2: 'hydrogens driven off', co2: 'carbon dioxides driven off', acid: 'times hydrate or dehydrate acts', wood: 'times reduce acts', salt: 'times oxidize acts on an OH at the end of a chain', slime: 'times hydroborate acts', seedling: 'times grow acts', ammonia: 'ammonias driven off', brimstone: 'sulfurs driven off' };
 // what a creature does, one plain line each (the numbers are read from HOMS2K; a multiplier is given as the player reads it on the yield)
 const REF_HOM = { water: K => 'When a page drives off ' + K.need + ' waters or more: yield times ' + homK(K.k) + ', then every C=C becomes C-OH and the rings run again.',
-  h2: K => 'Not on the last page. When oxidize is fired last and lands and the page has a chain of ' + K.need + ' or more: the next page counts its chain on from this one. If the next chain is shorter, yield times ' + homK(K.pop) + '.',
+  h2: K => 'Not on the last page. When a page fires only two reagents, oxidize is the second and it lands: yield times ' + homK(K.k || 1) + ', and the next page counts its chain on from this one. If the next chain is shorter, yield times ' + homK(K.pop) + '.',
   co2: K => 'On the last page, if carbon dioxide came off this round and ' + K.least + ' of the reagents never acted in it: yield times ' + homK(Math.pow(K.k, K.most)) + '.',
   acid: K => 'When the molecule ends a page ' + K.loss + ' atoms smaller or more: yield times ' + homK(K.k) + '.',
-  wood: K => 'When the first reagent lined up finds nothing to act on: he pours every dealt reagent that was not lined up, free; if one lands, yield times ' + homK(K.k) + '.',
+  wood: K => 'When the first reagent lined up finds nothing to act on: he pours every dealt reagent that was not lined up, a use of each; if one lands, yield times ' + homK(K.k) + '. The bottle he drank is empty for the rest of the round.',
   salt: K => 'When the line is the line of the page before again: yield times ' + homK(K.k) + ' and the three reagents get their use back.',
-  slime: K => 'When two of the page\'s reagents each set off a reflex: yield times ' + homK(K.k2) + '; all three: times ' + homK(K.k) + '. The reagents he stuck are shut on the next page.',
+  slime: K => 'When the same reagent is fired twice on a page and each time lands and sets off a reflex: yield times ' + homK(K.k) + '. That bottle is empty for the rest of the round.',
   ammonia: () => 'When nitrogen goes on the molecule this page (aminate lands, or a knit closes): the page\'s three reagents fire again in the same order, no use spent.',
   seedling: K => 'When the molecule ends a page ' + K.gain + ' atoms bigger or more: yield times ' + homK(K.k) + ', more for each page in a row. A later page that grows less: yield times ' + homK(K.wilt) + '.',
-  brimstone: K => 'When sulfur goes on the molecule, not on the last page: the round ends now and the task counts as met; yield times ' + homK(K.k) + ' after page one, ' + homK(K.k2) + ' after page two.' };
+  brimstone: K => 'When sulfur goes on the molecule and the task is at least half done, not on the last page: the round ends now and the task counts as met; yield times ' + homK(K.k) + ' after page one, ' + homK(K.k2) + ' after page two.' };
 const homK = k => (HOMS2K.asRead ? k : Math.round(Math.pow(k, FLAT.pow) * 100) / 100);      // a creature's k multiplies extra; the player reads its square root (FLAT)
 const REF_TERM = { glass: ['Glass', 'A run in which every round starts with extra at 3 (the yield reads 1.73 times) and the first reagent that does not follow on from the last ends the round.', 'Beat the number in a round of 6 or more steps with no broken row.'], occult: ['Occult', 'A run that starts with one of the eight instruments drawn at random, held or not; every number to beat is 1.22 times.', 'Clear 5 rounds in one run.'],
   lean: ['Lean', 'A run with three of the starting reagents and one more use of each.', 'Beat the number in a round having fired two kinds of reagent or fewer.'], long: ['Long', 'A run with four circles a page and two pages a round.', 'Make a row of 10 in one round.'], hoard: ['Hoard', 'A run that starts with three instruments drawn at random and is offered no more.', 'Hold five instruments in one run.'] };
@@ -269,7 +270,7 @@ function thingOf(cat, id) {
   if (cat === 'reagent') { const c = RX.CARDS[REF_CARD[id] || id] || {}; return { name: c.verb || id, does: (c.rule || c.note || '') + (id === 'chugaev' ? ' Sulfur comes off.' : '') }; }
   if (cat === 'reflex') return { name: REF_REFLEX[id][0], does: REF_REFLEX[id][1] };
   if (cat === 'motif') return { name: REF_MOTIF[id][0], does: REF_MOTIF[id][1] };
-  if (cat === 'instrument') { const G = GEARS[id] || {}, n = REF_GEAR[id] || G.note || ''; return { name: G.name || id, does: n + (G.tool ? ' Used on the molecule once a round.' : '') }; }
+  if (cat === 'instrument') { const G = GEARS[id] || {}, n = REF_GEAR[id] || G.note || ''; return { name: G.name || id, does: n + (G.task ? ' Used once a round.' : G.tool ? ' Used on the molecule once a round.' : '') }; }
   if (cat === 'soundtrack') return { name: REF_TRACK[id], does: 'A soundtrack to play the game to.' };
   if (cat === 'sigil') return { name: SIGILS[id].name, does: SIGILS[id].does };
   if (cat === 'homunculus') { const b = HOMS[id].brings, bc = b && RX.CARDS[b]; return { name: HOMS[id].name, does: REF_HOM[id](HOMS2K[id] || {}) + (bc ? ' While held, ' + (bc.verb || b).toLowerCase() + ' is on the rack too.' : '') }; }
@@ -513,6 +514,9 @@ const GEAR = [
   { id: 'dropper', tok: '+1 use', fam: 'rule', rule: true, note: 'two more uses of every reagent', name: 'dropper', shape: 'funnel' },
   { id: 'loupe', tok: 'rare', fam: 'rule', rule: true, note: 'rare reagents twice as often', name: 'loupe', shape: 'flask' },
   { id: 'timer', tok: '+1 reaction', fam: 'rule', rule: true, note: 'a fourth reaction on every page', name: 'timer', shape: 'box' },
+  // Fifteenth measure, item 1: two instruments that help the round's task, not its yield (the player sets each on a page; neither passes the task by itself).
+  { id: 'counter', tok: 'this page counts|twice for the task', fam: 'tool', five: true, rule: true, tool: true, whole: true, task: true, note: 'what this page adds toward the task counts twice', name: 'tally counter', shape: 'box' },
+  { id: 'condenser', tok: 'one more page|not weighed', fam: 'tool', five: true, rule: true, tool: true, whole: true, task: true, note: 'one more page this round: it counts for the task and adds no yield', name: 'condenser', shape: 'column' },
   // From the alchemist. These do things chemistry does not allow.
   { id: 'stone', tok: '{e} times 1.05', kin: 'alchemy', fam: 'extra', note: 'every reaction: extra times 1.05', name: "philosopher's stone", shape: 'round', at: 'step', fx: () => M('e', 1.05) },
   { id: 'transmute', tok: '{p} +40', kin: 'alchemy', fam: 'places', note: 'each place: +40 places', name: 'lead into gold', shape: 'box', at: 'site', fx: () => A('p', 40) },
@@ -547,7 +551,7 @@ const GEARS = {}; GEAR.forEach(q => { GEARS[q.id] = q; });
 //   burner, on the whole molecule: every OH loses water and becomes a C=C, all at once.
 // Three more still do what they say and are passive: carousel (one more reagent in the hand), dropper (one more use),
 // timer (a fourth circle). RULE.five: only these eight are offered, each from the supplier given here. Off: all sixty.
-const FIVE = { crystal: 0, bunsen: 0, dropper: 0, magnet: 1, carousel: 1, mirror: 2, timer: 3 };
+const FIVE = { crystal: 0, bunsen: 0, dropper: 0, counter: 0, magnet: 1, carousel: 1, condenser: 1, mirror: 2, timer: 3 };
 // The fifth piece. The clamp was the fifth and was taken out (the wood spirit homunculus does what it did). Three
 // candidates are built (rules.js, tools) and RULE.fifth names the one on offer; fifthSet(id) swaps it, and
 // fifthSet(null) offers none and puts the old number-adding piece of that name back.
@@ -568,6 +572,9 @@ const TOOLUSES = 1;
 RULE.toolPay = { bunsen: 2, magnet: 3, crystal: 0.5, burette: 0.5 };
 RULE.passive = { dropper: 2 };
 RULE.carouselFirst = true;
+// Fifteenth measure, item 1. bench: instruments used on the molecule or the page in one round at most (0: no limit); the pieces that are always
+// at work (carousel, dropper, timer) do not count. So a round's two uses are a choice: two for the yield, or one kept for the task.
+RULE.bench = 2;
 RULE.five = true;
 // RULE.bare: the bare game (docs/ORDER.md, layers 1 to 4): no piece is offered or held and no creature is taken
 RULE.bare = false;
@@ -870,7 +877,7 @@ const BRIEFS = [
 const BRIEF = {}; BRIEFS.forEach(b => { BRIEF[b.id] = b; });
 const synRack = () => RX.LIST.map(c => c.id).filter(id => id !== SYN.finish && id !== 'aibn' && !Object.keys(FOUND).some(k => FOUND[k] === id));
 // RULE.pages n: n more turns in every round (run-length option). RULE.stepsMore n: n more circles in every turn.
-const pagesOf = g => (sigOn('clepsydra') ? 1 : 0) + SYN.pages + (RULE.pages || 0) + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.includes('hourglass') ? 1 : 0) + (g.termPages || 0) - (g.brief === 'short' ? 1 : 0);
+const pagesOf = g => (sigOn('clepsydra') ? 1 : 0) + SYN.pages + (RULE.pages || 0) + (g.gear.includes('elixir') ? 1 : 0) + (g.gear.includes('hourglass') ? 1 : 0) + (g.termPages || 0) - (g.brief === 'short' ? 1 : 0) + (g.condenser ? 1 : 0);
 // everything made so far: what closed rows made plus the open row, all times extra
 // FLAT (ruling AT: flatter chain bonuses, docs/RIG.md fourteenth, part 1). What a round makes is still places times row times extra, but the
 // yield is that product raised to FLAT.pow (0.5: its square root), scaled so a product of FLAT.pivot stays FLAT.pivot. Every multiplier in the
@@ -883,7 +890,7 @@ const FLAT = { pow: 0.5, pivot: 4770 };
 const flat = raw => (FLAT.pow === 1 ? raw : Math.pow(FLAT.pivot, 1 - FLAT.pow) * Math.pow(Math.max(0, raw), FLAT.pow));
 // yx(k): what extra must be multiplied by for the YIELD to be multiplied by k (a creature's "yield times k" is on the yield the player reads)
 const yx = k => (FLAT.pow === 1 ? k : Math.pow(k, 1 / FLAT.pow));
-const made = g => Math.round(flat((g.bank + g.P * g.R) * g.E) * (g.lift || 1));    // g.lift: the sign (signLift), 1 without it
+const made = g => { const y = g.frozenAt || g; return Math.round(flat((y.bank + y.P * y.R) * y.E) * (g.lift || 1)); };    // g.lift: the sign (signLift), 1 without it
 const held = g => Math.round(g.P * g.R * g.E);
 const mult = g => g.R * g.E;
 const rowStart = g => (g.gear.includes('magnet') && !RULE.five ? 2.5 : 1);
@@ -1131,11 +1138,11 @@ function synTake(g, o, free) {
 // ---------- the page lined up, then fired ----------
 // The state of a round is saved, something is tried, and the state is put back.
 function snap(g) {
-  const c = g.cur, s = { P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest, lastOn: g.lastOn, rec: g.rec, spec: g.spec };
+  const c = g.cur, s = { counterPage: g.counterPage, condenser: g.condenser, frozenAt: g.frozenAt, P: g.P, R: g.R, E: g.E, bank: g.bank, lit: g.lit, ringSet: g.ringSet, tally: Object.assign({}, g.tally), by: Object.assign({}, g.by), lost: g.lost, tower: g.tower, chain: g.chain, fired: g.fired, best: g.best, pageSteps: g.pageSteps, left: Object.assign({}, g.left), m: g.m, trail: g.trail.length, path: c.path, fresh: c.fresh, layers: c.layers, seen: c.seen, step: c.step, used: c.used.length, over: g.over, total: g.total, more: g.more, doused: g.doused, chainLen: g.chainLen, loopsCont: g.loopsCont, kinds: g.kinds, free: g.free, rare: g.rare, redrawn: g.redrawn, shot: g.shot, casc: g.casc, queue: (g.queue || []).slice(), startTodo: (g.startTodo || []).slice(), mirrored: g.mirrorUsed, tools: g.tools, hom: g.hom, recycled: g.recycled, wastedNow: g.wastedNow, cascBest: g.cascBest, lastOn: g.lastOn, rec: g.rec, spec: g.spec };
   c.seen = new Set(c.seen); return s;
 }
 function back(g, s) {
-  const c = g.cur; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest; g.lastOn = s.lastOn; g.rec = s.rec; g.spec = s.spec;
+  const c = g.cur; g.counterPage = s.counterPage; g.condenser = s.condenser; g.frozenAt = s.frozenAt; g.P = s.P; g.R = s.R; g.E = s.E; g.bank = s.bank; g.lit = s.lit; g.ringSet = s.ringSet; g.tally = s.tally; Object.assign(g.by, s.by); g.lost = s.lost; g.tower = s.tower; g.chain = s.chain; g.fired = s.fired; g.best = s.best; g.pageSteps = s.pageSteps; g.left = s.left; g.m = s.m; g.trail.length = s.trail; c.path = s.path; c.fresh = s.fresh; c.layers = s.layers; c.seen = s.seen; c.step = s.step; c.used.length = s.used; g.over = s.over; g.total = s.total; g.more = s.more; g.doused = s.doused; g.chainLen = s.chainLen; g.loopsCont = s.loopsCont; g.kinds = s.kinds; g.free = s.free; g.rare = s.rare; g.redrawn = s.redrawn; g.shot = s.shot; g.casc = s.casc; g.queue = s.queue; g.startTodo = s.startTodo; g.mirrorUsed = s.mirrored; g.tools = s.tools; g.hom = s.hom; g.recycled = s.recycled; g.wastedNow = s.wastedNow; g.cascBest = s.cascBest; g.lastOn = s.lastOn; g.rec = s.rec; g.spec = s.spec;
 }
 const BANKID = '#bank';
 // The next step of a cascade: the first reaction the molecule has with itself as it stands, or nothing. Every kind
@@ -1175,13 +1182,25 @@ function startRun(g, each) { let n = 0; for (let o = startDue(g); o; o = startDu
 // taken out: a piece is now something the player uses on the molecule)
 const again = () => null, cascMode = () => RULE.cascade;
 // ---------- pieces used on the molecule ----------
-const canTool = (g, id) => !!RULE.five && !!g.syn && !g.over && !g.shot && g.gear.includes(id) && !!(GEARS[id] && GEARS[id].tool) && ((g.tools && g.tools[id]) || 0) < TOOLUSES;
-const toolSpots = (g, id) => (canTool(g, id) ? RX.tools.spots(g.m, id, RULE.atoms) : []);
+const benchUsed = g => Object.keys(g.tools || {}).reduce((t, k) => t + (g.tools[k] || 0), 0);
+const benchLeft = g => (RULE.bench ? Math.max(0, RULE.bench - benchUsed(g)) : 99);
+const canTool = (g, id) => !!RULE.five && !!g.syn && !g.over && !g.shot && g.gear.includes(id) && !!(GEARS[id] && GEARS[id].tool) && ((g.tools && g.tools[id]) || 0) < TOOLUSES && benchLeft(g) > 0 && (!GEARS[id].task || !!g.specDef);
+const toolSpots = (g, id) => (canTool(g, id) ? (GEARS[id].task ? [{ whole: true }] : RX.tools.spots(g.m, id, RULE.atoms)) : []);
+// The two instruments for the task. The tally counter is set on the page in play: whatever that page adds toward the task counts twice (counterBonus,
+// read by specParts). The condenser adds one more page to the round; when that page is reached the yield is fixed as it stands (g.frozenAt, read by
+// made), so the page counts for the task and for nothing else.
+function taskToolUse(g, id) {
+  if (id === 'counter') g.counterPage = g.page || 1; else if (id === 'condenser') g.condenser = 1; else return false;
+  g.tools = Object.assign({}, g.tools); g.tools[id] = (g.tools[id] || 0) + 1; g.tally.tools = (g.tally.tools || 0) + 1; g.toolRun = false; g.toolPay = 0; specUpdate(g);
+  return true;
+}
+function counterBonus(g, d, rec) { const k = g.counterPage; if (!k || rec.pages.length < k) return 0; const cut = n => specRead(d, { f0: rec.f0, pages: rec.pages.slice(0, n) }); return Math.max(0, cut(k) - cut(k - 1)); }
 // Uses piece id at a spot (from toolSpots). The molecule is replaced by a changed copy, as when rings open, and
 // g.reopened tells the page which atom became which. False when it cannot be done there (the size limit).
 function toolUse(g, id, spot) {
   g.lastOn = false;
   if (!canTool(g, id) || !spot) return false;
+  if (GEARS[id].task) return taskToolUse(g, id);
   const cm = RX.cloneMap(g.m), mp = v => (Array.isArray(v) ? v.map(mp) : cm.map.get(v)), sp = {}; Object.keys(spot).forEach(k => { sp[k] = spot[k] && typeof spot[k] === 'object' ? mp(spot[k]) : spot[k]; });
   const res = RX.tools.apply(cm.model, id, sp); if (!res) return false;
   if (RULE.atoms && heavy(cm.model) > RULE.atoms && heavy(cm.model) > heavy(g.m)) return false;
@@ -1323,7 +1342,12 @@ const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 // g.hom carries the state of the round and is replaced, never changed in place (snap and back keep it): v2, tp (tapped on this page), a0 (heavy
 // atoms when the page began), w0 (waters off when it began), t0 and t1 (where the page before and this page begin in g.trail), float (the chain
 // count to carry over the turn), streak and wpage (seedling), end (brimstone: turn() says the round is over).
-const HOMS2K = { water: { k: 1.5, need: 4 }, h2: { pop: 0.6, need: 3 }, co2: { k: 1.36, most: 3, least: 3 }, acid: { k: 2, loss: 2 }, wood: { first: true, k: 1.25 }, salt: { k: 2.5 }, slime: { k: 2.5, k2: 1.5, steps: 1 }, ammonia: {}, seedling: { k: 1.4, gain: 8, wilt: 0.7 }, brimstone: { k: 1.5, k2: 1.25 } };
+// Fifteenth measure, item 2 (the five a reviewer failed against "reward gameplay not averages"): each is now lit by a line the player has to choose.
+//   h2: a page of TWO reagents (the third circle left empty), oxidize the second and landing: yield times k and the chain floats over the turn.
+//   wood: the bottle he drank is empty for the rest of the round (empty) and his pours spend a use each (pay); times k if a pour lands.
+//   slime: the SAME bottle twice on a page, both landing and each setting off a reflex of its own: times k; that bottle is empty for the round.
+//   seedling: 12 atoms, and it pays more. brimstone: the fire takes only a task at least half done (half).
+const HOMS2K = { water: { k: 1.5, need: 4 }, h2: { pop: 0.6, need: 1, two: true, k: 2.5 }, co2: { k: 1.36, most: 3, least: 3 }, acid: { k: 2, loss: 2 }, wood: { first: true, k: 1.5, pay: true, empty: true }, salt: { k: 2.5 }, slime: { k: 2.5, k2: 2.5, steps: 1, same: 2 }, ammonia: {}, seedling: { k: 1.8, gain: 12, wilt: 0.7 }, brimstone: { k: 1.5, k2: 1.25, half: 0.5 } };
 const HOMS1 = Object.assign({}, HOMS);
 const hom2On = g => !!RULE.homs2 && !!g && !!g.hom && !!g.hom.v2;
 // what a stretch of the trail was: the circles in order ({ id, places, set: reflex steps it set off }) and the reflex kinds
@@ -1335,10 +1359,13 @@ const hom2Shut = g => Math.min(HOMS2K.co2.most, (g.rackIds || synRack()).filter(
 // wood: the dealt reagents that were not in the line and have a use left, in the order dealt
 const hom2Rest = g => { if (!hom2On(g)) return []; const ln = hom2Rec(g).circ.map(c => c.id); return g.kinds.filter(id => !ln.includes(id) && ((g.free && g.free[id]) || g.left[id] > 0)); };
 // slime: the reagents of the line that landed and set off a reflex of their own (K.steps steps or more)
-const hom2Own = (p, K) => p.circ.slice(0, 3).filter(c => c.id !== SYN.finish && c.id !== BANKID && c.places > 0 && c.set >= (K.steps || 1)).map(c => c.id);
+const hom2Own = (p, K) => { const c3 = p.circ.slice(0, 3).filter(c => c.id !== SYN.finish && c.id !== BANKID), ok = c => c.places > 0 && c.set >= (K.steps || 1);
+  if (!K.same) return c3.filter(ok).map(c => c.id);
+  for (const c of c3) { const tw = c3.filter(x => x.id === c.id); if (tw.length >= K.same && tw.every(ok)) return tw.map(x => x.id); }      // the same bottle twice, each landing and setting off a reflex
+  return []; };
 const HOM2LIT = {
   water: (g, p, K) => (g.tally.off_water || 0) - g.hom.w0 >= K.need,
-  h2: (g, p, K) => { const c = p.circ[p.circ.length - 1]; return !!c && c.id === 'pcc' && c.places > 0 && (g.casc || 0) >= (K.need || 1) && g.page < pagesOf(g); },
+  h2: (g, p, K) => { const c = p.circ[p.circ.length - 1]; return (!K.two || p.circ.length === 2) && !!c && c.id === 'pcc' && c.places > 0 && (g.casc || 0) >= (K.need || 1) && g.page < pagesOf(g); },
   co2: (g, p, K) => g.page >= pagesOf(g) && (g.tally.off_carbon_dioxide || 0) >= 1 && hom2Shut(g) >= K.least,
   acid: (g, p, K) => g.hom.a0 - heavy(g.m) >= K.loss,
   wood: (g, p, K) => { const c3 = p.circ.slice(0, 3), dud = c => c.id !== SYN.finish && c.id !== BANKID && c.places === 0; return c3.length >= 3 && (K.first ? dud(c3[0]) : c3.some(dud)) && hom2Rest(g).length >= 1; },   // any page
@@ -1346,16 +1373,16 @@ const HOM2LIT = {
   slime: (g, p, K) => hom2Own(p, K).length >= 2,
   ammonia: (g, p) => p.circ.some(c => c.id === 'ritter' && c.places > 0) || p.chain.includes('knit'),
   seedling: (g, p, K) => heavy(g.m) - g.hom.a0 >= K.gain,
-  brimstone: (g, p) => g.page < pagesOf(g) && (p.circ.some(c => c.id === 'thiolene' && c.places > 0) || p.chain.includes('cap'))
+  brimstone: (g, p, K) => g.page < pagesOf(g) && (!K.half || !g.specDef || specProg(g) >= K.half * g.specDef.parts.length) && (p.circ.some(c => c.id === 'thiolene' && c.places > 0) || p.chain.includes('cap'))
 };
 // the page has fired and the creature has not been tapped on it
 const hom2Open = g => hom2On(g) && !!g.syn && !g.over && !!g.shot && !(g.queue || []).length && !g.hom.tp;
 const hom2Lit = g => hom2Open(g) && !!HOM2LIT[g.hom.id] && !!HOM2LIT[g.hom.id](g, hom2Rec(g), HOMS2K[g.hom.id] || {});
 const HOM2TOK = {
-  water: K => K.need + ' waters off|yield x' + K.k, h2: K => 'oxidize last|chain ' + K.need + '+ floats', co2: K => K.least + ' bottles shut|x' + K.k + ' each', acid: K => K.loss + ' atoms smaller|yield x' + K.k,
-  wood: K => (K.first ? 'first is a dud|' : 'a dud in line|') + 'pours rest x' + K.k, salt: K => 'same line again|x' + K.k + ', uses back', slime: K => 'two chains x' + K.k2 + '|three x' + K.k, ammonia: () => 'nitrogen goes on|line fires again',
-  seedling: K => 'grows ' + K.gain + ' atoms|x' + K.k + ' and rising', brimstone: K => 'sulfur goes on|burns spec x' + K.k
-};
+  water: K => K.need + ' waters off|yield x' + homK(K.k), h2: K => (K.two ? 'two reagents, oxidize last|x' + homK(K.k || 1) + ', chain floats' : 'oxidize last|chain ' + K.need + '+ floats'), co2: K => K.least + ' bottles shut|x' + homK(Math.pow(K.k, K.most)), acid: K => K.loss + ' atoms smaller|yield x' + homK(K.k),
+  wood: K => (K.first ? 'first is a dud|' : 'a dud in line|') + 'pours rest x' + homK(K.k), salt: K => 'same line again|x' + homK(K.k) + ', uses back', slime: K => (K.same ? 'one bottle twice|both set off x' + homK(K.k) : 'two chains x' + homK(K.k2) + '|three x' + homK(K.k)), ammonia: () => 'nitrogen goes on|line fires again',
+  seedling: K => 'grows ' + K.gain + ' atoms|x' + homK(K.k) + ' and rising', brimstone: K => (K.half ? 'sulfur on, task half done|ends round x' : 'sulfur goes on|burns spec x') + homK(K.k)
+};      // every multiplier as the player reads it on the yield (homK)
 const HOMS2 = {};
 Object.keys(HOMS2K).forEach(id => {
   const o = HOMS1[id], e = { name: o.name, jar: o.jar, feed: o.feed, need: 1, uses: 1, whole: true, word: '', v2: true,
@@ -1387,12 +1414,12 @@ function homAfter(g) {
   if (!hom2On(g) || g.over) return false; const h = g.hom; if (h.id === 'wood') return homWoodPay(g);
   if (h.id === 'h2') {     // the bet: the chain that floated in was longer than this page's own chain, the balloon pops
     if (!h.floated || h.ppage === g.page) return false; const own = hom2Rec(g).chain.length, pop = own < h.floated;
-    if (pop) g.E *= HOMS2K.h2.pop; g.hom = Object.assign({}, h, { floated: 0, ppage: g.page, popped: (h.popped || 0) + (pop ? 1 : 0) }); return pop;
+    if (pop) { g.E *= HOMS2K.h2.pop; if (g.frozenAt) g.frozenAt = Object.assign({}, g.frozenAt, { E: g.frozenAt.E * HOMS2K.h2.pop }); } g.hom = Object.assign({}, h, { floated: 0, ppage: g.page, popped: (h.popped || 0) + (pop ? 1 : 0) }); return pop;
   }
   if (h.id !== 'seedling') return false;
   // once tapped it must be fed every page: a page that grows less than K.gain wilts it (not the page of the tap itself)
   if (!(heavy(g.m) - h.a0 < HOMS2K.seedling.gain && (h.streak || 0) > 0 && h.wpage !== g.page && h.spage !== g.page)) return false;
-  g.E *= HOMS2K.seedling.wilt; g.hom = Object.assign({}, h, { streak: 0, wpage: g.page }); return true;
+  g.E *= HOMS2K.seedling.wilt; if (g.frozenAt) g.frozenAt = Object.assign({}, g.frozenAt, { E: g.frozenAt.E * HOMS2K.seedling.wilt }); g.hom = Object.assign({}, h, { streak: 0, wpage: g.page }); return true;
 }
 // the tap. Further circles (wood, ammonia) are put in the queue with room made for them: the page, or homGo, fires them
 function hom2Use(g, spot, rnd) {
@@ -1401,11 +1428,11 @@ function hom2Use(g, spot, rnd) {
   const give = ids => ids.forEach(x => { if (!(g.free && g.free[x])) g.left[x] = (g.left[x] || 0) + 1; }), more = ids => { g.queue = ids.slice(); g.more = (g.more || 0) + ids.length - (stepsOf(g) - g.pageSteps); };
   const cm = RX.cloneMap(g.m); let made = [];
   if (id === 'water') { g.E *= K.k; made = HOMS2.water.act(cm.model).made; }
-  else if (id === 'h2') up.float = g.casc || 0;
+  else if (id === 'h2') { up.float = g.casc || 0; if (K.k) g.E *= K.k; }
   else if (id === 'co2') g.E *= Math.pow(K.k, hom2Shut(g));
   else if (id === 'acid') g.E *= K.k;
-  else if (id === 'slime') { const own = hom2Own(hom2Rec(g), K); g.E *= own.length >= 3 ? K.k : K.k2; up.stuck = own.filter((x, i) => own.indexOf(x) === i); }
-  else if (id === 'wood') { const rest = hom2Rest(g); give(rest); more(rest); up.woodFrom = g.trail.length; up.woodPaid = false; }      // his pours spend no use
+  else if (id === 'slime') { const own = hom2Own(hom2Rec(g), K); g.E *= own.length >= 3 || K.same ? K.k : K.k2; if (K.same) { if (!(g.free && g.free[own[0]])) g.left[own[0]] = 0; } else up.stuck = own.filter((x, i) => own.indexOf(x) === i); }      // same: that bottle is empty for the rest of the round
+  else if (id === 'wood') { const rest = hom2Rest(g), dud = hom2Rec(g).circ[0]; if (!K.pay) give(rest); more(rest); if (K.empty && dud && !(g.free && g.free[dud.id])) g.left[dud.id] = 0; up.woodFrom = g.trail.length; up.woodPaid = false; }      // pay: his pours spend a use each; empty: the bottle he drank is empty for the round
   else if (id === 'salt') { g.E *= K.k; give(line); }
   else if (id === 'ammonia') { give(line); more(line); }
   else if (id === 'seedling') { up.streak = (g.hom.streak || 0) + 1; up.spage = g.page; g.E *= 1 + (K.k - 1) * up.streak; }
@@ -1433,7 +1460,7 @@ function hom2Go(g, spot, rnd) {
 const HOMAIM = { h2Step: 0.1, h2Safe: 99 };
 function homPeek(g, v0) {
   if (!hom2Lit(g)) return null; const id = g.hom.id, better = (a, b) => a.prog > b.prog || (a.prog === b.prog && a.made > b.made);
-  if (id === 'h2') return (g.casc || 0) <= HOMAIM.h2Safe ? { prog: v0.prog, made: Math.round(v0.made * (1 + HOMAIM.h2Step * (g.casc || 0))) } : null;
+  if (id === 'h2') return (g.casc || 0) <= HOMAIM.h2Safe ? { prog: v0.prog, made: Math.round(v0.made * Math.pow(HOMS2K.h2.k || 1, FLAT.pow) * (1 + HOMAIM.h2Step * (g.casc || 0))) } : null;
   const met0 = !!g.specDef && specMet(g), made0 = made(g), need = g.runRef ? needYield(g.runRef) : 0;
   if (hom2Go(g, { all: true }) < 0) return null; const v1 = homValue(g);
   if (id === 'brimstone') return (need > 0 ? v1.made >= need && (!met0 || made0 < need) : !met0 && g.page >= 2) ? v1 : null;
@@ -1532,7 +1559,7 @@ function queueView(g) {
 // the fire extinguisher: stops a chain that is running; the round counts half again once the page is over
 function douse(g) { if (!g.gear.includes('extinguisher') || !g.chain || g.doused) return false; g.chain = false; g.doused = 1; return true; }
 const doused = g => { if (g.doused === 1) { g.E *= 1.5; g.doused = 2; } };
-function turn(g, rnd) { doused(g); homAfter(g); specPage(g); if (g.page >= pagesOf(g) || (hom2On(g) && g.hom.end)) return false; g.cascBest = Math.max(g.cascBest || 0, g.casc || 0); g.page++; g.back = g.gear.includes('raven') ? g.cur.used[g.cur.used.length - 1] : null; reopenAll(g); synDeal(g, rnd); frozenPay(g); return true; }
+function turn(g, rnd) { doused(g); homAfter(g); specPage(g); if (g.page >= pagesOf(g) || (hom2On(g) && g.hom.end)) return false; g.cascBest = Math.max(g.cascBest || 0, g.casc || 0); g.page++; if (g.condenser && !g.frozenAt && g.page >= pagesOf(g)) g.frozenAt = { P: g.P, R: g.R, E: g.E, bank: g.bank }; g.back = g.gear.includes('raven') ? g.cur.used[g.cur.used.length - 1] : null; reopenAll(g); synDeal(g, rnd); frozenPay(g); return true; }
 // the finishing reagent, on the last page only
 function finishOpt(g) {
   if (g.page < pagesOf(g) || !RX.CARDS[SYN.finish].find(g.m).length) return null;
@@ -2139,7 +2166,7 @@ function specRead(d, rec) {
   throw new Error('spec: no reading ' + d.mode);
 }
 // the values of the parts of the round's spec. live (default): the page in play counts as it stands
-function specParts(g, live) { const rec = specRec(g, live), D = g.specDef; if (!rec || !D) return []; return D.parts.map(p => { const v = specRead(SPEC_TABLE[p.name], rec); return { name: p.name, n: p.n, mark: p.mark, value: v, met: v >= p.n }; }); }
+function specParts(g, live) { const rec = specRec(g, live), D = g.specDef; if (!rec || !D) return []; return D.parts.map(p => { const v = specRead(SPEC_TABLE[p.name], rec) + counterBonus(g, SPEC_TABLE[p.name], rec); return { name: p.name, n: p.n, mark: p.mark, value: v, met: v >= p.n }; }); }
 const specValue = (g, live) => { const p = specParts(g, live); return p.length ? p[0].value : 0; };
 const specMet = (g, live) => { if (g && g.hom && g.hom.burnt && g.specDef) return true; const p = specParts(g, live); return p.length > 0 && p.every(q => q.met); };
 function specUpdate(g) {
@@ -2161,7 +2188,7 @@ function specProg(g) { if (g && g.hom && g.hom.burnt && g.specDef) return g.spec
 function specLines(g) {
   const L = stepsOf(g) - g.pageSteps; if (L <= 0) return [];
   const last = g.page >= pagesOf(g), fin = last ? finishOpt(g) : null; let ids = g.kinds.filter(id => usesLeft(g, id) > 0); if (fin) ids = ids.concat(['#finish']);
-  const short = !!(g.specDef && g.specDef.parts.some(p => p.name === 'held_back')), lines = [], rec = cur => { if (cur.length === L) { lines.push(cur); return; } if (short && cur.length >= 1) lines.push(cur); for (const id of ids) { if (id === '#finish' ? cur.includes(id) : !(g.free && g.free[id]) && cur.filter(x => x === id).length >= (g.left[id] || 0)) continue; rec(cur.concat(id)); } };
+  const short = !!(g.specDef && g.specDef.parts.some(p => p.name === 'held_back')) || (hom2On(g) && g.hom.id === 'h2' && !!HOMS2K.h2.two), lines = [], rec = cur => { if (cur.length === L) { lines.push(cur); return; } if (short && cur.length >= 1) lines.push(cur); for (const id of ids) { if (id === '#finish' ? cur.includes(id) : !(g.free && g.free[id]) && cur.filter(x => x === id).length >= (g.left[id] || 0)) continue; rec(cur.concat(id)); } };
   rec([]); return lines;
 }
 function specTry(g, line) {
@@ -2268,6 +2295,6 @@ const reachAfter = (reach, run) => { const top = RULE.postdoc ? 4 : 3; return Ma
 // the fold of a molecule for the page: rows, columns, which side each atom points to, who hosts whom, and the pairs that face across it
 function foldOf(m, K) { const ENG = RX.ENG, G = ENG.snapG(m), f = ENG.foldOf(G, K), at = i => G.atoms[i]; const pos = new Map(), down = new Map(), host = new Map(); f.pos.forEach((v, i) => pos.set(at(i), v)); f.down.forEach((v, i) => down.set(at(i), v)); f.host.forEach((h, i) => host.set(at(i), at(h)));
   return { K: f.K, rows: f.rows, anchor: at(f.anchor), path: f.path.map(at), pos, down, host, rungs: f.rung.map(r => [at(r[0]), at(r[1])]), across: ENG.acrossPairs(G, K).map(p => [at(p[0]), at(p[1]), p[2]]), faces: (a, b) => ENG.faces(f, G.idx.get(a), G.idx.get(b)) }; }
-AA.rxPath = { facts, reference, REFERENCE_CATS, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { facts, reference, REFERENCE_CATS, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, benchLeft, benchUsed, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

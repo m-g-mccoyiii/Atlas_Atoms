@@ -11,14 +11,14 @@ For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name
 | Reagents | 17 | The twelve earned by a deed are new ways: until now the game handed all of them to any long run, or (hydroborate, reduce) only with a creature. The three bought with credit and the two found by a row are as the game already had them. |
 | Reflexes | 3 | All three are new ways: the game had no way to get them. |
 | Motifs | 4 | All four are new ways: the game had no way to open them. |
-| Instruments | 8 | All eight are new ways: until now an instrument was on offer once its supplier had been bought with credit. |
+| Instruments | 10 | Two added in the fifteenth measure (tally counter, condenser). All are new ways: until now an instrument was on offer once its supplier had been bought with credit. |
 | Homunculi | 10 | None invented: each hatches when its jar is full, as built. Ammonia and brimstone had no jar size in the game and could never hatch; they now have 40 and 80. |
 | Sigils | 9 | All nine are new ways (first proposals; how sigils are got is still the owner's to decide). |
 | Terms of a run | 5 | None invented: each is earned by a deed the game already had. |
 | Longer runs | 2 | None invented. |
 | Soundtracks | 4 | All four are new ways: nothing gated a soundtrack. The page has to call the music with what is owned. |
 | The sign | 3 | None invented. |
-| All | 65 | |
+| All | 67 | |
 
 A new game holds: six reagents (hydrate, oxidize, grow, thiolate, dehydrate, aminate), ten reflexes (ring, dry, weld, shift, tuck, flip, snap, close, cap, knit), eight motifs, the three-round run, two soundtracks, and nothing else.
 
@@ -73,6 +73,8 @@ A new game holds: six reagents (hydrate, oxidize, grow, thiolate, dehydrate, ami
 | Carousel | One more reagent is dealt on every page. | Fire six different reagents in one run. | 6 |
 | Dropper | One more use of every reagent. | Clear a round having fired three kinds of reagent or fewer. |  |
 | Timer | A fourth circle on every page: four reagents fire. | Clear 20 rounds. | 20 |
+| Tally counter | Set on a page: whatever that page adds toward the task of the round counts twice. | Lose a round of a six-round or nine-round run by under 15 in 100. | 1 |
+| Condenser | One more page is played this round. It counts toward the task and adds nothing to the yield. | Lose 2 rounds of a six-round or nine-round run on the task alone, with the yield past its mark. | 2 |
 
 ## Homunculi (10)
 

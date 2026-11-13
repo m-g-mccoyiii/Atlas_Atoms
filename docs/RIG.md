@@ -1,8 +1,117 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the fourteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the fifteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-13, fifteenth: helpers for the task, the five creatures
+
+Two of five items were done. Each ends with the choices left for the owner. What was not started is at the end.
+
+### 1. Helpers that help the task
+
+**What was built** (in the game: `path.js` `counter`, `condenser`, `RULE.bench`, `taskToolUse`, `counterBonus`; in the simulator: `sweep_tools.py`; checked in the game by the job `tool15.js`).
+
+| Thing | What the player does | What it does |
+|---|---|---|
+| Tally counter (instrument) | sets it on a page, once a round | whatever that page adds toward the task counts twice: a page that closes one ring of the two asked for meets the task |
+| Condenser (instrument) | sets it once a round | one more page is played; it counts toward the task and adds nothing to the yield |
+| The bench's limit | chooses | two instruments may be used in a round (the carousel, dropper and timer are always at work and do not count). Two for the yield, or one kept for the task |
+| Brimstone (creature, item 2) | lands sulfur with the task half done | ends the round with the task counted as met |
+| Hydrogen (creature, item 2) | fires a page of two reagents | pays, and that page counts for the task "turns firing fewer than three" |
+
+Neither instrument passes a task by itself: the counter needs a page that does half the task, the condenser needs a page that makes what is missing. The counter is earned by losing a round by under 15 in 100; the condenser by losing two rounds on the task alone with the yield past its mark.
+
+**Each alone**, 300 nine-round runs on the same deals, every round played (`sweep_run.py help15`). Task met, of 100 rounds, rounds 1 to 9:
+
+| Held | Casual: task met | Careful: task met | Used, of 100 rounds |
+|---|---|---|---|
+| nothing | 88 84 65 81 79 65 63 64 59 | 94 93 87 94 91 87 84 83 81 | |
+| Tally counter | 88 88 83 89 85 77 72 73 68 | 94 95 96 98 95 90 87 89 85 | 25 casual, 23 careful |
+| Condenser | 89 86 72 83 82 70 64 68 64 | 94 94 90 96 93 88 85 87 83 | 5 casual, 2 careful |
+| Both | 89 89 85 90 87 80 73 75 71 | 94 96 96 99 96 91 87 91 87 | |
+
+The counter takes about a third of the casual player's lost tasks away. The condenser is weak: of the rounds whose task is not met after three pages, a fourth page meets it in 1 in 4. With both, the casual player's nine tasks in a row are met 3.2 times as often and the careful player's 1.7 times.
+
+**Whole kits, the bench's limit on** (100 runs each; the win rate is the nine clear rates multiplied):
+
+| Kit of five | Casual: yield past the mark, rounds 7, 8, 9 | Casual: wins of nine, of 100 | Careful: wins of nine, of 100 |
+|---|---|---|---|
+| nothing | 9, 4, 2 | 0.000 | 0.19 |
+| five drawn at random from the nine | 17, 5, 10 | 0.005 | 3.5 |
+| carousel, burette, seed crystal, timer, dropper | 33, 17, 12 | 0.047 | 6.4 (40 runs) |
+| carousel, burette, seed crystal, counter, condenser | 25, 14, 8 | 0.023 | 5.0 |
+| the first kit and the counter as a sixth | 31, 14, 8 | 0.039 | 6.8 (40 runs) |
+
+**The career** (`SWEEP_HELP=help15 SWEEP_CAP=2 python sweep_help.py career`: 300 careers of 300 runs; a long run's rounds are drawn from runs played with that many instruments held, five at most, drawn at random from the nine; no creature):
+
+| Player | Things earned after 10, 30, 100 runs | Deepest round cleared after 10, 30, 100 runs | First six-round win (run) | First nine-round win (run) | Careers with a nine-round win by run 25, 40, 100, 300, of 100 |
+|---|---|---|---|---|---|
+| Casual | 19, 34, 43 | 4.7, 6.1, 6.9 | 19 | not in 300 | 0, 0, 0, 1 |
+| Careful | 20, 42, 47 | 7.3, 8.7, 9.0 | 5 | 24 | 48, 69, 96, 100 |
+
+**The aims, said plainly.**
+- The bare run: not touched (no instrument, no change).
+- The careful player's first nine-round win at about run 25 to 40: it is run 24 (it was 17). Most of that is not the bench's limit (five drawn at random: 3.9 wins in 100 without the limit, 3.5 with it); it is that two of the nine instruments now help the task and not the yield, so a kit drawn at random is weaker for him.
+- One casual career in four with a nine-round win: not met. With kits drawn at random it is about 1 career in 100. If he always carries the best five for the yield it is about 12 in 100 (0.047 a run over some 270 runs); with the two task instruments in the kit about 6.
+- Why: at rounds 7 to 9 the casual player passes the yield mark about 3 times in 10, 1 in 7 and 1 in 10 with the best kit. Tasks are what he loses most rounds on over a whole run, but they are not what stops him at the wall, and a task instrument takes the place of a yield instrument in the kit. Even with every task met the best kit would win about 0.2 runs in 100.
+
+**What the reviewer found, and what was done.** A fresh reviewer read the code and ran the career table again (it came out the same). Four things:
+- The simulated players use both instruments with hindsight: the counter is spent only on a page that meets the task with it, and the condenser's page is played only when the task is still unmet after the last page and counted only when it helped. In the game each is set before the page fires and its use is spent whether it helps or not. So the "task met" figures above are the most the two can do, not what a player gets.
+- On the condenser's page the yield is fixed, so a creature's penalty due on that page (the balloon popping, the Seedling wilting) cost nothing. Fixed: both are now taken off the fixed yield.
+- With the condenser set, the round's last page is the one that is not weighed: Dry ice (last page only) and the finishing reagent then pay nothing, and page three is no longer the last page, so Hydrogen and Brimstone can light on it. Left as it is; it is the price of the fourth page.
+- The game's undo kept the bench use but not what the instrument had set. Fixed. The counter's doubling stays even if a later page undoes what that page gained (the same in the simulator).
+
+**Not done.** The mirror is still not in the simulator. The kits were held from round one. The pools are 60 to 100 runs (40 where marked), so a win rate under 1 in 100 is good to about a half either way and the order of the three casual kits is not firm. The game's own aiming player does not use the two instruments (the job sets them by hand). In the simulator the counter is set on the page just fired; in the game it is set while the page is in play. The page does not draw either instrument yet.
+
+**Choices for the owner**
+
+1. The casual player's wall. (a) Leave it: about 1 career in 10 if he picks his kit well. (b) A lower yield mark in rounds 7 to 9 for a round whose task was met with the counter or the condenser (the task instruments then lower the wall for whoever needs them). (c) A lower wall for a player who has lost at it several times.
+2. The bench's limit. (a) As built: two uses a round. (b) Three. (c) None; the careful player's first win is then held back only by what is in the kit.
+3. The condenser. (a) As built: one more page, weak. (b) Its page deals all six reagents. (c) Take it out and keep the counter alone.
+
+### 2. The five creatures a reviewer failed
+
+Ruling AP: "reward gameplay not averages". Each of the five is now lit only by a line the player has to choose, and each has a cost. Built in `path.js` (`HOMS2K`, `HOM2LIT`, `hom2Own`, `hom2Use`, `homPeek`, the reference book's lines, the tokens) and in `sweep_homs.py`. Every number below is as the player reads it on the yield.
+
+| Creature | Was | Now |
+|---|---|---|
+| Hydrogen | oxidize last after a chain of three; the chain floats over | a page of TWO reagents (the third circle left empty), oxidize the second and landing: yield times 1.58 and the chain floats over; the balloon still pops (times 0.77) if the next page's chain is shorter |
+| Slime | two or three reagents each set off a reflex; the bottles shut for one page | the SAME bottle twice on a page, both landing and each setting off a reflex of its own: yield times 1.58; that bottle is empty for the rest of the round |
+| Seedling | 8 atoms bigger: times 1.18, 1.34, 1.48 | 12 atoms bigger: times 1.34, then 1.61, then 1.84 for each page in a row; a later page that grows less still wilts it (times 0.84) |
+| Wood spirit | first reagent a dud: he pours the rest free, times 1.12 | the same, but his pours spend a use each and the bottle he drank is empty for the rest of the round; times 1.22 if a pour lands |
+| Brimstone | sulfur lands: the round ends and the task counts as met whatever it was | the same, only when the task is at least half done |
+
+**Each alone, the careful player** (`sweep_run.py hom15`, 100 nine-round runs each on the same deals, every round played; with none: 0.26 wins in 100):
+
+| Creature | Lit, of 100 pages | Tapped | The line was picked for it | Of its taps, picked for it | Wins nine, of 100 | Against none | As it was: lit, picked, wins |
+|---|---|---|---|---|---|---|---|
+| Hydrogen | 5 | 5 | 2.5 | half | 0.50 | 1.9 times | 22, 4.3, 0.80 |
+| Slime | 14 | 14 | 7.5 | 54 in 100 | 0.62 | 2.4 | 36, 9.5, 0.47 |
+| Seedling | 9 | 9 | 5.4 | 60 in 100 | 0.45 | 1.7 | 24, 9.1, 0.43 |
+| Wood spirit | 57 | 44 | 40.7 | 92 in 100 | 0.56 | 2.2 | 56, 38.8, 0.51 |
+| Brimstone | 13 | 6 | 4.7 | 78 in 100 | 0.54 | 2.1 | 19, 10.4, 0.90 |
+
+- With Brimstone, rounds 1 to 6 were cleared 100, 99, 95, 91, 81, 77 times in 100 before; now 92, 96, 89, 88, 77, 75, against 92, 93, 83, 85, 77, 66 with none. The task matters again.
+- The casual player (100 runs): the Wood spirit is lit on 58 pages in 100 and helps him in every round (cleared 89, 75, 64, 67, 58, 38, 9, 8, 5 against 85, 66, 60, 53, 42, 27, 4, 4, 1). Hydrogen, Slime and the Seedling come up for him on 2 to 4 pages in 100: he seldom finds their lines. Brimstone is lit on 13 and tapped on 2.
+
+**Other trials, not kept.** Slime on one bottle in all three circles: never lit in 100 runs. Slime on one bottle twice without the reflexes: lit on 56 pages in 100 and 9 to 16 times the wins. Hydrogen with no pay at the tap: 0.37 wins. Seedling at 10 atoms: under half its taps were picked for it. The Wood spirit at times 1.12 with the new cost: 0.34 wins.
+
+**Checked in the game.** The creatures' own job (`homs2.js`): Water, Dry ice, Acid, Salt, Ammonia and the old table pass every case (57 of 57). 20 of the 76 cases of the five changed creatures fail because the job still states their old rules; it has not been rewritten. Dry ice and Salt (a page builder's parade could not light them): both light and tap in the game's rules. Dry ice needs the round's LAST page, carbon dioxide off earlier in the round and three of the six bottles never having acted; Salt needs three reagents fired, the same three in the same order as the page before, and the tap comes after the page has fired. `P.JAR.full` holds ammonia 40 and brimstone 80 in this checkout.
+
+**Not done.** The five under the game's own rig, and the job's cases for them. How often the balloon popped or the Seedling wilted. Pairs of creatures and creatures with instruments under the new rules. Hydrogen at half its taps picked for it is on the line, not past it. 100 runs: a win rate is good to about a half either way.
+
+**Two creatures at once.** Nothing changed: the round's creature state (`g.hom`) made a list, the lit, spots and tap functions told which creature is meant, the run holding two, two jars with a tap each on the page, and the order of taps settled (left to right in the simulator).
+
+**Choices for the owner**
+
+1. Hydrogen. (a) As built: rare (5 pages in 100), always a choice. (b) Chain of two or more needed as well, pay 1.73. (c) Back to oxidize last on a full page, which is seldom a choice.
+2. The Wood spirit comes up on more than half of all pages. (a) As built, with the new cost. (b) Once a round. (c) Only when the dud is a bottle with all its uses left.
+3. Brimstone. (a) As built: task half done. (b) Task all but one thing done. (c) It no longer touches the task and pays more.
+
+### Not started
+
+Item 3 (how sigils are got), item 4 (unlocks as deeds, and the four open faults of the reference book), item 5 (N, S and Cl in rounds 4 to 9). The reference book now holds 67 things (two more instruments); `docs/REFERENCE.md` has the two new lines but its ways were not reworked.
 
 ## The measure of 2026-11-13, fourteenth: the picks of AT
 

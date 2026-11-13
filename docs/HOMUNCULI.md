@@ -26,6 +26,25 @@ Every "yield times" on this page multiplies the product a round makes (places ti
 
 Dry ice: the table of numbers in `path.js` (`HOMS2K.co2`) holds 1.36, which is for each of the three reagents left shut; three times over that is the 2.5 written here. The two always agreed; the comment above the table said so only in passing and has been rewritten.
 
+## The five changed on 2026-11-13 (fifteenth measure), as the player reads them
+
+These five lines replace the lines of the same creatures in the table below and in "The seven changed". Numbers and trials: `docs/RIG.md`, fifteenth, part 2.
+
+**Hydrogen.** Fire only two reagents on a page, oxidize second: yield times 1.58 and the chain's count carries over the page turn. If the next page's own chain is shorter, yield times 0.77.
+Round 1, `C=C(C)CCC(=O)CCCC=O`, page two. Lined up: grow, oxidize, and the third circle left empty. Grow lands on two places; oxidize lands on two and a dry, a tuck and a weld follow. Tap: the yield goes from 8,518 to 13,468 and page three starts counting at 3. The third reagent not fired is the price.
+
+**Slime.** Fire the same bottle twice on a page, each time landing and each setting off a reflex: yield times 1.58. That bottle is empty for the rest of the round.
+Round 1, `C=CCCC(Cl)C(O)CC=O`, page one. Lined up: oxidize, grow, oxidize. The first oxidize sets off a weld and a dry, the second a weld. Tap: 3,648 becomes 5,769, and oxidize cannot be used on pages two and three.
+
+**Seedling.** End a page 12 atoms bigger: yield times 1.34, then 1.61, then 1.84 for each page in a row. Once tapped, a later page that grows less wilts it: yield times 0.84.
+The same molecule, page two. Lined up: grow, oxidize, grow. Grow adds three carbons at two places, oxidize makes more C=O, the second grow lands on three. Tap: 7,012 becomes 9,408. Page three must grow 12 again or it wilts.
+
+**Wood spirit.** Put a bottle that cannot act first: he drinks it and pours every dealt bottle you did not line up, a use of each; if one lands, yield times 1.22. The bottle he drank is empty for the rest of the round.
+The same molecule, page two. Dealt: hydrate, oxidize, grow, thiolene, ritter. Lined up: oxidize (finds nothing), hydrate, hydrate. Tap: he pours grow (lands), thiolene (lands) and ritter (finds nothing). 5,588 becomes 6,934. Oxidize is gone for page three, and grow, thiolene and ritter each lost a use.
+
+**Brimstone.** Land sulfur with the task at least half done, not on the last page: the round ends now and the task counts as met; yield times 1.22 after page one, 1.12 after page two.
+The same molecule, task "one more C=O at the finish", page one. Lined up: oxidize, oxidize, thiolene. Oxidize makes the C=O; thiolene puts an SH on. Tap: the round ends, 1,525 becomes 1,868. With the task not yet half done he would not have lit.
+
 ## The ten
 
 | Creature | Lit when | Tap | What it asks | The play it rewards |

@@ -165,12 +165,20 @@ class Hydrogen(Hom):
     name = 'h2'
     last_page = False
     POP = 0.6
-    NEED = 3            # the page's chain must be this long to float
+    NEED = 1            # the page's chain must be this long to float (3 until the fifteenth)
+    TWO = True          # fifteenth: lit only by a page of two reagents (the third circle left empty), oxidize the second
+    KT = 2.5            # fifteenth: the yield times this at the tap (reads 1.58)
+
+    def setup(self, G):
+        if self.TWO:
+            G.p['short_lines'] = True
     SAFE = 99           # a reader floats any chain it is lit for
     peek_force = True   # a reader sees the pop before it lines up
 
     def lit(self, G, R):
         c = R.rec[-1]['circ']
+        if self.TWO and len(c) != 2:
+            return False
         return bool(c) and c[-1][0] == 'oxidize' and c[-1][1] > 0 and R.casc >= self.NEED
 
     def food_now(self, G, R):
@@ -178,6 +186,7 @@ class Hydrogen(Hom):
 
     def apply(self, G, R):
         R.x['float'] = R.casc
+        R.E *= self.KT
 
     def want(self, G, R, R2):
         return R.casc <= self.SAFE
@@ -254,7 +263,7 @@ class Wood(Hom):
     """Any page (thirteenth): a reagent lined up found nothing to act on.  He drinks it and pours every dealt reagent that was
     not lined up, left to right as dealt, and his pours spend no use."""
     name = 'wood'
-    K = 1.25            # yield times this when at least one of his pours lands (1.5 measured: lit on 6 pages in 10 and 3.9 times the wins, too much)
+    K = 1.5             # yield times this when at least one of his pours lands (1.25 while his pours were free and the bottle he drank came back)
 
     def rest(self, R):
         ln = set(line_of(R.rec[-1]))
@@ -270,13 +279,19 @@ class Wood(Hom):
     def lit(self, G, R):
         return self.dud(R) and not R.over and len(self.rest(R)) >= 1
 
+    FREE = False        # fifteenth: his pours spend a use each (they were free)
+    EMPTY = True        # fifteenth: the bottle he drank is empty for the rest of the round
+
     def apply(self, G, R):
         rest = self.rest(R)
-        if R.left is not None:
+        dud = R.rec[-1]['circ'][0][0]
+        if R.left is not None and self.FREE:
             for r in rest:
                 R.left[r] = R.left.get(r, 0) + 1
         n0 = len(R.rec[-1]['circ'])
         more_circles(G, R, rest)
+        if self.EMPTY and R.left is not None:
+            R.left[dud] = 0
         if any(c[1] > 0 for c in R.rec[-1]['circ'][n0:]):
             R.E *= self.K
 
@@ -297,13 +312,24 @@ class Salt(Hom):
 
 
 class Slime(Hom):
-    """Two or three of the page's reagents each land and set off a reflex of their own (thirteenth: two is enough).  He sticks
-    the chains into one: yield times K2 for two, K for three.  The cost: the bottles he stuck are shut on the next page."""
+    """Fifteenth: the same bottle twice on a page, both landing and each setting off a reflex of its own: yield times K, and that
+    bottle is empty for the rest of the round.  (SAME 0 is the thirteenth's rule: two or three reagents each with a reflex, K2 and K,
+    the bottles shut on the next page.)"""
     name = 'slime'
     K = 2.5
-    K2 = 1.5
+    K2 = 2.5
+
+    OWN = 1             # fifteenth: each of the twins must also set off a reflex of its own
+    SAME = 2            # fifteenth: lit by one bottle in this many of the page's circles, each landing; that bottle is then empty for the round
 
     def own(self, R):
+        if self.SAME:           # the same bottle in two of the page's three circles (SAME 2) or all three (SAME 3), every one of them landing
+            c = [x for x in R.rec[-1]['circ'][:3] if x[0] != 'finish']
+            for r in dict.fromkeys(x[0] for x in c):
+                tw = [x for x in c if x[0] == r]
+                if len(tw) >= self.SAME and all(x[1] > 0 and (not self.OWN or x[2] > 0) for x in tw):
+                    return [r] * len(tw)
+            return []
         return [x[0] for x in R.rec[-1]['circ'][:3] if x[0] != 'finish' and x[1] > 0 and x[2] > 0]
 
     def lit(self, G, R):
@@ -315,6 +341,10 @@ class Slime(Hom):
     def apply(self, G, R):
         own = self.own(R)
         R.E *= self.K if len(own) >= 3 else self.K2
+        if self.SAME:
+            if R.left is not None:
+                R.left[own[0]] = 0
+            return
         R.x['stuck'] = tuple(dict.fromkeys(own))      # in the order of the line, as the game (the measures were run with them sorted by name: at most two are ever shut, so it seldom differs)
 
     def before_page(self, G, R, rng, player, hand):
@@ -341,8 +371,8 @@ class Ammonia(Hom):
 
 class Seedling(Hom):
     name = 'seedling'
-    K = 1.4             # 1.4, then 1.8, then 2.2 for each page in a row
-    GAIN = 8
+    K = 1.8             # 1.8, then 2.6, then 3.4 for each page in a row (1.4 and 8 atoms until the fifteenth)
+    GAIN = 12
     WILT = 0.7
     peek_force = True         # a reader sees the wilt before it lines up
 
@@ -388,8 +418,12 @@ class Brimstone(Hom):
     K2 = 1.25
     last_page = False
 
+    HALF = 0.5          # fifteenth: the fire takes only a task this far done (0.5: at least half)
+
     def lit(self, G, R):
         rec = R.rec[-1]
+        if self.HALF and R.spec and G.prog(R, R.rec) < self.HALF * len(R.spec):
+            return False
         return (not R.over) and (any(c[0] == 'thiolene' and c[1] > 0 for c in rec['circ']) or 'cap' in rec['chain'])
 
     def apply(self, G, R):
@@ -413,5 +447,10 @@ LABEL = {'water': 'Water', 'h2': 'Hydrogen', 'co2': 'Dry ice', 'acid': 'Acid', '
 
 
 def make(arg):
+    arg, _, opts = arg.partition('/')          # name[@k][/ATTR=value/ATTR=value]: a trial of a creature's own numbers
     name, _, k = arg.partition('@')
-    return HOMS[name](float(k) if k else None)
+    h = HOMS[name](float(k) if k else None)
+    for o in opts.split('/') if opts else ():
+        a, v = o.split('=')
+        setattr(h, a.upper(), float(v) if '.' in v else int(v))
+    return h
