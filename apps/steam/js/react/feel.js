@@ -1098,15 +1098,15 @@ function uiFrame(t) {
   if (UI.cv.width !== W || UI.cv.height !== H) { UI.cv.width = W; UI.cv.height = H; } const x = UI.x; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); UI.hit = []; if (!show || !AA.rxPen) return;
   x.setTransform(W / 1280, 0, 0, H / 720, 0, 0); const pen = AA.rxPen, INK = api.INK, PEN = api.PENCIL, RED = api.REDINK;
   // the speed row, in the left margin under the queue
-  { const X0 = pageX0E(), Y = 329, sz = 22, gap = 19; let wx = X0;
-    [['slow', '1'], ['normal', '2'], ['fast', '3'], ['skip', 'skip']].forEach(w => { const on = w[1] === 'skip' ? skipping : (PACE === w[1] && !(S && S.skipAll)), ww = pen.width(w[0], sz, on ? 'heavy' : 'thin'), hov = UI.hov === w[1], pop = on && pulsing ? 1 + 0.16 * Math.max(0, ring((t - UI.pulse) / 1000, 6, 0.45)) : 1;
-      x.save(); x.translate(wx + ww / 2, Y - 7); x.scale(pop, pop); pen.write(x, w[0], -ww / 2, 7, sz, { weight: on ? 'heavy' : 'thin', color: on ? (w[1] === 'skip' ? RED : INK) : hov ? INK : PEN }); x.restore();
-      if (on) uiLoop(x, wx + ww / 2, Y - 8, (ww / 2 + 9) * pop, 13 * pop, w[1] === 'skip' ? RED : INK, 2.4);
-      UI.hit.push({ x: wx - gap / 2, y: Y - 26, w: ww + gap, h: 36, act: w[1] }); wx += ww + gap; }); }
+  { const X0 = pageX0E() + 24, Y = 296, gap = 20; let wx = X0;
+    [['1', 1], ['2', 2], ['3', 3], ['skip', 2]].forEach(w => { const on = w[0] === 'skip' ? skipping : (PACE === w[0] && !(S && S.skipAll)), ww = 12 + w[1] * 11 + (w[0] === 'skip' ? 8 : 0), hov = UI.hov === w[0], pop = on && pulsing ? 1 + 0.16 * Math.max(0, ring((t - UI.pulse) / 1000, 6, 0.45)) : 1, col = on ? (w[0] === 'skip' ? RED : INK) : hov ? INK : PEN;
+      x.save(); x.translate(wx + ww / 2, Y - 8); x.scale(pop, pop); x.strokeStyle = col; x.lineWidth = on ? 3.6 : 2.4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); for (let k = 0; k < w[1]; k++) { const cx = -ww / 2 + 8 + k * 11; x.moveTo(cx - 4, -8); x.lineTo(cx + 4, 0); x.lineTo(cx - 4, 8); } if (w[0] === 'skip') { x.moveTo(ww / 2 - 5, -9); x.lineTo(ww / 2 - 5, 9); } x.stroke(); x.restore();
+      if (on) uiLoop(x, wx + ww / 2, Y - 8, (ww / 2 + 9) * pop, 15 * pop, w[0] === 'skip' ? RED : INK, 2.4);
+      UI.hit.push({ x: wx - gap / 2, y: Y - 26, w: ww + gap, h: 36, act: w[0] }); wx += ww + gap; }); }
   // the way home: an arrow going round, shown while the molecule is turned
   if (TW.was) { const cx = (TW.btn || [1004, 138])[0], cy = (TW.btn || [1004, 138])[1], r = 17, hov = UI.hov === 'home', col = hov ? RED : INK; x.save(); x.fillStyle = 'rgba(244,243,238,0.88)'; x.beginPath(); x.ellipse(cx, cy, 26, 24, 0, 0, 6.3); x.fill(); x.restore(); uiLoop(x, cx, cy, 26, 24, col, 2.6);
     x.save(); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.arc(cx, cy, r - 3, -0.4, 4.3); x.stroke(); const ax = cx + (r - 3) * Math.cos(-0.4), ay = cy + (r - 3) * Math.sin(-0.4); x.beginPath(); x.moveTo(ax + 6, ay - 6); x.lineTo(ax - 5, ay - 3); x.lineTo(ax + 3, ay + 6); x.closePath(); x.fill(); x.restore();
-    pen.write(x, 'lay flat', cx, cy + 45, 17, { color: INK, align: 'center' }); UI.hit.push({ x: cx - 34, y: cy - 30, w: 68, h: 84, act: 'home' }); }
+    UI.hit.push({ x: cx - 34, y: cy - 30, w: 68, h: 84, act: 'home' }); }
 }
 // after a skip nothing left over from the step that was under way may pull the count or the numeral back
 function skipGuard(S) { const ct = S.count, t = now(); if (S.nums.some(q => !q.combo)) S.nums = S.nums.filter(q => q.combo); if (ct.to !== S.finY || ct.target !== S.finY) { ct.frozen = false; ct.from = ct.shown; ct.to = S.finY; ct.t0 = t; ct.dur = 200; ct.ease = 'outQuart'; ct.target = S.finY; S.landed = Math.max(S.landed || 0, t + 220); } }
