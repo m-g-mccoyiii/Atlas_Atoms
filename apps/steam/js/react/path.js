@@ -1304,27 +1304,25 @@ const homOf = g => (g && g.hom && HOMS[g.hom.id]) || null;
 // has a cost. One tap a page at most, any number of pages a round; not in a spec proof. HOMS2K holds every number (it is tuned
 // from the sweeps). With RULE.homs2 on, HOMS[id] is the entry of HOMS2; off, the old entry (HOMS1). Setting RULE.homs2 swaps them.
 //   water      K.need or more waters came off the page. Tap: yield times k, every C=C to C-OH, loose rings reopen, the reflexes run on.
-//   h2         the last reagent of the line is oxidize, it acted, the chain is above 0; not on the last page. Tap: the chain count is carried over the page turn.
-//   co2        last page only: carbon dioxide came off this round and K.least or more reagents of the rack never acted in it. Tap: yield times k for each (K.most at most).
+//   h2         the last reagent of the line is oxidize, it acted, and the page's chain is K.need steps or more; not on the last page. Tap: the chain count is
+//              carried over the page turn. A bet: if the next page's own chain is shorter than the chain that floated, the balloon pops (yield times K.pop).
+//   co2        last page only: carbon dioxide came off this round and K.least or more reagents of the rack never acted in it. Tap: yield times k for
+//              each such reagent, K.most at most. With least 3 and most 3 it is always three: 1.36 three times over is 2.5.
 //   acid       the molecule has K.loss or more fewer heavy atoms than when the page began. Tap: yield times k.
-//   wood       the last reagent of the line found nothing to act on. Tap: every dealt reagent not in the line fires as a further circle, each spending a use.
+//   wood       the FIRST reagent lined up found nothing to act on. Tap: he pours every dealt reagent not lined up, as further circles, spending no use;
+//              if one of his pours lands the yield is times k.
 //   salt       the line is the line of the page before, reagent for reagent. Tap: yield times k and each of the three gets a use back.
-//   slime      each of the three reagents acted and set off a reflex. Tap: yield times k.
+//   slime      two of the three reagents each acted and set off a reflex (yield times k2), or all three (k). The reagents he stuck are shut on the next page.
 //   ammonia    ritter acted on this page, or a knit is in its chain. Tap: the line fires again as further circles, no use spent.
-//   seedling   the molecule ends the page K.gain or more heavy atoms bigger. Tap: the row grows by one, yield times 1 + (k - 1) * row.
-//              By itself after every page (homAfter): a page that ends smaller with a row above 0 wilts it (yield times K.wilt, the row starts again).
-//   brimstone  thiolene acted on this page, or a cap is in its chain; not on the last page. Tap: yield times k (page one) or k2 (later), and the round ends now.
+//   seedling   the molecule ends the page K.gain or more heavy atoms bigger. Tap: the row grows by one, yield times 1 + (k - 1) * row. Once tapped it
+//              must be fed: after any later page that grows less (homAfter) it wilts (yield times K.wilt, the row starts again).
+//   brimstone  thiolene acted on this page, or a cap is in its chain; not on the last page. Tap: the round ends now, what is left of the spec is burned
+//              (it counts as met), yield times k after page one, k2 after page two.
+// EVERY "yield times k" above multiplies extra. Since the flat rule (FLAT.pow 0.5) the player reads the square root of it on the yield: 1.5 reads as
+// 1.22, 2 as 1.41, 2.5 as 1.58, the pop 0.6 as 0.77, the wilt 0.7 as 0.84. P.reference() gives each as read.
 // g.hom carries the state of the round and is replaced, never changed in place (snap and back keep it): v2, tp (tapped on this page), a0 (heavy
 // atoms when the page began), w0 (waters off when it began), t0 and t1 (where the page before and this page begin in g.trail), float (the chain
 // count to carry over the turn), streak and wpage (seedling), end (brimstone: turn() says the round is over).
-// Thirteenth (ruling AR, "fix the five weak ones"; RIG.md thirteenth, part 3; the spec is docs/tools_chem/sweep_homs.py):
-//   h2        the page's chain must be K.need steps or more; the float is a bet: if the next page's own chain is shorter than the chain that floated, the balloon pops (yield times K.pop)
-//   co2       three bottles shut, not two (yield times K.k for each: 2.5 times)
-//   acid      a real cut: the page ends K.loss atoms smaller or more
-//   wood      any page: the FIRST reagent lined up finds nothing; he pours the dealt reagents not lined up, his pours spend no use, and if one of them lands the yield is times K.k
-//   slime     two of the three reagents each set off a reflex (yield times K.k2), or all three (K.k); the bottles he stuck are shut on the next page
-//   seedling  K.gain atoms a page; once tapped it must be fed every page: a page that grows less wilts it (yield times K.wilt)
-//   brimstone the round ends now and what is left of the spec is burned (it counts as met); yield times K.k after page one, K.k2 after page two
 const HOMS2K = { water: { k: 1.5, need: 4 }, h2: { pop: 0.6, need: 3 }, co2: { k: 1.36, most: 3, least: 3 }, acid: { k: 2, loss: 2 }, wood: { first: true, k: 1.25 }, salt: { k: 2.5 }, slime: { k: 2.5, k2: 1.5, steps: 1 }, ammonia: {}, seedling: { k: 1.4, gain: 8, wilt: 0.7 }, brimstone: { k: 1.5, k2: 1.25 } };
 const HOMS1 = Object.assign({}, HOMS);
 const hom2On = g => !!RULE.homs2 && !!g && !!g.hom && !!g.hom.v2;

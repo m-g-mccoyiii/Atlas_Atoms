@@ -71,6 +71,9 @@ def build_mods(names):
         elif kind == 'hom':
             import sweep_homs
             mods.append(sweep_homs.make(arg))
+        elif kind == 'tool':
+            import sweep_tools
+            mods.append(sweep_tools.make(arg))
         elif kind == 'elem':
             import sweep_elements
             mods.append(sweep_elements.make(arg))

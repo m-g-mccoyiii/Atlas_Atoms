@@ -10,6 +10,22 @@
 - Nothing is counted up across pages to feed it. Its food is what that one page made.
 - The amounts are in one table (`HOMS2K`).
 
+## The numbers as the player reads them (since 13 November, the flat rule)
+
+Every "yield times" on this page multiplies the product a round makes (places times row times extra). Since the fourteenth measure the yield the player reads is the square root of that product, so each multiplier reads as its square root. The strength of a creature in rounds won did not change.
+
+| On this page | As read on the yield |
+|---|---|
+| times 1.25 | 1.12 |
+| times 1.4, 1.8, 2.2 | 1.18, 1.34, 1.48 |
+| times 1.5 | 1.22 |
+| times 2 | 1.41 |
+| times 2.5 | 1.58 |
+| times 0.6 (the balloon pops) | 0.77 |
+| times 0.7 (the seedling wilts) | 0.84 |
+
+Dry ice: the table of numbers in `path.js` (`HOMS2K.co2`) holds 1.36, which is for each of the three reagents left shut; three times over that is the 2.5 written here. The two always agreed; the comment above the table said so only in passing and has been rewritten.
+
 ## The ten
 
 | Creature | Lit when | Tap | What it asks | The play it rewards |

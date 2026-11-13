@@ -8,6 +8,7 @@ import itertools
 import json
 import os
 import random
+import re
 import sys
 
 import sweep_core as SC
@@ -578,6 +579,7 @@ FLAT14 = {
     'p0m': {'chain_pow': 0.0, 'chain_knee': 0, 'motif_pow': 0.5},
     'p0m0': {'chain_pow': 0.0, 'chain_knee': 0, 'motif_pow': 0.0},
     'now': {},
+    'now_b': {},        # the same, for the first-game runs the career tables draw from
 }
 
 
@@ -598,3 +600,34 @@ def flat14(arg='now,median,300'):
 
 
 EXPERIMENTS['flat14'] = flat14
+
+
+# --- the fourteenth measure, part 2: the helpers as they are (ruling AT) ----------------------------------------------------
+TOOLS14 = ('crystal', 'bunsen', 'burette', 'magnet', 'carousel', 'dropper', 'timer')      # sweep_tools.py; the mirror is not modelled
+
+
+def help14(arg='none,median,200'):
+    """Fourteenth: a nine-round run under the game's rule with a set of helpers held from round one, every round played and
+    written out in full.  arg: set,player,runs[,seed letter[,length]].  set: none, or names joined by + (an instrument of
+    sweep_tools.py, or hom:<creature>), or kNhM: N instruments and M creatures drawn at random for each ten runs."""
+    import random as _r
+    ps = arg.split(',')
+    st, pl, n = ps[0], ps[1], int(ps[2])
+    sd = ps[3] if len(ps) > 3 and ps[3] else 'p'
+    ln = ps[4] if len(ps) > 4 and ps[4] else 'doctorate'
+    jobs = []
+    for i in range(n // 10):
+        if re.match(r'k\d+h\d+$', st):
+            rg = _r.Random('%s/%s/%d' % (st, sd, i))
+            k, h = int(st[1:st.index('h')]), int(st[st.index('h') + 1:])
+            mods = ['tool:' + t for t in rg.sample(TOOLS14, k)] + ['hom:' + x for x in rg.sample(HOMS2, h)]
+        elif st == 'none':
+            mods = []
+        else:
+            mods = [x if ':' in x else 'tool:' + x for x in st.split('+')]
+        jobs.append({'id': 'hp_%s_%s_%s_%s_%d' % (st, pl, sd, ln, i), 'rack': START, 'length': ln, 'player': pl, 'mods': mods, 'params': dict(T13),
+                     'full': True, 'seeds': ['%s/%d' % (sd, i * 10 + k) for k in range(10)], 'tag': '%s/%s' % (st, pl)})
+    return jobs
+
+
+EXPERIMENTS['help14'] = help14

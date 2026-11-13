@@ -1197,7 +1197,7 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
         R.seen = frozenset([R.smi])
     nh = G.p['hand']
     hrng = random.Random(rng.random())       # the hands have their own dice too: a tie broken another way does not move the next deal
-    hand = deal_hand(rack, R, hrng, nh)
+    hand = deal_hand(rack, R, hrng, nh + (G.p.get('hand_first') or 0))       # hand_first: more reagents in the first hand of a round only (the carousel)
     steps_page, kinds, dealt, usedc = [], Counter(), Counter(), Counter()
     while True:
         dealt.update(hand)

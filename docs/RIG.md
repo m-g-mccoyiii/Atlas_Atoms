@@ -69,6 +69,63 @@ A stronger flattening laid over the same runs (the cube root in place of the squ
 2. The lost task. (a) Leave it: half of lost rounds are lost on the task and are seldom close. (b) Count a task one thing short as a close call on the page and in the ladder. (c) Make tasks count in parts, which needs new rules for each task.
 3. The top mark. (a) As built: 2.83 times the number to beat, reached as often as before. (b) Higher, so OVERREACT is rarer and reads bigger. (c) Lower.
 
+### 2. Stronger helpers: the instruments measured as they are, and tuned
+
+Pick AT: each instrument about 1.2 times and a creature about 1.5, so that a casual player who keeps at it can win a nine-round run. Those figures were on the old yield; on the yield as read now (part 1) they are 1.10 and 1.22.
+
+**How each was measured** (`sweep_tools.py`, `sweep_run.py help14`, `sweep_help.py each`). The simulator had no instruments. Seven of the eight are now in it as they are in the game: the three that change a rule of the round exactly (carousel, dropper, timer), and four that change the molecule by the reference chemistry (seed crystal, burner, burette, magnet). The mirror is not modelled. Each was held alone from round one of a nine-round run, every round played, 100 runs of the careful player, against the same deals with none. "Worth" is the flat lift of the bare run's yield that wins nine rounds as often: the number the owner's 1.2 is about.
+
+| Instrument | As it was: yield as read, times | Task met, of 100 rounds (87 with none) | Worth, as it was | Used, of 100 rounds | What was changed | Worth now |
+|---|---|---|---|---|---|---|
+| Carousel | 1.39 | 96 | 1.68 | always | its extra reagent is dealt on the first page of a round only | 1.33 |
+| Burette | 1.32 | 91 | 1.31 | 83 | the reflexes it sets off count half | 1.24 |
+| Seed crystal | 1.26 | 88 | 1.27 | 89 | the reflexes it sets off count half | 1.19 |
+| Timer | 1.09 | 87 | 1.14 | always | nothing | 1.14 |
+| Dropper | 1.04 | 88 | 1.04 | always | two more uses, not one | 1.08 |
+| Burner | 1.02 | 88 | 1.04 | 66 | the reflexes it sets off count twice | between 1.04 and 1.19 (at three times it was 1.19; twice was not run alone) |
+| Magnet | 1.02 | 87 | 1.03 | 9 | the reflexes it sets off count three times | 1.05 |
+
+The aim was 1.10 each. The carousel was worth six instruments: with all six reagents in the hand every page the task is met 96 times in 100. The magnet is still weak because it has something to pull shut in 1 round in 10. In the game: `RULE.toolPay`, `RULE.passive`, `RULE.carouselFirst`.
+
+**Held together** (`help14 --arg kNhM`: N instruments and M creatures drawn at random for every ten runs; 200 to 300 runs each, as tuned):
+
+| Held from round one | Careful: worth | Careful: wins of nine, of 100 | Casual: worth | Casual: wins of nine, of 100 |
+|---|---|---|---|---|
+| nothing | 1 | 0.21 | 1 | 0 |
+| 1 instrument | 1.12 | 0.57 | 1.09 | 0.00 |
+| 3 instruments | 1.51 | 2.5 | 1.26 | 0.00 |
+| 5 instruments | 1.91 | 6.7 | 1.51 | 0.02 |
+| 5 instruments and a creature | 1.80 | 5.3 | 1.57 | 0.03 |
+
+- One instrument is on the aim for both players (1.12 and 1.09).
+- Five together are worth more to the careful player than five times one (1.91, where 1.10 five times over is 1.61): he finds the lines where two of them work on each other. The casual player gets 1.51.
+- A creature adds little on top of five instruments: 4 in 100 for the casual player and nothing measurable for the careful. That is far from 1.22. The creatures as they are do not do what the pick asks; they are part 3's work, which is not done.
+
+**A career with real helpers** (`sweep_help.py career`: as the thirteenth's career, but a long run's rounds are drawn from runs played with that many instruments held, and with a creature in the nine-round run once 200 reflex steps have been set off; 300 careers of 300 runs):
+
+| Player | Things earned after 10, 30, 100 runs | Deepest round of a long run cleared after 10, 30, 100 runs | First six-round win (run) | First nine-round win (run) | Careers with a nine-round win in 300 runs |
+|---|---|---|---|---|---|
+| Casual, real helpers | 19, 34, 44 | 4.7, 6.0, 7.0 | 20 | not in 300 | 0 of 100 drawn; about 8 in 100 by the clear rates |
+| Careful, real helpers | 20, 42, 46 | 7.5, 8.8, 9.0 | 5 | 17 | 100 in 100 |
+| Casual, nothing lifts | 18, 28, 39 | 4.1, 5.0, 5.7 | 65 | not in 300 | 0 |
+| Careful, nothing lifts | 20, 37, 44 | 6.2, 7.4, 7.9 | 5 | not in 300 | 0 |
+
+The casual player's pool of 300 nine-round runs with everything held has no won run in it, so the drawn careers show none; by the nine clear rates multiplied he wins 0.03 runs in 100, which over the 270 or so runs he plays fully kitted is about 8 careers in 100.
+
+**The aims, said plainly.**
+- Bare run unchanged: yes.
+- Careful player's first nine-round win at about run 25 to 40: no, it is run 17. Five instruments are worth too much to him.
+- One casual career in four with a nine-round win inside 300 runs: no, about 1 in 12. For 1 in 4 the casual player's whole kit has to be worth 2.0 times the yield as read (it is 1.57). At that strength for everyone the careful player would win a nine-round run about 1 time in 8.
+- So the two aims pull against each other: whatever lifts the yield helps the player who reads every line more. What separates the two players is the task (the casual player meets it 73 to 79 times in 100, the careful 89 to 96) and the wall of rounds 7 to 9 (casual 20, 9, 8 in 100 with everything held).
+
+**Not done.** The mirror. The burner at twice, alone. Creatures one by one under the flat rule, and their rework (part 3). The same in the game's own rig. The pools are 200 to 300 runs each, so a win rate under 1 in 100 is good to about a half either way. The instruments are held from round one, where in the game they are picked up between rounds.
+
+**Choices for the owner**
+
+1. The carousel. (a) As built: the extra reagent on page one only, still the strongest (1.33). (b) Every page, as it was, and make it the rarest thing in the book. (c) Page one of rounds 1 to 3 only.
+2. Who the helpers are for. (a) As built: one instrument is 1.1 for everyone, five are worth far more to the careful player. (b) A cap on how much several instruments add together, so the careful player's first nine-round win moves back to about run 30. (c) Leave the careful player fast and raise everything until the casual player gets there.
+3. What gets the casual player through. (a) Stronger creatures (part 3), aimed at the wall of rounds 7 to 9. (b) Helpers that help with the task, not the yield. (c) A lower wall for a player who has lost at it several times.
+
 ### The nine sigils in the game
 
 Owner's pick: "Build the nine ready ones now". Until now the sigils were in the simulator only (`docs/tools_chem/sigil2_rules.py`). The nine are now in the game's own rules.
