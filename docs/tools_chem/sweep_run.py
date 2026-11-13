@@ -76,7 +76,7 @@ def game_for(mods, params):
             chem += '|' + json.dumps(pk, sort_keys=True)
         if (params or {}).get('_cold'):
             chem = 'cold'
-        G = SC.Game(key=chem, mods=ms, params=params, cache=SC.load_cache(chem))
+        G = SC.Game(key=chem, mods=ms, params=params, cache=(SC.MemStore() if chem == 'cold' else SC.shared_store()))
         _GAMES[k] = G
     return G
 
@@ -178,6 +178,7 @@ def do_job(job):
     try:
         G = game_for(job.get('mods'), job.get('params'))
         miss0 = G.stats['seg_miss']
+        pr0 = G.stats['proofs']
         length = job.get('length', 'bachelor')
         extra = None
         for m in G.mods:
@@ -191,18 +192,16 @@ def do_job(job):
             if hasattr(m, 'reset'):
                 m.reset()
         for pl in players:
-            runs = [SC.play_run(G, s, length, tuple(job['rack']), pl, extra=extra, first=first, last=last) for s in job['seeds']]
+            runs = [SC.play_run(G, s, length, tuple(job['rack']), pl, extra=extra, first=first, last=last, stop=bool(job.get('stop')))
+                    for s in job['seeds']]
             by[pl] = summarize(runs, nr, job.get('watch'), bool(job.get('watch') or job.get('per')))
         row = dict(by[players[0]]) if len(players) == 1 else {'by': by, 'turns': sum(v['turns'] for v in by.values())}
         for m in G.mods:
             if hasattr(m, 'report'):
                 row.setdefault('mod', {}).update(m.report())
         row['miss'] = G.stats['seg_miss'] - miss0
-        if len(G.new) > 30000 or time.time() - _LAST_SAVE[0] > 90:
-            SC.save_new(G, 'w')
-            _LAST_SAVE[0] = time.time()
-            if len(G.cache) > CACHE_LIMIT:
-                G.cache.clear()
+        row['proofs'] = G.stats['proofs'] - pr0
+        G.store.flush()
         row['id'] = job['id']
         row['secs'] = round(time.time() - t0, 3)
         for k in ('rack', 'player', 'players', 'length', 'mods', 'tag', 'first', 'last'):
@@ -218,9 +217,17 @@ def do_job(job):
 def _flush(_):
     n = 0
     for G in _GAMES.values():
-        if SC.save_new(G, 'w'):
-            n += 1
+        n += G.store.flush(True)
+    time.sleep(0.2)                      # so every worker takes one of these
     return n
+
+
+def do_chunk(jobs):
+    """Several jobs in one message to a worker; the rows come back together (small dicts)."""
+    out = [do_job(j) for j in jobs]
+    for G in _GAMES.values():
+        G.store.flush(True)
+    return out
 
 
 def rows_of(name):
@@ -238,83 +245,61 @@ def rows_of(name):
     return out
 
 
-def run(name, jobs, workers=12, waves=(0.01, 0.04, 0.12, 0.3, 0.6, 1.0), quiet=False, keep_errors=False):
-    """Run the jobs not yet done.  Returns the stats of this call."""
+def run(name, jobs, workers=12, waves=None, quiet=False, keep_errors=False, chunk=None, every=30, seconds=None):
+    """Run the jobs not yet done on one pool of workers that lives for the whole call.  The workers share what they learn
+    through the sqlite store as they go (sweep_core.Store), so there are no waves and nothing is merged.  Returns the stats."""
     d = os.path.join(OUT, name)
     os.makedirs(d, exist_ok=True)
     done = {r['id'] for r in rows_of(name) if 'error' not in r or keep_errors}
     todo = [j for j in jobs if j['id'] not in done]
-    stats = {'jobs': len(jobs), 'todo': len(todo), 'turns': 0, 'core_secs': 0.0, 'errors': 0, 'miss': 0}
+    stats = {'jobs': len(jobs), 'todo': len(todo), 'turns': 0, 'core_secs': 0.0, 'errors': 0, 'miss': 0, 'proofs': 0}
     if not todo:
         return stats
     random.Random(1).shuffle(todo)
     t0 = time.time()
-    keys = set()
     fp = os.path.join(d, 'rows.jsonl')
-    cuts = sorted({min(len(todo), max(workers, int(math.ceil(len(todo) * w)))) for w in waves})
-    start = 0
-    with open(fp, 'a', encoding='utf-8') as f:
-        for cut in cuts:
-            part = todo[start:cut]
-            start = cut
-            if not part:
-                continue
-            with mp.Pool(workers, initializer=low_priority) as pool:
-                chunk = max(1, min(16, len(part) // (workers * 8) or 1))
-                for row in pool.imap_unordered(do_job, part, chunksize=chunk):
-                    f.write(json.dumps(row) + '\n')
-                    if 'error' in row:
-                        stats['errors'] += 1
-                        if stats['errors'] <= 3:
-                            print('ERROR', row['id'], row['error'], row.get('trace', '')[-600:], flush=True)
-                    else:
-                        stats['turns'] += row.get('turns', 0)
-                        stats['miss'] += row.get('miss', 0)
-                    stats['core_secs'] += row.get('secs', 0)
+    if seconds is None and os.environ.get('SWEEP_SECONDS'):
+        seconds = float(os.environ['SWEEP_SECONDS'])       # stop cleanly after this long (the pool is closed, nothing is orphaned)
+    if chunk is None:
+        chunk = max(1, min(4, len(todo) // (workers * 20) or 1))
+    parts = [todo[i:i + chunk] for i in range(0, len(todo), chunk)]
+    n_done, t_last, turns_last = 0, t0, 0
+    with open(fp, 'a', encoding='utf-8') as f, mp.Pool(workers, initializer=low_priority) as pool:
+        for rows in pool.imap_unordered(do_chunk, parts, chunksize=1):
+            for row in rows:
+                f.write(json.dumps(row) + '\n')
+                n_done += 1
+                if 'error' in row:
+                    stats['errors'] += 1
+                    if stats['errors'] <= 3:
+                        print('ERROR', row['id'], row['error'], row.get('trace', '')[-600:], flush=True)
+                else:
+                    stats['turns'] += row.get('turns', 0)
+                    stats['miss'] += row.get('miss', 0)
+                    stats['proofs'] += row.get('proofs', 0)
+                stats['core_secs'] += row.get('secs', 0)
+            now = time.time()
+            if not quiet and now - t_last >= every:
                 f.flush()
-                pool.map(_flush, range(workers * 2), chunksize=1)
-            for fn in os.listdir(os.path.join(OUT, 'cache')) if os.path.isdir(os.path.join(OUT, 'cache')) else ():
-                if fn.startswith('new_'):
-                    keys.add(fn[4:].rsplit('_w_', 1)[0])
-            for k in keys:
-                _merge_key(k)
-            if not quiet:
-                el = time.time() - t0
-                print('[%s] %d/%d jobs, %d turns, wall %.0f s, %.0f turns/s all cores, %.1f turns/s a core, misses %d' % (
-                    name, cut, len(todo), stats['turns'], el, stats['turns'] / max(el, 1e-9),
-                    stats['turns'] / max(stats['core_secs'], 1e-9), stats['miss']), flush=True)
+                print('[%s] %d/%d jobs, %d turns, wall %.0f s, %.0f turns/s all cores (%.0f in the last %.0f s), %.1f turns/s a core, new pairs %d, proofs %d' % (
+                    name, n_done, len(todo), stats['turns'], now - t0, stats['turns'] / (now - t0),
+                    (stats['turns'] - turns_last) / (now - t_last), now - t_last,
+                    stats['turns'] / max(stats['core_secs'], 1e-9), stats['miss'], stats['proofs']), flush=True)
+                t_last, turns_last = now, stats['turns']
+            if seconds and now - t0 > seconds:
+                stats['stopped'] = True
+                pool.terminate()
+                break
+        else:
+            pool.map(_flush, range(workers), chunksize=1)
     stats['wall'] = time.time() - t0
+    if not quiet:
+        print('[%s] done: %d jobs, %d turns, wall %.0f s, %.0f turns/s all cores, %.1f turns/s a core, new pairs %d, proofs %d' % (
+            name, len(todo), stats['turns'], stats['wall'], stats['turns'] / stats['wall'],
+            stats['turns'] / max(stats['core_secs'], 1e-9), stats['miss'], stats['proofs']), flush=True)
     with open(os.path.join(d, 'stats.jsonl'), 'a', encoding='utf-8') as f:
         f.write(json.dumps(dict(stats, workers=workers, at=time.strftime('%Y-%m-%d %H:%M'))) + '\n')
     return stats
-
-
-def _merge_key(k2):
-    """Fold the workers' new files of one cache namespace (the file-name form of the key) into its base."""
-    import pickle
-    d = os.path.join(OUT, 'cache')
-    files = [f for f in os.listdir(d) if f.startswith('new_%s_w_' % k2)]
-    if not files:
-        return
-    base_fp = os.path.join(d, 'base_%s.pkl' % k2)
-    base = {}
-    if os.path.exists(base_fp):
-        try:
-            with open(base_fp, 'rb') as h:
-                base = pickle.load(h)
-        except Exception:
-            base = {}
-    for fn in files:
-        try:
-            with open(os.path.join(d, fn), 'rb') as h:
-                new = pickle.load(h)
-            if len(base) < CACHE_LIMIT:
-                base.update(new)
-        except Exception:
-            pass
-        os.remove(os.path.join(d, fn))
-    with open(base_fp, 'wb') as h:
-        pickle.dump(base, h, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def bench(workers=12, n=24):

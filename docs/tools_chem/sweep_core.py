@@ -20,13 +20,16 @@ Everything a rule-breaking sigil or a perk needs is a field of Game.p (the rule 
 (the chemistry) or a hook on the Mod object passed to Game (sweep_perks.py, sigil2_rules.py).
 """
 import copy
+import hashlib
 import json
 import math
 import os
 import pickle
 import random
 import re
+import sqlite3
 import sys
+import time
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +47,41 @@ import engine as E
 import fold as F
 import traits as TR
 import hurdle_graph as HG
+
+
+
+def _far_sites_lazy(mol, sma_a, sma_b, anchor_a, anchor_b, same=False, extra=None):
+    """fold.far_sites with the same answer, but the fold of the molecule (the dear part: about a millisecond for a molecule
+    not seen before) is laid out only when both groups are on the molecule."""
+    As = chemlib.matches(mol, sma_a)
+    if not As or (same and len(As) < 2):
+        return []
+    Bs = As if same else chemlib.matches(mol, sma_b)
+    if not Bs:
+        return []
+    f = F._fi(mol)
+    out = []
+    min_d = F.CFG['min_d']
+    for ia, a in enumerate(As):
+        ca = a[anchor_a]
+        for ib, b in enumerate(Bs):
+            if same and ib <= ia:
+                continue
+            cb = b[anchor_b]
+            if ca == cb or set(a.values()) & set(b.values()):
+                continue
+            if not F.faces(f, ca, cb):
+                continue
+            d = int(f.dm[ca][cb])
+            if d < min_d:
+                continue
+            if extra is not None and not extra(mol, a, b):
+                continue
+            out.append({'A': a, 'B': b, 'dist': d, 'tie': (ia, ib)})
+    return out
+
+
+F.far_sites = _far_sites_lazy
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 PATH_JS = os.path.join(ROOT, 'apps', 'steam', 'js', 'react', 'path.js')
@@ -377,8 +415,8 @@ class Game:
         for m in self.mods:
             m.setup(self)
         self._engs = {}
-        self.cache = cache if cache is not None else {}
-        self.new = {}
+        self.store = cache if isinstance(cache, MemStore) else (MemStore() if cache is None else MemStore(cache))
+        self._segs = {}                 # (smi, reagent, used, rules, co2) -> Seg, this process only (built from the kept parts)
         self.stats = Counter()
 
     # --- engines -------------------------------------------------------------------------------------------------
@@ -403,19 +441,18 @@ class Game:
         return any(getattr(self.self_rules[r], 'far', False) for r in rules)
 
     def _get(self, k):
-        v = self.cache.get(k)
-        if v is None:
-            v = self.new.get(k)
-        return v
+        return self.store.get(k)
 
     def _put(self, k, v):
-        self.new[k] = v
+        self.store.put(k, v)
         return v
 
     def trim(self):
         for e in self._engs.values():
-            if len(e._fire) > 60000:
+            if len(e._fire) > 20000:
                 e.clear()
+        if len(self._segs) > 1500000:
+            self._segs.clear()
 
     # --- chemistry, cached by canonical SMILES ----------------------------------------------------------------------
     def rules_for(self, rnd):
@@ -458,40 +495,87 @@ class Game:
         return s
 
     def seg(self, smi, rid, used, rules, co2):
-        """One reagent fired on smi and the reflexes that follow, step by step.  None when it is wasted."""
-        k = ('s', self.key, smi, rid, used, rules, co2)
-        v = self.cache.get(k)
-        if v is None:
-            v = self.new.get(k)
+        """One reagent fired on smi and the reflexes that follow, step by step.  None when it is wasted.
+        Built from three kept parts, each keyed by the canonical SMILES and shared by every worker through the store:
+        the reagent's product (smi, reagent), the reflexes a molecule can do in order (smi), one reflex applied (smi, reflex).
+        The per-turn limits (used) only pick among kept answers, so they do not split the store."""
+        k = (smi, rid, used, rules, co2)
+        v = self._segs.get(k)
         if v is not None:
             return v if v != 0 else None
-        self.stats['seg_miss'] += 1
-        F.CFG['K'] = self.fold_K
-        eng = self.eng(co2, self.has_far(rules))
-        f = eng.fire(smi, rid)
-        if not f.acted:
-            self.new[k] = 0
+        far = self.has_far(rules)
+        fk = ('F', self.key, smi, rid, co2, far)
+        f = self.store.get(fk)
+        if f is None:
+            self.stats['seg_miss'] += 1
+            F.CFG['K'] = self.fold_K
+            r = self.eng(co2, far).fire(smi, rid)
+            f = (r.smi, r.n, tuple((OFFKEY.get(a, a), b) for a, b in r.off)) if r.acted else 0
+            self.store.put(fk, f)
+        if f == 0:
+            self._segs[k] = 0
             return None
-        v = Seg(f.n, tuple((OFFKEY.get(a, a), b) for a, b in f.off), f.smi, self.cascade(f.smi, used, rules, co2))
-        self.new[k] = v
+        v = Seg(f[1], f[2], f[0], self.cascade(f[0], used, rules, co2))
+        self._segs[k] = v
+        return v
+
+    def cands(self, smi, rules):
+        """The reflexes that fit smi, in the engine's order (engine._next_self: priority, nearest pair, place in the list)."""
+        k = ('x', self.key, smi, rules)
+        v = self.store.get(k)
+        if v is None:
+            self.stats['cand_miss'] += 1
+            F.CFG['K'] = self.fold_K
+            mol = parse(smi)
+            sr = self.self_rules
+            c = []
+            for ri, rn in enumerate(rules):
+                sites = sr[rn].find(mol)
+                if sites:
+                    c.append(((getattr(sr[rn], 'prio', 1), sites[0].dist, ri), rn))
+            c.sort(key=lambda t: t[0])
+            v = tuple(rn for _, rn in c)
+            self.store.put(k, v)
+        return v
+
+    def step(self, smi, rn):
+        """One reflex at its first place that gives a valid molecule: (smiles after, what comes off), or 0."""
+        k = ('a', self.key, smi, rn)
+        v = self.store.get(k)
+        if v is None:
+            self.stats['step_miss'] += 1
+            F.CFG['K'] = self.fold_K
+            mol = parse(smi)
+            rule = self.self_rules[rn]
+            v = 0
+            for st in rule.find(mol):
+                r = rule.apply(mol, st)
+                if r is not None:
+                    v = (Chem.MolToSmiles(r[0]), tuple((OFFKEY.get(a, a), b) for a, b in rule.off.items()))
+                    break
+            self.store.put(k, v)
         return v
 
     def cascade(self, smi, used, rules, co2, budget=None):
-        F.CFG['K'] = self.fold_K
-        eng = self.eng(co2, self.has_far(rules))
-        mol = parse(smi)
-        cnt = Counter(dict(used))
-        steps = []
         sr = self.self_rules
         cap = budget or self.p['most']
+        cnt = dict(used)
+        steps = []
         while len(steps) < cap:
-            act = tuple(r for r in rules if getattr(sr[r], 'per_turn', None) is None or cnt[r] < sr[r].per_turn)
-            nxt = eng._next_self(mol, act)
-            if nxt is None:
+            hit = None
+            for rn in self.cands(smi, rules):
+                lim = getattr(sr[rn], 'per_turn', None)
+                if lim is not None and cnt.get(rn, 0) >= lim:
+                    continue
+                r = self.step(smi, rn)
+                if r != 0:
+                    hit = (rn, r)
+                    break
+            if hit is None:
                 break
-            rule, (mol, _d) = nxt
-            cnt[rule.name] += 1
-            steps.append((rule.name, Chem.MolToSmiles(mol), tuple((OFFKEY.get(a, a), b) for a, b in rule.off.items())))
+            rn, (smi, off) = hit
+            cnt[rn] = cnt.get(rn, 0) + 1
+            steps.append((rn, smi, off))
         return tuple(steps)
 
     def casc_only(self, smi, used, rules, co2):
@@ -508,10 +592,10 @@ class Game:
         v = self._get(k)
         if v is None:
             try:
-                c = TR.counts(_strip(self.reopen(smi)))
+                mol = parse(_strip(self.reopen(smi)))
                 v = 1.0
-                for name in self.p['motif_open']:
-                    lv = c.get(name, 0)
+                for name in self.p['motif_open']:      # only the open motifs are counted (traits.counts counts all twelve)
+                    lv = TR.MOTIFS[name].fn(mol)
                     if lv:
                         v *= 1 + MOTIF_RATE[name] * lv
             except Exception:
@@ -708,17 +792,45 @@ class Game:
                 circ[2] += 1
             R.limcnt = self._used(cnt)
 
-    def run_line(self, R, line):
-        """Fire a line on a copy of the round.  Returns (round after, page record)."""
-        R2 = R.copy()
-        page = {'circ': [], 'chain': [], 'off': {}, 'last_on': False}
-        R2.limcnt = ()
+    def run_line(self, R, line, memo=None):
+        """Fire a line on a copy of the round.  Returns (round after, page record).
+        memo: a dict kept for one choice; lines that begin the same way share the work of the circles they share."""
         n = len(line)
-        for i, rid in enumerate(line):
+        nc = max(n, self.p['circles'])
+        i = 0
+        R2 = None
+        if memo is not None:
+            line = tuple(line)
+            i = n
+            st = None
+            while i > 0:
+                st = memo.get((nc, line[:i]))
+                if st is not None:
+                    break
+                i -= 1
+            if i == n and st is not None:
+                return st
+            if i > 0:
+                R2 = st[0].copy()
+                pg = st[1]
+                page = {'circ': [list(c) for c in pg['circ']], 'chain': pg['chain'][:], 'off': dict(pg['off']), 'last_on': pg['last_on']}
+        if R2 is None:
+            R2 = R.copy()
+            page = {'circ': [], 'chain': [], 'off': {}, 'last_on': False}
+            R2.limcnt = ()
+        while i < n:
             if R2.over:
                 break
-            self.play_circle(R2, rid, page, i, max(n, self.p['circles']))
+            self.play_circle(R2, line[i], page, i, nc)
+            i += 1
+            if memo is not None and i < n:
+                page['smi'] = R2.smi
+                memo[(nc, line[:i])] = (R2, page)
+                R2 = R2.copy()
+                page = {'circ': [list(c) for c in page['circ']], 'chain': page['chain'][:], 'off': dict(page['off']), 'last_on': page['last_on']}
         page['smi'] = R2.smi
+        if memo is not None:
+            memo[(nc, line)] = (R2, page)
         return R2, page
 
     def page_rec(self, page):
@@ -856,8 +968,9 @@ class Game:
         scored = []
         plain = None
         peek = peek and bool(self.mods)
+        memo = {}
         for l in lines:
-            R2, page = self.run_line(R, l)
+            R2, page = self.run_line(R, l, memo)
             pr = self.prog(R, R.rec + [self.page_rec(page)]) if R.spec else 0.0
             v = (pr, made(R2))
             if peek:
@@ -887,8 +1000,9 @@ class Game:
                 R3.rec = R.rec + [self.page_rec(page)]
                 self.turn(R3)
                 nv = (-1.0, -1)
+                memo2 = {}
                 for l2 in self.lines(R3, next_hand):
-                    R4, pg2 = self.run_line(R3, l2)
+                    R4, pg2 = self.run_line(R3, l2, memo2)
                     w = (self.prog(R3, R3.rec + [self.page_rec(pg2)]), made(R4))
                     if w > nv:
                         nv = w
@@ -1069,9 +1183,11 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
         if v is None:
             v = 0
             G.real = False
+            G.stats['proofs'] += 1
+            prng = random.Random(repr(ck))       # the proof has its own dice: a run is the same whether or not the proof was kept
             try:
                 for k in range(SPEC_REACH['plays']):
-                    if play_round(G, smi, rnd, rack, 'aim30', rng, spec=parts, brief=brief, tierNo=tierNo).x['met']:
+                    if play_round(G, smi, rnd, rack, 'aim30', prng, spec=parts, brief=brief, tierNo=tierNo).x['met']:
                         v = k + 1
                         break
             finally:
@@ -1208,64 +1324,92 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# the disk cache shared by the workers
+# the store shared by every worker and every later run: one sqlite file, read on a miss, written in batches
 # ---------------------------------------------------------------------------------------------------------------
 
-def cache_path(key):
-    return os.path.join(SWEEP_DIR, 'cache', 'base_%s.pkl' % re.sub(r'[^A-Za-z0-9_.-]', '_', key))
+class MemStore:
+    """The store of one process (tests, a cold bench)."""
 
+    def __init__(self, d=None):
+        self.mem = d if d is not None else {}
 
-def load_cache(key):
-    fp = cache_path(key)
-    if os.path.exists(fp):
-        try:
-            with open(fp, 'rb') as f:
-                return pickle.load(f)
-        except Exception:
-            return {}
-    return {}
+    def get(self, k):
+        return self.mem.get(k)
 
+    def put(self, k, v):
+        self.mem[k] = v
 
-def save_new(G, tag):
-    """A worker writes what it learned; merge_cache folds the files into the base."""
-    if not G.new:
-        return None
-    d = os.path.join(SWEEP_DIR, 'cache')
-    os.makedirs(d, exist_ok=True)
-    fp = os.path.join(d, 'new_%s_%s_%d.pkl' % (re.sub(r'[^A-Za-z0-9_.-]', '_', G.key), tag, os.getpid()))
-    old = {}
-    if os.path.exists(fp):
-        with open(fp, 'rb') as f:
-            old = pickle.load(f)
-    old.update(G.new)
-    with open(fp, 'wb') as f:
-        pickle.dump(old, f, protocol=pickle.HIGHEST_PROTOCOL)
-    G.cache.update(G.new)
-    G.new = {}
-    return fp
-
-
-def merge_cache(key, limit=4000000):
-    d = os.path.join(SWEEP_DIR, 'cache')
-    if not os.path.isdir(d):
+    def flush(self, force=False):
         return 0
-    k2 = re.sub(r'[^A-Za-z0-9_.-]', '_', key)
-    files = [f for f in os.listdir(d) if f.startswith('new_%s_' % k2)]
-    if not files:
-        return 0
-    base = load_cache(key)
-    for f in files:
-        try:
-            with open(os.path.join(d, f), 'rb') as h:
-                new = pickle.load(h)
-            if len(base) < limit:
-                base.update(new)
-        except Exception:
-            pass
-        os.remove(os.path.join(d, f))
-    with open(cache_path(key), 'wb') as h:
-        pickle.dump(base, h, protocol=pickle.HIGHEST_PROTOCOL)
-    return len(base)
+
+
+class Store(MemStore):
+    """A dict in memory in front of one sqlite file (WAL, so twelve workers read and write at once).  A key is the 12-byte
+    blake2b of repr(key tuple); a value is a pickle.  New answers wait in a list and are written every few seconds."""
+    LIMIT = 2500000
+
+    def __init__(self, path=None):
+        MemStore.__init__(self)
+        self.path = path or os.path.join(SWEEP_DIR, 'cache', 'store.sqlite')
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        self.db = sqlite3.connect(self.path, timeout=120, isolation_level=None)
+        self.db.execute('PRAGMA journal_mode=WAL')
+        self.db.execute('PRAGMA synchronous=OFF')
+        self.db.execute('PRAGMA cache_size=-200000')
+        self.db.execute('CREATE TABLE IF NOT EXISTS kv (k BLOB PRIMARY KEY, v BLOB) WITHOUT ROWID')
+        self.pend = []
+        self.last = time.time()
+        self.disk_hits = 0
+
+    def get(self, k):
+        v = self.mem.get(k)
+        if v is None:
+            h = hashlib.blake2b(repr(k).encode(), digest_size=12).digest()
+            row = self.db.execute('SELECT v FROM kv WHERE k=?', (h,)).fetchone()
+            if row is not None:
+                v = pickle.loads(row[0])
+                self.disk_hits += 1
+                if len(self.mem) > self.LIMIT:
+                    self.mem.clear()
+                self.mem[k] = v
+        return v
+
+    def put(self, k, v):
+        if len(self.mem) > self.LIMIT:
+            self.mem.clear()
+        self.mem[k] = v
+        self.pend.append((hashlib.blake2b(repr(k).encode(), digest_size=12).digest(), pickle.dumps(v, pickle.HIGHEST_PROTOCOL)))
+        if len(self.pend) >= 20000:
+            self.flush(True)
+
+    def flush(self, force=False):
+        if not self.pend or (not force and time.time() - self.last < 5):
+            return 0
+        n = len(self.pend)
+        for _ in range(5):
+            try:
+                self.db.execute('BEGIN IMMEDIATE')
+                self.db.executemany('INSERT OR IGNORE INTO kv VALUES (?,?)', self.pend)
+                self.db.execute('COMMIT')
+                break
+            except sqlite3.OperationalError:
+                try:
+                    self.db.execute('ROLLBACK')
+                except Exception:
+                    pass
+                time.sleep(0.5)
+        self.pend = []
+        self.last = time.time()
+        return n
+
+
+_STORE = [None]
+
+
+def shared_store():
+    if _STORE[0] is None:
+        _STORE[0] = Store()
+    return _STORE[0]
 
 
 if __name__ == '__main__':

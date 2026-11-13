@@ -226,8 +226,56 @@ EXPERIMENTS = {'e_last': e_last, 'd_base4': d_base4, 'a_six': a_six, 'a_six2': a
 ORDER_ALL = ('d_sig1', 'c_hom1', 'd_base4', 'e_last', 'a_six', 'a_six2', 'b_elem', 'd_sig2', 'c_hom23', 'd_sighom', 'a_eight', 'd_sigsets')
 
 
+def speed(arg='greedy'):
+    """Throughput and the bare win rate: nine-round runs of the starting six, 5 seeds a job (arg: player[,jobs[,length]])."""
+    ps = (arg or 'greedy').split(',')
+    pl, n, ln = ps[0], int(ps[1]) if len(ps) > 1 else 4000, ps[2] if len(ps) > 2 else 'doctorate'
+    return [{'id': 'sp_%s_%s_%d' % (pl, ln, i), 'rack': START, 'length': ln, 'player': pl,
+             'seeds': ['%s/%d' % (ln, i * 5 + k) for k in range(5)]} for i in range(n)]
+
+
+EXPERIMENTS['speed'] = speed
+
+
+def phase1(name, jobs):
+    """The first pass, for a machine that is shared: a part of every grid, chosen so each cell still has runs.  The ids are the
+    ids of the full grid, so the full grid later carries on from here."""
+    rg = random.Random(11)
+    if name == 'a_six':
+        keep = set(j['id'] for j in rg.sample(jobs, 700))
+        keep |= {'six_' + _rid(START), 'six_' + _rid(sorted(OLD, key=POOL.index))}
+        return [j for j in jobs if j['id'] in keep]
+    if name == 'd_sig1':
+        return [j for j in jobs if ('_start_bachelor_' in j['id'] and j['id'][-1] in '012') or ('_start_master_' in j['id'] and j['id'][-1] == '0')]
+    if name == 'c_hom1':
+        return [j for j in jobs if ('_eight_master_' in j['id'] and j['id'][-1] in '01') or ('_start_bachelor_' in j['id'] and j['id'][-1] in '01')]
+    if name == 'e_last':
+        return [j for j in jobs if '_master_' in j['id'] and j['id'][-1] in '01']
+    if name == 'b_elem':
+        return [j for j in jobs if j['id'][-1] == '0' and ('_rise_' in j['id'] or '_none_' in j['id'] or 'control' in j['id'])]
+    if name == 'd_sig2':
+        return rg.sample(jobs, 60)
+    if name == 'c_hom23':
+        return [j for j in jobs if j['id'].startswith('h2_')]
+    if name == 'd_sighom':
+        return rg.sample(jobs, 50)
+    if name == 'a_eight':
+        return jobs[:60]
+    if name == 'd_base4':
+        return jobs
+    return []
+
+
+PHASE1 = ('d_sig1', 'c_hom1', 'e_last', 'a_six', 'b_elem', 'd_base4', 'c_hom23', 'd_sig2', 'd_sighom', 'a_eight')
+
 if __name__ == '__main__':
     import sweep_run as SR
+    if sys.argv[1] == 'phase1':
+        workers = int(os.environ.get('SWEEP_WORKERS', '12'))
+        for name in sys.argv[2:] or PHASE1:
+            st = SR.run(name, phase1(name, EXPERIMENTS[name]()), workers)
+            print('DONE', name, json.dumps(st), flush=True)
+        sys.exit(0)
     which = sys.argv[2:] or ORDER_ALL
     workers = int(os.environ.get('SWEEP_WORKERS', '12'))
     for name in which:
