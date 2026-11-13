@@ -106,7 +106,7 @@ const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 // right page; the goal, the round, the three places, notes and pinned records on the left); ?shape=b one upright page, centred (the places and the goal above the
 // molecule, the track at its foot). Without it: the wide sheet. Everything the page draws is placed from SHP when it is set.
 const SHAPE = (() => { try { const v = new URLSearchParams(root.location.search).get('shape'); return !BENCH0 || v === '0' ? '' : v === 'b' ? 'b' : 'a'; } catch (e) { return 'a'; } })();
-const SHP = SHAPE === 'a' ? { gut: -2, x0: -36, x1: 32, z1: 18.9, home: { x0: -1.5, x1: 31.9, z0: -21.8, z1: 11.5 }, trk: { x0: 8.4, x1: 26.4, z: 13.6 }, made: { x: -0.6, z: 15.2 }, speed: { x: 19.9, z: 17.8, gap: 8 }, pin: { x: -8.0, z: 13.8, w: 8, d: 5, smax: 1.0 }, draw: { x: 29.4, z: -20.2 }, bt: 40.5, cam: [5.7, -6.5, 91.5, 20], cup: { x: 47.5, z: -29.2 }, gp: { x: 38.2, z: -27.2 }, top: [-33, 29] }
+const SHP = SHAPE === 'a' ? { gut: -2, x0: -36, x1: 32, z1: 18.9, home: { x0: -1.5, x1: 31.9, z0: -21.8, z1: 11.5 }, trk: { x0: 8.4, x1: 26.4, z: 13.6 }, made: { x: -0.6, z: 15.2 }, speed: { x: 19.9, z: 17.8, gap: 8 }, pin: { x: -8.0, z: 13.8, w: 8, d: 5, smax: 1.0 }, draw: { x: 29.4, z: -20.2 }, bt: 40.5, cam: [5.7, -6.5, 91.5, 20], cup: { x: 47.5, z: -29.2 }, gp: { x: 38.2, z: -27.2 }, top: [-33, 29], step: { x: -22.2, z: -1.6 }, round: { x: -23.5, z: -9.6 } }
   : SHAPE === 'b' ? { x0: -17, x1: 17, z1: 20.4, home: { x0: -16.2, x1: 16.2, z0: -9.4, z1: 11.6 }, trk: { x0: -4.2, x1: 15.4, z: 14.9 }, made: { x: -15.8, z: 16.4 }, speed: { x: -16.6, z: 18.7 }, pin: { x: 11.6, z: -13.2, w: 8.6, d: 5.6, smax: 1.0 }, draw: { x: 14.6, z: -8.2 }, bt: 26.4, cam: [-3.4, -5.9, 96.5, 20], cup: { x: -31, z: 3 }, gp: { x: -27.5, z: 15.5 }, top: [-45, 30],
     step: { x: -13.2, z: -12.2 }, round: { x: -15.6, z: -17.6 }, goal: { x: -7.4, z: -19.9, room: 14.2 }, need: { x: 8.2, z: -18.4 } } : null;
 if (SHP) { PGE.home = SHP.home; if (SHP.step) { STEP.x = SHP.step.x; STEP.z = SHP.step.z; } }
@@ -160,24 +160,25 @@ function start(app) {
   // ---------- the page, and the layer of ink over it ----------
   const paper = canvasTex(2048, 1408);
   paperDraw(paper.x, 2048, 1408, PAPERN, SW); paper.t.needsUpdate = true;
+  const CLIP = new T.Plane(new T.Vector3(1, 0, 0), 1e4), clipL = m => { if (SHAPE === 'a') { (Array.isArray(m.material) ? m.material : [m.material]).forEach(q => { q.clippingPlanes = [CLIP]; }); } return m; }; if (SHAPE === 'a') ren.localClippingEnabled = true;
   const paperMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), std({ map: paper.t, roughness: 0.95 }), 0, 0, 0); paperMesh.castShadow = false;
-  if (SHP) shapeDress();
+  if (SHP) shapeDress(); clipL(paperMesh);
   // (builder 12) the notebook as an object: the boards of its cover under the pages, the edges of the block of pages, and for the spread the gutter with its shadow and stitches
   function shapeDress() { const x0 = SHP.x0, x1 = SHP.x1, W = x1 - x0, cx = (x0 + x1) / 2, SH = SHP.z1 + 22, cz = (SHP.z1 - 22) / 2, flat = (w, d, mat, x, y, z) => { const m = add(new T.PlaneGeometry(w, d).rotateX(-Math.PI / 2), mat, x, y, z); m.castShadow = false; return m; };
     if (SHAPE === 'b') { paperMesh.scale.x = W / SW; paperMesh.position.x = cx; } paperMesh.scale.z = SH / 44; paperMesh.position.z = cz;
     const cloth = canvasTex(256, 256); cloth.x.fillStyle = '#2b3a34'; cloth.x.fillRect(0, 0, 256, 256); noise(cloth.x, 256, 256, 5000, 0.16, '0,0,0'); noise(cloth.x, 256, 256, 3000, 0.1, '190,200,180'); cloth.t.needsUpdate = true;
-    const board = add(new T.BoxGeometry(W + 2.2, 0.5, SH + 2.0), std({ map: cloth.t, roughness: 0.9 }), cx, -0.27, cz); board.castShadow = false;
+    const board = add(new T.BoxGeometry(W + 2.2, 0.5, SH + 2.0), std({ map: cloth.t, roughness: 0.9 }), cx, -0.27, cz); board.castShadow = false; clipL(board);
     // the block of pages: a few sheets showing past the top sheet at the outer edges and the foot
     const ec = canvasTex(64, 512); ec.x.fillStyle = '#e4dcc6'; ec.x.fillRect(0, 0, 64, 512); for (let i = 0; i < 9; i++) { ec.x.fillStyle = 'rgba(90,80,60,' + (0.16 + 0.05 * (i % 3)) + ')'; ec.x.fillRect(i * 7 + 3, 0, 1.6, 512); } ec.t.needsUpdate = true;
-    const em = std({ map: ec.t, roughness: 0.95 }); flat(0.7, SH + 0.5, em, x1 + 0.3, -0.03, cz + 0.2); if (SHAPE === 'a') flat(0.7, SH + 0.5, em, x0 - 0.3, -0.03, cz + 0.2); const ec2 = canvasTex(512, 64); ec2.x.fillStyle = '#e4dcc6'; ec2.x.fillRect(0, 0, 512, 64); for (let i = 0; i < 8; i++) { ec2.x.fillStyle = 'rgba(90,80,60,0.2)'; ec2.x.fillRect(0, i * 8 + 3, 512, 1.6); } ec2.t.needsUpdate = true; flat(W + 1.2, 0.6, std({ map: ec2.t, roughness: 0.95 }), cx, -0.03, SHP.z1 + 0.3);
+    const em = std({ map: ec.t, roughness: 0.95 }); flat(0.7, SH + 0.5, em, x1 + 0.3, -0.03, cz + 0.2); if (SHAPE === 'a') clipL(flat(0.7, SH + 0.5, em, x0 - 0.3, -0.03, cz + 0.2)); const ec2 = canvasTex(512, 64); ec2.x.fillStyle = '#e4dcc6'; ec2.x.fillRect(0, 0, 512, 64); for (let i = 0; i < 8; i++) { ec2.x.fillStyle = 'rgba(90,80,60,0.2)'; ec2.x.fillRect(0, i * 8 + 3, 512, 1.6); } ec2.t.needsUpdate = true; clipL(flat(W + 1.2, 0.6, std({ map: ec2.t, roughness: 0.95 }), cx, -0.03, SHP.z1 + 0.3));
     if (SHAPE === 'a') { const gc = canvasTex(256, 64), gx = gc.x, gr = gx.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, 'rgba(60,48,30,0)'); gr.addColorStop(0.36, 'rgba(60,48,30,0.14)'); gr.addColorStop(0.47, 'rgba(40,30,18,0.5)'); gr.addColorStop(0.5, 'rgba(24,16,8,0.9)'); gr.addColorStop(0.53, 'rgba(40,30,18,0.42)'); gr.addColorStop(0.62, 'rgba(255,250,236,0.25)'); gr.addColorStop(0.75, 'rgba(60,48,30,0.05)'); gr.addColorStop(1, 'rgba(60,48,30,0)'); gx.fillStyle = gr; gx.fillRect(0, 0, 256, 64); gc.t.needsUpdate = true;
-      const gm = flat(7, SH, new T.MeshBasicMaterial({ map: gc.t, transparent: true, depthWrite: false }), SHP.gut, 0.012, cz); gm.receiveShadow = false;
+      const gm = flat(7, SH, new T.MeshBasicMaterial({ map: gc.t, transparent: true, depthWrite: false }), SHP.gut, 0.012, cz); gm.receiveShadow = false; clipL(gm);
       for (let i = 0; i < 4; i++) { const th = add(new T.CylinderGeometry(0.07, 0.07, 2.6, 6).rotateX(Math.PI / 2), std({ color: lin(0xd9d2bd), roughness: 0.8 }), SHP.gut, 0.03, -16 + i * 10); th.castShadow = false; } }
     else { const lc = canvasTex(64, 64), lg = lc.x.createLinearGradient(0, 0, 64, 0); lg.addColorStop(0, 'rgba(40,30,18,0.42)'); lg.addColorStop(0.5, 'rgba(60,48,30,0.1)'); lg.addColorStop(1, 'rgba(60,48,30,0)'); lc.x.fillStyle = lg; lc.x.fillRect(0, 0, 64, 64); lc.t.needsUpdate = true; flat(3, SH, new T.MeshBasicMaterial({ map: lc.t, transparent: true, depthWrite: false }), x0 + 1.5, 0.012, cz).receiveShadow = false;
       const sp = add(new T.BoxGeometry(1.6, 0.62, SH + 2.0), std({ color: lin(0x1c1612), roughness: 0.7 }), x0 - 0.5, -0.2, cz); sp.castShadow = false; } }
   const ink = canvasTex(IW, IH);
   { const st0 = ink.x.strokeText.bind(ink.x); ink.x.strokeText = function (t, a, b) { const c = ink.x.strokeStyle; if (c === '#f3eddc' || c === '#fbf8ee') return; st0(t, a, b); }; } // no paper-colored cut-out behind lettering: it leaves a pale fringe on the grain
-  const inkMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: ink.t, transparent: true, depthWrite: false }), 0, 0.02, 0); inkMesh.castShadow = false; inkMesh.receiveShadow = false;
+  const inkMesh = add(new T.PlaneGeometry(SW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: ink.t, transparent: true, depthWrite: false }), 0, 0.02, 0); inkMesh.castShadow = false; inkMesh.receiveShadow = false; clipL(inkMesh);
   const veil = document.createElement('canvas'); veil.className = 'veil'; app.append(veil);
   // above everything, in the frame's own pixels: the flash of a hit and OVERREACT (feel.js draws on it)
   const overC = document.createElement('canvas'); overC.className = 'veil'; app.append(overC); const overX = overC.getContext('2d');
@@ -200,7 +201,7 @@ function start(app) {
     benchTop = add(new T.PlaneGeometry(250, 150).rotateX(-Math.PI / 2), std({ map: wc.t, roughness: 0.78, color: lin(0xa89c92) }), 4, -0.25, -4); benchTop.castShadow = false;
     // the page's own small shadow, soft at the edge
     const sc = canvasTex(512, 384); sc.x.shadowColor = 'rgba(0,0,0,0.55)'; sc.x.shadowBlur = 26; sc.x.fillStyle = 'rgba(0,0,0,0.5)'; sc.x.fillRect(40, 40, 432, 304); sc.t.needsUpdate = true;
-    const PWs = SW + (PGE.on ? PGE.ext : 0); const sh = add(new T.PlaneGeometry((PWs + 2) * 512 / 432, (SH + 2) * 384 / 304).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: sc.t, transparent: true, depthWrite: false }), (PGE.on ? -PGE.ext / 2 : 0) + 0.8, -0.2, 0.9); sh.castShadow = false; sh.receiveShadow = false; if (SHP) { sh.scale.x = (SHP.x1 - SHP.x0 + 4) / (PWs + 2); sh.position.x = (SHP.x0 + SHP.x1) / 2 + 0.8; }
+    const PWs = SW + (PGE.on ? PGE.ext : 0); const sh = add(new T.PlaneGeometry((PWs + 2) * 512 / 432, (SH + 2) * 384 / 304).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: sc.t, transparent: true, depthWrite: false }), (PGE.on ? -PGE.ext / 2 : 0) + 0.8, -0.2, 0.9); sh.castShadow = false; sh.receiveShadow = false; clipL(sh); if (SHP) { sh.scale.x = (SHP.x1 - SHP.x0 + 4) / (PWs + 2); sh.position.x = (SHP.x0 + SHP.x1) / 2 + 0.8; }
     // the same pool laid lightly over the page and everything flat, so the paper is brightest under the lamp and its far corners fall off a little (the middle stays clear and neutral)
     { const lc = canvasTex(512, 512), lg = lc.x.createRadialGradient(250, 250, 0, 256, 256, 256); lg.addColorStop(0, 'rgba(30,14,4,0)'); lg.addColorStop(0.37, 'rgba(30,14,4,0)'); lg.addColorStop(0.5, 'rgba(28,13,4,0.2)'); lg.addColorStop(0.62, 'rgba(24,11,3,0.5)'); lg.addColorStop(1, 'rgba(14,6,1,0.82)'); lc.x.fillStyle = lg; lc.x.fillRect(0, 0, 512, 512); lc.t.needsUpdate = true;
       const lm = add(new T.PlaneGeometry(190, 150).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: lc.t, transparent: true, depthWrite: false }), 4, 0.045, -4); lm.castShadow = false; lm.receiveShadow = false; lm.renderOrder = 1;
@@ -220,7 +221,7 @@ function start(app) {
   // asks for the cover to be opened. Opening the cover is the start of the run: the first page is under it. Nothing is cut to.
   let cover = null;
   function coverDraw(k) {
-    const x = cover.tx.x, W = 1536, H = 1000; let sd = 4242; const Rr = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
+    const x = cover.tx.x, W = 1536, H = SHAPE === 'a' ? 1836 : 1000; x.setTransform(1, 0, 0, 1000 / H, 0, 0); let sd = 4242; const Rr = () => (sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296;
     x.fillStyle = '#4f1d1b'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 5200; i++) { x.fillStyle = 'rgba(' + (i % 2 ? '20,6,6' : '150,78,70') + ',' + (0.03 + Rr() * 0.07).toFixed(3) + ')'; x.fillRect(Rr() * W, Rr() * H, 2 + Rr() * 9, 1 + Rr() * 2); }
     { const gr = x.createRadialGradient(W * 0.52, H * 0.5, 180, W * 0.52, H * 0.5, 980); gr.addColorStop(0, 'rgba(255,190,150,0.10)'); gr.addColorStop(1, 'rgba(10,2,2,0.5)'); x.fillStyle = gr; x.fillRect(0, 0, W, H); }
@@ -229,26 +230,26 @@ function start(app) {
     [[W, 0], [W, H]].forEach(q => { const gr = x.createRadialGradient(q[0], q[1], 0, q[0], q[1], 120); gr.addColorStop(0, 'rgba(214,180,150,0.55)'); gr.addColorStop(1, 'rgba(214,180,150,0)'); x.fillStyle = gr; x.fillRect(q[0] - 120, q[1] - 120, 240, 240); });
     // a cup was stood on it once
     // the label, and the name lettered on it by the game's own pen
-    x.save(); x.translate(820, 400); x.rotate(-0.012); x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(-452, -162, 916, 340); x.fillStyle = '#efe7d2'; x.fillRect(-460, -170, 920, 340); x.strokeStyle = '#3b3f4a'; x.lineWidth = 5; x.strokeRect(-438, -148, 876, 296); x.lineWidth = 2; x.strokeRect(-426, -136, 852, 272);
+    x.save(); x.translate(820, SHAPE === 'a' ? 640 : 400); x.rotate(-0.012); x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(-452, -162, 916, 340); x.fillStyle = '#efe7d2'; x.fillRect(-460, -170, 920, 340); x.strokeStyle = '#3b3f4a'; x.lineWidth = 5; x.strokeRect(-438, -148, 876, 296); x.lineWidth = 2; x.strokeRect(-426, -136, 852, 272);
     try { let sz = 100; const w0 = AA.rxPen.measure('OVERREACT', sz, 'heavy').width; sz *= 760 / Math.max(1, w0); if (k > 0) { AA.rxPen.write(x, 'OVERREACT', 5, sz * 0.36 + 6, sz, { weight: 'heavy', color: 'rgba(34,37,44,0.9)', align: 'center', t: k }); AA.rxPen.write(x, 'OVERREACT', 0, sz * 0.36, sz, { weight: 'heavy', color: '#c8261c', align: 'center', t: k }); } } catch (e) { /* no pen */ }
     x.restore();
     // (builder 11) the sign shows itself more each time it has been taken: our own mark (the four yield marks as one), in yellow. 1: scratched small in a corner. 2: larger, and a second one. 3: across the whole cover.
     { const n = signN(); if (n >= 1) { try { x.save(); x.translate(1392, 232); x.rotate(0.12); AA.rxMarks.yieldMark(x, 3, 1.5, 1.5, 24, { pencil: 'rgba(196,150,140,0.16)', plw: 2, ink: 'rgba(196,150,140,0.16)', lw: 2, t: 1 }); AA.rxMarks.yieldMark(x, 3, 0, 0, 24, { pencil: 'rgba(24,8,8,0.42)', plw: 2.4, ink: 'rgba(24,8,8,0.42)', lw: 2.4, t: 1 }); x.restore(); } catch (e) { /* no marks */ } } }
-    cover.tx.t.needsUpdate = true; cover.named = k;
+    x.setTransform(1, 0, 0, 1, 0, 0); cover.tx.t.needsUpdate = true; cover.named = k;
   }
   const signN = () => { try { const v = new URLSearchParams(root.location.search).get('sign'); if (v != null) return Math.max(0, Math.min(3, +v || 0)); } catch (e) { /* no window */ } return Math.max(0, Math.min(3, (meta && meta.sign) | 0)); };
   // the sign scratched into the bench round the notebook (from the second time on), seen only while the notebook is closed
   function signBench() { if (cover.signs) return; cover.signs = []; const n = signN(); if (n < 2) return; const c = canvasTex(256, 256); try { AA.rxMarks.yieldMark(c.x, 3, 130, 178, 44, { pencil: 'rgba(214,170,120,0.2)', plw: 3, ink: 'rgba(214,170,120,0.2)', lw: 3, t: 1 }); AA.rxMarks.yieldMark(c.x, 3, 128, 176, 44, { pencil: 'rgba(22,12,5,0.5)', plw: 3.5, ink: 'rgba(22,12,5,0.5)', lw: 3.5, t: 1 }); } catch (e) { /* no marks */ } c.t.needsUpdate = true; (n >= 3 ? [[42, 27, 6.5, -0.3], [CUP.x - 9.5, CUP.z + 6.5, 4.6, 0.5]] : [[42, 27, 6.5, -0.3]]).forEach(q => { const m = new T.Mesh(new T.PlaneGeometry(q[2], q[2]).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: c.t, transparent: true, depthWrite: false, opacity: 0.85 })); m.position.set(q[0], -0.1, q[1]); m.rotation.y = q[3]; m.renderOrder = 2; scene.add(m); cover.signs.push(m); }); }
   function coverMake() {
-    const ext = PGE.on ? PGE.ext : 0, W = SW + ext + 1.4, D = SH + 1.4, tx = canvasTex(1536, 1000); cover = { tx, W, D, grp: new T.Group(), named: -1, lamp: -1 };
+    const ext = PGE.on ? PGE.ext : 0, W = SHAPE === 'a' ? SHP.x1 - SHP.gut + 1.2 : SW + ext + 1.4, D = SHAPE === 'a' ? SHP.z1 + 22 + 1.6 : SH + 1.4, tx = canvasTex(1536, 1000); cover = { tx, W, D, grp: new T.Group(), named: -1, lamp: -1 };
     const side = std({ color: lin(0x1c1410), roughness: 0.9 }), box = new T.Mesh(new T.BoxGeometry(W, 0.55, D), [side, side, std({ map: tx.t, roughness: 0.85 }), std({ color: lin(0xd9cfb8), roughness: 0.95 }), side, side]); box.position.set(W / 2, 0.3, 0); cover.grp.add(box);
-    cover.grp.position.set(-SW / 2 - ext - 0.7, 0.04, 0); scene.add(cover.grp); coverDraw(0);
+    cover.grp.position.set(-SW / 2 - ext - 0.7, 0.04, 0); if (SHAPE === 'a') cover.grp.position.set(SHP.gut - 0.5, 0.04, (SHP.z1 - 22) / 2); scene.add(cover.grp); coverDraw(0);
     { const ac = canvasTex(256, 128), x = ac.x; x.strokeStyle = '#efe7d2'; x.lineWidth = 13; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(236, 96); x.quadraticCurveTo(150, 4, 26, 62); x.moveTo(84, 22); x.lineTo(26, 62); x.lineTo(90, 100); x.stroke(); ac.t.needsUpdate = true; cover.arrow = flatMesh(15, 7.5, ac.t, 0.75); cover.arrow.position.set(19, 0.75, 14.5); cover.arrow.renderOrder = 30; cover.arrow.visible = false; scene.add(cover.arrow); }
   }
   function titleBench(now) {
     const W = titleC.width, H = titleC.height, x = titleC.getContext('2d'), k = W / 1280;
     if (!title.on) { if (title.drawn) { x.clearRect(0, 0, W, H); title.drawn = false; } return; }
-    if (!cover) coverMake(); signBench(); if (cover.signN !== signN()) { cover.signN = signN(); cover.named = -1; } if (!title.t0) title.t0 = now; const age = now - title.t0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+    if (!cover) coverMake(); if (SHAPE === 'a' && !title.out) CLIP.constant = -SHP.gut + 0.7; signBench(); if (cover.signN !== signN()) { cover.signN = signN(); cover.named = -1; } if (!title.t0) title.t0 = now; const age = now - title.t0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
     // the lamp comes on: dark, a flicker, then the warm pool
     const lamp = title.out ? 1 : age < 600 ? 0 : age < 700 ? 0.5 : age < 860 ? 0.12 : age < 980 ? 0.62 : 0.62 + 0.38 * sm((age - 980) / 1900), st0 = age < 600 ? 0 : age < 860 ? 1 : 2;
     if (st0 !== cover.lamp) { cover.lamp = st0; if (st0 === 1) sfxN('click'); }
@@ -256,7 +257,7 @@ function start(app) {
     { const kn = title.out ? 1 : Math.round(sm((age - 1500) / 1500) * 40) / 40; if (kn !== cover.named) coverDraw(kn); }
     // one hand-drawn arrow at the cover's free edge: open it
     if (cover.arrow) { cover.arrow.visible = age > 3300 && !title.out; cover.arrow.position.x = 19 - 0.6 * Math.sin(now / 280); }
-    if (title.out) { const o = (now - title.out) / 1250, e = o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * Math.min(1, o) + 2, 3) / 2; cover.grp.rotation.z = Math.min(1, e) * Math.PI * 0.992; if (!title.shown && now - title.out > 480) { title.shown = true; briefMols.forEach((m, i) => { m.group.visible = true; tweens = tweens.filter(tw => tw.m !== m); m.group.scale.setScalar(0.01); tween(m, { x: m.group.position.x, z: m.group.position.z }, m.sc, 0.5 + i * 0.22); }); } if (o >= 1) { title.on = false; if (SHP) cover.grp.visible = false; x.clearRect(0, 0, W, H); title.drawn = false; if (cover.signs) { cover.signs.forEach(m => scene.remove(m)); cover.signs = []; } } }
+    if (title.out) { const o = (now - title.out) / 1250, e = o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * Math.min(1, o) + 2, 3) / 2; cover.grp.rotation.z = Math.min(1, e) * Math.PI * 0.992; if (!title.shown && now - title.out > 480) { title.shown = true; briefMols.forEach((m, i) => { if (SHAPE === 'a' && i === 0 && briefMols.length > 1) return; m.group.visible = true; tweens = tweens.filter(tw => tw.m !== m); m.group.scale.setScalar(0.01); tween(m, { x: m.group.position.x, z: m.group.position.z }, m.sc, 0.5 + i * 0.22); }); } if (SHAPE === 'a') CLIP.constant = o >= 0.9 ? 1e4 : -SHP.gut + 0.7; if (o >= 1) { title.on = false; if (SHP) cover.grp.visible = false; if (SHAPE === 'a' && briefMols.length > 1) { const m = briefMols[0]; m.group.visible = true; tweens = tweens.filter(tw => tw.m !== m); m.group.scale.setScalar(0.01); tween(m, { x: m.group.position.x, z: m.group.position.z }, m.sc, 0.5); } x.clearRect(0, 0, W, H); title.drawn = false; if (cover.signs) { cover.signs.forEach(m => scene.remove(m)); cover.signs = []; } } }
     else briefMols.forEach(m => { m.group.visible = false; });
   }
   function drawTitle(now) {
@@ -945,6 +946,7 @@ function start(app) {
   const BAND = 11.2, MULT = { x: EDGE + 0.9 + (KITV === 'side' ? 0.6 : 0), z: BAND }, MADE = { x: -22.6, z: 13.3 }, BEAT = KITV === 'back' ? { x: -1.2, z: 12.3 } : { x: -4.8 + SX, z: 14.4 }, GAIN = { x: 22, z: -1.5 }, CALL = { x: 3.5, z: -4.3 }, KITP = i => (KITV === 'side' ? { x: -23.4 + i * 0.42, z: -8.8 + i * 4.2 } : KITV === 'back' ? (BENCHV ? (BENCHV === 'a' ? topRow().kit[i] || { x: 40, z: TOPB.z } : { x: 37.5, z: -20 + i * 7.5 }) : { x: -8.6 + i * 5.3, z: -10.9 }) : { x: 0.2 + i * 4.75, z: 11.0 });
   if (PGE.on) MADE.z += PGE.dz;
   if (SHP) { MADE.x = SHP.made.x; MADE.z = SHP.made.z; Object.assign(PINH, SHP.pin); }
+  if (SHAPE === 'a') GAIN.z -= 3.9;
   if (SIDE) { GAIN.x = -12.6 + SX; GAIN.z = 7.4; CALL.x = -1; CALL.z = -12.3; }
   if (KITV === 'back') { GAIN.x = -17.5; GAIN.z = 3.6; CALL.x = 10; CALL.z = 13.1; }
   if (KITV !== 'bottom') { C0.x += SX * 0.55; C0.z += 1.3; }
@@ -1256,7 +1258,7 @@ function start(app) {
     x.restore(); arrow(x, { x: 17.6, z: 17.4 }, { x: 23.2, z: 17.6 }, 9, PENCIL); }
   function shopInk(x, now) { if (SHOPV === 'b') return catalogInk(x, now);
     const o = shopB && (shopB.take ? shopB.take.o : st.hover >= 0 ? shopB.objs.find(q => q.kind === 'offer' && q.i === st.hover) : st.mark === 'shelf' ? shopObj('shelf') : null), c = px({ x: 3, z: -1.5 });
-    { const h = px({ x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
+    { const h = px(SHAPE === 'a' ? { x: -30.4, z: -15.2 } : { x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
     const id = o && (o.kind === 'shelf' ? o.id : o.p && !o.gear ? o.p.id : null), tl = id && TILE[id];
     if (tl) { const t = ((now - (shopB.hovT || now)) % 2600) / 2600, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, kA = sm((t - 0.22) / 0.18), kB = sm((t - 0.4) / 0.12), pop = t > 0.4 && t < 0.56 ? 1 + 0.25 * Math.sin((t - 0.4) / 0.16 * Math.PI) : 1, out = t > 0.92 ? 1 - (t - 0.92) / 0.08 : 1;
       x.save(); x.translate(c[0], c[1]); x.scale(4.6, 4.6); x.globalAlpha = out; fragOrChip(x, tl[0], -66, 0, true); x.strokeStyle = INK; x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; if (kA > 0) { x.beginPath(); x.moveTo(-26, 0); x.lineTo(-26 + 26 * kA, 0); if (kA >= 1) { x.moveTo(-12, -11); x.lineTo(0, 0); x.lineTo(-12, 11); } x.stroke(); } if (kB > 0) { x.globalAlpha = out * kB; x.translate(50, 0); x.scale(pop, pop); fragOrChip(x, tl[1], 0, 0, true); } x.restore(); }
@@ -1286,7 +1288,7 @@ function start(app) {
   let briefCoins = [];
   function clearBriefs() { briefMols.forEach(freeMol); briefMols = []; briefCoins.forEach(c => scene.remove(c.m)); briefCoins = []; st.choose = null; }
   // an assay is one round and stands alone in the middle of the page
-  const BXC = PGE.on ? (BENCHV ? 1.0 : 1.2) : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (BENCHV ? (i ? 19.25 : -5.75) : (i ? 1 : -1) * 10.5 + BXC) : PICKX[i]), BZ = BENCHV ? -4.0 : -3.6, BX2 = 6.75;
+  const BXC = PGE.on ? (BENCHV ? 1.0 : 1.2) : 0, BX = i => (briefs.length === 1 ? BXC : briefs.length === 2 ? (SHAPE === 'a' ? (i ? 15.2 : -18.6) : BENCHV ? (i ? 19.25 : -5.75) : (i ? 1 : -1) * 10.5 + BXC) : PICKX[i]), BZ = BENCHV ? -4.0 : -3.6, BX2 = 6.75;
   // the pair drawn again: a turning arrow under the two molecules, and the coins it costs
   const PAIR = BENCH0 ? { x: 4.6, z: 19.6 } : { x: -1.6, z: 11.6 };
   const pairOn = () => P.RULE.choose && P.RULE.coins && st.mode === 'brief' && briefs.length === 2 && !!meta.coined;
@@ -1322,8 +1324,8 @@ function start(app) {
   function inkLoop(x, cx, cy, rx, ry, k, lw, col) { if (k <= 0) return; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); const n = 44, a0 = -2.5; for (let j = 0; j <= n * Math.min(1, k); j++) { const a = a0 + j / n * 6.75, w = 1 + 0.035 * Math.sin(j * 0.9) + 0.03 * j / n; const X = cx + Math.cos(a) * rx * w, Y = cy + Math.sin(a) * ry * w; if (j) x.lineTo(X, Y); else x.moveTo(X, Y); } x.stroke(); }
   function briefInk(x, now) {
     const ch = st.choose, el = ch ? now - ch.t0 : 0, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
-    { const h = px({ x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
-    if (briefs.length === 2) { const a = px({ x: BX2, z: -15 }), b = px({ x: BX2 + 0.3, z: 17.5 }); x.strokeStyle = FAINT; x.lineWidth = 4; x.lineCap = 'round'; x.setLineDash([18, 16]); x.beginPath(); x.moveTo(a[0], a[1]); x.quadraticCurveTo(a[0] - 14, (a[1] + b[1]) / 2, b[0], b[1]); x.stroke(); x.setLineDash([]); }
+    { const h = px(SHAPE === 'a' ? { x: -30.4, z: -15.2 } : { x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
+    if (briefs.length === 2 && SHAPE !== 'a') { const a = px({ x: BX2, z: -15 }), b = px({ x: BX2 + 0.3, z: 17.5 }); x.strokeStyle = FAINT; x.lineWidth = 4; x.lineCap = 'round'; x.setLineDash([18, 16]); x.beginPath(); x.moveTo(a[0], a[1]); x.quadraticCurveTo(a[0] - 14, (a[1] + b[1]) / 2, b[0], b[1]); x.stroke(); x.setLineDash([]); }
     briefs.forEach((b, i) => {
       const c = px({ x: BX(i), z: 11.5 }), hov = st.hover === i && !ch, lost = ch && ch.i !== i, fadeK = lost ? 1 - sm((el - 650) / 450) : 1, mc = px({ x: BX(i), z: BZ }), half = briefs.length === 2 ? 12.2 * U : 20 * U;
       x.save(); x.globalAlpha = Math.max(0.0, fadeK * (lost ? 0.9 : 1));
@@ -2075,12 +2077,21 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const marker = (x, n) => { x.font = (FAM ? 'bold ' : '') + Math.round(n) + 'px ' + (FAM || 'Marker') + ', "Segoe Print", sans-serif'; if (FONT === 'own') AA.rxPen.set(x, n, true); };
   // (builder 12, a picture to choose from) the records of the rounds before this one, pinned on the left page of the spread: a slip, a strip of tape, the round's
   // numeral, a small pencil drawing and the mark it reached. The drawings here are stand-ins: the real ones would be the molecules as they were left.
-  function recMock(x) { const n = Math.min(3, Math.max(0, (run.round || 1) - 1)); for (let i = 0; i < n; i++) { const c = px({ x: -17.4 + i * 9.6, z: 13.6 + (i % 2) * 0.7 }), w = 270, h = 190, R = (k => Math.sin((i + 1) * 12.9898 * k) * 0.5 + 0.5); x.save(); x.translate(c[0], c[1]); x.rotate((R(1) - 0.5) * 0.09);
-      x.fillStyle = 'rgba(40,30,18,0.16)'; x.fillRect(-w / 2 + 5, -h / 2 + 7, w, h); x.fillStyle = '#f7f2e2'; x.fillRect(-w / 2, -h / 2, w, h); x.strokeStyle = 'rgba(90,80,60,0.3)'; x.lineWidth = 2; x.strokeRect(-w / 2, -h / 2, w, h);
-      x.save(); x.translate(0, -h / 2 + 2); x.rotate((R(2) - 0.5) * 0.2); x.fillStyle = 'rgba(222,206,150,0.78)'; x.fillRect(-52, -17, 104, 34); x.restore();
-      marker(x, 44); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText(String(i + 1), -w / 2 + 14, -h / 2 + 50);
-      x.strokeStyle = PENCIL; x.lineWidth = 4; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); const m = 5 + i * 2; for (let k = 0; k < m; k++) { const ax = -w / 2 + 64 + k * (150 / (m - 1)), ay = (k % 2 ? -14 : 12) + 4; if (k) x.lineTo(ax, ay); else x.moveTo(ax, ay); } x.stroke(); if (i) { x.beginPath(); x.arc(-w / 2 + 64 + 150, -22, 26, 0.6, 5.2); x.stroke(); }
-      try { AA.rxMarks.yieldMark(x, Math.min(3, i + 1), w / 2 - 44, h / 2 - 44, 26, { pencil: 'rgba(90,86,78,0.5)', plw: 2, ink: GREEN, lw: 6, t: 1 }); } catch (e) { /* no marks */ }
+  const RECS = {}, recSlot = r => ({ x: -21.4 + ((r - 1) % 4) * 5.5, z: 10.4 + Math.floor((r - 1) / 4) * 4.5 });
+  // the molecule as it was left at the end of a round that was passed, drawn small and flat for its slip (kept for the run)
+  function recSnap() { const m = center; if (!m || !run) return; const c = document.createElement('canvas'); c.width = 300; c.height = 210; const x = c.getContext('2d'), w = new T.Vector3(), w2 = new T.Vector3(); m.group.updateMatrixWorld(true); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+    m.balls.forEach(b => { if (!b.mesh.visible) return; b.mesh.getWorldPosition(w); x0 = Math.min(x0, w.x); x1 = Math.max(x1, w.x); z0 = Math.min(z0, w.z); z1 = Math.max(z1, w.z); }); if (x0 > 1e8) return;
+    const k = Math.min(250 / (x1 - x0 + 1.5), 150 / (z1 - z0 + 1.5)), P2 = v => [150 + (v.x - (x0 + x1) / 2) * k, 112 + (v.z - (z0 + z1) / 2) * k]; x.lineCap = 'round';
+    (m.sticks || []).forEach(q => { const A = m.balls.get(q.a), B = m.balls.get(q.b); if (!A || !B || !A.mesh.visible || !B.mesh.visible) return; A.mesh.getWorldPosition(w); B.mesh.getWorldPosition(w2); const a = P2(w), b = P2(w2); x.strokeStyle = '#4a4f5c'; x.lineWidth = Math.max(2, k * 0.2); x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); });
+    m.balls.forEach((b, a) => { if (!b.mesh.visible || a.el === 'H') return; b.mesh.getWorldPosition(w); const q = P2(w), r = Math.max(3, (b.R || 0.4) * m.group.scale.x * k * 0.8); x.fillStyle = a.el === 'O' ? '#e04038' : a.el === 'N' ? '#3d6fe0' : a.el === 'S' ? '#f0c820' : a.el === 'Cl' ? '#30c060' : '#5a6072'; x.strokeStyle = '#22252c'; x.lineWidth = 1.5; x.beginPath(); x.arc(q[0], q[1], r, 0, 6.3); x.fill(); x.stroke(); });
+    const marks = P.runMarks(st.quota); let nm = 0; marks.forEach(v => { if (g.total >= v) nm++; }); RECS[run.round] = { c, nm, run: st.noteRun }; }
+  // the records of the rounds before this one, pinned on the lower left page: a slip with a strip of tape, the round's numeral, the drawing, the mark it reached
+  function recMock(x) { const upto = st.mode === 'done' && st.pinned && st.pinK > 0.98 ? run.round : run.round - 1; for (let r = 1; r <= Math.min(8, upto); r++) { const rec = RECS[r]; if (!rec || rec.run !== st.noteRun) continue; const q = recSlot(r), c = px(q), w = 160, h = 128, R = k => Math.sin((r + 1) * 12.9898 * k) * 0.5 + 0.5; x.save(); x.translate(c[0], c[1]); x.rotate((R(1) - 0.5) * 0.08);
+      x.fillStyle = 'rgba(40,30,18,0.16)'; x.fillRect(-w / 2 + 4, -h / 2 + 6, w, h); x.fillStyle = '#f7f2e2'; x.fillRect(-w / 2, -h / 2, w, h); x.strokeStyle = 'rgba(90,80,60,0.3)'; x.lineWidth = 2; x.strokeRect(-w / 2, -h / 2, w, h);
+      x.save(); x.translate(0, -h / 2 + 1); x.rotate((R(2) - 0.5) * 0.2); x.fillStyle = 'rgba(222,206,150,0.78)'; x.fillRect(-34, -12, 68, 24); x.restore();
+      if (!(r === run.round && st.mode === 'done')) x.drawImage(rec.c, -w / 2 + 8, -h / 2 + 14, 144, 101);
+      marker(x, 30); x.textAlign = 'left'; x.fillStyle = PENCIL; x.fillText(String(r), -w / 2 + 8, -h / 2 + 34);
+      if (rec.nm > 0) { try { AA.rxMarks.yieldMark(x, Math.min(3, rec.nm - 1), w / 2 - 22, h / 2 - 22, 13, { pencil: 'rgba(90,86,78,0.4)', plw: 1.5, ink: GREEN, lw: 4, t: 1 }); } catch (e) { /* no marks */ } }
       x.restore(); } }
   function wob(x, a, b, lw, col, dash) {
     const A = px(a), B = px(b), n = 14; x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.setLineDash(dash || []); x.beginPath();
@@ -2328,8 +2339,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     paper.x.drawImage(paper.c, 290, 0, 120, IH, 0, 0, 120, IH); paper.t.needsUpdate = true; c.drawImage(paper.c, 290, 0, EW, IH, 0, 0, EW, IH);
     const g0 = c.createLinearGradient(0, 0, 90, 0); g0.addColorStop(0, 'rgba(120,110,100,0.2)'); g0.addColorStop(1, 'rgba(120,110,100,0)'); c.fillStyle = g0; c.fillRect(0, 0, 90, IH);
     if (!SHP) [0.22, 0.42, 0.62].forEach(f => { const hx = holeXE() + EW, hy = IH * f; c.fillStyle = 'rgba(0,0,0,0.14)'; c.beginPath(); c.arc(hx + 2, hy + 3, 31, 0, 6.3); c.fill(); c.fillStyle = PAPERS[PAPERN].bg; c.beginPath(); c.arc(hx, hy, 28, 0, 6.3); c.fill(); c.strokeStyle = 'rgba(0,0,0,0.22)'; c.lineWidth = 3.5; c.beginPath(); c.arc(hx, hy, 28, 0.6, 3.6); c.stroke(); });
-    ex.t.needsUpdate = true; const exm = add(new T.PlaneGeometry(PGE.ext, SH).rotateX(-Math.PI / 2), std({ map: ex.t, roughness: 0.95 }), -SW / 2 - PGE.ext / 2, 0, 0); exm.castShadow = false; exm.visible = SHAPE !== 'b'; if (SHP) { exm.scale.z = (SHP.z1 + 22) / SH; exm.position.z = (SHP.z1 - 22) / 2; }
-    const m = add(new T.PlaneGeometry(PGE.inkW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: mk.t, transparent: true, depthWrite: false }), -SW / 2 - PGE.ext + PGE.inkW / 2, 0.024, 0); m.castShadow = false; m.receiveShadow = false; m.visible = SHAPE !== 'b';
+    ex.t.needsUpdate = true; const exm = add(new T.PlaneGeometry(PGE.ext, SH).rotateX(-Math.PI / 2), std({ map: ex.t, roughness: 0.95 }), -SW / 2 - PGE.ext / 2, 0, 0); exm.castShadow = false; exm.visible = SHAPE !== 'b'; clipL(exm); if (SHP) { exm.scale.z = (SHP.z1 + 22) / SH; exm.position.z = (SHP.z1 - 22) / 2; }
+    const m = add(new T.PlaneGeometry(PGE.inkW, SH).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: mk.t, transparent: true, depthWrite: false }), -SW / 2 - PGE.ext + PGE.inkW / 2, 0.024, 0); m.castShadow = false; m.receiveShadow = false; m.visible = SHAPE !== 'b'; clipL(m);
     return { cv: mk.c, x: mk.x, t: mk.t, ox: EW, w: MW }; }
   // called every frame: follows what happens, keeps the notes in step, dims the margin while a chain runs, and redraws the margin's ink only when it has changed
   function marginBusyE(now0) { if (!PGE.on) return false; if (!mE.mesh) mE.mesh = marginMeshE(); tagsE();
@@ -2626,7 +2637,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     }
     // the reaction arrow after the circles fires the page
     if (P.RULE.queue && g && !g.over && (play || st.firing) && !g.chain) { const f = FIREP(), on = lineUp || !!st.homWait, hov = st.mark === 'fire' && on; arrow(x, { x: f.x - 3.6, z: f.z }, { x: f.x + 3.2, z: f.z }, hov ? 19 : 15, on ? INK : FAINT); /* no word under the arrow: the page is wordless */ }
-    if (SHAPE === 'a' && st.mode !== 'done' && run) recMock(x);
+    if (SHAPE === 'a' && run) recMock(x);
     // how much has been made, and the number to beat
     const q = px(MADE), bq = px(BEAT), beaten = st.shown >= st.quota, done = st.mode === 'done';
     if (!fe()) { const txt = fmt(st.shown), size = fit(x, txt, 112 * (1 + 0.3 * st.madeBump * Math.cos((1 - st.madeBump) * 5)), madeMax(), marker), mw = x.measureText(txt).width; st.madeW = mw; x.textAlign = 'left'; x.fillStyle = beaten || (done && st.pass) ? GREEN : done ? REDINK : INK; x.fillText(txt, q[0], q[1]);
@@ -3131,7 +3142,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     cam.position.set(CAM.x + (st.fx - CAM.x) * zk + hx, CAM.y + (16 - CAM.y) * zk, CAM.z + (st.fz + 12 - CAM.z) * zk + hz);
     { const want = BENCHV && st.mode === 'pick' && shopB && SHOPV !== 'b' ? 1 : 0; st.shopK = (st.shopK || 0) + (want - (st.shopK || 0)) * Math.min(1, dt * 3.2); if (Math.abs(want - st.shopK) < 0.002) st.shopK = want; else dirty = true; }
     { const want = BENCHV && title.on && (!title.out || now - title.out < 900) ? 1 : 0; st.titleK = st.titleK == null ? want : st.titleK + (want - st.titleK) * Math.min(1, dt * 2.6); if (Math.abs(want - st.titleK) < 0.002) st.titleK = want; else dirty = true; }
-    const tk9 = st.titleK * st.titleK * (3 - 2 * st.titleK), sk = st.shopK * st.shopK * (3 - 2 * st.shopK), SHX = 26 * sk - 30 * tk9, SHB = 0.1 * sk + 0.5 * tk9; cam.position.x += SHX + (CAM.x - LOOKAT.x) * SHB; cam.position.y += (CAM.y - LOOKAT.y) * SHB; cam.position.z += (CAM.z - LOOKAT.z) * SHB;
+    const tk9 = st.titleK * st.titleK * (3 - 2 * st.titleK), sk = st.shopK * st.shopK * (3 - 2 * st.shopK), SHX = 26 * sk - (SHAPE === 'a' ? -9 : 30) * tk9, SHB = 0.1 * sk + 0.5 * tk9; cam.position.x += SHX + (CAM.x - LOOKAT.x) * SHB; cam.position.y += (CAM.y - LOOKAT.y) * SHB; cam.position.z += (CAM.z - LOOKAT.z) * SHB;
     cam.lookAt(LOOKAT.x + (st.fx - LOOKAT.x) * zk + SHX, 0.8 * zk, LOOKAT.z + (st.fz - LOOKAT.z) * zk);
     // the hotter the run, the warmer the page
     const playing = g && (st.mode === 'play' || st.mode === 'move'), heat = playing ? Math.min(1, Math.log2(Math.max(1, st.mult)) / 6) : 0;
@@ -3149,7 +3160,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     { const mo = morph && morph.m === center ? morph : null;
       if (mo !== SL.mo && !(mo && mo.cont)) { const snap = center ? snapW(center) : null; if (SL.open && snap) slClose(snap, now); if (mo && snap) SL.open = { before: snap, made: mo.made || new Set(), t: now, slow: !!mo.slow }; SL.idle = 0; }
       SL.mo = mo; if (!mo && center && (SL.open || SL.turnB) && ++SL.idle >= 2) { const snap = snapW(center); if (SL.open) slClose(snap, now); else { SL.open = { before: SL.turnB, made: new Set(), t: now, turn: true }; slClose(snap, now); } SL.turnB = null; } }
-    if (BENCHV && st.mode === 'done' && st.pass && !st.pinned && now - (st.doneT || now) > RES_MS) { st.pinned = true; st.pinT = now; st.pin0 = null; sfxN('pageTurn'); }
+    if (BENCHV && st.mode === 'done' && st.pass && !st.pinned && now - (st.doneT || now) > RES_MS) { if (SHAPE === 'a') { recSnap(); const q = recSlot(run.round); PINH.x = q.x; PINH.z = q.z + 0.2; PINH.w = 4.3; PINH.d = 2.9; PINH.smax = 0.6; } st.pinned = true; st.pinT = now; st.pin0 = null; sfxN('pageTurn'); }
     if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt, now); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) { st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); keepIn(center, homeNow()); } { center.group.scale.setScalar(st.sc); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0;  }
     
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
