@@ -1117,6 +1117,7 @@ function rise5(t, d, w) {
 // swell: a warm chord and an organ sliding up into D, steam, toms and rattling glass climbing with it, the soundtrack rising with
 // them. The resolve: a bright hit on D and the soundtrack let go. Then the pay-out as the yield counts up: glass ticks that climb,
 // a coin on every fourth, closing up, a last ring. A long warm tail. o: { count: ms the pay-out lasts (2400) }
+let RSV5 = 1;                                        // the level of OVERREACT's resolve (build c lowers it so the lift after it is the top)
 function over5(t0, o) {
   const w = madW(), t = t0 + 0.09, th = third4(), bp = SB.breath.gain, dk = SB.duck.gain, sw = t + 0.55, L = 1.35, rs = sw + L + 0.04, cn = clamp(o && o.count ? o.count / 1000 : 2.4, 0.8, 8), D = x => Object.assign({ dir: true }, x), DL = x => Object.assign({ dir: 'lo' }, x);
   trembleCut(t0);
@@ -1140,9 +1141,10 @@ function over5(t0, o) {
   roll4('fdrum', NO, sw + L * 0.5, sw + L, 0.03, 0.4, 0.045, { rev: 0.1, dur: 0.1, r: 0.08 });
   if (w > 0.3) for (let j = 0; j < Math.round(5 * w); j++) Q('bubble', NO, sw + L * (0.2 + 0.7 * rnd()), 0.35, { det: -700, lp: 1500, pan: rnd() * 1.6 - 0.8, rev: 0.2 });
   // the resolve
-  Q('kick', NO, rs, 1.0, { strict: true, rev: 0.1 }); Q('tom', 38, rs, 0.5, { strict: true }); Q('ebass', 38, rs, 0.9, { strict: true, dur: 1.2, r: 0.4 }); Q('ebass', 26, rs, 0.6, { strict: true, dur: 1.0, r: 0.4 }); Q('fdrum', NO, rs, 0.5, { strict: true, rev: 0.25 }); Q('cym', NO, rs, 1.0, { pan: -0.3, rev: 0.4 });
+  G4 = RSV5; Q('kick', NO, rs, 1.0, { strict: true, rev: 0.1 }); Q('tom', 38, rs, 0.5, { strict: true }); Q('ebass', 38, rs, 0.9, { strict: true, dur: 1.2, r: 0.4 }); Q('ebass', 26, rs, 0.6, { strict: true, dur: 1.0, r: 0.4 }); Q('fdrum', NO, rs, 0.5, { strict: true, rev: 0.25 }); Q('cym', NO, rs, 1.0, { pan: -0.3, rev: 0.4 });
   [50, 57, 62].concat(th ? [62 + th] : [64]).forEach((q, i) => Q('ep', q, rs, 0.5, { strict: true, pan: (i - 1.5) * 0.3, rev: 0.3 })); [62, 69, 74, 76, 81].concat(th ? [74 + th] : []).forEach((q, i) => Q('vibes', q, rs, 0.55, { strict: true, pan: (i - 2) * 0.35, rev: 0.45 }));
   [86, 93].forEach((q, i) => Q('glass', q, rs, 0.6, { strict: true, pan: i ? 0.5 : -0.5, rev: 0.45 })); [62, 69].forEach((q, i) => Q('bowl', q, rs, 0.4, { strict: true, pan: i ? -0.5 : 0.5, rev: 0.5 }));
+  G4 = 1;
   // the pay-out: ticks of glass climbing the safe notes and closing up, a coin on every eighth, a hand drum pushing 3 + 3 + 2, a last ring
   { const NT = Math.round(cn * 10 * (1 + 0.4 * w)); let te = rs;
     for (let i = 0; i < NT; i++) { const x = i / Math.max(1, NT - 1), tt = rs + 0.16 + cn * (0.45 * x + 0.55 * (1 - Math.pow(1 - x, 1.6))), g = 0.2 + 0.14 * x; te = tt;
@@ -1314,7 +1316,9 @@ function warm4(sync) {
 // Every drum is made here by code: kettledrums, a bass drum, big barrel drums and their rim, a field snare, a low boom, a
 // cymbal played backwards. Notes: the chain chord's root on the kettledrums; everything else D, E, G, A.
 // ====================================================================================================================
-let BLD = '';
+const BKEY = 'overreact.sfx.build';
+let BLD = 'c';                                       // the owner's pick (12 November): cinematic. Saved between sessions; '' is style 4's own chain
+const C5HIT = 0.34, C5LAST = 0.88, C5RISE = 8, C5ARR = 0.33, C5ARISE = 1.5, C5LARR = 0.7;   // c: the hit at the top of the build, the last hit, decibels from the first hit to the top, the arrow, the last arrow
 const H5 = LAB.H, BREATH5 = 0.32, B5HIT = 0.52, B5LAST = 0.72, B5RISE = 6.5;   // B5RISE: decibels from the first hit of a cold 12-step chain to its last ordinary hit
 Object.assign(LAB.INST, {
   taiko: { rr: 2, lo: 26, hi: 41, gen: m => { const f = mf(m), x = H5.modal([[f, 1, 0.95], [f * 1.59, 0.55, 0.5], [f * 2.14, 0.4, 0.34], [f * 2.65, 0.25, 0.24], [f * 3.16, 0.16, 0.18], [f * 3.6, 0.1, 0.14]], 1.3); H5.chirp(x, 0, f * 2.2, f, 0.09, 0.9); H5.burst(x, 0, 0.035, 60, 500, 1.5, 501 + m); H5.burst(x, 0, 0.006, 1200, 5200, 0.8, 502 + m); return H5.norm(H5.fade(x, 0.2), 0.9); } },
@@ -1376,22 +1380,45 @@ function hitB(t, n, u, last, tNA, tNH) {
     if (P >= 6) R5('tom', k % 2 ? 50 : 45, tk + s / 2 + h(), 0.3, { pan: k % 2 ? 0.3 : -0.3, rev: 0.25 });
     if (P >= 8) R5('hat', NO, tk + s / 2, 0.25, { pan: -0.5 }); }
 }
-// ---- c: cinematic ----
+// ---- c: cinematic (the owner's pick, 12 November; rebuilt by builder 6) ----
+// The hit: a boom with a body (a sub under 60 Hz, drum modes from 70 to 400 Hz, a thud and a crack a phone can play) in a big
+// hall, a snare in the same hall, a cymbal and a gong that come in by degrees. The arrow: a heartbeat, a snare roll, and the
+// riser: one tone that climbs D, E, G, A step by step in stacked octaves and never starts again, low brass swelling into the
+// hit, a cymbal roll, and the cymbal played backwards from the hit before. Every layer's level is a smooth curve of u (the
+// place in the build), so each step is a little bigger and a little brighter than the last. Deeper rounds (w): the heart
+// races and skips, the tone wavers and a wrong note leans into it, the boom sags and echoes, glass falls after the hit.
+Object.assign(LAB.INST, {
+  boomc: { fix: 30, gen: () => { const n = Math.floor(3.6 * 44100), x = new Float32Array(n), f = 36.7; let ph = 0; for (let i = 0; i < n; i++) { const t = i / 44100; ph += 2 * Math.PI * (f + 85 * Math.exp(-t / 0.05)) / 44100; x[i] = 0.55 * Math.tanh(2.4 * Math.sin(ph) * (0.3 + 0.7 * Math.exp(-t / 0.14))) * Math.exp(-t / 0.85) * Math.min(1, i / 40); }
+      const md = H5.modal([[f * 2, 0.8, 1.3], [f * 3.18, 0.6, 1.0], [f * 4.28, 0.5, 0.75], [f * 5.3, 0.42, 0.6], [f * 6.3, 0.34, 0.5], [f * 8.5, 0.3, 0.4], [f * 11.2, 0.24, 0.32], [f * 14.6, 0.18, 0.26], [f * 19, 0.12, 0.2]], 3.4); for (let i = 0; i < md.length; i++) x[i] += md[i] * 0.6;
+      H5.burst(x, 0, 0.08, 30, 220, 1.0, 541); H5.burst(x, 0, 0.07, 260, 1300, 4.5, 542); H5.burst(x, 0, 0.014, 1500, 7000, 1.6, 543); H5.burst(x, 0.012, 0.5, 60, 600, 0.6, 544); H5.burst(x, 0.02, 0.4, 400, 2800, 0.7, 545); return H5.norm(H5.fade(x, 0.5), 0.9); } }
+});
 const TONE5 = [45, 50, 52, 55, 57, 62, 64, 67, 69, 74, 76, 79, 81, 86];
 function arrC(t, n, d, u, last, gap) {
-  const end = last ? Math.max(0.1, d - BREATH5) : d, from = TONE5[Math.min(n - 1, 12)], to = TONE5[Math.min(n, 13)], len = last ? end : gap + 0.06, g = 0.07 + 0.2 * u;
-  const X = x => Object.assign({ dur: len, a: 0.07, r: 0.14, gl: [(from - to) * 100, 0, Math.min(d, end) * 0.9, 0], wide: 0.4, rev: 0.25, cut: last }, x);
-  R5(to < 62 ? 'horn' : 'pad', to, t, g, X({ lp: 700 + 5000 * u })); R5('drone', Math.min(60, to - 12), t, g * 0.8, X({})); if (u > 0.45) R5('pad', to + 12, t, g * 0.5, X({ lp: 1500 + 6000 * u, pan: 0.3 }));
-  const hb = (tt, gg) => { R5('kick', NO, tt, gg, { det: -500, lp: 500 }); R5('kick', NO, tt + 0.15, gg * 0.6, { det: -700, lp: 450 }); };
-  for (let tt = t; tt < t + end - 0.2; tt += u > 0.55 ? 0.3 : 0.42) hb(tt, 0.45 + 0.5 * u);
-  if (n >= 3) roll5('snr', NO, t + (n < 5 ? end * 0.4 : 0), t + end, 0.03, 0.2 + 0.45 * u, 15, 21, { rev: 0.2, pan: 0.15 });
-  if (last) { rcym5(t, t + end, 1.0); whoosh5(t, end, 0.9, 9000); }
+  const w = madW(), end = last ? Math.max(0.1, d - BREATH5) : d, from = TONE5[Math.min(n - 1, 12)], to = TONE5[Math.min(n, 13)], len = last ? end : gap + 0.06, g = 0.2 + 0.2 * u, rt = pc5(chordIx(n, false), 33);
+  // the one tone, in octaves: it slides up from the last step's note while the arrow is drawn and holds until the next arrow
+  const X = x => Object.assign({ dur: len, a: 0.07, r: 0.14, gl: [(from - to) * 100, 0, Math.min(d, end) * 0.9, 0], wide: 0.4, rev: 0.3, cut: last, g1: last ? 1.6 : 1, vib: w > 0.2 ? 30 * w : 0 }, x);
+  R5(to < 67 ? 'horn' : 'pad', to, t, g, X({ lp: 1600 + 5000 * u })); R5('pad', to + 12, t, g * 0.75, X({ lp: 2200 + 6000 * u, pan: 0.3 })); R5('pad', to + 24 > 96 ? to + 12 : to + 24, t, g * (0.3 + 0.3 * u), X({ lp: 2500 + 7000 * u, pan: -0.3 })); if (to - 12 >= 33) R5('horn', to - 12, t, g * 0.5, X({ lp: 700 + 2500 * u })); R5('drone', clamp(to - 12, 33, 50), t, g * 0.3, X({}));
+  if (w > 0.4) { MST.wrong++; R5('pad', to + 6, t, g * 0.5 * w, X({ gl: [-100 - 200 * w, 100, Math.min(d, end) * 0.95, 0], lp: 2500, pan: -0.5 })); }   // deeper rounds: a wrong note leans up into the fifth
+  // low brass swelling into the hit on the chain chord's root and fifth, and a cymbal roll opening under it
+  const S = x => Object.assign({ dur: end, a: end * 0.96, ax: true, cut: true, lp: 500, lp1: 1800 + 5000 * u, lpt: end, wide: 0.35, rev: 0.35 }, x);
+  R5('horn', rt + 12, t, 0.16 + 0.3 * u, S({})); R5('horn', rt + 19, t, 0.1 + 0.26 * u, S({ pan: 0.3 })); R5('horn', rt + 24, t, 0.05 + 0.26 * u, S({ pan: -0.3 })); R5('drone', rt + 12, t, 0.08 + 0.15 * u, S({ lp: 0 }));
+  roll5('cym', NO, t + end * 0.25, t + end, 0.01, 0.03 + 0.2 * u, 16, 22, { hp: 2500 - 1000 * u, dur: 0.25, r: 0.15, rev: 0.25 });
+  // the heartbeat: a low thump with a knock a phone can play; it quickens with the build and, deeper in the run, races and skips
+  const hb = (tt, gg) => { R5('kick', NO, tt, gg * 0.6, { det: -200, lp: 1600 }); R5('tom', 57, tt, gg * 0.7, { lp: 1800, dur: 0.12, r: 0.08 }); R5('kick', NO, tt + 0.14, gg * 0.35, { det: -400, lp: 1200 }); R5('tom', 55, tt + 0.14, gg * 0.4, { lp: 1500, dur: 0.1, r: 0.08 }); };
+  { const iv = (0.44 - 0.16 * u) / (1 + 0.45 * w); for (let tt = t; tt < t + end - 0.2; tt += iv * (w > 0.3 && rnd() < 0.3 * w ? (rnd() < 0.5 ? 0.5 : 1.5) : 1)) hb(tt, 0.4 + 0.35 * u); }
+  if (n >= 3) roll5('snr', NO, t + end * Math.max(0, 0.5 - 0.6 * u), t + end, 0.03, 0.12 + 0.36 * u, 15 + 3 * w, 21 + 4 * w, { rev: 0.25, pan: 0.15 });
+  if (last) { rcym5(t, t + end, 0.9); rcym5(t, t + end, 0.5, { det: -700, pan: -0.4 }); whoosh5(t, end, 0.7, 9000); roll5('bdrum', NO, t, t + end, 0.1, 0.6, 9, 14, { rev: 0.3, dur: 0.4, r: 0.2 }); roll5('timp', pc5(0, 36) + 7, t, t + end, 0.1, 0.5, 11, 17, { rev: 0.3, dur: 0.4, r: 0.2 }); }
 }
 function hitC(t, n, u, last, tNA, tNH) {
-  const big = last ? 1.25 : 1;
-  R5('boom', NO, t, (0.38 + 0.3 * u) * big, { rev: 0.25 }); R5('crack', NO, t, 0.4 + 0.6 * u, { pan: 0.4, rev: 0.3 }); R5('kick', NO, t, 0.6, {}); R5('taiko', 28, t, (0.3 + 0.5 * u) * big, { rev: 0.4, lp: 400 + 3000 * u });
-  R5('snr', NO, t, 0.45 + 0.6 * u, { rev: 0.5, pan: -0.2 }); if (u > 0.25) R5('cym', NO, t, (0.2 + 0.8 * (u - 0.25)) * big, { pan: 0.3, rev: 0.4, hp: 1200 }); if (u > 0.8 || last) R5('tam', NO, t, last ? 0.9 : 0.4, { rev: 0.4 });
-  if (!last && tNH > t + 0.3) rcym5(t + 0.06, tNH, 0.3 + 0.6 * u, { pan: n % 2 ? 0.35 : -0.35, hp: 900, fin: 0.08 });
+  const w = madW(), X = last ? x => Object.assign({ dir: true, dur: 0.12, r: 0.12 }, x) : x => x, XL = last ? x => Object.assign({ dir: 'lo', dur: 0.12, r: 0.12 }, x) : x => x, k = last ? 0.78 : 1, br = dB(-11 * (1 - u));   // br: the bright layers, 11 dB down at the first step, all on one curve
+  R5('boomc', NO, t, 0.8 * k, XL({ rev: 0.55, gl: w > 0.25 ? [0, -500 * w, 0.6, 0.05] : undefined })); R5('taiko', 28, t, 0.4 * k, XL({ rev: 0.5 })); R5('kick', NO, t, 0.4 * k, XL({})); R5('tom', 45, t, 0.4, XL({ rev: 0.4, pan: -0.2 })); R5('tom', 57, t, 0.5, XL({ rev: 0.4, pan: 0.2 })); R5('snr', NO, t, 0.5, XL({ rev: 0.5, lp: 1800, pan: 0.1 }));
+  R5('snr', NO, t, (last ? 1.6 : 0.9) * br, X({ rev: 0.6, pan: -0.2, hp: 200 })); R5('crack', NO, t, (last ? 1.2 : 0.7) * br, X({ pan: 0.4, rev: 0.4 }));
+  R5('cym', NO, t, (last ? 2.2 : 0.8) * br, X({ pan: 0.3, rev: 0.45, hp: 1200 })); R5('tam', NO, t, last ? 1.1 : 0.4 * br * u, X({ rev: 0.45 })); if (last) { R5('cym', NO, t, 1.6, { pan: -0.3, rev: 0.45, hp: 1500, take: 1 }); R5('boomc', NO, t, 1.0, { rev: 0.6 }); R5('tam', NO, t, 0.9, { rev: 0.45 }); R5('snr', NO, t + 0.07, 0.8, { rev: 0.6 }); R5('shatter', NO, t + 0.06, 0.9, { dur: 0.5, r: 0.4, rev: 0.4, hp: 1500 }); }   /* the tail of the last hit, on the bus as it opens */
+  R5('steam', NO, t, (last ? 1.0 : 0.35) * br, X({ dur: 0.1, a: 0.004, r: 0.3, wide: 0.5, hp: 3500 }));
+  if (last) { R5('bdrum', NO, t, 0.5, XL({ rev: 0.4 })); R5('timp', pc5(0, 36), t, 0.4, XL({ rev: 0.4 })); R5('shatter', NO, t, 1.7, X({ rev: 0.4, hp: 1500 })); [38, 50, 57, 62, 69, 74].forEach((q, i) => R5('horn', q, t, 0.8, { dur: 0.9, a: 0.02, r: 0.5, pan: (i - 2.5) * 0.25, wide: 0.3, rev: 0.5, lp: 6000, lp1: 1800, lpt: 1.2 })); }
+  // deeper rounds: the boom echoes off the beat, a flam on the snare, glass falls
+  if (w > 0.3) { MST.extra++; R5('boomc', NO, t + 0.17, 0.3 * w, { lp: 700, rev: 0.5, det: -300 }); R5('snr', NO, t + 0.035, 0.3 * w * (0.5 + u), { rev: 0.5, pan: 0.3 }); for (let i = 0; i < Math.round(5 * w); i++) R5('clink', safeUp(86 + Math.floor(rnd() * 12)), t + 0.08 + rnd() * 0.3, 0.12 * w, { pan: rnd() * 1.6 - 0.8, rev: 0.4 }); }
+  if (!last && tNH > t + 0.3) { rcym5(t + 0.06, tNH, 0.22 + 0.5 * u, { pan: n % 2 ? 0.35 : -0.35, hp: 900, fin: 0.08 }); if (w > 0.5) rcym5(t + 0.06, tNH, 0.3 * w, { det: -700, pan: n % 2 ? -0.5 : 0.5, hp: 500, fin: 0.08 }); }
 }
 // ---- the arrow, the hit, OVERREACT ----
 function st5() { return SB.b5 || (SB.b5 = { la: -99, gap: 1.5, d: 0.4, n: 0, of: 0 }); }
@@ -1401,31 +1428,38 @@ function arrow5(n, ms, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), d = clamp((+ms || 400) / 1000, 0.08, 3), last = !!o.last;
   if (n <= 1) b.of = 0; if (o.of) b.of = o.of | 0;
   const seen = t - b.la; b.gap = o.gap ? clamp(o.gap / 1000, 0.2, 4) : n > 1 && seen > 0.2 && seen < 3 ? Math.max(0.5, seen * 0.91) : 1.5; b.la = t; b.d = d; b.n = n;
-  const u = u5(n, b.of); G4 = B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(1 + 9 * u); SB.duck.gain.setTargetAtTime(0.6, t, d / 3);
+  const u = u5(n, b.of), c = BLD === 'c'; G4 = c ? C5ARR * dB(-C5ARISE * (1 - u)) * (last ? C5LARR : 1) : B5HIT * dB(-B5RISE * (1 - u)) * (last ? 0.9 : 0.8); OUT4 = shelf5(c ? 1 + 8 * u : 1 + 9 * u); SB.duck.gain.setTargetAtTime(c ? 0.33 : 0.6, t, c ? 0.05 : d / 3); if (c) SB.duck.gain.setTargetAtTime(1, t + d + 0.35, 0.15);   /* let go again even if no hit follows */
   try { (BLD === 'b' ? arrB : BLD === 'c' ? arrC : arrA)(t, n, d, u, last, b.gap); if (last) { const e = t + Math.max(0.1, d - BREATH5); trembleCut(e); breathe(e, t + d); } } finally { G4 = 1; OUT4 = null; }
 }
 function hit5(kind, n, o) {
   const t = begin(); if (t == null) return; o = o || {}; const b = st5(), last = !!o.last, kd = kindOf(kind), had = b.n === n && t - b.la < 3, tNA = had ? b.la + b.gap : t + Math.max(0.5, b.gap * 0.91) - b.d, tNH = tNA + b.d;
   if (o.of) b.of = o.of | 0; const u = u5(n, b.of);
-  duck(t, 0.3, 0.5, 0.06); G4 = last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(2 + 9 * u);
+  const c = BLD === 'c'; if (c) { duck(t, 0.25, 0.5, 0.2); if (last) { const bp = SB.breath.gain; bp.cancelScheduledValues(t); bp.setValueAtTime(0.03, t); bp.setValueAtTime(0.03, t + 0.1); bp.linearRampToValueAtTime(0.45, t + 0.16); bp.linearRampToValueAtTime(0.95, t + 0.22); bp.linearRampToValueAtTime(1, t + 0.5); } } else duck(t, 0.3, 0.5, 0.06); /* c's last hit goes past the bus (as OVERREACT's strike does), so the bus opens behind it */ G4 = c ? (last ? C5LAST : C5HIT * dB(-C5RISE * (1 - u))) : last ? B5LAST : B5HIT * dB(-B5RISE * (1 - u)); OUT4 = shelf5(c ? 1 + 8 * u : 2 + 9 * u);
   try { (BLD === 'b' ? hitB : BLD === 'c' ? hitC : hitA)(t, n, u, last, tNA, tNH);
     // the kind keeps its own voice on top of the drums, climbing D, E, G, A
-    G4 *= 0.6; OUT4 = shelf5((KSH4[kd] || 0) + 2 + 6 * u); (K4[kd] || K4.lactol)(t, mel5(n) + 12, 0.7 * (KLV4[kd] || 1), 0);
+    if (c) { G4 *= 0.38; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 700 * Math.pow(2, 3.4 * u); lp.connect(shelf5((KSH4[kd] || 0) + 2)); OUT4 = lp; }   // the kind's top opens with the build, so the step sets the brightness
+    else { G4 *= 0.6; OUT4 = shelf5((KSH4[kd] || 0) + 2 + 6 * u); } (K4[kd] || K4.lactol)(t, mel5(n) + 12, 0.7 * (KLV4[kd] || 1), 0);
   } finally { G4 = 1; OUT4 = null; }
 }
 // OVERREACT with the drums on it: weight on the strike; through the swell a roll on A, a snare roll, a cymbal backwards and brass
 // opening on A; on the resolve the whole section lands on D, then lifts: A below, then D an octave up; glass runs up and coins down
 function over6(t0, o) {
-  over5(t0, o); G4 = 1; OUT4 = null;
+  RSV5 = BLD === 'c' ? 0.45 : 1; try { over5(t0, o); } finally { RSV5 = 1; } G4 = 1; OUT4 = null;
   const t = t0 + 0.09, sw = t + 0.55, L = 1.35, rs = sw + L + 0.04, th = third4(), DL = x => Object.assign({ dir: 'lo' }, x), D = x => Object.assign({ dir: true }, x), B = BLD === 'b';
   R5('boom', NO, t, 1.3, DL({})); R5('bdrum', NO, t, 1.0, DL({})); R5('timp', 38, t, 0.9, DL({ rev: 0.3 })); R5('tam', NO, t, 0.8, D({ rev: 0.4 })); if (B) R5('taiko', 26, t, 1.0, DL({ rev: 0.3 }));
   roll5(B ? 'taiko' : 'timp', B ? 33 : 45, sw, rs - 0.03, 0.08, 0.9, 11, 18, { rev: 0.35, dur: 0.5, r: 0.2 }); roll5('snr', NO, sw + L * 0.4, rs - 0.03, 0.03, 0.5, 15, 22, { rev: 0.25 }); rcym5(sw, rs, 0.8, { fin: 0.1 });
   [45, 52, 57, 62, 64].forEach((q, i) => R5('horn', q, sw, 0.3, { dur: L, a: L * 0.97, ax: true, cut: true, pan: (i - 2) * 0.3, wide: 0.3, rev: 0.4, lp: 600, lp1: 6000, lpt: L }));
-  R5('timp', 38, rs, 1.1, { rev: 0.4 }); R5('bdrum', NO, rs, 1.0, { rev: 0.3 }); R5('tam', NO, rs, 0.5, { rev: 0.4 }); R5('cym', NO, rs, 0.8, { pan: 0.3, rev: 0.4 }); if (B) { R5('taiko', 26, rs, 1.0, { rev: 0.35 }); R5('taiko', 38, rs, 0.7, { pan: -0.5, rev: 0.35 }); }
-  [38, 45, 50, 57, 62, th ? 62 + th : 64, 69].forEach((q, i) => R5('horn', q, rs, 0.5, { dur: 2.4, a: 0.03, r: 2.6, pan: (i - 3) * 0.25, wide: 0.3, rev: 0.45, lp: 6500, lp1: 2200, lpt: 4 }));
+  const Cc = BLD === 'c', rk = Cc ? 0.45 : 1;   // c: the resolve gives way to the lift
+  R5('timp', 38, rs, 1.1 * rk, { rev: 0.4 }); R5('bdrum', NO, rs, 1.0 * rk, { rev: 0.3 }); R5('tam', NO, rs, 0.5 * rk, { rev: 0.4 }); R5('cym', NO, rs, 0.8 * rk, { pan: 0.3, rev: 0.4 }); if (B) { R5('taiko', 26, rs, 1.0, { rev: 0.35 }); R5('taiko', 38, rs, 0.7, { pan: -0.5, rev: 0.35 }); }
+  [38, 45, 50, 57, 62, th ? 62 + th : 64, 69].forEach((q, i) => R5('horn', q, rs, 0.5 * rk, { dur: 2.4, a: 0.03, r: 2.6, pan: (i - 3) * 0.25, wide: 0.3, rev: 0.45, lp: 6500, lp1: 2200, lpt: 4 }));
   R5('timp', 45, rs + 0.46, 0.5, { rev: 0.4 }); R5('horn', 74, rs + 0.46, 0.7, { dur: 1.6, a: 0.03, r: 2, rev: 0.45, wide: 0.3 });
   R5('timp', 38, rs + 0.92, 0.9, { rev: 0.4 }); R5('bdrum', NO, rs + 0.92, 0.7, { rev: 0.3 }); R5('pad', 81, rs + 0.92, 0.7, { dur: 1.4, a: 0.03, r: 2.4, rev: 0.5, wide: 0.4 }); R5('cym', NO, rs + 0.92, 0.5, { pan: -0.3, rev: 0.4, hp: 2000 });
-  for (let i = 0; i < 12; i++) R5('glass', safeUp(74 + i * 2), rs + 0.02 + i * 0.028, 0.32, { pan: (i / 11 - 0.5) * 1.6, rev: 0.45 });
+  if (Cc) { const tl = rs + 0.92, dk = SB.duck.gain; dk.cancelScheduledValues(rs - 0.02); dk.setValueAtTime(0.5, rs - 0.02); dk.setValueAtTime(0.5, tl - 0.04); dk.linearRampToValueAtTime(1, tl); { const bp = SB.breath.gain; bp.setValueAtTime(0.5, rs - 0.012); bp.setValueAtTime(0.5, tl - 0.4); bp.linearRampToValueAtTime(1, tl - 0.01); }   // the resolve lands under the bus's ceiling (the whole bus half down, the soundtrack half down again) and everything is let go on the lift   // the lift: a cymbal backwards and a snare roll up to it, then a boom, a crash and the brass and pads an octave higher; then the cascade
+    rcym5(rs + 0.12, tl, 0.6, { fin: 0.1 }); roll5('snr', NO, rs + 0.5, tl, 0.05, 0.4, 16, 24, { rev: 0.3 });
+    R5('boomc', NO, tl, 1.0, { rev: 0.5 }); R5('cym', NO, tl, 1.2, { pan: 0.3, rev: 0.4 }); R5('snr', NO, tl, 0.9, { rev: 0.5 }); R5('tam', NO, tl, 0.7, { rev: 0.4 });
+    [38, 50, 57, 62, 69, 74, th ? 74 + th : 76, 81, 86].forEach((q, i) => R5(q < 72 ? 'horn' : 'pad', q, tl, 1.3, { dur: 1.6, a: 0.02, r: 2.2, pan: (i - 4) * 0.2, wide: 0.3, rev: 0.5, lp: 8000, lp1: 2500, lpt: 3 }));
+    for (let i = 0; i < 16; i++) R5(i % 2 ? 'coin' : 'glass', safeUp((i % 2 ? 105 : 96) - i), tl + 0.12 + i * 0.045, 0.3, { pan: (0.5 - i / 15) * 1.5, rev: 0.45 }); }
+  for (let i = 0; i < 12; i++) R5('glass', safeUp(74 + i * 2), rs + 0.02 + i * 0.028, 0.32 * rk, { pan: (i / 11 - 0.5) * 1.6, rev: 0.45 });
   for (let i = 0; i < 8; i++) R5('coin', safeUp(93 + i), rs + 0.94 + i * 0.03, 0.3, { pan: (0.5 - i / 7) * 1.4, rev: 0.4 });
 }
 // what a call does while a build is chosen (true = handled here)
@@ -1435,7 +1469,7 @@ const B5 = {
   windup: a => { arrow5(Math.max(1, a[0] | 0), Math.max(60, +a[1] || 400), { last: !!a[2] }); return true; },
   flag: a => { if ((a[0] | 0) !== 4) return false; const t = begin(); if (t == null) return true; try { over6(t, a[1]); } finally { G4 = 1; OUT4 = null; } return true; }
 };
-try { const q = root.location && root.location.search ? new URLSearchParams(root.location.search).get('build') : null; if (q === 'a' || q === 'b' || q === 'c') BLD = q; } catch (e) { /* no window */ }
+try { const q = root.location && root.location.search ? new URLSearchParams(root.location.search).get('build') : null; if (q !== null && /^([abc]|0|off|)$/.test(q)) BLD = /^[abc]$/.test(q) ? q : ''; else { const sv = root.localStorage.getItem(BKEY); if (sv !== null && /^[abc]?$/.test(sv)) BLD = sv; } } catch (e) { /* default */ }
 
 const DARK = [null, darkArcade(1), darkArcade(2), darkArcade(3)], OLD2 = STYLE[2];
 const cur = () => STY === 2 ? (ARCV ? DARK[ARCV] : OLD2) : STYLE[STY];
@@ -1661,12 +1695,12 @@ const fx = {
 // every call of the moment of play goes to the chosen style first; style 0 (or a style without that call) plays the set above
 ['queue', 'fire', 'ring', 'flag', 'wasted', 'pageTurn', 'lost', 'strike', 'handoff', 'reflex', 'snap', 'boom', 'drone', 'draw', 'tick', 'swish', 'flagSoft', 'clink', 'windup', 'gold', 'title', 'runStart', 'shopOpen', 'buy', 'cantBuy', 'hover', 'click', 'pick', 'redraw', 'roundWon', 'runWon', 'runLost', 'unlock', 'finding', 'creature', 'instrument', 'ambience'].forEach(k => {
   const f0 = fx[k] || function () {};
-  fx[k] = function () { const a = Array.prototype.slice.call(arguments); if (BLD && B5[k]) { try { if (B5[k](a)) return; } catch (e) { if (ERRS.length < 20) ERRS.push('build ' + k + ': ' + (e && e.stack || e)); G4 = 1; OUT4 = null; return; } } if (STY) { try { if (sty(k, a)) return; } catch (e) { if (ERRS.length < 20) ERRS.push(k + ': ' + (e && e.stack || e)); /* a broken voice never breaks play */ } } return f0.apply(fx, a); };
+  fx[k] = function () { const a = Array.prototype.slice.call(arguments); if (BLD && STY === 4 && B5[k]) { try { if (B5[k](a)) return; } catch (e) { if (ERRS.length < 20) ERRS.push('build ' + k + ': ' + (e && e.stack || e)); G4 = 1; OUT4 = null; return; } } if (STY) { try { if (sty(k, a)) return; } catch (e) { if (ERRS.length < 20) ERRS.push(k + ': ' + (e && e.stack || e)); /* a broken voice never breaks play */ } } return f0.apply(fx, a); };
 });
 // the build-up options: build('a' | 'b' | 'c') chooses one, build('') goes back to style 4's own chain, build() reads it (also ?build=a)
-fx.build = function (id) { if (id === undefined) return BLD; BLD = /^[abc]$/.test(String(id)) ? String(id) : ''; return BLD; };
+fx.build = function (id) { if (id === undefined) return BLD; BLD = /^[abc]$/.test(String(id)) ? String(id) : ''; try { root.localStorage.setItem(BKEY, BLD); } catch (e) { /* storage blocked */ } return BLD; };
 // an arrow starts being drawn for step n and its hit comes in ms: the anticipation. o: { last, of, gap } (see arrow5). With no build chosen it is style 4's wind-up.
-fx.arrow = function (n, ms, o) { n = Math.max(1, Math.round(n) || 1); if (BLD) { try { arrow5(n, ms, o); } catch (e) { if (ERRS.length < 20) ERRS.push('arrow: ' + (e && e.stack || e)); G4 = 1; OUT4 = null; } return; } if (o && o.last) fx.windup(n, ms, true); };
+fx.arrow = function (n, ms, o) { n = Math.max(1, Math.round(n) || 1); if (BLD && STY === 4) { try { arrow5(n, ms, o); } catch (e) { if (ERRS.length < 20) ERRS.push('arrow: ' + (e && e.stack || e)); G4 = 1; OUT4 = null; } return; } if (o && o.last) fx.windup(n, ms, true); };
 const ERRS = []; fx._errs = () => ERRS.splice(0);   // test hook: what went wrong inside a styled call since the last look
 AA.sfx = fx;
 if (STY === 4 && root.setTimeout) root.setTimeout(() => { try { warm4(); } catch (e) { /* made on first use instead */ } }, 0);
