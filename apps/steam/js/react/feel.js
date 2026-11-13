@@ -179,13 +179,14 @@ function onReact(o, nm, prev, L, morph) {
   // runoff leaves as the art's runoff objects, kicked out and falling
   try { st.flyers.forEach(f => { if (f.feel) return; f.feel = true; f.kick = { x: (Math.random() - 0.5) * 0.6, z: -1 }; f.dur = 950; dressFlyer(f); }); } catch (e) { /* plain flyer */ }
   try { snapPlan(o, nm, prev); } catch (e) { /* no snap */ }
-  if (!o.casc) { morph.feelEase = true; seeStrike(o, nm, prev); return; }
-  const n = g.casc || 1, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(n, last), d = S.d;
+  // (builder 12, the owner's ruling) each reagent's own reaction and the reflexes it sets off is one run: the pace climbs inside it and starts again, slow, with the next reagent
+  if (!o.casc) { S.rn = 0; S.rIdx = (S.rIdx || 0) + 1; try { if (AA.sfx && AA.sfx.runStart) AA.sfx.runStart(S.rIdx); } catch (e) { /* no such call yet */ } if (morph && morph.ms) morph.ms = Math.max(morph.ms, D().T1 * 0.62 / (S.speed || 1)); F.log.push(['pace', S.rIdx, 0, Math.round(morph && morph.ms || 0), Math.round(now() - S.t0)]); morph.feelEase = true; seeStrike(o, nm, prev); return; }
+  S.rn = (S.rn || 0) + 1; const n = g.casc || 1, pn = S.rn, last = S.plan && n >= S.plan.N && S.plan.N > 0, ph = phases(pn, last), d = S.d; F.log.push(['pace', S.rIdx || 0, pn, Math.round(Tn(pn) / (S.speed || 1)), Math.round(now() - S.t0)]);
   const kindNow = o.kind || o.kindName || o.id, change = !!S.prevKind && S.prevKind !== kindNow && !last; S.prevKind = kindNow;
-  const fm = last ? KIND_FEEL.ring : KIND_FEEL[famOf(kindNow)]; ph.wind *= fm.w; ph.swing *= fm.s; ph.hold = Math.max(16, ph.hold * fm.h); seeFloor(ph, n, last);
+  const fm = last ? KIND_FEEL.ring : KIND_FEEL[famOf(kindNow)]; ph.wind *= fm.w; ph.swing *= fm.s; ph.hold = Math.max(16, ph.hold * fm.h); seeFloor(ph, pn, last);
   const far = o.via === 'fold', spd = S.speed || 1; if (far && !last) { ph.wind = Math.max(ph.wind, 760 / spd); ph.swing = Math.max(ph.swing, 1250 / spd); } else if (far) ph.swing = Math.max(ph.swing, 900 / spd);
   S.sn = (S.sn || 0) + 1; const sn = S.sn, sOf = Math.max(sn, (S.plan && S.plan.S) || 0, last ? sn : sn + 1);
-  S.steps = n; S.cur = { n, sn, sOf, last, ph, t0: now(), kind: kindNow, change, fm }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
+  S.steps = n; S.cur = { n, pn, sn, sOf, last, ph, t0: now(), kind: kindNow, change, fm }; F.log.push(['react', n, Math.round(now() - S.t0), Math.round(ph.wind), Math.round(ph.swing), Math.round(ph.hold)]);
   // the two atoms that join, on the new drawing
   const ids = o.atoms || [], mp = o.map || new Map(), A = mp.get(ids[0]), B = mp.get(ids[3] || ids[ids.length - 1]);
   S.cur.a = A && nm.balls.has(A) ? A : null; S.cur.b = B && nm.balls.has(B) ? B : null;
@@ -209,7 +210,7 @@ function onReact(o, nm, prev, L, morph) {
   // a marker of the hand-off: the molecule takes over
   // the build-up the owner picked (the cinematic one): told when this step's pencil arrow starts, how long until its hit, how many steps the chain has
   // and how long until the next arrow; silent when the sound engine has no build-ups
-  if (AA.sfx && AA.sfx.arrow) snd('arrow', sn, morph.ms, { last: !!last, of: sOf, gap: last ? undefined : Math.round(morph.ms + (d.breath || 150)) }); else snd('windup', n, morph.ms, last);
+  if (AA.sfx && AA.sfx.arrow) snd('arrow', pn, morph.ms, { last: !!last, of: last ? pn : Math.max(pn + 1, 3), run: S.rIdx || 1, turn: sn, turnOf: sOf, gap: last ? undefined : Math.round(morph.ms + (d.breath || 150)) }); else snd('windup', n, morph.ms, last);
   if (n === 1) snd('handoff');
   if (d.count === 'race') S.count.target = P_made();
   // the drone: one held voice per step, cut before the last step lands
@@ -487,9 +488,9 @@ function camTo(target, z, ms) { const S = F.seq; if (!S) return; const c = S.cam
 function unlock(o, L) {
   const S = F.seq; if (!S) return L.unlock; const d = S.d, sp = S.speed, plan = S.plan; S.ev++;
   const next = plan.ev[S.ev];
-  if (o.casc) { const c = S.cur; if (!c) return L.unlock; F.log.push(['unlock', c.n, Math.round(Math.max(c.ph.wind + c.ph.swing + c.ph.hold, Tn(c.n) / sp)), Math.round(L.unlock)]); if (c.last) return c.ph.wind + c.ph.swing + c.ph.hold + 600; return Math.max(c.ph.wind + c.ph.swing + c.ph.hold + 40, Tn(c.n) / sp) + (d.gap || 0) / sp + (c.change ? (d.kindBeat || 140) / sp : 0); }
+  if (o.casc) { const c = S.cur; if (!c) return L.unlock; F.log.push(['unlock', c.n, Math.round(Math.max(c.ph.wind + c.ph.swing + c.ph.hold, Tn(c.pn || c.n) / sp)), Math.round(L.unlock)]); if (c.last) return c.ph.wind + c.ph.swing + c.ph.hold + 600; return Math.max(c.ph.wind + c.ph.swing + c.ph.hold + 40, Tn(c.pn || c.n) / sp) + (d.gap || 0) / sp + (c.change ? (d.kindBeat || 140) / sp : 0); }
   // after a reagent: the next throw, or the first reflex after a breath
-  if (next && next.k === 's') return Math.max(L.unlock, d.firstWait / sp);
+  if (next && next.k === 's') return Math.max(L.unlock, d.firstWait / sp, 0.62 * d.T1 / sp); /* (builder 12) the reagent's own strike is a slow beat of its own before its first reflex */
   return Math.max(120, (d.throwGap - d.throwMs) / sp + 60);
 }
 // the page has nothing left to do: hold until everything has landed and been written, then turn
