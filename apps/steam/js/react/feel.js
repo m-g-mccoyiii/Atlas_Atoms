@@ -149,6 +149,7 @@ function throwThen(h, react) {
   if (!tgt) { const b = molWorldBox(c); tgt = new T.Vector3(b.cx, 0.6, b.cz); }
   const dur = d.throwMs * (i === 2 && mode === 1 ? 1.15 : 1) / sp, col = api.colOf(h.id);
   const tok = { t0: now(), dur, from, tgt, col, i, id: h.id, arc: d.arc };
+  try { tok.poured = !!(api.pour && api.pour(h.id, tgt, dur)); } catch (e) { tok.poured = false; }
   S.tokens.push(tok); seeAim(h, c, dur, col);
   if (d.throwZ) camTo(tgt, d.throwZ, Math.max(120, dur * 0.9));
   later(() => {
@@ -536,10 +537,13 @@ function drawOver(t) {
   if (!F.ov && !fx.length && heat < 0.01) { if (F.ovDirty) { wipe(); F.ovDirty = false; } return; }
   wipe(); F.ovDirty = true;
   if (heat >= 0.01) heatDraw(x, t, k, heat);
-  fx.forEach(q => { const u = clamp((t - q.t) / 360, 0, 1), m = Math.min(12, q.n), R = (95 + 26 * m) * k * (q.last ? 1.6 : 1) * (0.45 + 0.9 * E.outCubic(u)), a = (1 - u) * Math.min(1, 0.8 + 0.03 * m);
+  // the flash of a hit stays inside the molecule's own rectangle and never whitens the rest of the page
+  x.save(); if (fx.length) { const ip = AA.rxScheme && AA.rxScheme.inPlay && AA.rxScheme.inPlay(); if (ip) { x.beginPath(); x.rect(ip.play[0] * k, ip.play[1] * k, (ip.play[2] - ip.play[0]) * k, (ip.play[3] - ip.play[1]) * k); x.clip(); } }
+  fx.forEach(q => { const u = clamp((t - q.t) / 360, 0, 1), m = Math.min(12, q.n), R = (95 + 26 * m) * k * (q.last ? 1.6 : 1) * (0.45 + 0.9 * E.outCubic(u)), a = (1 - u) * Math.min(1, 0.8 + 0.03 * m) * 0.5;
     const g = x.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, 'rgba(255,255,255,' + a.toFixed(3) + ')'); g.addColorStop(0.45, 'rgba(255,244,214,' + (a * 0.6).toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = g; x.beginPath(); x.arc(q.x, q.y, R, 0, 6.3); x.fill();
     const nl = 10 + m, r1 = (40 + 12 * m) * k * (0.6 + 1.6 * E.outCubic(u)), len = (34 + 9 * m) * k * (1 - u); x.save(); x.strokeStyle = 'rgba(34,37,44,' + (0.85 * (1 - u)).toFixed(3) + ')'; x.lineWidth = (3.4 + 0.3 * m) * k; x.lineCap = 'round';
     for (let i = 0; i < nl; i++) { const an = i / nl * 6.283 + q.t * 0.01, c = Math.cos(an), s = Math.sin(an), jj = 1 + 0.25 * Math.sin(i * 7.3 + q.t); x.beginPath(); x.moveTo(q.x + c * r1 * jj, q.y + s * r1 * jj); x.lineTo(q.x + c * (r1 * jj + len), q.y + s * (r1 * jj + len)); x.stroke(); } x.restore(); });
+  x.restore();
   if (F.ov) overDraw(x, t, W, H, k, wipe);
 }
 
@@ -779,7 +783,7 @@ function ink(x, t) {
     const mixc = (a, b, k2) => 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * k2)).join(',') + ')';
     api.marker(x, sz); x.textAlign = 'left'; x.fillStyle = nf ? mixc([34, 37, 44], [150, 22, 10], Math.min(1, 0.45 + 0.55 * heat)) : api.INK; x.fillText(txt, bx0, by0); st.madeW = w; }
   // tokens in flight
-  S.tokens.forEach(tk => { const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);
+  S.tokens.forEach(tk => { if (tk.poured) return; const u = clamp((t - tk.t0) / tk.dur, 0, 1), e = E.inQuad(u), B = inkOf(tk.tgt), A = tk.from, lift = tk.arc * ips * 4 * u * (1 - u), cx = A[0] + (B[0] - A[0]) * e, cy = A[1] + (B[1] - A[1]) * e - lift, r = 26 * ips * (1 - 0.25 * u);
     x.save(); x.fillStyle = 'rgb(' + tk.col.join(',') + ')'; x.strokeStyle = api.INK; x.lineWidth = 5; x.beginPath(); x.ellipse(cx, cy, r, r * 0.86, 0, 0, 6.3); x.fill(); x.stroke(); x.restore(); });
   // the step numeral has its own place in the left margin, clear of the molecule and of the yield; it grows with the chain, and each gain drops from it into the yield
   { const NP = api.px({ x: -20.3, z: 9.5 }), GP = api.px({ x: -14.7, z: 8.3 });

@@ -94,25 +94,27 @@ const EDGE = -22.6 + SX, STEP = { x: -21.5 + SX, z: 2.3 }, STEPD = 3.75, PAGES =
 // All in page units. The sheet runs on ext units further to the left than before; line is the red margin line; the margin column is everything
 // to the left of it. play is the one rectangle nothing is ever written in; top, left, home, reag and band are the things inside it.
 // The molecule's home is centred in the play rectangle, not in the frame.
+// the bench view is on unless ?bench=0
+const BENCH0 = (() => { try { return new URLSearchParams(root.location.search).get('bench') !== '0'; } catch (e) { return true; } })();
 const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 function pageE() {
   let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
   const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2 - 2.6, hw = 11.9, bz = 11.5;
   return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
-    home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
+    home: BENCH0 ? { x0: -12.5, x1: 22.5, z0: -12.2, z1: 9.6 } : { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
 }
 // the camera drawn back along its own line of sight and set to the left, so the page's bound edge and its margin are in the frame
 function camE(CAM, LOOKAT) { if (!PGE.on) return; CAM.sub(LOOKAT).multiplyScalar(PGE.k).add(LOOKAT); CAM.x += PGE.cx; LOOKAT.x += PGE.cx; CAM.z += PGE.cz; LOOKAT.z += PGE.cz; }
 // the molecule's home is the middle of the play rectangle; it may be drawn as large on the screen as before the camera drew back
-function homeE(HOME) { if (!PGE.on) return; const h = PGE.home; HOME.x = (h.x0 + h.x1) / 2; HOME.z = (h.z0 + h.z1) / 2; HOME.w = h.x1 - h.x0; HOME.d = h.z1 - h.z0; HOME.smax *= PGE.k; }
+function homeE(HOME) { if (!PGE.on) return; const h = PGE.home; HOME.x = (h.x0 + h.x1) / 2; HOME.z = (h.z0 + h.z1) / 2; HOME.w = h.x1 - h.x0; HOME.d = h.z1 - h.z0; HOME.smax *= PGE.k * (BENCH0 ? 1.42 : 1); }
 // the reagents stand a little further right, to give the molecule's home the room the wider view asks for
 function reagE(ids) { if (!PGE.on) return; ids.forEach(i => { SPOT[i].x += PGE.rx; LAB[i].x += PGE.rx; }); }
 // the pencil no longer lies across the margin, where the notes are written
 function pencilE(scene) { if (!PGE.on) return; scene.children[scene.children.length - 1].visible = false; }
 let SC_MAIN = 1.5; const SC_HOVER = 1.3;
 // the bench view's camera: what it looks at on the bench (x, z), how far it stands back, its lean from straight down in degrees, its field of view
-const BCAM = [3.5, -2.2, 85, 20];
+const BCAM = [5, -4.4, 78, 20];
 
 function start(app) {
   const cv = document.createElement('canvas'); app.append(cv);
@@ -697,7 +699,7 @@ function start(app) {
   const deepOf = m => { let lo = 1e9, hi = -1e9; m.balls.forEach((b, a) => { if (a.el === 'H') return; const q = m.at.get(a); lo = Math.min(lo, q.z - q.y * 0.5); hi = Math.max(hi, q.z); }); return Math.max(2, hi - lo + 1.2); };
   // the room the molecule has: with no piece standing on the page and no creature beside it, it takes the whole middle
   const LANE = { w: KITV === 'side' ? 17 : 16, d: KITV === 'bottom' ? 10.5 : 10 }, C0B = {};
-  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; st.lx = C0.x; };
+  const laneSet = () => { if (C0B.x == null) { C0B.x = C0.x; C0B.z = C0.z; } const wide = SIDE && KITV === 'back' && !st.gear.length && !(run && run.hom) && (P.RULE.bare || !JARK.some(jarSeen)); C0.x = wide ? 0 : C0B.x; C0.z = wide ? -5.6 : C0B.z; LANE.w = wide ? 41 : KITV === 'side' ? 17 : 16; LANE.d = wide ? 11 : KITV === 'bottom' ? 10.5 : 10; if (BENCHV) { C0.x = HOME.x; C0.z = HOME.z; LANE.w = HOME.w - 1; LANE.d = HOME.d - 1; } st.lx = C0.x; };
   const HOME = { x: 0.6, z: -1.7, w: 25.5, d: 19.4, smax: 2.0 }, HOMED = { x: 0, z: 0.4, w: 36, d: 11.5, smax: 1.5 }, benchOn = () => !BENCHV && !!run && !P.RULE.bare && meta.stage >= 2 && (st.gear.length > 0 || JARK.some(jarSeen)), homeNow = () => (st.mode === 'done' ? HOMED : benchOn() ? { x: HOME.x, z: HOME.z + 2.7, w: HOME.w, d: HOME.d - 5.4, smax: HOME.smax } : HOME);
   homeE(HOME);
   const flScale = m => { const H = homeNow(), b = m.box; return Math.min(H.smax, H.w / b.w, H.d / b.d); };
@@ -709,8 +711,17 @@ function start(app) {
   const scrY = z => { _sv.set(0, 0.45, z).project(camRest); return (1 - _sv.y) / 2; };
   const zFor = (d, yc) => { let lo = -12, hi = 10; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (scrY(mid - d / 2) + scrY(mid + d / 2) < 2 * yc) lo = mid; else hi = mid; } return (lo + hi) / 2; };
   if (PGE.on) HOME.yc = (scrY(PGE.home.z0) + scrY(PGE.home.z1)) / 2 + 0.011;
-  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, moving = !snap && !!morph && morph.m === m, b = m.box, fit = Math.min(H.smax, H.w / m.box.w, H.d / m.box.d), s = fit; /* the molecule slides and scales to its home only while a step is moving it, toward where the step will leave it; between steps it stands exactly still */ if (snap || st.bcx == null || !moving) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; st.sc = s; } else { const k = Math.min(1, dt * 9); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * k; } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; }
-  const fitMain = m => m.fl ? flScale(m) : Math.max(0.5, (SIDE ? Math.min(4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
+  function flHome(m, snap, dt) { const H0 = homeNow(), H = H0 === HOME ? { x: H0.x, z: zFor(Math.max(1, (m.box ? m.box.d : 8) * (st.sc || 1)), (HOME.yc || 0.534) - 0.022 * Math.min(1, (m.box ? m.box.d : 8) * (st.sc || 1) / H0.d)), w: H0.w, d: H0.d, smax: H0.smax } : H0, moving = !snap && !!morph && morph.m === m, b = m.box, fit = Math.min(H.smax, H.w / m.box.w, H.d / m.box.d), s = fit; /* the molecule slides and scales to its home only while a step is moving it, toward where the step will leave it; between steps it stands exactly still */ if (snap || st.bcx == null || !moving) { st.bcx = b.cx; st.bcz = b.cz; st.hx = H.x; st.hz = H.z; st.sc = s; } else { const k = Math.min(1, dt * 9); st.bcx += (b.cx - st.bcx) * k; st.bcz += (b.cz - st.bcz) * k; st.hx += (H.x - st.hx) * k; st.hz += (H.z - st.hz) * k; st.sc += (s - st.sc) * k; } SC_MAIN = s; C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; keepIn(m, H0); }
+  // what is drawn at this moment lies inside the play rectangle on every frame, also while it changes: the scale gives way as far as the widest
+  // in-between shape needs (and comes back with the step, never in a jump), and the whole is shifted by what still reaches over
+  function keepIn(m, H0) { const L = stayBox(m), R0 = playRect(H0), hk = BENCHV ? st.sc : 0, R = [R0[0] + 0.32 * hk, R0[1] + 0.6 * hk, R0[2] - 0.32 * hk, R0[3]], fw = (R[2] - R[0]) / Math.max(0.5, L.w), fd = (R[3] - R[1]) / Math.max(0.5, L.d); if (st.sc > fw) st.sc = fw; if (st.sc > fd) st.sc = fd;
+    if (m.fl) { C0.x = st.hx - st.bcx * st.sc; C0.z = st.hz - st.bcz * st.sc; } else if (BENCHV) { C0.x = (R[0] + R[2]) / 2 - L.cx * st.sc; C0.z = (R[1] + R[3]) / 2 - L.cz * st.sc; }
+    const x0 = C0.x + (L.cx - L.w / 2) * st.sc, x1 = C0.x + (L.cx + L.w / 2) * st.sc, z0 = C0.z + (L.cz - L.d / 2) * st.sc, z1 = C0.z + (L.cz + L.d / 2) * st.sc; if (x0 < R[0]) C0.x += R[0] - x0; else if (x1 > R[2]) C0.x -= x1 - R[2]; if (z0 < R[1]) C0.z += R[1] - z0; else if (z1 > R[3]) C0.z -= z1 - R[3]; }
+  // the box of what belongs to the molecule as drawn now (atoms on their way out of it are not counted: they are meant to leave)
+  const stayBox = m => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; m.balls.forEach((b, a) => { if (!m.at || !m.at.get(a)) return; const p = b.mesh.position, r = (b.R || 0.4) + 0.1; x0 = Math.min(x0, p.x - r); x1 = Math.max(x1, p.x + r); z0 = Math.min(z0, p.z - r); z1 = Math.max(z1, p.z + r); }); return x0 > 1e8 ? liveBox(m) : { cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, w: x1 - x0, d: z1 - z0 }; };
+  // the one rectangle of the page the molecule lives in (page units): x0, z0, x1, z1
+  const playRect = H => { H = H || homeNow(); return [H.x - H.w / 2, H.z - H.d / 2, H.x + H.w / 2, H.z + H.d / 2]; };
+  const fitMain = m => m.fl ? flScale(m) : Math.max(0.5, (SIDE ? Math.min(BENCHV ? HOME.smax : 4.4, LANE.w / spanOf(m), LANE.d / deepOf(m)) : Math.min(2.9, 24 / spanOf(m), 10 / deepOf(m))));
   function freeMol(m) { if (!m) return; scene.remove(m.group); m.group.traverse(o => { if (o.userData.own && o.geometry) { o.geometry.dispose(); o.material.dispose(); } }); }
   const place = (m, p, sc) => { m.group.position.set(p.x, 0, p.z); m.group.scale.setScalar(sc); };
 
@@ -916,9 +927,10 @@ function start(app) {
       const rings = new Map(), c = rgb(colOf(s.id)); s.o.r.made.forEach(a => rings.set(a, c));
       const m = buildMol(s.o.model, rings, true); m.col = c; SCS[i] = SIDE ? Math.max(0.14, Math.min(0.3, 3.4 / spanOf(m))) : Math.max(0.3, Math.min(1.05, (SLOTW - 1.6) / spanOf(m))); if (P.RULE.queue && SIDE) m.group.visible = false; place(m, SPOT[i], 0.01); tween(m, SPOT[i], SCS[i], 0.16 + (i % 7) * 0.03); prods[i] = m;
     });
+    bottleSync();
     st.hover = -1; setHover(-1); dirty = true;
   }
-  function clearRound() { clearBench(); st.flyers.forEach(f => scene.remove(f.grp)); st.flyers = []; morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
+  function clearRound() { bottlesClear(); clearBench(); st.flyers.forEach(f => scene.remove(f.grp)); st.flyers = []; morph = null; st.pending = null; st.strokes = []; st.peek = null; st.willFire = null; tweens = []; prods.forEach(freeMol); prods = []; slots = []; freeMol(center); center = null; rowMols.forEach(freeMol); rowMols = []; }
   // the next round of the run: a molecule, the equipment held, and a number to beat
   function load() {
     st.tok++; st.splats = []; st.specMetT = []; st.specWas = []; st.ypass = false; st.mode = 'play'; st.firing = false; st.starting = false; st.rezip = false; st.tool = null; st.toolList = null; st.toolSpot = null; st.view = null; st.paid = ''; st.shown = 0; st.gains = []; st.passT = []; st.pass = false; st.won = false; st.pageStart = 0; st.floats = []; st.blots = []; st.pings = []; st.slashes = []; st.fury = 0; st.call = null; st.over = 0;
@@ -1362,7 +1374,7 @@ function start(app) {
   const ringAt = () => { const bx = molBox(), T0 = px(MADE); if (!bx) return null; return [(bx.l + bx.r) / 2, bx.b + 70, T0, bx]; };
   function pick(i) { sfxN('click');
     const s = slots[i], o = s && s.o;
-    if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); st.qT = performance.now(); refresh(); return; }
+    if (P.RULE.queue && g && !g.chain) { if (!s || st.mode !== 'play' || g.shot) return; if (!P.queueAdd(g, s.id)) { sfx.bad(); return; } (AA.sfx.queue ? AA.sfx.queue(g.queue.length - 1) : sfx.lock(g.queue.length)); st.qT = performance.now(); refresh(); bottlePick(s.id, g.pageSteps + g.queue.length - 1); return; }
     if (!o || !prods[i] || st.mode !== 'play') return;
     const link = !!g.chain; st.chainN = link ? (st.chainN || 0) + 1 : 0; react(o, s.id, s.fin, LAB[i] ? { x: LAB[i].x - 0.8, z: LAB[i].z + 0.5 } : { x: C0.x, z: -9 }, link);
   }
@@ -2110,7 +2122,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (false && play && g && g.nextHand && g.nextHand.length) { const n0 = px({ x: 20.6, z: 12.4 }), nn = Math.min(5, g.nextHand.length), cw = 62; for (let j = 0; j < nn; j++) { const tl = TILE[g.nextHand[j]]; if (!tl) continue; x.save(); x.translate(n0[0] - (nn - 1) * cw / 2 + j * cw + 0, n0[1]); x.scale(0.36, 0.36); fragOrChip(x, tl[0], -50, 0, false); x.strokeStyle = FAINT; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(-8, 0); x.lineTo(14, 0); x.stroke(); fragOrChip(x, tl[1], 78, 0, false); x.restore(); }
       const cx0 = px({ x: 25.5, z: 12.6 }); x.fillStyle = 'rgba(120,100,70,0.22)'; x.beginPath(); x.moveTo(cx0[0] + 30, cx0[1] - 70); x.lineTo(cx0[0] + 30, cx0[1] + 30); x.lineTo(cx0[0] - 70, cx0[1] + 30); x.closePath(); x.fill(); x.strokeStyle = PENCIL; x.lineWidth = 3; x.stroke(); }
     // the arrows out of the molecule, and what each one does. Yellow marks the ones that continue the run
-    if (play) slots.forEach((s, i) => {
+    if (play && !BENCHV) slots.forEach((s, i) => {
       if (!s) return;
       const o = s.o, hov = st.hover === i, card = RX.CARDS[s.id], verb = card.verb.toLowerCase(), m = px(LAB[i]), e = ends(i), col = o ? INK : FAINT;
       if (o && !SIDE) { arrow(x, e.a, e.b, hov ? 9 : 6, col, o.loop ? [14, 12] : null); }
@@ -2179,7 +2191,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       ring(x, c, 54, 50, id ? 6 : 5, id || qi === (g.queue ? g.queue.length : 0) ? INK : PENCIL, 0.1 * k);
       { hand(x, 40); x.textAlign = 'center'; x.fillStyle = PENCIL; x.fillText(String(k + 1), c[0] - 46, c[1] - 48); }
       if (tdone && tdone.wasted) cross(c, PENCIL); else if ((tdone && tdone.bank) || qid === P.BANKID) tray(x, c[0], c[1] - 2, 0.7, INK, 5);
-      else if (id && qid && age < 0.85 && TILE[id] && slots.findIndex(q => q && q.id === id) >= 0) { // the picture flies from the shelf to its place: 220 ms, eased, landing with a small pop
+      else if (BENCHV && id && qid && st.bfly && now < st.bfly && qi === g.queue.length - 1) { st.slotT[key] = now; dirty = true; }
+      else if (!BENCHV && id && qid && age < 0.85 && TILE[id] && slots.findIndex(q => q && q.id === id) >= 0) { // the picture flies from the shelf to its place: 220 ms, eased, landing with a small pop
         const li = slots.findIndex(q => q && q.id === id), fr = px(LAB[li]), u = Math.min(1, age / 0.85), e = 1 - Math.pow(1 - u, 3), fxp = fr[0] + (c[0] - fr[0]) * e, fyp = fr[1] + (c[1] - fr[1]) * e - 60 * Math.sin(Math.PI * u), sc2 = 1.5 + (0.82 - 1.5) * e; x.save(); x.translate(fxp, fyp); x.scale(sc2, sc2); fragOrChip(x, TILE[id][1], 0, 6, true); x.restore(); dirty = true; }
       else if (id) { const fits = !qid || !P.queueFits || P.queueFits(g)[qi] !== false, cc = rgb(colOf(id)), tl = TILE[id]; x.save(); x.translate(c[0], c[1]); x.scale(pop, pop); x.globalAlpha = (fits ? 0.28 : 0.12) * (tdone ? 0.6 : 1); x.fillStyle = cc; x.beginPath(); x.ellipse(1, 0, 46, 42, 0.2, 0, 6.3); x.fill(); x.globalAlpha = fits ? (tdone ? 0.55 : 1) : 0.35;
         if (id === P.SYN.finish) { marker(x, 40); x.textAlign = 'center'; x.fillStyle = INK; x.fillText('F', 1, 14); } else if (tl) { x.save(); x.scale(0.82, 0.82); fragOrChip(x, tl[1], 0, 6, true); x.restore(); }
@@ -2347,7 +2360,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function slotAt(e) {
     const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     if (!ray.ray.intersectPlane(ground, hit) || st.mode !== 'play') return -1;
-    const any = lining(); let slot = -1; slots.forEach((s, i) => { if (!s || (!s.o && !any)) return; const p = SPOT[i]; if (p && (SIDE ? hit.x > 12 && Math.abs(hit.z - p.z) < SLOTW / 2 : Math.abs(hit.x - p.x) < SLOTW / 2 && hit.z > -14.5 && hit.z < p.z + 3)) slot = i; });
+    const any = lining(); let slot = -1; slots.forEach((s, i) => { if (!s || (!s.o && !any)) return; const p = SPOT[i]; if (p && (SIDE ? hit.x > (BENCHV ? 33.5 : 12) && Math.abs(hit.z - p.z) < SLOTW / 2 : Math.abs(hit.x - p.x) < SLOTW / 2 && hit.z > -14.5 && hit.z < p.z + 3)) slot = i; });
     if (FEEL && FEEL.twistHit) FEEL.twistHit(hit, ray.ray);
     return slot;
   }
@@ -2389,7 +2402,90 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   });
 
   // the moment of play is played by feel.js (AA.rxFeel); with feel 0 or no feel.js the page plays it as before
-  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  // The molecule as it is seen in the frame (1280 by 720, with the atoms' radii; atoms on their way out are not counted) against the play rectangle as it is seen.
+  const _iv = new T.Vector3(), _iw = new T.Vector3(), _ir = new T.Vector3();
+  function seenIn(m) { if (!m || !m.balls) return null; m.group.updateMatrixWorld(true); const R = playRect(), M = 0.9, v = _iv, w = _iw, right = _ir.setFromMatrixColumn(cam.matrixWorld, 0), pj = (x, z) => { v.set(x, 0, z).project(cam); return [(v.x + 1) * 640, (1 - v.y) * 360]; };
+    const c = [pj(R[0] - M, R[1] - M), pj(R[2] + M, R[1] - M), pj(R[0] - M, R[3] + M), pj(R[2] + M, R[3] + M)], pr = [Math.max(c[0][0], c[2][0]), Math.max(c[0][1], c[1][1]), Math.min(c[1][0], c[3][0]), Math.min(c[2][1], c[3][1])]; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    m.balls.forEach((b, a) => { if (!b.mesh.visible || !m.at || !m.at.get(a)) return; b.mesh.getWorldPosition(v); const rw = b.mesh.scale.x * m.group.scale.x; w.copy(v).addScaledVector(right, rw).project(cam); v.project(cam); const sx = (v.x + 1) * 640, sy = (1 - v.y) * 360, r = Math.abs(w.x - v.x) * 640; x0 = Math.min(x0, sx - r); x1 = Math.max(x1, sx + r); y0 = Math.min(y0, sy - r); y1 = Math.max(y1, sy + r); });
+    if (x0 > 1e8) return null; return { out: Math.max(0, pr[0] - x0, x1 - pr[2], pr[1] - y0, y1 - pr[3]), box: [x0, y0, x1, y1], play: pr, ppu: (c[1][0] - c[0][0] + c[3][0] - c[2][0]) / 2 / (R[2] - R[0] + 2 * M) }; }
+  // the last word before the frame is drawn: whatever moved the atoms, the molecule as seen is inside the play rectangle as seen
+  function keepSeen() { const m = center; if (!m || !BENCHV || !(st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse') || (FEEL && FEEL.twistState && FEEL.twistState().ang > 0.01)) return; let q = seenIn(m); if (!q || q.out <= 0) return; const G = m.group, P1 = q.play, pw = P1[2] - P1[0] - 2, ph = P1[3] - P1[1] - 2, bw = q.box[2] - q.box[0], bh = q.box[3] - q.box[1], f = Math.min(1, pw / bw, ph / bh);
+    if (f < 1) { G.scale.multiplyScalar(f); st.sc *= f; q = seenIn(m); if (!q) return; }
+    const dx = q.box[0] < P1[0] + 1 ? P1[0] + 1 - q.box[0] : q.box[2] > P1[2] - 1 ? P1[2] - 1 - q.box[2] : 0, dy = q.box[1] < P1[1] + 1 ? P1[1] + 1 - q.box[1] : q.box[3] > P1[3] - 1 ? P1[3] - 1 - q.box[3] : 0; G.position.x += dx / q.ppu; G.position.z += dy / (q.ppu * 0.94); }
+  const flashM = BENCHV ? add(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }), 0, 0.03, 0) : null; if (flashM) { flashM.castShadow = false; flashM.receiveShadow = false; flashM.visible = false; }
+  // ---------- the bench's own objects: the reagent bottles ----------
+  // Each reagent is a bottle standing on the wood to the right of the page: its before -> after picture is its label, the shape of the glass says
+  // which kind of reagent it is and the liquid has the reagent's colour. A bottle with nothing to act on is corked and dim; one used up is gone.
+  const BT = { map: new Map(), drops: [], flyers: [], x: 39.3, w: 10.7, h: 6.85, dropGeo: null };
+  const BSHAPE = { acid: 'square', base: 'jar', oxidant: 'cone', hydride: 'tin', metal: 'tin', grignard: 'round', radical: 'round', ylide: 'round', chloride: 'amber', light: 'cone', self: 'jar' };
+  function bottleDraw(c, id, on, W, H) {
+    const card = RX.CARDS[id] || {}, shape = BSHAPE[card.cls] || 'square', col = card.rgb ? bright(card.rgb) : [150, 150, 150], liq = 'rgb(' + col.join(',') + ')', INKC = '#22252c';
+    c.clearRect(0, 0, W, H); c.save(); c.globalAlpha = on ? 1 : 0.5; c.lineJoin = 'round'; c.lineCap = 'round';
+    const bx0 = 14, bx1 = W - 14, by1 = H - 10, by0 = 84, nw = shape === 'jar' ? 150 : shape === 'tin' ? 210 : shape === 'round' ? 48 : 66, ncx = W / 2, ny0 = 22;
+    const body = () => { c.beginPath();
+      if (shape === 'square' || shape === 'amber') { const r = shape === 'amber' ? 64 : 22; c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 22); c.quadraticCurveTo(ncx - nw / 2, by0, bx0 + r, by0); c.quadraticCurveTo(bx0, by0, bx0, by0 + r); c.lineTo(bx0, by1 - 16); c.quadraticCurveTo(bx0, by1, bx0 + 16, by1); c.lineTo(bx1 - 16, by1); c.quadraticCurveTo(bx1, by1, bx1, by1 - 16); c.lineTo(bx1, by0 + r); c.quadraticCurveTo(bx1, by0, bx1 - r, by0); c.quadraticCurveTo(ncx + nw / 2, by0, ncx + nw / 2, by0 - 22); c.lineTo(ncx + nw / 2, ny0); }
+      else if (shape === 'cone') { c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 30); c.lineTo(bx0 + 4, by1 - 26); c.quadraticCurveTo(bx0 - 4, by1, bx0 + 26, by1); c.lineTo(bx1 - 26, by1); c.quadraticCurveTo(bx1 + 4, by1, bx1 - 4, by1 - 26); c.lineTo(ncx + nw / 2, by0 - 30); c.lineTo(ncx + nw / 2, ny0); }
+      else if (shape === 'round') { c.moveTo(ncx - nw / 2, ny0); c.lineTo(ncx - nw / 2, by0 - 26); c.bezierCurveTo(bx0 - 30, by0 - 10, bx0 - 30, by1 + 4, ncx - 60, by1); c.lineTo(ncx + 60, by1); c.bezierCurveTo(bx1 + 30, by1 + 4, bx1 + 30, by0 - 10, ncx + nw / 2, by0 - 26); c.lineTo(ncx + nw / 2, ny0); }
+      else if (shape === 'tin') { c.moveTo(bx0 + 20, by0 - 20); c.lineTo(bx0 + 20, by1 - 8); c.quadraticCurveTo(bx0 + 20, by1, bx0 + 30, by1); c.lineTo(bx1 - 30, by1); c.quadraticCurveTo(bx1 - 20, by1, bx1 - 20, by1 - 8); c.lineTo(bx1 - 20, by0 - 20); }
+      else { c.moveTo(bx0 + 30, by0 - 26); c.lineTo(bx0 + 30, by0 - 10); c.quadraticCurveTo(bx0 + 4, by0, bx0 + 4, by0 + 30); c.lineTo(bx0 + 4, by1 - 18); c.quadraticCurveTo(bx0 + 4, by1, bx0 + 24, by1); c.lineTo(bx1 - 24, by1); c.quadraticCurveTo(bx1 - 4, by1, bx1 - 4, by1 - 18); c.lineTo(bx1 - 4, by0 + 30); c.quadraticCurveTo(bx1 - 4, by0, bx1 - 30, by0 - 10); c.lineTo(bx1 - 30, by0 - 26); }
+      c.closePath(); };
+    // glass, then the liquid inside it
+    body(); c.fillStyle = shape === 'tin' ? '#b9bec4' : shape === 'amber' ? 'rgba(150,92,38,0.9)' : 'rgba(226,238,240,0.9)'; c.fill();
+    if (shape !== 'tin') { c.save(); body(); c.clip(); c.fillStyle = liq; c.globalAlpha *= shape === 'amber' ? 0.55 : 0.92; const top = by0 + (shape === 'cone' ? 44 : shape === 'round' ? 30 : 22); c.beginPath(); c.moveTo(0, top + 6); c.quadraticCurveTo(W * 0.3, top - 8, W * 0.55, top + 3); c.quadraticCurveTo(W * 0.8, top + 12, W, top); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill(); c.restore(); }
+    else { c.strokeStyle = 'rgba(40,44,52,0.35)'; c.lineWidth = 3; [by0 + 2, by1 - 22].forEach(y => { c.beginPath(); c.moveTo(bx0 + 22, y); c.lineTo(bx1 - 22, y); c.stroke(); }); c.fillStyle = liq; c.fillRect(bx0 + 22, by0 + 8, bx1 - bx0 - 44, 16); }
+    body(); c.strokeStyle = INKC; c.lineWidth = 6; c.stroke();
+    // the mouth: a lid on a jar or a tin; a cork only when the reagent has nothing to act on
+    if (shape === 'jar' || shape === 'tin') { const lw = shape === 'jar' ? W - 110 : W - 60, ly = by0 - (shape === 'jar' ? 52 : 44); c.fillStyle = on ? (shape === 'jar' ? '#3a3f47' : '#8d949c') : '#6f5a40'; c.strokeStyle = INKC; c.lineWidth = 6; c.beginPath(); c.rect(W / 2 - lw / 2, ly, lw, 28); c.fill(); c.stroke(); }
+    else if (!on) { c.fillStyle = '#b08954'; c.strokeStyle = INKC; c.lineWidth = 5; c.beginPath(); c.moveTo(ncx - nw / 2 - 5, 4); c.lineTo(ncx + nw / 2 + 5, 4); c.lineTo(ncx + nw / 2 - 3, ny0 + 22); c.lineTo(ncx - nw / 2 + 3, ny0 + 22); c.closePath(); c.fill(); c.stroke(); }
+    else { c.strokeStyle = INKC; c.lineWidth = 6; c.beginPath(); c.moveTo(ncx - nw / 2 - 8, ny0); c.lineTo(ncx + nw / 2 + 8, ny0); c.stroke(); }
+    // a shine down the left of the glass
+    if (shape !== 'tin') { c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 7; c.beginPath(); c.moveTo(bx0 + 20, by0 + 40); c.lineTo(bx0 + 20, by1 - 34); c.stroke(); }
+    // the label: the reagent's picture, before -> after
+    const tl = TILE[id]; const lx0 = 44, lx1 = W - 44, ly0 = by0 + (shape === 'cone' ? 66 : 50), ly1 = by1 - 26;
+    c.fillStyle = '#f6f3ea'; c.strokeStyle = INKC; c.lineWidth = 3.5; c.beginPath(); c.rect(lx0, ly0, lx1 - lx0, ly1 - ly0); c.fill(); c.stroke();
+    if (tl) { const k = Math.min((lx1 - lx0) / 262, (ly1 - ly0) / 92); c.save(); c.translate((lx0 + lx1) / 2 + 16 * k, (ly0 + ly1) / 2 + 8 * k); c.scale(k, k); fragOrChip(c, tl[0], -78, -8, on); c.strokeStyle = on ? INK : FAINT; c.lineWidth = 6; c.beginPath(); c.moveTo(-26, -8); c.lineTo(-2, -8); c.moveTo(-14, -18); c.lineTo(-2, -8); c.lineTo(-14, 2); c.stroke(); fragOrChip(c, tl[1], 46, -8, on); c.restore(); }
+    c.restore();
+  }
+  function bottleMake(id) {
+    const W = 544, H = 348, tx = canvasTex(W, H), grp = new T.Group(), lean = new T.Group(), mesh = new T.Mesh(new T.PlaneGeometry(BT.w, BT.h), new T.MeshBasicMaterial({ map: tx.t, transparent: true, depthWrite: false }));
+    mesh.position.set(0, BT.h / 2, 0); lean.add(mesh); lean.rotation.x = -0.8; grp.add(lean);
+    const shc = canvasTex(128, 64); { const g2 = shc.x.createRadialGradient(64, 32, 4, 64, 32, 60); g2.addColorStop(0, 'rgba(0,0,0,0.42)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); shc.x.fillStyle = g2; shc.x.fillRect(0, 0, 128, 64); shc.t.needsUpdate = true; }
+    const sh = new T.Mesh(new T.PlaneGeometry(BT.w * 1.1, 3.4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: shc.t, transparent: true, depthWrite: false })); sh.position.set(0.5, 0.02, 0.3); grp.add(sh);
+    mesh.renderOrder = 5; scene.add(grp);
+    return { id, grp, lean, mesh, tx, W, H, on: null, x: BT.x, z: 0, sc: 1, born: performance.now(), act: null, gone: 0 };
+  }
+  function bottleSync() {
+    if (!BENCHV) return; const seen = new Set(), ids = []; slots.forEach((q, i) => { if (q && !(q.fin && !TILE[q.id])) ids.push(i); });
+    const n = ids.length, gap = Math.min(6.1, 29 / Math.max(1, n)), z0 = -0.5 - (n - 1) / 2 * gap, sc = Math.min(1, gap / 5.9), now = performance.now();
+    ids.forEach((i, k) => { const q = slots[i], left = g && g.left && !q.fin && !usesHidden() ? (g.left[q.id] || 0) : 1; let b = BT.map.get(q.id);
+      const z = z0 + k * gap + 2.2; SPOT[i] = { x: BT.x, z: z - 2.1 }; LAB[i] = { x: BT.x, z: z - 2.0 }; SLOTW = gap;
+      if (left <= 0 && !(g.queue || []).includes(q.id) && !st.firing) { if (b && !b.gone) b.gone = now; if (b) seen.add(q.id); return; }
+      if (!b) { b = bottleMake(q.id); BT.map.set(q.id, b); b.grp.position.set(BT.x, -0.2, z); } seen.add(q.id); b.gone = 0; b.slot = i;
+      b.x = BT.x; b.z = z; b.sc = sc; const on = !!q.o; if (b.on !== on) { b.on = on; bottleDraw(b.tx.x, q.id, on, b.W, b.H); b.tx.t.needsUpdate = true; } });
+    BT.map.forEach((b, id) => { if (!seen.has(id)) { scene.remove(b.grp); BT.map.delete(id); } });
+  }
+  function bottlesClear() { BT.map.forEach(b => scene.remove(b.grp)); BT.map.clear(); BT.drops.forEach(d => scene.remove(d.m)); BT.drops = []; BT.flyers.forEach(f => scene.remove(f.m)); BT.flyers = []; }
+  // picking: the bottle lifts and tips toward the page, and its after-picture flies to the numbered place
+  function bottlePick(id, k) { const b = BT.map.get(id); if (!b) return; const now = performance.now(); b.act = { kind: 'pick', t0: now, dur: 420 };
+    const tl = TILE[id]; if (!tl) return; const tx = canvasTex(192, 144); tx.x.translate(96, 66); tx.x.scale(1.25, 1.25); fragOrChip(tx.x, tl[1], 0, 6, true); tx.t.needsUpdate = true;
+    const m = new T.Mesh(new T.PlaneGeometry(6.4, 4.8).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tx.t, transparent: true, depthWrite: false, depthTest: false })); m.renderOrder = 9; m.visible = false; scene.add(m);
+    BT.flyers.push({ m, t0: now + 90, dur: 300, from: { x: b.x - 1, z: b.z - 3 }, to: { x: STEP.x + k * STEPD, z: STEP.z } }); st.bfly = now + 390; }
+  // firing: the bottle is lifted over and its liquid goes onto the molecule where it acts
+  function bottlePour(id, tgt, dur) { const b = BT.map.get(id); if (!b || !BENCHV) return false; const now = performance.now(), col = new T.Color('rgb(' + colOf(id).join(',') + ')'); b.act = { kind: 'pour', t0: now, dur: Math.max(520, dur + 300) };
+    if (!BT.dropGeo) BT.dropGeo = new T.SphereGeometry(1, 10, 8); const mat = new T.MeshBasicMaterial({ color: col });
+    const fx = b.x - BT.w * 0.5 - 2.4, fz = b.z - 3.4, n = 26; for (let i = 0; i < n; i++) { const m = new T.Mesh(BT.dropGeo, mat); m.visible = false; m.renderOrder = 8; scene.add(m); const j = i / (n - 1);
+      BT.drops.push({ m, t0: now + 60 + j * dur * 0.55, dur: dur * 0.62, fx, fy: 4.6, fz, tx: tgt.x + (hash(id + i) - 0.5) * 0.9, ty: tgt.y || 0.6, tz: tgt.z + (hash(id + 'z' + i) - 0.5) * 0.9, r: 0.5 + 0.45 * hash('r' + i + id), arc: 5.5 + 1.2 * hash('a' + i) }); }
+    return true; }
+  function bottleFrame(now, dt) {
+    if (!BENCHV) return; const playing = st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse';
+    BT.map.forEach((b, id) => { const G = b.grp; G.visible = playing; if (!playing) return; const age = (now - b.born) / 260, grow = Math.max(0, Math.min(1, age)), hov = st.hover === b.slot && b.on; let lift = 0, tip = 0, k = b.sc * (hov ? 1.07 : 1) * (1 - Math.pow(1 - grow, 3));
+      if (b.gone) { const u = Math.min(1, (now - b.gone) / 320); k *= 1 - u * u; if (u >= 1) { G.visible = false; } }
+      if (b.act) { const u = (now - b.act.t0) / b.act.dur; if (u >= 1) b.act = null; else { const e = Math.sin(Math.PI * Math.min(1, u)); if (b.act.kind === 'pick') { lift = 1.6 * e; tip = 0.34 * e; } else { const up = Math.min(1, u / 0.25), dn = Math.max(0, (u - 0.75) / 0.25), h = up * (1 - dn); lift = 3.2 * h; tip = 1.25 * h; G.position.x = b.x - 2.4 * h; } } }
+      G.position.x += (b.x - G.position.x) * Math.min(1, dt * 12); G.position.z += (b.z - G.position.z) * Math.min(1, dt * 12); G.position.y = -0.2 + lift; G.scale.setScalar(Math.max(0.001, k)); b.mesh.rotation.z = tip; b.mesh.position.x = -tip * 2.2; });
+    if (BT.drops.length) { BT.drops = BT.drops.filter(d => { const u = (now - d.t0) / d.dur; if (u < 0) return true; if (u >= 1) { scene.remove(d.m); return false; } const e = u * u * (3 - 2 * u); d.m.visible = true; d.m.position.set(d.fx + (d.tx - d.fx) * e, d.fy + (d.ty - d.fy) * e + d.arc * 4 * u * (1 - u), d.fz + (d.tz - d.fz) * e); const r = d.r * (1 - 0.35 * u); d.m.scale.set(r, r * 1.25, r); return true; }); }
+    if (BT.flyers.length) { BT.flyers = BT.flyers.filter(f => { const u = (now - f.t0) / f.dur; if (u < 0) { f.m.visible = false; return true; } if (u >= 1) { scene.remove(f.m); dirty = true; return false; } const e = 1 - Math.pow(1 - u, 3); f.m.visible = true; f.m.position.set(f.from.x + (f.to.x - f.from.x) * e, 0.3 + 5 * Math.sin(Math.PI * u), f.from.z + (f.to.z - f.from.z) * e); f.m.scale.setScalar(1.25 - 0.45 * e); return true; }); }
+  }
+  const FEEL = AA.rxFeel ? AA.rxFeel.attach({ pour: bottlePour, T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
   function size() {
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
@@ -2484,12 +2580,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     cam.lookAt(LOOKAT.x + (st.fx - LOOKAT.x) * zk, 0.8 * zk, LOOKAT.z + (st.fz - LOOKAT.z) * zk);
     // the hotter the run, the warmer the page
     const playing = g && (st.mode === 'play' || st.mode === 'move'), heat = playing ? Math.min(1, Math.log2(Math.max(1, st.mult)) / 6) : 0;
-    if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; }
+    if (flashM) { const on = st.flash > 0 && (st.mode === 'play' || st.mode === 'move' || st.mode === 'fuse'); if (st.flash > 0) st.flash = Math.max(0, st.flash - dt * 2.2); flashM.visible = on && st.flash > 0.01; if (flashM.visible) { const R = playRect(), c = st.flashC.split(',').map(Number); flashM.position.set((R[0] + R[2]) / 2, 0.03, (R[1] + R[3]) / 2); flashM.scale.set(R[2] - R[0] + 1.6, 1, R[3] - R[1] + 1.6); flashM.material.color.setRGB(c[0] / 255, c[1] / 255, c[2] / 255); flashM.material.opacity = st.flash * 0.22; } if (veil.style.backgroundColor) veil.style.backgroundColor = ''; }
+    else if (st.flash > 0) { st.flash = Math.max(0, st.flash - dt * 2.2); veil.style.backgroundColor = 'rgba(' + st.flashC + ',' + (st.flash * 0.3).toFixed(3) + ')'; }
     else if (heat > 0.05 && LOOK === 'now') veil.style.backgroundColor = 'rgba(255,110,30,' + (heat * 0.3).toFixed(3) + ')';
     else if (veil.style.backgroundColor) veil.style.backgroundColor = '';
     // nothing on the page sits dead still: molecules rock, equipment trembles with the multiplier, a hot run throws bubbles
     const tt = now / 1000;
-    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); { center.group.scale.setScalar(st.sc); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0;  }
+    if (center && !tweens.some(tw => tw.m === center)) { if (center.fl) flHome(center, false, dt); else { let lo = 1e9, hi = -1e9; center.balls.forEach(b => { const q = b.mesh.position.x; if (q < lo) lo = q; if (q > hi) hi = q; }); const w = hi - lo + 1.4; if (w * SC_MAIN > LANE.w * 1.02) SC_MAIN = Math.max(0.5, LANE.w / w); if (st.lx != null && lo < 1e8) C0.x = st.lx - (lo + hi) / 2 * center.group.scale.x; } st.pop = Math.max(0, st.pop - dt * 3.2); const sp = 1 + 0.28 * st.pop * Math.cos(st.pop * 9); if (!center.fl) { st.sc += (SC_MAIN - st.sc) * Math.min(1, dt * 13); keepIn(center, homeNow()); } { center.group.scale.setScalar(st.sc); } st.cx = st.cx == null || st.mode !== 'done' ? C0.x : st.cx + (C0.x - st.cx) * Math.min(1, dt * 7), st.cz = st.cz == null || st.mode !== 'done' ? C0.z : st.cz + (C0.z - st.cz) * Math.min(1, dt * 7), center.group.position.set(st.cx, 0.25, st.cz); center.group.rotation.z = 0;  }
     
     { const tc = chargeOf(); st.ch = (st.ch || 0) + (tc - (st.ch || 0)) * Math.min(1, dt * (tc < (st.ch || 0) ? 8 : 2.2)); if (Math.abs(tc - st.ch) > 0.003) dirty = true; }
     { const on = !!g && (st.mode === 'play' || st.mode === 'move' || st.mode === 'done' || st.mode === 'fuse'); flask.grp.visible = false; if (on) { const ratio = st.quota ? st.shown / st.quota : 0, ov = ratio >= 1 ? Math.log2(ratio) + 0.001 : 0; flask.set(Math.min(1, ratio), ov); const boil = Math.min(1, ov / 5), near = Math.max(0, Math.min(1, (ratio - 0.6) / 0.4)), tq = now / 1000; flask.grp.rotation.z = 0.03 * Math.sin(tq * 1.4) + (boil ? (Math.random() - 0.5) * 0.09 * boil : near * 0.03 * Math.sin(tq * 17)); flask.grp.position.y = boil ? Math.random() * 0.25 * boil : near * 0.06 * Math.abs(Math.sin(tq * 9)); flask.grp.scale.set(1.25 * (1 + 0.012 * Math.sin(tq * 2.1)), 1.25 * (1 - 0.012 * Math.sin(tq * 2.1)), 1.25); if (boil) dirty = true; } }
@@ -2502,6 +2599,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     stepParts(dt);
     marginBusyE(now);
     if (dirty && now - lastInk > 24) { drawInk(now); dirty = false; lastInk = now; }
+    keepSeen(); bottleFrame(now, dt);
     ren.render(scene, cam);
   }
   root.addEventListener('resize', size);
@@ -2516,6 +2614,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       let bl = 0, bp = null, rung = 0; m.sticks.forEach(q => { if (!q.vis || q.len == null || q.a.el === 'H' || q.b.el === 'H') return; const r = q.len / FL.L; if (q.rung) { rung = Math.max(rung, r); return; } if (r > bl) { bl = r; bp = [q.a.el, q.b.el]; } });
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; pts.forEach(p => { x0 = Math.min(x0, p.x - p.r); x1 = Math.max(x1, p.x + p.r); y0 = Math.min(y0, p.y - p.r); y1 = Math.max(y1, p.y + p.r); });
       return { ov: +ov.toFixed(3), ovH: +ovH.toFixed(3), op, bl: +bl.toFixed(3), bp, rung: +rung.toFixed(2), n: pts.length, box: [Math.round(x0), Math.round(x1), Math.round(y0), Math.round(y1)] }; },
+    playRect: () => playRect(), inPlay: () => { const q = seenIn(center); return q ? { out: +q.out.toFixed(1), box: q.box.map(Math.round), play: q.play.map(Math.round) } : null; },
     speedAt: () => (BENCHV ? { x: -23.4, z: -13.2 } : null), keepClear: () => keepClear(),
     debugG: () => g, debugCenter: () => center, debugMorph2: () => morph, debugSelf: ids => { run.self = ids.slice(); }, setOff, fire: doFire, unqueue: doUnqueue, spots: () => ({ fire: FIREP(), bank: BANK, draw: DRAW, step: STEP, lab: LAB.slice(), reroll: REROLL, skip: SKIP, held: [0, 1, 2, 3, 4].map(HELD) }), bank: doBank, redraw: doRedraw, reroll: doReroll, redrawPair: doPair, debugCoined: v => { meta.coined = !!v; dirty = true; }, skip: doSkip, bin: doBin, debugCoins: n => { run.coins = n; dirty = true; }, turn: doTurn, twist: doTwist, canTwist: () => !!twistOpt(), debugTip: id => { st.tip = id; dirty = true; }, debugRack: ids => { run.rack = ids.slice(); load(); }, debugFeed: smi => { run.feed = P.salt(P.modelOf(smi)); run.brief = 'plain'; run.kin = P.kinOf(smi); run.quota = P.runQuota(run, smi, 'plain'); load(); },
     openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
