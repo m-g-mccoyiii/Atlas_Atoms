@@ -128,6 +128,7 @@ function build(id, T, grp, tint, extra) {
     const mid = cs(S2 * 0.62), big = cs(S2);
     g.userData.report = () => { const o = {}; [['speck', sp], ['half', mid], ['ready', big]].forEach(q => { const b = meas(q[1], g); o[q[0]] = { r: +b.r.toFixed(2), y0: +b.y0.toFixed(2), y1: +b.y1.toFixed(2), ok: b.r <= 0.84 && b.y0 >= 0.14 && b.y1 <= 2.2 }; }); return o; };
     g.userData.set = (f, st) => { f = Math.max(0, Math.min(1, f)); st = st == null ? (f < 0.34 ? 0 : f < 1 ? 1 : 2) : st; const h = 0.05 + f * 1.8; lq.scale.y = h; lq.position.y = 0.17 + h / 2; sf.position.y = lv.position.y = 0.17 + h; lq.visible = sf.visible = lv.visible = f > 0.001; sp.visible = st === 0; mid.visible = st === 1; big.visible = st === 2; g.userData.fill = f; g.userData.stage = st; };
+    g.userData.big = big; g.userData.mid = mid;   // (builder 14) the page moves the creature inside its jar
     g.userData.set(fill, stage); if (at) g.position.set(at, 0, 0); grp.add(g); return g;
   };
   const B = {
