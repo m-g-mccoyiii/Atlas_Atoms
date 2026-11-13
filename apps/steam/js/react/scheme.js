@@ -456,6 +456,7 @@ function start(app) {
   // whole where the line passes through it; short arms are groups that stand off their atom; long arms and side rings hang outside. Positions
   // are kept in the frame of the start end, so nothing that has not changed moves when the far end grows or shrinks. A bond made across the
   // fold (a rung) is left out of the layout and drawn as a long bond from row to row.
+  const CAGE3D = (() => { try { return new URLSearchParams(root.location.search).get('cage') === '1'; } catch (e) { return false; } })();   // ?cage=1: cages drawn from their shape in space with depth cues (a trial; not good enough yet, so off)
   const FL = { L: 1.55, DX: 1.36, ZA: 0.4, RG: 5.0, LEAN: -0.3 };
   // how far apart two atoms that are not bonded must stand, in the molecule's own units, so that their balls never touch on screen
   const radOf = a => BALL(a.el) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1), apartOf = (a, b) => Math.max(1.2, 1.12 * (radOf(a) + radOf(b)) + 0.12);
@@ -496,7 +497,19 @@ function start(app) {
       // a cage or a crowded ring system cannot be drawn ring by ring: when the result still has atoms on each other or bonds off their length, the body is
       // spread out instead, every pair of atoms drawn toward a distance that grows with how many bonds lie between them (a flat net, bonds may cross, balls never touch)
       { const bad = () => { for (const w of cs) { const d = Math.hypot(pts[w[0]].x - pts[w[1]].x, pts[w[0]].z - pts[w[1]].z); if (d > FL.L * 1.14 || d < FL.L * 0.8) return true; } for (const w of rp) { if (Math.hypot(pts[w[0]].x - pts[w[1]].x, pts[w[0]].z - pts[w[1]].z) < w[2] - 0.12) return true; } return false; };
-        if (n >= 5 && bad()) { const gd = bd.atoms.map(() => new Array(n).fill(99)), ixb = new Map(); bd.atoms.forEach((a, i) => ixb.set(a, i)); for (let i = 0; i < n; i++) { gd[i][i] = 0; const q = [i]; for (let qi = 0; qi < q.length; qi++) { const u = q[qi]; cadj.get(bd.atoms[u]).forEach(b => { const v = ixb.get(b); if (v != null && gd[i][v] > gd[i][u] + 1) { gd[i][v] = gd[i][u] + 1; q.push(v); } }); } }
+        let done3 = false;
+        if (CAGE3D && n >= 5 && bad()) { const P3 = bd.atoms.map(a => at.get(a)); let mx = 0, my = 0, mz = 0; P3.forEach(q => { mx += q.x; my += q.y; mz += q.z; }); mx /= n; my /= n; mz /= n; const Q = P3.map(q => [q.x - mx, q.y - my, q.z - mz]);
+          const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; Q.forEach(q => { for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) C[i][j] += q[i] * q[j]; });
+          const mul = v => [C[0][0] * v[0] + C[0][1] * v[1] + C[0][2] * v[2], C[1][0] * v[0] + C[1][1] * v[1] + C[1][2] * v[2], C[2][0] * v[0] + C[2][1] * v[1] + C[2][2] * v[2]], nrm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }, dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+          let e1 = nrm([1, 0.3, 0.2]); for (let it = 0; it < 40; it++) e1 = nrm(mul(e1)); let e2 = nrm([0.2, 0.4, 1]); for (let it = 0; it < 40; it++) { let v = mul(e2); const d1 = dot(v, e1); v = [v[0] - d1 * e1[0], v[1] - d1 * e1[1], v[2] - d1 * e1[2]]; e2 = nrm(v); }
+          const e3 = nrm([e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]), dep = Q.map(q => dot(q, e3)), dlo = Math.min.apply(null, dep), dhi = Math.max.apply(null, dep);
+          if (dhi - dlo > 0.8) { const raw = Q.map((q, i) => ({ x: dot(q, e1) + 0.42 * dep[i], z: dot(q, e2) + 0.3 * dep[i] })); let bl = 0; cs.forEach(w => { bl += Math.hypot(raw[w[0]].x - raw[w[1]].x, raw[w[0]].z - raw[w[1]].z); }); const k3 = FL.L / Math.max(0.3, bl / Math.max(1, cs.length)) * 1.08; raw.forEach((q, i) => { pts[i].x = q.x * k3; pts[i].z = q.z * k3; });
+            const home = pts.map(q => ({ x: q.x, z: q.z }));
+            for (let it = 0; it < 220; it++) { cs.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const t = d > FL.L * 1.16 ? FL.L * 1.16 : d < FL.L * 0.82 ? FL.L * 0.82 : d; if (t === d) return; const f = (d - t) / d * 0.5; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; });
+              rp.forEach(w => { const A = pts[w[0]], B = pts[w[1]]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); const t = w[2] - 0.06; if (d >= t) return; if (d < 1e-3) { dx = Math.cos(w[0] * 1.3 + w[1]); dz = Math.sin(w[0] * 1.3 + w[1]); d = 1; } const f = (d - t) / d * 0.5; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; });
+              if (it < 180) pts.forEach((q, i) => { q.x += (home[i].x - q.x) * 0.04; q.z += (home[i].z - q.z) * 0.04; }); }
+            bd.depth = new Map(); bd.atoms.forEach((a, i) => bd.depth.set(a, (dep[i] - dlo) / (dhi - dlo))); done3 = true; } }
+        if (!done3 && n >= 5 && bad()) { const gd = bd.atoms.map(() => new Array(n).fill(99)), ixb = new Map(); bd.atoms.forEach((a, i) => ixb.set(a, i)); for (let i = 0; i < n; i++) { gd[i][i] = 0; const q = [i]; for (let qi = 0; qi < q.length; qi++) { const u = q[qi]; cadj.get(bd.atoms[u]).forEach(b => { const v = ixb.get(b); if (v != null && gd[i][v] > gd[i][u] + 1) { gd[i][v] = gd[i][u] + 1; q.push(v); } }); } }
           const tg = g => (g <= 1 ? FL.L : g === 2 ? FL.L * 1.72 : FL.L * (1.72 + 0.8 * (g - 2)));
           for (let it = 0; it < 400; it++) { const soft = it < 320; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const g = gd[i][j], A = pts[i], B = pts[j]; let dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz); if (d < 1e-3) { dx = Math.cos(i * 1.3 + j); dz = Math.sin(i * 1.3 + j); d = 1; } let t, k; if (g <= 1) { t = FL.L; k = 0.5; } else if (soft) { t = tg(g); k = 0.5 / (g * g); } else { t = Math.max(apartOf(bd.atoms[i], bd.atoms[j]) + 0.15, 1.45); if (d >= t) continue; k = 0.5; } const f = (d - t) / d * k; A.x += dx * f; A.z += dz * f; B.x -= dx * f; B.z -= dz * f; } } } }
       // the new shape keeps the handedness the ring had on the page before (it is never flipped over between two drawings): compare the turn of its first ring
@@ -558,7 +571,7 @@ function start(app) {
     hd.forEach((list, pa) => { const P0 = pos.get(pa); if (!P0) return; let mx = 0, mz = 0, n = 0; nb.get(pa).forEach(q => { const p = pos.get(q); if (p) { mx += p.x; mz += p.z; n++; } }); const dx = n ? P0.x - mx / n : 0, dz = n ? P0.z - mz / n : -1, l = Math.hypot(dx, dz) || 1, d = { x: dx / l, z: dz / l };
       list.forEach((h, k) => { const dd = rot(d, list.length === 1 ? 0 : (k - (list.length - 1) / 2) * 1.1); at.get(h).set(P0.x + dd.x * hlen.get(h), y0, P0.z + dd.z * hlen.get(h)); }); });
     at.fold = null; at.flip = null; at.unf = null;
-    return { f, rows, rk, rungSet: rungs, bodyOf };
+    const depth = new Map(); bodies.forEach(bd => { if (bd.depth) bd.depth.forEach((d, a) => depth.set(a, d)); }); return { f, rows, rk, rungSet: rungs, bodyOf, depth };
   }
   // the box of what is drawn, with the atoms' own radii, in the molecule's units
   function drawnBox(m) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; m.balls.forEach((b, a) => { const p = m.at.get(a); if (!p) return; const r = (b.R || 0.4) + 0.1; x0 = Math.min(x0, p.x - r); x1 = Math.max(x1, p.x + r); z0 = Math.min(z0, p.z - r - 0.3); z1 = Math.max(z1, p.z + r); }); return { x0, x1, z0, z1, w: x1 - x0, d: z1 - z0, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2 }; }
@@ -583,7 +596,8 @@ function start(app) {
     { const arch = flat ? archesOf(model) : []; if (flat && !caged(model, arch)) tidy(model, at, skip, beads, seed, arch); }
     let fl = null; if (flat && !beads.length && !NOFOLD) { try { fl = foldLay(model, at, skip); } catch (e) { fl = null; } }
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
-    const radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1));
+    const dOf = a => (fl && fl.depth && fl.depth.has(a) ? fl.depth.get(a) : null), radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : BALL(a.el) * (pale.has(a) ? 0.5 : 1) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1) * (dOf(a) == null ? 1 : 0.78 + 0.3 * dOf(a)));
+    if (fl && fl.depth && fl.depth.size) fl.depth.forEach((d, a) => { const q = at.get(a); if (q) q.y += 1.1 * d; });
     at.forEach((p, a) => { if (!skip.has(a)) low = Math.min(low, p.y - radius(a)); });
     at.forEach(p => { p.y += 0.5 - low; });
     model.atoms.forEach(a => {
@@ -598,7 +612,7 @@ function start(app) {
     model.bonds.forEach(bd => {
       if (!balls.has(bd.a) || !balls.has(bd.b)) return;
       const far = pale.has(bd.a) && pale.has(bd.b), parts = []; (bd.order === 1 ? [0] : bd.order >= 3 ? [-1, 0, 1] : [-0.5, 0.5]).forEach(f => [0, 1].forEach(h => parts.push({ f, h, mesh: add(CYL, far ? paleMat : stickMat((h ? bd.b : bd.a).el), 0, 0, 0, grp) })));
-      sticks.push({ a: bd.a, b: bd.b, r: (bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1), parts });
+      { const da = dOf(bd.a), db = dOf(bd.b), dm = da == null || db == null ? null : (da + db) / 2; if (dm != null && dm < 0.34) parts.forEach(pt => { pt.mesh.material = paleMat; }); sticks.push({ a: bd.a, b: bd.b, r: (bd.order > 1 ? 0.06 : 0.09) * (far ? 0.6 : 1) * (dm == null ? 1 : 0.62 + 0.55 * dm), parts }); }
     });
     scene.add(grp);
     const m = { group: grp, at, model, balls, sticks, beads, flat, hover: [], marks: [], hot: [] };
