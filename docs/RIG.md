@@ -8,6 +8,39 @@ The rules of a round were changed later the same day (bounds, a budget of uses, 
 
 One part for each of the owner's answers of the morning of 13 November, written as each was finished (so part 5 is first). Each ends with the choices left for the owner.
 
+### 4. Chlorine in the first rounds
+
+**What was wrong.** No molecule of rounds 1 and 2 held a chlorine at all (0 of 64 each), and round 3 had two. The reflex was never the fault: in the reference chemistry a Cl closes a ring with an OH, NH2 or SH three to five carbons away, and four of the six starting reagents make such a partner (hydrate and grow an OH, thiolene an SH, ritter an NH2). On a molecule that holds a chlorine, `close` fires on about 9 lines in 10.
+
+**What was built** (`path.js`: `FEED_CL`, `FEED_CL_ROWS`, `RULE.clEarly`; the simulator deals the same way). The reflex and the six reagents are untouched.
+
+- 18 chlorine molecules, six for each of rounds 1 to 3, made from the rounds' own molecules by putting a Cl on a plain carbon (`sweep_chlorine.py make` tried every such place and kept those where the reflex is set off by the player's reagents, not by itself). Four of each six carry two Cl, so chlorine can act on two pages of a round.
+- In rounds 1 to 3 each dealt molecule is one of these with chance 0.22, in every length of run. They are in no other pool, so nitrogen and sulfur molecules are dealt as before.
+
+**Measured, 1,000 runs a player** (hands in which the reflex fired, of 100; a hand is one page):
+
+| | Round 1 | Round 2 | Round 3 | Round 4 |
+|---|---|---|---|---|
+| Before, any player | 0 | 0 | 0.5 | 2.2 |
+| First game (three rounds), novice | 11.6 | 11.9 | 10.9 | |
+| First game, casual | 11.5 | 11.1 | 13.5 | |
+| First game, careful | 11.2 | 11.2 | 13.6 | |
+| Long run, casual | 10.6 | 10.0 | 12.3 | 2.2 |
+
+That is 1 hand in 7 to 1 in 10, about 1 in 9. A chlorine is on 21 to 30 molecules in 100. Of all reflex steps in a first game, chlorine's share went from 0 to 9 (careful) to 16 (novice) in 100; nitrogen's is 7 to 12 and sulfur's 1 to 6, as before.
+
+The first game is no easier or harder for it: wins of 100 were 24, 54, 80 (novice, casual, careful) and are 27, 57, 81.
+
+**Against the reference chemistry.** Each of the 18 molecules, twelve lines of three in the game's own round (`cl13.js`, `sweep_chlorine.py game`): 216 turns, the same count of `close` in all 216 (239 steps each side), the same reflexes in the same order in 214, the same molecule after in 213.
+
+**Not done.** After round 3 chlorine falls back to 6 or 7 molecules in 100 and 1 hand in 45, which is against "rarer elements become more common as the rounds get deeper". The same tool can make chlorine molecules for rounds 4 to 9; that moves the yields of the wall rounds, so the pass marks of part 1 would have to be fitted again. The page's pictures of these molecules were not looked at.
+
+**Choices for the owner**
+
+1. How much chlorine early. (a) As built: about 1 molecule in 5, the reflex in 1 hand in 9. (b) More: 1 molecule in 4, about 1 hand in 8 (`RULE.clEarly` 0.25). (c) Less.
+2. After round 3. (a) As built: it thins out to 1 molecule in 15. (b) Chlorine molecules for rounds 4 to 9 too, rising with the rounds, and the marks fitted again.
+3. Two chlorines on a molecule. (a) As built: four of each six. (b) One only, so it acts once a round.
+
 ### 5. Agreement with the reference chemistry: back to 126 of 150
 
 **The cause.** The game's chemistry did not change. The fall was in the test. The fold commit (e2e9c8a, 12 November) made a round hold the twelve across-the-fold reflexes whenever `RULE.holdAll` is set, and the parity job sets it. The 150 reference turns hold only the thirteen near reflexes (the reference's whole-turn function knows no fold), so the game took across steps the reference could not take.
@@ -24,6 +57,8 @@ One part for each of the owner's answers of the morning of 13 November, written 
 **The 24 turns that are not exact.** 17 take the same steps at another, equal place. 5 differ in steps but the game's answer is one the reference gives when equal places are taken another way (turns 8, 23, 33, 49, 70). 2 (turns 52 and 108) are not proven at the search limit of 4,000 states; at 60,000 both are inside the reference's set. No real difference is left.
 
 **Not done.** The across reflexes have no whole-turn check against the reference; their own check is single steps (`foldpar.js`, 876 of 876 on 12 November). Which commit after the fold moved 86 to 93 was not looked for.
+
+**The reviewer** (fresh, read the code and ran the compare again): the cause and the counts hold; all 22 ties pass the strict test. Three things to know. A turn that mixes across and near reflexes is checked nowhere. Inside a tie what comes off the molecule is not compared, and it differs in turns 8, 33, 49 and 108. The job lives under `.claude/`, which git does not keep, so the repair is on this machine only.
 
 **Choices for the owner**: none; this was a repair.
 

@@ -53,7 +53,7 @@ class Hom(SC.Mod):
     def before_page(self, G, R, rng, player, hand):
         R.x['a0'] = G.feat(R.smi)['atoms']
         R.x['hand'] = tuple(hand)
-        R.x['tp'] = False
+        R.x['tp_' + self.name] = False
         return None
 
     # --- what each creature answers -------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ class Hom(SC.Mod):
 
     # --- the flow ----------------------------------------------------------------------------------------------------
     def _ok(self, R):
-        return bool(R.rec) and not R.x.get('tp') and (self.last_page or R.page < R.pages)
+        return bool(R.rec) and not R.x.get('tp_' + self.name) and (self.last_page or R.page < R.pages)
 
     def after_page(self, G, R, rng, player):
         if not R.rec:
@@ -99,7 +99,7 @@ class Hom(SC.Mod):
             if not self.want(G, R, R2):
                 return
         self.apply(G, R)
-        R.x['tp'] = True
+        R.x['tp_' + self.name] = True
         R.x['tap'] = R.x.get('tap', 0) + 1
         if G.real:
             self.taps += 1
@@ -160,12 +160,18 @@ class Water(Hom):
 
 
 class Hydrogen(Hom):
+    """The chain floats over the page turn.  The bet (thirteenth): if the next page's own chain is shorter than the chain that
+    floated, the balloon pops and the yield is times POP."""
     name = 'h2'
     last_page = False
+    POP = 0.6
+    NEED = 3            # the page's chain must be this long to float
+    SAFE = 99           # a reader floats any chain it is lit for
+    peek_force = True   # a reader sees the pop before it lines up
 
     def lit(self, G, R):
         c = R.rec[-1]['circ']
-        return bool(c) and c[-1][0] == 'oxidize' and c[-1][1] > 0 and R.casc > 0
+        return bool(c) and c[-1][0] == 'oxidize' and c[-1][1] > 0 and R.casc >= self.NEED
 
     def food_now(self, G, R):
         return R.rec[-1]['off'].get('hydrogen', 0) >= 1
@@ -174,26 +180,38 @@ class Hydrogen(Hom):
         R.x['float'] = R.casc
 
     def want(self, G, R, R2):
-        return True
+        return R.casc <= self.SAFE
 
     def page_turn(self, G, R):
         f = R.x.pop('float', 0)
         if f:
             R.casc = f
+            R.x['floated'] = f
+
+    def passive(self, G, R):
+        f = R.x.pop('floated', 0)
+        if f and len(R.rec[-1]['chain']) < f:
+            R.E *= self.POP
+            R.x['popped'] = R.x.get('popped', 0) + 1
 
     def peek(self, G, R, rng):
-        # the gain comes on the next page: a reader counts the chain it carries over as half a step of yield each
-        if not self._ok(R) or not self.lit(G, R):
+        if not R.rec:
             return None
-        v = G.value(R)
-        return (v[0], int(v[1] * (1 + 0.1 * R.casc)))
+        R2 = R.copy()
+        R2.rec = list(R.rec)
+        self.passive(G, R2)
+        v = G.value(R2)
+        if self._ok(R2) and self.lit(G, R2) and self.want(G, R2, R2):
+            # the gain comes on the next page: a reader counts the chain it carries over as a tenth of the yield a step
+            v = (v[0], int(v[1] * (1 + 0.1 * R2.casc)))
+        return v
 
 
 class DryIce(Hom):
     name = 'co2'
-    K = 1.3
+    K = 1.36            # three bottles shut: 2.5 times
     MOST = 3
-    LEAST = 2
+    LEAST = 3
 
     def shut(self, R):
         rack = R.x.get('rack') or ()
@@ -222,8 +240,8 @@ class DryIce(Hom):
 
 class Acid(Hom):
     name = 'acid'
-    K = 1.6
-    LOSS = 1
+    K = 2.0
+    LOSS = 2
 
     def lit(self, G, R):
         return R.x.get('a0', 0) - R.rec[-1]['F']['atoms'] >= self.LOSS
@@ -233,29 +251,34 @@ class Acid(Hom):
 
 
 class Wood(Hom):
+    """Any page (thirteenth): a reagent lined up found nothing to act on.  He drinks it and pours every dealt reagent that was
+    not lined up, left to right as dealt, and his pours spend no use."""
     name = 'wood'
+    K = 1.5             # yield times this when at least one of his pours lands
 
     def rest(self, R):
         ln = set(line_of(R.rec[-1]))
         return [r for r in R.x.get('hand', ()) if r not in ln and (R.left is None or R.left.get(r, 0) > 0)]
 
     def dud(self, R):
-        c = R.rec[-1]['circ']
-        return len(c) >= 3 and c[-1][0] != 'finish' and c[-1][1] == 0
+        c = R.rec[-1]['circ'][:3]
+        return len(c) >= 3 and c[0][0] != 'finish' and c[0][1] == 0       # the FIRST reagent lined up found nothing
 
     def food_now(self, G, R):
         return any(c[1] == 0 for c in R.rec[-1]['circ'])
 
     def lit(self, G, R):
-        return self.dud(R) and not R.over and R.page >= R.pages and len(self.rest(R)) >= 1      # the round's last page only
+        return self.dud(R) and not R.over and len(self.rest(R)) >= 1
 
     def apply(self, G, R):
-        more_circles(G, R, self.rest(R))
-
-    def want(self, G, R, R2):
-        # a reader lets him pour on the round's last page, or when every bottle he would pour keeps a use afterwards
-        spare = R.left is None or R.page >= R.pages or all(R.left.get(r, 0) >= 2 for r in self.rest(R))
-        return spare and G.value(R2) > G.value(R)
+        rest = self.rest(R)
+        if R.left is not None:
+            for r in rest:
+                R.left[r] = R.left.get(r, 0) + 1
+        n0 = len(R.rec[-1]['circ'])
+        more_circles(G, R, rest)
+        if any(c[1] > 0 for c in R.rec[-1]['circ'][n0:]):
+            R.E *= self.K
 
 
 class Salt(Hom):
@@ -274,18 +297,31 @@ class Salt(Hom):
 
 
 class Slime(Hom):
+    """Two or three of the page's reagents each land and set off a reflex of their own (thirteenth: two is enough).  He sticks
+    the chains into one: yield times K2 for two, K for three.  The cost: the bottles he stuck are shut on the next page."""
     name = 'slime'
     K = 2.5
+    K2 = 1.5
+
+    def own(self, R):
+        return [x[0] for x in R.rec[-1]['circ'][:3] if x[0] != 'finish' and x[1] > 0 and x[2] > 0]
 
     def lit(self, G, R):
-        c = R.rec[-1]['circ']
-        return len(c) >= 3 and all(x[0] != 'finish' and x[1] > 0 and x[2] > 0 for x in c[:3])
+        return len(self.own(R)) >= 2
 
     def food_now(self, G, R):
-        return sum(1 for x in R.rec[-1]['circ'][:3] if x[2] > 0) >= 2
+        return len(self.own(R)) >= 1
 
     def apply(self, G, R):
-        R.E *= self.K
+        own = self.own(R)
+        R.E *= self.K if len(own) >= 3 else self.K2
+        R.x['stuck'] = tuple(sorted(set(own)))
+
+    def before_page(self, G, R, rng, player, hand):
+        for r in R.x.pop('stuck', ()):
+            if r in hand and len(hand) > 3:
+                hand.remove(r)
+        return Hom.before_page(self, G, R, rng, player, hand)
 
 
 class Ammonia(Hom):
@@ -305,9 +341,9 @@ class Ammonia(Hom):
 
 class Seedling(Hom):
     name = 'seedling'
-    K = 1.2
-    GAIN = 5
-    WILT = 0.8
+    K = 1.4             # 1.4, then 1.8, then 2.2 for each page in a row
+    GAIN = 8
+    WILT = 0.7
     peek_force = True         # a reader sees the wilt before it lines up
 
     def peek(self, G, R, rng):
@@ -330,7 +366,8 @@ class Seedling(Hom):
         return self.grew(R) >= self.GAIN and not R.x.get('wilted_now')
 
     def passive(self, G, R):
-        if self.grew(R) < 0 and R.x.get('streak', 0) > 0 and R.x.get('wpage') != R.page:
+        # thirteenth: once it has been tapped it must be fed every page: a page that grows less than GAIN and it wilts
+        if self.grew(R) < self.GAIN and R.x.get('streak', 0) > 0 and R.x.get('wpage') != R.page and R.x.get('spage') != R.page:
             R.E *= self.WILT
             R.x['streak'] = 0
             R.x['wpage'] = R.page
@@ -338,13 +375,17 @@ class Seedling(Hom):
     def apply(self, G, R):
         n = R.x.get('streak', 0) + 1
         R.x['streak'] = n
+        R.x['spage'] = R.page
         R.E *= 1 + (self.K - 1) * n
 
 
 class Brimstone(Hom):
+    """Sulfur went on the molecule this page (thiolene lands, or a cap), not on the last page.  Hellfire: the round ends now,
+    whatever is left of the task is burned (it counts as met), and the yield is times K after page one, K2 after page two.
+    The pages not played are the price."""
     name = 'brimstone'
-    K = 3.0
-    K2 = 2.0
+    K = 1.5
+    K2 = 1.25
     last_page = False
 
     def lit(self, G, R):
@@ -353,14 +394,16 @@ class Brimstone(Hom):
 
     def apply(self, G, R):
         R.E *= self.K if R.page <= 1 else self.K2
+        R.x['burnt'] = True
         R.over = True
 
     def want(self, G, R, R2):
-        # hellfire is taken only when it turns a round not yet cleared into a cleared one
-        if not (R.spec and G.met(R2)):
-            return False
+        # a reader burns when that clears the round: the yield then passes the mark, and either the task is not met yet (it is
+        # burned) or the yield was short without the fire
         nd = G.need_abs(R)
-        return nd > 0 and made(R) < nd <= made(R2)
+        if nd <= 0:
+            return bool(R.spec) and not G.met(R) and R.page >= 2
+        return made(R2) >= nd and (not G.met(R) or made(R) < nd)
 
 
 HOMS = {c.name: c for c in (Water, Hydrogen, DryIce, Acid, Wood, Salt, Slime, Ammonia, Seedling, Brimstone)}

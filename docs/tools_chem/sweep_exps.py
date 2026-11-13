@@ -305,7 +305,6 @@ EXPERIMENTS['diff'] = diff
 NEED12 = [0.74, 0.90, 0.78, 1.36, 2.57, 1.07, 1.25, 1.59, 1.35, 0.96, 0.60, 0.27]
 T12 = {'need_par': NEED12, 'spec_scale_long': {1: 0.7, 2: 0.5}, 'aim_par': True}
 assert SC.NEED_PAR is None or SC.NEED_PAR == NEED12, 'path.js RULE.needPar and NEED12 differ'
-assert SC.SPEC_SCALE_LONG is None or SC.SPEC_SCALE_LONG == T12['spec_scale_long'], 'path.js RULE.specScaleLong differs'
 
 
 def final(arg='median,20000'):
@@ -379,7 +378,7 @@ EXPERIMENTS['hom1'] = hom1
 EXPERIMENTS['hom23'] = hom23
 
 # --- the sign (ruling AP 4; path.js SIGN) -------------------------------------------------------------------------------
-SIGN = {'lift': 0.2, 'bar': 1.12, 'tasks': 1.25, 'takes': ['pair4', 'tasks', 'uses', 'pair1', 'hand']}
+SIGN = {'lift': 0.2, 'bar': 1.15, 'tasks': 1.25, 'takes': ['pair4', 'tasks', 'uses', 'pair1', 'hand']}
 
 
 def sign_params(level, opt='takes'):
@@ -490,3 +489,77 @@ if __name__ == '__main__':
     for name in which:
         st = SR.run(name, EXPERIMENTS[name](), workers)
         print('DONE', name, json.dumps(st), flush=True)
+
+
+# --- the thirteenth measure, part 1: a gentle start and a wall at the end (ruling AR) ------------------------------------
+GENTLE = {
+    'g0': {'spec_scale_long': {1: 0.7, 2: 0.5}},
+    'g1': {'spec_scale_long': {1: 0.3, 2: 0.35, 3: 0.7}, 'spec_ban_long': {1: ['cut_down', 'double_bonds', 'unsaturation', 'lean_turns'], 2: ['end_CO', 'off_hydrogen']}},
+}
+
+
+def gentle(arg='g1,median,2000'):
+    """Every round of twelve played, cleared or not, with every round written out in full (molecule, spec met, share of the
+    spec reached, yield, the reflexes), as the game plays a long run with nothing unlocked.  arg: variant,player,runs[,seed letter[,length]]."""
+    ps = arg.split(',')
+    var, pl, n = ps[0], ps[1], int(ps[2])
+    sd = ps[3] if len(ps) > 3 else 'g'
+    ln = ps[4] if len(ps) > 4 else 'postdoc'
+    lt = '' if ln == 'postdoc' else '_' + ln
+    return [{'id': 'gt_%s_%s_%s%s_%d' % (var, pl, sd, lt, i), 'rack': START, 'length': ln, 'player': pl, 'params': dict(GENTLE[var]), 'full': True,
+             'seeds': ['%s/%d' % (sd, i * 10 + k) for k in range(10)], 'tag': '%s%s/%s' % (var, lt, pl)} for i in range(n // 10)]
+
+
+GENTLE['g3'] = dict(GENTLE['g1'])        # as g2, the chlorine molecules dealt by RULE.clEarly alone (0.22)
+GENTLE['g2'] = dict(GENTLE['g1'])        # the same rule, run after the chlorine molecules went into rounds 1 to 3 (part 4)
+EXPERIMENTS['gentle'] = gentle
+
+
+# the clear rule as the game has it now (path.js RULE.needParBy, specScaleLong, specBanByLong)
+T13 = {'need_par': SC.NEED_PAR_BY, 'spec_scale_long': SC.SPEC_SCALE_LONG, 'spec_ban_long': SC.SPEC_BAN_LONG, 'aim_par': True}
+
+
+def final13(arg='median,6000,doctorate'):
+    """A long run with nothing unlocked under the game's rule as it stands, stopped at the first round not cleared, on deals the
+    marks were not fitted on.  arg: player,runs,length[,key=value;...]."""
+    ps = arg.split(',')
+    pl, n, ln = ps[0], int(ps[1]), ps[2]
+    par = dict(T13)
+    tag = '%s/%s' % (ln, pl)
+    for x in ps[3:]:
+        k, v = x.split('=', 1)
+        par[k] = json.loads(v.replace(';', ','))
+        tag += '/' + x
+    return [{'id': 'f13_%s_%d' % (tag, i), 'rack': START, 'length': ln, 'player': pl, 'stop': True, 'params': par, 'full': True,
+             'seeds': ['v/%d' % (i * 10 + k) for k in range(10)], 'tag': tag} for i in range(n // 10)]
+
+
+EXPERIMENTS['final13'] = final13
+
+
+def hom13(arg='300'):
+    """Thirteenth: each creature alone under the game's rule as it stands (T13), nine rounds, every round played, with the run
+    that holds none.  arg: runs[,player[,names;names...]] (a name may be a pair: wood+ammonia)."""
+    ps = arg.split(',')
+    n = int(ps[0])
+    pl = ps[1] if len(ps) > 1 else 'median'
+    sets = [()] + [(h,) for h in HOMS2]
+    if len(ps) > 2:
+        sets = [tuple(x.split('+')) if x != 'none' else () for x in ps[2].split(';')]
+    jobs = hom_jobs(sets, n, player=pl, seed='k', extra=T13)
+    for j in jobs:
+        j['id'] = 'h13' + j['id']
+    return jobs
+
+
+def hompair13(arg='40'):
+    """Thirteenth: all 45 pairs, each creature with its own tap on a page.  arg: runs a pair."""
+    import itertools
+    jobs = hom_jobs(list(itertools.combinations(HOMS2, 2)), int(arg), seed='k', extra=T13)
+    for j in jobs:
+        j['id'] = 'h13' + j['id']
+    return jobs
+
+
+EXPERIMENTS['hom13'] = hom13
+EXPERIMENTS['hompair13'] = hompair13

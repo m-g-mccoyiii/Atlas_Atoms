@@ -113,8 +113,29 @@ _sb = re.search(r'RULE.specBanBy = (\{.*?\});', _JS)
 SPEC_BAN_BY = {int(k): re.findall(r"'(\w+)'", v) for k, v in re.findall(r'(\d): \[(.*?)\]', _sb.group(1))} if _sb else {}
 _np = re.search(r'RULE.needPar = \[(.*?)\]', _JS)
 NEED_PAR = [float(x) for x in _np.group(1).split(',')] if _np else None      # the game's pass marks (the simulator applies them only when asked: params need_par)
+_nb = re.search(r'RULE\.needParBy = \{(.*?)\};', _JS)
+NEED_PAR_BY = {k: [float(x) for x in v.split(',')] for k, v in re.findall(r'(\w+): \[(.*?)\]', _nb.group(1))} if _nb else None   # the pass marks by run length
+_sbl = re.search(r'RULE\.specBanByLong = \{(.*?)\};', _JS)
+SPEC_BAN_LONG = {int(k): re.findall(r"'(\w+)'", v) for k, v in re.findall(r'(\d): \[(.*?)\]', _sbl.group(1))} if _sbl else None
+
+
+def need_of(np_, length, rnd):
+    """The pass mark of a round: np_ a number, a list by round, or {length: list} (path.js needParBy; a length not listed has none)."""
+    if not np_:
+        return 0.0
+    if isinstance(np_, dict):
+        np_ = np_.get(length)
+        if not np_:
+            return 0.0
+    return float(np_[min(rnd, len(np_)) - 1]) if isinstance(np_, (list, tuple)) else float(np_)
+
+
 _sl = re.search(r'RULE.specScaleLong = \{(.*?)\}', _JS)
 SPEC_SCALE_LONG = {int(k): float(v) for k, v in re.findall(r'(\d): ([\d.]+)', _sl.group(1))} if _sl else None
+_ce = re.search(r'RULE\.clEarly = \[(.*?)\]', _JS)
+CL_EARLY = [float(x) for x in _ce.group(1).split(',')] if _ce else None      # rounds 1 to 3: the chance a dealt molecule is a chlorine one
+_fc = re.search(r'const FEED_CL = \{(.*?)\};', _JS)
+FEED_CL = {int(k): re.findall(r"'([^']+)'", v) for k, v in re.findall(r'(\d): \[(.*?)\]', _fc.group(1))} if _fc else {}
 _HETRE = re.compile(r'[^CcOoHh0-9()=#\[\]@+\-/.%:]')
 _c = re.search(r'const CASC = \{ step: ([\d.]+), place: (\d+), row: ([\d.]+), mul: false, most: (\d+), old: ([\d.]+) \}', _JS)
 CASC = {'step': float(_c.group(1)), 'place': float(_c.group(2)), 'row': float(_c.group(3)), 'most': int(_c.group(4)), 'old': float(_c.group(5))}
@@ -212,6 +233,7 @@ DEFAULTS = dict(
     need_par=None,           # RULE.needPar: a round is cleared only when the yield also passes this share of the number to beat
                              #   (a list by round, the last entry for every later round; None: the spec alone clears a round)
     pair_from=6,             # RULE.pairFrom: two tasks from this round (tiers past the bachelor's)
+    spec_ban_long=None,      # RULE.specBanByLong: {round: [spec names not set]} in the runs past the bachelor's
     spec_scale_long=None,    # RULE.specScaleLong: {round: N of the table times this} in the runs past the bachelor's
     spec_shift=None,         # RULE.specShiftLong: {round: change of the spec's target share} for the runs past the bachelor's
     aim_par=False,           # the player counts the yield still missing to the pass mark as part of what it plays for
@@ -910,7 +932,7 @@ class Game:
         np_ = self.p.get('need_par')
         if not np_ or R.tierNo == 1:        # the bachelor's keeps the task alone (path.js needParB is null)
             return 0.0
-        nd = np_[min(R.rnd, len(np_)) - 1] if isinstance(np_, (list, tuple)) else float(np_)
+        nd = need_of(np_, (getattr(self, 'run', None) or {}).get('length'), R.rnd)
         return nd * quota_of(R.rnd, R.brief, self.p.get('par_mul') or 1.0) / (self.p.get('yield_mul') or 1.0)
 
     def value(self, R):
@@ -957,12 +979,16 @@ class Game:
         raise ValueError(mode)
 
     def prog(self, R, pages):
+        if R.x.get('burnt'):
+            return float(len(R.spec))        # brimstone: the task was burned, it counts as met
         t = 0.0
         for name, n in R.spec:
             t += min(self.spec_value(name, R.f0, pages), n) / float(n)
         return round(t, 9)
 
     def met(self, R):
+        if R.x.get('burnt'):
+            return bool(R.spec)
         return bool(R.spec) and all(self.spec_value(name, R.f0, R.rec) >= n for name, n in R.spec)
 
     # --- lines and players ----------------------------------------------------------------------------------------
@@ -1180,6 +1206,7 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
         hand = nxt
     R.x['total'] = G.end(R)
     R.x['met'] = G.met(R) if R.spec else None
+    R.x['prog'] = round(G.prog(R, R.rec) / max(1, len(R.spec)), 4) if R.spec else None      # share of the spec reached, 0 to 1
     R.x['steps'] = steps_page
     R.x['kinds'] = dict(kinds)
     R.x['dealt'] = dict(dealt)
@@ -1216,6 +1243,9 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
     ban = (p['spec_ban'] if p['spec_ban'] is not None else SPEC_BAN) if tierNo == 1 else ()
     if tierNo == 1 and (p.get('spec_ban_by') if p.get('spec_ban_by') is not None else SPEC_BAN_BY):     # RULE.specBanBy
         bb = p['spec_ban_by'] if p.get('spec_ban_by') is not None else SPEC_BAN_BY
+        ban = tuple(ban) + tuple(bb.get(rnd, bb.get(str(rnd), ())))
+    if tierNo != 1 and p.get('spec_ban_long'):                                  # RULE.specBanByLong: the same in the runs past the bachelor's
+        bb = p['spec_ban_long']
         ban = tuple(ban) + tuple(bb.get(rnd, bb.get(str(rnd), ())))
     rnd_true, rnd = rnd, max(1, min(9, rnd))          # rounds past nine use round nine's specs (path.js POSTDOC)
     target = SPEC_TARGET[max(1, min(9, rnd))]
@@ -1329,7 +1359,7 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
 # a run
 # ---------------------------------------------------------------------------------------------------------------
 
-def deal_two(rnd, rng, extra=None, het=True):
+def deal_two(rnd, rng, extra=None, het=True, cl_early=True):
     """Two different molecules of the round: the pool with the game's chance, else the bank (path.js feedsFor, P_POOL).
     RULE.hetCurve (on in the game): each molecule is first decided to hold an element other than C, H, O or not, with the
     round's share, and is then drawn from the molecules of the round that fit.  Rounds past nine deal round nine's.
@@ -1338,7 +1368,13 @@ def deal_two(rnd, rng, extra=None, het=True):
     cv = het if isinstance(het, (list, tuple)) else HET_CURVE          # a list: another curve than the game's (RULE.hetCurve)
     hc = cv[min(len(cv), r9) - 1] if (het and cv) else None
     out = []
+    cl = CL_EARLY[rnd - 1] if (cl_early and CL_EARLY and 1 <= rnd <= len(CL_EARLY) and FEED_CL.get(rnd)) else 0
     while len(out) < 2:
+        if cl > 0 and rng.random() < cl:           # path.js RULE.clEarly: one of the round's chlorine molecules
+            left = [x for x in FEED_CL[rnd] if x not in out]
+            if left:
+                out.append(rng.choice(left))
+                continue
         use_pool = rng.random() < P_POOL[r9 - 1]
         pl, bk = FEED_POOL[r9], FEED_BANK[r9]
         if hc is not None:
@@ -1368,7 +1404,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
     hist = []
     out = {'seed': seed, 'length': length, 'player': player, 'rounds': [], 'cleared': 0, 'won': False}
     alive = True
-    run = G.run = {'gold': 0, 'spent': 0, 'uses': 0, 'spec_up': 1.0, 'debt': 0, 'player': player, 'n_rounds': n_rounds, 'at': []}
+    run = G.run = {'gold': 0, 'spent': 0, 'uses': 0, 'spec_up': 1.0, 'debt': 0, 'player': player, 'n_rounds': n_rounds, 'at': [], 'length': length}
     G.extra_key = ''
     for m in G.mods:
         m.run_start(G, run)
@@ -1381,7 +1417,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         het = G.p.get('het', True)
         if tierNo == 1 and het is True and G.p.get('het_b', HET_CURVE_B):
             het = G.p.get('het_b', HET_CURVE_B)
-        two = deal_two(r, rng, extra, het)
+        two = deal_two(r, rng, extra, het, G.p.get('cl_early', True))
         opts = [(s, spec_pick(G, s, r, rk, random.Random('run/%s/%d/spec%d' % (seed, r, i)), tierNo, hist, brief)) for i, s in enumerate(two)]
         if PLAYERS[player]['pick'] == 'random':
             smi, sp = opts[rng.randrange(2)]
@@ -1400,7 +1436,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
             total = int(round(total * G.p['yield_mul']))
         par = quota_of(r, brief, G.p.get('par_mul') or 1.0)
         np_ = G.p.get('need_par')
-        need = (np_[min(r, len(np_)) - 1] if isinstance(np_, (list, tuple)) else float(np_)) if (np_ and tierNo != 1) else 0.0
+        need = need_of(np_, length, r) if (np_ and tierNo != 1) else 0.0
         ok = bool(R.x['met']) and total >= need * par
         earned = 0
         if total >= par:
@@ -1410,7 +1446,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         run['gold'] += earned
         row = {'r': r, 'mol': smi, 'brief': brief, 'spec': sp['parts'], 'fell': sp['fell'], 'met': bool(R.x['met']), 'ok': ok, 'total': total,
                'par': par, 'marks': sum(1 for k in MARKS if total >= nice(par * k)), 'gold': run['gold'], 'steps': R.x['steps'], 'kinds': R.x['kinds'],
-               'lines': R.x.get('lines', ()), 'dealt': R.x['dealt'], 'used': R.x['used'], 'alive': alive, 'end': R.smi, 'tap': R.x.get('tap', 0),
+               'lines': R.x.get('lines', ()), 'dealt': R.x['dealt'], 'used': R.x['used'], 'alive': alive, 'end': R.smi, 'tap': R.x.get('tap', 0), 'prog': R.x.get('prog'),
                'dec': (R.x.get('dec_changed', 0), R.x.get('dec_pages', 0))}
         if logs:
             row['log'] = lg
