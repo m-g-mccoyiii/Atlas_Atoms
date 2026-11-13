@@ -26,7 +26,7 @@ The cause: a round's yield is three numbers multiplied (places, row, extra), and
 **The rule as built** (`path.js`: `FLAT`, `flat`, `made`; the simulator reads the same line). A round still makes places times row times extra. The yield is the square root of that product, scaled so 4,770 stays 4,770. Every multiplier in the game therefore counts at its square root: ten times the product is 3.2 times the yield.
 
 - The best line is the same line as before: the order of any two lines does not change. A long chain still beats a short one on every page.
-- The number to beat, the pass marks, the inspections' factors and the three marks above were moved by the same rule, so the same rounds are won and lost. The number to beat by round is now 4770, 5115, 5486, 5917, 7008, 8804, 9777, 10961, 11754. The pass marks of a nine-round run are 0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18 of it (six rounds: 0.36, 0.53, 0.39, 0.63, 1.26, 1.10).
+- The number to beat, the pass marks, the inspections' factors and the three marks above were moved by the same rule, so a round played the same way is won or lost as before. The simulated players do not play quite the same way (they weigh the yield still missing against the task, and that weighing moved): of the same deals, 26 runs in 1,000 of the casual player, 108 in 2,000 of the careful and 190 in 600 of the two-hand reader end at another round than before. The number to beat by round is now 4770, 5115, 5486, 5917, 7008, 8804, 9777, 10961, 11754. The pass marks of a nine-round run are 0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18 of it (six rounds: 0.36, 0.53, 0.39, 0.63, 1.26, 1.10).
 - The marks above the number to beat are 1.41, 2 and 2.83 times it (they were 2, 4, 8). OVERREACT is at 2.83.
 
 **What a long chain is worth now.** A round whose pages each set off three steps, six steps, ten steps, against a round with no chain: it was 3, 7 and 17 times; it is 1.7, 2.6 and 4.1 times.
@@ -55,6 +55,8 @@ A stronger flattening laid over the same runs (the cube root in place of the squ
 **What else moved, said plainly.**
 - A creature's multiplier is on the product, so "times 2.5" in `HOMUNCULI.md` now reads on the page as times 1.58. Its strength in wins is what it was. Parts 2 and 3 restate the creatures' numbers as the player reads them.
 - The sign's 1.2 times is on the yield as read, and the number to beat rises 1.15 times as read. On the product that is a little more than before (9 in 100 more against the mark at the first sign, not 4), so each lap is a little easier than the thirteenth measure said. Not measured again.
+- Four old pieces that raise the number to beat (the pact, the idol, the hourglass, the occult supplier) were moved to the square roots too (1.41, 1.22, 1.12, 1.22), so each costs what it did; the pact's "times 3" reads as times 1.73.
+- The page's own heat and overshoot (in `scheme.js`, not the rules' file) still scale by the old ratios of 2, 4, 8.
 - Instruments that add to row or extra count at the square root like everything else. Part 2 measures them as they now are.
 
 **Checked in the game.** One nine-round run of the careful player in the game's own rig ran through under the new rule; the sign's 73 tests and the ladder job pass. The simulator's runs above read `path.js` itself.
