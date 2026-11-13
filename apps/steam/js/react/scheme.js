@@ -98,7 +98,7 @@ const PGE = pageE(); if (PGE.on) STEP.x += PGE.sx;
 function pageE() {
   let on = true; try { on = new URLSearchParams(root.location.search).get('air') !== '0'; } catch (e) { /* no window */ }
   const line = -24.4, play = { x0: line, x1: 29.6, z0: -22, z1: 22 }, cx = (play.x0 + play.x1) / 2, hw = 14.4, bz = 11.5;
-  return { on, k: 1.13, cx: -2.6, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
+  return { on, k: 1.15, cx: -3.2, cz: 0.3, ext: 4, inkW: 16, line, linePx: (line + SW / 2) * U, holeX: -34.5, play, sx: -0.7, rx: 0, dz: 2.2, speedX: 174,
     top: { x0: -28.6, x1: play.x1, z0: play.z0, z1: -13.5 }, left: { x0: line + 0.2, x1: -13.0, z0: -4.6, z1: bz }, reag: { x0: 19.8, x1: 32, z0: -5.2, z1: bz }, band: { x0: line, x1: play.x1, z0: bz, z1: play.z1 },
     home: { x0: cx - hw, x1: cx + hw, z0: -12.6, z1: 9.3 } };
 }
@@ -1699,27 +1699,32 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else if (q[2] > P0[0] && !edges) return null;
     return q; }
   // the words of the next note: from notes_data.js by depth, unlocks and what has just happened; else from the three lists by depth. None is used twice in a run.
-  function pickE(m, r, R) { const hand0 = m < 0.34 ? 'neat' : m < 0.67 ? 'shaky' : 'frantic';
-    if (AA.notesPick) { try { const hs = run && run.hom ? [String(run.hom)] : []; for (let k = 0; k < 3; k++) { const tag = k === 0 && mE.tags.length ? mE.tags.pop() : undefined, l = AA.notesPick({ depth: m, unlocks: unlocksE(), round: r, tag, homs: hs, used: Object.keys(mE.used) }).filter(o => o && o.t && !mE.used[o.t]); if (l.length) { const o = l[Math.floor(R() * l.length)]; mE.used[o.t] = 1; return { t: o.t, hand: o.hand || hand0, big: !!o.big, when: o.when }; } } } catch (e) { /* fall back to the lists */ } }
+  function pickE(m, r, R, short) { const hand0 = m < 0.34 ? 'neat' : m < 0.67 ? 'shaky' : 'frantic';
+    if (AA.notesPick) { try { const hs = run && run.hom ? [String(run.hom)] : []; for (let k = 0; k < 3; k++) { const tag = k === 0 && mE.tags.length ? mE.tags.pop() : undefined, l = AA.notesPick({ depth: m, unlocks: unlocksE(), round: r, tag, homs: hs, used: Object.keys(mE.used) }).filter(o => o && o.t && !mE.used[o.t]); if (l.length) { if (short) { l.sort((p, q) => p.t.length - q.t.length); l.length = Math.max(1, Math.ceil(l.length * 0.3)); } const o = l[Math.floor(R() * l.length)]; mE.used[o.t] = 1; return { t: o.t, hand: o.hand || hand0, big: !!o.big, when: o.when }; } } } catch (e) { /* fall back to the lists */ } }
     const pool = m < 0.34 ? TIER0 : m < 0.67 ? TIER1 : TIER2; let f = pool.filter(t => !mE.used[t]); if (!f.length) { pool.forEach(t => { delete mE.used[t]; }); f = pool; } const t = f[Math.floor(R() * f.length)]; mE.used[t] = 1; return { t, hand: hand0, big: /[A-Z]{3}/.test(t) }; }
   // the left end of what the frame shows of the page at ink height iy
   function leftE(iy) { const L = -PGE.ext * U; if (seenE(L + 4, iy)) return L + 12; let lo = L, hi = PGE.linePx; for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (seenE(mid, iy)) hi = mid; else lo = mid; } return hi; }
   // the room in the margin for something whose ink runs from y0 to y1: from the frame's edge (or a punched hole) to the red line, and late in a run a little over the line where nothing stands
   function roomE(y0, y1, r) { const K = keepE(), P0 = inkR(PGE.play); let xl = Math.max(leftE(y0), leftE(y1)) + 6; holesE().forEach(h => { if (y0 < h[3] + 4 && y1 > h[1] - 4) xl = Math.max(xl, h[2] + 6); });
-    const creep = r >= 6 && y0 > K.top[3] + 16 && y1 < K.left[1] - 16 ? 22 + (r - 5) * 11 : 0; let xr = P0[0] - 12 + creep; if (y0 < K.top[3] + 14) xr = Math.min(xr, K.top[0] - 14); return [xl, xr]; }
-  // make one more note or doodle and set it down; when it is not instant it is written in over about a second
+    const creep = r >= 6 && y0 > K.top[3] + 16 && y1 < K.left[1] - 16 ? 22 + (r - 5) * 11 : 0; let xr = P0[0] - 18 + creep; if (y0 < K.top[3] + 14) xr = Math.min(xr, K.top[0] - 14); return [xl, xr]; }
+  // make one more note or doodle and set it down; when it is not instant it is written in over about a second.
+  // Places are tried row by row down the margin and from the frame's edge toward the red line; the first where the measured ink fits is taken.
   function makeE(r, R, instant, now0) { const m = (r - 1) / 8, i = mE.list.length, HV = { neat: 0.1, shaky: 0.5, frantic: 0.95 };
-    const doodle = r >= 3 && i % 3 === 2, red = m > 0.6 && R() < 0.16, col = red ? 'rgba(168,38,34,0.86)' : 'rgba(38,48,80,' + (0.76 + m * 0.14).toFixed(2) + ')', seed = (R() * 1e9) | 0;
+    const doodle = r >= 3 && (r >= 7 ? i % 2 === 1 : i % 3 === 2), red = m > 0.6 && R() < 0.16, col = red ? 'rgba(168,38,34,0.86)' : 'rgba(38,48,80,' + (0.76 + m * 0.14).toFixed(2) + ')', seed = (R() * 1e9) | 0, k0 = Math.floor(R() * 1000), span = IH - 250;
+    const setDown = (q, ax, ay) => { if (!fitsE(q, ax, ay, r, false)) { mE.dbg.fit++; return false; } const est = q.b; q.b = boundsE(q); const box = q.b && fitsE(q, ax, ay, r, false); if (!box) { q.b = est; mE.dbg.fit2++; return false; } q.ax = ax; q.ay = ay; q.box = box; return true; };
     let n = null;
     if (doodle) { const sk = m < 0.3 ? SKETCH_EARLY : m < 0.62 ? SKETCH_MID : SKETCH_LATE, name = sk[Math.floor(R() * sk.length)], s0 = 50 + m * 30 + R() * 16, rot = (R() - 0.5) * m * 0.6;
-      for (let a = 0; a < 40 && !n; a++) { const s = s0 * (1 - (a >> 3) * 0.12), ay = 330 + R() * (IH - 420), rm = roomE(ay - s * 1.1, ay + s * 0.8, r), q = { doodle: name, s, mh: 0.2 + m * 0.7, rot, col, seed, ax: 0, ay: 0, sz: 30 }; if (rm[1] - rm[0] < s * 1.7) continue;
-        q.b = [-s * 0.85, -s * 1.1, s * 0.85, s * 0.8]; const ax = rm[0] + s * 0.85 + R() * Math.max(0, rm[1] - rm[0] - s * 1.7); if (!fitsE(q, ax, ay, r, false)) continue; q.b = boundsE(q); const box = q.b && fitsE(q, ax, ay, r, false); if (box) { q.ax = ax; q.ay = ay; q.box = box; n = q; } } }
-    else for (let p = 0; p < 4 && !n; p++) { const pk = pickE(m, r, R), chars = parseE(pk.t), neat = pk.hand === 'neat', mh = (HV[pk.hand] || 0.1) * (neat ? 1 : 0.7 + 0.3 * m), strikeAll = m > 0.2 && !neat && R() < 0.24; if (strikeAll) chars.forEach(q => { q.s = true; });
-      const sz0 = Math.min(60, 35 + m * 9 + R() * m * 8 + (pk.big && r >= 6 ? 6 + R() * 8 : 0)), lh = 1.12 + mh * 0.12, rot = neat ? 0 : (R() - 0.5) * (0.04 + m * 0.16), k0 = Math.floor(R() * 6);
-      for (let a = 0; a < 48 && !n; a++) { const sz = Math.max(30, sz0 * (1 - (a >> 3) * 0.06)), ay = neat ? 196 + 40 * (3 + ((k0 + a * 4) % 25)) - 5 : 300 + R() * (IH - 400), est = Math.max(1, Math.ceil(penW(pk.t, sz) * 1.1 / Math.max(120, roomE(ay - sz, ay + sz, r)[1] - roomE(ay - sz, ay + sz, r)[0] - 30))), rm = roomE(ay - sz, ay + (est + 0.6) * sz * lh, r), maxW = rm[1] - rm[0]; if (maxW < 130) { mE.dbg.room++; continue; }
-        const lines = wrapE(chars, sz, maxW - 12 - mh * 14); if (lines.length > 7 || lines.length > est + 1) { mE.dbg.lines++; continue; } const lw = Math.max.apply(null, lines.map(l => penW(l.map(c => c.ch).join(''), sz))), q = { lines, sz, lh, mh, rot, col, seed, ax: 0, ay: 0, t: pk.t };
-        q.b = [-8, -sz * 1.05, lw + 10 + mh * 14, (lines.length - 1) * sz * lh + sz * 0.45]; const ax = rm[0] + 8 + (neat ? 0 : R() * Math.max(0, maxW - lw - 22)); if (!fitsE(q, ax, ay, r, false)) { mE.dbg.fit++; continue; } q.b = boundsE(q); const box = q.b && fitsE(q, ax, ay, r, false); if (box) { q.ax = ax; q.ay = ay; q.box = box; n = q; } else mE.dbg.fit2++; } }
-    if (!n) { mE.dbg.none++; return null; } const len = n.doodle ? 14 : n.lines.reduce((a, l) => a + l.length, 0); n.t0 = instant ? -1e12 : now0 + 500; n.dur = Math.max(900, Math.min(1900, 520 + 48 * len)); n.done = !!instant; mE.list.push(n); return n; }
+      for (let a = 0; a < 4 && !n; a++) { const s = s0 * (1 - a * 0.14);
+        for (let kk = 0; kk < 26 && !n; kk++) { const ay = 120 + ((k0 * 47 + kk * 43) % span), rm = roomE(ay - s * 1.1, ay + s * 0.8, r), q = { doodle: name, s, mh: 0.2 + m * 0.7, rot, col, seed, ax: 0, ay: 0, sz: 30 }; if (rm[1] - rm[0] < s * 1.7) { mE.dbg.room++; continue; }
+          q.b = [-s * 0.85, -s * 1.1, s * 0.85, s * 0.8]; for (let ax = rm[0] + s * 0.85 + (k0 % 3) * 9; ax + s * 0.85 <= rm[1] && !n; ax += 18) if (setDown(q, ax, ay)) n = q; } } }
+    else for (let p = 0; p < 4 && !n; p++) { const pk = pickE(m, r, R, p > 0 || i >= (r >= 6 ? 1 : 4)), chars = parseE(pk.t), neat = pk.hand === 'neat', mh = (HV[pk.hand] || 0.1) * (neat ? 1 : 0.7 + 0.3 * m), strikeAll = m > 0.2 && !neat && chars.length < 26 && !chars.some(q => q.s) && R() < 0.2; if (strikeAll) chars.forEach(q => { q.s = true; });
+      const sz0 = Math.min(chars.length > 28 ? 40 : 60, 35 + m * 9 + R() * m * 8 + (pk.big && r >= 6 ? 6 + R() * 8 : 0)), lh = 1.12 + mh * 0.12, rot = neat ? 0 : (R() - 0.5) * (0.04 + m * 0.16), plain = chars.map(q => q.ch).join('');
+      for (let a = 0; a < 5 && !n; a++) { const sz = Math.max(30, sz0 * (1 - a * 0.09));
+        for (let kk = 0; kk < 30 && !n; kk++) { const ay = neat ? 196 + 40 * (3 + ((k0 + kk * 4) % 25)) - 5 : 110 + ((k0 * 53 + kk * 41) % span), r0 = roomE(ay - sz, ay + sz, r), est = Math.max(1, Math.ceil(penW(plain, sz) * 1.1 / Math.max(110, r0[1] - r0[0] - 30))), rm = roomE(ay - sz, ay + (est + 0.6) * sz * lh, r), maxW = rm[1] - rm[0]; if (maxW < 110) { mE.dbg.room++; continue; }
+          const lines = wrapE(chars, sz, maxW - 12 - mh * 14); if (lines.length > 8 || lines.length > est + 2) { mE.dbg.lines++; continue; } const lw = Math.max.apply(null, lines.map(l => penW(l.map(c => c.ch).join(''), sz))), q = { lines, sz, lh, mh, rot, col, seed, ax: 0, ay: 0, t: pk.t };
+          q.b = [-8, -sz * 1.05, lw + 10 + mh * 14, (lines.length - 1) * sz * lh + sz * 0.45]; for (let ax = rm[0] + 4 + (neat ? 0 : (k0 % 4) * 5); ax + q.b[2] <= rm[1] + 2 && !n; ax += neat ? 1e6 : 16) if (setDown(q, ax, ay)) n = q; } }
+      if (!n) delete mE.used[pk.t]; }
+    if (!n) { mE.dbg.none++; return null; } const len = n.doodle ? 14 : n.lines.reduce((s, l) => s + l.length, 0); n.t0 = instant ? -1e12 : now0 + 500; n.dur = Math.max(900, Math.min(1900, 520 + 48 * len)); n.done = !!instant; mE.list.push(n); return n; }
   // what has just happened, for the next note's words
   function tagsE() { const w = mE.w, tag = t => { if (mE.tags[mE.tags.length - 1] !== t) mE.tags.push(t); if (mE.tags.length > 6) mE.tags.shift(); };
     try { const cr = meta.credit | 0, un = (meta.tier | 0) + Object.keys(meta.fam || {}).length + Object.keys(meta.found || {}).length + Object.keys(meta.hatched || {}).length, co = (run && run.coins) || 0;
