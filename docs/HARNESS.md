@@ -126,6 +126,8 @@ AX. The reference book (13 November): "The in game manual should just be picture
 
 **BF (2026-11-14).** Water is a WATER SPIRIT ("A water spirit but each stage needs more character"; stills approved: "Yes, animate it"). In the game it felt like "an animation happening on top of the game rather than a part of it": not standing in the scene, drawn in a different style, nothing reacts to it. After four passes: "The water creature needs better animations ... but its art doesn't match everthing else." Shown three styles in the scene (clear water like the bench things; pen and wash like the page; the atoms' material), the owner picked PEN AND WASH: a black drawn outline, a pale blue wash, pencil shading, a drawing come alive. This is the creature style to carry to the others, one at a time.
 
+**BG (2026-11-14).** Pen and wash confirmed ("Style is right"). Water's evolution: "the evolution sucks. It should be more magnificent, like curling up into a swirling sphere and then sprouting." And for all ten: "Each homculus should get its own evolution style and world interactions": no shared evolve sequence, no shared set of reactions from the world; each creature's are its own, from its substance. Token use: "Make sure you're efficiently using subagents and models": art and motion design on the top model in stills; recording takes, frame sheets and mechanical wiring on a cheaper model.
+
 
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
