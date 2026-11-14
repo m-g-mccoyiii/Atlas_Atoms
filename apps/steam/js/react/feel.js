@@ -1152,4 +1152,6 @@ AA.rxFeel = {
   stepMs: n => Tn(n), log: F.log, probeRows: F.probeRows, probe: false,
   state: () => F.seq && { steps: F.seq.steps, N: F.seq.plan.N, shown: F.seq.count.shown, zoom: F.seq.zoom, shake: F.seq.shake, words: F.seq.words.map(w => w.k), speed: F.seq.speed, done: F.seq.done, plan: F.seq.plan.ev.map(e => e.k + (e.n || '')).join('') }
 };
+// (builder 20) a creature's act lands: the count rolls up to the new yield there and then (scheme.js, homJump's tick), not when the page goes on
+AA.rxFeel.homLand = y => { const S = F.seq; if (!S) return false; const ct = S.count, t = now(); ct.frozen = false; ct.holdTill = 0; ct.from = ct.shown; ct.to = y; ct.t0 = t; ct.dur = 420; ct.ease = 'outQuart'; ct.target = y; S.yDrop = t; return true; };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
