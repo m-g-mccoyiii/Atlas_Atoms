@@ -1,10 +1,10 @@
 # Overreact: the reference book
 
-Everything a player can get that a new game does not hold, by category: what it is called, what it does, and the one way to get it. This file is written from the game's own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref16.js` and `sweep_deeds.py career`), so it says what the rules say. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.
+Everything a player can get that a new game does not hold, by category: what it is called, what it does, and the one way to get it. This file is written from the game's own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref18.js` and `sweep_deeds.py career`), so it says what the rules say. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.
 
-Since the sixteenth measure every thing is got by a deed that fits it ("More deeds, fewer counts"). The lifetime counts left are the ten jars and Fold (epoxidize acts 3 times); the condenser asks for 2 rounds over all runs. No two things share a way. "Runs" is the run on which the thing is handed over in the middle career of 300 simulated careers of 300 runs, for the casual player and then the careful one; a run hands over two things at most, so in the first twenty runs a deed can be handed over up to about 19 runs after it was done. Both runs are given: the run the deed is done, then the run the thing is handed over.
+Since the sixteenth measure every thing is got by a deed that fits it ("More deeds, fewer counts"). The lifetime counts left are the ten jars and Fold (epoxidize acts 3 times); the condenser asks for 2 rounds over all runs. No two things share a way. "Runs" is the run on which the thing is handed over in the middle career of 200 simulated careers of 300 runs, for the casual player and then the careful one; a run hands over two things at most, so in the first twenty runs a deed can be handed over up to about 19 runs after it was done. Both runs are given: the run the deed is done, then the run the thing is handed over.
 
-For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name`, `does`, `how`, `owned`, and `count` and `target` where the way has a number. `P.REFERENCE_CATS` is the order and the names of the categories. `P.profileOpts(meta)` is what `P.runNew` needs so that a run offers what the profile holds and nothing else. `P.runResult(run).earned` lists what a run handed over, each with the thing's `name` and `how`. `P.stageOf(meta)` and `P.gateOpen(meta, what)` are what the page's own gate should read.
+For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name`, `does`, `how`, `owned`, `nums` (the numbers of the line in order), and `count` and `target` where the way has a number; a homunculus also has `stages` (its five numbers) and `stage` (how far this profile has brought it). `P.thingOf(category, id)` gives the name and line of any thing, the ones a new game holds too. `P.REFERENCE_CATS` is the order and the names of the categories. `P.profileOpts(meta)` is what `P.runNew` needs so that a run offers what the profile holds and nothing else. `P.runResult(run).earned` lists what a run handed over, each with the thing's `name` and `how`. `P.stageOf(meta)` and `P.gateOpen(meta, what)` are what the page's own gate should read.
 
 ## How many
 
@@ -28,118 +28,193 @@ A new game holds: six reagents (hydrate, oxidize, grow, thiolate, dehydrate, ami
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Epoxidize | Turns every C=C into an epoxide. | Have dehydrate make 5 C=C in one go. | 11, 12; 4, 9 |
-| Extend | Turns an aldehyde or methyl ketone C=O into C=C beside a new ketone. | End a round with the molecule 10 or more atoms bigger than it was dealt. | 2, 4; 1, 1 |
-| Burn | Turns chain-end C=C, aldehydes and chain-end CH2-OH into COOH. | Drive off carbon dioxide on 2 pages of one round. | 4, 8; 3, 10 |
-| Hydroborate | Adds water across C=C with the OH on the carbon with more H. Also turns C=O into C-OH. | Fire hydrate, dehydrate, hydrate on one page, all three landing. | 23, 23; 4, 10 |
-| Cyanate | Turns an aldehyde or methyl ketone C=O into C(OH)-COOH. Ammonia leaves. | End a page with 3 more C=O on the molecule than it was dealt with. | 9, 11; 7, 11 |
-| Reduce | Turns C=O into C-OH. Leaves C=C alone. | End a round with no C=O left on a molecule dealt with two or more. | 2, 2; 2, 9 |
-| Chlorinate | Swaps the OH of a primary or secondary alcohol for Cl. | Have chlorine close 2 rings in one round. | 2, 3; 2, 11 |
-| Formylate | Adds CHO and H across every C=C. The CHO goes on the carbon with more H. | Have grow add 4 arms in one go. | 8, 11; 5, 12 |
-| Cleave | Cuts every C=C into two C=O. | End a page with 4 more C=C on the molecule than it was dealt with. | 10, 13; 7, 13 |
-| Dihydroxylate | Puts an OH on both carbons of every C=C. | Have hydrate put on 4 OH in one go. | 5, 11; 3, 13 |
-| Eliminate N | An NH2 leaves and a C=C forms toward the neighbor with more H. | On one page, have aminate land and a nitrogen close a ring. | 2, 9; 2, 13 |
-| Eliminate S | An OH leaves and a C=C forms toward the neighbor with more H. Sulfur comes off. | On one page, have thiolate land and a sulfur close a ring. | 5, 12; 3, 14 |
-| Add methyl | Adds CH₃ to the carbon of C=O and leaves C-OH. | Buy the organometallics at the bench for 5 credit (the trade supplier must be open). | not simulated |
-| Methylenate | Swaps the O of C=O for CH₂ and leaves C=C. | Buy the ylides at the bench for 8 credit (the trade supplier must be open). | not simulated |
-| Polymerize | Starts a chain at C=C. Used again, it doubles every chain. | Buy the radicals at the bench for 14 credit (the trade supplier must be open). | not simulated |
-| Oxidize C=C | Turns C=C straight into C=O on the carbon with fewer H. | Fire hydrate or hydroborate and then oxidize, the oxidize working on the C-OH the first one just made. | 2, 2; 1, 1 |
-| Strip C=O | Takes the O off C=O and leaves CH₂. | Fire reduce or hydroborate, then dehydrate, then the finishing hydrogen, each working on what the one before it just made. | not simulated |
+| Epoxidize | Epoxidize bridges. Every C=C turns to an epoxide. | Make 5 C=C with one dehydrate. | 13, 13; 3, 9 |
+| Extend | Extend lengthens. An aldehyde or methyl ketone C=O turns to C=C beside a new ketone. | End a round 10 atoms bigger than dealt. | 2, 3; 1, 1 |
+| Burn | Burn scorches. Chain-end C=C, aldehydes and chain-end CH2-OH turn to COOH. | Drive off carbon dioxide on 2 pages of one round. | 4, 8; 3, 10 |
+| Hydroborate | Hydroborate wets the other carbon. A C=C takes water, OH on the carbon with more H. C=O turns to C-OH. | Land hydrate, dehydrate, hydrate on one page. | 24, 24; 4, 10 |
+| Cyanate | Cyanate adds an acid. An aldehyde or methyl ketone C=O turns to C(OH)-COOH. Ammonia leaves. | End a page with 3 more C=O than dealt. | 12, 13; 7, 11 |
+| Reduce | Reduce softens. C=O turns to C-OH. | End a round with no C=O on a molecule dealt two or more. | 2, 2; 2, 10 |
+| Chlorinate | Chlorinate swaps. The OH of a primary or secondary alcohol turns to Cl. | Close 2 rings with chlorine in one round. | 2, 3; 2, 11 |
+| Formylate | Formylate adds CHO. Every C=C takes CHO on the carbon with more H. | Add 4 arms with one grow. | 8, 11; 5, 12 |
+| Cleave | Cleave cuts. Every C=C splits into two C=O. | End a page with 4 more C=C than dealt. | 11, 13; 7, 13 |
+| Dihydroxylate | Dihydroxylate doubles. Every C=C takes an OH on both carbons. | Put on 4 OH with one hydrate. | 6, 11; 2, 13 |
+| Eliminate N | Eliminate N strips. An NH2 leaves and a C=C forms toward the neighbor with more H. | Land aminate and close a ring through nitrogen on one page. | 3, 8; 2, 14 |
+| Eliminate S | Eliminate S strips. An OH leaves and a C=C forms toward the neighbor with more H. Sulfur leaves. | Land thiolate and close a ring through sulfur on one page. | 4, 11; 4, 14 |
+| Add methyl | Add methyl plants a carbon. A C=O takes CH₃ and turns to C-OH. | Buy the organometallics. 5 credit. | not simulated |
+| Methylenate | Methylenate swaps. The O of a C=O turns to CH₂, leaving C=C. | Buy the ylides. 8 credit. | not simulated |
+| Polymerize | Polymerize chains. A chain starts at C=C. Used again, every chain doubles. | Buy the radicals. 14 credit. | not simulated |
+| Oxidize C=C | Oxidize C=C goes straight. A C=C turns to C=O on the carbon with fewer H. | Oxidize an OH that hydrate or hydroborate just made. | 2, 2; 1, 1 |
+| Strip C=O | Strip C=O scrubs. A C=O turns to CH₂. | Reduce or hydroborate, then dehydrate, then hydrogenate, each on what the last one made. | not simulated |
 
 ## Reflexes (3)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Seal | A COOH and an OH, NH2 or SH 3 or 4 carbons apart join in a ring; water comes off. Across the fold too, from round 4. | End a round with a COOH on the molecule that it was not dealt with. | 12, 16; 13, 17 |
-| Open | An OH 3 or 4 carbons from an epoxide opens it and closes a ring. Across the fold too, from round 4. | Have epoxidize make 2 epoxides in one go. | 37, 37; 42, 42 |
-| Fold | An epoxide with a carbon on both ends turns into a C=O. | Have epoxidize act 3 times. | 45, 45; 55, 55 |
+| Seal | Seal locks. A COOH and an OH, NH2 or SH 3 or 4 carbons apart join in a ring. Water leaves. | End a round with a COOH the molecule was not dealt. | 12, 15; 13, 17 |
+| Open | Open springs. An OH 3 or 4 carbons from an epoxide opens it and closes a ring. | Make 2 epoxides with one epoxidize. | 35, 35; 44, 44 |
+| Fold | Fold flattens. An epoxide with a carbon on both ends turns to C=O. | 3 uses of epoxidize. | 45, 45; 58, 58 |
 
 ## Motifs (4)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Spiro centre | While two rings of the molecule meet at a single atom, everything a reagent or a reflex changes on it counts for 10 in 100 more. Each further such atom adds the same again. | Close 3 rings on one page. | 5, 13; 2, 15 |
-| Benzene ring | While the molecule holds a benzene ring, everything a reagent or a reflex changes on it counts for 30 in 100 more. Two benzene rings count twice. | End a round at 1.41 times the number to beat on a molecule with a benzene ring. | 9, 14; 4, 15 |
-| Shared side | While two rings of the molecule share a side, everything a reagent or a reflex changes on it counts for 15 in 100 more. Each further pair of rings that share a side adds the same again. | End a round with 3 more pairs of rings that share a side than the molecule was dealt with. | 3, 13; 2, 16 |
-| Cage | While rings of the molecule are tied into a cage, everything a reagent or a reflex changes on it counts for 3 in 100 more for each ring of the cage. | End a round with 6 more rings than the molecule was dealt with. | 9, 15; 3, 16 |
+| Spiro centre | Spiro centre pivots. Keep two rings meeting at one atom. x1.05, rising with each. | Close 3 rings on one page. | 5, 12; 2, 15 |
+| Benzene ring | Benzene ring steadies. Keep a benzene ring. x1.14, rising with each. | End a round at 1.41 times the number to beat on a molecule with a benzene ring. | 10, 15; 4, 15 |
+| Shared side | Shared side braces. Keep two rings sharing a side. x1.07, rising with each. | End a round with 3 more shared sides than dealt. | 3, 13; 2, 16 |
+| Cage | Cage encloses. Keep rings tied into a cage. x1.01, rising with each. | End a round with 6 more rings than dealt. | 9, 15; 4, 17 |
 
 ## Instruments (10)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Seed crystal | Put it on a carbon: one hydrogen there becomes an OH, and whatever the molecule can then do by itself it does at once. Used on the molecule once a round. | Clear a round whose first page set off no reflex. It counts in a six-round or nine-round run. | 6, 7; 6, 6 |
-| Burner | Heats the whole molecule: every OH that can lose water does, and a C=C is left where it was. Used on the molecule once a round. | Drive off water on every page of a round. It counts in a six-round or nine-round run. | 3, 4; 2, 5 |
-| Burette | Every C=C outside a benzene ring becomes a C=O. Used on the molecule once a round. | Have oxidize turn 5 OH into C=O in one go. It counts in a six-round or nine-round run. | 8, 9; 5, 6 |
-| Mirror | Put on a bond: one side of the bond goes and the other is copied across it. Used on the molecule once a round. | Fire one reagent and no other on a full page. It counts in a six-round or nine-round run. | 17, 17; 25, 25 |
-| Magnet | Every stretch of four or more plain CH2 in a row is pulled shut to two carbons, so the groups at its two ends come close. Used on the molecule once a round. | End a round with the longest carbon chain 4 longer than it was dealt. It counts in a six-round or nine-round run. | 8, 9; 8, 9 |
-| Carousel | One more reagent is dealt on the first page of every round. | Fire 6 different reagents in one round. It counts in a six-round or nine-round run. | 4, 5; 3, 6 |
-| Dropper | Two more uses of every reagent. | End a round with 4 reagents used up. It counts in a six-round or nine-round run. | 10, 11; 7, 8 |
-| Timer | Every page takes four reagents, not three. | Have three reagents of one page each set off a reflex. It counts in a six-round or nine-round run. | 13, 13; 4, 8 |
-| Tally counter | Set on a page: whatever that page adds toward the task of the round counts twice. Used once a round. | Lose a round of a six-round or nine-round run by under 15 in 100. | 8, 9; 6, 9 |
-| Condenser | One more page is played this round. It counts toward the task and adds nothing to the yield. Used once a round. | Lose 2 rounds of a six-round or nine-round run on the task alone, with the yield past its mark. | 7, 8; 8, 10 |
+| Seed crystal | Seed crystal seeds. A hydrogen on the carbon you pick turns to OH. Once a round. | Clear a round whose first page set off no reflex. In a run of six rounds or more. | 7, 7; 5, 6 |
+| Burner | Burner heats. Every OH that can lose water leaves a C=C. Once a round. | Drive off water on every page of a round. In a run of six rounds or more. | 3, 5; 2, 5 |
+| Burette | Burette drips. Every C=C outside a benzene ring turns to C=O. Once a round. | Turn 5 OH to C=O with one oxidize. In a run of six rounds or more. | 8, 9; 5, 6 |
+| Mirror | Mirror reflects. One side of the bond you pick is copied over the other. Once a round. | Fill a page with one reagent. In a run of six rounds or more. | 21, 21; 15, 15 |
+| Magnet | Magnet pulls. Every run of four or more CH2 shuts to two carbons. Once a round. | End a round with the longest carbon chain 4 longer than dealt. In a run of six rounds or more. | 9, 10; 9, 9 |
+| Carousel | Carousel deals. One more reagent on the first page of a round. | Fire 6 different reagents in one round. In a run of six rounds or more. | 4, 5; 3, 6 |
+| Dropper | Dropper refills. Two more uses of every reagent. | Use up 4 reagents in one round. In a run of six rounds or more. | 11, 11; 7, 8 |
+| Timer | Timer stretches. Four reagents a page. | Set off a reflex with each of a page's three reagents. In a run of six rounds or more. | 11, 12; 4, 8 |
+| Tally counter | Tally counter doubles. One page counts twice toward the task. Once a round. | Lose a round by under 15 in 100, in a run of six rounds or more. | 8, 9; 6, 9 |
+| Condenser | Condenser returns. One more page this round, for the task only. Once a round. | Lose 2 rounds on the task alone, in a run of six rounds or more. | 6, 8; 10, 10 |
 
 ## Homunculi (10)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Water | When a page drives off 4 waters or more: yield times 1.22, then every C=C becomes C-OH and the rings run again. | Fill its jar: 200 waters driven off, over all runs. | 23, 23; 10, 10 |
-| Hydrogen | Not on the last page. When a page fires only two reagents, oxidize is the second and it lands: yield times 1.58, and the next page counts its chain on from this one. If the next chain is shorter, yield times 0.77. | Fill its jar: 130 hydrogens driven off, over all runs. | 29, 29; 12, 12 |
-| Dry ice | On the last page, if carbon dioxide came off this round and 3 of the reagents never acted in it: yield times 1.59. | Fill its jar: 50 carbon dioxides driven off, over all runs. | 15, 15; 8, 8 |
-| Acid | When the molecule ends a page 2 atoms smaller or more: yield times 1.41. | Fill its jar: 200 times hydrate or dehydrate acts, over all runs. | 35, 35; 17, 17 |
-| Wood spirit | When the first reagent lined up finds nothing to act on: he pours every dealt reagent that was not lined up, a use of each; if one lands, yield times 1.22. The bottle he drank is empty for the rest of the round. While held, reduce is on the rack too. | Fill its jar: 40 times reduce acts, over all runs. | not in 300, not in 300; not in 300, not in 300 |
-| Salt | When the line is the line of the page before again: yield times 1.58 and the three reagents get their use back. | Fill its jar: 50 times oxidize acts on an OH at the end of a chain, over all runs. | not simulated |
-| Slime | When the same reagent is fired twice on a page and each time lands and sets off a reflex: yield times 1.58. That bottle is empty for the rest of the round. While held, hydroborate is on the rack too. | Fill its jar: 70 times hydroborate acts, over all runs. | not in 300, not in 300; not in 300, not in 300 |
-| Seedling | When the molecule ends a page 12 atoms bigger or more: yield times 1.34, more for each page in a row. A later page that grows less: yield times 0.84. | Fill its jar: 120 times grow acts, over all runs. | 24, 24; 13, 13 |
-| Ammonia | When nitrogen goes on the molecule this page (aminate lands, or a knit closes): the page's three reagents fire again in the same order, no use spent. While held, cyanate is on the rack too. | Fill its jar: 40 times aminate acts or ammonia is driven off, over all runs. | 22, 22; 19, 19 |
-| Brimstone | When sulfur goes on the molecule and the task is at least half done, not on the last page: the round ends now and the task counts as met; yield times 1.22 after page one, 1.12 after page two. While held, eliminate s is on the rack too. | Fill its jar: 80 times thiolate acts or sulfur is driven off, over all runs. | 62, 62; 78, 78 |
+| Water | Water floods. Wring out 3 waters. x1.30. Double bonds soak up OH; closed rings burst. | 200 waters driven off. | 23, 23; 10, 10 |
+| Hydrogen | Hydrogen lifts. Drive off 2 hydrogens. x1.38. | 130 hydrogens driven off. | 30, 30; 12, 12 |
+| Dry ice | Dry ice freezes. Leave 3 reagents untouched all round. x1.91, last page. | 50 carbon dioxides driven off. | 15, 15; 8, 8 |
+| Acid | Acid eats. Chew 2 atoms off the molecule. x2.01. | 200 uses of hydrate or dehydrate. | 34, 34; 17, 17 |
+| Wood spirit | Wood spirit drinks. Line up a reagent that finds nothing. x1.22. Brings Reduce. | 40 uses of reduce. | not in 300, not in 300; not in 300, not in 300 |
+| Salt | Salt preserves. Open with last page's first reagent. x1.35. Its use returns. | 50 chain-end OH oxidized. | not simulated |
+| Slime | Slime clings. Land one reagent twice. x1.32. That bottle is shut all round. Brings Hydroborate. | 70 uses of hydroborate. | not in 300, not in 300; not in 300, not in 300 |
+| Seedling | Seedling sprouts. Add 6 atoms. x1.30. | 120 uses of grow. | 24, 24; 13, 13 |
+| Ammonia | Ammonia revives. Put nitrogen on the molecule. The three reagents go round again. x1.08. Brings Cyanate. | 40 aminate landings or ammonias driven off. | 22, 22; 19, 19 |
+| Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Brings Eliminate S. | 80 thiolate landings or sulfurs driven off. | 60, 60; 78, 78 |
+
+The line above is a new profile's (stage 1). A homunculus keeps what it grows: its jar goes on counting after it hatches, and at 2, 4, 7 and 11 times the jar's size it reaches stages 2 to 5. Its number at each stage:
+
+| Name | Stage 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Water | x1.30 | x1.50 | x1.71 | x1.93 | x2.15 |
+| Hydrogen | x1.38 | x1.62 | x1.84 | x2.11 | x2.46 |
+| Dry ice | x1.91 | x2.40 | x2.82 | x3.89 | x4.50 |
+| Acid | x2.01 | x2.58 | x3.17 | x3.95 | x4.50 |
+| Wood spirit | x1.22 | x1.33 | x1.40 | x1.45 | x1.51 |
+| Salt | x1.35 | x1.49 | x1.67 | x1.92 | x2.15 |
+| Slime | x1.32 | x1.45 | x1.56 | x1.66 | x1.88 |
+| Seedling | x1.30 | x1.50 | x1.67 | x1.91 | x2.25 |
+| Ammonia | x1.08 | x1.23 | x1.32 | x1.45 | x1.57 |
+| Brimstone | x1.17 | x1.30 | x1.39 | x1.52 | x1.59 |
 
 ## Sigils (9)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Clepsydra | A round has four pages, not three. | Lose a round whose last page set off a chain of 3 or more. It counts in a six-round or nine-round run. | 23, 23; 11, 18 |
-| Solve | A page normally lets dry happen once, weld twice and ring twice. With Solve each goes on for as long as it can. Across the fold each still happens once. | On one page have two of these happen: dry once, weld twice, ring twice. It counts in a six-round or nine-round run. | 7, 16; 3, 18 |
-| Respiratio | A page normally lets dry happen once, weld twice and ring twice. With Respiratio that count starts again after every reagent, so each can happen after each of the three. | Set off dry on every page of a round. It counts in a six-round or nine-round run. | 5, 16; 3, 19 |
-| Phlogiston | Oxidize also takes two hydrogens from the carbons beside every C=O: a C=C appears there and hydrogen comes off. | Drive off 5 hydrogens on one page. It counts in a six-round or nine-round run. | 21, 21; 7, 19 |
-| Via Humida | A ring closes when an OH is 3 or 4 atoms from a C=O. Normally only carbons may lie between the two; with Via Humida an O, N or S may lie there too. | Close a ring through oxygen, one through nitrogen and one through sulfur in one run. It counts in a six-round or nine-round run. | 6, 18; 4, 20 |
-| Aqua Permanens | Water never leaves the molecule: dehydrate finds nothing to do, and the reflexes that give off water (dry, seal, link) do not happen. | Clear a round without driving off any water. It counts in a six-round or nine-round run. | 8, 18; 20, 22 |
-| Tetractys | Every page takes four reagents, not three. The last reagent of a page pays double, and that is now the fourth. | Have the last reagent of a full page set off 4 or more reflex steps. It counts in a six-round or nine-round run. | 15, 20; 4, 21 |
-| Gemini | Every double bond counts twice: whatever a reagent or a reflex does to a C=C or a C=O is paid as if it had been done two times. | End a page with more C=C and more C=O on the molecule than it was dealt with. It counts in a six-round or nine-round run. | 7, 19; 4, 21 |
-| Sulphur's Mask | Oxygen behaves as sulfur: an OH closes its ring before anything else happens and as often as it can on a page, and two OH that face each other across the fold join, oxygen to oxygen. | Have sulfur close 4 rings in one round. It counts in a six-round or nine-round run. | 68, 68; 29, 29 |
+| Clepsydra | Clepsydra slows the clock. Four pages a round. | Lose a round whose last page chained 3 reflexes. In a run of six rounds or more. | 13, 17; 14, 18 |
+| Solve | Solve loosens. Dry, weld and ring have no limit. Across the fold: once each. | Reach two of these on one page: dry once, weld twice, ring twice. In a run of six rounds or more. | 7, 16; 3, 18 |
+| Respiratio | Respiratio breathes. The limits on dry, weld and ring start again after every reagent. | Set off dry on every page of a round. In a run of six rounds or more. | 5, 16; 3, 19 |
+| Phlogiston | Phlogiston draws hydrogen. Oxidize also takes two hydrogens beside every C=O and leaves a C=C. | Drive off 5 hydrogens on one page. In a run of six rounds or more. | 23, 23; 7, 19 |
+| Via Humida | Via Humida opens the wet way. Rings close through O, N or S as through carbon. | Close rings through oxygen, nitrogen and sulfur in one run. In a run of six rounds or more. | 6, 17; 5, 20 |
+| Aqua Permanens | Aqua Permanens holds water. No water leaves the molecule for 2 rounds. 8 gold. | Clear a round without driving off water. In a run of six rounds or more. | 8, 18; 23, 23 |
+| Tetractys | Tetractys makes four. Four reagents a page. The fourth: x3. | Set off 4 reflexes with the last reagent of a full page. In a run of six rounds or more. | 14, 20; 4, 21 |
+| Gemini | Gemini doubles. Anything done to a C=C or C=O counts again. x2. | End a page with more C=C and more C=O than dealt. In a run of six rounds or more. | 8, 19; 4, 21 |
+| Sulphur's Mask | Sulphur's Mask disguises. Oxygen closes rings as sulfur does. The first two: x2. | Close 4 rings with sulfur in one round. In a run of six rounds or more. | 73, 73; 34, 34 |
 
 ## Terms of a run (5)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Glass | A run in which every round starts with its yield at 1.73 times, and the round ends at the first reagent that does not carry on from the one before it. | Pass the number to beat in a round of six or more reagents in which every one carried on from the one before. It counts once two runs have each cleared six rounds. | not simulated |
-| Occult | A run that starts with one of the eight instruments drawn at random, held or not; every number to beat is 1.22 times. | Clear 5 rounds in one run. It counts once two runs have each cleared six rounds. | not simulated |
-| Lean | A run with three of the starting reagents and one more use of each. | Pass the number to beat in a round having fired two kinds of reagent or fewer. It counts once two runs have each cleared six rounds. | not simulated |
-| Long | A run in which a page takes four reagents and a round has two pages. | In one round, have ten reagents in a row each carry on from the one before. It counts once two runs have each cleared six rounds. | not simulated |
-| Hoard | A run that starts with three instruments drawn at random and is offered no more. | Hold five instruments in one run. It counts once two runs have each cleared six rounds. | not simulated |
+| Glass | Glass shatters. Every round starts at x1.73 and ends at the first reagent that does not carry on. | Beat a round in which six reagents in a row each carry on. After two runs that cleared six rounds. | not simulated |
+| Occult | Occult conjures. The run starts with one random instrument, held or not. Every number to beat: x1.22. | Clear 5 rounds in one run. After two runs that cleared six rounds. | not simulated |
+| Lean | Lean pares. Three of the starting reagents, one more use of each. | Beat a round firing two kinds of reagent or fewer. After two runs that cleared six rounds. | not simulated |
+| Long | Long stretches. Four reagents a page, two pages a round. | Have ten reagents in a row each carry on, in one round. After two runs that cleared six rounds. | not simulated |
+| Hoard | Hoard stockpiles. The run starts with three random instruments and is offered no more. | Hold five instruments in one run. After two runs that cleared six rounds. | not simulated |
 
 ## Longer runs (2)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Master's | A run of six rounds. Instruments can be held. A round is cleared by the task and a pass mark on the yield. | Win a three-round run. | 1, 1; 1, 1 |
-| Doctorate | A run of nine rounds. Instruments and one homunculus can be held. | Win a six-round run. | 25, 25; 5, 5 |
+| Master's | Master's runs six rounds. Instruments allowed. A round needs its task and a pass mark. | Win a three-round run. | 1, 1; 1, 1 |
+| Doctorate | Doctorate runs nine rounds. Instruments and one homunculus allowed. | Win a six-round run. | 18, 18; 6, 6 |
 
 ## Soundtracks (4)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| Gothic hybrid | A soundtrack to play the game to. | Clear round 3 of a six-round or nine-round run. | 4, 4; 2, 3 |
-| Harpsichord unhinged | A soundtrack to play the game to. | Clear round 6 of a six-round or nine-round run. | 25, 25; 5, 6 |
-| Chain Lightning | A soundtrack to play the game to. | End a round at OVERREACT (2.83 times the number to beat). | 11, 20; 3, 22 |
-| Monster-movie lab | A soundtrack to play the game to. | Set off 5 different kinds of reflex in one round. | 6, 20; 2, 22 |
+| Gothic hybrid | A soundtrack. | Clear round 3 of a run of six rounds or more. | 4, 4; 2, 3 |
+| Harpsichord unhinged | A soundtrack. | Clear round 6 of a run of six rounds or more. | 18, 18; 6, 6 |
+| Chain Lightning | A soundtrack. | End a round at OVERREACT. | 10, 20; 3, 22 |
+| Monster-movie lab | A soundtrack. | Set off 5 kinds of reflex in one round. | 6, 20; 3, 23 |
 
 ## The sign (3)
 
 | Name | What it does | How it is got | Runs: casual done, handed over; careful done, handed over |
 |---|---|---|---|
-| The sign, first time | Everything in this book is given up and earned again, but for the two reagents found by firing others one after another; the yield is 1.2 times for good and the number to beat 1.15 times. | Hold nine tenths of everything in this book. | not simulated |
-| The sign, second time | Everything in this book is given up and earned again, but for the two reagents found by firing others one after another; the yield is 1.4 times for good and the number to beat 1.32 times. | After the sign has been taken 1 time: hold nine tenths of everything in this book. | not simulated |
-| The sign, third time | Everything in this book is given up and earned again, but for the two reagents found by firing others one after another; the yield is 1.6 times for good and the number to beat 1.52 times. | After the sign has been taken 2 times: hold nine tenths of everything in this book. | not simulated |
+| The sign, first time | The sign resets. The book empties but for the two found reagents. Yield x1.2 for good; number to beat x1.15. | Hold nine tenths of this book. | not simulated |
+| The sign, second time | The sign resets. The book empties but for the two found reagents. Yield x1.4 for good; number to beat x1.32. | Take the sign once. Hold nine tenths of this book. | not simulated |
+| The sign, third time | The sign resets. The book empties but for the two found reagents. Yield x1.6 for good; number to beat x1.52. | Take the sign twice. Hold nine tenths of this book. | not simulated |
+
+## What a new game already holds, in the same words
+
+Not in the book (there is nothing to get); `P.thingOf` gives these lines to the page.
+
+### Reagents: the starting six and the finishing hydrogen
+
+| Name | What it does |
+|---|---|
+| Hydrate | Hydrate wets. A C=C takes water, OH on the carbon with fewer H. |
+| Oxidize | Oxidize burns hydrogen off. A C-OH with an H to give turns to C=O. |
+| Grow | Grow branches. A C=O takes a three-carbon arm with a C=C and turns to C-OH. |
+| Thiolate | Thiolate adds sulfur. Every C=C takes SH on the carbon with more H. |
+| Dehydrate | Dehydrate dries. An alcohol loses water and leaves a C=C. |
+| Aminate | Aminate adds nitrogen. Every C=C takes NH2 on the carbon with fewer H. |
+| Hydrogenate | Hydrogenate fills. A C=C takes H₂. |
+
+### Reflexes: the starting ten, and the twelve across the fold
+
+| Name | What it does |
+|---|---|
+| Ring | Ring closes. An OH and a C=O join in a ring. |
+| Dry | Dry parches. An OH near a C=O leaves as water and a C=C forms. |
+| Weld | Weld fuses. Two C=O join in a ring. |
+| Shift | Shift slides. A C=C two carbons from a C=O moves beside it. |
+| Tuck | Tuck folds in. An OH adds to the far end of a C=C beside a C=O and closes a ring. |
+| Flip | Flip turns. An OH on a C=C turns to C=O. |
+| Snap | Snap springs. Two C=C side by side and a third nearby close a six-ring. |
+| Close | Close shuts. A Cl and an OH, NH2, SH or COOH join in a ring. Acid fumes leave. |
+| Cap | Cap covers. An SH and a C=O join in a ring. |
+| Knit | Knit loops. An NH2 and a C=O join in a ring. |
+| Ring across | Ring across reaches. An OH and a C=O facing across the fold join. |
+| Cap across | Cap across reaches. An SH and a C=O facing across the fold join. |
+| Knit across | Knit across reaches. An NH2 and a C=O facing across the fold join as C=N. Water leaves. |
+| Weld across | Weld across reaches. Two C=O facing across the fold join. |
+| Seal across | Seal across reaches. A COOH and an OH, NH2 or SH facing across the fold join. Water leaves. |
+| Close across | Close across reaches. A Cl and an OH, NH2, SH or COOH facing across the fold join. Acid fumes leave. |
+| Open across | Open across reaches. An epoxide and an OH facing across the fold join. |
+| Tuck across | Tuck across reaches. An OH adds to the far end of a C=C beside a C=O across the fold. |
+| Snap across | Snap across reaches. Two C=C side by side and a C=C facing them across the fold close a six-ring. |
+| Bridge | Bridge spans. Two SH facing across the fold join as S-S. Hydrogen leaves. |
+| Stitch | Stitch sews. Two C=C facing across the fold join in a four-ring. |
+| Link | Link ties. Two OH facing across the fold join as an ether. Water leaves. |
+
+### Motifs: all twelve (four of them are in the book above)
+
+| Name | What it does |
+|---|---|
+| Sugar | Sugar sweetens. Keep a carbon with an OH. x1.03, rising with each. |
+| Resonance | Resonance ripples. Keep two double bonds one single bond apart. x1.08, rising with each. |
+| Benzene ring | Benzene ring steadies. Keep a benzene ring. x1.14, rising with each. |
+| Ring | Ring holds. Keep a ring outside benzene and cages. x1.02, rising with each. |
+| Shared side | Shared side braces. Keep two rings sharing a side. x1.07, rising with each. |
+| Cage | Cage encloses. Keep rings tied into a cage. x1.01, rising with each. |
+| Spiro centre | Spiro centre pivots. Keep two rings meeting at one atom. x1.05, rising with each. |
+| Acid group | Acid group sours. Keep a COOH. x1.12, rising with each. |
+| Amine | Amine reaches. Keep an amine nitrogen. x1.10, rising with each. |
+| Sulfur bridge | Sulfur bridge spans. Keep a sulfur between two atoms. x1.16, rising with each. |
+| Branch point | Branch point forks. Keep a carbon holding three carbons. x1.02, rising with each. |
+| Long chain | Long chain trails. Keep three plain carbons in a row. x1.06, rising with each. |
 
 ## The ladder: what each rung hands over
 

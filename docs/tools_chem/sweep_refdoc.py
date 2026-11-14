@@ -1,7 +1,7 @@
 """Write docs/REFERENCE.md from the game's own table (P.reference), as the job ref16.js printed it, with the simulated number of
 runs each thing takes (sweep_deeds.py career, which writes _sweep/deed16/earn.json).
 
-    bash .claude/headless/hlow.sh jobs/ref16.js ref16 120
+    bash .claude/headless/hlow.sh jobs/ref18.js ref18 120      (ref16.js until the eighteenth measure)
     python docs/tools_chem/sweep_deeds.py career 300
     python docs/tools_chem/sweep_refdoc.py
 """
@@ -9,8 +9,8 @@ import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref16.json'), encoding='utf-8'))['result']
-ref, cats, ladder = o['ref'], o['cats'], o['ladder']
+o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref18.json'), encoding='utf-8'))['result']
+ref, cats, ladder, start = o['ref'], o['cats'], o['ladder'], o.get('start') or []
 try:
     E = json.load(open(os.path.join(ROOT, 'docs', 'tools_chem', '_sweep', 'deed16', 'earn.json'), encoding='utf-8'))
 except Exception:
@@ -41,9 +41,9 @@ n_long = sum(1 for r in ladder if r['thing'] and r['long'])
 n_thing = sum(1 for r in ladder if r['thing'])
 n_credit = sum(1 for r in ladder if r['credit'])
 L = ['# Overreact: the reference book', '',
-     'Everything a player can get that a new game does not hold, by category: what it is called, what it does, and the one way to get it. This file is written from the game\'s own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref16.js` and `sweep_deeds.py career`), so it says what the rules say. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.', '',
+     'Everything a player can get that a new game does not hold, by category: what it is called, what it does, and the one way to get it. This file is written from the game\'s own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref18.js` and `sweep_deeds.py career`), so it says what the rules say. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.', '',
      'Since the sixteenth measure every thing is got by a deed that fits it ("More deeds, fewer counts"). The lifetime counts left are the ten jars and Fold (epoxidize acts 3 times); the condenser asks for 2 rounds over all runs. No two things share a way. "Runs" is the run on which the thing is handed over in the middle career of %d simulated careers of %d runs, for the casual player and then the careful one; a run hands over two things at most, so in the first twenty runs a deed can be handed over up to about 19 runs after it was done. Both runs are given: the run the deed is done, then the run the thing is handed over.' % (E.get('careers', 0), E.get('runs', 300)), '',
-     'For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name`, `does`, `how`, `owned`, and `count` and `target` where the way has a number. `P.REFERENCE_CATS` is the order and the names of the categories. `P.profileOpts(meta)` is what `P.runNew` needs so that a run offers what the profile holds and nothing else. `P.runResult(run).earned` lists what a run handed over, each with the thing\'s `name` and `how`. `P.stageOf(meta)` and `P.gateOpen(meta, what)` are what the page\'s own gate should read.', '',
+     'For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name`, `does`, `how`, `owned`, `nums` (the numbers of the line in order), and `count` and `target` where the way has a number; a homunculus also has `stages` (its five numbers) and `stage` (how far this profile has brought it). `P.thingOf(category, id)` gives the name and line of any thing, the ones a new game holds too. `P.REFERENCE_CATS` is the order and the names of the categories. `P.profileOpts(meta)` is what `P.runNew` needs so that a run offers what the profile holds and nothing else. `P.runResult(run).earned` lists what a run handed over, each with the thing\'s `name` and `how`. `P.stageOf(meta)` and `P.gateOpen(meta, what)` are what the page\'s own gate should read.', '',
      '## How many', '', '| Category | Things | How they are got |', '|---|---|---|']
 for cid, cname in cats:
     n = sum(1 for x in ref if x['category'] == cid)
@@ -56,6 +56,18 @@ for cid, cname in cats:
     for x in rows:
         L.append('| %s | %s | %s | %s |' % (x['name'][0].upper() + x['name'][1:], x['does'], x['how'], runs(x)))
     L.append('')
+    if cid == 'homunculus':
+        L += ['The line above is a new profile\'s (stage 1). A homunculus keeps what it grows: its jar goes on counting after it hatches, and at 2, 4, 7 and 11 times the jar\'s size it reaches stages 2 to 5. Its number at each stage:', '',
+              '| Name | Stage 1 | 2 | 3 | 4 | 5 |', '|---|---|---|---|---|---|']
+        for x in rows:
+            L.append('| %s | %s |' % (x['name'], ' | '.join('x%.2f' % v for v in (x.get('stages') or [])) or 'no number'))
+        L.append('')
+if start:
+    L += ['## What a new game already holds, in the same words', '', 'Not in the book (there is nothing to get); `P.thingOf` gives these lines to the page.', '']
+    for cid, cname in (('reagent', 'Reagents: the starting six and the finishing hydrogen'), ('reflex', 'Reflexes: the starting ten, and the twelve across the fold'), ('motif', 'Motifs: all twelve (four of them are in the book above)')):
+        L += ['### ' + cname, '', '| Name | What it does |', '|---|---|']
+        L += ['| %s | %s |' % (x['name'], x['does']) for x in start if x['category'] == cid]
+        L.append('')
 L += ['## The ladder: what each rung hands over', '',
       'A run hands over two rungs at most; what is earned beyond that comes with the next runs, instruments first. The ladder has %d rungs. %d hand over one named thing (they are in the tables above); %d of those count only what is done in a six-round or nine-round run. %d pay credit, 1 to 10 each: the plain counts of rounds played and cleared, runs lost, reflex steps and rings, and the older deeds whose thing now has a way that fits it better. 3 rungs (clearing rounds 10, 11 and 12) are closed while the twelve-round run is switched off.' % (len(ladder), n_thing, n_long, n_credit), '',
       '## What is not in the book, and why', '',
