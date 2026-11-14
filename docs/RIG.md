@@ -8,7 +8,7 @@ The rules of a round were changed later the same day (bounds, a budget of uses, 
 
 One part for each item, written as each was finished. Each ends with the choices left for the owner. What was not done is at the end.
 
-Everything here was played on the deal as it stands now (N, S and Cl in the late rounds, `RULE.elLate`) under the pass marks of the sixteenth. The sets of sigils were all played again: none and each alone 200 runs, each of the 36 pairs 60, each of the 84 threes 20, the casual and the careful player on the same deals (`sweep_run.py sig17`, `sig17n`, `sig17s`; read by `sweep_sig17.py`). "Worth 1.2" means the thing helps a run as much as multiplying every yield by 1.2 would. A run in which sigils are bought on the way is laid together round by round from runs that held that set, as in the sixteenth (20,000 such runs for each row).
+Everything here was played on the deal as it stands now (N, S and Cl in the late rounds, `RULE.elLate`) under the pass marks of the sixteenth. The sets of sigils were all played again: none and each alone 200 runs, each of the 36 pairs 60, each of the 84 threes 20, the casual and the careful player on the same deals (`sweep_run.py sig17`, `sig17n`, `sig17s`; read by `sweep_sig17.py`). "Worth 1.2" means the thing helps a run as much as multiplying every yield by 1.2 would. A run in which sigils are bought on the way is built round by round from runs that held that set, as in the sixteenth (20,000 such runs for each line of a table).
 
 ### 1. The owner's three picks on sigils
 
@@ -30,14 +30,14 @@ Owner (AY): sigils are bought with gold, three at most; one gold for each cleare
 | Respiratio | 1.16 | 0.8 | 36, 30, 18 | 14 | 1.15 | 2 |
 | Aqua Permanens | 0.62 | 0.0 | 12, 3, 2 | 4 | 0.50 | none: it pays 8 |
 
-Pairs are worth 0.50 to 1.91 (the middle pair 1.42) and win up to 7.2 runs in 100 (the middle 2.6); threes 0.50 to 2.63 (the middle 1.67) and win up to 16 in 100 (the middle 4.6; a three was played 20 times, so one three's wins are good to about 1.5 times either way). The biggest round: 19 times the number to beat with one sigil, 32 with two (Clepsydra and Solve), 39 with three (Solve, Tetractys and Gemini). Rounds past 20 times: none of 16,200 with one sigil, 11 of 19,440 with two, 21 of 15,120 with three.
+Pairs are worth 0.50 to 1.91 (the middle pair 1.42) and win up to 7.2 runs in 100 (the middle 2.5); threes 0.50 to 2.63 (the middle 1.67) and win up to 16 in 100 (the middle 4.6; a three was played 20 times, so one three's wins are good to about 1.5 times either way). The biggest round: 19 times the number to beat with one sigil, 32 with two (Clepsydra and Solve), 39 with three (Solve, Tetractys and Gemini). Rounds past 20 times: none of 16,200 with one sigil, 11 of 19,440 with two, 21 of 15,120 with three.
 
 **Buying, with one gold for each cleared round** (all nine owned; nine-round runs with nothing else held)
 
 | | Careful | Casual |
 |---|---|---|
 | Sigils held going into round 4, 7, 9 (runs that get there) | 1.3, 2.6, 3.0 | 0.9, 1.9, 2.8 |
-| Before the gold for a cleared round (sixteenth) | 0.9, 1.8, 2.6 | 0.3, 0.9, . |
+| The same with no gold for a cleared round (today's deal, forms and prices) | 0.7, 1.5, 2.4 | 0.1, 0.6, 1.3 |
 | Sigils held when the run ends | 1.9 | 0.6 |
 | Wins of nine, of 100: buying nothing | 0.4 | 0.00 |
 | buying the strongest he can pay for | 4.5 | 0.01 |
@@ -45,15 +45,15 @@ Pairs are worth 0.50 to 1.91 (the middle pair 1.42) and win up to 7.2 runs in 10
 | buying at random | 4.5 | 0.01 |
 | Runs that reach round 7, of 100: buying nothing; buying | 39; 45 | 3; 6 |
 | Two runs end holding the same set, of 100 pairs of runs | 4 | 29 (most of his runs end early, holding none or one) |
-| Gold a round pays in rounds 4 to 9, holding 0, 1, 2, 3 sigils | 2.3, 2.5, 2.8, 2.9 | 1.0, 1.1, 1.1, 1.2 |
+| Gold a round pays in rounds 4 to 9: the player who buys nothing; the buyer while he holds three | 2.8; 2.9 | 1.2; 1.2 |
 
 - **He now gets his three in time.** The careful player holds one by round 4, between two and three by round 7 and three by round 9. The casual player who is still alive holds about one by round 4 and two by round 7.
-- **Wins.** The careful player wins 4.5 to 4.9 nine-round runs in 100 with bought sigils and nothing else (0.4 with none; 0.9 to 2.4 in the sixteenth, before the gold for a cleared round). The casual player still wins almost none: sigils alone do not carry him past rounds 7 to 9.
-- **Runs differ.** Two of the careful player's runs end with the same three 4 times in 100.
-- **Gold does not run away.** A round of rounds 4 to 9 pays the careful player 2.3 gold with no sigil held and 2.9 with three; the casual player 1.0 and 1.2. What he holds makes a quarter more gold, not a multiple.
+- **Wins.** The careful player wins 4.5 to 4.9 nine-round runs in 100 with bought sigils and nothing else (0.4 with none; 2.2 to 2.4 on today's deal without the gold for a cleared round: the gold about doubles his wins). The casual player still wins almost none: sigils alone do not carry him past rounds 7 to 9.
+- **Runs differ.** Two of the careful player's runs end holding the same set 4 times in 100.
+- **Gold does not run away.** A round of rounds 4 to 9 pays about the same whatever is held: the careful player 2.8 gold a round buying nothing and 2.9 while he holds three; the casual player 1.2 and 1.2.
 - Which sigil he buys hardly matters to the careful player (4.5 buying at random, 4.9 choosing): the prices do their work.
 
-**Aqua Permanens pays gold when taken: three sizes, and no size makes it a trade.** Taken, it stays for the whole run, holds one of the three places, and cuts the yield to 0.58 of what it was. The buyer below takes it whenever it is shown and spends the gold on the others.
+**Aqua Permanens pays gold when taken: three sizes, and no size makes it a trade.** Taken, it stays for the whole run, is one of the three a run may hold, and cuts the yield to 0.58 of what it was. The buyer below takes it whenever it is shown and spends the gold on the others.
 
 | Aqua Permanens pays | Careful: wins of nine, of 100, taking it whenever shown (4.9 never taking it) | The runs that took it win | Taking it only before round 2 or 3 |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Pairs are worth 0.50 to 1.91 (the middle pair 1.42) and win up to 7.2 runs in 10
 
 No payment comes near level: with one gold for each cleared round, gold is not what holds a run back, so more gold buys nothing that makes up for a yield cut nearly in half through rounds 7 to 9. The casual player wins none either way. The payment is set at 8, the largest of the three; it is still a trap, and the book's line for it says what it does.
 
-**The trade that does come out level, built behind a switch and left off** (`RULE.aquaRounds`, 0): Aqua Permanens works for a set number of rounds and is then gone, its place free again; it is not offered again in that run.
+**A trade that does work, built behind a switch and left off** (`RULE.aquaRounds`, 0): Aqua Permanens works for a set number of rounds and is then gone, and the run may hold another in its stead; it is not offered again in that run.
 
 | Works for | Pays | Careful: wins of nine, of 100, taking it whenever shown (4.9 never taking it) | The runs that took it win | Taking it only before round 2 or 3 | The runs that took it win |
 |---|---|---|---|---|---|
@@ -72,15 +72,15 @@ No payment comes near level: with one gold for each cleared round, gold is not w
 | 2 rounds | 6 | 3.9 | 4.7 | 4.2 | 4.3 |
 | 2 rounds | 8 | 4.0 | 5.2 | 4.8 | 5.1 |
 | 3 rounds | 8 | 3.0 | 3.5 | 4.6 | 3.8 |
-| 4 rounds | 8 | 2.6 (6,000 runs) | 2.8 | 4.2 | 3.3 |
+| 4 rounds | 8 | 2.4 | 2.4 | 4.2 | 3.1 |
 
-Two rounds and 8 gold is about level with not taking it (4.0 to 4.8 against 4.9; the runs that took it win 5.1 to 5.2) and is never clearly the best line. It is a loan: gold now, two weak rounds, and the early rounds are the ones with low pass marks. The job checks it in the game (it works two rounds, is gone, and is not offered again).
+With two rounds and 8 gold, taking it only early is level with not taking it (4.8 wins in 100 against 4.9); taking it whenever it is shown costs a little (4.0). The runs that took it win 5.1 to 5.2, so it is never clearly the best line. It is a loan: gold now, two weak rounds, and the early rounds are the ones with low pass marks. The job checks it in the game (it works two rounds, is gone, and is not offered again).
 
 **Not done.** Buying was not played by the game's own aiming player (the job buys by hand). The six-round run and runs with instruments are in part 3. A buyer who saves for one named sigil was not modelled. The shelf's reagent and the re-deals take no gold in these numbers, so a real player holds a little less.
 
 **Choices for the owner**
 
-1. Aqua Permanens. (a) It works for two rounds, pays 8, and is gone: about level with not taking it (4.0 to 4.8 wins in 100 against 4.9). **Recommended**; built, off (`RULE.aquaRounds = 2`). (b) As built today: it pays 8 and stays for good; taking it drops a careful player from 4.9 wins in 100 to 1.2. (c) Take it out of the nine.
+1. Aqua Permanens. (a) It works for two rounds, pays 8, and is gone: level with not taking it when taken early (4.8 wins in 100 against 4.9), a little worse when taken late (4.0). **Recommended**; built, off (`RULE.aquaRounds = 2`). (b) As built today: it pays 8 and stays for good; taking it drops a careful player from 4.9 wins in 100 to 1.2. (c) Take it out of the nine.
 2. Gold for a cleared round. (a) One, as picked: the careful player holds his three by round 9 and wins 4.5 to 4.9 in 100 on sigils alone. (b) One from round 4 on only, to slow the first sigil. (c) Raise every price by 1 instead.
 
 ### 2. The two weak sigils, and Solve with Ammonia
@@ -95,10 +95,10 @@ Two rounds and 8 gold is about level with not taking it (4.0 to 4.8 against 4.9;
 | every ring an OH closes counts twice in the chain | 1.45 | 1.47 | 60 | too strong |
 | the first ring of a page counts twice, the join across the fold too | 1.37 | 1.29 | 44 | too strong |
 | the first ring an OH closes on a page counts twice | 1.13 | 1.15 | 9 | just under |
-| **the first two rings an OH closes on a page each count twice** | **1.17 (1.25 at 200 runs)** | **1.19** | **13** | taken |
+| **the first two rings an OH closes on a page each count twice** | **1.17 (1.25 at 200 runs)** | **1.19** | **12 (13 at 200 runs)** | taken |
 | Tetractys as it was | 1.07 | 1.09 | 9 | |
 | the fourth reagent spends no use | 1.07 | 1.08 | 10 | nothing |
-| **the fourth reagent pays three times, not twice** | **1.20 (1.21 at 200 runs)** | **1.19** | **15** | taken |
+| **the fourth reagent pays three times, not twice** | **1.20 (1.21 at 200 runs)** | **1.15 (1.19 at 200 runs)** | **15** | taken |
 | both of those | 1.41 | 1.19 | 14 | too strong |
 
 - **Sulphur's Mask** now: oxygen behaves as sulfur (an OH closes its ring first and as often as it can; two OH facing across the fold join), and the first two rings an OH closes on a page each count as two steps of the chain. Worth 1.25 to the careful player and 1.19 to the casual (target 1.15 to 1.3); it wins 1.5 nine-round runs in 100 alone (0.3 before).
@@ -118,7 +118,7 @@ Two rounds and 8 gold is about level with not taking it (4.0 to 4.8 against 4.9;
 
 It is not rare: with the two together about one run in four has a round past 20 times the number to beat, and one round in 300 is past 50 times. It does not win more than the two are worth apart (1.65 together, 1.66 apart): the huge rounds come in rounds that were already won.
 
-**The mildest fix, built behind a switch and left off** (`RULE.ammoniaLimits`; the simulator's `ammonia_limits`): when Ammonia fires the page again, that second firing has the page's plain limits (dry once, weld twice, ring twice), counted afresh, whatever sigil is held. Nothing else about either changes. It counts what the page has already done, so with Solve a kind that has had its count does not go again in the second firing. With it the two together have a round past 20 times the number to beat in 9 runs of 200 (45 without) and none past 50 times; the biggest was 33 (68 without). They still win 3.6 runs in 100 (4.3). Ammonia alone is unchanged (0.8 wins in 100, biggest round 17). A first form that counted the limits afresh was dropped: it left 24 runs in 200 with such a round and made Ammonia alone stronger. In the game the job checks only that the engine puts the limits back while the flag is up; a whole second firing was not played in the game.
+**The mildest fix, built behind a switch and left off** (`RULE.ammoniaLimits`; the simulator's `ammonia_limits`): when Ammonia fires the page again, that second firing has the page's plain limits (dry once, weld twice, ring twice), whatever sigil is held. Nothing else about either changes. It counts what the page has already done, so with Solve a kind that has had its count does not go again in the second firing. With it the two together have a round past 20 times the number to beat in 9 runs of 200 (45 without) and none past 50 times; the biggest was 33 (68 without). They still win 3.6 runs in 100 (4.3). Ammonia alone is unchanged (0.8 wins in 100 with it and 0.8 without on the same 100 runs; biggest round 17). A first form that counted the limits afresh was dropped: it left 24 runs in 200 with such a round and made Ammonia alone stronger. In the game the job checks only that the engine puts the limits back while the switch is at work; a whole second firing was not played in the game.
 
 **Choices for the owner**
 
@@ -131,23 +131,23 @@ It is not rare: with the two together about one run in four has a round past 20 
 
 | Player | Six rounds: runs | Wins, of 100 | Of the runs still alive, clear rounds 1 to 6 | Nine rounds: runs | Wins, of 100 | Of the runs still alive, clear rounds 1 to 9 |
 |---|---|---|---|---|---|---|
-| Novice | 1,000 | 0 | 63, 42, 39, 17 | 600 | 0 | 65, 43, 38, 21 |
+| Novice | 1,000 | 0 | 63, 42, 39, 17 (rounds 1 to 4; too few runs after) | 600 | 0 | 65, 43, 38, 21 (rounds 1 to 4) |
 | Casual | 1,000 | 0.6 | 83, 72, 61, 48, 36, 10 | 1,000 | 0 | 83, 71, 61, 50, 49, 30, 0 |
-| Careful | 1,000 | 17.8 | 94, 91, 84, 81, 71, 43 | 2,000 | 0.35 (7 runs) | 94, 92, 84, 84, 82, 70, 32, 19, 14 |
-| Reads two hands | 1,000 | 31.9 | 96, 95, 90, 90, 83, 53 | 2,000 | 1.35 to 1.5 (27 to 30 runs) | 97, 95, 90, 92, 91, 79, 44, 28, 17 |
+| Careful | 1,000 | 17.8 | 94, 91, 84, 81, 71, 43 | 2,000 | 0.35 (7 runs) | 94, 92, 84, 84, 82, 70, 32, 22, 14 |
+| Reads two hands | 1,000 | 31.9 | 96, 95, 90, 90, 83, 53 | 2,000 | 1.5 (30 runs) | 97, 95, 90, 92, 91, 79, 44, 33, 19 |
 
-- **The shape holds:** a gentle start (the careful player clears each of rounds 1 to 6 at 70 to 94 in 100) and a wall at rounds 7 to 9 (32, 19, 14). Of 100 careful runs 50 reach round 6, 35 reach round 7, 11 round 8, 2 round 9.
-- **Flag: the player who reads two hands.** Counted again from the same 2,000 runs he wins 27 (by the yield over the mark) to 30 (by the simulator's own count) nine-round runs, 1.35 to 1.5 in 100, not the 1.1 the sixteenth wrote; chance alone does not put that past about 2.0. It is under the owner's line of 2 in 100, with little room. The careful player wins 7 of 2,000 (0.35), not 6.
+- **The shape holds:** a gentle start (the careful player clears each of rounds 1 to 6 at 70 to 94 in 100) and a wall at rounds 7 to 9 (32, 22, 14). Of 100 careful runs 50 reach round 6, 35 reach round 7, 11 round 8, 2 round 9.
+- **Flag: the player who reads two hands.** Counted again from the same 2,000 runs he wins 30 nine-round runs by the simulator's own count (27 by a second count of the yield over the mark), 1.5 in 100, not the 1.1 the sixteenth wrote; chance alone does not put that past about 2.1. It is under the owner's line of 2 in 100, with little room. The careful player wins 7 of 2,000 (0.35), not 6.
 - The casual player wins 6 six-round runs in 1,000 and no nine-round run in 1,000.
 
-**Credit over a career, and the sign's three laps, under the new ladder** (`sweep_deeds.py credit`, 200 careers of each player; runs drawn from the pools of the sixteenth's part 2 played again on the new deal, `deed17`). The ladder has 85 rungs; 40 pay credit, 82 credit in all.
+**Credit over a career, and the sign's three laps, under the new ladder** (`sweep_deeds.py credit`, 200 careers of each player; runs drawn from the four kinds of run of the sixteenth's part 2, played again on the new deal, `deed17`). The ladder has 85 rungs; 40 pay credit, 82 credit in all.
 
 | Player | Credit held after 5, 10, 20, 40, 100, 300 runs (nothing spent) | Things of the book held after 5, 10, 20, 40, 100 runs (of 52 simulated) | First six-round win (run) | First nine-round win (run) |
 |---|---|---|---|---|
 | Casual | 5, 7, 10, 42, 57, 65 | 6, 15, 35, 45, 48 | 18 | not in 300 |
 | Careful | 7, 13, 17, 67, 80, 81 | 6, 16, 39, 46, 48 | 6 | 32 |
 
-Credit comes slowly for twenty runs and then in a rush (10 to 42 for the casual player between runs 20 and 40): a run hands over two rungs at most and the things come first, so the rungs that pay credit wait in the queue. The sign can be taken when 77 of the 85 rungs are held:
+Credit comes slowly for twenty runs and then in a rush (10 to 42 for the casual player between runs 20 and 40): a run hands over two rungs at most and the things come first, so the rungs that pay credit wait in the queue. The sign can be taken when 77 of the 85 rungs are held (a second set of 200 careers, so its first wins differ a little from the table above):
 
 | Player | Lap (signs taken) | Yield times | Number to beat times | Runs until the sign can be taken | First six-round win in the lap (run) | First nine-round win in the lap (run) |
 |---|---|---|---|---|---|---|
@@ -156,22 +156,22 @@ Credit comes slowly for twenty runs and then in a rush (10 to 42 for the casual 
 
 Every lap is about as long as the first (about 100 runs for the casual player, 40 for the careful): the lift and the higher number to beat nearly cancel. These careers do not buy sigils and hold a creature only as the old model did, so the first nine-round win of a real player is sooner than the table says; the casual player's "not in 600" is the bare game's wall.
 
-**Sigils in the six-round run, and bought sigils beside instruments.** Six rounds (`sig17m`: none 200 runs, each sigil alone 100, every round played): held from round one, a sigil lifts the careful player's six-round wins from 20 in 100 to between 24 (Via Humida, Sulphur's Mask) and 42 (Phlogiston); Aqua Permanens drops them to 3. The casual player goes from 0.9 to between 1.3 and 3.9. Bought on the way with one gold a round (he holds 1.3 going into round 4; only the first sigil bought is counted, because pairs were not played on six rounds, so the true figure is a little higher): the careful player wins 28 in 100 against 20, the casual 1.8 against 0.9. **Bought sigils beside instruments were not finished:** the runs with the kit of three instruments were still being played at hand-back (`sweep_run.py sig17k`; `python sweep_sig17.py other` reads them).
+**Sigils in the six-round run, and bought sigils beside instruments.** Six rounds (`sig17m`: none 200 runs, each sigil alone 100, every round played): held from round one, a sigil lifts the careful player's six-round wins from 20 in 100 to between 24 (Via Humida, Sulphur's Mask) and 42 (Phlogiston); Aqua Permanens drops them to 3. The casual player goes from 0.9 to between 1.3 and 3.9. Bought on the way with one gold a round (he holds 1.3 going into round 4; only the first sigil bought is counted, because pairs were not played on six rounds, so the true figure is a little higher): the careful player wins 28 in 100 against 20, the casual 1.8 against 0.9. **Bought sigils beside instruments were not finished:** the runs with three instruments held (carousel, burette, seed crystal) were still being played when this was written (`sweep_run.py sig17k`; `python sweep_sig17.py other` reads them).
 
 **Not done.** A career in which sigils are bought and creatures grow was not laid together. The rounds-cleared shape with helpers held was not drawn again. The yellow sign's laps do not include what the sign takes away (`SIGN.takes` is empty in the game).
 
 **Choices for the owner**
 
-1. The reader of two hands (1.35 to 1.5 wins in 100, the line is 2). (a) Raise the marks of rounds 8 and 9 a little (2.1 and 2.3): the sixteenth measured 0.85 for him and 0.2 for the careful player with those. **Recommended.** (b) Leave it. (c) Fit rounds 7 to 9 again on fresh runs.
+1. The reader of two hands (1.5 wins in 100, the line is 2). (a) Raise the marks of rounds 8 and 9 a little (2.1 and 2.3): the sixteenth gave 0.85 for him and 0.2 for the careful player with those, by the count that read him low, so his true figure with them is likely about 1.1; it was not measured again. **Recommended.** (b) Leave it. (c) Fit rounds 7 to 9 again on fresh runs.
 2. Credit in the first twenty runs. (a) Leave it: things first, credit after. (b) Credit rungs do not count toward the two a run hands over. (c) Three rungs a run.
 
 ### 4. The game's own deal
 
-**The fault.** The game drew a family first (chain 38, ring 24; arene and cage are not open in a new game) and then a molecule of that family; the simulator, on which every pass mark was fitted, draws from all the round's molecules that fit. Round 4's pool holds four chain molecules, two of them plain, among 24: the game gave those two a whole family's share, which is how one of them came up 21 times in 100 with the late-round rule off (3 or 4 in the simulator), and it hardly ever dealt the round's arene and cage molecules.
+**The fault.** The game drew a family first (chain 38, ring 24; arene and cage are not open in a new game) and then a molecule of that family; the simulator, on which every pass mark was fitted, draws from all the round's molecules that fit. Round 4's own list holds four chain molecules, two of them plain, among 24: the game gave those two a whole family's share, which is how one of them came up 21 times in 100 with the late-round rule off (3 or 4 in the simulator), and it hardly ever dealt the round's arene and cage molecules.
 
-**The fix** (`path.js` `RULE.dealFlat`, on; in `runBriefs`): a molecule is drawn from all the round's molecules that fit, pool first with the round's chance, as the simulator does. The family of a molecule is still read from the molecule after it is dealt. The first-game deal goes through the same lines.
+**The fix** (`path.js` `RULE.dealFlat`, on; in `runBriefs`): a molecule is drawn from all the round's molecules that fit (the round's own list first, with the round's chance, then its reserve), as the simulator does. The family of a molecule is still read from the molecule after it is dealt. The first-game deal goes through the same lines.
 
-**Every round checked** (job `deal17.js`: 150 deals of two molecules a round in the game's own deal, against 20,000 in the simulator; the late-round rule on, as the game has it. With 300 molecules dealt, two tallies of the same deal already stand about 15 to 20 apart by chance.)
+**Rounds 1 to 6 and 9 checked** (job `deal17.js`: 150 deals of two molecules a round in the game's own deal, against 20,000 in the simulator; the late-round rule on, as the game has it. With 300 molecules dealt, two tallies of the same deal already stand about 15 to 20 apart by chance.)
 
 | Round | Simulator: molecules dealt; the most dealt, of 100 | Game before: molecules; the most dealt; deals of 100 that differ from the simulator; molecules never dealt | Game now |
 |---|---|---|---|
@@ -184,7 +184,7 @@ Every lap is about as long as the first (about 100 runs for the casual player, 4
 | 7, 8 | | not tallied: the game's job ran out of time on these two rounds (it works out the number to beat of every molecule dealt, which takes minutes for the large ones) | |
 | 9 | 64; 3.5 | 35; 19.3; 47; 8 | 42; 6.7; 19; 2 |
 
-The same fault was in every round from 3 on (30 to 40 deals in 100 unlike the simulator's, 4 to 19 of the round's commoner molecules never dealt); rounds 1 and 2 were close already, because the chlorine molecules of the first rounds are dealt by their own rule. With the fix the game's deal is as near the simulator's as two tallies of this size can show. Round 9 was the worst: one molecule in five deals. A tally of 1,000 deals a round was started and had not finished at hand-back.
+The same fault was in every round tallied from 3 on (29 to 47 deals in 100 unlike the simulator's, 4 to 19 of the round's commoner molecules never dealt); rounds 1 and 2 were close already, because the chlorine molecules of the first rounds are dealt by their own rule. With the fix the game's deal is within, or just over, what chance alone gives two tallies of this size (14 to 25 apart). Round 9 was the worst: one molecule in five deals. A tally of 1,000 deals a round was started and had not finished when this was written.
 
 **Not done.** The game's whole runs were not played against the simulator's after the fix. In the game three molecules are still drawn and two shown; the simulator draws two (the first two are the same draw).
 
@@ -194,8 +194,8 @@ Their jars fill from reduce and hydroborate, which are not in the starting six. 
 
 | Way | Wood spirit hatches (run of the middle career; careers that hatch it in 300 runs, of 100) | Slime hatches |
 |---|---|---|
-| (a) As they are: 40 uses of reduce, 70 of hydroborate | never (casual 5, careful 10) | never (0, 0) |
-| (b) Smaller jars: 15 and 25 | run 174 casual, 173 careful (94, 92) | never (0, 0) |
+| (a) As they are: 40 uses of reduce, 70 of hydroborate | not in 300 runs for the middle career (5 careers in 100 of the casual player hatch it, 10 of the careful) | not in 300 runs (0, 0) |
+| (b) Smaller jars: 15 and 25 | run 174 casual, 173 careful (94, 92) | not in 300 runs (0, 0) |
 | (c) Fed by a starting play too, same jars: a reagent lined up that found nothing feeds the wood spirit; a page on which one reagent landed twice feeds the slime | run 5 casual, 7 careful (100, 100) | run 70 casual, 25 careful (100, 100) |
 | (c) with those counted at half | run 10, 13 | run 137, 46 |
 
@@ -241,7 +241,7 @@ Owner (13 November): "perhaps we also have the homunculi get better at their 'jo
 | No creature | 0.32 | 96, 91, 88, 80, 84, 75 | 32, 22, 12 | 9 |
 | As they are (stage 3) | 0.51 (0.51) | 95, 93, 89, 80, 85, 75 | 36, 21, 17 | 17 |
 | Stage 1, a creature just hatched under `'keep'` | 0.36 (0.37) | 95, 93, 89, 80, 84, 74 | 33, 19, 15 | 14 |
-| Stage 5, an old profile under `'keep'` | 0.80 (0.67) | 95, 93, 89, 82, 86, 75 | 38, 24, 20 | 21 |
+| Stage 5, a long-time player under `'keep'` | 0.80 (0.67) | 95, 93, 89, 82, 86, 75 | 38, 24, 20 | 21 |
 | Grows in the run (`'run'`) | 0.54 (0.43) | 95, 93, 89, 80, 84, 74 | 35, 21, 17 | 18 |
 
 - **`'run'`: most creatures hardly grow.** Stage reached after rounds 3, 6, 9 (every round played): Wood spirit 2.5, 3.9, 4.8 (it does its job 12 times a run); Ammonia 1.7, 2.6, 3.5; Water 1.4, 2.1, 2.8; Dry ice, Salt, Slime 1.4, 1.9, 2.3; Acid 1.1, 1.4, 1.8; Seedling 1.1, 1.2, 1.6; Hydrogen 1.0, 1.2, 1.4; Brimstone 1.0, 1.1, 1.2. For the casual player lower still (most stay at stage 1). With the counts as built a creature spends most of a run weaker than it is today; eight of the ten win a little less often than today, Ammonia a little more (1.0 in 100 against 0.8) and only the Wood spirit clearly more (1.1 against 0.6). Counts of 1, 2, 4, 6 would suit how seldom a job is done; that was not played.
@@ -258,10 +258,10 @@ Owner (13 November): "perhaps we also have the homunculi get better at their 'jo
 | Brimstone | 80 | 78; 150, 293, not in 300 | 60; 118, 233, not in 300 |
 
   Stage 5 comes at run 62 for the creature used most by the careful player and run 129 for the casual one; never before about run 60. Salt's jar is not kept by the simulator; the wood spirit's and the slime's do not fill (part 5).
-- **Does `'keep'` flatten the early rounds for an old profile?** No. With a creature at stage 5 rounds 1 to 6 are cleared 95, 93, 89, 82, 86, 75 times in 100, against 95, 93, 89, 80, 85, 75 today. A stage 5 creature alone lifts the careful player from 0.5 to 0.8 nine-round wins in 100 (the best, Ammonia and the Wood spirit, to 1.5 and 1.4). The owner's line of under 2 in 100 is for a profile with nothing unlocked and is not touched; an old profile's creature at stage 5 is still worth less than one good sigil.
+- **Does `'keep'` flatten the early rounds for a long-time player?** No. With a creature at stage 5 rounds 1 to 6 are cleared 95, 93, 89, 82, 86, 75 times in 100, against 95, 93, 89, 80, 85, 75 today. A stage 5 creature alone lifts the careful player from 0.5 to 0.8 nine-round wins in 100 (the best, Ammonia and the Wood spirit, to 1.5 and 1.4). The owner's line of under 2 in 100 is for a player with nothing unlocked and is not touched; a long-time player's creature at stage 5 is still worth less than one good sigil.
 - **A new profile under `'keep'`** meets its creatures at stage 1: all ten win 0.36 in 100 against 0.51 today, so hatching a creature is a little less of an event than it is now.
 - **`'both'`** was built and checked in the game; one ceiling was played: with the ceiling at stage 3 the ten win 0.47 in 100, against 0.54 with no ceiling and 0.51 today. Other ceilings were not played.
-- The casual player wins no nine-round run with any creature at any stage.
+- The casual player wins almost no nine-round run with any creature at any stage (at most 0.04 in 100, the Wood spirit at stage 5).
 
 **Three creatures made simpler** (`RULE.homSimple`, off; all nine versions in the simulator, `sweep_homs.py MODE`; the recommended one of each in the game, job `simple17.js`, 10 checks, all pass). 100 runs each. The number is as the player reads it.
 
@@ -270,22 +270,22 @@ Owner (13 November): "perhaps we also have the homunculi get better at their 'jo
 | Hydrogen | (a) **recommended, in the game** | Drive off 2 hydrogens. x1.18. | 1.07 (1.03) | 7.1 (1.1) | 1.07 (0.96) |
 | | (b) | Play only two reagents and land both. x1.12. | 0.99; at x1.34: 1.20, 13 times a run | 6.0 | 0.97 |
 | | (c) | Land oxidize last. The chain carries on into the next page. | 1.19, a round of 20 times the number to beat | 7.6 | 1.10 |
-| Wood spirit | (a) | Put a dud first. He pours the bottles left out, a use of each. | 0.97 (1.09) | 7.5 (11.2) | 1.09 (1.30) |
+| Wood spirit | (a) | Put first a reagent that finds nothing. He pours the bottles left out, a use of each. | 0.97 (1.09) | 7.5 (11.2) | 1.09 (1.30) |
 | | (b) **recommended, in the game** | Line up a reagent that finds nothing. x1.16. | 1.04 at x1.12, 1.20 at x1.22; x1.16 lies between and was not played | 11 to 15 | 1.20 to 1.42 |
-| | (c) | Put a dud first. He pours the bottles left out, free; the bottle he drank is empty. | 0.94 | 7.3 | 1.07 |
+| | (c) | Put first a reagent that finds nothing. He pours the bottles left out, free; the bottle he drank is empty. | 0.94 | 7.3 | 1.07 |
 | Brimstone | (a) **recommended, in the game** | Put sulfur on the molecule. The round ends; the task counts as met. | 1.05 (1.07) | 1.8 (1.4) | 0.97 (0.98) |
 | | (b) | Put sulfur on with the task met. The round ends. x1.58. | 1.07; at x1.22: 0.99 | 4.1 | 1.01 |
 | | (c) | Put sulfur on with the task half done. The round ends; the task counts as met. | 1.03 | 0.8 | 0.99 |
 
 - Hydrogen (a) keeps "lifts off": hydrogen leaving is the job. It is done seven times a run where today's is done once, so the creature is felt. (c) is the strongest and has no number to read.
-- Wood spirit (b) loses the pouring: he only drinks. It is the one version worth as much as today's. (a) and (c) keep the pouring and are worth less than nothing to a careful player (the pours spend uses or a bottle); with a number added they could be tuned, which was not done.
+- Wood spirit (b) loses the pouring: he only drinks. It should be the one version worth as much as today's (the number built, x1.16, lies between the two that were played). (a) and (c) keep the pouring and are worth less than nothing to a careful player (the pours spend uses or a bottle); with a number added they could be tuned, which was not done.
 - Brimstone (a) drops the half-done condition and both numbers and is worth what today's is.
 - **Water and Slime against the one-sentence test.** Water fails it: after its number it does two more things (double bonds take an OH, closed rings open). Its job and number alone pass; the flood was not measured apart from the number. Slime passes with one drawback (that bottle is shut for the round); the reagent it brings to the rack is a second thing and is not needed by its rule: "Brings Hydroborate" can go, and the same for the Wood spirit (reduce), Ammonia (cyanate) and Brimstone (eliminate S), whose rules do not use the reagent they bring either. Taking those off the rack was not measured.
 
 **Choices for the owner**
 
-1. Where creatures grow. (a) They keep it (`'keep'`): stage 5 at about run 60 to 130 for the creature used most; an old profile's creature wins 0.8 nine-round runs in 100 alone against 0.5 today; early rounds unchanged. **Recommended.** (b) In the run (`'run'`): as built most creatures stay near stage 1 and are weaker than today; it needs lower counts first. (c) Both: the lifetime count sets the ceiling.
-2. Keeping old players challenged under `'keep'`. (a) Nothing more: a stage 5 creature is worth less than one good sigil, and the sign already raises the number to beat 1.15 times a lap. **Recommended.** (b) An evolved creature (stage 4 or 5) takes a bench place. (c) The number to beat rises 2 in 100 for each stage past 3 of the creature held.
+1. Where creatures grow. (a) They keep it (`'keep'`): stage 5 at about run 60 to 130 for the creature used most; a long-time player's creature wins 0.8 nine-round runs in 100 alone against 0.5 today; early rounds unchanged. **Recommended.** (b) In the run (`'run'`): as built most creatures stay near stage 1 and are weaker than today; it needs lower counts first. (c) Both: the lifetime count sets the ceiling.
+2. Keeping old players challenged under `'keep'`. (a) Nothing more: a stage 5 creature is worth less than one good sigil, and the sign already raises the number to beat 1.15 times a lap. **Recommended.** (b) An evolved creature (stage 4 or 5) counts as one of the instruments the bench may hold. (c) The number to beat rises 2 in 100 for each stage past 3 of the creature held.
 3. Hydrogen: (a), (b) or (c) of the table; (a) recommended.
 4. Wood spirit: (b) recommended; (a) or (c) if the pouring must stay, with a number to be tuned.
 5. Brimstone: (a) recommended.
@@ -293,17 +293,17 @@ Owner (13 November): "perhaps we also have the homunculi get better at their 'jo
 
 ### 7. The manual's words
 
-Owner (13 November), after three rounds of samples: the thing's name and one verb of its own; the act; the number alone as xN.NN; a side effect as a bare fact; everything is per page unless the entry says otherwise; how it is got as a bare count. Done in `path.js` (`REF_HOM`, `REF_HOMHOW`, `SIGILS`): seven creatures (Acid, Water, Salt, Seedling and Slime as the owner wrote them; Dry ice and Ammonia to the pattern), their ten counts, and five sigils (Clepsydra, Tetractys, Gemini, Sulphur's Mask, Aqua Permanens). Every row of `P.reference(meta)` carries `nums: [{ v, sign }]`, the numbers of its line in order, so the page need not read the sentence. Names are capitalised. With growth on, a creature's line takes its stage's number.
+Owner (13 November), after three rounds of samples: the thing's name and one verb of its own; the act; the number alone as xN.NN; a side effect as a bare fact; everything is per page unless the entry says otherwise; how it is got as a bare count. Done in `path.js` (`REF_HOM`, `REF_HOMHOW`, `SIGILS`): seven creatures (Acid, Water, Salt, Seedling and Slime as the owner wrote them; Dry ice and Ammonia to the pattern), their ten counts, and five sigils (Clepsydra, Tetractys, Gemini, Sulphur's Mask, Aqua Permanens). Every entry of `P.reference(meta)` carries `nums: [{ v, sign }]`, the numbers of its line in order, so the page need not read the sentence. Names are capitalised. With growth on, a creature's line takes its stage's number.
 
 **Not done.** Hydrogen, Wood spirit and Brimstone keep their old lines until a version is picked. The ten instruments and four sigils (Solve, Respiratio, Phlogiston, Via Humida) were reworded once with the thing as the doer, before the pattern was settled, and need a second pass. The reagents, reflexes, motifs, terms, run lengths and the sign, and every deed's "how it is got" line, are in the old wording.
 
 ### What the reviewer found, and what was done
 
-Not yet reviewed.
+A fresh reviewer made the tables again from the result files with the scripts named above, counted the bare runs himself, ran the five jobs in the game (20 of 20, 12 of 12, 10 of 10, 27 of 27, 32 of 32) and read the switches in `path.js`. Verdict: pass with fixes. Nearly every number came out the same. Fixed since: two cells of the bare-run table that mixed two counts (rounds 8 and 9 for the careful player and the reader of two hands), and his wins given by one count (30 of 2,000); the four-round line of Aqua Permanens given at 20,000 runs like the others; "before the gold for a cleared round" is now today's deal without that gold, not the sixteenth's older deal; the line on gold says what was measured (a round pays about the same whatever is held); "level" for Aqua Permanens leaving is said only of taking it early; the Ammonia fix is described one way; the deal's table says which rounds were tallied; the trial lines of the two sigils say which figures are at 100 runs and which at 200; several words were made plainer. Also fixed in the game: with `RULE.sigilStrong` off the shop showed the stronger line of a sigil; it now shows the same line as the book. He could not make part 4's table again (the job was not on his list) and did not check the figures quoted from the sixteenth beyond their being quoted rightly.
 
 ### Not done, in one place
 
-- Item 3: sigils in the six-round run and bought sigils beside instruments (see part 3); a career with bought sigils and growing creatures.
+- Item 3: bought sigils beside instruments, and pairs of sigils on six rounds (see part 3); a career with bought sigils and growing creatures.
 - Item 5: the jars' three ways are in the simulator only.
 - Solve with Ammonia: a whole second firing was not played in the game's job.
 - Creature growth: `'run'` with lower counts; `'both'` beyond one ceiling; creatures at a stage beside sigils or instruments.
