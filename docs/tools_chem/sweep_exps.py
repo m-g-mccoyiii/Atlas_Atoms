@@ -685,3 +685,108 @@ def hom15(arg='200'):
 
 
 EXPERIMENTS['hom15'] = hom15
+
+
+# --- the sixteenth measure, item 1: the nine sigils alone, in pairs, in threes, and with each creature ---------------------------
+SIG9 = ('phlogiston', 'clepsydra', 'via_humida', 'unbound', 'aqua_permanens', 'tetractys', 'respiratio', 'gemini', 'sulphurs_mask')
+
+
+def sig16(arg='1,median,200'):
+    """Sixteenth: nine-round runs under the game's rule with a set of sigils held from round one, every round played and written
+    out in full, every set on the same deals.  arg: what,player,runs[,seed letter[,extra mods joined by +]].
+    what: 0 none; 1 each alone; 2 the 36 pairs; 3 the 84 threes; 4 thirty sets of four; hom: each sigil with each creature;
+    or sigil ids joined by + (one set).  extra mods: instruments (sweep_tools.py) or hom:<creature>, held as well."""
+    ps = arg.split(',')
+    what, pl, n = ps[0], ps[1], int(ps[2])
+    sd = ps[3] if len(ps) > 3 and ps[3] else 'q'
+    more = [x if ':' in x else 'tool:' + x for x in ps[4].split('+')] if len(ps) > 4 and ps[4] else []
+    if what == '0':
+        sets = [()]
+    elif what in ('1', '2', '3'):
+        sets = list(itertools.combinations(SIG9, int(what)))
+    elif what == '4':
+        sets = random.Random(16).sample(list(itertools.combinations(SIG9, 4)), 30)
+    elif what == 'hom':
+        sets = [(s, 'hom:' + h) for s in SIG9 for h in HOMS2] + [('hom:' + h,) for h in HOMS2]
+    else:
+        sets = [tuple(what.split('+'))]
+    par = dict(T13)
+    _b = re.search(r'RULE\.bench = (\d+)', SC._JS)
+    if more and _b and int(_b.group(1)) > 0:
+        par['tool_cap'] = int(_b.group(1))
+    jobs = []
+    for st in sets:
+        mods = [x if ':' in x else 'sigil:' + x for x in st] + more
+        name = '+'.join(st) or 'none'
+        if more:
+            name += '&' + '+'.join(m.split(':')[1] for m in more)
+        for i in range(n // 10):
+            j = {'id': 's16_%s_%s_%s_%d' % (name, pl, sd, i), 'rack': START, 'length': 'doctorate', 'player': pl, 'mods': mods,
+                 'params': dict(par), 'full': True, 'seeds': ['%s/%d' % (sd, i * 10 + k) for k in range(10)], 'tag': '%s/%s' % (name, pl)}
+            if pl == 'both':             # the casual and the careful player on the same deals, in one job (the proofs are shared)
+                j['players'] = ['greedy', 'median']
+            jobs.append(j)
+    return jobs
+
+
+EXPERIMENTS['sig16'] = sig16
+
+# --- the sixteenth measure, item 2: the runs the deeds of the reference book are counted on (sweep_deeds.py) -----------------------
+EARNED12 = ('epoxidation', 'hwe', 'permanganate', 'hydroborate', 'cyanohydrin', 'reduce', 'chlorination', 'hydroformylation', 'ozonolysis',
+            'dihydroxylation', 'hofmann', 'chugaev')
+
+
+def deed16(arg='none,300'):
+    """Sixteenth, item 2: runs of the casual and the careful player with what the deeds read written out for every round.
+    arg: pool,runs[,key=value;...].  pool: b (three rounds, a first game), none (nine rounds, nothing held), kit (nine rounds with the
+    carousel, burette and seed crystal), plus (nine rounds, two of the twelve earned reagents on the rack as well, drawn for
+    every ten runs).  Every round is played."""
+    ps = arg.split(',')
+    pool, n = ps[0], int(ps[1])
+    par = dict(T13)
+    for x in ps[2:]:
+        k, v = x.split('=', 1)
+        par[k] = json.loads(v.replace(';', ','))
+    jobs = []
+    for i in range(n // 10):
+        rack, mods, ln = START, [], 'doctorate'
+        if pool == 'b':
+            ln = 'bachelor'
+        elif pool == 'kit':
+            mods = ['tool:carousel', 'tool:burette', 'tool:crystal']
+            _b = re.search(r'RULE\.bench = (\d+)', SC._JS)
+            if _b and int(_b.group(1)) > 0:
+                par['tool_cap'] = int(_b.group(1))
+        elif pool == 'plus':
+            rack = START + random.Random('plus/%d' % i).sample(EARNED12, 2)
+        jobs.append({'id': 'd16_%s_%d%s' % (pool, i, ''.join('_' + x for x in ps[2:])), 'rack': rack, 'length': ln, 'players': ['greedy', 'median'], 'mods': mods, 'params': dict(par),
+                     'full': True, 'deeds': True, 'seeds': ['d%s/%d' % (pool, i * 10 + k) for k in range(10)], 'tag': '%s%s' % (pool, ''.join('/' + x for x in ps[2:]))})
+    return jobs
+
+
+EXPERIMENTS['deed16'] = deed16
+
+
+# --- the sixteenth measure, item 3: N, S and Cl in rounds 4 to 9 (path.js RULE.elLate) ---------------------------------------------
+# the chance, by round, that a dealt molecule is first one of the round's own that hold the element (chlorine, then sulfur, then nitrogen)
+EL16 = {4: {'Cl': 0.29, 'S': 0.08, 'N': 0.17}, 5: {'Cl': 0.31, 'S': 0.10, 'N': 0.02}, 6: {'Cl': 0.26, 'S': 0.09, 'N': 0.14},
+        7: {'Cl': 0.23, 'S': 0.11, 'N': 0.05}, 8: {'Cl': 0.10, 'S': 0.08}, 9: {'Cl': 0.07, 'S': 0.04, 'N': 0.08}}
+FLAT14['el16'] = {'el_late': {str(k): v for k, v in EL16.items()}}       # flat14 el16,<player>,<runs>,g,doctorate: the pools the pass marks are fitted on
+# the marks fitted on those pools (sweep_career.py fit el16 ...), for the runs that check them on other deals (final13 ...,ver=16)
+MARKS16 = None
+
+
+def final16(arg='median,2000'):
+    """Sixteenth, item 3: a nine-round run with nothing unlocked under RULE.elLate and the refitted marks, stopped at the first
+    round not cleared, on deals the marks were not fitted on.  arg: player,runs[,length]."""
+    ps = arg.split(',')
+    pl, n = ps[0], int(ps[1])
+    ln = ps[2] if len(ps) > 2 else 'doctorate'
+    par = dict(T13, el_late=FLAT14['el16']['el_late'])
+    if MARKS16:
+        par['need_par'] = MARKS16
+    return [{'id': 'f16_%s_%s_%d' % (ln, pl, i), 'rack': START, 'length': ln, 'player': pl, 'stop': True, 'params': par, 'full': True,
+             'seeds': ['w/%d' % (i * 10 + k) for k in range(10)], 'tag': '%s/%s/ver=16' % (ln, pl)} for i in range(n // 10)]
+
+
+EXPERIMENTS['final16'] = final16

@@ -1,8 +1,199 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the fifteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the sixteenth, 2026-11-13). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-13, sixteenth: how sigils are got, unlocks as deeds
+
+One part for each item, written as each was finished. Each ends with the choices left for the owner. What was not done is at the end.
+
+### 1. Sigils: how they are got
+
+Owner (AW): "I think we need to consider how they impact each other and gameplay before deciding but I'm towards buying them since it's alchemy"; up to three at work at once.
+
+**How it was measured** (`sweep_run.py sig16`, `sweep_sig16.py`). Nine-round runs with nothing else held, every round played, the casual and the careful player on the same deals: none and each sigil alone 200 runs, each of the 36 pairs 60, each of the 84 threes 20, thirty sets of four 20, each sigil with each creature 20 (careful only). "Worth 1.4" means the sigil helps a run as much as multiplying every yield by 1.4 would; an instrument is worth about 1.1. Worth is not measured below 0.5. With 20 runs a good set's win rate is good to about 1.5 times either way (a weak set's 2 to 3 times) and its worth to about 0.1, so single threes are not ranked finely; what is said below is what holds across many sets.
+
+**(a) Each alone**
+
+| Sigil | Careful: worth | Wins of nine, of 100 (0.27 with none) | Rounds 7, 8, 9 cleared, of 100 (32, 18, 12 with none) | Biggest round, times the number to beat (11.7) | Casual: worth | What changes in play |
+|---|---|---|---|---|---|---|
+| Solve | 1.44 | 2.3 | 50, 36, 29 | 17 | 1.27 | dry happens far more (24 points more of all reflexes); 2.6 reflex steps a page, 1.8 without |
+| Phlogiston | 1.39 | 2.1 | 46, 34, 28 | 16 | 1.36 | oxidize is worth firing on a C=O; a little more snap; the task is met more often (92 rounds in 100, 90 without) |
+| Gemini | 1.31 | 1.7 | 45, 30, 24 | 16 | 1.33 | the same lines, paid more: the only one that changes nothing a player does |
+| Clepsydra | 1.20 | 1.1 | 42, 26, 23 | 15 | 1.22 | a fourth page; fewer reflex steps a page (1.6), because the uses are spread over four |
+| Via Humida | 1.15 | 0.8 | 42, 30, 18 | 8 | 1.09 | ring happens more (14 points), dry less |
+| Respiratio | 1.08 | 0.7 | 40, 23, 16 | 11 | 1.11 | dry happens more (10 points) |
+| Tetractys | 1.07 | 0.6 | 37, 22, 20 | 14 | 1.03 | a fourth reagent a page; thiolate and aminate are used more; the task is met a little less (88), the uses run short |
+| Sulphur's Mask | 1.05 | 0.5 | 38, 20, 19 | 7 | 1.03 | ring first and more often, dry and weld less; the yield reads a little lower (0.96 times) |
+| Aqua Permanens | 0.55 | 0.0 | 10, 0, 2 | 7 | 0.77 | no dry at all, more ring and weld; yield 0.57 times, the task met less (84) |
+
+- Nothing runs away. The biggest single round of 1,800 with none was 11.7 times the number to beat; with one sigil 17; with three 28 (Phlogiston, Clepsydra and Solve). OVERREACT (2.83 times) is reached in fewer than one round of the nine with none, in about two with one of the good ones, in 4 to 5 with the best threes.
+- **Too weak to feel:** Sulphur's Mask and Tetractys (1.05 and 1.07 for the careful player, 1.03 for the casual). **It hurts:** Aqua Permanens. Under the pass marks of a long run its lower yield loses rounds, and it no longer makes tasks easier (it did in short runs before the pass marks). A run that holds it wins almost never.
+- The casual player gets about as much from each as the careful one (worth 1.03 to 1.36), but rounds 7 to 9 still stop him: with one sigil he clears rounds 7, 8 and 9 at most 14, 10 and 9 times in 100.
+
+**Pairs and threes: what they do together.** "Together over apart" compares the set with what its sigils are worth one by one: above 1 they help each other, below 1 they get in each other's way. Over all 36 pairs the middle is 1.0: mostly they simply add up.
+
+| Set | Worth | Together over apart | Wins of nine, of 100 | In plain words |
+|---|---|---|---|---|
+| Respiratio + Gemini | 1.74 | 1.22 | 4.9 | Respiratio lets dry happen after every reagent; each dry makes a C=C, and Gemini pays twice for everything done to a double bond |
+| Phlogiston + Respiratio | 1.74 | 1.15 | 4.9 | Phlogiston's oxidize leaves a C=C beside a C=O, which is what the reflexes need; Respiratio lets them go again after each reagent |
+| Tetractys + Respiratio | 1.35 | 1.16 | 1.8 | a fourth reagent is a fourth fresh start for dry, weld and ring |
+| Tetractys + Gemini | 1.55 | 1.11 | 3.1 | the fourth reagent is the one that pays double, and Gemini doubles what it does to double bonds |
+| Solve + Sulphur's Mask | 1.20 | 0.79 | 1.2 | both take the limit off ring: the second adds nothing the first did not |
+| Clepsydra + Tetractys | 1.08 | 0.84 | 0.6 | four pages of four reagents is sixteen firings, and the six bottles hold eighteen uses between them: the ones he wants are empty by page three |
+| Phlogiston + Clepsydra + Respiratio | 2.17 | 1.20 | 10.5 | the pair above with a fourth page to do it on |
+| Tetractys + Respiratio + Gemini | 1.91 | 1.25 | 7.3 | the three that are weak or plain alone: four fresh starts a page, all paid twice |
+| Phlogiston + Clepsydra + Solve | 2.38 | 1.0 | 13.0 | the strongest three: no help between them, three strong ones added up |
+
+- Pairs: worth from 0.50 to 1.91, the middle pair 1.43; wins of nine up to 7.3 in 100, the middle 2.2. Threes: up to 2.38, the middle 1.46; wins up to 13 in 100, the middle 2.4. Almost every set that holds Aqua Permanens is in the bottom third.
+- Solve adds least to a set (0.87 to 0.93 together over apart): it is strong alone and the others add less on top of it.
+- For the casual player the best three wins 0.8 runs in 100 and the middle three 0.01.
+
+**With each creature** (careful, 20 runs each, so these are hints, not findings). Phlogiston and Solve keep their worth beside every creature (1.55 to 1.80). Tetractys does more beside Water, Salt and Ammonia (1.2 to 1.3 times what the two do apart), Respiratio beside Ammonia, Water and the Wood spirit (1.2). Nothing is broken by a creature. The one to watch: Solve with Ammonia made a round of 51 times the number to beat (Ammonia fires the page again and Solve has taken the limits off); the next biggest with any creature was 30.
+
+**(b) Three ways of getting them.** All three are built in the game behind `RULE.sigilWay` and go through the same two calls, `P.sigilVisit(run)` and `P.sigilGet(run, id)` (the job `sig16.js`: 27 checks, all pass). A run in which sigils arrive on the way is put together round by round from runs that held that set (8,000 such runs for each row; the rounds behind them are the 20 to 200 runs of each set, so a row that always ends on one set of three, as choosing at the start does, is good to about 2 times either way, and choosing and the offer cannot be told apart).
+
+| | Bought with gold (`'buy'`, as built, on) | Chosen at the start, more at rounds 4 and 7 (`'start'`) | Offered one of three after rounds 2, 4, 6 (`'offer'`) |
+|---|---|---|---|
+| What the player does | after each round the catalog shows two he owns, each with a price; he buys what he can pay for | takes any one he owns before round 1, again before rounds 4 and 7 | takes one of three drawn at random, three times |
+| Careful: held going into round 4, 7, 9 | 0.9, 1.8, 2.6 | 2, 3, 3 | 1, 3, 3 |
+| Casual: held going into round 4, 7 | 0.3, 0.9 | 2, 3 | 1, 3 |
+| Careful: sigils held when the run ends | 1.3 | 2.2 | 2.1 |
+| Casual: sigils held when the run ends | 0.2 | 1.7 | 1.0 |
+| Careful: wins of nine, of 100 (0.24 with none) | 0.9 buying whatever he can pay for; 2.2 to 2.4 if he leaves the weak ones and saves | 7.7 | 8.0 |
+| Casual: wins of nine, of 100 | 0.00 | 0.5 | 0.2 |
+| Two runs end holding the same set, of 100 pairs of runs (all nine owned, he takes the strongest he can) | 9 | 37 | 6 |
+| A new player who owns his first sigil: of ten runs, runs in which it was at work (casual; careful) | 1; 6 | 9; 9 | 6; 8 |
+
+Prices, set from each sigil's worth: Solve 7, Phlogiston 7, Gemini 5, Clepsydra 3, Via Humida 3, Respiratio 2, Tetractys 2, Sulphur's Mask 1, Aqua Permanens 1; each sigil already held adds 2.
+
+- **Can he afford them?** Gold comes from yield above the number to beat (one for each mark passed, and interest); the gold a harder molecule promises and the one for leaving all three picks are not in these numbers. The careful player earns about 0.8 a round and holds 3.3 after round 3 and 10 after round 6: one sigil by round 4, two by round 7, three by round 9, about a round later than asked, so the third works for one round. The casual player earns 0.2 a round: in one of three runs that reach round 4 he has bought one. Buying as built gives the casual player almost nothing: helpers have to carry him.
+- **Does it take gold from helpers?** Instruments are not bought: they are one of the three free picks after a round. What gold buys today is the fourth reagent on the shelf (2 to 9 gold) and the re-deals. If he keeps half his gold for those he holds 0.5, 1.2, 1.9 sigils going into rounds 4, 7, 9 and wins 0.65 in 100.
+- **Does a rich run get richer?** A little. In rounds 4 to 9 a round pays the careful player 1.0 gold with no sigil, 1.2 with one, 1.3 with two, 1.4 with three. Runs that held one by round 4 win 1.6 in 100, the rest 1.4.
+- **Gold for a round cleared** (`RULE.goldClear = 1`, built, off): one gold for every round cleared whatever its yield. The casual player then holds 1.0 and 2.1 going into rounds 4 and 7 and a sigil is at work in 4 of a new player's ten runs; the careful player holds 1.5, 2.7, 3.0 and wins 2.3 in 100 (about 5 if he leaves the weak ones); a rich run no longer gets richer (a round pays 2.5 with or without sigils). The casual player still wins no nine-round run with it. It also makes the shelf's reagent easier to buy, which was not measured.
+- **Every run different.** Choosing at the start is the worst: a player who knows the strongest three takes them every run (37 pairs of runs in 100 end the same; of 1,000 runs only 3 different sets). Buying and the offer of three both mix the runs, because what is shown is drawn.
+- **Strength.** Free sigils held early are worth more than the same sigils bought late: about 8 wins in 100 against 1 to 2.4. The simulated buyer is a poor one: he buys the strongest he can pay for at once, which is mostly a cheap weak one (Sulphur's Mask first in 2,181 of 8,000 runs, Solve in 15). The reviewer ran a buyer who leaves the weak ones: 2.2 to 2.4 wins in 100. Buying keeps sigils a late prize in a run that was already going well.
+- **A new player's first runs** are three-round runs, which hold no sigils under any way.
+
+**(c) Is three the right cap?** There is no sign that four is better. Thirty sets of four were played (20 runs each). The fifteen without Aqua Permanens are worth 1.74 in the middle; the best three inside each of them is worth 1.85 in the middle. A cap of two was not compared. A fourth sigil adds nothing that can be measured (four over its best three: 0.98 for the careful player, 0.95 for the casual), because the fourth is mostly a weak one or one that overlaps, and the uses of the reagents do not stretch further. The biggest round with four was 28 times the number to beat, the same as with three. The cap is `RULE.sigilCap` (3).
+
+**What the reviewer found, and what was done.** A fresh reviewer ran the job (27 of 27) and every script again; every number matched. Verdict: pass with fixes. Fixed since: the buyer's weakness is now said and both win rates are given; the error of the row for choosing at the start is said; a sentence that guessed at sigils with instruments was cut; the game now refuses a sigil when the run is lost, when the offer is from an earlier round or another way, or when it has no price; the lines on gold, on Aqua Permanens, on the cap and on the creatures say no more than was measured; how many a run ends holding is in the table.
+
+**Not done.** No picture goes with the choices below. Sigils are offered in the six-round run too, at prices measured only on nine rounds. The game lets a sigil be bought while a round is in play; the page must call it only between rounds. A run started without a profile is offered all nine (for tests); the page must start runs from the profile so that only earned sigils are sold. What is shown is drawn afresh if the page asks with another round number or after a reload. Re-deals and the shelf's reagent take no gold in these numbers except in the half-kept line. Sigils together with instruments (three sets with a kit of three were queued and are not in this section). The six-round run. The shopper in the table takes the strongest sigil he can pay for; a real player's choices were not modelled. The game's own aiming player does not buy sigils (the job buys by hand). The page neither shows the catalog's sigils nor draws a held one. How a sigil is unlocked for the career is part 2.
+
+**Choices for the owner**
+
+1. How they are got. (a) Bought with gold between rounds, as built: one by round 4, two by 7, three by 9 for a careful player; runs differ; the casual player seldom affords one. **Recommended**, with choice 2(b). (b) Offered one of three after rounds 2, 4 and 6: everyone gets three, runs differ most, a careful player wins about 8 runs in 100 before instruments. (c) Chosen at the start: strongest, and the same three every run.
+2. Gold. (a) As it is: only yield above the number to beat pays. (b) One gold for each round cleared as well, so the casual player can buy too. (c) Lower prices instead.
+3. The weak ones. (a) Keep all nine. (b) Take Aqua Permanens out until it has a point (it only hurts now). (c) Make Aqua Permanens pay gold when taken, as a bargain.
+4. Solve with Ammonia (a round of 51 times the number to beat). (a) Leave it: it is rare. (b) Ammonia's second firing keeps the limits. (c) The two cannot be held in one run.
+
+### 2. Unlocks as deeds
+
+Owner: "More deeds, fewer counts." In the rules, every one of the 67 things is now got by doing something that fits it. The played game does not hand anything over yet: the page still has to start its runs from the saved profile (the last part of `docs/REFERENCE.md` lists what it must do). Built in `path.js` (`LADDER`, `countersUpdate`, `countersRun`, `RUNG_TXT`, `reference`, `stageOf`), written out in `docs/REFERENCE.md`, measured with `sweep_deeds.py`, checked in the game by the job `ref16.js` (32 checks, all pass).
+
+**The rule for each kind of thing**
+
+| Kind | Things | How each is got | Example |
+|---|---|---|---|
+| Reagent | 12 | a deed in its own chemistry | Dihydroxylate (puts OH on both carbons of a C=C): have hydrate put on 4 OH in one go |
+| Reflex | 3 | nearly making it | Seal (a COOH joins an OH in a ring): end a round with a COOH the molecule was not dealt with |
+| Motif | 4 | a deed with rings | Cage: end a round with 6 more rings than the molecule was dealt with |
+| Instrument | 10 | the kind of play it helps, in a six-round or nine-round run | Dropper (more uses): end a round with 4 reagents used up |
+| Sigil | 9 | brushing against the rule it bends, in a six-round or nine-round run | Clepsydra (a fourth page): lose a round whose last page set off a chain of 3 or more |
+| Soundtrack | 4 | something reached | Chain Lightning: end a round at OVERREACT |
+| Homunculus | 10 | its jar fills (ruling K) | as built |
+| Bought reagent, found reagent, term, longer run, the sign | 15 | as built | |
+
+- Plain lifetime counts: the ten jars and one more (Fold: epoxidize lands 3 times). That is 11 of 67, one thing in six.
+- No two things share a way (checked by the job). The deeds of the instruments and the sigils (19) count only when done in a six-round or nine-round run, so a first game cannot hand them over.
+- A deed is one page, one round or one run. Each is read from what the game already records of a round (the reagents of each page, where each landed, the reflexes each set off, what came off, and counts of the molecule before and after). About 35 new counters; the simulator keeps the same ones (`sweep_deeds.py round_counts`).
+
+**How many runs it takes** (`sweep_run.py deed16`, `sweep_deeds.py career 300`: 300 careers of 300 runs for each player; a run is drawn from 300 three-round runs, 300 nine-round runs with nothing held, 150 with three instruments once two are owned, and 300 with two earned reagents on the rack; a run hands over two things at most, instruments first).
+
+| Player | Things held after 5, 10, 20, 40, 100 runs (of the 52 simulated) | First six-round win (run) |
+|---|---|---|
+| Casual | 6, 15, 35, 45, 48 | 25 |
+| Careful | 6, 17, 40, 46, 48 | 5 |
+
+`docs/REFERENCE.md` gives two runs for each thing and each player: the run its deed is done, and the run it is handed over. In the first twenty runs the second is mostly the queue: a run hands over two things at most, so the careful player does the deed for Monster-movie lab on run 2 and is handed it on run 22. For the casual player the deeds are done: Extend, Reduce, Chlorinate and Eliminate N on run 2; the instruments between runs 3 and 17; most reagents and motifs by run 11, Hydroborate at 23; seven sigils between runs 5 and 23, Sulphur's Mask at 68; Open and Fold at about 37 and 45 (epoxidize has to be earned and then taken into a run first); the jars between 15 and 62.
+
+**What changed** (was, now, and the runs: casual deed done, handed over; careful deed done, handed over)
+
+| Thing | Was | Now | Runs |
+|---|---|---|---|
+| Epoxidize | Set off 3 different kinds of reflex in one round. | Have dehydrate make 5 C=C in one go. | 11, 12; 4, 9 |
+| Burn | Lose 10 runs. | Drive off carbon dioxide on 2 pages of one round. | 4, 8; 3, 10 |
+| Hydroborate | Have hydrate act 40 times. | Fire hydrate, dehydrate, hydrate on one page, all three landing. | 23, 23; 4, 10 |
+| Cyanate | Fire hydrate and then oxidize on one page, both acting, 30 times. | End a page with 3 more C=O on the molecule than it was dealt with. | 9, 11; 7, 11 |
+| Reduce | Have oxidize act 40 times. | End a round with no C=O left on a molecule dealt with two or more. | 2, 2; 2, 9 |
+| Chlorinate | Drive off acid fumes 20 times (a Cl closing a ring gives them off). | Have chlorine close 2 rings in one round. | 2, 3; 2, 11 |
+| Formylate | Have grow act 60 times. | Have grow add 4 arms in one go. | 8, 11; 5, 12 |
+| Cleave | End 10 rounds with the molecule smaller than it was dealt. | End a page with 4 more C=C on the molecule than it was dealt with. | 10, 13; 7, 13 |
+| Dihydroxylate | Have hydrate act 120 times. | Have hydrate put on 4 OH in one go. | 5, 11; 3, 13 |
+| Eliminate N | Have aminate act 60 times. | On one page, have aminate land and a nitrogen close a ring. | 2, 9; 2, 13 |
+| Eliminate S | Have thiolate act 60 times. | On one page, have thiolate land and a sulfur close a ring. | 5, 12; 3, 14 |
+| Oxidize C=C | Fire hydrate or hydroborate and then oxidize so that the second follows on from the first, once. | Fire hydrate or hydroborate and then oxidize, the oxidize working on the C-OH the first one just made. | 2, 2; 1, 1 |
+| Strip C=O | Fire reduce or hydroborate, then dehydrate, then the finishing hydrogen, each following on from the last, once. | Fire reduce or hydroborate, then dehydrate, then the finishing hydrogen, each working on what the one before it just made. | not simulated |
+| Seal | Close 100 rings. | End a round with a COOH on the molecule that it was not dealt with. | 12, 16; 13, 17 |
+| Open | Have epoxidize act 10 times. | Have epoxidize make 2 epoxides in one go. | 37, 37; 42, 42 |
+| Fold | Have epoxidize act 30 times. | Have epoxidize act 3 times. | 45, 45; 55, 55 |
+| Spiro centre | Set off a chain of 9 reflex steps on one page. | Close 3 rings on one page. | 5, 13; 2, 15 |
+| Benzene ring | End a round at 1.41 times the number to beat. | End a round at 1.41 times the number to beat on a molecule with a benzene ring. | 9, 14; 4, 15 |
+| Shared side | Close 400 rings. | End a round with 3 more pairs of rings that share a side than the molecule was dealt with. | 3, 13; 2, 16 |
+| Cage | Close 1000 rings. | End a round with 6 more rings than the molecule was dealt with. | 9, 15; 3, 16 |
+| Seed crystal | Clear round 1 of a six-round or nine-round run. | Clear a round whose first page set off no reflex. It counts in a six-round or nine-round run. | 6, 7; 6, 6 |
+| Burner | Clear round 3 of a six-round or nine-round run. | Drive off water on every page of a round. It counts in a six-round or nine-round run. | 3, 4; 2, 5 |
+| Burette | Clear round 5 of a six-round or nine-round run. | Have oxidize turn 5 OH into C=O in one go. It counts in a six-round or nine-round run. | 8, 9; 5, 6 |
+| Mirror | Clear round 7 of a nine-round run. | Fire one reagent and no other on a full page. It counts in a six-round or nine-round run. | 17, 17; 25, 25 |
+| Magnet | Set off a chain of 6 reflex steps on one page. | End a round with the longest carbon chain 4 longer than it was dealt. It counts in a six-round or nine-round run. | 8, 9; 8, 9 |
+| Carousel | Fire six different reagents in one run. | Fire 6 different reagents in one round. It counts in a six-round or nine-round run. | 4, 5; 3, 6 |
+| Dropper | Clear a round having fired three kinds of reagent or fewer. | End a round with 4 reagents used up. It counts in a six-round or nine-round run. | 10, 11; 7, 8 |
+| Timer | Clear 20 rounds. | Have three reagents of one page each set off a reflex. It counts in a six-round or nine-round run. | 13, 13; 4, 8 |
+| Ammonia | Fill its jar: 40 ammonias driven off, over all runs. | Fill its jar: 40 times aminate acts or ammonia is driven off, over all runs. | 22, 22; 19, 19 |
+| Brimstone | Fill its jar: 80 sulfurs driven off, over all runs. | Fill its jar: 80 times thiolate acts or sulfur is driven off, over all runs. | 62, 62; 78, 78 |
+| Clepsydra | Play 100 rounds. | Lose a round whose last page set off a chain of 3 or more. It counts in a six-round or nine-round run. | 23, 23; 11, 18 |
+| Solve | Set off 600 reflex steps. | On one page have two of these happen: dry once, weld twice, ring twice. It counts in a six-round or nine-round run. | 7, 16; 3, 18 |
+| Respiratio | Set off dry 100 times. | Set off dry on every page of a round. It counts in a six-round or nine-round run. | 5, 16; 3, 19 |
+| Phlogiston | Have oxidize act 150 times. | Drive off 5 hydrogens on one page. It counts in a six-round or nine-round run. | 21, 21; 7, 19 |
+| Via Humida | Fire hydrate 60 times. | Close a ring through oxygen, one through nitrogen and one through sulfur in one run. It counts in a six-round or nine-round run. | 6, 18; 4, 20 |
+| Aqua Permanens | Drive off 5 or more waters on a page, 30 times. | Clear a round without driving off any water. It counts in a six-round or nine-round run. | 8, 18; 20, 22 |
+| Tetractys | Line up one reagent in all three circles, 5 times. | Have the last reagent of a full page set off 4 or more reflex steps. It counts in a six-round or nine-round run. | 15, 20; 4, 21 |
+| Gemini | Fire dehydrate 50 times. | End a page with more C=C and more C=O on the molecule than it was dealt with. It counts in a six-round or nine-round run. | 7, 19; 4, 21 |
+| Sulphur's Mask | Put on 25 SH. | Have sulfur close 4 rings in one round. It counts in a six-round or nine-round run. | 68, 68; 29, 29 |
+| Glass | Beat the number in a round of 6 or more steps with no broken row. It counts once two runs have each cleared six rounds. | Pass the number to beat in a round of six or more reagents in which every one carried on from the one before. It counts once two runs have each cleared six rounds. | not simulated |
+| Lean | Beat the number in a round having fired two kinds of reagent or fewer. It counts once two runs have each cleared six rounds. | Pass the number to beat in a round having fired two kinds of reagent or fewer. It counts once two runs have each cleared six rounds. | not simulated |
+| Long | Make a row of 10 in one round. It counts once two runs have each cleared six rounds. | In one round, have ten reagents in a row each carry on from the one before. It counts once two runs have each cleared six rounds. | not simulated |
+| Gothic hybrid | Lose 3 runs. | Clear round 3 of a six-round or nine-round run. | 4, 4; 2, 3 |
+| Monster-movie lab | Set off 200 reflex steps. | Set off 5 different kinds of reflex in one round. | 6, 20; 2, 22 |
+
+**What each thing does, in words for the manual.** Rewritten where it used working words: the four motifs (no "places counted"), the seed crystal ("adds OH here and zips" is now "one hydrogen there becomes an OH, and whatever the molecule can then do by itself it does at once"), the burner, the magnet, the timer and Tetractys (no "circles"), Solve, Respiratio, Via Humida, Aqua Permanens, Gemini, Sulphur's Mask, the terms Glass and Long (no "extra", no "row"), and the sign. The job checks that no line holds extra, rows, circle, places or zips.
+
+**The four open faults of the book's review**
+
+| Fault | What was done |
+|---|---|
+| The page's own gate (`meta.stage`) stands in front of instruments, homunculi and terms | The gate is the page's file, which this builder may not edit. `P.stageOf(meta)` and `P.gateOpen(meta, what)` now give the same answer from the book (2 once a six-round run is open, 3 once a nine-round run is open). The page has to read them in place of `meta.stage` and then set `RULE.termsGate = false`; until it does, the book still says a term waits for two six-round runs, because that is true. Not fixed in the game until the page builder makes that change. |
+| Bought and found reagents are seldom offered once an earned reagent is owned | One visit in two now shows one of them in the first place (`RULE.extraOffer`). Checked: 151 of 300 visits. |
+| The jars of ammonia and brimstone fill only from reagents earned very late | Aminate acting feeds ammonia's jar and thiolate acting feeds brimstone's (as grow feeds the Seedling's). Ammonia hatches at about run 22, brimstone at about run 62 (casual) and 88 (careful, who uses thiolate less). |
+| Rings closed across the fold are not counted as rings closed | They are now (every join across the fold closes a ring). Checked in the game. |
+
+**The creatures' test job** (`homs2.js`) states the five creatures' new rules: 137 of 137 cases pass, and the scan of 7,800 pages (85,800 checks) finds no page where the game lights a creature and the rule written in the job does not, or the other way round. Three tokens were cut to the page's 17 letters a line (Hydrogen, Slime, Brimstone).
+
+**What the reviewer found, and what was done.** A fresh reviewer read the code, ran both jobs again (32 of 32; 137 of 137) and the careers (the same numbers). Verdict: pass with fixes. Fixed since: the careers never opened the nine-round run (a slip in the simulator; they do now); one act earned several things at once (dehydrate on five OH met the Burner's deed and Epoxidize's, and Cleave's met Gemini's), so the Burner is now "drive off water on every page of a round" and Gemini "end a page with more C=C and more C=O than dealt"; the book now gives both runs (deed done, handed over); four lines said more than the game counts (Eliminate N and S, Tetractys, Timer, Mirror) and were reworded; `stageOf` never reads below what an older save holds. Left as they are, said plainly: Open and Fold both ask for epoxidize to be used (Fold is the one small count); Monster-movie lab counts a reflex and its twin across the fold as two kinds; the Burette's deed (oxidize on 5 OH in one go) may often meet Phlogiston's (5 hydrogens off a page) in the game, where each oxidized OH gives a hydrogen; a few lines of the book still use the game's own words (the rack, lands, lined up); the sigils' old count lines are still in `SIGILS` though nothing reads them; a profile saved under the old ladder would read wrongly (no page saves one yet).
+
+**Not done.** The wood spirit's and the slime's jars fill from reduce and hydroborate, which are no longer in the starting six: about 45 runs with that reagent on the rack for the wood spirit, more for the slime; neither hatched in 300 simulated runs. Salt's jar is not kept by the simulator. The three bought reagents, Strip C=O, the terms and the sign have no simulated number. The simulated players do not go after a deed on purpose, so a player who reads the book will be quicker than these numbers. In the simulator an earned reagent is on the rack less often than in the game, so Open and Fold are probably sooner in the game. The ladder now has 85 rungs (40 pay credit); credit earned over a career was not measured again, and the sign's "nine tenths" was not run again.
+
+**Choices for the owner**
+
+1. How fast the book fills. (a) As built: a casual player holds about 34 of the things by run 20 and 44 by run 40. (b) Slower: one thing a run at most. (c) Faster: hand a thing over the moment its deed is done, with no limit a run.
+2. Instruments and sigils in a first game. (a) As built: their deeds count only in six-round and nine-round runs. (b) Count them anywhere, so a first game can earn them.
+3. The wood spirit's and the slime's jars. (a) Leave them slow: they are for a player who chooses reduce or hydroborate run after run. (b) Smaller jars (15 and 25). (c) Feed them from a starting reagent as well.
+
+### 3. N, S and Cl in rounds 4 to 9
+
+In work when parts 1 and 2 were committed.
 
 ## The measure of 2026-11-13, fifteenth: helpers for the task, the five creatures
 

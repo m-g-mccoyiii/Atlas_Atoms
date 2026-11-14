@@ -51,7 +51,10 @@ def low_priority():
     try:
         if os.name == 'nt':
             import ctypes
-            ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), 0x00004000)
+            k32 = ctypes.windll.kernel32
+            k32.GetCurrentProcess.restype = ctypes.c_void_p        # the handle is a pointer: left as an int it was cut to 32 bits and the call failed
+            k32.SetPriorityClass.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+            k32.SetPriorityClass(k32.GetCurrentProcess(), 0x00004000)
         else:
             os.nice(10)
     except Exception:
@@ -189,6 +192,19 @@ def summarize(runs, n_rounds, watch=None, per_round=False):
     return row
 
 
+DEED_KEYS = ('atoms', 'rings', 'dbl', 'chain', 'fused_pairs', 'g:C=O', 'g:C=C', 'g:OH', 'g:COOH')
+
+
+def deed_rec(G, rd):
+    """What the deeds of the reference book read from a round (sweep_deeds.py; path.js countersUpdate): each page's line, the
+    places each reagent changed, the reflex steps each set off, the chain, what came off, and a few counts of the molecule."""
+    def ft(smi):
+        f = G.feat(smi)
+        return [f[k] for k in DEED_KEYS] + [int('c' in smi)]
+    return {'f0': ft(G.start(rd['mol'], rd['r'])), 'sp': rd.get('spent', 0),
+            'p': [[[c[0] for c in pg['circ']], [c[1] for c in pg['circ']], [c[2] for c in pg['circ']], pg['chain'], pg.get('off', {}), ft(pg['smi'])] for pg in rd.get('log') or []]}
+
+
 _HAS = {}
 
 
@@ -221,12 +237,13 @@ def do_job(job):
             if hasattr(m, 'reset'):
                 m.reset()
         for pl in players:
-            runs = [SC.play_run(G, s, length, tuple(job['rack']), pl, extra=extra, first=first, last=last, stop=bool(job.get('stop')))
-                    for s in job['seeds']]
+            runs = [SC.play_run(G, s, length, tuple(job['rack']), pl, extra=extra, first=first, last=last, stop=bool(job.get('stop')),
+                                logs=bool(job.get('deeds'))) for s in job['seeds']]
             by[pl] = summarize(runs, nr, job.get('watch'), bool(job.get('watch') or job.get('per')))
             if job.get('full'):          # every round of every run, for the career tables (sweep_career.py)
                 by[pl]['full'] = [[[rd['mol'], int(rd['met']), rd['total'], rd['par'], rd.get('prog'), rd['steps'], rd['kinds'], rd['used'],
-                                    [n for n, _ in rd['spec']], rd['end'], rd.get('close_pages', 0)] for rd in r['rounds']] for r in runs]
+                                    [n for n, _ in rd['spec']], rd['end'], rd.get('close_pages', 0)] + ([deed_rec(G, rd)] if job.get('deeds') else [])
+                                   for rd in r['rounds']] for r in runs]
         row = dict(by[players[0]]) if len(players) == 1 else {'by': by, 'turns': sum(v['turns'] for v in by.values())}
         for m in G.mods:
             if hasattr(m, 'report'):
