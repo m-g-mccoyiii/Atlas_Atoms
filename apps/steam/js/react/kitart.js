@@ -1972,7 +1972,7 @@ function draw30(T, S, ren, cam) { const R = S.pen30, sz = ren.getDrawingBufferSi
   R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
 /* every figure in pen and wash has its line written before its scene is drawn */
 function hook30(T, S) { let top = S.root; while (top.parent) top = top.parent; if (!top.isScene || !W30.scenes || W30.scenes.has(top)) return !!top.isScene; W30.scenes.add(top); const f0 = top.onBeforeRender;
-  top.onBeforeRender = function (ren, scene, cam) { if (f0) f0.apply(this, arguments); for (let i = W30.figs.length - 1; i >= 0; i--) { const F = W30.figs[i]; let t2 = F.root; while (t2.parent) t2 = t2.parent; if (t2 !== scene) continue;
+  top.onBeforeRender = function (ren, scene, cam) { if (f0) f0.apply(this, arguments); if (KIT.skip33) return; for (let i = W30.figs.length - 1; i >= 0; i--) { const F = W30.figs[i]; let t2 = F.root; while (t2.parent) t2 = t2.parent; if (t2 !== scene) continue;
       if (!F.w30 || !shown30(F.root, null)) continue; try { draw30(T, F, ren, cam); } catch (e) { KIT.spiritErr = 'w30 ' + String(e && e.stack); } } }; return true; }
 /* the wash: body ('b', skinned), margin ('m', the skin pushed out, drawn first), a rigid piece ('p') */
 const N30 = 'float H30(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }\nfloat N30(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(H30(i), H30(i + vec3(1.0, 0.0, 0.0)), f.x), mix(H30(i + vec3(0.0, 1.0, 0.0)), H30(i + vec3(1.0, 1.0, 0.0)), f.x), f.y), mix(mix(H30(i + vec3(0.0, 0.0, 1.0)), H30(i + vec3(1.0, 0.0, 1.0)), f.x), mix(H30(i + vec3(0.0, 1.0, 1.0)), H30(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }\n';
@@ -1981,7 +1981,7 @@ const F30 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(
   'float nz = N30(bp * 3.1), nz2 = N30(bp * 8.3 + 5.0), nz3 = N30(bp * 4.4 + 9.0), gr = N29(gl_FragCoord.xy / s9 * 0.9);',
   'vec3 bg = texture2D(t29, gl_FragCoord.xy / r29).rgb; float lum = dot(bg, vec3(0.3, 0.59, 0.11));',
   'vec3 base = mix(PAPER29 * (0.985 + 0.03 * gr), bg, smoothstep(0.60, 0.74, lum));',                                                                // on paper it is on the paper; off it, a cut-out
-  'float l9 = dot(n9, normalize(vec3(-0.6, 0.62, 0.5)));',
+  'float l9 = dot(n9, normalize(mix(vec3(-0.6, 0.62, 0.5), normalize(l33.xyz + vViewPosition), l33.w)));',
   '#ifdef MARGIN30', 'float a9 = (1.0 - smoothstep(0.30, 0.36, nz3)) * (0.75 + 0.25 * nz2) * step(l9, 0.35); vec3 wash = vec3(0.60, 0.76, 0.92);', '#else',
   'float hl = smoothstep(0.80, 0.87, l9 + 0.42 * (nz - 0.5)) * (1.0 - pl);',                                                                         // the paper left bare on the lit side, with a broken edge
   'hl = max(hl, smoothstep(0.84, 0.88, nz2) * smoothstep(0.1, 0.4, l9) * (1.0 - pl));',                                                              // and a few bare specks
@@ -1996,13 +1996,14 @@ const F30 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(
   'vec3 c9 = base * mix(vec3(1.0), wash, a9);',
   '#ifndef MARGIN30', '{ float sh = smoothstep(0.02, -0.26, l9 + 0.2 * (nz - 0.5)) * (1.0 - pl), hh = dot(bp, vec3(0.74, 0.62, 0.26)) * HATCH30 + 0.35 * nz, hd = abs(fract(hh) - 0.5) / max(fwidth(hh), 1e-4);', // pencil hatching in the shade, in the body's own space
   'float hm = smoothstep(0.30, 0.42, N30(bp * 5.3 + 2.0)); c9 = mix(c9, PENCIL30, 0.5 * (1.0 - smoothstep(0.35, 1.05 * s9, hd)) * sh * hm * (0.45 + 0.55 * gr)); }', '#endif',
+  /* (builder 33) the lamp on it */ '{ float k33 = l33.w, lt = smoothstep(0.05, 0.75, l9), sd = smoothstep(0.38, -0.3, l9), we = smoothstep(0.5, 0.92, 1.0 - nv) * smoothstep(0.0, 0.55, l9); c9 *= mix(vec3(1.0), vec3(1.0, 0.972, 0.91), 0.8 * lt * k33 * (1.0 - 0.7 * pl)); c9 *= mix(vec3(1.0), vec3(0.70, 0.72, 0.82), 0.5 * sd * k33 * (1.0 - pl)); c9 = mix(c9, base * vec3(1.0, 0.95, 0.84), 0.2 * we * k33 * (1.0 - pl)); }',
   'gl_FragColor = vec4(c9, 1.0); }'].join('\n');
 function mat30(T, kind, o) { o = o || {}; const U = u29(T), v3 = h => { const c = new T.Color(h); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; }, skin = kind !== 'p', pl = o.pl;
   const m = new T.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0 }); m.skinning = skin; m.transparent = !o.jar; m.extensions = { derivatives: true }; if (kind === 'm') { m.side = T.BackSide; m.userData.w = o.w; }
-  m.onBeforeCompile = sh => { sh.uniforms.t29 = U.t29; sh.uniforms.r29 = U.r29; if (kind === 'm') sh.uniforms.w27 = m.userData.w;
+  m.onBeforeCompile = sh => { sh.uniforms.t29 = U.t29; sh.uniforms.r29 = U.r29; sh.uniforms.l33 = u33(T).l33; if (kind === 'm') sh.uniforms.w27 = m.userData.w;
     sh.vertexShader = sh.vertexShader.replace('void main() {', (skin ? 'attribute vec4 w25a;\n' : '') + (kind === 'm' ? 'uniform float w27;\n' : '') + 'varying vec4 vW29;\nvarying vec3 vB30;\nvarying vec2 vP30;\nvoid main() {\n\tvW29 = ' + (skin ? 'w25a' : 'vec4(0.0)') + '; vB30 = position * ' + (o.k || 1).toFixed(5) + ' + vec3(' + (o.off || 0).toFixed(3) + '); vP30 = ' + (pl ? 'vec2((position.x - (' + pl.x.toFixed(4) + ')) / ' + pl.rx.toFixed(4) + ', (position.z - (' + pl.z.toFixed(4) + ')) / ' + pl.rz.toFixed(4) + ')' : 'vec2(0.0)') + ';');
     if (kind === 'm') sh.vertexShader = sh.vertexShader.replace('#include <skinning_vertex>', '#include <skinning_vertex>\n#ifdef USE_SKINNING\n\tmat4 sm27 = skinWeight.x * boneMatX + skinWeight.y * boneMatY + skinWeight.z * boneMatZ + skinWeight.w * boneMatW;\n\ttransformed += normalize((bindMatrixInverse * sm27 * bindMatrix * vec4(normal, 0.0)).xyz) * w27 * 1.5;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform sampler2D t29;\nuniform vec2 r29;\nvarying vec4 vW29;\nvarying vec3 vB30;\nvarying vec2 vP30;\n#define PAPER29 ' + v3(W30.C.paper) + '\n#define PENCIL30 ' + v3(W30.C.pencil) + '\n#define HATCH30 ' + (o.hatch || 22).toFixed(2) + '\n' + (kind === 'm' ? '#define MARGIN30\n' : '') + N29 + N30 + 'void main() {').replace('#include <dithering_fragment>', F30 + '\n#include <dithering_fragment>'); };
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform sampler2D t29;\nuniform vec2 r29;\nuniform vec4 l33;\nvarying vec4 vW29;\nvarying vec3 vB30;\nvarying vec2 vP30;\n#define PAPER29 ' + v3(W30.C.paper) + '\n#define PENCIL30 ' + v3(W30.C.pencil) + '\n#define HATCH30 ' + (o.hatch || 22).toFixed(2) + '\n' + (kind === 'm' ? '#define MARGIN30\n' : '') + N29 + N30 + 'void main() {').replace('#include <dithering_fragment>', F30 + '\n#include <dithering_fragment>'); };
   m.customProgramCacheKey = () => 's30' + kind + (o.key || ''); return m; }
 function set30(T, S, on) { const lin = h => new T.Color(h).convertSRGBToLinear();
     if (!S.o29) set29(T, S, 'b');
@@ -2200,9 +2201,9 @@ ball31 = (f0 => function (S, e, ks) { if (on32() && e.curl > 0.002 && e.go != nu
 /* the ball: its own mesh (five petals of nine lines, a line between them that is cut away as it opens) and its own wash */
 function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; }, NP = W32.NP, NX = NP * 9, NY = 30, T0 = X.T0, T1 = X.T1, g = new T.SphereGeometry(1, NX, NY, 0, 2 * Math.PI, T0, T1 - T0);
   g.setAttribute('p0', new T.BufferAttribute(new Float32Array(g.attributes.position.array), 3)); g.attributes.position.usage = T.DynamicDrawUsage; const pid = new Float32Array((NX + 1) * (NY + 1)); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pid[iy * (NX + 1) + ix] = Math.floor(ix / 9); g.setAttribute('pid', new T.BufferAttribute(pid, 1)); const pu = new Float32Array(pid.length); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pu[iy * (NX + 1) + ix] = ((ix % 9) - 4) / 4; g.setAttribute('pu', new T.BufferAttribute(pu, 1));
-  const m = new T.ShaderMaterial({ transparent: true, side: T.DoubleSide, uniforms: { t29: U.t29, r29: U.r29, spin: { value: 0 }, amt: { value: 1 }, open: { value: 0 }, rpx: { value: 60 }, dim: { value: 1 } },
+  const m = new T.ShaderMaterial({ transparent: true, side: T.DoubleSide, uniforms: { t29: U.t29, r29: U.r29, spin: { value: 0 }, amt: { value: 1 }, open: { value: 0 }, rpx: { value: 60 }, dim: { value: 1 }, l33: u33(T).l33, soak: { value: 0 } },
     vertexShader: 'attribute vec3 p0;\nattribute float pid;\nattribute float pu;\nvarying float vU;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvoid main() { vP = p0; vPid = pid; vU = pu; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
-    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31, '#define PAPER31 ' + v3(W30.C.paper),
+    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform vec4 l33;\nuniform float soak;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31, '#define PAPER31 ' + v3(W30.C.paper),
       'void main() { float fg = abs(vPid - floor(vPid + 0.5)); if (open > 0.001 && vP.y > ' + Math.cos(W32.TH).toFixed(4) + ' && fg > 0.5 * (1.0 - smoothstep(0.0, 0.25, open)) + 0.004) discard;',
       'vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n; float nv = clamp(dot(n, normalize(vV)), 0.0, 1.0), c = cos(spin), s = sin(spin);',
       'vec3 bp = vec3(c * vP.x - s * vP.z, vP.y, s * vP.x + c * vP.z); float lon = atan(bp.z, bp.x), s9 = r29.y / 720.0, gr = N29(gl_FragCoord.xy / s9 * 0.9);',
@@ -2211,7 +2212,7 @@ function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); re
       'vec2 uv = (gl_FragCoord.xy - n.xy * (1.0 - nv) * rpx * 0.6 * (1.0 - open)) / r29, px = 1.6 * s9 / r29;',
       'vec3 bg = 0.4 * texture2D(t29, uv).rgb + 0.15 * (texture2D(t29, uv + vec2(px.x, 0.0)).rgb + texture2D(t29, uv - vec2(px.x, 0.0)).rgb + texture2D(t29, uv + vec2(0.0, px.y)).rgb + texture2D(t29, uv - vec2(0.0, px.y)).rgb);',
       'float lum = dot(bg, vec3(0.3, 0.59, 0.11)); vec3 base = mix(PAPER31 * (0.985 + 0.03 * gr) * dim, bg, smoothstep(0.60 * dim, 0.74 * dim, lum));',
-      'float l9 = dot(n, normalize(vec3(-0.5, 0.66, 0.56)));',
+      'float l9 = dot(n, normalize(mix(vec3(-0.5, 0.66, 0.56), normalize(l33.xyz + vV), l33.w)));',
       'float sp = sin(lon * 3.0 + bp.y * 5.2 + 2.4 * (nz - 0.5)), band = smoothstep(0.05, 0.75, sp), lite = smoothstep(-0.3, -0.85, sp);',
       'float hl = smoothstep(0.78, 0.86, l9 + 0.36 * (nz - 0.5)); hl = max(hl, lite * smoothstep(0.0, 0.4, l9) * smoothstep(0.42, 0.52, nz2));',
       'float rim = clamp(smoothstep(0.35, 0.95, 1.0 - nv + 0.25 * (nz - 0.5)), 0.0, 1.0), core = smoothstep(0.25, -0.35, l9 + 0.3 * (nz - 0.5));',
@@ -2223,17 +2224,29 @@ function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); re
       /* an open petal: the wash pools along its two edges, and the pen goes down them */
       'float pe = smoothstep(0.02, 0.2, open) * step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y), au = abs(vU); wash = mix(wash, vec3(0.30, 0.46, 0.76), 0.75 * pe * smoothstep(0.55, 0.95, au + 0.2 * (nz - 0.5))); a9 = mix(a9, 1.0, pe * smoothstep(0.6, 0.95, au)); wash = mix(wash, vec3(0.17, 0.14, 0.13), pe * smoothstep(0.90, 0.96, au + 0.05 * (nz2 - 0.5)));',
       'float cupl = smoothstep(0.03, 0.15, open) * (1.0 - step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y)) * smoothstep(0.90, 0.955, 1.0 - nv + 0.04 * (nz2 - 0.5)); wash = mix(wash, vec3(0.17, 0.14, 0.13), cupl); a9 = mix(a9, 1.0, cupl);',
-      'gl_FragColor = vec4(base * mix(vec3(1.0), wash, a9 * amt), 1.0); }'].join('\n') });
+      /* (builder 33) the petals soak into the page from their points; the cup goes last */ 'if (soak > 0.001) { float tp = (vP.y - CT33) / (1.0 - CT33), th = tp > 0.0 ? 1.12 - 1.25 * soak - tp : 1.55 - 1.6 * soak; float ns = 0.5 * (nz - 0.5) + 0.2 * (nz2 - 0.5); if (th + ns < 0.0) discard; float eg = 1.0 - smoothstep(0.0, 0.14, th + ns); wash = mix(wash, vec3(0.33, 0.50, 0.78), 0.7 * eg); a9 = mix(a9, 1.0, 0.6 * eg); }',
+      'vec3 c9 = base * mix(vec3(1.0), wash, a9 * amt); float pl = 0.5;', '{ float k33 = l33.w, lt = smoothstep(0.05, 0.75, l9), sd = smoothstep(0.38, -0.3, l9), we = smoothstep(0.5, 0.92, 1.0 - nv) * smoothstep(0.0, 0.55, l9); c9 *= mix(vec3(1.0), vec3(1.0, 0.972, 0.91), 0.8 * lt * k33 * (1.0 - 0.7 * pl)); c9 *= mix(vec3(1.0), vec3(0.70, 0.72, 0.82), 0.5 * sd * k33 * (1.0 - pl)); c9 = mix(c9, base * vec3(1.0, 0.95, 0.84), 0.2 * we * k33 * (1.0 - pl)); }',
+      'gl_FragColor = vec4(c9, 1.0); }'].join('\n').split('CT33').join(Math.cos(W32.TH).toFixed(4)) });
   X.sph.geometry.dispose(); X.sph.geometry = g; X.sph.material = m; X.NX = NX; X.NY = NY; X.k32 = true; X.tp = topo30(g); X.src = src30(X.tp, { mesh: X.sph, rs: 1, seed: 7700, o: { smooth: 2, min: 5, wob: 0.8 } }); }
 make31 = (f0 => function (T, S) { const X = f0(T, S); if (on32()) { try { up32(T, X); } catch (x) { W32.err = 'up ' + String(x && x.stack); } } return X; })(make31);
 /* closed it is a ball; open, each petal leans out from its hinge, cups, and curls its point back; the petals narrow to their points */
 function shape32(X, open, flat) { const g = X.sph.geometry, pos = g.attributes.position, A = pos.array, NX = X.NX, NY = X.NY, T0 = X.T0, dT = (X.T1 - T0) / NY, TH = W32.TH, ih = Math.round((TH - T0) / dT), am = ih * dT, hw = 4 / NX * 2 * Math.PI;
   for (let ix = 0; ix <= NX; ix++) { const pk = Math.floor(ix / 9), c = ix - pk * 9, u = (c - 4) / 4, phc = (pk * 9 + 4) / NX * 2 * Math.PI, kp = Math.max(0, Math.min(1.2, open * 1.3 - 0.14 * (pk % 2) + 0.05 * Math.sin(pk * 2.3))), k1 = Math.min(1, kp), th = T0 + ih * dT, b0 = Math.PI - th; let r = Math.sin(th), y = Math.cos(th);
     for (let iy = NY; iy >= 0; iy--) { const i = 3 * (iy * (NX + 1) + ix), t2 = T0 + iy * dT; let ph = ix / NX * 2 * Math.PI; if (iy >= ih || kp < 0.001) { r = Math.sin(t2); y = Math.cos(t2); } else { const a = (ih - iy - 0.5) * dT, s = a / am, bo = 0.75 + 0.75 * Math.sin(2.8 * s) - 1.0 * s * s * s - 0.9 * (kp - k1) * s, be = (b0 + a) * (1 - k1) + bo * k1; r += Math.cos(be) * dT; y += Math.sin(be) * dT; ph = phc + u * hw * (1 - k1 * (0.06 + 0.8 * Math.pow(s, 2.2))); }
-      const yy = -1 + (y + 1) * (1 - 0.96 * flat), rr = Math.max(0, r) * (1 + 0.25 * flat); A[i] = -rr * Math.cos(ph); A[i + 1] = Math.max(-1, yy); A[i + 2] = rr * Math.sin(ph); } }
+      const fl = KIT.one33 !== false ? 0.5 * flat : flat, yy = -1 + (y + 1) * (1 - 0.96 * fl), rr = Math.max(0, r) * (1 + 0.25 * flat); A[i] = -rr * Math.cos(ph); A[i + 1] = Math.max(-1, yy); A[i + 2] = rr * Math.sin(ph); } }
   pos.needsUpdate = true; g.computeVertexNormals(); const P = X.tp.P, F = X.tp.first; for (let w = 0; w < F.length; w++) { const i = 3 * F[w]; P[3 * w] = A[i]; P[3 * w + 1] = A[i + 1]; P[3 * w + 2] = A[i + 2]; } }
 shape31 = (f0 => function (X, open, flat) { if (X.k32) return shape32(X, open, flat); return f0(X, open, flat); })(shape31);
-stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.k32) return; const U = X.sph.material.uniforms; U.open.value = e.open; U.rpx.value = o.rpx32 || 60; U.dim.value = o.dim32 == null ? 1 : o.dim32; })(stage31);
+stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.k32) return; const U = X.sph.material.uniforms; U.open.value = e.open; U.rpx.value = o.rpx32 || 60; U.dim.value = o.dim32 == null ? 1 : o.dim32; U.soak.value = KIT.one33 !== false ? e.flat || 0 : 0; if (KIT.one33 !== false) { U.amt.value = 1; X.gw.visible = false; } })(stage31);
 KIT.spirit26.W32 = W32;
 // ==== W32 END
+// ==== W33 BEGIN
+// (builder 33) WATER AND THE SCENE AS ONE PICTURE during the change of stage (AA.rxKit.one33, on by default; false or ?o33=0 gives builder 32's look).
+// Here only what the water's own wash needs: the lamp (l33: where it is, seen from the eye, and how much of it there is) is read by the body's
+// wash (F30) and the ball's (up32): the lit side is toward the lamp and warm, the far side takes the room's shade, a warm edge where the light
+// grazes. The petals soak away from their points (soak) and keep their curl as they go down (shape32). scheme.js S33 does the rest.
+KIT.one33 = KIT.one33 == null ? !(typeof location !== 'undefined' && /[?&]o33=0/.test(String(location.search))) : KIT.one33;
+const W33 = { U: null, err: null };
+function u33(T) { if (!W33.U) W33.U = { l33: { value: new T.Vector4(0, 0, 0, 0) } }; return W33.U; }
+KIT.spirit26.W33 = W33; KIT.spirit26.u33 = u33; KIT.spirit26.grab29 = grab29; KIT.spirit26.u29 = u29;
+// ==== W33 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
