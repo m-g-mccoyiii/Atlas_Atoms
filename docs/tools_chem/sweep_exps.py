@@ -820,6 +820,7 @@ EXPERIMENTS['sig17n'] = lambda arg='2,both,60': _s17(arg, 'n_', strong='not')   
 EXPERIMENTS['sig17m'] = lambda arg='1,both,100': _s17(arg, 'm_', 'master', 'all')    # the six-round run
 EXPERIMENTS['sig17k'] = lambda arg='0,both,100,q,carousel+burette+crystal': _s17(arg, 'k_', strong='all')   # with the kit of three instruments held
 EXPERIMENTS['deed17'] = deed16                                                       # the deeds' pools on the new deal (sweep_deeds.py, SWEEP_DEEDS=deed17)
+EXPERIMENTS['sig17q'] = lambda arg: _s17(arg, 'q_', strong='all')                    # the second trial of the same (SWEEP_P ammonia_limits 2)
 EXPERIMENTS['sig17p'] = lambda arg: _s17(arg, 'p_', strong='all')                    # a trial with SWEEP_P set (Ammonia's second firing keeps the limits)
 
 

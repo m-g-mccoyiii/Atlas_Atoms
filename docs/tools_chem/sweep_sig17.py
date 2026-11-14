@@ -267,6 +267,49 @@ if __name__ == '__main__':
         k = {pl: {st.split('&')[0]: v for st, v in d.items()} for pl, d in k.items()}
         table(k, n, rows=rows)
         sys.exit(0)
+    if cmd == 'grow':
+        # creatures that get better at their jobs (sweep_run.py hom17): python sweep_sig17.py grow
+        import json
+        import os
+        import sweep_career as C
+        base = S16.load('sig17')
+        d, mod = {}, {}
+        for line in open(os.path.join(SC.SWEEP_DIR, 'hom17', 'rows.jsonl'), encoding='utf-8'):
+            r = json.loads(line) if line.strip() else None
+            if not r or 'error' in r or not r.get('full'):
+                continue
+            st, pl = r['tag'].split('/')
+            d.setdefault(pl, {}).setdefault(st, []).extend(r['full'])
+            m = mod.setdefault((pl, st), {})
+            for v in (r.get('mod') or {}).values():
+                for k, x in v.items():
+                    m[k] = m.get(k, 0) + x
+        modes = ('now', 's1', 's3', 's5', 'run', 'cap3')
+        for pl in ('median', 'greedy'):
+            if pl not in d:
+                continue
+            b0 = base[pl]['none']
+            print('%s; none: wins of nine %.2f, rounds 1 to 9 cleared %s' % (S16.PL[pl], S16.H.win(b0), ', '.join('%.0f' % (100 * x) for x in S16.H.rates(b0))))
+            print('| Creature | ' + ' | '.join('%s: worth; wins of nine; biggest round' % m for m in modes) + ' | grows in the run: stage after round 3, 6, 9; taps a run |')
+            tot = {m: [] for m in modes}
+            for h in sorted({k.split('@')[0] for k in d[pl]}):
+                cells = []
+                for m in modes:
+                    runs = d[pl].get(h + '@' + m)
+                    if not runs:
+                        cells.append('.')
+                        continue
+                    w = S16.H.win(runs)
+                    tot[m].append(runs)
+                    cells.append('%.2f; %.2f; %.0f' % (S16.H.flat_lift(b0, w), w, max(C.ratio(rd) for r in runs for rd in r[:9])))
+                g = mod.get((pl, h + '@run')) or {}
+                n = float(g.get('runs') or 1)
+                print('| %s | %s | %.1f, %.1f, %.1f; %.1f |' % (h.replace('hom:', ''), ' | '.join(cells), g.get('st3', 0) / n, g.get('st6', 0) / n, g.get('st9', 0) / n, g.get('taps', 0) / n))
+            for m in modes:
+                if tot[m]:
+                    allr = [r for runs in tot[m] for r in runs]
+                    print('  all ten, %s: wins of nine %.2f in 100 (middle creature %.2f); rounds 1 to 9 cleared %s' % (m, sum(S16.H.win(x) for x in tot[m]) / len(tot[m]), sorted(S16.H.win(x) for x in tot[m])[len(tot[m]) // 2], ', '.join('%.0f' % (100 * x) for x in S16.H.rates(allr))))
+        sys.exit(0)
     if cmd == 'aqua':
         # Aqua Permanens' payment, more sizes and a buyer who takes it early only: python sweep_sig17.py aqua [runs]
         table(load17(), int(sys.argv[2]) if len(sys.argv) > 2 else 20000, rows=[('best', 0, 1.15)] + [(pk, pay, 1.15) for pk in ('aqua', 'aqua3') for pay in (4, 6, 8, 12, 20, 40)])

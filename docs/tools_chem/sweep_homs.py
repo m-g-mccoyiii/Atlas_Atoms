@@ -407,8 +407,13 @@ class Ammonia(Hom):
         if R.left is not None:
             for r in ln:
                 R.left[r] = R.left.get(r, 0) + 1
-        if G.p.get('ammonia_limits'):      # path.js RULE.ammoniaLimits (off): the second firing has the page's plain limits, counted afresh
-            R.limcnt = ()
+        if G.p.get('ammonia_limits'):      # path.js RULE.ammoniaLimits (off): the second firing has the page's plain limits, counting what the page has already done
+            if G.p['ammonia_limits'] == 1:
+                R.limcnt = ()              # the first trial: counted afresh (it made Ammonia alone stronger; not kept)
+            else:
+                import library as _L
+                done = R.rec[-1]['chain']
+                R.limcnt = tuple(sorted((k, min(n, sum(1 for x in done if x == k))) for k, n in _L.PER_TURN.items() if any(x == k for x in done)))
             G.limits_back = True
             try:
                 more_circles(G, R, ln)

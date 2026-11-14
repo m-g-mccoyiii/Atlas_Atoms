@@ -744,7 +744,8 @@ class Game:
 
     def _used(self, cnt):
         sr = self.self_rules
-        return tuple(sorted((k, min(v, sr[k].per_turn)) for k, v in cnt.items() if getattr(sr[k], 'per_turn', None) is not None))
+        lim = (lambda k: L.PER_TURN.get(k, getattr(sr[k], 'per_turn', None))) if self.limits_back else (lambda k: getattr(sr[k], 'per_turn', None))
+        return tuple(sorted((k, min(v, lim(k))) for k, v in cnt.items() if lim(k) is not None))
 
     def score_casc(self, R, kind, smi, off, page, lx):
         """One reflex step: path.js scoreRound with o.casc (and synTake's bookkeeping)."""
