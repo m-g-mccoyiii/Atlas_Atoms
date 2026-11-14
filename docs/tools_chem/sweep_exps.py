@@ -844,3 +844,29 @@ def hom17(arg='now,median,100'):
 
 
 EXPERIMENTS['hom17'] = hom17
+
+
+def hom18(arg='median,100,,water@2.25'):
+    """Eighteenth: a creature with numbers of its own, nine rounds, every round played, on sig17's deals (seed letter q).
+    arg: player,runs,extra mods joined by + (instruments, sigil:<id>),spec;spec;...  A spec is a creature as sweep_homs.make reads
+    it with ~ for / ('h2~MODE=1~KS=2.25'), or 'none'.  player 'both': the casual and the careful player on the same deals."""
+    pl, n, more, specs = arg.split(',', 3)
+    more = [x if ':' in x else 'tool:' + x for x in more.split('+')] if more else []
+    par = dict(T13)
+    _b = re.search(r'RULE\.bench = (\d+)', SC._JS)
+    if any(m.startswith('tool:') for m in more) and _b and int(_b.group(1)) > 0:
+        par['tool_cap'] = int(_b.group(1))
+    jobs = []
+    for sp in specs.split(';'):
+        mods = ([] if sp == 'none' else ['hom:' + sp.replace('~', '/')]) + more
+        name = sp + ('&' + '+'.join(m.split(':')[1] for m in more) if more else '')
+        for i in range(int(n) // 10):
+            j = {'id': 'h18_%s_%s_%d' % (name, pl, i), 'rack': START, 'length': 'doctorate', 'player': pl, 'mods': mods, 'params': dict(par),
+                 'full': True, 'seeds': ['q/%d' % (i * 10 + k) for k in range(10)], 'tag': '%s|%s' % (name, pl)}
+            if pl == 'both':
+                j['players'] = ['greedy', 'median']
+            jobs.append(j)
+    return jobs
+
+
+EXPERIMENTS['hom18'] = hom18

@@ -288,6 +288,7 @@ class DryIce(Hom):
     K = 1.36            # three bottles shut: 2.5 times
     MOST = 3
     LEAST = 3
+    NEEDC = 1           # eighteenth: 0 drops the carbon dioxide (the job eased in one plain way: leave LEAST reagents untouched all round)
 
     def shut(self, R):
         rack = R.x.get('rack') or ()
@@ -301,14 +302,14 @@ class DryIce(Hom):
         return R.rec[-1]['off'].get('carbon_dioxide', 0) >= 1
 
     def lit(self, G, R):
-        return R.page >= R.pages and R.ev.get('carbon_dioxide', 0) >= 1 and self.shut(R) >= self.LEAST
+        return R.page >= R.pages and (not self.NEEDC or R.ev.get('carbon_dioxide', 0) >= 1) and self.shut(R) >= self.LEAST
 
     def apply(self, G, R):
         R.E *= self.K ** self.shut(R)
 
     def peek_plan(self, G, R):
         # before the last page a reader counts the bottles still shut once carbon dioxide has been made
-        if R.ev.get('carbon_dioxide', 0) < 1 or self.shut(R) < self.LEAST:
+        if (self.NEEDC and R.ev.get('carbon_dioxide', 0) < 1) or self.shut(R) < self.LEAST:
             return None
         v = G.value(R)
         return (v[0], int(v[1] * self.K ** self.shut(R)))
@@ -385,14 +386,21 @@ class Wood(Hom):
 class Salt(Hom):
     name = 'salt'
     K = 2.5
+    ANY = 0             # eighteenth: 1 takes the page before's three reagents in any order (the job eased in one plain way)
+    MATCH = 3           # eighteenth: how many of the first reagents of the line must be those of the page before, in place (1: the first only)
 
     def lit(self, G, R):
-        return len(R.rec) >= 2 and len(R.rec[-1]['circ']) >= 3 and line_of(R.rec[-1])[:3] == line_of(R.rec[-2])[:3]
+        if len(R.rec) < 2 or len(R.rec[-1]['circ']) < 3:
+            return False
+        a, b = line_of(R.rec[-1])[:3], line_of(R.rec[-2])[:3]
+        if self.MATCH < 3:
+            return len(b) == 3 and a[:int(self.MATCH)] == b[:int(self.MATCH)] and 'finish' not in a[:int(self.MATCH)]
+        return a == b or bool(self.ANY and len(b) == 3 and sorted(a) == sorted(b))
 
     def apply(self, G, R):
         R.E *= self.K
         if R.left is not None:
-            for r in line_of(R.rec[-1])[:3]:
+            for r in line_of(R.rec[-1])[:int(self.MATCH)]:       # the repeated reagents get their use back
                 if r != 'finish':
                     R.left[r] = R.left.get(r, 0) + 1
 
@@ -442,12 +450,14 @@ class Slime(Hom):
 
 class Ammonia(Hom):
     name = 'ammonia'
+    KN = 1.0            # eighteenth: a number of its own at the tap (it had none; path.js HOMS2K.ammonia.k)
 
     def lit(self, G, R):
         rec = R.rec[-1]
         return (not R.over) and (any(c[0] == 'ritter' and c[1] > 0 for c in rec['circ']) or 'knit' in rec['chain'])
 
     def apply(self, G, R):
+        R.E *= self.KN
         ln = [r for r in line_of(R.rec[-1])[:3] if r != 'finish']
         if R.left is not None:
             for r in ln:
@@ -473,6 +483,7 @@ class Seedling(Hom):
     K = 1.8             # 1.8, then 2.6, then 3.4 for each page in a row (1.4 and 8 atoms until the fifteenth)
     GAIN = 12
     WILT = 0.7
+    RISE = 1            # eighteenth: 0 is a plain number at every tap: no rising in a row, no wilt
     peek_force = True         # a reader sees the wilt before it lines up
 
     def peek(self, G, R, rng):
@@ -496,7 +507,7 @@ class Seedling(Hom):
 
     def passive(self, G, R):
         # thirteenth: once it has been tapped it must be fed every page: a page that grows less than GAIN and it wilts
-        if self.grew(R) < self.GAIN and R.x.get('streak', 0) > 0 and R.x.get('wpage') != R.page and R.x.get('spage') != R.page:
+        if self.RISE and self.grew(R) < self.GAIN and R.x.get('streak', 0) > 0 and R.x.get('wpage') != R.page and R.x.get('spage') != R.page:
             R.E *= self.WILT
             R.x['streak'] = 0
             R.x['wpage'] = R.page
@@ -505,7 +516,7 @@ class Seedling(Hom):
         n = R.x.get('streak', 0) + 1
         R.x['streak'] = n
         R.x['spage'] = R.page
-        R.E *= 1 + (self.K - 1) * n
+        R.E *= (1 + (self.K - 1) * n) if self.RISE else self.K
 
 
 class Brimstone(Hom):
@@ -515,7 +526,12 @@ class Brimstone(Hom):
     name = 'brimstone'
     K = 1.5
     K2 = 1.25
-    last_page = False
+    LASTP = 0           # eighteenth: 1 lets the fire be lit on the last page too (the job eased in one plain way)
+    KB = 1.0            # eighteenth: a number at the tap for the one-job version (MODE 1); 1.0 is none
+
+    @property
+    def last_page(self):
+        return bool(self.LASTP)
 
     HALF = 0.5          # fifteenth: the fire takes only a task this far done (0.5: at least half)
     # seventeenth, "simplify the creatures": MODE 0 as it is; one job each (never on the last page):
@@ -540,6 +556,8 @@ class Brimstone(Hom):
             return
         if not self.MODE:
             R.E *= self.K if R.page <= 1 else self.K2
+        elif self.MODE == 1:
+            R.E *= self.KB
         R.x['burnt'] = True
         R.over = True
 
