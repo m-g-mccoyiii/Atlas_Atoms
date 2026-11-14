@@ -886,7 +886,7 @@ function start(app) {
     { const arch = flat ? archesOf(model) : []; if (flat && !caged(model, arch)) tidy(model, at, skip, beads, seed, arch); }
     let fl = null; if (flat && !beads.length && !NOFOLD) { try { fl = foldLay(model, at, skip); } catch (e) { fl = null; } }
     if (fl && EASE && seed && seed.size) { try { fl.eased = easeLay(model, at, skip, seed); } catch (e) { fl.eased = false; EASEWHY = 'err ' + e.message; } fl.why = EASEWHY; if (fl.eased) { fl.ring = true; fl.rungSet = new Set(); } }
-    let KN = null; if (KNOT.mode !== 'a' && !beads.length) { try { KN = knotLay(model, at, skip, KNOT.mode, !(seed && seed.size), seed && seed.size ? seed : buildMol.orient); } catch (e) { KN = null; KNOT.err = String(e && e.stack); } if (KN && KN.placed && fl && fl.depth) KN.set.forEach(q => fl.depth.delete(q)); }
+    let KN = null; if (KNOT.mode !== 'a' && !beads.length && !buildMol.noKnot) { try { KN = knotLay(model, at, skip, KNOT.mode, !(seed && seed.size), seed && seed.size ? seed : buildMol.orient); } catch (e) { KN = null; KNOT.err = String(e && e.stack); } if (KN && KN.placed && fl && fl.depth) KN.set.forEach(q => fl.depth.delete(q)); }
     if (FOLD === 'focus' && big) { const ar = RX.aromaticAtoms(model), dist = new Map(), q0 = []; liveAtoms(model, ar).forEach(a => { dist.set(a, 0); q0.push(a); }); while (q0.length) { const a = q0.shift(); model.neighbors(a).forEach(nb => { if (!dist.has(nb.atom)) { dist.set(nb.atom, dist.get(a) + 1); q0.push(nb.atom); } }); } model.atoms.forEach(a => { if ((dist.has(a) ? dist.get(a) : 9) > 2) pale.add(a); }); }
     const dOf = a => (KN && KN.depth.has(a) ? KN.depth.get(a) : fl && fl.depth && fl.depth.has(a) ? fl.depth.get(a) : null), radius = a => (a.bead ? 0.82 : a.poly ? 0.7 + 0.12 * Math.min(6, Math.log2(a.poly)) : (KN && KN.mode === 'c' && KN.placed && KN.set.has(a) ? KNOT.small : 1) * BALL(a.el) * (pale.has(a) ? 0.5 : 1) * (a.el === 'N' || a.el === 'S' || a.el === 'Cl' ? 1.3 : 1) * (dOf(a) == null ? 1 : 0.78 + 0.3 * dOf(a)));
     if (fl && fl.depth && fl.depth.size) fl.depth.forEach((d, a) => { const q = at.get(a); if (q) q.y += 1.1 * d; });
@@ -915,6 +915,8 @@ function start(app) {
     if (KN) sticks.forEach(q => { if (KN.set.has(q.a) && KN.set.has(q.b)) q.kfree = true; });
     if (fl) { m.fl = fl; sticks.forEach(q => { if (fl.rungSet.has(fl.rk(q.a, q.b))) q.rung = true; }); m.box = drawnBox(m); }
     try { m.fitNote = fitAt(m); } catch (e) { m.fitNote = 'err ' + e.message; } if (m.fitNote && fl) m.box = drawnBox(m);
+    // (builder 16) a set-down drawing that leaves two balls overlapping or a bond out of its limits is given up: that molecule is drawn the old way
+    if (KN && KN.placed && m.fitNote === 'fail' && !buildMol.noKnot) { freeMol(m); buildMol.noKnot = true; try { const m3 = buildMol(model, rings, lean0, seed, seedBead); m3.knotOff = true; return m3; } finally { buildMol.noKnot = false; } }
     // a layout eased from the one before that could not be put right is given up for a fresh one
     if (m.fitNote === 'fail' && seed && seed.size && !buildMol.again) { freeMol(m); buildMol.again = true; buildMol.orient = seed; try { const m2 = buildMol(model, rings, lean0, null, seedBead); m2.fitNote = 'fresh:' + m2.fitNote; return m2; } finally { buildMol.again = false; buildMol.orient = null; } }
     layout(m, a => at.get(a), null);
@@ -955,9 +957,9 @@ function start(app) {
     let D = m._dc; if (D) return D;
     const A = [], R = [], ix = new Map(); m.balls.forEach((b, a) => { ix.set(a, A.length); A.push(a); R.push(b.R); });
     const hd = A.map(() => 0); m.sticks.forEach(q => { const i = ix.get(q.a), j = ix.get(q.b); if (i == null || j == null || q.rung) return; if (A[i].el !== 'H' && A[j].el !== 'H') { hd[i]++; hd[j]++; } });
-    const W = A.map((a, i) => (a.el === 'H' ? 4 : m.kn && m.kn.placed && m.kn.set.has(a) ? 0.01 : hd[i] <= 1 ? 0.6 : hd[i] === 2 ? 0.3 : 0.15));
+    const W = A.map((a, i) => (a.el === 'H' ? 4 : m.kn && m.kn.placed && m.kn.set.has(a) ? 0.05 : hd[i] <= 1 ? 0.6 : hd[i] === 2 ? 0.3 : 0.15));
     const B = []; m.sticks.forEach(q => { const i = ix.get(q.a), j = ix.get(q.b); if (i == null || j == null || q.rung) return; const h = A[i].el === 'H' || A[j].el === 'H'; let rest = FL.L; if (h) rest = R[i] + R[j] + hydGap(A[i].el === 'H' ? R[j] : R[i]); else if (!m.fl) { const p = m.at.get(A[i]), r = m.at.get(A[j]); if (p && r) rest = Math.max(1.0, Math.min(FL.L, p.distanceTo(r))); } B.push({ i, j, q, rest, h }); });
-    D = m._dc = { A, R, W, B, ix, kn: A.map(a => !!(m.kn && m.kn.placed && m.kn.set.has(a))), P: A.map(() => new T.Vector3()), on: A.map(() => false), r: A.map(() => 0), map: new Map() };
+    D = m._dc = { A, R, W, B, ix, kn: (() => { const so = new Map(); if (m.kn && m.kn.placed) m.kn.sys.forEach((l, k) => l.forEach(q => so.set(q, k + 1))); return A.map(a => so.get(a) || 0); })(), P: A.map(() => new T.Vector3()), on: A.map(() => false), r: A.map(() => 0), map: new Map() };
     return D;
   }
   // one pass over positions D.P (local to the molecule's group). k: the margin. iters: how long to try. Returns the worst pair left, as a share of touching.
@@ -966,7 +968,7 @@ function start(app) {
     const cx = _dcc.x, cy = _dcc.y, cz = _dcc.z; let worst = 9, any = false;
     for (let it = 0; it < iters; it++) { let moved = false; worst = 9;
       for (let i = 0; i < n; i++) { if (!on[i]) continue; const p = P[i];
-        for (let j = i + 1; j < n; j++) { if (!on[j] || (D.kn[i] && D.kn[j])) continue; const q = P[j], need = k * (r[i] + r[j]); let dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z; if (dx > need * 1.6 || dx < -need * 1.6 || dz > need * 2.4 + 2 || dz < -need * 2.4 - 2) continue;
+        for (let j = i + 1; j < n; j++) { if (!on[j] || (D.kn[i] && D.kn[i] === D.kn[j])) continue; const q = P[j], need = k * (r[i] + r[j]); let dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z; if (dx > need * 1.6 || dx < -need * 1.6 || dz > need * 2.4 + 2 || dz < -need * 2.4 - 2) continue;
           // the ray from the camera to the middle of the pair; what is left of the pair's separation across that ray is what is seen
           let vx = (p.x + q.x) / 2 - cx, vy = (p.y + q.y) / 2 - cy, vz = (p.z + q.z) / 2 - cz; const vl = Math.hypot(vx, vy, vz) || 1; vx /= vl; vy /= vl; vz /= vl;
           const t = dx * vx + dy * vy + dz * vz; let sx = dx - t * vx, sy = dy - t * vy, sz = dz - t * vz, d = Math.hypot(sx, sy, sz);
@@ -3721,6 +3723,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const manCirc = (x, cx, cy, n, extra, col) => { for (let i = 0; i < n; i++) { manInk(x, i >= n - (extra || 0) ? REDINK : col || INK, 3); x.beginPath(); x.arc(cx - (n - 1) * 13 + i * 26, cy, 10, 0, 6.3); x.stroke(); } };
   const manPages = (x, cx, cy, n, extra) => { for (let i = 0; i < n; i++) { const px = cx - (n - 1) * 11 + i * 22; manInk(x, i >= n - (extra || 0) ? REDINK : INK, 2.5); x.fillStyle = '#fbf8ee'; x.beginPath(); x.rect(px - 8, cy - 12, 16, 24); x.fill(); x.stroke(); x.beginPath(); x.moveTo(px - 4, cy - 5); x.lineTo(px + 4, cy - 5); x.moveTo(px - 4, cy + 1); x.lineTo(px + 4, cy + 1); x.stroke(); } };
   const manYield = (x, cx, cy, up) => { manInk(x, INK, 3); x.beginPath(); x.moveTo(cx - 26, cy + 14); x.lineTo(cx + 26, cy + 14); x.stroke(); const col = up ? GREEN : REDINK, h = [10, 16, up ? 28 : 6]; h.forEach((q, i) => { x.fillStyle = i === 2 ? col : PENCIL; x.fillRect(cx - 22 + i * 16, cy + 12 - q, 11, q); }); manInk(x, col, 3); x.beginPath(); if (up) { x.moveTo(cx + 16, cy - 20); x.lineTo(cx + 16, cy - 34); x.moveTo(cx + 10, cy - 28); x.lineTo(cx + 16, cy - 34); x.lineTo(cx + 22, cy - 28); } else { x.moveTo(cx + 16, cy - 16); x.lineTo(cx + 16, cy - 2); x.moveTo(cx + 10, cy - 8); x.lineTo(cx + 16, cy - 2); x.lineTo(cx + 22, cy - 8); } x.stroke(); };
+  const manNum = (x, cx, cy, str, good) => { AA.rxPen.write(x, str, cx, cy + 11, 34, { weight: 'heavy', color: good ? GREEN : REDINK, align: 'center' }); };
   const manLoop = (x, cx, cy, r, col) => { manInk(x, col || REDINK, 3); x.beginPath(); x.arc(cx, cy, r, 0.6, 5.6); x.stroke(); const ax = cx + r * Math.cos(5.6), ay = cy + r * Math.sin(5.6); x.beginPath(); x.moveTo(ax - 9, ay - 1); x.lineTo(ax, ay); x.lineTo(ax - 2, ay - 10); x.stroke(); };
   const manBottle = (x, cx, cy, col) => { manInk(x, INK, 2.5); x.fillStyle = col || '#9fc4d8'; x.beginPath(); x.moveTo(cx - 5, cy - 16); x.lineTo(cx - 5, cy - 8); x.lineTo(cx - 12, cy + 2); x.lineTo(cx - 12, cy + 16); x.lineTo(cx + 12, cy + 16); x.lineTo(cx + 12, cy + 2); x.lineTo(cx + 5, cy - 8); x.lineTo(cx + 5, cy - 16); x.closePath(); x.fill(); x.stroke(); };
   const manPlus = (x, cx, cy, col) => { manInk(x, col || REDINK, 3.5); x.beginPath(); x.moveTo(cx - 7, cy); x.lineTo(cx + 7, cy); x.moveTo(cx, cy - 7); x.lineTo(cx, cy + 7); x.stroke(); };
@@ -3755,19 +3758,19 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     [/every C=C becomes C-OH/, (x, cx, cy) => { manMol(x, 'C-C-O-H', cx, cy, 0.85); }],
     [/pours every dealt reagent/, (x, cx, cy) => { [-22, 0, 22].forEach(d => manBottle(x, cx + d, cy - 4)); manArrow(x, cx - 24, cy + 24, cx + 24, REDINK); }],
     [/get their use back/, (x, cx, cy) => { manBottle(x, cx, cy); manLoop(x, cx, cy, 24, GREEN); }], [/are shut on the next page/, (x, cx, cy) => { manBottle(x, cx, cy, '#cfcabd'); manCross(x, cx, cy, 14); }],
-    [/yield times 1\.|yield reads 1\./, (x, cx, cy) => manYield(x, cx, cy + 6, true)], [/yield times 0\./, (x, cx, cy) => manYield(x, cx, cy + 6, false)],
+    [/yield (?:times|reads) (\d+\.\d+)/, (x, cx, cy, mt) => manNum(x, cx, cy, 'x' + mt[1], +mt[1] >= 1)],
     [/number to beat (is )?1\./, (x, cx, cy) => { manInk(x, REDINK, 3); x.beginPath(); x.arc(cx, cy, 13, 0, 6.3); x.stroke(); x.beginPath(); x.moveTo(cx + 24, cy + 10); x.lineTo(cx + 24, cy - 12); x.moveTo(cx + 18, cy - 6); x.lineTo(cx + 24, cy - 12); x.lineTo(cx + 30, cy - 6); x.stroke(); }],
     [/instruments? drawn at random/, (x, cx, cy) => { manInk(x, INK, 3); x.beginPath(); x.rect(cx - 16, cy - 14, 32, 30); x.stroke(); [[-7, -5], [7, 7], [0, 1]].forEach(q => { x.beginPath(); x.arc(cx + q[0], cy + q[1], 3, 0, 6.3); x.fill(); }); }],
     [/three of the starting reagents/, (x, cx, cy) => { [-22, 0, 22].forEach(d => manBottle(x, cx + d, cy)); }],
     [/run of six rounds/, (x, cx, cy) => { manPages(x, cx, cy - 13, 3); manPages(x, cx, cy + 15, 3, 3); }], [/run of nine rounds/, (x, cx, cy) => { manPages(x, cx, cy - 22, 3); manPages(x, cx, cy + 2, 3); manPages(x, cx, cy + 26, 3, 3); }],
     [/soundtrack/, (x, cx, cy) => { manInk(x, INK, 3); for (let i = 0; i < 9; i++) { const h = 6 + 22 * Math.abs(Math.sin(i * 1.3 + cx)); x.beginPath(); x.moveTo(cx - 32 + i * 8, cy - h / 2); x.lineTo(cx - 32 + i * 8, cy + h / 2); x.stroke(); } }],
-    [/given up and earned again/, (x, cx, cy) => { manLoop(x, cx - 22, cy, 14, INK); manYield(x, cx + 24, cy + 6, true); }] ];
+    [/given up and earned again/, (x, cx, cy) => { manLoop(x, cx, cy, 14, INK); }] ];
   function manDoes(x, row, cx, cy, w) {
     if (row.category === 'reagent') { const W = 300, H = 150, c = document.createElement('canvas'); c.width = W; c.height = H; try { cardDraw(c.getContext('2d'), row.id, true, W, H); } catch (e) { return; } const k = Math.min(w / W, 0.62); x.drawImage(c, cx - W * k / 2, cy - H * k / 2, W * k, H * k); return; }
     if (row.category === 'reflex') { const R = { seal: () => { manMol(x, 'O-C-C-C-O', cx - 44, cy, 0.62); manArrow(x, cx - 2, cy, cx + 14); manRing(x, cx + 44, cy, 17, 5, 'O'); }, open: () => { manRing(x, cx - 42, cy + 2, 11, 3, 'O'); manArrow(x, cx - 14, cy, cx + 4); manRing(x, cx + 38, cy, 17, 5, 'O'); }, fold: () => { manRing(x, cx - 40, cy + 2, 11, 3, 'O'); manArrow(x, cx - 14, cy, cx + 4); manMol(x, 'C-C=O', cx + 44, cy, 0.9); } }; if (R[row.id]) R[row.id](); return; }
-    if (row.category === 'motif') { try { AA.rxMarks.motif(x, row.id, cx - 46, cy, 1, 46, {}); } catch (e) { /* no mark */ } manArrow(x, cx - 12, cy, cx + 6); manYield(x, cx + 44, cy + 6, true); return; }
+    if (row.category === 'motif') { try { AA.rxMarks.motif(x, row.id, cx - 46, cy, 1, 46, {}); } catch (e) { /* no mark */ } manArrow(x, cx - 12, cy, cx + 6); const mm = row.does.match(/counted (\d+) in 100 more/); if (mm) manNum(x, cx + 50, cy, '+' + (+mm[1] / 100), true); return; }
     const hits = MANP.filter(q => q[0].test(row.does)).slice(0, 3); if (!hits.length) return; const st = Math.min(92, w / hits.length), x0 = cx - (hits.length - 1) * st / 2;
-    hits.forEach((q, i) => { x.save(); const k = st < 80 ? 0.78 : 0.95; x.translate(x0 + i * st, cy); x.scale(k, k); q[1](x, 0, 0); x.restore(); if (i < hits.length - 1) manArrow(x, x0 + i * st + st / 2 - 7, cy, x0 + i * st + st / 2 + 7, PENCIL); });
+    hits.forEach((q, i) => { x.save(); const k = st < 80 ? 0.78 : 0.95; x.translate(x0 + i * st, cy); x.scale(k, k); q[1](x, 0, 0, row.does.match(q[0])); x.restore(); if (i < hits.length - 1) manArrow(x, x0 + i * st + st / 2 - 7, cy, x0 + i * st + st / 2 + 7, PENCIL); });
   }
   // the flat emblem of a thing that is not an object on the bench (also a category's tab)
   function manEmblem(x, row, cx, cy, r) {
@@ -3808,10 +3811,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     // the turn: it coasts after the hand lets go, and after a while comes home (front to the eye)
     if (!MAN.drag) { MAN.yaw += MAN.vy; MAN.pit = Math.max(-1.1, Math.min(1.1, MAN.pit + MAN.vp)); MAN.vy *= 0.95; MAN.vp *= 0.9; if (now - MAN.idle > 2600 && Math.abs(MAN.vy) < 0.004) { const home = Math.round((MAN.yaw + 0.5) / (2 * Math.PI)) * 2 * Math.PI - 0.5; MAN.yaw += (home - MAN.yaw) * 0.07; MAN.pit += (0.12 - MAN.pit) * 0.07; } }
     x.fillStyle = 'rgba(60,40,20,0.16)'; x.beginPath(); x.ellipse(330, 560, 150, 22, 0, 0, 6.3); x.fill(); const img = manShot(row, MAN.yaw, MAN.pit); x.drawImage(row.owned ? img : manPencil(img, 400), 110, 150, 440, 440);
-    const W = AA.rxPen.write, X0 = 640, WD = 540; let y = 170; W(x, row.name.charAt(0).toUpperCase() + row.name.slice(1), X0, y, 46, { weight: 'heavy', color: INK, align: 'left' }); y += 26; x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, y); x.lineTo(X0 + WD, y); x.stroke(); y += 44;
-    if (row.owned) { manWrap(row.does, 25, WD).forEach(l => { W(x, l, X0, y, 25, { weight: 'thin', color: INK, align: 'left' }); y += 34; }); y += 22; }
-    manWrap(row.how, 23, WD).forEach(l => { W(x, l, X0, y, 23, { weight: 'thin', color: row.owned ? PENCIL : INK, align: 'left' }); y += 31; });
-    if (row.target && !(row.owned && row.target === 1)) { y += 14; const f = Math.max(0, Math.min(1, (row.count || 0) / row.target)); x.fillStyle = 'rgba(90,86,78,0.2)'; x.fillRect(X0, y, 300, 12); x.fillStyle = '#2f6b3a'; x.fillRect(X0, y, 300 * f, 12); W(x, fmt(row.count || 0) + ' of ' + fmt(row.target), X0 + 316, y + 13, 24, { weight: 'heavy', color: row.owned ? GREEN : REDINK, align: 'left' }); }
+    const W = AA.rxPen.write, X0 = 640, WD = 540; let y = 170; W(x, row.name.charAt(0).toUpperCase() + row.name.slice(1), X0, y, 56, { weight: 'heavy', color: INK, align: 'left' }); y += 26; x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, y); x.lineTo(X0 + WD, y); x.stroke(); y += 44;
+    if (row.owned) { manWrap(row.does, 33, WD).forEach(l => { W(x, l, X0, y, 33, { weight: 'thin', color: INK, align: 'left' }); y += 44; }); y += 24; }
+    manWrap(row.how, 29, WD).forEach(l => { W(x, l, X0, y, 29, { weight: 'thin', color: row.owned ? PENCIL : INK, align: 'left' }); y += 39; });
+    if (row.target && !(row.owned && row.target === 1)) { y += 14; const f = Math.max(0, Math.min(1, (row.count || 0) / row.target)); x.fillStyle = 'rgba(90,86,78,0.2)'; x.fillRect(X0, y, 300, 12); x.fillStyle = '#2f6b3a'; x.fillRect(X0, y, 300 * f, 12); W(x, fmt(row.count || 0) + ' of ' + fmt(row.target), X0 + 316, y + 14, 30, { weight: 'heavy', color: row.owned ? GREEN : REDINK, align: 'left' }); }
     // the way back: a turned-down corner, drawn
     x.fillStyle = '#cdbf9c'; x.strokeStyle = '#4a2e1e'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(1220, 74); x.lineTo(1160, 74); x.lineTo(1220, 134); x.closePath(); x.fill(); x.stroke();
   }

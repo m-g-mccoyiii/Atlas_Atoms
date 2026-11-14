@@ -422,3 +422,11 @@ Branch `page-builder-16` (worktree `page16`). Files: `scheme.js`, `feel.js`. Rec
 Not done: see the hand-back. The four ways of drawing a knot are all still in the file for the owner to pick; the three not picked should be taken out then.
 
 scheme.html: bump `scheme.js?v=` and `feel.js?v=`.
+
+Later the same day (sixteenth builder, second part):
+
+- **Textbook drawing is the default** (the owner's pick; `?knot=a` is the old way). Added: a layout that follows another is turned as a whole to lie as the atoms it shares with the one before lay (`seedO`, `buildMol.orient`); a first layout with a stored cage at its root stands the cage upright (`KN.rootAng`); a single thing on a ring-fusion atom goes into the gap that points away from the ring system (`gapAt` with `probe`); the cube's bonds are 0.91 to 1.12; depth lifts an atom 0.2. The clean-up leaves two atoms of the SAME drawing alone (`D.kn` is the drawing's number) and still parts everything else. **If a set-down drawing cannot be made clean (`fitNote` `fail`) that molecule is built again the old way** (`buildMol.noKnot`, `m.knotOff`).
+- **Whole-game job, 5,238 layouts** (`j_lay.js` with `strict=1`: a layout fails on a pair under touching, a bond over 1.15 or under 0.9). Before (old way, old limits): 0 clashes, 1,010 layouts with a bond over 1.15, 771 with one under 0.9 (worst 1.27 and 0.66). Old way with the rest limits: 0 clashes, 59 and 43. Textbook default with the rest limits and the fall-back: 4 layouts with a pair just under touching (worst 0.987), 168 and 202 (worst 1.38 and 0.66; part of these are a stored drawing's own foreshortened bonds, which the measure counts). Without the fall-back the textbook way left 37 clashes (worst 0.56): do not take the fall-back out.
+- **The manual pays in numbers** (owner: no bar charts): `manNum` writes the multiplier found in the rules' own sentence (`yield times N`) in the pen's hand; `manYield` is no longer called. The motifs tab's second picture broke in this change (not fixed). The opened view's words are bigger.
+
+Not started: the six properties shown on the molecule (`?kin`), creature stages (`P.homStage`), the leftovers list, `P.profileOpts`, `P.stageOf` / `P.gateOpen`, sigil buying.
