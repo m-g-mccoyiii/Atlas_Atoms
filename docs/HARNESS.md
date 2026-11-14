@@ -132,6 +132,8 @@ AX. The reference book (13 November): "The in game manual should just be picture
 
 **BI (2026-11-14, evening).** Water's evolution at the centre of the screen, after the one-picture pass: "that one is basically done" (small fixes only: the straight wet strip, the arm over the molecule, the flat front of the bud), "Start the next one": ACID is the next creature, three still directions in pen and wash first. Synergy tried on three (RIG twentieth, `RULE.homCount`): Acid's x3.20 cap holds only its stage number; atoms chewed beyond that climb past the cap (owner picked "Cap only the base"; to be measured alone and with a plain kit before it is kept). Brimstone: x1.12 for each sulfur past the first (picked), and while Sulphur's Mask is held every OH counts as a sulfur ("Yes, keep it"). Seedling: x1.06 for each atom past 6 (picked "Medium, 6%" once it was explained from the start in plain words with a table; the owner had said "I have gotten lost in the jargon": explain rules from scratch, no shorthand). Art builders: the top model only writes drawing code and makes stills; a cheaper helper records every take and frame sheet ("Split it").
 
+**BJ (2026-11-14, evening).** Balance: "I just want to make sure we reward clever gameplay and luck and don't overbalance everything". So the "about 100 times the number to beat" of BC is not a ceiling to trim to: a clever or lucky line may run high. What is guarded is the floor: the bare game and a plain kit stay as hard as they are.
+
 
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
