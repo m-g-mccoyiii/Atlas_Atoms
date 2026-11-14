@@ -159,7 +159,7 @@ def load17():
     return by
 
 
-def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3, marks=None, least=1.0):
+def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3, marks=None, least=1.0, aqua_rounds=0):
     """One nine-round run of buying, laid together from rounds of the sets held (as sweep_sig16.one_run, way 'buy').
     pay: gold Aqua Permanens pays when taken (it then costs nothing).  pick: 'best' the strongest he can pay for, leaving any worth
     under `least`; 'aqua' the same, and he takes Aqua Permanens whenever it is shown, for its gold; 'any' at random."""
@@ -170,10 +170,13 @@ def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3,
     out = {'won': False, 'cleared': 0, 'at': {}, 'earn': {}, 'aqua': 0}
     nr = len(marks)
     for i in range(nr):
+        if aqua_rounds and out['aqua'] and i + 1 - out['aqua'] >= aqua_rounds and 'aqua_permanens' in held:
+            held.remove('aqua_permanens')      # path.js RULE.aquaRounds: it has worked that many rounds and is gone; the place is free again
+            owned = [s for s in owned if s != 'aqua_permanens']
         if i > 0 and len(held) < cap:
             left = [s for s in owned if s not in held]
             shown = rng.sample(left, min(G['shown'], len(left)))
-            if 'aqua_permanens' in shown and pay and pick in ('aqua', 'any'):
+            if 'aqua_permanens' in shown and pay and (pick in ('aqua', 'any') or (pick == 'aqua3' and i <= 2)):       # aqua3: only before rounds 2 and 3
                 held.append('aqua_permanens')
                 shown.remove('aqua_permanens')
                 gold += pay
@@ -208,7 +211,7 @@ def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3,
 WORTH = {}        # each sigil's worth alone on nine rounds, by player: what the buyer goes by in every table
 
 
-def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9, marks=None, rows=None):
+def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9, marks=None, rows=None, aqua_rounds=0):
     import random
     import sweep_sig16 as S16
     G = S16.GET
@@ -225,7 +228,7 @@ def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9, marks=None, ro
             rs = []
             for _ in range(n):
                 owned = [] if pk == 'none' else (list(S16.SIG9) if owned_n >= 9 else rng.sample(S16.SIG9, owned_n))
-                rs.append(one_run(pools, rng, owned, G, worth, pk, per_clear, pay, least=least, marks=marks))
+                rs.append(one_run(pools, rng, owned, G, worth, pk, per_clear, pay, least=least, marks=marks, aqua_rounds=aqua_rounds))
             at = lambda r_: sum(x['at'][r_] for x in rs if r_ in x['at']) / float(max(1, sum(1 for x in rs if r_ in x['at'])))
             cnt = {}
             for x in rs:
@@ -240,8 +243,8 @@ def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9, marks=None, ro
                         a[1] += 1
             aq = [x for x in rs if x['aqua']]
             print('| %s%s | %s | %.1f, %.1f, %.1f | %.2f | %.2f | %.1f | %.0f | %s | %.0f; %.2f |' % (
-                {'none': 'buys nothing', 'best': 'the strongest he can pay for', 'aqua': 'the same, and takes Aqua Permanens when shown', 'any': 'anything, at random'}[pk],
-                ', leaving any worth under 1.15' if least > 1.0 and pk != 'none' else '', pay if pk in ('aqua', 'any') else '.', at(4), at(7), at(9), sum(len(x['held']) for x in rs) / float(n),
+                {'none': 'buys nothing', 'best': 'the strongest he can pay for', 'aqua': 'the same, and takes Aqua Permanens when shown', 'aqua3': 'the same, and takes Aqua Permanens when shown before round 2 or 3', 'any': 'anything, at random'}[pk],
+                ', leaving any worth under 1.15' if least > 1.0 and pk != 'none' else '', pay if pk in ('aqua', 'aqua3', 'any') else '.', at(4), at(7), at(9), sum(len(x['held']) for x in rs) / float(n),
                 100.0 * sum(x['won'] for x in rs) / n, 100.0 * sum(1 for x in rs if 7 in x['at']) / n, same,
                 ', '.join('%.2f' % (e[h][0] / float(e[h][1])) if h in e else '.' for h in range(4)), 100.0 * len(aq) / n, 100.0 * sum(x['won'] for x in aq) / max(1, len(aq))))
 
@@ -263,6 +266,16 @@ if __name__ == '__main__':
         k = S16.load('sig17k')
         k = {pl: {st.split('&')[0]: v for st, v in d.items()} for pl, d in k.items()}
         table(k, n, rows=rows)
+        sys.exit(0)
+    if cmd == 'aqua':
+        # Aqua Permanens' payment, more sizes and a buyer who takes it early only: python sweep_sig17.py aqua [runs]
+        table(load17(), int(sys.argv[2]) if len(sys.argv) > 2 else 20000, rows=[('best', 0, 1.15)] + [(pk, pay, 1.15) for pk in ('aqua', 'aqua3') for pay in (4, 6, 8, 12, 20, 40)])
+        sys.exit(0)
+    if cmd == 'aquar':
+        # Aqua Permanens that leaves after some rounds: python sweep_sig17.py aquar [runs]
+        for ar in (2, 3, 4):
+            print('LEAVES AFTER %d ROUNDS' % ar)
+            table(load17(), int(sys.argv[2]) if len(sys.argv) > 2 else 20000, rows=[('best', 0, 1.15)] + [(pk, pay, 1.15) for pk in ('aqua', 'aqua3') for pay in (4, 6, 8)], aqua_rounds=ar)
         sys.exit(0)
     if cmd == 'table':
         table(load17(), int(sys.argv[2]) if len(sys.argv) > 2 else 20000, per_clear=int(sys.argv[3]) if len(sys.argv) > 3 else 1, owned_n=int(sys.argv[4]) if len(sys.argv) > 4 else 9)

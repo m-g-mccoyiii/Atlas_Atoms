@@ -779,14 +779,14 @@ const sigStrong = id => (sigOn(id) && RULE.sigilStrong && RULE.sigilStrong[id]) 
 // (next; worked out from the run when left out) and keeps what was drawn in run.sigShelf, so asking twice shows the same.  sigilGet(run, id)
 // takes one of the offers (pays the gold), true when it did.  A run with no profile (run.sigilsOwned null) is offered all nine.  Sigils are not
 // offered in the bare three-round run.  What was got is logged in run.sigLog ({ round, id, price, way }).
-const SIGIL_GET = { price: { phlogiston: 7, solve: 7, gemini: 5, via_humida: 3, clepsydra: 3, respiratio: 2, tetractys: 3, sulphurs_mask: 3, aqua_permanens: 1 }, step: 2, shown: 2, startRounds: [1, 4, 7], offerRounds: [2, 4, 6], offerN: 3, goldClear: 1, pay: { aqua_permanens: 6 }, payTry: [4, 6, 8] };
+const SIGIL_GET = { price: { phlogiston: 7, solve: 7, gemini: 5, via_humida: 3, clepsydra: 3, respiratio: 2, tetractys: 3, sulphurs_mask: 3, aqua_permanens: 1 }, step: 2, shown: 2, startRounds: [1, 4, 7], offerRounds: [2, 4, 6], offerN: 3, goldClear: 1, pay: { aqua_permanens: 8 }, payTry: [4, 6, 8] };
 // Owner's picks of 13 November (HARNESS AY): bought with gold; one gold for each cleared round (goldClear 1); Aqua Permanens PAYS gold when taken
 // (pay: it costs nothing and puts that much in the tin; RULE.aquaPay = 0 takes the payment off, payTry are the three sizes measured, RIG.md seventeenth).
 RULE.extraOffer = 2; RULE.termsGate = true;      // the page still holds the terms back until two runs have each cleared six rounds (its meta.stage); the book says so while this is on
-RULE.dealFlat = true; RULE.ammoniaLimits = false; RULE.sigilWay = 'buy'; RULE.sigilCap = 3; RULE.goldClear = SIGIL_GET.goldClear; RULE.aquaPay = SIGIL_GET.pay.aqua_permanens;
+RULE.dealFlat = true; RULE.ammoniaLimits = false; RULE.sigilWay = 'buy'; RULE.sigilCap = 3; RULE.goldClear = SIGIL_GET.goldClear; RULE.aquaPay = SIGIL_GET.pay.aqua_permanens; RULE.aquaRounds = 0;      // aquaRounds n (off at 0, built for the owner to rule on): Aqua Permanens works for n rounds and is then gone, its place free again; no payment makes it worth taking while it stays for good
 const sigilPays = id => (RULE.sigilWay === 'buy' && id === 'aqua_permanens' ? Math.max(0, RULE.aquaPay | 0) : 0);      // gold the sigil pays when taken (0 for every other)
 const sigilRoom = run => Math.max(0, (RULE.sigilCap || 3) - ((run && run.sigils) || []).length);
-const sigilPool = run => (RULE.unlockAll || !run.sigilsOwned ? Object.keys(SIGILS) : run.sigilsOwned.filter(id => SIGILS[id])).filter(id => !(run.sigils || []).includes(id));
+const sigilPool = run => (RULE.unlockAll || !run.sigilsOwned ? Object.keys(SIGILS) : run.sigilsOwned.filter(id => SIGILS[id])).filter(id => !(run.sigils || []).includes(id) && !(run.sigGone || []).includes(id));
 const sigilPrice = (run, id) => (RULE.sigilWay === 'buy' && !sigilPays(id) ? SIGIL_GET.price[id] + SIGIL_GET.step * ((run.sigils || []).length) : 0);
 function sigilVisit(run, R, next) {
   const way = RULE.sigilWay || null, nx = next || (run.endedRound === (run.round || 1) ? (run.round || 1) + 1 : (run.round || 1)), rnd = R || rand;
@@ -2429,7 +2429,8 @@ function roundEnd(g, run) {
   const won = roundWon(g, run), ypass = g.total >= run.quota, extra = run.payCoins || 0, earn = runEarn(run, g.total, run.quota), marks = marksHit(g.total, run.quota);
   // a round won by the spec with a low yield still pays what the harder molecule promised
   if (won && !ypass && RULE.coins && extra) { run.coins = (run.coins || 0) + extra; earn.extra = extra; }
-  if (won && RULE.coins && RULE.goldClear && !bareRun(run)) { run.coins = (run.coins || 0) + RULE.goldClear; earn.extra = (earn.extra || 0) + RULE.goldClear; earn.clear = RULE.goldClear; }      // sixteenth: gold for a round cleared (off at 0)
+  if (won && RULE.coins && RULE.goldClear && !bareRun(run)) { run.coins = (run.coins || 0) + RULE.goldClear; earn.extra = (earn.extra || 0) + RULE.goldClear; earn.clear = RULE.goldClear; }      // sixteenth: gold for a round cleared (on at 1 since the seventeenth)
+  if (won && RULE.aquaRounds && (run.sigils || []).includes('aqua_permanens')) { const e = (run.sigLog || []).filter(x => x.id === 'aqua_permanens').pop(); if (e && (run.round || 1) - e.round + 1 >= RULE.aquaRounds) { run.sigils = run.sigils.filter(x => x !== 'aqua_permanens'); run.sigGone = (run.sigGone || []).concat(['aqua_permanens']); sigSync(run); } }
   if (!run.log) run.log = [];
   const word = ypass ? WORDS[Math.min(WORDS.length - 1, marks)] : null;
   if (run.meta) countersUpdate(run.meta, run, g);

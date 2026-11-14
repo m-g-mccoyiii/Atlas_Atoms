@@ -291,6 +291,7 @@ def career(pools, n_runs, rng, marks, cap=None, lift=1.0, until=None):
             if feed and ('jar_' + h) not in done and sum(cnt.get(k, 0) for k in feed) >= JF[h]:
                 done['jar_' + h] = got['jar_' + h] = i
         out['credit'].append(credit)
+        out.setdefault('feed', []).append({h: sum(cnt.get(k, 0) for k in (f or ())) for h, f in JAR_FEED.items()})
         if out['sign'] is None and until and n_got >= until:
             out['sign'] = i
             break
@@ -389,6 +390,24 @@ if __name__ == '__main__':
                 w, sl = f('wood'), f('slime')
                 print('| %s | %s | %s | %.0f | %s | %.0f |' % (name, PL[pl], w[0] if w[0] else 'not in 300', w[1], sl[0] if sl[0] else 'not in 300', sl[1]))
         JARX['size'], JARX['feed'] = {}, {}
+    elif cmd == 'grow':
+        # seventeenth: creatures that keep growing (path.js HOMGROW.keep): the run on which the lifetime count of each jar reaches
+        # 1, 2, 4, 7, 11 ... times its size.  python sweep_deeds.py grow [careers] [multiples joined by +]
+        n = int(sys.argv[2]) if len(sys.argv) > 2 else 200
+        mult = [float(x) for x in sys.argv[3].split('+')] if len(sys.argv) > 3 else [1, 2, 4, 7, 11]
+        res = careers(by, n)
+        JF = jars()
+        print('| Creature | Jar | ' + ' | '.join('Casual: run at %g jars' % m for m in mult) + ' | ' + ' | '.join('Careful: %g' % m for m in mult) + ' |')
+        for h, f in JAR_FEED.items():
+            if not f:
+                continue
+            cells = []
+            for pl in ('greedy', 'median'):
+                for m in mult:
+                    at = [next((i + 1 for i, d in enumerate(c['feed']) if d[h] >= m * JF[h]), None) for c in res[pl]]
+                    v = med(at, n)
+                    cells.append(str(v) if v else 'not in 300')
+            print('| %s | %d | %s |' % (h, JF[h], ' | '.join(cells)))
     elif cmd == 'credit':
         # seventeenth, item 3: credit over a career under the new ladder, and the sign's three laps.  python sweep_deeds.py credit [careers]
         n = int(sys.argv[2]) if len(sys.argv) > 2 else 200
