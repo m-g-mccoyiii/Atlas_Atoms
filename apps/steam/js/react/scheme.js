@@ -3374,7 +3374,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   a20Spent = (f0 => function (now) { if (S27.on) { try { s27Frame(now); } catch (e) { S27.err = String(e && e.stack); } } return f0(now); })(a20Spent);
   if (AA.rxScheme) AA.rxScheme.s27 = () => ({ on: S27.on, err: S27.err, wet: S27.wet.filter(w => w.m.visible).length, job: S27.job ? { n: S27.job.pairs.length, set: S27.job.set ? S27.job.set.length : 0, done: !!S27.job.done } : null, y: homObj ? homObj.grp.position.y : null });
   // ==== S27 END
-            // ==== S28 BEGIN
+              // ==== S28 BEGIN
   // (builder 28) THE WORLD REACTS TO WATER (S28.on; ?r28=0 or AA.rxKit.react28 = false gives builder 27 back).
   // Its way out is no longer a straight line: home, along the bench, by the cup, under the near corner of the top reagent card, then onto the page
   // (s28Path, a smooth line through those places walked at the clip's own pace; home again is straight). As it passes: the jar it leaves rocks once,
