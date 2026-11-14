@@ -561,3 +561,15 @@ Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W26` at
 - **Not done / weak**: listed in the three `.txt` notes. Chief: the evolve's first frame is a handover to the next stage's skin; the puddle is a plain disc; the arm has no hand shape; jar and shelf were not looked at; stages 1, 2, 4, 5 were seen at rest only (their acts and the other three evolves run through the same code and were not looked at).
 
 scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
+
+## Twenty-seventh builder (14 November)
+
+Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W27` after `W26`), `scheme.js` (block `S27` after `S26`; two guards inside `S26`'s draw on `S26.b27`). Shots: `belong27-before-after.jpg`, `belong27.mp4` with notes.
+
+- **Why it read as laid on top**: the spirit was a toon material with cut gloss bands and a fat hull, while the atoms are `MeshStandardMaterial` (roughness 0.3, metalness 0.08) under the scene's lights; its pool tilted with the figure (the hold group is turned -0.8 like every standing creature); it stood at y = 0 over a bench that lies at -0.25; its trail and film were blue 2D ink.
+- **Look** (`W27`, `AA.rxKit.belong27`, `?b27=0` gives builder 26 back): `mat27` is a standard material with the atoms' numbers, soft depth colours (`C27`), no gloss bands; `hull27` pushes the skin out along the skinned normal in the vertex shader by `AA.rxKit.ink27` WORLD units (0.05), colour of the hydrogens' edge; the pool bone is turned back (`play27`) so the pool lies flat whatever the tilt or turn; `C26.act` is wrapped so the back turn is made standing, then it sinks and goes home (`S26.T[2]` is 2700).
+- **Scene** (`S27`, per frame from the `a20Spent` wrapper, `s27Frame`): `s27K` says bench or book (ramp over the pool's width), the figure's y follows (the book's edge hides what is below); two round soft shadows; `S27.wet` is 30 flat marks stamped where the pool has been (`paper`, `wood`, `bead` textures; dry by shrinking and fading); `S27.ring` the damp ring at home; `S27.ca` a small additive caustic; `S27.job` (taken in an `A20ACT.water` wrapper) gives the pairs: their balls get a glossy film child and dip and spring, their sticks a dark wet film. `actPiece('puff')` is refused during the water spirit's `jumpPlan`.
+- **Not done / weak**: the film on atoms is lost when the molecule is rebuilt (about 0.25 s seen); cards, cup and steam do not stir (never near the path); no hand shape; the stage-change swap; paper does not truly cockle; the pool is opaque; stages 1, 2, 4, 5, jar and shelf were not looked at with the new look; frame cost not timed (one skinned hull replaces the old one, up to about 35 small flat quads, five 256 px textures).
+- **Recorder**: `.claude/r26` as before (`run.sh w26 "&part=act&w26=1&hom=water&stage=3&smi=...&lines=dehydrate&rack=dehydrate"`; the molecule needs three OH for the tap to light). Sources: `.claude/f27/block27.js`, `s27.js`, `apply.py`.
+
+scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
