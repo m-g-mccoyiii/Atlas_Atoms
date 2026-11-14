@@ -2147,7 +2147,7 @@ function end31(S) { const X = S.x31; if (S.e31) { if (S.e31.gg.parent) S.e31.gg.
 function ink31(T, S, X, ren, cam) { const R = S.pen30, e = X.e, K = RK, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
   const lw = Math.max(R.lw || 2, 1.9 * sc), fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), Rw = X.Rw, d = 0.06 * Rw, pts = X.pts, cp = X.v.setFromMatrixPosition(cam.matrixWorld), C = X.c, G0 = X.g0, P2 = X.pen2;
   P2.vp = R.vp; P2.boil = R.boil; P2.nv = 0; P2.ni = 0; P2.mesh.visible = true;
-  if (X.sph.visible) { X.sph.updateMatrixWorld(true); proj30(R, X.src, R.vp, Wd, Ht, P10, P11, d * 0.3); sil30(R, X.src, lw * 1.05, s2, Wd, Ht); const M = X.sph.matrixWorld;
+  if (X.sph.visible) { X.sph.updateMatrixWorld(true); proj30(R, X.src, R.vp, Wd, Ht, P10, P11, d * 0.3); if (!(X.k32 && e.open > 0.03)) sil30(R, X.src, lw * 1.05, s2, Wd, Ht); /* (builder 32) the open bud is lined in its wash: the outline finder would join petal to petal */ const M = X.sph.matrixWorld;
     if (e.open < 0.5) { /* strokes that land on the turning water, go round with it and lift */ const n = 8 + 2 * e.g, fade = 1 - e.open * 2;
       for (let i = 0; i < n; i++) { const h = h30(i * 71 + 3), h2 = h30(i * 37 + 11), life = K.mod(e.spin * (0.22 + 0.1 * h) + h2, 1), len = (0.8 + 1.2 * h) * Math.sin(Math.PI * life) * fade, lat0 = -0.9 + 1.8 * ((i + 0.5) / n), l0 = -e.spin * (1.15 + 0.5 * h2) + i * 2.4, N = 12; if (len < 0.12) continue; let k = 0;
         for (let j = 0; j <= N; j++) { const lo = l0 - len * j / N, la = lat0 + 0.32 * (j / N - 0.5) * len, cl = Math.cos(la), p = pts[k]; p.set(Math.cos(lo) * cl * 1.012, Math.sin(la) * 1.012, Math.sin(lo) * cl * 1.012).applyMatrix4(M); const fr = (p.x - C.x) * (cp.x - p.x) + (p.y - C.y) * (cp.y - p.y) + (p.z - C.z) * (cp.z - p.z); if (fr > 0.12 * Rw * cp.distanceTo(p)) k++; else if (k) break; }
@@ -2172,4 +2172,68 @@ const play31 = (f0 => function (grp, clip, t, o) { const S = grp.userData.rig2.s
     stage31(S, X, grp, e, o, ks); } catch (err) { W31.err = String(err && err.stack); } return r; })(play26);
 play26 = play31; KIT.spirit26.play = play31; KIT.spirit26.W31 = W31;
 // ==== W31 END
+// ==== W32 BEGIN
+// (builder 32) WATER'S CHANGE OF STAGE AT THE CENTRE OF THE SCREEN (AA.rxKit.evolve32, on by default; false or ?e32=0 gives builder 31's back).
+// The same three beats, restaged by scheme.js S32 (it leaves home in one move while it curls, comes up over the book toward the eye, bursts,
+// stands tall on the page, turns its back and goes home in two more beats). Here: the times (e.go out, e.home back, the walk home after the
+// proud look), everything of the ball grown by o.bk32, a real curl (curl32: the spine rolls up like a fern head, the limbs carried with it),
+// a ball that reads round (mat32: what is under it is seen bent through it, wash bands that wind round, a pooled rim, a shaded side with
+// pencil, bare paper that rides the spin) and a bud of five pointed petals that peel open in the round (shape32).
+KIT.evolve32 = KIT.evolve32 == null ? !(typeof location !== 'undefined' && /[?&]e32=0/.test(String(location.search))) : KIT.evolve32;
+const W32 = { err: null, NP: 5, TH: 0.6 * Math.PI }, on32 = () => KIT.evolve32 !== false;
+C26.evo = (f0 => function (S, t, o, q) { if (!(o && o.e31 && on32())) return f0(S, t, o, q);
+  const K = RK, X = tl31(o), L = o.L, bt = X.TG / (2.5 + 0.25 * (X.g - 2)), uH = X.H + X.TA * 2.15 / 3, TH = 2 * bt, u = t / L;
+  f0(S, Math.min(t, uH * L - 1), o, q); const e = q.e31; if (!e) return;
+  e.go = t < 0 ? 0 : K.sm(K.cl(((e.b >= 0 ? 1 + e.b : e.a) - 0.14) / 1.16)); e.home = 0; e.bk = o.bk32 || 1; q.done = false; q.home = false;
+  if (u > uH) { const p = K.cl((u - uH) / TH); e.home = K.sm((p - 0.14) / 0.72); e.v = 2.15 + 0.8 * p; q.turn = PI * K.sm(p / 0.16) + PI * K.sm((p - 0.86) / 0.14);
+    q.sink = 0.4 * K.pulse(p, 0.16, 0.84, 0.1); q.sq += -0.18 * K.pulse(p, 0, 0.14, 0.05) + (p > 0.86 ? -0.16 * K.ring((p - 0.86) * TH * L, 220, 280) : 0); q.lidx = 0; q.tilt = 0; q.home = p >= 0.9; q.done = p >= 1; }
+  e.R *= e.bk; e.cy *= e.bk; e.R0 *= e.bk; })(C26.evo);
+/* the curl: the spine rolls forward and over into a ring, head tucked in, and what hangs on it is carried round with it */
+function curl32(S, e, ks) { const k = e.curl, B = S.bones, J = S.G.J, ch = []; for (let j = 1; j < J.length; j++) { const r = J[j].role; if (r === 'spine' || r === 'neck' || r === 'head') ch.push(j); } const n = ch.length; if (n < 3) return;
+  const T = S.T, P0 = ch.map(j => B[j].position.clone()), sl = [0]; let Ls = 0; for (let i = 1; i < n; i++) { Ls += P0[i].distanceTo(P0[i - 1]); sl.push(Ls); } if (Ls < 1e-4) return;
+  const dir = P0[n - 1].z - P0[0].z < -0.02 * Ls ? -1 : 1, w = RK.sm(k * 2), kap = Math.max(1e-3, k * 1.75 * PI / Ls), r = 1 / kap, cy = e.R0 * 0.62 / ks, D = [], cen = new T.Vector3(), qx = new T.Quaternion(), ax = new T.Vector3(1, 0, 0), bow0 = 1.7 * k;
+  const A = sl.map(s => new T.Vector3(P0[0].x, P0[0].y + r * Math.sin(kap * s), P0[0].z + dir * r * (1 - Math.cos(kap * s)))); A.forEach(p => cen.add(p)); cen.multiplyScalar(1 / n);
+  const sh = RK.sm(k), ox = (B[0].position.x - cen.x) * sh, oy = (cy - cen.y) * sh, oz = (B[0].position.z - cen.z) * sh, own = new Map();
+  ch.forEach((j, i) => { const p = A[i]; p.x += ox; p.y += oy; p.z += oz; p.lerpVectors(P0[i], p, w); D[i] = p.clone().sub(P0[i]); B[j].position.copy(p); own.set(j, i); B[j].quaternion.premultiply(qx.setFromAxisAngle(ax, dir * w * Math.max(0, kap * sl[i] - bow0 * sl[i] / Ls))); });
+  for (let j = 1; j < J.length; j++) { if (own.has(j)) continue; let a = J[j].par, g = 0; while (a > 0 && !own.has(a) && g++ < 40) a = J[a].par; if (!own.has(a)) continue; const i = own.get(a); B[j].position.add(D[i]); const d = B[j].position.clone().sub(B[ch[i]].position); qx.setFromAxisAngle(ax, dir * w * Math.max(0, kap * sl[i] - bow0 * sl[i] / Ls)); d.applyQuaternion(qx); B[j].position.copy(B[ch[i]].position).add(d); B[j].quaternion.premultiply(qx); } }
+ball31 = (f0 => function (S, e, ks) { if (on32() && e.curl > 0.002 && e.go != null) { try { curl32(S, e, ks); } catch (x) { W32.err = 'curl ' + String(x && x.stack); } } f0(S, e, ks); })(ball31);
+/* the ball: its own mesh (five petals of nine lines, a line between them that is cut away as it opens) and its own wash */
+function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; }, NP = W32.NP, NX = NP * 9, NY = 30, T0 = X.T0, T1 = X.T1, g = new T.SphereGeometry(1, NX, NY, 0, 2 * Math.PI, T0, T1 - T0);
+  g.setAttribute('p0', new T.BufferAttribute(new Float32Array(g.attributes.position.array), 3)); g.attributes.position.usage = T.DynamicDrawUsage; const pid = new Float32Array((NX + 1) * (NY + 1)); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pid[iy * (NX + 1) + ix] = Math.floor(ix / 9); g.setAttribute('pid', new T.BufferAttribute(pid, 1)); const pu = new Float32Array(pid.length); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pu[iy * (NX + 1) + ix] = ((ix % 9) - 4) / 4; g.setAttribute('pu', new T.BufferAttribute(pu, 1));
+  const m = new T.ShaderMaterial({ transparent: true, side: T.DoubleSide, uniforms: { t29: U.t29, r29: U.r29, spin: { value: 0 }, amt: { value: 1 }, open: { value: 0 }, rpx: { value: 60 }, dim: { value: 1 } },
+    vertexShader: 'attribute vec3 p0;\nattribute float pid;\nattribute float pu;\nvarying float vU;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvoid main() { vP = p0; vPid = pid; vU = pu; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31, '#define PAPER31 ' + v3(W30.C.paper),
+      'void main() { float fg = abs(vPid - floor(vPid + 0.5)); if (open > 0.001 && vP.y > ' + Math.cos(W32.TH).toFixed(4) + ' && fg > 0.5 * (1.0 - smoothstep(0.0, 0.25, open)) + 0.004) discard;',
+      'vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n; float nv = clamp(dot(n, normalize(vV)), 0.0, 1.0), c = cos(spin), s = sin(spin);',
+      'vec3 bp = vec3(c * vP.x - s * vP.z, vP.y, s * vP.x + c * vP.z); float lon = atan(bp.z, bp.x), s9 = r29.y / 720.0, gr = N29(gl_FragCoord.xy / s9 * 0.9);',
+      'float nz = N30(bp * 2.3), nz2 = N30(bp * 6.1 + 5.0);',
+      /* what lies under it is seen through the water: bent more toward the rim, and run a little */
+      'vec2 uv = (gl_FragCoord.xy - n.xy * (1.0 - nv) * rpx * 0.6 * (1.0 - open)) / r29, px = 1.6 * s9 / r29;',
+      'vec3 bg = 0.4 * texture2D(t29, uv).rgb + 0.15 * (texture2D(t29, uv + vec2(px.x, 0.0)).rgb + texture2D(t29, uv - vec2(px.x, 0.0)).rgb + texture2D(t29, uv + vec2(0.0, px.y)).rgb + texture2D(t29, uv - vec2(0.0, px.y)).rgb);',
+      'float lum = dot(bg, vec3(0.3, 0.59, 0.11)); vec3 base = mix(PAPER31 * (0.985 + 0.03 * gr) * dim, bg, smoothstep(0.60 * dim, 0.74 * dim, lum));',
+      'float l9 = dot(n, normalize(vec3(-0.5, 0.66, 0.56)));',
+      'float sp = sin(lon * 3.0 + bp.y * 5.2 + 2.4 * (nz - 0.5)), band = smoothstep(0.05, 0.75, sp), lite = smoothstep(-0.3, -0.85, sp);',
+      'float hl = smoothstep(0.78, 0.86, l9 + 0.36 * (nz - 0.5)); hl = max(hl, lite * smoothstep(0.0, 0.4, l9) * smoothstep(0.42, 0.52, nz2));',
+      'float rim = clamp(smoothstep(0.35, 0.95, 1.0 - nv + 0.25 * (nz - 0.5)), 0.0, 1.0), core = smoothstep(0.25, -0.35, l9 + 0.3 * (nz - 0.5));',
+      'vec3 wash = mix(vec3(0.66, 0.81, 0.95), vec3(0.42, 0.60, 0.85), max(rim, 0.8 * band)); wash = mix(wash, vec3(0.30, 0.45, 0.72), 0.7 * core); wash = mix(wash, vec3(1.0), 0.45 * lite * (1.0 - core));',
+      'float ht = smoothstep(0.5, 0.9, sin((gl_FragCoord.x + gl_FragCoord.y) / s9 * 0.85 + 3.0 * nz)) * core; wash = mix(wash, vec3(0.36, 0.38, 0.44), 0.22 * ht);',
+      'float bnc = smoothstep(0.72, 1.0, 1.0 - nv) * smoothstep(-0.1, -0.7, n.y); wash = mix(wash, vec3(0.80, 0.88, 0.96), 0.45 * bnc);',
+      'float a9 = (1.0 - hl) * (0.82 + 0.18 * nz2) * (0.93 + 0.07 * gr);',
+      'if (!gl_FrontFacing) { wash = mix(wash, vec3(0.34, 0.51, 0.79), 0.55); a9 = max(a9, 0.78); }',
+      /* an open petal: the wash pools along its two edges, and the pen goes down them */
+      'float pe = smoothstep(0.02, 0.2, open) * step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y), au = abs(vU); wash = mix(wash, vec3(0.30, 0.46, 0.76), 0.75 * pe * smoothstep(0.55, 0.95, au + 0.2 * (nz - 0.5))); a9 = mix(a9, 1.0, pe * smoothstep(0.6, 0.95, au)); wash = mix(wash, vec3(0.17, 0.14, 0.13), pe * smoothstep(0.90, 0.96, au + 0.05 * (nz2 - 0.5)));',
+      'float cupl = smoothstep(0.03, 0.15, open) * (1.0 - step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y)) * smoothstep(0.90, 0.955, 1.0 - nv + 0.04 * (nz2 - 0.5)); wash = mix(wash, vec3(0.17, 0.14, 0.13), cupl); a9 = mix(a9, 1.0, cupl);',
+      'gl_FragColor = vec4(base * mix(vec3(1.0), wash, a9 * amt), 1.0); }'].join('\n') });
+  X.sph.geometry.dispose(); X.sph.geometry = g; X.sph.material = m; X.NX = NX; X.NY = NY; X.k32 = true; X.tp = topo30(g); X.src = src30(X.tp, { mesh: X.sph, rs: 1, seed: 7700, o: { smooth: 2, min: 5, wob: 0.8 } }); }
+make31 = (f0 => function (T, S) { const X = f0(T, S); if (on32()) { try { up32(T, X); } catch (x) { W32.err = 'up ' + String(x && x.stack); } } return X; })(make31);
+/* closed it is a ball; open, each petal leans out from its hinge, cups, and curls its point back; the petals narrow to their points */
+function shape32(X, open, flat) { const g = X.sph.geometry, pos = g.attributes.position, A = pos.array, NX = X.NX, NY = X.NY, T0 = X.T0, dT = (X.T1 - T0) / NY, TH = W32.TH, ih = Math.round((TH - T0) / dT), am = ih * dT, hw = 4 / NX * 2 * Math.PI;
+  for (let ix = 0; ix <= NX; ix++) { const pk = Math.floor(ix / 9), c = ix - pk * 9, u = (c - 4) / 4, phc = (pk * 9 + 4) / NX * 2 * Math.PI, kp = Math.max(0, Math.min(1.2, open * 1.3 - 0.14 * (pk % 2) + 0.05 * Math.sin(pk * 2.3))), k1 = Math.min(1, kp), th = T0 + ih * dT, b0 = Math.PI - th; let r = Math.sin(th), y = Math.cos(th);
+    for (let iy = NY; iy >= 0; iy--) { const i = 3 * (iy * (NX + 1) + ix), t2 = T0 + iy * dT; let ph = ix / NX * 2 * Math.PI; if (iy >= ih || kp < 0.001) { r = Math.sin(t2); y = Math.cos(t2); } else { const a = (ih - iy - 0.5) * dT, s = a / am, bo = 0.75 + 0.75 * Math.sin(2.8 * s) - 1.0 * s * s * s - 0.9 * (kp - k1) * s, be = (b0 + a) * (1 - k1) + bo * k1; r += Math.cos(be) * dT; y += Math.sin(be) * dT; ph = phc + u * hw * (1 - k1 * (0.06 + 0.8 * Math.pow(s, 2.2))); }
+      const yy = -1 + (y + 1) * (1 - 0.96 * flat), rr = Math.max(0, r) * (1 + 0.25 * flat); A[i] = -rr * Math.cos(ph); A[i + 1] = Math.max(-1, yy); A[i + 2] = rr * Math.sin(ph); } }
+  pos.needsUpdate = true; g.computeVertexNormals(); const P = X.tp.P, F = X.tp.first; for (let w = 0; w < F.length; w++) { const i = 3 * F[w]; P[3 * w] = A[i]; P[3 * w + 1] = A[i + 1]; P[3 * w + 2] = A[i + 2]; } }
+shape31 = (f0 => function (X, open, flat) { if (X.k32) return shape32(X, open, flat); return f0(X, open, flat); })(shape31);
+stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.k32) return; const U = X.sph.material.uniforms; U.open.value = e.open; U.rpx.value = o.rpx32 || 60; U.dim.value = o.dim32 == null ? 1 : o.dim32; })(stage31);
+KIT.spirit26.W32 = W32;
+// ==== W32 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);

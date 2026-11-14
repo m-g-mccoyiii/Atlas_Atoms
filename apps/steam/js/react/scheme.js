@@ -3476,6 +3476,59 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     } catch (x) { S31.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s31dbg = () => ({ err: S31.err, kit: AA.rxKit.spirit26.W31 && AA.rxKit.spirit26.W31.err, sp: AA.rxKit.spiritErr || null, evo: R21.evo ? { L: R21.evo.L, tl: R21.evo.tl31, fw: R21.evo.fwN, big: R21.evo.big31, ks: R21.evo.ks31, s0: R21.evo.s0, s1: R21.evo.s1 } : null, s: homObj && homObj.s, ph: (() => { const SP = s26Fig(), e = SP && SP.q0 && SP.q0.e31; return e ? [e.a, e.b, e.v] : null; })() });
   // ==== S31 END
+  // ==== S32 BEGIN
+  // (builder 32) WATER'S CHANGE OF STAGE AT THE CENTRE OF THE SCREEN (AA.rxKit.evolve32; kitart W32 has the motion and the ball). Here: its way
+  // (home, up over the book toward the eye in one move, down on to the page as it bursts, home again), its sizes (the ball about two fifths of
+  // the screen's height, the new form about half), and the one picture it must make with the bench. Nothing on the bench is moved by it
+  // (the owner: "I don't want them to be moving I just want everything to be interacting"): the room's own lights go down and one lamp
+  // stays on it (the game gives way in the scene's light, not under a veil), a blue light from the water falls on what is near, its shadow
+  // on the paper goes wide and faint as it rises and small and dark as it comes down, drips and thrown drops leave damp marks where they
+  // land, the page under it is wet and dries. Sound as builder 31's.
+  const S32 = { err: null, v: new T.Vector3(), sm: null, C: null, dim: 0, bead: [], dripT: 0 };
+  const s32On = () => !!(AA.rxKit && AA.rxKit.evolve32 !== false);
+  const s32Scene = (now, e, E, C) => { if (!S32.sm) { /* the room's shade: one sheet over the whole view, drawn in the scene after the bench and the page and before the water, worked out on the bench's own plane (each point of the picture is carried down the eye's line to the bench): the lamp's round, the shadow under the water, the blue it throws */
+      const m = new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, blending: T.MultiplyBlending, uniforms: { ivp: { value: new T.Matrix4() }, cp: { value: new T.Vector3() }, lamp: { value: new T.Vector4() }, shd: { value: new T.Vector4() }, blu: { value: new T.Vector4() }, pen: { value: 0.2 }, ry: { value: 720 } },
+        vertexShader: 'varying vec2 vQ;\nvoid main() { vQ = position.xy; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+        fragmentShader: ['uniform mat4 ivp;\nuniform vec3 cp;\nuniform vec4 lamp;\nuniform vec4 shd;\nuniform vec4 blu;\nuniform float pen;\nuniform float ry;\nvarying vec2 vQ;',
+          'void main() { vec4 w = ivp * vec4(vQ, 1.0, 1.0); vec3 d = normalize(w.xyz / w.w - cp); float t = -cp.y / min(-0.0001, d.y); vec2 g = cp.xz + d.xz * t;',
+          'float dl = length((g - lamp.xy) * vec2(1.0, 1.12)) / lamp.z, dark = lamp.w * smoothstep(0.5, 1.7, dl), k = 720.0 / ry;',
+          'float ht = smoothstep(0.2, 0.8, 0.5 + 0.5 * sin((gl_FragCoord.x + gl_FragCoord.y * 0.8) * k * 1.3)) * smoothstep(0.9, 1.9, dl);',
+          'vec3 m = mix(vec3(1.0), vec3(0.47, 0.46, 0.50) - 0.05 * ht, dark);',
+          'float ds = length(g - shd.xy) / shd.z; m *= 1.0 - shd.w * (1.0 - smoothstep(1.0 - pen, 1.0 + pen, ds)) * vec3(1.0, 0.95, 0.85);',
+          'float db = length(g - blu.xy) / blu.z; m *= mix(vec3(1.0), vec3(0.80, 0.90, 1.0), blu.w * (1.0 - smoothstep(0.25, 1.0, db)));',
+          'gl_FragColor = vec4(m, 1.0); }'].join('\n') });
+      S32.sm = new T.Mesh(new T.PlaneGeometry(2, 2), m); S32.sm.frustumCulled = false; S32.sm.renderOrder = 4; S32.sm.visible = false; S32.sm.castShadow = false; S32.sm.userData.plain = true; S32.sm.userData.nobox = true; scene.add(S32.sm); }
+    const want = e ? Math.min(1, e.go * 1.6) * (1 - e.home) : 0; S32.dim += (want - S32.dim) * 0.22; if (Math.abs(want - S32.dim) < 0.004) S32.dim = want; const d = S32.dim, fl = e && e.v >= 0 ? Math.exp(-e.v / 0.12) : 0, U = S32.sm.material.uniforms;
+    if (!e || !C) { if (S32.C && d > 0) { U.lamp.value.w = 0.56 * d; U.shd.value.w = 0; U.blu.value.w = 0; dirty = true; } else S32.sm.visible = false; return; } S32.C = C; dirty = true; S32.sm.visible = true;
+    cam.updateMatrixWorld(); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.ry.value = ren.domElement.height;
+    const h = Math.max(0, C.by - C.gy - (C.ball === 1 ? C.Rw : 0));
+    U.lamp.value.set(C.bx, C.bz + 1.5, 8 + 1.7 * C.Rw, 0.56 * d * (1 - 0.85 * fl)); U.shd.value.set(C.bx + 0.14 * h, C.bz + 0.1 * h + (C.ball === 1 ? 0.75 * (C.by - C.gy) : 0), C.Rw * (1.0 + 0.035 * h), (C.ball === 1 ? 0.4 : 0.22) * Math.min(1, e.go * 3) / (1 + 0.05 * h)); U.pen.value = Math.min(0.85, 0.1 + 0.075 * h);
+    U.blu.value.set(C.bx, C.bz + (C.ball === 1 ? 0.6 * (C.by - C.gy) : 0), 2.7 * C.Rw, 0.55 * Math.min(1, e.go * 2) * (1 - e.home) * (C.ball === 1 ? 1 : 0.6)); };
+  homEvo19 = (f0 => function (now) { f0(now); try { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, fg = r21Fig(); if (!E || !E.e31 || !e || e.go == null || !homObj || !fg || !s32On()) { if (S32.sm) s32Scene(now, null); return; }
+      const K = AA.rxKit.RK, L = E.L, tl = E.tl31, v = S32.v, once = (k, f) => { if (!E.f[k]) { E.f[k] = 1; try { f(); } catch (x) { S32.err = 'once ' + k + ' ' + String(x); } } }, h0 = homObj.h0 || 3, cf = fg.scale.x || 1, TY = 0.697, TZ = -0.717, tanF = Math.tan(cam.fov * Math.PI / 360);
+      if (!E.c32) { /* the centre, worked out once: where the new form stands so that it is half the screen tall with its middle at the middle; how high the ball comes and how large it is there */
+        let zc = 4, F = 1.5; for (let it = 0; it < 8; it++) { const H = h0 * E.s1 * F; v.set(0, 0.03, zc).project(cam); const fy = v.y; v.set(0, H * TY, zc + H * TZ).project(cam); const hy = v.y - fy; F = Math.max(1, Math.min(7, F * 1.02 / Math.max(0.05, hy))); zc = Math.max(-8, Math.min(15, zc + ((v.y + fy) / 2 + 0.05) * 11)); }
+        const yb = 8.5, cx = cam.position.x, cy = cam.position.y, cz = cam.position.z, lx = LOOKAT.x, lz = LOOKAT.z, sB = (cy - yb) / cy, bz = cz + (lz - cz) * sB + 0.6, dist = Math.hypot(cy - yb, cz - bz), Rw = 0.42 * dist * tanF, Rm = (tl ? tl.R0 : 1.2) * (1.3 + 0.07 * E.to) * 0.87;
+        E.c32 = { zc, F, yb, bz, B: Math.max(1, Rw / Math.max(1e-3, Rm * E.s0 * cf)), dist }; }
+      const C3 = E.c32, pre = e.v < 0, bk = pre ? 1 + (C3.B - 1) * K.sm(Math.min(1, e.go * 1.8)) : C3.B + (1 - C3.B) * e.home, cyW = e.cy * E.s0 * cf /* e.cy has bk in it already */, dn = pre ? 0 : K.sm(e.v / 0.42);
+      /* its foot: home; under the ball as it comes up; on the page where it stands; home */ const ax = HOMP.x, az = HOMP.z, ux = 0, uy = C3.yb - cyW * TY, uz = C3.bz - cyW * TZ; let x = ax + (ux - ax) * e.go, y = uy * e.go, z = az + (uz - az) * e.go;
+      /* the ball never goes into the page: its foot keeps it clear */ const clr = e.R * E.s0 * cf - cyW * TY + 0.15; if (pre && e.R > 0.01) y = Math.max(y, clr * Math.min(1, e.ball * 2 + (e.b >= 0 ? 1 : 0)));
+      if (!pre) { x = ux; y = Math.max(uy * (1 - dn), clr * (1 - (e.flat || 0)) * (e.v < 1.25 ? 1 : 0)); z = uz + (C3.zc - uz) * dn; const hm = e.home; x += (ax - x) * hm; z += (az - z) * hm; }
+      const s = pre ? E.s0 * bk : (E.s0 * C3.B + (E.s1 * C3.F - E.s0 * C3.B) * e.sk) * (1 - e.home) + E.s1 * e.home, Q = HEVO.pos || (HEVO.pos = {});
+      if (R21.evo) { homObj.s = s; E.ks31 = s / E.s0; E.bk32 = bk; Q.sx = 1; Q.sy = 1; Q.x = x; Q.z = z; Q.y = y; const onP = s27K(x, z, 1) > 0.5; E.g31 = { y: onP ? 0.03 : -0.232 };
+        const ballOn = e.R > 0.01 && !(e.v > 1.25), Rw = ballOn ? e.R * E.s0 * cf * (1 - 0.5 * (e.flat || 0)) : SP.G.pl.rx * s * cf * (q.px || 1), bx = x, by = y + (ballOn ? cyW * TY : 0.3 * Rw), bzz = z + (ballOn ? cyW * TZ : 0), dd = Math.hypot(cam.position.y - by, cam.position.z - bzz), C = { bx, by, bz: bzz, Rw, gy: E.g31.y, ball: ballOn ? 1 : 0.35 };
+        E.rpx32 = Rw / (dd * tanF) * ren.domElement.height / 2; E.dim32 = 1 - 0.3 * S32.dim; s32Scene(now, e, E, C);
+        /* drips from the turning ball, and the drops it throws, leave damp where they land */ if (ballOn && e.b >= 0 && now - S32.dripT > 170 && y > 0.4) { S32.dripT = now; const n = ++S32.n32 || (S32.n32 = 1), an = 6.2832 * hash('d32a' + n), dr = Rw * (0.2 + 1.1 * hash('d32b' + n)), wx = x + Math.cos(an) * dr, wz = bzz + 0.5 * (z - bzz) + Math.sin(an) * dr * 0.8, r = Rw * (0.1 + 0.16 * hash('d32c' + n)); s27Stamp(wx, wz, r, s27K(wx, wz, r), now, n % 4 === 0); }
+        const bd = SP.x31 && SP.x31.beads; if (bd) bd.forEach((b, i) => { const m = b.m, was = S32.bead[i]; if (e.v >= 0 && was && !m.visible) { s27Stamp(was.x, was.z, was.r * 3.4, s27K(was.x, was.z, was.r), now, false); } S32.bead[i] = m.visible ? { x: m.position.x, z: m.position.z, r: m.scale.x } : null; });
+      } else s32Scene(now, null);
+      E.f.rise31 = E.f.hit31 = 1;
+      if (e.b >= 0 && tl) once('rise32', () => { const ms = (1 - e.b) * tl.TS * L; if (AA.sfx.windup) AA.sfx.windup(E.to, ms, true); if (AA.sfx.draw) AA.sfx.draw(E.to + 2, ms / 1000); });
+      if (e.v >= 0) once('hit32', () => { if (AA.sfx.flag) AA.sfx.flag(Math.max(1, Math.min(3, E.to - 1))); if (E.to >= 4 && AA.sfx.boom) AA.sfx.boom(1);
+        /* the page takes the burst: a wet middle and two rings of damp, each later and farther */ const R = C3.B * (tl ? tl.R0 : 1.2) * E.s0 * cf, x0 = 0, z0 = C3.zc; E.wet31 = [{ t: now + L * 0.3, x: x0, z: z0, r: R * 0.95 }]; for (let ring = 0; ring < 2; ring++) { const n = 7 + 4 * ring; for (let i = 0; i < n; i++) { const an = i / n * 6.2832 + ring * 0.7 + 0.5 * hash('e32' + ring + '_' + i), d = R * (1.5 + 1.3 * ring + 0.5 * hash('d32' + ring + '_' + i)); E.wet31.push({ t: now + L * (0.35 + 0.35 * ring), x: x0 + Math.cos(an) * d, z: z0 + Math.sin(an) * d * 0.85, r: R * (0.16 + 0.2 * hash('r32' + i + ring)) }); } } });
+      if (E.wet31) E.wet31.forEach(w => { if (!w.done && now >= w.t) { w.done = 1; try { s27Stamp(w.x, w.z, w.r, s27K(w.x, w.z, w.r), now, false); } catch (x) { /* no mark */ } } });
+    } catch (x) { S32.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s32dbg = () => ({ err: S32.err, kit: AA.rxKit.spirit26.W32 && AA.rxKit.spirit26.W32.err, c: R21.evo && R21.evo.c32, dim: S32.dim, pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z], s: homObj && homObj.s });
+  // ==== S32 END
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; try { bleedMock(x); } catch (e) { /* a mock never breaks the page */ } if (BENCHV && LOSS.blank && st.mode === 'done' && !st.pass) { if (now - (st.doneT || now) > LOSS.end) { const nb = 9 * Math.sin(now / 260), n0 = px({ x: 4, z: 2 }), nx = [n0[0] + nb, n0[1]]; x.save(); x.translate(nx[0], nx[1]); x.scale(2.2, 2.2); x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(-78, 0, 24, 0.9, 6.0); x.stroke(); const ex = -78 + 24 * Math.cos(6.0), ey = 24 * Math.sin(6.0); x.beginPath(); x.moveTo(ex - 16, ey - 6); x.lineTo(ex, ey); x.lineTo(ex + 6, ey - 17); x.stroke(); x.beginPath(); x.moveTo(-30, 0); x.lineTo(30, 0); x.lineTo(8, -20); x.moveTo(30, 0); x.lineTo(8, 20); x.stroke(); x.restore(); } ink.t.needsUpdate = true; return; } pageStains(x);
     if (st.mode !== 'shop') marginalia(x, now);
