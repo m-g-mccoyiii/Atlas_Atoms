@@ -183,3 +183,25 @@ Built as entries of the same table. Read on runs of the median simulated player,
 - The structural screen (`homTable`) was not run for these five: it has no tap before the line. The reads above are whole runs.
 - Jars: acid 200, wood spirit 40, salt 50, slime 70, seedling 120 (about 12, 14, 12, 13 and 21 runs of the median player).
 - Frames: `.claude/shots/hom-acid-game.jpg`, `hom-wood-game.jpg`, `hom-salt-game.jpg`, `hom-slime-game.jpg`, `hom-seedling-game.jpg` (the seedling frame shows the arm of 6 carbons, recorded before it became 9).
+
+## Seventeenth measure, 2026-11-13: growth, three made simpler, two jars, the manual's lines
+
+Full tables: `docs/RIG.md`, seventeenth, parts 5 to 7. Everything here is behind a switch that is off; the creatures play as before.
+
+**Each alone on the deal as it stands** (careful player, 100 runs; worth 1.0 is no creature): Ammonia 1.16, Water 1.12, Slime 1.10, Wood spirit 1.09, Salt 1.07, Brimstone 1.07, Acid 1.06, Dry ice 1.05, Hydrogen 1.03, Seedling 0.99. None is near the 1.5 that ruling AT asks for.
+
+**Getting better at their jobs** (`RULE.homGrow`: `'run'`, `'keep'`, `'both'`; `P.homStage(run, id)`; `HOMGROW`). Five stages; a stage multiplies what the job does to the yield by 0.8, 0.9, 1, 1.15, 1.3 (stage 3 is the creature as it is).
+
+- `'keep'`: the jar keeps counting after it hatches; stages 2 to 5 at 2, 4, 7, 11 times the jar's size. Dry ice, the creature used most, reaches stage 5 at about run 62 (careful) or 129 (casual); Water at 98 or 223.
+- `'run'`: stage 1 at the start of every run; a stage at 2, 4, 7, 10 jobs done in the run. Only the Wood spirit (12 jobs a run) gets near stage 5; most stay at stage 1 or 2.
+- All ten alone, wins of nine in 100: stage 1 0.36, as they are 0.51, stage 5 0.80, growing in the run 0.54.
+
+**Three made simpler** (`RULE.homSimple`, the recommended one of each in the game; all nine in `sweep_homs.py` as `MODE`):
+
+- Hydrogen: drive off 2 hydrogens, x1.18 (worth 1.07; it is 1.03 now and does its job once a run, this one seven times).
+- Wood spirit: line up a reagent that finds nothing, x1.16 (worth 1.04 at x1.12 and 1.20 at x1.22; he no longer pours).
+- Brimstone: put sulfur on the molecule; the round ends and the task counts as met (worth 1.05; it is 1.07 now).
+
+**The wood spirit's and the slime's jars** (simulator only). As they are neither hatches in 300 runs. Smaller jars (15 and 25): the wood spirit at about run 173, the slime never. Fed by a starting play too (a reagent that found nothing; a page on which one reagent landed twice): the wood spirit at run 5 to 7 with its jar of 40 (a jar of 250 would put it at about run 30), the slime at run 25 (careful) or 70 (casual).
+
+**The manual's lines** follow the owner's pattern of 13 November (name and one verb; the act; the number alone; a side effect as a bare fact; how it is got as a bare count): Acid, Water, Salt, Seedling, Slime, Dry ice, Ammonia. Hydrogen, Wood spirit and Brimstone wait for the version picked.
