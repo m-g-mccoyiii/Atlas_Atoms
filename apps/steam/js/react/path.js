@@ -304,22 +304,20 @@ const REF_FEED = { water: 'waters driven off', h2: 'hydrogens driven off', co2: 
 // The manual's voice (owner, 13 November: "Acid eats. Let it chew 2 atoms or more off the molecule in a page and your yield jumps x1.41."): the creature
 // does it, in a verb of its own; then what the player must do and what the yield does. Every multiplier is written once, as xN.NN, read from HOMS2K
 // (and scaled by f, the factor of the creature's stage when RULE.homGrow is on); the book's rows also carry them as nums: [{ v, sign }].
-const REF_HOM = { water: (K, f) => 'Water floods. Wring ' + K.need + ' waters out of the molecule in one page. x' + homK(K.k * f) + '. Then the flood comes in: every double bond soaks up an OH, and every closed ring bursts open.',
+const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homK(K.k * f) + '. Double bonds soak up OH; closed rings burst.',
   h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a page with oxidize second; if oxidize lands, your yield jumps x' + homK((K.k || 1) * f) + ' and the next page carries this page\'s chain on. If that next chain comes out shorter, your yield drops x' + homK(K.pop) + '. It sits out the last page.',
-  co2: (K, f) => 'Dry ice freezes. Drive carbon dioxide off, then leave ' + K.least + ' of your reagents untouched for the whole round. x' + homK(Math.pow(K.k, K.most) * f) + ', on the last page.',
-  acid: (K, f) => 'Acid eats. Let it chew ' + K.loss + ' atoms or more off the molecule in a page. x' + homK(K.k * f) + '.',
+  co2: (K, f) => 'Dry ice freezes. Drive off carbon dioxide and leave ' + K.least + ' reagents untouched all round. x' + homK(Math.pow(K.k, K.most) * f) + ', last page.',
+  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homK(K.k * f) + '.',
   wood: (K, f) => 'Wood spirit drinks. Line up first a reagent that finds nothing to do: he drinks that bottle dry for the round, then pours every dealt reagent you left out, one use of each. If one of them lands, your yield jumps x' + homK(K.k * f) + '.',
-  salt: (K, f) => 'Salt preserves. Play the same three reagents in the same order as last page. x' + homK(K.k * f) + '. Nothing gets used up.',
-  slime: (K, f) => 'Slime clings. Land the same reagent twice in a page, with a reflex each time. x' + homK(K.k * f) + '. Then it gums that bottle shut for the rest of the round.',
-  ammonia: (K, f) => 'Ammonia revives. Get nitrogen onto the molecule in a page. It wakes that page\'s three reagents and sends them round again in the same order, and nothing gets used up.' + (f !== 1 ? ' x' + homK(f) + '.' : ''),
-  seedling: (K, f) => 'Seedling sprouts. Grow the molecule by ' + K.gain + ' atoms in a page. x' + homK(K.k * f) + ', and more every page you keep it up. Slow down and it wilts: x' + homK(K.wilt) + '.',
+  salt: (K, f) => 'Salt preserves. Repeat last page\'s line. x' + homK(K.k * f) + '. Uses return.',
+  slime: (K, f) => 'Slime clings. Land one reagent twice, a reflex each time. x' + homK(K.k * f) + '. That bottle is shut all round.',
+  ammonia: (K, f) => 'Ammonia revives. Put nitrogen on the molecule. The three reagents go round again, no uses spent.' + (f !== 1 ? ' x' + homK(f) + '.' : ''),
+  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homK(K.k * f) + ', rising each page. Stall: x' + homK(K.wilt) + '.',
   brimstone: (K, f) => 'Brimstone burns. Get sulfur onto the molecule with the task at least half done and it burns the rest of the round away: the round ends there and the task counts as met. Your yield jumps x' + homK(K.k * f) + ' after page one, x' + homK(K.k2 * f) + ' after page two. It sits out the last page.' };
 // how each is got, in the same voice (the count is its jar's size, JAR.full)
-const REF_HOMHOW = { water: n => 'Water turns up once you have driven ' + n + ' waters off. Any run counts.', h2: n => 'Hydrogen turns up once you have driven ' + n + ' hydrogens off. Any run counts.',
-  co2: n => 'Dry ice turns up once you have driven ' + n + ' carbon dioxides off. Any run counts.', acid: n => 'Acid turns up once you have used hydrate or dehydrate ' + n + ' times. Any run counts.',
-  wood: n => 'Wood spirit turns up once you have used reduce ' + n + ' times. Any run counts.', salt: n => 'Salt turns up once oxidize has turned the OH at the end of a chain ' + n + ' times. Any run counts.',
-  slime: n => 'Slime turns up once you have used hydroborate ' + n + ' times. Any run counts.', seedling: n => 'Seedling turns up once you have used grow ' + n + ' times. Any run counts.',
-  ammonia: n => 'Ammonia turns up once aminate has landed or ammonia has come off ' + n + ' times. Any run counts.', brimstone: n => 'Brimstone turns up once thiolate has landed or sulfur has come off ' + n + ' times. Any run counts.' };
+const REF_HOMHOW = { water: n => n + ' waters driven off.', h2: n => n + ' hydrogens driven off.', co2: n => n + ' carbon dioxides driven off.', acid: n => n + ' uses of hydrate or dehydrate.',
+  wood: n => n + ' uses of reduce.', salt: n => n + ' end-of-chain OH turned by oxidize.', slime: n => n + ' uses of hydroborate.', seedling: n => n + ' uses of grow.',
+  ammonia: n => n + ' aminate landings or ammonias driven off.', brimstone: n => n + ' thiolate landings or sulfurs driven off.' };
 // the multipliers written in a line, in order: [{ v, sign }], sign '+' for a rise and '-' for a drop (so the page need not read the sentence)
 const capName = t => String(t || '').replace(/^./, c => c.toUpperCase());
 const refNums = t => { const o = []; String(t || '').replace(/\bx(\d+(?:\.\d+)?)/g, (m, v) => { o.push({ v: +v, sign: +v >= 1 ? '+' : '-' }); return m; }); return o; };
@@ -333,8 +331,8 @@ function thingOf(cat, id, f) {
   if (cat === 'motif') return { name: REF_MOTIF[id][0], does: REF_MOTIF[id][1] };
   if (cat === 'instrument') { const G = GEARS[id] || {}, n = REF_GEAR[id] || G.note || ''; return { name: G.name || id, does: n + (G.task ? ' Used once a round.' : G.tool ? ' Used on the molecule once a round.' : '') }; }
   if (cat === 'soundtrack') return { name: REF_TRACK[id], does: 'A soundtrack to play the game to.' };
-  if (cat === 'sigil') return { name: SIGILS[id].name, does: (RULE.sigilStrong && RULE.sigilStrong[id] ? SIGILS[id].does : SIGILS[id].doesPlain || SIGILS[id].does) + (sigilPays(id) ? ' Take it and it puts ' + sigilPays(id) + ' gold in your tin.' : '') + (id === 'aqua_permanens' && RULE.aquaRounds ? ' It stays for ' + RULE.aquaRounds + ' rounds and is then gone.' : '') };
-  if (cat === 'homunculus') { const b = HOMS[id].brings, bc = b && RX.CARDS[b]; return { name: capName(HOMS[id].name), does: REF_HOM[id](HOMS2K[id] || {}, f || 1) + (bc ? ' It brings ' + capName(bc.verb || b) + ' to the rack.' : '') }; }
+  if (cat === 'sigil') return { name: SIGILS[id].name, does: (RULE.sigilStrong && RULE.sigilStrong[id] ? SIGILS[id].does : SIGILS[id].doesPlain || SIGILS[id].does) + (sigilPays(id) ? ' Puts ' + sigilPays(id) + ' gold in the tin.' : '') + (id === 'aqua_permanens' && RULE.aquaRounds ? ' Gone after ' + RULE.aquaRounds + ' rounds.' : '') };
+  if (cat === 'homunculus') { const b = HOMS[id].brings, bc = b && RX.CARDS[b]; return { name: capName(HOMS[id].name), does: REF_HOM[id](HOMS2K[id] || {}, f || 1) + (bc ? ' Brings ' + capName(bc.verb || b) + '.' : '') }; }
   return { name: id, does: '' };
 }
 // owned(meta): what the saved profile holds, by category. The ladder's rungs are read from meta.ladder; the rest from where the page keeps them
@@ -757,14 +755,14 @@ const bareRun = run => !!RULE.bare || !!(run && run.bare);
 // the lifetime count of countersUpdate that earns it). where: 'engine' (rules.js reads MODE.sig) or 'round' (read here by sigOn).
 const SIGILS = {
   phlogiston: { name: 'Phlogiston', where: 'engine', does: 'Phlogiston draws hydrogen out. Oxidize also takes two hydrogens from the carbons beside every C=O: a C=C appears there and hydrogen comes off.', how: 'Oxidize acts 150 times.', counter: 'oxidize_acted', n: 150 },
-  clepsydra: { name: 'Clepsydra', where: 'round', does: 'Clepsydra slows the clock: a round has four pages, not three.', how: 'Play 100 rounds.', counter: 'rounds', n: 100 },
+  clepsydra: { name: 'Clepsydra', where: 'round', does: 'Clepsydra slows the clock. Four pages a round.', how: 'Play 100 rounds.', counter: 'rounds', n: 100 },
   via_humida: { name: 'Via Humida', where: 'engine', does: 'Via Humida opens the wet way. A ring closes when an OH is 3 or 4 atoms from a C=O; normally only carbons may lie between the two, and Via Humida lets an O, N or S lie there too.', how: 'Fire hydrate 60 times.', counter: 'hydrate_fired', n: 60 },
   solve: { name: 'Solve', where: 'engine', does: 'Solve loosens. A page normally lets dry happen once, weld twice and ring twice; Solve lets each go on for as long as it can. Across the fold each still happens once.', how: 'Set off 600 reflex steps.', counter: 'reflex_steps', n: 600 },
-  aqua_permanens: { name: 'Aqua Permanens', where: 'engine', does: 'Aqua Permanens holds the water in. Water never leaves the molecule: dehydrate finds nothing to do, and the reflexes that give off water (dry, seal, link) do not happen.', how: 'Drive off 5 or more waters on a page, 30 times.', counter: 'water5_pages', n: 30 },
-  tetractys: { name: 'Tetractys', where: 'round', does: 'Tetractys makes four. Every page takes four reagents, not three; the last reagent of a page always counts double, and Tetractys makes the fourth count for more. x3.', doesPlain: 'Every page takes four reagents, not three. The last reagent of a page pays double, and that is now the fourth.', how: 'Line up one reagent in all three circles, 5 times.', counter: 'one_reagent_lines', n: 5 },
+  aqua_permanens: { name: 'Aqua Permanens', where: 'engine', does: 'Aqua Permanens holds water in. No water leaves: dehydrate does nothing; dry, seal and link never happen.', how: 'Drive off 5 or more waters on a page, 30 times.', counter: 'water5_pages', n: 30 },
+  tetractys: { name: 'Tetractys', where: 'round', does: 'Tetractys makes four. Four reagents a page. The fourth: x3.', doesPlain: 'Every page takes four reagents, not three. The last reagent of a page pays double, and that is now the fourth.', how: 'Line up one reagent in all three circles, 5 times.', counter: 'one_reagent_lines', n: 5 },
   respiratio: { name: 'Respiratio', where: 'round', does: 'Respiratio breathes in again. A page normally lets dry happen once, weld twice and ring twice; Respiratio starts that count again after every reagent, so each can happen after each of the three.', how: 'Set off dry 100 times.', counter: 'dry_steps', n: 100 },
-  gemini: { name: 'Gemini', where: 'round', does: 'Gemini doubles. Whatever a reagent or a reflex does to a C=C or a C=O is counted over again. x2.', how: 'Fire dehydrate 50 times.', counter: 'dehydrate_fired', n: 50 },
-  sulphurs_mask: { name: "Sulphur's Mask", where: 'engine', does: 'Sulphur\'s Mask makes oxygen behave as sulfur. An OH closes its ring before anything else happens and as often as it can on a page, and two OH that face each other across the fold join, oxygen to oxygen. The first two rings an OH closes on a page weigh in the chain as sulfur\'s would. x2.', doesPlain: 'Oxygen behaves as sulfur: an OH closes its ring before anything else happens and as often as it can on a page, and two OH that face each other across the fold join, oxygen to oxygen.', how: 'Put on 25 SH.', counter: 'sh_made', n: 25 }
+  gemini: { name: 'Gemini', where: 'round', does: 'Gemini doubles. Anything done to a C=C or C=O counts again. x2.', how: 'Fire dehydrate 50 times.', counter: 'dehydrate_fired', n: 50 },
+  sulphurs_mask: { name: "Sulphur's Mask", where: 'engine', does: 'Sulphur\'s Mask turns oxygen to sulfur. An OH closes its ring first and without limit; two OH facing across the fold join. First two such rings: x2.', doesPlain: 'Oxygen behaves as sulfur: an OH closes its ring before anything else happens and as often as it can on a page, and two OH that face each other across the fold join, oxygen to oxygen.', how: 'Put on 25 SH.', counter: 'sh_made', n: 25 }
 };
 RULE.sigil = {};
 const SIGIL_Q = (() => { try { const m = typeof location !== 'undefined' && /[?&]sigil=([^&#]+)/.exec(location.search || ''); return m ? decodeURIComponent(m[1]).split(',').filter(id => SIGILS[id]) : []; } catch (e) { return []; } })();

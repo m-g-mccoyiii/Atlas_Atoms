@@ -830,8 +830,13 @@ def hom17(arg='now,median,100'):
     cap2..cap4 (grows in the run up to that stage)."""
     mode, pl, n = arg.split(',')
     opt = {'now': '', 'run': '/GROW=1'}.get(mode) if mode in ('now', 'run') else ('/STAGE=' + mode[1:] if mode[0] == 's' else '/GROW=1/CAP=' + mode[3:])
+    which = HOMS2
+    if mode[0] == 'm':                    # "simplify the creatures": m<1..3>[k<number>] for hydrogen, wood spirit and brimstone; m2k1.8:h2 for one of them
+        mode, _, one = mode.partition(':')
+        which = (one,) if one else ('h2', 'wood', 'brimstone')
+        opt = '/MODE=' + mode[1] + ('/KS=' + mode[3:] if len(mode) > 2 else '')
     jobs = []
-    for h in HOMS2:
+    for h in which:
         for i in range(int(n) // 10):
             jobs.append({'id': 'h17_%s_%s_%s_%d' % (h, mode, pl, i), 'rack': START, 'length': 'doctorate', 'player': pl, 'mods': ['hom:' + h + opt], 'params': dict(T13),
                          'full': True, 'seeds': ['q/%d' % (i * 10 + k) for k in range(10)], 'tag': 'hom:%s@%s/%s' % (h, mode, pl)})

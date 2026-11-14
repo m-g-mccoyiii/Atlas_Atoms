@@ -204,20 +204,36 @@ class Hydrogen(Hom):
     """The chain floats over the page turn.  The bet (thirteenth): if the next page's own chain is shorter than the chain that
     floated, the balloon pops and the yield is times POP."""
     name = 'h2'
-    last_page = False
     POP = 0.6
+    # seventeenth, "simplify the creatures": MODE 0 as it is; one job each:
+    #   1  drive NEEDH hydrogens or more off in a page: yield times KS
+    #   2  play only two reagents in a page and land both: yield times KS
+    #   3  land oxidize last on a page: the chain carries on into the next page (no number, no bet)
+    MODE = 0
+    KS = 1.8
+    NEEDH = 2
+
+    @property
+    def last_page(self):
+        return self.MODE in (1, 2)
     NEED = 1            # the page's chain must be this long to float (3 until the fifteenth)
     TWO = True          # fifteenth: lit only by a page of two reagents (the third circle left empty), oxidize the second
     KT = 2.5            # fifteenth: the yield times this at the tap (reads 1.58)
 
     def setup(self, G):
-        if self.TWO:
+        if self.TWO and self.MODE in (0, 2):
             G.p['short_lines'] = True
     SAFE = 99           # a reader floats any chain it is lit for
     peek_force = True   # a reader sees the pop before it lines up
 
     def lit(self, G, R):
         c = R.rec[-1]['circ']
+        if self.MODE == 1:
+            return R.rec[-1]['off'].get('hydrogen', 0) >= self.NEEDH
+        if self.MODE == 2:
+            return len(c) == 2 and all(x[1] > 0 for x in c)
+        if self.MODE == 3:
+            return bool(c) and c[-1][0] == 'oxidize' and c[-1][1] > 0 and R.casc >= 1
         if self.TWO and len(c) != 2:
             return False
         return bool(c) and c[-1][0] == 'oxidize' and c[-1][1] > 0 and R.casc >= self.NEED
@@ -226,10 +242,16 @@ class Hydrogen(Hom):
         return R.rec[-1]['off'].get('hydrogen', 0) >= 1
 
     def apply(self, G, R):
+        if self.MODE in (1, 2):
+            R.E *= self.KS
+            return
         R.x['float'] = R.casc
-        R.E *= self.KT
+        if self.MODE == 0:
+            R.E *= self.KT
 
     def want(self, G, R, R2):
+        if self.MODE in (1, 2):
+            return Hom.want(self, G, R, R2)
         return R.casc <= self.SAFE
 
     def page_turn(self, G, R):
@@ -240,11 +262,15 @@ class Hydrogen(Hom):
 
     def passive(self, G, R):
         f = R.x.pop('floated', 0)
+        if self.MODE:
+            return
         if f and len(R.rec[-1]['chain']) < f:
             R.E *= self.POP
             R.x['popped'] = R.x.get('popped', 0) + 1
 
     def peek(self, G, R, rng):
+        if self.MODE in (1, 2):
+            return Hom.peek(self, G, R, rng)
         if not R.rec:
             return None
         R2 = R.copy()
@@ -305,6 +331,12 @@ class Wood(Hom):
     not lined up, left to right as dealt, and his pours spend no use."""
     name = 'wood'
     K = 1.5             # yield times this when at least one of his pours lands (1.25 while his pours were free and the bottle he drank came back)
+    # seventeenth, "simplify the creatures": MODE 0 as it is; one job each:
+    #   1  put first a reagent that finds nothing: he pours the dealt reagents left out, a use of each (no number, no empty bottle)
+    #   2  any reagent of the page finds nothing: yield times KS (he drinks it; nothing is poured)
+    #   3  put first a reagent that finds nothing: he pours the dealt reagents left out, free (no number; the bottle he drank is empty)
+    MODE = 0
+    KS = 1.5
 
     def rest(self, R):
         ln = set(line_of(R.rec[-1]))
@@ -318,14 +350,27 @@ class Wood(Hom):
         return any(c[1] == 0 for c in R.rec[-1]['circ'])
 
     def lit(self, G, R):
+        if self.MODE == 2:
+            return any(c[1] == 0 and c[0] != 'finish' for c in R.rec[-1]['circ'][:3]) and not R.over
         return self.dud(R) and not R.over and len(self.rest(R)) >= 1
 
     FREE = False        # fifteenth: his pours spend a use each (they were free)
     EMPTY = True        # fifteenth: the bottle he drank is empty for the rest of the round
 
     def apply(self, G, R):
+        if self.MODE == 2:
+            R.E *= self.KS
+            return
         rest = self.rest(R)
         dud = R.rec[-1]['circ'][0][0]
+        if self.MODE:
+            if R.left is not None and self.MODE == 3:
+                for r in rest:
+                    R.left[r] = R.left.get(r, 0) + 1
+            more_circles(G, R, rest)
+            if self.MODE == 3 and R.left is not None:
+                R.left[dud] = 0
+            return
         if R.left is not None and self.FREE:
             for r in rest:
                 R.left[r] = R.left.get(r, 0) + 1
@@ -473,19 +518,34 @@ class Brimstone(Hom):
     last_page = False
 
     HALF = 0.5          # fifteenth: the fire takes only a task this far done (0.5: at least half)
+    # seventeenth, "simplify the creatures": MODE 0 as it is; one job each (never on the last page):
+    #   1  get sulfur onto the molecule: the round ends there and the task counts as met (no number, no half)
+    #   2  get sulfur onto the molecule with the task already met: the round ends there, yield times KS
+    #   3  get sulfur onto the molecule with the task at least half done: the round ends there and the task counts as met (no number)
+    MODE = 0
+    KS = 1.5
 
     def lit(self, G, R):
         rec = R.rec[-1]
-        if self.HALF and R.spec and G.prog(R, R.rec) < self.HALF * len(R.spec):
+        if self.MODE == 2 and not G.met(R):
+            return False
+        if self.MODE in (0, 3) and self.HALF and R.spec and G.prog(R, R.rec) < self.HALF * len(R.spec):
             return False
         return (not R.over) and (any(c[0] == 'thiolene' and c[1] > 0 for c in rec['circ']) or 'cap' in rec['chain'])
 
     def apply(self, G, R):
-        R.E *= self.K if R.page <= 1 else self.K2
+        if self.MODE == 2:
+            R.E *= self.KS
+            R.over = True
+            return
+        if not self.MODE:
+            R.E *= self.K if R.page <= 1 else self.K2
         R.x['burnt'] = True
         R.over = True
 
     def want(self, G, R, R2):
+        if self.MODE == 2:
+            return made(R2) >= G.need_abs(R)       # he stops early when the yield with the fire already passes the mark
         # a reader burns when that clears the round: the yield then passes the mark, and either the task is not met yet (it is
         # burned) or the yield was short without the fire
         nd = G.need_abs(R)
