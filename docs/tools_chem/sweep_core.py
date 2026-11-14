@@ -459,6 +459,8 @@ def chain_n(n, p):
 
 
 class Game:
+    limits_back = False
+
     def __init__(self, key='base', mods=(), params=None, cache=None):
         self.key = key
         self.p = dict(DEFAULTS)
@@ -577,7 +579,7 @@ class Game:
         Built from three kept parts, each keyed by the canonical SMILES and shared by every worker through the store:
         the reagent's product (smi, reagent), the reflexes a molecule can do in order (smi), one reflex applied (smi, reflex).
         The per-turn limits (used) only pick among kept answers, so they do not split the store."""
-        k = (smi, rid, used, rules, co2)
+        k = (smi, rid, used, rules, co2, self.limits_back)
         v = self._segs.get(k)
         if v is not None:
             return v if v != 0 else None
@@ -646,6 +648,8 @@ class Game:
             hit = None
             for rn in self.cands(smi, rules):
                 lim = getattr(sr[rn], 'per_turn', None)
+                if self.limits_back:           # path.js RULE.ammoniaLimits: the page's plain limits, whatever sigil is held
+                    lim = L.PER_TURN.get(rn, lim)
                 if lim is not None and cnt.get(rn, 0) >= lim:
                     continue
                 r = self.step(smi, rn)
@@ -754,6 +758,8 @@ class Game:
         nrp = (p['fold_pay'] if far else 1) + (p['kind_fresh'] if (p['kind_fresh'] and base not in R.kinds_seen) else 0)
         if p['runoff_step'] and off:
             nrp += p['runoff_step'] * sum(b for _a, b in off)
+        if kind in p.get('twice', ()) and sum(1 for k in page['chain'] if k in p['twice']) < p.get('twice_max', 99):
+            nrp *= 2                         # Sulphur's Mask, the stronger form: the first ring(s) closed through oxygen on a page count as two steps of the chain
         for _ in range(nrp):
             R.casc += 1
             w = 1.0 if (not p['fresh'] or R.casc > R.best) else p['old']
@@ -796,8 +802,8 @@ class Game:
         page['circ'].append(circ)
         if rid == 'finish' and R.page < R.pages:
             return
-        if R.left is not None and rid != 'finish':
-            if R.left.get(rid, 0) <= 0:
+        if R.left is not None and rid != 'finish' and not (p.get('free_last') and idx >= n_circ - 1 and n_circ >= p['circles']):
+            if R.left.get(rid, 0) <= 0:      # free_last (Tetractys, the stronger form): the last reagent of a full page spends no use
                 return
             R.left[rid] -= 1
         times = 1 if rid == 'finish' else p['fire_times']
@@ -1028,7 +1034,8 @@ class Game:
     def lines(self, R, hand):
         """path.js specLines: every line the hand allows (uses respected), the finishing reagent on the last page."""
         L_ = self.p['circles']
-        ids = [r for r in hand if R.left is None or R.left.get(r, 0) > 0]
+        free_last = bool(self.p.get('free_last'))
+        ids = [r for r in hand if R.left is None or R.left.get(r, 0) > 0 or free_last]
         last = R.page >= R.pages
         fin = False
         if last and self.p['finish']:
@@ -1048,7 +1055,7 @@ class Game:
                 if r == 'finish':
                     if r in cur:
                         continue
-                elif R.left is not None and cur.count(r) >= R.left.get(r, 0):
+                elif R.left is not None and cur.count(r) >= R.left.get(r, 0) and not (free_last and len(cur) == L_ - 1):
                     continue
                 cur.append(r)
                 rec(cur)

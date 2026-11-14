@@ -791,3 +791,33 @@ def final16(arg='median,2000'):
 
 
 EXPERIMENTS['final16'] = final16
+
+
+# --- the seventeenth measure: the same sets on the new deal (RULE.elLate on, read from path.js), kept apart in _sweep/sig17 ---
+EXPERIMENTS['sig17'] = sig16
+
+
+def _s17(arg, prefix, length='doctorate', strong='only'):
+    """sig16's jobs with the stronger forms of path.js RULE.sigilStrong in place of the plain sigils (sweep_sig17.STRONG).
+    strong: 'only' the sets that hold such a sigil, 'not' the others, 'all' every set."""
+    import sweep_sig17 as S17
+    out = []
+    for j in sig16(arg):
+        has = any(m.split(':')[1] in S17.STRONG for m in j['mods'] if m.startswith('sigil:'))
+        if (strong == 'only' and not has) or (strong == 'not' and has):
+            continue
+        j['mods'] = ['sig17:' + S17.STRONG[m.split(':')[1]] if (m.startswith('sigil:') and m.split(':')[1] in S17.STRONG) else m for m in j['mods']]
+        j['id'] = prefix + j['id']
+        j['length'] = length
+        if os.environ.get('SWEEP_P'):          # further rule numbers for a trial, as JSON (the experiment sig17p)
+            j['params'].update(json.loads(os.environ['SWEEP_P']))
+        out.append(j)
+    return out
+
+
+EXPERIMENTS['sig17s'] = lambda arg='1,both,200': _s17(arg, 's_')                     # nine rounds, the sets that hold a stronger form
+EXPERIMENTS['sig17n'] = lambda arg='2,both,60': _s17(arg, 'n_', strong='not')        # the other sets; run with experiment name sig17 (see RIG.md seventeenth)
+EXPERIMENTS['sig17m'] = lambda arg='1,both,100': _s17(arg, 'm_', 'master', 'all')    # the six-round run
+EXPERIMENTS['sig17k'] = lambda arg='0,both,100,q,carousel+burette+crystal': _s17(arg, 'k_', strong='all')   # with the kit of three instruments held
+EXPERIMENTS['deed17'] = deed16                                                       # the deeds' pools on the new deal (sweep_deeds.py, SWEEP_DEEDS=deed17)
+EXPERIMENTS['sig17p'] = lambda arg: _s17(arg, 'p_', strong='all')                    # a trial with SWEEP_P set (Ammonia's second firing keeps the limits)

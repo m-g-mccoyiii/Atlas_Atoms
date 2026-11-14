@@ -71,6 +71,9 @@ def build_mods(names):
         elif kind == 'sigil':
             import sigil2_rules
             mods.append(sigil2_rules.make(arg))
+        elif kind == 'sig17':
+            import sweep_sig17
+            mods.append(sweep_sig17.make(arg))
         elif kind == 'hom':
             import sweep_homs
             mods.append(sweep_homs.make(arg))

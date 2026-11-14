@@ -787,7 +787,7 @@ const ENG = (() => {
   // which reflex goes next (engine.py _next_self). held: the kinds the run holds (any order); cnt: the steps made so far this turn by kind
   function nextReflex(m, held, cnt, G0) {
     // the sigils: Aqua Permanens (no reflex that gives off water), Solve (no near reflex has a limit a turn), Sulphur's Mask (ring goes first and has no limit)
-    const wet = k => SG('aqua_permanens') && !!(R[k].off && R[k].off.water), mask = k => k === 'ring' && SG('sulphurs_mask'), perOf = k => ((SG('solve') && !R[k].far) || mask(k) ? null : R[k].per), over = k => R[k].per != null && (cnt[k] || 0) >= R[k].per;
+    const wet = k => SG('aqua_permanens') && !!(R[k].off && R[k].off.water), mask = k => k === 'ring' && SG('sulphurs_mask'), perOf = k => (MODE.limitsBack ? R[k].per : ((SG('solve') && !R[k].far) || mask(k) ? null : R[k].per)), over = k => R[k].per != null && (cnt[k] || 0) >= R[k].per;
     const G = G0 || snapG(m); G.self = true; const rules = ORDER.filter(k => held.includes(k) && !wet(k) && (perOf(k) == null || (cnt[k] || 0) < perOf(k))), cands = [];
     rules.forEach((k, ri) => { const sites = R[k].find(G).filter(s => free(G, s)); if (sites.length) cands.push({ key: [mask(k) ? 0 : R[k].prio, sites[0].dist, ri], k, sites, sig: sites[0].sig || (mask(k) ? 'sulphurs_mask' : over(k) ? 'solve' : null) }); });
     cands.sort((a, b) => lex(a.key, b.key));
