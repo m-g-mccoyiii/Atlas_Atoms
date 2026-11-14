@@ -523,3 +523,14 @@ Branch `page-builder-22` (worktree `page22`). Files: `kitart.js`, `scheme.js`. R
 - NOT done: slime, hydrogen, seedling, wood spirit, ammonia, brimstone (batches 2 and 3; the flat sticker flames are still there). Stages 1, 2 and 5 of water, dry ice and salt were not looked at; the jar versions and the spent slump of the three were not looked at. Dry ice's fog is hardly seen on the white page away from its act (the act washes cold in under it; the evolve does not). Water washes over the whole molecule, not the double bonds only. The auto-rigged limbs are whole pieces: no elbow.
 
 scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
+
+## Twenty-fourth builder (14 November)
+
+Branch `page-builder-24` (worktree `page24`). File: `kitart.js` (added to only). Stills only. Sheet: `water24-options.jpg` and `.txt` in `C:\Worktlas-atoms\.claude\shots`. The game's Water is not changed and nothing is wired in.
+
+- **Water as an elemental, three ways** (`W24`, `AA.rxKit.water24 = 'a' | 'b' | 'c'`, `AA.rxKit.water24Fig(THREE, stage, way)`): a pure water, b water spirit, c water beast, five stages each, front to +z, standing at y = 0. The owner had rejected the old creatures as objects stuck together.
+- **One closed mesh per body** (`sweep`): rings swept along a spine given as keys `[x, y, z, a, b]` (a point, half width to the side, half depth), Catmull-Rom between keys, frames carried along the spine. `pool(...)` gives the first keys: the thin pool and the fillet up into the foot, part of the same surface. Arms, ears, legs are `bumps` (`k` key index, `th` angle round the ring, `amp`, `off` a pull); manes, twists and foam lips are `mod(kp, th)`. Depth (deep foot, mid, pale where thin), `foam`, `lite` and the highlight are vertex colours. `inkHull` is the same geometry pushed out along its normals, back faces, for the ink line. So nothing can come apart when animated: animate by moving the keys and rebuilding, or by bones along the spine.
+- **The face** (`face24`): two eyes and a smile laid where rays from in front meet the body; the same at every stage.
+- **Pieces of their own**: eyes, mouth, the wet patch on the wood, loose drops. Nothing else.
+- **The sheet job** is in `.claude/f24` of the worktree (not in git): `srv.py` (port 9431, writes `srv.pid`), `run.sh <name>` (one headless Edge, ended by its written PID), `sheet.html` (lamp values of `scheme.js` as in builder 18's sheet; `ways=`, `st=`, `w=`).
+- **Known weak points** are listed per option in `water24-options.txt`.
