@@ -1909,8 +1909,8 @@ const shown30 = (o, top) => { for (; o && o !== top; o = o.parent) if (!o.visibl
 /* the pen's line as one mesh: ribbons written straight in the picture's own frame */
 function pen30(T, S) { const MAXV = 24000, g = new T.BufferGeometry(), pa = new T.BufferAttribute(new Float32Array(MAXV * 3), 3), ua = new T.BufferAttribute(new Float32Array(MAXV * 2), 2), ia = new T.BufferAttribute(new Uint16Array(MAXV * 3), 1);
   pa.usage = ua.usage = ia.usage = T.DynamicDrawUsage; g.setAttribute('position', pa); g.setAttribute('ua', ua); g.setIndex(ia); g.setDrawRange(0, 0);
-  const c = new T.Color(W30.C.pen), m = new T.ShaderMaterial({ transparent: true, depthWrite: false, side: T.DoubleSide, uniforms: { col: { value: new T.Vector3(c.r, c.g, c.b) } },
-    vertexShader: 'attribute vec2 ua;\nvarying vec2 vU;\nvoid main() { vU = ua; gl_Position = vec4(position, 1.0); }', fragmentShader: 'uniform vec3 col;\nvarying vec2 vU;\nvoid main() { gl_FragColor = vec4(col, clamp(vU.y + 0.5 - abs(vU.x), 0.0, 1.0)); }' });
+  const c = new T.Color(W30.C.pen), m = new T.ShaderMaterial({ transparent: !S.jar, depthWrite: false, side: T.DoubleSide, uniforms: { col: { value: new T.Vector3(c.r, c.g, c.b) } },
+    vertexShader: 'attribute vec2 ua;\nvarying vec2 vU;\nvoid main() { vU = ua; gl_Position = vec4(position, 1.0); }', fragmentShader: 'uniform vec3 col;\nvarying vec2 vU;\nvoid main() { gl_FragColor = vec4(col, clamp(vU.y + 0.5 - abs(vU.x), 0.0, 1.0));' + (S.jar ? ' if (gl_FragColor.a < 0.3) discard; gl_FragColor.a = 1.0;' : '') + ' }' });
   const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 23; mesh.castShadow = false; mesh.userData.plain = true; mesh.userData.nobox = true; mesh.visible = false;
   if (!W30.sph) W30.sph = topo30(new T.SphereGeometry(1, 14, 10));
   const R = { mesh, pa, ua, ia, nv: 0, ni: 0, MAXV, body: src30(topo30(S.G.geo), { skin: true }), parts: new Map(), bm: null, X: [], Y: [], Z: [], Sd: [], tx: [], ty: [], tz: [], v: new T.Vector3(), v2: new T.Vector3(), v3: new T.Vector3(), boil: 0 };
@@ -1998,7 +1998,7 @@ const F30 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(
   'float hm = smoothstep(0.30, 0.42, N30(bp * 5.3 + 2.0)); c9 = mix(c9, PENCIL30, 0.5 * (1.0 - smoothstep(0.35, 1.05 * s9, hd)) * sh * hm * (0.45 + 0.55 * gr)); }', '#endif',
   'gl_FragColor = vec4(c9, 1.0); }'].join('\n');
 function mat30(T, kind, o) { o = o || {}; const U = u29(T), v3 = h => { const c = new T.Color(h); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; }, skin = kind !== 'p', pl = o.pl;
-  const m = new T.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0 }); m.skinning = skin; m.transparent = true; m.extensions = { derivatives: true }; if (kind === 'm') { m.side = T.BackSide; m.userData.w = o.w; }
+  const m = new T.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0 }); m.skinning = skin; m.transparent = !o.jar; m.extensions = { derivatives: true }; if (kind === 'm') { m.side = T.BackSide; m.userData.w = o.w; }
   m.onBeforeCompile = sh => { sh.uniforms.t29 = U.t29; sh.uniforms.r29 = U.r29; if (kind === 'm') sh.uniforms.w27 = m.userData.w;
     sh.vertexShader = sh.vertexShader.replace('void main() {', (skin ? 'attribute vec4 w25a;\n' : '') + (kind === 'm' ? 'uniform float w27;\n' : '') + 'varying vec4 vW29;\nvarying vec3 vB30;\nvarying vec2 vP30;\nvoid main() {\n\tvW29 = ' + (skin ? 'w25a' : 'vec4(0.0)') + '; vB30 = position * ' + (o.k || 1).toFixed(5) + ' + vec3(' + (o.off || 0).toFixed(3) + '); vP30 = ' + (pl ? 'vec2((position.x - (' + pl.x.toFixed(4) + ')) / ' + pl.rx.toFixed(4) + ', (position.z - (' + pl.z.toFixed(4) + ')) / ' + pl.rz.toFixed(4) + ')' : 'vec2(0.0)') + ';');
     if (kind === 'm') sh.vertexShader = sh.vertexShader.replace('#include <skinning_vertex>', '#include <skinning_vertex>\n#ifdef USE_SKINNING\n\tmat4 sm27 = skinWeight.x * boneMatX + skinWeight.y * boneMatY + skinWeight.z * boneMatZ + skinWeight.w * boneMatW;\n\ttransformed += normalize((bindMatrixInverse * sm27 * bindMatrix * vec4(normal, 0.0)).xyz) * w27 * 1.5;\n#endif');
@@ -2007,7 +2007,7 @@ function mat30(T, kind, o) { o = o || {}; const U = u29(T), v3 = h => { const c 
 function set30(T, S, on) { const lin = h => new T.Color(h).convertSRGBToLinear();
     if (!S.o29) set29(T, S, 'b');
   if (!S.m30) { const none = new T.MeshBasicMaterial({ visible: false }), flat = h => new T.MeshBasicMaterial({ color: lin(h) }), G = S.G, k = 1 / G.H, key = '_' + S.st; let pi = 0;
-    S.m30 = { body: mat30(T, 'b', { k, pl: G.pl, key }), hull: mat30(T, 'm', { k, pl: G.pl, key, w: S.hull27.material.userData.w }), film: none, marks: none, ink: none, face: flat(W30.C.pen), glint: flat(W30.C.paper), lid: flat(0x9fc0dc), drop: () => mat30(T, 'p', { k: 0.3, off: 3 + 1.7 * (pi++ % 4), hatch: 7, key: 'p' + (pi % 4) }), hand: () => mat30(T, 'p', { k: 0.3, off: 11 + 1.7 * (pi++ % 4), hatch: 7, key: 'h' + (pi % 4) }) };
+    S.m30 = { body: mat30(T, 'b', { k, pl: G.pl, key, jar: S.jar }), hull: S.jar ? none : mat30(T, 'm', { k, pl: G.pl, key, jar: S.jar, w: S.hull27.material.userData.w }), film: none, marks: none, ink: none, face: flat(W30.C.pen), glint: flat(W30.C.paper), lid: flat(0x9fc0dc), drop: () => mat30(T, 'p', { k: 0.3, off: 3 + 1.7 * (pi++ % 4), hatch: 7, key: 'p' + (pi % 4), jar: S.jar }), hand: () => mat30(T, 'p', { k: 0.3, off: 11 + 1.7 * (pi++ % 4), hatch: 7, key: 'h' + (pi % 4), jar: S.jar }) };
     S.pen30 = pen30(T, S); }
   const M = S.m30; S.o29.forEach(q => { let r = M[q.k]; if (typeof r === 'function') r = q.m30 || (q.m30 = r()); q.m.material = r || q.mt; q.m.renderOrder = q.k === 'hull' ? 20 : q.k === 'body' ? 19 : q.k === 'hand' || q.k === 'drop' ? 20 : q.k === 'face' || q.k === 'lid' ? 21 : q.k === 'glint' ? 22 : q.ro; });
   S.w30 = true; S.pen30.mesh.visible = true; if (W30.figs.indexOf(S) < 0) W30.figs.push(S); }
@@ -2028,7 +2028,7 @@ const play30 = (f0 => function (grp, clip, t, o) { const S = grp.userData.rig2.s
     const want = KIT.wash30 !== false && !KIT.style29 && S && S.b27 && S.x28; if (want) { if (!S.w30) set30(S.T, S, true); S.st29 = 'b'; if (!S.hk30) S.hk30 = hook30(S.T, S); }
     else if (was) { S.w30 = false; S.pen30.mesh.visible = false; if (!KIT.style29) set29(S.T, S, null); } } catch (e) { KIT.spiritErr = 'w30 ' + String(e && e.stack); } return r; })(play26);
 /* stage 1 is the shy droplet: when it ducks it still peeks over its puddle (it used to go right under, leaving a pool and a wisp) */
-C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (KIT.wash30 !== false && S.st === 1 && q.sink > 0.36) { const ov = q.sink - 0.36; q.sink = 0.36 + 0.12 * Math.min(1, ov / 0.44) + 0.15 * (o.spent || 0); q.wide = Math.max(q.wide, 0.5); q.brow = Math.max(q.brow, 0.6); } })(C26.rest);
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (KIT.wash30 !== false && S.st === 1 && q.sink > 0.1) { const ov = q.sink - 0.1; q.sink = 0.1 + 0.1 * Math.min(1, ov / 0.7) + 0.05 * (o.spent || 0); q.wide = Math.max(q.wide, 0.5); q.brow = Math.max(q.brow, 0.6); } })(C26.rest);
 /* the shelf jar holds the same spirit, small (it was the old pushed form at every stage) */
 KIT.spiritBuild = (f0 => function (T, grp, extra) { if (KIT.wash30 !== false && extra && extra.push && extra.jar) return f0(T, grp, { jar: true, stage: extra.stage, ink: extra.ink }); return f0(T, grp, extra); })(KIT.spiritBuild);
 play26 = play30; KIT.spirit26.play = play30; KIT.spirit26.W30 = W30;
