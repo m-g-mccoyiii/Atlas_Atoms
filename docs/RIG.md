@@ -20,24 +20,24 @@ Owner (13 November, late): creatures grow across runs and keep it; the three sim
 
 Owner: "Raise them to about 1.5 at stage 3." Alone they were worth 0.99 to 1.16.
 
-**How.** Each creature was played alone at five sizes of its number, 100 runs a size, careful player (`sweep_hom18.py fit`). Where the number alone reached 1.5 without very big rounds, only the number was raised. Where it could not reach 1.5 at any size, or reached it only with rounds of 50 times the number to beat and more, the job was eased in one plain way and fitted again. Then every creature has five numbers of its own, one a stage, read off those trials at worth 1.2, 1.35, 1.5, 1.65 and 1.8 (`path.js` `HOMGROW.read`; the single ladder 0.8 to 1.3 of the seventeenth is kept only for a creature switched back to an older rule).
+**How.** Each creature was played alone at five sizes of its number, 100 runs a size, careful player (`sweep_hom18.py fit`). Where the number alone reached 1.5 without very big rounds, only the number was raised. Where it could not reach 1.5 at any size, or reached it only with rounds of 50 times the number to beat and more, the job was eased in one plain way and fitted again. Then every creature has five numbers of its own, one a stage, read off those trials at worth 1.2, 1.35, 1.5, 1.65 and 1.8; Dry ice and Acid stop at x4.50, where they are worth 1.70 and 1.73, because the trials did not reach 1.8 (`path.js` `HOMGROW.read`; the single ladder 0.8 to 1.3 of the seventeenth is kept only for a creature switched back to an older rule).
 
 | Creature | It was (worth) | Number alone | What was done | Its line now, on a new profile |
 |---|---|---|---|---|
 | Water | 4 waters, x1.22 (1.12) | 1.5 only at x2.33, with rounds of about 55 times the number to beat | 3 waters | Water floods. Wring out 3 waters. x1.30. Double bonds soak up OH; closed rings burst. |
 | Hydrogen | two reagents, oxidize second, a bet (1.03) | . | the one job the owner picked, number fitted | Hydrogen lifts. Drive off 2 hydrogens. x1.38. |
-| Dry ice | carbon dioxide and 3 reagents untouched, x1.59 (1.05) | stops at 1.28, even at x5 | no carbon dioxide needed | Dry ice freezes. Leave 3 reagents untouched all round. x1.91, last page. |
-| Acid | 2 atoms, x1.41 (1.06) | 1.5 at x3.17, biggest round 19 | number only | Acid eats. Chew 2 atoms off the molecule. x2.01. |
+| Dry ice | carbon dioxide and 3 reagents untouched, x1.59 (1.05) | stops at 1.28, even at x5 | no carbon dioxide needed | Dry ice freezes. Leave 3 reagents untouched to the last page. x1.91. |
+| Acid | 2 atoms, x1.41 (1.06) | 1.55 at x3.17, biggest round 19 | number only | Acid eats. Chew 2 atoms off the molecule. x2.01. |
 | Wood spirit | a dud first, he pours (1.09) | . | the one job the owner picked, number fitted | Wood spirit drinks. Line up a reagent that finds nothing. x1.22. |
 | Salt | the whole line again, x1.58 (1.07) | stops at 1.26, even at x5, with rounds of 93 times | the first reagent only | Salt preserves. Open with last page's first reagent. x1.35. Its use returns. |
 | Slime | one reagent twice, a reflex each time, x1.58 (1.10) | 1.40 at x5, with rounds of 229 times | no reflex asked for | Slime clings. Land one reagent twice. x1.32. That bottle is shut all round. |
 | Ammonia | the line again, no number (1.16) | . | a number of its own | Ammonia revives. Put nitrogen on the molecule. The three reagents go round again. x1.08. |
-| Seedling | 12 atoms, x1.34 and rising, a stall (0.99) | with 8 atoms and still rising, 1.5 only at x2.09 with rounds of 95 times | 6 atoms, a plain number (no rising, no stall) | Seedling sprouts. Add 6 atoms. x1.30. |
+| Seedling | 12 atoms, x1.34 and rising, a stall (0.99) | still rising: with 8 atoms 1.55 at x2.20 with rounds of 95 times; with 6 atoms 1.57 at x1.80 with rounds of 49 times | 6 atoms, a plain number (no rising, no stall) | Seedling sprouts. Add 6 atoms. x1.30. |
 | Brimstone | sulfur on, task half done, x1.22 or x1.12 (1.07) | the one job with no number: 1.05; on the last page too: 1.11 | the one job, on the last page too, and a number | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. |
 
 **Flag: Brimstone has a number.** The owner's sentence for it has none. With none it is worth 1.11 at best and cannot grow, because a stage raises a number. It is built with one (`HOMSIMPLE.brimstone.k`; set the row of `HOMGROW.read` aside and it has none). Choice 2 below.
 
-**Each alone at its five stages** (100 runs a cell, the same deals; careful player: none wins 0.32 in 100, biggest round 9.3)
+**Each alone at its five stages** (100 runs a cell, six cells 200, the same deals; careful player: none wins 0.32 in 100, biggest round 9.3)
 
 | Creature | Stage 1: reads; worth; wins of nine, of 100; biggest round | Stage 2 | Stage 3 | Stage 4 | Stage 5 | Runs of 100 with a round past 20 times: stage 3; stage 5 |
 |---|---|---|---|---|---|---|
@@ -68,24 +68,44 @@ Owner: "Raise them to about 1.5 at stage 3." Alone they were worth 0.99 to 1.16.
 - **Stage 1 is a real creature now**: worth 1.2, about one nine-round win in 100 for the careful player (0.36 in the seventeenth).
 - **The early rounds stay as they were**: rounds 1 to 6 are cleared 97, 94, 90, 86, 89, 82 times in 100 with a stage 5 creature against 96, 91, 88, 80, 84, 75 with none.
 
-**Flag: what runs away.** At stage 3 nothing does: the biggest round of the ten is 23 times the number to beat, and at most 3 runs in 100 have a round past 20 times. At stage 5 four creatures make very big rounds: Hydrogen 55 times, Seedling 47, Water 43, Acid 38, and 12 to 17 runs in 100 have a round past 20 times. They can be tapped on every page of a round, so a large number multiplies three times. Under `'keep'` stage 5 comes at about run 60 to 130 for the creature used most (seventeenth, part 6).
+**Flag: what runs away.** At stage 3 nothing does: the biggest round of the ten is 23 times the number to beat, and at most 3 runs in 100 have a round past 20 times. At stage 5 four creatures make very big rounds: Hydrogen 55 times, Seedling 47, Water 43, Acid 38, and 12 to 17 runs in 100 have a round past 20 times. Dry ice (33 times; 9 runs in 100), Ammonia (32; 10) and Slime (28; 5) come next. They can be tapped on every page of a round, so a large number multiplies three times. Under `'keep'` stage 5 comes at about run 60 to 130 for the creature used most (seventeenth, part 6).
 
-**On deals the numbers were not fitted on.** Still being played when this was first written.
+**On deals the numbers were not fitted on** (200 new runs a set, both players, the ten at stage 3; `sweep_hom18_table.py fresh`). The careful player with none wins 0.30 in 100 there. The ten are worth 1.41 (Dry ice) to 1.60 (Ammonia), the middle 1.55; they win 2.0 to 3.4 nine-round runs in 100; the biggest round is 28 times the number to beat (Hydrogen) and at most one run in 100 has a round past 20 times. The fit holds; Dry ice comes out a little low. The casual player: worth 1.28 (Slime) to 1.98 (Wood spirit), the middle 1.46; he wins 0.1 in 100 at most.
 
 **A full kit** (three instruments: carousel, burette, seed crystal; three sigils held from round one: Gemini, Clepsydra, Via Humida; a creature at stage 3; 50 runs a set, both players on the same deals)
 
-Still being played when this was first written.
+| Held | Careful: wins of nine, of 100 | Rounds 7, 8, 9 cleared | Biggest round | Runs of 100 with a round past 20; 50 times | Casual: wins of nine, of 100 | Rounds 7, 8, 9 | Biggest round | Runs past 20; 50 |
+|---|---|---|---|---|---|---|---|---|
+| Nothing (the bare game) | 0.32 | 32, 22, 12 | 9 | 0; 0 | 0.00 | 11, 6, 0 | 9 | 0; 0 |
+| The kit, no creature | 39 | 76, 82, 76 | 16 | 0; 0 | 3.0 | 46, 32, 38 | 19 | 0; 0 |
+| with Water | 48 | 78, 86, 84 | 104 | 62; 10 | 6.0 | 52, 44, 46 | 57 | 6; 2 |
+| with Hydrogen | 42 | 74, 84, 82 | 53 | 70; 4 | 6.3 | 50, 44, 52 | 37 | 10; 0 |
+| with Dry ice | 45 | 78, 84, 80 | 31 | 26; 0 | 5.0 | 50, 36, 54 | 43 | 6; 0 |
+| with Acid | 47 | 84, 84, 82 | 108 | 72; 8 | 7.6 | 60, 46, 50 | 36 | 14; 0 |
+| with Wood spirit | 59 | 78, 94, 96 | 37 | 56; 0 | 22 | 74, 68, 80 | 43 | 8; 0 |
+| with Salt | 59 | 80, 96, 88 | 55 | 84; 8 | 13 | 62, 60, 64 | 36 | 18; 0 |
+| with Slime | 48 | 78, 86, 86 | 57 | 50; 2 | 7.7 | 56, 46, 56 | 23 | 6; 0 |
+| with Ammonia | 41 | 74, 82, 86 | 84 | 76; 6 | 8.3 | 54, 56, 56 | 30 | 8; 0 |
+| with Seedling | 45 | 74, 86, 86 | 49 | 84; 0 | 9.3 | 60, 48, 62 | 74 | 10; 2 |
+| with Brimstone | 73 | 88, 90, 92 | 17 | 0; 0 | 23 | 72, 60, 58 | 19 | 0; 0 |
 
-**Not done.** A kit with the strongest three sigils (Phlogiston, Solve, Gemini) or with Solve beside Ammonia at its new number. Creatures at a stage beside a kit other than stage 3. Two creatures at once. A career in which the stages come run by run. The simulator's own default numbers are still the seventeenth's (the eighteenth's are in `sweep_hom18_specs.py`); `sweep_deeds.py` careers still hold creatures by the old model. Salt's jar is still not kept by the simulator.
+- **The kit itself is most of it.** Three instruments and three sigils held from round one win the careful player 39 nine-round runs in 100 with no creature, and the casual player 3. A creature at stage 3 adds 2 to 20 wins for the careful player (34 for Brimstone) and takes the casual player to between 5 and 9 (13 with Salt, 22 with the Wood spirit, 23 with Brimstone). 50 runs a set: a figure near 45 is good to about 7 either way, so most creatures cannot be told apart here.
+- **Flag: with a full kit the rounds run away.** Without a creature the kit's biggest round is 16 times the number to beat. With one, half or more of the careful player's runs have a round past 20 times (Salt and Seedling 84 in 100, Ammonia 76, Acid 72, Hydrogen 70, Water 62), and Acid, Water and Ammonia made rounds of 108, 104 and 84 times. These come in rounds already won: the wins move far less than the rounds do.
+- **Flag: Brimstone with a kit wins too much** (73 in 100 careful, 23 casual, against 39 and 3 for the kit alone). It makes no big round; it ends a round with the task counted as met, and beside a kit that lifts the yield the task was the only thing left to fail.
+- A real run buys its sigils on the way and holds its three only from about round 7; held from round one, as here, is the upper end.
+
+**Not done.** None of the fixes of choices 7 and 8 was built or measured. A kit with the strongest three sigils (Phlogiston, Solve, Gemini) or with Solve beside Ammonia at its new number. Creatures at a stage beside a kit other than stage 3. Two creatures at once. A career in which the stages come run by run. The simulator's own default numbers are still the seventeenth's (the eighteenth's are in `sweep_hom18_specs.py`); `sweep_deeds.py` careers still hold creatures by the old model. Salt's jar is still not kept by the simulator.
 
 **Choices for the owner**
 
 1. Stage 5 of Hydrogen, Seedling, Water and Acid (rounds of 38 to 55 times the number to beat). (a) Leave it: it is a creature fed for 60 runs or more, and the early rounds and the pass marks are untouched. **Recommended.** (b) Stop those four at their stage 4 number (worth about 1.65; biggest round 29 to 35). (c) Those four can be tapped once a round, not once a page, with their numbers fitted again.
 2. Brimstone. (a) A number, and it works on the last page too (x1.39 at stage 3; as built). **Recommended.** (b) No number, as the sentence was picked: worth 1.11, and its stages do nothing.
-3. Seedling. (a) 6 atoms and a plain number (as built). **Recommended.** (b) Keep "rising each page" and the stall: at 8 atoms and x1.80 it is worth 1.35 with rounds up to 49 times; it cannot reach 1.5 without rounds of 95 times.
+3. Seedling. (a) 6 atoms and a plain number (as built). **Recommended.** (b) Keep "rising each page" and the stall: at 6 atoms and x1.80 it is worth 1.57 with rounds up to 49 times, against 20 times for the plain number at the same worth.
 4. Water. (a) 3 waters (as built). **Recommended.** (b) 2 waters and smaller numbers (x1.29 at stage 3, biggest round 17). (c) 4 waters as the owner wrote it, x2.33: rounds of about 55 times.
-5. Acid. (a) 2 atoms as the owner wrote it, x3.17 at stage 3 (as built). (b) 1 atom, x1.96 at stage 3 and x2.42 at stage 5, biggest round about 17: smaller numbers and no very big rounds.
+5. Acid. (a) 2 atoms as the owner wrote it, x3.17 at stage 3 (as built); it stops at 1.73 at stage 5. (b) 1 atom, x1.96 at stage 3 and x2.42 at stage 5, biggest round about 17: smaller numbers and no very big rounds.
 6. Salt, Dry ice, Slime: each was eased because its old job could not reach 1.5 at any number. (a) As built. **Recommended.** (b) The old job back for any of them (`HOMS2K_17`), worth 1.26 to 1.40 at most.
+7. A creature beside a full kit (rounds of 50 to 108 times the number to beat; more than half the careful player's runs have a round past 20 times). (a) A creature can be tapped once a round, not once a page, with the numbers fitted again: this is what multiplies. **Recommended**, to be measured first. (b) Leave it: the rounds are already won and the wins move little. (c) Lower every creature's stage 3 to about 1.3.
+8. Brimstone beside a full kit (73 wins in 100 for the careful player, 39 without it). (a) Its fire works once a run. **Recommended**, to be measured first. (b) No number and not on the last page (worth 1.05 alone). (c) Leave it.
 
 ### 3. The manual's words
 
@@ -94,12 +114,12 @@ Owner (ruling BA): the thing and one verb of its own; the act; then just the num
 **Done** (`path.js`; `docs/REFERENCE.md` is written again from the game by `sweep_refdoc.py` after the job `ref18.js`). Every row of `P.reference(meta)` and every "how it is got" line: the 17 reagents, 3 reflexes, 4 motifs, 10 instruments, 10 creatures, 9 sigils, 5 terms, 2 run lengths, 4 soundtracks, the sign's three. Also, for the page, the things a new game already holds, which are not rows of the book: the starting six reagents and the finishing hydrogen, the ten starting reflexes and the twelve across the fold, and all twelve motifs (`P.thingOf(category, id)`). The three the owner flagged:
 
 - Sulphur's Mask: "Sulphur's Mask disguises. Oxygen closes rings as sulfur does. The first two: x2."
-- Aqua Permanens: "Aqua Permanens holds water. No water leaves the molecule for 2 rounds. 8 gold."
+- Aqua Permanens: "Aqua Permanens stills. No water leaves for 2 rounds. Gives 8 gold."
 - Salt, how it is got: "50 chain-end OH oxidized."
 
-Samples of the rest: "Burner heats. Every OH that can lose water leaves a C=C. Once a round." "Solve loosens. Dry, weld and ring have no limit. Across the fold: once each." "Cleave cuts. Every C=C splits into two C=O." "Dry parches. An OH near a C=O leaves as water and a C=C forms." "Benzene ring steadies. Keep a benzene ring. x1.14, rising with each." "Long stretches. Four reagents a page, two pages a round." "The sign resets. The book empties but for the two found reagents. Yield x1.2 for good; number to beat x1.15." How it is got: "Make 5 C=C with one dehydrate." "Buy the organometallics. 5 credit." "Oxidize an OH that hydrate or hydroborate just made." A deed that counts only in a long run ends "In a run of six rounds or more."
+Samples of the rest: "Burner heats. Every OH that can lose water leaves a C=C. Once a round." "Solve loosens. Dry, weld and ring have no limit. Once each across the fold." "Cleave cuts. Every C=C splits into two C=O." "Dry parches. An OH near a C=O leaves as water and a C=C forms." "Benzene ring steadies. Keep a benzene ring. x1.14, rising with each." "Long stretches. Four reagents a page, two pages a round." "The sign resets. The book empties but for the two found reagents. Yield x1.2 for good; number to beat x1.15." How it is got: "Make 5 C=C with one dehydrate." "Buy the organometallics. 5 credit." "Oxidize an OH that hydrate or hydroborate just made." A deed that counts only in a long run ends "In a run of six rounds or more."
 
-The job `ref18.js` checks what a machine can: every line starts with the thing's name, none holds a banned phrase ("in a page", "your yield", "pays", "normally", "when", a bracket, two colons), none has more than five sentences, no two things share a way.
+The job `ref18.js` checks what a machine can: every line starts with the thing's name, none holds a banned phrase ("in a page", "your yield", "pays", "normally", "when", a bracket, two colons), none has more than five sentences, no two things share a way. It cannot tell whether a line is true, whether a verb is shared, or whether a line is two sentences.
 
 **Flagged as too complicated to say in two short sentences and a number**
 
@@ -108,14 +128,18 @@ The job `ref18.js` checks what a machine can: every line starts with the thing's
 - Hydroborate does two things (water across C=C the other way; C=O to C-OH).
 - Glass changes two rules (every round starts at x1.73; the round ends at the first reagent that does not carry on).
 - The sign's line holds three facts (the book empties; the yield; the number to beat).
-- Slime's line is five sentences with "Brings Hydroborate." on the end. Four creatures still say what reagent they bring (the owner has not picked on that).
+- Slime's, Brimstone's and Ammonia's lines are four or five sentences with "Brings ..." on the end. Four creatures still say what reagent they bring (the owner has not picked on that).
+- Strip C=O, how it is got: three reagents in a row, each on what the last one made. Solve, how it is got: a list of three limits.
+- Master's line holds three facts.
 
 **Other things a reader should know**
 
 - A motif's number is written as the player reads it, for the least that counts ("x1.14" for one benzene ring), then "rising with each". The motif the rules call acid is named "Acid group" in the book so it is not taken for the creature.
 - Tetractys ("The fourth: x3."), Gemini ("x2.") and Sulphur's Mask ("The first two: x2.") write a count as xN: the thing counts two or three times, which is not the yield times two or three. `nums` carries them as if they were yield numbers.
 - Numbers of creatures and motifs always have two decimals (x1.30).
-- A deed's count that was a count of landings reads "N uses of oxidize."; one that counts firings reads "Fire hydrate N times."
+- A deed's count that was a count of landings reads "N uses of oxidize."; one that counts firings reads "Fire hydrate N times." Two jars read "40 aminate landings or ammonias driven off."
+- Still outside the pattern: all twelve motifs and the Seedling of old end the number with a tail ("x1.14, rising with each."); Tetractys keeps "The fourth: x3." and Gemini "counts again. x2." (lines the owner had already seen); four reagents share the verb "adds" (Thiolate, Aminate, Cyanate, Formylate); the nine across-the-fold reflexes share "reaches"; Chlorinate "swaps" and Eliminate N "strips" are near Methylenate "trades" and Eliminate S "sheds"; 17 deeds end "In a run of six rounds or more." and the five terms end "After two runs that cleared six rounds."; a soundtrack's line is "A soundtrack."
+- Three lines say less than the rule: Salt also needs three reagents on both pages; Dry ice's "untouched" means the reagent never landed, so one that found nothing still counts as untouched; Brimstone and Ammonia are also lit when a reflex puts the sulfur or nitrogen in a ring.
 
 **Choices for the owner**
 
@@ -126,14 +150,14 @@ The job `ref18.js` checks what a machine can: every line starts with the thing's
 
 **The wood spirit's and the slime's jars, in the game** (`path.js` `RULE.jarStart`, off; `JARSTART`; `P.jarFull(id)`). With the switch on a starting play feeds each as well as its own reagent: a reagent lined up that finds nothing feeds the wood spirit, the second landing of one reagent on a page feeds the slime, and the jars are 250 and 70; the book's line says both ways. The job `hom18.js` checks it (off: neither play feeds a jar; on: each feeds once; the sizes and the book's lines). The numbers are the seventeenth's (part 5): both then hatch at about run 25 to 70.
 
-**Bought sigils beside instruments** (the seventeenth's runs with carousel, burette and seed crystal held, finished since: 30 runs for each sigil alone beside the kit, so only the first sigil bought counts; `python sweep_sig17.py other`). The careful player with the kit and no sigil wins 5.1 nine-round runs in 100; buying sigils he wins 11.4 to 12.0. The casual player goes from 0.01 to 0.33. The careful player holds three sigils by round 7, the casual player by round 9.
+**Bought sigils beside instruments** (the seventeenth's runs with carousel, burette and seed crystal held, finished since: 30 runs for each sigil alone beside the kit, so only the first sigil bought counts; `python sweep_sig17.py other`). The careful player with the kit and no sigil wins 5.1 nine-round runs in 100; buying sigils he wins 11.4 to 12.0 (8.1 if he also takes Aqua Permanens whenever shown; that table was played with it paying 6 and staying). The casual player goes from 0.01 to 0.33. The careful player holds three sigils by round 7, the casual player 2.7 to 2.9 by round 9.
 
 **Rounds 7 and 8 of the deal's tally** (job `deal17.js`, 150 deals of two a round, one round a job so it does not run out of time; `sweep_deal18.py` lays it beside 20,000 deals of the simulator; two tallies of the simulator at the game's size differ by 14 deals in 100 by chance).
 
 | Round | Simulator: molecules dealt; the most dealt, of 100 | Game before the fix: molecules; the most dealt; deals of 100 that differ; commoner molecules never dealt | Game now |
 |---|---|---|---|
 | 7 | 64; 5.1 | 44; 16.0; 35; 6 | 57; 5.3; 17; 0 |
-| 8 | being tallied | | |
+| 8 | 64; 4.1 | 38; 15.3; 43; 8 | 55; 5.0; 16; 0 |
 
 The fault and the fix are the same in these two rounds as in the others.
 
@@ -143,17 +167,17 @@ The fault and the fix are the same in these two rounds as in the others.
 
 - A creature's stage and number: `P.homStage(run, id)` gives `{ stage, mult, mults, count, next }`; `mult` is the creature's own number at its stage (`P.HOMGROW.read[id]`). Under `'keep'` the stage is read from `run.meta.jar[id]`, so the page must put the profile on the run (`run.meta = meta`) and go on adding to `meta.jar[id]` after the creature has hatched. When a tap lifts a stage `g.homEvolved` and the trail's `evolve` mark carry the new number, as before.
 - The book: every row of `P.reference(meta)` has `nums`; a homunculus row has `stages` (five numbers) and `stage`. `P.thingOf('reagent' | 'reflex' | 'motif', id)` gives the name and line of the things a new game holds (reagents by the card's id: `pcc`, `allyl`; the motif `acid` is named "Acid group").
-- The creatures' tokens (`P.HOMS[id].tok`) changed for Hydrogen, Wood spirit, Brimstone, Salt, Slime and Seedling. Brimstone is now lit on the last page too. Salt gives one use back, not three. The Seedling no longer wilts.
+- The creatures' tokens (`P.HOMS[id].tok`) changed for Hydrogen, Wood spirit, Brimstone, Salt, Slime and Seedling. A token still writes the stage 3 number whatever the stage: show `P.homStage(run, id).mult` instead. Brimstone is now lit on the last page too. Salt gives one use back, not three. The Seedling no longer wilts.
 - Aqua Permanens: after its second cleared round `run.sigils` no longer holds it, `run.sigGone` lists it, and `P.sigilVisit` does not show it again. `P.sigilPays('aqua_permanens')` is 8.
 - If `RULE.jarStart` is switched on: read a jar's size from `P.jarFull(id)`, not `P.JAR.full[id]`.
 
 ### What the reviewer found, and what was done
 
-Not yet reviewed.
+A fresh reviewer made the stage tables, the trials and round 7's deal row again from the result files, read the game's rules against the simulator's specs, ran `hom18.js` (27 of 27) and `ref18.js` (10 of 10), and read every line of `REFERENCE.md` against ruling BA. Verdict: pass with fixes. All 50 cells of the careful player's stage table, the "all ten" table and the "number alone" column matched; `HOMGROW.read` equals the simulator's table; no rule differs between the game and the simulator by reading. Fixed since, in this section: stage 5 is said to stop at 1.70 and 1.73 for Dry ice and Acid; Dry ice, Ammonia and Slime are named among the big rounds of stage 5; the Seedling's rising form is given with the right trials (6 atoms: 1.57 with rounds of 49 times); Acid's number alone is 1.55, not 1.5; the sigils beside the kit include the buyer who takes Aqua Permanens, and the casual player's count; the page is told that a token writes the stage 3 number; three lines that say less than the rule are listed. Fixed in the manual: the colon forms of Solve and Occult, "held or not", Polymerize's "Used again,", Aqua Permanens ("holds water" was a pun and "8 gold." did not say which way: now "stills" and "Gives 8 gold."), Dry ice's number with a tail, the two puns among the motifs, verbs that were phrases (Oxidize, Hydroborate, Oxidize C=C, Add methyl, Tuck), and verbs that were another thing's name or shared (Ring, Dehydrate, Tally counter, Dihydroxylate, Timer, Methylenate, Eliminate S, Open, Sulfur bridge, Amine). Left, and listed in part 3: the motifs' tail, Tetractys and Gemini, the shared "adds" and "reaches", the trailing conditions on deeds and terms. He did not see the kit table, the check on other deals or round 8, which were finished after he read; the jobs he named as unchecked in the game are in "Not done".
 
 ### Not done, in one place
 
-- Item 2: see "Not done" under part 2. The fit and its check used the same deals; the check on other deals is in part 2.
+- Item 2: see "Not done" under part 2. The fit and its check used the same deals; stage 3 was checked on 200 other deals (part 2), stages 1, 2, 4 and 5 were not. The kit was played 50 times a set with one three of sigils. In the game's job: taps at stages 2, 4 and 5, a whole run, the round ending on Brimstone's tap, Slime's shut bottle, Ammonia's second firing and Water's side effects are not checked.
 - Item 5: the wording was checked by a machine for banned phrases and by one reviewer; the owner has seen fifteen rows.
 - Item 6: see part 4.
 - More owner picks that had not arrived when this was written: Solve with Ammonia (`RULE.ammoniaLimits` is still off), the best player's 1.5 wins in 100, Water's two side effects.

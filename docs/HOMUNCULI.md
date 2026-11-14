@@ -218,7 +218,7 @@ Full tables: `docs/RIG.md`, eighteenth, parts 1 and 2. This section is how the t
 |---|---|---|---|
 | Water | Water floods. Wring out 3 waters. x1.30. Double bonds soak up OH; closed rings burst. | x1.30, x1.50, x1.71, x1.93, x2.15 | 3 waters (it was 4) |
 | Hydrogen | Hydrogen lifts. Drive off 2 hydrogens. x1.38. | x1.38, x1.62, x1.84, x2.11, x2.46 | the one job |
-| Dry ice | Dry ice freezes. Leave 3 reagents untouched all round. x1.91, last page. | x1.91, x2.40, x2.82, x3.89, x4.50 | no carbon dioxide needed |
+| Dry ice | Dry ice freezes. Leave 3 reagents untouched to the last page. x1.91. | x1.91, x2.40, x2.82, x3.89, x4.50 | no carbon dioxide needed |
 | Acid | Acid eats. Chew 2 atoms off the molecule. x2.01. | x2.01, x2.58, x3.17, x3.95, x4.50 | nothing: the number only |
 | Wood spirit | Wood spirit drinks. Line up a reagent that finds nothing. x1.22. | x1.22, x1.33, x1.40, x1.45, x1.51 | the one job |
 | Salt | Salt preserves. Open with last page's first reagent. x1.35. Its use returns. | x1.35, x1.49, x1.67, x1.92, x2.15 | the first reagent only (it was the whole line) |
