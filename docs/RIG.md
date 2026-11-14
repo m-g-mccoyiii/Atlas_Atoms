@@ -4,7 +4,7 @@ Built 2026-11-10. The newest measure is the first section below (the sixteenth, 
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
 
-## The measure of 2026-11-13, sixteenth: how sigils are got, unlocks as deeds
+## The measure of 2026-11-13, sixteenth: how sigils are got, unlocks as deeds, N, S and Cl in the late rounds
 
 One part for each item, written as each was finished. Each ends with the choices left for the owner. What was not done is at the end.
 
@@ -74,13 +74,14 @@ Prices, set from each sigil's worth: Solve 7, Phlogiston 7, Gemini 5, Clepsydra 
 - **Gold for a round cleared** (`RULE.goldClear = 1`, built, off): one gold for every round cleared whatever its yield. The casual player then holds 1.0 and 2.1 going into rounds 4 and 7 and a sigil is at work in 4 of a new player's ten runs; the careful player holds 1.5, 2.7, 3.0 and wins 2.3 in 100 (about 5 if he leaves the weak ones); a rich run no longer gets richer (a round pays 2.5 with or without sigils). The casual player still wins no nine-round run with it. It also makes the shelf's reagent easier to buy, which was not measured.
 - **Every run different.** Choosing at the start is the worst: a player who knows the strongest three takes them every run (37 pairs of runs in 100 end the same; of 1,000 runs only 3 different sets). Buying and the offer of three both mix the runs, because what is shown is drawn.
 - **Strength.** Free sigils held early are worth more than the same sigils bought late: about 8 wins in 100 against 1 to 2.4. The simulated buyer is a poor one: he buys the strongest he can pay for at once, which is mostly a cheap weak one (Sulphur's Mask first in 2,181 of 8,000 runs, Solve in 15). The reviewer ran a buyer who leaves the weak ones: 2.2 to 2.4 wins in 100. Buying keeps sigils a late prize in a run that was already going well.
+- **With instruments as well** (added after the review; 100 runs each, a kit of carousel, burette and seed crystal, all held from round one). The kit alone: the careful player wins 6 runs in 100, the casual 0.01. The kit and the three strongest sigils (Phlogiston, Solve, Gemini): the careful player wins 59 in 100 and clears rounds 7, 8, 9 94, 84 and 81 times in 100; the casual player wins 4.4 in 100; the biggest round was 41 times the number to beat. So three strong sigils held from the start, beside instruments, end the hard goal for a careful player, and are also the first thing measured that gets a casual player through. That is the case for making them cost something and come late.
 - **A new player's first runs** are three-round runs, which hold no sigils under any way.
 
 **(c) Is three the right cap?** There is no sign that four is better. Thirty sets of four were played (20 runs each). The fifteen without Aqua Permanens are worth 1.74 in the middle; the best three inside each of them is worth 1.85 in the middle. A cap of two was not compared. A fourth sigil adds nothing that can be measured (four over its best three: 0.98 for the careful player, 0.95 for the casual), because the fourth is mostly a weak one or one that overlaps, and the uses of the reagents do not stretch further. The biggest round with four was 28 times the number to beat, the same as with three. The cap is `RULE.sigilCap` (3).
 
 **What the reviewer found, and what was done.** A fresh reviewer ran the job (27 of 27) and every script again; every number matched. Verdict: pass with fixes. Fixed since: the buyer's weakness is now said and both win rates are given; the error of the row for choosing at the start is said; a sentence that guessed at sigils with instruments was cut; the game now refuses a sigil when the run is lost, when the offer is from an earlier round or another way, or when it has no price; the lines on gold, on Aqua Permanens, on the cap and on the creatures say no more than was measured; how many a run ends holding is in the table.
 
-**Not done.** No picture goes with the choices below. Sigils are offered in the six-round run too, at prices measured only on nine rounds. The game lets a sigil be bought while a round is in play; the page must call it only between rounds. A run started without a profile is offered all nine (for tests); the page must start runs from the profile so that only earned sigils are sold. What is shown is drawn afresh if the page asks with another round number or after a reload. Re-deals and the shelf's reagent take no gold in these numbers except in the half-kept line. Sigils together with instruments (three sets with a kit of three were queued and are not in this section). The six-round run. The shopper in the table takes the strongest sigil he can pay for; a real player's choices were not modelled. The game's own aiming player does not buy sigils (the job buys by hand). The page neither shows the catalog's sigils nor draws a held one. How a sigil is unlocked for the career is part 2.
+**Not done.** No picture goes with the choices below. Sigils are offered in the six-round run too, at prices measured only on nine rounds. The game lets a sigil be bought while a round is in play; the page must call it only between rounds. A run started without a profile is offered all nine (for tests); the page must start runs from the profile so that only earned sigils are sold. What is shown is drawn afresh if the page asks with another round number or after a reload. Re-deals and the shelf's reagent take no gold in these numbers except in the half-kept line. Sigils with instruments were run for one kit and one set of three only, both held from round one; bought sigils beside instruments were not. The six-round run. The shopper in the table takes the strongest sigil he can pay for; a real player's choices were not modelled. The game's own aiming player does not buy sigils (the job buys by hand). The page neither shows the catalog's sigils nor draws a held one. How a sigil is unlocked for the career is part 2.
 
 **Choices for the owner**
 
@@ -193,7 +194,48 @@ Owner: "More deeds, fewer counts." In the rules, every one of the 67 things is n
 
 ### 3. N, S and Cl in rounds 4 to 9
 
-In work when parts 1 and 2 were committed.
+Ruling AF2: "Rarer elements should become more common as the rounds get deeper." Chlorine was dealt in 1 molecule in 3 in rounds 1 to 3 and then fell to 1 in 15.
+
+**What was built** (`path.js` `RULE.elLate`, in `runBriefs`; the simulator's `deal_two` reads the same line). In rounds 4 to 9 of a six-round or nine-round run (a twelve-round run would use round 9's chances after it) each dealt molecule is first, with a set chance, one of that round's own molecules that hold chlorine; failing that, sulfur; failing that, nitrogen. Otherwise the deal is as it was. No molecule was added: the same 64 a round are dealt, some more often.
+
+**Molecules dealt that hold the element, of 100, rounds 1 to 9** (12,000 dealt a round, simulator)
+
+| | Before | Now |
+|---|---|---|
+| Chlorine | 33, 33, 36, 7, 7, 17, 22, 38, 44 | 33, 33, 36, 33, 35, 36, 40, 42, 48 |
+| Sulfur | 2, 13, 4, 12, 15, 28, 26, 28, 36 | 2, 13, 4, 12, 17, 27, 32, 32, 38 |
+| Nitrogen | 8, 8, 24, 25, 42, 39, 56, 66, 63 | 8, 8, 24, 25, 37, 40, 52, 64, 64 |
+| Any element past C, H, O | 42, 47, 54, 41, 55, 70, 80, 90, 95 | 42, 47, 54, 67, 72, 82, 86, 92, 96 |
+
+Chlorine no longer drops after round 3 and rises every round to the end. Sulfur and nitrogen rise or hold from round 4; nitrogen is a little lower than before in rounds 5, 7 and 8, because chlorine and sulfur take some of its deals. The share of any such element now rises through all nine rounds (it dipped at round 4). In the game's own deal (the job `el16.js`; chlorine only, 100 molecules a round, rounds 4 and 5; rounds 6 to 9 were not dealt in the game): chlorine 32 and 33 in 100 with the rule, 10 and 7 without. In that job, with the rule off, one molecule of round 4 came up 21 times in 100, far more than in the simulator (3 or 4): the game's deal and the simulator's are not quite the same deal, and that is an open question older than this change.
+
+**The pass marks, refitted** on 1,000 nine-round runs of each player under the new deal, to hold the clear rates the old marks gave on the old deal (500 runs of each player with nothing held, from parts 1 and 2: casual rounds 4 to 6 cleared 51, 47, 31 times in 100, careful rounds 7 to 9 32, 21, 16; six rounds: casual round 4 51, careful rounds 5 and 6 69, 47). Rounds 1 to 3 are untouched. The fit asked for lower marks in rounds 8 and 9 (1.94 and 1.93). They were not taken: with 1.94 and 2.05 the check runs below gave the player who reads two hands 1.5 wins in 100 (30 of 2,000), too near 2, so rounds 8 and 9 keep their old marks (2.04, 2.18). That choice was made on the check runs themselves, so for those two rounds the check is not a fresh one.
+
+| Run | Before | Now |
+|---|---|---|
+| Nine rounds | 0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18 | 0.36, 0.53, 0.39, 0.65, 0.83, 0.70, 1.48, 2.04, 2.18 |
+| Six rounds | 0.36, 0.53, 0.39, 0.63, 1.26, 1.10 | 0.36, 0.53, 0.39, 0.65, 1.16, 1.09 |
+
+**A long run with nothing unlocked, on deals the marks were not fitted on**, stopped at the first round not cleared (`sweep_run.py final16`):
+
+| Player | Runs | Wins all nine, of 100 (at most, by chance) | Before | Of the runs still alive, clear rounds 1 to 9 | Before |
+|---|---|---|---|---|---|
+| Novice | 600 | 0 (0.6) | 0 | 65, 43, 38, 21 (too few runs alive after round 4) | |
+| Casual | 1,000 | 0 (0.4) | 0 | 83, 71, 61, 50, 49, 30, 0 | 82, 70, 63, 47, 42, 38, 4 |
+| Careful | 2,000 | 0.30 (0.6) | 0.20 | 94, 92, 84, 84, 82, 70, 32, 19, 14 | 93, 92, 83, 83, 79, 67, 32, 14, 14 |
+| Reads two hands | 2,000 | 1.1 (1.7) | 0.83 | 97, 95, 90, 92, 91, 79, 44, 28, 16 | 97, 94, 92, 90, 90, 75, 36, 34, 14 |
+
+The shape holds: a gentle start and a wall at rounds 7 to 9. Round 8 is a little easier for the careful player than it was (19 of the runs still alive clear it, against 14). Every player measured wins under 2 runs in 100; the best one, who reads two hands, wins 1.1 (22 of 2,000 runs), which chance alone does not put past 1.7. The six-round run is a little easier: on the fitting deals the careful player wins 18.7 in 100 with the new marks against 17.2 with the old, and 17.8 on the check deals; the casual player 1.2.
+
+**What the reviewer found, and what was done.** A fresh reviewer read both deals (the same, step for step; the three-round first game untouched; no molecule dealt twice in 108,000 pairs), made the shares table again with his own script (within 1 or 2 everywhere), and counted the check runs again (the same). Verdict: pass with fixes. Fixed since: the two-hand player's 400 runs could not carry "under 2 in 100", so 1,600 more were played, and they showed the lowered marks of rounds 8 and 9 were too low, so those went back; the true reason for round 9's mark is given; the rates the marks were fitted to are written down; the lines on nitrogen, on round 8, on the six-round run and on the thin check in the game say what was measured.
+
+**Not done.** More chlorine and sulfur molecules for rounds 4 and 5: there are 6 and 4 with chlorine, so the same few come up (the most dealt molecule of round 5 is about 10 deals in 100; it was 4). Sulfur in rounds 1 to 3 (2, 13, 4 in 100) was not part of this. Runs with helpers, creatures or sigils were not played again under the new deal: every table of parts 1 and 2 and of the earlier measures was made on the deal as it was. The game's own rig was not run over whole runs.
+
+**Choices for the owner**
+
+1. How much chlorine late. (a) As built: about 1 molecule in 3 through round 6, rising to 1 in 2. (b) Less: 1 in 5 in rounds 4 to 6. (c) As it was.
+2. The few chlorine molecules of rounds 4 and 5. (a) Leave them: some repeat. (b) Make about ten more for each of those rounds. (c) Deal rounds 1 to 3's chlorine molecules there as well.
+3. The wall for the best player (1.1 wins in 100). (a) Leave it. (b) Raise the marks of rounds 8 and 9 a little (2.1 and 2.3 give him 0.85 and the careful player 0.2). (c) Fit the marks again on more runs before deciding.
 
 ## The measure of 2026-11-13, fifteenth: helpers for the task, the five creatures
 

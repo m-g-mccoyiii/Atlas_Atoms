@@ -666,7 +666,7 @@ RULE.clEarly = [0.32, 0.32, 0.32];
 // RULE.elLate (sixteenth, item 3; ruling AF2: "Rarer elements should become more common as the rounds get deeper"): in the rounds named, each
 // dealt molecule is first, with the chance given, one of the round's own molecules that hold that element (chlorine tried first, then sulfur,
 // then nitrogen). It lifts what hetCurve alone deals: chlorine fell to 1 molecule in 15 in rounds 4 and 5, and sulfur was 1 in 8. null: off.
-RULE.elLate = null;
+RULE.elLate = { 4: { Cl: 0.29, S: 0.08, N: 0.17 }, 5: { Cl: 0.31, S: 0.10, N: 0.02 }, 6: { Cl: 0.26, S: 0.09, N: 0.14 }, 7: { Cl: 0.23, S: 0.11, N: 0.05 }, 8: { Cl: 0.10, S: 0.08 }, 9: { Cl: 0.07, S: 0.04, N: 0.08 } };
 const EL_RE = { Cl: /Cl/, S: /S|s/, N: /N|n/ };
 const FEED_CL = {1: ['C=CC(Cl)C(O)(CCCl)CCC(C)=O', 'C=C(C)CC(Cl)C(Cl)C(=O)CCC=O', 'C=CCC1C(=O)C(Cl)C=CC1Cl', 'C=CCCC(C(=O)CCCl)C(Cl)C=O', 'CCCCC(Cl)C=CC=CC=O', 'C=CCCC(Cl)C(O)CC=O'], 2: ['CC(=O)CCC=C(CCl)C(Cl)CC=C(C)C', 'C=CCCC(Cl)C(=O)C(Cl)CCC=O', 'C=CC1=CC(C(Cl)C(=O)C(Cl)CO)=CC=C1', 'C=CCCC1C(=O)C(CC=O)C(Cl)C1Cl', 'O=CC=CC(O)CCCCCCl', 'CC(=O)CC(O)C=CC1CSCCC1Cl'], 3: ['C=CC(CC1(Cl)COC(C)C1)C(Cl)C=O', 'O=CC=CC(O)C(Cl)CCCC(Cl)CCCO', 'CC(C)=CCCC(Cl)C(=O)C(Cl)CCC=O', 'C=CCCC1CC(Cl)(C(O)C(Cl)C(C)N)C1=O', 'C=CCCCCCC(Cl)CCC=CC=O', 'NC1CC2CC1CC2(O)C=CC(=O)CCl']};
 // needPar (ruling AP 1, RIG.md twelfth): in the runs past the bachelor's a round is cleared only when the spec is met AND the yield
@@ -682,7 +682,7 @@ RULE.homAim = true;
 // wall. Fitted on the simulator (docs/tools_chem/sweep_career.py fit) and confirmed on other deals.
 // FLAT (fourteenth measure, part 1): these are the square roots of the thirteenth's marks (0.13, 0.28, 0.15, 0.40, 0.70, 0.53, 2.35, 4.15, 4.75; master 1.6, 1.2;
 // postdoc 1.46, 1.21, 0.84), so the same rounds clear.
-RULE.needParBy = { master: [0.36, 0.53, 0.39, 0.63, 1.26, 1.10], doctorate: [0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18], postdoc: [0.36, 0.53, 0.39, 0.63, 0.84, 0.73, 1.53, 2.04, 2.18, 1.21, 1.10, 0.92] };
+RULE.needParBy = { master: [0.36, 0.53, 0.39, 0.65, 1.16, 1.09], doctorate: [0.36, 0.53, 0.39, 0.65, 0.83, 0.70, 1.48, 2.04, 2.18], postdoc: [0.36, 0.53, 0.39, 0.65, 0.83, 0.70, 1.48, 2.04, 2.18, 1.21, 1.10, 0.92] };      // sixteenth, item 3: rounds 4 to 9 refitted under RULE.elLate (were 0.63, 0.84, 0.73, 1.53; rounds 8 and 9 kept at 2.04 and 2.18; master was 0.63, 1.26, 1.10)
 // specBanByLong: the specs a casual player seldom clears are not set in rounds 1 and 2 of the long runs either (as specBanBy in the bachelor's)
 RULE.specBanByLong = { 1: ['cut_down', 'double_bonds', 'unsaturation', 'lean_turns'], 2: ['end_CO', 'off_hydrogen'] };
 // pairFrom: two specs from this round on. specShiftLong: { round: change } to the spec's target share in the runs past the bachelor's.

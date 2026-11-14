@@ -772,8 +772,9 @@ EXPERIMENTS['deed16'] = deed16
 EL16 = {4: {'Cl': 0.29, 'S': 0.08, 'N': 0.17}, 5: {'Cl': 0.31, 'S': 0.10, 'N': 0.02}, 6: {'Cl': 0.26, 'S': 0.09, 'N': 0.14},
         7: {'Cl': 0.23, 'S': 0.11, 'N': 0.05}, 8: {'Cl': 0.10, 'S': 0.08}, 9: {'Cl': 0.07, 'S': 0.04, 'N': 0.08}}
 FLAT14['el16'] = {'el_late': {str(k): v for k, v in EL16.items()}}       # flat14 el16,<player>,<runs>,g,doctorate: the pools the pass marks are fitted on
+assert SC.EL_LATE is None or EL16 == SC.EL_LATE, 'EL16 and path.js RULE.elLate differ'
 # the marks fitted on those pools (sweep_career.py fit el16 ...), for the runs that check them on other deals (final13 ...,ver=16)
-MARKS16 = None
+MARKS16 = {'master': [0.36, 0.53, 0.39, 0.65, 1.16, 1.09], 'doctorate': [0.36, 0.53, 0.39, 0.65, 0.83, 0.70, 1.48, 2.04, 2.18]}
 
 
 def final16(arg='median,2000'):
