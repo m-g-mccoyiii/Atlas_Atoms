@@ -2744,7 +2744,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // beat when it pays. c: the marks in quiet pencil, and the on-molecule animation only for a moment when a property is gained or pays.
   // No words, no colour, no atom is moved. Drawn on a canvas of its own over the picture (a .veil, width 0 when off); the sheen and the cage's
   // paling are cut away over the atoms, so no ball is covered. A property PAYS when a step's record carries it (ev src 'motif' or 'family').
-  const KINV = { mode: (() => { try { const v = new URLSearchParams(root.location.search).get('kin'); return v === 'a' || v === 'b' || v === 'c' ? v : null; } catch (e) { return null; } })(), cv: null, c: null, g: null, n: 0, F: null, S: {}, W: 1280, H: 720, clk: { beat: null, b0: null, off: null, len: 0.5, live: -1e9 }, v: new T.Vector3(), at: { x: null, z: null }, err: null };
+  const KINV = { mode: (() => { try { const v = new URLSearchParams(root.location.search).get('kin'); return v === 'a' || v === 'b' || v === 'c' ? v : v === '0' ? null : 'c'; } catch (e) { return 'c'; } })(), cv: null, c: null, g: null, n: 0, F: null, S: {}, W: 1280, H: 720, clk: { beat: null, b0: null, off: null, len: 0.5, live: -1e9 }, v: new T.Vector3(), at: { x: null, z: null }, err: null };
   const KINMAP = { sugar: 'sugar', resonance: 'resonance', arene: 'arene', benzene: 'arene', ring: 'ring', fusion: 'ring', spiro: 'ring', cage: 'cage', chain: 'chain' };
   // beats on the music's clock (a steady half second when no music with a beat plays, as in a recording, whose sound is rendered afterwards)
   function kinBeat(now) {
@@ -2791,7 +2791,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     x.beginPath(); const st0 = Math.max(2, (s1 - s0) / 14); for (let s = s0, k = 0; ; s = Math.min(s1, s + st0), k++) { const p = at(s); if (k) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); if (s >= s1) break; } x.stroke(); return tot;
   }
   function kinFrame(now) {
-    const on = kinSync(now); let c = KINV.cv; if (!on) { if (c && c.width) c.width = 0; return; }
+    const on = kinSync(now); let c = KINV.cv; if (!on) { if (c && c.width) c.width = 0; return; } const hevN = HEVO.num && now - HEVO.numT < 2400 ? now - HEVO.numT : -1;
     if (!c) { c = KINV.cv = document.createElement('canvas'); c.className = 'veil'; app.append(c); }
     const W = KINV.W = veil.width || 1280, H = KINV.H = veil.height || 720; if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
     const x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); x.lineCap = 'round'; x.lineJoin = 'round'; x.setLineDash([]);
@@ -2820,6 +2820,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           x.globalAlpha = Math.min(1, k * 1.3); x.fillStyle = '#ffffff'; x.strokeStyle = INK; x.lineWidth = Math.max(1.2, lwS * 0.14); x.beginPath(); for (let j = 0; j < 8; j++) { const an = j * Math.PI / 4, rr = j % 2 ? L * 0.26 : L; x.lineTo(gx + Math.cos(an) * rr, gy + Math.sin(an) * rr); } x.closePath(); x.fill(); x.stroke(); }); } }
       x.globalAlpha = 1;
     }
+    if (hevN >= 0) { /* the creature's new number, in the pen's hand, beside it while it stands large */ const hp = scr(HOMP.x + 4.6, 2.2, HOMP.z), kq = W / 1280, pop = Math.min(1, hevN / 160), al = Math.min(1, (2400 - hevN) / 400); x.save(); x.globalAlpha = Math.max(0, al); try { AA.rxPen.write(x, 'x' + (+HEVO.num).toFixed(2), hp[0], hp[1], 58 * kq * (0.6 + 0.4 * pop), { weight: 'heavy', color: '#fbf6e6', align: 'left' }); } catch (e) { x.fillStyle = '#fbf6e6'; x.font = 'bold ' + (46 * kq) + 'px sans-serif'; x.fillText('x' + (+HEVO.num).toFixed(2), hp[0], hp[1]); } x.restore(); }
     // the marks on the page: a row under the molecule (b: ink; c: quiet pencil, inked for a moment when one is gained or pays)
     if (KINV.mode !== 'a' && AA.rxMarks && AA.rxMarks.kin) {
       const Hh = homeNow(), at = scr(KINV.at.x == null ? Hh.x : KINV.at.x, 0.05, KINV.at.z == null ? Hh.z + Hh.d / 2 - 0.9 : KINV.at.z), kk = W / 1280, sz = 80 * kk, gap = 104 * kk, rows = AA.rxMarks.kinIds.filter(id => S[id] && ((S[id].lv > 0 && now >= S[id].gain) || (S[id].lose > -1e8 && now - S[id].lose < 1700)));
@@ -2835,12 +2836,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function homStageNow(id) { try { return P.RULE.homGrow && run ? P.homStage(run, id).stage : 0; } catch (e) { return 0; } }
   function homEvoFrame(now) {
     if (!homObj || !g) return; const ev = g.homEvolved;
-    if (ev && ev !== HEVO.seen && ev.id === homObj.id && HEVO.done) { HEVO.seen = ev; HEVO.at = kinNext(now + 700); HEVO.done = false; HEVO.swap = false; HEVO.s0 = homObj.s; }
+    if (ev && ev !== HEVO.seen && ev.id === homObj.id && HEVO.done && !HEVO.pend) { HEVO.seen = ev; HEVO.pend = true; }
+    /* it changes at home, once it is back from its job */ if (HEVO.pend && !st.homAct) { HEVO.pend = false; HEVO.at = kinNext(now + 520); HEVO.done = false; HEVO.swap = false; HEVO.s0 = homObj.s; }
     if (HEVO.done) return; const a = now - HEVO.at; dirty = true;
     if (a < 0) { const u = Math.max(0, 1 + a / 420); homObj.s = HEVO.s0 * (1 + 0.2 * u * u); return; }
-    if (!HEVO.swap) { HEVO.swap = true; const id = homObj.id; homStand(); HEVO.s1 = homObj.s; try { burst3(HOMP.x, 1.4, HOMP.z, 18, '#fbf6e6'); burst3(HOMP.x, 0.9, HOMP.z, 14, '#' + new T.Color(JARC[id]).getHexString()); } catch (e) { /* no puff */ } try { sfx.stamp(); sfx.good(); } catch (e) { /* no sound */ } st.shake = Math.max(st.shake, 0.3); }
-    const u = Math.min(1, a / 620), e = 1 - Math.pow(1 - u, 3); homObj.s = HEVO.s1 * (0.55 + 0.45 * e + 0.32 * Math.sin(Math.PI * u) * (1 - u)); const fg = homObj.grp.children[0]; if (fg) fg.rotation.y = (1 - e) * 6.2832;
-    if (u >= 1) { HEVO.done = true; homObj.s = HEVO.s1; if (fg) fg.rotation.y = 0; }
+    if (!HEVO.swap) { HEVO.swap = true; const id = homObj.id; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; homStand(); HEVO.s1 = homObj.s; try { burst3(HOMP.x, 1.4, HOMP.z, 18, '#fbf6e6'); burst3(HOMP.x, 0.9, HOMP.z, 14, '#' + new T.Color(JARC[id]).getHexString()); } catch (e) { /* no puff */ } try { sfx.stamp(); sfx.good(); } catch (e) { /* no sound */ } st.shake = Math.max(st.shake, 0.3); }
+    const u = Math.min(1, a / 620), e = 1 - Math.pow(1 - u, 3); const big = a < 1500 ? 1 : Math.max(0, 1 - (a - 1500) / 500); homObj.s = HEVO.s1 * (0.55 + 0.45 * e + 0.32 * Math.sin(Math.PI * u) * (1 - u)) * (1 + 0.9 * big * e); const fg = homObj.grp.children[0]; if (fg) fg.rotation.y = (1 - e) * 6.2832;
+    if (a >= 2000) { HEVO.done = true; homObj.s = HEVO.s1; if (fg) fg.rotation.y = 0; }
   }
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; try { bleedMock(x); } catch (e) { /* a mock never breaks the page */ } if (BENCHV && LOSS.blank && st.mode === 'done' && !st.pass) { if (now - (st.doneT || now) > LOSS.end) { const nb = 9 * Math.sin(now / 260), n0 = px({ x: 4, z: 2 }), nx = [n0[0] + nb, n0[1]]; x.save(); x.translate(nx[0], nx[1]); x.scale(2.2, 2.2); x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(-78, 0, 24, 0.9, 6.0); x.stroke(); const ex = -78 + 24 * Math.cos(6.0), ey = 24 * Math.sin(6.0); x.beginPath(); x.moveTo(ex - 16, ey - 6); x.lineTo(ex, ey); x.lineTo(ex + 6, ey - 17); x.stroke(); x.beginPath(); x.moveTo(-30, 0); x.lineTo(30, 0); x.lineTo(8, -20); x.moveTo(30, 0); x.lineTo(8, 20); x.stroke(); x.restore(); } ink.t.needsUpdate = true; return; } pageStains(x);

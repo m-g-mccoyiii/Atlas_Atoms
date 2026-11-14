@@ -445,3 +445,10 @@ Branch `page-builder-17` (worktree `page17`). Files: `scheme.js`, `marks.js`, `k
 Not done: the manual (nothing of item 3), `P.profileOpts`, `P.stageOf` / `P.gateOpen`, the jar past full, `runResult().earned`; the other seven creatures' forms; the creature in its jar on the shelf and in the manual is not staged.
 
 scheme.html: bump `scheme.js?v=`, `marks.js?v=`, `kitart.js?v=`.
+
+Later the same day (seventeenth builder, after the owner's rulings):
+
+- **`c` is the default** for the properties (`?kin=a`, `?kin=b` the other two, `?kin=0` none). Not yet done in `c`: a strip for the marks that the molecule's fit box leaves free, a line from a mark to where its property lives, a bigger on-molecule effect, the loss shown on the molecule, the amount paid written beside the stamp.
+- **Creatures, second go** ("bigger changes and fewer spikes"): water is droplet, puddle on legs, the figure as it was, waterspout, tide; acid keeps its points and grows by eating (toothed mouth and a gnawed bolt, then a belly that is all maw in a crater); slime buds, stacks and stretches. The other seven are not drawn.
+- **The evolve moment** waits until the creature is home from its job (`HEVO.pend`), lands at nearly twice size for a second and a half, and the new multiplier is written beside it in the pen's hand on the properties' canvas (so it needs `kin` not `0`).
+- **Whole-game layout job is NOT at 0**: 7 of 5,277 layouts under touching with these changes (6 before them on the same rules; worst 0.971). Four are the cube's own atoms (0.987 to 0.995: the build-time check does not see them, the measure there differs from the placed one); two or three are layouts where both the eased and the fresh build failed (`fresh:fail`).
