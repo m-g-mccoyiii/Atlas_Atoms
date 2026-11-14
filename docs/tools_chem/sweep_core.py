@@ -1221,7 +1221,7 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
             R.rec = rec
             if log is not None:
                 log.append({'page': R.page, 'hand': list(hand), 'line': list(line), 'chain': list(page['chain']), 'smi': R.smi,
-                            'made': made(R), 'circ': [list(c) for c in page['circ']]})
+                            'made': made(R), 'circ': [list(c) for c in page['circ']], 'off': dict(page['off'])})
             R.x['lines'] = R.x.get('lines', ()) + (line,)
             usedc.update(set(line))
         else:
@@ -1248,6 +1248,7 @@ def play_round(G, smi, rnd, rack, player, rng, spec=None, brief='plain', tierNo=
     R.x['kinds'] = dict(kinds)
     R.x['dealt'] = dict(dealt)
     R.x['used'] = dict(usedc)
+    R.x['spent'] = sum(1 for v in R.left.values() if v <= 0) if R.left else 0      # reagents with no use left at the end of the round
     return R
 
 
@@ -1396,7 +1397,12 @@ def spec_pick(G, smi, rnd, rack, rng, tierNo, hist, brief='plain', proof=True):
 # a run
 # ---------------------------------------------------------------------------------------------------------------
 
-def deal_two(rnd, rng, extra=None, het=True, cl_early=True):
+_el = re.search(r'RULE\.elLate = (\{.*?\});', _JS)
+EL_LATE = {int(k): {e: float(v) for e, v in re.findall(r'(\w+): ([\d.]+)', body)} for k, body in re.findall(r'(\d): \{(.*?)\}', _el.group(1))} if _el else None   # path.js RULE.elLate
+_EL_RE = {'Cl': re.compile('Cl'), 'S': re.compile('S|s'), 'N': re.compile('N|n')}
+
+
+def deal_two(rnd, rng, extra=None, het=True, cl_early=True, el_late=None):
     """Two different molecules of the round: the pool with the game's chance, else the bank (path.js feedsFor, P_POOL).
     RULE.hetCurve (on in the game): each molecule is first decided to hold an element other than C, H, O or not, with the
     round's share, and is then drawn from the molecules of the round that fit.  Rounds past nine deal round nine's.
@@ -1406,11 +1412,26 @@ def deal_two(rnd, rng, extra=None, het=True, cl_early=True):
     hc = cv[min(len(cv), r9) - 1] if (het and cv) else None
     out = []
     cl = CL_EARLY[rnd - 1] if (cl_early and CL_EARLY and 1 <= rnd <= len(CL_EARLY) and FEED_CL.get(rnd)) else 0
+    el = None
+    if el_late:
+        el = el_late.get(r9) or el_late.get(str(r9))
     while len(out) < 2:
         if cl > 0 and rng.random() < cl:           # path.js RULE.clEarly: one of the round's chlorine molecules
             left = [x for x in FEED_CL[rnd] if x not in out]
             if left:
                 out.append(rng.choice(left))
+                continue
+        if el:                                      # path.js RULE.elLate: one of the round's own molecules that hold the element
+            got = None
+            for e in ('Cl', 'S', 'N'):
+                pe = el.get(e, 0)
+                if pe > 0 and rng.random() < pe:
+                    cand = [x for x in FEED_POOL[r9] + FEED_BANK[r9] if _EL_RE[e].search(x) and x not in out]
+                    if cand:
+                        got = rng.choice(cand)
+                        break
+            if got:
+                out.append(got)
                 continue
         use_pool = rng.random() < P_POOL[r9 - 1]
         pl, bk = FEED_POOL[r9], FEED_BANK[r9]
@@ -1454,7 +1475,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         het = G.p.get('het', True)
         if tierNo == 1 and het is True and G.p.get('het_b', HET_CURVE_B):
             het = G.p.get('het_b', HET_CURVE_B)
-        two = deal_two(r, rng, extra, het, G.p.get('cl_early', True))
+        two = deal_two(r, rng, extra, het, G.p.get('cl_early', True), (G.p.get('el_late', EL_LATE) if tierNo != 1 else None))
         opts = [(s, spec_pick(G, s, r, rk, random.Random('run/%s/%d/spec%d' % (seed, r, i)), tierNo, hist, brief)) for i, s in enumerate(two)]
         if PLAYERS[player]['pick'] == 'random':
             smi, sp = opts[rng.randrange(2)]
@@ -1484,7 +1505,7 @@ def play_run(G, seed, length='bachelor', rack=START_SIX, player='median', racks=
         row = {'r': r, 'mol': smi, 'brief': brief, 'spec': sp['parts'], 'fell': sp['fell'], 'met': bool(R.x['met']), 'ok': ok, 'total': total,
                'par': par, 'marks': sum(1 for k in MARKS if total >= nice(par * k)), 'gold': run['gold'], 'steps': R.x['steps'], 'kinds': R.x['kinds'],
                'lines': R.x.get('lines', ()), 'dealt': R.x['dealt'], 'used': R.x['used'], 'alive': alive, 'end': R.smi, 'tap': R.x.get('tap', 0), 'prog': R.x.get('prog'), 'close_pages': R.x.get('close_pages', 0),
-               'dec': (R.x.get('dec_changed', 0), R.x.get('dec_pages', 0))}
+               'dec': (R.x.get('dec_changed', 0), R.x.get('dec_pages', 0)), 'spent': R.x.get('spent', 0)}
         if logs:
             row['log'] = lg
         out['rounds'].append(row)
