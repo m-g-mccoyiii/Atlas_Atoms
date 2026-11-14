@@ -3288,7 +3288,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // (builder 22, "bigger on the bench so the face reads") a rigged creature stands half as large again on the bench, up to what its place allows
   homStand = (f0 => function () { f0(); if (r21Fig() && homObj && homObj.s) homObj.s = Math.min(homObj.s * 1.5, BNZ.hom.s * 1.45); })(homStand);
   R21.report = () => ({ err: R21.err, tb: +R21.tb.toFixed(2), rig: !!r21Fig(), evo: R21.evo ? { from: R21.evo.from, to: R21.evo.to } : null, act: R21.act, a20: A20.err || null, hevo: HEVO.err || null });
-        // ==== S26 BEGIN
+            // ==== S26 BEGIN
   // (builder 26) THE WATER SPIRIT ON THE PAGE. kitart's spirit (AA.rxKit.spiritOn; a figure whose rig2.spirit is set) is played by the same three wrappers as
   // every rig (r21Frame, homJump, homEvo19): the page says when and where. Its act is its own: it sinks into its pool and flows to the molecule as a puddle
   // (the wet it leaves dries), rises, reaches an arm of water to each water that left and draws it into its body, lays its hand on the molecule and a thin
@@ -3326,7 +3326,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           x.strokeStyle = 'rgba(255,255,255,0.95)'; x.lineWidth = lw * 0.9; x.setLineDash([9 * E.kk, 11 * E.kk]); x.lineDashOffset = -a / 16; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(ex, ey); x.stroke(); x.setLineDash([]);
           if (fu < 1) { x.globalAlpha = 1 - fd; a20Drop(x, ex, ey, 5.5 * E.kk, '#8fbdf4', lw * 0.7, Math.atan2(Bq[1] - A[1], Bq[0] - A[0]) + 1.57); } x.globalAlpha = 1; }); } }; })(A20ACT.water);
   /* on the bench it keeps its own proportions from stage to stage (a newborn is small, the elder fills the row) and its raised arm stays on the screen */
-  homStand = (f0 => function () { f0(); const SP = s26Fig(); if (SP && homObj) homObj.s = [3.3, 4.5, 6.4, 7.4, 8.3][SP.st - 1] / SP.G.H; })(homStand);
+  homStand = (f0 => function () { f0(); const SP = s26Fig(); if (SP && homObj) homObj.s = [3.3, 4.5, 6.4, 7.0, 6.9][SP.st - 1] / SP.G.H; })(homStand);
   if (AA.rxScheme) AA.rxScheme.s26 = () => ({ fig: !!s26Fig(), err: (AA.rxKit && AA.rxKit.spiritErr) || null, r21: R21.err, a20: A20.err || null, stage: homObj && homObj.stage, s: homObj && homObj.s });
   // ==== S26 END
   function drawInk(now) {
