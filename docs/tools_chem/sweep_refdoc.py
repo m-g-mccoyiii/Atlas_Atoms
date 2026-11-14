@@ -1,7 +1,7 @@
 """Write docs/REFERENCE.md from the game's own table (P.reference), as the job ref16.js printed it, with the simulated number of
 runs each thing takes (sweep_deeds.py career, which writes _sweep/deed16/earn.json).
 
-    bash .claude/headless/hlow.sh jobs/ref18.js ref18 120      (ref16.js until the eighteenth measure)
+    bash .claude/headless/hlow.sh jobs/ref19.js ref19 120      (ref18.js for the eighteenth measure, ref16.js before it)
     python docs/tools_chem/sweep_deeds.py career 300
     python docs/tools_chem/sweep_refdoc.py
 """
@@ -9,7 +9,7 @@ import json
 import os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref18.json'), encoding='utf-8'))['result']
+o = json.load(open(os.path.join(ROOT, '.claude', 'headless', 'out', 'ref19.json'), encoding='utf-8'))['result']
 ref, cats, ladder, start = o['ref'], o['cats'], o['ladder'], o.get('start') or []
 try:
     E = json.load(open(os.path.join(ROOT, 'docs', 'tools_chem', '_sweep', 'deed16', 'earn.json'), encoding='utf-8'))
@@ -18,7 +18,7 @@ except Exception:
 KIND = {
     'reagent': 'Twelve by a deed in the reagent\'s own chemistry. Three bought with credit. Two found by firing others one after another.',
     'reflex': 'Each by a deed that nearly makes it. All three need a reagent that is itself earned first.',
-    'motif': 'Each by a deed with rings: many closed at once, many more than dealt, two that share a side, or a high yield on a benzene ring.',
+    'motif': 'Eight are held from the start. The other four each by a deed with rings: many closed at once, many more than dealt, two that share a side, or a high yield on a benzene ring. More of a motif gives more: the number written is for the least that counts.',
     'instrument': 'Each by the kind of play it helps, done in a six-round or nine-round run.',
     'homunculus': 'Each hatches when its jar is full. These ten are the lifetime counts of the book (ruling K: jars fill across runs).',
     'sigil': 'Each by brushing against the rule it bends, in a six-round or nine-round run.',
@@ -41,7 +41,7 @@ n_long = sum(1 for r in ladder if r['thing'] and r['long'])
 n_thing = sum(1 for r in ladder if r['thing'])
 n_credit = sum(1 for r in ladder if r['credit'])
 L = ['# Overreact: the reference book', '',
-     'Everything a player can get that a new game does not hold, by category: what it is called, what it does, and the one way to get it. This file is written from the game\'s own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref18.js` and `sweep_deeds.py career`), so it says what the rules say. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.', '',
+     'Everything a player can get that a new game does not hold, and the eight motifs it does hold, by category: what it is called, what it does, and the one way to get it. A way that ends "Master\'s." counts only in a run of six rounds or more. This file is written from the game\'s own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref19.js` and `sweep_deeds.py career`), so it says what the rules say. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.', '',
      'Since the sixteenth measure every thing is got by a deed that fits it ("More deeds, fewer counts"). The lifetime counts left are the ten jars and Fold (epoxidize acts 3 times); the condenser asks for 2 rounds over all runs. No two things share a way. "Runs" is the run on which the thing is handed over in the middle career of %d simulated careers of %d runs, for the casual player and then the careful one; a run hands over two things at most, so in the first twenty runs a deed can be handed over up to about 19 runs after it was done. Both runs are given: the run the deed is done, then the run the thing is handed over.' % (E.get('careers', 0), E.get('runs', 300)), '',
      'For the page: `P.reference(meta)` gives one row a thing: `id`, `category`, `name`, `does`, `how`, `owned`, `nums` (the numbers of the line in order), and `count` and `target` where the way has a number; a homunculus also has `stages` (its five numbers) and `stage` (how far this profile has brought it). `P.thingOf(category, id)` gives the name and line of any thing, the ones a new game holds too. `P.REFERENCE_CATS` is the order and the names of the categories. `P.profileOpts(meta)` is what `P.runNew` needs so that a run offers what the profile holds and nothing else. `P.runResult(run).earned` lists what a run handed over, each with the thing\'s `name` and `how`. `P.stageOf(meta)` and `P.gateOpen(meta, what)` are what the page\'s own gate should read.', '',
      '## How many', '', '| Category | Things | How they are got |', '|---|---|---|']
@@ -57,14 +57,14 @@ for cid, cname in cats:
         L.append('| %s | %s | %s | %s |' % (x['name'][0].upper() + x['name'][1:], x['does'], x['how'], runs(x)))
     L.append('')
     if cid == 'homunculus':
-        L += ['The line above is a new profile\'s (stage 1). A homunculus keeps what it grows: its jar goes on counting after it hatches, and at 2, 4, 7 and 11 times the jar\'s size it reaches stages 2 to 5. Its number at each stage:', '',
+        L += ['A homunculus acts once a round, on the page the player picks; Brimstone once a run; Dry ice only on the last page. The line above is a new profile\'s (stage 1). A homunculus keeps what it grows: its jar goes on counting after it hatches, and at 2, 4, 7 and 11 times the jar\'s size it reaches stages 2 to 5. Its number at each stage:', '',
               '| Name | Stage 1 | 2 | 3 | 4 | 5 |', '|---|---|---|---|---|---|']
         for x in rows:
             L.append('| %s | %s |' % (x['name'], ' | '.join('x%.2f' % v for v in (x.get('stages') or [])) or 'no number'))
         L.append('')
 if start:
     L += ['## What a new game already holds, in the same words', '', 'Not in the book (there is nothing to get); `P.thingOf` gives these lines to the page.', '']
-    for cid, cname in (('reagent', 'Reagents: the starting six and the finishing hydrogen'), ('reflex', 'Reflexes: the starting ten, and the twelve across the fold'), ('motif', 'Motifs: all twelve (four of them are in the book above)')):
+    for cid, cname in (('reagent', 'Reagents: the starting six and the finishing hydrogen'), ('reflex', 'Reflexes: the starting ten, and the twelve across the fold')):
         L += ['### ' + cname, '', '| Name | What it does |', '|---|---|']
         L += ['| %s | %s |' % (x['name'], x['does']) for x in start if x['category'] == cid]
         L.append('')

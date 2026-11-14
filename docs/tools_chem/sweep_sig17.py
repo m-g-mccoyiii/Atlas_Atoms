@@ -124,7 +124,37 @@ class TetBoth(S2.Tetractys):
         G.p['lastx'] = 3.0
 
 
-ALL = {c.id: c for c in (MaskHold, MaskWide, MaskBoth, MaskTwice, MaskWideTwice, MaskT1, MaskT2, MaskR1, MaskR2, TetFree, TetX3, TetBoth)}
+# --- nineteenth: Sulphur's Mask cut to ONE rule, three ways (the owner's choice; RIG.md nineteenth, part 5) ---------------------------
+class Mask1Twice(S2.Sigil):
+    """No chemistry changed: the first two rings an OH closes on a page each count as two steps of the chain."""
+    id, title, kind, chem = 'mask1_twice', "Sulphur's Mask (count only)", 'game', ''
+
+    def setup(self, G):
+        G.p['twice'] = ('ring',)
+        G.p['twice_max'] = 2
+
+
+class Mask1First(S2.Sigil):
+    """Ring goes before every other reflex (its limit of two a page stays); the first two count twice."""
+    id, title, kind, chem = 'mask1_first', "Sulphur's Mask (ring first)", 'chemistry', 'oass_first'
+
+    def setup(self, G):
+        G.self_rules['ring'] = S2._c(G.self_rules['ring'], prio=0)
+        G.p['twice'] = ('ring',)
+        G.p['twice_max'] = 2
+
+
+class Mask1Free(S2.Sigil):
+    """Ring has no limit on a page (it keeps its place in the order); the first two count twice."""
+    id, title, kind, chem = 'mask1_free', "Sulphur's Mask (no limit)", 'chemistry', 'oass_free'
+
+    def setup(self, G):
+        G.self_rules['ring'] = S2._c(G.self_rules['ring'], per_turn=None)
+        G.p['twice'] = ('ring',)
+        G.p['twice_max'] = 2
+
+
+ALL = {c.id: c for c in (MaskHold, MaskWide, MaskBoth, MaskTwice, MaskWideTwice, MaskT1, MaskT2, MaskR1, MaskR2, TetFree, TetX3, TetBoth, Mask1Twice, Mask1First, Mask1Free)}
 
 
 def make(name):
