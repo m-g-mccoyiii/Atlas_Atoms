@@ -617,3 +617,18 @@ Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W30` af
 - **Recorder**: `.claude/r28` as before; `stills30.py`, `stages30.py`, `crop30.py`; sources `.claude/f30/block30.js`, `s30.js`, `apply.py`.
 
 scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
+
+## Thirty-first builder (14 November)
+
+Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W31` after `W30`), `scheme.js` (block `S31` after `S30`). Shots: `evolve31-strip.jpg`, `evolve31.mp4` with notes. Switch: `AA.rxKit.evolve31` (on by default; `false` or `?e31=0` gives builder 30's change of stage back). Owner's ruling: this is WATER'S OWN change of stage, not a recipe for the others.
+
+- **The sequence** (`evo31`, wrapped over `C26.evo`; times in beats of the music, `tl31`: each third is 2.5 beats plus a quarter beat per stage, so 3 to 4 is 9 beats, 4.5 s at pace 2; never under 2.5 s). The gathering (a start, then the curl: the pose, and `ball31` pulls every joint inside one round; beads run in). The whirlpool (a ball of wash, `make31`/`shape31`, grows out of the curled body; the old stage's own skin is changed for the new one inside it; wash in two turning arms, pen strokes that land and lift, a ring of drops and spray, pencil lines on the bench, a round of wash under it; it tightens and holds still for the last eighth). The spring (the same ball mesh opens from the top and lies down; the new form shoots up; `fern31` unrolls arm, hair, arm on beats of their own; splash ring, flecks, drops; the proud look; a hop home).
+- **Scheme** (`S31`, wrapped over `homEvo19`): it stays home; `E.big31` and `E.fwN` are worked out once so the whole sprouting form is in the picture (it grows and comes toward the eye while it hovers, and hops home at the end). Sound: `sfx.drift` at the start, `sfx.windup(stage, ms, true)` for the build, `sfx.flag` (and `sfx.boom` from stage 4) at the hit, the old `feed`/`good` on the unrolling beats. The steam bends, the cup is kicked, the nearest card lifts its corner, the nearest jar rocks at the hit; three rings of wet marks (`s27Stamp`) run out. The new number is written beside it when it has settled.
+- **Not done / weak**: small in the picture (the bench has little room); the opened ball reads as two flat sheets and then a slab until the pool covers it; the curl is mostly a shrink; it always happens at home (the game raises the stage only after the act has gone home); the hop home was not asked for; the bench's answers are hard to see; stages 1 to 2, 2 to 3 and 4 to 5 have not been looked at in frames; no timing on a real graphics card.
+- **To record each step** (bash, from `.claude/r28` in the worktree; first start the two servers, each in its own window: `python srv.py` and `python fsrv.py`; one take at a time; each take is about 9 s and takes a few minutes). `<N>` is the stage it leaves (1, 2, 3 or 4):
+  - `JOBN=a21 TMO=560 ./t.sh ev31_<N> "&hom=water&part=evo&stage=<N>&lead=1000&hold=7600" 24` records frames and sound into `frames/ev31_<N>` and writes a sheet `ev31_<N>.jpg`.
+  - `python make4.py evolve31-<N>.mp4 ev31_<N>` makes `.claude/shots/evolve31-<N>.mp4`. All four back to back with number cards: `python make4.py evolve31-all.mp4 ev31_1=1 ev31_2=2 ev31_3=3 ev31_4=4`.
+  - Key-frame stills instead of a take: `./e31.sh k<N> <N> "a.12,a.6,b.05,b.5,b.93,v.1,v.3,v.75,v1.9" 1700` writes `t31/k<N>.jpg` (a = the gathering 0 to 1, b = the whirlpool 0 to 1, v = thirds of a beat-third after the hit, 0 to 3).
+- Sources: `.claude/f31/block31.js`, `s31.js`, `apply.py`.
+
+scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
