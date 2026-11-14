@@ -1809,4 +1809,74 @@ const play28 = (f0 => function (grp, clip, t, o) { const S = grp.userData.rig2.s
   return r; })(play26);
 play26 = play28; KIT.spirit26.play = play28; KIT.spirit26.fig = fig26;
 // ==== W28 END
+// ==== W29 BEGIN
+// (builder 29) THREE LOOKS FOR THE WATER SPIRIT, AS STILLS (AA.rxKit.style29 = 'a' | 'b' | 'c'; unset = the game's own look, which is not changed).
+//  a: like the bench things. Clear water: what is behind it is read back from the frame (one copy of the picture so far, taken as the body
+//     is about to be drawn) and bent by the surface's turn; a faint blue-green that deepens at the rim; the lamp's own highlight and the
+//     room's reflection added; a light meniscus round the pool; no ink line; the face is darker water seen through the surface.
+//  b: like the page. A pen line of the page's ink (uneven in width), a flat blue wash that pools at the edges and leaves the paper bare in
+//     the lights, pencil hatching in the shade, no lamp shading at all. Off the paper it has the paper's colour behind it, as a cut-out.
+//  c: like the atoms. The atoms' own material (roughness 0.3, metalness 0.08) in one muted blue, opaque, the hydrogens' outline, plain dark face marks.
+// The switch is read every time the figure is played, so it can be thrown while the game runs. Only materials and draw order are changed.
+KIT.style29 = KIT.style29 == null ? ((typeof location !== 'undefined' && (/[?&]s29=([abc])/.exec(String(location.search)) || [])[1]) || null) : KIT.style29;
+const W29 = { U: null, tex: typeof WeakMap !== 'undefined' ? new WeakMap() : null, C: { c: 0x4f6d9b, pen: 0x2b2420, paper: 0xf2ede0 } };
+const N29 = 'float H29(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat N29(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(H29(i), H29(i + vec2(1.0, 0.0)), f.x), mix(H29(i + vec2(0.0, 1.0)), H29(i + vec2(1.0, 1.0)), f.x), f.y); }\n';
+const F29 = { a: ['{ vec3 n9 = normalize(normal); float f9 = 1.0 - clamp(dot(n9, normalize(vViewPosition)), 0.0, 1.0);',
+    'float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)), rho = vW29.y;',
+    'vec2 o9 = -n9.xy * vec2(r29.y / r29.x, 1.0) * (0.012 + 0.075 * f9 * f9) * (1.0 - 0.8 * pl);',                                 // the bend: more toward the rim, as a lens
+    'vec3 bg = texture2D(t29, gl_FragCoord.xy / r29 + o9).rgb;',
+    'vec3 tint = mix(vec3(0.90, 0.965, 0.95), vec3(0.50, 0.69, 0.70), smoothstep(0.25, 1.0, f9)); tint = mix(tint, vec3(0.87, 0.94, 0.93), pl);',
+    'vec3 c9 = bg * tint; c9 = mix(c9, vec3(0.66, 0.84, 0.86), (0.16 + 0.22 * f9 * f9) * (1.0 - 0.5 * pl));',                        // a little of its own colour, so it is water and not glass
+    'c9 += vec3(0.30, 0.33, 0.32) * smoothstep(0.2, 0.8, dot(n9.xy, vec2(0.62, -0.62))) * smoothstep(0.3, 0.75, f9) * (1.0 - smoothstep(0.86, 1.0, f9)) * (1.0 - pl);', // the lamp gathered on the far side
+    'c9 *= 1.0 - 0.38 * smoothstep(0.80, 1.0, f9) * (1.0 - pl);',                                              // the dark rim of clear water
+    'c9 += gl_FragColor.rgb * mix(1.3, 0.6, pl) + vec3(0.40, 0.39, 0.36) * pow(max(dot(n9, normalize(vec3(-0.5, 0.62, 0.6))), 0.0), 9.0) * (1.0 - pl);',                                                                                  // the lamp and the room on its surface
+    'c9 = mix(c9, vec3(0.97, 0.98, 0.95), 0.5 * pl * smoothstep(0.85, 0.92, rho) * (1.0 - smoothstep(0.94, 0.985, rho)));',         // the meniscus
+    'c9 *= 1.0 - 0.3 * pl * smoothstep(0.95, 0.995, rho);', 'gl_FragColor = vec4(c9, 1.0); }'].join('\n'),
+  b: ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(vViewPosition)), 0.0, 1.0);',
+    'float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)), rho = vW29.y, s9 = r29.y / 800.0; vec2 p9 = gl_FragCoord.xy / s9;',
+    'float nz = N29(p9 * 0.035), nz2 = N29(p9 * 0.11 + 7.0), gr = N29(p9 * 0.9);',
+    'vec3 bg = texture2D(t29, gl_FragCoord.xy / r29).rgb; float lum = dot(bg, vec3(0.3, 0.59, 0.11));',
+    'vec3 base = mix(PAPER29, bg, smoothstep(0.60, 0.74, lum));',                                                                   // on paper it is on the paper; off it, a cut-out
+    'float l9 = dot(n9, normalize(vec3(-0.6, 0.62, 0.5)));',
+    'float hl = smoothstep(0.86, 0.90, l9 + 0.12 * (nz - 0.5)) * (1.0 - pl);',                                                      // paper left bare in the lights
+    'float ed = mix(smoothstep(0.45, 0.95, 1.0 - nv + 0.3 * (nz - 0.5)), smoothstep(0.55, 0.95, rho + 0.2 * (nz - 0.5)), pl);',     // the wash pools at the edges
+    'vec3 wash = mix(vec3(0.63, 0.79, 0.93), vec3(0.31, 0.50, 0.76), ed);',
+    'float a9 = (1.0 - hl) * (0.78 + 0.22 * nz2) * (0.93 + 0.07 * gr) * mix(1.0, 0.75, pl);',
+    'vec3 c9 = base * mix(vec3(1.0), wash, a9);',
+    'float sh = smoothstep(0.38, 0.02, l9) * (1.0 - pl), hx = abs(fract((p9.x + p9.y) / 5.5 + 0.4 * nz2) - 0.5);',                 // pencil hatching in the shade
+    'c9 = mix(c9, vec3(0.35, 0.335, 0.305), 0.72 * (1.0 - smoothstep(0.09, 0.2, hx)) * sh * (0.4 + 0.6 * gr));',
+    'float e9 = nv / max(fwidth(nv), 1e-4) / s9, w9 = 1.5 * (0.5 + 1.0 * nz2);',                                                    // the pen line where the surface turns away
+    'c9 = mix(c9, PEN29, 0.92 * (1.0 - smoothstep(w9 - 0.6, w9 + 0.6, e9)) * (1.0 - pl));', 'gl_FragColor = vec4(c9, 1.0); }'].join('\n') };
+function u29(T) { if (!W29.U) { const t = new T.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, T.RGBAFormat); W29.U = { t29: { value: t }, r29: { value: new T.Vector2(1, 1) } }; W29.v2 = new T.Vector2(); } return W29.U; }
+/* the picture so far, read back for the body to bend (a) or to lie on (b) */
+function grab29(T, ren) { const U = u29(T); if (!ren || !ren.copyFramebufferToTexture || !W29.tex || ren.getRenderTarget()) return; const sz = ren.getDrawingBufferSize(W29.v2); let t = W29.tex.get(ren);
+  if (!t || t.image.width !== sz.x || t.image.height !== sz.y) { if (t) t.dispose(); t = new T.DataTexture(new Uint8Array(sz.x * sz.y * 3), sz.x, sz.y, T.RGBFormat) /* the canvas has no alpha: the copy must be RGB */; t.minFilter = t.magFilter = T.LinearFilter; t.generateMipmaps = false; W29.tex.set(ren, t); }
+  U.t29.value = t; U.r29.value.set(sz.x, sz.y); ren.copyFramebufferToTexture(W29.v2.set(0, 0), t); }
+function mat29(T, st, skin) { const U = u29(T), v3 = h => { const c = new T.Color(h); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; };
+  const m = new T.MeshStandardMaterial(st === 'a' ? { color: 0x000000, roughness: 0.24, metalness: 0 } : { color: 0x000000, roughness: 1, metalness: 0 }); m.skinning = !!skin; m.transparent = true; m.extensions = { derivatives: true };
+  m.onBeforeCompile = sh => { sh.uniforms.t29 = U.t29; sh.uniforms.r29 = U.r29;
+    sh.vertexShader = sh.vertexShader.replace('void main() {', (skin ? 'attribute vec4 w25a;\n' : '') + 'varying vec4 vW29;\nvoid main() {\n\tvW29 = ' + (skin ? 'w25a' : 'vec4(0.0)') + ';');
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform sampler2D t29;\nuniform vec2 r29;\nvarying vec4 vW29;\n#define PAPER29 ' + v3(W29.C.paper) + '\n#define PEN29 ' + v3(W29.C.pen) + '\n' + N29 + 'void main() {').replace('#include <dithering_fragment>', F29[st] + '\n#include <dithering_fragment>'); };
+  m.customProgramCacheKey = () => 's29' + st + (skin ? 's' : 'n'); return m; }
+/* the pen's outer line for b: the skin pushed out, by a width that wanders as a hand's does */
+function hull29(T, S) { const u = S.hull27.material.userData.w, m = new T.MeshBasicMaterial({ color: new T.Color(W29.C.pen).convertSRGBToLinear(), side: T.BackSide, skinning: true });
+  m.onBeforeCompile = sh => { sh.uniforms.w27 = u; sh.vertexShader = sh.vertexShader.replace('void main() {', 'uniform float w27;\nattribute vec4 w25a;\nvarying vec2 vH28;\nvoid main() {\n\tvH28 = w25a.xy;').replace('#include <skinning_vertex>', '#include <skinning_vertex>\n#ifdef USE_SKINNING\n\tmat4 sm27 = skinWeight.x * boneMatX + skinWeight.y * boneMatY + skinWeight.z * boneMatZ + skinWeight.w * boneMatW;\n\ttransformed += normalize((bindMatrixInverse * sm27 * bindMatrix * vec4(normal, 0.0)).xyz) * w27 * (0.62 + 0.5 * sin(position.x * 9.0 + 2.0 * sin(position.y * 6.3)) * sin(position.y * 10.0 + position.z * 5.0));\n#endif');
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'varying vec2 vH28;\nvoid main() {\n\tif (vH28.x > 0.5 && vH28.y < 0.93) discard;'); }; m.customProgramCacheKey = () => 'h29'; return m; }
+function set29(T, S, st) { const lin = h => new T.Color(h).convertSRGBToLinear(), C = W29.C;
+  if (!S.o29) { const lids = new Set(((S.F && S.F.eyes) || []).map(e => e.lid)), L = []; S.root.traverse(m => { if (!m.isMesh || m === S.hull || m === S.wet) return; const mt = m.material; let k = null;
+      if (m === S.body) k = 'body'; else if (m === S.hull27) k = 'hull'; else if (m === S.film28) k = 'film'; else if (m === S.marks) k = 'marks'; else if (!mt) k = null;
+      else if (mt.isMeshBasicMaterial && mt.side === T.BackSide) k = 'ink'; else if (mt.isMeshBasicMaterial && mt.color.r + mt.color.g + mt.color.b < 0.2) k = 'face'; else if (mt.isMeshBasicMaterial) k = 'glint';
+      else if (mt.isMeshToonMaterial) k = lids.has(m) ? 'lid' : 'drop'; else if (mt.isMeshStandardMaterial) k = 'hand'; if (k) L.push({ m, k, mt, ro: m.renderOrder }); }); S.o29 = L; S.m29 = {};
+    S.body.onBeforeRender = function (ren) { if (S.st29 === 'a' || S.st29 === 'b') grab29(T, ren); }; }
+  let M = st ? S.m29[st] : null; if (st && !M) { const none = new T.MeshBasicMaterial({ visible: false }), flat = h => new T.MeshBasicMaterial({ color: lin(h) }), std = (h, sk) => { const m = new T.MeshStandardMaterial({ color: lin(h), roughness: 0.3, metalness: 0.08 }); m.skinning = !!sk; return m; };
+    if (st === 'a') { const eye = new T.MeshBasicMaterial({ color: lin(0x1f3f44), transparent: true, opacity: 0.6, depthWrite: false }), dr = new T.MeshStandardMaterial({ color: lin(0xd5e6e2), roughness: 0.12, metalness: 0, transparent: true, opacity: 0.5, depthWrite: false });
+      M = { body: mat29(T, 'a', true), hull: none, film: none, marks: none, ink: none, face: eye, glint: none, lid: none, drop: dr, hand: mat29(T, 'a', false) }; }
+    else if (st === 'b') M = { body: mat29(T, 'b', true), hull: hull29(T, S), film: none, marks: null, ink: new T.MeshBasicMaterial({ color: lin(C.pen), side: T.BackSide }), face: flat(C.pen), glint: flat(C.paper), lid: flat(0x9fc0dc), drop: mat29(T, 'b', false), hand: mat29(T, 'b', false) };
+    else M = { body: std(C.c, true), hull: null, film: none, marks: none, ink: null, face: flat(0x22252c), glint: none, lid: std(C.c), drop: std(C.c), hand: std(C.c) };
+    S.m29[st] = M; }
+  S.o29.forEach(q => { const r = M && M[q.k]; if (r && q.k === 'hull') r.userData.w = q.mt.userData.w; /* play27 sets the line's width on whatever the hull wears */ q.m.material = r || q.mt; q.m.renderOrder = M && (st === 'a' || st === 'b') && (q.k === 'body' || q.k === 'hand' || q.k === 'drop') ? (q.k === 'body' ? 19 : 20) : st === 'a' && q.k === 'face' ? 21 : q.ro; });
+  S.st29 = st || null; }
+const play29 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o); try { const S = grp.userData.rig2.sp, st = KIT.style29 === 'a' || KIT.style29 === 'b' || KIT.style29 === 'c' ? KIT.style29 : null; if (S && S.b27 && S.x28 && (S.st29 || null) !== st) set29(S.T, S, st); } catch (e) { KIT.spiritErr = String(e && e.stack); } return r; })(play26);
+play26 = play29; KIT.spirit26.play = play29; KIT.spirit26.set29 = set29;
+// ==== W29 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);

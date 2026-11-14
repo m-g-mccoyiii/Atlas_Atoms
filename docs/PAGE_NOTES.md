@@ -587,3 +587,17 @@ Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W28` af
 - **Recorder**: `.claude/r28` (ports 9491, 9492; `s.sh <name> "<query>"` takes stills with `j_s28.js`: `at=ms,ms` after the tap, `part=evo`, `part=stages`, `cost=1`). Sources: `.claude/f28/block28.js`, `s28.js`, `apply.py`, `guards.py`.
 
 scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
+
+## Twenty-ninth builder (14 November)
+
+Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W29` after `W28`), `scheme.js` (block `S29` after `S28`). Shots: `style29-options.jpg` with notes. Stills only; nothing animated.
+
+- **Three looks for the water spirit behind a switch** (`AA.rxKit.style29 = 'a' | 'b' | 'c'`, or `?s29=a`; unset is the game's look, unchanged). The switch is read each time the figure is played (`play29`), and `set29` only swaps materials and draw order and puts them back.
+- **a, like the bench things**: clear water. `grab29` copies the picture so far into a texture as the body is about to be drawn (`copyFramebufferToTexture`; the texture must be RGB, the canvas has no alpha); `mat29('a')` reads it back offset by the view-space normal, tints, darkens the rim, adds the lit result of a black standard material (the lamp and the room) and a meniscus round the pool. No hull, no pool film, no marks, no lids; the face is half-clear dark water drawn after the body.
+- **b, like the page**: `mat29('b')` is a flat wash over the copied picture where it is paper and over paper colour elsewhere, bare paper in the lights, screen-fixed pencil hatching, a pen line where the surface turns away; `hull29` is the outer line with a wandering width.
+- **c, like the atoms**: one `MeshStandardMaterial` with the atoms' numbers (`W29.C.c`), the builder-27 hull, dark flat face, no marks, opaque pool.
+- **Scene** (`S29`): with a look set, the wet marks and the damp ring are hidden; a's shadows are lighter.
+- **Not done / weak**: see `style29-options.txt`. Nothing timed; b's hatching would swim in motion; a has no blink; `play27` writes the line width to `hull27.material.userData.w`, so any material put on the hull must carry that object (`set29` does).
+- **Recorder**: `.claude/r28` as before; `j_s29.js` takes today, a, b, c of one moment at the canvas's own size (`WSIZE=3864,2252 NAME=q ./run.sh s29 "&hom=water&stage=3&smi=OC1CC(O)CC(O)C1&lines=dehydrate&rack=dehydrate&at=8450" 560`, about four minutes); `opt29b.py q out.jpg` makes the sheet. Sources: `.claude/f29/block29.js`, `s29.js`, `apply.py`.
+
+scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
