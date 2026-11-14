@@ -201,4 +201,40 @@ function kinMark(ctx, id, cx, cy, size, o) {
 }
 AA.rxMarks.kin = kinMark; AA.rxMarks.kinIds = Object.keys(KINDRAW);
 AA.rxMarks.motif = motif; AA.rxMarks.MOTIFS = MOT; AA.rxMarks.motifIds = Object.keys(MOT);
+// ---- (builder 18) the twelve motifs the rules pay by (path.js MOTIFS), one hand-inked mark each in the same family as the six above: ink only ----
+// AA.rxMarks.motifMark(ctx, id, cx, cy, size, o)   o as for kin(), and shut: true draws the mark as a faint dashed outline (held, not open: pays nothing)
+// The picture sits in x -42..42, y -44..30 of the 100 box; the level's dots are at y 42.
+const hexAt = (x, y, r, rot) => poly(x, y, r, 6, K.ink, K.lw, rot, null);
+const MOTMARK = {
+  sugar: KINDRAW.sugar, resonance: KINDRAW.resonance, arene: KINDRAW.arene, ring: KINDRAW.ring, cage: KINDRAW.cage,
+  // two rings with a side in common, the common side drawn heavy
+  fusion: () => { const r = 22, dx = r * Math.cos(Math.PI / 6); hexAt(-dx, -6, r); hexAt(dx, -6, r); line(0, -6 - r / 2, 0, -6 + r / 2, K.ink, K.lw * 1.5); },
+  // two rings that meet at one atom
+  spiro: () => { const s = 21; path([[0, -6], [-s, -6 - s], [-2 * s, -6], [-s, -6 + s]], K.ink, K.lw, true); path([[0, -6], [s, -6 - s], [2 * s, -6], [s, -6 + s]], K.ink, K.lw, true); if (!K.shut) dot(0, -6, 7.5, K.ink); },
+  // a drop that has eaten into the line it fell on
+  acid: () => { begin(K.ink, K.lw); c.moveTo(0, -42); c.bezierCurveTo(6, -26, 20, -14, 20, 0); c.arc(0, 0, 20, 0, Math.PI); c.bezierCurveTo(-20, -14, -6, -26, 0, -42); c.stroke(); line(-40, 26, -17, 26, K.ink, K.lw); line(17, 26, 40, 26, K.ink, K.lw); if (!K.shut) dot(-6, 4, 5, K.ink); },
+  // a trident: three prongs off one stem
+  amine: () => { line(0, 30, 0, -4, K.ink, K.lw); path([[-28, -40], [-28, -10], [0, -4], [28, -10], [28, -40]], K.ink, K.lw); line(0, -4, 0, -42, K.ink, K.lw); line(-12, 16, 12, 16, K.ink, K.lw * 0.8); },
+  // the old sign for brimstone: a triangle standing on a cross
+  sulfur: () => { path([[0, -42], [28, -4], [-28, -4]], K.ink, K.lw, true); line(0, -4, 0, 30, K.ink, K.lw); line(-15, 14, 15, 14, K.ink, K.lw); },
+  // a stem that forks three ways
+  branch: () => { line(0, 30, 0, -2, K.ink, K.lw); line(0, -2, -30, -30, K.ink, K.lw); line(0, -2, 30, -30, K.ink, K.lw); line(0, -2, 0, -42, K.ink, K.lw); if (!K.shut) dot(0, -2, 7, K.ink); },
+  // three links of a chain
+  chain: () => { [-27, 0, 27].forEach((q, i) => { begin(K.ink, K.lw); c.ellipse(q, -6 + (i === 1 ? 3 : 0), 19, 12, i === 1 ? 0.12 : -0.1, 0, 6.2832); c.stroke(); }); }
+};
+function motifMark(ctx, id, cx, cy, size, o) {
+  const D = MOTMARK[id]; if (!D) return false; o = o || {};
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(size / 100, size / 100); ctx.setLineDash([]); c = ctx; c.lineCap = 'round'; c.lineJoin = 'round';
+  if (o.shut) { K = kit({ lw: (o.lw || 7) * 0.5 }, 'rgba(90,86,78,0.5)'); K.paper = 'rgba(251,246,230,0)'; K.faint = 'rgba(90,86,78,0.25)'; K.shut = true; }
+  else { K = kit(o.pencil ? { lw: (o.lw || 7) * 0.72 } : o, o.pencil ? 'rgba(90,86,78,0.62)' : null); if (o.pencil) K.paper = 'rgba(251,246,230,0.6)'; }
+  jseed = hash('kin' + id);
+  const t = o.t == null ? 1 : Math.max(0, Math.min(1, o.t));
+  if (t > 0) { c.save(); if (t < 1) { c.beginPath(); c.rect(-56, -60, 112 * t, 120); c.clip(); }
+    if (o.shut) { /* dashed: the outline of a thing not yet there. Filled parts are left open. */ const sd = c.setLineDash.bind(c); c.setLineDash([7, 8]); c.setLineDash = () => {}; const fl = c.fill; c.fill = () => {}; try { D(o); } finally { c.setLineDash = sd; c.fill = fl; c.setLineDash([]); } }
+    else D(o); c.restore(); }
+  const n = Math.max(0, Math.min(6, o.pips | 0)); for (let i = 0; i < n; i++) if (t >= (i + 1) / (n + 1)) { if (o.shut) { c.beginPath(); c.arc((i - (n - 1) / 2) * 15, 42, 3.6, 0, 6.3); c.strokeStyle = K.ink; c.lineWidth = 1.6; c.stroke(); } else dot((i - (n - 1) / 2) * 15, 42, 4.6, K.ink); }
+  if (o.strike > 0) { const s = Math.min(1, o.strike); begin(o.red || '#c8261c', (o.lw || 7) * 1.05); c.moveTo(-46, 30); c.lineTo(-46 + 92 * s, 30 - 60 * s); c.stroke(); }
+  ctx.restore(); return true;
+}
+AA.rxMarks.motifMark = motifMark; AA.rxMarks.motifMarkIds = ['sugar', 'resonance', 'arene', 'ring', 'fusion', 'cage', 'spiro', 'acid', 'amine', 'sulfur', 'branch', 'chain'];
 })(window);
