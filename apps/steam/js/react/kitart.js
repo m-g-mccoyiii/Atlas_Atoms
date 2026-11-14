@@ -1321,6 +1321,7 @@ const W24 = {
   ]
 };
 function water24Fig(T, stage, way) {
+  if ((way || KIT.water24) === 'spirit') return water25Fig(T, stage);
   const w = W24[way || KIT.water24 || 'a'] || W24.a, o = w[Math.max(1, Math.min(5, stage | 0)) - 1](), g = new T.Group(), inner = new T.Group(); inner.rotation.y = o.yaw || 0; g.add(inner);
   if (!ramp24) { ramp24 = new T.DataTexture(new Uint8Array([150, 215, 255]), 3, 1, T.LuminanceFormat); ramp24.minFilter = ramp24.magFilter = T.NearestFilter; ramp24.needsUpdate = true; }
   const geo = sweep(T, o), body = new T.Mesh(geo, new T.MeshToonMaterial({ vertexColors: true, gradientMap: ramp24 })); body.userData.water24 = 'body'; inner.add(body); inner.add(inkHull(T, geo, 0.045));
@@ -1331,5 +1332,169 @@ function water24Fig(T, stage, way) {
   g.userData.water24 = { way: way || KIT.water24 || 'a', stage };
   return g;
 }
-KIT.water24 = KIT.water24 || 'a'; KIT.water24Fig = water24Fig; KIT.WATER24 = { ways: { a: 'pure water', b: 'water spirit', c: 'water beast' } };
+// ---- Builder 25: the WATER SPIRIT (the owner's pick, band b), redrawn so each of the five stages is its own character. AA.rxKit.water24 = 'spirit'.
+// Still ONE closed mesh per body (sweep25: the same rings along a spine as sweep). New here:
+//  LIMBS: a limb is a round patch of the body's own skin drawn out along a path (the rim of the patch stays where it is, its centre becomes the tip),
+//   so an arm, a ribbon, a pouring stream is the same surface and can never come off. { k, th: where on the body, r0: patch radius, path: points from the
+//   root, rad: radius at each point, w: how many rings each stretch gets, flat + fk: squash along an axis, foam(s), ey: patch taller than wide }.
+//  COLOUR is not baked per vertex any more: the mesh carries smooth numbers (pool, ring of the pool, depth, foam, thin) and the toon material cuts them
+//   per pixel; the gloss bands come from the normal. So no patch has a stepped edge. Lamp side as in sweep: front-left, and back-right for the back.
+//  twist(kp) turns the rings about the spine; lift(kp, th) raises a ring in points; pk is the key where the pool ends. Marks (eyes, lids, brows, mouth, bubbles, the swirl) are laid on by rays.
+const C25 = { deep: 0x1d3f8e, mdeep: 0x2c5cbc, mid: 0x3a6fd0, lite: 0x8dbdf4, pool: 0x5b93e0, hi: 0xf2f9fd, foam: 0xf3f6f7 };
+const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+const adiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+function sweep25(T, o) {
+  const K = o.keys, nk = K.length, per = o.per || 14, NS = o.ns || 128, V3 = T.Vector3, rows = [], kps = [], wc = o.warp == null ? 0.5 : o.warp, LB = o.limbs || [], pk = o.pk || 3.2;
+  for (let i = 0; i < nk - 1; i++) { const pp = LB.some(l => Math.abs(l.k - i - 0.5) < 1.6) ? per * 3 : per; for (let j = 0; j < pp; j++) { const t = j / pp, g = c => cr(K[Math.max(0, i - 1)][c], K[i][c], K[i + 1][c], K[Math.min(nk - 1, i + 2)][c], t), cl = c => Math.max(Math.min(K[i][c], K[i + 1][c]), Math.min(Math.max(K[i][c], K[i + 1][c]), g(c))); rows.push([g(0), g(1), g(2), cl(3), cl(4)]); kps.push(i + t); } }
+  rows.push(K[nk - 1].slice()); kps.push(nk - 1);
+  if (rows[0][3] > 0) { const f = rows[0].slice(); f[3] = f[4] = 0; rows.unshift(f); kps.unshift(0); }
+  if (rows[rows.length - 1][3] > 0) { const f = rows[rows.length - 1].slice(); f[3] = f[4] = 0; rows.push(f); kps.push(nk - 1); }
+  const n = rows.length, NV = n * NS, pos = new Float32Array(NV * 3), ths = [], tans = [], lim = new Array(NV);
+  for (let j = 0; j < NS; j++) { const u = j / NS; ths.push(2 * PI * u - wc / 2 * Math.sin(4 * PI * u)); }   // more columns at the two sides, where the arms are drawn out
+  let N = new V3().fromArray(o.ref || [1, 0, 0]), Tp = null;
+  for (let i = 0; i < n; i++) { const a = rows[Math.max(0, i - 1)], b = rows[Math.min(n - 1, i + 1)], r = rows[i], kp = kps[i]; let t = new V3(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    if (kp < pk + 1.2) t.set(0, 1, 0); else if (t.length() < 1e-5 || (Tp && t.clone().normalize().dot(Tp) < 0.15)) t = Tp ? Tp.clone() : new V3(0, 1, 0);
+    t.normalize(); N = N.clone().sub(t.clone().multiplyScalar(N.dot(t))).normalize(); const B = new V3().crossVectors(N, t); Tp = t; tans.push(t);
+    const tw = o.twist ? o.twist(kp) : 0, ct = Math.cos(tw), st = Math.sin(tw);
+    for (let j = 0; j < NS; j++) { const th = ths[j]; let m = o.mod ? o.mod(kp, th) : 1, ox = 0, oy = 0, oz = 0;
+      (o.bumps || []).forEach(q => { const d = adiff(th, q.th), w = Math.tanh(2.6 * Math.exp(-Math.pow((kp - q.k) / (q.sk || 0.5), 2) - Math.pow(d / (q.sth || 0.4), 2))); m += q.amp * w; if (q.off) { ox += q.off[0] * w; oy += q.off[1] * w; oz += q.off[2] * w; } });
+      const c0 = Math.cos(th) * r[3] * m, s0 = Math.sin(th) * r[4] * m, ca = c0 * ct - s0 * st, sb = c0 * st + s0 * ct, k = (i * NS + j) * 3, live = r[3] > 0 ? 1 : 0;
+      pos[k] = r[0] + N.x * ca + B.x * sb + ox * live; pos[k + 1] = Math.max(0, r[1] + N.y * ca + B.y * sb + (oy + (o.lift ? o.lift(kp, th) : 0)) * live); pos[k + 2] = r[2] + N.z * ca + B.z * sb + oz * live; } }
+  // limbs: the patch round (k, th), radius r0, is drawn out along the path. f = 0 on the rim of the patch, 1 at its centre, which becomes the tip.
+  // The patch is measured ON the skin (a along the ring, b along the spine, from the grid itself), so the map from patch to limb can not fold or shear.
+  const Q = new T.Quaternion();
+  LB.forEach(l => { let bi = 0, bj = 0, bd = 1e9; for (let i = 0; i < n; i++) { const d = Math.abs(kps[i] - l.k); if (d < bd) { bd = d; bi = i; } } bd = 1e9; for (let j = 0; j < NS; j++) { const d = Math.abs(adiff(ths[j], l.th)); if (d < bd) { bd = d; bj = j; } }
+    const p0 = pos.slice(), P = v => new V3(p0[v * 3], p0[v * 3 + 1], p0[v * 3 + 2]), C = P(bi * NS + bj), S = new V3(rows[bi][0], rows[bi][1], rows[bi][2]), n0 = C.clone().sub(S).normalize();
+    const e1 = P(bi * NS + (bj + 1) % NS).sub(P(bi * NS + (bj + NS - 1) % NS)); e1.addScaledVector(n0, -e1.dot(n0)).normalize(); const e2 = new V3().crossVectors(n0, e1); if (e2.dot(tans[bi]) < 0) e2.negate();
+    const pts = [new V3()].concat(l.path.map(p => new V3(p[0], p[1], p[2]))), ns = pts.length - 1, cv = new T.CatmullRomCurve3(pts, false, 'centripetal'), rad = [l.r0].concat(l.rad), w = l.w || l.path.map(() => 1), wt = w.reduce((a, b) => a + b, 0), ey = l.ey || 1, cap = 0.86, fa = l.flat ? new V3().fromArray(l.flat) : null;
+    const rAt = s => { const x = s * ns, i = Math.min(ns - 1, Math.floor(x)); return Math.max(0.005, cr(rad[Math.max(0, i - 1)], rad[i], rad[i + 1], rad[Math.min(ns, i + 2)], x - i)); };
+    const sAt = u => { let acc = 0; for (let i = 0; i < ns; i++) { const d = w[i] / wt; if (u <= acc + d || i === ns - 1) return (i + Math.min(1, (u - acc) / d)) / ns; acc += d; } return 1; };
+    const put = (v, a, b) => { const r = Math.hypot(a, b / ey); if (r >= l.r0) return; const p = P(v), f = 1 - r / l.r0, g = f > cap ? (f - cap) / (1 - cap) : 0, s = sAt(Math.min(1, f / cap)), A = cv.getPoint(s), tn = cv.getTangent(s).normalize(), R = rAt(s) * Math.sqrt(Math.max(0, 1 - g * g));
+      const d = e1.clone().multiplyScalar(a).addScaledVector(e2, b / ey); if (r > 1e-6) d.multiplyScalar(1 / r); Q.setFromUnitVectors(n0, tn); const off = d.applyQuaternion(Q).multiplyScalar(R); if (fa) off.addScaledVector(fa, off.dot(fa) * ((l.fk ? l.fk(s) : 0.5) - 1));
+      const arm = C.clone().add(A).add(off).addScaledVector(tn, rad[ns] * g * 0.9); p.lerp(arm, sm(f / 0.12)); pos[v * 3] = p.x; pos[v * 3 + 1] = Math.max(0.012, p.y); pos[v * 3 + 2] = p.z; lim[v] = [l, s, R, f]; };
+    for (let dir = -1; dir <= 1; dir += 2) { let b = 0; for (let i = dir > 0 ? bi : bi - 1; i >= 0 && i < n; i += dir) { if (i !== bi) b += dir * P(i * NS + bj).distanceTo(P((i - dir) * NS + bj)); if (Math.abs(b) > l.r0 * ey) break; if (rows[i][3] <= 0) continue;
+      put(i * NS + bj, 0, b); for (let sd = -1; sd <= 1; sd += 2) { let a = 0; for (let q = 1; q < NS / 2; q++) { const j = (bj + sd * q + NS * 2) % NS, jp = (bj + sd * (q - 1) + NS * 2) % NS; a += P(i * NS + j).distanceTo(P(i * NS + jp)); if (a > l.r0) break; put(i * NS + j, sd * a, b); } } } } });
+  const idx = []; for (let i = 0; i < n - 1; i++) for (let j = 0; j < NS; j++) { const a = i * NS + j, b = (i + 1) * NS + j, c = (i + 1) * NS + (j + 1) % NS, d = i * NS + (j + 1) % NS; idx.push(a, b, d, b, c, d); }
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  // the smooth numbers the material cuts: a = [pool, ring of the pool, depth, foam], b = [thin, no spine line]
+  const A4 = new Float32Array(NV * 4), B2 = new Float32Array(NV * 2), foot = o.foot || 0.3, thin = o.thin || 0.2, R0 = K[0][3];
+  for (let v = 0; v < NV; v++) { const i = (v / NS) | 0, kp = kps[i], th = ths[v % NS], y = pos[v * 3 + 1], q = lim[v], r = rows[i], wob = 0.05 * Math.sin(th * 3 + 1) + 0.03 * Math.sin(th * 7), rr = q ? q[2] : Math.min(r[3], r[4]);
+    A4[v * 4] = !q && kp < pk ? 1 : 0; A4[v * 4 + 1] = r[3] / R0; A4[v * 4 + 2] = y / (foot * (1 + wob * 4));
+    A4[v * 4 + 3] = q && q[3] > 0.1 ? (q[0].foam ? q[0].foam(q[1]) : 0) : (o.foam ? o.foam(kp, th, y) : 0);
+    B2[v * 2] = Math.max(kp < pk ? 0 : 0.5 + (thin - rr) * 6, q ? (q[0].lite ? q[0].lite(q[1]) : 0) : (o.lite ? o.lite(kp, th, y) : 0)); B2[v * 2 + 1] = o.nosp && o.nosp(kp) ? 1 : 0; }
+  geo.setAttribute('w25a', new T.BufferAttribute(A4, 4)); geo.setAttribute('w25b', new T.BufferAttribute(B2, 2)); geo.userData.grid = [n, NS]; return geo;
+}
+function inkHull25(T, geo, t) { const g = geo.clone(), p = g.attributes.position, n = geo.userData.grid[0], NS = geo.userData.grid[1]; let a = Float32Array.from(g.attributes.normal.array), b = new Float32Array(a.length);
+  for (let pass = 0; pass < 6; pass++) { for (let i = 0; i < n; i++) for (let j = 0; j < NS; j++) { const v = (i * NS + j) * 3, nb = [(i * NS + (j + 1) % NS) * 3, (i * NS + (j + NS - 1) % NS) * 3, (Math.min(n - 1, i + 1) * NS + j) * 3, (Math.max(0, i - 1) * NS + j) * 3]; for (let c = 0; c < 3; c++) b[v + c] = a[v + c] * 2 + a[nb[0] + c] + a[nb[1] + c] + a[nb[2] + c] + a[nb[3] + c]; const l = Math.hypot(b[v], b[v + 1], b[v + 2]) || 1; b[v] /= l; b[v + 1] /= l; b[v + 2] /= l; } const sw = a; a = b; b = sw; }
+  for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + a[i * 3] * t, Math.max(0, p.getY(i) + a[i * 3 + 1] * t), p.getZ(i) + a[i * 3 + 2] * t);
+  // the hull is also set back a little in depth, so that where a limb's fine mesh ripples the ink does not scratch through the skin
+  const m = new T.Mesh(g, new T.MeshBasicMaterial({ color: new T.Color(COL.ink).convertSRGBToLinear(), side: T.BackSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: KIT.water25Back == null ? 6000 : KIT.water25Back })); m.userData.plain = true; return m; }
+function mat25(T, o) {
+  const v3 = h => { const c = new T.Color(h).convertSRGBToLinear(); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; };
+  const m = new T.MeshToonMaterial({ color: 0xffffff, gradientMap: ramp24 }), u = new T.Vector4(o.hp || 1.5, o.rings || 2, o.frho || 0.3, 0); m.extensions = { derivatives: true };
+  const frag = ['{', 'vec3 n5 = normalize(vN25); float hl = length(n5.xz); vec2 hd = n5.xz / max(hl, 1e-4); float sd = A25(hl, 0.5);',
+    'float ph = dot(vP25, vec3(0.5, 2.0, 0.3)) * 3.14159 / w25u.x; float m5 = sin(ph + 0.6) + 0.62, wf = clamp(m5 * 2.5, 0.0, 1.0) * A25(m5, 0.0), m6 = sin(ph * 1.7 + 2.0) + 0.1, wg = clamp(m6 * 2.5, 0.0, 1.0) * A25(m6, 0.0);',
+    'vec3 c5 = ' + v3(C25.mid) + ';',
+    'c5 = mix(c5, ' + v3(C25.mdeep) + ', 1.0 - A25(vWa.z, 2.2)); c5 = mix(c5, ' + v3(C25.deep) + ', 1.0 - A25(vWa.z, 1.0));',                     // darker where deep: the foot
+    'c5 = mix(c5, ' + v3(C25.lite) + ', A25(vWb.x, 0.5));',                                                                                       // paler where thin
+    'c5 = mix(c5, ' + v3(C25.lite) + ', 0.7 * A25(dot(hd, vec2(0.966, 0.259)), 0.93) * sd);',                                                     // the pale edge away from the lamp
+    'c5 = mix(c5, ' + v3(C25.lite) + ', A25(dot(hd, vec2(0.0, -1.0)), 1.0 - 0.004 * wg) * sd * (1.0 - vWb.y));',                                       // the spine of highlights down a back
+    'vec3 p5 = ' + v3(C25.pool) + '; float rho = vWa.y;',
+    'p5 = mix(p5, ' + v3(C25.mid) + ', 1.0 - A25(rho, w25u.z * 1.3));',                                                                           // the pool is deeper round the foot
+    'p5 = mix(p5, ' + v3(C25.lite) + ', A25(sin(rho * 6.2832 * w25u.y + 1.0), 0.9) * A25(sin(vP25.x * 4.1 + vP25.z * 2.3), -0.55));',             // ripple rings, broken
+    'p5 = mix(p5, ' + v3(C25.hi) + ', A25(rho, 0.86) * (1.0 - A25(rho, 0.93)));',                                                                 // the rim highlight
+    'c5 = mix(c5, p5, A25(vWa.x, 0.5));',
+    'float g5 = max(A25(dot(hd, vec2(-0.64, 0.768)), 1.0 - 0.014 * wf), A25(dot(hd, vec2(-0.309, 0.951)), 1.0 - 0.002 * wf));',                                    // the gloss band and its thin partner, lamp side
+    'g5 = max(g5, A25(dot(hd, vec2(0.64, -0.768)), 1.0 - 0.01 * wg)) * sd;',                                                                          // and on the back
+    'g5 = max(g5, max(A25(dot(n5, vec3(-0.502, 0.622, 0.602)), 0.968), A25(dot(n5, vec3(0.502, 0.622, -0.602)), 0.98)));',                         // the shine on a shoulder or a crown
+    'c5 = mix(c5, ' + v3(C25.hi) + ', g5); c5 = mix(c5, ' + v3(C25.foam) + ', A25(vWa.w, 0.5)); diffuseColor.rgb *= c5;', '}'].join('\n');
+  m.onBeforeCompile = sh => { sh.uniforms.w25u = { value: u };
+    sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute vec4 w25a;\nattribute vec2 w25b;\nvarying vec4 vWa;\nvarying vec2 vWb;\nvarying vec3 vN25;\nvarying vec3 vP25;\nvoid main() {\n\tvWa = w25a; vWb = w25b; vN25 = normal; vP25 = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec4 w25u;\nvarying vec4 vWa;\nvarying vec2 vWb;\nvarying vec3 vN25;\nvarying vec3 vP25;\nfloat A25(float v, float t) { float w = max(fwidth(v), 1e-5) * 0.75; return smoothstep(t - w, t + w, v); }\nvoid main() {').replace('#include <color_fragment>', frag); };
+  return m;
+}
+// marks laid on the body where rays from in front meet it: c a point, d the way the face looks; hit(px, py) in the plane across d
+function lay25(T, body, c, d) { const V3 = T.Vector3, D = new V3().fromArray(d || [0, 0, 1]).normalize(), R = new V3().crossVectors(new V3(0, 1, 0), D).normalize(), U = new V3().crossVectors(D, R), C = new V3().fromArray(c), rc = new T.Raycaster();
+  const hit = (px, py, lift) => { const o = C.clone().addScaledVector(R, px).addScaledVector(U, py).addScaledVector(D, 9); rc.set(o, D.clone().negate()); const h = rc.intersectObject(body)[0]; return h ? { p: h.point.clone().addScaledVector(h.face.normal, lift || 0), n: h.face.normal.clone() } : null; };
+  const line = (pts, r, mat, closed) => { const q = pts.map(p => hit(p[0], p[1], r * 0.6)).filter(Boolean).map(h => h.p); return q.length > 2 ? new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(q, !!closed), q.length * 5, r, 6, !!closed), mat) : null; };
+  return { hit, line, R, U }; }
+// the face: the SAME eyes at every stage (a dark oval, one glint); what changes with age and temper is their size, the lids, the brows and the mouth
+function face25(T, grp, body, f, lidMat) { if (!f) return; const L = lay25(T, body, f.c, f.d), k = f.k || 1, lin = h => new T.Color(h).convertSRGBToLinear(), black = new T.MeshBasicMaterial({ color: lin(0x1d1a18) }), white = new T.MeshBasicMaterial({ color: 0xffffff }), er = 0.085 * k * (f.er || 1), dx = (f.dx || 0.2) * k, br = f.brow, mo = f.mouth, add = m => { if (m) grp.add(m); };
+  [-1, 1].forEach((s, si) => { const h = L.hit(s * dx, 0); if (!h) return; const put = (m, sc, lift, uo) => { m.scale.set(sc[0], sc[1], sc[2]); m.position.copy(h.p).addScaledVector(h.n, lift).addScaledVector(L.U, uo || 0); m.lookAt(m.position.clone().add(h.n)); grp.add(m); };
+    put(new T.Mesh(new T.SphereGeometry(er, 18, 12), black), [1, 1.25, 0.35], 0.01);
+    if (f.lid) put(new T.Mesh(new T.SphereGeometry(er * 1.14, 18, 12), lidMat), [1, 1.25, 0.42], 0.016, 2.5 * er * (1 - f.lid));
+    const gl = new T.Mesh(new T.SphereGeometry(er * 0.34, 8, 6), white); gl.position.copy(h.p).addScaledVector(h.n, er * 0.42).addScaledVector(L.U, er * (f.lid ? -0.5 : 0.45)).addScaledVector(L.R, -er * 0.3); grp.add(gl);
+    if (br) { const a = br.ang[si], cy = (br.y + (br.lift ? br.lift[si] : 0)) * k, hl = br.len * k / 2; add(L.line([-1, 0, 1].map(e => [s * dx + s * e * hl * Math.cos(a), cy + e * hl * Math.sin(a) + (e ? 0 : (br.arch == null ? 0.02 : br.arch) * k)]), (br.r || 0.02) * k, br.foam ? white : black)); } });
+  if (mo) { const pts = [], mx = mo.x || 0; if (mo.o) for (let i = 0; i < 10; i++) pts.push([(mx + Math.cos(i / 10 * 2 * PI) * mo.o) * k, (mo.y + Math.sin(i / 10 * 2 * PI) * mo.o * 1.15) * k]); else for (let i = -4; i <= 4; i++) { const s = i / 4; pts.push([(mx + s * mo.w) * k, (mo.y - mo.d * (1 - s * s) + (mo.tilt || 0) * s) * k]); }
+    add(L.line(pts, (mo.r || 0.024) * k, black, !!mo.o));
+    if (mo.tick) { const s = mo.tick, x = mx + s * mo.w, y = mo.y + (mo.tilt || 0) * s; add(L.line([[(x - 0.02 * s) * k, (y - 0.04) * k], [(x + 0.012 * s) * k, y * k], [(x + 0.03 * s) * k, (y + 0.045) * k]], (mo.r || 0.024) * k * 0.9, black)); } } }
+const circ = (x, y, r, n) => { const p = []; for (let i = 0; i < (n || 10); i++) p.push([x + Math.cos(i / (n || 10) * 2 * PI) * r, y + Math.sin(i / (n || 10) * 2 * PI) * r]); return p; };
+const bub = (x, y, r) => ({ c: [0, 0, 0], pts: circ(x, y, r), r: 0.014, closed: true, col: 'lite', dot: [x - r * 0.35, y + r * 0.35, r * 0.28] });
+// The five stages. x is to the figure's left (the right of the picture from in front), z to the front. Each is one spine: pool, body, neck, head, and the hair or crest as the end of it.
+const S25 = [
+  // 1 the newborn: only its crown is out of its own small puddle, eyes at the water line, its mouth still under; a single curl on top; it leans, shy
+  () => ({ keys: [[0, 0, 0, 1.0, 0.8], [0, 0.05, 0, 0.99, 0.79], [0, 0.16, 0, 0.9, 0.72], [0, 0.07, 0, 0.79, 0.63], [0, 0.06, 0.02, 0.62, 0.52], [0, 0.1, 0.03, 0.52, 0.47],
+      [0.02, 0.3, 0.03, 0.47, 0.45], [0.06, 0.56, 0.03, 0.46, 0.45], [0.1, 0.78, 0.02, 0.36, 0.36], [0.14, 0.92, 0, 0.2, 0.2], [0.2, 1.02, 0, 0.09, 0.09],
+      [0.26, 1.16, 0, 0.055, 0.055], [0.18, 1.38, 0, 0.055, 0.055], [-0.02, 1.42, 0, 0.05, 0.05], [-0.12, 1.28, 0, 0.048, 0.048], [-0.03, 1.16, 0, 0.045, 0.045], [0.07, 1.22, 0, 0.04, 0.04], [0.06, 1.29, 0, 0, 0]].map(k => k.map(v => v * 1.1)),
+    pk: 4.6, foot: 0.2, thin: 0.16, hp: 0.9, rings: 1.5, frho: 0.52, ns: 96, warp: 0, wet: [0, 0, 1.1, 0.88],
+    face: { c: [0.055, 0.44, 0], k: 1.1, er: 1.3, dx: 0.21, brow: { y: 0.24, len: 0.11, ang: [-0.5, -0.5], r: 0.016 } },
+    drops: [[-1.4, 0, 0.3, 0.05], [1.3, 0, -0.45, 0.04]] }),
+  // 2 the child: head and shoulders out, propped on two stubby hands at the edge of its puddle, leaning out to look; cheeks puffed, a cowlick with a drip
+  () => ({ keys: [[0, 0, 0.15, 1.45, 1.1], [0, 0.05, 0.15, 1.44, 1.09], [0, 0.13, 0.15, 1.33, 1.0], [0, 0.07, 0.12, 1.2, 0.9], [0, 0.06, -0.05, 0.8, 0.62], [0, 0.1, -0.15, 0.6, 0.5],
+      [0, 0.32, -0.2, 0.5, 0.44], [-0.06, 0.7, -0.1, 0.46, 0.4], [-0.14, 1.02, 0.02, 0.5, 0.4], [-0.16, 1.24, 0.1, 0.3, 0.28], [-0.08, 1.6, 0.2, 0.6, 0.56], [0.02, 1.94, 0.2, 0.46, 0.45], [0.06, 2.1, 0.17, 0.2, 0.2],
+      [0.12, 2.22, 0.17, 0.09, 0.09], [0.28, 2.32, 0.2, 0.06, 0.06], [0.44, 2.24, 0.24, 0.055, 0.055], [0.49, 2.09, 0.26, 0.085, 0.085], [0.49, 2.0, 0.26, 0, 0]],
+    pk: 4.6, foot: 0.3, thin: 0.12, hp: 1.1, rings: 2, frho: 0.44, wet: [0, 0.15, 1.45, 1.1],
+    bumps: [{ k: 9.8, th: PI / 2 - 0.85, amp: 0.13, sk: 0.35, sth: 0.32 }, { k: 9.8, th: PI / 2 + 0.85, amp: 0.13, sk: 0.35, sth: 0.32 }],
+    limbs: [{ k: 8, th: 0.55, r0: 0.2, ey: 1.2, path: [[0.3, -0.2, 0.18], [0.62, -0.55, 0.38], [0.81, -0.9, 0.52]], rad: [0.15, 0.13, 0.2], flat: [0, 1, 0], fk: s => 1 - 0.45 * sm((s - 0.75) * 4) },
+      { k: 8, th: PI - 0.55, r0: 0.2, ey: 1.2, path: [[-0.25, -0.22, 0.16], [-0.52, -0.58, 0.34], [-0.68, -0.9, 0.47]], rad: [0.15, 0.13, 0.2], flat: [0, 1, 0], fk: s => 1 - 0.45 * sm((s - 0.75) * 4) }],
+    face: { c: [-0.08, 1.64, 0.2], d: [0.12, 0, 1], k: 1.0, er: 1.15, brow: { y: 0.23, len: 0.13, ang: [0.05, 0.3], lift: [0, 0.06], r: 0.018 }, mouth: { o: 0.045, y: -0.25, r: 0.02 } },
+    marks: [{ c: [-0.08, 1.64, 0.2], d: [0.12, 0, 1], pts: [[-0.38, -0.2], [-0.32, -0.25], [-0.25, -0.24]], r: 0.014, col: 'hi' }, { c: [-0.08, 1.64, 0.2], d: [0.12, 0, 1], pts: [[0.25, -0.24], [0.32, -0.25], [0.38, -0.2]], r: 0.014, col: 'hi' }],
+    drops: [[0.49, 1.78, 0.26, 0.05, 1], [0.49, 1.52, 0.26, 0.032, 1], [-1.75, 0, 0.5, 0.05]] }),
+  // 3 the youth: a slim body twisting, one arm flung up mid-splash, the other trailing a ribbon of water; a wave-lick of hair; bubbles rising in it; a cheeky grin
+  () => ({ keys: pool(0, 0, 1.55, 1.15, 0.44, 0.38).concat([[0.05, 0.7, 0, 0.36, 0.32], [0.16, 1.2, 0, 0.33, 0.29], [0.02, 1.7, 0.04, 0.4, 0.31], [-0.14, 2.1, 0.06, 0.5, 0.33], [-0.1, 2.36, 0.06, 0.2, 0.2], [0, 2.7, 0.08, 0.43, 0.41], [0.06, 3.0, 0.06, 0.33, 0.33],
+      [0.04, 3.2, 0.02, 0.2, 0.19], [-0.12, 3.4, 0, 0.15, 0.14], [-0.38, 3.46, 0.05, 0.1, 0.1], [-0.56, 3.32, 0.1, 0.06, 0.06], [-0.6, 3.18, 0.12, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.55, 1.15], twist: kp => 0.5 * sm((kp - 6) / 3) - 0.35 * sm((kp - 9.5) / 1.5),
+    limbs: [{ k: 9, th: 0, r0: 0.22, ey: 1.25, path: [[0.28, 0.2, 0], [0.5, 0.62, 0.02], [0.48, 1.08, 0.08], [0.5, 1.3, 0.1]], rad: [0.15, 0.12, 0.11, 0.16] },
+      { k: 9, th: PI, r0: 0.22, ey: 1.25, path: [[-0.26, -0.12, 0], [-0.55, -0.5, -0.04], [-0.92, -0.62, -0.1], [-1.22, -0.42, -0.18], [-1.5, -0.62, -0.24], [-1.62, -1.05, -0.26], [-1.45, -1.4, -0.24]], rad: [0.14, 0.12, 0.11, 0.11, 0.09, 0.065, 0.03], flat: [0, 0, 1], fk: s => 1 - 0.35 * sm((s - 0.2) * 4), lite: s => s > 0.3 ? 1 : 0 }],
+    face: { c: [0, 2.72, 0.08], d: [0.2, 0, 1], k: 0.9, brow: { y: 0.22, len: 0.14, ang: [0.05, 0.35], lift: [-0.03, 0.07], r: 0.02 }, mouth: { w: 0.22, d: 0.13, y: -0.21, tilt: 0.05, tick: 1, r: 0.032 } },
+    marks: [bub(0.1, 0.85, 0.075), bub(0.0, 1.22, 0.05), bub(0.2, 1.42, 0.06), bub(0.0, 1.78, 0.04), bub(-0.18, 1.98, 0.03)],
+    drops: [[0.98, 3.74, 0.3, 0.06, 1], [1.22, 3.5, 0.3, 0.045, 1], [0.64, 3.84, 0.3, 0.04, 1], [1.32, 3.18, 0.3, 0.035, 1], [-2.0, 0.45, -0.3, 0.04, 1], [1.8, 0, 0.5, 0.05]] }),
+  // 4 the adult: tall, poised, shoulders back; long hair pouring down its back as a running fall into the pool; one hand out palm up, water spilling from it; a current turning in its chest
+  () => ({ keys: pool(0, 0, 2.1, 1.6, 0.5, 0.42).concat([[0.12, 1.0, 0, 0.4, 0.34], [0.17, 1.7, 0.02, 0.33, 0.3], [0.04, 2.4, 0.08, 0.44, 0.34], [-0.08, 2.95, 0.14, 0.58, 0.36], [-0.07, 3.3, 0.07, 0.2, 0.2], [-0.03, 3.72, 0.04, 0.43, 0.42], [0, 4.1, -0.06, 0.33, 0.34],
+      [0, 4.3, -0.32, 0.3, 0.22], [0, 4.16, -0.62, 0.3, 0.18], [-0.02, 3.6, -0.78, 0.28, 0.16], [0.04, 2.6, -0.84, 0.4, 0.12], [0, 1.5, -0.88, 0.56, 0.12], [0, 0.6, -0.96, 0.62, 0.14], [0, 0.14, -1.05, 0.74, 0.3], [0, 0.03, -1.05, 0, 0]]),
+    foot: 0.42, thin: 0.1, hp: 2.0, rings: 3, frho: 0.34, ns: 128, warp: 0.3, per: 16, wet: [0, 0, 2.1, 1.6], nosp: kp => kp > 12.4,
+    mod: (kp, th) => kp > 18.4 ? 1 + 0.12 * Math.sin(5 * th) * Math.min(1, (kp - 18.4) * 2) : 1,
+    lite: (kp, th) => kp > 12.9 ? Math.min(0.5 + (Math.sin(th * 11 + 1.2 * Math.sin(kp * 0.9)) - 0.62) * 4, 0.5 + (Math.sin(kp * 1.9 + th * 4) + 0.35) * 2, kp - 12.9) : 0, foam: kp => 0.5 + (kp - 18.55) * 3,
+    limbs: [{ k: 9, th: 0.2, r0: 0.23, ey: 1.4, path: [[0.2, -0.3, 0.05], [0.38, -0.7, 0.2], [0.72, -0.6, 0.42], [1.0, -0.42, 0.55], [1.15, -0.5, 0.58], [1.18, -0.95, 0.58], [1.18, -1.5, 0.58]], rad: [0.15, 0.13, 0.115, 0.2, 0.07, 0.045, 0.02], w: [2, 2, 2, 2, 1.2, 0.8, 0.8], flat: [0, 1, 0], fk: s => 1 - 0.55 * Math.exp(-Math.pow((s - 4 / 7) / 0.07, 2)) },
+      { k: 9, th: PI, r0: 0.23, ey: 1.4, path: [[-0.2, -0.38, 0], [-0.3, -0.95, 0.02], [-0.24, -1.5, 0.14], [-0.26, -1.78, 0.2]], rad: [0.15, 0.13, 0.11, 0.14] }],
+    face: { c: [-0.02, 3.76, 0.04], k: 1, er: 0.95, lid: 0.45, brow: { y: 0.21, len: 0.15, ang: [0.06, 0.06], arch: 0.03, r: 0.018 }, mouth: { w: 0.11, d: 0.04, y: -0.23 } },
+    marks: [{ c: [0, 2.72, 0], pts: Array.from({ length: 26 }, (_, i) => { const a = i / 25 * 3.4 * PI, r = 0.03 + 0.2 * i / 25; return [Math.cos(a) * r, Math.sin(a) * r * 0.9]; }), r: 0.016, col: 'lite' }],
+    drops: [[1.63, 1.12, 0.79, 0.05, 1], [1.63, 0.78, 0.79, 0.04, 1], [1.63, 0.46, 0.79, 0.03, 1], [-0.98, 1.72, 0.16, 0.045, 1], [-0.98, 1.42, 0.16, 0.03, 1], [1.95, 0, 1.2, 0.05], [-2.3, 0, 0.6, 0.05]] }),
+  // 5 the elder, a small god of water: towering and broad; crowned by breaking water (the coronet a splash throws up, foam on its points), a beard of foam drawn from its chin and a mantle of foam
+  //   on its back; both arms low and wide like tides drawing in, breaking into foam where they meet the pool; drops going round it
+  () => { const pr = th => 0.5 + 0.5 * Math.cos(7 * th), rim = kp => Math.exp(-Math.pow((kp - 15.5) / 0.75, 2));
+    return { keys: pool(0, 0, 3.9, 2.5, 1.15, 0.9).concat([[0, 1.2, 0, 1.0, 0.8], [0.05, 2.2, 0, 1.05, 0.8], [0, 3.2, 0.05, 1.3, 0.85], [0, 3.95, 0.08, 1.5, 0.85], [0, 4.25, 0.06, 0.95, 0.7], [0, 4.42, 0.05, 0.6, 0.55], [-0.05, 4.98, 0.05, 0.9, 0.85],
+      [-0.05, 5.5, 0, 0.74, 0.7], [-0.05, 5.72, 0, 0.7, 0.66], [-0.05, 5.95, 0, 0.95, 0.9], [-0.05, 6.0, 0, 0.84, 0.8], [-0.05, 5.78, 0, 0.6, 0.56], [-0.05, 5.74, 0, 0, 0]]),
+    foot: 0.7, thin: 0.12, hp: 2.7, rings: 4.5, frho: 0.3, wet: [0, 0, 3.9, 2.5],
+    lift: (kp, th) => rim(kp) * (0.42 * pr(th) * pr(th) + 0.1 * (1 - Math.sin(th))), mod: (kp, th) => 1 + 0.14 * rim(kp) * pr(th),
+    foam: (kp, th, y) => { if (kp > 14.4) return 0.5 + (kp - 14.95 + 0.3 * pr(th)) * 3; if (kp < 8 || kp > 13) return 0; const d = Math.abs(adiff(th, PI / 2)); return d < 1.3 ? 0.5 + 4 * Math.min(y - (4.12 + 0.6 * d * d + 0.05 * Math.sin(11 * th)), 4.5 + 0.4 * sm(d / 0.8) - y) : 0.5 + 4 * Math.min(y - 4.0 - 0.07 * Math.sin(9 * th), 4.5 - y, (d - 1.75) * 0.6); },
+    limbs: [{ k: 9, th: 0.1, r0: 0.62, ey: 1.3, path: [[0.45, -0.45, 0.05], [0.95, -1.3, 0.15], [1.4, -2.3, 0.35], [1.8, -3.2, 0.7], [1.7, -3.6, 1.2], [1.3, -3.6, 1.6], [0.95, -3.45, 1.75]], rad: [0.44, 0.36, 0.34, 0.42, 0.4, 0.26, 0.1], foam: s => 0.5 + (s - 0.74) * 12 },
+      { k: 9, th: PI - 0.1, r0: 0.62, ey: 1.3, path: [[-0.5, -0.4, 0.05], [-1.05, -1.2, 0.15], [-1.55, -2.2, 0.35], [-1.95, -3.15, 0.65], [-1.9, -3.6, 1.15], [-1.5, -3.6, 1.55], [-1.15, -3.45, 1.7]], rad: [0.44, 0.36, 0.34, 0.42, 0.4, 0.26, 0.1], foam: s => 0.5 + (s - 0.74) * 12 },
+      { k: 11.05, th: PI / 2, r0: 0.4, path: [[0, -0.25, 0.3], [0.06, -0.75, 0.42], [-0.04, -1.25, 0.36], [0.05, -1.65, 0.3]], rad: [0.44, 0.4, 0.28, 0.1], flat: [0, 0, 1], fk: s => 0.6, foam: s => 1 }],
+    face: { c: [-0.05, 5.12, 0.05], k: 1.7, er: 0.85, lid: 0.22, brow: { y: 0.2, len: 0.2, ang: [-0.2, -0.2], arch: 0.025, r: 0.035, foam: true }, mouth: { w: 0.12, d: 0.02, y: -0.235 } },
+    drops: Array.from({ length: 10 }, (_, i) => { const a = i / 10 * 2 * PI + 0.3; return [2.35 * Math.cos(a), 4.35 + 0.45 * Math.cos(a + 0.7), 1.5 * Math.sin(a), 0.075, 1]; }).concat([[4.0, 0, 1.0, 0.07], [-4.1, 0, -0.4, 0.06]]) }; }
+];
+function water25Fig(T, stage) {
+  const o = S25[Math.max(1, Math.min(5, stage | 0)) - 1](), g = new T.Group(), lin = h => new T.Color(h).convertSRGBToLinear(), ink = KIT.water25Ink || 0.045;
+  if (!ramp24) { ramp24 = new T.DataTexture(new Uint8Array([150, 215, 255]), 3, 1, T.LuminanceFormat); ramp24.minFilter = ramp24.magFilter = T.NearestFilter; ramp24.needsUpdate = true; }
+  const geo = sweep25(T, o), body = new T.Mesh(geo, mat25(T, o)); body.userData.water24 = 'body'; g.add(body); g.add(inkHull25(T, geo, ink));
+  face25(T, g, body, o.face, new T.MeshToonMaterial({ color: lin(C25.mid), gradientMap: ramp24 }));
+  (o.marks || []).forEach(mk => { const L = lay25(T, body, mk.c, mk.d), m = L.line(mk.pts, mk.r, new T.MeshBasicMaterial({ color: lin(C25[mk.col || 'lite']) }), mk.closed); if (m) g.add(m); if (mk.dot) { const h = L.hit(mk.dot[0], mk.dot[1], 0.01); if (h) { const d = new T.Mesh(new T.SphereGeometry(mk.dot[2], 8, 6), new T.MeshBasicMaterial({ color: 0xffffff })); d.position.copy(h.p); g.add(d); } } });
+  // the wood is only a little darker in a thin margin round the pool: wet, not a shadow
+  if (o.wet) { const s = o.wet, cg = new T.CircleGeometry(1, 64), m = new T.Mesh(cg, new T.MeshBasicMaterial({ color: lin(0x5d3a1c), transparent: true, opacity: 0.4 })); m.rotation.x = -PI / 2; m.scale.set(s[2] * 1.035 + 0.05, s[3] * 1.035 + 0.05, 1); m.position.set(s[0], 0.006, s[1]); m.userData.plain = true; g.add(m); }
+  (o.drops || []).forEach(d => { const air = d[4], dg = new T.SphereGeometry(d[3], 12, 10), dm = new T.Mesh(dg, new T.MeshToonMaterial({ color: lin(C25.lite), gradientMap: ramp24 })); dm.scale.set(1, air ? 1.35 : 0.55, 1); dm.position.set(d[0], air ? d[1] : d[3] * 0.3, d[2]); g.add(dm); const ik = new T.Mesh(dg, new T.MeshBasicMaterial({ color: lin(COL.ink), side: T.BackSide })); ik.position.copy(dm.position); ik.scale.copy(dm.scale).multiplyScalar(1 + ink * 0.8 / d[3]); ik.userData.plain = true; g.add(ik); });
+  g.userData.water24 = { way: 'spirit', stage };
+  return g;
+}
+KIT.water24 = KIT.water24 || 'a'; KIT.water24Fig = water24Fig; KIT.WATER24 = { ways: { a: 'pure water', b: 'water spirit', c: 'water beast', spirit: 'the water spirit, each stage its own character (builder 25)' } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
