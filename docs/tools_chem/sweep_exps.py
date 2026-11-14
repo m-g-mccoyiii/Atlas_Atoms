@@ -872,3 +872,6 @@ def hom18(arg='median,100,,water@2.25'):
 
 
 EXPERIMENTS['hom18'] = hom18
+
+
+EXPERIMENTS['hom19'] = hom18          # nineteenth: the same jobs, kept apart (specs carry ~ONCE=1, Brimstone ~ONCERUN=1)

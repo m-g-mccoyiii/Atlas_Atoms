@@ -2,6 +2,7 @@
 
     python sweep_hom18_table.py stages     each creature at its five stages, alone: the careful and the casual player
     python sweep_hom18_table.py kit        a full kit (three instruments, three sigils) with each creature at stage 3 and with none
+    python sweep_hom18_table.py stages 19  (also kit 19, kit5 19)   the nineteenth: _sweep/hom19, sweep_hom19_specs (a creature acts once a round)
     python sweep_hom18_table.py jobs       how often each creature does its job in a run (careful player, the runs played for him alone)
 
 "Worth" is sweep_help.flat_lift against sig17's bare runs (the same deals).  A set played 100 times: wins are good to about 1.3
@@ -26,7 +27,13 @@ def cell(runs, base):
 
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'stages'
-    by, mod = M.load('hom18')
+    N19 = '19' in sys.argv          # nineteenth: `python sweep_hom18_table.py stages 19`, `kit 19`, `kit5 19` read _sweep/hom19 and sweep_hom19_specs
+    if N19:
+        import sweep_hom19_specs as S
+        sys.argv.remove('19')
+    KST = 5 if cmd == 'kit5' else 3
+    cmd = 'kit' if cmd == 'kit5' else cmd
+    by, mod = M.load('hom19' if N19 else 'hom18')
     bare = S16.load('sig17')
     if cmd == 'stages':
         for pl in ('median', 'greedy'):
@@ -67,7 +74,7 @@ if __name__ == '__main__':
                 print('| The kit with no creature | n %d | worth %.2f | wins of nine %.1f | rounds 7 to 9: %s | biggest round %.0f | runs of 100 with a round past 20, 50: %.0f, %.0f |' % (
                     x['n'], x['worth'], x['win'], ', '.join('%.0f' % v for v in x['wall']), x['max'], 100.0 * x['r20'] / x['n'], 100.0 * sum(1 for r in k0 if any(C.ratio(rd) > 50 for rd in r[:9])) / x['n']))
             for h in S.ORDER:
-                runs = d.get(S.spec(h, 3) + KIT)
+                runs = d.get(S.spec(h, KST) + KIT)
                 if not runs:
                     continue
                 x = cell(runs, base)

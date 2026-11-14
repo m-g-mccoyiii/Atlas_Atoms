@@ -2,6 +2,8 @@
 
 Each pays for a way of playing a page or a round.  It is lit by what the player's three reagents did on the page (never by a
 flat count), the player taps it, and it has a cost or a risk.  The numbers (K) are the ones in path.js HOMS2.
+The class defaults below are the seventeenth's, kept so that older experiments play as they did.  The game's creatures of today
+(eased jobs, one tap a round, Brimstone once a run, five numbers a stage) are make('water*') or make('water*5'): sweep_hom19_specs.
 A name may carry its own strength: 'water@1.8'.
 
     water      a wet page: 4 or more waters off one page.  The flood: the round's yield times K, and every C=C becomes C-OH.
@@ -47,6 +49,9 @@ class Hom(SC.Mod):
     CAP = 5
     GROW_F = (0.8, 0.9, 1.0, 1.15, 1.3)
     GROW_AT = (2, 4, 7, 10)
+    # nineteenth (owner, ruling BB: "a creature acts ONCE A ROUND (the player picks the page)"): ONCE 1 and a tap is spent for the
+    # round (path.js RULE.homOnce); 0 is once a page, as it was.
+    ONCE = 0
 
     def reset(self):
         self.taps = self.lit_n = self.rounds = self.pages = self.food = self.rtap = 0
@@ -115,7 +120,7 @@ class Hom(SC.Mod):
 
     # --- the flow ----------------------------------------------------------------------------------------------------
     def _ok(self, R):
-        return bool(R.rec) and not R.x.get('tp_' + self.name) and (self.last_page or R.page < R.pages)
+        return bool(R.rec) and not R.x.get('tp_' + self.name) and not (self.ONCE and R.x.get('rt_' + self.name)) and (self.last_page or R.page < R.pages)
 
     def after_page(self, G, R, rng, player):
         if not R.rec:
@@ -140,6 +145,7 @@ class Hom(SC.Mod):
                 return
         self.apply2(G, R)
         R.x['tp_' + self.name] = True
+        R.x['rt_' + self.name] = True
         R.x['tap'] = R.x.get('tap', 0) + 1
         if G.real:
             self.taps += 1
@@ -540,9 +546,37 @@ class Brimstone(Hom):
     #   3  get sulfur onto the molecule with the task at least half done: the round ends there and the task counts as met (no number)
     MODE = 0
     KS = 1.5
+    # nineteenth (owner, ruling BB: "Brimstone works once a run and keeps its number"): ONCERUN 1 and the fire is spent for the run
+    # once it has ended a round (path.js RULE.brimOnce); ONCERUN n: it has n fires a run (a trial for the owner's choice).  SAVE is how the player keeps it: 0 he burns the first time the fire clears
+    # a round (as before); 1 he burns only when the round stands lost without it (its last page, the task unmet or the yield
+    # short), or from round WALL on, on any page where the task is unmet.  The careful player saves, the casual player does not.
+    ONCERUN = 0
+    WALL = 7
+    _fired = 0
+    _saves = False
+
+    def run_start(self, G, run):
+        Hom.run_start(self, G, run)
+        self._fired = 0
+
+    def before_page(self, G, R, rng, player, hand):
+        self._saves = player == 'median'
+        return Hom.before_page(self, G, R, rng, player, hand)
+
+    def after_page(self, G, R, rng, player):
+        b = R.x.get('burnt')
+        self._saves = player == 'median'
+        Hom.after_page(self, G, R, rng, player)
+        if self.ONCERUN and R.x.get('burnt') and not b and G.real:
+            self._fired += 1
+            self.fired_at = getattr(self, 'fired_at', {})
+            r = (getattr(G, 'run', None) or {}).get('round')
+            self.fired_at[r] = self.fired_at.get(r, 0) + 1
 
     def lit(self, G, R):
         rec = R.rec[-1]
+        if self.ONCERUN and self._fired >= self.ONCERUN:
+            return False
         if self.MODE == 2 and not G.met(R):
             return False
         if self.MODE in (0, 3) and self.HALF and R.spec and G.prog(R, R.rec) < self.HALF * len(R.spec):
@@ -569,7 +603,11 @@ class Brimstone(Hom):
         nd = G.need_abs(R)
         if nd <= 0:
             return bool(R.spec) and not G.met(R) and R.page >= 2
-        return made(R2) >= nd and (not G.met(R) or made(R) < nd)
+        ok = made(R2) >= nd and (not G.met(R) or made(R) < nd)
+        if ok and self.ONCERUN and self._saves:
+            rn = (getattr(G, 'run', None) or {}).get('round') or 0
+            return R.page >= R.pages or (rn >= self.WALL and not G.met(R))
+        return ok
 
 
 HOMS = {c.name: c for c in (Water, Hydrogen, DryIce, Acid, Wood, Salt, Slime, Ammonia, Seedling, Brimstone)}
@@ -579,6 +617,11 @@ LABEL = {'water': 'Water', 'h2': 'Hydrogen', 'co2': 'Dry ice', 'acid': 'Acid', '
 
 
 def make(arg):
+    if '*' in arg.split('/')[0]:               # 'water*' or 'water*5': the creature as the game has it today (nineteenth: sweep_hom19_specs), at stage 3 or the stage given
+        import sweep_hom19_specs as S19
+        nm, _, rest = arg.partition('*')
+        st, _, more = rest.partition('/')
+        arg = S19.spec(nm, int(st or 3)).replace('~', '/') + ('/' + more if more else '')
     arg, _, opts = arg.partition('/')          # name[@k][/ATTR=value/ATTR=value]: a trial of a creature's own numbers
     name, _, k = arg.partition('@')
     h = HOMS[name](float(k) if k else None)
