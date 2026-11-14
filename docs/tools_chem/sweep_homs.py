@@ -57,6 +57,7 @@ class Hom(SC.Mod):
         self.taps = self.lit_n = self.rounds = self.pages = self.food = self.rtap = 0
         self.runs = self.st3 = self.st6 = self.st9 = self.run_taps = 0
         self._open = False
+        self.nh = {}            # twentieth: taps by the count the per-count form read (n_<count> in the report)
 
     def stage(self):
         if self.GROW:
@@ -82,8 +83,11 @@ class Hom(SC.Mod):
 
     def report(self):
         self._close()
-        return {self.name: {'taps': self.taps, 'lit': self.lit_n, 'rounds': self.rounds, 'pages': self.pages, 'food': self.food, 'rtap': self.rtap,
-                            'runs': self.runs, 'st3': self.st3, 'st6': self.st6, 'st9': self.st9}}
+        d = {'taps': self.taps, 'lit': self.lit_n, 'rounds': self.rounds, 'pages': self.pages, 'food': self.food, 'rtap': self.rtap,
+             'runs': self.runs, 'st3': self.st3, 'st6': self.st6, 'st9': self.st9}
+        for n, c in self.nh.items():
+            d['n_%d' % n] = c
+        return {self.name: d}
 
     def round_start(self, G, R, rng):
         if G.real:
@@ -150,6 +154,9 @@ class Hom(SC.Mod):
         if G.real:
             self.taps += 1
             self.run_taps += 1
+            n = getattr(self, '_n', None)
+            if n is not None:
+                self.nh[n] = self.nh.get(n, 0) + 1
             if not self._rt:
                 self._rt = True
                 self.rtap += 1
@@ -171,6 +178,42 @@ class Hom(SC.Mod):
 
 def line_of(rec):
     return tuple(c[0] for c in rec['circ'])
+
+
+def count_k(k, per, extra, capr=0.0):
+    """Twentieth (path.js homCountK): what a per-count tap multiplies E by.  k is the number at the threshold as the rules count it
+    (the square of what is read), per the step for each count past it as read, capr the most it may read (0: none)."""
+    r = (k ** 0.5) * (per ** max(0, extra))
+    if capr:
+        r = min(r, capr)
+    return r * r
+
+
+_SC = {}
+
+
+def sulfur_count(smi, oh=False):
+    """Sulfur atoms on the molecule; oh: every OH counts as well (Sulphur's Mask held: oxygen passes for sulfur)."""
+    k = (smi, oh)
+    v = _SC.get(k)
+    if v is None:
+        from rdkit import Chem
+        m = Chem.MolFromSmiles(smi)
+        v = 0
+        if m is not None:
+            v = sum(1 for a in m.GetAtoms() if a.GetSymbol() == 'S')
+            if oh:
+                v += sum(1 for a in m.GetAtoms() if a.GetSymbol() == 'O' and a.GetDegree() == 1 and a.GetTotalNumHs() == 1
+                         and all(b.GetBondTypeAsDouble() == 1.0 for b in a.GetBonds()))
+        if len(_SC) > 200000:
+            _SC.clear()
+        _SC[k] = v
+    return v
+
+
+def mask_held(G):
+    import sigil2_rules as S2
+    return any(isinstance(m, S2.SulphursMask) for m in G.mods)
 
 
 def more_circles(G, R, rids):
@@ -325,11 +368,21 @@ class Acid(Hom):
     name = 'acid'
     K = 2.0
     LOSS = 2
+    # twentieth (owner, ruling BC: "synergy over averages"; path.js RULE.homCount): COUNT 1 and the number grows with each atom
+    # chewed past LOSS: as read B * PER^(loss - LOSS) (B is the square root of K), at most CAPR as read (0: no cap; ruling BC: x3.20)
+    COUNT = 0
+    PER = 1.0
+    CAPR = 0.0
 
     def lit(self, G, R):
         return R.x.get('a0', 0) - R.rec[-1]['F']['atoms'] >= self.LOSS
 
     def apply(self, G, R):
+        if self.COUNT:
+            n = R.x.get('a0', 0) - R.rec[-1]['F']['atoms']
+            R.E *= count_k(self.K, self.PER, n - self.LOSS, self.CAPR)
+            self._n = n
+            return
         R.E *= self.K
 
 
@@ -518,10 +571,20 @@ class Seedling(Hom):
             R.x['streak'] = 0
             R.x['wpage'] = R.page
 
+    # twentieth (ruling BC; path.js RULE.homCount): COUNT 1 and the number grows with each atom added past GAIN: as read
+    # B * PER^(gain - GAIN), B the square root of K (RISE 0 only)
+    COUNT = 0
+    PER = 1.0
+
     def apply(self, G, R):
         n = R.x.get('streak', 0) + 1
         R.x['streak'] = n
         R.x['spage'] = R.page
+        if self.COUNT and not self.RISE:
+            g = self.grew(R)
+            R.E *= count_k(self.K, self.PER, g - self.GAIN)
+            self._n = g
+            return
         R.E *= (1 + (self.K - 1) * n) if self.RISE else self.K
 
 
@@ -554,6 +617,17 @@ class Brimstone(Hom):
     WALL = 7
     _fired = 0
     _saves = False
+    # twentieth (owner, ruling BC: "Brimstone counts sulfur"; path.js RULE.homCount): COUNT 1 (MODE 1) and the number is read
+    # B * PER^(n - 1), n the sulfur atoms on the molecule at the fire (B the square root of KB; B = PER is "xPER for each sulfur").
+    # MASKOH 1: with Sulphur's Mask held every OH counts as a sulfur.  BURNAT: a player who saves the fire (the careful one) also
+    # burns it on any page where the count's number reads BURNAT or more (0: never; the line of play that hunts the big fire).
+    COUNT = 0
+    PER = 1.0
+    MASKOH = 0
+    BURNAT = 0.0
+
+    def count(self, G, R):
+        return sulfur_count(R.smi, bool(self.MASKOH) and mask_held(G))
 
     def run_start(self, G, run):
         Hom.run_start(self, G, run)
@@ -591,7 +665,12 @@ class Brimstone(Hom):
         if not self.MODE:
             R.E *= self.K if R.page <= 1 else self.K2
         elif self.MODE == 1:
-            R.E *= self.KB
+            if self.COUNT:
+                n = self.count(G, R)
+                R.E *= count_k(self.KB, self.PER, n - 1)
+                self._n = n
+            else:
+                R.E *= self.KB
         R.x['burnt'] = True
         R.over = True
 
@@ -600,6 +679,8 @@ class Brimstone(Hom):
             return made(R2) >= G.need_abs(R)       # he stops early when the yield with the fire already passes the mark
         # a reader burns when that clears the round: the yield then passes the mark, and either the task is not met yet (it is
         # burned) or the yield was short without the fire
+        if self.BURNAT and self.COUNT and self.MODE == 1 and count_k(self.KB, self.PER, self.count(G, R) - 1) ** 0.5 >= self.BURNAT:
+            return True                    # the hunter: a fire this big is burned now, whatever the round needs
         nd = G.need_abs(R)
         if nd <= 0:
             return bool(R.spec) and not G.met(R) and R.page >= 2

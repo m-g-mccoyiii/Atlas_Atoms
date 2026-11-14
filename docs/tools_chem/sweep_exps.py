@@ -875,3 +875,23 @@ EXPERIMENTS['hom18'] = hom18
 
 
 EXPERIMENTS['hom19'] = hom18          # nineteenth: the same jobs, kept apart (specs carry ~ONCE=1, Brimstone ~ONCERUN=1)
+EXPERIMENTS['hom20'] = hom18          # twentieth (ruling BC): the per-count forms of Acid, Seedling and Brimstone (sweep_hom20_specs.py)
+EXPERIMENTS['hom20t'] = hom18         # the same, for short trials kept apart
+
+
+def hom20x(arg):
+    """Twentieth: a creature with what a player might find to go with it.  arg: player,runs,held beside it (as hom18),reagents added to
+    the rack (joined by +),spec;spec;...  The set's name ends '&R:' and the reagents added."""
+    pl, n, more, extra, specs = arg.split(',', 4)
+    jobs = []
+    for j in hom18('%s,%s,%s,%s' % (pl, n, more, specs)):
+        if extra:
+            j['rack'] = list(START) + extra.split('+')
+            j['id'] += '_R' + extra
+            nm, _, who = j['tag'].partition('|')
+            j['tag'] = '%s&R:%s|%s' % (nm, extra, who)
+        jobs.append(j)
+    return jobs
+
+
+EXPERIMENTS['hom20x'] = hom20x

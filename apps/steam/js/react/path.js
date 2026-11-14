@@ -342,13 +342,13 @@ const REF_HOM0 = { h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a pag
 const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Double bonds soak up OH; closed rings burst.',
   h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
   co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Leave ' : 'Drive off carbon dioxide and leave ') + K.least + ' reagents untouched to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
-  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.',
+  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') && homK(K.k * f) < HOMCOUNT.cap.acid ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '. Never past x' + HOMCOUNT.cap.acid.toFixed(2) + '.' : ''),      // twentieth (homCount): the count's step and the cap
   wood: (K, f) => (homSimple('wood') ? 'Wood spirit drinks. Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
   salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
   slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle is shut all round.',
   ammonia: (K, f) => 'Ammonia revives. Put nitrogen on the molecule. The three reagents go round again.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
-  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
-  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' : '') : REF_HOM0.brimstone(K, f)) };
+  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
+  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met.' + (HOMSIMPLE.brimstone.k ? (homCountOn('brimstone') ? ' Each sulfur: x' : ' x') + homX(HOMSIMPLE.brimstone.k * f) + '.' : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): the number is each sulfur's
 // how each is got, in the same voice (the count is its jar's size, JAR.full)
 const REF_HOMHOW = { water: n => n + ' waters driven off.', h2: n => n + ' hydrogens driven off.', co2: n => n + ' carbon dioxides driven off.', acid: n => n + ' uses of hydrate or dehydrate.',
   wood: n => n + ' uses of reduce.', salt: n => n + ' chain-end OH oxidized.', slime: n => n + ' uses of hydroborate.', seedling: n => n + ' uses of grow.',
@@ -1668,6 +1668,40 @@ function homStage(run, id) {
   const cap = mode === 'both' ? Math.max(2, ks) : 5, st = Math.min(cap, rs);
   return { stage: st, mult: mults && mults[st - 1], mults, count: jobs, next: st >= cap ? null : nx(jobs, HOMGROW.run), of: 'run', cap };
 }
+// TWENTIETH (owner, ruling BC, 14 November: "these combinations of homunculus, sigil, reagent, and play style should allow for people to massively
+// chain stuff together, it can't always be about averages. things can have synergy if the player uncovers it"; "Try it on three first").
+// RULE.homCount: three creatures' numbers grow with a count (docs/RIG.md, twentieth; sweep_hom20_specs.py):
+//   acid       2 atoms chewed: the stage's number; each atom more: times HOMCOUNT.per.acid; never past x3.20 (ruling BC: "Acid stops at x3.20")
+//   seedling   6 atoms added: the stage's number; each atom more: times HOMCOUNT.per.seedling
+//   brimstone  the stage's number for each sulfur atom on the molecule when it burns (once a run, as before); with Sulphur's Mask held every
+//              OH counts as a sulfur (HOMCOUNT.maskOH: the mask passes oxygen off as sulfur)
+// Every number here is as the player reads it. HOMCOUNT.read is the five stage numbers of each (they replace HOMGROW.read's rows while the switch
+// is on; HOMCOUNT.read19 keeps the nineteenth's). The stage's factor (homF) is not applied again to these three: homCountK holds the whole tap.
+// homCountN(g, id) is the count on the page as it stands; P.homCountNow(g) gives { id, n, x } (x as read) for the page to show.
+var HOMCOUNT = { n0: { acid: 2, seedling: 6, brimstone: 1 }, per: { acid: 1.2, seedling: 1.06 }, cap: { acid: 3.2 }, maskOH: true,
+  read: { acid: [1.96, 2.67, 3.17, 3.2, 3.2], seedling: [1.48, 1.71, 1.92, 2.26, 2.73], brimstone: [1.17, 1.30, 1.39, 1.52, 1.59] },
+  read19: { acid: HOMGROW.read.acid.slice(), seedling: HOMGROW.read.seedling.slice(), brimstone: HOMGROW.read.brimstone.slice() } };
+var homCountFlag = false;      // var, not let: the book's lines (REF_HOM) may ask before this line has run
+const homCountSet = () => { Object.keys(HOMCOUNT.n0).forEach(id => { HOMGROW.read[id] = (homCountFlag ? HOMCOUNT.read : HOMCOUNT.read19)[id].slice(); }); homNumbers(); };
+Object.defineProperty(RULE, 'homCount', { enumerable: true, configurable: true, get: () => homCountFlag, set: v => { homCountFlag = !!v; homCountSet(); } });
+RULE.homCount = false;      // twentieth: off until measured (docs/RIG.md, twentieth)
+function homCountOn(id) { return !!(homCountFlag && HOMCOUNT && RULE.homs2 && HOMCOUNT.n0[id] && (id !== 'brimstone' || homSimple('brimstone')) && (id !== 'seedling' || HOMS2K.seedling.rise === false)); }
+const homOHs = m => { let n = 0; m.atoms.forEach(a => { if (a.el !== 'O') return; const nb = m.neighbors(a); if (nb.length === 2 && nb.every(q => q.bond.order === 1) && nb.some(q => q.atom.el === 'H')) n++; }); return n; };
+function homCountN(g, id) {
+  if (!g || !g.m || !g.hom) return 0;
+  if (id === 'acid') return (g.hom.a0 || 0) - heavy(g.m);
+  if (id === 'seedling') return heavy(g.m) - (g.hom.a0 || 0);
+  if (id === 'brimstone') return g.m.atoms.filter(a => a.el === 'S').length + (HOMCOUNT.maskOH && sigOn('sulphurs_mask') ? homOHs(g.m) : 0);
+  return 0;
+}
+// the tap's whole multiplier as the rules count it (the square of what is read), at the stage the run's creature holds
+function homCountK(g, id, n) {
+  const st = RULE.homGrow ? homStage(g.runRef || null, id).stage : 3, b = HOMGROW.read[id][st - 1], per = id === 'brimstone' ? b : HOMCOUNT.per[id];
+  let r = b * Math.pow(per, Math.max(0, (n == null ? homCountN(g, id) : n) - HOMCOUNT.n0[id]));
+  if (HOMCOUNT.cap[id]) r = Math.min(HOMCOUNT.cap[id], r);
+  return Math.pow(r, 1 / FLAT.pow);
+}
+const homCountNow = g => { const id = g && g.hom && g.hom.id; if (!id || !homCountOn(id)) return null; const n = homCountN(g, id); return { id, n, x: Math.round(Math.pow(homCountK(g, id, n), FLAT.pow) * 100) / 100 }; };
 function hom2Use(g, spot, rnd) {
   g.lastOn = false; if (!spot || !hom2Lit(g)) return false;
   const id = g.hom.id, K = HOMS2K[id] || {}, line = hom2Line(hom2Rec(g)).filter(x => x !== SYN.finish && x !== BANKID), up = { tp: true, rt: true, used: (g.hom.used || 0) + 1 };
@@ -1676,15 +1710,15 @@ function hom2Use(g, spot, rnd) {
   if (id === 'water') { g.E *= K.k; made = HOMS2.water.act(cm.model).made; }
   else if (id === 'h2' && homSimple('h2')) g.E *= HOMSIMPLE.h2.k;
   else if (id === 'wood' && homSimple('wood')) g.E *= HOMSIMPLE.wood.k;
-  else if (id === 'brimstone' && homSimple('brimstone')) { if (HOMSIMPLE.brimstone.k) g.E *= HOMSIMPLE.brimstone.k; up.end = true; up.burnt = true; }
+  else if (id === 'brimstone' && homSimple('brimstone')) { if (homCountOn('brimstone')) { up.count = homCountN(g, id); g.E *= homCountK(g, id, up.count); } else if (HOMSIMPLE.brimstone.k) g.E *= HOMSIMPLE.brimstone.k; up.end = true; up.burnt = true; }      // twentieth: each sulfur (homCount)
   else if (id === 'h2') { up.float = g.casc || 0; if (K.k) g.E *= K.k; }
   else if (id === 'co2') g.E *= Math.pow(K.k, hom2Shut(g));
-  else if (id === 'acid') g.E *= K.k;
+  else if (id === 'acid') { if (homCountOn('acid')) { up.count = homCountN(g, id); g.E *= homCountK(g, id, up.count); } else g.E *= K.k; }      // twentieth: each atom chewed (homCount)
   else if (id === 'slime') { const own = hom2Own(hom2Rec(g), K); g.E *= own.length >= 3 || K.same ? K.k : K.k2; if (K.same) { if (!(g.free && g.free[own[0]])) g.left[own[0]] = 0; } else up.stuck = own.filter((x, i) => own.indexOf(x) === i); }      // same: that bottle is empty for the rest of the round
   else if (id === 'wood') { const rest = hom2Rest(g), dud = hom2Rec(g).circ[0]; if (!K.pay) give(rest); more(rest); if (K.empty && dud && !(g.free && g.free[dud.id])) g.left[dud.id] = 0; up.woodFrom = g.trail.length; up.woodPaid = false; }      // pay: his pours spend a use each; empty: the bottle he drank is empty for the round
   else if (id === 'salt') { g.E *= K.k; give(K.match && K.match < 3 ? hom2Line(hom2Rec(g)).slice(0, K.match) : line); }      // the repeated reagents get their use back
   else if (id === 'ammonia') { if (K.k) g.E *= K.k; give(line); more(line); if (RULE.ammoniaLimits) g.againFrom = g.trail.length; }      // ammoniaLimits (off): his second firing has the page's plain limits (dry once, weld twice, ring twice, counting what the page has already done), whatever sigil is held
-  else if (id === 'seedling') { up.streak = (g.hom.streak || 0) + 1; up.spage = g.page; g.E *= K.rise === false ? K.k : 1 + (K.k - 1) * up.streak; }
+  else if (id === 'seedling') { up.streak = (g.hom.streak || 0) + 1; up.spage = g.page; if (homCountOn('seedling')) { up.count = homCountN(g, id); g.E *= homCountK(g, id, up.count); } else g.E *= K.rise === false ? K.k : 1 + (K.k - 1) * up.streak; }      // twentieth: each atom added (homCount)
   else if (id === 'brimstone') { g.E *= g.page <= 1 ? K.k : K.k2; up.end = true; up.burnt = true; }      // the spec is burned: it counts as met (specMet)
   const cur = g.cur, live = new Set(cm.model.atoms), mS = S => { const T = new Set(); (S || []).forEach(a => { const c = cm.map.get(a); if (c && live.has(c)) T.add(c); }); return T; };
   cur.fresh = mS(cur.fresh); cur.layers = (cur.layers || []).map(mS); g.m = cm.model; g.reopened = { n: 1, map: cm.map, made, gone: [] };
@@ -1692,7 +1726,7 @@ function hom2Use(g, spot, rnd) {
   if (id !== 'water') up.hold = g.trail.length;
   g.hom = Object.assign({}, g.hom, up); g.tally.homs = (g.tally.homs || 0) + 1; g.homAgain = null;
   if (RULE.homGrow) {      // the creature gets better at its job: the stage it holds scales this tap, the tap counts toward the next stage (homStage)
-    const run = g.runRef || null, s0 = homStage(run, id); g.E *= homF(id, s0.stage); if (run) { run.homJobs = run.homJobs || {}; run.homJobs[id] = (run.homJobs[id] || 0) + 1; }
+    const run = g.runRef || null, s0 = homStage(run, id); if (!homCountOn(id)) g.E *= homF(id, s0.stage); if (run) { run.homJobs = run.homJobs || {}; run.homJobs[id] = (run.homJobs[id] || 0) + 1; }
     const s1 = homStage(run, id); g.homEvolved = s1.stage > s0.stage ? { id, stage: s1.stage, from: s0.stage, mult: s1.mult, at: g.trail.length } : null;
     if (g.homEvolved && g.trail.length) g.trail[g.trail.length - 1].evolve = { id, stage: s1.stage, mult: s1.mult };
   }
@@ -2573,6 +2607,6 @@ const reachAfter = (reach, run) => { const top = RULE.postdoc ? 4 : 3; return Ma
 // the fold of a molecule for the page: rows, columns, which side each atom points to, who hosts whom, and the pairs that face across it
 function foldOf(m, K) { const ENG = RX.ENG, G = ENG.snapG(m), f = ENG.foldOf(G, K), at = i => G.atoms[i]; const pos = new Map(), down = new Map(), host = new Map(); f.pos.forEach((v, i) => pos.set(at(i), v)); f.down.forEach((v, i) => down.set(at(i), v)); f.host.forEach((h, i) => host.set(at(i), at(h)));
   return { K: f.K, rows: f.rows, anchor: at(f.anchor), path: f.path.map(at), pos, down, host, rungs: f.rung.map(r => [at(r[0]), at(r[1])]), across: ENG.acrossPairs(G, K).map(p => [at(p[0]), at(p[1]), p[2]]), faces: (a, b) => ENG.faces(f, G.idx.get(a), G.idx.get(b)) }; }
-AA.rxPath = { motifAtoms, homSpent, LONG_MARK, SXm: SX, homBase, homF, homNumbers, HOMS2K_17, JARSTART, jarFull, stageOf, gateOpen, SIGIL_GET, sigilVisit, sigilGet, sigilPrice, sigilPays, sigStrong, refNums, HOMSIMPLE, homSimple, HOMGROW, homStage, sigilRoom, facts, reference, REFERENCE_CATS, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, benchLeft, benchUsed, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { motifAtoms, homSpent, HOMCOUNT, homCountOn, homCountN, homCountK, homCountNow, LONG_MARK, SXm: SX, homBase, homF, homNumbers, HOMS2K_17, JARSTART, jarFull, stageOf, gateOpen, SIGIL_GET, sigilVisit, sigilGet, sigilPrice, sigilPays, sigStrong, refNums, HOMSIMPLE, homSimple, HOMGROW, homStage, sigilRoom, facts, reference, REFERENCE_CATS, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, benchLeft, benchUsed, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
