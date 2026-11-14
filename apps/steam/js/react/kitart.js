@@ -2071,7 +2071,7 @@ function evo31(S, t, o, q) { const K = RK, L = o.L, X = tl31(o), u = t / L, g = 
   q.sq = -0.42 * c0 + 0.5 * K.pulse(v, 0.08, 0.42, 0.12) + (v > 0.45 ? -0.16 * K.ring((v - 0.45) * LL, 240, 300) : 0);
   for (let i = 1; i <= 3; i++) { const bt = 0.4 * i; q.sq += -0.08 * K.pulse(v, bt - 0.14, bt, 0.05) + (v > bt ? 0.09 * K.ring((v - bt) * LL, 200, 260) : 0); }
   q.px = q.pz = 0.4 + 0.6 * Math.min(1.25, K.back((v - 0.4) / 0.55)) + (v > 0.95 ? 0.1 * K.ring((v - 0.95) * LL, 380, 420) : 0);
-  q.armL = 1.1 * (1 - K.sm((v - 0.4) / 0.45)) * K.sm(v / 0.35) - 1.3 * c0 + (v > 0.8 ? 0.25 * K.ring((v - 0.8) * LL, 260, 300) : 0); q.armR = 1.1 * (1 - K.sm((v - 1.2) / 0.45)) * K.sm(v / 0.35) - 1.3 * c0 + (v > 1.6 ? 0.25 * K.ring((v - 1.6) * LL, 260, 300) : 0);
+  q.armL = 1.1 * (1 - K.sm((v - 0.4) / 0.45)) * K.sm(v / 0.35) - 1.3 * c0 + (v > 0.8 ? 0.25 * K.ring((v - 0.8) * LL, 260, 300) : 0); q.armR = 1.1 * (1 - (KIT.fix34 !== false ? -0.2 : 1) * K.sm((v - 1.2) / 0.45)) * K.sm(v / 0.35) - 1.3 * c0 + (v > 1.6 ? 0.25 * K.ring((v - 1.6) * LL, 260, 300) : 0);
   q.hair = 0.9 * K.pulse(v, 0.1, 0.8, 0.2) - 0.8 * c0 + (v > 1.2 ? -0.3 * K.ring((v - 1.2) * LL, 300, 340) : 0);
   q.blink = 1 - K.sm((v - 0.28) / 0.1); q.wide = 0.9 * K.pulse(v, 0.25, 1.2, 0.2); q.brow = 0.8 * K.pulse(v, 0.25, 1.3, 0.2); q.looky = 0.7 * K.pulse(v, 0.2, 0.8, 0.2); q.open = K.pulse(v, 0.2, 0.6, 0.1);
   q.lookx = -K.pulse(v, 0.45, 0.8, 0.12) + K.pulse(v, 1.2, 1.55, 0.12); q.hturn = -0.45 * K.pulse(v, 0.45, 0.8, 0.15) + 0.45 * K.pulse(v, 1.2, 1.55, 0.15);
@@ -2203,7 +2203,7 @@ function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); re
   g.setAttribute('p0', new T.BufferAttribute(new Float32Array(g.attributes.position.array), 3)); g.attributes.position.usage = T.DynamicDrawUsage; const pid = new Float32Array((NX + 1) * (NY + 1)); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pid[iy * (NX + 1) + ix] = Math.floor(ix / 9); g.setAttribute('pid', new T.BufferAttribute(pid, 1)); const pu = new Float32Array(pid.length); for (let iy = 0; iy <= NY; iy++) for (let ix = 0; ix <= NX; ix++) pu[iy * (NX + 1) + ix] = ((ix % 9) - 4) / 4; g.setAttribute('pu', new T.BufferAttribute(pu, 1));
   const m = new T.ShaderMaterial({ transparent: true, side: T.DoubleSide, uniforms: { t29: U.t29, r29: U.r29, spin: { value: 0 }, amt: { value: 1 }, open: { value: 0 }, rpx: { value: 60 }, dim: { value: 1 }, l33: u33(T).l33, soak: { value: 0 } },
     vertexShader: 'attribute vec3 p0;\nattribute float pid;\nattribute float pu;\nvarying float vU;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvoid main() { vP = p0; vPid = pid; vU = pu; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
-    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform vec4 l33;\nuniform float soak;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31, '#define PAPER31 ' + v3(W30.C.paper),
+    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform vec4 l33;\nuniform float soak;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31, '#define PAPER31 ' + v3(W30.C.paper), '#define F34 ' + (KIT.fix34 !== false ? '1.0' : '0.0'),
       'void main() { float fg = abs(vPid - floor(vPid + 0.5)); if (open > 0.001 && vP.y > ' + Math.cos(W32.TH).toFixed(4) + ' && fg > 0.5 * (1.0 - smoothstep(0.0, 0.25, open)) + 0.004) discard;',
       'vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n; float nv = clamp(dot(n, normalize(vV)), 0.0, 1.0), c = cos(spin), s = sin(spin);',
       'vec3 bp = vec3(c * vP.x - s * vP.z, vP.y, s * vP.x + c * vP.z); float lon = atan(bp.z, bp.x), s9 = r29.y / 720.0, gr = N29(gl_FragCoord.xy / s9 * 0.9);',
@@ -2213,14 +2213,15 @@ function up32(T, X) { const U = u29(T), v3 = h => { const c = new T.Color(h); re
       'vec3 bg = 0.4 * texture2D(t29, uv).rgb + 0.15 * (texture2D(t29, uv + vec2(px.x, 0.0)).rgb + texture2D(t29, uv - vec2(px.x, 0.0)).rgb + texture2D(t29, uv + vec2(0.0, px.y)).rgb + texture2D(t29, uv - vec2(0.0, px.y)).rgb);',
       'float lum = dot(bg, vec3(0.3, 0.59, 0.11)); vec3 base = mix(PAPER31 * (0.985 + 0.03 * gr) * dim, bg, smoothstep(0.60 * dim, 0.74 * dim, lum));',
       'float l9 = dot(n, normalize(mix(vec3(-0.5, 0.66, 0.56), normalize(l33.xyz + vV), l33.w)));',
+      /* (builder 34) an open petal is thin: the lamp comes through it, so the side turned from the lamp is lit too, and its inside is not a dark lining */ 'float op34 = F34 * smoothstep(0.02, 0.2, open); l9 = mix(l9, max(l9, 0.55 * abs(l9) + 0.12), op34);',
       'float sp = sin(lon * 3.0 + bp.y * 5.2 + 2.4 * (nz - 0.5)), band = smoothstep(0.05, 0.75, sp), lite = smoothstep(-0.3, -0.85, sp);',
       'float hl = smoothstep(0.78, 0.86, l9 + 0.36 * (nz - 0.5)); hl = max(hl, lite * smoothstep(0.0, 0.4, l9) * smoothstep(0.42, 0.52, nz2));',
-      'float rim = clamp(smoothstep(0.35, 0.95, 1.0 - nv + 0.25 * (nz - 0.5)), 0.0, 1.0), core = smoothstep(0.25, -0.35, l9 + 0.3 * (nz - 0.5));',
+      'float rim = clamp(smoothstep(0.35, 0.95, 1.0 - nv + 0.25 * (nz - 0.5)), 0.0, 1.0), core = smoothstep(0.25, -0.35, l9 + 0.3 * (nz - 0.5)) * (1.0 - 0.6 * op34);',
       'vec3 wash = mix(vec3(0.66, 0.81, 0.95), vec3(0.42, 0.60, 0.85), max(rim, 0.8 * band)); wash = mix(wash, vec3(0.30, 0.45, 0.72), 0.7 * core); wash = mix(wash, vec3(1.0), 0.45 * lite * (1.0 - core));',
       'float ht = smoothstep(0.5, 0.9, sin((gl_FragCoord.x + gl_FragCoord.y) / s9 * 0.85 + 3.0 * nz)) * core; wash = mix(wash, vec3(0.36, 0.38, 0.44), 0.22 * ht);',
       'float bnc = smoothstep(0.72, 1.0, 1.0 - nv) * smoothstep(-0.1, -0.7, n.y); wash = mix(wash, vec3(0.80, 0.88, 0.96), 0.45 * bnc);',
       'float a9 = (1.0 - hl) * (0.82 + 0.18 * nz2) * (0.93 + 0.07 * gr);',
-      'if (!gl_FrontFacing) { wash = mix(wash, vec3(0.34, 0.51, 0.79), 0.55); a9 = max(a9, 0.78); }',
+      'if (!gl_FrontFacing) { wash = mix(wash, vec3(0.34, 0.51, 0.79), 0.55 * (1.0 - 0.6 * op34)); a9 = max(a9, 0.78 * (1.0 - 0.3 * op34)); }',
       /* an open petal: the wash pools along its two edges, and the pen goes down them */
       'float pe = smoothstep(0.02, 0.2, open) * step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y), au = abs(vU); wash = mix(wash, vec3(0.30, 0.46, 0.76), 0.75 * pe * smoothstep(0.55, 0.95, au + 0.2 * (nz - 0.5))); a9 = mix(a9, 1.0, pe * smoothstep(0.6, 0.95, au)); wash = mix(wash, vec3(0.17, 0.14, 0.13), pe * smoothstep(0.90, 0.96, au + 0.05 * (nz2 - 0.5)));',
       'float cupl = smoothstep(0.03, 0.15, open) * (1.0 - step(' + Math.cos(W32.TH).toFixed(4) + ', vP.y)) * smoothstep(0.90, 0.955, 1.0 - nv + 0.04 * (nz2 - 0.5)); wash = mix(wash, vec3(0.17, 0.14, 0.13), cupl); a9 = mix(a9, 1.0, cupl);',
@@ -2249,4 +2250,10 @@ const W33 = { U: null, err: null };
 function u33(T) { if (!W33.U) W33.U = { l33: { value: new T.Vector4(0, 0, 0, 0) } }; return W33.U; }
 KIT.spirit26.W33 = W33; KIT.spirit26.u33 = u33; KIT.spirit26.grab29 = grab29; KIT.spirit26.u29 = u29;
 // ==== W33 END
+// ==== W34 BEGIN
+// (builder 34) three small faults of Water's change of stage (AA.rxKit.fix34, on by default; false or ?f34=0 gives builder 33's back):
+// the standing form's arm stays raised through the proud look (evo31's q.armR), clear of the molecule; an open petal is thin and lit on both
+// faces (F34 / op34 in up32's wash); scheme.js S33 has the third (wet paper with soft uneven edges, small drips on the way home).
+KIT.fix34 = KIT.fix34 == null ? !(typeof location !== 'undefined' && /[?&]f34=0/.test(String(location.search))) : KIT.fix34;
+// ==== W34 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
