@@ -2,6 +2,8 @@
 
 Each pays for a way of playing a page or a round.  It is lit by what the player's three reagents did on the page (never by a
 flat count), the player taps it, and it has a cost or a risk.  The numbers (K) are the ones in path.js HOMS2.
+The class defaults below are the seventeenth's, kept so that older experiments play as they did.  The game's creatures of today
+(eased jobs, one tap a round, Brimstone once a run, five numbers a stage) are make('water*') or make('water*5'): sweep_hom19_specs.
 A name may carry its own strength: 'water@1.8'.
 
     water      a wet page: 4 or more waters off one page.  The flood: the round's yield times K, and every C=C becomes C-OH.
@@ -615,6 +617,11 @@ LABEL = {'water': 'Water', 'h2': 'Hydrogen', 'co2': 'Dry ice', 'acid': 'Acid', '
 
 
 def make(arg):
+    if '*' in arg.split('/')[0]:               # 'water*' or 'water*5': the creature as the game has it today (nineteenth: sweep_hom19_specs), at stage 3 or the stage given
+        import sweep_hom19_specs as S19
+        nm, _, rest = arg.partition('*')
+        st, _, more = rest.partition('/')
+        arg = S19.spec(nm, int(st or 3)).replace('~', '/') + ('/' + more if more else '')
     arg, _, opts = arg.partition('/')          # name[@k][/ATTR=value/ATTR=value]: a trial of a creature's own numbers
     name, _, k = arg.partition('@')
     h = HOMS[name](float(k) if k else None)

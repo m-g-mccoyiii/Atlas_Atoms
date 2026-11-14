@@ -400,9 +400,9 @@ function reference(meta) {
   Object.keys(REF_TERM).forEach(id => add('term', id, REF_TERM[id][0], REF_TERM[id][1], REF_TERM[id][2] + (RULE.termsGate ? ' After two runs that cleared six rounds.' : ''), m.sig && m.sig[id] ? 1 : 0, 1));
   add('length', 'master', 'Master\'s', REF_LENGTH.master[0], REF_LENGTH.master[1], c.won_bachelor || (has('length', 'master') ? 1 : 0), 1);
   add('length', 'doctorate', 'Doctorate', REF_LENGTH.doctorate[0], REF_LENGTH.doctorate[1], c.won_master || (has('length', 'doctorate') ? 1 : 0), 1);
-  const total = out.length + SIGN.laps;
+  const total = out.filter(x => !x.start).length + SIGN.laps;      // the sign counts what can be got: the eight starting motifs' rows are left out, so its nine tenths is as it was
   for (let k = 1; k <= SIGN.laps; k++) add('sign', 'sign' + k, 'The sign, ' + (k === 1 ? 'first' : k === 2 ? 'second' : 'third') + ' time', 'The sign resets. The book keeps only the two found reagents. x' + (1 + SIGN.lift * k).toFixed(2) + '; the number to beat x' + Math.pow(SIGN.bar, k).toFixed(2) + '.', (k > 1 ? 'Take the sign ' + (k > 2 ? 'twice' : 'once') + '. ' : '') + 'Hold nine tenths of this book.', null, null);
-  const n = out.filter(x => x.category !== 'sign' && x.owned).length, need = Math.ceil(SIGN.share * (total - SIGN.laps));
+  const n = out.filter(x => x.category !== 'sign' && x.owned && !x.start).length, need = Math.ceil(SIGN.share * (total - SIGN.laps));
   out.forEach(x => { if (x.category === 'sign') { x.count = Math.min(need, n); x.target = need; } });
   return out;
 }

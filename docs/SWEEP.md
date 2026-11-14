@@ -342,3 +342,19 @@ Results: `docs/RIG.md`, eighteenth. Pools of 8 workers at below-normal priority,
 | the same specs with `SWEEP_SEED=r`, `both,200,,` | the ten at stage 3 and none on deals the numbers were not fitted on | `sweep_hom18_table.py fresh` |
 
 A spec is a creature as `sweep_homs.make` reads it, with `~` for `/`. The simulator's own default numbers are still the seventeenth's; the eighteenth's are `sweep_hom18_specs.py` (`READ`: what the player reads at stages 1 to 5; the rules multiply by the square). New switches of a creature in `sweep_homs.py`: Water `NEED`, Dry ice `NEEDC`, Salt `MATCH` and `ANY`, Slime `OWN`, Seedling `GAIN` and `RISE`, Ammonia `KN`, Brimstone `LASTP` and `KB`. `sweep_deal18.py` lays the game's deal of a round (job `deal17.js`) beside the simulator's.
+
+## Nineteenth measure, 2026-11-14: what was run
+
+Results: `docs/RIG.md`, nineteenth. Pools of 8 workers at below-normal priority, one at a time. Everything is in `_sweep/hom19` (`sweep_run.py hom19`, the same jobs as `hom18`, kept apart).
+
+| Experiment (`sweep_run.py hom19 --arg <player>,<runs>,<held beside it>,<spec;spec;...>`) | What | Read by |
+|---|---|---|
+| `median,100,,` and `python sweep_hom19_specs.py grid` | eight creatures tapped once a round (`~ONCE=1`) at six sizes of the number (x1.25 to x4.50 as read) | `sweep_hom18.py fit hom19` |
+| `both,100,,` and `python sweep_hom19_specs.py stages`, `brim` | the ten as fitted at their five stages, both players; Brimstone at stage 3 once a run, once a round, and as it was | `sweep_hom18_table.py stages 19`, `sweep_hom18.py hom19` |
+| `both,50,carousel+burette+crystal+sigil:gemini+sigil:clepsydra+sigil:via_humida,` and `python sweep_hom19_specs.py three`, then `five` | a full kit with each creature at stage 3 and with none; the same at stage 5 | `sweep_hom18_table.py kit 19`, `kit5 19` |
+| `both,200,sig17:mask1_twice,none` (also `mask1_first`, `mask1_free`, `mask_r2`) | Sulphur's Mask cut to one rule, three ways, and the form as built | `sweep_hom18.py hom19` (the sets named `none&mask1_...`) |
+| `both,200,,` and `both,50,<the kit>,` with `brimstone~MODE=1~LASTP=1~KB=1.9321~ONCE=1~ONCERUN=2` and `ONCERUN=3` | Brimstone with two and three fires a run | `sweep_hom18.py hom19` |
+
+New switches in `sweep_homs.py`: every creature `ONCE` (1: one tap a round; path.js `RULE.homOnce`); Brimstone `ONCERUN` (n fires a run; path.js `RULE.brimOnce` is 1) and `WALL`. With `ONCERUN` the careful player saves the fire: he burns only on a round's last page when the round is lost without it, or from round 7 on any page where the task is unmet; the casual player burns the first time the fire clears a round. `sweep_homs.make('water*')` or `make('water*5')` builds a creature as the game has it today, at stage 3 or the stage given (`sweep_hom19_specs.py`: `READ` is `path.js` `HOMGROW.read`); the class defaults are still the seventeenth's so that older experiments play as they did. New forms in `sweep_sig17.py`: `mask1_twice`, `mask1_first`, `mask1_free`.
+
+Game jobs (`bash .claude/headless/hlow.sh jobs/<job>.js <name> <seconds>`): `hom19.js` (creatures once a round, Brimstone once a run, the jars, Ammonia's limits, `P.motifAtoms` against the counts on 587 molecules, the twelve motif rows; it takes `hom18.js`'s place), `ref19.js` (the manual's wording checks and the book for `sweep_refdoc.py`; it takes `ref18.js`'s place), `run19.js` (whole runs with a creature at stages 2, 4 and 5 and Brimstone ending a round), `sig17.js` (two checks updated to the switches now on).

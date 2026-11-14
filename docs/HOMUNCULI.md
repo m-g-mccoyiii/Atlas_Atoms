@@ -233,3 +233,28 @@ Full tables: `docs/RIG.md`, eighteenth, parts 1 and 2. This section is how the t
 - Brimstone's number is a choice for the owner: his sentence for it has none, and with none it is worth 1.11 and cannot grow.
 - The older rules are kept: `HOMS2K_17` for the seven whose table changed, `RULE.homSimple = null` for the three.
 - The two jars that never fill: `RULE.jarStart` (off) feeds the wood spirit from a reagent that finds nothing and the slime from one reagent landed twice, with jars of 250 and 70.
+
+## Nineteenth measure, 2026-11-14: once a round, Brimstone once a run
+
+Full tables: `docs/RIG.md`, nineteenth. This section is how the ten stand in the game now; where a section above disagrees, this one wins.
+
+Owner (ruling BB): a homunculus acts once a round, on the page the player picks; Brimstone works once a run and keeps its number; the wood spirit's and the slime's jars are fed by an ordinary play too; Ammonia's second go keeps the page's limits when Solve is held; the "Brings X." lines are gone from the book (the rule itself stands: a homunculus held in a run still puts its reagent on the rack).
+
+Eight were fitted again for one tap a round, so that alone each is still worth about 1.2, 1.35, 1.5, 1.65 and 1.8 at stages 1 to 5. Dry ice was lit only on the last page already and keeps its numbers. Brimstone keeps its numbers by the owner's pick.
+
+| Homunculus | Its line on a new profile | Its number at stages 1 to 5 | The eighteenth's numbers (a tap on every page) |
+|---|---|---|---|
+| Water | Water floods. Wring out 3 waters. x1.36. Once a round. Double bonds soak up OH; closed rings burst. | x1.36, x1.83, x2.19, x2.54, x2.92 | x1.30 to x2.15 |
+| Hydrogen | Hydrogen lifts. Drive off 2 hydrogens. x1.50. Once a round. | x1.50, x1.86, x2.15, x2.39, x2.75 | x1.38 to x2.46 |
+| Dry ice | Dry ice freezes. Leave 3 reagents untouched to the last page. x1.91. | x1.91, x2.40, x2.82, x3.89, x4.50 | the same |
+| Acid | Acid eats. Chew 2 atoms off the molecule. x1.96. Once a round. | x1.96, x2.67, x3.17, x4.05, x4.50 | x2.01 to x4.50 |
+| Wood spirit | Wood spirit drinks. Line up a reagent that finds nothing. x1.54. Once a round. | x1.54, x1.72, x1.88, x2.08, x2.38 | x1.22 to x1.51 |
+| Salt | Salt preserves. Open with last page's first reagent. x1.54. Once a round. Its use returns. | x1.54, x1.87, x2.13, x2.36, x2.64 | x1.35 to x2.15 |
+| Slime | Slime clings. Land one reagent twice. x1.55. Once a round. That bottle is shut all round. | x1.55, x1.76, x1.98, x2.17, x2.38 | x1.32 to x1.88 |
+| Seedling | Seedling sprouts. Add 6 atoms. x1.48. Once a round. | x1.48, x1.71, x1.92, x2.26, x2.73 | x1.30 to x2.25 |
+| Ammonia | Ammonia revives. Put nitrogen on the molecule. The three reagents go round again. x1.24. Once a round. | x1.24, x1.48, x1.73, x1.96, x2.21 | x1.08 to x1.57 |
+| Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Once a run. | x1.17, x1.30, x1.39, x1.52, x1.59 | the same |
+
+In the rules (`path.js`): `RULE.homOnce` and `RULE.brimOnce` (both on). The round's state says a tap is spent (`g.hom.rt`); the run's says Brimstone's fire is gone (`run.homSpent.brimstone`, the round it burned in, written at the round's end). `P.homSpent(g)` gives `null`, `'round'` or `'run'`. `HOMGROW.read18` keeps the eighteenth's numbers for a creature switched back to a tap on every page.
+
+Jars: the wood spirit's takes 250 (reagents that found nothing, or uses of reduce), the slime's 70 (pages with one reagent landed twice, or uses of hydroborate); `P.jarFull(id)`.
