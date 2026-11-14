@@ -853,6 +853,55 @@ function build(id, T, grp, tint, extra) {
     PUSH.homco2 = s => { const w = (extra && extra.dry) || (root.AA && root.AA.rxKit && root.AA.rxKit.dryIce) || 'fog'; /* (builder 20, the owner's pick) the game's Dry ice is the fog; 'old' gives builder 19's back */ if (DRY[w]) return DRY[w](s); return c1(s); }; }
   const pushOn = !!((extra && extra.push) || (root.AA && root.AA.rxKit && root.AA.rxKit.pushOn));
   B.__stage = () => { if (sg && pushOn && PUSH[id]) { PUSH[id](sg); young = true; } else if (sg && sg <= 2 && YOUNG[id]) { YOUNG[id](sg); young = true; } else { B[id](); if (sg >= 4 && GROWN[id] && R.body) into(R.body, () => GROWN[id](sg)); } };
+  // (builder 21, the owner: "The animations still seem stiff?") THE RIG. A creature that has an entry here is not one solid figure: it is built from NAMED PARTS,
+  // each a pivot of its own, so a part can move by itself. RIG[id]() gives { parts, form }:
+  //   parts: [name, parent, maker]. parent '' hangs the part on the figure, '~' lays it on the page (left out in a jar), any other name hangs it on that part.
+  //          The maker draws the part about its own pivot at unit size (a ball of radius 1, a limb one long hanging down from its joint).
+  //   form(stage): where each part is at rest at that stage, in the figure's own space: { p: [x, y, z], s: size or [sx, sy, sz], r: [rx, ry, rz] } or, for a
+  //          limb, { p: joint, to: hand }. A part that a stage does not name is not there at that stage. The same name at two stages is the same part: it tweens.
+  // rigSet (below build) puts the parts in place for a stage, or between two stages, with a pose on top; CLIP[id] (below build) is the creature's motion.
+  const RIG = {
+    homacid: () => { const sk = M(0xd4e21a, 0.25, 0, { exact: 1 }), dk = M(0x7a8a10, 0.4, 0, { exact: 1 }), pit = M(0x2c2f34, 0.9), fume = M(0xe8f0a0, 0.9, 0, { transparent: true, opacity: 0.5, exact: 1 }), wh = M(0xffffff, 0.4), tng = M(0xd6453a, 0.6), gls = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.45 });
+      const ball = m => put(new T.SphereGeometry(1, 20, 14), m, 0, 0, 0), pl = o => { o.userData.plain = true; return o; }, disc = n => () => pl(cyl(1, 1, 0.03, pit, 0, 0.015, 0, null, n)), limb = hm => () => { cyl(0.1, 0.1, 1, dk, 0, -0.5, 0, null, 12); if (hm) sph(0.17, hm, 0, -1, 0); };
+      const parts = [['pit', '~', disc(9)], ['pit2', '~', disc(7)], ['pit3', '~', disc(7)], ['pit4', '~', disc(6)], ['sizzle', '~', disc(7)],
+        ['crumb0', '~', () => box(1, 0.8, 1, steel, 0, 0.4, 0)], ['crumb1', '~', () => box(1, 0.8, 1, steel, 0, 0.4, 0)], ['crumb2', '~', () => box(1, 0.8, 1, steel, 0, 0.4, 0)], ['chip0', '~', () => box(1, 0.6, 1, wood, 0, 0.3, 0)], ['chip1', '~', () => box(1, 0.6, 1, wood, 0, 0.3, 0)],
+        ['plankL', '', () => box(1.1, 0.16, 1.5, wood, 0, 0, 0)], ['plankR', '', () => box(1.1, 0.16, 1.5, wood, 0, 0, 0)],
+        ['hips', '', null], ['pool', 'hips', () => ball(sk)], ['legL', 'hips', limb()], ['legR', 'hips', limb()], ['footL', 'hips', () => ball(dk)], ['footR', 'hips', () => ball(dk)],
+        ['body', 'hips', () => { ball(sk); side.forEach(q => sph(0.34, sk, q * 0.25, -0.4, -0.78, [1, 1.05, 0.8])); }], ['point', 'body', () => put(new T.ConeGeometry(0.5, 1, 10), sk, 0, 0.5, 0)],
+        ['eyeL', 'body', () => pl(ball(black))], ['eyeR', 'body', () => pl(ball(black))], ['browL', 'body', () => pl(box(1, 1, 1, black, 0, 0, 0))], ['browR', 'body', () => pl(box(1, 1, 1, black, 0, 0, 0))],
+        ['mouth', 'body', null], ['maw', 'mouth', () => pl(ball(black))], ['tongue', 'mouth', () => pl(ball(tng))], ['jawU', 'mouth', null], ['jawL', 'mouth', null]];
+      for (let i = 0; i < 8; i++) parts.push(['toothU' + i, 'jawU', () => pl(put(new T.ConeGeometry(0.5, 1.1, 4), wh, 0, 0, 0, [PI, 0, 0]))]);
+      for (let i = 0; i < 7; i++) parts.push(['toothL' + i, 'jawL', () => pl(put(new T.ConeGeometry(0.5, 1.1, 4), wh, 0, 0, 0))]);
+      parts.push(['armL', 'hips', limb(sk)], ['armR', 'hips', limb(sk)],
+        ['bolt', 'hips', () => { cyl(0.07, 0.07, 0.55, steel, 0, 0, 0, [0, 0, H]); cyl(0.13, 0.13, 0.1, steel, 0.31, 0, 0, [0, 0, H], 6); pl(sph(0.09, pit, -0.25, 0.02, 0.03)); }],
+        ['bar', 'hips', () => { cyl(0.1, 0.1, 2.3, steel, 0, 0, 0, [0, 0, H]); [-0.62, 0.62].forEach(k => pl(sph(0.13, pit, k, 0.06, 0.02))); }],
+        ['chunk', 'hips', () => box(0.3, 0.2, 0.22, wood, 0, 0, 0)], ['leg5', 'hips', () => rod([0, -0.65, 0], [0, 0.65, 0], 0.13, wood)], ['jar5', 'hips', () => { cyl(0.3, 0.3, 0.6, gls, 0, 0, 0, null, 14); cyl(0.32, 0.32, 0.08, steel, 0, 0.34, 0, null, 14); }],
+        ['drip0', 'hips', () => put(new T.SphereGeometry(1, 12, 10), sk, 0, 0, 0, null, [1, 1.8, 1])], ['drip1', 'hips', () => put(new T.SphereGeometry(1, 12, 10), sk, 0, 0, 0, null, [1, 1.8, 1])], ['drip2', 'hips', () => put(new T.SphereGeometry(1, 12, 10), sk, 0, 0, 0, null, [1, 1.8, 1])],
+        ['puff0', '', () => pl(put(new T.SphereGeometry(1, 14, 10), fume, 0, 0, 0, null, [1.3, 0.8, 1]))], ['puff1', '', () => pl(put(new T.SphereGeometry(1, 14, 10), fume, 0, 0, 0, null, [1.3, 0.8, 1]))], ['puff2', '', () => pl(put(new T.SphereGeometry(1, 14, 10), fume, 0, 0, 0, null, [1.3, 0.8, 1]))],
+        ['bub0', '', () => pl(put(new T.SphereGeometry(1, 12, 10), fume, 0, 0, 0))], ['bub1', '', () => pl(put(new T.SphereGeometry(1, 12, 10), fume, 0, 0, 0))]);
+      // the five forms, from the pushed drawings: R the body's radius, by its height, bs its squash, pt the point (radius, height, middle), ey the eyes (y, z, gap, r), br the brows (y, z, gap, w, tilt), mw the mouth (y, z, half width, half height, half depth), tu and tl the tooth rows (y, z, width, count)
+      const D = [null,
+        { R: 0.42, by: 0.4, bs: [1, 0.9, 1], pt: [0.2, 0.4, 0.9], ey: [0.5, 0.36, 0.13, 0.05], br: [0.62, 0.36, 0.14, 0.14, 0.5], mw: [0.3, 0.4, 0.09, 0.035, 0.02], tu: [0.31, 0.42, 0.1, 1], pit: 0.5 },
+        { R: 0.6, by: 0.68, bs: [1, 0.95, 0.95], pt: [0.26, 0.5, 1.38], ey: [0.88, 0.5, 0.17, 0.055], br: [1.02, 0.5, 0.18, 0.18, 0.5], mw: [0.56, 0.58, 0.16, 0.075, 0.02], tu: [0.6, 0.6, 0.26, 3], pit: 0.7 },
+        { R: 0.85, by: 1.05, bs: [1, 1.05, 0.9], pt: [0.3, 0.6, 2.05], ey: [1.55, 0.6, 0.2, 0.06], br: [1.72, 0.6, 0.21, 0.24, 0.55], mw: [0.95, 0.62, 0.48, 0.34, 0.17], tu: [1.2, 0.8, 0.7, 5], tl: [0.72, 0.78, 0.6, 4], pit: 1.0 },
+        { R: 1.0, by: 1.0, bs: [1.15, 0.95, 0.95], pt: [0.3, 0.55, 2.1], ey: [1.6, 0.7, 0.24, 0.07], br: [1.8, 0.7, 0.25, 0.28, 0.55], mw: [0.95, 0.78, 0.72, 0.45, 0.24], tu: [1.28, 0.88, 1.0, 7], tl: [0.6, 0.84, 0.8, 5], pit: 1.0 },
+        { R: 1.15, by: 1.5, bz: -0.35, bs: [1.1, 1.1, 0.9], pt: [0.34, 0.65, 2.95], ey: [2.05, 0.6, 0.32, 0.1], br: [2.35, 0.6, 0.33, 0.4, 0.55], mw: [1.2, 0.42, 1.02, 0.68, 0.42], tu: [1.68, 0.78, 1.5, 8], tl: [0.72, 0.8, 1.3, 7], pit: 2.0 }];
+      const form = s => { const d = D[s], F = { _: d }, bz = d.bz || 0, P = (n, p, sc, r) => { F[n] = { p, s: typeof sc === 'number' ? [sc, sc, sc] : sc, r }; }, L = (n, a, b) => { F[n] = { p: a, to: b }; }, fl = (n, x, z, r) => P(n, [x, 0, z], [r, 1, r]);
+        P('hips', [0, 0, 0], 1); P('body', [0, d.by, bz], [d.R * d.bs[0], d.R * d.bs[1], d.R * d.bs[2]]); P('point', [0, d.pt[2] - d.pt[1] / 2, bz], [d.pt[0] * 2, d.pt[1], d.pt[0] * 2]); fl('pit', 0, 0.1, d.pit);
+        side.forEach(q => { const n = q < 0 ? 'L' : 'R'; P('eye' + n, [q * d.ey[2], d.ey[0], d.ey[1]], d.ey[3]); P('brow' + n, [q * d.br[2], d.br[0], d.br[1]], [d.br[3], 0.055, 0.03], [0, 0, q * d.br[4]]); });
+        P('mouth', [0, d.mw[0], d.mw[1]], 1); P('maw', [0, d.mw[0], d.mw[1]], [d.mw[2], d.mw[3], d.mw[4]]); P('jawU', [0, d.tu[0], d.tu[1]], 1); for (let i = 0; i < d.tu[3]; i++) P('toothU' + i, [-d.tu[2] / 2 + (i + 0.5) * d.tu[2] / d.tu[3], d.tu[0], d.tu[1]], d.tu[2] / d.tu[3]);
+        if (d.tl) { P('jawL', [0, d.tl[0], d.tl[1]], 1); for (let i = 0; i < d.tl[3]; i++) P('toothL' + i, [-d.tl[2] / 2 + (i + 0.5) * d.tl[2] / d.tl[3], d.tl[0], d.tl[1]], d.tl[2] / d.tl[3]); }
+        P('bub0', [d.R * 0.55, d.by + d.R * 0.8, bz], d.R * 0.11); P('bub1', [-d.R * 0.4, d.by + d.R * 0.9, bz], d.R * 0.08);
+        if (s === 2) { side.forEach(q => { const n = q < 0 ? 'L' : 'R'; P('foot' + n, [q * 0.22, 0.07, 0.1], [0.1, 0.06, 0.15]); L('arm' + n, [q * 0.5, 0.6, 0.2], [q * 0.3, 0.5, 0.72]); }); P('bolt', [0.05, 0.5, 0.75], 1); [[0.5, 0.9], [-0.4, 1.0], [0.1, 1.15]].forEach((c, i) => P('crumb' + i, [c[0], 0, c[1]], 0.06, [0, c[0] * 3, 0])); }
+        else if (s === 3) { side.forEach(q => { const n = q < 0 ? 'L' : 'R'; P('foot' + n, [q * 0.36, 0.06, 0.1], [0.1, 0.055, 0.15]); L('leg' + n, [q * 0.3, 0.4, 0], [q * 0.36, 0.07, 0.04]); L('arm' + n, [q * 0.8, 1.1, 0.2], [q * 0.95, 0.98, 0.85]); }); P('bar', [0, 0.96, 0.88], 1); P('drip0', [-1.15, 0.7, 0.88], 0.07); P('drip1', [1.15, 0.7, 0.88], 0.07); P('puff0', [0.15, 2.7, 0], 0.18); fl('pit2', 1.2, 0.5, 0.16); fl('pit3', -1.15, 0.6, 0.12); }
+        else if (s === 4) { P('plankL', [-1.45, 0.5, 0], 1, [0, 0, 0.22]); P('plankR', [1.45, 0.5, 0], 1, [0, 0, -0.22]); fl('pit2', 1.7, 0.5, 0.2); fl('pit3', -1.75, 0.3, 0.24); fl('pit4', 0.6, 1.5, 0.16); side.forEach(q => L('arm' + (q < 0 ? 'L' : 'R'), [q * 1.0, 1.2, 0.1], [q * 1.5, 0.78, 0.5])); P('chunk', [1.5, 0.95, 0.55], 1, [0.3, 0.5, 0.2]); P('tongue', [0, 0.78, 0.8], [0.34, 0.14, 0.11]); P('drip0', [-0.75, 0.5, 0.7], 0.08); P('drip1', [0.7, 0.4, 0.75], 0.08); P('puff0', [-0.3, 2.9, 0], 0.22); P('puff1', [0.4, 3.4, 0], 0.15); }
+        else if (s === 5) { P('pool', [0, 0.25, 0], [1.84, 0.79, 1.75]); P('chip0', [1.6, 0, 1.5], [0.2, 0.2, 0.2], [0, 1.6, 0.2]); P('chip1', [-1.7, 0, 1.4], [0.16, 0.2, 0.16], [0, -1.7, 0.2]); P('leg5', [1.475, 0.9, 1.05], 1, [0.24, 0, -0.43]); P('jar5', [-1.3, 0.55, 0.9], 1, [0.5, 0, 0.5]); side.forEach(q => L('arm' + (q < 0 ? 'L' : 'R'), [q * 1.1, 1.3, 0], [q * 1.7, 0.9, 0.7])); P('tongue', [0, 0.95, 0.66], [0.52, 0.2, 0.16]); P('drip0', [-1.0, 1.7, 0.4], 0.1); P('drip1', [0.9, 2.0, 0.3], 0.1); P('drip2', [0.3, 0.75, 1.25], 0.1); P('puff0', [-0.5, 3.6, 0], 0.3); P('puff1', [0.5, 4.1, 0], 0.2); P('puff2', [0.1, 3.2, 0], 0.26); }
+        return F; };
+      return { parts, form }; }
+  };
+  if (sg && RIG[id] && (extra && extra.rig != null ? extra.rig : !(root.AA && root.AA.rxKit && root.AA.rxKit.rigOn === false))) B.__stage = () => { young = true; const sp = RIG[id](), all = body(), Rg = { T, id, stage: sg, parts: {}, par: {}, order: [], form: sp.form, fc: {}, all, inkT: (extra && extra.ink) || 0.05, jar: jarMode };
+    sp.parts.forEach(q => { if (q[1] === '~' && jarMode) return; const pg = new T.Group(); (q[1] === '~' ? grp : q[1] ? Rg.parts[q[1]] : all).add(pg); Rg.parts[q[0]] = pg; Rg.par[q[0]] = q[1] && q[1] !== '~' ? q[1] : null; Rg.order.push(q[0]); if (q[2]) into(pg, q[2]); });
+    grp.userData.rig2 = Rg; rigSet(grp, sg, sg, 0); };
   if (id === '__list') return Object.keys(B).filter(k => k !== '__stage');
   if (!B[id] || id === '__stage') return false;
   B.__stage();
@@ -911,7 +960,7 @@ function build(id, T, grp, tint, extra) {
     w.scale.setScalar(k); w.position.set(-(bb.min.x + bb.max.x) / 2 * k, -bb.min.y * k, -(bb.min.z + bb.max.z) / 2 * k); grp.add(w); }
   // every piece stands centered on its own place, so the words under it sit under its middle
   { const bb = new T.Box3().setFromObject(grp), cx = (bb.min.x + bb.max.x) / 2; if (isFinite(cx) && !R.body && inkK === 1) grp.children.forEach(c => { c.position.x -= cx; }); }
-  finish(T, grp, (extra && extra.ink) || 0.05 / inkK); return true;
+  finish(T, grp, (extra && extra.ink) || 0.05 / inkK); if (grp.userData.rig2) rigInk(grp); return true;
 }
 // Posing a creature without knowing its parts. o = { lean: [dx, dz], reach: 0..1, squash: -1..1, t: seconds }.
 // lean is a direction on the page in the creature's own frame (x to the right, z toward the viewer); the body tips that way from its feet
@@ -959,5 +1008,137 @@ function drawCoin(c, x, y, r, o) {
 function use(grp, s) { const f = grp && grp.userData && grp.userData.use; if (!f) return false; f(Math.max(0, Math.min(1, s || 0))); return true; }
 // pieces that lie flat on the page and are seen from on top
 const FLAT = { coin: 1, spatula: 1, loupe: 1, ouija: 1, pact: 1, stopwatch: 1, magnet: 1 };
+// ---------- (builder 21) THE RIG: placing the parts, and the motion ----------
+// rigSet(grp, a, b, k, pose): every part of a rigged creature (grp.userData.rig2, made in build by RIG[id]) is put where form(a) says, or k of the way to form(b).
+// pose is { part: { p: [dx, dy, dz] added (the figure's units), s: [x, y, z] multiplied, r: [x, y, z] turned about the part's own pivot, k: this part's own way from a to b } }.
+// A child rides on its parent's pose; the ink line of each part is kept the same thickness whatever its size.
+const RIG_ID = { p: [0, 0, 0], s: [1, 1, 1] };
+function rigForm(Rg, s) { let F = Rg.fc[s]; if (!F) { F = Rg.fc[s] = Rg.form(s); const T = Rg.T; Object.keys(F).forEach(n => { const X = F[n]; if (n === '_') return; X.q = new T.Quaternion(); if (X.to) { const d = new T.Vector3(X.to[0] - X.p[0], X.to[1] - X.p[1], X.to[2] - X.p[2]), l = d.length(); X.s = [l, l, l]; X.q.setFromUnitVectors(new T.Vector3(0, -1, 0), d.normalize()); } else if (X.r) X.q.setFromEuler(new T.Euler(X.r[0], X.r[1], X.r[2])); }); } return F; }
+function rigSet(grp, a, b, k, pose) {
+  const Rg = grp && grp.userData && grp.userData.rig2; if (!Rg) return false; const T = Rg.T, FA = rigForm(Rg, a), FB = rigForm(Rg, b), M = Rg.m || (Rg.m = {}), MM = Rg.mm || (Rg.mm = {}), W = Rg.w || (Rg.w = {}), E = Rg.e || (Rg.e = new T.Euler()), Q = Rg.q || (Rg.q = new T.Quaternion());
+  Rg.a = a; Rg.b = b; Rg.k = k || 0; Rg.pose = pose; pose = pose || {}; Rg.all.position.set(0, 0, 0); Rg.all.scale.set(1, 1, 1); Rg.all.rotation.set(0, 0, 0);
+  Rg.order.forEach(n => { const g = Rg.parts[n], A = FA[n], B = FB[n], X = A || B, po = pose[n], par = Rg.par[n], Pm = par ? M[par] : RIG_ID, Pw = par ? W[par] : RIG_ID.s;
+    if (!X || !Pm) { g.visible = false; M[n] = null; return; }
+    const Y = B || A, kk = Math.max(0, Math.min(1, po && po.k != null ? po.k : Rg.k)), m = MM[n] || (MM[n] = { p: [0, 0, 0], s: [0, 0, 0] }), w = W[n] || (W[n] = [1, 1, 1]), l = [0, 0, 0], c = [0, 0, 0]; M[n] = m;
+    for (let i = 0; i < 3; i++) { m.p[i] = X.p[i] + (Y.p[i] - X.p[i]) * kk; m.s[i] = (A ? A.s[i] : 0) * (1 - kk) + (B ? B.s[i] : 0) * kk; const d = Math.max(1e-4, Pm.s[i]); l[i] = (m.p[i] + (po && po.p ? po.p[i] : 0) - Pm.p[i]) / d; c[i] = m.s[i] * (po && po.s ? po.s[i] : 1) / d; w[i] = c[i] * Pw[i]; }
+    g.position.set(l[0], l[1], l[2]); g.scale.set(c[0], c[1], c[2]); g.quaternion.copy(X.q); if (X !== Y) g.quaternion.slerp(Y.q, kk); if (po && po.r) { E.set(po.r[0], po.r[1], po.r[2]); Q.setFromEuler(E); g.quaternion.premultiply(Q); }
+    g.visible = Math.max(Math.abs(c[0]), Math.abs(c[1]), Math.abs(c[2])) > 1e-4;
+    const L = Rg.ink && Rg.ink[n]; if (L) for (let i = 0; i < L.length; i++) { const q = L[i], t = 2 * Rg.inkT, ms = q.m.scale; q.o.scale.set(ms.x * (1 + t / Math.max(0.05, q.sz.x * ms.x * Math.abs(w[0]))), ms.y * (1 + t / Math.max(0.05, q.sz.y * ms.y * Math.abs(w[1]))), ms.z * (1 + t / Math.max(0.05, q.sz.z * ms.z * Math.abs(w[2])))); } });
+  return true;
+}
+// after build has drawn the ink lines: each part learns its own, so that rigSet can keep them even
+function rigInk(grp) { const Rg = grp.userData.rig2; if (!Rg) return; const T = Rg.T; Rg.ink = {};
+  Rg.order.forEach(n => { const g = Rg.parts[n], L = []; g.children.forEach(o => { if (!o.isMesh || !o.material || o.material.side !== T.BackSide) return; const m = g.children.find(q => q.isMesh && q !== o && q.geometry === o.geometry); if (!m) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); L.push({ o, m, sz: m.geometry.boundingBox.getSize(new T.Vector3()) }); }); if (L.length) Rg.ink[n] = L; });
+  rigSet(grp, Rg.a, Rg.b, Rg.k, Rg.pose); }
+// THE MOTION KIT, the same for every rigged creature. Nothing here keeps a state: every value is worked out from the time, so nothing can jitter; a part that
+// lags reads the body's state of a moment ago.
+const RK = (() => {
+  const cl = (v, a, b) => Math.max(a == null ? 0 : a, Math.min(b == null ? 1 : b, v)), sm = u => { u = cl(u); return u * u * (3 - 2 * u); }, eo = u => 1 - Math.pow(1 - cl(u), 3), ei = u => { u = cl(u); return u * u * u; };
+  const back = u => { u = cl(u); return 1 + 3.2 * Math.pow(u - 1, 3) + 2.2 * Math.pow(u - 1, 2); };                       // past its place by a seventh, then back
+  const ring = (ms, tau, per) => (ms < 0 ? 0 : Math.exp(-ms / tau) * Math.cos(ms / per * 6.2832));                             // a landing: full, through nothing, over the other way, settling
+  const hop = u => { u = cl(u); return u < 0.45 ? 1 - Math.pow(1 - u / 0.45, 2.2) : u < 0.6 ? 1 : 1 - Math.pow((u - 0.6) / 0.4, 2.4); };   // up easing out, a hang at the top, a fast fall
+  const pulse = (x, a, b, e) => sm((x - a) / e) * (1 - sm((x - b) / e));                                                         // 1 between a and b, eased in and out over e
+  const mod = (x, p) => ((x % p) + p) % p;
+  const part = (P, n) => P[n] || (P[n] = { p: [0, 0, 0], s: [1, 1, 1], r: [0, 0, 0] });
+  const mv = (P, n, x, y, z) => { const q = part(P, n); q.p[0] += x; q.p[1] += y; q.p[2] += z; }, sc = (P, n, x, y, z) => { const q = part(P, n); q.s[0] *= x; q.s[1] *= y == null ? x : y; q.s[2] *= z == null ? x : z; }, rt = (P, n, x, y, z) => { const q = part(P, n); q.r[0] += x; q.r[1] += y; q.r[2] += z; };
+  const squash = (P, n, k) => { const sy = Math.max(0.3, 1 - k), sx = 1 / Math.sqrt(sy); sc(P, n, sx, sy, sx); };               // flat and wide, or tall and thin: the volume is kept
+  // the body acts and the rest follows late: S(lag in ms) gives { sq, lean, dx, vy } of that moment. hips squash from the feet; the body, the point, the arms and whatever is held come after
+  const dress = (P, d, S, held) => { const a = S(0), b = S(70), c = S(150), e = S(230), R = d.R;
+    squash(P, 'hips', a.sq); rt(P, 'hips', 0, 0, a.lean); mv(P, 'hips', a.dx, 0, 0); squash(P, 'body', (b.sq - a.sq) * 0.5); rt(P, 'body', 0, 0, (b.lean - a.lean) * 0.7);
+    rt(P, 'point', 0.5 * (c.vy || 0), 0, (c.lean - a.lean) * 2.4 - (c.dx - a.dx) / R * 1.2); sc(P, 'point', 1 + c.sq * 0.5, 1 - c.sq * 1.5, 1 + c.sq * 0.5);
+    ['L', 'R'].forEach((s, i) => { const q = i ? 1 : -1; rt(P, 'arm' + s, 0.55 * (b.vy || 0) - 0.5 * b.sq, 0, q * (0.9 * Math.max(0, b.sq) + 0.25 * Math.abs(b.vy || 0)) + (b.lean - a.lean) * 1.5); mv(P, 'arm' + s, 0, -R * 0.25 * (b.sq - a.sq), 0); });
+    (held || []).forEach(n => { mv(P, n, -(e.dx - a.dx) * 0.8, -R * 0.5 * (e.sq - a.sq), 0); rt(P, n, 0, 0, (e.lean - a.lean) * 2); }); return a; };
+  // the face: wide -1 (shut) .. 0 .. 1 (wide), brow -1 (angry) .. 1 (raised), look [x, y], open 0 (shut) .. 1 (as wide as it goes) or null (as drawn), smile 0..1
+  const face = (P, d, f) => { const R = d.R, w = f.wide || 0, lx = (f.look ? f.look[0] : 0) * d.ey[3] * 0.9, ly = (f.look ? f.look[1] : 0) * d.ey[3] * 0.9, bw = f.brow || 0;
+    ['L', 'R'].forEach((s, i) => { const q = i ? 1 : -1; sc(P, 'eye' + s, 1 + 0.2 * Math.abs(w), Math.max(0.1, w < 0 ? 1 + 0.9 * w : 1 + 0.5 * w), 1); mv(P, 'eye' + s, lx, ly, 0); mv(P, 'brow' + s, lx * 0.4, bw * R * 0.09 + Math.max(0, w) * R * 0.06 + ly * 0.4, 0); rt(P, 'brow' + s, 0, 0, -q * bw * 0.45); });
+    const r0 = d.mw[3], shut = r0 * (d.tl ? 0.22 : 0.6), wide = Math.max(r0 * 1.45, R * 0.42), o0 = (r0 - shut) / (wide - shut), op = f.open == null ? o0 : f.open, y = shut + (wide - shut) * op, dy = y - r0;
+    sc(P, 'maw', 1 + 0.1 * (op - o0) + 0.1 * (f.smile || 0), y / r0, 1); mv(P, 'jawU', 0, dy * 0.8, 0); mv(P, 'jawL', 0, -dy * 0.8, 0); mv(P, 'tongue', 0, -dy * 0.5, 0); if (f.smile) mv(P, 'mouth', 0, -R * 0.03 * f.smile, 0); return o0; };
+  // what goes on by itself all the time: bubbles rise from the body and pop, fumes drift up, drips swell, fall and eat a pit (t in beats)
+  const ambient = (P, Rg, F, t, amp) => { const d = F._, R = d.R;
+    [5, 7].forEach((per, i) => { const u = mod(t + i * 2.3, per) / per, k = u > 0.96 ? 0 : sm(u * 5) * (0.7 + 0.6 * u) * (u > 0.9 ? 1 + 5 * (u - 0.9) : 1); mv(P, 'bub' + i, 0.1 * R * Math.sin(u * 9 + i), Math.pow(u, 0.8) * R * 1.3, 0); sc(P, 'bub' + i, k * amp); });
+    [9, 11, 13].forEach((per, i) => { if (!F['puff' + i]) return; const u = mod(t + i * 3.7, per) / per; mv(P, 'puff' + i, 0.18 * R * Math.sin(u * 6.2832 + i), (u - 0.4) * R * 0.9, 0); sc(P, 'puff' + i, Math.sqrt(Math.sin(Math.PI * u)) * (0.75 + 0.6 * u)); });
+    let land = -1; [8, 10, 12].forEach((per, i) => { const X = F['drip' + i]; if (!X) return; const x = mod(t + i * 3.1, per), g = per - 1.7; if (x < g) { const k = sm(x / g); sc(P, 'drip' + i, k, k * (0.7 + 0.5 * k), k); } else if (x < g + 0.7) { const u = (x - g) / 0.7; mv(P, 'drip' + i, 0, -u * u * (X.p[1] - 0.06), 0); sc(P, 'drip' + i, 0.8, 1.35, 0.8); } else { sc(P, 'drip' + i, 0); if (!i) land = x - g - 0.7; } if (!i && x < 4) land = x + 1; });
+    sc(P, 'sizzle', land < 0 ? 0 : eo(land / 0.4) * (1 - sm((land - 0.6) / 4))); };
+  return { cl, sm, eo, ei, back, ring, hop, pulse, mod, part, mv, sc, rt, squash, dress, face, ambient };
+})();
+// CLIP[id]: the creature's own motion, from the kit. Each clip fills a pose from the time and gives back what the page needs to move the whole figure:
+//   rest(Rg, F, P, beats, o)  o: { glance 0..1, look [x, y], spent 0..1, land (ms since it landed), jar }
+//   act(Rg, F, P, ms, o)      o: { W, J, D, B (the plan's lengths: wind-up, the way there, the work, the way home), N (hops each way), bites [parts of D], hop [ms into the work, length, way] (a hop to a second place; out.e2 is how far along it), dir (the way it goes, -1 or 1), sd (the side its food is on) } -> { e 0 home .. 1 at the molecule, y 0..1 of a hop's height, lunge 0..1, reach 0..1 }
+//   evo(Rg, F, P, ms, o)      o: { L (a beat), from, to } -> { e, y, big 0..1, n (beats since it landed), done }
+const CLIP = {
+  homacid: (() => { const K = RK, HELD = ['bolt', 'bar', 'chunk'], GROUND = ['pit', 'pit2', 'pit3', 'pit4', 'crumb0', 'crumb1', 'crumb2', 'chip0', 'chip1', 'plankL', 'plankR'];
+    const prop = (P, F, k) => { if (k >= 1) return; const d = F._; HELD.forEach(n => { const X = F[n]; if (!X) return; K.sc(P, n, k); K.mv(P, n, (0 - X.p[0]) * (1 - k), (d.mw[0] - X.p[1]) * (1 - k), (d.mw[1] - X.p[2]) * (1 - k)); }); }, ground = (P, k) => { if (k < 1) GROUND.forEach(n => K.sc(P, n, k)); };
+    const leap = (u, dir) => { const v = (K.hop(u + 0.03) - K.hop(u - 0.03)) / 0.06; return { sq: -Math.min(0.34, Math.abs(v) * 0.12) + 0.07 * K.pulse(u, 0.42, 0.62, 0.08), lean: -dir * K.cl(v * 0.07, -0.2, 0.26), dx: 0, vy: K.cl(v / 2.6, -1, 1) }; };
+    const trip = (u, N, dir) => { const x = K.cl(u) * N, i = Math.min(N - 1, Math.floor(x)), v = x - i, C = i ? 0.26 : 0.08, hh = i === N - 1 ? 0.62 : 0.34; if (v < C) { const c = v / C; return { e: i / N, y: 0, sq: 0.3 * Math.sin(Math.PI * Math.min(1, c * 0.8 + 0.2)), lean: -dir * 0.1 * c, dx: 0, vy: 0 }; } const w = (v - C) / (1 - C), l = leap(w, dir); l.e = (i + w) / N; l.y = K.hop(w) * hh; l.sq *= 0.75; return l; };
+    return {
+      rest(Rg, F, P, tb, o) { const s = Rg.stage, d = F._, R = d.R, amp = o.jar ? 0.6 : 1, sp = o.spent || 0, t = tb * (o.jar ? 0.55 : 1), gl = o.glance || 0, lk = o.look || [1, 0.3], land = o.land == null ? 1e9 : o.land;
+        const S = lag => { const q = t - lag / 500, ph = K.mod(q, 13), w = ph < 6.5 ? K.sm(ph) * 2 - 1 + 0.2 * K.ring((ph - 1) * 500, 170, 430) : 1 - 2 * K.sm(ph - 6.5) - 0.2 * K.ring((ph - 7.5) * 500, 170, 430);
+          return { sq: amp * (0.03 * (1 - sp) * Math.sin(q * 1.5708) + 0.045 * sp * Math.sin(q * 0.7854)) + 0.2 * sp + 0.45 * K.ring(land - lag, 130, 330), lean: 0.05 * w * amp * (1 - sp) + 0.13 * sp - 0.06 * gl * lk[0], dx: 0.07 * R * w * amp * (1 - sp), vy: 0 }; };
+        K.dress(P, d, S, HELD); K.rt(P, 'hips', 0, 0.3 * gl * lk[0], 0);
+        const bx = Math.min(K.mod(t, 7), K.mod(t, 11) + 4 > 7.36 ? 9 : Math.abs(K.mod(t, 11) - 3) < 0.4 ? K.mod(t, 11) - 3 : 9), blink = bx >= 0 && bx < 0.36 ? 1 - Math.abs(bx / 0.18 - 1) : 0, dart = K.pulse(K.mod(t, 9), 4, 5.6, 0.15) * (Math.floor(t / 9) % 2 ? -0.8 : 0.8) * (1 - gl) * (1 - sp);
+        const f = { wide: Math.min(0.6 * gl - blink * (1 + 0.6 * gl), 0.6 * gl - 0.6 * sp - blink * 0.4) - 0.5 * K.pulse(land, -1, 110, 40), brow: 0.7 * gl + 0.9 * sp, look: [lk[0] * gl + dart, lk[1] * gl - 0.5 * sp], open: null, smile: 0 };
+        if (s === 2) { const ph = K.mod(t, 5), n = ph < 1.2 ? Math.sin(ph / 1.2 * 12.566) : 0, b = Math.max(0, n) * (1 - sp); f.open = 0.12 + 0.5 * b; K.mv(P, 'bolt', 0, 0.05 * R * b, 0); K.rt(P, 'bolt', 0, 0, 0.14 * n * (1 - sp)); ['armL', 'armR'].forEach(n2 => K.rt(P, n2, -0.12 * b, 0, 0)); }
+        else if (s === 3) { const ph = K.mod(t, 3), c = (ph < 0.5 ? Math.sin(Math.PI * ph / 0.5) : 0) * (1 - sp), sw = 0.13 * Math.sin(t * 1.0472) * (1 - sp); f.open = K.face({}, d, {}) * (1 - 0.8 * c); ['bar', 'armL', 'armR'].forEach(n => K.mv(P, n, sw, 0, 0)); K.squash(P, 'body', 0.04 * c); }
+        else if (s === 4) { const lick = K.pulse(K.mod(t, 9), 5, 6.4, 0.3); K.mv(P, 'tongue', 0.12 * Math.sin(t * 5) * lick, -0.08 * lick, 0.12 * lick); K.sc(P, 'tongue', 1 + 0.25 * lick); K.rt(P, 'plankL', 0, 0, 0.03 * Math.sin(t * 1.5708)); K.rt(P, 'plankR', 0, 0, -0.03 * Math.sin(t * 1.5708)); }
+        else if (s === 5) { const b = Math.sin(t * 1.5708 + 1), yw = K.pulse(K.mod(t, 17), 12, 14, 0.7) * (1 - sp); K.sc(P, 'pool', 1 + 0.025 * b, 1 - 0.04 * b, 1 + 0.025 * b); ['leg5', 'jar5'].forEach((n, i) => { K.mv(P, n, 0, 0.09 * Math.sin(t * 1.2566 + i * 2), 0); K.rt(P, n, 0, 0, 0.07 * Math.sin(t * 0.8976 + i)); }); if (yw > 0) { f.open = K.face({}, d, {}) + (1 - K.face({}, d, {})) * yw; f.wide = Math.min(f.wide, -0.8 * yw); K.squash(P, 'body', -0.07 * yw); } }
+        K.face(P, d, f); K.ambient(P, Rg, F, t, amp); prop(P, F, K.sm((land - 350) / 450)); ground(P, K.eo(land / 420)); return { e: 0, y: 0 }; },
+      // (the owner: "I would prefer if the sprites walked to the molecule and interacted with it") THE ACT IS A TRIP: it goes to the molecule on its own feet in N short hops
+      // (trip: a push off the ground, a low arc, a landing that is the next push), handles the piece there, and comes home the same way. o.N hops each way.
+      act(Rg, F, P, a, o) { const d = F._, T1 = o.W, T2 = T1 + o.J, T3 = T2 + o.D, T4 = T3 + o.B, CR = 0.12, N = o.N || 3, last = o.bites[o.bites.length - 1] * o.D, G0 = last + 190, f = { wide: 0, brow: 0, look: [0, 0], open: null, smile: 0 }, o0 = K.face({}, d, {});
+        // a bite, x ms from its snap (the snap is at 60): the hands go out to the piece and bring it to the mouth, the body goes with them; the jaws shut on it; it chews
+        const bite = ms => { let reach = 0, lunge = 0, sq = 0, open = null, shut = 0; o.bites.forEach(b => { const x = ms - b * o.D; if (x < -190 || x > 330) return; reach = Math.max(reach, K.sm((x + 190) / 110) * (1 - K.sm((x - 15) / 50))); lunge += K.sm((x + 190) / 120) * (1 - K.sm((x - 140) / 130)); sq += 0.24 * K.ring(x - 60, 90, 230) - 0.1 * K.pulse(x, -150, 30, 40); if (x < 60) open = Math.max(open || 0, K.sm((x + 130) / 100)); else { open = 0.3 * Math.abs(Math.sin((x - 60) / 58)) * K.sm((x - 100) / 40); shut = Math.max(shut, 1 - K.sm((x - 60) / 130)); } }); return { reach, lunge, sq, open, shut }; };
+        const S = lag => { const t = a - lag; if (t < T1) { const u = t / T1; return { sq: 0.4 * K.eo(u / 0.5) - 0.6 * K.ei((u - 0.84) / 0.16), lean: o.dir * 0.1 * K.eo(u / 0.5), dx: 0, vy: 0 }; }
+          if (t < T2) return trip((t - T1) / o.J, N, o.dir);
+          if (t < T3) { const ms = t - T2, b = bite(ms), g = ms - G0, hp = o.hop; if (hp && ms >= hp[0] && ms < hp[0] + hp[1]) { const u = (ms - hp[0]) / hp[1], l = u < 0.2 ? { sq: 0.3 * Math.sin(Math.PI * u / 0.2 * 0.8), lean: 0, dx: 0, vy: 0, y: 0, e2: 0 } : leap((u - 0.2) / 0.8, hp[2]); if (u >= 0.2) { l.e2 = (u - 0.2) / 0.8; l.y = K.hop(l.e2) * 0.5; } l.b = b; return l; }
+            return { e2: hp && ms >= hp[0] ? 1 : 0, y: 0, sq: 0.4 * K.ring(ms, 110, 300) + (hp ? 0.36 * K.ring(ms - hp[0] - hp[1], 110, 300) : 0) + b.sq + (g > 0 ? -0.24 * Math.sin(Math.PI * K.cl(g / 190)) * (g < 190 ? 1 : 0) + 0.18 * K.ring(g - 190, 110, 270) : 0), lean: -o.sd * 0.22 * b.lunge, dx: 0, vy: 0, b }; }
+          if (t < T4) { const u = (t - T3) / o.B; if (u < CR) return { sq: 0.3 * Math.sin(Math.PI * u / CR * 0.8), lean: -o.dir * 0.08, dx: 0, vy: 0, e: 0, y: 0 }; return trip((u - CR) / (1 - CR), N, -o.dir); }
+          return { sq: 0.45 * K.ring(t - T4, 130, 330), lean: 0, dx: 0, vy: 0 }; };
+        const st = K.dress(P, d, S, HELD), out = { e: 0, y: 0, lunge: 0, reach: 0 }; let pk = 0, gk = 0;
+        if (a < T1) { const u = a / T1; f.wide = -0.4 * K.sm(u * 3); f.brow = -0.7 * K.sm(u * 3); f.look = [o.dir, 0.4]; pk = 1 - K.sm((u - 0.15) / 0.45); gk = 1; if (pk < 1 && pk > 0) f.open = o0 + (1 - o0) * Math.sin(Math.PI * pk); }
+        else if (a < T2) { const u = (a - T1) / o.J; out.e = st.e; out.y = st.y; f.wide = 0.5; f.brow = -0.2; f.look = [o.dir, 0.2]; f.open = o0 + (0.8 - o0) * K.sm((u - 0.7) / 0.3); gk = 1 - K.sm(u * 8); }
+        else if (a < T3) { const ms = a - T2, b = st.b, g = ms - G0; out.e = 1; out.e2 = st.e2 || 0; out.y = st.y || 0; out.lunge = b.lunge; out.reach = b.reach; gk = K.eo(ms / 350) * 0.6; f.look = [o.sd, 0.1]; f.brow = -0.5; f.open = b.open == null ? 0.3 : b.open; f.wide = b.reach > 0.05 ? 0.9 * b.reach : -0.9 * b.shut; if (ms < 90) f.wide = -0.5;
+          ['L', 'R'].forEach((s, i) => { K.rt(P, 'arm' + s, -1.0 * b.reach, 0, (i ? -1 : 1) * 0.3 * b.reach - o.sd * 0.5 * b.reach); K.sc(P, 'arm' + s, 1 + 0.5 * b.reach); });
+          if (g > 0) { /* the swallow (the neck goes up, the lump goes down), then the pleased look */ const gu = K.pulse(g, 0, 190, 40), pl = K.sm((g - 190) / 120); f.open = 0.08; f.wide = -0.9 * gu - 0.72 * pl; f.brow = 0.8 * gu + pl; f.smile = pl; f.look = [0, 0.3 * gu]; K.sc(P, 'body', 1 - 0.1 * gu + 0.12 * K.pulse(g, 150, 330, 60), 1, 1); } }
+        else if (a < T4) { const u = (a - T3) / o.B; f.smile = 1; f.brow = 1; f.open = 0.1; f.wide = -0.6 + 0.9 * K.sm(u * 4); f.look = [-o.dir, 0.2]; out.e = u < CR ? 1 : 1 - st.e; out.y = u < CR ? 0 : st.y; gk = 0.6 * (1 - K.sm(u / CR)); K.rt(P, 'point', 0, 0, 0.25 * Math.sin(a / 60)); }
+        else { const ms = a - T4; f.wide = -0.6 * K.pulse(ms, -1, 110, 40) - 0.3; f.brow = 0.8; f.smile = 0.6; f.open = 0.1; gk = K.eo(ms / 420); pk = K.sm((ms - 350) / 450); }
+        K.face(P, d, f); K.ambient(P, Rg, F, a / 500, 1); prop(P, F, pk); ground(P, gk); return out; },
+      evo(Rg, F, P, a, o) { const d = F._, L = o.L, PRE = 420, n = (a - L) / L, END = 5.7, CR = 0.4, out = { e: 0, y: 0, big: 0, n, done: false }, FA = rigForm(Rg, o.from), FB = rigForm(Rg, o.to), fr = o.from, f = { wide: 0, brow: 0, look: [0, 0], open: null, smile: 0 };
+        const S = lag => { const t = a - lag, m = (t - L) / L; if (t < 0) { const u = 1 + t / PRE; return { sq: 0.38 * K.eo(u / 0.55) - 0.6 * K.ei((u - 0.85) / 0.15), lean: 0, dx: 0, vy: 0 }; }
+          if (t < L) return leap(t / L, o.dir);
+          if (m < END) { let sq = 0.45 * K.ring(t - L, 130, 330); for (let b = 1; b <= 4; b++) sq += 0.1 * K.pulse(m, b - 0.22, b - 0.02, 0.1) - 0.2 * K.ring((m - b) * L, 110, 280); return { sq, lean: 0, dx: 0, vy: 0 }; }
+          if (m < END + CR) { const u = (m - END) / CR; return { sq: 0.36 * K.eo(u / 0.6) - 0.55 * K.ei((u - 0.8) / 0.2), lean: 0, dx: 0, vy: 0 }; }
+          if (m < END + CR + 1) return leap(m - END - CR, -o.dir);
+          return { sq: 0.45 * K.ring((m - END - CR - 1) * L, 130, 330), lean: 0, dx: 0, vy: 0 }; };
+        K.dress(P, d, S, HELD);
+        if (a < 0) { f.wide = -0.3; f.brow = -0.4; } else if (a < L) { out.e = a / L; out.y = K.hop(out.e); out.big = K.sm(out.e); f.wide = 0.7; f.brow = 0.5; }
+        else if (n < END + CR) { out.e = 1; out.big = 1; } else if (n < END + CR + 1) { const u = n - END - CR; out.e = 1 - u; out.y = K.hop(u); out.big = 1 - K.sm(u); f.smile = 1; f.brow = 1; f.wide = 0.3; } else { out.done = n > END + CR + 1.5; f.smile = 0.6; f.brow = 0.8; }
+        // every part has its own beat. The rules, first that fits: [name test, beat, how, length in beats]. how: 'm' it tweens between the two forms, 'p' it grows there with a bounce,
+        // 'd' it drops in from above, 'u' it comes up from below, 'a' it goes into the mouth and is gone, 'g' it shrinks away where it is
+        const RULE = { 1: [[/^(foot|leg)L/, 2, 'p'], [/^(foot|leg)R/, 2.25, 'p'], [/^armL/, 3, 'p'], [/^armR/, 3.2, 'p'], [/^bolt/, 3.5, 'x'], [/^crumb/, 4.6, 'p']],
+          2: [[/^bolt/, 1, 'a', 0.6], [/^crumb/, 1.3, 'g'], [/^leg/, 2, 'p'], [/^(jawL|toothL)/, 2.5, 'p', 0.4], [/^bar/, 3, 'd', 0.5], [/^drip/, 4, 'p'], [/^pit[23]/, 4.2, 'p'], [/^puff/, 4.4, 'p'], [/^sizzle/, 9, 'p']],
+          3: [[/^bar/, 1, 'x'], [/^plank/, 2, 'x'], [/^(leg|foot)/, 3, 'g', 0.3], [/^pit4/, 3.2, 'p'], [/^tongue/, 4, 'p'], [/^chunk/, 4.3, 'd', 0.5], [/^puff1/, 4.6, 'p']],
+          4: [[/^chunk/, 1.2, 'a', 0.5], [/^plank/, 2, 'x'], [/^(pool|pit$)/, 2, 'x'], [/^(mouth|maw|jaw|tooth|tongue)/, 3, 'm', 0.6], [/^leg5/, 4, 'u'], [/^jar5/, 4.4, 'u'], [/^chip/, 4.2, 'p'], [/^drip2/, 4.6, 'p'], [/^puff2/, 4.8, 'p']] }[fr] || [];
+        Rg.order.forEach(nm => { const A = FA[nm], B = FB[nm]; if (!A && !B) return; let r = null; for (let i = 0; i < RULE.length && !r; i++) if (RULE[i][0].test(nm)) r = RULE[i]; const at = r ? r[1] : 1, how = r ? r[2] : A && B ? 'm' : B ? 'p' : 'g', len = (r && r[3]) || 0.7, u = K.cl((n - at) / len), q = K.part(P, nm), X = B || A;
+          if (how === 'm') { q.k = K.sm(u); if (u > 0 && u < 1 && (nm === 'body' || nm === 'pool')) K.squash(P, nm, -0.14 * Math.sin(Math.PI * u)); }
+          else if (how === 'p') { q.k = K.sm(u * 2); if (u > 0 && u < 1) K.sc(P, nm, K.back(u) / Math.max(0.02, q.k)); }
+          else if (how === 'd') { q.k = n >= at ? 1 : 0; const fall = u < 0.6 ? 1 - K.ei(u / 0.6) * 1 : 0, bn = u >= 0.6 ? 0.12 * Math.abs(Math.sin((u - 0.6) / 0.4 * 6.2832)) * (1 - u) : 0; K.mv(P, nm, 0, 5 * fall * (1 - K.cl(u / 0.6) * K.cl(u / 0.6)) + bn, 0); K.rt(P, nm, 0, 0, 1.2 * fall); }
+          else if (how === 'u') { q.k = K.sm(u * 2.5); K.mv(P, nm, 0, -1.3 * (1 - K.back(u)), 0); K.rt(P, nm, 0, 0, 0.5 * (1 - K.back(u))); }
+          else if (how === 'a') { q.k = K.sm((u - 0.45) / 0.55); const g = K.sm(u / 0.6), y0 = X.p[1]; K.mv(P, nm, (0 - X.p[0]) * g, (d.mw[0] - y0) * g + 0.5 * Math.sin(Math.PI * K.cl(u / 0.6)), (d.mw[1] - X.p[2]) * g * 0.8); K.rt(P, nm, 0, 0, 3 * g); if (u > 0 && u < 1) { f.open = 0.95 * K.pulse(u, 0.05, 0.6, 0.12); f.wide = 0.6; } }
+          else if (how === 'g') q.k = K.sm(u);
+          else if (nm === 'bolt') { /* it drops on the page in front, is looked at, and picked up on the next beat */ q.k = n >= at ? 1 : 0; const fall = K.cl((n - at) / 0.3), up = K.sm((n - 4.05) / 0.5), fx = 0.75, fy = 0.09 - X.p[1], fz = 0.55; K.mv(P, nm, fx * (1 - up), fy * (1 - up) + 4 * (1 - fall * fall) + 0.25 * Math.sin(Math.PI * up), fz * (1 - up)); K.rt(P, nm, 0, 0.6 * (1 - up), 0); const rch = K.pulse(n, 3.95, 4.3, 0.12); ['armL', 'armR'].forEach(s2 => K.rt(P, s2, -0.7 * rch, 0, -0.3 * rch)); K.squash(P, 'hips', 0.16 * rch); if (n > 3.5 && n < 4.3) f.look = [0.8, -0.8]; }
+          else if (nm === 'bar') { /* it is eaten from both ends in three bites */ const b = Math.min(3, Math.floor(K.cl((n - 1) / 0.9) * 3 + 1e-6)), w = [1, 0.62, 0.3, 0][b]; q.k = b >= 3 ? 1 : 0; K.sc(P, nm, w, 1, 1); if (n > 0.8 && n < 2) f.open = 0.9 * Math.abs(Math.cos((n - 1) / 0.9 * 3 * Math.PI)); }
+          else if (/^plank/.test(nm)) { const sd = nm === 'plankL' ? -1 : 1; if (fr === 3) { /* the plank is slid in under it; on the next beat it is bitten through and tips into the hole */ q.k = n >= 2 ? 1 : 0; const sl = 1 - K.eo((n - 2) / 0.5), cr = n < 3 ? 0 : 1 - K.ring((n - 3) * L, 120, 300); K.mv(P, nm, sd * (3.2 * sl - 0.34 * (1 - cr)), -0.22 * (1 - cr), 0); K.rt(P, nm, 0, 0, sd * 0.22 * (1 - cr)); } else { /* it goes under as the pool spreads */ const g = K.sm((n - 2) / 0.9); q.k = K.sm((n - 2.5) / 0.5); K.mv(P, nm, 0, -0.55 * g, 0); K.rt(P, nm, 0, 0, -sd * 0.5 * g); } }
+          else { /* the pool spreads, with a wobble */ q.k = K.sm((n - 2) / 0.6); const wb = 0.22 * K.ring((n - 2.5) * L, 200, 330) * (n > 2.5 ? 1 : 0); K.sc(P, nm, 1 + wb, nm === 'pool' ? 1 - wb : 1, 1 + wb); } });
+        if (fr === 3 && n > 1.6 && n < 3.4) { /* it hops to let the plank under, lands, and bites down through it */ const h = Math.sin(Math.PI * K.cl((n - 1.75) / 0.6)); K.mv(P, 'hips', 0, 0.9 * h, 0); if (n > 2.75) f.open = 0.9 * K.pulse(n, 2.8, 2.98, 0.06); }
+        if (fr === 2 && n > 2.5 && n < 3.6) f.open = n < 3.32 ? 0.95 * K.sm((n - 2.5) / 0.3) : 0.02;
+        if (fr === 4 && n > 3 && n < 4) f.open = K.face({}, d, {}) + (1 - K.face({}, d, {})) * Math.sin(Math.PI * K.cl((n - 3) / 0.9));
+        if (a >= L && n < END) { let pop = 0; for (let b = 1; b <= 4; b++) pop = Math.max(pop, Math.exp(-Math.max(0, n - b) * 3.5) * (n >= b ? 1 : 0)); const pl = K.sm((n - 4.9) / 0.4); f.wide = Math.max(f.wide, 0.75 * pop) * (1 - pl) - 0.72 * pl - 0.6 * K.pulse(a - L, -1, 110, 40); f.brow = 0.6 * pop + pl; f.smile = pl; if (f.look[0] === 0 && pop > 0.3 && n < 4.9) f.look = [Math.floor(n) % 2 ? 0.5 : -0.5, -0.7]; }
+        K.face(P, d, f); K.ambient(P, Rg, F, a / 500, 1); if (a < L || n >= END) ground(P, a < L ? 1 - K.sm(a / L * 6) : K.eo((n - END - CR - 1) * L / 420)); return out; }
+    }; })()
+};
+// rigPlay(grp, clip, time, o): one frame of a rigged creature's motion (clip 'rest' takes the time in beats, 'act' and 'evo' in ms from their start). Gives back what the clip gives.
+function rigPlay(grp, clip, t, o) { const Rg = grp && grp.userData && grp.userData.rig2, C = Rg && CLIP[Rg.id]; if (!C || !C[clip]) return null; o = o || {}; const a = clip === 'evo' ? o.from : Rg.stage, b = clip === 'evo' ? o.to : Rg.stage, P = {}, out = C[clip](Rg, rigForm(Rg, clip === 'evo' ? o.to : Rg.stage), P, t, o); rigSet(grp, a, b, 0, P); return out; }
 AA.rxKit = { fogDrift: (g, t) => { /* the fog hangs, sinks and rolls slowly, on a loop */ let n = 0; g.traverse(o => { const f = o.userData && o.userData.fog; if (!f) return; n++; const a = t * 0.5 + f.n * 1.7, b = t * 0.31 + f.n * 2.9; o.position.x = f.x + (f.low ? 0.22 : 0.08) * f.w * Math.sin(a); o.position.y = f.y + (f.low ? 0.01 : -0.06 * f.h * (0.5 + 0.5 * Math.sin(b))); o.scale.set(f.w * (1 + 0.1 * Math.sin(b)), f.h * (1 + 0.08 * Math.cos(a)), 1); o.material.opacity = f.o * (0.82 + 0.18 * Math.sin(a * 0.7 + 1)); o.material.rotation += 0.0006 * (f.n % 2 ? 1 : -1); }); return n; }, pushOn: true, PUSHED: ['water', 'acid', 'slime', 'salt', 'co2', 'h2', 'wood', 'seedling', 'ammonia', 'brimstone'], stageSize, STAGED: ['water', 'acid', 'slime'], shelf: (T, n) => { const g = new T.Group(); return build(n > 5 ? 'shelf10' : 'shelf5', T, g, new T.Color(0x8a5a2b)) ? g : null; }, tag: (T, n) => { const g = new T.Group(); return build(n >= 1 && n <= 5 ? 'tag_' + n : 'tag_more', T, g, new T.Color(0xf0b93a)) ? g : null; }, build, FLAT, K, mat, finish, snap, PAL, drawCoin, use, jarReport, pose, poseToward, creature, jar, HOMID, list: T => { const g = {}; return build('__list', T, { add() {}, traverse() {}, children: [] }, new T.Color(0)); } };
+// (builder 21) the rig: AA.rxKit.rigOn = false gives the solid pushed forms back
+Object.assign(AA.rxKit, { rigOn: true, rigSet, rigPlay, rigForm, RK, CLIP, RIGGED: ['acid'] });
 })(typeof globalThis !== 'undefined' ? globalThis : window);
