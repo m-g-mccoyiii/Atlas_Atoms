@@ -342,7 +342,7 @@ const REF_HOM0 = { h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a pag
 const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Double bonds soak up OH; closed rings burst.',
   h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
   co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Leave ' : 'Drive off carbon dioxide and leave ') + K.least + ' reagents untouched to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
-  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') && homK(K.k * f) < HOMCOUNT.cap.acid ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '. Never past x' + HOMCOUNT.cap.acid.toFixed(2) + '.' : ''),      // twentieth (homCount): the count's step and the cap
+  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') && homK(K.k * f) < HOMCOUNT.cap.acid ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + ' up to x' + HOMCOUNT.cap.acid.toFixed(2) + '.' : ''),      // twentieth (homCount): the count's step and the cap
   wood: (K, f) => (homSimple('wood') ? 'Wood spirit drinks. Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
   salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
   slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle is shut all round.',
@@ -1684,7 +1684,7 @@ var HOMCOUNT = { n0: { acid: 2, seedling: 6, brimstone: 1 }, per: { acid: 1.2, s
 var homCountFlag = false;      // var, not let: the book's lines (REF_HOM) may ask before this line has run
 const homCountSet = () => { Object.keys(HOMCOUNT.n0).forEach(id => { HOMGROW.read[id] = (homCountFlag ? HOMCOUNT.read : HOMCOUNT.read19)[id].slice(); }); homNumbers(); };
 Object.defineProperty(RULE, 'homCount', { enumerable: true, configurable: true, get: () => homCountFlag, set: v => { homCountFlag = !!v; homCountSet(); } });
-RULE.homCount = false;      // twentieth: off until measured (docs/RIG.md, twentieth)
+RULE.homCount = true;      // twentieth: on (docs/RIG.md, twentieth: alone each is worth what it was, the bare game is untouched, a combination sought reaches about 100 times the number to beat)
 function homCountOn(id) { return !!(homCountFlag && HOMCOUNT && RULE.homs2 && HOMCOUNT.n0[id] && (id !== 'brimstone' || homSimple('brimstone')) && (id !== 'seedling' || HOMS2K.seedling.rise === false)); }
 const homOHs = m => { let n = 0; m.atoms.forEach(a => { if (a.el !== 'O') return; const nb = m.neighbors(a); if (nb.length === 2 && nb.every(q => q.bond.order === 1) && nb.some(q => q.atom.el === 'H')) n++; }); return n; };
 function homCountN(g, id) {

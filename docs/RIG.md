@@ -1,8 +1,127 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the nineteenth, 2026-11-14). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the twentieth, 2026-11-14). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-14, twentieth: synergy over averages, tried on three (Acid per atom chewed, Seedling per atom added, Brimstone counts sulfur)
+
+Owner (ruling BC): "these combinations of homunculus, sigil, reagent, and play style should allow for people to massively chain stuff together, it can't always be about averages. things can have synergy if the player uncovers it." "Try it on three first": Brimstone counts sulfur, Acid per atom chewed, Seedling per atom added. Each is judged alone AND by the best combination found; a found combination may reach about 100 times the number to beat; the bare game and a plain kit stay as they are; Dry ice and Acid stop at x3.20.
+
+Played on the nineteenth's deals (the same 200 bare runs), 8 workers at below-normal priority, one pool at a time. "Worth", "biggest round" and "times the number to beat" are the nineteenth's. What was run is in `SWEEP.md`, twentieth; the tables come from `sweep_hom20_table.py alone` and `combo`.
+
+### 1. What was built
+
+`path.js`, behind one switch, **`RULE.homCount`, on**. Each of the three keeps its job, its threshold, its five stages and how often it acts (once a round; Brimstone once a run). Only its number changes:
+
+| Creature | When the job is just done | For each count more | Its line in the book on a new profile |
+|---|---|---|---|
+| Acid | the stage's number (2 atoms chewed) | times x1.20 an atom, never past x3.20 (ruling BC) | Acid eats. Chew 2 atoms off the molecule. x1.92. Once a round. Each atom more: x1.20 up to x3.20. |
+| Seedling | the stage's number (6 atoms added) | times x1.06 an atom | Seedling sprouts. Add 6 atoms. x1.19. Once a round. Each atom more: x1.06. |
+| Brimstone | its own number, kept (1 sulfur on the molecule when it burns) | times x1.12 a sulfur; with Sulphur's Mask held every OH counts as a sulfur | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Once a run. Each sulfur more: x1.12. |
+
+- `HOMCOUNT` holds the thresholds, the steps, Acid's cap and the five numbers of each (`HOMCOUNT.read`; on, they replace the three rows of `HOMGROW.read`; off, the nineteenth's come back from `HOMCOUNT.read19`). `homCountK(g, id)` is the tap's whole number with the stage in it (`homF` is not applied again to these three).
+- For the page: `P.homCountNow(g)` gives `{ id, n, x }`, the count on the page as it stands and the number the tap would read now; the tap writes `g.hom.count`. Nothing else the page calls changed.
+- Brimstone and the Mask: the Mask's line already says oxygen behaves as sulfur, so Brimstone counting every OH under the Mask is a link a player can find. The Mask's own line is not touched. This link is a design choice of this measure, not a ruling (choice 3).
+- Brimstone's numbers stay its own (x1.17 to x1.59): "Brimstone ... keeps its number" (ruling BB). The first try gave it its number for each sulfur (part 3, "the first try") and was dropped.
+
+### 2. Each alone: three candidates each
+
+The judgement call is the step for each count more. For Acid and Seedling the number at the threshold was fitted for each candidate step, so that alone the creature is still worth about 1.2, 1.35, 1.5, 1.65, 1.8 at stages 1 to 5 (five sizes of the number, 100 runs each, careful player; `sweep_hom18.py fit hom20`). Brimstone keeps its own five numbers; its candidates are the step. Then each candidate was played at stages 1, 3 and 5, 100 runs a cell, both players on the same deals.
+
+Careful player (none: worth 1.00, wins 0.32 in 100, biggest round 9). A cell is worth; nine-round wins in 100; biggest round in times the number to beat.
+
+| Candidate | Step | The five numbers (as read) | Stage 1 | Stage 3 | Stage 5 |
+|---|---|---|---|---|---|
+| Acid, the nineteenth (for comparison) | none | x1.96, x2.67, x3.17, x4.05, x4.50 | 1.20; 1.1; 12 | 1.52; 3.1; 18 | 1.70; 5.0; 25 |
+| Acid a | x1.10 | x1.92, x2.61, x3.12, x3.20, x3.20 | 1.20; 1.1; 14 | 1.54; 3.2; 18 | 1.52; 3.1; 18 |
+| **Acid b (built)** | **x1.20** | **x1.92, x2.50, x3.11, x3.20, x3.20** | **1.20; 1.1; 16** | **1.54; 3.2; 18** | **1.52; 3.1; 18** |
+| Acid c | x1.35 | x1.90, x2.50, x3.11, x3.20, x3.20 | 1.20; 1.1; 17 | 1.54; 3.2; 18 | 1.52; 3.1; 18 |
+| Seedling, the nineteenth | none | x1.48, x1.71, x1.92, x2.26, x2.73 | 1.22; 1.3; 14 | 1.50; 2.9; 18 | 1.81; 6.1; 25 |
+| Seedling a | x1.03 | x1.34, x1.57, x1.77, x1.99, x2.34 | 1.20; 1.0; 13 | 1.57; 3.4; 18 | 1.78; 5.8; 23 |
+| **Seedling b (built)** | **x1.06** | **x1.19, x1.38, x1.54, x1.79, x2.16** | **1.19; 1.0; 13** | **1.54; 3.2; 17** | **1.78; 5.8; 23** |
+| Seedling c | x1.10 | x1.07, x1.23, x1.40, x1.59, x1.94 | 1.22; 1.3; 15 | 1.57; 3.5; 20 | 1.82; 6.4; 27 |
+| Brimstone, the nineteenth | none | x1.17, x1.30, x1.39, x1.52, x1.59 | 1.07; 0.5; 9 | 1.07; 0.5; 9 | 1.07; 0.5; 9 |
+| Brimstone a | x1.08 | its own | 1.04; 0.4; 7 | 1.12; 0.6; 9 | 1.10; 0.6; 9 |
+| **Brimstone b (built)** | **x1.12** | **its own** | **1.14; 0.8; 9** | **1.07; 0.5; 9** | **1.12; 0.6; 9** |
+| Brimstone c | x1.16 | its own | 1.11; 0.6; 8 | 1.06; 0.5; 9 | 1.05; 0.4; 11 |
+
+- **Alone each is worth what it was.** Seedling 1.2, 1.5, 1.8 at stages 1, 3, 5 for all three steps; Acid 1.20 and 1.54 at stages 1 and 3. Brimstone 1.04 to 1.14 (one fire a run: one saved round, as in the nineteenth; the differences are inside the noise of 100 runs).
+- **Acid at stage 5 is worth 1.52, not 1.70**: the cap of x3.20 (part 5).
+- **Acid's step makes almost no difference alone**: the careful player chews exactly 2 atoms in 79 taps of 100 at stage 5 (3 atoms 14, 4 atoms 6, at most 6), so the three candidates play nearly the same runs; from stage 3 on the number is at or next to the cap whatever the step.
+- **Seedling grows 6 to 26 atoms a tap** (8.6 on average at stage 5), so its step matters: the larger the step, the smaller the number at 6 atoms.
+- The casual player alone: Acid worth 1.21, 1.48, 1.48 at stages 1, 3, 5 for all three; Seedling b 1.29, 1.57, 1.79 (a and c: 1.35 and 1.41 at stage 1, within 0.02 at stages 3 and 5). Brimstone: no wins with or without it, so its worth cannot be read for him (as in the nineteenth).
+
+### 3. With a kit, and with a combination sought (stage 5, careful player)
+
+**The plain kit** is the nineteenth's: carousel, burette, seed crystal; Gemini, Clepsydra, Via Humida held from round one; the six starting reagents; 50 runs a set. Kit alone (no creature): 38.6 nine-round wins in 100, biggest round 15.7.
+
+**The combinations sought**, one family each, chosen from what the count feeds on (30 runs a set):
+
+- Seedling: the three instruments, Tetractys (four reagents a page), Clepsydra (four pages), Gemini; hydroformylation and HWE added to the rack. Each C=C becomes a CHO, which grow lengthens again. The careful player then adds up to 39 atoms in one tap.
+- Acid: the three instruments, Tetractys, Clepsydra, Gemini; ozonolysis and Chugaev added. Ozonolysis cuts every C=C and the short piece is lost: up to 16 atoms chewed in one tap.
+- Brimstone: the three instruments, Sulphur's Mask, Tetractys, Clepsydra; Chugaev and dihydroxylation added (every C=C becomes two OH, which pass for sulfur under the Mask); the player also burns the fire on any page where it would read x5 or more (the line of play that hunts the big fire). Up to 17 counted at the fire. The same without the Mask (Gemini in its place): at most 6 to 10 counted.
+
+Each cell: nine-round wins in 100; biggest round in times the number to beat.
+
+| Candidate | The plain kit (50 runs) | The combination sought (30 runs) | Combination, no creature |
+|---|---|---|---|
+| Acid, the nineteenth | 48; 55 | not played | |
+| Acid a, b, c (the same at stage 5: x3.20) | 47; 39 | 48; 80 | 39; 27 |
+| Acid b without the cap (choice 1b) | not played | 50; 263 | |
+| Seedling, the nineteenth | 49; 32 | not played | |
+| Seedling a | 49; 35 | 53; 67 | 32; 33 |
+| **Seedling b** | **50; 63** | **53; 109** | |
+| Seedling c | 49; 119 | 53; 214 | |
+| Brimstone, the nineteenth | 50; 20 | not played | |
+| Brimstone a | 51; 22 | with the Mask 24; 59. Without 47; 25 | with the Mask 19; 30. Without 33; 25 |
+| **Brimstone b** | **51; 22** | **with the Mask 20; 106. Without 49; 25** | |
+| Brimstone c | 51; 23 | with the Mask 19; 186. Without 46; 59 | |
+
+- **With the steps built (b) each found combination reaches about 100 times the number to beat**: Seedling 109, Brimstone with the Mask 106; Acid 80 (it is held at x3.20). A round past 100 times came once in 270 rounds for Seedling b and for Brimstone b with the Mask.
+- **The plain kit**: Acid's biggest round fell from 55 to 39 (the cap); Brimstone's is about as it was (22 against 20); **Seedling b's doubled (63 against 32)**: with the kit's Gemini and Clepsydra the careful player adds up to 26 atoms in a tap without seeking it. Seedling a keeps it at 35 but its found combination reaches only 67. Wins with the kit are as they were (47 to 51 against 48 to 50).
+- **Wins are not what a combination gives.** The Brimstone hunt with the Mask wins 20 runs in 100 (the kit 39 to 51): the Mask, Chugaev and dihydroxylation make a weaker game (19 with no creature); it is a hunt for one great round. The Seedling and Acid combinations win about what the kit wins.
+- 30 runs a set: a biggest round is the largest of 270 rounds and moves a lot from one draw of deals to another.
+
+**The first try at Brimstone, dropped**: its number for each sulfur (x1.17 to x1.59 by stage, "x1.17 for each sulfur"), and two other ladders (x1.10 to x1.30; x1.25 to x1.85), at stage 5:
+
+| Each sulfur at stage 5 | Alone: biggest round | Plain kit: biggest | Sought with the Mask | Sought without |
+|---|---|---|---|---|
+| x1.30 | 13 | 29 | 940 | 135 |
+| x1.59 (its own number) | 32 | 95 | 28,819 | 229 |
+| x1.85 | 78 | 237 | 378,311 | 767 |
+
+A fire counted 17 and the number was raised to the 17th power. Alone and with a plain kit the worth did not move (1.07; 50 to 51 wins), but the biggest rounds did. Hence the second form: its own number for the first sulfur, a small step for each more.
+
+### 4. The bare game
+
+No rule of the bare game was touched (`RULE.homCount` reads only a held Acid, Seedling or Brimstone). Bare, the careful player wins 0.32 nine-round runs in 100 on these 200 runs, before and after; the casual player 0.00. The kit with no creature was played again: 38.6 wins in 100, biggest round 15.7 (the nineteenth: 39, 16).
+
+### 5. Acid and the cap of x3.20: the two rulings meet
+
+Ruling BC says both "Acid per atom chewed" and "Dry ice and Acid stop at x3.20". As built, the cap holds the whole number. What that does:
+
+- From stage 3 the number at 2 atoms is already x3.11 and stages 4 and 5 are x3.20: every tap reads x3.20 at once, and the count does nothing. Acid's step matters only at stages 1 and 2, for chews of 3 to 5 atoms.
+- Stages 4 and 5 are no stronger than stage 3 (worth 1.52, 1.52; the nineteenth 1.62, 1.70). The book's check that every creature has five rising numbers fails for Acid (`ref19.js`).
+- A found combination reaches 80 times the number to beat, but from the rest of the kit: the chewing adds nothing past the cap.
+- Without the cap on the climb (the stage's number kept at most x3.20, each atom more x1.20 past it) the same combination reached 263.
+
+Not decided here: choice 1.
+
+### 6. Choices for the owner
+
+1. Acid's cap and its count. (a) The cap holds the whole number, as built: the count works only at stages 1 and 2; stages 3 to 5 read x3.20; found combination 80. (b) The cap holds the stage's number only and the atoms climb past it: found combination 263 at step x1.20 (a smaller step to be fitted for about 100); the plain kit not played. (c) A lower number at the threshold so the climb has room under x3.20 (for example x1.60 and x1.20 an atom, the cap at 6 atoms): alone it would be worth less than 1.5 at stage 3 and cannot pass 1.52 at any stage: to be fitted.
+2. Seedling's step. (a) x1.06, as built: found combination 109; the plain kit's biggest round 63 (it was 32). **Recommended**: it is the one that reaches about 100 when sought. (b) x1.03: the plain kit stays at 35; found combination 67. (c) x1.10: 119 with the plain kit, 214 sought.
+3. Brimstone. (a) Its own number, x1.12 for each sulfur more, and every OH under Sulphur's Mask, as built: found combination 106 with the Mask; without the Mask 25. **Recommended.** (b) The same at x1.16: 186 with the Mask, 59 without. (c) The Mask not counted: Brimstone grows with thiolate alone; at x1.12 its best found here is 25, at x1.16 59 (a larger step to be fitted for about 100 without the Mask).
+4. Brimstone's line has six sentences ("... x1.17. Once a run. Each sulfur more: x1.12."); the book's check allows five. (a) Leave it. (b) The owner words it.
+
+### Not done, in one place
+
+- One combination family a creature was sought by hand, at stage 5, by the careful player only, 30 runs a set; other sigils, instruments and reagents may do more. Stage 3 with combinations was not played. The casual player was not played with a kit or a combination.
+- Acid without its cap was played only in the sought combination, at step x1.20; not alone, not with the plain kit.
+- `hom19.js` with the switch on fails 4 of 41 checks, all of them the nineteenth's flat numbers for the three (five rising numbers, the Seedling and Brimstone taps at a fixed number, the book's line); `hom20.js` checks the new forms (16 of 16). `ref19.js` 13 of 15 with the switch on (Brimstone's six sentences; Acid's stages 4 and 5 equal); 15 of 15 with it off.
+- The page does not show the count yet (`P.homCountNow(g)` is there for it). The manual's lines for the three are new wording and have not been shown to the owner.
+- Not checked in a take: whether a player can see the count on the page. The whole-run game job `run19.js` with the switch on did not finish in its 380 seconds (no result): whole runs in the game with the three new forms are not checked.
 
 ## The measure of 2026-11-14, nineteenth: a creature acts once a round, Brimstone once a run, the other picks of BB, where a motif sits, the manual's flagged lines
 

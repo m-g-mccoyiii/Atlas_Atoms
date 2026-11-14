@@ -1,6 +1,6 @@
 # Overreact: the reference book
 
-Everything a player can get that a new game does not hold, and the eight motifs it does hold, by category: what it is called, what it does, and the one way to get it. A way that ends "Master's." counts only in a run of six rounds or more. This file is written from the game's own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref19.js` and `sweep_deeds.py career`), so it says what the rules say. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.
+Everything a player can get that a new game does not hold, and the eight motifs it does hold, by category: what it is called, what it does, and the one way to get it. A way that ends "Master's." counts only in a run of six rounds or more. This file is written from the game's own table, `P.reference(meta)` in `path.js` (`python docs/tools_chem/sweep_refdoc.py` after the job `ref19.js` and `sweep_deeds.py career`), so it says what the rules say. Since the twentieth measure (`RULE.homCount`, on) the lines of Acid, Seedling and Brimstone carry the step for each count past the threshold; those three lines were copied here from the book as the job `hom20.js` printed it, not rewritten by `sweep_refdoc.py`. Every line is in the pattern of the manual (ruling BA): the thing and one verb of its own, the act, then just the number; everything is per page unless the line says otherwise. In the game the book shows a thing that is not yet owned with its name and how to get it, and hides what it does.
 
 Since the sixteenth measure every thing is got by a deed that fits it ("More deeds, fewer counts"). The lifetime counts left are the ten jars and Fold (epoxidize acts 3 times); the condenser asks for 2 rounds over all runs. No two things share a way. "Runs" is the run on which the thing is handed over in the middle career of 200 simulated careers of 300 runs, for the casual player and then the careful one; a run hands over two things at most, so in the first twenty runs a deed can be handed over up to about 19 runs after it was done. Both runs are given: the run the deed is done, then the run the thing is handed over.
 
@@ -93,13 +93,13 @@ A new game holds: six reagents (hydrate, oxidize, grow, thiolate, dehydrate, ami
 | Water | Water floods. Wring out 3 waters. x1.36. Once a round. Double bonds soak up OH; closed rings burst. | 200 waters driven off. | 23, 23; 10, 10 |
 | Hydrogen | Hydrogen lifts. Drive off 2 hydrogens. x1.50. Once a round. | 130 hydrogens driven off. | 30, 30; 12, 12 |
 | Dry ice | Dry ice freezes. Leave 3 reagents untouched to the last page. x1.91. | 50 carbon dioxides driven off. | 15, 15; 8, 8 |
-| Acid | Acid eats. Chew 2 atoms off the molecule. x1.96. Once a round. | 200 uses of hydrate or dehydrate. | 34, 34; 17, 17 |
+| Acid | Acid eats. Chew 2 atoms off the molecule. x1.92. Once a round. Each atom more: x1.20 up to x3.20. | 200 uses of hydrate or dehydrate. | 34, 34; 17, 17 |
 | Wood spirit | Wood spirit drinks. Line up a reagent that finds nothing. x1.54. Once a round. | 250 reagents that found nothing, or uses of reduce. | not in 300, not in 300; not in 300, not in 300 |
 | Salt | Salt preserves. Open with last page's first reagent. x1.54. Once a round. Its use returns. | 50 chain-end OH oxidized. | not simulated |
 | Slime | Slime clings. Land one reagent twice. x1.55. Once a round. That bottle is shut all round. | 70 pages with one reagent landed twice, or uses of hydroborate. | not in 300, not in 300; not in 300, not in 300 |
-| Seedling | Seedling sprouts. Add 6 atoms. x1.48. Once a round. | 120 uses of grow. | 24, 24; 13, 13 |
+| Seedling | Seedling sprouts. Add 6 atoms. x1.19. Once a round. Each atom more: x1.06. | 120 uses of grow. | 24, 24; 13, 13 |
 | Ammonia | Ammonia revives. Put nitrogen on the molecule. The three reagents go round again. x1.24. Once a round. | 40 aminate landings or ammonias driven off. | 22, 22; 19, 19 |
-| Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Once a run. | 80 thiolate landings or sulfurs driven off. | 60, 60; 78, 78 |
+| Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Once a run. Each sulfur more: x1.12. | 80 thiolate landings or sulfurs driven off. | 60, 60; 78, 78 |
 
 A homunculus acts once a round, on the page the player picks; Brimstone once a run; Dry ice only on the last page. The line above is a new profile's (stage 1). A homunculus keeps what it grows: its jar goes on counting after it hatches, and at 2, 4, 7 and 11 times the jar's size it reaches stages 2 to 5. Its number at each stage:
 
