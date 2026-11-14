@@ -348,7 +348,7 @@ const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' water
   slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle is shut all round.',
   ammonia: (K, f) => 'Ammonia revives. Put nitrogen on the molecule. The three reagents go round again.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
   seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
-  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met.' + (HOMSIMPLE.brimstone.k ? (homCountOn('brimstone') ? ' Each sulfur: x' : ' x') + homX(HOMSIMPLE.brimstone.k * f) + '.' : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): the number is each sulfur's
+  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' + (homCountOn('brimstone') ? ' Each sulfur more: x' + HOMCOUNT.per.brimstone.toFixed(2) + '.' : '') : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): each sulfur more
 // how each is got, in the same voice (the count is its jar's size, JAR.full)
 const REF_HOMHOW = { water: n => n + ' waters driven off.', h2: n => n + ' hydrogens driven off.', co2: n => n + ' carbon dioxides driven off.', acid: n => n + ' uses of hydrate or dehydrate.',
   wood: n => n + ' uses of reduce.', salt: n => n + ' chain-end OH oxidized.', slime: n => n + ' uses of hydroborate.', seedling: n => n + ' uses of grow.',
@@ -1673,13 +1673,13 @@ function homStage(run, id) {
 // RULE.homCount: three creatures' numbers grow with a count (docs/RIG.md, twentieth; sweep_hom20_specs.py):
 //   acid       2 atoms chewed: the stage's number; each atom more: times HOMCOUNT.per.acid; never past x3.20 (ruling BC: "Acid stops at x3.20")
 //   seedling   6 atoms added: the stage's number; each atom more: times HOMCOUNT.per.seedling
-//   brimstone  the stage's number for each sulfur atom on the molecule when it burns (once a run, as before); with Sulphur's Mask held every
-//              OH counts as a sulfur (HOMCOUNT.maskOH: the mask passes oxygen off as sulfur)
+//   brimstone  1 sulfur on the molecule when it burns: the stage's number (its own, kept); each sulfur more: times HOMCOUNT.per.brimstone
+//              (once a run, as before); with Sulphur's Mask held every OH counts as a sulfur (HOMCOUNT.maskOH: the mask passes oxygen off as sulfur)
 // Every number here is as the player reads it. HOMCOUNT.read is the five stage numbers of each (they replace HOMGROW.read's rows while the switch
 // is on; HOMCOUNT.read19 keeps the nineteenth's). The stage's factor (homF) is not applied again to these three: homCountK holds the whole tap.
 // homCountN(g, id) is the count on the page as it stands; P.homCountNow(g) gives { id, n, x } (x as read) for the page to show.
-var HOMCOUNT = { n0: { acid: 2, seedling: 6, brimstone: 1 }, per: { acid: 1.2, seedling: 1.06 }, cap: { acid: 3.2 }, maskOH: true,
-  read: { acid: [1.96, 2.67, 3.17, 3.2, 3.2], seedling: [1.48, 1.71, 1.92, 2.26, 2.73], brimstone: [1.17, 1.30, 1.39, 1.52, 1.59] },
+var HOMCOUNT = { n0: { acid: 2, seedling: 6, brimstone: 1 }, per: { acid: 1.2, seedling: 1.06, brimstone: 1.12 }, cap: { acid: 3.2 }, maskOH: true,
+  read: { acid: [1.92, 2.50, 3.11, 3.20, 3.20], seedling: [1.19, 1.38, 1.54, 1.79, 2.16], brimstone: [1.17, 1.30, 1.39, 1.52, 1.59] },      // fitted (twentieth): alone worth 1.2, 1.35, 1.5, 1.65, 1.8; Acid's 4 and 5 stop at x3.20
   read19: { acid: HOMGROW.read.acid.slice(), seedling: HOMGROW.read.seedling.slice(), brimstone: HOMGROW.read.brimstone.slice() } };
 var homCountFlag = false;      // var, not let: the book's lines (REF_HOM) may ask before this line has run
 const homCountSet = () => { Object.keys(HOMCOUNT.n0).forEach(id => { HOMGROW.read[id] = (homCountFlag ? HOMCOUNT.read : HOMCOUNT.read19)[id].slice(); }); homNumbers(); };
@@ -1696,7 +1696,7 @@ function homCountN(g, id) {
 }
 // the tap's whole multiplier as the rules count it (the square of what is read), at the stage the run's creature holds
 function homCountK(g, id, n) {
-  const st = RULE.homGrow ? homStage(g.runRef || null, id).stage : 3, b = HOMGROW.read[id][st - 1], per = id === 'brimstone' ? b : HOMCOUNT.per[id];
+  const st = RULE.homGrow ? homStage(g.runRef || null, id).stage : 3, b = HOMGROW.read[id][st - 1], per = HOMCOUNT.per[id];
   let r = b * Math.pow(per, Math.max(0, (n == null ? homCountN(g, id) : n) - HOMCOUNT.n0[id]));
   if (HOMCOUNT.cap[id]) r = Math.min(HOMCOUNT.cap[id], r);
   return Math.pow(r, 1 / FLAT.pow);

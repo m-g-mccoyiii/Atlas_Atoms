@@ -358,3 +358,18 @@ Results: `docs/RIG.md`, nineteenth. Pools of 8 workers at below-normal priority,
 New switches in `sweep_homs.py`: every creature `ONCE` (1: one tap a round; path.js `RULE.homOnce`); Brimstone `ONCERUN` (n fires a run; path.js `RULE.brimOnce` is 1) and `WALL`. With `ONCERUN` the careful player saves the fire: he burns only on a round's last page when the round is lost without it, or from round 7 on any page where the task is unmet; the casual player burns the first time the fire clears a round. `sweep_homs.make('water*')` or `make('water*5')` builds a creature as the game has it today, at stage 3 or the stage given (`sweep_hom19_specs.py`: `READ` is `path.js` `HOMGROW.read`); the class defaults are still the seventeenth's so that older experiments play as they did. New forms in `sweep_sig17.py`: `mask1_twice`, `mask1_first`, `mask1_free`.
 
 Game jobs (`bash .claude/headless/hlow.sh jobs/<job>.js <name> <seconds>`): `hom19.js` (creatures once a round, Brimstone once a run, the jars, Ammonia's limits, `P.motifAtoms` against the counts on 587 molecules, the twelve motif rows; it takes `hom18.js`'s place), `ref19.js` (the manual's wording checks and the book for `sweep_refdoc.py`; it takes `ref18.js`'s place), `run19.js` (whole runs with a creature at stages 2, 4 and 5 and Brimstone ending a round), `sig17.js` (two checks updated to the switches now on).
+
+## Twentieth measure, 2026-11-14: what was run
+
+Results: `docs/RIG.md`, twentieth. Ruling BC ("synergy over averages"; "Try it on three first"): Acid, Seedling and Brimstone with a number that grows with a count. Pools of 8 workers at below-normal priority, one at a time. `_sweep/hom20` (`sweep_run.py hom20`, the jobs of `hom18`) and `_sweep/hom20x` (`sweep_run.py hom20x`: the same with reagents added to the rack).
+
+| Experiment | What | Read by |
+|---|---|---|
+| `hom20 --arg median,100,,` with `python sweep_hom20_specs.py grid acid a` (and `b`, `c`; the same for `seedling`) | each candidate step (`PER`) with five sizes of the number at the threshold | `sweep_hom18.py fit hom20` |
+| `hom20 --arg both,100,,` with `python sweep_hom20_specs.py s135 <creature> <a, b or c>` | the three candidates of the three creatures as fitted at stages 1, 3 and 5, alone | `sweep_hom18.py hom20` |
+| `hom20x --arg median,50,carousel+burette+crystal+sigil:gemini+sigil:clepsydra+sigil:via_humida,,none;<the nine at stage 5>` | the plain kit of the nineteenth with each candidate at stage 5 | `sweep_hom18.py hom20x` |
+| `hom20x --arg median,30,<instruments>+<three sigils>,<two reagents>,none;<the three candidates at stage 5>` | the combinations sought: `_sweep/hom20_combo2.sh` holds the four | `sweep_hom18.py hom20x` |
+
+New in `sweep_homs.py`: Acid and Seedling `COUNT`, `PER` (the step for each atom past the threshold, as read), Acid `CAPR` (the most it may read; 3.2 by ruling BC, 0 none); Brimstone `COUNT`, `PER` (its number is read `sqrt(KB) * PER^(n - 1)`, n the sulfur atoms on the molecule; `KB = PER^2` is "xPER for each sulfur"), `MASKOH` (with Sulphur's Mask held every OH counts as a sulfur) and `BURNAT` (a careful player who also burns the fire on any page where it would read that much or more: the line of play that hunts the big fire). Every creature reports `n_<count>`: its taps by the count read. `count_k` is `path.js` `homCountK`. `sweep_hom20_specs.py` holds the candidates (`CAND`) and the numbers fitted (`FIT`).
+
+Game job: `hom20.js` (the switch swaps the three rows of `HOMGROW.read` and back; each tap is the stage's number times the step for each count past the threshold; Acid never past x3.20; Brimstone counts sulfur and, with Sulphur's Mask held, every OH; the book's three lines; no other creature moves).
