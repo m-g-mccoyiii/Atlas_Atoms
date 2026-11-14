@@ -329,3 +329,16 @@ Everything on the deal as it stands (`RULE.elLate` read from `path.js`). Pools a
 | `final16` `<player>,1000,master` | six-round runs with nothing unlocked | counted in RIG.md, seventeenth, part 3 |
 
 The wood spirit's and the slime's jars, three ways (`sweep_deeds.py jars`): as they are neither hatches in 300 runs; with jars of 15 and 25 the wood spirit hatches at about run 173 and the slime never; fed by a starting play too, the wood spirit at run 5 to 7 and the slime at run 25 to 70.
+
+## Eighteenth measure, 2026-11-13: what was run
+
+Results: `docs/RIG.md`, eighteenth. Pools of 8 workers at below-normal priority, one at a time.
+
+| Experiment (`sweep_run.py hom18 --arg <player>,<runs>,<held beside it>,<spec;spec;...>`) | What | Read by |
+|---|---|---|
+| three grids, careful player, 100 runs a spec | each creature at five sizes of its number, as it was and with its job eased (`water@4.0~NEED=3`, `salt@2.56~MATCH=1`, `co2@1.48~NEEDC=0`, `slime@4.0~K2=4.0~OWN=0`, `seedling@3.24~GAIN=6~RISE=0`, `brimstone~MODE=1~LASTP=1~KB=1.96`, `ammonia~KN=1.69`) | `sweep_hom18.py` (every spec), `sweep_hom18.py fit` (the number at which a creature is worth 1.2 to 1.8) |
+| `both,100,,` and `python sweep_hom18_specs.py stages` | the ten as fitted, at their five stages, both players on the same deals | `sweep_hom18_table.py stages` |
+| `both,50,carousel+burette+crystal+sigil:gemini+sigil:clepsydra+sigil:via_humida,` and `python sweep_hom18_specs.py three` | a full kit with each creature at stage 3 and with none | `sweep_hom18_table.py kit` |
+| the same specs with `SWEEP_SEED=r`, `both,200,,` | the ten at stage 3 and none on deals the numbers were not fitted on | `sweep_hom18_table.py fresh` |
+
+A spec is a creature as `sweep_homs.make` reads it, with `~` for `/`. The simulator's own default numbers are still the seventeenth's; the eighteenth's are `sweep_hom18_specs.py` (`READ`: what the player reads at stages 1 to 5; the rules multiply by the square). New switches of a creature in `sweep_homs.py`: Water `NEED`, Dry ice `NEEDC`, Salt `MATCH` and `ANY`, Slime `OWN`, Seedling `GAIN` and `RISE`, Ammonia `KN`, Brimstone `LASTP` and `KB`. `sweep_deal18.py` lays the game's deal of a round (job `deal17.js`) beside the simulator's.

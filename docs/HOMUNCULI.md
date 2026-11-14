@@ -205,3 +205,31 @@ Full tables: `docs/RIG.md`, seventeenth, parts 5 to 7. Everything here is behind
 **The wood spirit's and the slime's jars** (simulator only). As they are neither hatches in 300 runs. Smaller jars (15 and 25): the wood spirit at about run 173, the slime never. Fed by a starting play too (a reagent that found nothing; a page on which one reagent landed twice): the wood spirit at run 5 to 7 with its jar of 40 (a jar of 250 would put it at about run 30), the slime at run 25 (careful) or 70 (casual).
 
 **The manual's lines** follow the owner's pattern of 13 November (name and one verb; the act; the number alone; a side effect as a bare fact; how it is got as a bare count): Acid, Water, Salt, Seedling, Slime, Dry ice, Ammonia. Hydrogen, Wood spirit and Brimstone wait for the version picked.
+
+## Eighteenth measure, 2026-11-13: the owner's picks on, every creature refitted
+
+Full tables: `docs/RIG.md`, eighteenth, parts 1 and 2. This section is how the ten stand in the game now; where a section above disagrees, this one wins.
+
+**On, by the owner's picks:** creatures keep what they grow (`RULE.homGrow = 'keep'`); Hydrogen, Wood spirit and Brimstone have one job each (`RULE.homSimple`).
+
+**Refitted** (owner: "Raise them to about 1.5 at stage 3"). Held alone a creature is worth about 1.2 at stage 1, 1.35 at stage 2, 1.5 at stage 3, 1.65 at stage 4 and 1.8 at stage 5 to the careful player (worth 1.5: as much help as every yield times 1.5). Each has five numbers of its own (`HOMGROW.read`), and six had their job eased in one plain way because the number alone could not do it or made rounds of 50 times the number to beat and more.
+
+| Creature | Its line on a new profile (stage 1) | Its number at stages 1 to 5 | What changed in the job |
+|---|---|---|---|
+| Water | Water floods. Wring out 3 waters. x1.30. Double bonds soak up OH; closed rings burst. | x1.30, x1.50, x1.71, x1.93, x2.15 | 3 waters (it was 4) |
+| Hydrogen | Hydrogen lifts. Drive off 2 hydrogens. x1.38. | x1.38, x1.62, x1.84, x2.11, x2.46 | the one job |
+| Dry ice | Dry ice freezes. Leave 3 reagents untouched all round. x1.91, last page. | x1.91, x2.40, x2.82, x3.89, x4.50 | no carbon dioxide needed |
+| Acid | Acid eats. Chew 2 atoms off the molecule. x2.01. | x2.01, x2.58, x3.17, x3.95, x4.50 | nothing: the number only |
+| Wood spirit | Wood spirit drinks. Line up a reagent that finds nothing. x1.22. | x1.22, x1.33, x1.40, x1.45, x1.51 | the one job |
+| Salt | Salt preserves. Open with last page's first reagent. x1.35. Its use returns. | x1.35, x1.49, x1.67, x1.92, x2.15 | the first reagent only (it was the whole line) |
+| Slime | Slime clings. Land one reagent twice. x1.32. That bottle is shut all round. | x1.32, x1.45, x1.56, x1.66, x1.88 | no reflex asked for |
+| Ammonia | Ammonia revives. Put nitrogen on the molecule. The three reagents go round again. x1.08. | x1.08, x1.23, x1.32, x1.45, x1.57 | a number of its own |
+| Seedling | Seedling sprouts. Add 6 atoms. x1.30. | x1.30, x1.50, x1.67, x1.91, x2.25 | 6 atoms (it was 12); a plain number: no rising, no stall |
+| Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. | x1.17, x1.30, x1.39, x1.52, x1.59 | the one job; on the last page too; a number |
+
+- Measured alone, careful player, 100 runs a cell: stage 1 worth 1.16 to 1.22, stage 3 1.46 to 1.55, stage 5 1.70 to 1.84. Nine-round wins in 100: 0.32 with none, 1.1 at stage 1, 3.0 at stage 3, 5.7 at stage 5.
+- The casual player: the middle creature is worth 1.54 at stage 3, but he still wins almost no nine-round run with a creature alone (0.02 in 100). Slime is weak for him (1.19).
+- Big rounds: at stage 3 the biggest round is 23 times the number to beat. At stage 5 Hydrogen (55 times), Seedling (47), Water (43) and Acid (38) make very big rounds.
+- Brimstone's number is a choice for the owner: his sentence for it has none, and with none it is worth 1.11 and cannot grow.
+- The older rules are kept: `HOMS2K_17` for the seven whose table changed, `RULE.homSimple = null` for the three.
+- The two jars that never fill: `RULE.jarStart` (off) feeds the wood spirit from a reagent that finds nothing and the slime from one reagent landed twice, with jars of 250 and 70.
