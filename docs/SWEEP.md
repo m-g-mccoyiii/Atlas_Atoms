@@ -311,3 +311,21 @@ Choices for the owner:
 2. Grow. (a) Leave it as the reagent every set wants. (b) Take a little off it (one place a turn, or a smaller piece). (c) Put it in every set on purpose and balance the rest around it.
 3. Nitrogen and sulfur doing so little by themselves. (a) Widen knit and cap so they fire more. (b) Give ritter and thiolene more places to act. (c) Leave it and let the deal do the work.
 4. Growing the carried set past six. (a) Deal more than five when more than six are carried. (b) Leave it: a bigger set is a real cost. (c) Let the player bench reagents before a round.
+
+## Seventeenth measure, 2026-11-13: what was run
+
+Everything on the deal as it stands (`RULE.elLate` read from `path.js`). Pools are 8 workers at below-normal priority (checked: the workers report the below-normal class). Results: `docs/RIG.md`, seventeenth.
+
+| Experiment (`sweep_run.py <name> --arg ...`) | What | Read by |
+|---|---|---|
+| `sig17` `0,both,200`, `1,both,200` | none and each sigil alone, plain forms; trials of stronger forms (`sig17:<form>,both,100`) | `sweep_sig17.py worth`, `alone` |
+| `sig17s` `1,both,200`, `2,both,60`, `3,both,20` | every set that holds Sulphur's Mask or Tetractys, in the stronger form | `sweep_sig17.py table`, `aqua`, `aquar` (buying, 20,000 runs laid together a row) |
+| `sig17n` `2,both,60`, `3,both,20` | the other pairs and threes | the same |
+| `sig17p`, `sig17q` with `SWEEP_P` | Solve with Ammonia, the two forms of the fix | `sweep_sig17.py big <experiment> <sets>` |
+| `sig17m` | each sigil alone on six rounds | `sweep_sig17.py other` |
+| `sig17k` | the same beside a kit of three instruments (not finished) | `sweep_sig17.py other` |
+| `hom17` `now`, `s1`, `s5`, `run`, `cap3`, `m1` to `m3` | each creature at a stage of growth; one-job versions of three | `sweep_sig17.py grow` |
+| `deed17` `b`, `none`, `plus`, `kit` | the deeds' pools again | `SWEEP_DEEDS=deed17 python sweep_deeds.py career`, `credit`, `jars`, `grow` |
+| `final16` `<player>,1000,master` | six-round runs with nothing unlocked | counted in RIG.md, seventeenth, part 3 |
+
+The wood spirit's and the slime's jars, three ways (`sweep_deeds.py jars`): as they are neither hatches in 300 runs; with jars of 15 and 25 the wood spirit hatches at about run 173 and the slime never; fed by a starting play too, the wood spirit at run 5 to 7 and the slime at run 25 to 70.
