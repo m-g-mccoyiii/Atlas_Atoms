@@ -1720,4 +1720,39 @@ KIT.spiritBuild = function (T, grp, extra) { if (KIT.spiritOn !== false && T && 
 KIT.rigPlay = (f0 => function (grp, clip, t, o) { const Rg = grp && grp.userData && grp.userData.rig2; return Rg && Rg.spirit ? play26(grp, clip, t, o) : f0(grp, clip, t, o); })(KIT.rigPlay);
 KIT.spirit26 = { fig: fig26, geo: geo26, play: play26, C: C26, W: W26 };
 // ==== W26 END
+// ==== W27 BEGIN
+// (builder 27) THE WATER SPIRIT BELONGS TO THE SCENE (AA.rxKit.belong27, on by default; false gives builder 26's look back).
+// Drawn like the atoms: a lit MeshStandardMaterial with the atoms' roughness and metalness, so the page's own lamp shades it and puts one
+// soft highlight on it (the cut gloss bands are gone); the blues are toned toward the page; the depth colours are soft, not stepped; the
+// ink line is the skin itself pushed out along its skinned normal by a width given in WORLD units (thin and even at any size; the atoms'
+// outline colour). Standing in the scene: the pool joint is turned back so the pool lies flat on its surface while the figure stands at
+// the tilt every standing thing on the bench has. The turn that shows its back is slower and made fully risen.
+KIT.belong27 = KIT.belong27 == null ? !(typeof location !== 'undefined' && /[?&]b27=0/.test(String(location.search))) : KIT.belong27;
+const C27 = { mid: 0x4f83bd, deep: 0x2e5a96, lite: 0x9dc2df, pool: 0x6291c3, hi: 0xeef4f2, foam: 0xf3f1e6, ink: 0x22252c };
+function mat27(T, o) {
+  const v3 = h => { const c = new T.Color(h).convertSRGBToLinear(); return 'vec3(' + c.r.toFixed(4) + ',' + c.g.toFixed(4) + ',' + c.b.toFixed(4) + ')'; };
+  const m = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.08 }), u = new T.Vector4(o.hp || 1.5, o.rings || 2, o.frho || 0.3, 0); m.extensions = { derivatives: true }; m.skinning = true; m.userData.u = u;
+  const frag = ['{', 'vec3 c5 = mix(' + v3(C27.deep) + ', ' + v3(C27.mid) + ', smoothstep(0.4, 2.6, vWa.z));',                                   // darker where deep: the foot, soft
+    'c5 = mix(c5, ' + v3(C27.lite) + ', 0.7 * smoothstep(0.25, 0.75, vWb.x));',                                                                  // paler where thin
+    'vec3 p5 = ' + v3(C27.pool) + '; float rho = vWa.y; p5 = mix(' + v3(C27.mid) + ', p5, smoothstep(w25u.z * 0.9, w25u.z * 1.7, rho));',          // the pool is deeper round the foot
+    'p5 = mix(p5, ' + v3(C27.lite) + ', 0.45 * A25(sin(rho * 6.2832 * w25u.y + 1.0 - w25u.w), 0.93));',                                          // one faint ripple ring, moving
+    'p5 = mix(p5, ' + v3(C27.hi) + ', 0.12 * A25(rho, 0.86) * (1.0 - A25(rho, 0.93)));',                                                         // the rim's thin light
+    'c5 = mix(c5, p5, A25(vWa.x, 0.5)); c5 = mix(c5, ' + v3(C27.foam) + ', A25(vWa.w, 0.5)); diffuseColor.rgb *= c5;', '}'].join('\n');
+  m.onBeforeCompile = sh => { sh.uniforms.w25u = { value: u };
+    sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute vec4 w25a;\nattribute vec2 w25b;\nvarying vec4 vWa;\nvarying vec2 vWb;\nvoid main() {\n\tvWa = w25a; vWb = w25b;');
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec4 w25u;\nvarying vec4 vWa;\nvarying vec2 vWb;\nfloat A25(float v, float t) { float w = max(fwidth(v), 1e-5) * 0.75; return smoothstep(t - w, t + w, v); }\nvoid main() {').replace('#include <color_fragment>', frag); };
+  m.customProgramCacheKey = () => 'w27'; return m; }
+function hull27(T) { const u = { value: 0.03 }, m = new T.MeshBasicMaterial({ color: new T.Color(C27.ink).convertSRGBToLinear(), side: T.BackSide, skinning: true }); m.userData.w = u;
+  m.onBeforeCompile = sh => { sh.uniforms.w27 = u; sh.vertexShader = sh.vertexShader.replace('void main() {', 'uniform float w27;\nvoid main() {').replace('#include <skinning_vertex>', '#include <skinning_vertex>\n#ifdef USE_SKINNING\n\tmat4 sm27 = skinWeight.x * boneMatX + skinWeight.y * boneMatY + skinWeight.z * boneMatZ + skinWeight.w * boneMatW;\n\ttransformed += normalize((bindMatrixInverse * sm27 * bindMatrix * vec4(normal, 0.0)).xyz) * w27;\n#endif'); };
+  m.customProgramCacheKey = () => 'h27'; return m; }
+fig26 = (f0 => function (T, stage, ex) { const grp = f0(T, stage, ex); if (KIT.belong27 === false) return grp; try { const S = grp.userData.rig2.sp, m = mat27(T, S.G.o);
+    S.body.material = m; S.mat = m; S.hull.visible = false; const h = new T.SkinnedMesh(S.G.geo, hull27(T)); h.bind(S.body.skeleton, new T.Matrix4()); h.frustumCulled = false; h.userData.plain = true; S.root.add(h); S.hull27 = h; if (S.wet) S.wet.visible = false;
+    S.b27 = true; S.x27 = new T.Vector3(1, 0, 0); S.y27 = new T.Vector3(0, 1, 0); S.q2 = new T.Quaternion(); S.s27 = new T.Vector3(); play27(grp, 'rest', 0, { jar: S.jar }); } catch (e) { KIT.spiritErr = String(e && e.stack); } return grp; })(fig26);
+const play27 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = grp.userData.rig2.sp; if (!S.b27) return r;
+    /* the pool lies flat on what it is on, whatever the figure's tilt */ { const q0 = S.q0 || {}, b0 = S.bones[0].quaternion, tn = q0.turn || 0; S.q.setFromAxisAngle(S.y27, tn); b0.copy(S.q).conjugate(); b0.multiply(S.q2.setFromAxisAngle(S.x27, (1 - (q0.flat || 0)) * (S.tilt || 0))).multiply(S.q); }
+    /* the ink line keeps its width in the world, not the figure's */ const sc = S.s27.setFromMatrixScale(S.root.matrixWorld).x || 1; S.hull27.material.userData.w.value = (KIT.ink27 == null ? 0.05 : KIT.ink27) / sc; return r; })(play26);
+play26 = play27; KIT.spirit26.play = play27; KIT.spirit26.fig = fig26;
+C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); if (KIT.belong27 === false) return; const a = t - o.W - o.J - o.D; if (!(a > 0)) return; const K = RK, b = K.cl(a / o.B);
+  /* it turns its back standing tall, then goes down and home; turns again at home */ q.turn = PI * K.sm(b / 0.3) + PI * K.sm((b - 0.82) / 0.18); q.sink = 0.46 * K.sm((b - 0.3) / 0.14) * (1 - K.back((b - 0.84) / 0.16)); q.e = 1 - K.sm((b - 0.3) / 0.56); const v = K.pulse(b, 0.32, 0.84, 0.16); q.bow = 0.16 * v; q.hair = 0.35 * v; q.pz = 1 + 0.2 * v; q.px = 1 - 0.07 * v; q.mv = v; })(C26.act);
+// ==== W27 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
