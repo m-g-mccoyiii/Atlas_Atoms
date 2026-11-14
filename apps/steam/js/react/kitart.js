@@ -1983,14 +1983,14 @@ const F30 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(
   'vec3 base = mix(PAPER29 * (0.985 + 0.03 * gr), bg, smoothstep(0.60, 0.74, lum));',                                                                // on paper it is on the paper; off it, a cut-out
   'float l9 = dot(n9, normalize(vec3(-0.6, 0.62, 0.5)));',
   '#ifdef MARGIN30', 'float a9 = (1.0 - smoothstep(0.30, 0.36, nz3)) * (0.75 + 0.25 * nz2) * step(l9, 0.35); vec3 wash = vec3(0.60, 0.76, 0.92);', '#else',
-  'float hl = smoothstep(0.66, 0.74, l9 + 0.42 * (nz - 0.5)) * (1.0 - pl);',                                                                         // the paper left bare on the lit side, with a broken edge
+  'float hl = smoothstep(0.80, 0.87, l9 + 0.42 * (nz - 0.5)) * (1.0 - pl);',                                                                         // the paper left bare on the lit side, with a broken edge
   'hl = max(hl, smoothstep(0.84, 0.88, nz2) * smoothstep(0.1, 0.4, l9) * (1.0 - pl));',                                                              // and a few bare specks
   'hl = max(hl, pl * smoothstep(0.72, 0.78, N30(vec3(vP30 * 2.3, 1.0))) * (1.0 - smoothstep(0.8, 0.9, rho)));',                                      // the pool keeps a glint of paper
   'float low = smoothstep(0.42, 0.02, bp.y);',
   'float ed = mix(clamp(smoothstep(0.45, 0.95, 1.0 - nv + 0.3 * (nz - 0.5)) + 0.45 * low, 0.0, 1.0), smoothstep(0.50, 0.97, rho + 0.25 * (nz - 0.5)), pl);', // it pools at the outline and low down
   'float s2 = smoothstep(0.12, -0.14, l9 + 0.3 * (nz - 0.5)) * (1.0 - pl);',                                                                          // the second wash, on the shadow side
   'float bl = N30(bp * 2.1 + 3.0), ring = smoothstep(0.640, 0.662, bl) * (1.0 - smoothstep(0.668, 0.70, bl)), inb = smoothstep(0.66, 0.70, bl);',  // a bloom: paler inside, a dark crinkled edge
-  'vec3 wash = mix(vec3(0.70, 0.84, 0.955), vec3(0.42, 0.61, 0.85), ed); wash = mix(wash, vec3(0.36, 0.52, 0.78), 0.62 * s2); wash = mix(wash, vec3(1.0), 0.3 * inb); wash *= 1.0 - 0.16 * ring;',
+  'vec3 wash = mix(vec3(0.64, 0.80, 0.945), vec3(0.40, 0.59, 0.84), ed); wash = mix(wash, vec3(0.36, 0.52, 0.78), 0.62 * s2); wash = mix(wash, vec3(1.0), 0.3 * inb); wash *= 1.0 - 0.16 * ring;',
   'float a9 = (1.0 - hl) * (0.80 + 0.20 * nz2) * (0.93 + 0.07 * gr) * mix(1.0, 0.86, pl);',
   'a9 *= 1.0 - (1.0 - pl) * smoothstep(0.64, 0.70, nz3) * smoothstep(0.42, 0.22, nv);', '#endif',                                                    // here the wash stops short of the line
   'vec3 c9 = base * mix(vec3(1.0), wash, a9);',
