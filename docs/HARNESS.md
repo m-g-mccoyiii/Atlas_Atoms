@@ -128,6 +128,8 @@ AX. The reference book (13 November): "The in game manual should just be picture
 
 **BG (2026-11-14).** Pen and wash confirmed ("Style is right"). Water's evolution: "the evolution sucks. It should be more magnificent, like curling up into a swirling sphere and then sprouting." And for all ten: "Each homculus should get its own evolution style and world interactions": no shared evolve sequence, no shared set of reactions from the world; each creature's are its own, from its substance. Token use: "Make sure you're efficiently using subagents and models": art and motion design on the top model in stills; recording takes, frame sheets and mechanical wiring on a cheaper model.
 
+**BH (2026-11-14, evening).** Water's swirling-sphere evolution, first take: "It's too small and flat and I want it to like come up to the center of the screen. Think Pokemon evolutions. Also, the character still doesn't seem interact with the world that much, the movement of the sprite doesn't seem to dynamically affect the underlying pages or anything". So: an evolution is staged at the CENTRE of the screen, large, with depth (not flat sheets), the game giving way to it for the moment; our own drawing, nothing copied from that game. And a creature's movement must visibly and continuously move the world under it (the paper, the pages, things on them) as it goes, not small one-off answers. Also allowed the same evening: a rules builder may run alongside a look builder when their files do not overlap.
+
 
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
