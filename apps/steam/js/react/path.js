@@ -812,7 +812,7 @@ function sigilVisit(run, R, next) {
     sh = run.sigShelf = { next: nx, way, ids, taken: false, asked: !!next };
   }
   const open = way === 'buy' || !sh.taken;
-  out.offers = sh.ids.filter(id => !(run.sigils || []).includes(id)).map(id => { const price = sigilPrice(run, id); return { id, name: SIGILS[id].name, does: SIGILS[id].does, price, pays: sigilPays(id), can: open && (run.coins || 0) >= price }; });
+  out.offers = sh.ids.filter(id => !(run.sigils || []).includes(id)).map(id => { const price = sigilPrice(run, id); return { id, name: SIGILS[id].name, does: thingOf('sigil', id).does, price, pays: sigilPays(id), can: open && (run.coins || 0) >= price }; });
   if (!open) out.offers = [];
   return out;
 }
