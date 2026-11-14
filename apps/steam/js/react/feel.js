@@ -327,12 +327,12 @@ function clearAngle(c, anchor, aw, a0, L, sc) {
 }
 // where a group that has broken off goes: the nearest point on the top or the sides of the play area (the higher the better) that it can reach without crossing the molecule
 function freeEdge(from, dir, c, sc) {
-  const H = api.HOME, x0 = H.x - H.w / 2 + 1.5, x1 = H.x + H.w / 2 - 1.5, z0 = H.z - H.d / 2 + 1.8, zm = H.z + H.d * 0.3, cands = [], pts = [];
+  const H = api.HOME, x0 = H.x - H.w / 2 + 1.5 + 1.2 * sc, x1 = H.x + H.w / 2 - 1.5 - 1.2 * sc, z0 = H.z - H.d / 2 + 1.8 + 1.5 * sc, zm = H.z + H.d * 0.3, cands = [], pts = [];
   for (let i = 0; i <= 10; i++) cands.push([x0 + (x1 - x0) * i / 10, z0]); for (let i = 1; i <= 7; i++) { const z = z0 + (zm - z0) * i / 7; cands.push([x0, z, i * 0.5], [x1, z, i * 0.5]); }
   c.balls.forEach(b => pts.push(b.mesh.getWorldPosition(new T.Vector3())));
   let best = cands[0], bs = 1e9; cands.forEach(q => { const dx = q[0] - from.x, dz = q[1] - from.z, L = Math.hypot(dx, dz) || 1; let cost = L + (q[2] || 0) - 2.5 * (dx / L * dir.x + dz / L * dir.z);
     [0.2, 0.4, 0.6, 0.8, 1].forEach(k => { const x = from.x + dx * k, z = from.z + dz * k; if (pts.some(p => Math.hypot(p.x - x, p.z - z) < 1.5 * sc)) cost += 12; }); if (cost < bs) { bs = cost; best = q; } });
-  return new T.Vector3(best[0], from.y + 1.2, best[1]);
+  return new T.Vector3(best[0], from.y + 0.5, best[1]);
 }
 // one leaving group drawn as its atoms, every frame
 function flyReal(f, t, S) {
@@ -358,7 +358,7 @@ function flyReal(f, t, S) {
     else { // thrown off along its bond (harder for a stronger bond), then up and outward to the free edge while it fades; kept inside the play area
       const H = api.HOME, to = R.to || from, kick = (snapOn ? 0.5 + 2.4 * w : 0.9) * R.sc, k1 = E.outCubic(Math.min(1, u / 0.22)), m = 1 - Math.pow(1 - clamp((u - 0.04) / 0.96, 0, 1), 2.2);
       pos.set(from.x + R.now.x * kick * k1 * (1 - m) + (to.x - from.x) * m, from.y + (to.y - from.y) * m, from.z + R.now.z * kick * k1 * (1 - m) + (to.z - from.z) * m);
-      pos.x = clamp(pos.x, H.x - H.w / 2 + 0.8, H.x + H.w / 2 - 0.8); pos.z = clamp(pos.z, H.z - H.d / 2 + 1.2, H.z + H.d / 2 - 1.2); s = R.sc; op = 1 - E.inOutSine(clamp((u - 0.6) / 0.4, 0, 1)); }
+      pos.x = clamp(pos.x, H.x - H.w / 2 + 0.8 + 1.2 * R.sc, H.x + H.w / 2 - 0.8 - 1.2 * R.sc); pos.z = clamp(pos.z, H.z - H.d / 2 + 1.2 + 1.5 * R.sc, H.z + H.d / 2 - 1.2 - 0.8 * R.sc); s = R.sc; op = 1 - E.inOutSine(clamp((u - 0.6) / 0.4, 0, 1)); }
   }
   // its hydrogens are not drawn on the molecule: they grow in, small and white, before it goes
   const hk = E.outBack(clamp((t - (due - STR - 520)) / 260, 0, 1), 1.6); R.hs.forEach(h => { h.mesh.scale.copy(h.s).multiplyScalar(Math.max(0.0001, hk)); h.mesh.position.copy(h.at).lerp(h.p, clamp(hk, 0, 1)); });
