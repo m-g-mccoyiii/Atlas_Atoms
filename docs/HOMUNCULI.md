@@ -269,12 +269,12 @@ In the rules (`path.js`): **`RULE.homCount`, on**; `HOMCOUNT` (thresholds, steps
 
 | Homunculus | Its line on a new profile | Its number at stages 1 to 5 (the job just done) | Each count more |
 |---|---|---|---|
-| Acid | Acid eats. Chew 2 atoms off the molecule. x1.92. Once a round. Each atom more: x1.20 up to x3.20. | x1.92, x2.50, x3.11, x3.20, x3.20 | x1.20 an atom chewed, never past x3.20 |
+| Acid | Acid eats. Chew 2 atoms off the molecule. x1.92. Once a round. Each atom more: x1.20. | x1.92, x2.50, x3.11, x3.20, x3.20 (the cap holds these only) | x1.20 an atom chewed, past x3.20 (twenty-first, ruling BI "cap only the base"; `RIG.md`, twenty-first) |
 | Seedling | Seedling sprouts. Add 6 atoms. x1.19. Once a round. Each atom more: x1.06. | x1.19, x1.38, x1.54, x1.79, x2.16 | x1.06 an atom added |
 | Brimstone | Brimstone burns. Put sulfur on the molecule. The round ends; the task counts as met. x1.17. Once a run. Each sulfur more: x1.12. | x1.17, x1.30, x1.39, x1.52, x1.59 (its own, kept) | x1.12 a sulfur on the molecule at the fire; with Sulphur's Mask held every OH counts as a sulfur |
 
 - Alone (careful player): Acid worth 1.20, 1.54, 1.52 at stages 1, 3, 5; Seedling 1.19, 1.54, 1.78; Brimstone about 1.07 (one fire a run), as before. The bare game is untouched (0.32 wins in 100).
-- Found combinations at stage 5 reach about 100 times the number to beat: Seedling 109 (Tetractys, Clepsydra, Gemini, hydroformylation and HWE), Brimstone 106 (Sulphur's Mask, dihydroxylation, the fire saved for a page where it reads x5 or more), Acid 80 (Tetractys, Clepsydra, Gemini, ozonolysis; held at x3.20).
+- Found combinations at stage 5 reach about 100 times the number to beat: Seedling 109 (Tetractys, Clepsydra, Gemini, hydroformylation and HWE), Brimstone 106 (Sulphur's Mask, dihydroxylation, the fire saved for a page where it reads x5 or more), Acid 80 (Tetractys, Clepsydra, Gemini, ozonolysis; held at x3.20 then; 263 with the cap on the base only, twenty-first).
 - Worked example, Brimstone at stage 3 with Sulphur's Mask: the molecule ends a page with 2 SH and 3 OH. Five count: x1.39 times x1.12 four times, x2.19 on the round, and the round ends with its task met. Without the Mask the same fire counts 2: x1.56.
 - Worked example, Seedling at stage 3: grow lands on three C=O and the molecule ends the page 9 atoms bigger: x1.54 times x1.06 three times, x1.83. 6 atoms: x1.54.
-- Open (RIG.md twentieth, choices): Acid's cap meets its count (from stage 3 every tap reads x3.20 at once); Seedling's step (the plain kit's biggest round doubled, 32 to 63); whether Brimstone counts the OH under the Mask; Brimstone's line has six sentences.
+- Open (RIG.md twentieth, choices): Acid's cap meets its count (settled by ruling BI: the cap holds the stage's number only; alone worth 1.54 at stage 5, plain kit biggest round 93, sought line 263); Seedling's step (the plain kit's biggest round doubled, 32 to 63); whether Brimstone counts the OH under the Mask; Brimstone's line has six sentences.

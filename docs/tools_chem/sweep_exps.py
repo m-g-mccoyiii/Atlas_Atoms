@@ -895,3 +895,5 @@ def hom20x(arg):
 
 
 EXPERIMENTS['hom20x'] = hom20x
+EXPERIMENTS['hom21'] = hom18          # twenty-first (ruling BI, "cap only the base"): Acid with the cap on the stage's number only
+EXPERIMENTS['hom21x'] = hom20x
