@@ -504,12 +504,51 @@ function build(id, T, grp, tint, extra) {
     eyes(0.8, 0.86, 0.42, 0.075, -0.07); side.forEach(q => { box(0.22, 0.055, 0.03, black, q * 0.42, 0.91 - (q > 0 ? 0.07 : 0), 0.9, [0, 0, -q * 0.3]).userData.plain = true; });
     tor(0.1, 0.03, black, 0, 0.62, 1.0, [0, 0, PI], PI).userData.plain = true;
     side.forEach(q => arm(q * 1.02, 0.7, 0.1, 0.6, 0.12, gr, gr, 0.22, 0.9, 1.6)); rod([0.8, 1.0, 0.3], [0.95, 0.4, 0.5], 0.045, gr); sph(0.1, gr, 0.95, 0.36, 0.5, [1, 1.5, 1]); };
-  if (id === '__list') return Object.keys(B);
-  if (!B[id]) return false;
-  B[id]();
+  // (builder 17, ruling AZ: "the sprite should physically change too through 4-5 stages") FIVE FORMS of a creature, the same creature growing.
+  // extra.stage 1..5 (none: the creature as it was, which is stage 3). 1 a small plain hatchling of the substance; 2 a youngster with its first
+  // limbs; 3 as it was; 4 and 5 add more of the substance's own character on top of 3. Every form has a face and a backside. Three are drawn so
+  // far for the owner to rule on (water, acid, slime); the other seven are stage 3 at every stage until then. Sizes: AA.rxKit.stageSize(stage).
+  const sg = extra && extra.stage ? Math.max(1, Math.min(5, extra.stage | 0)) : 0; let young = false;
+  const smile = (x, y, z, w) => { tor(w, 0.03, black, x, y, z, [0, 0, PI], PI).userData.plain = true; }, bum = (m, y, z, r, dx) => { side.forEach(q => sph(r, m, q * dx, y, -z, [1, 1.05, 0.8])); box(0.035, r * 1.5, 0.05, black, 0, y - r * 0.05, -z - r * 0.55).userData.plain = true; };
+  const cone = (r, h, n, m, x, y, z, rot) => put(new T.ConeGeometry(r, h, n), m, x, y, z, rot), brow = (y, z, gap, w, tilt) => side.forEach(q => { box(w, 0.055, 0.03, black, q * gap, y, z, [0, 0, q * tilt]).userData.plain = true; }), feet = (m, gap) => side.forEach(q => sph(0.1, m, q * gap, 0.07, 0.1, [1, 0.6, 1.5]));
+  const YOUNG = {
+    homwater: s => { const sk = M(0x3a6fd0, 0.3), wet = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.5 });
+      if (s === 1) { floor(() => { cyl(0.6, 0.64, 0.03, wet, 0, 0.015, 0.1, null, 24).userData.plain = true; }); body(); feet(sk, 0.2); sph(0.5, sk, 0, 0.6, 0, [1, 1.05, 0.95]); cone(0.25, 0.55, 14, sk, 0, 1.22, 0); eyes(0.7, 0.44, 0.15, 0.06, 0); smile(0, 0.52, 0.47, 0.07); shine(-0.2, 0.68, 0.46, 0.08, 0.26); bum(sk, 0.4, 0.36, 0.2, 0.14); }
+      else { floor(() => { cyl(0.9, 0.95, 0.03, wet, 0.05, 0.015, 0.1, null, 28).userData.plain = true; }); body(); legs(0.42, 0.2, sk, 0.04); sph(0.6, sk, 0, 1.0, 0, [1, 1.2, 0.92]); cone(0.3, 0.62, 14, sk, 0, 1.96, 0); eyes(1.25, 0.5, 0.16, 0.058, 0); smile(0, 1.04, 0.55, 0.08); shine(-0.24, 1.1, 0.5, 0.09, 0.34); side.forEach(q => arm(q * 0.56, 1.1, 0, 0.42, 0.08, sk, sk, 0.11, 0.5)); bum(sk, 0.6, 0.42, 0.26, 0.17); } },
+    homacid: s => { const sk = M(0xd4e21a, 0.25, 0, { exact: 1 }), dk = M(0x7a8a10, 0.4, 0, { exact: 1 }), pit = M(0x2c2f34, 0.9), fume = M(0xe8f0a0, 0.9, 0, { transparent: true, opacity: 0.5, exact: 1 });
+      if (s === 1) { body(); cyl(0.42, 0.5, 0.14, dk, 0, 0.08, 0, null, 6); cone(0.42, 1.05, 5, sk, 0, 0.66, 0, [0, 0.3, 0]); eyes(0.52, 0.25, 0.11, 0.05, 0); brow(0.63, 0.25, 0.12, 0.15, 0.5); bum(sk, 0.32, 0.24, 0.16, 0.12); }
+      else { floor(() => { cyl(0.75, 0.8, 0.03, pit, 0, 0.015, 0.1, null, 7).userData.plain = true; }); body(); cyl(0.6, 0.7, 0.2, dk, 0, 0.11, 0, null, 6); cone(0.6, 1.65, 5, sk, 0, 1.0, 0, [0, 0.3, 0]); cone(0.22, 0.65, 4, sk, -0.42, 0.85, 0, [0, 0, 0.75]); eyes(0.92, 0.33, 0.14, 0.055, 0); brow(1.05, 0.33, 0.15, 0.2, 0.55); box(0.24, 0.09, 0.03, black, 0, 0.68, 0.44).userData.plain = true; sph(0.15, fume, 0.1, 2.1, 0, [1.3, 0.8, 1]).userData.plain = true; side.forEach(q => arm(q * 0.42, 0.9, 0.1, 0.36, 0.06, dk, sk, 0.09, 0.7)); bum(sk, 0.46, 0.34, 0.22, 0.16); } },
+    homslime: s => { const gr = M(0x8a5ad0, 0.15, 0, { transparent: true, opacity: 0.8, exact: 1 }), in2 = M(0x2fd0c4, 0.3, 0, { exact: 1 }), goo = M(0x8a5ad0, 0.1, 0, { transparent: true, opacity: 0.45, exact: 1 });
+      if (s === 1) { floor(() => { cyl(0.6, 0.66, 0.03, goo, 0, 0.015, 0.1, null, 24).userData.plain = true; }); body(); sph(0.5, gr, 0, 0.3, 0, [1.1, 0.64, 1]); sph(0.08, in2, 0.18, 0.3, 0.2).userData.plain = true; eyes(0.42, 0.42, 0.2, 0.06, -0.03); smile(0, 0.27, 0.5, 0.07); bum(gr, 0.26, 0.36, 0.2, 0.15); }
+      else { floor(() => { cyl(0.9, 0.98, 0.03, goo, 0, 0.015, 0.1, null, 26).userData.plain = true; }); body(); sph(0.72, gr, 0, 0.43, 0, [1.2, 0.62, 1.05]); sph(0.34, gr, 0.36, 0.8, 0, [1, 0.8, 0.9]); [[-0.2, 0.42, 0.3, 0.12], [0.3, 0.36, 0.4, 0.08]].forEach(q => { sph(q[3], in2, q[0], q[1], q[2]).userData.plain = true; }); eyes(0.62, 0.64, 0.3, 0.065, -0.05); smile(0, 0.46, 0.74, 0.08); side.forEach(q => arm(q * 0.8, 0.5, 0.1, 0.36, 0.1, gr, gr, 0.17, 0.9, 1.4)); bum(gr, 0.38, 0.56, 0.3, 0.22); } }
+  };
+  const GROWN = {
+    homwater: s => { const sk = M(0x3a6fd0, 0.3), wet = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.5 }), drop = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.55 });
+      floor(() => { cyl(1.7, 1.76, 0.03, wet, 0, 0.012, 0.1, null, 32).userData.plain = true; });
+      side.forEach(q => { cone(0.13, 0.42, 10, sk, q * 0.27, 2.3, 0, [0, 0, -q * 0.5]); sph(0.21, sk, q * 0.55, 1.42, 0); }); [[0.6, 2.0, 0.1], [-0.62, 1.0, 0.25], [0.3, 0.9, 0.5]].forEach(q => sph(0.075, drop, q[0], q[1], q[2], [1, 1.6, 1]));
+      if (s >= 5) { floor(() => { cyl(0.6, 0.64, 0.03, wet, -1.6, 0.012, 0.9, null, 22).userData.plain = true; cyl(0.45, 0.5, 0.03, wet, 1.7, 0.012, 0.8, null, 20).userData.plain = true; });
+        [-2, -1, 1, 2].forEach(k => cone(0.11, 0.4, 10, sk, k * 0.2, 2.2 + (Math.abs(k) === 1 ? 0.12 : -0.06), -0.16, [-0.35, 0, -k * 0.3])); for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * PI + 0.4; sph(0.1, drop, Math.cos(a) * 1.02, 1.0 + 0.1 * Math.sin(i * 2.1), Math.sin(a) * 0.9, [1, 1.5, 1]); }
+        brow(2.02, 0.37, 0.16, 0.2, 0.45); side.forEach(q => cone(0.3, 1.0, 4, sk, q * 0.52, 1.5, -0.4, [-0.6, 0, -q * 0.9])); } },
+    homacid: s => { const sk = M(0xd4e21a, 0.25, 0, { exact: 1 }), pit = M(0x2c2f34, 0.9), fume = M(0xe8f0a0, 0.9, 0, { transparent: true, opacity: 0.5, exact: 1 }), wh = M(0xffffff, 0.4);
+      floor(() => { [[1.25, 0.2, 0.2], [-1.2, 0.0, 0.16], [0.3, 1.0, 0.12]].forEach(q => cyl(q[2], q[2], 0.03, pit, q[0], 0.015, q[1], null, 6).userData.plain = true); });
+      side.forEach(q => { cone(0.22, 0.85, 4, sk, q * 0.3, 1.75, -0.32, [-0.45, 0, -q * 0.5]); cone(0.26, 0.8, 4, sk, q * 0.72, 0.6, 0, [0, 0, -q * 1.15]); }); sph(0.17, fume, 0.25, 3.4, 0, [1.3, 0.8, 1]).userData.plain = true; sph(0.08, sk, -0.55, 0.4, 0.45, [1, 1.6, 1]);
+      if (s >= 5) { floor(() => { cyl(1.5, 1.6, 0.03, pit, 0, 0.012, 0.1, null, 7).userData.plain = true; [[1.7, 0.9, 0.18], [-1.75, 0.7, 0.2]].forEach(q => cyl(q[2], q[2], 0.03, pit, q[0], 0.015, q[1], null, 6).userData.plain = true); });
+        for (let i = 0; i < 6; i++) { const a = i / 6 * 2 * PI + 0.5; cone(0.1, 0.45, 4, sk, Math.cos(a) * 0.36, 2.02, Math.sin(a) * 0.3, [Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7]); }
+        side.forEach(q => { cone(0.4, 1.55, 4, sk, q * 0.88, 1.2, -0.12, [0, 0, -q * 0.5]); put(new T.ConeGeometry(0.07, 0.2, 4), wh, q * 0.16, 0.86, 0.6, [PI, 0, 0]).userData.plain = true; }); sph(0.22, fume, -0.45, 3.2, 0.05, [1.3, 0.8, 1]).userData.plain = true; sph(0.13, fume, 0.5, 3.8, 0, [1.3, 0.8, 1]).userData.plain = true; } },
+    homslime: s => { const gr = M(0x8a5ad0, 0.15, 0, { transparent: true, opacity: 0.8, exact: 1 }), in2 = M(0x2fd0c4, 0.3, 0, { exact: 1 }), goo = M(0x8a5ad0, 0.1, 0, { transparent: true, opacity: 0.45, exact: 1 });
+      floor(() => { cyl(1.55, 1.65, 0.03, goo, 0, 0.012, 0.1, null, 28).userData.plain = true; });
+      sph(0.38, gr, -0.3, 1.18, -0.1, [1, 0.85, 0.9]); sph(0.3, gr, 0.9, 1.4, 0, [1, 0.85, 0.9]); [[0.5, 1.3, 0.3, 0.09], [-0.3, 1.2, 0.25, 0.08], [0.85, 0.5, 0.45, 0.07], [0.1, 0.4, 0.75, 0.06]].forEach(q => { sph(q[3], in2, q[0], q[1], q[2]).userData.plain = true; }); rod([-0.95, 0.9, 0.2], [-1.1, 0.3, 0.4], 0.045, gr); sph(0.1, gr, -1.1, 0.26, 0.4, [1, 1.5, 1]);
+      if (s >= 5) { floor(() => { cyl(0.5, 0.56, 0.03, goo, 1.9, 0.012, 0.8, null, 20).userData.plain = true; cyl(0.4, 0.45, 0.03, goo, -1.8, 0.012, 0.9, null, 20).userData.plain = true; });
+        sph(0.44, gr, 0.3, 1.8, -0.05, [1, 0.85, 0.9]); sph(0.3, gr, 0.16, 2.3, 0, [1, 0.85, 0.9]); sph(0.19, gr, 0.26, 2.66, 0, [1, 0.9, 0.9]); [[0.3, 1.85, 0.3, 0.09], [0.16, 2.32, 0.22, 0.06]].forEach(q => { sph(q[3], in2, q[0], q[1], q[2]).userData.plain = true; });
+        side.forEach(q => { rod([q * 1.15, 0.7, -0.1], [q * 1.55, 1.5, -0.1], 0.07, gr); rod([q * 1.55, 1.5, -0.1], [q * 1.35, 2.0, -0.1], 0.06, gr); sph(0.16, gr, q * 1.35, 2.05, -0.1); }); } }
+  };
+  B.__stage = () => { if (sg && sg <= 2 && YOUNG[id]) { YOUNG[id](sg); young = true; } else { B[id](); if (sg >= 4 && GROWN[id] && R.body) into(R.body, () => GROWN[id](sg)); } };
+  if (id === '__list') return Object.keys(B).filter(k => k !== '__stage');
+  if (!B[id] || id === '__stage') return false;
+  B.__stage();
   // (builder 14, the owner: "give all the homunculi butts") every creature is modelled all the way round: each has a backside of its own, seen when it is turned or turns its back in its jar.
   // cheeks(material, height, how far back, size, half gap, squash) puts two cheeks and the crease between them on the body
-  if (R.body && /^hom/.test(id) && id !== 'homunculus') { const pc = cur; cur = R.body;
+  if (R.body && !young && /^hom/.test(id) && id !== 'homunculus') { const pc = cur; cur = R.body;
     const cheeks = (m, y, z, r, dx, scl, geo) => { side.forEach(q => { if (geo) put(geo(r), m, q * dx, y, -z, [0.3, q * 0.5, 0.2], scl); else sph(r, m, q * dx, y, -z, scl || [1, 1.05, 0.8]); }); box(0.035, r * 1.5, 0.05, black, 0, y - r * 0.05, -z - r * 0.62 * ((scl && scl[2]) || 0.8)).userData.plain = true; };
     const BUTT = {
       homwater: () => { const sk = M(0x3a6fd0, 0.3); cheeks(sk, 0.72, 0.36, 0.3, 0.2); const d = M(0xcfe3ee, 0.1, 0, { transparent: true, opacity: 0.55 }); sph(0.07, d, 0, 0.36, -0.5, [1, 1.7, 1]); },
@@ -585,7 +624,10 @@ function poseToward(grp, T, world, reach, squash, t) {
   return pose(grp, { lean: [p.x / m * d, p.z / m * d], reach, squash, t });
 }
 // a creature, or the jar of one. key: water, h2, co2, acid, wood, salt, slime, ammonia, seedling, brimstone
-function creature(T, key, tint) { const g = new T.Group(); return build(HOMID[key], T, g, tint || new T.Color(0x3a6fd0)) ? g : null; }
+function creature(T, key, tint, stage) { const g = new T.Group(); return build(HOMID[key], T, g, tint || new T.Color(0x3a6fd0), stage ? { stage } : undefined) ? g : null; }
+// (builder 17) how big each of the five forms stands, as a share of the full-grown one
+const STAGE_SIZE = [0.5, 0.66, 0.8, 0.9, 1];
+const stageSize = s => STAGE_SIZE[Math.max(1, Math.min(5, s | 0)) - 1];
 // the check: for every creature at every stage, how far from the jar's axis and how low and high it reaches, against the inner glass (0.9, kept to 0.84) and the lid (2.3, kept to 2.2)
 function jarReport(T) { return Object.keys(HOMID).map(k => { const j = jar(T, k, 1, 2); return { key: k, stages: j.userData.report() }; }); }
 function jar(T, key, fill, stage) { const g = new T.Group(); if (!build('jar_' + key, T, g, new T.Color(0x3a6fd0))) return null; const j = g.children[0]; j.userData.set(fill == null ? 0.6 : fill, stage); return j; }
@@ -607,5 +649,5 @@ function drawCoin(c, x, y, r, o) {
 function use(grp, s) { const f = grp && grp.userData && grp.userData.use; if (!f) return false; f(Math.max(0, Math.min(1, s || 0))); return true; }
 // pieces that lie flat on the page and are seen from on top
 const FLAT = { coin: 1, spatula: 1, loupe: 1, ouija: 1, pact: 1, stopwatch: 1, magnet: 1 };
-AA.rxKit = { shelf: (T, n) => { const g = new T.Group(); return build(n > 5 ? 'shelf10' : 'shelf5', T, g, new T.Color(0x8a5a2b)) ? g : null; }, tag: (T, n) => { const g = new T.Group(); return build(n >= 1 && n <= 5 ? 'tag_' + n : 'tag_more', T, g, new T.Color(0xf0b93a)) ? g : null; }, build, FLAT, K, mat, finish, snap, PAL, drawCoin, use, jarReport, pose, poseToward, creature, jar, HOMID, list: T => { const g = {}; return build('__list', T, { add() {}, traverse() {}, children: [] }, new T.Color(0)); } };
+AA.rxKit = { stageSize, STAGED: ['water', 'acid', 'slime'], shelf: (T, n) => { const g = new T.Group(); return build(n > 5 ? 'shelf10' : 'shelf5', T, g, new T.Color(0x8a5a2b)) ? g : null; }, tag: (T, n) => { const g = new T.Group(); return build(n >= 1 && n <= 5 ? 'tag_' + n : 'tag_more', T, g, new T.Color(0xf0b93a)) ? g : null; }, build, FLAT, K, mat, finish, snap, PAL, drawCoin, use, jarReport, pose, poseToward, creature, jar, HOMID, list: T => { const g = {}; return build('__list', T, { add() {}, traverse() {}, children: [] }, new T.Color(0)); } };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

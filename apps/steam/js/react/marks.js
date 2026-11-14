@@ -178,5 +178,27 @@ function yieldMark(ctx, k, cx, cy, r, o) {
   ctx.restore();
 }
 AA.rxMarks.yieldMark = yieldMark;
+// ---- (builder 17) the six properties of the molecule (path.js kinsOf): one hand-inked mark each, in the ink of the page, no colour ----
+// AA.rxMarks.kin(ctx, id, cx, cy, size, o)   o: { ink, lw, t (0..1: how much of it is inked in, left to right), pencil (true: a quiet pencil mark),
+//   strike (0..1: struck out, the stroke drawn that far), pips (the level: small dots under the mark), turn (radians: the arene's inner circle turned) }
+const KINDRAW = {
+  ring: () => { poly(0, -4, 34, 6); },
+  arene: o => { poly(0, -4, 34, 6); c.save(); c.translate(0, -4); c.rotate(o.turn || 0); begin(K.ink, K.lw * 0.8); c.setLineDash([13, 9]); c.arc(0, 0, 18, 0, 6.2832); c.stroke(); c.setLineDash([]); c.restore(); },
+  sugar: () => { line(-40, 22, 40, 22, K.ink, K.lw); [-27, 0, 27].forEach(q => { line(q, 22, q, -4, K.ink, K.lw * 0.85); circ(q, -14, 9.5, K.ink, K.lw * 0.7, K.ink); circ(q + 13, -27, 5.5, K.ink, K.lw * 0.6, K.paper); }); },
+  resonance: () => { const p = [[-40, 10], [-20, -14], [0, 10], [20, -14], [40, 10]]; path(p, K.ink, K.lw); [[0, 1], [2, 3]].forEach(e => { const a = p[e[0]], b = p[e[1]], d = Math.hypot(b[0] - a[0], b[1] - a[1]), nx = -(b[1] - a[1]) / d * 9, ny = (b[0] - a[0]) / d * 9; line(a[0] + nx + (b[0] - a[0]) * 0.14, a[1] + ny + (b[1] - a[1]) * 0.14, b[0] + nx - (b[0] - a[0]) * 0.14, b[1] + ny - (b[1] - a[1]) * 0.14, K.ink, K.lw * 0.75); }); },
+  cage: () => { const a = 36, x = -27, y = -12, o2 = 16; path([[x, y], [x + a, y], [x + a, y + a], [x, y + a]], K.ink, K.lw, true); line(x, y, x + o2, y - o2); line(x + a, y, x + a + o2, y - o2); line(x + a, y + a, x + a + o2, y + a - o2); line(x + o2, y - o2, x + a + o2, y - o2); line(x + a + o2, y - o2, x + a + o2, y + a - o2); line(x, y + a, x + o2, y + a - o2, K.faint, K.lw * 0.7); line(x + o2, y + a - o2, x + a + o2, y + a - o2, K.faint, K.lw * 0.7); line(x + o2, y - o2, x + o2, y + a - o2, K.faint, K.lw * 0.7); },
+  chain: () => { const p = [[-40, 8], [-20, -10], [0, 8], [20, -10], [40, 8]]; path(p, K.ink, K.lw); }
+};
+function kinMark(ctx, id, cx, cy, size, o) {
+  const D = KINDRAW[id]; if (!D) return false; o = o || {};
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(size / 100, size / 100); ctx.setLineDash([]); c = ctx; c.lineCap = 'round'; c.lineJoin = 'round';
+  K = kit(o.pencil ? { lw: (o.lw || 7) * 0.72 } : o, o.pencil ? 'rgba(90,86,78,0.62)' : null); if (o.pencil) K.paper = 'rgba(251,246,230,0.6)'; jseed = hash('kin' + id);
+  const t = o.t == null ? 1 : Math.max(0, Math.min(1, o.t));
+  if (t > 0) { c.save(); if (t < 1) { c.beginPath(); c.rect(-56, -60, 112 * t, 120); c.clip(); } D(o); c.restore(); }
+  const n = Math.max(0, Math.min(6, o.pips | 0)); for (let i = 0; i < n; i++) if (t >= (i + 1) / (n + 1)) dot((i - (n - 1) / 2) * 15, 42, 4.6, K.ink);
+  if (o.strike > 0) { const s = Math.min(1, o.strike); begin(o.red || '#c8261c', (o.lw || 7) * 1.05); c.moveTo(-46, 30); c.lineTo(-46 + 92 * s, 30 - 60 * s); c.stroke(); }
+  ctx.restore(); return true;
+}
+AA.rxMarks.kin = kinMark; AA.rxMarks.kinIds = Object.keys(KINDRAW);
 AA.rxMarks.motif = motif; AA.rxMarks.MOTIFS = MOT; AA.rxMarks.motifIds = Object.keys(MOT);
 })(window);
