@@ -39,16 +39,56 @@ class Hom(SC.Mod):
             self.K = k
         self.reset()
 
+    # path.js RULE.homGrow / HOMGROW (seventeenth): STAGE a fixed stage 1..5 (0: off, the creature as it was); GROW 1: it starts each
+    # run at stage 1 and gains one when its job has been done GROW_AT[i] times in the run, up to CAP.  A stage multiplies what a tap
+    # does to the yield by GROW_F.
+    STAGE = 0
+    GROW = 0
+    CAP = 5
+    GROW_F = (0.8, 0.9, 1.0, 1.15, 1.3)
+    GROW_AT = (2, 4, 7, 10)
+
     def reset(self):
         self.taps = self.lit_n = self.rounds = self.pages = self.food = self.rtap = 0
+        self.runs = self.st3 = self.st6 = self.st9 = self.run_taps = 0
+        self._open = False
+
+    def stage(self):
+        if self.GROW:
+            return min(int(self.CAP), 1 + sum(1 for t in self.GROW_AT if self.run_taps >= t))
+        return int(self.STAGE)
+
+    def apply2(self, G, R):
+        self.apply(G, R)
+        st = self.stage()
+        if st:
+            R.E *= self.GROW_F[st - 1]
+
+    def _close(self):
+        if self._open:
+            self.st9 += self.stage()
+            self._open = False
+
+    def run_start(self, G, run):
+        self._close()
+        self.run_taps = 0
+        self.runs += 1
+        self._open = True
 
     def report(self):
-        return {self.name: {'taps': self.taps, 'lit': self.lit_n, 'rounds': self.rounds, 'pages': self.pages, 'food': self.food, 'rtap': self.rtap}}
+        self._close()
+        return {self.name: {'taps': self.taps, 'lit': self.lit_n, 'rounds': self.rounds, 'pages': self.pages, 'food': self.food, 'rtap': self.rtap,
+                            'runs': self.runs, 'st3': self.st3, 'st6': self.st6, 'st9': self.st9}}
 
     def round_start(self, G, R, rng):
         if G.real:
             self.rounds += 1
             self._rt = False
+            r = (getattr(G, 'run', None) or {}).get('round')
+            if r == 4:
+                self.st3 += self.stage()
+            elif r == 7:
+                self.st6 += self.stage()
 
     def before_page(self, G, R, rng, player, hand):
         R.x['a0'] = G.feat(R.smi)['atoms']
@@ -95,14 +135,15 @@ class Hom(SC.Mod):
         else:
             R2 = R.copy()
             R2.rec = list(R.rec)
-            self.apply(G, R2)
+            self.apply2(G, R2)
             if not self.want(G, R, R2):
                 return
-        self.apply(G, R)
+        self.apply2(G, R)
         R.x['tp_' + self.name] = True
         R.x['tap'] = R.x.get('tap', 0) + 1
         if G.real:
             self.taps += 1
+            self.run_taps += 1
             if not self._rt:
                 self._rt = True
                 self.rtap += 1
@@ -113,7 +154,7 @@ class Hom(SC.Mod):
         R2 = R.copy()
         R2.rec = list(R.rec)
         self.passive(G, R2)
-        self.apply(G, R2)
+        self.apply2(G, R2)
         if not self.want(G, R, R2):
             return None
         return G.value(R2)
@@ -391,7 +432,7 @@ class Seedling(Hom):
         R2.rec = list(R.rec)
         self.passive(G, R2)
         if self._ok(R2) and self.lit(G, R2):
-            self.apply(G, R2)
+            self.apply2(G, R2)
         return G.value(R2)
 
     def grew(self, R):

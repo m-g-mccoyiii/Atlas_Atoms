@@ -821,3 +821,20 @@ EXPERIMENTS['sig17m'] = lambda arg='1,both,100': _s17(arg, 'm_', 'master', 'all'
 EXPERIMENTS['sig17k'] = lambda arg='0,both,100,q,carousel+burette+crystal': _s17(arg, 'k_', strong='all')   # with the kit of three instruments held
 EXPERIMENTS['deed17'] = deed16                                                       # the deeds' pools on the new deal (sweep_deeds.py, SWEEP_DEEDS=deed17)
 EXPERIMENTS['sig17p'] = lambda arg: _s17(arg, 'p_', strong='all')                    # a trial with SWEEP_P set (Ammonia's second firing keeps the limits)
+
+
+def hom17(arg='now,median,100'):
+    """Seventeenth: each creature alone at a stage of its growth (path.js RULE.homGrow, sweep_homs.Hom STAGE / GROW), nine rounds, every
+    round played, on sig17's deals.  arg: mode,player,runs.  mode: now (as it was), s1..s5 (a fixed stage), run (grows in the run),
+    cap2..cap4 (grows in the run up to that stage)."""
+    mode, pl, n = arg.split(',')
+    opt = {'now': '', 'run': '/GROW=1'}.get(mode) if mode in ('now', 'run') else ('/STAGE=' + mode[1:] if mode[0] == 's' else '/GROW=1/CAP=' + mode[3:])
+    jobs = []
+    for h in HOMS2:
+        for i in range(int(n) // 10):
+            jobs.append({'id': 'h17_%s_%s_%s_%d' % (h, mode, pl, i), 'rack': START, 'length': 'doctorate', 'player': pl, 'mods': ['hom:' + h + opt], 'params': dict(T13),
+                         'full': True, 'seeds': ['q/%d' % (i * 10 + k) for k in range(10)], 'tag': 'hom:%s@%s/%s' % (h, mode, pl)})
+    return jobs
+
+
+EXPERIMENTS['hom17'] = hom17

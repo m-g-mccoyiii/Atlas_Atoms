@@ -145,17 +145,17 @@ STRONG.update(_strong())
 
 
 def load17():
+    """Every set on the new deal: _sweep/sig17 (none, each alone, the trials), sig17n (pairs and threes without a stronger form) and
+    sig17s (every set that holds Sulphur's Mask or Tetractys, in the stronger form; these replace the plain ones of sig17)."""
+    import os
     import sweep_sig16 as S16
     by = S16.load('sig17')
-    try:
-        new = S16.load('sig17s')
-    except IOError:
-        new = {}
-    for pl, d in by.items():
-        for st in list(d):
-            if any(x in STRONG for x in st.split('+')) and st in (new.get(pl) or {}):
-                del d[st]
-        d.update(new.get(pl) or {})
+    for exp in ('sig17n', 'sig17s'):
+        if not os.path.exists(os.path.join(SC.SWEEP_DIR, exp, 'rows.jsonl')):
+            continue
+        new = S16.load(exp)
+        for pl, d in new.items():
+            by.setdefault(pl, {}).update(d)
     return by
 
 
@@ -168,7 +168,8 @@ def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3,
     marks = marks or S16.MS
     held, gold, spent = [], 0, 0
     out = {'won': False, 'cleared': 0, 'at': {}, 'earn': {}, 'aqua': 0}
-    for i in range(9):
+    nr = len(marks)
+    for i in range(nr):
         if i > 0 and len(held) < cap:
             left = [s for s in owned if s not in held]
             shown = rng.sample(left, min(G['shown'], len(left)))
@@ -190,7 +191,7 @@ def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3,
                 held.append(s)
                 shown.remove(s)
         out['at'][i + 1] = len(held)
-        pool = pools.get(S16.key(held)) or pools[S16.key(held[:2])]
+        pool = pools.get(S16.key(held)) or pools.get(S16.key(held[:2])) or pools[S16.key(held[:1])]     # a set not played: its first two, else its first (the later ones then count for nothing)
         rd = rng.choice(pool)[i]
         ok = C.cleared(rd, marks[i])
         e = S16.gold_of(rd, gold, ok, per_clear)
@@ -199,28 +200,32 @@ def one_run(pools, rng, owned, G, worth, pick='best', per_clear=1, pay=0, cap=3,
         if not ok:
             break
         out['cleared'] = i + 1
-    out['won'] = out['cleared'] == 9
+    out['won'] = out['cleared'] == nr
     out['held'], out['gold'], out['spent'] = tuple(held), gold, spent
     return out
 
 
-def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9):
+WORTH = {}        # each sigil's worth alone on nine rounds, by player: what the buyer goes by in every table
+
+
+def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9, marks=None, rows=None):
     import random
     import sweep_sig16 as S16
     G = S16.GET
     for pl in ('median', 'greedy'):
         pools = {k: v for k, v in by[pl].items() if k == 'none' or S16.is_sigset(k)}
-        worth = {s: S16.stats(pools[s], pools['none'])['worth'] for s in S16.SIG9}
+        worth = WORTH.get(pl) or {s: S16.stats(pools[s], pools['none'])['worth'] for s in S16.SIG9}
+        WORTH.setdefault(pl, worth)
         print(S16.PL[pl], 'worth alone:', ', '.join('%s %.2f' % (S16.NAME[s], worth[s]) for s in sorted(worth, key=lambda x: -worth[x])))
         print('| The buyer | Aqua Permanens pays | Held going into round 4, 7, 9 | Held at the end | Wins of nine, of 100 | Reach round 7, of 100 | Two runs end with the same set, of 100 pairs | Gold a round pays in rounds 4 to 9 holding 0, 1, 2, 3 | Runs that took Aqua Permanens, of 100; they win |')
         print('|---|---|---|---|---|---|---|---|---|')
-        rows = [('none', 0, 9.9)] + [(pk, pay, least) for pk, least in (('best', 1.0), ('best', 1.15), ('aqua', 1.0), ('aqua', 1.15), ('any', 0)) for pay in pays if not (pk == 'best' and pay != pays[0])]
-        for pk, pay, least in rows:
+        rows_ = rows or [('none', 0, 9.9)] + [(pk, pay, least) for pk, least in (('best', 1.0), ('best', 1.15), ('aqua', 1.0), ('aqua', 1.15), ('any', 0)) for pay in pays if not (pk == 'best' and pay != pays[0])]
+        for pk, pay, least in rows_:
             rng = random.Random('t17/%s/%s/%s/%s/%d/%d' % (pl, pk, pay, least, per_clear, owned_n))
             rs = []
             for _ in range(n):
                 owned = [] if pk == 'none' else (list(S16.SIG9) if owned_n >= 9 else rng.sample(S16.SIG9, owned_n))
-                rs.append(one_run(pools, rng, owned, G, worth, pk, per_clear, pay, least=least))
+                rs.append(one_run(pools, rng, owned, G, worth, pk, per_clear, pay, least=least, marks=marks))
             at = lambda r_: sum(x['at'][r_] for x in rs if r_ in x['at']) / float(max(1, sum(1 for x in rs if r_ in x['at'])))
             cnt = {}
             for x in rs:
@@ -244,8 +249,45 @@ def table(by, n=20000, pays=(0, 4, 6, 8), per_clear=1, owned_n=9):
 if __name__ == '__main__':
     import sweep_sig16 as S16
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'worth'
+    if cmd == 'other':
+        # the six-round run and the run with the kit of instruments: python sweep_sig17.py other [runs]
+        import sweep_career as C
+        n = int(sys.argv[2]) if len(sys.argv) > 2 else 20000
+        rows = [('none', 0, 9.9), ('best', 0, 1.0), ('best', 0, 1.15), ('aqua', 6, 1.15)]
+        for pl in ('median', 'greedy'):
+            d = load17()[pl]
+            WORTH[pl] = {s: S16.stats(d[s], d['none'])['worth'] for s in S16.SIG9}
+        print('SIX ROUNDS (each sigil alone played; a second one bought counts for nothing)')
+        table(S16.load('sig17m'), n, marks=C.MARKS['master'], rows=rows)
+        print('NINE ROUNDS WITH THE KIT (carousel, burette, seed crystal; each sigil alone played beside it)')
+        k = S16.load('sig17k')
+        k = {pl: {st.split('&')[0]: v for st, v in d.items()} for pl, d in k.items()}
+        table(k, n, rows=rows)
+        sys.exit(0)
     if cmd == 'table':
         table(load17(), int(sys.argv[2]) if len(sys.argv) > 2 else 20000, per_clear=int(sys.argv[3]) if len(sys.argv) > 3 else 1, owned_n=int(sys.argv[4]) if len(sys.argv) > 4 else 9)
+        sys.exit(0)
+    if cmd == 'alone':
+        by = load17()
+        for pl in ('median', 'greedy'):
+            d = by[pl]
+            b = S16.stats(d['none'], None)
+            print('%s: none %d runs: wins of nine %.2f in 100; rounds 7, 8, 9 cleared %s; biggest round %.1f' % (S16.PL[pl], b['n'], b['win'], ', '.join('%.0f' % x for x in b['wall']), b['max']))
+            for st in sorted((x for x in S16.SIG9 if x in d), key=lambda x: -S16.stats(d[x], d['none'])['worth']):
+                x = S16.stats(d[st], d['none'])
+                print('| %s | %d | %.2f | %.2f | %s | %.1f | %.2f | %.0f |' % (S16.NAME[st], x['n'], x['worth'], x['win'], ', '.join('%.0f' % v for v in x['wall']), x['max'], x['y'] / b['y'], x['met']))
+        sys.exit(0)
+    if cmd == 'big':
+        # how often a set makes a very big round: python sweep_sig17.py big <experiment> <set> [player]
+        import sweep_career as C
+        d = S16.load(sys.argv[2])[sys.argv[4] if len(sys.argv) > 4 else 'median']
+        for st in sys.argv[3].split(','):
+            runs = d[st]
+            rat = sorted((C.ratio(rd) for r in runs for rd in r[:9]), reverse=True)
+            n = len(rat)
+            print('%s (%s): %d runs, %d rounds; biggest five %s; rounds past 10, 20, 30, 50 times the number to beat: %s; runs with a round past 20 times: %d of %d; wins of nine %.2f; worth %.2f' % (
+                st, sys.argv[2], len(runs), n, ', '.join('%.0f' % x for x in rat[:5]), ', '.join('%d' % sum(1 for x in rat if x > k) for k in (10, 20, 30, 50)),
+                sum(1 for r in runs if any(C.ratio(rd) > 20 for rd in r[:9])), len(runs), S16.H.win(runs), S16.H.flat_lift(d['none'], S16.H.win(runs)) if 'none' in d else 0))
         sys.exit(0)
     by = load17() if (len(sys.argv) > 2 and sys.argv[2] == 'all') else S16.load(sys.argv[2] if len(sys.argv) > 2 else 'sig17')
     if cmd == 'worth':

@@ -8,6 +8,7 @@ countersUpdate keeps, written again on the simulator's record of a round; a rung
     python sweep_deeds.py career [n]       careers: the run on which each thing is earned, casual and careful
 """
 import json
+import math
 import os
 import random
 import re
@@ -32,7 +33,8 @@ def is_ring(k):
     return base(k) in RINGK or k in ('bridge', 'stitch', 'link', 'bridge_o')
 
 
-def load(exp='deed16'):
+def load(exp=None):
+    exp = exp or os.environ.get('SWEEP_DEEDS') or 'deed16'
     by = {}
     fp = os.path.join(SC.SWEEP_DIR, exp, 'rows.jsonl')
     for line in open(fp, encoding='utf-8'):
@@ -74,6 +76,11 @@ def round_counts(rd, won, marks_n, near, task_lost, long_run):
             add(n + '_fired')
             if p > 0:
                 add(n + '_acted')
+            else:
+                add('wasted_circles')        # a bottle lined up that found nothing to act on (seventeenth, item 5: it can feed the wood spirit's jar)
+        if any(sum(1 for n2, p2, _s in cs if n2 == n and p2 > 0) >= 2 for n in set(x[0] for x in cs)):
+            add('twice_pages')               # a page on which one reagent landed twice (it can feed the slime's jar)
+        for n, p, s in cs:
             if n in ('dehydrate', 'hydrate', 'oxidize', 'grow', 'epoxidation'):
                 top('max_%s_places' % n, p)
         for k in chain:
@@ -177,13 +184,13 @@ def round_counts(rd, won, marks_n, near, task_lost, long_run):
     return a, t, fired, het
 
 
-def play(run, ln, marks):
+def play(run, ln, marks, lift=1.0):
     """Cut a run at its first round not cleared.  Returns the rounds played with (won, marks, near, task lost) each."""
     out = []
     ms = marks.get(ln)
     for i, rd in enumerate(run['rounds'][:{'bachelor': 3, 'master': 6, 'doctorate': 9}[ln]]):
-        ok = bool(rd[C.MET]) if ln == 'bachelor' else C.cleared(rd, ms[i])
-        x = C.ratio(rd)
+        ok = bool(rd[C.MET]) if ln == 'bachelor' else C.cleared(rd, ms[i], lift)
+        x = C.ratio(rd) * lift
         mk = (1 + sum(1 for k in SC.TIERS if x >= k)) if x >= 1 else 0
         nr = (not ok) and ln != 'bachelor' and C.near(rd, ms[i])
         tl = (not ok) and ln != 'bachelor' and not rd[C.MET] and x >= ms[i]
@@ -208,13 +215,17 @@ JAR_FEED = {'water': ('off_water',), 'h2': ('off_hydrogen',), 'co2': ('off_carbo
             'salt': None, 'slime': ('hydroborate_acted',), 'seedling': ('grow_acted',), 'ammonia': ('off_ammonia', 'ritter_acted'), 'brimstone': ('off_sulfur', 'thiolene_acted')}
 
 
-def career(pools, n_runs, rng, marks, cap=None):
+JARX = {'size': {}, 'feed': {}}      # seventeenth, item 5: trials of the jars (smaller jars; further feeds)
+
+
+def career(pools, n_runs, rng, marks, cap=None, lift=1.0, until=None):
     """One career: the longest run open each time.  Returns {thing or rung id: (run the deed was done, run it was handed over)}."""
     cap = cap or C.LADDER_CAP
     cnt, cntL, got, done, deep, reach = {}, {}, {}, {}, 0, 1      # cntL: what was done in six-round and nine-round runs only (path.js 'L:' counters)
     have_inst, have_reag = 0, set()
-    JF = jars()
-    out = {'won': {}}
+    JF = dict(jars(), **JARX['size'])
+    out = {'won': {}, 'credit': [], 'sign': None}
+    credit, n_got = 0, 0
     for i in range(1, n_runs + 1):
         ln = ('bachelor', 'master', 'doctorate')[reach - 1]
         if ln == 'bachelor':
@@ -226,7 +237,7 @@ def career(pools, n_runs, rng, marks, cap=None):
                 if fit:
                     pool = fit
         run = pool[rng.randrange(len(pool))]
-        rs = play(run, ln, marks)
+        rs = play(run, ln, marks, lift)
         fired, het = set(), set()
         for rd, ok, mk, nr, tl in rs:
             a, t, f, h = round_counts(rd, ok, mk, nr, tl, ln != 'bachelor')
@@ -269,13 +280,20 @@ def career(pools, n_runs, rng, marks, cap=None):
             if met and g['id'] not in got and new < cap:
                 got[g['id']] = i
                 new += 1
+                n_got += 1
+                credit += int(g.get('credit', 0) or 0)
                 if g.get('gives') == 'instrument':
                     have_inst += 1
                 if g.get('gives') == 'reagent':
                     have_reag.add(g.get('thing'))
         for h, feed in JAR_FEED.items():
+            feed = (feed or ()) + tuple(JARX['feed'].get(h, ()))
             if feed and ('jar_' + h) not in done and sum(cnt.get(k, 0) for k in feed) >= JF[h]:
                 done['jar_' + h] = got['jar_' + h] = i
+        out['credit'].append(credit)
+        if out['sign'] is None and until and n_got >= until:
+            out['sign'] = i
+            break
     out['done'], out['got'], out['cnt'] = done, got, cnt
     return out
 
@@ -354,6 +372,44 @@ if __name__ == '__main__':
     by = load()
     if cmd == 'rates':
         rates(by)
+    elif cmd == 'jars':
+        # seventeenth, item 5: the wood spirit's and the slime's jars three ways.  python sweep_deeds.py jars [careers]
+        n = int(sys.argv[2]) if len(sys.argv) > 2 else 200
+        ways = (('as they are (40 reduce, 70 hydroborate)', {}, {}), ('smaller jars (15 and 25)', {'wood': 15, 'slime': 25}, {}),
+                ('fed by a starting play too (a bottle that found nothing; a page where one reagent landed twice)', {}, {'wood': ('wasted_circles',), 'slime': ('twice_pages',)}),
+                ('fed by a starting play too, counted at half', {'wood': 80, 'slime': 140}, {'wood': ('wasted_circles', 'reduce_acted'), 'slime': ('twice_pages', 'hydroborate_acted')}))
+        print('| Way | Player | Wood spirit hatches (run of the middle career) | careers that hatch it in 300 runs, of 100 | Slime hatches | careers, of 100 |')
+        print('|---|---|---|---|---|---|')
+        for name, size, feed in ways:
+            JARX['size'], JARX['feed'] = size, feed
+            res = careers(by, n)
+            for pl in ('greedy', 'median'):
+                cs = res[pl]
+                f = lambda h: (med([c['got'].get('jar_' + h) for c in cs], n), 100.0 * sum(1 for c in cs if ('jar_' + h) in c['got']) / n)
+                w, sl = f('wood'), f('slime')
+                print('| %s | %s | %s | %.0f | %s | %.0f |' % (name, PL[pl], w[0] if w[0] else 'not in 300', w[1], sl[0] if sl[0] else 'not in 300', sl[1]))
+        JARX['size'], JARX['feed'] = {}, {}
+    elif cmd == 'credit':
+        # seventeenth, item 3: credit over a career under the new ladder, and the sign's three laps.  python sweep_deeds.py credit [careers]
+        n = int(sys.argv[2]) if len(sys.argv) > 2 else 200
+        res = careers(by, n)
+        tot = sum(int(g.get('credit', 0) or 0) for g in C.LADDER)
+        print('the ladder: %d rungs, %d pay credit, %d credit in all' % (len(C.LADDER), sum(1 for g in C.LADDER if g.get('credit')), tot))
+        for pl in ('greedy', 'median'):
+            cs = res[pl]
+            print('%s: credit held after 5, 10, 20, 40, 100, 300 runs (nothing spent): %s' % (PL[pl], ', '.join('%.0f' % (sum(c['credit'][k - 1] for c in cs) / float(n)) for k in (5, 10, 20, 40, 100, 300))))
+        until = int(math.ceil(C.SIGN['share'] * len(C.LADDER)))
+        print('the sign can be taken when %d of the %d rungs are held' % (until, len(C.LADDER)))
+        print('| Player | Lap (signs taken) | Yield times | Number to beat times | Runs until the sign can be taken | First six-round win in the lap (run) | First nine-round win in the lap (run) | Laps finished within 600 runs, of 100 |')
+        print('|---|---|---|---|---|---|---|---|')
+        for pl in ('greedy', 'median'):
+            rng = random.Random('laps17/' + pl)
+            for k in range(C.SIGN['laps'] + 1):
+                lift = (1 + C.SIGN['lift'] * k) / C.SIGN['bar'] ** k
+                cs = [career(by[pl], 600, rng, C.MARKS, lift=lift, until=until) for _ in range(n)]
+                s_ = lambda x: 'not in 600' if x is None else str(x)
+                print('| %s | %d | %.1f | %.2f | %s | %s | %s | %.0f |' % (PL[pl], k, 1 + C.SIGN['lift'] * k, C.SIGN['bar'] ** k, s_(med([c['sign'] for c in cs], n)), s_(med([c['won'].get('master') for c in cs], n)),
+                                                                     s_(med([c['won'].get('doctorate') for c in cs], n)), 100.0 * sum(1 for c in cs if c['sign']) / n))
     else:
         res = careers(by, int(sys.argv[2]) if len(sys.argv) > 2 else 200)
         table(res)
