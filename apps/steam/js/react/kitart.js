@@ -4280,7 +4280,8 @@ KIT.W66 = W66;
 //  5 the druse: a great cube on a broad bed of small crystals, a crown of cubes, shards fanned behind it like a halo; eyes all but shut
 KIT.salt63 = KIT.salt63 == null ? ((typeof location !== 'undefined' && /[?&]t63=1/.test(String(location.search))) ? 1 : null) : KIT.salt63;
 const W63 = { geo: {}, figs: [], err: null, seg: 0.3,
-  C: { lite: [0.945, 0.965, 0.985], edge: [0.80, 0.865, 0.94], shade: [0.63, 0.645, 0.80], margin: [0.90, 0.93, 0.965], lid: 0xedf2f8 } };
+  C: { lite: [0.945, 0.965, 0.985], edge: [0.80, 0.865, 0.94], shade: [0.63, 0.645, 0.80], margin: [0.90, 0.93, 0.965], lid: 0xd3dbe8 },
+  /* (builder 68) the lamp as the crystal's own tone bands see it (the body's space): from up, left and in front */ L: [-0.5, 0.78, 0.38] };
 /* a crystal: centre, half sizes (one number: a cube), turned about y, rolled about its own front face, tipped forward */
 const bx63 = (c, h, yaw, roll, pitch, ex) => { const cy = Math.cos(yaw || 0), sy = Math.sin(yaw || 0), cq = Math.cos(roll || 0), sq = Math.sin(roll || 0), cp = Math.cos(pitch || 0), sp = Math.sin(pitch || 0), ry = v => [cy * v[0] + sy * v[2], v[1], -sy * v[0] + cy * v[2]];
   return Object.assign({ c, h: typeof h === 'number' ? [h, h, h] : h, ax: [ry([cq, cp * sq, sp * sq]), ry([-sq, cp * cq, sp * cq]), ry([0, -sp, cp])] }, ex || {}); };
@@ -4300,7 +4301,9 @@ const mk63 = () => { const B = [], L = [], add = b => { B.push(b); return b; }, 
   /* a crystal grown THROUGH a bigger one at its own odd angle: where on it (in its half sizes), how big, how turned */ twin: (b, u, h, yaw, roll, pitch, ex) => add(bx63(loc63(b, u), h, yaw, roll, pitch, same(b, ex))),
   /* a shard that is a hand: a slender prism narrowing to a point, three joints (root, middle, point), the whole of it carried by the root */
   shard: (par, side, a, t, w) => { const li = L.length; L.push({ par, side, s: a, pts: [[(a[0] + t[0]) / 2, (a[1] + t[1]) / 2, (a[2] + t[2]) / 2], t], r: w }); return add(seg63(a, t, w, { li, tp: 0.93 })); },
-  /* a shard that is only grown on (no joint of its own) */ spike: (b, a, t, w) => add(seg63(a, t, w, same(b, { tp: 0.93 }))),
+  /* a shard that is only grown on (no joint of its own) */ spike: (b, a, t, w, ex) => add(seg63(a, t, w, same(b, Object.assign({ tp: 0.93 }, ex)))),
+  /* (builder 68) a bud that comes and goes: a small crystal on a corner of b, carried by a joint of its own a little inside b (it grows out of
+     that point and is drawn back into it) */ pop: (b, u, h, yaw, roll, pitch) => add(bx63(loc63(b, u), h, yaw, roll, pitch, { pop: 1, piv: loc63(b, u.map(x => x * 0.8)) })),
   /* cubes lying on the wood, each tipped its own way: x, z, half size, turn, roll, tip */ bed: list => list.forEach(q => add(rest63(bx63([q[0], 0, q[1]], q[2], q[3] || 0, q[4] || 0, q[5] || 0, { g: 1, grain: q[2] < 0.2 ? 1 : 0 })))),
   /* a scatter of them in a ring about (x, z) */ ring: (x, z, rx, rz, n, h0, h1, seed, r0) => { const r = rnd63(seed); for (let i = 0; i < n; i++) { const a = (i + r() * 0.8) / n * 6.2832, k = (r0 || 0.6) + (1 - (r0 || 0.6)) * r(), h = h0 + (h1 - h0) * r() * r(); add(rest63(bx63([x + Math.cos(a) * rx * k, 0, z + Math.sin(a) * rz * k], h, r() * 1.5, (r() - 0.5) * 1.1, (r() - 0.5) * 0.9, { g: 1, grain: h < 0.2 ? 1 : 0 }))); } },
   /* grains flat on the wood: x, z, half size, turn */ grains: list => list.forEach(q => add(bx63([q[0], q[2] + 0.004, q[1]], q[2], q[3] || 0, 0, 0, { g: 1, grain: 1 }))) }; };
@@ -4320,31 +4323,53 @@ const thru63 = (b, x, y, w) => { const sx = x < 0 ? 1 : -1, sy = y < 0 ? 1 : -1,
 const hop63 = (b, ax, sg, cx, cy, r) => [1, 0.64, 0.32].reduce((a, k) => a.concat(sq63(b, ax, sg, r * k, 0.3, cx + (1 - k) * r * 0.12, cy - (1 - k) * r * 0.12)), []);
 /* a glint in the air by a corner: a four-pointed star, written in one line round its points, carried by the crystal it is by */
 const glint63 = (b, p, r) => [{ b, w: 0.5, air: 1, pts: Array.from({ length: 9 }, (_, i) => { const a = i * 0.7854, k = i % 2 ? 0.2 : i % 4 ? 0.8 : 1.3; return [p[0] + Math.sin(a) * k * r, p[1] + Math.cos(a) * k * r, p[2]]; }) }];
+/* (builder 68) the light on it and under it: a bold glint (a four-point star with a short streak) on the main cube's upper edge and a small
+   twinkle on one bud, both riding the cube's joint (drawn as sprites, so they always face the eye; the idle runs them along the edge); a cool
+   blue shade on the wood under it, darkest at the corner it stands on; the lids drawn with a pen line along their edge */
+const tex63 = (T, k) => { const W = W63.tex || (W63.tex = {}); if (W[k]) return W[k]; const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  if (k === 'star') { const st = (r, w) => { x.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * 6.2832, q = i % 4 === 0 ? r : i % 2 ? r * 0.13 : r * 0.36; x.lineTo(64 + Math.sin(a) * q, 64 - Math.cos(a) * q); } x.closePath(); };
+    x.lineJoin = 'round'; x.save(); x.translate(64, 64); x.rotate(-0.42); x.translate(-64, -64); x.beginPath(); x.moveTo(6, 64); x.quadraticCurveTo(64, 58, 122, 64); x.quadraticCurveTo(64, 70, 6, 64); x.strokeStyle = 'rgba(40,36,34,0.95)'; x.lineWidth = 6; x.stroke(); x.fillStyle = '#fff'; x.fill(); x.restore();
+    st(60); x.strokeStyle = 'rgba(40,36,34,0.95)'; x.lineWidth = 11; x.stroke(); x.fillStyle = '#ffffff'; x.fill(); st(30); x.fillStyle = '#eef6ff'; x.fill(); }
+  else { const g = x.createRadialGradient(64, 64, 2, 64, 64, 62); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
+  const t = new T.CanvasTexture(c); return (W[k] = t); };
+function lit63(T, S, o) { const G = S.G, J = G.J, jh = G.bj[G.R.head], hb = S.bones[jh], hp = J[jh].p, g = o.boxes[0], lin = h => new T.Color(h).convertSRGBToLinear();
+  const spr = (p, s) => { const m = new T.Sprite(new T.SpriteMaterial({ map: tex63(T, 'star'), transparent: true, depthTest: false, depthWrite: false })); m.position.set(p[0] - hp[0], p[1] - hp[1], p[2] - hp[2]); m.scale.setScalar(s); m.renderOrder = 30; m.userData.plain = true; m.userData.nobox = true; m.userData.s0 = s; hb.add(m); return m; };
+  if (o.gl) { const a = o.gl[0], c = o.gl[1]; S.gl63 = spr([a[0] + (c[0] - a[0]) * 0.62, a[1] + (c[1] - a[1]) * 0.62, a[2] + (c[2] - a[2]) * 0.62], 1.3 * g.h[0] + 0.25); S.gl63.userData.e = [a, c]; }
+  if (o.tw) { S.tw63 = spr(o.tw, 0.5 * g.h[0]); S.tw63.userData.p = o.tw; }
+  /* the shade on the wood: a soft cool oval under the cube and a darker spot where its corner stands */
+  const lo = [-1, 1].reduce((a, i) => a.concat([-1, 1].reduce((b2, j) => b2.concat([-1, 1].map(k => loc63(g, [i, j, k]))), [])), []).sort((p, q) => p[1] - q[1])[0];
+  const pad = (x, z, rx, rz, op) => { const m = new T.Mesh(new T.PlaneGeometry(2, 2), new T.MeshLambertMaterial({ color: lin(0x2a3655), emissive: lin(0x34467a), map: tex63(T, 'soft'), transparent: true, opacity: op, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.011, z); m.scale.set(rx, rz, 1); m.renderOrder = 2; m.userData.plain = true; m.userData.nobox = true; S.root.add(m); return m; };
+  S.sh63 = [pad(g.c[0] + 0.1 * g.h[0], g.c[2] + 0.1, 2.0 * g.h[0], 1.15 * g.h[0], 0.55), pad(lo[0], lo[2] + 0.05, 0.8 * g.h[0], 0.5 * g.h[0], 0.75)]; S.sh63.lo = lo;
+  /* the lids: a pen line along the edge of each */ const ink = new T.MeshBasicMaterial({ color: lin(0x1d1a18) });
+  (S.F && S.F.eyes || []).forEach(e => { const r = e.er * 1.14, m = new T.Mesh(new T.RingGeometry(r * 0.84, r, 24, 1, Math.PI * 1.1, Math.PI * 0.8), ink); m.position.z = r * 1.05; m.userData.plain = true; e.lid.add(m); e.arc63 = m; }); }
 /* the crust: a pale patch of dried salt on the wood under it, ragged at its rim (a flat thing of its own: the pen does not draw it) */
-const crust63 = (T, o) => { const c = o.crust, r = rnd63(c[4] || 7), g = new T.Group(); [[1, 0.22], [0.72, 0.2]].forEach((q, n) => { const sh = new T.Shape(), N = 34; for (let i = 0; i < N; i++) { const a = i / N * 6.2832, k = q[0] * (1 + (r() - 0.5) * 0.22 + (i % 2 ? 0.05 : -0.05)), x = c[0] + Math.cos(a) * c[2] * k, y = -c[1] - Math.sin(a) * c[3] * k; if (i) sh.lineTo(x, y); else sh.moveTo(x, y); }
-    const m = new T.Mesh(new T.ShapeGeometry(sh), new T.MeshLambertMaterial({ color: new T.Color(0xf3f6fb).convertSRGBToLinear(), transparent: true, opacity: q[1], depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.006 + 0.002 * n; m.renderOrder = 1; m.userData.plain = true; m.userData.nobox = true; g.add(m); }); return g; };
+const crust63 = (T, o) => { const c = o.crust, r = rnd63(c[4] || 7), g = new T.Group(); [[1, 0.34], [0.72, 0.3]].forEach((q, n) => { const sh = new T.Shape(), N = 34; for (let i = 0; i < N; i++) { const a = i / N * 6.2832, k = q[0] * (1 + (r() - 0.5) * 0.22 + (i % 2 ? 0.05 : -0.05)), x = c[0] + Math.cos(a) * c[2] * k, y = -c[1] - Math.sin(a) * c[3] * k; if (i) sh.lineTo(x, y); else sh.moveTo(x, y); }
+    const m = new T.Mesh(new T.ShapeGeometry(sh), new T.MeshLambertMaterial({ color: new T.Color(0xf3f6fb).convertSRGBToLinear(), emissive: new T.Color(0x8a9098).convertSRGBToLinear(), transparent: true, opacity: q[1], depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.006 + 0.002 * n; m.renderOrder = 1; m.userData.plain = true; m.userData.nobox = true; g.add(m); }); return g; };
 const SPEC63 = [
   // 1 the grain: one cube on its corner, wide eyes, one tiny bud
-  () => { const m = mk63(), g = m.main(0, 0, 0.44, -0.42, 0.5, -0.1, 0, { jb: 2 }); m.twin(g, [0.95, 1.0, -0.3], 0.16, 0.3, 0.25, 0.2);
-    m.grains([[-0.95, 0.3, 0.1, 0.5], [0.95, 0.42, 0.12, -0.3], [-0.62, 0.66, 0.07, 0.2], [1.3, 0.1, 0.07, 0.9], [0.5, 0.75, 0.05, 0.4]]);
-    return fin63(m, g, { H: 1.1, base: [0, 0, 1.0, 0.7], crust: [0.05, 0.1, 1.15, 0.72, 11],
+  () => { const m = mk63(), g = m.main(0, 0, 0.44, -0.42, 0.5, -0.1, 0, { jb: 2 }); const t = m.twin(g, [0.95, 1.0, -0.3], 0.16, 0.3, 0.25, 0.2);
+    m.pop(g, [-0.95, 0.92, 0.55], 0.13, 0.4, 0.3, 0.2); m.pop(g, [0.95, -0.4, 0.75], 0.12, -0.3, 0.4, 0.1);
+    m.grains([[-0.95, 0.3, 0.13, 0.5], [1.0, 0.45, 0.14, -0.3], [-0.55, 0.75, 0.11, 0.2]]);
+    return fin63(m, g, { H: 0.9, gl: [loc63(g, [-1, 1, 1]), loc63(g, [1, 1, 1])], tw: loc63(t, [1, 1, 1]), base: [0, 0, 1.0, 0.7], crust: [0.05, 0.1, 1.15, 0.72, 11],
       face: face63(g, 0, 0.02, { k: 1, er: 1.7, dx: 0.2, mouth: { w: 0.05, d: 0.012, y: -0.22, r: 0.022 } }),
       pen: glint63(g, [-0.66, 1.26, 0.3], 0.2).concat(hop63(g, 0, 1, 0.1, 0.1, 0.55), thru63(g, -0.87, -0.8)) }); },
   // 2 the twin: a second cube grown through its top corner like a hat pushed askew, its first short shard; puzzled
-  () => { const m = mk63(), g = m.main(0, 0, 0.6, -0.4, -0.42, -0.14, 0, { jb: 2 }), t = m.twin(g, [-0.78, 0.92, -0.15], 0.36, 0.25, 0.28, 0.1); m.twin(g, [1.0, -0.55, 0.2], 0.15, 0.5, 0.3, 0);
-    const a = loc63(g, [0.7, 0.0, 0.45]); m.shard(2, 1, a, [a[0] + 1.05, a[1] + 0.55, a[2] + 0.3], 0.15);
-    m.grains([[-1.2, 0.4, 0.11, 0.5], [1.35, 0.7, 0.13, -0.3], [-0.9, 0.85, 0.07, 0.2], [1.7, 0.1, 0.07, 0.9], [0.4, 1.0, 0.06, 0.3]]);
-    return fin63(m, g, { H: 1.72, base: [0, 0, 1.3, 0.9], crust: [0.05, 0.12, 1.5, 0.95, 23],
+  () => { const m = mk63(), g = m.main(0, 0, 0.6, -0.4, -0.42, -0.14, 0, { jb: 2 }), t = m.twin(g, [-0.78, 0.92, -0.15], 0.36, 0.25, 0.28, 0.1, { jb: 3, hat: 1 }), t2 = m.twin(g, [1.0, -0.55, 0.2], 0.15, 0.5, 0.3, 0);
+    const a = loc63(g, [-0.75, -0.1, 0.45]); m.shard(2, -1, a, [a[0] - 1.0, a[1] + 0.5, a[2] + 0.3], 0.15);
+    m.pop(g, [0.95, 0.92, 0.5], 0.16, 0.5, 0.2, 0.2); m.pop(g, [0.9, -0.95, 0.8], 0.14, -0.3, 0.4, 0.1);
+    m.grains([[-1.25, 0.45, 0.14, 0.5], [1.35, 0.7, 0.15, -0.3], [-0.85, 0.9, 0.11, 0.2]]);
+    return fin63(m, g, { H: 1.45, gl: [loc63(g, [-1, 1, 1]), loc63(g, [1, 1, 1])], tw: loc63(t2, [1, 1, 1]), base: [0, 0, 1.3, 0.9], crust: [0.05, 0.12, 1.5, 0.95, 23],
       face: face63(g, 0.02, 0.0, { k: 1.3, er: 1.6, dx: 0.21, brow: { y: 0.27, len: 0.2, ang: [0.1, 0.1], lift: [0, 0.09], arch: 0, r: 0.026 }, mouth: { w: 0.06, d: 0, y: -0.25, tilt: 0.02, r: 0.024 } }),
       pen: glint63(g, [1.0, 1.75, 0.5], 0.24).concat(hop63(g, 0, 1, 0.15, 0.1, 0.55), thru63(g, -0.84, -0.78)) }); },
   // 3 the cluster: a crest of cubes on its top and one side, two shards planted at its sides like hands; prim and proud
   () => { const m = mk63(), g = m.main(0, 0, 0.8, -0.4, 0.38, -0.1, 0, { jb: 2 });
     const c1 = m.twin(g, [0.6, 1.25, 0.0], 0.45, 0.3, -0.25, 0.15); m.twin(c1, [0.3, 1.1, 0.2], 0.19, 0.9, 0.3, 0.2); m.twin(g, [-0.2, 1.2, -0.2], 0.32, -0.5, 0.45, 0); m.twin(g, [-0.8, 1.12, 0.0], 0.24, 0.2, 0.2, 0.3);
     m.twin(g, [1.02, -0.45, -0.3], 0.33, 0.5, 0.2, -0.2); m.twin(g, [-1.02, -0.45, 0.2], 0.24, -0.2, -0.35, 0.1);
-    /* planted like hands: it props itself on them */ const a = loc63(g, [-0.9, -0.15, 0.6]), b = loc63(g, [0.55, -0.9, 0.6]); m.shard(2, -1, a, [a[0] - 0.75, 0.03, a[2] + 0.2], 0.19); m.shard(2, 1, b, [b[0] + 0.75, 0.03, b[2] + 0.25], 0.19);
-    m.bed([[-1.15, 0.5, 0.24, 0.3, 0.3, 0.2], [1.1, 0.55, 0.2, -0.5, -0.2, 0.3], [-1.75, -0.2, 0.17, 0.8, 0.4, 0], [1.8, -0.1, 0.2, -0.2, 0.3, 0.4], [0.2, 0.95, 0.13, 0.4, 0.3, 0.2]]);
-    m.grains([[-2.3, 0.5, 0.1, 0.5], [2.4, 0.6, 0.08, -0.3], [-0.9, 1.0, 0.07, 0.2], [1.3, 1.0, 0.08, 0.9], [2.7, 0.0, 0.06, 0.4], [-2.6, 0.1, 0.06, 0.1]]);
-    return fin63(m, g, { H: 2.75, base: [0, 0, 1.9, 1.3], crust: [0, 0.2, 2.6, 1.1, 31],
+    /* hands resting on the wood in front of it, like forearms on a table */ const a = loc63(g, [-0.8, -0.72, 0.85]), b = loc63(g, [0.62, -0.9, 0.85]); m.shard(2, -1, a, [a[0] - 1.05, 0.05, a[2] + 0.45], 0.19); m.shard(2, 1, b, [b[0] + 1.05, 0.05, b[2] + 0.4], 0.19);
+    m.pop(g, [-0.95, 0.5, 0.8], 0.2, 0.5, 0.2, 0.2); m.pop(g, [0.95, 0.35, 0.85], 0.18, -0.3, 0.4, 0.1);
+    m.bed([[-1.35, -0.1, 0.26, 0.3, 0.3, 0.2], [1.3, -0.15, 0.24, -0.5, -0.2, 0.3], [-1.95, -0.4, 0.18, 0.8, 0.4, 0], [1.95, -0.3, 0.2, -0.2, 0.3, 0.4]]);
+    m.grains([[-2.3, 0.5, 0.15, 0.5], [2.35, 0.6, 0.14, -0.3], [-0.4, 0.9, 0.13, 0.2], [2.7, 0.0, 0.12, 0.4]]);
+    return fin63(m, g, { H: 2.75, gl: [loc63(g, [-1, 1, 1]), loc63(g, [1, 1, 1])], tw: loc63(c1, [1, 1, 1]), base: [0, 0, 1.9, 1.3], crust: [0, 0.2, 2.6, 1.1, 31],
       face: face63(g, 0, 0.02, { k: 1.7, er: 1.5, dx: 0.21, lid: 0.3, brow: { y: 0.27, len: 0.22, ang: [0.08, 0.08], arch: 0, r: 0.026 }, mouth: { w: 0.055, d: -0.01, y: -0.26, r: 0.022 } }),
       pen: glint63(g, [-1.15, 2.2, 0.4], 0.3).concat(glint63(g, [1.9, 2.2, 0.3], 0.17), hop63(g, 0, 1, 0.3, 0.25, 0.5), thru63(g, -0.82, -0.78)) }); },
   // 4 the crown: a spire of stepped cubes off one upper corner, one shard raised and pointing; stern
@@ -4353,20 +4378,22 @@ const SPEC63 = [
     const c1 = m.twin(g, [0.85, 0.95, -0.3], 0.3, 0.4, 0.25, 0.1); m.twin(g, [1.02, -0.3, -0.2], 0.24, 0.3, -0.2, 0.3); m.twin(g, [0.25, 1.05, -0.5], 0.2, 0.7, 0.2, 0.1);
     const a = loc63(g, [0.8, 0.2, 0.5]); m.shard(2, 1, a, [a[0] + 1.0, a[1] + 1.35, a[2] + 0.35], 0.18); const b = loc63(g, [-0.9, -0.2, 0.6]); m.shard(2, -1, b, [b[0] - 0.6, 0.03, b[2] + 0.2], 0.17);
     m.bed([[-0.55, -0.3, 0.42, 0.3, 0.25, 0.2], [0.6, -0.35, 0.38, -0.5, -0.2, 0.3], [0.1, 0.45, 0.3, 0.1, 0.4, -0.2], [-1.45, 0.1, 0.2, 0.8, 0.4, 0], [1.5, 0.4, 0.24, -0.2, 0.3, 0.4], [0.9, 1.25, 0.13, 0.4, 0.3, 0.2]]);
-    m.grains([[-2.0, 0.9, 0.1, 0.5], [2.2, 0.9, 0.08, -0.3], [-1.0, 1.5, 0.07, 0.2], [1.6, 1.6, 0.08, 0.9], [2.5, 0.0, 0.06, 0.4], [-2.4, 0.2, 0.06, 0.1]]);
-    return fin63(m, g, { H: 3.25, t: [0.2, 0.15, -0.1], base: [0, 0, 1.9, 1.3], crust: [0, 0.3, 2.3, 1.5, 43],
+    m.pop(g, [-0.95, 0.1, 0.85], 0.2, 0.5, 0.2, 0.2); m.pop(g, [0.5, -0.95, 0.85], 0.18, -0.3, 0.4, 0.1);
+    m.grains([[-2.0, 0.9, 0.15, 0.5], [2.2, 0.9, 0.14, -0.3], [-1.6, 0.9, 0.12, 0.2], [2.5, 0.0, 0.12, 0.4]]);
+    return fin63(m, g, { H: 3.25, gl: [loc63(g, [-1, 1, 1]), loc63(g, [1, 1, 1])], tw: loc63(c1, [1, 1, 1]), t: [0.2, 0.15, -0.1], base: [0, 0, 1.9, 1.3], crust: [0, 0.3, 2.3, 1.5, 43],
       face: face63(g, 0, 0.0, { k: 1.8, er: 1.45, dx: 0.21, lid: 0.42, brow: { y: 0.25, len: 0.23, ang: [0.26, 0.26], arch: 0, r: 0.026 }, mouth: { w: 0.06, d: -0.03, y: -0.27, r: 0.022 } }),
       pen: glint63(g, [1.55, 3.0, 0.4], 0.3).concat(glint63(g, [-1.75, 3.2, 0.2], 0.18), hop63(g, 0, 1, 0.2, 0.2, 0.55), thru63(g, -0.82, -0.78)) }); },
   // 5 the druse: a great cube on a broad bed of small crystals, a crown of cubes, shards fanned behind it like a halo
   () => { const m = mk63(), g = m.main(0, 0, 1.15, -0.3, 0.3, -0.12, 0.4, { jb: 2 });
     /* the halo: shards fanned in the cube's own plane, from behind its middle */ const C = loc63(g, [0, 0.05, -0.55]), d = (f, r) => [0, 1, 2].map(k => C[k] + (Math.sin(f) * g.ax[0][k] + Math.cos(f) * g.ax[1][k]) * r - g.ax[2][k] * 0.1 * r);
-    [[-1.5, 2.6, 0.24], [-0.98, 3.15, 0.3], [-0.42, 2.75, 0.24], [0.1, 3.3, 0.32], [0.62, 2.8, 0.25], [1.12, 3.1, 0.29], [1.6, 2.5, 0.22]].forEach(q => m.spike(g, d(q[0], 0.7), d(q[0], q[1]), q[2]));
+    [[-1.5, 2.6, 0.24], [-0.98, 3.15, 0.3], [-0.42, 2.75, 0.24], [0.1, 3.3, 0.32], [0.62, 2.8, 0.25], [1.12, 3.1, 0.29], [1.6, 2.5, 0.22]].forEach(q => m.spike(g, d(q[0], 0.7), d(q[0], q[1]), q[2], { jb: 4, halo: 1 }));
     /* the crown: cubes along its top, the tallest off the middle */ const c1 = m.twin(g, [0.25, 1.15, -0.1], 0.5, 0.5, 0.2, 0.1); m.twin(c1, [-0.2, 1.1, 0.1], 0.24, 0.9, -0.2, 0.2); m.twin(g, [-0.85, 1.05, 0.0], 0.42, -0.2, -0.3, 0.2); m.twin(g, [-0.3, 1.12, -0.3], 0.3, 0.6, 0.3, 0); m.twin(g, [0.95, 1.0, -0.1], 0.36, 0.2, 0.35, 0.1); m.twin(g, [1.05, 0.2, -0.3], 0.3, -0.4, -0.2, 0.3); m.twin(g, [-1.05, -0.3, 0.1], 0.3, 0.3, 0.3, -0.2);
     const a = loc63(g, [-0.85, -0.55, 0.8]), b = loc63(g, [0.85, -0.6, 0.8]); m.shard(2, -1, a, [a[0] - 0.95, a[1] - 0.25, a[2] + 0.3], 0.2); m.shard(2, 1, b, [b[0] + 1.0, b[1] - 0.1, b[2] + 0.3], 0.2);
     /* the bed */ m.bed([[-1.75, 0.0, 0.52, 0.3, 0.3, 0.2], [1.8, -0.1, 0.48, -0.5, -0.25, 0.3], [-0.8, -0.6, 0.5, 0.2, 0.2, 0.1], [0.8, -0.6, 0.5, -0.3, 0.3, 0.2], [-0.9, 0.95, 0.33, 0.7, 0.3, -0.2], [0.75, 1.0, 0.3, -0.6, -0.3, 0.2], [0.0, 1.25, 0.24, 0.2, 0.4, 0.3]]);
-    m.ring(0, 0.2, 3.0, 1.75, 20, 0.12, 0.34, 77, 0.72);
-    m.grains([[-3.4, 0.6, 0.09, 0.5], [3.45, 0.7, 0.08, -0.3], [-2.0, 2.2, 0.07, 0.2], [1.6, 2.3, 0.08, 0.9], [3.2, 1.6, 0.06, 0.4], [-3.1, 1.5, 0.06, 0.1], [0.2, 2.4, 0.06, 0.6]]);
-    return fin63(m, g, { H: 4.0, base: [0, 0, 2.8, 1.8], crust: [0, 0.3, 3.5, 2.15, 57],
+    m.ring(0, 0.1, 3.0, 1.3, 10, 0.18, 0.34, 77, 0.72);
+    m.pop(g, [-0.95, 0.35, 0.85], 0.26, 0.5, 0.2, 0.2); m.pop(g, [0.95, -0.2, 0.85], 0.24, -0.3, 0.4, 0.1);
+    m.grains([[-3.4, 0.6, 0.15, 0.5], [3.45, 0.7, 0.14, -0.3], [-2.2, 1.3, 0.13, 0.2], [2.0, 1.3, 0.13, 0.9]]);
+    return fin63(m, g, { H: 4.0, halo: C, crown: m.B.filter(b => b.jb === 2 && b !== g && !b.tp && b.c[1] > g.c[1] + 0.5 * g.h[1]).map(b => loc63(b, [0.3, 1, 0.6])), gl: [loc63(g, [-1, 1, 1]), loc63(g, [1, 1, 1])], tw: loc63(c1, [1, 1, 1]), base: [0, 0, 2.8, 1.8], crust: [0, 0.3, 3.5, 2.15, 57],
       face: face63(g, 0, -0.02, { k: 2.3, er: 1.45, dx: 0.215, lid: 0.72, brow: { y: 0.27, len: 0.24, ang: [-0.04, -0.04], arch: 0, r: 0.026 }, mouth: { w: 0.06, d: 0.0, y: -0.27, r: 0.022 } }),
       pen: glint63(g, [-2.1, 3.9, 0.4], 0.36).concat(glint63(g, [2.3, 3.3, 0.4], 0.22), hop63(g, 0, 1, 0.1, 0.2, 0.55), thru63(g, -0.82, -0.78)) }); }
 ];
@@ -4376,21 +4403,24 @@ function geo63(T, o) { const R = o.R, J = [{ p: [o.base[0], 0, o.base[1]], par: 
   o.spine.forEach((k, i) => { const role = i <= R.chest ? 'spine' : i < R.head ? 'neck' : i === R.head ? 'head' : i < R.hair ? 'top' : 'hair'; J.push({ p: [k[0], k[1], k[2]], par: i ? bj[i - 1] : 0, role, r: Math.max(k[3], 0.04), i, lag: role === 'spine' ? 2 * i / Math.max(1, R.chest) : role === 'neck' ? 2.4 : role === 'hair' ? 3.6 + 1.1 * (i - R.hair) : 3 }); bj.push(J.length - 1); });
   chains.push({ kind: 'body', pts: [], jn: [bj[0]].concat(bj), pin: false });
   (o.limbs || []).forEach((l, li) => { const jl = []; [l.s].concat(l.pts).forEach((p, i) => { J.push({ p, par: jl.length ? jl[jl.length - 1] : bj[l.par], role: 'limb', li, side: l.side, r: l.r, i, lag: 2.6 + 0.9 * i }); jl.push(J.length - 1); }); chains.push({ kind: 'limb', l, li, side: l.side, pts: [], jn: jl, pin: false }); });
-  const B = o.boxes; B.forEach(b => { if (b.g) { b.j = 0; return; } if (b.jb != null && !b.at) { b.j = bj[b.jb]; return; } const at = b.at || b.c; let bd = 1e9; b.j = bj[0]; J.forEach((q, j) => { if (!j || (b.li != null ? !(q.role === 'limb' && q.li === b.li) : q.role === 'limb')) return; const d = Math.hypot(q.p[0] - at[0], q.p[1] - at[1], q.p[2] - at[2]); if (d < bd) { bd = d; b.j = j; } }); });
+  const B = o.boxes; B.forEach(b => { if (b.pop) { b.j = J.length; J.push({ p: b.piv.slice(), par: bj[2], role: 'top', r: 0.05, i: R.head, lag: 3, pop: 1 }); } });
+  B.forEach(b => { if (b.pop) return; if (b.g) { b.j = 0; return; } if (b.jb != null && !b.at) { b.j = bj[b.jb]; return; } const at = b.at || b.c; let bd = 1e9; b.j = bj[0]; J.forEach((q, j) => { if (!j || (b.li != null ? !(q.role === 'limb' && q.li === b.li) : q.role === 'limb')) return; const d = Math.hypot(q.p[0] - at[0], q.p[1] - at[1], q.p[2] - at[2]); if (d < bd) { bd = d; b.j = j; } }); });
   /* how far a point is from the body */ const sd = (b, x, y, z) => { const dx = x - b.c[0], dy = y - b.c[1], dz = z - b.c[2], A = b.ax, qx = Math.abs(dx * A[0][0] + dy * A[0][1] + dz * A[0][2]) - b.h[0], qy = Math.abs(dx * A[1][0] + dy * A[1][1] + dz * A[1][2]) - b.h[1], qz = Math.abs(dx * A[2][0] + dy * A[2][1] + dz * A[2][2]) - b.h[2]; return Math.hypot(Math.max(qx, 0), Math.max(qy, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qy, qz), 0); };
   const f = (x, y, z) => { let d = 1e9; for (let i = 0; i < B.length; i++) { const e = sd(B[i], x, y, z); if (e < d) d = e; } return d; }, cell = 0.06;
   const grad = (x, y, z, e) => { const gx = f(x + e, y, z) - f(x - e, y, z), gy = f(x, y + e, z) - f(x, y - e, z), gz = f(x, y, z + e) - f(x, y, z - e), l = Math.hypot(gx, gy, gz) || 1; return [gx / l, gy / l, gz / l, l / (2 * e)]; };
   const skin = (x, y, z) => { let d = 1e9, bi = 0; for (let i = 0; i < B.length; i++) { const e = sd(B[i], x, y, z); if (e < d) { d = e; bi = i; } } return { top: [[B[bi].j, 1]], s: 1, bi: 1, poolW: 0 }; };
   /* the mesh: each face of each box a small grid (so the pen's line has points to be unsteady at), the points of a box shared by its faces */
-  const pos = [], nor = [], idx = [], si = [], pl = { x: o.base[0], z: o.base[1], rx: o.base[2], rz: o.base[3], h: 0.07 };
-  B.forEach(b => { const n = b.h.map(h => b.grain ? 1 : Math.max(1, Math.min(7, Math.round(2 * h / W63.seg)))), map = new Map(), A = b.ax;
-    const vt = (ia, ib, ic) => { const key = ia * 10000 + ib * 100 + ic; let v = map.get(key); if (v !== undefined) return v; const u = [ia / n[0] * 2 - 1, ib / n[1] * 2 - 1, ic / n[2] * 2 - 1], p = loc63(b, u); v = pos.length / 3; map.set(key, v); pos.push(p[0], Math.max(0.004, p[1]), p[2]); nor.push(0, 0, 0); si.push(b.j); return v; };
+  const pos = [], nor = [], idx = [], si = [], a63 = [], LL = (l => l.map(v => v / Math.hypot(l[0], l[1], l[2])))(W63.L), pl = { x: o.base[0], z: o.base[1], rx: o.base[2], rz: o.base[3], h: 0.07 };
+  B.forEach(b => { const n = b.h.map(h => b.grain ? 1 : Math.max(1, Math.min(7, Math.round(2 * h / W63.seg)))), map = new Map(), A = b.ax, big = !b.tp && !b.grain && !b.pop && Math.min(b.h[0], b.h[1], b.h[2]) > 0.2,
+      rl = A.reduce((s, ax, k) => s + b.h[k] * Math.abs(ax[0] * LL[0] + ax[1] * LL[1] + ax[2] * LL[2]), 0) || 1;
+    const vt = (ia, ib, ic) => { const key = ia * 10000 + ib * 100 + ic; let v = map.get(key); if (v !== undefined) return v; const u = [ia / n[0] * 2 - 1, ib / n[1] * 2 - 1, ic / n[2] * 2 - 1], p = loc63(b, u); v = pos.length / 3; map.set(key, v); pos.push(p[0], Math.max(0.004, p[1]), p[2]); nor.push(0, 0, 0); si.push(b.j);
+      a63.push(big ? u[0] : 0, big ? u[1] : 0, big ? u[2] : 0, ((p[0] - b.c[0]) * LL[0] + (p[1] - b.c[1]) * LL[1] + (p[2] - b.c[2]) * LL[2]) / rl); return v; };
     for (let a = 0; a < 3; a++) for (let s = 0; s < 2; s++) { const u = (a + 1) % 3, v = (a + 2) % 3, sg = s ? 1 : -1, ix = (i, j) => { const q = [0, 0, 0]; q[a] = s ? n[a] : 0; q[u] = i; q[v] = j; return vt(q[0], q[1], q[2]); };
       for (let i = 0; i < n[u]; i++) for (let j = 0; j < n[v]; j++) { const p00 = ix(i, j), p10 = ix(i + 1, j), p11 = ix(i + 1, j + 1), p01 = ix(i, j + 1); if (s) idx.push(p00, p10, p11, p00, p11, p01); else idx.push(p00, p11, p10, p00, p01, p11); [p00, p10, p11, p01].forEach(q => { nor[3 * q] += A[a][0] * sg; nor[3 * q + 1] += A[a][1] * sg; nor[3 * q + 2] += A[a][2] * sg; }); } } });
   const NV = pos.length / 3, P = new Float32Array(pos), Nn = new Float32Array(NV * 3), A4 = new Float32Array(NV * 4), B2 = new Float32Array(NV * 2), SI = new Uint16Array(NV * 4), SW = new Float32Array(NV * 4), H = Math.max.apply(null, J.map(q => q.p[1])), ink = 0.02 + 0.011 * H, HP = new Float32Array(NV * 3);
   for (let v = 0; v < NV; v++) { const l = Math.hypot(nor[3 * v], nor[3 * v + 1], nor[3 * v + 2]) || 1; for (let k = 0; k < 3; k++) { Nn[3 * v + k] = nor[3 * v + k] / l; HP[3 * v + k] = P[3 * v + k] + Nn[3 * v + k] * ink; } HP[3 * v + 1] = Math.max(0, HP[3 * v + 1]); SI[4 * v] = si[v]; SW[4 * v] = 1; A4[4 * v + 1] = Math.hypot((P[3 * v] - pl.x) / pl.rx, (P[3 * v + 2] - pl.z) / pl.rz); A4[4 * v + 2] = P[3 * v + 1] / 0.4; }
   const mk = ps => { const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(ps, 3)); g.setAttribute('normal', new T.BufferAttribute(Nn, 3)); g.setIndex(idx); g.setAttribute('skinIndex', new T.BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new T.BufferAttribute(SW, 4)); return g; };
-  const geo = mk(P); geo.setAttribute('w25a', new T.BufferAttribute(A4, 4)); geo.setAttribute('w25b', new T.BufferAttribute(B2, 2));
+  const geo = mk(P); geo.setAttribute('w25a', new T.BufferAttribute(A4, 4)); geo.setAttribute('w25b', new T.BufferAttribute(B2, 2)); geo.setAttribute('a63', new T.BufferAttribute(new Float32Array(a63), 4));
   const reach = chains.filter(c => c.kind === 'limb' && c.side).map(c => ({ jn: c.jn, side: c.side, len: c.jn.slice(1).reduce((a, j, i) => a + Math.hypot(J[j].p[0] - J[c.jn[i]].p[0], J[j].p[1] - J[c.jn[i]].p[1], J[j].p[2] - J[c.jn[i]].p[2]), 0) }));
   const hairJ = bj.slice(R.hair); if (!reach.length) reach.push({ jn: [bj[Math.max(0, R.hair - 1)]].concat(hairJ), side: 0, len: 0.6 * H });
   J.forEach(q => { q.hw = 0.5; }); return { stage: 3, o, J, chains, geo, hull: mk(HP), f, grad, skin, H, cell, bj, R, pl, reach, pins: [], hairJ, nSp: R.chest + 1, nNk: Math.max(1, R.head - R.chest), ink, NV, ip: 4, salt63: 1 }; }
@@ -4404,9 +4434,24 @@ function tint63(T, S) { if (!S.m30) return; S.t63 = true; S.t48 = true; const C 
       ['smoothstep(0.02, -0.26, l9 + 0.2 * (nz - 0.5))', 'smoothstep(' + tt[2].toFixed(3) + ', ' + (tt[2] - 0.08).toFixed(3) + ', l9 + 0.05 * (nz - 0.5))'],
       ['smoothstep(0.64, 0.70, nz3) * smoothstep(0.42, 0.22, nv)', 'smoothstep(0.66, 0.70, nz3) * 0.35'],
       ['c9 = mix(c9, PENCIL30, 0.5 * (1.0', 'c9 = mix(c9, PENCIL30, 0.2 * (1.0'], ['vec3(1.0, 0.972, 0.91)', 'vec3(1.0, 0.992, 0.975)'], ['base * vec3(1.0, 0.95, 0.84)', 'base * vec3(0.985, 0.985, 0.985)']];
-  const one = (m, flat) => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s63) return; m.userData.s63 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 't63' + way; if (flat) m.flatShading = true; m.needsUpdate = true; };
+  const U = S.u63 || (S.u63 = { value: 0 }), one = (m, flat) => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s63) return; m.userData.s63 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); });
+      if (flat) { sh.uniforms.u63 = U; sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute vec4 a63;\nvarying vec4 vA63;\nvoid main() {\n\tvA63 = a63;'); sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform float u63;\nvarying vec4 vA63;\nvoid main() {').split(TAIL63).join(CLEAR63 + TAIL63); } }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 't63' + way; if (flat) m.flatShading = true; m.needsUpdate = true; };
   one(S.m30.body, 1); one(S.m30.hull); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
 W63.t = [0.45, 0.40, 0.10]; W63.inner = 0.5;
+/* (builder 68) CLEAR, NOT CARD: on every crystal a pale band along the edge toward the lamp and a cooler, darker band toward the far edge (a63.w);
+   a faint blue shade inside that drifts slowly (u63, the clock, as if the lamp moved); on the front face of each big crystal its far edges seen
+   THROUGH it as pale lines with a faint grey under-line (the back face's two edges and the short diagonal to the near corner) */
+const TAIL63 = 'gl_FragColor = vec4(c9, 1.0); }';
+const CLEAR63 = ['{ vec4 a6 = vA63; float g6 = clamp(a6.w, -1.0, 1.0); c9 *= vec3(0.86, 0.90, 0.97);',
+  'c9 *= mix(vec3(1.0), vec3(0.78, 0.84, 0.95), smoothstep(0.2, -0.9, g6));',
+  'c9 = mix(c9, vec3(0.995, 1.0, 1.0), 0.75 * smoothstep(0.55, 0.97, g6));',
+  'float d6 = N30(bp * 2.3 + vec3(0.11 * u63, 0.03 * u63, 0.07 * u63)); c9 *= mix(vec3(1.0), vec3(0.85, 0.90, 1.0), 0.75 * smoothstep(0.48, 0.78, d6));',
+  'if (a6.z > 0.99) { vec2 p = a6.xy, fw = max(fwidth(p), vec2(1e-4)), o6 = vec2(-0.80, -0.76), dd = vec2(-0.97) - o6; float s6 = r29.y / 720.0;',
+  '  float l1 = (1.0 - smoothstep(0.7 * s6, 1.5 * s6, abs(p.y - o6.y) / fw.y)) * step(o6.x, p.x) * step(p.x, 0.93);',
+  '  float l2 = (1.0 - smoothstep(0.7 * s6, 1.5 * s6, abs(p.x - o6.x) / fw.x)) * step(o6.y, p.y) * step(p.y, 0.93);',
+  '  float u6 = clamp(dot(p - o6, dd) / dot(dd, dd), 0.0, 1.0); float l3 = 1.0 - smoothstep(0.7 * s6, 1.5 * s6, length((p - o6 - dd * u6) / fw));',
+  '  float k1 = (1.0 - smoothstep(0.5 * s6, 1.2 * s6, abs(p.y - o6.y + 2.2 * s6 * fw.y) / fw.y)) * step(o6.x, p.x) * step(p.x, 0.93), k2 = (1.0 - smoothstep(0.5 * s6, 1.2 * s6, abs(p.x - o6.x - 2.2 * s6 * fw.x) / fw.x)) * step(o6.y, p.y) * step(p.y, 0.93);',
+  '  c9 *= 1.0 - 0.16 * max(k1, k2); c9 = mix(c9, vec3(1.0), 0.95 * max(max(l1, l2), l3)); } }', ''].join('\n');
 /* one stage: its skin goes in Water's stage-3 slot for the moment of building (geo26 hands back a skin that is already there); the figure then carries its own stage */
 function salt63Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const keep = [S25[2], W26.geo[3], W26.ROLE[3]]; let g = null; const G0 = W63.geo[stage] || (W63.geo[stage] = geo63(T, SPEC63[stage - 1]()));
   S25[2] = () => G0.o; W26.geo[3] = G0; W26.ROLE[3] = G0.R;
@@ -4416,6 +4461,7 @@ function salt63Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)
   if (f && hb && S.F) { const D = new V3().fromArray(f.d).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), D).normalize(), Uv = new V3().crossVectors(D, Rv), X = new V3().fromArray(hb.ax[0]), roll = Math.atan2(X.dot(Uv), X.dot(Rv)), q = new T.Quaternion().setFromAxisAngle(D, roll), c0 = new V3().fromArray(f.c).sub(new V3().fromArray(J[jh].p));
     S.F.eyes.map(e => e.g).concat(S.F.brows.map(b => b.g), [S.F.mouth, S.F.om]).forEach(m => { if (!m) return; m.position.sub(c0).applyQuaternion(q).add(c0); m.quaternion.premultiply(q); m.userData.p0 = m.position.clone(); m.userData.q0 = m.quaternion.clone(); }); }
   if (o.crust) { try { S.crust63 = crust63(T, o); S.root.add(S.crust63); } catch (e) { W63.err = String(e && e.stack); } }
+  try { lit63(T, S, o); } catch (e) { W63.err = String(e && e.stack); }
   /* salt is dry: nothing drips from it */ S.drips.forEach(d => { d.g.visible = false; }); S.drips.length = 0;
   /* the pen's own strokes: each rides the joint of the crystal it is on */
   S.a63 = { strokes: (o.pen || []).map(s => { const j = s.b.j; return { j, w: s.w, o: s.air ? { smooth: 0, wob: 0.3, min: 2, trim: 0 } : { smooth: 0, wob: 0.35, min: 2, trim: 0 }, pts: s.pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }), pts: Array.from({ length: 40 }, () => new V3()) };
@@ -4444,6 +4490,142 @@ KIT.salt63Fig = salt63Fig; KIT.SALT63 = W63;
 /* behind the switch: Salt's bench figure is the spirit at its stage (the jar keeps the old Salt) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homsalt' && KIT.salt63 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = salt63Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W63.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W63 END
+// ==== W68 BEGIN
+// (builder 68) SALT ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle68; false or ?i68=0 gives Water's rest back on it).
+// Crystal does not sway. Salt holds dead still, then makes one small, exact, sudden move and holds again, like a bird or a clockwork tick, each
+// arrival ending in a tiny click (a quick damped overshoot): the eyes slide to one side and back; the brows come down a notch; the whole cube tips a
+// few degrees on its corner (onto the next corner if it must: it is lifted so no corner goes into the wood) and its loose grains hop; a shard lifts,
+// taps and lowers. Between moves only the LIGHT moves: a bold glint runs slowly along the main cube's upper edge and flares at the corner, a
+// twinkle on one bud, the blue shade inside the faces drifts (u63). And it GROWS: now and then a small cube pops out on a corner with a snap and
+// a puff of grains (they land on the wood and are slowly drawn back into the bed) while an older bud is quietly drawn back in elsewhere.
+//  1 the grain tips and rocks on its corner like a dropped dice settling, looks about wide-eyed, a double blink
+//  2 the twin lifts its one shard to its askew hat-cube, the hat straightens, holds, slips back askew with a click; a frown
+//  3 the cluster drums its two shard hands on the wood, chin up (tipped back), a slow proud blink, a look, a brow notch, primly straightens
+//  4 the crown points: its raised shard taps the air three times as if counting, eyes on it, then a frown; its planted shard taps twice
+//  5 the druse barely moves: the halo of shards opens and closes a fraction like a slow breath, a glint chases round the crown, one eye opens,
+//    looks, and shuts
+// Boxes only turn about points inside the crystal they grow from (hat, buds, halo) or with the whole body; shards turn at their root; planted
+// shards are re-aimed each frame so their points stay on the wood. Nothing comes apart but the grains.
+KIT.idle68 = KIT.idle68 == null ? !(typeof location !== 'undefined' && /[?&]i68=0/.test(String(location.search))) : KIT.idle68;
+const W68 = { err: null, n: 0, ms: 0, jar: 0.55 };
+/* the new Salt is ON by default from here (bench and jar both work at all five stages); ?t63=0 on the page gives the old Salt */
+if (KIT.salt63 == null && !(typeof location !== 'undefined' && /[?&]t63=0/.test(String(location.search)))) KIT.salt63 = 1;
+const on68 = S => !!(S && S.way63 && KIT.idle68 !== false);
+const clk68 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W68.jar : 1) + S.st * 2.3;
+/* time since this cycle's moment t0 (period p) */ const at68 = (tt, p, t0) => fr52((tt - t0) / p) * p;
+/* a tiny click at an arrival: a quick damped overshoot */ const ck68 = (d, k) => d > 0 && d < 0.6 ? 0.1 * (k || 1) * Math.exp(-d / 0.07) * Math.sin(d / 0.03) : 0;
+/* one sudden exact move: in (a s), hold (h), back (b), each arrival a click; 0 outside */
+const mv68 = (d, a, h, b, k) => { if (d <= 0) return 0; if (d < a) return 1 - Math.pow(1 - d / a, 3); d -= a; if (d < h) return 1 + ck68(d, k); d -= h; if (d < b) return Math.pow(1 - d / b, 3); return -ck68(d - b, k); };
+/* a short tap: down and up at once */ const tap68 = d => d <= 0 || d > 0.5 ? 0 : d < 0.07 ? sm52(d / 0.07) : d < 0.11 ? 1 : 1 - sm52((d - 0.11) / 0.12) + ck68(d - 0.23, 0.6);
+/* the moments of each stage: period, and what happens (all times in s within the period) */
+const P68 = [null, { p: 8.5 }, { p: 10 }, { p: 11 }, { p: 11 }, { p: 12 }];
+/* everything the idle moves at clock tt (the face numbers, the body's tip and chin, the hat, shards, halo, buds, the last knock for the grains) */
+function ev68(S, tt) { if (S.e68 && S.e68.tt === tt) return S.e68; const st = S.st, p = P68[st].p, a = t0 => at68(tt, p, t0), E = { tt, tip: 0, chin: 0, lookx: 0, looky: -0.1, brow: 0, blink: 0, wide: 0, lidx: 0, eye1: null, hat: 0, sh: [], lift: [], halo: 1, kick: [] };
+  const kick = (t0, kind, amp) => { E.kick.push([a(t0), kind, amp || 1]); };
+  const blk = (t0, len) => { E.blink = Math.max(E.blink, pl52(a(t0), 0, len || 0.13, 0.04)); };
+  if (st === 1) { E.tip = 0.14 * mv68(a(0.6), 0.09, 1.1, 0.12, 2.6) - 0.11 * mv68(a(4.7), 0.09, 0.9, 0.12, 2.6); kick(0.69, 'hop'); kick(1.91, 'hop', 0.6); kick(4.79, 'hop'); kick(5.81, 'hop', 0.6);
+    E.lookx = -1.5 * mv68(a(2.3), 0.07, 0.6, 0.07) + 1.5 * mv68(a(3.15), 0.07, 0.6, 0.07) + 0.8 * mv68(a(7.2), 0.07, 0.5, 0.07); E.looky = -0.1 + 0.7 * mv68(a(7.2), 0.07, 0.5, 0.07); E.wide = 0.5 * (mv68(a(0.6), 0.05, 0.8, 0.3) + mv68(a(2.3), 0.05, 1.4, 0.2)); blk(6.0); blk(6.3); }
+  if (st === 2) { const up = mv68(a(0.8), 0.22, 2.0, 0.3); E.sh[0] = 0.85 * up; E.hat = mv68(a(1.12), 0.1, 1.05, 0.06, 1.8); kick(2.33, 'hop', 0.7);
+    E.lookx = -0.9 * up + 1.5 * mv68(a(5.0), 0.07, 0.8, 0.07); E.looky = -0.1 + 1.0 * up; E.brow = 0.6 * mv68(a(0.9), 0.08, 1.2, 0.1) - 0.8 * mv68(a(2.35), 0.07, 1.4, 0.12);
+    E.tip = -0.08 * mv68(a(6.9), 0.09, 0.8, 0.11, 1.6); kick(6.99, 'hop'); kick(7.9, 'hop', 0.5); blk(8.7); }
+  if (st === 3) { [0.8, 1.05, 1.3, 1.55, 1.95, 2.2].forEach((t0, i) => { const d = a(t0), v = tap68(d); E.lift[i % 2] = Math.max(E.lift[i % 2] || 0, v); kick(t0 + 0.07, 'tap' + (i % 2), 0.5); });
+    E.chin = -0.1 * mv68(a(3.0), 0.12, 2.7, 0.14); E.blink = Math.max(E.blink, pl52(a(4.2), 0, 0.55, 0.22)); E.lookx = 1.4 * mv68(a(6.4), 0.07, 0.9, 0.07); E.brow = -0.7 * mv68(a(7.7), 0.07, 1.2, 0.1);
+    E.tip = 0.06 * mv68(a(9.3), 0.09, 0.35, 0.07, 2.2); kick(9.39, 'hop', 0.6); kick(9.81, 'hop', 0.8); }
+  if (st === 4) { const pt = mv68(a(0.6), 0.1, 2.1, 0.2); E.sh[0] = 0.12 * pt - [0.95, 1.4, 1.85].reduce((s, t0) => s + 0.22 * tap68(a(t0)), 0); E.lookx = 0.9 * pt - 1.4 * mv68(a(6.5), 0.07, 0.8, 0.07); E.looky = -0.1 + 0.9 * pt;
+    E.brow = -0.9 * mv68(a(2.3), 0.07, 1.7, 0.12); E.tip = -0.07 * mv68(a(4.6), 0.09, 1.0, 0.11, 1.6); kick(4.69, 'hop'); kick(5.8, 'hop', 0.6);
+    [8.0, 8.32].forEach(t0 => { E.lift[1] = Math.max(E.lift[1] || 0, tap68(a(t0))); kick(t0 + 0.07, 'tap1', 0.5); }); blk(9.6); }
+  if (st === 5) { E.halo = 1 + 0.04 * Math.sin(2 * PI * tt / 6.2); const op = mv68(a(3.0), 0.12, 2.6, 0.18); E.eye1 = op; E.lookx = op * (1.3 * mv68(a(3.5), 0.08, 0.7, 0.08) - 1.3 * mv68(a(4.5), 0.08, 0.7, 0.08)); E.looky = -0.1 + 0.2 * op; }
+  /* the buds: A pops out, B is drawn in; later B pops out and A is drawn in (pb s apart) */
+  const pb = 9.7, v = fr52(tt / (2 * pb) + 0.02 * st), pop = (u0, uin) => { const d = (fr52(v - u0)) * 2 * pb, din = fr52(v - uin) * 2 * pb; if (fr52(v - u0) < fr52(uin - u0)) return d < 0.12 ? 1.3 * (1 - Math.pow(1 - d / 0.12, 3)) : 1 + 0.3 * Math.exp(-(d - 0.12) / 0.06) * Math.cos((d - 0.12) / 0.035); return Math.max(0.02, 1 - sm52(din / 2.4)); };
+  E.bud = [pop(0.05, 0.55), pop(0.5, 1.05)]; E.kick.push([fr52(v - 0.05) * 2 * pb, 'puff0', 1], [fr52(v - 0.5) * 2 * pb, 'puff1', 1]);
+  S.e68 = E; return E; }
+/* the clip's numbers: only the face (the body is moved in pose68) */
+function rest68(S, t, o, q) { const E = ev68(S, clk68(S)), f = (S.F && S.F.f) || {};
+  q.sq = 0; q.lean = 0; q.bow = 0; q.hair = 0; q.armR = q.armL = 0; q.px = q.pz = 1; q.tilt = 0; q.nod = 0; q.hturn = 0;
+  q.lookx = E.lookx; q.looky = E.looky; q.brow = E.brow; q.blink = E.blink; q.wide = E.wide; q.lidx = 0;
+  if (!E.blink) { const u = fr52(clk68(S) / 5.3 + S.st * 0.1); q.blink = S.st === 5 ? 0 : pl52(u, 0, 0.022, 0.008); } }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on68(S) && S.k68) return rest68(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* the parts it moves, found once */
+function init68(S) { const G = S.G, J = G.J, o = G.o, T = S.T, V3 = T.Vector3, g = o.boxes[0], bj = G.bj, K = { g, pops: [], shards: [], C: [] };
+  J.forEach((q, j) => { if (q.pop) K.pops.push(j); });
+  [-1, 1].forEach(i => [-1, 1].forEach(j2 => [-1, 1].forEach(k => K.C.push(new V3().fromArray(loc63(g, [i, j2, k])))))); K.gc = new V3().fromArray(g.c); K.lo = Math.min.apply(null, K.C.map(c => c.y));
+  K.loP = K.C.reduce((a, c) => c.y < a.y ? c : a, K.C[0]).clone();
+  const hat = o.boxes.find(b => b.hat); if (hat) { const m0 = new T.Matrix4().makeBasis(new V3().fromArray(g.ax[0]), new V3().fromArray(g.ax[1]), new V3().fromArray(g.ax[2])), m1 = new T.Matrix4().makeBasis(new V3().fromArray(hat.ax[0]), new V3().fromArray(hat.ax[1]), new V3().fromArray(hat.ax[2]));
+    const q0 = new T.Quaternion().setFromRotationMatrix(m0), q1 = new T.Quaternion().setFromRotationMatrix(m1); K.hat = { j: bj[3], c: new V3().fromArray(hat.c), q: q0.multiply(q1.invert()) }; }
+  if (o.halo) K.halo = { j: bj[4], c: new V3().fromArray(o.halo) };
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; const jn = c.jn, r = new V3().fromArray(J[jn[0]].p), t = new V3().fromArray(J[jn[jn.length - 1]].p); K.shards.push({ jn, r, t, len: r.distanceTo(t), planted: t.y < 0.25, side: c.side || 1 }); });
+  /* in shard order: free shards are moved by E.sh, planted ones lifted by E.lift */ let fi = 0, pi = 0; K.shards.forEach(s => { s.k = s.planted ? pi++ : fi++; });
+  S.v68 = { q: new T.Quaternion(), q2: new T.Quaternion(), a: new V3(), b: new V3(), c: new V3(), z: new V3(0, 0, 1), x: new V3(1, 0, 0), m: new T.Matrix4() };
+  S.k68 = K; return K; }
+/* turn bones about a point (positions about it, their own turn too) */
+function turn68(B, list, piv, q) { list.forEach(j => { const b = B[j]; b.position.sub(piv).applyQuaternion(q).add(piv); b.quaternion.premultiply(q); }); }
+/* the grains it scatters: small cubes of the scene (not of its body), knocked up by a tip or a tap, puffed out by a bud, drawn slowly back */
+function fx68(S, K) { const T = S.T, g = K.g, lin = h => new T.Color(h).convertSRGBToLinear(), r = rnd63(31 + S.st), hs = Math.max(0.07, 0.17 * g.h[0]), geo = new T.BoxGeometry(2, 2, 2);
+  const wm = new T.MeshLambertMaterial({ color: lin(0xf1f5fb), emissive: lin(0x3a4250) }), im = new T.MeshBasicMaterial({ color: lin(0x1d1a18), side: T.BackSide });
+  const mk = () => { const gr = new T.Group(), a = new T.Mesh(geo, wm), b = new T.Mesh(geo, im); b.scale.setScalar(1.14); a.userData.plain = b.userData.plain = true; a.userData.nobox = b.userData.nobox = true; gr.add(a); gr.add(b); gr.scale.setScalar(hs); gr.rotation.set(r() * 1.5, r() * 3, r() * 1.5); S.root.add(gr); return gr; };
+  K.fx = []; const lo = K.loP, R = 1.35 * g.h[0] + 0.35;
+  for (let i = 0; i < 4; i++) { const an = (i + 0.3 + 0.3 * r()) / 4 * PI + 0.05, home = [lo.x + Math.cos(an) * R * (i % 2 ? 1 : -1), hs, lo.z + Math.min(0.25, 0.2 * Math.sin(an) * R)]; K.fx.push({ m: mk(), home, kind: 'hop', i }); }
+  for (let i = 0; i < 3; i++) K.fx.push({ m: mk(), kind: 'puff', i, dir: [(i - 1) * 0.9 + 0.25 * r(), 0.5 + 0.4 * r()] }); }
+function grains68(S, K, E, B) { if (!K.fx) return; const g = K.g, J = S.G.J, V = S.v68, H = g.h[0];
+  /* the latest knock of each kind */ const last = {}; E.kick.forEach(k => { const c = k[1].replace(/[0-9]/g, ''), key = k[1]; if (!last[key] || k[0] < last[key][0]) last[key] = k; if (!last[c] || k[0] < last[c][0]) last[c] = k; });
+  K.fx.forEach(f => { const m = f.m;
+    if (f.kind === 'hop') { const k = [last.hop, last['tap' + (f.i % 2)]].filter(Boolean).reduce((a, b) => (!a || b[0] < a[0] ? b : a), null), d = k ? k[0] : 9, u = d / 0.34, amp = k ? k[2] * (k[1] === 'hop' ? 1 : 0.6) : 0;
+      const y = u < 1 ? 4 * u * (1 - u) * 0.45 * H * amp : 0, out = (u < 1 ? u : 1) * 0.18 * H * amp * Math.max(0, 1 - Math.max(0, d - 0.34) / 3.5), sx = f.home[0] < K.loP.x ? -1 : 1;
+      m.position.set(f.home[0] + sx * out, f.home[1] + y, f.home[2]); m.visible = true; if (u < 1) m.rotation.z = f.i + 3 * u * amp; return; }
+    /* puff: from the bud that just popped, out and down on to the wood, then crawling back to the bed and drawn into it */
+    const k = [last.puff0, last.puff1].filter(Boolean).reduce((a, b) => (!a || b[0] < a[0] ? b : a), null), d = k ? k[0] : 99, bj = K.pops[k && k[1] === 'puff1' ? 1 : 0];
+    if (d > 6 || bj == null) { m.visible = false; return; } const bp = B[bj].position, fl = 0.5, u = Math.min(1, d / fl), sx = f.dir[0] + (bp.x < K.gc.x ? -0.5 : 0.5), lx = bp.x + sx * 1.1 * H, lz = Math.min(K.loP.z + 0.3, bp.z + f.dir[1] * 0.5 * H);
+    if (d < fl) { m.position.set(bp.x + (lx - bp.x) * u, Math.max(0.6 * m.scale.x, bp.y * (1 - u * u) + 1.4 * H * u * (1 - u)), bp.z + (lz - bp.z) * u); m.rotation.x = f.i + 6 * u; }
+    else { const w = sm52((d - fl - 1.2) / 4); m.position.set(lx + (K.loP.x - lx) * 0.6 * w, 0.6 * m.scale.x, lz + (K.loP.z + 0.3 - lz) * 0.6 * w); }
+    const s = Math.max(0.07, 0.17 * H) * (d < 0.08 ? d / 0.08 : 1) * (1 - sm52((d - 4.5) / 1.4)); m.scale.setScalar(Math.max(0.0005, s)); m.visible = s > 0.002; }); }
+/* after the whole play chain: the bud scales, the hat, the halo, free shards; then the whole body tips and lifts its chin; then planted shards
+   are re-aimed so their points stay on the wood; then the lids, the light, the grains */
+function pose68(S, o) { const K = S.k68 || init68(S), G = S.G, J = G.J, B = S.bones, V = S.v68, T = S.T, tt = clk68(S), E = ev68(S, tt), k = S.jar ? 0.6 : 1, g = K.g, H = g.h[0];
+  if (S.u63) S.u63.value = tt;
+  /* buds: grow out of and draw back into the corner they sit on */ K.pops.forEach((j, i) => { B[j].scale.setScalar(Math.max(0.02, E.bud[i])); });
+  /* the hat: turned toward lying straight on the cube, about its own middle (it stands in the cube's corner) */
+  if (K.hat && E.hat) { V.q.identity().slerp(K.hat.q, Math.min(1.1, 0.8 * E.hat)); turn68(B, [K.hat.j], K.hat.c, V.q); }
+  /* the halo breathes: its joint scaled about the halo's middle */ if (K.halo) { const b = B[K.halo.j], s = 1 + (E.halo - 1) * k; b.position.sub(K.halo.c).multiplyScalar(s).add(K.halo.c); b.scale.multiplyScalar(s); }
+  /* free shards turn at their root, in the picture's plane (raise > 0) */ K.shards.forEach(s => { if (s.planted) return; const an = (E.sh[s.k] || 0) * k; if (!an) return; V.q.setFromAxisAngle(V.z, s.side * an); turn68(B, s.jn, s.r, V.q); });
+  /* the whole body: tipped about its corner on the wood (sideways), chin up (back), lifted if another corner would go into the wood */
+  const tip = E.tip * k, chin = E.chin * k; if (tip || chin) { V.q.setFromAxisAngle(V.z, tip); V.q2.setFromAxisAngle(V.x, chin); V.q.multiply(V.q2); let lo = 1e9; K.C.forEach(c => { V.a.copy(c).sub(K.loP).applyQuaternion(V.q); lo = Math.min(lo, V.a.y + K.loP.y); }); const dy = Math.max(0, K.lo - lo);
+    for (let j = 1; j < B.length; j++) { const b = B[j]; b.position.sub(K.loP).applyQuaternion(V.q).add(K.loP); b.position.y += dy; b.quaternion.premultiply(V.q); } }
+  /* planted shards: their points stay on the wood (lifted a little to tap), whatever the body does */
+  K.shards.forEach(s => { if (!s.planted) return; const jn = s.jn, R = B[jn[0]].position, tp = B[jn[jn.length - 1]].position, lf = (E.lift[s.k] || 0) * k; V.a.copy(tp).sub(R).normalize(); V.b.copy(s.t); V.b.y += lf * 0.45 * H; V.b.sub(R).normalize(); if (V.a.dot(V.b) > 0.99999) return; V.q.setFromUnitVectors(V.a, V.b); V.c.copy(R); turn68(B, jn, V.c, V.q); });
+  lids68(S, E); light68(S, K, E, tt); if (!S.jar) { if (!K.fx && S.m30) fx68(S, K); grains68(S, K, E, B); } }
+/* the lids: the same tone as the face, a pen line along the edge; the lid lies only over the eye (sized to the eye at its height), so no pale
+   patch shows above it */
+function lids68(S, E) { const Fc = S.F, f = Fc && Fc.f; if (!f) return; const q = S.q0 || {}, lid0 = Math.max(f.lid || 0, q.lidx || 0);
+  Fc.eyes.forEach((e, i) => { let L = lid0; if (E.eye1 != null && i === 1) L = lid0 + (0.12 - lid0) * Math.min(1, E.eye1); const er = e.er, ry0 = 1.25 * er, r = er * 1.14;
+    if (L < 0.03) { e.lid.visible = false; return; } e.lid.visible = true; const h = ry0 * (1 - 2 * Math.min(1, L)), top = ry0 * 1.04, c = (h + top) / 2, ry = Math.max(0.02 * er, (top - h) / 2), w = er * Math.sqrt(Math.max(0.05, 1 - Math.pow(c / ry0, 2)));
+    e.lid.position.y = c; e.lid.scale.set(Math.max(w * 1.03, ry * 0.8) / r, ry / r, 0.42); if (E.eye1 != null && i === 1) { e.gl.visible = L < 0.5; } }); }
+/* the light: the glint runs along the upper edge and flares at the corner (stage 5: hops round the crown, flaring at each); the twinkle on a bud */
+function light68(S, K, E, tt) { const G = S.G, o = G.o, hp = G.J[G.bj[G.R.head]].p, gl = S.gl63, tw = S.tw63;
+  if (gl) { const s0 = gl.userData.s0 * 1.15; let p = null, s = 0;
+    if (S.st === 5 && o.crown && o.crown.length) { const n = o.crown.length, u = fr52(tt / (1.4 * n)) * n, i = Math.floor(u), f = u - i; p = o.crown[i]; s = f < 0.25 ? sm52(f / 0.25) * (1 + 0.7 * pl52(f, 0.12, 0.3, 0.06)) : 1 - sm52((f - 0.55) / 0.35); }
+    else { const [a, c] = gl.userData.e, u = fr52(tt / 5.6 + 0.13 * S.st); if (u < 0.62) { const w = sm52(u / 0.62); p = [a[0] + (c[0] - a[0]) * w, a[1] + (c[1] - a[1]) * w, a[2] + (c[2] - a[2]) * w]; s = 0.55 + 0.45 * sm52(u / 0.12); }
+      else if (u < 0.86) { p = c; const d = (u - 0.62) * 5.6; s = 1 + 0.6 * Math.exp(-Math.pow((d - 0.18) / 0.22, 2)) - 0.9 * sm52((u - 0.74) / 0.12); } else { p = a; s = 0; } }
+    gl.visible = s > 0.04; gl.position.set(p[0] - hp[0], p[1] - hp[1], p[2] - hp[2]); gl.scale.setScalar(s0 * Math.max(0.001, s)); gl.material.rotation = 0.25 * Math.sin(tt * 0.7); }
+  if (tw) { const u = fr52(tt / 3.1 + 0.4), s = pl52(u, 0.0, 0.16, 0.06) * (1 + 0.3 * Math.sin(u * 60)); tw.visible = s > 0.05; tw.scale.setScalar(tw.userData.s0 * 1.3 * Math.max(0.001, s)); }
+  /* the shade under it stays put; its dark spot follows the corner it stands on */ }
+function hide68(S) { const K = S.k68; if (!K) return; (K.fx || []).forEach(f => { f.m.visible = false; }); if (S.gl63) S.gl63.visible = false; if (S.tw63) S.tw63.visible = false; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way63) return f0(grp, clip, t, o);
+  /* the old error at play27 (line ~1753): the margin's material carries no line width once the pen and wash has swapped it; give it one */
+  const gw = () => { const m = S.hull27 && S.hull27.material; if (m && !m.userData.w) { m.userData.w = { value: 0 }; return true; } return false; }; gw();
+  const safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  let r = safe(); if (!on68(S)) return r; S.c68 = clip;
+  if (clip === 'rest') { const c0 = rn44(); try { if (!S.k68) { init68(S); r = safe(); } } catch (e) { W68.err = 'init ' + String(e && e.stack); } try { pose68(S, o || {}); } catch (e) { W68.err = 'pose ' + String(e && e.stack); } W68.ms += rn44() - c0; W68.n++; }
+  else hide68(S); return r; })(play26);
+KIT.spirit26.play = play26;
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Salt (fitted to the glass), each playing its rest as it is drawn */
+function drive68(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf68 === fr) return; S.jf68 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W68.err = String(e && e.stack); } }; }
+function jar68(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = salt63Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.35, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.3 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive68(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = salt63Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 1.02, sg >= 4 ? 1.5 : 1.35, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + (sg >= 3 ? 0.4 : 0.34) - q.y0 * q.s, -q.cz * q.s + 0.1); drive68(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'salt' && KIT.salt63 && KIT.idle68 !== false && T && T.SkinnedMesh) { try { jar68(T, j); } catch (e) { W68.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W68 = W68;
+// ==== W68 END
 // ==== W64 BEGIN
 // (builder 64) SEEDLING AS A SPIRIT, five stages, stills only (AA.rxKit.seed64 = 1, or ?g64=1 on the page; OFF by default: the game shows the old Seedling).
 // Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53) and Slime (61) were: each stage is a set of numbers like a stage of S25, put in
