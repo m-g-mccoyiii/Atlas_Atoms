@@ -5616,7 +5616,8 @@ function post77(S, X) { const F = fig77(S), K = S.k73, B = S.bones, J = S.G.J, T
   if (e.ph === 'count' || e.ph === 'up' || e.ph === 'hit' || e.ph === 'pour' || e.ph === 'rise') { const q = TW || (Z.mc ? new V3(Z.mc.x, Z.mc.y, Z.mc.z) : null); if (q) { const dx = q.x - hp.x, dy = q.y - hp.y, dz = q.z - hp.z, hz = Math.hypot(dx, dz) || 1; const c = Math.cos(e.yaw); lk = [Math.max(-1.2, Math.min(1.2, (dx / hz) * 1.4 * c)), Math.max(-1, Math.min(0.4, Math.atan2(dy, hz) * 1.2))]; } }
   S.lk77 = e.ph === 'wait' ? null : lk;
   /* for the page: the foot, the middle, the height, the tip */ const bw = Bl.clone().applyMatrix4(R.matrixWorld), mid = F.P0.clone(); mid.y += 0.5 * F.H; mid.sub(F.P0); mid.x *= k; mid.y *= k * sy; mid.z *= k; mid.applyQuaternion(Q).add(Bl).applyMatrix4(R.matrixWorld);
-  S.h77 = { base: [bw.x, bw.y, bw.z], c: [mid.x, mid.y, mid.z], H: F.H * k * sy * ws * (st > 1 ? 1 : 0.4), Wd: (F.x1 - F.x0) * k * ws, tip: tipL ? (v => [v.x, v.y, v.z])(tipL.clone().applyMatrix4(R.matrixWorld)) : null, head: [hp.x, hp.y, hp.z], ws }; }
+  S.h77 = { base: [bw.x, bw.y, bw.z], c: [mid.x, mid.y, mid.z], H: F.H * k * sy * ws * (st > 1 ? 1 : 0.4), Wd: (F.x1 - F.x0) * k * ws, tip: tipL ? (v => [v.x, v.y, v.z])(tipL.clone().applyMatrix4(R.matrixWorld)) : null, head: [hp.x, hp.y, hp.z], ws };
+  try { thread82(S, X, Bl); } catch (err) { W77.err = 'thread82 ' + String(err && err.stack); } }
 /* the spent state at rest: everything of the act's last pose but the move (the page sets S.spent77 while the game holds Brimstone spent) */
 function spent77(S) { const F = fig77(S), K = S.k73, T = S.T, V3 = T.Vector3; if (!K) return;
   if (!S.w77) S.w77 = { inv: new T.Matrix4(), a: new V3(), b: new V3(), c: new V3(), d: new V3(), e: new V3(), f: new V3(), g: new V3(), h: new V3(), q: new T.Quaternion(), q1: new T.Quaternion(), q2: new T.Quaternion(), y: new V3(0, 1, 0), x: new V3(1, 0, 0), ax: new V3() };
@@ -5632,10 +5633,59 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
   if (!S || !S.way69) return f0(grp, clip, t, o);
   if (clip === 'act' && on77(S) && o && o.bites && o.bites.s77) { try { return act77(f0, grp, S, t, o); } catch (err) { W77.err = String(err && err.stack); S.x77 = null; return f0(grp, clip, t, o); } }
   if (S.x77) { S.x77 = null; S.lk77 = null; }
+  if (S.u82) S.u82.value.x = 0; if (S.th82 && S.th82.sp[0].visible !== undefined) { S.th82.sp.forEach(m => { m.visible = false; }); S.th82.up.forEach(q => { q.m.visible = false; }); }
   const r = f0(grp, clip, t, o); hz77(S); if (clip === 'rest' && S.spent77 && on77(S) && S.k73) { try { spent77(S); } catch (err) { W77.err = 'spent ' + String(err && err.stack); } } return r; })(play26);
 KIT.spirit26.play = play26;
 /* while the smoke is away the stretched skin between the lump's top and the foot of the smoke is its thread: no pen line on it (a pen outline there reads as a pipe) */
 brk69 = (f0 => function (S, s) { const m = f0(S, s); try { const X = S && S.x77, F = S && S.f77; if (X && F && X.e.hb > 0.05 && S.st > 1) { const P = s.tp.P, n = s.tp.nv, y0 = S.G.J[S.G.bj[3]].p[1] - 0.12, y1 = F.P0.y + 0.32; for (let i = 0; i < n; i++) { const y = P[3 * i + 1]; if (y > y0 && y < y1 && Math.hypot(P[3 * i], P[3 * i + 2]) < 1.0) m[i] = 1; } } } catch (e) { W77.err = String(e && e.stack); } return m; })(brk69);
+/* (builder 82, owner's fix) THE THREAD IS A WISP OF SMOKE, NOT A ROD. The stretched skin between the lump and the smoke away from it (stage 1: the
+   whole long wisp) read as a dark glossy tube. Those parts of the skin are now not drawn while the smoke is away (a77, a mark per vertex: where the
+   skin is shared between the lump and the smoke, or stage 1's wisp; every triangle touching one is dropped by the wash and the margin, and the pen
+   line leaves them out), and the thread is drawn instead as soft puffs of Brimstone's own smoke (tex73, a broken pen edge) laid along the way the
+   smoke went (the bench, over the book's edge: S77's way0 / wayB) or along the wisp's own bones: thin, wavering and drifting, thinning to nothing in
+   stretches that travel along it, with a few small puffs lifting off it. KIT.thread82 = false gives the old tube. */
+KIT.thread82 = KIT.thread82 == null ? true : KIT.thread82;
+function mark82(S) { const g = S.body && S.body.geometry; if (!g || !g.attributes.skinIndex) return false; const F = fig77(S), key = 'a82b_' + S.st; if (g.userData[key]) return true;
+  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, n = si.count, a = new Float32Array(n), st = S.st, set = st <= 1 ? new Set(F.wisp) : F.set;
+  for (let i = 0; i < n; i++) { let w = 0; for (let c = 0; c < 4; c++) { const b = si.array[4 * i + c], x = sw.array[4 * i + c]; if (set.has(b)) w += x; } a[i] = Math.max(0, Math.min(1, w)); }
+  g.setAttribute('a77', new S.T.BufferAttribute(a, 1)); g.userData[key] = true; return true; }
+function mat82(S) { if (S.u82) return; const T = S.T; S.u82 = { value: new T.Vector4(0, 0, 0, 0) }; const one = m => { if (!m || !m.onBeforeCompile || m.userData.s82) return; m.userData.s82 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey;
+    m.onBeforeCompile = sh => { f0(sh); sh.uniforms.u82 = S.u82; sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute float a77;\nvarying float v82;\nvoid main() {\n\tv82 = a77;');
+      sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec4 u82;\nvarying float v82;\nvoid main() {\n\tif (u82.x > 0.5 && (u82.y > 0.5 ? v82 > 0.02 : (v82 > 0.002 && v82 < 0.998))) discard;'); };
+    m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'u82'; m.needsUpdate = true; };
+  if (S.m30) { one(S.m30.body); one(S.m30.hull); } }
+const n82 = x => 0.5 + 0.5 * Math.sin(x * 1.13 + 0.7) * Math.sin(x * 0.53 + 2.1 + Math.sin(x * 0.29));
+/* the soft thread: puffs laid on a path (points in the figure's frame), wavering, drifting, broken into stretches; a few lift off it */
+function lay82(S, pts, o) { const T = S.T, K = S.k73, R = S.root; if (!K) return; const tt = (S.tt73 || 0), U = K.U || 0.3;
+  let L = S.th82; if (!L) { const tex = tex73(T), lin = h => new T.Color(h).convertSRGBToLinear(), mk = (c) => { const m = new T.Sprite(new T.SpriteMaterial({ map: tex, color: lin(c), transparent: true, depthWrite: false, opacity: 0 })); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 22; m.visible = false; R.add(m); return m; };
+    L = S.th82 = { sp: [], up: [] }; for (let i = 0; i < 96; i++) L.sp.push(mk(i % 3 ? 0xa39a93 : 0x8f8780)); for (let i = 0; i < 6; i++) L.up.push({ m: mk(0xaaa29b), ph: i / 6 + 0.05 * i, per: 2.6 + 0.5 * (i % 3) }); }
+  const hideAll = () => { L.sp.forEach(m => { m.visible = false; }); L.up.forEach(p => { p.m.visible = false; }); };
+  if (!pts || pts.length < 2 || !(o.a > 0.01)) { hideAll(); return; }
+  /* arc length, then puffs every ds */ const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1])); const Ltot = cum[cum.length - 1]; if (Ltot < 1e-3) { hideAll(); return; }
+  const w0 = Math.max((o.w || 1) * U * 0.85, Ltot / (0.42 * 90)), ds = 0.42 * w0, n = Math.min(L.sp.length, Math.max(3, Math.ceil(Ltot / ds))), V = new T.Vector3(), D = new T.Vector3(), at = d => { let i = 1; while (i < cum.length - 1 && cum[i] < d) i++; const u = (d - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]); V.copy(pts[i - 1]).lerp(pts[i], Math.max(0, Math.min(1, u))); D.copy(pts[i]).sub(pts[i - 1]); return V; };
+  for (let i = 0; i < L.sp.length; i++) { const m = L.sp[i]; if (i >= n) { m.visible = false; continue; } const s = (i + 0.5) / n, d = s * Ltot; at(d); const px = -D.z, pz = D.x, pl = Math.hypot(px, pz) || 1;
+    /* a slow waver across the way and a drift up, travelling along it */ const wv = Math.sin(d / (2.6 * w0) - tt * 1.3 + i * 0.07) * 0.55 * w0 + 0.3 * w0 * Math.sin(d / (1.1 * w0) + tt * 0.9), up = (0.25 + 0.35 * n82(d / (1.5 * w0) - tt * 0.8)) * w0;
+    m.position.set(V.x + wv * px / pl, V.y + up, V.z + wv * pz / pl);
+    /* thinning to nothing in stretches that travel along it; fading into the lump and into the smoke at the ends */ const gap = ss77(n82(d / (3.2 * w0) - tt * 0.55 + 4.0), 0.22, 0.62), ends = ss77(s, 0, 0.06) * (1 - ss77(s, o.e0 || 0.92, 1)) * (o.tip ? 1 : 1);
+    const sz = w0 * (0.75 + 0.5 * n82(d / w0 + tt * 0.6 + i)) * (o.taper ? lp77(1, 0.55, s) : 1); m.scale.set(sz * 1.35, sz, 1); m.material.rotation = 0.9 * Math.sin(i * 1.7 + tt * 0.3);
+    m.material.opacity = o.a * (0.12 + 0.36 * gap) * ends; m.visible = m.material.opacity > 0.01; }
+  /* a few small puffs lifting off it */ L.up.forEach((p, j) => { const u = fr52(tt / p.per + p.ph), s = 0.15 + 0.7 * fr52(Math.floor(tt / p.per + p.ph) * 0.618 + j * 0.37), m = p.m; at(s * Ltot);
+    m.position.set(V.x, V.y + w0 * (0.3 + 2.4 * u), V.z); const sz = w0 * (0.6 + 1.3 * u); m.scale.set(sz, sz, 1); m.material.opacity = o.a * 0.32 * Math.sin(PI * u); m.visible = m.material.opacity > 0.01; }); }
+function thread82(S, X, Bl) { if (KIT.thread82 === false || !S.k73) { if (S.u82) S.u82.value.x = 0; if (S.th82) lay82(S, null, {}); return; }
+  if (!mark82(S)) return; mat82(S); const F = fig77(S), e = X.e, Z = X.Z, st = S.st, B = S.bones, R = S.root, V3 = S.T.Vector3;
+  if (st <= 1) { const on = e.ext > 0.02; S.u82.value.x = on ? 1 : 0; S.u82.value.y = 1; if (!on) { lay82(S, null, {}); return; } const pts = F.wisp.map(j => B[j].position.clone()); lay82(S, pts, { a: 1.25 * ss77(e.ext, 0.02, 0.15), w: 1.5, taper: true, e0: 0.97, tip: true }); return; }
+  const on = e.hb > 0.05; S.u82.value.x = on ? 1 : 0; S.u82.value.y = 0; if (!on || !Z.way0) { lay82(S, null, {}); return; }
+  R.updateWorldMatrix(true, false); const inv = R.matrixWorld.clone().invert(), lw = (x, y, z) => new V3(x, y, z).applyMatrix4(inv), back = e.w === 'back', way = back ? Z.wayB : Z.way0, u = back ? e.ub : e.w === 'stand' ? 1 : e.u;
+  const A = F.P0.clone(); A.y -= 0.05; const pts = [A], m = 18, s0 = back ? u : 0, s1 = back ? 1 : u; const mid = [];
+  for (let i = 0; i <= m; i++) { const s = s0 + (s1 - s0) * i / m, q = way.at(Math.min(1, Math.max(0, s))); const p = lw(q.x, Z.floor(q.x, q.z), q.z); p.y += 0.18; mid.push(p); }
+  if (back) mid.reverse(); /* from home out to the smoke's foot */ mid.slice(1).forEach(p => pts.push(p)); pts.push(Bl.clone());
+  lay82(S, pts, { a: e.hb * (back ? 1 - ss77(e.ub, 0.85, 1) : 1), w: 1, e0: 0.9 }); }
+/* the pen line leaves out what the wash leaves out */
+brk69 = (f0 => function (S, s) { const m = f0(S, s); try { if (S && S.u82 && S.u82.value.x > 0.5 && s.tp && s.tp.SI && S.f77) { const tp = s.tp, key = 'a82c_' + S.st; if (!tp[key]) { const F = S.f77, set = S.st <= 1 ? new Set(F.wisp) : F.set, n = tp.nv, a = new Uint8Array(n);
+      const wv = new Float32Array(n); for (let i = 0; i < n; i++) { let w = 0; for (let c = 0; c < 4; c++) if (set.has(tp.SI[4 * i + c])) w += tp.SW[4 * i + c]; wv[i] = w; a[i] = S.st <= 1 ? (w > 0.02 ? 1 : 0) : (w > 0.01 && w < 0.99 ? 1 : 0); }
+      /* a triangle joining the lump to the smoke is the stretched thread: its corners leave the pen line */ if (S.st > 1 && tp.tris) for (let t = 0; t < tp.nt; t++) { const i0 = tp.tris[3 * t], i1 = tp.tris[3 * t + 1], i2 = tp.tris[3 * t + 2], lo = Math.min(wv[i0], wv[i1], wv[i2]), hi = Math.max(wv[i0], wv[i1], wv[i2]); if (hi - lo > 0.02) { a[i0] = a[i1] = a[i2] = 1; } }
+      tp[key] = a; }
+    const a = tp[key]; for (let i = 0; i < a.length; i++) if (a[i]) m[i] = 1; } } catch (e) { W77.err = 'brk82 ' + String(e && e.stack); } return m; })(brk69);
 KIT.W77 = W77; KIT.fire77 = fire73; KIT.tex77 = tex73;
 // ==== W77 END
 // ==== W70 BEGIN
