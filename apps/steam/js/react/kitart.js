@@ -3239,7 +3239,7 @@ function pose58(S, e, Z, z) { const G = S.G, H = G.H, K = S.k52, B = S.bones, st
   else if (e.ph === 'atom' || e.ph === 'lick') {
     const i = e.i, a = Z.a[i], Kd = a ? AK58[a.kind] : AK58[0], u = e.u, at = a && Z.at[i];
     if (e.ph === 'atom' && a && at && !a.sk) { a.sk = 1; const t0 = loc58(S, at); a.sd = a.kind === 2 && e.i > 0 ? -Z.a[e.i - 1].sd : t0.x >= ch.x ? 1 : -1; }
-    if (e.ph === 'atom' && a && at) { const sd = a.sd, tg = loc58(S, at), up = hd.y + (a.kind ? 0.12 : 0.28) * H, ox = sd * (a.kind ? 0.14 : 0.3) * H, mx = S.h58 ? loc58(S, S.h58.m) : hd;
+    if (e.ph === 'atom' && a && at) { const sd = a.sd, tg = loc58(S, at), up = hd.y + (a.kind ? 0.16 : 0.42) * H, ox = sd * (a.kind ? 0.16 : 0.34) * H, mx = S.h58 ? loc58(S, S.h58.m) : hd;
       const wR = sm58(u / Kd.re), pull = sm58((u - Kd.pi) / (Kd.pu - Kd.pi)), lift = sm58((u - Kd.pu) / (Kd.li - Kd.pu)), toM = sm58((u - (Kd.li - 0.04)) / (Kd.dr + 0.04 - Kd.li));
       /* the claw: out to the atom, pinch, pull it back toward itself, up beside its head to admire, over the mouth, let go */
       let x = tg.x, y = tg.y, zz = tg.z; const bx = (tg.x - ch.x), bz = (tg.z - ch.z), bl = Math.hypot(bx, bz) || 1; x -= bx / bl * 0.12 * H * pull; zz -= bz / bl * 0.12 * H * pull; y += 0.08 * H * pull;
