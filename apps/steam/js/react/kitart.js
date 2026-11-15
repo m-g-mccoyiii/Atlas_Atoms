@@ -5493,6 +5493,151 @@ function jar73(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'brimstone' && KIT.brim69 && KIT.idle73 !== false && T && T.SkinnedMesh) { try { jar73(T, j); } catch (e) { W73.err = String(e && e.stack); } } return j; })(KIT.jar);
 KIT.W73 = W73;
 // ==== W73 END
+// ==== W77 BEGIN
+// (builder 77) BRIMSTONE'S OWN ACT (AA.rxKit.act77, on by default; false or ?a77=0 gives the old act, Water's clip on the smoke). It burns ONCE A RUN
+// and ends the round, so it is the slowest and most ominous of the acts. The LUMP stays at home, burning; the SMOKE (every bone above the lump) is
+// the creature that goes: one transform of those bones (a pivot at the foot of the smoke, a size, a squash, a lean, a turn) carries it from the lump
+// to the molecule and back, and the skin between the lump's top and the foot of the smoke stretches into the thread that ties it to the lump. Its idle
+// (W73: flames, billows, breath, eyes, puffs, wisps, embers) keeps running under it; the act is laid over it. The page (scheme S77) gives the times and
+// places (o.bites.s77, read with KIT.ph77: one timeline both files read) and draws what is not its body: the fire on the atoms, the ring of fire, the
+// scorch, the bank's smoke on the bench, the lamp drawn in, the sound.
+//  wake:  the lump's flames sink low, the coal eyes open wide and blaze, it leans toward the molecule (the room dims: S77)
+//  pour:  the smoke sinks to a low dark bank and pours off the lump along the bench, slow and steady, the thread trailing back to the lump; over the
+//         book's edge, onto the page, gathering and growing as it comes toward the eye
+//  rise:  behind the molecule it rises, vast, head bowed (stage 5: the tallest of any act)
+//  count: it lowers its head and looks; one long hand of smoke comes down and touches each counted atom in turn, slow at first, quicker after
+//  burn:  a held instant drawn up to its full height, eyes blazing; on the hit both hands close round the molecule
+//  home:  it turns its back (the back of the bowed head, no face), is drawn back along its thread into the lump, smaller and lower; the lump's
+//         flames gutter and the cracks go dull: spent, grey and cold (S.spent77, set by the page while the game holds Brimstone spent)
+//  stage 1 (the ember) cannot leave its lump: its one long wisp reaches the whole way to the molecule and touches the atoms with its curled tip
+KIT.act77 = KIT.act77 == null ? !(typeof location !== 'undefined' && /[?&]a77=0/.test(String(location.search))) : KIT.act77;
+const W77 = { err: null, e: null };
+const on77 = S => !!(S && S.way69 && !S.jar && KIT.act77 !== false && on73(S));
+const ss77 = (x, a, b) => sm52((x - a) / Math.max(1e-6, b - a));
+const lp77 = (a, b, u) => a + (b - a) * u;
+/* what the act needs of the figure, found once: the foot of the smoke (the pivot), the smoke's bones, the wisp (stage 1), height, head, the arms */
+function fig77(S) { if (S.f77) return S.f77; const G = S.G, J = G.J, T = S.T, V3 = T.Vector3, st = S.st, bj = G.bj, K = S.k73 || init73(S);
+  const p5 = J[bj[4]].p, yCut = st <= 1 ? 1.12 : p5[1] - 0.01, sm = []; for (let j = 1; j < J.length; j++) if (J[j] && J[j].p[1] >= yCut) sm.push(j);
+  const wisp = bj.filter(j => J[j] && J[j].p[1] >= yCut), P0 = st <= 1 ? new V3().fromArray(J[wisp[0]].p) : new V3(p5[0], p5[1], 0);
+  let top = 0, x0 = 0, x1 = 0; sm.forEach(j => { const q = J[j]; top = Math.max(top, q.p[1] + (q.r || 0)); x0 = Math.min(x0, q.p[0] - (q.r || 0) - P0.x); x1 = Math.max(x1, q.p[0] + (q.r || 0) - P0.x); });
+  /* the arms (stage 2 has none: its two outermost billows reach instead) */ let arms = K.arm.map(a => ({ jn: a.jn, fing: a.fing, a }));
+  if (!arms.length) { const pf = K.pf.slice().sort((a, b) => J[a.jn[a.jn.length - 1]].p[0] - J[b.jn[b.jn.length - 1]].p[0]); arms = [pf[0], pf[pf.length - 1]].filter(Boolean).map(a => ({ jn: a.jn, fing: [], a })); }
+  arms.forEach(a => { const n = a.jn.length, L = [0]; for (let i = 1; i < n; i++) L.push(L[i - 1] + new V3().fromArray(J[a.jn[i]].p).distanceTo(new V3().fromArray(J[a.jn[i - 1]].p))); a.len = L[n - 1] || 1; a.f = L.map(l => l / a.len); const e = J[a.jn[n - 1]].p; a.side = Math.sign(e[0] - P0.x) || 1;
+    a.fg = (a.fing || []).map(f => ({ out: f.out || [], jn: f.jn, map: f.jn.map(j => { if ((f.out || []).includes(j)) return -1; let bi = 0, bd = 1e9; a.jn.forEach((k, i) => { const d = Math.hypot(J[k].p[0] - J[j].p[0], J[k].p[1] - J[j].p[1], J[k].p[2] - J[j].p[2]); if (d < bd) { bd = d; bi = i; } }); return bi; }) })); });
+  const long = arms.slice().sort((a, b) => b.len - a.len)[0];
+  return (S.f77 = { P0, sm, set: new Set(sm), wisp, top, H: Math.max(0.5, top - P0.y), hx: J[K.hj].p[0] - P0.x, hy: J[K.hj].p[1] - P0.y, x0, x1, arms, long }); }
+KIT.fig77 = S => { try { return fig77(S); } catch (e) { W77.err = String(e && e.stack); return null; } };
+/* the spent shape: the smoke sunk small and low on the lump, the fire nearly out, the cracks dull, the coals dim */
+const SP77 = { k: 0.6, sy: 0.55, flame: 0.12, crack: 0.3, glow: 0.3, lid: 0.55 };
+/* the act's numbers at t ms since the tap (Z: S77's plan, absolute times) */
+function ph77(t, Z) { const st = Z.st, e = { ph: 'wait', w: 'home', t, u: 0, ub: 0, hb: 0, k: 1, sy: 1, lean: 0, bow: 0, yaw: 0, wide: 0, lid: 0, flame: 1, crack: 1, glow: 1, dim: 0, away: 0, ext: 0, ri: -1, rm: 0, rx: 0, tap: 0, hands: 0, up: 0, done: false, home: false, brow: null };
+  const kT = Z.k || 1, L = Z.L;
+  if (t < Z.tW) return e;
+  if (t < Z.tPour) { const w = ss77(t, Z.tW, Z.tPour); e.ph = 'wake'; e.flame = 1 - 0.78 * ss77(w, 0, 0.45); e.wide = ss77(w, 0.2, 0.5); e.glow = 1 + 1.4 * ss77(w, 0.2, 0.55); e.dim = ss77(w, 0.05, 0.9); e.brow = -0.9 * ss77(w, 0.3, 0.7);
+    e.lean = 0.22 * ss77(w, 0.55, 1); e.sy = 1 - 0.1 * ss77(w, 0.55, 1); e.crack = 1 + 0.5 * ss77(w, 0.2, 0.6); return e; }
+  e.flame = 0.22; e.glow = 2.2; e.wide = 0.8; e.dim = 1; e.crack = 1.5; e.brow = -0.9;
+  if (st <= 1) { /* the ember: its wisp reaches out the whole way, touches, coils round the molecule on the hit, is drawn back */
+    if (t < Z.tA) { e.ph = 'pour'; e.w = 'wisp'; e.ext = ss77(t, Z.tPour, Z.tA); e.ri = 0; e.rm = 1; return e; }
+    if (t < Z.tD) { e.ph = 'count'; e.w = 'wisp'; e.ext = 1; reach77(t, Z, e); if (t >= Z.tUp) { e.ph = t >= Z.tHit ? 'hit' : 'up'; e.hands = ss77(t, Z.tHit - 0.8 * L, Z.tHit) * (1 - ss77(t, Z.tRel, Z.tRel + L)); e.glow = 2.6; } return e; }
+    if (t < Z.tEnd) { e.ph = 'back'; e.w = 'wisp'; e.ext = 1 - ss77(t, Z.tD, Z.tHm); e.ri = Math.max(0, Z.P.length - 1); e.rm = 1; const s = ss77(t, Z.tHm - L, Z.tEnd); e.flame = lp77(0.22, SP77.flame, s); e.crack = lp77(1.5, SP77.crack, s); e.glow = lp77(2.2, SP77.glow, s); e.dim = 1 - ss77(t, Z.tHm - L, Z.tEnd); e.lid = SP77.lid * s; e.wide = 0.8 * (1 - s); return e; }
+    e.ph = 'done'; e.done = e.home = true; e.spent = 1; return e; }
+  if (t < Z.tRise) { /* the pour: down into a low bank and along the way, slow and steady, gathering on the page */ const w = (t - Z.tPour) / Math.max(1, Z.tRise - Z.tPour);
+    e.ph = 'pour'; e.w = 'out'; e.u = 0.25 * sm52(w) + 0.75 * w; e.hb = ss77(w, 0, 0.12); e.away = ss77(w, 0, 0.08);
+    e.sy = lp77(0.9, 0.3, ss77(w, 0, 0.18)) + 0.22 * ss77(w, 0.65, 1); e.lean = lp77(0.22, 0.5, ss77(w, 0, 0.2)) * (1 - 0.6 * ss77(w, 0.7, 1)); e.k = lp77(1, 1.6, ss77(w, 0.05, 0.5)) + (0.42 * kT - 1.6) * Math.max(0, ss77(w, 0.55, 1)); e.k = Math.max(1, e.k); return e; }
+  if (t < Z.tA) { /* it rises, vast, behind the molecule */ const w = ss77(t, Z.tRise, Z.tA), ov = Math.sin(Math.PI * ss77(t, Z.tRise + 0.55 * (Z.tA - Z.tRise), Z.tA)) * 0.05;
+    e.ph = 'rise'; e.w = 'stand'; e.u = 1; e.hb = 1; e.away = 1; e.sy = lp77(0.52, 1, w) + ov; e.k = lp77(Math.max(1, 0.42 * kT), kT, w); e.lean = 0.2 * (1 - w); e.bow = 0.18 * w; return e; }
+  if (t < Z.tD) { e.w = 'stand'; e.u = 1; e.hb = 1; e.away = 1; e.k = kT; e.sy = 1; e.bow = 0.2; e.ph = 'count'; e.wide = 0; e.lid = 0.38; e.glow = 1.7;
+    /* it lowers its head and looks; then the long hand */ e.bow = 0.2 + 0.08 * ss77(t, Z.tA, Z.tA + 1.5 * L); reach77(t, Z, e);
+    if (t >= Z.tUp) { /* the held instant: drawn up to its full height, eyes blazing; on the hit both hands close round the molecule */ const u = ss77(t, Z.tUp, Z.tHit), r = ss77(t, Z.tRel, Z.tRel + 1.5 * L); e.ph = t >= Z.tHit ? 'hit' : 'up';
+      e.up = u * (1 - r); e.sy = 1 + 0.12 * e.up; e.k = kT * (1 + 0.05 * e.up); e.bow = lp77(0.28, -0.04, u) + 0.24 * r; e.glow = 2.2 + 1.2 * u * (1 - r); e.wide = 0.8 + 0.2 * u; e.brow = -1.1;
+      e.rx *= 1 - ss77(t, Z.tUp, Z.tUp + L); e.lid = 0.38 * (1 - u) + 0.3 * r; e.hands = ss77(t, Z.tHit - 0.9 * L, Z.tHit) * (1 - r); }
+    return e; }
+  if (t < Z.tBk) { /* it turns its back */ const u = ss77(t, Z.tD, Z.tBk); e.ph = 'turn'; e.w = 'stand'; e.u = 1; e.hb = 1; e.away = 1; e.yaw = PI * u; e.k = kT * lp77(1, 0.82, u); e.sy = lp77(1, 0.8, u); e.bow = 0.32; e.glow = 1.6; return e; }
+  if (t < Z.tHm) { /* drawn back along its thread, seen from behind, sinking and shrinking */ const w = (t - Z.tBk) / Math.max(1, Z.tHm - Z.tBk); e.ph = 'back'; e.w = 'back'; e.ub = 0.3 * sm52(w) + 0.7 * w; e.hb = 1 - ss77(w, 0.88, 1); e.away = 1 - ss77(w, 0.9, 1); e.yaw = PI;
+    e.k = Math.max(0.55, lp77(0.82 * kT, 1.3, ss77(w, 0, 0.45)) - 0.75 * ss77(w, 0.75, 1)); e.sy = lp77(0.8, 0.3, ss77(w, 0, 0.3)); e.lean = -0.3 * ss77(w, 0.05, 0.3) * (1 - ss77(w, 0.8, 1)); e.bow = 0.3; e.glow = 1.2; e.flame = 0.22; e.dim = 1 - 0.5 * ss77(w, 0.6, 1); return e; }
+  if (t < Z.tEnd) { /* home: it re-forms on the lump, small and low, turned to face front; the flames gutter, the cracks dim: spent */ const s = ss77(t, Z.tHm, Z.tEnd), s2 = ss77(t, Z.tHm, Z.tHm + 0.6 * (Z.tEnd - Z.tHm));
+    e.ph = 'settle'; e.w = 'home'; e.hb = 0; e.yaw = PI * (1 + s2); e.k = lp77(0.55, SP77.k, s); e.sy = lp77(0.3, SP77.sy, s); e.flame = lp77(0.22, SP77.flame, s); e.crack = lp77(1.5, SP77.crack, s); e.glow = lp77(1.2, SP77.glow, s); e.lid = SP77.lid * s; e.wide = 0; e.dim = 0.5 * (1 - s); e.brow = -0.4; return e; }
+  e.ph = 'done'; e.w = 'home'; e.done = e.home = true; e.spent = 1; e.k = SP77.k; e.sy = SP77.sy; e.flame = SP77.flame; e.crack = SP77.crack; e.glow = SP77.glow; e.lid = SP77.lid; e.yaw = 0; return e; }
+/* the long hand: which atom it is on (ri), how far it has moved from the last one to it (rm), how far out it is (rx), the touch (tap) */
+function reach77(t, Z, e) { const P = Z.P || []; let c = -1; P.forEach((p, i) => { if (t >= p.r0) c = i; }); if (c < 0) { e.ri = 0; e.rm = 1; e.rx = 0; return; }
+  const p = P[c]; e.ri = c; e.rm = c === 0 ? 1 : ss77(t, p.r0, p.t - 0.1 * Z.L); e.rx = c === 0 ? ss77(t, p.r0, p.t - 0.05 * Z.L) : 1; e.tap = pl52(t, p.t - 90, p.t + 60, 70); }
+KIT.ph77 = ph77;
+/* faces go over the idle's: wide coals, lids, a look at what it touches */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (!S || !S.way69) return; const X = S.x77;
+  if (!X) { if (S.spent77 && !S.jar) { q.lidx = Math.max(q.lidx || 0, SP77.lid); q.looky = -0.45; q.lookx = 0; q.wide = 0; } return; } const e = X.e;
+  q.wide = Math.max(q.wide || 0, e.wide); if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); if (e.brow != null) q.brow = e.brow; if (e.ph !== 'wait') q.blink = 0; if (S.lk77) { q.lookx = S.lk77[0]; q.looky = S.lk77[1]; } })(C26.rest);
+/* the whole smoke moved by one transform: p -> base + Q (s . (p - P0)); Q = turn about up, lean along the way, a bow toward the eye */
+function move77(S, F, Bl, k, sy, Q, thin) { const B = S.bones, J = S.G.J, W = S.w77; F.sm.forEach(j => { const b = B[j], yy = J[j].p[1] - F.P0.y, th = thin ? lp77(0.42, 1, sm52(yy / 0.9)) : 1;
+    W.b.copy(b.position).sub(F.P0); W.b.x *= k; W.b.y *= k * sy; W.b.z *= k; W.b.applyQuaternion(Q).add(Bl); b.position.copy(W.b); b.scale.x *= k * th; b.scale.y *= k * sy; b.scale.z *= k * th; b.quaternion.premultiply(Q); }); }
+/* a sprite or plane that rides with the smoke (the idle's puffs, the mouth's puff, the haze) */
+function ride77(m, F, Bl, k, sy, Q, W) { W.b.copy(m.position).sub(F.P0); W.b.x *= k; W.b.y *= k * sy; W.b.z *= k; W.b.applyQuaternion(Q).add(Bl); m.position.copy(W.b); m.scale.multiplyScalar(k); }
+/* lay a chain of bones (positions by fraction f along it) on a curve from a to c through b, by amount u */
+function bez77(B, jn, f, a, b, c, u, W) { jn.forEach((j, i) => { const s = f[i], r = 1 - s; W.d.set(r * r * a.x + 2 * s * r * b.x + s * s * c.x, r * r * a.y + 2 * s * r * b.y + s * s * c.y, r * r * a.z + 2 * s * r * b.z + s * s * c.z); B[j].position.lerp(W.d, u); }); }
+/* one arm (or billow) reaches to a point in the figure's frame; its fingers come along, pointed along the reach */
+function arm77(S, a, Tl, u, W, kk) { const B = S.bones, n = a.jn.length; if (u <= 0.001 || n < 2) return; const S0 = W.e.copy(B[a.jn[0]].position), E0 = W.f.copy(B[a.jn[n - 1]].position), dist = S0.distanceTo(Tl);
+  /* a long reach thickens the arm a little (smoke drawn out, not a stick) */ const str = dist / Math.max(1e-3, a.len * (kk || 1)); if (str > 1.1) { const g = 1 + Math.min(1.2, 0.45 * (str - 1)) * u; a.jn.forEach((j, i) => { if (i) { B[j].scale.x *= g; B[j].scale.z *= g; } }); }
+  const C = W.g.copy(S0).lerp(Tl, 0.5); C.y += 0.3 * dist; bez77(B, a.jn, a.f, S0, C, Tl, u, W);
+  const dir = W.h.copy(Tl).sub(C).normalize(), E1 = B[a.jn[n - 1]].position, md = W.c.set(0, 0, 0);
+  /* the hand turns as one: the mean way its fingers point is turned to the way it reaches */ a.fg.forEach(fg => { const j = fg.jn[fg.jn.length - 1]; md.add(W.b.copy(B[j].position).sub(E0)); });
+  if (md.lengthSq() > 1e-8) { md.normalize(); W.q1.setFromUnitVectors(md, dir); W.q2.identity().slerp(W.q1, u); } else W.q2.identity();
+  a.fg.forEach(fg => { fg.jn.forEach((j, i) => { const mi = fg.map[i]; if (mi >= 0) { B[j].position.copy(B[a.jn[mi]].position); return; } W.b.copy(B[j].position).sub(E0).applyQuaternion(W.q2); B[j].position.copy(E1).add(W.b); }); }); }
+/* the fingertip of an arm, in the figure's frame (for the page: where it touches) */
+const tip77 = (S, a) => { const B = S.bones; let best = B[a.jn[a.jn.length - 1]].position, bd = -1; const s0 = B[a.jn[0]].position; a.fg.forEach(fg => { const j = fg.jn[fg.jn.length - 1], d = B[j].position.distanceTo(s0); if (d > bd) { bd = d; best = B[j].position; } }); return best; };
+/* after the idle: the act's transform of the smoke, the reach, the hands, the light; then where its parts are, for the page */
+function post77(S, X) { const F = fig77(S), K = S.k73, B = S.bones, J = S.G.J, T = S.T, e = X.e, Z = X.Z, R = S.root, st = S.st, V3 = T.Vector3;
+  const W = S.w77 || (S.w77 = { inv: new T.Matrix4(), a: new V3(), b: new V3(), c: new V3(), d: new V3(), e: new V3(), f: new V3(), g: new V3(), h: new V3(), q: new T.Quaternion(), q1: new T.Quaternion(), q2: new T.Quaternion(), y: new V3(0, 1, 0), x: new V3(1, 0, 0), ax: new V3() });
+  R.updateWorldMatrix(true, false); W.inv.copy(R.matrixWorld).invert(); const ws = new V3().setFromMatrixScale(R.matrixWorld).y || 1, Lw = (x, y, z, out) => (out || new V3()).set(x, y, z).applyMatrix4(W.inv);
+  const k = e.k, sy = e.sy; let Bl = F.P0.clone(), dl = new V3(0, 0, 1);
+  /* where the foot of the smoke is: on the way (on the floor there, a little up), at its place, home */
+  const onWay = (way, u) => { const q = way.at(Math.min(1, Math.max(0, u))), q2 = way.at(Math.min(1, u + 0.02)), q1 = way.at(Math.max(0, u - 0.02)), p = Lw(q.x, Z.floor(q.x, q.z), q.z); const d = Lw(q2.x, 0, q2.z).sub(Lw(q1.x, 0, q1.z)); d.y = 0; if (d.lengthSq() > 1e-8) dl.copy(d.normalize()); p.y += 0.12 * k * sy; return p; };
+  if (st > 1 && e.hb > 0) { const p = e.w === 'back' ? onWay(Z.wayB, e.ub) : e.w === 'stand' ? onWay(Z.way0, 1) : onWay(Z.way0, e.u); Bl.lerp(p, e.hb); }
+  /* Q: turn about up, then lean toward where it goes, then bow toward the eye */
+  W.q.setFromAxisAngle(W.y, e.yaw); if (e.lean) { W.ax.set(dl.z, 0, -dl.x).normalize(); W.q1.setFromAxisAngle(W.ax, e.lean); W.q.premultiply(W.q1); } if (e.bow) { W.q1.setFromAxisAngle(W.x, e.bow); W.q.premultiply(W.q1); }
+  const Q = W.q.clone(); let tipL = null;
+  if (st > 1 || e.spent) { move77(S, F, Bl, k, sy, Q, st > 1 && e.hb > 0.02);
+    [K.mouth && K.mouth.m, K.haze].concat(K.sm.map(p => p.m)).forEach(m => { if (m) ride77(m, F, Bl, k, sy, Q, W); }); }
+  const tg = Z.tg || [], at = i => tg[Math.max(0, Math.min(tg.length - 1, i))];
+  /* the target of the long hand (or the wisp's tip): moving from the last atom to this one with a lift between, out by rx; the touch pushes in */
+  let TW = null; if (tg.length && e.ri >= 0) { const a1 = at(e.ri), a0 = at(Math.max(0, e.ri - 1)), m = e.rm, R0 = a1.R || 0.6; TW = new V3(lp77(a0.x, a1.x, m), lp77(a0.y, a1.y, m) + Math.sin(PI * m) * 2.4 * R0 * (e.ri > 0 ? 1 : 0), lp77(a0.z, a1.z, m)); TW.y += R0 * (0.85 - 0.5 * e.tap); }
+  if (st <= 1) { /* the wisp: laid on a curve from its root to the atom, out by ext; its last bones curl round the tip */ const wj = F.wisp, n = wj.length; if (n > 2 && e.ext > 0.001) {
+      const a = B[wj[0]].position.clone(); let c = TW ? Lw(TW.x, TW.y, TW.z) : a.clone().add(new V3(3, 1, 0)); if (e.hands > 0 && Z.mc) { const an = (e.t - Z.tHit) / 260, rr = (Z.mr || 2) * 0.7, mc = Lw(Z.mc.x + rr * Math.cos(an), Z.mc.y + 0.8, Z.mc.z + 0.5 * rr * Math.sin(an)); c.lerp(mc, e.hands); }
+      const dist = a.distanceTo(c), b = a.clone().lerp(c, 0.45); b.y += 0.42 * dist; const f = wj.map((j, i) => (i / (n - 1)) * e.ext);
+      bez77(B, wj, f, a, b, c, ss77(e.ext, 0, 0.06), W); const curl = 0.45 / ws * (at(0) ? at(0).R || 0.6 : 0.6) * 1.6; wj.forEach((j, i) => { const s = i / (n - 1), w = ss77(s, 0.78, 1) * ss77(e.ext, 0.8, 1), an = (s - 0.78) / 0.22 * PI * 1.4; B[j].position.x += w * curl * (1 - Math.cos(an)); B[j].position.y += w * curl * Math.sin(an); const g = lp77(3.6, 5.2, s); B[j].scale.multiplyScalar(g); });
+      tipL = B[wj[n - 1]].position.clone(); } }
+  else if (F.long && (e.rx > 0.001 || e.hands > 0.001)) { /* the long hand on the atom; at the hit both hands round the molecule */
+    if (e.rx > 0.001 && TW) { const lt = tip77(S, F.long), le = B[F.long.jn[F.long.jn.length - 1]].position, off = lt.distanceTo(le); const Tl = Lw(TW.x, TW.y, TW.z), sh = B[F.long.jn[0]].position, d = Tl.clone().sub(sh).normalize(); Tl.addScaledVector(d, -0.8 * off); arm77(S, F.long, Tl, e.rx, W, k); tipL = tip77(S, F.long).clone(); }
+    if (e.hands > 0.001 && tg.length) { /* both hands close round the burning atoms, from either side, no further than twice an arm's length */ let x0 = 1e9, x1 = -1e9, zs = 0, ys = 0; tg.forEach(q => { x0 = Math.min(x0, q.x - 1.3 * q.R); x1 = Math.max(x1, q.x + 1.3 * q.R); zs += q.z; ys += q.y; }); zs /= tg.length; ys /= tg.length;
+      F.arms.forEach(a => { const Tl = Lw(a.side > 0 ? x1 : x0, ys + 1.2 * (Z.mr0 || 0.7), zs), sh = B[a.jn[0]].position, d = Tl.clone().sub(sh), mx = 2.0 * a.len * k; if (d.length() > mx) Tl.copy(sh).addScaledVector(d.normalize(), mx); arm77(S, a, Tl, e.hands, W, k); }); } }
+  /* the light: the lump's flames sink and gutter; the cracks; the coals blaze and dim */
+  K.fl.forEach(f => { if (!f.sp) return; f.sp.scale.y *= e.flame; f.sp.scale.x *= 0.5 + 0.5 * e.flame; if (e.flame < 0.06) f.sp.visible = false; }); if (K.light) K.light.m.material.opacity *= Math.max(0.15, e.flame);
+  if (S.u69) S.u69.value.y *= e.crack; K.eg.forEach(x => { x.g.material.opacity = Math.min(1, x.g.material.opacity * e.glow); x.g.scale.multiplyScalar(1 + 0.1 * (e.glow - 1)); x.e.gl.material.emissive.multiplyScalar(Math.min(1.6, 0.6 + 0.4 * e.glow)); });
+  if (e.away > 0.5 && K.mouth) K.mouth.m.visible = false; if (st > 1 && e.away > 0.02) (K.spit || []).forEach(x => { x.m.visible = false; });
+  /* the look: at the atom it touches (or the molecule), from the head */ const hp = B[K.hj].position.clone().applyMatrix4(R.matrixWorld); let lk = [0.6 * (Z.dx || 1), -0.35];
+  if (e.ph === 'count' || e.ph === 'up' || e.ph === 'hit' || e.ph === 'pour' || e.ph === 'rise') { const q = TW || (Z.mc ? new V3(Z.mc.x, Z.mc.y, Z.mc.z) : null); if (q) { const dx = q.x - hp.x, dy = q.y - hp.y, dz = q.z - hp.z, hz = Math.hypot(dx, dz) || 1; const c = Math.cos(e.yaw); lk = [Math.max(-1.2, Math.min(1.2, (dx / hz) * 1.4 * c)), Math.max(-1, Math.min(0.4, Math.atan2(dy, hz) * 1.2))]; } }
+  S.lk77 = e.ph === 'wait' ? null : lk;
+  /* for the page: the foot, the middle, the height, the tip */ const bw = Bl.clone().applyMatrix4(R.matrixWorld), mid = F.P0.clone(); mid.y += 0.5 * F.H; mid.sub(F.P0); mid.x *= k; mid.y *= k * sy; mid.z *= k; mid.applyQuaternion(Q).add(Bl).applyMatrix4(R.matrixWorld);
+  S.h77 = { base: [bw.x, bw.y, bw.z], c: [mid.x, mid.y, mid.z], H: F.H * k * sy * ws * (st > 1 ? 1 : 0.4), Wd: (F.x1 - F.x0) * k * ws, tip: tipL ? (v => [v.x, v.y, v.z])(tipL.clone().applyMatrix4(R.matrixWorld)) : null, head: [hp.x, hp.y, hp.z], ws }; }
+/* the spent state at rest: everything of the act's last pose but the move (the page sets S.spent77 while the game holds Brimstone spent) */
+function spent77(S) { const F = fig77(S), K = S.k73, T = S.T, V3 = T.Vector3; if (!K) return;
+  if (!S.w77) S.w77 = { inv: new T.Matrix4(), a: new V3(), b: new V3(), c: new V3(), d: new V3(), e: new V3(), f: new V3(), g: new V3(), h: new V3(), q: new T.Quaternion(), q1: new T.Quaternion(), q2: new T.Quaternion(), y: new V3(0, 1, 0), x: new V3(1, 0, 0), ax: new V3() };
+  const Q = new T.Quaternion(); if (S.st > 1) { move77(S, F, F.P0, SP77.k, SP77.sy, Q, false); [K.mouth && K.mouth.m, K.haze].concat(K.sm.map(p => p.m)).forEach(m => { if (m) ride77(m, F, F.P0, SP77.k, SP77.sy, Q, S.w77); }); }
+  K.sm.forEach((p, i) => { if (i > 0) p.m.visible = false; else p.m.material.opacity *= 0.6; }); if (K.mouth) K.mouth.m.visible = false; (K.spit || []).forEach(x => { x.m.visible = false; });
+  K.fl.forEach(f => { if (f.sp) { f.sp.scale.y *= SP77.flame; f.sp.scale.x *= 0.6; } }); if (K.light) K.light.m.material.opacity *= 0.15; if (S.u69) S.u69.value.y *= SP77.crack;
+  K.eg.forEach(x => { x.g.material.opacity *= 0.35; x.e.gl.material.emissive.multiplyScalar(0.45); }); K.emb.forEach(x => { x.m.scale.multiplyScalar(0.4); x.m.material.opacity *= 0.4; }); if (K.haze) K.haze.material.opacity *= 0.5; }
+/* the haze is placed once by the idle: put it back where it was before the act or the spent shape moves it */
+const hz77 = S => { const K = S.k73, h = K && K.haze; if (!h) return; if (!S.hz77) S.hz77 = { p: h.position.clone(), s: h.scale.clone() }; h.position.copy(S.hz77.p); h.scale.copy(S.hz77.s); };
+function act77(f0, grp, S, t, o) { const Z = o.bites.s77, e = ph77(t, Z); S.x77 = { t, e, Z }; W77.e = e;
+  f0(grp, 'rest', 0, {}); hz77(S); if (S.k73) post77(S, S.x77); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!S || !S.way69) return f0(grp, clip, t, o);
+  if (clip === 'act' && on77(S) && o && o.bites && o.bites.s77) { try { return act77(f0, grp, S, t, o); } catch (err) { W77.err = String(err && err.stack); S.x77 = null; return f0(grp, clip, t, o); } }
+  if (S.x77) { S.x77 = null; S.lk77 = null; }
+  const r = f0(grp, clip, t, o); hz77(S); if (clip === 'rest' && S.spent77 && on77(S) && S.k73) { try { spent77(S); } catch (err) { W77.err = 'spent ' + String(err && err.stack); } } return r; })(play26);
+KIT.spirit26.play = play26;
+/* while the smoke is away the stretched skin between the lump's top and the foot of the smoke is its thread: no pen line on it (a pen outline there reads as a pipe) */
+brk69 = (f0 => function (S, s) { const m = f0(S, s); try { const X = S && S.x77, F = S && S.f77; if (X && F && X.e.hb > 0.05 && S.st > 1) { const P = s.tp.P, n = s.tp.nv, y0 = S.G.J[S.G.bj[3]].p[1] - 0.12, y1 = F.P0.y + 0.32; for (let i = 0; i < n; i++) { const y = P[3 * i + 1]; if (y > y0 && y < y1 && Math.hypot(P[3 * i], P[3 * i + 2]) < 1.0) m[i] = 1; } } } catch (e) { W77.err = String(e && e.stack); } return m; })(brk69);
+KIT.W77 = W77; KIT.fire77 = fire73; KIT.tex77 = tex73;
+// ==== W77 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
