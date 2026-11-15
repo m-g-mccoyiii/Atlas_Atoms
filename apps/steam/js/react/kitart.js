@@ -3386,19 +3386,20 @@ const SPEC49 = [
 ];
 /* the wash turns cold: the same shader as Water's, its blues changed for white and grey-violet, the paper under it a colder white, the lamp's warmth taken out
    (so the fog never goes beige on the wood), and along the low and outer edges of the bank the wash thins out in dry brush and the wood shows through */
-function tint49(T, S) { if (!S.m30) return; S.t49 = true; S.u49 = S.u49 || { value: 0 }; const C = W49.C, way = S.way49, G = S.G, b = S.bank49 || [0.14, 0.6], g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4);
+function tint49(T, S) { if (!S.m30) return; S.t49 = true; S.u49 = S.u49 || { value: 0 }; S.v59 = S.v59 || { value: new T.Vector3(0, -99, 1) };   /* (builder 59) the change of stage: x sublimes it from the edges in, y the height below which it is not yet condensed, z its unit */ const C = W49.C, way = S.way49, G = S.G, b = S.bank49 || [0.14, 0.6], g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4);
   /* (builder 56) u49 is the idle's clock: the dry-brush streaks creep outward along the bench, the body's edges thin and fill again in patches that sink, faint grey streaks sink through the wash */
   const dry = '{ vec3 q9 = bp * ' + f(G.H) + '; float lo9 = 1.0 - smoothstep(' + f(b[0]) + ', ' + f(b[1]) + ', q9.y), rr9 = length(vec2(q9.x / ' + f(G.pl.rx) + ', q9.z / ' + f(G.pl.rz) + '));'
     + ' vec2 rd9 = q9.xz / max(0.08, length(q9.xz)); vec3 m9 = vec3(q9.x - rd9.x * u49 * 0.2, q9.y, q9.z - rd9.y * u49 * 0.2);'
     + ' float st9 = N30(vec3(m9.x * 2.2, m9.y * 26.0, m9.z * 2.2)), st8 = N30(vec3(m9.x * 7.0, m9.y * 60.0, m9.z * 7.0) + 4.0), sk9 = N30(vec3(q9.x * 3.0, q9.y * 3.5 + u49 * 0.45, q9.z * 3.0) + 9.0);'
     + ' float dr9 = lo9 * (0.2 + 0.55 * smoothstep(0.6, 1.1, rr9) + 0.45 * smoothstep(0.6, 0.15, nv) * step(q9.z, 0.4)) + 0.4 * smoothstep(0.03, -0.02, q9.y) + (1.0 - lo9) * K56E * smoothstep(0.38, 0.03, nv) * sk9;'
-    + ' float gone9 = smoothstep(0.45, 0.68, dr9 + 0.55 * (st9 - 0.5) + 0.35 * (st8 - 0.5)); c9 = mix(c9, bg, gone9);'
+    + ' float gone9 = smoothstep(0.45, 0.68, dr9 + 0.55 * (st9 - 0.5) + 0.35 * (st8 - 0.5));'
+    + ' gone9 = max(gone9, max(smoothstep(-0.06, 0.06, v59.x * 1.6 - 1.28 + (1.0 - nv) + 0.4 * v59.x * (st9 - 0.5)), 1.0 - smoothstep(-0.03, 0.03, (q9.y - v59.y) / v59.z + 0.12 * (st9 - 0.5) + 0.06 * (st8 - 0.5)))); c9 = mix(c9, bg, gone9);'
     + ' c9 = mix(c9, c9 * vec3(0.88, 0.885, 0.96), (1.0 - gone9) * K56S * smoothstep(0.5, 0.78, N30(vec3(q9.x * 2.0, q9.y * 2.6 + u49 * 0.3, q9.z * 2.0) + 2.0))); }\n  gl_FragColor = vec4(c9, 1.0); }';
   const sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)], ['PAPER29 * (0.985', g(C.paper) + ' * (0.985'],
     ['smoothstep(0.80, 0.87, l9', 'smoothstep(0.52, 0.64, l9'],            /* far more of the lit side is left bare: fog is mostly paper */
     ['vec3(1.0, 0.972, 0.91)', 'vec3(0.985, 0.99, 1.0)'], ['vec3(1.0, 0.95, 0.84)', 'vec3(0.93, 0.95, 1.0)'], ['vec3(0.70, 0.72, 0.82)', 'vec3(0.72, 0.71, 0.86)'],   /* the lamp: no warmth, a violet shade */
     ['gl_FragColor = vec4(c9, 1.0); }', dry]];
-  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); sh.uniforms.u49 = S.u49; sh.fragmentShader = 'uniform float u49;\n#define K56E ' + (+(KIT.edge56 == null ? 1.0 : KIT.edge56)).toFixed(3) + '\n#define K56S ' + (+(KIT.streak56 == null ? 0.5 : KIT.streak56)).toFixed(3) + '\n' + sh.fragmentShader; }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd53' + way; m.needsUpdate = true; };
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); sh.uniforms.u49 = S.u49; sh.uniforms.v59 = S.v59; sh.fragmentShader = 'uniform float u49;\nuniform vec3 v59;\n#define K56E ' + (+(KIT.edge56 == null ? 1.0 : KIT.edge56)).toFixed(3) + '\n#define K56S ' + (+(KIT.streak56 == null ? 0.5 : KIT.streak56)).toFixed(3) + '\n' + sh.fragmentShader; }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd53' + way; m.needsUpdate = true; };
   one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); if (S.m30.glint && S.m30.glint.color) S.m30.glint.color.copy(new T.Color(C.glint).convertSRGBToLinear()); }
 /* a soft round texture (white on black, read as alpha): a glow, or rime with needles of frost in it */
 const tex49 = (T, kind) => { const key = 't' + kind; if (W49[key]) return W49[key]; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, n, n);
@@ -3480,7 +3481,7 @@ const clk56 = S => (typeof performance !== 'undefined' ? performance.now() : 0) 
 const vn56 = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy), h = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); }, a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy; };
 /* the manner at time tt: notice, duck, peek; stage 1's place along its roll; stage 3's offering */
 function man56(S, tt) { const st = S.st, P = P56[st] || P56[3], u = fr52(tt / P.cyc), M = { notice: 0, duck: 0, peek: 0, dx: 0, off: 0, sd: Math.floor(tt / P.cyc) % 2 ? 1 : -1 };
-  if (S.x57) return M;   /* (builder 57) while it acts, its act sets its manner */
+  if (S.x57 || (S.x59 && S.x59.live)) return M;   /* (builder 57) while it acts, its act sets its manner; (builder 59) so does its change of stage */
   if (st < 5) { M.notice = pl52(u, 0.3, 0.4, 0.04); M.duck = pl52(u, 0.4, 0.66, 0.06); M.peek = pl52(u, 0.62, 0.8, 0.05); }
   if (st === 1) { const n = Math.floor(tt / P.cyc), xp = m => 0.3 * (2 * h52(m * 3.7 + 1) - 1); M.dx = xp(n - 1) + (xp(n) - xp(n - 1)) * sm52((u - 0.47) / 0.12); }
   if (st === 3) M.off = pl52(u, 0.04, 0.34, 0.1) * (1 - M.duck);
@@ -3675,4 +3676,203 @@ KIT.fog57 = function (T, kind) { const key = 'tx_' + kind; if (W57[key]) return 
   return (W57[key] = new T.CanvasTexture(cv)); };
 KIT.W57 = W57; KIT.d57dbg = () => ({ err: W57.err, go: W57.go, L: W57.L, e: W57.e ? { ph: W57.e.ph, e: +W57.e.e.toFixed(2), sink: +W57.e.sink.toFixed(2), reach: +W57.e.reach.toFixed(2), ti: W57.e.ti, turn: +W57.e.turn.toFixed(2) } : null });
 // ==== W57 END
+// ==== W59 BEGIN
+// (builder 59) DRY ICE THE SHY ONE'S OWN CHANGE OF STAGE, "the whiteout" (AA.rxKit.evo59, on by default; false or ?v59=0 gives the old one, Water's evo
+// played on its joints). Fog and frost, quiet where Acid's is loud. The page (scheme S59) brings it from home over the open book to the middle of the
+// screen as a low tide, large, and home again seen from behind, dims the room round one cold glow and plays the sound. Here, on the music's beats
+// (PAR59: go, well, gather, whiteout, reveal, home):
+//  1. GO: it sinks into its bank and pours to the middle, then wells up there hugging its block (1 to 2: a puff and a peep at you first).
+//  2. THE GATHERING: eyes shut, it curls round its block, which glows cold from inside (3 to 4: the block sinks into its chest); its bank pours out
+//     over the page every way (fog lying on the paper, thin enough for the lines to show, rolls at its front, each with a pen curl); frost ferns race
+//     out over the paper from under it (pen, in the paper); the figure sublimes into its own fog from the edges in (v59 in W49's wash, the pen line
+//     breaking up) till only the glowing block and two shut eyes are left in the cloud.
+//  3. THE WHITEOUT: the fog rises into a soft dome over the middle; the room dims round one cold glow (a cold overlay and the page's light pool here,
+//     builder 33's one-lamp pass from S59); held: slow motes fall, the block's light pulses once, twice.
+//  4. THE REVEAL: on the hit the block cracks (a ring of frost light runs out over the page, pen cracks, a flash); the old body goes and the new one
+//     is put in its place under the dome; all the fog rushes back, the dome is drawn in and the new stage condenses top down (v59's cut), the last
+//     fog pouring off its shoulders; it opens its eyes, looks at its hands, then shyly at you, and settles.
+//  5. HOME: the frost melts to dew and is gone; it ducks, turns its back, pours home and settles; the page writes its number.
+KIT.evo59 = KIT.evo59 == null ? !(typeof location !== 'undefined' && /[?&]v59=0/.test(String(location.search))) : KIT.evo59;
+const W59 = { err: null, e: null, cam: null };
+const on59 = S => !!(S && S.way49 && !S.jar && KIT.evo59 !== false);
+const cl59 = x => (x < 0 ? 0 : x > 1 ? 1 : x), UY59 = 0.697, UZ59 = -0.717;
+/* each step, by the stage it becomes: beats of go, well, gather, whiteout, reveal, home (go to the whiteout's end a whole number: the hit); hd the held
+   part of the whiteout, pul its pulses; fog how far the fog pours (in R, the place's radius), fern the ferns' reach, nf how many; dome its size; sk how
+   deep it rides in its bank as it pours; rv how long it takes to condense (of the reveal); lin how long the frost lingers going home */
+const PAR59 = [null, null,
+  { b: [1.5, 0.5, 2.0, 1.0, 2.0, 1.75], hd: 0.55, pul: 1, fog: 2.3, fern: 1.5, nf: 8, dome: 0.85, sk: 0.5, rv: 0.32, lin: 0 },
+  { b: [2.0, 0.75, 2.25, 1.0, 2.5, 2.0], hd: 0.6, pul: 2, fog: 2.8, fern: 1.9, nf: 10, dome: 0.95, sk: 0.55, rv: 0.38, lin: 0 },
+  { b: [2.0, 0.75, 2.75, 1.5, 2.75, 2.0], hd: 0.65, pul: 2, fog: 3.2, fern: 2.2, nf: 12, dome: 1.05, sk: 0.56, rv: 0.4, lin: 0 },
+  { b: [2.0, 1.0, 3.5, 2.5, 3.5, 2.25], hd: 0.75, pul: 2, fog: 4.6, fern: 3.0, nf: 16, dome: 1.2, sk: 0.58, rv: 0.5, lin: 0.2 }];
+/* where it is in the change: every number the figure, the fog, the frost and the room read */
+function ph59(t, o) { const P = PAR59[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => cl59((u - c[i]) / b[i]), e = o.e59 || (o.e59 = {}), rise = 1 - P.hd;
+  e.u = u; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[4]; e.to = o.to; e.from = o.from; e.pre = u < 0;
+  e.go = at(0); e.well = at(1); e.ga = at(2); e.wo = at(3); e.v = at(4); e.home = at(5); e.done = u >= s; e.old = u < c[4];
+  e.hold = u >= c[3] && u < c[4] && e.wo >= rise ? 1 : 0;
+  e.pu = []; for (let k = 0; k < P.pul; k++) e.pu.push(c[3] + b[3] * (rise + P.hd * (k + 1) / (P.pul + 1)));
+  let pz = 0; e.pu.forEach(x => { const d = (u - x) / 0.14; pz += Math.exp(-d * d * (d < 0 ? 4 : 1)); }); e.pulse = u < c[4] ? pz : 0;
+  e.spread = u < c[2] ? 0 : u < c[4] ? sm52(e.ga / 0.85) : 1 - sm52(e.v / 0.34);
+  e.fogA = u < c[2] ? 0 : u < c[4] ? sm52(e.ga / 0.15) : 1 - sm52((e.v - 0.1) / 0.3);
+  e.dome = u < c[2] ? 0 : u < c[3] ? 0.3 * sm52((e.ga - 0.72) / 0.28) : u < c[4] ? 0.3 + 0.7 * sm52(e.wo / rise) : 1;
+  e.din = u < c[4] ? 0 : sm52(e.v / 0.5);
+  e.thin = u < c[2] ? 0 : u < c[3] ? sm52((e.ga - 0.12) / 0.8) : 1;
+  e.cut = u < c[4] ? 1 : 1 - sm52((e.v - 0.1) / P.rv);
+  e.flash = u >= c[4] ? Math.exp(-(u - c[4]) / 0.12) : 0;
+  e.glow = u < c[1] ? 0 : u < c[2] ? 0.2 * e.well : u < c[3] ? 0.2 + 0.6 * sm52(e.ga / 0.8) : u < c[4] ? 0.8 + 0.7 * e.pulse : (0.8 + 1.4 * e.flash) * (1 - sm52(e.v / 0.22));
+  e.fern = u < c[2] ? 0 : sm52((e.ga - 0.04) / 0.72);
+  e.melt = u < c[5] ? 0 : sm52((e.home - P.lin) / 0.5);
+  e.motes = u < c[3] ? 0 : u < c[4] ? sm52(e.wo / rise) : 1 - sm52(e.v / 0.3);
+  e.ring = u >= c[4] ? cl59(e.v / 0.3) : 0;
+  e.pour = u >= c[4] ? pl52(e.v, 0.26, 0.66, 0.08) : 0;
+  e.dim = e.pre ? 0 : u < c[1] ? 0.3 * sm52(e.go) : u < c[2] ? 0.3 + 0.2 * e.well : u < c[3] ? 0.5 + 0.3 * e.ga : u < c[4] ? 0.8 + 0.2 * sm52(e.wo / rise) : u < c[5] ? 1 - 0.3 * sm52(e.v / 0.6) : 0.7 * (1 - sm52(e.home / 0.7));
+  return e; }
+/* the face and body numbers of each beat, laid over its own idle (the C26.rest wrapper below) */
+function face59(e, old, st) { const z = {}, P = e.P, dir = e.dir || -1;
+  if (old) {
+    if (e.u < e.c[1]) { const g = e.go; z.sink = P.sk * sm52(g / 0.18) * (1 - sm52((g - 0.78) / 0.22)); z.lookx = dir * 0.9 * pl52(g, 0.05, 0.85, 0.1); z.hturn = 0.22 * dir * pl52(g, 0.05, 0.85, 0.1); z.looky = -0.1; z.lean = -dir * 0.05 * Math.sin(PI * g); z.wide = 0.3 * pl52(g, 0, 0.2, 0.06); z.blink = pl52(g, 0.3, 0.36, 0.03); return z; }
+    if (e.u < e.c[2]) { const w = e.well, pk = pl52(w, 0.08, 0.6, 0.08); z.sink = 0; z.sq = 0.06 * pl52(w, 0, 0.35, 0.12); z.looky = 0.2 * pk; z.lookx = 0; z.hturn = 0; z.wide = 0.55 * pk; z.brow = 0.45 * pk; z.blink = sm52((w - 0.66) / 0.25); z.bow = 0.06 * sm52((w - 0.6) / 0.4); return z; }
+    const g = e.u < e.c[3] ? sm52(e.ga / 0.4) : 1; z.sink = 0; z.blink = 1; z.bow = 0.06 + 0.1 * g + (st >= 4 ? 0.06 * g : 0); z.nod = 0.3 * g; z.sq = -0.04 * g; z.lookx = 0; z.looky = -0.3; z.hturn = 0; return z; }
+  if (e.u < e.c[5]) { const v = e.v, op = sm52((v - 0.5) / 0.06), hd = pl52(v, 0.6, 0.76, 0.05), sv = sm52((v - 0.78) / 0.06), lid = sm52((v - 0.88) / 0.06);
+    z.blink = 1 - op; z.sink = 0.35 * (1 - sm52((v - 0.12) / 0.45)); z.wide = 0.45 * pl52(v, 0.5, 0.62, 0.04) + 0.35 * pl52(v, 0.78, 0.9, 0.03);
+    z.looky = -0.85 * hd + 0.15 * sv; z.lookx = 0.3 * Math.sin((v - 0.6) * 25) * hd - 0.5 * dir * lid; z.nod = 0.35 * hd; z.bow = 0.05 * hd + 0.06 * sv; z.brow = 0.35 * pl52(v, 0.78, 0.92, 0.04); z.lidx = 0.35 * lid; z.hturn = 0.2 * dir * lid;
+    if (st === 5) { const bw = 1 - 0.5 * sm52((v - 0.7) / 0.3); z.bow += 0.16 * bw; z.nod += 0.35 * bw; }
+    if (st === 4) z.sq = 0.07 * pl52(v, 0.42, 0.74, 0.1);
+    if (st === 2) z.sq = 0.06 * pl52(v, 0.6, 0.75, 0.05);
+    return z; }
+  const hm = e.home; z.bow = 0.16 * pl52(hm, 0, 0.2, 0.06); z.lookx = -0.4 * dir * pl52(hm, 0.02, 0.14, 0.04); z.looky = 0; z.hturn = 0; z.blink = pl52(hm, 0.03, 0.08, 0.02);
+  z.turn = PI * sm52((hm - 0.08) / 0.16) + PI * sm52((hm - 0.84) / 0.12); z.sink = P.sk * sm52((hm - 0.06) / 0.2) * (1 - sm52((hm - 0.86) / 0.12)); z.sq = -0.05 * pl52(hm, 0.93, 0.99, 0.02); z.lean = dir * 0.04 * Math.sin(PI * cl59((hm - 0.2) / 0.62)); return z; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs), z = S && S.z59; if (!z || !S.x59 || !S.x59.live) return r;
+  ['sink', 'turn', 'lookx', 'looky', 'hturn'].forEach(k => { if (z[k] != null) q[k] = z[k]; });
+  ['lean', 'bow', 'nod', 'wide', 'brow', 'sq'].forEach(k => { if (z[k] != null) q[k] = (q[k] || 0) + z[k]; });
+  ['blink', 'lidx'].forEach(k => { if (z[k] != null) q[k] = Math.max(q[k] || 0, z[k]); }); return r; })(C26.rest);
+/* after its idle: the hands and the block (the hug; 3 to 4 the block into the chest; the new one looks at its hands, 2 to 3 holds the block out), the block's cold glow */
+function post59(S, e, old) { const K = S.k56; if (!K) return; const B = S.bones, G = S.G, H = G.H, J = G.J, V = S.v56, st = S.st, hand = c => c.l.arm || c.jn.length - 1; let hug = 0, up = 0, fw = 0, chest = 0;
+  if (old) { hug = e.u < e.c[1] ? sm52(e.go / 0.3) : 1; if (e.from === 3 && e.u >= e.c[2]) chest = sm52((e.ga - 0.08) / 0.6); }
+  else if (e.u < e.c[5]) { const v = e.v, hd = pl52(v, 0.6, 0.76, 0.05); up = 0.05 * hd; fw = 0.06 * hd; if (st === 2) hug = sm52((v - 0.62) / 0.14); if (st === 3) { const of = pl52(v, 0.66, 1.2, 0.08); fw += 0.16 * of; up += 0.05 * of; } if (st === 5) hug = 0.6 * sm52((v - 0.5) / 0.2); }
+  else hug = 0.8 * pl52(e.home, 0.02, 0.92, 0.08);
+  const jc = G.bj[G.R.chest] || 1, cd = V.c.set(0, 0, 0); let bp0 = null;
+  K.box.forEach(x => { if (x.m.userData.box49 !== 1 || bp0) return; const b = B[x.j]; bp0 = V.b.copy(x.m.position).multiply(b.scale).applyQuaternion(b.quaternion).add(b.position).clone(); });
+  if (chest > 0 && bp0) { cd.copy(B[jc].position); cd.z += 0.5 * J[jc].r; cd.sub(bp0).multiplyScalar(chest); }
+  const off = [cd.x, cd.y + (0.02 * hug + up) * H, cd.z + (-0.05 * hug + fw) * H];
+  if (st <= 3) { let bo = null; K.box.forEach(x => { const b = B[x.j]; V.a.set(off[0], off[1], off[2]).applyQuaternion(V.q.copy(b.quaternion).invert()).divide(b.scale); x.m.position.add(V.a); const p0 = S.bo56 || [0, 0, 0]; bo = [p0[0] + V.a.x, p0[1] + V.a.y, p0[2] + V.a.z]; if (chest > 0) x.m.scale.setScalar(1 - 0.25 * chest); }); if (bo) S.bo56 = bo; }
+  [1, -1].forEach(s => (K.arm[s] || []).forEach((c, ci) => { if (ci > 0 && st >= 4) return; push52(S, c.jn, hand(c), -s * 0.05 * H * hug * (1 - chest) + off[0], off[1], off[2]); }));
+  const gk = old ? 1 + 2.6 * e.glow : st >= 4 && e.u < e.c[5] ? 1 + 1.4 * pl52(e.v, 0.42, 1.2, 0.1) : 0;
+  if (gk) K.box.forEach(x => [].concat(x.m.material).forEach((m, k) => { if (x.em[k]) m.emissive.copy(x.em[k]).multiplyScalar(gk); })); }
+/* what of it is seen: thin (it sublimes from the edges in) and the cut (1: nothing yet condensed, 0: all); the wash, the pen line, the eyes, the block, the mist */
+function vis59(S, thin, cf, e, old) { const G = S.G, H = G.H, B = S.bones, J = G.J, K = S.k56, v = S.v59 && S.v59.value;
+  if (S.top59 == null) { let t = 0; J.forEach(q => { t = Math.max(t, q.p[1] + q.r); }); S.top59 = t; const M = S.m30 || {}, mats = [M.face, M.glint, M.lid].filter(Boolean), eyes = []; S.root.traverse(o => { if (o.isMesh && mats.indexOf(o.material) >= 0) eyes.push(o); }); S.eyes59 = eyes; }
+  const cutY = cf <= 0 ? -99 : -0.3 * H + (S.top59 + 0.35 * H) * cf, hide = thin > 0.2 || cf > 0.003; if (v) v.set(thin, cutY, cutY < -50 ? 1 : H);
+  S.eyes59.forEach(m => { const b = m.parent, y = b.position.y + m.position.y * (b.scale.y || 1); m.visible = cutY < -50 || y > cutY + 0.02 * H; });
+  if (K) { K.box.forEach(x => { const b = B[x.j], y = b.position.y + x.m.position.y * (b.scale.y || 1); x.m.visible = cutY < -50 || y > cutY; });
+    K.mist.forEach(x => { x.m.material.opacity *= (1 - thin) * (cutY > 0.25 * H ? 0 : 1); if (x.m.material.opacity < 0.01) x.m.visible = false; });
+    K.rime.forEach(r => { r.m.material.opacity *= (1 - thin) * (cf > 0.02 ? 0 : 1); }); }
+  const Rp = S.pen30, s = Rp && Rp.body; if (Rp && Rp.mesh) Rp.mesh.visible = !(hide && !(s && s.tp && s.tp.P));
+  if (hide && s && s.tp && s.tp.P) { const P = s.tp.P, n = s.tp.nv; let m = S.cut49; if (!m || m.length !== n) m = S.cut49 = new Uint8Array(n);
+    for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2], nz = vn56(x * 2.1 + z * 0.7 + 3.3, y * 2.1 + 1.7); if (y < cutY + 0.14 * H * (nz - 0.5) + 0.03 * H || nz < thin * 1.25 - 0.1) m[i] = 1; } }
+  const X = S.a48; if (X && X.strokes) X.strokes.forEach(q => { if (!q.p0) { q.p0 = q.pts.map(p => p.slice()); q.w0 = q.w; } if (!hide) { if (q.t !== 'wisp' && q.t !== 'fern') q.off = false; return; } const b = B[q.j] || B[0], y = b.position.y + q.p0[0][1];
+    if (q.t === 'box') { const bo = S.bo56; q.pts = bo ? q.p0.map(p => [p[0] + bo[0], p[1] + bo[1], p[2] + bo[2]]) : q.p0; q.off = (cutY > -50 && y < cutY) || (old && e.dome > 0.55); }
+    else q.off = q.t === 'wisp' || q.t === 'fern' || thin > 0.3 || y < cutY + 0.05 * H; });
+  if (hide) S.c56 = 'x59'; }
+function restore59(S) { if (S.v59) S.v59.value.set(0, -99, 1); (S.eyes59 || []).forEach(m => { m.visible = true; }); if (S.k56) S.k56.box.forEach(x => { x.m.visible = true; x.m.scale.setScalar(1); }); if (S.a48 && S.a48.strokes) S.a48.strokes.forEach(q => { if (q.t !== 'wisp' && q.t !== 'fern') q.off = false; }); if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = true; S.z59 = null; }
+/* soft pictures: a billow (rounds lit above, grey-violet below) and a ring of frost light with needles */
+function tex59(T, kind) { const key = 'x' + kind; if (W59[key]) return W59[key]; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); let s = kind === 'ring' ? 5 : 13; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  if (kind === 'roll') { const L = []; for (let i = 0; i < 9; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.2; L.push([n / 2 + Math.cos(a) * d * 1.25, n / 2 + Math.sin(a) * d * 0.7 + n * 0.05, n * (0.15 + 0.1 * r())]); } L.sort((p, q) => p[1] - q[1]);
+    L.forEach(([cx, cy, rr]) => { const g = x.createRadialGradient(cx - rr * 0.3, cy - rr * 0.38, rr * 0.08, cx, cy, rr); g.addColorStop(0, 'rgba(255,255,255,0.97)'); g.addColorStop(0.5, 'rgba(241,242,251,0.95)'); g.addColorStop(0.82, 'rgba(196,198,222,0.82)'); g.addColorStop(1, 'rgba(186,188,216,0)'); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, rr, 0, 2 * PI); x.fill(); }); }
+  else { const g = x.createRadialGradient(n / 2, n / 2, n * 0.28, n / 2, n / 2, n * 0.5); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.95)'); g.addColorStop(0.72, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, n, n);
+    x.strokeStyle = 'rgba(255,255,255,0.85)'; x.lineWidth = 1.3; for (let i = 0; i < 56; i++) { const a = i / 56 * 2 * PI + r() * 0.08, r0 = n * 0.36, r1 = n * (0.43 + 0.06 * r()); x.beginPath(); x.moveTo(n / 2 + Math.cos(a) * r0, n / 2 + Math.sin(a) * r0); x.lineTo(n / 2 + Math.cos(a) * r1, n / 2 + Math.sin(a) * r1); x.stroke(); } }
+  return (W59[key] = new T.CanvasTexture(cv)); }
+const NFL59 = 44, NR59 = 28, NM59 = 36, NP59 = 8;
+function make59(T) { const X = { live: false, fl: [], ro: [], sh: [], dm: [], mo: [], po: [], fe: [], all: [], tm: 0, tf: 0, last: 0, c: new T.Vector3(), bp: new T.Vector3(), sh0: new T.Vector3(), pts: Array.from({ length: 40 }, () => new T.Vector3()) };
+  const fg = new T.PlaneGeometry(1, 1).rotateX(-PI / 2), bg = new T.PlaneGeometry(1, 1), tf = KIT.fog57(T, 'fog'), tr = tex59(T, 'roll'), tg = tex49(T, 'glow'), tn = tex59(T, 'ring');
+  const mk = (geo, o, ro) => { const m = new T.Mesh(geo, new T.MeshBasicMaterial(Object.assign({ transparent: true, depthWrite: false, opacity: 0 }, o))); m.renderOrder = ro; m.frustumCulled = false; m.visible = false; m.userData.plain = true; m.userData.nobox = true; m.castShadow = false; m.receiveShadow = false; X.all.push(m); return m; };
+  for (let i = 0; i < NFL59; i++) X.fl.push({ m: mk(fg, { map: tf, color: 0xd3d7eb }, 16.2), h: h30(i * 31 + 5), h2: h30(i * 17 + 11), a: 2 * PI * h30(i * 7 + 2) });
+  for (let i = 0; i < NR59; i++) { X.ro.push({ m: mk(bg, { map: tr }, 22), h: h30(i * 23 + 9), h2: h30(i * 19 + 4), a: 2 * PI * (i + 0.6 * h30(i * 3 + 1)) / NR59, x: 0, y: 0, z: 0, r: 0, o: 0 }); X.sh.push(mk(fg, { map: tf, color: 0x868aab }, 16.25)); }
+  [[10, 1.0, 0.1, 0.5], [7, 0.74, 0.45, 0.47], [4, 0.42, 0.74, 0.45], [1, 0, 0.92, 0.5]].forEach(([n, rr, hh, rs], k) => { for (let i = 0; i < n; i++) { const j = X.dm.length; X.dm.push({ m: mk(bg, { map: tr, depthTest: false }, 22.5), h: h30(j * 13 + 7), a: 2 * PI * (i + 0.5 * k) / n, rr, hh, rs, k, x: 0, y: 0, z: 0, r: 0, o: 0 }); } });
+  for (let i = 0; i < NM59; i++) X.mo.push({ m: mk(bg, { alphaMap: tg, color: 0xf2f6ff, depthTest: false }, 28), h: h30(i * 37 + 3), h2: h30(i * 11 + 8), h3: h30(i * 5 + 13), x: 0, y: 0, z: 0, o: 0 });
+  for (let i = 0; i < NP59; i++) X.po.push({ m: mk(bg, { map: tr, depthTest: false }, 24.5), h: h30(i * 29 + 1), x: 0, y: 0, z: 0, r: 0, o: 0 });
+  X.glow = mk(bg, { alphaMap: tg, color: 0x8cc2ff, depthTest: false }, 27);   /* cold light that shows on white fog as well as in the dim */
+  X.flash = mk(bg, { map: tg, color: 0xe8f4ff, blending: T.AdditiveBlending, depthTest: false }, 28.5);
+  X.pg = mk(fg, { alphaMap: tg, color: 0x9cc0ee, depthTest: false }, 16.7);
+  X.ring = mk(fg, { map: tn, color: 0x86b6ee, depthTest: false }, 16.8);
+  X.cool = mk(fg, { color: 0xffffff, blending: T.MultiplyBlending, depthTest: false, opacity: 1, toneMapped: false }, 16.6);
+  for (let i = 0; i < 16; i++) X.fe.push({ L: 0.62 + 0.38 * h30(i * 43 + 1), cu: 0.6 * (h30(i * 47 + 2) - 0.5), lag: 0.25 * h30(i * 53 + 3), nb: 5 + Math.floor(3 * h30(i * 59 + 4)), ja: 0.5 * h30(i * 41 + 6) });
+  return X; }
+function hide59(X) { if (!X) return; X.live = false; X.all.forEach(m => { m.visible = false; }); }
+function kill59(S) { const O = S.e59; if (O) { if (O.gg.parent) O.gg.parent.remove(O.gg); S.e59 = null; } }
+function end59(S) { kill59(S); hide59(S.x59); S.root.visible = true; restore59(S); }
+/* where the block is (the glow, the crack) */
+function bp59(S, X) { const K = S.k56, x = K && K.box.find(q => q.m.userData.box49 === 1); if (x) { x.m.getWorldPosition(X.bp); return; } const B = S.bones, G = S.G; B[G.bj[G.R.head] || 1].getWorldPosition(X.bp); }
+/* one frame of the fog on the page, the rolls, the dome, the glow, the motes, the ring, the cold over the room (world places from the figure's pool) */
+function stage59(S, X, e, o) { const now = (typeof performance !== 'undefined' ? performance.now() : 0) / 1000, dt = Math.min(0.1, Math.max(0, now - (X.last || now))); X.last = now;
+  let top = S.root; while (top.parent) top = top.parent; X.all.forEach(m => { if (m.parent !== top) top.add(m); });
+  const C = o.c59 || { R: 3, y: 0.03, Hc: 8 }, P = e.P, k = o.k59 || 1, R = C.R * k, Hc = C.Hc * k, cW = X.c, cam = W59.cam, mol = C.mol, pl = S.G.pl || S.pl49;
+  S.root.updateWorldMatrix(true, false); cW.set(pl.x, 0, pl.z).applyMatrix4(S.root.matrixWorld); cW.y = C.y; if (!e.hold) X.tm += dt; X.tf += dt; X.R = R; X.Hc = Hc;
+  const pg = C.pg, onBook = (x0, z0, ca, sa, rr, r) => { if (!pg) return rr; let t = rr; if (ca > 1e-4) t = Math.min(t, (pg[1] - r - x0) / ca); if (ca < -1e-4) t = Math.min(t, (pg[0] + r - x0) / ca); if (sa > 1e-4) t = Math.min(t, (pg[3] - r - z0) / sa); if (sa < -1e-4) t = Math.min(t, (pg[2] + r - z0) / sa); return Math.max(0, t); };
+  const Rf = P.fog * R, sp = e.spread, fa = e.fogA, din = e.din, inMol = (x, z, r) => !!mol && x + r > mol[0] && x - r < mol[1] && z + r > mol[2] && z - r < mol[3];
+  /* fog lying on the paper, poured out every way and drawn back */
+  X.fl.forEach((f, i) => { const d = Math.sqrt(f.h), s = cl59(sp * 1.3 - 0.3 * d), m = f.m, r0 = R * (0.7 + 0.55 * f.h2) * (0.55 + 0.45 * s) * (1 + 0.6 * d), rr = onBook(cW.x, cW.z, Math.cos(f.a), Math.sin(f.a) * 0.85, Rf * d * s, 0.4 * r0), r = R * (0.7 + 0.55 * f.h2) * (0.55 + 0.45 * s) * (1 + 0.6 * d), a = fa * (0.66 - 0.3 * d) * sm52(s / 0.25); m.visible = a > 0.01; if (!m.visible) return;
+    m.position.set(cW.x + Math.cos(f.a) * rr, C.y + 0.015 + 0.0015 * i, cW.z + Math.sin(f.a) * rr * 0.85); m.scale.set(2 * r * 1.3, 1, 2 * r); m.rotation.y = f.h * 6 + 0.05 * X.tf * (f.h2 - 0.5); m.material.opacity = a; });
+  /* rolls of fog at its front and in it, rolling, each with its shade on the paper; none stands in the molecule */
+  X.ro.forEach((q, i) => { const front = i % 2 === 0, d = front ? 0.84 + 0.16 * q.h : 0.3 + 0.4 * q.h, s = cl59(sp * 1.2 - 0.2 * q.h2), r = R * (front ? 0.3 + 0.18 * q.h2 : 0.24 + 0.14 * q.h2) * (0.45 + 0.55 * s) * (0.85 + 0.15 * P.fog / 3), rr = onBook(cW.x, cW.z, Math.cos(q.a), Math.sin(q.a) * 0.85, Rf * d * s, 0.9 * r), m = q.m, sh = X.sh[i];
+    const x = cW.x + Math.cos(q.a) * rr, z = cW.z + Math.sin(q.a) * rr * 0.85, a = fa * 0.95 * sm52(s / 0.2) * (inMol(x, z, r * 0.9) ? 0 : 1); q.o = a; m.visible = a > 0.01 && !!cam; sh.visible = m.visible; if (!m.visible) return; const lift = r * 0.62;
+    q.x = x; q.y = C.y + UY59 * lift; q.z = z + UZ59 * lift; q.r = r; m.position.set(q.x, q.y, q.z); m.quaternion.copy(cam.quaternion); m.rotateZ(0.5 * Math.sin(X.tf * 0.4 + q.h * 9)); m.scale.set(2 * r * 1.35, 2 * r, 1); m.material.opacity = a;
+    sh.position.set(x, C.y + 0.012, z + 0.15 * r); sh.scale.set(2.6 * r, 1, 1.5 * r); sh.material.opacity = 0.3 * a; });
+  /* the dome: rises off the page over the middle, churns, is drawn in to the new form */
+  const Rd = P.dome * Math.max(1.05 * R, 0.4 * Hc), Hd = P.dome * 0.85 * Hc, rise = e.dome; X.Rd = Rd; X.Hd = Hd; X.hideR = Rd * 0.85 * sm52((rise - 0.3) / 0.5) * (1 - din);
+  X.dm.forEach((q, i) => { const m = q.m, rr = q.rr * Rd * (0.85 + 0.15 * rise) * (1 - 0.8 * din), hh = (q.hh * rise + (0.5 - q.hh) * din * 0.6) * Hd, wob = 0.05 * Rd * Math.sin(X.tf * 0.7 + q.h * 11), r = q.rs * Rd * (0.5 + 0.5 * rise) * (1 - 0.55 * din);
+    const rf = 1 - e.cut, a = 0.97 * sm52((rise - 0.04 * q.k) / 0.25) * (1 - sm52((din - 0.5) / 0.5)) * (1 - sm52((rf - (1 - q.hh) + 0.05) / 0.3)); q.o = a; m.visible = a > 0.01 && !!cam; if (!m.visible) return;
+    q.x = cW.x + Math.cos(q.a) * rr + wob; q.y = C.y + UY59 * (hh + 0.4 * r); q.z = cW.z + Math.sin(q.a) * rr * 0.6 + UZ59 * (hh + 0.4 * r); q.r = r; m.position.set(q.x, q.y, q.z); m.quaternion.copy(cam.quaternion); m.rotateZ(q.h * 6 + 0.15 * Math.sin(X.tf * 0.3 + i)); m.scale.set(2.3 * r, 2.1 * r, 1); m.material.opacity = a; });
+  /* the block's cold glow, its light on the page, the flash and the ring of frost light at the crack */
+  const gl = e.glow; X.glow.visible = gl > 0.01 && !!cam; if (X.glow.visible) { X.glow.position.copy(X.bp); X.glow.quaternion.copy(cam.quaternion); const s = R * (0.35 + 0.45 * gl); X.glow.scale.set(s, s, 1); X.glow.material.opacity = Math.min(0.9, 0.75 * gl); }
+  X.pg.visible = gl > 0.01; if (X.pg.visible) { X.pg.position.set(cW.x, C.y + 0.03, cW.z); const s = R * (2.2 + 1.2 * gl); X.pg.scale.set(s * 1.2, 1, s); X.pg.material.opacity = 0.3 * Math.min(1, gl); }
+  X.flash.visible = e.flash > 0.01 && !!cam; if (X.flash.visible) { X.flash.position.copy(X.bp); X.flash.quaternion.copy(cam.quaternion); const s = R * (0.6 + 1.6 * (1 - e.flash)); X.flash.scale.set(s, s, 1); X.flash.material.opacity = e.flash; }
+  X.ring.visible = e.ring > 0 && e.ring < 1; if (X.ring.visible) { const s = 2 * R * (0.6 + P.fog * 1.3 * sm52(e.ring)); X.ring.position.set(cW.x, C.y + 0.04, cW.z); X.ring.scale.set(s, 1, s * 0.92); X.ring.material.opacity = 0.95 * (1 - sm52(e.ring)); }
+  X.cool.visible = e.dim > 0.01; if (X.cool.visible) { X.cool.position.set(cW.x, C.y + 0.3, cW.z); X.cool.scale.set(600, 1, 600); const k2 = 0.14 * e.dim; X.cool.material.color.setRGB(1 - k2, 1 - 0.5 * k2, 1); }
+  /* motes falling slow in the hush, blown out at the crack */
+  X.mo.forEach((q, i) => { const m = q.m; if (e.motes < 0.01 || !cam) { m.visible = false; q.o = 0; return; } const tp = 1.25 * Hd, f = (X.tf * (0.06 + 0.05 * q.h2) + q.h) % 1, y = tp * (1 - f), an = 2 * PI * q.h3, rr = 1.5 * Rd * Math.sqrt(q.h2) * (1 + (e.old ? 0 : 1.8 * sm52(e.v / 0.3))), sw = 0.06 * Rd * Math.sin(X.tf * 0.9 + i);
+    const a = e.motes * sm52(f / 0.15) * (1 - sm52((f - 0.85) / 0.15)); q.o = a; m.visible = a > 0.01; if (!m.visible) return; q.x = cW.x + Math.cos(an) * rr + sw; q.y = C.y + UY59 * y; q.z = cW.z + Math.sin(an) * rr * 0.7 + UZ59 * y; m.position.set(q.x, q.y, q.z); m.quaternion.copy(cam.quaternion); const s = R * (0.08 + 0.06 * q.h); m.scale.set(s, s, 1); m.material.opacity = a; });
+  /* the last fog pours off its shoulders */
+  const ce = cam ? cam.matrixWorld.elements : null;
+  X.po.forEach((q, i) => { const m = q.m; if (e.pour < 0.01 || !cam || e.old) { m.visible = false; q.o = 0; return; } const sd = i % 2 ? 1 : -1, k2 = Math.floor(i / 2), p = cl59((e.v - 0.26 - 0.06 * k2) / 0.34), a = 0.9 * Math.sin(PI * p) * (p > 0 && p < 1 ? 1 : 0); q.o = a; m.visible = a > 0.01; if (!m.visible) return;
+    const w = sd * Hc * (0.2 * (1 + 0.4 * q.h) + 0.35 * p), hgt = Hc * (0.12 - 0.55 * p * p); q.x = X.sh0.x + ce[0] * w; q.y = X.sh0.y + ce[1] * w + UY59 * hgt; q.z = X.sh0.z + ce[2] * w + UZ59 * hgt; q.r = Hc * 0.11 * (0.7 + 0.8 * p);
+    m.position.set(q.x, q.y, q.z); m.quaternion.copy(cam.quaternion); m.rotateZ(q.h * 5 + p); m.scale.set(2.4 * q.r, 2 * q.r, 1); m.material.opacity = a; }); }
+/* the pen's part: frost ferns racing out over the paper and melting to dew, curls on the rolls and the dome, motes, the crack, the ring */
+function ink59(T, S, X, ren, cam) { const Rp = S.pen30, e = X.e, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
+  const lw = Math.max(Rp.lw || 2, 1.6 * sc), fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), pts = X.pts, C = X.c, R = X.R || 3, ce = cam.matrixWorld.elements, rx = ce[0], ry = ce[1], rz = ce[2], ux = ce[4], uy = ce[5], uz = ce[6], d = 0.02 * R, P = e.P;
+  const st = (n, w, sd, o) => { if (w < 0.08 * lw) return; free30(Rp, pts.slice(0, n), w, s2, Wd, Ht, P10, P11, d, sd, o || { smooth: 2, wob: 0.7, min: 3 }); };
+  const arc = (x, y, z, r, a0, a1, n, w, sd) => { for (let k = 0; k < n; k++) { const an = a0 + (a1 - a0) * k / (n - 1); pts[k].set(x + (rx * Math.cos(an) * 1.2 + ux * Math.sin(an)) * r, y + (ry * Math.cos(an) * 1.2 + uy * Math.sin(an)) * r, z + (rz * Math.cos(an) * 1.2 + uz * Math.sin(an)) * r); } st(n, w, sd, { smooth: 2, wob: 0.6, min: 3 }); };
+  /* the ferns: a curving stem with barbs on both sides, from under it outward; going home they melt from the tips in to beads of dew, then are gone */
+  if (e.fern > 0.001 && e.melt < 0.999) { const nf = P.nf, y = C.y + 0.02, r0 = 0.5 * R, m = e.melt, hr = X.hideR || 0;
+    for (let i = 0; i < nf; i++) { const f = X.fe[i], g = cl59((e.fern - f.lag) / (1 - f.lag)); if (g <= 0.02) continue; const an0 = 2 * PI * (i + f.ja) / nf, Lf = P.fern * R * f.L, tip = g * (1 - 0.55 * m), w = lw * 1.3 * (1 - m) * (0.6 + 0.4 * f.L), t0 = cl59((hr - r0) / Lf);
+      const at = t => { const rr = r0 + Lf * t, an = an0 + f.cu * t * t; return [C.x + Math.cos(an) * rr, C.z + Math.sin(an) * rr * 0.85, an]; };
+      if (tip > t0 + 0.02) { const n = 12; for (let k = 0; k < n; k++) { const q = at(t0 + (tip - t0) * k / (n - 1)); pts[k].set(q[0], y, q[1]); } st(n, w, 15000 + i * 50, { smooth: 2, wob: 0.5, min: 3 }); }
+      for (let b = 1; b <= f.nb; b++) { const t = b / (f.nb + 1); if (t > tip || t < t0) continue; const q = at(t), bl = 0.22 * Lf * (1 - 0.55 * t) * Math.min(1, (tip - t) * 4 + 0.3), an = q[2], dw = pl52(m, 0.12, 0.8, 0.1);
+        [0.85, -0.85].forEach((s, j) => { pts[0].set(q[0], y, q[1]); pts[1].set(q[0] + Math.cos(an + s) * bl * 0.55, y, q[1] + Math.sin(an + s) * bl * 0.55 * 0.85); pts[2].set(q[0] + Math.cos(an + s * 0.8) * bl, y, q[1] + Math.sin(an + s * 0.8) * bl * 0.85); const dx = pts[2].x, dz = pts[2].z; st(3, w * 0.7, 15000 + i * 50 + b * 4 + j, { smooth: 1, wob: 0.4, min: 2 });
+          if (dw > 0.02) { const rr = 0.028 * R * (0.6 + 0.4 * sm52(m / 0.3)); for (let k = 0; k < 9; k++) { const a2 = k / 8 * 2 * PI; pts[k].set(dx + Math.cos(a2) * rr, y, dz + Math.sin(a2) * rr * 0.85); } st(9, lw * 0.6 * dw, 15500 + i * 50 + b * 4 + j, { smooth: 1, wob: 0.3, min: 3 }); } }); } } }
+  /* a pen curl on each roll and on the dome's upper puffs */
+  X.ro.forEach((q, i) => { if (q.o < 0.12) return; arc(q.x, q.y, q.z, q.r * 0.68, 0.35 + 0.3 * q.h, 2.5 - 0.3 * q.h2, 8, lw * 0.75 * q.o, 16000 + i * 7); });
+  X.dm.forEach((q, i) => { if (q.o < 0.15 || (q.k === 0 && i % 2)) return; arc(q.x, q.y, q.z, q.r * 0.82, 0.3 + 0.4 * q.h, 2.4 + 0.3 * q.h, 9, lw * 0.7 * q.o, 17000 + i * 7); });
+  X.po.forEach((q, i) => { if (q.o < 0.15) return; arc(q.x, q.y, q.z, q.r * 0.75, 0.4, 2.3, 7, lw * 0.6 * q.o, 17500 + i * 7); });
+  /* motes: every third a small pen star */
+  X.mo.forEach((q, i) => { if (q.o < 0.2 || i % 3) return; const r = 0.035 * R; for (let k = 0; k < 3; k++) { const an = k * PI / 3 + q.h; pts[0].set(q.x - (rx * Math.cos(an) + ux * Math.sin(an)) * r, q.y - (ry * Math.cos(an) + uy * Math.sin(an)) * r, q.z - (rz * Math.cos(an) + uz * Math.sin(an)) * r); pts[1].set(q.x + (rx * Math.cos(an) + ux * Math.sin(an)) * r, q.y + (ry * Math.cos(an) + uy * Math.sin(an)) * r, q.z + (rz * Math.cos(an) + uz * Math.sin(an)) * r); st(2, lw * 0.5 * q.o, 18800 + i * 5 + k, { smooth: 0, wob: 0.2, min: 2 }); } });
+  /* the block cracks: jagged pen lines out of it, and a broken pen ring running out with the light */
+  if (!e.old && e.v < 0.3) { const k = sm52(e.v / 0.05), fd = 1 - sm52((e.v - 0.06) / 0.24), B = X.bp; for (let j = 0; j < 7; j++) { const an = j * 0.9 + 0.3, L = 0.5 * R * k; for (let q = 0; q < 4; q++) { const t = q / 3, a2 = an + (q > 0 && q < 3 ? 0.35 * (h30(j * 7 + q) - 0.5) : 0); pts[q].set(B.x + (rx * Math.cos(a2) + ux * Math.sin(a2)) * L * t, B.y + (ry * Math.cos(a2) + uy * Math.sin(a2)) * L * t, B.z + (rz * Math.cos(a2) + uz * Math.sin(a2)) * L * t); } st(4, lw * 1.0 * fd, 18000 + j * 5, { smooth: 0, wob: 0.3, min: 2 }); } }
+  if (e.ring > 0 && e.ring < 1) { const rr = R * (0.6 + P.fog * 1.3 * sm52(e.ring)) * 0.78; for (let k = 0; k < 5; k++) { const n = 9; for (let q = 0; q < n; q++) { const an = (k / 5 + q / (n - 1) * 0.15) * 2 * PI + 0.4; pts[q].set(C.x + Math.cos(an) * rr, C.y + 0.03, C.z + Math.sin(an) * rr * 0.92); } st(n, lw * 0.9 * (1 - e.ring), 18500 + k * 3, { smooth: 2, wob: 0.4, min: 3 }); } }
+  Rp.pa.needsUpdate = Rp.ua.needsUpdate = Rp.ia.needsUpdate = true; Rp.mesh.geometry.setDrawRange(0, Rp.ni); }
+function evo59(f0, grp, S, t, o) { const e = ph59(t, o), T = S.T, X = S.x59 || (S.x59 = make59(T)); X.live = true; X.e = e; W59.e = e; e.dir = (o.c59 && o.c59.dir) || -1; let O = S.e59; const ro = { look: [0, 0.5] };
+  if (e.old) { if (!O || O.from !== o.from) { kill59(S); const gg = dry49Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.o59 = S; grp.parent.add(gg); O = S.e59 = { gg, sp, from: o.from }; }
+    const sp = O.sp; O.gg.visible = true; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); S.root.visible = false; sp.x59 = X;
+    sp.z59 = face59(e, true, o.from); f0(O.gg, 'rest', t / e.L, ro); post59(sp, e, true); vis59(sp, e.thin, 0, e, true); bp59(sp, X); }
+  else { if (O) kill59(S); S.root.visible = true; S.z59 = face59(e, false, S.st); f0(grp, 'rest', t / e.L, ro); post59(S, e, false); vis59(S, 0, e.cut, e, false); bp59(S, X); const B = S.bones, G = S.G; B[G.bj[G.R.chest] || 1].getWorldPosition(X.sh0); }
+  stage59(S, X, e, o);
+  const c = e.c, b4 = e.P.b[4], u = e.u; let n = -1; if (u >= e.hit + 0.45 * b4) n = 0; if (u >= e.hit + 0.56 * b4) n = 1; if (u >= e.hit + 0.66 * b4) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on59(S) && o.from !== S.st)) { if (S && S.x59 && S.x59.live && clip !== 'evo') { try { end59(S); } catch (e) { W59.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo59(f0, grp, S, t, o); } catch (err) { W59.err = String(err && err.stack); const L = o.L || 500, tot = (PAR59[Math.max(2, Math.min(5, o.to | 0))] || PAR59[3]).b.reduce((a, b) => a + b, 0); return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+draw30 = (f0 => function (T, S, ren, cam) { const M = S.o59 || S, X = M.x59; if (X && X.live) W59.cam = cam; f0(T, S, ren, cam); if (!X || !X.live || !X.e || !S.pen30) return; const fr = ren.info && ren.info.render ? ren.info.render.frame : 0; if (X.df === fr) return; X.df = fr; try { ink59(T, S, X, ren, cam); } catch (e) { W59.err = 'ink ' + String(e && e.stack); } })(draw30);
+KIT.W59 = W59; KIT.e59dbg = () => { const e = W59.e; return { err: W59.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), ga: +e.ga.toFixed(2), wo: +e.wo.toFixed(2), v: +e.v.toFixed(2), home: +e.home.toFixed(2), thin: +e.thin.toFixed(2), cut: +e.cut.toFixed(2), sp: +e.spread.toFixed(2), dome: +e.dome.toFixed(2), hit: e.hit, tot: e.tot, old: e.old } : null }; };
+// ==== W59 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
