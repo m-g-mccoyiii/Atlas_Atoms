@@ -3016,8 +3016,8 @@ function ph55(t, o) { const P = PAR55[Math.max(2, Math.min(5, o.to | 0))], b = P
   e.ha = u < c[2] ? sm55(e.sink / 0.4) : 1 - sm55((e.home - 0.05) / 0.45);
   e.deep = u < c[2] ? 0.35 * e.sink : u < c[3] ? 0.35 + 0.65 * sm55(e.bo) : u < c[4] ? 1 : u < c[5] ? 1 - 0.7 * sm55(e.look) : 0.3 * (1 - sm55(e.home / 0.5));
   e.scorch = u < c[2] ? 0.2 * e.sink : u < c[3] ? 0.2 + 0.8 * sm55(e.bo / 0.8) : u < c[4] ? 1 : u < c[5] ? 1 - 0.45 * e.look : 0.55 * (1 - sm55(e.home / 0.6));
-  e.fume = e.pre ? 0 : u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.6) : u < c[4] ? 1 - sm55((e.v - 0.1) / 0.6) : 0; e.reach = u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.75) : 1;
-  e.tear = u >= c[3] && u < c[4] ? sm55(e.v / 0.45) : 0;
+  e.fume = e.pre ? 0 : u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.6) : u < c[4] ? 1 - sm55(e.v / 0.4) : 0; e.reach = u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.75) : 1;
+  e.tear = u >= c[3] && u < c[4] ? sm55(e.v / 0.18) : 0;
   e.dim = e.pre ? 0 : u < c[1] ? 0.75 * sm55((e.go - 0.2) / 0.8) : u < c[5] ? 0.75 + 0.25 * sm55(e.sink * 1.5) : 1 - sm55(e.home / 0.8);
   e.flash = u >= c[3] ? Math.exp(-(u - c[3]) / 0.3) : 0; return e; }
 /* Water's rest clip numbers with ours laid over them (the face, the bow, the turn home) */
@@ -3052,7 +3052,7 @@ function rise55(S, e, o) { const H = S.G.H, g = frame55(S), P = e.P, v = e.u < e
   if (h >= 1) D = -0.035 * H * Math.exp(-(v - hl[1]) * 9) * Math.sin((v - hl[1]) * 30);
   /* the claws: up out of the pit through the fume, down on the rim, holding while it hauls, let go */ const rl = sm55((v - P.rl[0]) / (P.rl[1] - P.rl[0]));
   [1, -1].forEach(sd => { const hp = hp55(S, sd), q = P.sides[sd]; if (!hp || !q || e.u < e.hit) return; const wu = sm55((v - q[0]) / Math.max(0.01, q[1] - q[0])), ws = sm55((v - q[2]) / Math.max(0.01, q[3] - q[2])); if (wu <= 0) return;
-    const nx = hp.x + g.dn.x * D, ny = hp.y + g.dn.y * D, nz = hp.z + g.dn.z * D, c = g.c, sx = (P.wide ? 0.55 : 0.28) * R * sd, shH = P.shH * H, rx = (P.wide ? 1.0 : 0.9) * R * sd;
+    const nx = hp.x + g.dn.x * D, ny = hp.y + g.dn.y * D, nz = hp.z + g.dn.z * D, c = g.c, sx = (P.wide ? 0.7 : 0.45) * R * sd, shH = P.shH * H * 1.25, rx = (P.wide ? 1.0 : 0.9) * R * sd;
     const ax = c.x + g.xh.x * sx + g.up.x * shH + g.fz.x * 0.1 * R, ay = c.y + g.xh.y * sx + g.up.y * shH + g.fz.y * 0.1 * R, az = c.z + g.xh.z * sx + g.up.z * shH + g.fz.z * 0.1 * R;
     const bx = c.x + g.xh.x * rx + g.up.x * 0.03 * H + g.fz.x * 0.2 * R, by = c.y + g.xh.y * rx + g.up.y * 0.03 * H + g.fz.y * 0.2 * R, bz = c.z + g.xh.z * rx + g.up.z * 0.03 * H + g.fz.z * 0.2 * R;
     let tx = nx + (ax - nx) * wu, ty = ny + (ay - ny) * wu, tz = nz + (az - nz) * wu; tx += (bx - tx) * ws; ty += (by - ty) * ws; tz += (bz - tz) * ws; const k = 1 - rl;
