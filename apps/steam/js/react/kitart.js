@@ -2272,7 +2272,7 @@ KIT.fix36 = KIT.fix36 == null ? !(typeof location !== 'undefined' && /[?&]f36=0/
 // Under it the eaten wood: bleached grain, pits, a ragged scorched edge, the pool's wet rim, sunk into the bench. Each body is ONE closed skin
 // (field35, nets35), a skinned mesh on five spine bones (bound, not posed). Pen builder 30's; wash Water's kind (mat35, F35).
 KIT.acid35 = KIT.acid35 == null ? ((typeof location !== 'undefined' && (/[?&]a35=(a)/.exec(String(location.search)) || [])[1]) || null) : KIT.acid35;
-const W35 = { figs: [], scenes: typeof WeakSet !== 'undefined' ? new WeakSet() : null, err: null, ways: { a: 'the breaker' }, lw: 0.96, rot: [0.12, 0.05, 0, -0.18, 0.1] };
+const W35 = { figs: [], scenes: typeof WeakSet !== 'undefined' ? new WeakSet() : null, err: null, ways: { a: 'the breaker' }, lw: 0.96, rot: [0.12, 0.05, 0, -0.1, 0.1] };
 /* shapes: each gives its distance, a centre and reach (to skip it when far), and how softly it joins (k) */
 const P35 = {
   ball(x, y, z, r, k) { return { c: [x, y, z], R: r, k: k == null ? 0.06 : k, f: (px, py, pz) => Math.hypot(px - x, py - y, pz - z) - r }; },
@@ -2309,7 +2309,8 @@ const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P3
   const drip = (o, x, y, z, len, r, lx, lz) => { lx = lx || 0; lz = lz || 0; o.d(t([[x, y, z, r], [x + lx * 0.35, y - len * 0.42, z + lz * 0.35, r * 0.55], [x + lx * 0.78, y - len * 0.8, z + lz * 0.78, r * 0.4]], 0.025), y, y - len); o.d(b(x + lx, y - len, z + lz, r * 0.66, 0.02), y, y - len); };
   /* (builder 39) a tooth: a drip off the crest caught mid-fall, a neck pinched almost through and a bead below it; not a drip in the paint, so it
      stays pale (bare paper inside the mouth) and the pen finds its edge against the dark */
-  const tooth = (o, x, y, z, len, r, lx) => { lx = lx || 0; len *= 1.2; r *= 1.45; o.a(t([[x, y + r, z, r * 1.1], [x + lx * 0.4, y - len * 0.42, z, r * 0.62], [x + lx * 0.78, y - len * 0.76, z, r * 0.42]], 0.02)); o.a(b(x + lx, y - len, z, r * 0.78, 0.016)); };
+  /* (builder 42) one clean pale drip: broad at the roof, tapering smoothly to a round tip, no pinched neck (the neck drew as pen loops) */
+  const tooth = (o, x, y, z, len, r, lx) => { lx = lx || 0; len *= 1.2; r *= 1.45; o.a(t([[x, y + r, z, r * 1.25], [x + lx * 0.4, y - len * 0.45, z, r * 0.9], [x + lx * 0.85, y - len * 0.85, z, r * 0.66]], 0.05)).th = 1; o.a(b(x + lx, y - len, z, r * 0.7, 0.05)).th = 1; };
   /* an arm as a thick run of liquid; its fingers are runs off the end */
   const arm = (o, pts, fing) => { o.a(t(pts, 0.08)); const L = pts[pts.length - 1]; fing.forEach(v => o.a(t([[L[0], L[1], L[2], L[3] * 0.66], [L[0] + v[0] * 0.6, L[1] + v[1] * 0.6, L[2] + v[2] * 0.6, L[3] * 0.48], [L[0] + v[0], L[1] + v[1], L[2] + v[2], L[3] * (v[3] || 0.36)]], 0.035))); };
   /* spray off the crest: a neck flung up to a bead */
@@ -2332,7 +2333,7 @@ const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P3
   const strand = (o, x, y0, y1, z, r) => o.a(t([[x, y0, z, r], [x + 0.02, (y0 + y1) / 2 + 0.03, z, r * 0.5], [x - 0.01, y1, z, r * 0.9]], 0.03));
   const ST = [
     /* 1, a shy lick: a small lip of acid just lifted off its pit, peering out; the mouth a crack under the lip; no hands yet, two nubs on the wood */
-    o => { pool(o, 0.02, 0.02, 0.66, 0.42, 11);
+    o => { pool(o, 0.04, 0.02, 0.5, 0.36, 11);
       wave(o, [[-0.52, 0.03, 0.11], [-0.3, 0.09, 0.14], [-0.08, 0.16, 0.15], [0.12, 0.25, 0.13], [0.27, 0.36, 0.1], [0.37, 0.45, 0.07], [0.42, 0.52, 0.05], [0.4, 0.57, 0.034]], 0.18, 3, 5);
       lip(o, [[-0.05, 0.05, 0.11], [0.25, 0.07, 0.09], [0.5, 0.1, 0.06]], [0.08]);
       mouth(o, [[-0.04, 0.19, 0.01], [0.1, 0.2, 0.034], [0.26, 0.215, 0.05], [0.44, 0.2, 0.046], [0.62, 0.18, 0.034]], 0.1, 0.08, 0.3);
@@ -2352,48 +2353,54 @@ const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P3
       sag(o, -0.3, 0.45, -0.62, 0.18, 0.22, 0.05); sag(o, -0.1, 0.5, -0.45, 0.2, -0.2, 0.045);
       o.eye(-0.04, 0.52, 0.016, { kind: 3, gl: -0.4 }); o.spr(0.62, 0.7, 0.04, 0.016); o.spr(0.34, 0.74, 0.0, 0.012);
       o.fume(-0.4, 0.4, -0.1, 0.26, -1); o.etch(0.14, 0.03, 1.5); },
-    /* 3, the breaker: reared and curling, one hand flung forward high as if for an atom, the other braced on the wood behind, hungry */
-    o => { pool(o, -0.04, 0.02, 0.98, 0.56, 21);
-      wave(o, [[-1.05, 0.03, 0.15], [-0.78, 0.22, 0.24], [-0.55, 0.5, 0.27], [-0.34, 0.8, 0.25], [-0.06, 1.0, 0.21], [0.24, 1.06, 0.17], [0.48, 0.98, 0.13], [0.62, 0.84, 0.09], [0.66, 0.72, 0.06]], 0.26, 4, 3, 0.05);
-      lip(o, [[-0.15, 0.06, 0.18], [0.22, 0.1, 0.15], [0.5, 0.17, 0.11], [0.7, 0.26, 0.07]], [0.08, -0.15]);
-      mouth(o, [[-0.3, 0.48, 0.04], [-0.14, 0.52, 0.11], [0.08, 0.56, 0.14], [0.38, 0.55, 0.15], [0.66, 0.52, 0.13], [0.9, 0.5, 0.1]], 0.06, 0.2);
-      [[-0.06, 0.14, 0.036], [0.14, 0.1, 0.03], [0.34, 0.18, 0.04], [0.54, 0.12, 0.032], [0.72, 0.09, 0.026]].forEach((q, i) => tooth(o, q[0], 0.71 - 0.02 * Math.abs(i - 2), 0.3, q[1], q[2], 0.01));
-      [[0.2, 0.42], [0.46, 0.4]].forEach(q => o.a(cone([q[0], q[1] - 0.06, 0.3], [q[0] - 0.02, q[1] + 0.06, 0.32], 0.03, 0.008)));
-      arm(o, [[0.38, 0.98, 0.2, 0.1], [0.72, 1.14, 0.3, 0.085], [1.02, 1.32, 0.32, 0.075], [1.22, 1.46, 0.28, 0.066]], [[0.14, 0.08, 0], [0.16, -0.02, 0.02], [0.12, -0.1, 0.04], [0.04, 0.14, 0.06, 0.42]]);
-      arm(o, [[-0.45, 0.5, 0.32, 0.11], [-0.44, 0.25, 0.55, 0.09], [-0.32, 0.06, 0.66, 0.08]], [[0.12, -0.02, 0.02], [0.06, -0.02, 0.13], [-0.07, -0.02, 0.12, 0.42]]);
-      sag(o, -0.45, 0.85, -0.8, 0.35, 0.24, 0.07); sag(o, -0.25, 1.0, -0.62, 0.55, -0.22, 0.06);
-      spike(o, 0.3, 1.18, 0.08, 0.12, 0.12, 0.02, 0.026); spike(o, 0.54, 1.06, 0.06, 0.16, 0.06, 0.03, 0.022); drip(o, 0.66, 0.72, 0.14, 0.12, 0.03, 0.02, 0);
-      o.eye(-0.24, 0.96, 0.018, { kind: 3, gl: -0.5 }); o.spr(0.74, 1.2, 0.06, 0.02); o.spr(0.5, 1.34, 0.0, 0.016);
-      o.fume(-0.5, 0.7, -0.1, 0.34, -1); o.etch(0.02, 0.03, 1.75); },
-    /* 4, the rip curl: tall, turned three-quarters to us (W35.rot) so we look into the mouth, both hands thrown up, spray off the crest, gleeful */
-    o => { pool(o, -0.04, 0.02, 1.0, 0.62, 41);
-      wave(o, [[-0.92, 0.04, 0.17], [-0.7, 0.35, 0.28], [-0.56, 0.75, 0.28], [-0.42, 1.12, 0.25], [-0.16, 1.4, 0.21], [0.16, 1.48, 0.17], [0.46, 1.4, 0.13], [0.7, 1.26, 0.09], [0.82, 1.06, 0.06], [0.78, 0.94, 0.04]], 0.3, 4, 27, 0.06);
-      lip(o, [[-0.15, 0.06, 0.2], [0.24, 0.11, 0.16], [0.52, 0.2, 0.12], [0.72, 0.3, 0.075]], [0.08, -0.17]);
-      mouth(o, [[-0.3, 0.66, 0.012], [-0.16, 0.69, 0.11], [0.0, 0.74, 0.18], [0.32, 0.74, 0.2], [0.62, 0.68, 0.17], [0.92, 0.62, 0.13]], 0.08, 0.24);
-      [[-0.1, 0.2, 0.044], [0.2, 0.27, 0.05], [0.48, 0.18, 0.042], [0.74, 0.12, 0.032]].forEach((q, i) => tooth(o, q[0], 0.93 - 0.03 * Math.abs(i - 1.5), 0.32, q[1], q[2], 0.01));
-      [[0.06, 0.5], [0.5, 0.48]].forEach(q => o.a(cone([q[0], q[1] - 0.07, 0.32], [q[0] - 0.02, q[1] + 0.07, 0.34], 0.032, 0.008)));
-      arm(o, [[0.3, 1.2, 0.34, 0.11], [0.66, 1.5, 0.46, 0.095], [0.92, 1.84, 0.46, 0.082], [1.02, 2.1, 0.42, 0.072]], [[0.04, 0.16, 0], [0.14, 0.1, 0], [-0.08, 0.13, 0.04], [0.11, 0.02, 0.08, 0.42]]);
-      arm(o, [[-0.4, 1.15, -0.3, 0.11], [-0.74, 1.5, -0.44, 0.095], [-0.96, 1.84, -0.44, 0.082], [-1.04, 2.1, -0.4, 0.072]], [[-0.04, 0.16, 0], [-0.14, 0.1, 0], [0.06, 0.14, 0.02], [-0.11, 0.03, 0.08, 0.42]]);
-      [[-0.06, 1.55, 0.0, -0.02, 0.16, 0.02, 0.03], [0.24, 1.6, 0.08, 0.1, 0.16, 0.02, 0.03], [0.5, 1.46, 0.04, 0.17, 0.12, 0.03, 0.026], [0.64, 1.24, 0.12, 0.17, 0.04, 0.03, 0.022]].forEach(q => spike(o, q[0], q[1], q[2], q[3], q[4], q[5], q[6]));
-      drip(o, 0.64, 1.06, 0.14, 0.14, 0.03, 0.02, 0);
-      sag(o, -0.5, 1.12, -0.84, 0.42, 0.26, 0.08); sag(o, -0.3, 1.3, -0.66, 0.7, -0.24, 0.07);
-      o.eye(-0.36, 1.3, 0.02, { kind: 3, gl: -0.5 }); [[0.86, 1.4, 0.06, 0.022], [0.5, 1.86, 0.0, 0.02], [0.96, 1.16, 0.1, 0.016], [0.16, 1.92, 0.0, 0.014], [1.04, 1.6, 0.0, 0.012], [-0.2, 1.84, 0.0, 0.012]].forEach(q => o.spr(q[0], q[1], q[2], q[3]));
-      o.fume(-0.56, 0.95, -0.1, 0.4, -1); o.etch(0.02, 0.03, 2.05); },
+    /* (builder 42) 3, the breaker (the earlier set's wave): a long slope of liquid up the back, the crest curling over, the mouth the long hollow
+       under the curl (open to the front, far wall lit at the top), five pale teeth off its roof, one hand rising out of the pool in front, the
+       other reaching forward from behind the curl */
+    o => { pool(o, -0.06, 0.02, 0.86, 0.52, 21);
+      wave(o, [[-1.1, 0.03, 0.14], [-0.86, 0.2, 0.24], [-0.62, 0.5, 0.27], [-0.4, 0.84, 0.23], [-0.12, 1.06, 0.17], [0.2, 1.12, 0.125], [0.46, 1.05, 0.09], [0.62, 0.94, 0.062], [0.66, 0.83, 0.042]], 0.26, 4, 3, 0.05);
+      lip(o, [[-0.15, 0.06, 0.19], [0.22, 0.1, 0.15], [0.52, 0.14, 0.1], [0.78, 0.18, 0.06]], [0.08, -0.15]);
+      mouth(o, [[-0.42, 0.5, 0.04], [-0.26, 0.52, 0.11], [0.0, 0.54, 0.14], [0.3, 0.54, 0.15], [0.58, 0.52, 0.14], [0.72, 0.5, 0.12], [1.1, 0.48, 0.1]], 0.06, 0.1);
+      [[-0.1, 0.12, 0.036], [0.1, 0.17, 0.04], [0.3, 0.11, 0.034], [0.48, 0.15, 0.034]].forEach((q, i) => tooth(o, q[0], [0.645, 0.67, 0.675, 0.65][i], 0.3, q[1], q[2], 0.01));
+      [[0.14, 0.42], [0.42, 0.4]].forEach(q => o.a(cone([q[0], q[1] - 0.06, 0.3], [q[0] - 0.02, q[1] + 0.06, 0.32], 0.034, 0.012)));
+      spike(o, -0.02, 1.2, 0.02, 0.04, 0.14, 0.02, 0.03); spike(o, 0.3, 1.18, 0.08, 0.14, 0.1, 0.02, 0.028); spike(o, 0.5, 1.06, 0.06, 0.16, 0.06, 0.03, 0.024);
+      drip(o, 0.66, 0.83, 0.12, 0.12, 0.032, 0.02, 0);
+      sag(o, -0.5, 0.82, -0.86, 0.3, 0.22, 0.07); sag(o, -0.26, 1.0, -0.66, 0.5, -0.2, 0.06);
+      arm(o, [[0.86, 0.03, 0.4, 0.12], [1.02, 0.18, 0.48, 0.1], [1.16, 0.34, 0.46, 0.085], [1.26, 0.48, 0.4, 0.075]], [[0.1, 0.12, -0.04], [0.15, 0.04, -0.02], [-0.02, 0.15, 0.04, 0.42]]);
+      arm(o, [[-0.24, 0.66, -0.36, 0.12], [0.22, 0.86, -0.48, 0.1], [0.68, 0.94, -0.44, 0.085], [0.98, 0.98, -0.32, 0.075]], [[0.13, 0.08, 0.04], [0.15, -0.03, 0.06], [0.04, 0.14, 0.08, 0.42]]);
+      o.eye(-0.22, 0.98, 0.018, { kind: 3, gl: -0.5 }); o.spr(0.74, 1.08, 0.06, 0.022); o.spr(0.5, 1.3, 0.0, 0.018); o.spr(0.2, 1.36, 0.0, 0.013);
+      o.fume(-0.5, 0.75, -0.1, 0.36, -1); o.etch(0.0, 0.03, 1.75); },
+    /* (builder 42) 4, the tall wave reared right over (the earlier set's), taller and leaning further forward than 3: the curl hangs out over a
+       long wide hollow, five teeth, both hands thrust out in front of the opening, spray off the crest */
+    o => { pool(o, -0.04, 0.02, 0.9, 0.56, 41);
+      wave(o, [[-1.0, 0.04, 0.16], [-0.78, 0.36, 0.27], [-0.62, 0.8, 0.29], [-0.46, 1.2, 0.25], [-0.22, 1.52, 0.19], [0.1, 1.66, 0.14], [0.42, 1.6, 0.105], [0.68, 1.42, 0.08], [0.86, 1.22, 0.06], [0.92, 1.08, 0.044], [0.9, 0.98, 0.032]], 0.3, 4, 27, 0.08);
+      lip(o, [[-0.18, 0.06, 0.21], [0.24, 0.11, 0.16], [0.58, 0.16, 0.11], [0.9, 0.2, 0.07]], [0.08, -0.17]);
+      mouth(o, [[-0.46, 0.64, 0.05], [-0.28, 0.67, 0.13], [0.0, 0.7, 0.17], [0.34, 0.7, 0.18], [0.66, 0.68, 0.17], [0.86, 0.66, 0.14], [1.28, 0.62, 0.11]], 0.08, 0.12);
+      [[-0.16, 0.16, 0.042], [0.1, 0.24, 0.048], [0.36, 0.14, 0.04], [0.6, 0.2, 0.04]].forEach((q, i) => tooth(o, q[0], [0.8, 0.85, 0.86, 0.83][i], 0.32, q[1], q[2], 0.01));
+      [[0.06, 0.5], [0.46, 0.48]].forEach(q => o.a(cone([q[0], q[1] - 0.07, 0.32], [q[0] - 0.02, q[1] + 0.07, 0.34], 0.038, 0.012)));
+      [[-0.14, 1.7, 0.0, -0.02, 0.16, 0.02, 0.032], [0.2, 1.76, 0.08, 0.1, 0.14, 0.02, 0.03], [0.5, 1.64, 0.04, 0.17, 0.1, 0.03, 0.026], [0.74, 1.4, 0.12, 0.17, 0.02, 0.03, 0.022]].forEach(q => spike(o, q[0], q[1], q[2], q[3], q[4], q[5], q[6]));
+      drip(o, 0.9, 0.98, 0.14, 0.14, 0.032, 0.02, 0);
+      sag(o, -0.58, 1.12, -0.9, 0.42, 0.26, 0.08); sag(o, -0.36, 1.36, -0.72, 0.7, -0.24, 0.07); sag(o, -0.7, 0.8, -0.96, 0.28, 0.0, 0.06);
+      arm(o, [[1.0, 0.03, 0.46, 0.12], [1.18, 0.24, 0.56, 0.1], [1.34, 0.46, 0.52, 0.088], [1.46, 0.6, 0.44, 0.078]], [[0.14, 0.08, -0.04], [0.16, -0.02, -0.02], [0.08, 0.14, 0.06, 0.42]]);
+      arm(o, [[-0.2, 0.92, -0.42, 0.13], [0.3, 1.08, -0.56, 0.11], [0.84, 1.08, -0.5, 0.09], [1.22, 0.98, -0.3, 0.08]], [[0.14, 0.08, 0.06], [0.16, -0.04, 0.08], [0.04, 0.15, 0.1, 0.42]]);
+      o.eye(-0.34, 1.42, 0.02, { kind: 3, gl: -0.5 }); [[0.96, 1.5, 0.06, 0.022], [0.5, 1.94, 0.0, 0.02], [1.04, 1.24, 0.1, 0.016], [0.1, 1.98, 0.0, 0.014]].forEach(q => o.spr(q[0], q[1], q[2], q[3]));
+      o.fume(-0.6, 0.95, -0.1, 0.42, -1); o.fume(0.0, 1.78, -0.2, 0.3, 1); o.etch(0.02, 0.03, 2.05); },
     /* 5, the standing sea: a great slow wave leaning back, a cavern of a mouth hung with strands, one hand resting on the lower lip, a second
        smaller wave rising behind it out of the same pool, the wood eaten wide; sated and vast */
-    o => { pool(o, -0.45, 0.02, 1.55, 0.8, 55);
-      wave(o, [[-1.6, 0.04, 0.2], [-1.4, 0.45, 0.3], [-1.22, 0.95, 0.32], [-1.02, 1.45, 0.28], [-0.78, 1.88, 0.23], [-0.45, 2.15, 0.18], [-0.08, 2.2, 0.14], [0.22, 2.08, 0.1], [0.42, 1.86, 0.075], [0.48, 1.66, 0.05], [0.42, 1.56, 0.035]], 0.4, 5, 61, 0.06);
-      wave(o, [[-2.2, 0.03, 0.14], [-2.0, 0.4, 0.24], [-1.85, 0.85, 0.24], [-1.7, 1.25, 0.2], [-1.5, 1.55, 0.15], [-1.26, 1.62, 0.11], [-1.06, 1.5, 0.08], [-0.98, 1.34, 0.05]], 0.22, 3, 77, 0.04, -0.5);
+    /* (builder 42) the game fits a stage by its width as well as its height: the pool and the second wave are drawn in closer and the crest
+       raised, so the standing sea stands taller in the game than the rip curl */
+    o => { pool(o, -0.5, 0.02, 1.0, 0.62, 55);
+      wave(o, [[-1.6, 0.04, 0.2], [-1.42, 0.5, 0.3], [-1.24, 1.05, 0.32], [-1.04, 1.6, 0.28], [-0.8, 2.04, 0.23], [-0.47, 2.32, 0.18], [-0.08, 2.38, 0.14], [0.22, 2.24, 0.1], [0.42, 1.98, 0.075], [0.48, 1.74, 0.05], [0.42, 1.6, 0.035]], 0.4, 5, 61, 0.06);
+      wave(o, [[-1.8, 0.03, 0.14], [-1.66, 0.42, 0.24], [-1.56, 0.9, 0.24], [-1.46, 1.32, 0.2], [-1.3, 1.64, 0.15], [-1.08, 1.72, 0.11], [-0.9, 1.6, 0.08], [-0.84, 1.44, 0.05]], 0.22, 3, 77, 0.04, -0.5);
       o.a(e(-0.4, 1.2, -0.12, 0.8, 0.85, 0.36, 0.14)); lip(o, [[-0.6, 0.08, 0.3], [-0.1, 0.12, 0.24], [0.35, 0.2, 0.17], [0.72, 0.3, 0.1]], [0.12, -0.2]);
       mouth(o, [[-0.86, 0.6, 0.07], [-0.5, 0.78, 0.24], [-0.08, 0.86, 0.28], [0.3, 0.8, 0.25], [0.62, 0.66, 0.19], [0.92, 0.54, 0.13]], 0.04, 0.3, 0.5);
       [[-0.52, 1.0, 0.58, 0.026], [-0.16, 1.1, 0.6, 0.024], [0.2, 1.02, 0.58, 0.022], [0.5, 0.82, 0.5, 0.02]].forEach((q, i) => strand(o, q[0], q[1], q[2], 0.36 + 0.02 * i, q[3]));
       [[-0.68, 0.1, 0.032], [-0.34, 0.14, 0.038], [0.02, 0.1, 0.032], [0.36, 0.12, 0.034]].forEach((q, i) => tooth(o, q[0], 1.08 - 0.03 * i, 0.36, q[1], q[2], 0.01));
       arm(o, [[-1.0, 0.5, 0.42, 0.12], [-0.55, 0.36, 0.6, 0.1], [-0.1, 0.3, 0.64, 0.088], [0.25, 0.3, 0.6, 0.078]], [[0.14, -0.04, -0.02], [0.15, -0.06, 0.05], [0.06, -0.06, 0.13, 0.42]]);
       sag(o, -1.0, 1.5, -1.42, 0.5, 0.36, 0.09); sag(o, -0.7, 1.75, -1.25, 0.9, -0.34, 0.08); sag(o, -1.2, 1.0, -1.5, 0.3, 0.1, 0.07); sag(o, -0.5, 1.85, -1.0, 1.2, 0.22, 0.06);
-      spike(o, -0.3, 2.3, 0.0, -0.04, 0.12, 0.0, 0.03); spike(o, 0.24, 2.14, 0.08, 0.1, 0.1, 0.02, 0.026);
-      drip(o, 0.42, 1.56, 0.14, 0.18, 0.032, 0.02, 0); drip(o, -0.98, 1.34, -0.5, 0.14, 0.026, 0.02, 0);
-      o.eye(-0.62, 1.84, 0.022, { kind: 3, gl: -0.5 }); [[0.4, 2.02, 0.06, 0.02], [-0.6, 2.12, 0.0, 0.016], [-1.4, 1.3, -0.3, 0.014]].forEach(q => o.spr(q[0], q[1], q[2], q[3]));
-      o.fume(-1.0, 1.4, -0.1, 0.46, -1); o.fume(-1.7, 1.0, -0.4, 0.3, 1); o.etch(-0.45, 0.04, 3.0); }];
+      spike(o, -0.3, 2.46, 0.0, -0.04, 0.12, 0.0, 0.03); spike(o, 0.24, 2.3, 0.08, 0.1, 0.1, 0.02, 0.026);
+      drip(o, 0.42, 1.6, 0.14, 0.18, 0.032, 0.02, 0); drip(o, -0.84, 1.44, -0.5, 0.14, 0.026, 0.02, 0);
+      o.eye(-0.64, 2.0, 0.022, { kind: 3, gl: -0.5 }); [[0.4, 2.16, 0.06, 0.02], [-0.6, 2.3, 0.0, 0.016], [-1.2, 1.9, -0.3, 0.014]].forEach(q => o.spr(q[0], q[1], q[2], q[3]));
+      o.fume(-1.0, 1.4, -0.1, 0.46, -1); o.fume(-1.5, 1.1, -0.4, 0.3, 1); o.etch(-0.45, 0.04, 2.6); }];
   /* (builder 40) one way only, the breaker, in five stages, each its own posture */
   return { a: (o, stage) => ST[Math.max(1, Math.min(5, stage | 0)) - 1](o) }; })();
 /* one figure's skin, eye pits, marks and the pen's bubbles and fume, worked out once and kept */
@@ -2405,9 +2412,9 @@ function geo35(T, stage, way) { const key = way + stage; if (G35[key]) return G3
   /* the eyes: where a ray from in front meets the skin; a pit is sunk there */
   let F = field35(ops); const E = []; eyes.forEach(q => { let z = bb[5]; for (let k = 0; k < 900 && F(q.x, q.y, z) > 0; k++) z -= h * 0.25; const sy = q.sy || 1; E.push({ p: [q.x, q.y, z], r: q.r, sy, rot: q.rot || 0, kind: q.kind || 0, gl: q.gl == null ? 1 : q.gl });
     if (q.kind === 2) { const pit = P35.ell(q.x, q.y, z + q.r * 0.2, q.r * 1.05, q.r * sy * 1.1, q.r * 0.7, 0.03); pit.cut = true; pit.m = 0; ops.push(pit); } });
-  F = field35(ops); const N = nets35(F, bb, h), P = N.P, nv = P.length / 3, H = bb[4] - pad, nor = new Float32Array(nv * 3), aq = new Float32Array(nv), ad = new Float32Array(nv), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), ep = h * 0.7, cuts = ops.filter(p => p.cut && p.m);
+  F = field35(ops); const N = nets35(F, bb, h), P = N.P, nv = P.length / 3, H = bb[4] - pad, nor = new Float32Array(nv * 3), aq = new Float32Array(nv), ad = new Float32Array(nv), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), ep = h * 0.7, cuts = ops.filter(p => p.cut && p.m), tths = ops.filter(p => p.th);
   for (let i = 0; i < nv; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2]; let nx = F(x + ep, y, z) - F(x - ep, y, z), ny = F(x, y + ep, z) - F(x, y - ep, z), nz = F(x, y, z + ep) - F(x, y, z - ep); const l = Math.hypot(nx, ny, nz) || 1; nor[3 * i] = nx / l; nor[3 * i + 1] = ny / l; nor[3 * i + 2] = nz / l;
-    let q = 1e9; for (let c = 0; c < cuts.length; c++) q = Math.min(q, cuts[c].f(x, y, z)); aq[i] = q < -1.3 * h ? -1 : 1 - Math.max(0, Math.min(1, (Math.abs(q) - 0.4 * h) / (1.4 * h)));   /* 1 on the carved wall of the mouth, -1 on what was grown back inside it (the teeth) */
+    let q = 1e9; for (let c = 0; c < cuts.length; c++) q = Math.min(q, cuts[c].f(x, y, z)); aq[i] = q < -1.3 * h ? -1 : 1 - Math.max(0, Math.min(1, (Math.abs(q) - 0.4 * h) / (1.4 * h))); if (q < 0.5 * h) for (let c = 0; c < tths.length; c++) if (tths[c].f(x, y, z) < 0.9 * h) { aq[i] = -1; break; }   /* (builder 42) a tooth is tooth to the roof, never edged as the mouth's wall */   /* 1 on the carved wall of the mouth, -1 on what was grown back inside it (the teeth) */
     let dd = 0; for (let c = 0; c < drips.length; c++) { const p = drips[c]; if (Math.hypot(x - p.c[0], y - p.c[1], z - p.c[2]) > p.R + 2 * h) continue; if (p.f(x, y, z) < 1.6 * h) dd = Math.max(dd, 0.2 + 0.8 * Math.max(0, Math.min(1, (p.y0 - y) / (p.y0 - p.y1 || 1)))); } ad[i] = dd;   /* how far down a drip this point is */
     const u = Math.max(0, Math.min(3.999, y / H * 4)), i0 = Math.floor(u), f = u - i0; si[4 * i] = i0; si[4 * i + 1] = i0 + 1; sw[4 * i] = 1 - f; sw[4 * i + 1] = f; }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(P), 3)); g.setAttribute('normal', new T.BufferAttribute(nor, 3)); g.setAttribute('aQ', new T.BufferAttribute(aq, 1)); g.setAttribute('aD', new T.BufferAttribute(ad, 1)); g.setAttribute('skinIndex', new T.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new T.BufferAttribute(sw, 4)); g.setIndex(new T.BufferAttribute(nv > 65535 ? new Uint32Array(N.I) : new Uint16Array(N.I), 1)); g.computeBoundingBox(); g.computeBoundingSphere();
@@ -2489,7 +2496,7 @@ function etch35(T, x, z, r, pr) { const m = new T.ShaderMaterial({ transparent: 
   const g = new T.PlaneGeometry(2 * r, 2 * r); g.rotateX(-PI / 2); g.computeBoundingSphere(); g.boundingBox = new T.Box3(new T.Vector3(-0.01, 0, -0.01), new T.Vector3(0.01, 0.01, 0.01)); /* the eaten wood does not count in the creature's size */ const q = new T.Mesh(g, m); q.userData.nobox = true; q.position.set(x, 0.012, z); q.renderOrder = 3; q.userData.plain = true; q.castShadow = false; return q; }
 function acid35Fig(T, stage, way) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; way = SPEC35[way] ? way : 'a'; const G = geo35(T, stage, way), top = new T.Group(), grp = new T.Group(), bones = []; top.add(grp);
   for (let i = 0; i < 5; i++) { const bn = new T.Bone(); bn.position.y = i ? G.H / 4 : 0; if (i) bones[i - 1].add(bn); bones.push(bn); }
-  grp.scale.setScalar([1.32, 1.12, 1, 1, 1][stage - 1]); grp.rotation.y = W35.rot[stage - 1] || 0; const body = new T.SkinnedMesh(G.geo, mat35(T, G)); body.add(bones[0]); body.bind(new T.Skeleton(bones)); body.frustumCulled = false; body.castShadow = false; body.userData.plain = true; body.renderOrder = 19; grp.add(body);
+  grp.scale.setScalar([1.55, 1.12, 1, 1, 1][stage - 1]); grp.rotation.y = W35.rot[stage - 1] || 0; const body = new T.SkinnedMesh(G.geo, mat35(T, G)); body.add(bones[0]); body.bind(new T.Skeleton(bones)); body.frustumCulled = false; body.castShadow = false; body.userData.plain = true; body.renderOrder = 19; grp.add(body);
   G.etch.forEach(q => grp.add(etch35(T, q[0], q[1], q[2], G.pr)));
   const S = { T, root: grp, body, bones, inv: body.skeleton.boneInverses, G: { geo: G.geo }, H: G.H, fumes: G.fumes, bub: G.bub, smoke: G.smoke, spr: G.spr, way, stage, jar: false }; S.pen = pen30(T, S); S.pen.body.seed = 3500 + stage * 97 + way.charCodeAt(0) * 13; S.pen.mesh.visible = true;
   body.onBeforeRender = (ren, scene) => { if (scene && scene.isScene) hook35(T, scene); };
@@ -2503,7 +2510,12 @@ function draw35(T, S, ren, cam) { const R = S.pen, sz = ren.getDrawingBufferSize
   W30.m4 = W30.m4 || new T.Matrix4(); R.vp = (R.vp || new T.Matrix4()).multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); R.nv = 0; R.ni = 0; R.boil = 0;
   const mw = S.root.matrixWorld, ws = R.v.setFromMatrixScale(mw).x || 1, Hw = S.H * ws, d = 0.03 * Hw, v = R.v.setFromMatrixPosition(mw), u = R.v2.set(0, 1, 0).transformDirection(mw), e = R.vp.elements, pj = (x, y, z) => { const w = e[3] * x + e[7] * y + e[11] * z + e[15]; return [(e[0] * x + e[4] * y + e[8] * z + e[12]) / w * Wd / 2, (e[1] * x + e[5] * y + e[9] * z + e[13]) / w * Ht / 2]; }, a = pj(v.x, v.y, v.z), b = pj(v.x + u.x * Hw, v.y + u.y * Hw, v.z + u.z * Hw);
   const hpx = Math.hypot(b[0] - a[0], b[1] - a[1]), fs = Math.max(0.42, Math.min(1.7, hpx / (105 * sc))), lw = W30.lw * sc * Math.max(0.8, fs) * W35.lw, s2 = sc * Math.min(1.6, Math.max(0.5, fs)); R.lw = lw; R.hpx = hpx;
-  R.body.o = { wob: Math.min(1.4, Math.max(0.5, fs)) }; proj30(R, R.body, R.vp, Wd, Ht, P10, P11, d, S.bones, S.inv); sil30(R, R.body, lw, s2, Wd, Ht);
+  R.body.o = { wob: 0.45, smooth: 4, min: 9 }; /* (builder 42) one even, steady line: little wobble, smoothed, no tiny scribbled runs */ proj30(R, R.body, R.vp, Wd, Ht, P10, P11, d, S.bones, S.inv);
+  /* (builder 42) the teeth get their own thin edge: the body's line is drawn with the teeth left out, then the teeth alone with a fine nib */
+  const B = R.body, C = B.C, tp = B.tp; if (!B.tq) { const aq = S.body.geometry.attributes.aQ, tq = []; tp.first.forEach((i, w) => { if (aq.getX(i) < -0.5) tq.push(w); }); B.tq = Int32Array.from(tq); B.cw = new Float32Array(tp.nv); }
+  const tq = B.tq, cw = B.cw; for (let w = 0; w < tp.nv; w++) cw[w] = C[4 * w + 3]; for (let k = 0; k < tq.length; k++) C[4 * tq[k] + 3] = 0; sil30(R, B, lw, s2, Wd, Ht);
+  if (tq.length) { for (let w = 0; w < tp.nv; w++) C[4 * w + 3] = 0; for (let k = 0; k < tq.length; k++) C[4 * tq[k] + 3] = cw[tq[k]]; const o0 = B.o; B.o = { wob: 0.3, smooth: 4, min: 4 }; sil30(R, B, lw * 0.42, s2, Wd, Ht); B.o = o0; }
+  for (let w = 0; w < tp.nv; w++) C[4 * w + 3] = cw[w];
   const W = q => new T.Vector3(q[0], q[1], q[2]).applyMatrix4(mw);
   S.fumes.forEach((f, i) => fume35(f, i).forEach((seg, j) => free30(R, seg.map(W), lw * (j ? 0.42 : 0.55), s2, Wd, Ht, P10, P11, d, 9700 + i * 40 + j * 13, { smooth: 2, wob: 0.7 })));
   S.smoke.forEach((f, i) => fume35([f[0], 0.03, f[1], f[2], f[3]], i).forEach((seg, j) => free30(R, seg.map(W), lw * (j ? 0.34 : 0.42), s2, Wd, Ht, P10, P11, d, 9900 + i * 40 + j * 13, { smooth: 2, wob: 0.7 })));
