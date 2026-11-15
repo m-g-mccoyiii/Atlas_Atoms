@@ -6115,6 +6115,136 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       n: p && p.n, tg: p && p.tg.map(q => q.kind + ':' + (q.a && q.a.el) + ':' + [q.x, q.y, q.z, q.R].map(r).join(',')).join(' '), kh: p && r(p.kh), molH: p && r(p.molH), hs1: p && r(p.hs1), kw: p && r(p.kw), H: p && V(p.H), A: p && V(p.A), R: p && r(p.R), L: p && Math.round(p.L), J: p && Math.round(p.J), D: p && Math.round(p.D), B: p && Math.round(p.B), hit: p && Math.round(p.hit),
       Z: Z ? { tW: Math.round(Z.tW), tGo: Math.round(Z.tGo), tBr: Math.round(Z.tBr), tA: Math.round(Z.tA), tWv: Math.round(Z.tWv), P: Z.P.map(q => Math.round(q.t)).join(','), tUp: Math.round(Z.tUp), tHit: Math.round(Z.tHit), tTb: Math.round(Z.tTb), tD: Math.round(Z.tD), tBk: Math.round(Z.tBk), tHm: Math.round(Z.tHm), tEnd: Math.round(Z.tEnd) } : null, HOMP: [HOMP.x, HOMP.z], ring: S86.pool ? { v: S86.pool.page.visible, R: r(S86.pool.page.material.uniforms.uR.value), A: r(S86.pool.page.material.uniforms.uA.value), F: r(S86.pool.page.material.uniforms.uF.value), same: !!(S86.Z && S86.Z.g === g), pg: !!(S86.Z && S86.Z.pg), rc: S86.ring || null } : null, tr: S86.tr.length }; };
   // ==== S86 END
+  // ==== S88 BEGIN
+  // (builder 88) AMMONIA'S OWN ACT ON THE PAGE (kitart W88 has the body; switch AA.rxKit.act88, ?a88=0 gives the old act). The rule (HOM2LIT.ammonia,
+  // hom2Use): Ammonia is lit when aminate acted on this page (it put NH2 on the molecule) or a knit is in its chain; the tap puts the page's line (the
+  // reagents that acted on it, in order) back in the queue with no use spent (give and more: g.queue, the further circles of the line-up, g.left one
+  // use back each), once a round; the yield is let through at the act's hit, and the page then fires the queue by its own flow (fireNext, j.rest after
+  // the hit), each reagent going from its place in the line-up. So it pricks those places: the circles of the line-up that hold the reagents put
+  // back, in the queue's order, on half beats; the hit (on a beat: jumpPlan20 puts it there) is the flourish. Here: those marks, the times, where it
+  // stands (beside the molecule, clear of the atoms and the marks, as tall on the screen as the molecule, within reach of every mark), its two
+  // straight darts each way by the book's edge; and what is not its body: frost left in the wood and the paper along its way and where it plants
+  // (the frost patch at home kept while it is away), a contact shade under its foot, a spark and a flash of cold on each mark it pricks with a frost
+  // mark that fades, cold glints at the needle on the hit, and the sound. Nothing on the bench moves.
+  const S88 = { err: null, np: false, v: new T.Vector3(), plan: null, Z: null, last: null, pool: null, mi: 0, lastMk: null };
+  const s88On = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way78 && !SP.jar && SP.mid78 && K && K.act88 !== false && K.idle81 !== false && K.ph88 && K.fig88); };
+  const S88F = [1.15, 1, 1, 1.05, 1.15];
+  const V88 = (x, y, z) => ({ x, y, z });
+  /* the marks it pricks: the circles of the line-up holding the reagents the tap put back, in the queue's order (then the molecule, if none) */
+  const s88Marks = () => { const out = [], n0 = (g && g.pageSteps) || 0; ((g && g.queue) || []).forEach((id, qi) => { if (!id || id === P.SYN.finish || id === P.BANKID || out.length >= 4) return; const x = STEP.x + (n0 + qi) * STEPD, z = STEP.z; out.push({ id, k: n0 + qi, x, y: s66Floor(x, z) + 0.04, z }); });
+    if (!out.length) { const mb = a20MolBox() || { x0: C0.x - 2, x1: C0.x + 2, z0: C0.z - 2, z1: C0.z + 2 }; out.push({ id: null, k: -1, x: (mb.x0 + mb.x1) / 2, y: 0.8, z: (mb.z0 + mb.z1) / 2 }); } return out; };
+  const s88Plan = (stg, L) => { const SP = s26Fig(), F = AA.rxKit.fig88(SP), f = S88F[stg - 1], v = S88.v, H = F.home, tg = s88Marks(), n = tg.length, fl0 = s66Floor(H.x, H.z);
+    const Y = (x, z) => H.y + s66Floor(x, z) - fl0;
+    cam.updateMatrixWorld(); const pr = (x, y, z) => { v.set(x, y, z).project(cam); return [(v.x + 1) / 2, (1 - v.y) / 2]; };
+    /* the molecule on the screen, and in the world */ const hv = []; if (center && center.balls) center.balls.forEach((b, a) => { if (!a || a.fly || !b || !b.mesh) return; b.mesh.getWorldPosition(v); const gq = b.mesh.geometry; if (gq && !gq.boundingSphere && gq.computeBoundingSphere) gq.computeBoundingSphere(); b.mesh.getWorldScale(S88.v2 || (S88.v2 = new T.Vector3())); hv.push({ x: v.x, y: v.y, z: v.z, R: S88.v2.x * (gq && gq.boundingSphere ? gq.boundingSphere.radius : 0.7) }); });
+    const ms = { x0: 1, x1: 0, y0: 1, y1: 0 }; hv.forEach(q => { [[q.R, 0, 0], [-q.R, 0, 0], [0, q.R, 0], [0, -q.R, 0], [0, 0, q.R], [0, 0, -q.R]].forEach(d => { const s = pr(q.x + d[0], q.y + d[1], q.z + d[2]); ms.x0 = Math.min(ms.x0, s[0]); ms.x1 = Math.max(ms.x1, s[0]); ms.y0 = Math.min(ms.y0, s[1]); ms.y1 = Math.max(ms.y1, s[1]); }); }); const molH = hv.length ? Math.max(0.1, ms.y1 - ms.y0) : 0.16;
+    const mb = a20MolBox() || { x0: C0.x - 4, x1: C0.x + 4, z0: C0.z - 3, z1: C0.z + 3 }, Tc = { x: tg.reduce((s, q) => s + q.x, 0) / n, z: tg.reduce((s, q) => s + q.z, 0) / n };
+    /* its height on the screen at size k, standing at p */ const hS = (p, k) => pr(p.x, Y(p.x, p.z), p.z)[1] - pr(p.x, Y(p.x, p.z) + F.h * k, p.z)[1];
+    const want = Math.max(0.15, Math.min(0.26, [0.8, 0.9, 1, 1.05, 1.15][stg - 1] * molH)), kh = Math.max(1.25, Math.min(3.4, want / Math.max(0.02, hS(H, 1))));
+    /* where it stands for each mark: a little behind the line-up and to one side of the mark, so each lunge is a long diagonal thrust that reads
+       on the screen; it advances from one to the next (the squall stands once, by the middle mark). Every stance on a page, off the crease, and
+       its body (on the screen) clear of the molecule, the marks and the other circles of the line-up */
+    const lr = [1, 1.35, 1.35, 1.4, 2.3][stg - 1], amax = [0, 0.9, 0.9, 0.85, 0.15][stg - 1], hW = F.h * kh, gut = SAFE.gut, one = stg >= 5;
+    const box = (p, sd) => { const xb = p.x - sd * 0.62 * hW, xf = p.x + sd * 0.45 * hW, y0 = Y(p.x, p.z); let x0 = 1, x1 = 0, y0s = 1, y1s = 0; [[xb, y0, p.z + 0.3], [xf, y0, p.z + 0.3], [xb, y0 + hW, p.z - 0.3], [xf, y0 + hW, p.z - 0.3], [p.x, y0 + hW * 1.05, p.z]].forEach(q => { const s = pr(q[0], q[1], q[2]); x0 = Math.min(x0, s[0]); x1 = Math.max(x1, s[0]); y0s = Math.min(y0s, s[1]); y1s = Math.max(y1s, s[1]); }); return { x0, x1, y0: y0s, y1: y1s }; };
+    const ov = (a, b) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+    const sbox = (x, y, z, r) => { const c = pr(x, y, z); return { x0: c[0] - r, x1: c[0] + r, y0: c[1] - r, y1: c[1] + r }; }, tgS = tg.map(q => sbox(q.x, q.y, q.z, 0.024)), circ = [];
+    for (let k = 0; k < Math.min(12, (P.stepsOf ? P.stepsOf(g) : 6)); k++) if (!tg.some(q => q.k === k)) circ.push(sbox(STEP.x + k * STEPD, 0, STEP.z, 0.022)); /* the round's counter is drawn over everything, just above the first circle of the line-up: its body keeps off it */ const c0s = pr(STEP.x, 0, STEP.z), cnt = { x0: c0s[0] - 0.02, x1: c0s[0] + 0.07, y0: c0s[1] - 0.18, y1: c0s[1] - 0.11 }; const msx = { x0: ms.x0 - 0.01, x1: ms.x1 + 0.01, y0: ms.y0 - 0.01, y1: ms.y1 + 0.01 };
+    let best = null, bc = 1e18; const mid = tg[(n - 1) >> 1];
+    [1, -1].forEach(sd => [0.5, 0.62, 0.75, 0.9].forEach(kx => [0.32, 0.22, 0.12, 0.45, -0.12].forEach(kz => { const dx = kx * hW * (one ? 1.25 : 1), dz = kz * hW, As = tg.map(q => { const o = one ? mid : q; return { x: o.x - sd * dx, z: o.z - dz }; });
+      let c = 2 * Math.abs(kx - 0.62) + 3 * Math.abs(kz - 0.22) + (sd > 0 ? 0 : 0.05), bad = false; As.forEach(p => { if (bad) return; if (s27K(p.x, p.z, 0.01) < 0.99 || (p.x > gut.x0 - 1.2 && p.x < gut.x1 + 1.2)) { bad = true; return; } const b = box(p, sd); if (b.y0 < 0.04 || b.x0 < 0.02 || b.x1 > 0.98 || b.y1 > 0.96) { bad = true; return; }
+        c += 4000 * ov(b, msx); { const y0 = Y(p.x, p.z), q0 = pr(p.x - sd * 0.2 * hW, y0 + 0.9 * hW, p.z), q1 = pr(p.x + sd * 0.3 * hW, y0, p.z), core = { x0: Math.min(q0[0], q1[0]), x1: Math.max(q0[0], q1[0]), y0: Math.min(q0[1], q1[1]), y1: Math.max(q0[1], q1[1]) }; c += 3000 * ov(core, cnt); } tgS.forEach(q => { c += 6000 * ov(b, q); }); circ.forEach(q => { c += 1500 * ov(b, q); }); if ((p.x - sd * 0.62 * hW - (gut.x0 - 0.3)) * (p.x + sd * 0.45 * hW - (gut.x1 + 0.3)) < 0) c += 3;
+        const dm = Math.max(0, mb.x0 - p.x, p.x - mb.x1) + Math.max(0, mb.z0 - p.z, p.z - mb.z1); c += 0.02 * dm; });
+      if (!bad && c < bc) { bc = c; best = { As, sd, kx, kz }; } })));
+    if (!best) { const sd = 1; best = { As: tg.map(q => ({ x: Math.max(SAFE.L.x0 + 4, q.x - sd * 0.6 * hW), z: q.z - 0.25 * hW })), sd, kx: 0.6, kz: 0.25 }; }
+    const As = best.As.map(p => V88(p.x, Y(p.x, p.z), p.z)), A = As[0], A2 = As[n - 1], s = best.sd;
+    /* the book's edge: where the straight line from home to the stance comes onto the page; it stops dead on the wood just short of it, a little to the
+       side (so the two darts make a zig and a zag) */ const edge = (Q, sd) => { let ce = null; for (let i = 0; i <= 200; i++) { const u = i / 200, x = H.x + (Q.x - H.x) * u, z = H.z + (Q.z - H.z) * u; if (s27K(x, z, 0.01) > 0.5) { ce = { x, z }; break; } }
+      if (!ce) ce = { x: (H.x + Q.x) / 2, z: (H.z + Q.z) / 2 }; const dl = Math.hypot(Q.x - H.x, Q.z - H.z) || 1, ux = (Q.x - H.x) / dl, uz = (Q.z - H.z) / dl, side = -sd * Math.min(4.5, 0.3 * dl);
+      let ex = ce.x - ux * 0.8 + side, ez = ce.z - uz * 0.8; for (let i = 0; i < 30 && s27K(ex, ez, 0.01) > 0.2; i++) { ex -= ux * 0.3; ez -= uz * 0.3; } return V88(ex, Y(ex, ez), ez); };
+    const E = one ? A : edge(A, s), E2 = one ? A2 : edge(A2, s);
+    const s1 = one ? s : (E.x >= H.x - 0.3 ? 1 : -1), kE = one ? kh : Math.max(1, 0.45 * (kh - 1) + 1);
+    /* the beats */ const R2 = b => Math.max(0.5, Math.round(b * f * 2) / 2) * L, hops = stg <= 1 ? 3 : 0;
+    const Tat = R2(stg <= 1 ? 1.5 : 1), Tm1 = R2(one ? 1 : hops ? 1.5 : 0.5), Te1 = one ? 0 : R2(stg <= 1 ? 1 : 1.5), Tm2 = one ? 0 : R2(hops ? 1.5 : 0.5), J = Tat + Tm1 + Te1 + Tm2;
+    const Tsal = R2(1.5), gaps = stg <= 1 ? [1.5, 1.5, 1.5, 1.5] : stg >= 5 ? [1, 1, 1, 1] : [1.5, 1, 1, 1], Pq = []; let t = Tsal + R2(0.5);
+    for (let i = 0; i < n; i++) { if (i) t += R2(gaps[i - 1]); const cr = Math.pow(0.85, i); Pq.push({ t, ex: (stg >= 5 ? 0.22 : 0.17) * L * cr, hd: 0.22 * L * cr, rc: 0.42 * L * cr }); }
+    const last = Pq[n - 1].t, fl = last + R2(0.75), hit = last + R2(stg >= 5 ? 2 : 1.5), D = hit + R2(1);
+    const Tpv = R2(0.5), Tb1 = R2(one ? 1 : hops ? 1.5 : 0.5), Tbe = one ? 0 : R2(0.5), Tb2 = one ? 0 : R2(hops ? 1.5 : 0.5), Ths = R2(1.5), B = Tpv + Tb1 + Tbe + Tb2 + Ths;
+    return { stg, st: stg, L, f, H, E, E2, A, A2, As, s, s1, kh, kE, hops, hop: (stg <= 1 ? 0.3 : 0.08) * F.h, lr, amax, one, tg, P: Pq, best, Tat, Tm1, Te1, Tm2, J, Tsal, fl, hit, D, Tpv, Tb1, Tbe, Tb2, Ths, B, n, molH, want, hS1: hS(H, 1), hW, F, mb, Tc }; };
+  jumpPlan = (f0 => function (id, to) { S88.np = false; if (id !== 'ammonia' || !s88On()) return f0(id, to);
+    try { const stg = Math.max(1, Math.min(5, homObj.stage || 3)), L = Math.max(380, Math.min(700, kinLen(performance.now()))), pf = paceK(), p = s88Plan(stg, L); S88.plan = p; R21T.ammonia = [p.J / pf, p.D / pf, p.B / pf]; S88.np = true; } catch (e) { S88.err = String(e && e.stack); S88.plan = null; }
+    try { return f0(id, to); } finally { S88.np = false; } })(jumpPlan);
+  actPiece = (f0 => function (kind) { if (S88.np && kind === 'puff') return null; return f0.apply(this, arguments); })(actPiece);
+  A20ACT.ammonia = (f0 => function (j, c) { if (!s88On() || !S88.plan) return f0(j, c); const p = S88.plan; j.r21 = true; j.s88 = true; j.bites = []; j.N = 3; j.f.up = 1; j.f.land = 1;   /* the old trip's whoosh and thump are not its own */
+    return { want: { x: HOMP.x, z: HOMP.z }, hitU: p.hit / p.D, dur: j.D + j.B + 1500, pad: 0.6,
+      after(pl) { pl.x = j.perch.x = HOMP.x; pl.z = j.perch.z = HOMP.z; pl.k = j.k = 1; j.sd = 1; j.spot = { x: p.A.x, z: p.A.z }; this.tgt = j.spot; },
+      draw() { /* all of it is in the scene */ } }; })(A20ACT.ammonia);
+  /* the plan in times since the tap, once the wind-up is known; the clip gets it as o.bites.s88 */
+  const s88Z = (A, j) => { const p = S88.plan, W = j.W, tM1 = W + p.Tat, tE1 = tM1 + p.Tm1, tM2 = tE1 + p.Te1, tA = tM2 + p.Tm2, tD = tA + p.D, tB1 = tD + p.Tpv, tBE = tB1 + p.Tb1, tB2 = tBE + p.Tbe, tHm = tB2 + p.Tb2;
+    const Z = Object.assign({}, p, { tW: W, tM1, tE1, tM2, tA, tFl: tA + p.fl, tHit: tA + p.hit, tD, tB1, tBE, tB2, tHm, tEnd: tHm + p.Ths, P: p.P.map(q => Object.assign({}, q, { t: tA + q.t })), tg: p.tg.map(q => Object.assign({}, q)), floor: s66Floor, g });
+    S88.Z = Z; j.bites.s88 = Z; return Z; };
+  homJump = (f0 => function (A, now) { const j = A && A.j; if (!j || !j.s88 || !s88On()) return f0(A, now);
+    let Z = j.bites && j.bites.s88; if (!Z) { try { Z = s88Z(A, j); } catch (e) { S88.err = String(e && e.stack); } }
+    const o = f0(A, now); if (!o || !Z) return o; o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; o.sx = 1; o.sy = 1; o.rz = 0; o.ry = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; } S88.last = { A, Z, j }; return o; })(homJump);
+  /* its pieces, made once: frost blooms (in the wood, on the paper), a contact shade, sparks and flashes of cold */
+  const s88Tex = kind => { const c = canvasTex(256, 256), x = c.x, C = 128; x.clearRect(0, 0, 256, 256); let sd = kind.length * 977 + 11; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    const star = (cx, cy, s, a, lw) => { for (let pass = 0; pass < 2; pass++) { x.strokeStyle = pass ? 'rgba(250,254,255,1)' : 'rgba(24,40,54,0.92)'; x.lineWidth = pass ? lw : lw * 2.1; x.lineCap = 'round'; x.beginPath(); for (let k = 0; k < 3; k++) { const b = a + k * Math.PI / 3; x.moveTo(cx - Math.cos(b) * s, cy - Math.sin(b) * s); x.lineTo(cx + Math.cos(b) * s, cy + Math.sin(b) * s); } x.stroke(); } };
+    if (kind === 'wood' || kind === 'paper') { const g2 = x.createRadialGradient(C, C, 6, C, C, 124), w = kind === 'wood'; g2.addColorStop(0, w ? 'rgba(200,236,240,0.55)' : 'rgba(150,206,214,0.42)'); g2.addColorStop(0.45, w ? 'rgba(170,220,228,0.3)' : 'rgba(140,196,210,0.22)'); g2.addColorStop(1, 'rgba(160,210,220,0)'); x.fillStyle = g2; x.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * 2 * Math.PI + 0.3 * r(), r0 = 8 + 10 * r(), r1 = 40 + 46 * r(); for (let pass = 0; pass < 2; pass++) { x.strokeStyle = pass ? 'rgba(246,252,255,1)' : 'rgba(24,40,54,0.9)'; x.lineWidth = pass ? 2.6 : 5.4; x.lineCap = 'round'; x.beginPath(); x.moveTo(C + Math.cos(a) * r0, C + Math.sin(a) * r0); x.lineTo(C + Math.cos(a) * r1, C + Math.sin(a) * r1); x.stroke(); } }
+      for (let i = 0; i < 16; i++) { const a = 2 * Math.PI * r(), d = 30 + 80 * Math.sqrt(r()); star(C + Math.cos(a) * d, C + Math.sin(a) * d, 6 + 9 * r(), r() * Math.PI, 2.2); } }
+    else if (kind === 'shade') { const g2 = x.createRadialGradient(C, C, 4, C, C, 124); g2.addColorStop(0, 'rgba(10,16,22,0.75)'); g2.addColorStop(0.5, 'rgba(10,16,22,0.35)'); g2.addColorStop(1, 'rgba(10,16,22,0)'); x.fillStyle = g2; x.fillRect(0, 0, 256, 256); }
+    else if (kind === 'ring') { /* a flash of cold round a circle of the line-up, flat on the paper */ const g2 = x.createRadialGradient(C, C, 60, C, C, 126); g2.addColorStop(0, 'rgba(120,200,214,0)'); g2.addColorStop(0.35, 'rgba(120,200,214,0.85)'); g2.addColorStop(0.55, 'rgba(236,252,255,0.95)'); g2.addColorStop(0.75, 'rgba(120,180,214,0.5)'); g2.addColorStop(1, 'rgba(120,200,214,0)'); x.fillStyle = g2; x.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 10; i++) { const a = i / 10 * 2 * Math.PI + 0.2 * r(), d = 92 + 14 * r(); star(C + Math.cos(a) * d, C + Math.sin(a) * d, 8 + 6 * r(), r() * Math.PI, 2.4); } }
+    else { /* a spark of frost: a white six-pointed glint with a pale teal halo */ const g2 = x.createRadialGradient(C, C, 0, C, C, 90); g2.addColorStop(0, 'rgba(255,255,255,1)'); g2.addColorStop(0.3, 'rgba(210,246,248,0.7)'); g2.addColorStop(1, 'rgba(170,228,236,0)'); x.fillStyle = g2; x.fillRect(0, 0, 256, 256);
+      x.strokeStyle = 'rgba(255,255,255,1)'; x.lineCap = 'round'; for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + 0.26, l = k % 2 ? 84 : 120; x.lineWidth = k % 2 ? 5 : 7; x.beginPath(); x.moveTo(C, C); x.lineTo(C + Math.cos(a) * l, C + Math.sin(a) * l); x.stroke(); } }
+    c.t.needsUpdate = true; return c.t; };
+  const s88Pool = () => { if (S88.pool) return S88.pool; const Pq = { tx: { wood: s88Tex('wood'), paper: s88Tex('paper'), shade: s88Tex('shade'), ring: s88Tex('ring'), spark: s88Tex('spark') }, marks: [], sp: [], si: 0 };
+    for (let i = 0; i < 48; i++) { const m = flatMesh(1, 1, Pq.tx.wood, 0); m.renderOrder = 2; m.visible = false; m.userData.plain = true; m.userData.nobox = true; scene.add(m); Pq.marks.push({ m, t0: -1e9, life: 1 }); }
+    Pq.shade = flatMesh(1, 1, Pq.tx.shade, 0); Pq.shade.renderOrder = 3; Pq.shade.visible = false; Pq.shade.userData.plain = true; Pq.shade.userData.nobox = true; scene.add(Pq.shade);
+    for (let i = 0; i < 16; i++) { const s = new T.Sprite(new T.SpriteMaterial({ map: Pq.tx.spark, transparent: true, depthWrite: false, blending: T.AdditiveBlending })); s.visible = false; s.renderOrder = 33; s.userData.plain = true; s.userData.nobox = true; scene.add(s); Pq.sp.push({ s, t0: -1e9 }); }
+    return (S88.pool = Pq); };
+  const s88Hide = Pq => { Pq.marks.forEach(w => { w.m.visible = false; }); Pq.sp.forEach(w => { w.s.visible = false; }); Pq.shade.visible = false; };
+  /* a mark lying in the wood or the paper (frost, or the ring's flash), fading by itself */
+  const s88Mark = (x, z, sz, now, life, kind, a0) => { const Pq = S88.pool, w = Pq.marks[S88.mi++ % Pq.marks.length], m = w.m, on = s27K(x, z, 0.01) > 0.5, k = kind || (on ? 'paper' : 'wood'); if (m.material.map !== Pq.tx[k]) { m.material.map = Pq.tx[k]; m.material.needsUpdate = true; }
+    m.position.set(x, s66Floor(x, z) + 0.02 + 0.0004 * (S88.mi % 48), z); m.rotation.set(0, (S88.mi * 2.39) % 6.28, 0); m.scale.set(sz, 1, sz * (on ? 0.8 : 0.9)); Object.assign(w, { t0: now, life, a0: a0 || 1, k }); m.visible = true; };
+  const s88Spark = (x, y, z, sz, now, life) => { const Pq = S88.pool, w = Pq.sp[Pq.si++ % Pq.sp.length]; Object.assign(w, { x, y, z, sz, t0: now, life, rot: Math.random() * 6.28 }); w.s.visible = true; };
+  const s88Fade = now => { const Pq = S88.pool; Pq.marks.forEach(w => { if (!w.m.visible) return; const u = (now - w.t0) / w.life; if (u >= 1 || u < 0) { w.m.visible = false; return; } w.m.material.opacity = w.a0 * Math.min(1, u * (w.k === 'ring' ? 8 : 14)) * (1 - u * u); if (w.k === 'ring') { const s = w.m.userData.s0 || w.m.scale.x; w.m.userData.s0 = s; } dirty = true; });
+    Pq.sp.forEach(w => { if (!w.s.visible) return; const u = (now - w.t0) / w.life; if (u >= 1 || u < 0) { w.s.visible = false; return; } const s = w.sz * (0.4 + 0.6 * Math.min(1, u / 0.15)) * (1 - 0.4 * u); w.s.position.set(w.x, w.y, w.z); w.s.scale.set(s, s, 1); w.s.material.opacity = 1 - u * u; w.s.material.rotation = w.rot + 0.8 * u; dirty = true; }); };
+  /* one frame after the figure is played */
+  const s88Frame = now => { const SP = s26Fig(), Pq = s88Pool(); s88Fade(now);
+    const Lq = S88.last; if (!Lq) { Pq.shade.visible = false; return; }
+    const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, live = !!(st.homAct === A && SP && SP.x88 && SP.h88), Kt = AA.rxKit;
+    if (t > Z.tEnd + 3000) { S88.last = null; s88Hide(Pq); if (homObj && homObj.grp) homObj.grp.children.forEach(c => { if (c.isMesh && c.userData.v88 != null) c.visible = c.userData.v88; }); return; } dirty = true;
+    const e = live ? SP.x88.e : Kt.ph88(t, Z), h = live ? SP.h88 : null, sx = AA.sfx || {}, Lb = Z.L, once = (k, f) => { if (!j.f['s88' + k]) { j.f['s88' + k] = 1; try { f(); } catch (x) { /* no sound */ } } }, same = Z.g === g;
+    /* the holder's own soft shadow stays at home: hidden while it is away (the page draws a shade under its foot) */ if (homObj && homObj.grp) homObj.grp.children.forEach(c => { if (c.isMesh) { if (c.userData.v88 == null) c.userData.v88 = c.visible; c.visible = live && t > Z.tM1 && t < Z.tHm ? false : c.userData.v88; } });
+    const ft = h ? h.foot : [e.p.x, e.p.y, e.p.z], ht = h ? h.ht : Z.F.h * e.kz, hk = Z.F.h * e.kz;
+    /* the contact shade under its foot while it is away; its frost patch at home stays there */
+    if (live && e.away) { const sm = Pq.shade, w = (e.move ? 0.32 : 0.42) * hk; sm.visible = true; sm.position.set(ft[0], s66Floor(ft[0], ft[2]) + 0.03, ft[2]); sm.scale.set(w, 1, w * 0.7); sm.material.opacity = e.move ? 0.5 : 0.85; } else Pq.shade.visible = false;
+    if (live && t >= Z.tM1) once('leave', () => { s88Mark(Z.H.x, Z.H.z, 0.55 * Z.F.h, now, Z.tHm - Z.tM1 + 600, 'wood', 0.75); s88Spark(Z.H.x, Z.H.y + 0.1 * Z.F.h, Z.H.z + 0.3, 0.3 * Z.F.h, now, 0.5 * Lb); if (sx.snap) sx.snap(6, 0.9); if (sx.tick) sx.tick(12); if (sx.swish) sx.swish(0.22); });
+    /* frost along its way: small sharp blooms behind its foot as it darts, in the wood and fainter on the paper */
+    if (live && e.move) { const lm = S88.lastMk, sp = 0.16 * hk; if (!lm || lm.A !== A || Math.hypot(ft[0] - lm.x, ft[2] - lm.z) > sp) { s88Mark(ft[0], ft[2], 0.22 * hk, now, s27K(ft[0], ft[2], 0.01) > 0.5 ? 1700 : 2300, null, 0.85); S88.lastMk = { A, x: ft[0], z: ft[2] }; } }
+    /* where it stops dead and where it plants: a burst of frost */ const plant = (k, P0, sz, snd) => once(k, () => { s88Mark(P0.x, P0.z, sz, now, 3.2 * Lb + 900, null, 1); s88Spark(P0.x, P0.y + 0.05 * hk, P0.z + 0.2, 0.16 * hk, now, 0.45 * Lb); if (snd) snd(); });
+    if (live && !Z.one && t >= Z.tE1) plant('e1', Z.E, 0.4 * Z.F.h * Z.kE, () => { if (sx.tick) sx.tick(9); if (sx.snap) sx.snap(5, 0.6); });
+    if (live && !Z.one && t >= Z.tM2) once('m2', () => { if (sx.swish) sx.swish(0.22); });
+    if (live && t >= Z.tA) plant('A', Z.A, 0.42 * Z.F.h * Z.kh, () => { if (sx.snap) sx.snap(7, 1.1); if (sx.tick) sx.tick(11); });
+    if (live && Z.hops && e.move) { const segs = [[Z.tM1, Z.tE1], [Z.tM2, Z.tA], [Z.tB1, Z.tBE], [Z.tB2, Z.tHm]]; segs.forEach((q, si) => { if (t < q[0] || t > q[1]) return; const ph = (t - q[0]) / Math.max(1, q[1] - q[0]) * Z.hops; for (let i = 1; i <= Z.hops; i++) if (ph >= i * 0.999 - 0.2) once('hp' + si + i, () => { if (sx.tick) sx.tick(4 + 2 * i); s88Mark(ft[0], ft[2], 0.3 * hk, now, 1800, null, 0.9); }); }); }
+    if (live) Z.P.forEach((p, i) => { if (i && t >= Z.P[i - 1].t + Z.P[i - 1].hd + Z.P[i - 1].rc + 0.32 * Lb && Z.As[i] && !Z.one) plant('as' + i, Z.As[i], 0.3 * Z.F.h * Z.kh, () => { if (sx.tick) sx.tick(6 + i); }); });
+    /* the pricks, in the queue's order, on the beats: a spark at the point, a flash of cold round the mark, a frost mark on it for a moment */
+    Z.P.forEach((p, i) => { if (t >= p.t) once('c' + i, () => { const q = Z.tg[i], tp = h ? h.tip : [q.x, q.y, q.z]; s88Spark(tp[0], tp[1] + 0.05, tp[2] + 0.1, 0.16 * hk * (1 + 0.1 * i), now, 0.55 * Lb); if (q && same) { s88Mark(q.x, q.z, 4.4, now, 0.9 * Lb + 300, 'ring', 1); s88Mark(q.x, q.z, 2.6, now, 2.6 * Lb + 600, 'paper', 0.9); }
+      if (sx.clink) sx.clink(8 + 3 * i); if (sx.tick) sx.tick(12); }); if (t >= p.t + p.hd) once('r' + i, () => { if (sx.tick) sx.tick(7 + i); }); });
+    if (live && t >= Z.tFl) once('fl', () => { if (sx.draw) sx.draw(5, Math.max(0.12, (Z.tHit - Z.tFl) / 1000)); });
+    if (t >= Z.tHit) once('hit', () => { const tp = h ? h.tip : [Z.A.x, Z.A.y + Z.hW, Z.A.z]; s88Spark(tp[0], tp[1], tp[2] + 0.1, 0.24 * hk, now, 0.9 * Lb); s88Spark(tp[0] - 0.06 * hk, tp[1] - 0.05 * hk, tp[2] + 0.1, 0.13 * hk, now + 60, 0.7 * Lb); if (sx.clink) sx.clink(16); if (sx.snap) sx.snap(6, 1.2); });
+    if (live) { if (t >= Z.tW) once('att', () => { if (sx.tick) sx.tick(10); });
+      if (t >= Z.tD) once('pv', () => { if (sx.tick) sx.tick(9); if (sx.swish) sx.swish(0.15); });
+      if (t >= Z.tB1) once('b1', () => { if (sx.swish) sx.swish(0.22); });
+      if (!Z.one && t >= Z.tBE) plant('be', Z.E2, 0.35 * Z.F.h * Z.kE, () => { if (sx.tick) sx.tick(8); });
+      if (!Z.one && t >= Z.tB2) once('b2', () => { if (sx.swish) sx.swish(0.2); });
+      if (t >= Z.tHm) plant('hm', Z.H, 0.45 * Z.F.h, () => { if (sx.snap) sx.snap(6, 0.9); if (sx.tick) sx.tick(11); }); } };
+  a20Spent = (f0 => function (now) { const r = f0(now); try { s88Frame(now); } catch (x) { S88.err = String(x && x.stack); } return r; })(a20Spent);
+  AA.rxKit.s88dbg = () => { const p = S88.plan, Z = S88.Z, SP = s26Fig(), e = SP && SP.x88 ? SP.x88.e : null, r = x => +(+x).toFixed(2), V = q => q && [r(q.x), r(q.y), r(q.z)];
+    return { err: S88.err, kit: AA.rxKit.W88 && AA.rxKit.W88.err, w81: AA.rxKit.W81 && AA.rxKit.W81.err, on: s88On(), ph: e ? e.ph : null, kz: e ? r(e.kz) : null, p: e ? V(e.p) : null, h88: SP && SP.h88 ? { foot: SP.h88.foot.map(r), tip: SP.h88.tip.map(r), ht: r(SP.h88.ht) } : null, sl: SP && SP.x88 ? r(SP.x88.sl || 0) : null, ta: SP && SP.x88 ? r(SP.x88.ta || 0) : null,
+      n: p && p.n, tg: p && p.tg.map(q => q.id + ':' + q.k + ':' + [q.x, q.y, q.z].map(r).join(',')).join(' '), kh: p && r(p.kh), kE: p && r(p.kE), molH: p && r(p.molH), hS1: p && r(p.hS1), want: p && r(p.want), hW: p && r(p.hW), F: p && { h: r(p.F.h), la: r(p.F.la), arm: p.F.arm }, H: p && V(p.H), E: p && V(p.E), A: p && V(p.A), As: p && p.As.map(V), E2: p && V(p.E2), best: p && p.best && [p.best.sd, p.best.kx, p.best.kz], s: p && p.s, s1: p && p.s1, L: p && Math.round(p.L), J: p && Math.round(p.J), D: p && Math.round(p.D), B: p && Math.round(p.B), hit: p && Math.round(p.hit),
+      Z: Z ? { tW: Math.round(Z.tW), tM1: Math.round(Z.tM1), tE1: Math.round(Z.tE1), tM2: Math.round(Z.tM2), tA: Math.round(Z.tA), P: Z.P.map(q => Math.round(q.t)).join(','), tFl: Math.round(Z.tFl), tHit: Math.round(Z.tHit), tD: Math.round(Z.tD), tB1: Math.round(Z.tB1), tBE: Math.round(Z.tBE), tB2: Math.round(Z.tB2), tHm: Math.round(Z.tHm), tEnd: Math.round(Z.tEnd) } : null, HOMP: [HOMP.x, HOMP.z], STEP: [STEP.x, STEP.z, STEPD], SAFE: SAFE && { L: SAFE.L, R: SAFE.R } }; };
+  // ==== S88 END
   // ==== S76 BEGIN
   // (builder 76) SALT'S OWN CHANGE OF STAGE ON THE PAGE, "the geode" (kitart W76 has the figure and the timeline KIT.ph76; switch AA.rxKit.evo76,
   // ?v76=0 gives the old one). Here: its way and size (from home over the open book to the middle of the screen beside the molecule, placed as S59

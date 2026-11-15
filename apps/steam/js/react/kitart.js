@@ -7069,4 +7069,143 @@ function jar81(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'ammonia' && KIT.amm78 && KIT.idle81 !== false && T && T.SkinnedMesh) { try { jar81(T, j); } catch (e) { W81.err = String(e && e.stack); } } return j; })(KIT.jar);
 KIT.W81 = W81;
 // ==== W81 END
+// ==== W88 BEGIN
+// (builder 88) AMMONIA'S OWN ACT (AA.rxKit.act88, on by default; false or ?a88=0 gives the old act: Water's clip on its body). A fencer made of a sharp
+// cold gust: straight lines and dead stops only. The whole figure is moved by one transform of the group mid78 (place, size, a turn about the upright,
+// a mirror so it can face either way, a tip along its way while it darts, stretched and thinned to a streak); its idle (W81: ribbons, tear, wisp,
+// shiver) keeps running under it, the act sets its lean, neck and face, and its needle arm is laid out straight to whatever it points at. The page
+// (scheme S88) gives the times and the places in the world (o.bites.s88, read with KIT.ph88: one timeline both files read) and draws what is not its
+// body: the frost it leaves in the wood and the paper, the flash of cold on what it pricks, the contact shade, the sound.
+//  att:    it snaps to attention, chin up, needle down at its side; its foot lets go of the bench with a crack of frost
+//  dart1:  thinned to a streak, one dead-straight dart over the bench to the book's edge; stops dead
+//  edge:   upright at the edge, it looks the page over down its nose (a turn of the head one way, the other)
+//  dart2:  a second dart onto the page, growing as it comes toward the eye; plants its foot beside the molecule with a burst of frost
+//  salute: needle up before its face; then en garde, the needle on the first mark
+//  lunge:  for each reagent the rule puts back in line, in the line's order: the body extends along its slant in one snap and the needle point
+//          touches that reagent's place in the line-up; it recovers as fast with a toss of the head; each crisper than the last
+//  flour:  on the hit the needle sweeps up and is held high, chin up
+//  home:   one sharp pivot (its back to us), the same two straight darts home seen from behind, plants its foot in its frost with a snap, turns
+//          to the front and resumes its slant, nose in the air
+//  stage 1 has no arms: it goes in little stabbing hops and pricks with its pointed head (the whole lick tips down to the mark); stage 5 makes one
+//  long imperious dart each way and reaches every mark from where it stands
+KIT.act88 = KIT.act88 == null ? !(typeof location !== 'undefined' && /[?&]a88=0/.test(String(location.search))) : KIT.act88;
+const W88 = { err: null, e: null };
+const on88 = S => !!(S && S.way78 && !S.jar && S.mid78 && KIT.act88 !== false && on81(S));
+const ss88 = (x, a, b) => sm52((x - a) / Math.max(1e-6, b - a));
+const lp88 = (a, b, u) => a + (b - a) * u;
+const v88 = (x, y, z) => ({ x, y, z });
+const mix88 = (a, b, u) => v88(lp88(a.x, b.x, u), lp88(a.y, b.y, u), lp88(a.z, b.z, u));
+/* a snap: out of the start at once, a small click on arrival, then held dead */
+const sn88 = x => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3) + 0.16 * Math.sin(PI * x) * x * x);
+/* what the act needs of the figure: its needle arm (the arm that ends furthest forward), the point of its head, its height */
+function k88(S) { if (S.k88) return S.k88; const G = S.G, J = G.J, R = S.r81;
+  let arms = G.chains.filter(c => c.kind === 'limb' && c.l && c.l.arm && c.jn && c.jn.length > 1); if (!arms.length) arms = (G.reach || []).filter(c => c.side && c.jn && c.jn.length > 1 && J[c.jn[c.jn.length - 1]].p[1] > 0.5);
+  let arm = null; arms.forEach(c => { const x = J[c.jn[c.jn.length - 1]].p[0]; if (!arm || x > J[arm.jn[arm.jn.length - 1]].p[0]) arm = c; });
+  let A = null; if (arm) { let L = 0; const cum = [0]; for (let i = 1; i < arm.jn.length; i++) { const a = J[arm.jn[i - 1]].p, b = J[arm.jn[i]].p; L += Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]); cum.push(L); } A = { jn: arm.jn, L, cum: cum.map(c => c / Math.max(1e-6, L)) }; }
+  let top = 0; J.forEach(q => { top = Math.max(top, q.p[1] + (q.r || 0)); }); const tip = R && R.tip ? R.tip : G.bj[G.bj.length - 1];
+  return (S.k88 = { arm: S.st >= 2 ? A : null, top, tip }); }
+/* the figure at home, in the world: where its foot is, how tall it stands, how long its needle arm is */
+function fig88(S) { const K = k88(S), mid = S.mid78, par = mid && mid.parent, V3 = S.T.Vector3; if (!par) return null; if (mid.userData.sz88 == null) mid.userData.sz88 = mid.scale.y;
+  par.updateWorldMatrix(true, false); const ps = new V3().setFromMatrixScale(par.matrixWorld).y || 1, sz = mid.userData.sz88, h = par.localToWorld(new V3(S.fx78 * sz, 0, 0));
+  return { home: v88(h.x, h.y, h.z), h: K.top * sz * ps, la: K.arm ? K.arm.L * sz * ps : 0, arm: !!K.arm, st: S.st }; }
+KIT.fig88 = S => { try { return fig88(S); } catch (e) { W88.err = String(e && e.stack); return null; } };
+/* a sharp pivot from one facing to another: a turn about the upright; a change of mirror only while it is edge on (where it cannot be seen) */
+const piv88 = (u, r0, m0, r1, m1) => { const v = sn88(u); if (m0 === m1) return { ry: lp88(r0, r1, v), mx: m0 }; const mid = PI / 2; return v < 0.5 ? { ry: lp88(r0, mid, v * 2), mx: m0 } : { ry: lp88(mid, r1, v * 2 - 1), mx: m1 }; };
+/* a dart (or the whiff's hops) from a to b over u in 0..1: where the foot is, and how much of a streak it is */
+function dart88(e, Z, a, b, u, hops) { const d = v88(b.x - a.x, 0, b.z - a.z), dl = Math.hypot(d.x, d.z) || 1; e.tipD = v88(d.x / dl, 0, d.z / dl); e.move = 1;
+  if (hops) { const ph = Math.min(hops - 1e-6, u * hops), i = Math.floor(ph), hu = ph - i, p0 = mix88(a, b, i / hops), p1 = mix88(a, b, (i + 1) / hops), f = sn88(Math.min(1, hu / 0.8));
+    e.p = mix88(p0, p1, f); e.p = v88(e.p.x, e.p.y + Z.hop * Math.sin(PI * Math.min(1, hu / 0.8)), e.p.z); const s = Math.sin(PI * Math.min(1, hu / 0.8)); e.tipA = 0.55 * s; e.str = 1 + 0.25 * s; e.thin = 1 - 0.25 * s; e.sq = hu > 0.8 ? -0.14 * Math.sin(PI * (hu - 0.8) / 0.2) : 0; return e; }
+  const f = sn88(u), env = ss88(u, 0, 0.06) * (1 - ss88(u, 0.55, 0.95)); e.p = mix88(a, b, f); e.tipA = 0.62 * env; e.str = 1 + 0.4 * env; e.thin = 1 - 0.45 * env; e.sq = -0.12 * pl52(u, 0.8, 0.92, 0.06); return e; }
+/* the act at t ms since the tap (Z: the page's plan, absolute times, places in the world) */
+function ph88(t, Z) { const st = Z.st, L = Z.L, s = Z.s, s1 = Z.s1;
+  const e = { ph: 'wait', t, p: Z.H, kz: 1, ry: 0, mx: 1, tipA: 0, tipD: null, str: 1, thin: 1, hand: 1, lean: 0.02, sq: 0, tilt: 0.3, hturn: 0, lookx: 0.2, looky: -0.6, brow: -0.3, blink: 0, smile: 0.95, aw: 0, adir: null, aext: 1, aT: null, lw: 0, armL: 0, ti: -1, away: false, move: 0, done: false, home: false };
+  if (t < Z.tW) return e;
+  e.hand = 1 - ss88(t, Z.tW, Z.tW + 0.18 * L);
+  if (t < Z.tM1) { /* to attention: drawn up straight, chin up, needle down at its side; the foot lets go */ const u = (t - Z.tW) / Math.max(1, Z.tM1 - Z.tW), a = sn88(Math.min(1, u / 0.22));
+    e.ph = 'att'; e.lean = lp88(0.02, 0.1, a); e.sq = 0.07 * a; e.tilt = lp88(0.2, 0.36, a) + 0.06 * pl52(u, 0.22, 0.3, 0.04); e.looky = -0.75; e.blink = 0.3; e.brow = -0.45; e.smile = 0.85;
+    e.aw = a; e.adir = [0.42, -1, 0.3]; e.aext = 1; e.armL = 0.25 * a; e.p = v88(Z.H.x, Z.H.y + Z.hop * 0.25 * ss88(u, 0.82, 1), Z.H.z);
+    if (s1 !== 1) { const r = piv88(ss88(u, 0.45, 0.7), 0, 1, 0, s1); e.ry = r.ry; e.mx = r.mx; } return e; }
+  e.away = t < Z.tHm; e.aw = 1; e.armL = 0.3; e.adir = [0.42, -1, 0.3];
+  if (t < Z.tE1) { /* the first dart (the squall's one dart) */ const u = (t - Z.tM1) / Math.max(1, Z.tE1 - Z.tM1); e.ph = 'dart1'; e.mx = s1; dart88(e, Z, Z.H, Z.E, u, Z.hops); e.kz = lp88(1, Z.kE, sn88(u));
+    e.lean = -0.12; e.tilt = 0.24; e.blink = 0.35; e.brow = -0.6; e.adir = [0.25, -1, 0.1]; return e; }
+  if (t < Z.tM2) { /* stopped dead at the edge: it looks the page over down its nose */ const u = (t - Z.tE1) / Math.max(1, Z.tM2 - Z.tE1); e.ph = 'edge'; e.p = Z.E; e.kz = Z.kE; e.mx = s1;
+    const k = [[0, 0, 0], [0.12, 0.42, 0.9], [0.5, -0.32, -0.8], [0.78, 0, 0]], h = (() => { let a = k[0], b = k[0]; for (let i = 0; i < k.length; i++) if (k[i][0] <= u) { a = k[Math.max(0, i - 1)]; b = k[i]; } const x = sn88(Math.min(1, (u - b[0]) / 0.1)); return [lp88(a[1], b[1], x), lp88(a[2], b[2], x)]; })();
+    e.hturn = h[0]; e.lookx = h[1]; e.tilt = 0.4 + 0.05 * pl52(u, 0.12, 0.2, 0.03) + 0.05 * pl52(u, 0.5, 0.58, 0.03); e.looky = -0.9; e.blink = 0.42; e.brow = -0.35; e.smile = 0.8; e.lean = 0.08;
+    e.sq = -0.12 * Math.exp(-u * 9) * Math.cos(u * 30); if (s !== s1) { const r = piv88(ss88(u, 0.8, 0.98), 0, s1, 0, s); e.ry = r.ry; e.mx = r.mx; } return e; }
+  if (t < Z.tA) { /* the second dart, onto the page, growing as it comes toward the eye */ const u = (t - Z.tM2) / Math.max(1, Z.tA - Z.tM2); e.ph = 'dart2'; e.mx = s; dart88(e, Z, Z.E, Z.A, u, Z.hops); e.kz = lp88(Z.kE, Z.kh, sn88(u));
+    e.lean = -0.12; e.tilt = 0.24; e.blink = 0.35; e.brow = -0.6; e.adir = [0.25, -1, 0.1]; return e; }
+  e.p = Z.A; e.kz = Z.kh; e.mx = s;
+  if (t < Z.tD) { const P = Z.P, n = P.length, sal = Z.tA + Z.Tsal;
+    e.sq = -0.14 * Math.exp(-(t - Z.tA) / 90) * Math.cos((t - Z.tA) / 30);
+    if (t < sal) { /* planted: the salute, needle straight up before its face */ const u = (t - Z.tA) / Math.max(1, sal - Z.tA), a = sn88(Math.min(1, u / 0.3)), b = sn88(ss88(u, 0.72, 0.95));
+      e.ph = 'salute'; e.adir = [lp88(0.42, 0.12, a), lp88(-1, 1, a), lp88(0.3, -0.55, a)]; e.aext = 1; e.aT = b > 0 ? Z.tg[0] : null; e.ag = b; e.tilt = 0.34 + 0.05 * pl52(u, 0.3, 0.4, 0.04); e.hturn = 0.3 * a * (1 - b); e.lookx = lp88(0.3 * a, 1, b); e.looky = -0.6; e.brow = -0.25; e.smile = 1.15; e.lean = 0.06; e.armL = 0.3 + 0.4 * b; return e; }
+    if (n && t < Z.tFl) { /* en garde; the lunges, one to each mark, in the line's order */ let i = 0; while (i < n - 1 && t > P[i].t + P[i].hd + P[i].rc) i++; const p = P[i], x = (t - (p.t - p.ex)) / p.ex, hold = t >= p.t && t < p.t + p.hd, rec = t >= p.t + p.hd ? (t - p.t - p.hd) / p.rc : 0;
+      let w = t < p.t ? (x > 0 ? sn88(x) : 0) : hold ? 1 : 1 - sn88(Math.min(1, rec)); if (st >= 5) w = Math.min(1, w);
+      const toss = t >= p.t + p.hd ? 0.22 * pl52(rec, 0.35, 0.9, 0.12) : 0;
+      let ap = Z.As[i]; if (i > 0) { const t0 = P[i - 1].t + P[i - 1].hd + P[i - 1].rc, u = (t - t0) / (0.32 * L); ap = mix88(Z.As[i - 1], Z.As[i], sn88(Math.max(0, Math.min(1, u)))); if (u > 0 && u < 1) { e.move = 1; e.sq += -0.08 * Math.sin(PI * u); } } e.p = ap;
+      e.ph = w > 0.02 ? 'lunge' : 'guard'; e.ti = i; e.lw = w; e.aT = Z.tg[i]; e.ag = 1; e.adir = null; e.aext = 1; e.armL = 0.7 - 0.4 * w;
+      e.lean = lp88(0.0, st >= 5 ? -0.12 : -0.3, w); e.sq = e.sq + (st >= 5 ? 0.05 : 0.16) * w; e.tilt = lp88(0.24, -0.04, w) + toss; e.hturn = -0.25 * toss; e.lookx = 1; e.looky = lp88(-0.6, -1, w); e.brow = -0.7; e.blink = 0.22; e.smile = lp88(0.85, 0.7, w) + 0.4 * toss;
+      return e; }
+    /* the flourish on the hit: the needle sweeps up and is held high, chin up */ e.p = Z.A2; const u = ss88(t, Z.tFl, Z.tHit), a = sn88(Math.min(1, (t - Z.tFl) / Math.max(1, Z.tHit - Z.tFl)));
+    e.ph = t < Z.tHit ? 'flour' : 'high'; e.aT = null; e.ag = 0; e.adir = a < 0.5 ? [lp88(0.9, 0.75, a * 2), lp88(-0.35, 0.55, a * 2), lp88(0.2, -0.2, a * 2)] : [lp88(0.75, 0.3, a * 2 - 1), lp88(0.55, 1, a * 2 - 1), lp88(-0.2, -0.5, a * 2 - 1)]; e.aext = lp88(1, 1.25, a); e.armL = 0.5;
+    e.tilt = 0.42 + 0.05 * pl52((t - Z.tHit) / L, 0, 0.15, 0.05); e.lean = 0.1 * u; e.sq = e.sq + 0.06 * u; e.lookx = 0.35; e.looky = -0.8; e.brow = -0.4; e.blink = 0.35; e.smile = 1.2; e.hturn = 0.25 * u; return e; }
+  if (t < Z.tB1) { /* one sharp pivot: its back to us */ const u = (t - Z.tD) / Math.max(1, Z.tB1 - Z.tD), r = piv88(Math.min(1, u / 0.8), 0, s, PI, s); e.ph = 'pivot'; e.p = Z.A2; e.ry = r.ry; e.mx = r.mx; e.adir = [0.3, 1, -0.5]; e.aext = lp88(1.25, 1, u); e.aw = 1 - sn88(u); e.tilt = 0.4; e.lean = 0.08; return e; }
+  e.ry = PI; e.mx = s; e.aw = 0; e.lean = -0.06; e.tilt = 0.3;
+  if (t < Z.tBE) { const u = (t - Z.tB1) / Math.max(1, Z.tBE - Z.tB1); e.ph = 'back1'; dart88(e, Z, Z.A2, Z.E2, u, Z.hops); e.kz = lp88(Z.kh, Z.kE, sn88(u)); return e; }
+  if (t < Z.tB2) { const u = (t - Z.tBE) / Math.max(1, Z.tB2 - Z.tBE); e.ph = 'edgeB'; e.p = Z.E2; e.kz = Z.kE; e.sq = -0.12 * Math.exp(-u * 9) * Math.cos(u * 30); return e; }
+  if (t < Z.tHm) { const u = (t - Z.tB2) / Math.max(1, Z.tHm - Z.tB2); e.ph = 'back2'; dart88(e, Z, Z.E2, Z.H, u, Z.hops); e.kz = lp88(Z.kE, 1, sn88(u)); return e; }
+  if (t < Z.tEnd) { /* planted in its frost with a snap; it turns to the front and resumes its slant, nose in the air */ const u = (t - Z.tHm) / Math.max(1, Z.tEnd - Z.tHm), r = piv88(ss88(u, 0.18, 0.5), PI, s, 0, 1);
+    e.ph = 'home'; e.p = Z.H; e.kz = 1; e.ry = r.ry; e.mx = r.mx; e.away = false; e.sq = -0.16 * Math.exp(-u * 7) * Math.cos(u * 26); e.tilt = 0.36; e.looky = -0.8; e.blink = 0.4; e.smile = 0.9; e.hand = ss88(u, 0.55, 1); return e; }
+  e.ph = 'done'; e.done = e.home = true; e.hand = 1; e.away = false; return e; }
+KIT.ph88 = ph88;
+/* its lean, neck and face go over the idle's */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (!S || !S.way78) return; const X = S.x88; if (!X || X.e.hand >= 0.999) return; const e = X.e, h = e.hand, m = (a, b) => lp88(b, a, h);
+  q.lean = m(q.lean, e.lean); q.sq = m(q.sq, e.sq); q.tilt = m(q.tilt, e.tilt); q.hturn = m(q.hturn, e.hturn); q.lookx = m(q.lookx, e.lookx); q.looky = m(q.looky, e.looky); q.brow = m(q.brow, e.brow); q.blink = m(q.blink, Math.max(e.blink, 0)); q.smile = m(q.smile, e.smile); q.armL = m(q.armL || 0, e.armL); })(C26.rest);
+const Y88 = { x: 0, y: 1, z: 0 };
+/* the needle arm laid out straight from its shoulder to a point (in the figure's own frame), w of the way from the idle's arm */
+function arm88(S, K, pt, w) { const B = S.bones, J = S.G.J, jn = K.arm.jn, V = S.w88, A = B[jn[0]].position, d = V.b.copy(pt).sub(A), Ld = d.length(); if (Ld < 1e-5 || w <= 0) return; const dn = V.c.copy(d).multiplyScalar(1 / Ld);
+  for (let k = 1; k < jn.length; k++) { const b = B[jn[k]], a0 = J[jn[k - 1]].p, a1 = J[jn[k]].p; V.d.set(A.x + d.x * K.arm.cum[k], A.y + d.y * K.arm.cum[k], A.z + d.z * K.arm.cum[k]); b.position.lerp(V.d, w);
+    V.r.set(a1[0] - a0[0], a1[1] - a0[1], a1[2] - a0[2]).normalize(); V.qa.setFromUnitVectors(V.r, dn); b.quaternion.slerp(V.qa, w); } }
+/* after the idle: the act's transform of the whole, the needle arm, the reach to the mark; then where it is, for the page */
+function post88(S, X) { const e = X.e, Z = X.Z, K = k88(S), mid = S.mid78, par = mid.parent, T = S.T, V3 = T.Vector3, B = S.bones, root = S.root; if (!par) return;
+  const V = S.w88 || (S.w88 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), r: new V3(), f: new V3(), t: new V3(), sv: new V3(), q: new T.Quaternion(), q2: new T.Quaternion(), qp: new T.Quaternion(), qa: new T.Quaternion(), ax: new V3() });
+  if (mid.userData.sz88 == null) mid.userData.sz88 = mid.scale.y; const sz = mid.userData.sz88, h = e.hand;
+  par.updateWorldMatrix(true, false); par.getWorldQuaternion(V.qp).invert(); const ps = new V3().setFromMatrixScale(par.matrixWorld).y || 1;
+  const F = V.f.set(e.p.x, e.p.y, e.p.z), sv = V.sv.set(sz * e.kz * e.mx * e.thin, sz * e.kz * e.str, sz * e.kz * e.thin);
+  /* the world turn: about the upright, then tipped along its way while it darts (its point leads, its thread trails) */
+  const qW = V.q.setFromAxisAngle(V.ax.set(0, 1, 0), e.ry); if (e.tipA > 1e-3 && e.tipD) { V.q2.setFromAxisAngle(V.ax.set(e.tipD.z, 0, -e.tipD.x).normalize(), e.tipA); qW.premultiply(V.q2); }
+  const place = () => { mid.quaternion.copy(V.qp).multiply(qW); mid.scale.copy(sv); root.updateMatrix(); V.a.set(S.fx78, 0, 0).applyMatrix4(root.matrix).multiply(sv).applyQuaternion(qW).multiplyScalar(ps);
+    V.t.copy(F).sub(V.a); par.worldToLocal(V.t); mid.position.copy(V.t);
+    if (h > 0) { mid.position.lerp(V.r.set(0, 0, 0), h); mid.quaternion.slerp(V.q2.identity(), h); mid.scale.lerp(V.r.set(sz, sz, sz), h); } mid.updateWorldMatrix(false, true); };
+  place();
+  /* the needle arm: down at its side, up in the salute, on the mark en garde, to the mark in the lunge, high in the flourish */
+  if (K.arm && e.aw > 0.001) { const jn0 = B[K.arm.jn[0]].position, La = K.arm.L;
+    if (e.aT && e.lw > 0.001) { /* the lunge: the whole body tips forward about its foot (toward the mark) until the needle arm, stretched to its reach, puts
+         the point on the mark; only if that is not enough does the foot slide along the floor */ const Sw = root.localToWorld(V.b.copy(jn0)), rel = V.c.copy(Sw).sub(F).clone(), Lr = Z.lr * La * sz * e.kz * ps, Tv = new V3(e.aT.x, e.aT.y, e.aT.z);
+      const ux0 = Tv.x - F.x, uz0 = Tv.z - F.z, hz0 = Math.hypot(ux0, uz0) || 1, ax = new V3(uz0 / hz0, 0, -ux0 / hz0), qa = new T.Quaternion(), at = a => { qa.setFromAxisAngle(ax, a); return V.r.copy(rel).applyQuaternion(qa).add(F).distanceTo(Tv) - Lr; };
+      let a = 0; const am = Z.amax; if (at(0) > 0) { if (at(am) > 0) a = am; else { let lo = 0, hi = am; for (let k = 0; k < 14; k++) { const m = (lo + hi) / 2; if (at(m) > 0) lo = m; else hi = m; } a = hi; } }
+      qa.setFromAxisAngle(ax, a); const S1 = V.r.copy(rel).applyQuaternion(qa).add(F), dx = Tv.x - S1.x, dy = Tv.y - S1.y, dz = Tv.z - S1.z, hz = Math.hypot(dx, dz) || 1, dl = Lr > Math.abs(dy) ? Math.max(0, hz - Math.sqrt(Lr * Lr - dy * dy)) : 0;
+      qa.setFromAxisAngle(ax, a * e.lw); qW.premultiply(qa); F.x += dx / hz * dl * e.lw; F.z += dz / hz * dl * e.lw; X.sl = dl * e.lw; X.ta = a * e.lw; place(); }
+    let pt = null; const aim = (dir, ext) => { const l = Math.hypot(dir[0], dir[1], dir[2]) || 1; return V.d.set(jn0.x + dir[0] / l * La * ext, jn0.y + dir[1] / l * La * ext, jn0.z + dir[2] / l * La * ext).clone(); };
+    if (e.aT) { const tl = root.worldToLocal(V.c.set(e.aT.x, e.aT.y, e.aT.z)), g0 = V.r.copy(tl).sub(jn0), gl = g0.length() || 1, gd = [g0.x / gl, g0.y / gl + 0.15, g0.z / gl], gp = aim(gd, 0.95);
+      pt = e.lw > 0 ? gp.lerp(tl, e.lw) : gp; if (e.adir && e.ag != null && e.ag < 1) pt = aim(e.adir, e.aext).lerp(pt, e.ag); }
+    else if (e.adir) pt = aim(e.adir, e.aext);
+    if (pt) arm88(S, K, pt, e.aw * (1 - h)); }
+  /* the whiff has no arms: the whole lick tips down about its foot so its point lands on the mark (and slides just enough) */
+  if (!K.arm && e.aT && e.lw > 0.001 && B[K.tip]) { const tw = root.localToWorld(V.b.copy(B[K.tip].position)), vx = tw.x - F.x, vy = tw.y - F.y, vz = tw.z - F.z, dx = e.aT.x - F.x, dz = e.aT.z - F.z, hz = Math.hypot(dx, dz) || 1, ux = dx / hz, uz = dz / hz;
+    const vu = vx * ux + vz * uz, px = vx - vu * ux, pz = vz - vu * uz, R0 = Math.hypot(vu, vy) || 1, dy = e.aT.y - F.y, a = Math.acos(Math.max(-1, Math.min(1, dy / R0))) - Math.atan2(vu, vy), sl = hz - (vu * Math.cos(a) + vy * Math.sin(a));
+    V.q2.setFromAxisAngle(V.ax.set(uz, 0, -ux), a * e.lw); qW.premultiply(V.q2); F.x += (sl * ux - px) * e.lw; F.z += (sl * uz - pz) * e.lw; X.sl = sl * e.lw; place(); }
+  /* its frost, damp and shade on the bench stay at home while it is away (the page leaves frost where it goes) */
+  if (S.lay78) S.lay78.visible = !e.away;
+  root.updateWorldMatrix(true, false); const tipJ = K.arm ? K.arm.jn[K.arm.jn.length - 1] : K.tip, tp = B[tipJ] ? root.localToWorld(V.b.copy(B[tipJ].position)) : V.b.copy(F), hd = B[K.tip] ? root.localToWorld(V.c.copy(B[K.tip].position)) : V.c.copy(F);
+  S.h88 = { foot: [F.x, F.y, F.z], tip: [tp.x, tp.y, tp.z], head: [hd.x, hd.y, hd.z], ht: K.top * sz * e.kz * e.str * ps, ph: e.ph, kz: e.kz, hand: h, away: e.away, lw: e.lw, ti: e.ti }; }
+function act88(f0, grp, S, t, o) { const Z = o.bites.s88, e = ph88(t, Z); S.x88 = { t, e, Z }; W88.e = e; f0(grp, 'rest', t, {}); post88(S, S.x88); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+/* back at rest: the group as it was at home */
+function rest88(S) { const mid = S.mid78; if (mid && mid.userData.sz88 != null) { mid.position.set(0, 0, 0); mid.quaternion.identity(); mid.scale.setScalar(mid.userData.sz88); } if (S.lay78) S.lay78.visible = true; S.x88 = null; S.h88 = null; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way78) return f0(grp, clip, t, o);
+  if (clip === 'act' && on88(S) && o && o.bites && o.bites.s88) { try { return act88(f0, grp, S, t, o); } catch (err) { W88.err = String(err && err.stack); rest88(S); return f0(grp, clip, t, o); } }
+  if (S.x88) rest88(S); return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26;
+KIT.W88 = W88;
+// ==== W88 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
