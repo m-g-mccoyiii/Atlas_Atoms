@@ -5364,6 +5364,162 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     count: g && g.hom ? g.hom.count : null, a0: g && g.hom ? g.hom.a0 : null, born: S70.born.length, tg: p && p.tg.map(q => [q.x, q.y, q.z, q.R].map(x => x.toFixed(1)).join(',')).join(' '), pl: p && [p.pl.x, p.pl.z, p.pl.k].map(x => +x.toFixed(2)), F: p && p.F, nS: p && p.nS, pre: p && p.pre, eE: p && +p.eE.toFixed(2), Ts: p && p.Ts, J: p && Math.round(p.J), D: p && Math.round(p.D), B: p && Math.round(p.B), hit: p && Math.round(p.hit), L: p && Math.round(p.L),
     Z: S70.Z ? { tW: Math.round(S70.Z.tW), tA: Math.round(S70.Z.tA), P: S70.Z.P.map(q => Math.round(q.t)).join(','), tHit: Math.round(S70.Z.tHit), tD: Math.round(S70.Z.tD), tSl: Math.round(S70.Z.tSl), tEnd: Math.round(S70.Z.tEnd), tPk: Math.round(S70.Z.tPk), tTn: Math.round(S70.Z.tTn), oc: Math.round((S70.Z.out.find(c => c.clb) || { t0: -1 }).t0), bc: Math.round((S70.Z.back.find(c => c.clb) || { t0: -1 }).t0), iTip: S70.Z.iTip, tip: Math.round((S70.Z.out.find(c => c.i === S70.Z.iTip) || { t0: -1 }).t0) } : null, G: G && [G.position.x, G.position.y, G.position.z, G.scale.x].map(x => +x.toFixed(2)), HOMP: [HOMP.x, HOMP.z], h70: SP && SP.h70 ? { tip: SP.h70.tip && SP.h70.tip.map(x => +x.toFixed(1)), feet: SP.h70.feet.length, tips: SP.h70.tips.length } : null }; };
   // ==== S70 END
+  // ==== S74 BEGIN
+  // (builder 74) SEEDLING'S OWN CHANGE OF STAGE ON THE PAGE, "the sprouting" (kitart W74 has the figure and the timeline KIT.ph74; switch
+  // AA.rxKit.evo74, ?v74=0 gives the old one). Here: its way and size (from home over the open book to the middle of the screen beside the molecule,
+  // worked out as S59 does, s59Place/s59Fit; home again), and every piece of the change that is not its skin: the seed (its coat closing up from the
+  // base over the folding plant with a click, swelling in pulses on the beat and rocking, the zigzag crack glowing green-white and widening, the held
+  // instant with one green tip, the burst: the cap flung off, chips flying, the two halves falling open and softening into the page), the roots drawn
+  // out across the paper like thin pen lines (along and across the ruled lines, never over the molecule) and the damp ring round it, both drying away
+  // as it goes home; the glow of the crack on the page; the room giving way (builder 33's one-lamp pass driven as S59 drives it, s74Lamp, a copy with
+  // its own state), the sound on the beats, and its new number beside it when it has settled. Nothing on the bench moves.
+  const S74 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, was: null, K: null, shown: false, U: new T.Vector3(0, 0.697, -0.717), F: new T.Vector3(0, 0.717, 0.697), X: new T.Vector3(1, 0, 0), NL: new T.Vector3(0, 0.697, 0.717) };
+  const s74Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S74.dim += (want - S74.dim) * 0.2; if (Math.abs(want - S74.dim) < 0.004) S74.dim = want; const d = S74.dim; if (A) S74.A = A;
+    if (d <= 0.002 || !S33.on() || !S74.A) { if (S74.lit) { S74.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
+    if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S74.A; sh.visible = true; dirty = true; S74.lit = true;
+    cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
+    if (!S33.rtB || S74.n++ % 20 === 0 || S33.rtB.width !== ren.getDrawingBufferSize(S33.v2).x) s33Bench(null);
+    if (!S33.wet.some(w => w && w.r > 0)) U.w33.value.forEach(u => { u.z = 0; });
+    S33.A.set(P.x, P.y, P.z); S33.L.set(P.x - 22, 46, P.z - 15); U.lpos.value.copy(S33.L); U.aim.value.copy(S33.A).sub(S33.L); U.lnf.value.w = U.aim.value.length(); U.aim.value.normalize(); U.lamp.value.z = 8 + 1.7 * P.R; U.lamp.value.w = 0.85 * d * (1 - 0.55 * (P.flash || 0));
+    if (l33) { S33.v.copy(S33.L).applyMatrix4(cam.matrixWorldInverse); l33.set(S33.v.x, S33.v.y, S33.v.z, Math.min(1, d * 1.5)); }
+    s33Light(null, P.x, P.y + 0.45 * P.H * 0.697, P.z - 0.45 * P.H * 0.717, Math.max(0.9 * P.H, 2.4 * P.R)); U.shk.value = 0.85 * Math.min(1, d * 1.3) * (P.sh == null ? 1 : P.sh); U.bs.value.w = 0; };
+  const cl74p = x => (x < 0 ? 0 : x > 1 ? 1 : x), sm74 = x => { x = cl74p(x); return x * x * (3 - 2 * x); };
+  /* the seed: an egg one unit tall on its base (local y the figures' up, z toward the eye); the seam a zigzag round it a little above the middle */
+  const NZ74 = 9, s74Seam = th => { const x = th * NZ74 / (2 * Math.PI) + 0.25, f = x - Math.floor(x); return 0.6 + 0.06 * (4 * Math.abs(f - 0.5) - 1); };
+  const s74Egg = (ph, th, o) => { const y = (1 - Math.cos(ph)) / 2, r = 0.36 * Math.sin(ph) * (1 + 0.1 * Math.cos(ph)); o[0] = r * Math.cos(th); o[1] = y; o[2] = r * Math.sin(th); return o; };
+  const s74Ph = y => Math.acos(Math.max(-1, Math.min(1, 1 - 2 * y)));
+  const s74Tex = stops => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); stops.forEach(([p, a]) => g.addColorStop(p, 'rgba(255,255,255,' + a + ')')); x.fillStyle = g; x.fillRect(0, 0, 128, 128); const t = new T.CanvasTexture(cv); return t; };
+  const s74Piece = (t0, t1, na, nr, par) => { const gq = new T.BufferGeometry(), idx = []; for (let i = 0; i < na; i++) for (let j = 0; j < nr; j++) { const a = i * (nr + 1) + j, b = a + nr + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+    gq.setAttribute('position', new T.BufferAttribute(new Float32Array((na + 1) * (nr + 1) * 3), 3)); gq.setIndex(idx);
+    const mc = new T.MeshStandardMaterial({ color: lin('#d9c29c'), roughness: 0.85, metalness: 0, emissive: lin('#4a3620'), emissiveIntensity: 0.3, side: T.DoubleSide, transparent: true, opacity: 1 }),
+      mi = new T.MeshBasicMaterial({ color: lin(INK), side: T.BackSide, transparent: true, opacity: 1 });
+    const pv = new T.Group(), inn = new T.Group(), m = new T.Mesh(gq, mc), h = new T.Mesh(gq, mi); h.scale.setScalar(1.05); h.position.y = -0.025; m.renderOrder = 12; h.renderOrder = 11; [m, h].forEach(q => { q.frustumCulled = false; q.userData.plain = true; inn.add(q); }); pv.add(inn); par.add(pv);
+    return { g: gq, m, h, mc, mi, pv, inn, t0, t1, na, nr, key: null }; };
+  const s74Fill = (pc, lo, hi) => { const a = pc.g.attributes.position.array, o3 = [0, 0, 0]; let k = 0;
+    for (let i = 0; i <= pc.na; i++) { const th = pc.t0 + (pc.t1 - pc.t0) * i / pc.na, p0 = lo(th), p1 = Math.max(p0, hi(th)); for (let j = 0; j <= pc.nr; j++) { s74Egg(p0 + (p1 - p0) * j / pc.nr, th, o3); a[k++] = o3[0]; a[k++] = o3[1]; a[k++] = o3[2]; } }
+    pc.g.attributes.position.needsUpdate = true; pc.g.computeVertexNormals(); pc.g.computeBoundingSphere(); };
+  const NS74 = 144, NB74 = 14, NC74 = 9;
+  const s74Make = () => { if (S74.K) return S74.K; const K = S74.K = { ci: lin(INK), cg: new T.Color(1.0, 1.0, 0.8) }, ink = lin(INK);
+    K.sg = new T.Group(); K.sg.matrixAutoUpdate = false; K.sg.visible = false; scene.add(K.sg); K.bd = new T.Group(); K.sg.add(K.bd);
+    K.cupL = s74Piece(Math.PI / 2, 3 * Math.PI / 2, 28, 10, K.bd); K.cupR = s74Piece(-Math.PI / 2, Math.PI / 2, 28, 10, K.bd); K.cap = s74Piece(0, 2 * Math.PI, 56, 7, K.bd);
+    /* the seam: a strip along the zigzag, a pen line at first, glowing as it swells */
+    { const gq = new T.BufferGeometry(), idx = []; for (let i = 0; i < NS74; i++) { const a = 2 * i, b = 2 * (i + 1); idx.push(a, a + 1, b, b, a + 1, b + 1); } gq.setAttribute('position', new T.BufferAttribute(new Float32Array((NS74 + 1) * 2 * 3), 3)); gq.setIndex(idx);
+      K.seamM = new T.MeshBasicMaterial({ color: ink, transparent: true, depthWrite: false, side: T.DoubleSide, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }); K.seam = new T.Mesh(gq, K.seamM); K.seam.renderOrder = 18; K.seam.frustumCulled = false; K.seam.userData.plain = true; K.bd.add(K.seam); K.seamW = -1; }
+    /* the one green tip at the crack */ K.tip = new T.Group(); { const a = new T.Mesh(SPH, new T.MeshBasicMaterial({ color: lin('#9ad860'), transparent: true, toneMapped: false })), b = new T.Mesh(SPH, new T.MeshBasicMaterial({ color: ink, side: T.BackSide, transparent: true })); b.scale.setScalar(1.25); a.renderOrder = 18.2; b.renderOrder = 18.1; [a, b].forEach(q => { q.userData.plain = true; K.tip.add(q); }); } K.bd.add(K.tip);
+    /* the glow: a halo at the crack, and its light on the page */ const gt = s74Tex([[0, 1], [0.25, 0.55], [0.6, 0.12], [1, 0]]);
+    K.halo = new T.Sprite(new T.SpriteMaterial({ map: gt, color: lin('#eaffcc'), blending: T.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false })); K.halo.renderOrder = 18.5; K.halo.userData.plain = true; K.halo.visible = false; scene.add(K.halo);
+    const flat = (tex, col, ro, add) => { const m = new T.Mesh(new T.CircleGeometry(1, 48).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tex, color: col, transparent: true, depthWrite: false, opacity: 0, blending: add ? T.AdditiveBlending : T.NormalBlending, toneMapped: !add })); m.renderOrder = ro; m.visible = false; m.userData.plain = true; m.frustumCulled = false; scene.add(m); return m; };
+    K.glow = flat(gt, lin('#dcffb4'), 17, true);
+    K.ring = flat(s74Tex([[0, 0.16], [0.6, 0.14], [0.84, 0.2], [0.9, 0.5], [0.95, 0.22], [1, 0]]), lin('#6c5638'), 3);
+    K.shade = flat(s74Tex([[0, 0.55], [0.5, 0.4], [1, 0]]), ink, 4);
+    const bt = s74Tex([[0, 0.7], [0.55, 0.5], [0.8, 0.2], [1, 0]]); K.blots = []; for (let i = 0; i < NB74; i++) K.blots.push({ m: flat(bt, lin('#8c6e48'), 3), t0: -1e9, life: 1, r: 1, a: 0.4, x: 0, z: 0 });
+    K.hb = [flat(bt, lin('#9c7e56'), 3), flat(bt, lin('#9c7e56'), 3)];
+    /* the roots: thin pen lines lying in the paper, one strip of quads, drawn in the order they grow */
+    K.rootM = new T.MeshBasicMaterial({ color: lin('#6f5134'), transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide }); K.roots = new T.Mesh(new T.BufferGeometry(), K.rootM); K.roots.renderOrder = 3; K.roots.frustumCulled = false; K.roots.visible = false; K.roots.userData.plain = true; scene.add(K.roots);
+    /* chips of coat flung at the burst */ K.chips = []; for (let i = 0; i < NC74; i++) { const g2 = new T.Group(), a = new T.Mesh(SPH, K.cupL.mc), b = new T.Mesh(SPH, new T.MeshBasicMaterial({ color: ink, side: T.BackSide })); b.scale.setScalar(1.3); a.renderOrder = 12; b.renderOrder = 11; [a, b].forEach(q => { q.userData.plain = true; g2.add(q); }); g2.visible = false; K.bd.add(g2); K.chips.push({ g: g2 }); }
+    return K; };
+  const s74Hide = () => { const K = S74.K; if (!K || !S74.shown) return; S74.shown = false; K.sg.visible = false; [K.halo, K.glow, K.ring, K.shade, K.roots].concat(K.hb).forEach(m => { m.visible = false; }); K.blots.forEach(b => { b.m.visible = false; b.t0 = -1e9; }); };
+  const s74Blot = (now, x, z, r, a, life) => { const K = S74.K, b = K.blots.find(q => now - q.t0 > q.life) || K.blots[0]; b.t0 = now; b.life = life; b.r = r; b.a = a; b.x = x; b.z = z; };
+  /* the roots, worked out once: from under the seed out over the paper, mostly along the ruled lines and now and then across them, with branches; kept
+     inside the page and off the molecule */
+  const s74Roots = (C, bx, bz, R, P, sz) => { let sd = 917 + 31 * (P.nr | 0); const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }, segs = [], mol = C.mol, pg = C.pg, mg = 0.2 * R, Y = C.y + 0.004;
+    const ok = (x, z) => !(pg && (x < pg[0] || x > pg[1] || z < pg[2] || z > pg[3])) && !(mol && x > mol[0] - mg && x < mol[1] + mg && z > mol[2] - mg && z < mol[3] + mg);
+    const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+    const grow = (x, z, h, len, w0, b0, b1, dep, a0) => { const ds = 0.07 * R, n = Math.max(2, Math.round(len / ds)); let fol = rnd() < 0.5, mk = 2 + Math.floor(rnd() * 4);
+      for (let i = 0; i < n; i++) { if (--mk <= 0) { fol = !fol; mk = fol ? 3 + Math.floor(rnd() * 6) : 2 + Math.floor(rnd() * 3); }
+        const along = Math.cos(h) >= 0 ? 0 : Math.PI, tg = fol ? along + (rnd() - 0.5) * 0.12 : a0 + (rnd() - 0.5) * 1.1; h += wrap(tg - h) * (fol ? 0.55 : 0.35) + (rnd() - 0.5) * 0.06;
+        const x2 = x + Math.cos(h) * ds, z2 = z + Math.sin(h) * ds; if (!ok(x2, z2)) break; const s = i / n;
+        segs.push({ x0: x, z0: z, x1: x2, z1: z2, w: w0 * (1 - 0.65 * s), b: b0 + (b1 - b0) * (i + 1) / n }); x = x2; z = z2;
+        if (dep < 2 && i > 1 && rnd() < 0.1) grow(x, z, h + (rnd() < 0.5 ? -1 : 1) * (0.5 + 0.5 * rnd()), len * (1 - s) * (0.35 + 0.25 * rnd()), w0 * (1 - 0.65 * s) * 0.7, b0 + (b1 - b0) * s, Math.min(1, b0 + (b1 - b0) * s + 0.45), dep + 1, h); } };
+    for (let i = 0; i < P.nr; i++) { const a = 2 * Math.PI * (i + 0.3 * rnd()) / P.nr, r0 = 0.22 * sz, d0 = 0.1 * rnd(); grow(bx + Math.cos(a) * r0, bz + Math.sin(a) * r0 * 0.8, a, P.rl * R * (0.55 + 0.45 * rnd()), 0.024 * R * (0.8 + 0.4 * rnd()), d0, 0.75 + 0.25 * rnd(), 0, a); }
+    segs.sort((p, q) => p.b - q.b); const pos = new Float32Array(segs.length * 12), idx = [];
+    segs.forEach((g, i) => { const dx = g.x1 - g.x0, dz = g.z1 - g.z0, l = Math.hypot(dx, dz) || 1, nx = -dz / l * g.w / 2, nz = dx / l * g.w / 2, ex = dx / l * g.w * 0.4, ez = dz / l * g.w * 0.4, o = 12 * i;
+      pos.set([g.x0 - nx - ex, Y, g.z0 - nz - ez, g.x0 + nx - ex, Y, g.z0 + nz - ez, g.x1 + nx * 0.85 + ex, Y, g.z1 + nz * 0.85 + ez, g.x1 - nx * 0.85 + ex, Y, g.z1 - nz * 0.85 + ez], o); const v = 4 * i; idx.push(v, v + 1, v + 2, v, v + 2, v + 3); });
+    const gq = new T.BufferGeometry(); gq.setAttribute('position', new T.BufferAttribute(pos, 3)); gq.setIndex(idx); return { gq, b: segs.map(g => g.b) }; };
+  /* a wide plant: its whole width between the screen's left edge and the molecule; smaller if it must be (S71's way, on its own numbers) */
+  const s74Wide = (E, SP) => { const C = E.c74, J = SP.G.J; let hw = 0; J.forEach(q => { hw = Math.max(hw, Math.abs(q.p[0]) + q.r); }); hw = hw * C.unit * E.s1 * C.F; const v = S74.v, nx = x => { v.set(x, C.y, C.z).project(cam); return v.x; }, pu = Math.max(1e-4, nx(C.x + 1) - nx(C.x));
+    const xL = C.x + (-0.9 - nx(C.x)) / pu, xR = C.mol && C.x < C.mol[0] ? C.mol[0] - 0.4 : C.x + (0.9 - nx(C.x)) / pu, room = xR - xL; if (2 * hw > room) { const f = Math.max(0.6, room / (2 * hw)); C.F *= f; C.Hc *= f; hw *= f; } C.x = Math.max(xL + hw, Math.min(xR - hw, C.x)); C.hw = hw; };
+  /* the new form's whole drawing (every joint and its radius, at rest) kept inside the screen: top below 0.8, sides inside 0.93; smaller if it must be */
+  const s74Box = (E, SP) => { const C = E.c74, J = SP.G.J, v = S74.v, ex = 1.2; let hf = 1;
+    const box = f => { const k = C.unit * E.s1 * C.F * f; let hi = -9, xl = 9, xh = -9, ty = 0; J.forEach(q => { const y = q.p[1] + ex * q.r; ty = Math.max(ty, y); v.set(C.x + (q.p[0]) * k, C.y + y * k * 0.697, C.z - y * k * 0.717 + q.p[2] * k * 0.697).project(cam); hi = Math.max(hi, v.y); [-1, 1].forEach(sd => { v.set(C.x + (q.p[0] + sd * ex * q.r) * k, C.y + q.p[1] * k * 0.697, C.z - q.p[1] * k * 0.717).project(cam); xl = Math.min(xl, v.x); xh = Math.max(xh, v.x); }); }); return { hi, xl, xh, ty }; };
+    for (let i = 0; i < 30; i++) { const b = box(hf); if (b.hi <= 0.8 && b.xl >= -0.93 && b.xh <= 0.93) break; if (b.xl < -0.93 && b.hi <= 0.8 && C.mol && (C.mol[0] - C.x) > C.hw * hf) { C.x += 0.3; continue; } hf *= 0.96; }
+    hf = Math.max(0.5, hf); C.F *= hf; C.Hc *= hf; const b = box(1); C.hf = SP.G.H / Math.max(SP.G.H, b.ty); C.box74 = [b.xl, b.hi, b.xh].map(x => +x.toFixed(2)); C.hf74 = +hf.toFixed(2); };
+  const s74Frame = now => { const E = R21.evo, SP = s26Fig(), Kt = AA.rxKit, e = E && E.e74;
+    if (!E || !e || !SP || !SP.way64 || HEVO.done || Kt.evo74 === false) { if (S74.was && !R21.evo) { const L = S74.was.L; S74.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s74Hide(); s74Lamp(now, null); return; }
+    S74.was = E; dirty = true; const c = e.c, u = e.u, P = e.P, sx = sfx, once = (n, f) => { if (!E.f74[n]) { E.f74[n] = 1; try { f(); } catch (x) { /* no sound */ } } };
+    if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; } if (S27.s1 && u >= c[2] + 0.5 * P.b[2] && u < c[5]) { S27.s1.visible = false; S27.s2.visible = false; } if (S27.ring) S27.ring.visible = false;
+    if (!E.c74) { s59Place(E, SP); E.c74 = E.c59; E.f74 = {}; E.k59 = 1; s74Wide(E, SP); s74Box(E, SP); E.sz74 = P.seed * E.c74.Hc / E.c74.hf; }
+    const C = E.c74, RK = Kt.RK, Q = HEVO.pos || (HEVO.pos = {}), k = E.k59 || 1, Fk = C.F * k, R = C.R * k, tt = now / 1000;
+    if (!E.d74) { const dx = C.x - HOMP.x, dz = C.z - HOMP.z, l = Math.hypot(dx, dz) || 1; E.d74 = [dx / l, dz / l]; }
+    /* the old stage at the middle no taller than a share of the new form (stage 1 the seed, shorter still) */
+    if (E.ko74 == null && E.h74 && S74.sp && u > 0.05 && u < c[1]) { const unit = E.h74 / S74.sp; E.ko74 = Math.max(0.35, Math.min(1, (E.from === 1 ? 0.4 : 0.8) * C.Hc / Math.max(1e-3, unit * E.s0 * C.F))); }
+    const ko = E.ko74 || 1; let x = C.x, z = C.z, s = (e.old ? E.s0 * ko : E.s1) * Fk;
+    if (u < c[1]) { const a = e.cr; x = HOMP.x + (C.x - HOMP.x) * a; z = HOMP.z + (C.z - HOMP.z) * a; s = E.s0 * (1 + (Fk * ko - 1) * RK.sm(Math.min(1, e.go * 1.1))); }
+    else if (u >= c[6]) { const h = 1 - e.cr; x = C.x + (HOMP.x - C.x) * h; z = C.z + (HOMP.z - C.z) * h; s = E.s1 * (Fk + (1 - Fk) * RK.sm(h)); }
+    Q.x = x; Q.z = z; Q.y = 0; Q.sx = 1; Q.sy = 1; homObj.s = s; E.ks31 = s / E.s0; S74.sp = s;
+    if ((u >= c[4] && u < c[6])) { try { s59Fit(E, SP); } catch (x2) { /* fits next frame */ } }
+    /* while both are hidden in the shut seed the new stage's whole drawing is fitted inside the screen (W74 stands it at rest, unseen, and gives its joints) */
+    if (e.gone && E.pts74 && E.sp74) { const p = E.pts74, rt = E.s1 * C.F * k / Math.max(1e-6, S74.sp), A = E.sp74, v = S74.v; let hi = -9, xl = 9, xh = -9;
+      for (let i = 0; i < p.length; i += 4) { const x0 = A[0] + (p[i] - A[0]) * rt, y0 = A[1] + (p[i + 1] - A[1]) * rt, z0 = A[2] + (p[i + 2] - A[2]) * rt, r = p[i + 3] * rt * 2.0;
+        v.set(x0, y0 + 0.697 * r, z0 - 0.717 * r).project(cam); hi = Math.max(hi, v.y); v.set(x0 - r, y0, z0).project(cam); xl = Math.min(xl, v.x); v.set(x0 + r, y0, z0).project(cam); xh = Math.max(xh, v.x); }
+      E.fit74 = [xl, hi, xh].map(q => +q.toFixed(2)); if (hi > 0.78 || xl < -0.9 || xh > 0.9) E.k59 = Math.max(0.45, (E.k59 || 1) * 0.96); }
+    const K = s74Make(); S74.shown = true; const sz = E.sz74;
+    if (u >= c[2] && !E.sp74) { const A = E.a74 || [C.x, C.y, C.z]; E.sp74 = [A[0], C.y + 0.01, A[2]]; E.sd74 = C.mol && A[0] < C.mol[0] ? -1 : 1; E.rt74 = s74Roots(C, A[0], A[2], R, P, sz); K.roots.geometry.dispose(); K.roots.geometry = E.rt74.gq; }
+    const B0 = E.sp74, seedOn = B0 && u >= c[2] && u < c[6], lift = u < c[4] ? 0 : 1;
+    /* the seed */
+    if (seedOn) { const sw = e.swell, pu = e.pulse * (1 - e.hold), bs = 1 + 0.12 * sw + 0.04 * (1 - e.cl), bb = u - Math.floor(u);
+      K.sg.visible = true; K.sg.matrix.makeBasis(S74.X, S74.U, S74.F).scale(S74.v.set(sz, sz, sz)).setPosition(B0[0], B0[1], B0[2]); K.sg.matrixWorldNeedsUpdate = true;
+      K.bd.scale.set(bs * (1 + 0.04 * pu), bs * (1 + 0.08 * pu), bs * (1 + 0.04 * pu)); K.bd.rotation.z = u >= c[3] && u < c[4] ? 0.07 * sw * (1 - e.hold) * Math.sin(Math.PI * (u - c[3])) * (1 - bb * 0.3) : 0; K.bd.updateWorldMatrix(true, false);
+      /* the coat closing up from the base: the open top shrinks to a point */
+      const pm = u < c[4] ? Math.max(0.02, e.cl * Math.PI * 1.001) : Math.PI, key = Math.round(pm * 400);
+      if (K.cupL.key !== key) { [K.cupL, K.cupR].forEach(pc => { s74Fill(pc, () => 0, th => Math.min(s74Ph(s74Seam(th)), pm)); pc.key = key; }); const ok = pm > s74Ph(0.54); K.cap.inn.visible = ok; if (ok) s74Fill(K.cap, th => s74Ph(s74Seam(th)), th => Math.min(Math.PI, pm)); K.cap.key = key; }
+      /* the seam: the pen line of the crack, glowing and widening on the beat */
+      const showSeam = u < c[4] && e.cl > 0.6; K.seam.visible = showSeam;
+      if (showSeam) { const w = 0.012 + 0.036 * sw + 0.018 * pu + 0.02 * e.hold; if (Math.abs(w - K.seamW) > 1e-4) { K.seamW = w; const a = K.seam.geometry.attributes.position.array, o3 = [0, 0, 0]; for (let i = 0; i <= NS74; i++) { const th = 2 * Math.PI * i / NS74, y = s74Seam(th); [y - w / 2, y + w / 2].forEach((yy, j) => { s74Egg(s74Ph(yy), th, o3); a[6 * i + 3 * j] = o3[0] * 1.012; a[6 * i + 3 * j + 1] = o3[1]; a[6 * i + 3 * j + 2] = o3[2] * 1.012; }); } K.seam.geometry.attributes.position.needsUpdate = true; K.seam.geometry.computeBoundingSphere(); }
+        const gl = Math.min(1, e.glow); K.seamM.color.copy(K.ci).lerp(K.cg, gl); K.seamM.opacity = Math.min(1, (e.cl - 0.6) / 0.25); }
+      /* the tip */ const tp = e.tip; K.tip.visible = tp > 0.01 && u < c[4]; if (K.tip.visible) { const th = Math.PI / 2, y = s74Seam(th) + 0.01, o3 = s74Egg(s74Ph(y), th, [0, 0, 0]); K.tip.position.set(o3[0], o3[1] + 0.02 * tp, o3[2] * 1.03); K.tip.scale.set(0.045 * tp, 0.085 * tp, 0.045 * tp); K.tip.rotation.z = 0.25; }
+      /* the burst: the cap flung (1 to 2: popped up off the hook, which wears it), the halves falling open, then softening into the page */
+      const dh = e.dh, NL = S74.NL;
+      K.cap.pv.position.set(0, 0, 0); K.cap.pv.rotation.set(0, 0, 0); K.cap.pv.scale.setScalar(1); K.cap.pv.visible = true; [K.cap.mc, K.cap.mi].forEach(m => { m.opacity = 1; });
+      if (lift) { const c0 = [0, 0.8, 0]; K.cap.inn.position.set(-c0[0], -c0[1], -c0[2]);
+        if (E.to === 2) { const up = 0.45 * sm74(dh / 0.3), gn = sm74((dh - 0.22) / 0.2); K.cap.pv.position.set(0.05 * up, c0[1] + up, 0.08 * up); K.cap.pv.rotation.z = -0.4 * up; K.cap.pv.scale.setScalar(Math.max(0.001, 1 - gn)); K.cap.pv.visible = gn < 0.99; }
+        else { const sd = E.sd74 || -1, v = [sd * 1.1, 2.6, 0.7], g = 7.0, t0 = dh, h0 = c0[1] * NL.y + c0[2] * NL.z, vn = v[1] * NL.y + v[2] * NL.z, tl = (vn + Math.sqrt(vn * vn + 2 * g * Math.max(0, h0 - 0.12))) / g, tc = Math.min(t0, tl);
+          const px = v[0] * tc, py = v[1] * tc - 0.5 * g * tc * tc * NL.y, pz = v[2] * tc - 0.5 * g * tc * tc * NL.z; K.cap.pv.position.set(c0[0] + px, c0[1] + py, c0[2] + pz); K.cap.pv.rotation.set(1.6 * tc, 0, -sd * 3.2 * tc);
+          if (t0 >= tl) { const f2 = sm74((t0 - tl) / 1.2); K.cap.pv.scale.set(1, 1 - 0.75 * f2, 1); [K.cap.mc, K.cap.mi].forEach(m => { m.opacity = 1 - f2; }); K.cap.pv.visible = f2 < 0.99;
+            once('capL', () => { K.cap.pv.updateWorldMatrix(true, false); const w = S74.v.setFromMatrixPosition(K.cap.pv.matrixWorld); s74Blot(now, w.x, w.z, 0.3 * sz, 0.35, Math.max(1500, 3.2 * e.L)); sx.tick(1); }); } } }
+      else K.cap.inn.position.set(0, 0, 0), K.cap.pv.position.set(0, 0, 0);
+      [[K.cupL, 1], [K.cupR, -1]].forEach(([pc, sg], i) => { const fa = e.fall, so = e.soft; pc.pv.rotation.set(0, 0, sg * 1.25 * fa); pc.pv.position.set(-sg * 0.06 * fa, 0, 0.02 * fa); pc.pv.scale.set(1, 1 - 0.8 * so, 1); [pc.mc, pc.mi].forEach(m => { m.opacity = 1 - so; }); pc.pv.visible = so < 0.99;
+        const hb = K.hb[i]; hb.visible = fa > 0.5 && e.rf > 0.01; if (hb.visible) { pc.pv.updateWorldMatrix(true, false); const w = S74.v.set(-sg * 0.25, 0.2, 0).applyMatrix4(pc.pv.matrixWorld); hb.position.set(w.x, C.y + 0.005, w.z); hb.scale.set(0.42 * sz, 1, 0.3 * sz); hb.material.opacity = 0.32 * sm74((fa - 0.5) / 0.5) * (0.4 + 0.6 * so) * (1 - sm74((e.op - 0.65) / 0.35)); } });
+      /* the chips */ K.chips.forEach((ch, i) => { if (!lift || dh > 1.6) { ch.g.visible = false; return; } const a = Math.PI * (0.15 + 0.7 * i / (NC74 - 1)) + 0.2 * Math.sin(i * 7.1), th0 = a, y0 = s74Seam(th0), o3 = s74Egg(s74Ph(y0), th0, [0, 0, 0]), vv = [Math.cos(a) * (1.4 + 0.5 * (i % 3)), 1.6 + 0.6 * ((i * 5) % 3), Math.sin(a) * 1.2], g = 7.0, h0 = o3[1] * NL.y + o3[2] * NL.z, vn = vv[1] * NL.y + vv[2] * NL.z, tl = (vn + Math.sqrt(vn * vn + 2 * g * Math.max(0, h0))) / g, tc = Math.min(dh, tl);
+        ch.g.visible = true; ch.g.position.set(o3[0] + vv[0] * tc, o3[1] + vv[1] * tc - 0.5 * g * tc * tc * NL.y, o3[2] + vv[2] * tc - 0.5 * g * tc * tc * NL.z); ch.g.rotation.set(5 * tc + i, 3 * tc, 4 * tc); const r = 0.035 + 0.015 * (i % 3), fd = dh >= tl ? 1 - sm74((dh - tl) / 0.5) : 1; ch.g.scale.set(r * fd, r * 0.4 * fd, r * 0.8 * fd);
+        if (dh >= tl) once('ch' + i, () => { ch.g.updateWorldMatrix(true, false); const w = S74.v.setFromMatrixPosition(ch.g.matrixWorld); s74Blot(now, w.x, w.z, 0.09 * sz, 0.4, Math.max(1200, 2.4 * e.L)); }); }); }
+    else { K.sg.visible = false; K.chips.forEach(ch => { ch.g.visible = false; }); K.hb.forEach(m => { m.visible = false; }); }
+    /* the halo at the crack, the glow on the page, the shade under the seed */
+    const gl = e.glow + 1.2 * e.flash; K.halo.visible = !!(seedOn && gl > 0.03 && u < c[4] + 0.45);
+    if (K.halo.visible) { const w = S74.v.set(0, s74Seam(Math.PI / 2), 0.42).applyMatrix4(K.bd.matrixWorld); K.halo.position.copy(w); K.halo.scale.setScalar(sz * (0.8 + 0.8 * Math.min(1.5, gl)) * (1 + 0.8 * e.flash)); K.halo.material.opacity = Math.min(1, 0.7 * gl); }
+    K.glow.visible = !!(seedOn && gl > 0.03); if (K.glow.visible) { K.glow.position.set(B0[0], C.y + 0.006, B0[2] + 0.1 * sz); K.glow.scale.setScalar(sz * (1.1 + 0.5 * Math.min(1.5, gl))); K.glow.material.opacity = Math.min(0.9, 0.5 * gl * (0.4 + 0.6 * S74.dim)); }
+    K.shade.visible = !!(seedOn && u < c[4] + 0.6); if (K.shade.visible) { K.shade.position.set(B0[0], C.y + 0.004, B0[2] - 0.06 * sz); const r = 0.42 * sz * (1 + 0.12 * e.swell); K.shade.scale.set(r, 1, r * 0.75); K.shade.material.opacity = 0.75 * sm74(e.cl / 0.5) * (u < c[4] ? 1 : 1 - sm74((u - c[4]) / 0.6)); }
+    /* the roots in the paper and the damp ring; dried away going home */
+    const rt = E.rt74; K.roots.visible = !!(rt && e.rt > 0 && e.rf > 0.005); if (K.roots.visible) { let n = 0; const want = e.rt; while (n < rt.b.length && rt.b[n] <= want) n++; K.roots.geometry.setDrawRange(0, 6 * n); K.rootM.opacity = (0.42 + 0.22 * e.pulse + 0.12 * e.hold) * e.rf * e.rf; }
+    K.ring.visible = !!(B0 && e.ring > 0 && e.rf > 0.005); if (K.ring.visible) { K.ring.position.set(B0[0], C.y + 0.003, B0[2]); const r = P.ring * R * (0.35 + 0.65 * e.ring) * (1 + 0.04 * e.pulse); K.ring.scale.set(r, 1, r * 0.82); K.ring.material.opacity = Math.min(1, e.ring * 1.5) * e.rf; }
+    K.blots.forEach(b => { const ag = (now - b.t0) / b.life; if (ag < 0 || ag >= 1) { b.m.visible = false; return; } b.m.visible = true; b.m.position.set(b.x, C.y + 0.005, b.z); const r = b.r * (0.8 + 0.4 * sm74(ag / 0.2)); b.m.scale.set(r, 1, r * 0.8); b.m.material.opacity = b.a * sm74(ag / 0.1) * (1 - sm74((ag - 0.4) / 0.6)); });
+    s74Lamp(now, { dim: e.dim, x: C.x, y: C.y, z: C.z, H: C.Hc * k, R: R * 1.3, flash: e.flash, sh: 0.55 });
+    /* the sound on the beats: soft ticks for the steps and the leaves rolling and snapping, a rising one for the swelling, a bright one for the burst
+       (the base plays stamp at the burst, feeds as it opens, good as it settles) */
+    if (e.stp) once((u < c[1] ? 'so' : 'sb') + e.stp.i, () => sx.tick(e.stp.i % 4));
+    if (u >= c[1]) once('plant', () => sx.bond());
+    if (u >= c[1] + 0.45 * P.b[1]) once('breath', () => sx.drift());
+    [0.06, 0.26, 0.46].forEach((w, i) => { if (u >= c[2] + w * P.b[2]) once('roll' + i, () => sx.tick(3 + i)); });
+    if (u >= e.click) once('click', () => sx.click());
+    if (u >= c[3]) once('swell', () => sx.draw(E.to + 1, (c[4] - c[3]) * e.L / 1000));
+    if (u >= c[3] && u < c[4] && !e.hold) { const bt = Math.floor(u + 1e-6); if (bt >= c[3]) once('pu' + bt, () => sx.flagSoft()); }
+    if (u >= c[4]) once('hit', () => { sx.clink(E.to + 4, 1); sx.swish(0.4); });
+    const tm = E.snap74; if (tm && u >= c[5] && u < c[6]) { tm.lt.forEach((t0, i) => { if (u - c[5] >= t0) once('sl' + i, () => sx.tick(5 + i)); }); tm.tt.forEach((t0, i) => { if (u - c[5] >= t0) once('st' + i, () => sx.swish(0.2)); }); tm.pt.forEach((t0, i) => { if (u - c[5] >= t0) once('sp' + i, () => sx.clink(2 + i, 0.6)); }); }
+    if (u >= c[6] + 0.02 * P.b[6]) once('pop0', () => sx.click()); if (u >= c[6] + 0.07 * P.b[6]) once('pop1', () => sx.click());
+    if (u >= c[6] + 0.06 * P.b[6]) once('turn', () => sx.swish(0.35)); };
+  homEvo19 = (f0 => function (now) { f0(now); try { s74Frame(now); } catch (x) { S74.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s74dbg = () => ({ err: S74.err, kit: AA.rxKit.e74dbg && AA.rxKit.e74dbg(), c: R21.evo && R21.evo.c74 && [R21.evo.c74.x, R21.evo.c74.z, R21.evo.c74.R, R21.evo.c74.F, R21.evo.c74.Hc].map(v => +(+v).toFixed(2)), mol: R21.evo && R21.evo.c74 && R21.evo.c74.mol, sz: R21.evo && R21.evo.sz74 && +R21.evo.sz74.toFixed(2), ko: R21.evo && R21.evo.ko74, fit: R21.evo && R21.evo.fit74, b74: R21.evo && R21.evo.c74 && [R21.evo.c74.box74, R21.evo.c74.hf74, R21.evo.c74.hf], k: R21.evo && R21.evo.k59, box: R21.evo && R21.evo.box59, a74: R21.evo && R21.evo.a74 && R21.evo.a74.map(v => +v.toFixed(2)), h74: R21.evo && R21.evo.h74 && +R21.evo.h74.toFixed(2), nseg: R21.evo && R21.evo.rt74 && R21.evo.rt74.b.length, dim: +S74.dim.toFixed(2), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done });
+  // ==== S74 END
   // ==== S71 BEGIN
   // (builder 71) SLIME'S OWN CHANGE OF STAGE ON THE PAGE, "the pull" (kitart W71 has the figure and the timeline KIT.ph71; switch AA.rxKit.evo71,
   // ?v71=0 gives the old one). Here: its way and size (from home over the open book to the middle of the screen beside the molecule, worked out as S59

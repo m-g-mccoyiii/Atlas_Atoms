@@ -5090,8 +5090,8 @@ const turn67s = (S, js, p, ax, ang, w) => { if (Math.abs(ang) > 1e-5) rot52(S, j
 function bend67(S, jn, i0, ang, ax) { const n = jn.length; if (Math.abs(ang) < 1e-5 || n - i0 < 1) return; const a = ang / (n - i0), B = S.bones, pv = S.v67.a;
   for (let k = i0; k < n; k++) { pv.copy(B[jn[k - 1]].position); rot52(S, jn, k, pv.x, pv.y, pv.z, ax, a); } }
 /* after the whole play chain: leaves, tendrils, petals; the head on its springy stem; the stem's lean; the sway on its feet; the step */
-function pose67(S) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = (S.jar ? 0.6 : 1) * (S.x70 ? S.x70.k : 1) /* (builder 70) its act damps the idle under it */, P = P67[st], tt = clk67(S), TAU = 2 * PI, V = S.v52, Z = V.z, Y = V.y, U = S.v67, SP = K.SP;
-  const l = lean67(P, tt), L = k * P.Lm * l.L, sp = S.jar || S.x70 ? [0, 0] : step67(P, l), knocks = [[l.d, 1], [l.d - 0.5, P.st ? 0.55 : 0]];
+function pose67(S) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = (S.jar ? 0.6 : 1) * (S.x70 ? S.x70.k : 1) /* (builder 70) its act damps the idle under it */ * (S.x74 ? S.x74.k : 1) /* (builder 74) and its change of stage */, P = P67[st], tt = clk67(S), TAU = 2 * PI, V = S.v52, Z = V.z, Y = V.y, U = S.v67, SP = K.SP;
+  const l = lean67(P, tt), L = k * P.Lm * l.L, sp = S.jar || S.x70 || S.x74 ? [0, 0] : step67(P, l), knocks = [[l.d, 1], [l.d - 0.5, P.st ? 0.55 : 0]];
   /* the leaves breathe (lift and settle), turn their faces to the light, and one at a time gives a quick flutter */
   const nl = K.leaves.length, [fd, fi] = since67(tt, 4.3, 1.1), fl = nl ? ((fi % nl) + nl) % nl : -1;
   K.leaves.forEach((X, i) => { const jn = X.c.jn, b = B[jn[0]].position, sd = X.side, big = st === 5 && i < 2;
@@ -5748,4 +5748,164 @@ KIT.hyd75Fig = hyd75Fig; KIT.HYD75 = W75;
 /* behind the switch: Hydrogen's bench figure is the spirit at its stage (the jar keeps the old Hydrogen) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homh2' && KIT.hyd75 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = hyd75Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W75 END
+// ==== W74 BEGIN
+// (builder 74) SEEDLING'S OWN CHANGE OF STAGE, "the sprouting" (AA.rxKit.evo74, on by default; false or ?v74=0 gives the old one, Water's evo played
+// on its joints). Bright and joyful: the one that is simply growing. The page (scheme S74) gives the place, moves it, and draws all that is not its
+// skin: the seed (its coat closing, swelling, the zigzag crack glowing, bursting, its halves falling and softening), the roots drawn into the paper,
+// the damp ring, the glow on the page. Here, on the music's beats (PAR74: go, look, wind, swell, burst, open, home; ph74 is the one timeline both
+// files read):
+//  1. GO: the OLD stage toddles to the middle by its act's own steps (W70's post70), growing on the way, and plants itself there, large.
+//  2. LOOK: a wiggle as it plants; it looks up at the lamp and takes a great breath (taller, leaves up).
+//  3. THE WINDING DOWN: eyes shut, the leaves roll up tight one after another, tendrils coil, petals close, the stem coils down, the bud tucks in;
+//     the page's seed coat closes up over it with a click and it is hidden (the old one is removed and the new one put in place while both are hidden).
+//  4. THE SWELLING: wholly the page's (the seed pulses on the beat; the crack glows; the held instant with one green tip).
+//  5. THE SPROUTING: on the hit the NEW stage unrolls up out of the burst seed: the stem uncoils and overshoots, the bud shakes itself, eyes open.
+//  6. THE OPENING: the leaves snap open one after another (3 to 4: a tendril whips out and coils; 4 to 5: the petals open last, one by one), then it
+//     stretches up to the lamp with a happy squint.
+//  7. HOME: it pops its feet free, turns its back and toddles home seen from behind, turns and settles.
+KIT.evo74 = KIT.evo74 == null ? !(typeof location !== 'undefined' && /[?&]v74=0/.test(String(location.search))) : KIT.evo74;
+const W74 = { err: null, e: null };
+const on74 = S => !!(S && S.way64 && !S.jar && KIT.evo74 !== false && on67(S));
+const cl74 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* each step, by the stage it becomes: beats of go, look, wind, swell, burst, open, home (go to the swell's end a whole number: the hit, the burst);
+   hd the held part of the swell; seed the seed's height (of the new form's); nst steps out, nbk steps home; nr roots drawn into the page, rl their
+   length (in R, the place's radius); ring the damp ring's radius (in R) */
+const PAR74 = [null, null,
+  { b: [2.0, 0.75, 0.75, 1.5, 0.75, 1.5, 2.0], hd: 0.3, seed: 0.42, nst: 4, nbk: 4, nr: 7, rl: 1.3, ring: 0.8 },
+  { b: [2.0, 1.0, 1.5, 2.5, 1.0, 2.0, 2.25], hd: 0.3, seed: 0.48, nst: 5, nbk: 5, nr: 10, rl: 1.9, ring: 0.95 },
+  { b: [2.25, 1.0, 1.75, 3.0, 1.25, 2.75, 2.25], hd: 0.3, seed: 0.55, nst: 5, nbk: 5, nr: 13, rl: 2.5, ring: 1.1 },
+  { b: [2.5, 1.25, 2.25, 5.0, 1.5, 4.0, 2.5], hd: 0.26, seed: 0.66, nst: 6, nbk: 6, nr: 18, rl: 4.0, ring: 1.35 }];
+/* a leaf, petal or tendril snapping open d beats after its time: 0 shut, 1 open, a springy overshoot */
+const snap74 = d => (d <= 0 ? 0 : 1 - Math.exp(-d / 0.13) * Math.cos(2 * PI * d / 0.5));
+/* where it is in the change: every number the figure and the page read */
+function ph74(t, o) { const P = PAR74[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => cl74((u - c[i]) / b[i]), e = o.e74 || (o.e74 = {}), rise = 1 - P.hd;
+  e.u = u; e.t = t; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[4]; e.to = o.to; e.from = o.from; e.pre = u < 0; e.rise = rise;
+  e.go = at(0); e.look = at(1); e.wind = at(2); e.sw = at(3); e.bu = at(4); e.op = at(5); e.home = at(6); e.done = u >= s; e.old = u < c[4];
+  /* the toddle out and home: the step (i, its u); cr how far along (0 home, 1 the place) */
+  e.stp = null; e.cr = u < c[1] ? 0 : 1;
+  if (u >= 0 && u < c[1]) { const k = Math.min(P.nst - 0.001, e.go * P.nst), i = Math.floor(k); e.stp = { i, u: k - i }; e.cr = (i + sm52(k - i)) / P.nst; }
+  e.hb = cl74((e.home - 0.16) / 0.66);
+  if (u >= c[6]) { const h = e.hb, k = Math.min(P.nbk - 0.001, h * P.nbk), i = Math.floor(k); if (h > 0 && h < 1) e.stp = { i, u: k - i }; e.cr = 1 - (h >= 1 ? 1 : (i + sm52(k - i)) / P.nbk); }
+  /* planting and looking up: a wiggle, the look up at the lamp, the great breath */
+  e.plant = u >= c[1] && u < c[3] ? Math.exp(-(u - c[1]) / 0.3) * Math.sin(2 * PI * (u - c[1]) / 0.45) : 0;
+  e.up = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.1) / 0.35) : u < c[3] ? 1 - sm52(e.wind / 0.35) : 0;
+  e.breath = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.35) / 0.55) : u < c[3] ? 1 - sm52(e.wind / 0.3) : 0;
+  /* the winding down: f the fold; cl the coat closing over it (the click at its end); gone: inside the shut seed */
+  e.f = u < c[2] ? 0 : u < c[3] ? sm52(e.wind / 0.85) : 1;
+  e.cl = u < c[2] ? 0 : u < c[4] ? sm52((e.wind - 0.1) / 0.75) : 1;
+  e.click = c[2] + 0.85 * b[2]; e.gone = u >= e.click && u < c[4];
+  /* the roots drawn into the paper and the damp ring: from the middle of the winding down to the hit; they dry away going home */
+  const r0 = c[2] + 0.4 * b[2], rx = cl74((u - r0) / Math.max(0.5, c[4] - r0)); e.rt = u < r0 ? 0 : 1 - Math.pow(1 - rx, 2); e.ring = u < r0 ? 0 : sm52(rx * 1.2);
+  e.rf = u < c[6] ? 1 : 1 - sm52((e.home - 0.04) / 0.5);
+  /* the swelling: pulses on the beat, the crack glowing; the held instant (still, the crack blazing, one green tip) */
+  const bp = u - Math.floor(u + 1e-6); e.swell = u < c[3] ? 0 : u < c[4] ? sm52(e.sw / rise) : 1; e.hold = u >= c[3] && u < c[4] && e.sw >= rise ? 1 : 0;
+  e.pulse = u >= c[3] && u < c[4] && !e.hold ? Math.exp(-bp / 0.2) * sm52(e.sw / 0.06) : 0;
+  e.glow = u < c[3] ? 0 : u < c[4] ? 0.2 + 0.55 * e.swell + 0.4 * e.pulse + 0.45 * e.hold : 1.5 * Math.exp(-(u - c[4]) / 0.18);
+  e.tip = u >= c[3] && u < c[4] ? sm52((e.sw - rise) / (0.45 * P.hd)) : 0;
+  e.flash = u >= c[4] ? Math.exp(-(u - c[4]) / 0.12) : 0; e.dh = u - c[4]; e.d5 = u - c[5];
+  /* the sprouting: g the new plant's height (it overshoots), coil (the stem still coiled), the bud shaking itself */
+  const p = e.bu, x2 = cl74(p / 0.5); e.g = u < c[4] ? 0 : u < c[5] ? (1 - Math.pow(1 - x2, 3)) + 0.17 * Math.sin(PI * cl74((p - 0.25) / 0.6)) : 1;
+  e.coil = u < c[4] ? 1 : u < c[5] ? 1 - sm52(p / 0.6) : 0;
+  e.shake = u >= c[4] && u < c[5] ? pl52(p, 0.55, 0.95, 0.05) : 0;
+  /* the coat: the halves fall open from the hit and soften into the page through the opening */
+  e.fall = u < c[4] ? 0 : sm52(e.dh / Math.max(0.5, 0.7 * b[4]));
+  e.soft = u < c[5] ? 0 : u < c[6] ? sm52((e.op - 0.25) / 0.6) : 1;
+  /* the stretch up to the lamp once all is open */
+  const sa = o.to >= 5 ? 0.86 : 0.7; e.str = u < c[5] ? 0 : u < c[6] ? sm52((e.op - sa) / (0.96 - sa)) : 1 - sm52(e.home / 0.12);
+  e.pops = u >= c[6] ? [pl52(e.home, 0.02, 0.08, 0.025), pl52(e.home, 0.07, 0.13, 0.025)] : [0, 0];
+  e.dim = e.pre ? 0 : u < c[1] ? 0.2 * sm52(e.go) : u < c[2] ? 0.2 + 0.15 * e.look : u < c[3] ? 0.35 + 0.25 * e.wind : u < c[4] ? 0.6 + 0.4 * e.swell : u < c[5] ? 1 : u < c[6] ? 1 - 0.35 * sm52(e.op / 0.8) : 0.65 * (1 - sm52(e.home / 0.6));
+  return e; }
+KIT.ph74 = ph74;
+/* the times the new stage's leaves, tendrils and petals snap open (beats after the opening begins) */
+function times74(K, st) { const nl = K.leaves.length, sp = st >= 5 ? 0.3 : st === 4 ? 0.42 : 0.5, lt = K.leaves.map((R, i) => 0.12 + i * sp), end = 0.12 + nl * sp;
+  const tt = K.tends.map((R, i) => end + 0.15 + 0.35 * i), pt = K.pets.map((R, i) => end + 0.3 + i * 0.33); return { lt, tt, pt }; }
+/* folding: leaves rolled up tight (lf), tendrils coiled (tf), petals shut (pf), the stem coiled down and squeezed toward its foot (f, coil) */
+function fold74(S, K, f, coil, lf, tf, pf) { const B = S.bones, SP = K.SP, st = S.st, Z = S.v52.z, U = S.v67, X = S.v67.x;
+  K.leaves.forEach((R, i) => { const li = lf(i); if (li <= 0.001) return; const jn = R.c.jn, sd = R.side; bend67(S, jn, 1, sd * 3.0 * li, Z); const b = U.b.copy(B[jn[0]].position); turn67s(S, jn, b, Z, sd * 0.9 * li);
+    for (let k = 1; k < jn.length; k++) { const q = B[jn[k]]; q.position.sub(b).multiplyScalar(1 - 0.5 * li).add(b); q.scale.multiplyScalar(1 - 0.3 * li); } });
+  K.tends.forEach((R, i) => { const t = tf(i); if (Math.abs(t) < 0.001) return; bend67(S, R.c.jn, 1, R.tw * 3.2 * t, Z); if (t > 0) { const jn = R.c.jn, b = U.b.copy(B[jn[0]].position); for (let k = 1; k < jn.length; k++) B[jn[k]].position.sub(b).multiplyScalar(1 - 0.45 * t).add(b); } });
+  K.pets.forEach((R, i) => { const pp = pf(i); if (pp <= 0.001) return; const jn = R.c.jn, b = U.b.copy(B[jn[0]].position); for (let k = 1; k < jn.length; k++) { const q = B[jn[k]]; q.position.sub(b).multiplyScalar(1 - 0.85 * pp).add(b); q.scale.multiplyScalar(1 - 0.85 * pp); } });
+  if (f <= 0.001 && coil <= 0.001) return;
+  if (K.sb >= 0 && coil > 0.001) { const n = Math.max(1, K.ap - K.sb); for (let i = K.ap - 1; i >= K.sb; i--) turn67s(S, K.ride[i], U.b.copy(B[SP[i]].position), Z, -1.6 * coil / n); }
+  if (K.ap >= 0 && st > 1 && f > 0.001) turn67s(S, K.ride[K.ap], U.b.copy(B[SP[K.ap]].position), X, 0.7 * f);
+  const bx = B[0].position.x, bz = B[0].position.z, fy = 1 - (st === 1 ? 0.12 : 0.5) * f, fr = 1 - (st === 1 ? 0.05 : 0.6) * f;
+  K.all.forEach(j => { const p = B[j].position; p.y *= fy; p.x = bx + (p.x - bx) * fr; p.z = bz + (p.z - bz) * fr; });
+  K.roots.forEach(R => R.c.jn.forEach((j, k) => { if (!k) return; const p = B[j].position; p.x = bx + (p.x - bx) * (1 - 0.6 * f); p.z = bz + (p.z - bz) * (1 - 0.6 * f); p.y *= 1 - 0.4 * f; })); }
+/* the face of each beat, laid over its idle's (the C26.rest wrapper below) */
+function face74(e, old, st) { const z = {}, u = e.u, c = e.c;
+  if (old) {
+    if (u < c[1]) { z.lookx = 0.6 * (e.dir || 0); z.looky = -0.2; z.smile = 1.4; z.lidMax = st === 1 ? 0.12 : 0.3; z.turn = (e.tn || 0) * sm52(e.go / 0.15); return z; }
+    if (u < c[2]) { const k = e.up; z.lookx = -0.65 * k; z.looky = 0.95 * k; z.wide = 0.5 * pl52(e.look, 0.1, 0.45, 0.1); z.brow = 0.4 * k; z.open = e.breath > 0.15 && e.breath < 0.97 ? 0.4 + 0.4 * e.breath : 0; z.smile = 1.3 + 0.3 * k; z.lidMax = 0.2; return z; }
+    z.blink = sm52((e.wind - 0.05) / 0.25); z.smile = 1.5; z.looky = 0.5 * (1 - e.f); z.lookx = -0.4; return z; }
+  if (u < c[5]) { const p = e.bu; z.blink = Math.max(1 - sm52((p - 0.45) / 0.1), pl52(p, 0.74, 0.8, 0.02)); z.wide = 0.8 * pl52(p, 0.5, 0.85, 0.08); z.brow = 0.6 * pl52(p, 0.5, 0.9, 0.1); z.looky = 0.3; z.lookx = 0.5 * Math.sin(e.dh * 9) * e.shake; z.smile = 1.3; z.lidMax = 0.1; return z; }
+  if (u < c[6]) { const s = e.str; z.lookx = 0.8 * Math.sin(e.d5 * 2.4) * (1 - s) - 0.65 * s; z.looky = 0.15 * (1 - s) + 0.95 * s; z.smile = 1.5 + 0.45 * s; z.lidx = 0.6 * s; z.wide = 0.35 * (1 - s); z.brow = 0.25 + 0.2 * s; if (s < 0.1) z.lidMax = 0.25; return z; }
+  const h = e.home; z.turn = PI * sm52((h - 0.04) / 0.12) * (1 - sm52((h - 0.86) / 0.1)); z.smile = 1.4; z.lidx = 0.4 * sm52((h - 0.9) / 0.1); return z; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs), z = S && S.z74; if (!z || !S.x74) return r;
+  q.turn = z.turn || 0;
+  ['lookx', 'looky', 'open'].forEach(k => { if (z[k] != null) q[k] = z[k]; });
+  ['wide', 'brow', 'nod', 'tilt'].forEach(k => { if (z[k] != null) q[k] = (q[k] || 0) + z[k]; });
+  if (z.smile != null) q.smile = z.smile;
+  ['blink', 'lidx'].forEach(k => { if (z[k] != null) q[k] = Math.max(q[k] || 0, z[k]); });
+  if (z.lidMax != null) { q.lidx = Math.min(q.lidx || 0, z.lidMax); if (!(z.blink > 0)) q.blink = Math.min(q.blink || 0, 0.2); }
+  if (z.blink >= 0.99) q.wide = 0; return r; })(C26.rest);
+/* after its idle (damped): the toddle, the plant and the look up, the winding down; the surge, the opening, the stretch, the toddle home */
+function post74(S, e, old) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, SP = K.SP, V = S.v52, Zx = V.z, Yx = V.y, Xx = S.v67.x, U = S.v67, u = e.u, c = e.c, TAU = 2 * PI;
+  const P0 = () => U.b.set(B[0].position.x, 0, B[0].position.z), feet = K.feet70 || (K.feet70 = K.roots.filter(R => J[R.c.jn[R.c.jn.length - 1]].p[1] < 0.3));
+  const tilt = (ax, ang, p) => { if (Math.abs(ang) < 1e-5) return; turn67s(S, K.all, p, ax, ang); K.roots.forEach(R => { const jn = R.c.jn, n = jn.length; rot52(S, jn, 0, p.x, p.y, p.z, ax, ang, kk => Math.max(0, 1 - kk / (n - 1))); }); };
+  const bend = (ax, ang) => { if (Math.abs(ang) < 1e-5) return; if (K.sb < 0 || st === 1) { tilt(ax, ang, P0()); return; } const n = Math.max(1, K.ap - K.sb); for (let i = K.ap - 1; i >= K.sb; i--) turn67s(S, K.ride[i], U.b.copy(B[SP[i]].position), ax, ang / n); };
+  const head = (ax, ang) => { if (K.ap >= 0 && st > 1 && Math.abs(ang) > 1e-5) turn67s(S, K.ride[K.ap], U.b.copy(B[SP[K.ap]].position), ax, ang); };
+  const stretch = s => { if (Math.abs(s) < 1e-4) return; K.all.forEach(j => { B[j].position.y *= 1 + s; }); };
+  const leaves = a => { if (Math.abs(a) < 1e-4) return; K.leaves.forEach(R => { const jn = R.c.jn; turn67s(S, jn, U.b.copy(B[jn[0]].position), Zx, R.side * a); }); };
+  /* the toddle out and home: the act's own steps */
+  if (e.stp) post70(S, { ph: 'out', st: e.stp, tip: 0, clb: -1, t: e.t, pr: [], fold: 0, str: 0, n: 0, cur: -1, look: 0, wig: 0, e: e.cr }, { Z: { P: [] }, tl: null, tipJ: null });
+  if (old) {
+    if (e.plant) tilt(Zx, 0.12 * e.plant, P0());
+    if (e.breath > 0) { stretch(0.13 * e.breath * (st === 1 ? 0.4 : 1)); leaves(0.4 * e.breath); }
+    if (e.up > 0) { head(Xx, -0.32 * e.up); bend(Zx, 0.12 * e.up); if (st === 1) tilt(Xx, -0.2 * e.up, P0()); }
+    if (e.f > 0) { const nl = Math.max(1, K.leaves.length - 1), w = e.wind; fold74(S, K, e.f, e.f, i => sm52((w - 0.04 - 0.42 * i / nl) / 0.28), i => sm52((w - 0.1) / 0.3), i => sm52((w - 0.02 - 0.03 * i) / 0.3));
+      if (st === 1) tilt(Zx, 0.1 * Math.sin(TAU * w * 2) * (1 - w), P0()); }
+    return; }
+  /* the new stage: shut tight inside the seed at the hit, then the surge, the opening, the stretch */
+  if (u < c[6]) { const tm = K.t74 || (K.t74 = times74(K, st)), d5 = e.d5, f = u < c[5] ? cl74(1 - e.g) : 0;
+    fold74(S, K, f, e.coil, i => 1 - snap74(d5 - tm.lt[i]), i => (u < c[5] ? 1 : 1 - snap74(d5 - tm.tt[i]) * (1 + 0.5 * Math.exp(-Math.max(0, d5 - tm.tt[i]) / 0.25))), i => 1 - snap74(d5 - tm.pt[i]));
+    if (e.g > 1) stretch(0.8 * (e.g - 1));
+    if (e.shake > 0) { head(Yx, 0.4 * e.shake * Math.sin(TAU * e.dh * 5)); head(Zx, 0.22 * e.shake * Math.sin(TAU * e.dh * 5 + 1.3)); }
+    if (u >= c[5]) { /* a little bounce as each leaf snaps */ let bo = 0; tm.lt.concat(tm.pt).forEach(t0 => { const d = d5 - t0; if (d > 0 && d < 0.6) bo += Math.exp(-d / 0.15) * Math.sin(PI * d / 0.3); }); stretch(0.025 * bo); }
+    if (e.str > 0) { stretch(0.1 * e.str); bend(Zx, 0.2 * e.str); leaves(0.45 * e.str); head(Xx, -0.3 * e.str); }
+    return; }
+  /* home: its feet popped free, then the toddle (above) */
+  const sd = [-1, 1]; e.pops.forEach((pp, i) => { if (pp <= 0) return; feet.forEach(R => { if (R.side === sd[i]) push52(S, R.c.jn, R.c.jn.length, 0, H * 0.16 * pp, 0.04 * H * pp); }); tilt(Zx, -sd[i] * 0.07 * pp, P0()); });
+  if (e.hb >= 1) { const s2 = e.home; stretch(-0.06 * pl52(s2, 0.88, 0.99, 0.04)); } }
+/* what is seen: the pen line goes with the figure */
+function show74(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; }
+function kill74(S) { const O = S.e74; if (O) { show74(O.sp, false); if (O.gg.parent) O.gg.parent.remove(O.gg); S.e74 = null; } }
+function end74(S) { kill74(S); show74(S, true); if (S.rs74 != null) { S.root.scale.setScalar(S.rs74); S.rs74 = null; } S.z74 = null; S.x74 = null; }
+/* its height in the world at a root scale */
+function hw74(S, rs) { const R = S.root, p = R.parent; if (!p) return S.G.H * rs; p.updateWorldMatrix(true, false); const v = S.v74 || (S.v74 = new S.T.Vector3()); p.getWorldScale(v); return S.G.H * rs * v.y; }
+function evo74(f0, grp, S, t, o) { const e = ph74(t, o), T = S.T; W74.e = e; const dd = o.d74 || [0, 1], hd = Math.atan2(dd[0], dd[1]); e.tn = 0.5 * Math.max(-1.1, Math.min(1.1, hd)); e.dir = Math.max(-1, Math.min(1, 1.3 * Math.sin(hd)));
+  let O = S.e74; const ro = {}; if (S.rs74 == null) S.rs74 = S.root.scale.x; S.x74 = { k: 0.35 }; const sz = o.sz74 || 0;
+  if (e.old) { if (!O || O.from !== o.from) { kill74(S); const gg = seed64Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.root.scale.multiplyScalar(W67.big[o.from] || 1); grp.parent.add(gg); O = S.e74 = { gg, sp, from: o.from, rs: sp.root.scale.x }; }
+    const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show74(S, false); sp.x74 = { k: u74k(e) };
+    /* folded, it fits inside the seed */ const Ho = hw74(sp, O.rs), mf = sz > 0 ? Math.min(1, (o.from === 1 ? 0.8 : 0.62) * sz / (Ho * (o.from === 1 ? 0.95 : 0.5))) : 1, m = 1 + (mf - 1) * Math.pow(e.f, 0.7); sp.root.scale.setScalar(O.rs * m);
+    sp.z74 = face74(e, true, o.from); f0(O.gg, 'rest', t / e.L, ro); post74(sp, e, true); O.gg.visible = !e.gone; show74(sp, !e.gone); where74(sp, o, Ho * m);
+    /* while both are hidden in the shut seed: the new stage stood at rest, unseen, so the page can fit its whole drawing inside the screen */
+    if (e.gone) { S.root.scale.setScalar(S.rs74); S.z74 = null; f0(grp, 'rest', t / e.L, ro); show74(S, false); o.pts74 = pts74(S); } }
+  else { if (O) kill74(S); show74(S, true); S.x74.k = u74k(e); const Hn = hw74(S, S.rs74), m0 = sz > 0 ? Math.min(1, 0.7 * sz / (0.5 * Hn)) : 1, m = e.u < e.c[5] ? m0 + (1 - m0) * Math.min(1, e.g) : 1; S.root.scale.setScalar(S.rs74 * m);
+    S.z74 = face74(e, false, S.st); f0(grp, 'rest', t / e.L, ro); post74(S, e, false); where74(S, o, Hn * m); if (!o.snap74 && S.k67 && S.k67.t74) o.snap74 = S.k67.t74; }
+  const c = e.c, b5 = e.P.b[5], u = e.u; let n = -1; if (u >= c[4]) n = 0; if (u >= c[5] + 0.3 * b5) n = 1; if (u >= c[5] + 0.65 * b5) n = 2; if (u >= c[6]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+/* the idle under it: damped, stiller still while it winds down and while it is the held seed */
+function u74k(e) { const c = e.c, u = e.u; return u >= c[2] && u < c[5] ? 0.12 : 0.35; }
+/* every joint of a figure in the world, with its radius: [x, y, z, r, ...] */
+function pts74(S) { const R = S.root, B = S.bones, J = S.G.J, V = S.v74 || (S.v74 = new S.T.Vector3()), out = []; R.updateWorldMatrix(true, false); const ws = R.getWorldScale(V).x;
+  for (let j = 1; j < B.length; j++) { V.copy(B[j].position).applyMatrix4(R.matrixWorld); out.push(V.x, V.y, V.z, J[j].r * ws * Math.max(B[j].scale.x, B[j].scale.y)); } return out; }
+/* for the page: where its foot is and how tall it stands (world) */
+function where74(S, o, Hw) { const R = S.root, B = S.bones, V = S.v74 || (S.v74 = new S.T.Vector3()); R.updateWorldMatrix(true, false); V.set(B[0].position.x, 0, B[0].position.z).applyMatrix4(R.matrixWorld); o.a74 = [V.x, V.y, V.z]; o.h74 = Hw; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on74(S) && o.from !== S.st)) { if (S && S.x74 && clip !== 'evo') { try { end74(S); } catch (e) { W74.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo74(f0, grp, S, t, o); } catch (err) { W74.err = String(err && err.stack); const L = o.L || 500, tot = (PAR74[Math.max(2, Math.min(5, o.to | 0))] || PAR74[3]).b.reduce((a, b) => a + b, 0); try { end74(S); } catch (x) { /* shown as it is */ } return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+KIT.W74 = W74; KIT.e74dbg = () => { const e = W74.e; return { err: W74.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), wind: +e.wind.toFixed(2), sw: +e.sw.toFixed(2), bu: +e.bu.toFixed(2), op: +e.op.toFixed(2), home: +e.home.toFixed(2), g: +e.g.toFixed(2), hit: e.hit, tot: e.tot, old: e.old, gone: e.gone } : null }; };
+// ==== W74 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
