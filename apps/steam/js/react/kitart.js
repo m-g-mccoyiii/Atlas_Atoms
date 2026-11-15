@@ -5905,7 +5905,7 @@ KIT.W77 = W77; KIT.fire77 = fire73; KIT.tex77 = tex73;
 //     rising column that then bends over and lets its head hang; 3 to 4 the shoulders spread broad and one hand is raised; 4 to 5 the mantle spreads
 //     slow and wide like a storm cloud. The new flames come up round the lump as the pillar sinks into them.
 //  6. HOME: it gathers its lump up again, turns its back and drifts home seen from behind, sets the lump down and turns to face front.
-KIT.evo82 = KIT.evo82 == null ? !(typeof location !== 'undefined' && /[?&]v82=0/.test(String(location.search))) : KIT.evo82;
+KIT.evo82 = KIT.evo82 == null ? (typeof location !== 'undefined' && /[?&]v82=1/.test(String(location.search))) : KIT.evo82; /* (builder 95) off by default: Water's change of stage, reskinned (W95); ?v82=1 gives this one back */
 const W82 = { err: null, e: null };
 const on82 = S => !!(S && S.way69 && !S.jar && KIT.evo82 !== false && on73(S));
 const cl82 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -6143,7 +6143,7 @@ function evo92(f0, grp, S, t, o) { const e = ph92e(t, o), T = S.T; W92.ee = e; l
   return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
 function end92(S) { kill82(S); show82(S, true); S.e92x = null; S.x92 = null; }
 play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way69 || !on92(S)) return f0(grp, clip, t, o);
-  if (clip === 'evo' && o && o.from && o.from !== S.st) { try { return evo92(f0, grp, S, t, o); } catch (err) { W92.err = 'evo ' + String(err && err.stack); try { end92(S); } catch (x) { /* as it is */ } const L = o.L || 500, tot = (PAR92[Math.max(2, Math.min(5, o.to | 0))] || PAR92[3]).b.reduce((a, b) => a + b, 0); return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } }
+  if (clip === 'evo' && o && o.from && o.from !== S.st && KIT.evo82 !== false /* (builder 95) */) { try { return evo92(f0, grp, S, t, o); } catch (err) { W92.err = 'evo ' + String(err && err.stack); try { end92(S); } catch (x) { /* as it is */ } const L = o.L || 500, tot = (PAR92[Math.max(2, Math.min(5, o.to | 0))] || PAR92[3]).b.reduce((a, b) => a + b, 0); return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } }
   if (S.e92x) { try { end92(S); } catch (x) { W92.err = String(x && x.stack); } }
   const inner = (c, tt, oo) => { const sp = S.spent77; S.spent77 = false; try { return f0(grp, c, tt, oo); } finally { S.spent77 = sp; } };
   if (clip === 'act' && o && o.bites && o.bites.s77 && o.bites.s77.v92) { try { const Z = o.bites.s77, e = ph92(t, Z); S.x92 = { t, e, Z }; W92.e = e; S.sp92 = false; inner('rest', 0, {}); hz77(S); if (S.k73) post92(S, e, Z); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; } catch (err) { W92.err = String(err && err.stack); S.x92 = null; return f0(grp, clip, t, o); } }
@@ -6330,6 +6330,73 @@ void main() {
   };
 })();
 // ==== W94 END
+// ==== W95 BEGIN
+// (builder 95) BRIMSTONE'S CHANGE OF STAGE AND ACT ARE WATER'S OWN, RESKINNED (AA.rxKit.mirror95, on by default; false or ?w95=0 gives Water's
+// machinery on Brimstone with Water's substance, as builder 93's mirror takes). No motion is made here: Water's clips (C26.evo through evo31 / W32,
+// C26.act), its ball mesh (make31 / up32 / shape32), its beads, its pen (ink31), its timing, size and travel are used as they are. Only the SUBSTANCE
+// is changed, by giving Water's own meshes a second material that shares Water's uniforms:
+//  - the figure that gathers and curls is Brimstone's OLD stage (brim69Fig), put where play31 keeps Water's old-stage figure (S.e31);
+//  - the ball (X.sph) is a ball of its grey smoke rolling round a core of blue fire seen through the gaps (skin95); the petals are smoke that
+//    thins and lifts; the beads are embers and ash (red-orange, blue-white, grey);
+//  - scheme S95 does the same to the page: Water's one pass (S33.sheet) with soot for wet and the fire's glow for the blue cast.
+// Brimstone's own change of stage (W82 / W92) is off by default from here (?v82=1 gives it back).
+KIT.mirror95 = KIT.mirror95 == null ? !(typeof location !== 'undefined' && /[?&]w95=0/.test(String(location.search))) : KIT.mirror95;
+const W95 = { err: null };
+const on95 = S => !!(S && S.way69 && !S.jar && KIT.mirror95 !== false);
+function skin95(T, X) { const m0 = X.sph.material, U = m0.uniforms, CT = Math.cos(W32.TH).toFixed(4), v3 = a => 'vec3(' + a.map(x => (+x).toFixed(4)).join(', ') + ')', C = W69.C.s, pc = new T.Color(W30.C.paper);
+  U.t95 = { value: 0 };
+  const m = new T.ShaderMaterial({ transparent: true, side: T.DoubleSide, uniforms: U,
+    vertexShader: ['attribute vec3 p0;\nattribute float pid;\nattribute float pu;\nuniform float soak;\nvarying float vU;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;',
+      /* Water's own vertex shader; the one addition: a petal that has lain down is smoke, so its outer part lifts off the page as it thins */
+      'void main() { vP = p0; vPid = pid; vU = pu; vec3 p = position; float pt = smoothstep(' + CT + ', ' + CT + ' + 0.45, p0.y) * soak; p.y += 0.6 * pt * pt; vec4 mv = modelViewMatrix * vec4(p, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }'].join('\n'),
+    fragmentShader: ['uniform sampler2D t29;\nuniform vec2 r29;\nuniform vec4 l33;\nuniform float soak;\nuniform float spin;\nuniform float amt;\nuniform float open;\nuniform float rpx;\nuniform float dim;\nuniform float t95;\nvarying vec3 vP;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying float vPid;\nvarying float vU;', N31,
+      '#define PAPER95 ' + v3([pc.r, pc.g, pc.b]), '#define LITE95 ' + v3(C.lite), '#define EDGE95 ' + v3(C.edge), '#define SHADE95 ' + v3(C.shade), '#define INK95 vec3(0.17, 0.14, 0.13)',
+      /* Water's petal cut, as it is */
+      'void main() { float fg = abs(vPid - floor(vPid + 0.5)); if (open > 0.001 && vP.y > ' + CT + ' && fg > 0.5 * (1.0 - smoothstep(0.0, 0.25, open)) + 0.004) discard;',
+      'vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n; float nv = clamp(dot(n, normalize(vV)), 0.0, 1.0), c = cos(spin), s = sin(spin), c2 = cos(0.55 * spin), s2 = sin(0.55 * spin);',
+      'vec3 bp = vec3(c * vP.x - s * vP.z, vP.y, s * vP.x + c * vP.z), bq = vec3(c2 * vP.x - s2 * vP.z, vP.y, s2 * vP.x + c2 * vP.z); float s9 = r29.y / 720.0, gr = N29(gl_FragCoord.xy / s9 * 0.9);',
+      /* the smoke: billows that go round with Water's spin, a second layer that slides against the first, all creeping upward */
+      'float b1 = N30(bp * 2.2 + vec3(0.0, -0.22 * t95, 0.0)), b2 = N30(bq * 4.6 + 7.0), b3 = N30(bp * 10.0 + 3.0), den = 0.60 * b1 + 0.30 * b2 + 0.10 * b3;',
+      'float pet = step(' + CT + ', vP.y) * smoothstep(0.02, 0.2, open), gt = 0.395 + 0.30 * soak * (0.4 + 0.6 * pet), gap = 1.0 - smoothstep(gt - 0.035, gt + 0.01, den);',
+      'float l9 = dot(n, normalize(mix(vec3(-0.5, 0.66, 0.56), normalize(l33.xyz + vV), l33.w))); l9 = mix(l9, max(l9, 0.55 * abs(l9) + 0.12), smoothstep(0.02, 0.2, open));',
+      'float bl = smoothstep(gt, gt + 0.30, den), core = smoothstep(0.25, -0.35, l9 + 0.3 * (b2 - 0.5)), rim = clamp(smoothstep(0.4, 0.95, 1.0 - nv + 0.25 * (b1 - 0.5)), 0.0, 1.0);',
+      'vec3 smoke = mix(EDGE95, LITE95, bl); smoke = mix(smoke, vec3(0.86, 0.83, 0.80), 0.55 * bl * smoothstep(0.35, 0.8, l9 + 0.4 * (b1 - 0.5))); smoke = mix(smoke, SHADE95, 0.6 * core); smoke = mix(smoke, EDGE95, 0.5 * rim);',
+      'float ht = smoothstep(0.5, 0.9, sin((gl_FragCoord.x + gl_FragCoord.y) / s9 * 0.85 + 3.0 * b1)) * core; smoke = mix(smoke, vec3(0.20, 0.18, 0.20), 0.25 * ht);',
+      /* the fire inside: it lights the smoke round each gap and the inside of the opened ball; it goes out as the smoke thins */
+      'float lick = N30(vec3(vP.x * 3.1, vP.y * 2.6 - 1.7 * t95, vP.z * 3.1)), fon = 1.0 - smoothstep(0.05, 0.6, soak);',
+      'smoke = mix(smoke, vec3(0.40, 0.45, 0.86), fon * 0.5 * (1.0 - smoothstep(gt, gt + 0.12, den))); if (!gl_FrontFacing) smoke = mix(smoke, vec3(0.36, 0.40, 0.80), 0.16 * fon);',
+      'smoke = mix(PAPER95 * (0.985 + 0.03 * gr), smoke, 0.88 + 0.12 * b3);',
+      'float lk2 = N30(vec3(vP.x * 7.3 + 2.0, vP.y * 5.2 - 2.6 * t95, vP.z * 7.3)), hr = 0.45 * nv + 0.40 * lick + 0.25 * lk2; vec3 fire = mix(vec3(0.33, 0.26, 0.78), vec3(0.33, 0.50, 0.95), smoothstep(0.38, 0.66, hr)); fire = mix(fire, vec3(0.90, 0.94, 1.0), 0.85 * smoothstep(0.76, 0.94, hr)); fire = mix(fire, vec3(0.16, 0.12, 0.46), 0.5 * (1.0 - smoothstep(0.0, 0.035, abs(lk2 - 0.5))) * (1.0 - smoothstep(0.7, 0.85, hr)));',
+      'vec3 col = smoke; float a = 1.0;',
+      /* a gap in the closed ball shows the fire; a gap in a petal, or in anything once the fire is out, is a hole in the smoke */
+      'if (gap > 0.0) { if (pet > 0.5 || !gl_FrontFacing) { if (gap > 0.5) discard; } else { col = mix(smoke, fire, gap * fon); a *= 1.0 - gap * (1.0 - fon); } }',
+      'float pen = smoothstep(gt - 0.045, gt - 0.02, den) * (1.0 - smoothstep(gt, gt + 0.02, den)) * smoothstep(0.3, 0.5, b3 + 0.2 * b2); col = mix(col, INK95, 0.8 * pen);',
+      /* an open petal: the wash pools along its two edges and the pen goes down them; the cup keeps its lip (Water's lines) */
+      'float au = abs(vU); col = mix(col, EDGE95, 0.6 * pet * smoothstep(0.55, 0.95, au + 0.2 * (b1 - 0.5))); col = mix(col, INK95, pet * smoothstep(0.90, 0.96, au + 0.05 * (b3 - 0.5)));',
+      'float cupl = smoothstep(0.03, 0.15, open) * (1.0 - step(' + CT + ', vP.y)) * smoothstep(0.90, 0.955, 1.0 - nv + 0.04 * (b3 - 0.5)); col = mix(col, INK95, cupl);',
+      /* Water's soaking away, from the petals' points, the cup last: here the smoke thins to nothing with a soft edge */
+      'if (soak > 0.001) { float tp = (vP.y - ' + CT + ') / (1.0 - ' + CT + '), th = tp > 0.0 ? 1.12 - 1.25 * soak - tp : 1.55 - 1.6 * soak; float ns = 0.5 * (b1 - 0.5) + 0.2 * (b3 - 0.5); if (th + ns < 0.0) discard; a *= smoothstep(0.0, 0.30, th + ns) * (1.0 - 0.55 * smoothstep(0.1, 0.9, soak)); }',
+      '{ float k33 = l33.w, lt = smoothstep(0.05, 0.75, l9), sd = smoothstep(0.38, -0.3, l9); col *= mix(vec3(1.0), vec3(1.0, 0.972, 0.91), 0.4 * lt * k33); col *= mix(vec3(1.0), vec3(0.74, 0.75, 0.84), 0.4 * sd * k33 * (1.0 - gap)); }',
+      'gl_FragColor = vec4(col, a); }'].join('\n') });
+  X.w95 = m0; X.sph.material = m;
+  /* the beads: embers and ash */ const em = (c0, c1) => new T.ShaderMaterial({ uniforms: { c0: { value: new T.Vector3(c0[0], c0[1], c0[2]) }, c1: { value: new T.Vector3(c1[0], c1[1], c1[2]) } },
+    vertexShader: 'varying vec3 vN;\nvarying vec3 vV;\nvoid main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'uniform vec3 c0;\nuniform vec3 c1;\nvarying vec3 vN;\nvarying vec3 vV;\nvoid main() { float nv = clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(mix(c1, c0, smoothstep(0.25, 0.9, nv)), 1.0); }' });
+  const E = [em([0.99, 0.56, 0.40], [0.82, 0.17, 0.08]), em([0.93, 0.96, 1.0], [0.42, 0.56, 0.98]), em([0.64, 0.61, 0.60], [0.36, 0.33, 0.34])];
+  X.beads.forEach((b, i) => { b.m.material = E[i % 3]; }); }
+make31 = (f0 => function (T, S) { const X = f0(T, S); if (on95(S) && X.k32) { try { skin95(T, X); } catch (e) { W95.err = 'skin ' + String(e && e.stack); } } return X; })(make31);
+/* each frame of Water's ball: the fire's clock; an ember is smaller than a drop */
+stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.w95) return; X.sph.material.uniforms.t95.value = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000; X.beads.forEach(b => { if (b.m.visible) b.m.scale.multiplyScalar(0.6); }); })(stage31);
+/* the figure that gathers and curls is Brimstone's own old stage: made here and left where play31 looks for it, so Water's code finds it made */
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (S && clip === 'evo' && o && o.from && o.from !== S.st && on95(S) && on31(S) && grp.parent) { try {
+      if (!S.e31 || S.e31.from !== o.from || !S.e31.sp.way69) { if (S.e31 && S.e31.gg.parent) S.e31.gg.parent.remove(S.e31.gg); const gg = brim69Fig(S.T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.g28 = 31; sp.o31 = S; gg.visible = false; grp.parent.add(gg); S.e31 = { gg, from: o.from, sp }; }
+      /* (as builder 73 for the figure itself) the margin's material must carry a line width */ const hm = S.e31.sp.hull27 && S.e31.sp.hull27.material; if (hm && !hm.userData.w) hm.userData.w = { value: 0 };
+    } catch (e) { W95.err = 'old ' + String(e && e.stack); } }
+  return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26;
+KIT.W95 = W95;
+// ==== W95 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)

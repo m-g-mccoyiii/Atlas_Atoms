@@ -6741,6 +6741,34 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   homEvo19 = (f0 => function (now) { f0(now); try { s93Log(now); } catch (x) { S93.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s93dbg = () => ({ err: S93.err, log: S93.log, plan: S77.plan && { k: +S77.plan.k.toFixed(2), n: S77.plan.n, Hw: +S77.plan.Hw.toFixed(2), pg: S77.plan.pg && [S77.plan.pg.x0, S77.plan.pg.x1, S77.plan.pg.z0, S77.plan.pg.z1].map(v => +v.toFixed(1)), sd: S77.plan.sd.map((q, i) => [q.x, q.z, q.d, q.lx, q.up || 0, q.same ? 1 : 0, S77.plan.tg[i].x, S77.plan.tg[i].z - S77.plan.tg[i].y].map(v => +(+v).toFixed(2))), bd: S77.plan.bd.length } });
   // ==== S93 END
+  // ==== S95 BEGIN
+  // (builder 95) BRIMSTONE'S CHANGE OF STAGE ON THE PAGE IS WATER'S, RESKINNED (kitart W95; AA.rxKit.mirror95, ?w95=0 gives Water's substance).
+  // Nothing of S31 / S32 / S33 / S36 is changed or repeated: place, size, travel, lamp, shadow and the wet marks' places and times are Water's.
+  // Water's one pass over the bench (S33.sheet) gets a second material that shares its uniforms and its shader text, with three colours changed:
+  // what was wet paper is faint soot (no ink run, no blue pigment), the shadow is not blue, and a glow of its fire lies on the paper (gl95) where
+  // Water threw a blue cast. Each mark is given a short life so that nothing is left when it is home; the wet patch it would stand in is not laid.
+  const S95 = { err: null, mat: null, w0: null };
+  const s95On = SP => !!(SP && SP.way69 && AA.rxKit && AA.rxKit.mirror95 !== false);
+  const s95Sheet = () => { const sh = S33.sheet; if (S95.mat) return S95.mat; const m0 = S95.w0 = sh.material; let f = m0.fragmentShader; const rep = (a, b) => { if (f.indexOf(a) < 0) throw new Error('s95: not found: ' + a); f = f.split(a).join(b); };
+    rep('uniform float shk;', 'uniform float shk;\nuniform vec4 gl95;');
+    rep('wet * (0.35 + 0.25 * pap)', 'wet * 0.08');
+    rep('mix(vec3(0.87, 0.87, 0.89), vec3(0.905, 0.928, 0.95), pap)', 'mix(vec3(0.90, 0.89, 0.88), vec3(0.905, 0.895, 0.885), pap)');
+    rep('mix(vec3(0.62, 0.78, 0.94), vec3(0.50, 0.68, 0.90), F36 * smoothstep(0.5, 1.0, pig))', 'mix(vec3(0.80, 0.785, 0.77), vec3(0.66, 0.64, 0.63), F36 * smoothstep(0.5, 1.0, pig))');
+    rep('c *= 1.0 - sh * vec3(1.0, 0.86, 0.68) * (0.4 + 0.6 * spot);', 'c *= 1.0 - sh * vec3(1.0, 0.97, 0.93) * (0.4 + 0.6 * spot); { float f95 = gl95.w * (1.0 - smoothstep(0.0, 1.0, length(g - gl95.xy) / max(0.001, gl95.z))); f95 *= f95; c = c * mix(vec3(1.0), vec3(0.86, 0.87, 1.0), f95) + vec3(0.03, 0.03, 0.10) * f95; }');
+    m0.uniforms.gl95 = { value: new T.Vector4(0, 0, 1, 0) };
+    const m = S95.mat = new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, blending: T.NoBlending, uniforms: m0.uniforms, vertexShader: m0.vertexShader, fragmentShader: f }); m.extensions = { derivatives: false }; return m; };
+  const s95Frame = now => { const SP = s26Fig(), sh = S33.sheet; if (!sh) return; if (!s95On(SP)) { if (S95.w0 && sh.material !== S95.w0) sh.material = S95.w0; return; }
+    const m = s95Sheet(); if (sh.material !== m) sh.material = m; const U = m.uniforms, W = S33.wet, E = R21.evo, q = SP.q0, e = q && q.e31, C = S32.C, RK = AA.rxKit.RK;
+    /* soot, not water: short-lived, little pigment; no patch to stand in */
+    for (let i = 0; i < S33.NW; i++) { const w = W[i]; if (!w || !(w.r > 0)) continue; if (w.hold) { w.hold = false; w.r = 0; U.w33.value[i].z = 0; continue; } if (w.b95 !== w.t0) { w.b95 = w.t0; w.life = Math.min(w.life, 1300); w.pig = Math.min(w.pig, 0.3); } }
+    /* Water's round stamps, its damp ring and its caustic are water: not for Brimstone */ if (S27.wet) S27.wet.forEach(w => { if (w.m.visible && !w.s95) w.m.visible = false; }); if (E && E.e31) { if (S27.ring) S27.ring.visible = false; if (S27.ca) S27.ca.visible = false; }
+    /* the fire's glow on the paper, where Water threw its blue */ const G = U.gl95.value;
+    if (E && E.e31 && e && e.go != null && C && sh.visible) { const ball = C.ball === 1, fl = 0.82 + 0.12 * Math.sin(now / 97) * Math.sin(now / 41) + 0.06 * Math.sin(now / 23);
+      G.set(C.bx, C.bz + (ball ? 0.6 * (C.by - C.gy) : 0), (ball ? 3.0 : 2.4) * C.Rw, fl * Math.min(1, e.go * 2) * (1 - (e.home || 0)) * (ball ? 0.8 * (e.b >= 0 ? 1 : RK.sm((e.a - 0.6) / 0.4)) : 0.5)); }
+    else G.w = 0; };
+  homEvo19 = (f0 => function (now) { f0(now); try { s95Frame(now); } catch (x) { S95.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s95dbg = () => ({ err: S95.err, kit: AA.rxKit.W95 && AA.rxKit.W95.err, w31: AA.rxKit.spirit26.W31 && AA.rxKit.spirit26.W31.err, w32: AA.rxKit.spirit26.W32 && AA.rxKit.spirit26.W32.err, s31: S31.err, s32: S32.err, s33: S33.err, s36: S36.err, sp: AA.rxKit.spiritErr || null, w69: AA.rxKit.BRIM69 && AA.rxKit.BRIM69.err, wet: S33.wet.filter(w => w && w.r > 0).length, old27: S27.wet.filter(w => w.m.visible).length });
+  // ==== S95 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
