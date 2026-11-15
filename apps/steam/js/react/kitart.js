@@ -3675,4 +3675,131 @@ KIT.fog57 = function (T, kind) { const key = 'tx_' + kind; if (W57[key]) return 
   return (W57[key] = new T.CanvasTexture(cv)); };
 KIT.W57 = W57; KIT.d57dbg = () => ({ err: W57.err, go: W57.go, L: W57.L, e: W57.e ? { ph: W57.e.ph, e: +W57.e.e.toFixed(2), sink: +W57.e.sink.toFixed(2), reach: +W57.e.reach.toFixed(2), ti: W57.e.ti, turn: +W57.e.turn.toFixed(2) } : null });
 // ==== W57 END
+// ==== W61 BEGIN
+// (builder 61) SLIME AS A SPIRIT, five stages, stills only (AA.rxKit.slime61 = 1, or ?s61=1 on the page; OFF by default: the game shows the old Slime).
+// Built and drawn the way Water is, by Water's own code, as builders 48/50 (Acid) and 49/53 (Dry ice) did: each stage is a set of numbers like a stage
+// of S25 (slick, spine keys, limbs, face) put in Water's stage-3 slot for the moment of building; geo26 makes it one closed skin on joints, fig26 gives
+// the face, set30 the pen and the wash. What is Slime's own: a low wide heap with NO head (the face sits in the mass itself), slopes that sag out along
+// the bench, a thick arm lifted and drooping at the hand, STRINGS (thin limbs that leave the arm and run down into the body: one skin, nothing loose),
+// drips that end in a bead, a thick smooth slick with a violet rim in place of a pool (ooze61, tongues of slick, is kept but not used: they drew as
+// claws), blisters of trapped air, the wash in dusky
+// violet-pink with a bigger bare-paper gloss, and the pen's own strokes (bubbles, the sagging lip, a dribble at the mouth). All limb points are given
+// where they are in the figure (lim61 turns them into paths from the place they leave the body).
+//  1 the dollop: a small glossy blob, heavy sleepy eyes, one thread pulled up off its top with a bead on the end
+//  2 the slump: a lopsided lump with a long sagging slope, puzzled at the first stub of an arm it has put up (one drip on it); one brow up, a long flat mouth
+//  3 the heap (the line-up's figure): low and wide, the face in the top of the mass, one arm lifted high with strings trailing back to the body
+//  4 the stretch: the whole mass pulled up tall like taffy, leaning, both arms flung out with curtains of strings, a great slow yawn
+//  5 the mire: a vast mound, heavy lids, a long content smile, two raised arms with strings and one fallen forward on the bench, a wide slick, blisters
+KIT.slime61 = KIT.slime61 == null ? ((typeof location !== 'undefined' && /[?&]s61=1/.test(String(location.search))) ? 1 : null) : KIT.slime61;
+const W61 = { geo: {}, figs: [], err: null, TARGET: [0, 6500, 9500, 9600, 9600, 10400],
+  ROLE: [null, { chest: 1, neck: 2, head: 2, hair: 5 }, { chest: 1, neck: 2, head: 2, hair: 6 }, { chest: 1, neck: 2, head: 2, hair: 6 }, { chest: 3, neck: 4, head: 6, hair: 9 }, { chest: 1, neck: 2, head: 2, hair: 6 }],   /* the 'head' joint is the low belly: there is no neck, the whole heap nods from its foot (a head joint higher up folds the skin across the face) */
+  C: { lite: [0.86, 0.68, 0.89], edge: [0.62, 0.37, 0.71], shade: [0.50, 0.30, 0.63], margin: [0.82, 0.65, 0.87], lid: 0xc293d2 } };
+/* where a limb leaves the body (as geo26 works it out: key k along the spine, angle th round it) */
+const at61 = (K, k, th) => { const x = Math.max(0, Math.min(K.length - 5, k - 4)), i = Math.min(K.length - 6, Math.floor(x)), t = x - i, a = K[4 + i], b = K[5 + i], c = a.map((v, j) => v + (b[j] - v) * t); return [c[0] + Math.cos(th) * c[3], c[1], c[2] + Math.sin(th) * c[4]]; };
+/* a limb given by where its points ARE */
+const lim61 = (K, k, th, abs, rad, ex) => { const C = at61(K, k, th); return Object.assign({ k, th, r0: rad[0], ey: 1.2, path: abs.map(p => [p[0] - C[0], p[1] - C[1], p[2] - C[2]]), rad }, ex || {}); };
+/* a string: from p0 (on the arm) down to p1 (in the body or the slick); thick where it leaves, a hair in the middle, a foot where it lands; it bows sideways by sag */
+const hang61 = (p0, p1, sag, r1, sy) => { const T = [0.2, 0.42, 0.64, 0.84, 1], R = [0.11, 0.066, 0.06, 0.075, r1 || 0.15]; return [T.map(t => [p0[0] + (p1[0] - p0[0]) * t + (sag || 0) * Math.sin(PI * t), p0[1] + (p1[1] - p0[1]) * t - (sy || 0) * Math.sin(PI * t), p0[2] + (p1[2] - p0[2]) * t]), R]; };
+/* a drip: a thread that ends in a bead before it parts */
+const drip61 = (p0, L, rb) => [[[p0[0], p0[1] - L * 0.3, p0[2]], [p0[0], p0[1] - L * 0.66, p0[2]], [p0[0] + 0.01, p0[1] - L, p0[2]]], [0.085, 0.06, rb || 0.13]];
+/* an arm with what hangs from it: the arm itself, and a limb for every string or drip: a hair that runs hidden inside the same arm and leaves it at point m
+   (thin inside the arm, so the body is not swollen where many of them lie together) */
+const arm61 = (K, k, th, abs, rad, hangs) => [lim61(K, k, th, abs, rad, { arm: 1 })].concat((hangs || []).map(h => { const hg = h.to ? hang61(abs[h.m], h.to, h.sag, h.r1, h.sy) : drip61(abs[h.m], h.L, h.rb); return lim61(K, k, th, abs.slice(0, h.m + 1).concat(hg[0]), rad.slice(0, h.m + 1).map(() => 0.07).concat(hg[1]), { str: 1 }); }));
+/* a tongue of the slick creeping out along the bench: f0 to f1 are how far out (1 = the slick's own edge), bend turns its tip */
+const ooze61 = (K, a, f0, f1, r, bend) => { const R = K[0][3], Rz = K[0][4], P = (f, da) => [K[0][0] + Math.cos(a + da) * R * f, 0.05, K[0][2] + Math.sin(a + da) * Rz * f]; return lim61(K, 4.4, a, [P(f0, 0), P((f0 + f1) / 2, (bend || 0) * 0.5), P(f1, bend || 0)], [r * 0.8, r, r * 0.7], { flat: [0, 1, 0], fk: () => 0.3, ooze: 1 }); };
+/* a blister of trapped air standing on the skin */
+const blis61 = (K, k, th, p, r) => lim61(K, k, th, [[p[0], p[1] - r * 0.5, p[2]], p], [r * 0.8, r], { blis: 1 });
+/* pen: a bubble seen in the body (a ring on the skin with a glint tick), an open stroke on the skin */
+const ring61 = (c, d, x, y, r, w) => [{ c, d, pts: Array.from({ length: 13 }, (_, i) => { const a = i / 12 * 2 * PI + 0.5; return [x + r * Math.cos(a), y + r * Math.sin(a)]; }), w: w || 0.6, o: { smooth: 1, wob: 0.25, min: 3, trim: 0 } },
+  { c, d, pts: [[x - r * 0.5, y + r * 0.1], [x - r * 0.38, y + r * 0.42], [x - r * 0.08, y + r * 0.55]], w: (w || 0.6) * 0.8, o: { smooth: 1, wob: 0.2, min: 2, trim: 0 } }];
+const line61 = (c, d, pts, w) => ({ c, d, pts, w: w || 0.6, o: { smooth: 2, wob: 0.5, min: 3 } });
+const SPEC61 = [
+  // 1 the dollop
+  () => { const K = pool(0.08, 0.06, 1.05, 0.86, 0.5, 0.42).concat([[0.05, 0.45, 0, 0.68, 0.6], [0, 0.68, 0.02, 0.62, 0.57], [-0.03, 0.9, 0.02, 0.45, 0.42], [-0.05, 1.05, 0.02, 0.27, 0.25], [-0.05, 1.16, 0.02, 0, 0]]), fc = [0, 0.66, 0.35], fd = [0.04, 0.3, 1];
+    return { keys: K, foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0.08, 0.06, 1.05, 0.86],
+      limbs: [lim61(K, 9, 0.2, [[-0.03, 1.27, 0.02], [0.04, 1.42, 0.02], [0.18, 1.54, 0.02], [0.36, 1.56, 0.02], [0.5, 1.42, 0.02]], [0.1, 0.07, 0.062, 0.07, 0.14], { str: 1 })],
+      face: { c: fc, d: fd, k: 1.12, er: 1.4, dx: 0.25, lid: 0.6, brow: { y: 0.33, len: 0.13, ang: [-0.3, -0.3], arch: 0.015, r: 0.02 }, mouth: { w: 0.09, d: 0.03, y: -0.2, tilt: 0.015, r: 0.022 } }, eyes: [1, 1.18],
+      pen: ring61(fc, fd, 0.34, -0.36, 0.07),
+      drops: [[-1.2, 0, 0.5, 0.05], [1.1, 0, 0.55, 0.04]] }; },
+  // 2 the slump
+  () => { const K = pool(0, 0.1, 1.75, 1.28, 0.85, 0.7).concat([[0.0, 0.55, 0, 0.92, 0.76], [-0.06, 0.88, 0, 0.88, 0.74], [-0.15, 1.2, 0.02, 0.78, 0.7], [-0.22, 1.48, 0.02, 0.56, 0.52], [-0.25, 1.66, 0.02, 0.32, 0.3], [-0.26, 1.76, 0.02, 0, 0]]), fc = [-0.12, 1.14, 0.5], fd = [0.14, 0.22, 1];
+    const A = [[0.95, 1.12, 0.1], [1.42, 1.5, 0.15], [1.85, 1.78, 0.18], [2.2, 1.74, 0.2]], AR = [0.38, 0.31, 0.28, 0.29];
+    return { keys: K, foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0.1, 1.75, 1.28],
+      limbs: [lim61(K, 5.6, PI, [[-1.05, 0.4, 0.05], [-1.6, 0.28, 0.1], [-2.1, 0.16, 0.14], [-2.5, 0.1, 0.16]], [0.55, 0.42, 0.27, 0.17], { slope: 1 }),
+        lim61(K, 5.3, 0, [[0.95, 0.34, 0], [1.5, 0.22, 0.05], [1.95, 0.12, 0.08]], [0.46, 0.32, 0.2], { slope: 1 })]
+        /* the first stub of an arm, held up a little way, one drip hanging from it */
+        .concat(arm61(K, 6.8, 0.1, A, AR, [{ m: 3, L: 0.8, rb: 0.14 }])),
+      face: { c: fc, d: fd, k: 1.4, er: 1.3, dx: 0.25, lid: 0.5, brow: { y: 0.31, len: 0.15, ang: [-0.38, 0.12], lift: [0, 0.045], arch: 0.015, r: 0.02 }, mouth: { w: 0.22, d: -0.03, y: -0.2, tilt: 0.035, r: 0.022 } }, eyes: [0.92, 1.2],
+      pen: ring61(fc, fd, -0.6, -0.72, 0.09).concat(ring61(fc, fd, -0.2, -0.86, 0.055)),
+      drops: [[-2.7, 0, 0.5, 0.05], [2.2, 0, 0.5, 0.045], [1.0, 0, 1.25, 0.04]] }; },
+  // 3 the heap (the line-up's figure)
+  () => { const K = pool(0, 0.15, 2.9, 1.75, 1.25, 1.0).concat([[-0.05, 0.7, 0, 1.3, 1.05], [-0.1, 1.25, 0.02, 1.22, 1.0], [-0.14, 1.6, 0.03, 0.98, 0.86], [-0.16, 1.9, 0.03, 0.66, 0.6], [-0.17, 2.1, 0.03, 0.38, 0.36], [-0.17, 2.2, 0.03, 0, 0]]), fc = [-0.02, 1.66, 0.7], fd = [-0.05, 0.16, 1];
+    const A = [[1.12, 1.5, 0], [1.42, 2.15, 0], [1.85, 2.8, 0.02], [2.5, 3.15, 0.05], [3.2, 3.05, 0.08], [3.6, 2.62, 0.1], [3.68, 2.2, 0.1]], AR = [0.48, 0.37, 0.31, 0.3, 0.32, 0.33, 0.22];
+    return { keys: K, foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0.15, 2.9, 1.75],
+      limbs: [lim61(K, 5.4, PI, [[-1.55, 0.36, 0.05], [-2.15, 0.32, 0.1], [-2.7, 0.24, 0.15], [-3.2, 0.14, 0.18], [-3.55, 0.1, 0.2]], [0.52, 0.46, 0.36, 0.22, 0.16], { slope: 1 }),
+        lim61(K, 5.4, 0, [[1.4, 0.42, 0], [2.0, 0.3, 0.05], [2.7, 0.2, 0.1], [3.3, 0.13, 0.12]], [0.55, 0.42, 0.3, 0.2], { slope: 1 })]
+        .concat(arm61(K, 6.4, -0.15, A, AR, [{ m: 2, to: [1.9, 0.6, 0.05], sag: -0.1 }, { m: 3, to: [2.62, 0.36, 0.1], sag: -0.14 }, { m: 4, to: [3.3, 0.16, 0.14], sag: 0.1, r1: 0.12 }, { m: 6, L: 1.0, rb: 0.15 }]))
+        ,
+      face: { c: fc, d: fd, k: 2.0, er: 1.2, dx: 0.25, lid: 0.62, brow: { y: 0.3, len: 0.14, ang: [-0.28, -0.28], arch: 0.018, r: 0.017 }, mouth: { w: 0.27, d: 0.06, y: -0.2, tilt: 0.03, r: 0.02 } }, eyes: [1, 1.15],
+      pen: ring61(fc, fd, -0.8, -1.15, 0.14).concat(ring61(fc, fd, 0.15, -1.3, 0.08), ring61(fc, fd, 0.85, -1.05, 0.1)),
+      drops: [[-3.9, 0, 0.45, 0.06], [3.5, 0, 0.6, 0.05], [1.2, 0, 1.75, 0.05]] }; },
+  // 4 the stretch
+  () => { const K = pool(0, 0.15, 3.0, 1.9, 1.5, 1.15).concat([[0, 0.8, 0, 1.55, 1.2], [0.02, 1.3, 0, 1.38, 1.1], [0.06, 1.8, 0.02, 1.18, 1.0], [0.12, 2.3, 0.04, 1.02, 0.9], [0.22, 2.8, 0.06, 0.96, 0.86], [0.34, 3.2, 0.06, 0.86, 0.8], [0.44, 3.55, 0.05, 0.64, 0.6], [0.5, 3.78, 0.05, 0.38, 0.36], [0.52, 3.9, 0.05, 0, 0]]), fc = [0.3, 3.02, 0.9], fd = [0.14, 0.12, 1];
+    const A = [[1.2, 2.4, 0], [1.95, 2.75, 0], [2.75, 2.9, 0.02], [3.4, 2.75, 0.04], [3.75, 2.4, 0.05]], AR = [0.52, 0.38, 0.31, 0.31, 0.26];
+    const B = [[-1.1, 2.5, 0], [-1.7, 3.1, 0], [-2.3, 3.6, 0.02], [-2.85, 3.82, 0.04], [-3.3, 3.62, 0.05]], BR = [0.52, 0.38, 0.31, 0.3, 0.27];
+    return { keys: K, foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0.15, 3.0, 1.9],
+      limbs: [lim61(K, 5.5, 0, [[1.7, 0.5, 0], [2.4, 0.33, 0.05], [3.0, 0.2, 0.1], [3.5, 0.12, 0.12]], [0.75, 0.5, 0.31, 0.19], { slope: 1 }),
+        lim61(K, 5.5, PI, [[-1.7, 0.5, 0], [-2.4, 0.33, 0.05], [-3.0, 0.2, 0.1], [-3.5, 0.12, 0.12]], [0.75, 0.5, 0.31, 0.19], { slope: 1 })]
+        .concat(arm61(K, 9, 0, A, AR, [{ m: 1, to: [1.97, 0.82, 0.04], sag: -0.12 }, { m: 2, to: [2.77, 0.42, 0.08], sag: -0.14 }, { m: 3, to: [3.42, 0.2, 0.1], sag: 0.1, r1: 0.12 }, { m: 4, L: 0.9, rb: 0.14 }]))
+        .concat(arm61(K, 9.1, PI, B, BR, [{ m: 1, to: [-1.75, 0.9, 0.04], sag: 0.12 }, { m: 2, to: [-2.35, 0.5, 0.08], sag: 0.16 }, { m: 3, to: [-2.9, 0.26, 0.1], sag: 0.1, r1: 0.12 }, { m: 4, L: 0.8, rb: 0.13 }])),
+      face: { c: fc, d: fd, k: 2.0, er: 1.1, dx: 0.225, lid: 0.7, brow: { y: 0.3, len: 0.14, ang: [-0.3, -0.3], arch: 0.035, r: 0.016 }, mouth: { o: 0.13, y: -0.27, r: 0.018 } }, eyes: [1, 1.1],
+      pen: ring61(fc, fd, -0.85, -1.75, 0.14).concat(ring61(fc, fd, -0.55, -2.15, 0.08)),
+      drops: [[-4.0, 0, 0.5, 0.06], [4.0, 0, 0.5, 0.05], [0.9, 0, 2.0, 0.05]] }; },
+  // 5 the mire
+  () => { const K = pool(0, 0.2, 4.3, 2.4, 1.9, 1.4).concat([[0, 1.0, 0, 2.0, 1.5], [0, 1.5, 0.02, 1.9, 1.45], [0, 2.0, 0.03, 1.5, 1.25], [0, 2.45, 0.03, 1.0, 0.9], [0, 2.75, 0.03, 0.55, 0.5], [0, 2.9, 0.03, 0, 0]]), fc = [0, 1.95, 1.0], fd = [0, 0.16, 1];
+    const A = [[2.0, 2.3, -0.1], [2.7, 3.1, -0.1], [3.4, 3.68, -0.05], [4.1, 3.85, 0], [4.62, 3.56, 0.05], [4.8, 3.12, 0.05]], AR = [0.6, 0.45, 0.38, 0.36, 0.36, 0.28];
+    const B = [[-1.7, 2.75, -0.2], [-2.3, 3.4, -0.2], [-2.85, 3.72, -0.15], [-3.3, 3.52, -0.1]], BR = [0.46, 0.33, 0.28, 0.26];
+    return { keys: K, foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0.2, 4.3, 2.4],
+      limbs: [lim61(K, 6, PI - 0.25, [[-2.0, 1.0, -0.2], [-2.9, 0.7, -0.1], [-3.7, 0.4, 0], [-4.3, 0.2, 0.1], [-4.75, 0.12, 0.15]], [1.25, 0.9, 0.55, 0.3, 0.18], { slope: 1 }),
+        lim61(K, 6, 0.25, [[2.1, 0.9, -0.2], [3.0, 0.6, -0.1], [3.8, 0.36, 0], [4.4, 0.2, 0.1], [4.85, 0.12, 0.15]], [1.12, 0.8, 0.5, 0.29, 0.18], { slope: 1 }),
+        /* the arm it has let fall forward on the bench */
+        lim61(K, 6.8, PI - 0.7, [[-1.95, 1.5, 0.75], [-2.6, 1.1, 1.2], [-3.05, 0.55, 1.55], [-3.3, 0.16, 1.85]], [0.55, 0.45, 0.4, 0.5], { arm: 1, flat: [0, 1, 0], fk: s => 1 - 0.55 * sm((s - 0.7) * 3.4) })]
+        .concat(arm61(K, 7.2, -0.2, A, AR, [{ m: 1, to: [2.72, 1.2, -0.05], sag: -0.12 }, { m: 2, to: [3.42, 0.72, 0], sag: -0.16 }, { m: 3, to: [4.1, 0.36, 0.05], sag: -0.12 }, { m: 4, to: [4.66, 0.16, 0.12], sag: 0.1, r1: 0.12 }, { m: 5, L: 1.1, rb: 0.15 }]))
+        .concat(arm61(K, 8, PI + 0.3, B, BR, [{ m: 1, to: [-2.36, 1.5, -0.1], sag: 0.12 }, { m: 2, to: [-2.9, 1.02, -0.05], sag: 0.14 }, { m: 3, L: 1.0, rb: 0.14 }]))
+        .concat([blis61(K, 8, 0.9, [0.95, 3.02, 0.35], 0.27), blis61(K, 8.5, 2.2, [-0.55, 3.4, 0.25], 0.19), blis61(K, 6, PI - 0.25, [-2.35, 2.2, 0.1], 0.2)])
+        ,
+      face: { c: fc, d: fd, k: 3.0, er: 1.0, dx: 0.245, lid: 0.6, brow: { y: 0.22, len: 0.16, ang: [-0.22, -0.22], arch: 0.02, r: 0.014 }, mouth: { w: 0.26, d: 0.06, y: -0.2, tilt: 0.012, r: 0.013 } }, eyes: [1, 1.12],
+      pen: ring61(fc, fd, -1.3, -1.0, 0.2).concat(ring61(fc, fd, -0.85, -1.3, 0.11), ring61(fc, fd, 1.25, -1.05, 0.16), ring61(fc, fd, 0.3, -1.4, 0.09), ring61(fc, fd, -0.2, 1.05, 0.12),
+        []),
+      drops: [[-5.3, 0, 0.5, 0.07], [5.3, 0, 0.5, 0.06], [1.5, 0, 2.5, 0.06], [-1.2, 0, 2.5, 0.05]] }; }
+];
+/* the wash turns dusky violet-pink: the same shader as Water's, its blues changed, and more of the lit side left bare (slime is glossy) */
+function tint61(T, S) { if (!S.m30) return; S.t61 = true; S.t48 = true; const C = W61.C, way = S.way61, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')',
+    sw = [['step(l9, 0.35);', 'step(l9, 0.35); a9 = max(a9, 0.9 * (1.0 - smoothstep(0.06, 0.16, bp.y)));'], ['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)], ['smoothstep(0.80, 0.87, l9', 'smoothstep(0.74, 0.80, l9'], ['hl = max(hl, pl * smoothstep(0.72, 0.78,', 'hl = max(hl, pl * smoothstep(0.86, 0.90,'], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = smoothstep(0.42, 0.02, bp.y); hl *= smoothstep(0.08, 0.18, bp.y);'], ['smoothstep(0.42, 0.22, nv);', 'smoothstep(0.42, 0.22, nv) * smoothstep(0.10, 0.22, bp.y);']];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s61) return; m.userData.s61 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's61' + way; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+/* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
+function slime61Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC61[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W61.geo[stage]) W26.geo[3] = W61.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W61.ROLE[stage]; W26.TARGET = W61.TARGET[stage];
+  try { g = fig26(T, 3, extra); W61.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way61 = 's' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  /* lopsided eyes: one a little bigger than the other */ if (o.eyes && S.F) S.F.eyes.forEach((e, i) => { const k = o.eyes[i] || 1; e.g.children.forEach(m => { m.scale.multiplyScalar(k); m.position.multiplyScalar(k); }); e.er *= k; });
+  /* the pen's own strokes, laid on the skin by rays from in front (as the face is laid); each rides the joint of the spine nearest to it */
+  const near = p => { let bj = 0, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && q.role !== 'limb' && dd < bd) { bd = dd; bj = j; } }); return bj; };
+  const strokes = (o.pen || []).map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
+        pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } return null; }).filter(Boolean); }
+    if (pts.length < 2) return null; const j = s.j != null ? s.j : near(pts[0]);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+  S.a61 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  tint61(T, S); W61.figs.push(S); if (W61.figs.length > 24) W61.figs.splice(0, W61.figs.length - 24); return g; }
+/* the pool's ripple strokes and the flow lines down the front are Water's: a heap of slime has none (as Dry ice: G.pl and the chest are hidden from the pen
+   for the moment of drawing). Its own strokes are then written by builder 48's ink48 with the figure's own pen; S.a48 is lent for that call only, so the
+   idles and acts that key on S.a48 (Acid's) never run on Slime. */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way61) return f0(T, S, ren, cam); if (!S.t61) tint61(T, S); const pl = S.G.pl, R0 = S.G.R; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 });
+  try { f0(T, S, ren, cam); } finally { S.G.pl = pl; S.G.R = R0; }
+  if (S.a61) { const a0 = S.a48; S.a48 = S.a61; try { ink48(T, S, ren, cam); } catch (e) { W61.err = String(e && e.stack); } finally { S.a48 = a0; } } })(draw30);
+KIT.slime61Fig = slime61Fig; KIT.SLIME61 = W61;
+/* behind the switch: Slime's bench figure is the spirit at its stage (the jar keeps the old Slime) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homslime' && KIT.slime61 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = slime61Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W61.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W61 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
