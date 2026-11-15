@@ -4002,4 +4002,161 @@ KIT.slime61Fig = slime61Fig; KIT.SLIME61 = W61;
 /* behind the switch: Slime's bench figure is the spirit at its stage (the jar keeps the old Slime) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homslime' && KIT.slime61 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = slime61Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W61.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W61 END
+// ==== W63 BEGIN
+// (builder 63) SALT AS A SPIRIT, five stages, stills only (AA.rxKit.salt63 = 1, or ?t63=1 on the page; OFF by default: the game shows the old Salt).
+// The line-up's figure B, "the hopper": a stepped crystal skirt narrowing upward to a body, a tilted cube head, straight arms with fists on hips.
+// Drawn by Water's own hand (fig26 gives the joints' figure and the face, set30 the pen and the wash, play26 the pose), but Salt is CRYSTAL, so its
+// skin is not Water's soft one: geo63 makes the body out of BOXES (flat faces, hard straight edges), each box carried whole by ONE joint, so the
+// figure bends only at its joints, the way a stack of crystals tilts. The boxes stand in one another (one body, nothing loose but the grains it
+// stands among). The wash is flat on every face (flat shading: one tone a face: bare paper on the lit faces, a pale cold grey-blue on the others,
+// a deeper one with pencil in the shade); the pen writes the outline with corners, and (edge63) every edge between two faces that are both seen.
+// The face lies on ONE flat face of the head cube and is rolled with it. Small cubes bud from head, shoulders and steps, in line with the crystal
+// they grow on (bud63). No pool: a little bed of grains and small cubes on the wood.
+//  1 the grain: one small cube tipped up on an edge, wide eyes, a bud on its top corner, a few grains
+//  2 the seed: a cube on its first step, a second cube for a head cocked to one side, one stub of an arm held out, one brow up
+//  3 the hopper (the line-up's figure): a stepped skirt, fists on hips, elbows out, chin up, the head tilted
+//  4 the tower: steps on steps, a tall body with square shoulders, one arm raised with a finger of crystal, a stern look down its nose, buds at the crown
+//  5 the cathedral: a broad stepped base with a pinnacle at each side, arms folded, a crown of cubes with a spire, eyes all but shut, lofty and still
+KIT.salt63 = KIT.salt63 == null ? ((typeof location !== 'undefined' && /[?&]t63=1/.test(String(location.search))) ? 1 : null) : KIT.salt63;
+const W63 = { geo: {}, figs: [], err: null, seg: 0.3,
+  C: { lite: [0.93, 0.955, 0.975], edge: [0.84, 0.89, 0.945], shade: [0.66, 0.74, 0.865], margin: [0.90, 0.93, 0.965], lid: 0xedf2f8 } };
+/* a crystal: centre, half sizes (one number: a cube), turned about y, rolled about its own front face, tipped forward */
+const bx63 = (c, h, yaw, roll, pitch, ex) => { const cy = Math.cos(yaw || 0), sy = Math.sin(yaw || 0), cq = Math.cos(roll || 0), sq = Math.sin(roll || 0), cp = Math.cos(pitch || 0), sp = Math.sin(pitch || 0), ry = v => [cy * v[0] + sy * v[2], v[1], -sy * v[0] + cy * v[2]];
+  return Object.assign({ c, h: typeof h === 'number' ? [h, h, h] : h, ax: [ry([cq, cp * sq, sp * sq]), ry([-sq, cp * cq, sp * cq]), ry([0, -sp, cp])] }, ex || {}); };
+/* a point of a crystal, in half sizes along its own three ways */
+const loc63 = (b, u) => [0, 1, 2].map(k => b.c[k] + b.ax[0][k] * u[0] * b.h[0] + b.ax[1][k] * u[1] * b.h[1] + b.ax[2][k] * u[2] * b.h[2]);
+/* a prism from a to b (an arm bone, a finger): square in section, a little longer than the bone so it stands in its neighbours */
+const seg63 = (a, b, w, ex) => { const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(d[0], d[1], d[2]) || 1, Y = d.map(v => v / L); let X = [Y[1], -Y[0], 0]; const xl = Math.hypot(X[0], X[1]) || 1; X = X[0] || X[1] ? X.map(v => v / xl) : [1, 0, 0]; const Z = [X[1] * Y[2] - X[2] * Y[1], X[2] * Y[0] - X[0] * Y[2], X[0] * Y[1] - X[1] * Y[0]], e = (ex && ex.ext) || 0;
+  return Object.assign({ c: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], h: [w, L / 2 + e, (ex && ex.d) || w], ax: [X, Y, Z], at: a }, ex || {}); };
+/* the list of one stage's crystals and arms, and the ways to add to it */
+const mk63 = () => { const B = [], L = [], add = b => { B.push(b); return b; }, same = (b, ex) => Object.assign({ g: b.g, jb: b.jb, li: b.li, at: b.at || (b.g || b.jb != null ? null : b.c) }, ex || {}); return { B, L,
+  box: (c, h, yaw, roll, pitch, ex) => add(bx63(c, h, yaw, roll, pitch, ex)),
+  /* a step: a slab standing on height y0 */ step: (y0, hx, hy, hz, yaw, ex, x, z) => add(bx63([x || 0, y0 + hy + 0.004, z || 0], [hx, hy, hz], yaw, 0, 0, ex)),
+  /* a small crystal grown on a bigger one, in line with it: where on it (in its half sizes), how big */ bud: (b, u, h, ex) => add(Object.assign({ c: loc63(b, u), h: typeof h === 'number' ? [h, h, h] : h, ax: b.ax }, same(b, ex))),
+  /* an arm: jointed prisms from the shoulder, a cube for a fist; par is the joint of the spine that carries it */
+  arm: (par, side, pts, w, fist) => { const li = L.length, W = i => typeof w === 'number' ? w : w[Math.min(i, w.length - 1)]; L.push({ par, side, s: pts[0], pts: pts.slice(1), r: W(0) }); let last = null; for (let i = 0; i + 1 < pts.length; i++) last = add(seg63(pts[i], pts[i + 1], W(i), { li, ext: W(i) * 0.7 })); if (fist) add({ c: pts[pts.length - 1], h: [fist, fist, fist], ax: last.ax, li, at: pts[pts.length - 1] }); return li; },
+  /* grains and small cubes lying on the wood: x, z, half size, turn */ grains: list => list.forEach(q => add(bx63([q[0], q[2] + 0.004, q[1]], q[2], q[3] || 0, 0, 0, { g: 1, grain: 1 }))) }; };
+/* the face lies on the front face of a crystal: its middle (in half sizes), looking the way that face looks */
+const face63 = (b, u, v, f) => Object.assign({ c: loc63(b, [u, v, 1]), d: b.ax[2] }, f);
+/* pen on a face of a crystal: ax is the way the face looks (0, 1, 2), sg which of the two; points in half sizes */
+const on63 = (b, ax, sg, pts, w) => ({ b, w: w || 0.55, pts: pts.map(p => { const u = [0, 0, 0]; u[ax] = sg; u[(ax + 1) % 3] = p[0]; u[(ax + 2) % 3] = p[1]; const q = loc63(b, u); return [q[0] + b.ax[ax][0] * sg * 0.02, q[1] + b.ax[ax][1] * sg * 0.02, q[2] + b.ax[ax][2] * sg * 0.02]; }) });
+/* a square drawn on a face, each side its own stroke (a hopper face: the steps of a crystal that grew fastest at its edges) */
+const sq63 = (b, ax, sg, r, w, cx, cy) => { const x = cx || 0, y = cy || 0, q = [[x - r, y - r], [x + r, y - r], [x + r, y + r], [x - r, y + r]]; return q.map((p, i) => on63(b, ax, sg, [p, [(p[0] + q[(i + 1) % 4][0]) / 2, (p[1] + q[(i + 1) % 4][1]) / 2], q[(i + 1) % 4]], w)); };
+/* a glint in the air by a corner: a small four-pointed star, carried by the crystal it is by */
+const glint63 = (b, p, r) => [[[-1, 0], [1, 0]], [[0, -1.25], [0, 1.25]]].map(l => ({ b, w: 0.5, air: 1, pts: [l[0], [0, 0], l[1]].map(q => [p[0] + q[0] * r, p[1] + q[1] * r, p[2]]) }));
+const SPEC63 = [
+  // 1 the grain
+  () => { const m = mk63(), g = m.box([0, 0.6, 0], 0.44, -0.42, 0.5, 0, { jb: 2 }); m.bud(g, [0.95, 1.0, -0.35], 0.17); m.grains([[-0.95, 0.3, 0.11, 0.5], [0.95, 0.42, 0.14, -0.3], [-0.62, 0.66, 0.08, 0.2], [1.3, 0.1, 0.08, 0.9]]);
+    return { base: [0, 0, 1.0, 0.7], R: { chest: 1, neck: 2, head: 2, hair: 4 }, spine: [[0, 0.15, 0, 0.4], [0, 0.3, 0, 0.4], [0, 0.6, 0, 0.44], [0.12, 1.0, 0, 0.2], [0.3, 1.1, 0, 0.15]], limbs: m.L, boxes: m.B,
+      face: face63(g, 0, 0.02, { k: 1, er: 1.7, dx: 0.2, mouth: { w: 0.05, d: 0.012, y: -0.22, r: 0.022 } }),
+      pen: glint63(g, [-0.62, 1.22, 0.3], 0.12) }; },
+  // 2 the seed
+  () => { const m = mk63(), s = m.step(0, 0.9, 0.2, 0.76, -0.42, { g: 1 }), b = m.step(0.4, 0.6, 0.42, 0.52, -0.42, { jb: 2 }), h = m.box([0.05, 1.8, 0.05], 0.56, -0.26, 0.3, 0, { jb: 3 }); m.bud(h, [-0.9, 1.0, -0.3], 0.2); m.bud(s, [-0.85, 1.0, 0.75], [0.2, 0.18, 0.2]);
+    m.arm(2, 1, [[0.5, 0.95, 0.2], [1.05, 1.1, 0.32], [1.5, 1.42, 0.4]], [0.24, 0.19], 0); m.grains([[-1.5, 0.35, 0.12, 0.5], [1.5, 0.6, 0.15, -0.3], [-1.15, 0.9, 0.08, 0.2], [1.85, 0.05, 0.08, 0.9]]);
+    return { base: [0, 0, 1.4, 0.95], R: { chest: 2, neck: 3, head: 3, hair: 5 }, spine: [[0, 0.17, 0, 0.6], [0, 0.32, 0, 0.6], [0, 0.8, 0, 0.6], [0, 1.26, 0, 0.5], [0.05, 1.85, 0, 0.3], [-0.25, 2.2, 0, 0.15]], limbs: m.L, boxes: m.B,
+      face: face63(h, 0, 0.02, { k: 1, er: 1.6, dx: 0.23, brow: { y: 0.27, len: 0.21, ang: [0.1, 0.1], lift: [0, 0.08], arch: 0, r: 0.024 }, mouth: { w: 0.065, d: 0, y: -0.26, tilt: 0.02, r: 0.024 } }),
+      pen: glint63(h, [0.9, 2.6, 0.3], 0.14) }; },
+  // 3 the hopper (the line-up's figure)
+  () => { const m = mk63(), Y = -0.42, s1 = m.step(0, 1.25, 0.3, 1.02, Y, { g: 1 }); m.step(0.6, 0.98, 0.28, 0.8, Y, { g: 1 }); m.step(1.16, 0.72, 0.26, 0.58, Y, { jb: 2 });
+    const t = m.step(1.68, 0.5, 0.42, 0.42, -0.34, { jb: 3 }), h = m.box([0.04, 3.2, 0.06], 0.74, -0.28, -0.2, -0.08, { jb: 4 }), hb = m.bud(h, [0.9, 1.0, -0.3], 0.26); m.bud(hb, [0.6, 1.0, 0.4], 0.12); m.bud(t, [-1.0, 0.9, -0.2], 0.2); m.bud(s1, [-0.84, 1.0, 0.78], [0.27, 0.25, 0.27]); m.bud(s1, [0.9, 1.0, 0.6], 0.16);
+    m.arm(3, 1, [[0.48, 2.36, 0.05], [1.34, 2.12, 0.25], [0.88, 1.64, 0.5]], [0.23, 0.19], 0.27); m.arm(3, -1, [[-0.48, 2.36, 0.05], [-1.34, 2.12, 0.25], [-0.88, 1.64, 0.5]], [0.23, 0.19], 0.27);
+    m.grains([[-1.95, 0.4, 0.14, 0.5], [1.95, 0.6, 0.17, -0.3], [-1.6, 1.1, 0.09, 0.2], [2.35, 0.0, 0.09, 0.9], [1.4, 1.25, 0.11, 0.4]]);
+    return { base: [0, 0, 1.9, 1.4], R: { chest: 3, neck: 4, head: 4, hair: 6 }, spine: [[0, 0.17, 0, 1], [0, 0.32, 0, 1], [0, 1.1, 0, 0.9], [0, 2.0, 0, 0.45], [0, 2.52, 0, 0.5], [0.04, 3.3, 0, 0.4], [0.5, 3.55, 0, 0.2]], limbs: m.L, boxes: m.B,
+      face: face63(h, 0, 0.04, { k: 1.2, er: 1.5, dx: 0.26, lid: 0.3, brow: { y: 0.27, len: 0.27, ang: [0.1, 0.1], arch: 0, r: 0.022 }, mouth: { w: 0.075, d: -0.012, y: -0.3, r: 0.022 } }),
+      pen: glint63(h, [-1.05, 4.05, 0.3], 0.17) }; },
+  // 4 the tower
+  () => { const m = mk63(), Y = -0.42, s1 = m.step(0, 1.25, 0.3, 1.02, Y, { g: 1 }); m.step(0.6, 1.0, 0.28, 0.82, Y, { g: 1 }); m.step(1.16, 0.78, 0.26, 0.63, Y, { jb: 2 }); m.step(1.68, 0.58, 0.22, 0.47, Y, { jb: 3 });
+    const t = m.step(2.12, 0.46, 0.5, 0.4, -0.34, { jb: 4 }), sh = m.step(2.85, 0.78, 0.17, 0.48, -0.34, { jb: 4 }), h = m.box([0, 3.97, 0.1], 0.82, -0.3, 0.13, 0.02, { jb: 5 });
+    const c1 = m.bud(h, [0.6, 1.0, -0.2], [0.3, 0.38, 0.3]); m.bud(c1, [0.5, 1.0, 0.3], 0.15); m.bud(h, [-0.72, 1.0, 0.1], 0.2); m.bud(sh, [-0.95, 1.0, -0.2], 0.22); m.bud(sh, [1.0, 1.0, -0.5], 0.15); m.bud(s1, [-0.84, 1.0, 0.78], [0.27, 0.25, 0.27]); m.bud(s1, [0.9, 1.0, 0.6], 0.16);
+    const ra = m.arm(4, 1, [[0.72, 3.05, 0.05], [1.55, 3.3, 0.2], [1.78, 4.22, 0.3]], [0.23, 0.19], 0.27); m.B.push(seg63([1.8, 4.35, 0.3], [1.88, 5.22, 0.3], 0.11, { li: ra, at: [1.78, 4.22, 0.3] }));
+    m.arm(4, -1, [[-0.72, 3.05, 0.05], [-1.52, 2.7, 0.25], [-0.92, 2.2, 0.5]], [0.23, 0.19], 0.27);
+    m.grains([[-1.95, 0.4, 0.14, 0.5], [1.95, 0.6, 0.17, -0.3], [-1.6, 1.1, 0.09, 0.2], [2.35, 0.0, 0.09, 0.9], [1.4, 1.25, 0.11, 0.4]]);
+    return { base: [0, 0, 1.9, 1.4], R: { chest: 4, neck: 5, head: 5, hair: 7 }, spine: [[0, 0.17, 0, 1], [0, 0.32, 0, 1], [0, 1.0, 0, 0.9], [0, 1.9, 0, 0.6], [0, 2.7, 0, 0.45], [0, 3.15, 0, 0.5], [0, 4.0, 0, 0.4], [0.4, 4.45, 0, 0.2]], limbs: m.L, boxes: m.B,
+      face: face63(h, 0, 0.02, { k: 1.3, er: 1.5, dx: 0.27, lid: 0.42, brow: { y: 0.26, len: 0.3, ang: [0.26, 0.26], arch: 0, r: 0.022 }, mouth: { w: 0.085, d: -0.03, y: -0.3, r: 0.02 } }),
+      pen: glint63(h, [-1.2, 4.95, 0.3], 0.18).concat(glint63(h, [2.3, 5.15, 0.3], 0.12)) }; },
+  // 5 the cathedral
+  () => { const m = mk63(), Y = -0.42, hx = [2.1, 1.7, 1.32, 0.98], S = hx.map((x, i) => m.step(0.52 * i, x, 0.26, x * 0.76, Y, i < 2 ? { g: 1 } : { jb: i < 3 ? 2 : 3 }));
+    const t = m.step(2.08, 0.62, 0.6, 0.5, -0.36, { jb: 4 }), sh = m.step(2.95, 1.0, 0.19, 0.6, -0.36, { jb: 4 }), h = m.box([0, 4.22, 0.06], 0.92, -0.24, -0.07, -0.06, { jb: 5 });
+    /* a pinnacle at each side: cubes on cubes */ [[-0.8, 0.3, 0.42, 0.32, 0.22], [0.82, 0.25, 0.38, 0.27, 0.16]].forEach(q => { let b = m.bud(S[0], [q[0], 1.0, q[1]], [q[2], q[2] * 1.25, q[2]]); b.c = [b.c[0], b.c[1] + q[2] * 1.2, b.c[2]]; q.slice(3).forEach(r => { const u = m.bud(b, [0, 1.0, 0], [r, r * 1.25, r]); u.c = [u.c[0], u.c[1] + r * 1.2, u.c[2]]; b = u; }); });
+    m.bud(S[1], [-0.9, 1.0, 0.85], 0.22); m.bud(S[2], [0.9, 1.0, 0.8], 0.19); m.bud(sh, [-0.98, 1.0, -0.3], 0.24); m.bud(sh, [1.0, 1.0, -0.4], 0.18);
+    /* the crown: a cube on each corner of the head, a spire in the middle */ [[-0.74, 0.7, 0.27], [0.74, 0.7, 0.27], [-0.74, -0.7, 0.24], [0.74, -0.7, 0.24]].forEach(q => m.bud(h, [q[0], 1.08, q[1]], q[2])); const sp = m.bud(h, [0, 1.0, 0], [0.34, 0.52, 0.34]); sp.c = [sp.c[0], sp.c[1] + 0.32, sp.c[2]]; const tp = m.bud(sp, [0, 1.0, 0], 0.19); tp.c = [tp.c[0], tp.c[1] + 0.12, tp.c[2]];
+    /* arms folded: each forearm lies across the chest, one over the other */ m.arm(4, 1, [[0.95, 3.1, 0.1], [1.25, 2.45, 0.6], [-0.45, 2.72, 1.0]], [0.23, 0.2], 0.24); m.arm(4, -1, [[-0.95, 3.1, 0.1], [-1.25, 2.38, 0.6], [0.48, 2.34, 1.06]], [0.23, 0.2], 0.24);
+    m.grains([[-2.85, 0.5, 0.18, 0.5], [2.8, 0.7, 0.21, -0.3], [-2.4, 1.5, 0.12, 0.2], [3.3, 0.0, 0.12, 0.9], [2.1, 1.75, 0.15, 0.4], [-3.35, -0.1, 0.1, 0.1], [-1.1, 2.0, 0.1, 0.7]]);
+    return { base: [0, 0, 2.8, 1.9], R: { chest: 4, neck: 5, head: 5, hair: 7 }, spine: [[0, 0.17, 0, 1], [0, 0.32, 0, 1], [0, 1.1, 0, 1], [0, 2.1, 0, 0.7], [0, 2.8, 0, 0.5], [0, 3.3, 0, 0.5], [0, 4.3, 0, 0.4], [0, 4.7, 0, 0.2]], limbs: m.L, boxes: m.B,
+      face: face63(h, 0, 0.0, { k: 1.45, er: 1.5, dx: 0.27, lid: 0.72, brow: { y: 0.3, len: 0.3, ang: [-0.04, -0.04], arch: 0, r: 0.022 }, mouth: { w: 0.085, d: 0.0, y: -0.32, r: 0.02 } }),
+      pen: glint63(h, [-1.5, 5.7, 0.3], 0.22).concat(glint63(h, [1.6, 5.3, 0.3], 0.13)) }; }
+];
+/* the body: every crystal a box of its own, all in ONE mesh on Water's joints. Each box is carried whole by one joint (it cannot bend). What Water's
+   code asks of a skin is all here (the joints and their roles, the arms that reach, the distance to the body for laying the face on it). */
+function geo63(T, o) { const R = o.R, J = [{ p: [o.base[0], 0, o.base[1]], par: -1, role: 'pool', r: o.base[2], lag: 0, i: 0 }], bj = [], chains = [];
+  o.spine.forEach((k, i) => { const role = i <= R.chest ? 'spine' : i < R.head ? 'neck' : i === R.head ? 'head' : i < R.hair ? 'top' : 'hair'; J.push({ p: [k[0], k[1], k[2]], par: i ? bj[i - 1] : 0, role, r: Math.max(k[3], 0.04), i, lag: role === 'spine' ? 2 * i / Math.max(1, R.chest) : role === 'neck' ? 2.4 : role === 'hair' ? 3.6 + 1.1 * (i - R.hair) : 3 }); bj.push(J.length - 1); });
+  chains.push({ kind: 'body', pts: [], jn: [bj[0]].concat(bj), pin: false });
+  (o.limbs || []).forEach((l, li) => { const jl = []; [l.s].concat(l.pts).forEach((p, i) => { J.push({ p, par: jl.length ? jl[jl.length - 1] : bj[l.par], role: 'limb', li, side: l.side, r: l.r, i, lag: 2.6 + 0.9 * i }); jl.push(J.length - 1); }); chains.push({ kind: 'limb', l, li, side: l.side, pts: [], jn: jl, pin: false }); });
+  const B = o.boxes; B.forEach(b => { if (b.g) { b.j = 0; return; } if (b.jb != null && !b.at) { b.j = bj[b.jb]; return; } const at = b.at || b.c; let bd = 1e9; b.j = bj[0]; J.forEach((q, j) => { if (!j || (b.li != null ? !(q.role === 'limb' && q.li === b.li) : q.role === 'limb')) return; const d = Math.hypot(q.p[0] - at[0], q.p[1] - at[1], q.p[2] - at[2]); if (d < bd) { bd = d; b.j = j; } }); });
+  /* how far a point is from the body */ const sd = (b, x, y, z) => { const dx = x - b.c[0], dy = y - b.c[1], dz = z - b.c[2], A = b.ax, qx = Math.abs(dx * A[0][0] + dy * A[0][1] + dz * A[0][2]) - b.h[0], qy = Math.abs(dx * A[1][0] + dy * A[1][1] + dz * A[1][2]) - b.h[1], qz = Math.abs(dx * A[2][0] + dy * A[2][1] + dz * A[2][2]) - b.h[2]; return Math.hypot(Math.max(qx, 0), Math.max(qy, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qy, qz), 0); };
+  const f = (x, y, z) => { let d = 1e9; for (let i = 0; i < B.length; i++) { const e = sd(B[i], x, y, z); if (e < d) d = e; } return d; }, cell = 0.06;
+  const grad = (x, y, z, e) => { const gx = f(x + e, y, z) - f(x - e, y, z), gy = f(x, y + e, z) - f(x, y - e, z), gz = f(x, y, z + e) - f(x, y, z - e), l = Math.hypot(gx, gy, gz) || 1; return [gx / l, gy / l, gz / l, l / (2 * e)]; };
+  const skin = (x, y, z) => { let d = 1e9, bi = 0; for (let i = 0; i < B.length; i++) { const e = sd(B[i], x, y, z); if (e < d) { d = e; bi = i; } } return { top: [[B[bi].j, 1]], s: 1, bi: 1, poolW: 0 }; };
+  /* the mesh: each face of each box a small grid (so the pen's line has points to be unsteady at), the points of a box shared by its faces */
+  const pos = [], nor = [], idx = [], si = [], pl = { x: o.base[0], z: o.base[1], rx: o.base[2], rz: o.base[3], h: 0.07 };
+  B.forEach(b => { const n = b.h.map(h => b.grain ? 1 : Math.max(1, Math.min(7, Math.round(2 * h / W63.seg)))), map = new Map(), A = b.ax;
+    const vt = (ia, ib, ic) => { const key = ia * 10000 + ib * 100 + ic; let v = map.get(key); if (v !== undefined) return v; const u = [ia / n[0] * 2 - 1, ib / n[1] * 2 - 1, ic / n[2] * 2 - 1], p = loc63(b, u); v = pos.length / 3; map.set(key, v); pos.push(p[0], Math.max(0.004, p[1]), p[2]); nor.push(0, 0, 0); si.push(b.j); return v; };
+    for (let a = 0; a < 3; a++) for (let s = 0; s < 2; s++) { const u = (a + 1) % 3, v = (a + 2) % 3, sg = s ? 1 : -1, ix = (i, j) => { const q = [0, 0, 0]; q[a] = s ? n[a] : 0; q[u] = i; q[v] = j; return vt(q[0], q[1], q[2]); };
+      for (let i = 0; i < n[u]; i++) for (let j = 0; j < n[v]; j++) { const p00 = ix(i, j), p10 = ix(i + 1, j), p11 = ix(i + 1, j + 1), p01 = ix(i, j + 1); if (s) idx.push(p00, p10, p11, p00, p11, p01); else idx.push(p00, p11, p10, p00, p01, p11); [p00, p10, p11, p01].forEach(q => { nor[3 * q] += A[a][0] * sg; nor[3 * q + 1] += A[a][1] * sg; nor[3 * q + 2] += A[a][2] * sg; }); } } });
+  const NV = pos.length / 3, P = new Float32Array(pos), Nn = new Float32Array(NV * 3), A4 = new Float32Array(NV * 4), B2 = new Float32Array(NV * 2), SI = new Uint16Array(NV * 4), SW = new Float32Array(NV * 4), H = Math.max.apply(null, J.map(q => q.p[1])), ink = 0.02 + 0.011 * H, HP = new Float32Array(NV * 3);
+  for (let v = 0; v < NV; v++) { const l = Math.hypot(nor[3 * v], nor[3 * v + 1], nor[3 * v + 2]) || 1; for (let k = 0; k < 3; k++) { Nn[3 * v + k] = nor[3 * v + k] / l; HP[3 * v + k] = P[3 * v + k] + Nn[3 * v + k] * ink; } HP[3 * v + 1] = Math.max(0, HP[3 * v + 1]); SI[4 * v] = si[v]; SW[4 * v] = 1; A4[4 * v + 1] = Math.hypot((P[3 * v] - pl.x) / pl.rx, (P[3 * v + 2] - pl.z) / pl.rz); A4[4 * v + 2] = P[3 * v + 1] / 0.4; }
+  const mk = ps => { const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(ps, 3)); g.setAttribute('normal', new T.BufferAttribute(Nn, 3)); g.setIndex(idx); g.setAttribute('skinIndex', new T.BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new T.BufferAttribute(SW, 4)); return g; };
+  const geo = mk(P); geo.setAttribute('w25a', new T.BufferAttribute(A4, 4)); geo.setAttribute('w25b', new T.BufferAttribute(B2, 2));
+  const reach = chains.filter(c => c.kind === 'limb' && c.side).map(c => ({ jn: c.jn, side: c.side, len: c.jn.slice(1).reduce((a, j, i) => a + Math.hypot(J[j].p[0] - J[c.jn[i]].p[0], J[j].p[1] - J[c.jn[i]].p[1], J[j].p[2] - J[c.jn[i]].p[2]), 0) }));
+  const hairJ = bj.slice(R.hair); if (!reach.length) reach.push({ jn: [bj[Math.max(0, R.hair - 1)]].concat(hairJ), side: 0, len: 0.6 * H });
+  J.forEach(q => { q.hw = 0.5; }); return { stage: 3, o, J, chains, geo, hull: mk(HP), f, grad, skin, H, cell, bj, R, pl, reach, pins: [], hairJ, nSp: R.chest + 1, nNk: Math.max(1, R.head - R.chest), ink, NV, ip: 4, salt63: 1 }; }
+/* the wash: Water's shader with its blues changed for the colours of a clear crystal, the paper left bare on every face that looks at the light, and
+   nearly no unevenness in where the tones change (a face is one tone); the body is shaded flat, so each face has one light */
+function tint63(T, S) { if (!S.m30) return; S.t63 = true; S.t48 = true; const C = W63.C, way = S.way63, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')',
+    sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)],
+      ['smoothstep(0.80, 0.87, l9 + 0.42 * (nz - 0.5))', 'smoothstep(' + W63.t[0].toFixed(3) + ', ' + (W63.t[0] + 0.03).toFixed(3) + ', l9 + 0.05 * (nz - 0.5))'],
+      ['clamp(smoothstep(0.45, 0.95, 1.0 - nv + 0.3 * (nz - 0.5)) + 0.45 * low, 0.0, 1.0)', 'clamp(smoothstep(' + W63.t[1].toFixed(3) + ', ' + (W63.t[1] - 0.06).toFixed(3) + ', l9 + 0.05 * (nz - 0.5)) + 0.25 * low, 0.0, 1.0)'],
+      ['smoothstep(0.12, -0.14, l9 + 0.3 * (nz - 0.5))', 'smoothstep(' + W63.t[2].toFixed(3) + ', ' + (W63.t[2] - 0.06).toFixed(3) + ', l9 + 0.05 * (nz - 0.5))'],
+      ['smoothstep(0.02, -0.26, l9 + 0.2 * (nz - 0.5))', 'smoothstep(' + W63.t[2].toFixed(3) + ', ' + (W63.t[2] - 0.08).toFixed(3) + ', l9 + 0.05 * (nz - 0.5))'],
+      ['smoothstep(0.64, 0.70, nz3) * smoothstep(0.42, 0.22, nv)', 'smoothstep(0.66, 0.70, nz3) * 0.35'],
+      ['c9 = mix(c9, PENCIL30, 0.5 * (1.0', 'c9 = mix(c9, PENCIL30, 0.2 * (1.0'], ['vec3(1.0, 0.972, 0.91)', 'vec3(1.0, 0.992, 0.975)'], ['base * vec3(1.0, 0.95, 0.84)', 'base * vec3(0.985, 0.985, 0.985)']];
+  const one = (m, flat) => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s63) return; m.userData.s63 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 't63' + way; if (flat) m.flatShading = true; m.needsUpdate = true; };
+  one(S.m30.body, 1); one(S.m30.hull); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+W63.t = [0.45, 0.40, 0.10];
+/* one stage: its skin goes in Water's stage-3 slot for the moment of building (geo26 hands back a skin that is already there); the figure then carries its own stage */
+function salt63Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const keep = [S25[2], W26.geo[3], W26.ROLE[3]]; let g = null; const G0 = W63.geo[stage] || (W63.geo[stage] = geo63(T, SPEC63[stage - 1]()));
+  S25[2] = () => G0.o; W26.geo[3] = G0; W26.ROLE[3] = G0.R;
+  try { g = fig26(T, 3, extra); } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way63 = 't' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  /* the face is rolled with the crystal it lies on */ const f = o.face, hb = o.boxes.find(b => b.ax[2] === f.d);
+  if (f && hb && S.F) { const D = new V3().fromArray(f.d).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), D).normalize(), Uv = new V3().crossVectors(D, Rv), X = new V3().fromArray(hb.ax[0]), roll = Math.atan2(X.dot(Uv), X.dot(Rv)), q = new T.Quaternion().setFromAxisAngle(D, roll), c0 = new V3().fromArray(f.c).sub(new V3().fromArray(J[jh].p));
+    S.F.eyes.map(e => e.g).concat(S.F.brows.map(b => b.g), [S.F.mouth, S.F.om]).forEach(m => { if (!m) return; m.position.sub(c0).applyQuaternion(q).add(c0); m.quaternion.premultiply(q); m.userData.p0 = m.position.clone(); m.userData.q0 = m.quaternion.clone(); }); }
+  /* salt is dry: nothing drips from it */ S.drips.forEach(d => { d.g.visible = false; }); S.drips.length = 0;
+  /* the pen's own strokes: each rides the joint of the crystal it is on */
+  S.a63 = { strokes: (o.pen || []).map(s => { const j = s.b.j; return { j, w: s.w, o: s.air ? { smooth: 0, wob: 0.3, min: 2, trim: 0 } : { smooth: 0, wob: 0.35, min: 2, trim: 0 }, pts: s.pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }), pts: Array.from({ length: 40 }, () => new V3()) };
+  tint63(T, S); try { play26(g, 'rest', 0, { jar: S.jar }); } catch (e) { W63.err = String(e && e.stack); } W63.figs.push(S); if (W63.figs.length > 24) W63.figs.splice(0, W63.figs.length - 24); return g; }
+/* the pen on a crystal. The outline is written with corners (one light smoothing, a steadier hand). Then the edges INSIDE the outline: every edge of a
+   box whose two faces are both seen is one straight stroke, lifted at each corner. Lines behind another crystal are hidden by the picture's own depth. */
+sil30 = (f0 => function (R, s, lw, sc, Wd, Ht) { if (!R.s63 || s !== R.body) return f0(R, s, lw, sc, Wd, Ht);
+  s.o = { smooth: 1, wob: 0.5 * ((s.o && s.o.wob) || 1), trim: 0.15, min: 3 }; f0(R, s, lw, sc, Wd, Ht);
+  const tp = s.tp, E = tp.E, F = s.F, C = s.C, P = tp.P, tr = tp.tris; let K = s.k63;
+  if (!K) { const nrm = t => { const a = tr[3 * t] * 3, b = tr[3 * t + 1] * 3, c = tr[3 * t + 2] * 3, ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2], n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx], l = Math.hypot(n[0], n[1], n[2]) || 1; return [n[0] / l, n[1] / l, n[2] / l]; }, list = [];
+    for (let e = 0; e < tp.ne; e++) { const t0 = E[4 * e + 2], t1 = E[4 * e + 3]; if (t1 < 0) continue; const a = nrm(t0), b = nrm(t1); if (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] < 0.7) list.push(e); }
+    K = s.k63 = { list: new Int32Array(list), on: new Uint8Array(tp.ne), adj: new Int32Array(tp.nv * 4), deg: new Uint8Array(tp.nv) }; }
+  const on = K.on, adj = K.adj, deg = K.deg, L = K.list, X = R.X, Y = R.Y, Z = R.Z, Sd = R.Sd; deg.fill(0);
+  for (let i = 0; i < L.length; i++) { const e = L[i], a = E[4 * e], b = E[4 * e + 1]; on[e] = F[E[4 * e + 2]] === 1 && F[E[4 * e + 3]] === 1 ? 1 : 0; if (!on[e]) continue; if (deg[a] < 4) adj[4 * a + deg[a]++] = e; if (deg[b] < 4) adj[4 * b + deg[b]++] = e; }
+  /* the next piece of the same straight edge at v, coming along e */ const next = (v, e) => { const o0 = E[4 * e] === v ? E[4 * e + 1] : E[4 * e], px = C[4 * v] - C[4 * o0], py = C[4 * v + 1] - C[4 * o0 + 1], pl = Math.hypot(px, py) || 1; for (let k = 0; k < deg[v]; k++) { const e2 = adj[4 * v + k]; if (e2 === e || !on[e2]) continue; const o2 = E[4 * e2] === v ? E[4 * e2 + 1] : E[4 * e2], qx = C[4 * o2] - C[4 * v], qy = C[4 * o2 + 1] - C[4 * v + 1]; if ((px * qx + py * qy) / (pl * (Math.hypot(qx, qy) || 1)) > 0.96) return e2; } return -1; };
+  for (let i = 0; i < L.length; i++) { let e = L[i]; if (!on[e]) continue; /* back to where this edge begins */ let v = E[4 * e], gd = 0; for (;;) { const e2 = next(v, e); if (e2 < 0 || gd++ > 60) break; e = e2; v = E[4 * e] === v ? E[4 * e + 1] : E[4 * e]; }
+    /* and along it */ let n = 0; const put = w => { X[n] = C[4 * w]; Y[n] = C[4 * w + 1]; Z[n] = C[4 * w + 2]; Sd[n] = 7300 + w; n++; }; put(v); v = E[4 * e] === v ? E[4 * e + 1] : E[4 * e];
+    for (;;) { on[e] = 0; put(v); const e2 = next(v, e); if (e2 < 0 || n > 80) break; e = e2; v = E[4 * e] === v ? E[4 * e + 1] : E[4 * e]; }
+    stroke30(R, n, lw * 0.72, sc, Wd, Ht, { smooth: 0, wob: 0.4, trim: 0.6, min: 2 }); } })(sil30);
+/* Water's pool ripples and flow lines are not Salt's (G.pl and the chest are hidden from the pen while it draws); its own strokes are written by builder
+   48's ink48 with the figure's own pen, S.a48 lent for that call only (as Slime does), so Acid's idle and act never run on Salt */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way63) return f0(T, S, ren, cam); if (!S.t63) tint63(T, S); const pl = S.G.pl, R0 = S.G.R; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); if (S.pen30) S.pen30.s63 = 1;
+  try { f0(T, S, ren, cam); } finally { S.G.pl = pl; S.G.R = R0; }
+  if (S.a63 && S.a63.strokes.length) { const a0 = S.a48; S.a48 = S.a63; try { ink48(T, S, ren, cam); } catch (e) { W63.err = String(e && e.stack); } finally { S.a48 = a0; } } })(draw30);
+KIT.salt63Fig = salt63Fig; KIT.SALT63 = W63;
+/* behind the switch: Salt's bench figure is the spirit at its stage (the jar keeps the old Salt) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homsalt' && KIT.salt63 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = salt63Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W63.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W63 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
