@@ -2257,19 +2257,17 @@ KIT.spirit26.W33 = W33; KIT.spirit26.u33 = u33; KIT.spirit26.grab29 = grab29; KI
 KIT.fix34 = KIT.fix34 == null ? !(typeof location !== 'undefined' && /[?&]f34=0/.test(String(location.search))) : KIT.fix34;
 // ==== W34 END
 // ==== W35 BEGIN
-// (builder 35) ACID AS AN ELEMENTAL, THREE STILL DIRECTIONS (AA.rxKit.acid35 = 'a' | 'b' | 'c'; off by default, so the game shows the old Acid;
-// ?a35=a on the page sets it). Stills only: nothing here moves, acts or changes stage.
-//   a  THE MAW: acid as the thing that eats. A squat heap that is mostly mouth, teeth that are its own drips, thick hands to feed itself.
-//   b  THE BORER: acid as the thing that etches through. No limbs, no eyes: a rearing worm out of a hole it has eaten in the bench, a round
-//      mouth ringed with teeth; its tail comes up out of a second hole.
-//   c  THE THORN: acid as the sharp thing (a splash caught at its points). A bead on pointed legs with scythe arms and one slit eye.
-// Each body is ONE closed skin: the shapes of a stage are melted into one field (smooth joins, the mouth carved out of it, the teeth grown back
-// in) and the skin is laid over that field (nets35), so nothing is a separate part and nothing can come apart. It is a skinned mesh on a chain
-// of five spine bones (bound, not yet posed). The pen is builder 30's (topo30, proj30, sil30, stroke30, free30): the outline of the skin written
-// as strokes. The wash (mat35) is its own: paper, a green wash with bare paper on the lit side, a darker second wash, pooling low and at the
-// outline, fizz rings, pencil in the shade, the mouth's dark inside, and the eyes painted in the body's own space.
-KIT.acid35 = KIT.acid35 == null ? ((typeof location !== 'undefined' && (/[?&]a35=([abc])/.exec(String(location.search)) || [])[1]) || null) : KIT.acid35;
-const W35 = { figs: [], scenes: typeof WeakSet !== 'undefined' ? new WeakSet() : null, err: null, lw: 1, ways: { a: 'the maw', b: 'the borer', c: 'the thorn' } };
+// (builder 35, redrawn by builder 37) ACID, THE MAW (AA.rxKit.acid35 = 'a'; off by default, so the game shows the old Acid; ?a35=a on the
+// page sets it). Stills only: nothing here moves, acts or changes stage.
+// A corrosive liquid holding the shape of a mouth: it rises out of a spreading pool, sags and drips at its edges, its teeth are drips caught
+// mid-fall, its hands are thick runs of liquid, its eyes are pits sunk under a brow of drip. Under it the wood is eaten: a bleached, pitted,
+// scorched ring with bubbles and thin fume drawn by the pen.
+// Each body is ONE closed skin: the shapes of a stage are melted into one field (smooth joins, the mouth and the eye pits carved out of it, the
+// teeth grown back in) and the skin is laid over that field (nets35), so nothing is a separate part. A skinned mesh on five spine bones (bound,
+// not posed). The pen is builder 30's (proj30, sil30, free30). The wash (mat35) is Water's kind: pale, uneven, pooled low and at the edges,
+// bare paper on the lit side, thin enough that the wood shows faintly; a sharper acid green only at the mouth's rim and in the drips.
+KIT.acid35 = KIT.acid35 == null ? ((typeof location !== 'undefined' && (/[?&]a35=(a)/.exec(String(location.search)) || [])[1]) || null) : KIT.acid35;
+const W35 = { figs: [], scenes: typeof WeakSet !== 'undefined' ? new WeakSet() : null, err: null, lw: 1, ways: { a: 'the maw' } };
 /* shapes: each gives its distance, a centre and reach (to skip it when far), and how softly it joins (k) */
 const P35 = {
   ball(x, y, z, r, k) { return { c: [x, y, z], R: r, k: k == null ? 0.06 : k, f: (px, py, pz) => Math.hypot(px - x, py - y, pz - z) - r }; },
@@ -2297,149 +2295,171 @@ function nets35(F, bb, h) { const nx = Math.ceil((bb[3] - bb[0]) / h) + 1, ny = 
     if (s0 !== (V[i + nx * (j + 1 + ny * k)] < 0)) quad(C(i - 1, j, k - 1), C(i - 1, j, k), C(i, j, k), C(i, j, k - 1), !s0);
     if (s0 !== (V[i + nx * (j + ny * (k + 1))] < 0)) quad(C(i - 1, j - 1, k), C(i, j - 1, k), C(i, j, k), C(i - 1, j, k), !s0); }
   return { P, I }; }
-/* THE FIFTEEN FIGURES. Front to +z, standing on y = 0, about one unit to the top of a stage 3. */
-const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P35.cone, LR = f => [-1, 1].forEach(f);
-  /* the borer's head: a ball, a round mouth carved in along dir, a ring of teeth, pores down each side in place of eyes */
-  const lam = (o, c, R, dir) => { const dl = Math.hypot(dir[0], dir[1], dir[2]), d = dir.map(x => x / dl), up = [0, 1, 0], ux = up[1] * d[2] - up[2] * d[1], uy = up[2] * d[0] - up[0] * d[2], uz = up[0] * d[1] - up[1] * d[0], ul = Math.hypot(ux, uy, uz) || 1, u = [ux / ul, uy / ul, uz / ul], w = [d[1] * u[2] - d[2] * u[1], d[2] * u[0] - d[0] * u[2], d[0] * u[1] - d[1] * u[0]];
-    o.a(b(c[0], c[1], c[2], R, 0.07)); const mc = [0, 1, 2].map(i => c[i] + d[i] * R * 0.78), mr = R * 0.6; o.c(b(mc[0], mc[1], mc[2], mr, 0.02), 1);
-    for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * PI + 0.3, q = [0, 1, 2].map(j => u[j] * Math.cos(a) + w[j] * Math.sin(a)), p0 = [0, 1, 2].map(j => c[j] + d[j] * R * 0.74 + q[j] * R * 0.62), p1 = [0, 1, 2].map(j => c[j] + d[j] * R * 0.92 + q[j] * R * 0.2); o.a(cone(p0, p1, R * 0.11, R * 0.02, 0.012)); }
-    LR(s => { for (let j = 0; j < 3; j++) { const q = [0, 1, 2].map(i => u[i] * s * 0.8 + d[i] * (0.28 - 0.34 * j) + w[i] * (0.42 - 0.08 * j)), ql = Math.hypot(q[0], q[1], q[2]); o.dot([0, 1, 2].map(i => c[i] + q[i] / ql * R * 0.98), R * (0.11 - 0.02 * j)); } }); };
-  const rim = (o, x, z, R) => { const p = []; for (let i = 0; i < 9; i++) { const a = i / 9 * 2 * PI; p.push([x + R * Math.cos(a) * (1 + 0.12 * Math.sin(i * 2.3)), 0.03, z + R * 0.85 * Math.sin(a), 0.045 + 0.012 * Math.sin(i * 1.7)]); } o.a(t(p, 0.04, true)); };
-  /* the thorn's leg: out of the body, up over a knee, down to a point on the wood */
-  const leg = (o, s, p0, p1, p2, r) => { o.a(t([[s * p0[0], p0[1], p0[2], r], [s * p1[0], p1[1], p1[2], r * 0.8], [s * (p1[0] * 0.35 + p2[0] * 0.65), p2[1] + (p1[1] - p2[1]) * 0.42, p1[2] * 0.35 + p2[2] * 0.65, r * 0.5], [s * p2[0], p2[1], p2[2], 0.012]], 0.04)); o.etch(s * p2[0], p2[2], 0.15, 1); };
-  /* a tongue of fume rising off it: a bent flame, never a pair */
-  const lick = (o, x, y, z, hg, r) => o.a(t([[x, y, z, r], [x - 0.16 * hg, y + 0.42 * hg, z, r * 0.72], [x + 0.14 * hg, y + 0.78 * hg, z, r * 0.4], [x + 0.03 * hg, y + hg, z, 0.01]], 0.05));
+const hh35 = i => { const s = Math.sin(i * 12.9898 + 4.1) * 43758.5453; return s - Math.floor(s); };
+/* THE FIVE FIGURES. Front to +z, standing on y = 0, about one unit to the top of a stage 3. */
+const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P35.cone;
+  /* the pool it rises from: a flat lobed spill, never a neat disc */
+  const pool = (o, x, z, rx, rz, sd) => { o.a(e(x, 0, z, rx * 0.78, 0.06, rz * 0.78, 0.07)); for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * PI + hh35(sd + i) * 0.7, d = 0.6 + 0.26 * hh35(sd + i + 20), rr = 0.26 + 0.18 * hh35(sd + i + 40); o.a(e(x + Math.cos(a) * rx * d, 0, z + Math.sin(a) * rz * d, rx * rr, 0.042 + 0.02 * hh35(sd + i + 60), rz * rr, 0.07)); } o.pr = [rx, rz]; };
+  /* a drip caught mid-fall: a neck that thins, a bead at its end (painted the sharper green toward the bead) */
+  const drip = (o, x, y, z, len, r, lx, lz) => { lx = lx || 0; lz = lz || 0; o.d(t([[x, y, z, r], [x + lx * 0.35, y - len * 0.42, z + lz * 0.35, r * 0.55], [x + lx * 0.78, y - len * 0.8, z + lz * 0.78, r * 0.36]], 0.025), y, y - len); o.d(b(x + lx, y - len, z + lz, r * 0.64, 0.02), y, y - len); };
+  /* an arm as a thick run of liquid; its fingers are runs off the end (on the bench, they spread into the pool) */
+  const arm = (o, pts, fing) => { o.a(t(pts, 0.08)); const L = pts[pts.length - 1]; fing.forEach(v => o.a(t([[L[0], L[1], L[2], L[3] * 0.62], [L[0] + v[0] * 0.6, L[1] + v[1] * 0.6, L[2] + v[2] * 0.6, L[3] * 0.42], [L[0] + v[0], L[1] + v[1], L[2] + v[2], L[3] * (v[3] || 0.32)]], 0.035))); };
+  /* a tongue of fume rising off it: a bent flame */
+  const lick = (o, x, y, z, hg, r, s) => { s = s || 1; r *= 0.85; hg *= 0.62; o.a(t([[x, y, z, r], [x + 0.1 * hg, y + 0.3 * hg, z, r * 0.62], [x - 0.04 * hg * s + 0.18 * hg, y + 0.62 * hg, z, r * 0.42], [x + 0.3 * hg, y + 0.86 * hg, z, r * 0.28], [x + 0.2 * hg + 0.12 * hg * s, y + hg, z, 0.01]], 0.05)); };
   return {
     a: [
-      /* 1 a bead gaping straight up, one tooth: all want */
-      o => { o.pool(0, 0, 0.36, 0.30); o.a(b(0, 0.22, 0, 0.24, 0.08)); o.c(e(0, 0.44, 0.09, 0.17, 0.14, 0.17, 0.03), 1); o.a(cone([-0.03, 0.29, 0.2], [-0.03, 0.43, 0.2], 0.04, 0.008)); LR(s => o.eye(s * 0.13, 0.19, 0.03)); o.etch(0, 0, 0.44); },
-      /* 2 a toad: low and wide, a shut grin with two teeth over the lip, hands planted, eyes on top */
-      o => { o.pool(0, 0, 0.62, 0.48); o.a(e(0, 0.2, 0, 0.44, 0.25, 0.36, 0.1)); o.a(e(0.03, 0.4, 0.04, 0.2, 0.12, 0.2, 0.1)); lick(o, -0.06, 0.48, 0, 0.3, 0.085); LR(s => { o.a(t([[s * 0.34, 0.22, 0.12, 0.1], [s * 0.47, 0.13, 0.26, 0.09], [s * 0.45, 0.06, 0.37, 0.1]], 0.06)); o.eye(s * 0.08 + 0.03, 0.4, 0.028); });
-        o.c(t([[-0.4, 0.27, 0.16, 0.02], [-0.22, 0.18, 0.3, 0.03], [0, 0.15, 0.345, 0.036], [0.22, 0.18, 0.3, 0.03], [0.4, 0.27, 0.16, 0.02]], 0.012), 1); LR(s => o.a(cone([s * 0.13, 0.14, 0.33], [s * 0.13, 0.25, 0.345], 0.036, 0.006))); o.etch(0, 0, 0.74); },
-      /* 3 sits back and feeds itself: the mouth wide, drip teeth, one hand at its lip, one on its belly */
-      o => { o.pool(0, 0, 0.64, 0.5); o.a(e(0, 0.3, 0, 0.42, 0.32, 0.36, 0.1)); o.a(e(0, 0.64, 0.02, 0.37, 0.3, 0.32, 0.12)); o.a(t([[-0.22, 0.89, 0.2, 0.05], [0, 0.875, 0.27, 0.055], [0.22, 0.89, 0.2, 0.05]], 0.05));
-        o.c(e(0, 0.6, 0.31, 0.25, 0.17, 0.22, 0.03), 1); [-0.18, -0.07, 0.05, 0.17].forEach((x, i) => o.a(cone([x, 0.76 - 0.03 * Math.abs(x) / 0.18, 0.29], [x, 0.63 + (i % 2) * 0.03, 0.31], 0.04, 0.006))); LR(s => o.a(cone([s * 0.14, 0.44, 0.3], [s * 0.15, 0.57, 0.33], 0.04, 0.006)));
-        o.a(t([[-0.38, 0.52, 0.05, 0.11], [-0.58, 0.32, 0.2, 0.09], [-0.44, 0.14, 0.34, 0.1]], 0.06)); o.a(t([[0.36, 0.56, 0.05, 0.11], [0.62, 0.6, 0.2, 0.09], [0.42, 0.7, 0.36, 0.085]], 0.06)); [0.64, 0.7, 0.76].forEach(y => o.a(cone([0.42, y, 0.36], [0.3, y - 0.02, 0.42], 0.04, 0.015)));
-        LR(s => o.eye(s * 0.1, 0.82, 0.03)); lick(o, -0.2, 0.86, -0.05, 0.3, 0.085); lick(o, 0.04, 0.9, -0.06, 0.44, 0.09); lick(o, 0.24, 0.84, -0.05, 0.2, 0.07); o.fume(0.12, 1.36, -0.05, 0.22, 0.05); o.etch(0, 0, 0.78); },
-      /* 4 down on its knuckles, jaw thrust out, drooling onto the wood, spines of fume on its shoulders */
-      o => { o.pool(0, 0.08, 0.74, 0.6); o.a(e(0, 0.5, -0.08, 0.44, 0.38, 0.38, 0.1)); o.a(e(0, 0.52, 0.3, 0.35, 0.27, 0.28, 0.12)); LR(s => { o.a(b(s * 0.38, 0.76, -0.04, 0.2, 0.1)); o.a(t([[s * 0.44, 0.74, 0, 0.13], [s * 0.7, 0.42, 0.22, 0.11], [s * 0.58, 0.1, 0.46, 0.15]], 0.07)); o.eye(s * 0.11, 0.7, 0.028, { rot: -s * 0.5, sy: 0.6 }); }); lick(o, -0.42, 0.9, -0.08, 0.46, 0.1); lick(o, -0.2, 0.9, -0.14, 0.24, 0.08); lick(o, 0.22, 0.9, -0.14, 0.34, 0.085); lick(o, 0.44, 0.9, -0.08, 0.22, 0.08);
-        o.a(t([[-0.24, 0.76, 0.34, 0.055], [0, 0.74, 0.44, 0.06], [0.24, 0.76, 0.34, 0.055]], 0.05));
-        o.c(e(0, 0.52, 0.52, 0.27, 0.12, 0.2, 0.03), 1); [-0.2, -0.1, 0, 0.1, 0.2].forEach((x, i) => o.a(cone([x, 0.4, 0.5 - Math.abs(x) * 0.5], [x, 0.53 + (i % 2) * 0.03, 0.56 - Math.abs(x) * 0.5], 0.04, 0.006))); [-0.15, 0.15].forEach(x => o.a(cone([x, 0.64, 0.46], [x, 0.54, 0.5], 0.035, 0.006)));
-        o.a(t([[0.1, 0.41, 0.56, 0.03], [0.11, 0.2, 0.6, 0.018], [0.12, 0.04, 0.6, 0.05]], 0.03)); o.fume(-0.36, 1.4, -0.1, 0.24, 0.05); o.etch(0, 0.08, 0.9); },
-      /* 5 a great heap with a cavern for a mouth, hands spread on the bench, a crown of rising tongues */
-      o => { o.pool(0, 0.05, 1.18, 0.72); o.a(e(0, 0.42, 0, 0.78, 0.44, 0.5, 0.12)); o.a(e(0, 0.78, 0, 0.5, 0.26, 0.38, 0.14));
-        LR(s => { o.a(t([[s * 0.7, 0.62, 0, 0.17], [s * 1.04, 0.38, 0.2, 0.13], [s * 0.98, 0.1, 0.46, 0.16]], 0.08)); [-0.12, 0, 0.12].forEach(dx => o.a(cone([s * 0.98 + dx, 0.1, 0.5], [s * 0.98 + dx * 1.8, 0.02, 0.72], 0.06, 0.012, 0.03))); o.eye(s * 0.2, 0.92, 0.032, { rot: -s * 0.45, sy: 0.6 }); });
-        o.a(t([[-0.3, 0.98, 0.2, 0.06], [0, 0.96, 0.3, 0.07], [0.3, 0.98, 0.2, 0.06]], 0.05)); [[-0.5, 0.3], [-0.3, 0.52], [-0.08, 0.36], [0.14, 0.66], [0.36, 0.3], [0.54, 0.42]].forEach(q => lick(o, q[0], 0.94 - Math.abs(q[0]) * 0.3, -0.1, q[1], 0.1));
-        o.c(e(0, 0.5, 0.42, 0.54, 0.22, 0.3, 0.035), 1); [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42].forEach((x, i) => o.a(cone([x, 0.72 - 0.1 * Math.abs(x), 0.42 - 0.3 * Math.abs(x)], [x, 0.54 + (i % 2) * 0.04, 0.46 - 0.3 * Math.abs(x)], 0.05, 0.007))); [-0.34, -0.12, 0.12, 0.34].forEach(x => o.a(cone([x, 0.29, 0.44 - 0.2 * Math.abs(x)], [x, 0.45, 0.49 - 0.2 * Math.abs(x)], 0.05, 0.007)));
-        o.fume(0.2, 1.66, -0.1, 0.26, 0.05); o.fume(-0.34, 1.5, -0.1, 0.2, 0.05); o.etch(0, 0.05, 1.36); }],
-    b: [
-      /* 1 a grub: a comma on the wood, its head just lifted, tasting */
-      o => { o.pool(0, 0, 0.4, 0.24); o.a(t([[-0.27, 0.06, 0.04, 0.045], [-0.1, 0.09, 0.1, 0.09], [0.08, 0.1, 0.07, 0.11], [0.19, 0.17, 0.02, 0.1], [0.22, 0.28, 0.04, 0.09]], 0.05)); lam(o, [0.22, 0.31, 0.07], 0.115, [0.25, 0.25, 1]); o.etch(0, 0, 0.44); },
-      /* 2 up out of its first hole like a question, head cocked */
-      o => { o.pool(0, 0, 0.3, 0.26); rim(o, 0, 0, 0.24); o.a(t([[0, 0, 0, 0.13], [0, 0.25, 0, 0.11], [-0.07, 0.5, 0.02, 0.1], [0.04, 0.7, 0.06, 0.1], [0.17, 0.73, 0.13, 0.1]], 0.05)); lam(o, [0.22, 0.7, 0.19], 0.15, [0.5, -0.25, 1]); o.etch(0, 0, 0.42); },
-      /* 3 an S reared to strike, mouth to the front; its tail hooks up out of a second hole */
-      o => { o.pool(0.2, 0.05, 0.62, 0.3); rim(o, -0.1, 0, 0.27); rim(o, 0.52, 0.1, 0.18); o.a(t([[-0.1, 0, 0, 0.15], [-0.15, 0.3, 0, 0.135], [0.1, 0.55, 0.03, 0.125], [0.17, 0.8, 0.05, 0.12], [-0.02, 1.0, 0.1, 0.12], [-0.12, 0.99, 0.2, 0.125]], 0.05)); lam(o, [-0.17, 0.95, 0.27], 0.175, [-0.3, -0.2, 1]);
-        o.a(t([[0.52, 0, 0.1, 0.09], [0.6, 0.2, 0.12, 0.07], [0.54, 0.38, 0.14, 0.04], [0.43, 0.42, 0.14, 0.012]], 0.04)); o.etch(0.2, 0.05, 0.76); },
-      /* 4 a hood of drips spread behind the head, the body laid in one coil round its hole */
-      o => { o.pool(0, 0, 0.56, 0.5); { const p = []; for (let i = 0; i < 8; i++) { const a = i / 8 * 2 * PI; p.push([0.36 * Math.cos(a), 0.12, 0.33 * Math.sin(a), 0.13]); } o.a(t(p, 0.05, true)); }
-        o.a(t([[0, 0.12, -0.33, 0.13], [0.06, 0.42, -0.2, 0.13], [0, 0.72, -0.06, 0.13], [-0.06, 1.02, 0, 0.13], [0, 1.26, 0.08, 0.13], [0.02, 1.3, 0.2, 0.135]], 0.05)); o.a(e(0, 1.0, -0.04, 0.4, 0.3, 0.07, 0.1)); [-0.34, -0.2, 0.2, 0.34].forEach((x, i) => o.a(cone([x, 0.84 + 0.06 * (i % 2), -0.04], [x * 1.08, 0.62 + 0.08 * (i % 2), -0.02], 0.05, 0.01, 0.03)));
-        lam(o, [0.02, 1.27, 0.3], 0.19, [0, -0.3, 1]); o.etch(0, 0, 0.7); },
-      /* 5 through the bench and out again: an arch, the great neck with fume spines, the tail far off */
-      o => { o.pool(-0.05, 0.05, 1.15, 0.4); rim(o, -0.95, 0, 0.2); rim(o, -0.38, 0.08, 0.22); rim(o, 0.02, 0.1, 0.3); rim(o, 0.84, 0.05, 0.17);
-        o.a(t([[-0.95, 0, 0, 0.14], [-0.92, 0.3, 0, 0.15], [-0.66, 0.5, 0.03, 0.16], [-0.42, 0.32, 0.06, 0.16], [-0.38, 0, 0.08, 0.16]], 0.05));
-        o.a(t([[0.02, 0, 0.1, 0.2], [0.04, 0.4, 0.05, 0.185], [0.32, 0.76, 0, 0.175], [0.38, 1.15, 0, 0.165], [0.13, 1.46, 0.06, 0.16], [-0.08, 1.42, 0.2, 0.165]], 0.05)); lam(o, [-0.15, 1.36, 0.29], 0.225, [-0.35, -0.3, 1]);
-        [[0.2, 0.5, 0.42, 0.44], [0.5, 0.8, 0.74, 0.74], [0.54, 1.12, 0.82, 1.2], [0.36, 1.44, 0.56, 1.66]].forEach(q => o.a(cone([q[0], q[1], 0], [q[2], q[3], -0.02], 0.07, 0.01, 0.04)));
-        o.a(t([[0.84, 0, 0.05, 0.1], [0.92, 0.25, 0.07, 0.08], [0.85, 0.46, 0.08, 0.04], [0.74, 0.5, 0.08, 0.012]], 0.04)); o.etch(-0.05, 0.05, 1.3); }],
-    c: [
-      /* 1 a drop that has just landed, caught at the top of its splash; one eye */
-      o => { o.pool(0, 0, 0.34, 0.28); o.a(e(0, 0.17, 0, 0.21, 0.18, 0.2, 0.07)); o.a(cone([0, 0.3, 0], [0.02, 0.56, 0], 0.07, 0.01, 0.04)); LR(s => o.a(cone([s * 0.12, 0.27, 0], [s * 0.3, 0.45, 0], 0.06, 0.01, 0.04))); o.eye(0, 0.18, 0.075, { kind: 1 }); o.etch(0, 0, 0.4); },
-      /* 2 up on three points, testing the wood, two horns */
-      o => { o.a(b(0, 0.38, 0, 0.2, 0.06)); LR(s => { leg(o, s, [0.14, 0.32, 0.08], [0.36, 0.42, 0.2], [0.42, 0, 0.3], 0.07); o.a(cone([s * 0.1, 0.54, 0], [s * 0.2, 0.76, -0.02], 0.06, 0.01, 0.04)); }); leg(o, 1, [0, 0.32, -0.14], [0.02, 0.44, -0.36], [0.03, 0, -0.5], 0.07);
-        o.eye(0, 0.4, 0.085, { kind: 1 }); LR(s => o.a(cone([s * 0.05, 0.23, 0.14], [s * 0.035, 0.12, 0.17], 0.03, 0.005))); },
-      /* 3 a body slung between four arched legs, two scythes up and hooked forward, thorns on its back */
-      o => { o.a(e(0, 0.46, 0, 0.27, 0.21, 0.25, 0.06)); LR(s => { leg(o, s, [0.2, 0.43, 0.1], [0.52, 0.66, 0.25], [0.64, 0, 0.38], 0.075); leg(o, s, [0.2, 0.43, -0.08], [0.54, 0.6, -0.22], [0.74, 0, -0.32], 0.07);
-          o.a(t([[s * 0.16, 0.57, 0.12, 0.075], [s * 0.36, 0.88, 0.22, 0.06], [s * 0.24, 1.1, 0.38, 0.04], [s * 0.1, 0.98, 0.5, 0.008]], 0.04)); o.a(cone([s * 0.05, 0.3, 0.2], [s * 0.03, 0.17, 0.24], 0.035, 0.005)); });
-        [[0, 0.64, -0.06, 0, 0.9, -0.14], [-0.14, 0.6, -0.1, -0.22, 0.8, -0.2], [0.14, 0.6, -0.1, 0.22, 0.8, -0.2]].forEach(q => o.a(cone([q[0], q[1], q[2]], [q[3], q[4], q[5]], 0.06, 0.008, 0.04))); o.eye(0, 0.48, 0.1, { kind: 1 }); },
-      /* 4 reared like a mantis: the hind body low, a waist, the chest up; one scythe raised to strike, the other already reaching down */
-      o => { o.a(e(0, 0.4, -0.1, 0.27, 0.2, 0.33, 0.07)); o.a(t([[0, 0.5, 0, 0.12], [0, 0.75, 0.08, 0.09], [0, 0.95, 0.1, 0.12]], 0.05)); o.a(e(0, 1.02, 0.1, 0.2, 0.19, 0.17, 0.06));
-        LR(s => { leg(o, s, [0.2, 0.4, 0.02], [0.5, 0.64, 0.18], [0.62, 0, 0.32], 0.075); leg(o, s, [0.2, 0.4, -0.22], [0.54, 0.56, -0.36], [0.76, 0, -0.5], 0.07); o.a(cone([s * 0.14, 0.55, -0.25], [s * 0.26, 0.82, -0.42], 0.06, 0.008, 0.04)); o.a(cone([s * 0.05, 0.88, 0.22], [s * 0.03, 0.72, 0.3], 0.04, 0.005)); o.eye(s * 0.14, 1.13, 0.028); });
-        o.a(t([[-0.16, 1.1, 0.12, 0.075], [-0.5, 1.42, 0.16, 0.06], [-0.46, 1.78, 0.3, 0.045], [-0.22, 1.58, 0.5, 0.008]], 0.04)); o.a(t([[0.16, 1.08, 0.12, 0.075], [0.52, 1.18, 0.3, 0.06], [0.58, 0.86, 0.56, 0.045], [0.36, 0.6, 0.66, 0.008]], 0.04));
-        o.a(cone([0, 1.18, 0.06], [0.04, 1.42, 0], 0.06, 0.008, 0.04)); o.eye(0, 1.03, 0.095, { kind: 1 }); },
-      /* 5 the whole splash: six legs, a crown of thorns, the scythes thrown wide */
-      o => { o.a(e(0, 0.62, 0, 0.37, 0.31, 0.33, 0.07)); LR(s => { leg(o, s, [0.28, 0.56, 0.16], [0.66, 0.84, 0.36], [0.82, 0, 0.56], 0.09); leg(o, s, [0.3, 0.56, 0], [0.78, 0.8, 0], [1.06, 0, 0.02], 0.085); leg(o, s, [0.28, 0.56, -0.16], [0.68, 0.74, -0.34], [0.9, 0, -0.5], 0.08);
-          o.a(t([[s * 0.3, 0.78, 0.16, 0.095], [s * 0.8, 1.18, 0.28, 0.075], [s * 1.02, 1.5, 0.48, 0.05], [s * 0.72, 1.24, 0.74, 0.008]], 0.05)); o.a(cone([s * 0.07, 0.4, 0.26], [s * 0.04, 0.2, 0.32], 0.05, 0.006)); o.eye(s * 0.17, 0.86, 0.035); });
-        [-0.3, -0.15, 0, 0.15, 0.3].forEach((x, i) => o.a(t([[x, 0.86, -0.08, 0.08], [x * 1.5, 1.2 - Math.abs(x) * 0.5, -0.14, 0.05], [x * 1.7 + (i % 2 ? 0.04 : -0.04), 1.58 - Math.abs(x) * 1.1, -0.16, 0.008]], 0.05))); o.eye(0, 0.64, 0.13, { kind: 1 }); }]
+      /* 1 a bead that is nearly all open mouth, gaping up, wide pits for eyes looking up: all want */
+      o => { pool(o, 0.02, 0.03, 0.46, 0.38, 1); o.a(e(0, 0.14, 0.02, 0.37, 0.16, 0.33, 0.09)); o.a(b(-0.02, 0.3, 0, 0.28, 0.08)); o.a(e(0.16, 0.1, 0.14, 0.17, 0.1, 0.15, 0.06));
+        o.c(e(-0.01, 0.5, 0.15, 0.28, 0.21, 0.25, 0.03), 1); o.a(t([[-0.27, 0.42, 0, 0.045], [-0.08, 0.55, -0.1, 0.07], [0.14, 0.53, -0.09, 0.06], [0.28, 0.43, 0.02, 0.045]], 0.05)); o.a(t([[-0.24, 0.42, 0.16, 0.035], [-0.1, 0.37, 0.29, 0.05], [0.08, 0.38, 0.29, 0.045], [0.24, 0.43, 0.15, 0.035]], 0.04));
+        drip(o, -0.13, 0.55, -0.05, 0.12, 0.034, 0.01, 0.07); drip(o, 0.0, 0.58, -0.07, 0.17, 0.036, 0, 0.08); drip(o, 0.13, 0.55, -0.05, 0.09, 0.03, -0.01, 0.06); o.a(cone([-0.07, 0.35, 0.25], [-0.07, 0.43, 0.24], 0.03, 0.006)); o.a(cone([0.09, 0.36, 0.25], [0.1, 0.42, 0.23], 0.026, 0.006));
+        drip(o, 0.06, 0.37, 0.31, 0.17, 0.035, 0.01, 0.04); drip(o, -0.15, 0.39, 0.27, 0.1, 0.03, -0.01, 0.03);
+        o.eye(-0.115, 0.235, 0.062, { kind: 2, sy: 1.05, rot: 0.15, gl: 1.75 }); o.eye(0.105, 0.235, 0.06, { kind: 2, sy: 1.05, rot: -0.15, gl: 1.4 });
+        o.fume(0.02, 0.62, -0.04, 0.2, 1); o.etch(0.02, 0.03, 0.76); },
+      /* 2 a slumped mouth-heap, lopsided, a sly grin that droops at one corner, lidded pits looking aside */
+      o => { pool(o, 0.04, 0.02, 0.74, 0.54, 11); o.a(e(0.02, 0.18, 0, 0.5, 0.22, 0.38, 0.1)); o.a(e(-0.1, 0.38, -0.02, 0.32, 0.21, 0.28, 0.1)); o.a(e(0.42, 0.11, 0.06, 0.24, 0.12, 0.24, 0.08)); o.a(e(-0.42, 0.1, 0.1, 0.18, 0.09, 0.2, 0.08));
+        o.c(t([[-0.32, 0.3, 0.2, 0.035], [-0.1, 0.27, 0.3, 0.085], [0.14, 0.22, 0.3, 0.08], [0.34, 0.15, 0.22, 0.035]], 0.02), 1);
+        [[-0.22, 0.35, 0.25, 0.08, 0.028, 0.01], [-0.08, 0.37, 0.29, 0.13, 0.032, -0.01], [0.04, 0.34, 0.3, 0.06, 0.024, 0.0], [0.15, 0.31, 0.29, 0.11, 0.03, 0.02], [0.25, 0.25, 0.25, 0.06, 0.024, 0]].forEach(q => drip(o, q[0], q[1], q[2], q[3], q[4], q[5], 0.03));
+        drip(o, 0.06, 0.15, 0.37, 0.12, 0.04, 0.02, 0.05); drip(o, 0.33, 0.11, 0.28, 0.08, 0.035, 0.02, 0.04);
+        o.a(t([[-0.36, 0.5, 0.12, 0.05], [-0.14, 0.54, 0.22, 0.062], [0.08, 0.49, 0.24, 0.052], [0.24, 0.41, 0.2, 0.04]], 0.05)); drip(o, 0.12, 0.47, 0.27, 0.08, 0.03, 0.01, 0.02);
+        o.eye(-0.18, 0.445, 0.05, { kind: 2, sy: 0.5, rot: -0.12, gl: 0.1 }); o.eye(0.04, 0.425, 0.05, { kind: 2, sy: 0.44, rot: -0.22, gl: 0.1 });
+        o.a(t([[-0.42, 0.28, 0.06, 0.1], [-0.58, 0.16, 0.18, 0.09], [-0.6, 0.05, 0.32, 0.1]], 0.06)); drip(o, -0.56, 0.16, 0.22, 0.08, 0.03, 0, 0.03);
+        lick(o, -0.14, 0.53, -0.06, 0.26, 0.075); o.fume(-0.08, 0.84, -0.06, 0.24, 1); o.etch(0.04, 0.02, 1.16); },
+      /* 3 sits back sated, one hand at its lip dripping in what it ate, the other a run down into the pool; lidded pits looking down */
+      o => { pool(o, 0, 0, 0.74, 0.56, 21); o.a(e(0, 0.28, 0, 0.47, 0.3, 0.38, 0.1)); o.a(e(0.02, 0.64, -0.05, 0.36, 0.3, 0.3, 0.12)); o.a(e(-0.36, 0.16, 0.12, 0.22, 0.15, 0.22, 0.08)); o.a(e(0.3, 0.12, 0.16, 0.2, 0.11, 0.2, 0.08));
+        o.c(e(0.02, 0.6, 0.27, 0.24, 0.17, 0.21, 0.03), 1); o.a(t([[-0.24, 0.75, 0.16, 0.045], [-0.02, 0.79, 0.26, 0.06], [0.24, 0.74, 0.17, 0.05]], 0.05));
+        [[-0.17, 0.77, 0.25, 0.11, 0.03, 0.01], [-0.08, 0.79, 0.28, 0.07, 0.028, 0], [0.02, 0.79, 0.29, 0.15, 0.033, -0.01], [0.11, 0.78, 0.28, 0.06, 0.026, 0], [0.19, 0.75, 0.24, 0.1, 0.03, 0.01]].forEach(q => drip(o, q[0], q[1], q[2], q[3], q[4], q[5], 0.03));
+        o.a(cone([-0.12, 0.42, 0.3], [-0.11, 0.5, 0.33], 0.035, 0.008)); o.a(cone([0.08, 0.43, 0.31], [0.1, 0.48, 0.34], 0.03, 0.008)); drip(o, -0.04, 0.44, 0.38, 0.2, 0.036, 0.01, 0.05);
+        arm(o, [[-0.36, 0.56, 0.04, 0.115], [-0.58, 0.38, 0.16, 0.1], [-0.54, 0.14, 0.32, 0.12], [-0.52, 0.04, 0.4, 0.12]], [[-0.16, -0.02, 0.1], [-0.03, -0.02, 0.2], [0.1, -0.02, 0.15, 0.4]]);
+        arm(o, [[0.34, 0.56, 0.02, 0.115], [0.6, 0.48, 0.16, 0.095], [0.52, 0.65, 0.34, 0.09], [0.32, 0.68, 0.4, 0.085]], [[-0.12, -0.03, 0.02], [-0.1, -0.09, 0.04]]);
+        drip(o, 0.62, 0.45, 0.16, 0.16, 0.04, 0.02, 0); drip(o, 0.24, 0.6, 0.43, 0.12, 0.03, 0, 0.02);
+        o.a(t([[-0.24, 0.92, 0.17, 0.045], [-0.02, 0.95, 0.24, 0.055], [0.2, 0.91, 0.2, 0.045]], 0.05)); drip(o, -0.16, 0.9, 0.23, 0.07, 0.028, 0, 0.02);
+        o.eye(-0.11, 0.86, 0.048, { kind: 2, sy: 0.55, rot: 0.1, gl: -1.9 }); o.eye(0.1, 0.855, 0.048, { kind: 2, sy: 0.55, rot: -0.12, gl: -1.6 });
+        lick(o, -0.14, 0.9, -0.1, 0.34, 0.08); lick(o, 0.12, 0.93, -0.12, 0.46, 0.085, -1); o.fume(0.16, 1.42, -0.12, 0.24, 1); o.fume(-0.2, 1.26, -0.1, 0.18, -1); o.etch(0, 0, 1.22); },
+      /* 4 down on its knuckles, jaw thrust out, drool running to the pool; slanted pits glaring down: ravenous */
+      o => { pool(o, 0, 0.1, 0.84, 0.64, 31); o.a(e(0, 0.48, -0.1, 0.44, 0.36, 0.38, 0.12)); o.a(e(0.04, 0.45, 0.25, 0.36, 0.26, 0.28, 0.12)); o.a(e(-0.32, 0.2, -0.06, 0.3, 0.2, 0.3, 0.1));
+        arm(o, [[-0.36, 0.66, 0, 0.13], [-0.68, 0.46, 0.2, 0.11], [-0.6, 0.16, 0.44, 0.13], [-0.56, 0.05, 0.52, 0.13]], [[-0.15, -0.03, 0.12], [0, -0.03, 0.2], [0.12, -0.03, 0.15, 0.4]]);
+        arm(o, [[0.38, 0.68, -0.02, 0.13], [0.74, 0.52, 0.14, 0.11], [0.66, 0.2, 0.4, 0.13], [0.62, 0.05, 0.5, 0.14]], [[0.17, -0.03, 0.08], [0.05, -0.03, 0.21], [-0.08, -0.03, 0.16, 0.42]]);
+        drip(o, -0.69, 0.42, 0.2, 0.18, 0.042, -0.01, 0); drip(o, 0.75, 0.48, 0.14, 0.12, 0.038, 0.01, 0);
+        o.c(e(0.04, 0.45, 0.5, 0.28, 0.15, 0.22, 0.03), 1); o.a(t([[-0.26, 0.63, 0.36, 0.055], [0.02, 0.63, 0.47, 0.065], [0.3, 0.6, 0.34, 0.05]], 0.05));
+        [[-0.2, 0.63, 0.1], [-0.11, 0.64, 0.07], [-0.02, 0.64, 0.17], [0.08, 0.64, 0.06], [0.17, 0.62, 0.13], [0.25, 0.59, 0.06]].forEach((q, i) => drip(o, q[0], q[1], 0.5 - 0.42 * Math.abs(q[0]), q[2], 0.03 + 0.006 * (i % 2), (i % 3 - 1) * 0.01, 0.03));
+        [-0.15, 0.03, 0.2].forEach((x, i) => o.a(cone([x, 0.3, 0.5 - 0.4 * Math.abs(x)], [x + 0.01, 0.37 + 0.03 * (i % 2), 0.53 - 0.4 * Math.abs(x)], 0.034, 0.007)));
+        o.d(t([[0.12, 0.32, 0.6, 0.036], [0.13, 0.18, 0.66, 0.022], [0.14, 0.04, 0.68, 0.05]], 0.03), 0.32, 0.0); drip(o, -0.1, 0.32, 0.56, 0.16, 0.036, 0, 0.03);
+        o.a(t([[-0.32, 0.84, 0.16, 0.06], [-0.06, 0.75, 0.36, 0.066], [0.08, 0.75, 0.36, 0.066], [0.34, 0.83, 0.14, 0.06]], 0.05)); drip(o, -0.16, 0.77, 0.32, 0.07, 0.03, 0, 0.02); drip(o, 0.21, 0.77, 0.3, 0.05, 0.026);
+        o.eye(-0.15, 0.71, 0.05, { kind: 2, sy: 0.72, rot: -0.45, gl: -1.3 }); o.eye(0.16, 0.71, 0.05, { kind: 2, sy: 0.72, rot: 0.45, gl: -1.8 });
+        lick(o, -0.42, 0.88, -0.1, 0.44, 0.1); lick(o, -0.18, 0.9, -0.16, 0.26, 0.08, -1); lick(o, 0.22, 0.9, -0.16, 0.34, 0.085); o.fume(-0.36, 1.38, -0.12, 0.24, 1); o.fume(0.26, 1.3, -0.14, 0.2, -1); o.etch(0, 0.1, 1.34); },
+      /* 5 a great heap: a cavern for a mouth, runs spread wide on the bench, small pits deep under a heavy brow, a crown of rising tongues */
+      o => { pool(o, 0, 0.06, 1.26, 0.8, 51); o.a(e(0, 0.42, 0, 0.8, 0.44, 0.52, 0.14)); o.a(e(-0.06, 0.8, -0.05, 0.52, 0.27, 0.4, 0.14)); o.a(e(0.62, 0.2, 0.12, 0.34, 0.22, 0.36, 0.1)); o.a(e(-0.68, 0.17, 0.08, 0.3, 0.17, 0.32, 0.1));
+        arm(o, [[-0.7, 0.62, 0, 0.17], [-1.04, 0.38, 0.22, 0.14], [-0.98, 0.1, 0.5, 0.17], [-0.96, 0.04, 0.58, 0.16]], [[-0.2, -0.02, 0.1], [-0.08, -0.02, 0.24], [0.06, -0.02, 0.24, 0.38], [0.18, -0.02, 0.14, 0.4]]);
+        arm(o, [[0.7, 0.66, 0, 0.17], [1.06, 0.48, 0.16, 0.14], [1.02, 0.14, 0.44, 0.17], [0.98, 0.04, 0.54, 0.17]], [[0.22, -0.02, 0.06], [0.1, -0.02, 0.22], [-0.06, -0.02, 0.22, 0.4]]);
+        drip(o, -1.05, 0.34, 0.22, 0.2, 0.05, -0.01, 0); drip(o, 1.07, 0.44, 0.16, 0.14, 0.046, 0.01, 0); drip(o, -0.52, 0.32, 0.4, 0.14, 0.04, 0, 0.03);
+        o.c(e(0, 0.48, 0.44, 0.56, 0.25, 0.32, 0.035), 1); o.a(t([[-0.52, 0.66, 0.22, 0.06], [-0.2, 0.75, 0.4, 0.075], [0.18, 0.74, 0.41, 0.075], [0.54, 0.64, 0.2, 0.06]], 0.05));
+        [[-0.44, 0.08], [-0.33, 0.15], [-0.2, 0.1], [-0.08, 0.22], [0.05, 0.12], [0.17, 0.19], [0.3, 0.08], [0.42, 0.14]].forEach((q, i) => { const x = q[0]; drip(o, x, 0.73 - 0.12 * Math.abs(x), 0.46 - 0.32 * Math.abs(x), q[1], 0.04 + 0.008 * (i % 3), (i % 3 - 1) * 0.015, 0.035); });
+        [-0.32, -0.1, 0.14, 0.34].forEach((x, i) => o.a(cone([x, 0.25, 0.46 - 0.24 * Math.abs(x)], [x - 0.01, 0.34 + 0.04 * (i % 2), 0.5 - 0.24 * Math.abs(x)], 0.045, 0.008)));
+        o.d(t([[-0.24, 0.26, 0.56, 0.042], [-0.25, 0.13, 0.62, 0.026], [-0.26, 0.04, 0.66, 0.06]], 0.03), 0.26, 0.0); drip(o, 0.22, 0.26, 0.56, 0.14, 0.04, 0, 0.04);
+        o.a(t([[-0.42, 1.0, 0.16, 0.075], [-0.12, 0.93, 0.33, 0.085], [0.12, 0.94, 0.33, 0.085], [0.42, 1.0, 0.15, 0.075]], 0.05)); drip(o, -0.3, 0.95, 0.27, 0.08, 0.034); drip(o, 0.05, 0.9, 0.38, 0.06, 0.03, 0, 0.02); drip(o, 0.32, 0.95, 0.27, 0.1, 0.034, 0.01);
+        o.eye(-0.22, 0.87, 0.042, { kind: 2, sy: 0.62, rot: -0.3, gl: -1.57 }); o.eye(0.22, 0.87, 0.042, { kind: 2, sy: 0.62, rot: 0.3, gl: -1.57 });
+        [[-0.5, 0.3, 1], [-0.3, 0.52, -1], [-0.08, 0.38, 1], [0.14, 0.7, -1], [0.38, 0.32, 1], [0.54, 0.44, -1]].forEach(q => lick(o, q[0], 0.95 - Math.abs(q[0]) * 0.3, -0.12, q[1], 0.1, q[2]));
+        o.fume(0.16, 1.7, -0.14, 0.28, 1); o.fume(-0.34, 1.5, -0.12, 0.22, -1); o.fume(0.5, 1.4, -0.12, 0.18, 1); o.etch(0, 0.06, 1.92); }]
   }; })();
-/* one figure's skin, eyes and marks, worked out once and kept */
+/* one figure's skin, eye pits, marks and the pen's bubbles and fume, worked out once and kept */
 const G35 = {};
-function geo35(T, stage, way) { const key = way + stage; if (G35[key]) return G35[key]; const ops = [], eyes = [], dots = [], fumes = [], etch = [];
-  const o = { a: p => { ops.push(p); return p; }, c: (p, m) => { p.cut = true; p.m = m; ops.push(p); return p; }, pool: (x, z, rx, rz) => ops.push(P35.ell(x, 0, z, rx, 0.065, rz, 0.08)), eye: (x, y, r, q) => eyes.push(Object.assign({ x, y, r }, q)), dot: (p, r) => dots.push({ p, r }), fume: (x, y, z, len, amp) => fumes.push([x, y, z, len, amp]), etch: (x, z, r, dk) => etch.push([x, z, r, dk || 0]) };
-  SPEC35[way][stage - 1](o); const bb = [1e9, 0, 1e9, -1e9, -1e9, -1e9]; ops.forEach(p => { if (p.cut) return; bb[0] = Math.min(bb[0], p.c[0] - p.R); bb[2] = Math.min(bb[2], p.c[2] - p.R); bb[3] = Math.max(bb[3], p.c[0] + p.R); bb[4] = Math.max(bb[4], p.c[1] + p.R); bb[5] = Math.max(bb[5], p.c[2] + p.R); });
-  const h = Math.max(0.0125, Math.max(bb[3] - bb[0], bb[4], bb[5] - bb[2]) / 120), pad = 3 * h; bb[0] -= pad; bb[1] = -pad; bb[2] -= pad; bb[3] += pad; bb[4] += pad; bb[5] += pad;
-  const F = field35(ops), N = nets35(F, bb, h), P = N.P, nv = P.length / 3, H = bb[4] - pad, nor = new Float32Array(nv * 3), aq = new Float32Array(nv), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), ep = h * 0.7, cuts = ops.filter(p => p.cut && p.m);
+function geo35(T, stage, way) { const key = way + stage; if (G35[key]) return G35[key]; const ops = [], eyes = [], fumes = [], etch = [], drips = [];
+  const o = { a: p => { ops.push(p); return p; }, c: (p, m) => { p.cut = true; p.m = m; ops.push(p); return p; }, d: (p, y0, y1) => { p.y0 = y0; p.y1 = y1; drips.push(p); ops.push(p); return p; }, eye: (x, y, r, q) => eyes.push(Object.assign({ x, y, r }, q)), fume: (x, y, z, len, s) => fumes.push([x, y, z, len, s]), etch: (x, z, r) => etch.push([x, z, r]) };
+  SPEC35[way][stage - 1](o); const pr = o.pr || [0.5, 0.4], bb = [1e9, 0, 1e9, -1e9, -1e9, -1e9]; ops.forEach(p => { if (p.cut) return; bb[0] = Math.min(bb[0], p.c[0] - p.R); bb[2] = Math.min(bb[2], p.c[2] - p.R); bb[3] = Math.max(bb[3], p.c[0] + p.R); bb[4] = Math.max(bb[4], p.c[1] + p.R); bb[5] = Math.max(bb[5], p.c[2] + p.R); });
+  const h = Math.max(0.0115, Math.max(bb[3] - bb[0], bb[4], bb[5] - bb[2]) / 124), pad = 3 * h; bb[0] -= pad; bb[1] = -pad; bb[2] -= pad; bb[3] += pad; bb[4] += pad; bb[5] += pad;
+  /* the eyes: where a ray from in front meets the skin; a pit is sunk there */
+  let F = field35(ops); const E = []; eyes.forEach(q => { let z = bb[5]; for (let k = 0; k < 900 && F(q.x, q.y, z) > 0; k++) z -= h * 0.25; const sy = q.sy || 1; E.push({ p: [q.x, q.y, z], r: q.r, sy, rot: q.rot || 0, kind: q.kind || 0, gl: q.gl == null ? 1 : q.gl });
+    if (q.kind === 2) { const pit = P35.ell(q.x, q.y, z + q.r * 0.2, q.r * 1.05, q.r * sy * 1.1, q.r * 0.7, 0.03); pit.cut = true; pit.m = 0; ops.push(pit); } });
+  F = field35(ops); const N = nets35(F, bb, h), P = N.P, nv = P.length / 3, H = bb[4] - pad, nor = new Float32Array(nv * 3), aq = new Float32Array(nv), ad = new Float32Array(nv), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), ep = h * 0.7, cuts = ops.filter(p => p.cut && p.m);
   for (let i = 0; i < nv; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2]; let nx = F(x + ep, y, z) - F(x - ep, y, z), ny = F(x, y + ep, z) - F(x, y - ep, z), nz = F(x, y, z + ep) - F(x, y, z - ep); const l = Math.hypot(nx, ny, nz) || 1; nor[3 * i] = nx / l; nor[3 * i + 1] = ny / l; nor[3 * i + 2] = nz / l;
     let q = 1e9; for (let c = 0; c < cuts.length; c++) q = Math.min(q, cuts[c].f(x, y, z)); aq[i] = q < -1.3 * h ? -1 : 1 - Math.max(0, Math.min(1, (Math.abs(q) - 0.4 * h) / (1.4 * h)));   /* 1 on the carved wall of the mouth, -1 on what was grown back inside it (the teeth) */
+    let dd = 0; for (let c = 0; c < drips.length; c++) { const p = drips[c]; if (Math.hypot(x - p.c[0], y - p.c[1], z - p.c[2]) > p.R + 2 * h) continue; if (p.f(x, y, z) < 1.6 * h) dd = Math.max(dd, 0.2 + 0.8 * Math.max(0, Math.min(1, (p.y0 - y) / (p.y0 - p.y1 || 1)))); } ad[i] = dd;   /* how far down a drip this point is */
     const u = Math.max(0, Math.min(3.999, y / H * 4)), i0 = Math.floor(u), f = u - i0; si[4 * i] = i0; si[4 * i + 1] = i0 + 1; sw[4 * i] = 1 - f; sw[4 * i + 1] = f; }
-  const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(P), 3)); g.setAttribute('normal', new T.BufferAttribute(nor, 3)); g.setAttribute('aQ', new T.BufferAttribute(aq, 1)); g.setAttribute('skinIndex', new T.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new T.BufferAttribute(sw, 4)); g.setIndex(new T.BufferAttribute(nv > 65535 ? new Uint32Array(N.I) : new Uint16Array(N.I), 1)); g.computeBoundingBox(); g.computeBoundingSphere();
-  /* the eyes go where a ray from in front meets the skin; the borer's pores where they were put */
-  const E = []; eyes.forEach(q => { let z = bb[5]; for (let k = 0; k < 600 && F(q.x, q.y, z) > 0; k++) z -= h * 0.25; E.push({ p: [q.x, q.y, z], r: q.r, sy: q.sy || 1, rot: q.rot || 0, kind: q.kind || 0, gl: 1 }); }); dots.forEach(q => E.push({ p: q.p, r: q.r, sy: 1, rot: 0, kind: 0, gl: 0 }));
-  return (G35[key] = { geo: g, H, E: E.slice(0, 8), fumes, etch, nv, h }); }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(P), 3)); g.setAttribute('normal', new T.BufferAttribute(nor, 3)); g.setAttribute('aQ', new T.BufferAttribute(aq, 1)); g.setAttribute('aD', new T.BufferAttribute(ad, 1)); g.setAttribute('skinIndex', new T.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new T.BufferAttribute(sw, 4)); g.setIndex(new T.BufferAttribute(nv > 65535 ? new Uint32Array(N.I) : new Uint16Array(N.I), 1)); g.computeBoundingBox(); g.computeBoundingSphere();
+  /* the pen's marks on the eaten wood: bubbles in the scorched ring, thin fume rising off its far side */
+  const bub = [], smoke = [], ex = etch[0] || [0, 0, 1]; for (let i = 0; i < 5 + stage * 2; i++) { const a = hh35(stage * 31 + i) * 2 * PI, m = 1.0 + 0.32 * hh35(stage * 17 + i * 3); bub.push([ex[0] + Math.cos(a) * pr[0] * m, ex[1] + Math.sin(a) * pr[1] * m, (0.016 + 0.022 * hh35(stage * 7 + i * 5)) * (0.7 + 0.12 * stage)]); }
+  [[-0.72, 1], [0.6, -1], [-0.1, 1]].slice(0, stage > 2 ? 3 : 2).forEach((q, i) => smoke.push([ex[0] + q[0] * pr[0] * 1.12, -Math.abs(pr[1]) * 0.62 + ex[1], (0.18 + 0.05 * stage) * (1 - 0.25 * i), q[1]]));
+  return (G35[key] = { geo: g, H, E: E.slice(0, 8), fumes, etch, pr, bub, smoke, nv, h }); }
 const N35 = 'float H35(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }\nfloat N35(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(H35(i), H35(i + vec3(1, 0, 0)), f.x), mix(H35(i + vec3(0, 1, 0)), H35(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(H35(i + vec3(0, 0, 1)), H35(i + vec3(1, 0, 1)), f.x), mix(H35(i + vec3(0, 1, 1)), H35(i + vec3(1, 1, 1)), f.x), f.y), f.z); }\n';
 const F35 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(vViewPosition)), 0.0, 1.0); vec3 bp = vB35 * k35;',
-  'const vec3 PAPER = vec3(0.949, 0.929, 0.878), INK = vec3(0.169, 0.141, 0.125), PENCIL = vec3(0.353, 0.337, 0.306);',
+  'const vec3 PAPER = vec3(0.949, 0.929, 0.878), INK = vec3(0.169, 0.141, 0.125), PENCIL = vec3(0.353, 0.337, 0.306), ACID = vec3(0.40, 0.68, 0.16);',
   'float nz = N35(bp * 3.1), nz2 = N35(bp * 8.3 + 5.0), nz3 = N35(bp * 4.4 + 9.0), gr = H35(vec3(floor(gl_FragCoord.xy * 0.5), 1.0));',
   'float l9 = dot(n9, normalize(vec3(-0.6, 0.62, 0.5)));',
-  'float hl = smoothstep(0.78, 0.85, l9 + 0.42 * (nz - 0.5));',                                    // bare paper on the lit side, a broken edge
-  'hl = max(hl, smoothstep(0.84, 0.88, nz2) * smoothstep(0.1, 0.4, l9));',
-  'float low = smoothstep(0.34, 0.02, bp.y);',
-  'float ed = clamp(smoothstep(0.45, 0.95, 1.0 - nv + 0.3 * (nz - 0.5)) + 0.5 * low, 0.0, 1.0);', // the wash pools at the outline and low down
-  'float s2 = smoothstep(0.12, -0.14, l9 + 0.3 * (nz - 0.5));',                                     // a second wash in the shade
-  'float bl = N35(bp * 2.1 + 3.0), ring = smoothstep(0.640, 0.662, bl) * (1.0 - smoothstep(0.668, 0.70, bl));',
-  'vec3 wash = mix(vec3(0.69, 0.91, 0.76), vec3(0.32, 0.70, 0.50), ed); wash = mix(wash, vec3(0.22, 0.52, 0.44), 0.62 * s2); wash = mix(wash, vec3(0.30, 0.64, 0.48), 0.5 * ring);',
-  'float a9 = (1.0 - hl) * (0.80 + 0.20 * nz2) * (0.94 + 0.06 * gr);',
-  'a9 *= 1.0 - smoothstep(0.64, 0.70, nz3) * smoothstep(0.42, 0.22, nv);',                          // gaps inside the line
+  'float hl = smoothstep(0.74, 0.83, l9 + 0.45 * (nz - 0.5));',                                    // bare paper on the lit side, a broken edge
+  'hl = max(hl, smoothstep(0.86, 0.9, nz2) * smoothstep(0.15, 0.45, l9));',
+  'float low = smoothstep(0.30, 0.0, bp.y) * (0.55 + 0.45 * nz);',
+  'float ed = clamp(smoothstep(0.5, 0.97, 1.0 - nv + 0.35 * (nz - 0.5)), 0.0, 1.0);',              // the wash pools at the outline
+  'float s2 = smoothstep(0.16, -0.18, l9 + 0.35 * (nz - 0.5));',                                    // a second wash in the shade
+  'float bl = N35(bp * 2.1 + 3.0), ring = smoothstep(0.640, 0.662, bl) * (1.0 - smoothstep(0.668, 0.70, bl));',   // a bloom's hard edge
+  'vec3 wash = mix(vec3(0.76, 0.90, 0.68), vec3(0.50, 0.75, 0.44), ed); wash = mix(wash, vec3(0.42, 0.62, 0.44), 0.6 * s2); wash = mix(wash, vec3(0.34, 0.57, 0.28), 0.7 * low); wash = mix(wash, vec3(0.56, 0.76, 0.50), 0.55 * ring);',
+  'float a9 = (1.0 - hl) * (0.76 + 0.24 * nz2) * (0.94 + 0.06 * gr);',
+  'a9 *= 1.0 - smoothstep(0.62, 0.68, nz3) * smoothstep(0.5, 0.25, nv) * (1.0 - low);',               // gaps inside the line
   'vec3 c9 = PAPER * (0.985 + 0.03 * gr) * mix(vec3(1.0), wash, a9);',
-  /* fizz: small rings where it is eating */
-  '{ vec3 g = bp * 9.0, ci = floor(g), cf = fract(g) - 0.5, off = (vec3(H35(ci + 1.3), H35(ci + 2.7), H35(ci + 4.1)) - 0.5) * 0.4; float rr = 0.14 + 0.2 * H35(ci + 7.7), dr = length(cf - off);',
-  '  float bub = step(0.72, H35(ci)) * (smoothstep(rr - 0.075, rr - 0.03, dr) - smoothstep(rr, rr + 0.045, dr)); c9 = mix(c9, PAPER * vec3(0.24, 0.56, 0.42), 0.6 * bub * (1.0 - hl)); }',
+  'float al = mix(0.74, 1.0, clamp(max(max(ed * 1.3, low), max(s2, hl * 0.8)) + 0.15 * nz2, 0.0, 1.0));',   // thin in the middle of a lit form: the wood shows faintly
+  /* fizz: a few small rings where it is eating */
+  '{ vec3 g = bp * 9.0, ci = floor(g), cf = fract(g) - 0.5, off = (vec3(H35(ci + 1.3), H35(ci + 2.7), H35(ci + 4.1)) - 0.5) * 0.4; float rr = 0.12 + 0.18 * H35(ci + 7.7), dr = length(cf - off);',
+  '  float bub = step(0.84, H35(ci)) * (smoothstep(rr - 0.07, rr - 0.03, dr) - smoothstep(rr, rr + 0.04, dr)); c9 = mix(c9, PAPER * vec3(0.36, 0.62, 0.30), 0.55 * bub * (1.0 - hl)); }',
   /* pencil in the shade */
-  '{ float sh = smoothstep(0.02, -0.26, l9 + 0.2 * (nz - 0.5)), hh = dot(bp, vec3(0.74, 0.62, 0.26)) * 30.0 + 0.35 * nz, hd = abs(fract(hh) - 0.5), hm = smoothstep(0.30, 0.42, N35(bp * 5.3 + 2.0)); c9 = mix(c9, PENCIL, 0.45 * (1.0 - smoothstep(0.10, 0.24, hd)) * sh * hm); }',
-  /* the inside of the mouth */
-  'c9 = mix(c9, PAPER * mix(vec3(0.13, 0.24, 0.22), vec3(0.20, 0.38, 0.32), nz), smoothstep(0.42, 0.58, vQ + 0.2 * (nz2 - 0.5)));',
-  /* the teeth: bare paper */
-  'c9 = mix(c9, PAPER * (0.97 + 0.03 * nz2), smoothstep(-0.25, -0.6, vQ) * (0.55 + 0.45 * smoothstep(-0.2, 0.3, l9)));',
-  /* the eyes, painted in the body\'s own space */
-  'for (int i = 0; i < 8; i++) { vec4 ea = e35a[i], eb = e35b[i]; if (ea.w <= 0.0) continue; vec3 q = (vB35 - ea.xyz) / ea.w; float cr = cos(eb.y), sr = sin(eb.y); q.xy = vec2(cr * q.x + sr * q.y, -sr * q.x + cr * q.y); q.y /= eb.x; float dq = length(q), in1 = 1.0 - smoothstep(0.88, 1.0, dq);',
-  '  if (eb.z < 0.5) { c9 = mix(c9, INK, in1); c9 = mix(c9, PAPER, eb.w * in1 * (1.0 - smoothstep(0.22, 0.32, length(q.xy - vec2(-0.32, 0.36))))); }',
-  '  else { vec3 ey = mix(INK, vec3(0.97, 0.96, 0.92), 1.0 - smoothstep(0.66, 0.76, dq)); ey = mix(ey, INK, 1.0 - smoothstep(0.8, 1.0, length(q.xy / vec2(0.2, 0.6)))); ey = mix(ey, vec3(0.97, 0.96, 0.92), 1.0 - smoothstep(0.1, 0.16, length(q.xy - vec2(-0.3, 0.34)))); c9 = mix(c9, ey, in1); } }',
-  'gl_FragColor = vec4(c9, 1.0); }'].join('\n');
-function mat35(T, G) { const m = new T.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0 }); m.skinning = true; const ea = [], eb = []; for (let i = 0; i < 8; i++) { const q = G.E[i]; ea.push(q ? new T.Vector4(q.p[0], q.p[1], q.p[2], q.r) : new T.Vector4(0, 0, 0, 0)); eb.push(q ? new T.Vector4(q.sy, q.rot, q.kind, q.gl) : new T.Vector4(1, 0, 0, 0)); }
-  m.onBeforeCompile = sh => { sh.uniforms.e35a = { value: ea }; sh.uniforms.e35b = { value: eb }; sh.uniforms.k35 = { value: 1 }; sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute float aQ;\nvarying float vQ;\nvarying vec3 vB35;\nvoid main() { vQ = aQ; vB35 = position;');
-    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec4 e35a[8];\nuniform vec4 e35b[8];\nuniform float k35;\nvarying float vQ;\nvarying vec3 vB35;\n' + N35 + 'void main() {').replace(/}\s*$/, F35 + '\n}'); };
-  m.customProgramCacheKey = () => 'a35'; return m; }
-/* the mark it has eaten into the wood under it: a scorched, uneven ring (a piece of its own, as Water's wet patch is) */
-function etch35(T, x, z, r, dk) { const m = new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sd: { value: x * 7.3 + z * 3.1 + r }, dk: { value: dk ? 2.0 : 1.0 } }, vertexShader: 'varying vec2 vU;\nvoid main() { vU = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform float sd;\nuniform float dk;\nvarying vec2 vU;\n' + N35 + 'void main() { float a = atan(vU.y, vU.x), r = length(vU) / (0.78 + 0.2 * N35(vec3(cos(a) * 1.6, sin(a) * 1.6, sd)) + 0.06 * N35(vec3(cos(a) * 6.0, sin(a) * 6.0, sd + 4.0))); float body = 1.0 - smoothstep(0.9, 1.0, r), edge = smoothstep(0.62, 0.95, r) * body; gl_FragColor = vec4(0.16, 0.10, 0.06, min(0.8, dk * (body * 0.22 + edge * 0.38))); }' });
-  const g = new T.PlaneGeometry(2 * r, 2 * r); g.rotateX(-PI / 2); const q = new T.Mesh(g, m); q.position.set(x, 0.012, z); q.renderOrder = 3; q.userData.plain = true; q.castShadow = false; return q; }
-function acid35Fig(T, stage, way) { stage = Math.max(1, Math.min(5, stage | 0 || 3)); way = SPEC35[way] ? way : 'a'; const G = geo35(T, stage, way), grp = new T.Group(), bones = [];
+  '{ float sh = smoothstep(0.06, -0.26, l9 + 0.2 * (nz - 0.5)), hh = dot(bp, vec3(0.74, 0.62, 0.26)) * 34.0 + 0.35 * nz, hd = abs(fract(hh) - 0.5), hm = smoothstep(0.26, 0.4, N35(bp * 5.3 + 2.0)); c9 = mix(c9, PENCIL, 0.55 * (1.0 - smoothstep(0.08, 0.22, hd)) * sh * hm); }',
+  /* the mouth: its rim the sharp acid green, its inside dark wash */
+  'float rim = smoothstep(0.06, 0.3, vQ) * (1.0 - smoothstep(0.5, 0.7, vQ)); c9 = mix(c9, PAPER * ACID, 0.85 * rim); al = max(al, rim);',
+  'float inm = smoothstep(0.5, 0.66, vQ + 0.2 * (nz2 - 0.5)); c9 = mix(c9, PAPER * mix(vec3(0.12, 0.22, 0.14), vec3(0.22, 0.40, 0.20), nz * (1.0 - nv * 0.5)), inm); al = max(al, inm);',
+  /* the teeth: bare paper, going green toward the bead; and every drip the sharper green, strongest at its bead */
+  'float tth = smoothstep(-0.25, -0.6, vQ); c9 = mix(c9, PAPER * (0.97 + 0.03 * nz2), tth * (0.6 + 0.4 * smoothstep(-0.2, 0.3, l9))); al = max(al, tth);',
+  'float dk = smoothstep(0.15, 1.0, vD); c9 = mix(c9, PAPER * mix(vec3(0.62, 0.84, 0.40), ACID, dk), dk * (tth > 0.5 ? 0.75 * dk : 0.85)); al = max(al, dk);',
+  /* the eyes, painted in the body\'s own space: kind 2 is a pit sunk in the liquid, dark wash pooled in it, a pale meniscus below, a pupil */
+  'for (int i = 0; i < 8; i++) { vec4 ea = e35a[i], eb = e35b[i]; if (ea.w <= 0.0) continue; vec3 q = (vB35 - ea.xyz) / ea.w; float cr = cos(eb.y), sr = sin(eb.y); q.xy = vec2(cr * q.x + sr * q.y, -sr * q.x + cr * q.y); q.y /= eb.x;',
+  '  if (eb.z > 1.5) { float d2 = length(vec3(q.xy, q.z * 0.25)), inn = 1.0 - smoothstep(0.9, 1.06, d2); vec3 pit = PAPER * mix(vec3(0.16, 0.28, 0.18), vec3(0.34, 0.54, 0.30), smoothstep(0.5, -0.7, q.y));',
+  '    float men = smoothstep(0.5, 0.74, d2) * smoothstep(-0.05, -0.55, q.y) * (1.0 - smoothstep(0.9, 1.0, d2)); pit = mix(pit, PAPER * vec3(0.92, 0.98, 0.86), 0.9 * men);',
+  '    vec2 pp = 0.34 * vec2(cos(eb.w), sin(eb.w)) * vec2(1.0, 1.0 / eb.x); float pu = (eb.w < 9.0 ? 1.0 : 0.0) * (1.0 - smoothstep(0.30, 0.38, length((q.xy - pp) * vec2(1.0, eb.x)))); pit = mix(pit, INK, pu);',
+  '    pit = mix(pit, PAPER, pu * (1.0 - smoothstep(0.07, 0.11, length((q.xy - pp - vec2(-0.1, 0.08)) * vec2(1.0, eb.x)))));',
+  '    float lid = smoothstep(0.76, 0.9, d2) * (1.0 - smoothstep(0.98, 1.08, d2)) * smoothstep(-0.25, 0.4, q.y); pit = mix(pit, INK, 0.9 * lid); c9 = mix(c9, pit, inn); al = max(al, inn); }',
+  '  else { float dq = length(q), in1 = 1.0 - smoothstep(0.88, 1.0, dq); c9 = mix(c9, INK, in1); } }',
+  'gl_FragColor = vec4(c9, al); }'].join('\n');
+function mat35(T, G) { const m = new T.MeshStandardMaterial({ color: 0x000000, roughness: 1, metalness: 0, transparent: true }); m.skinning = true; m.depthWrite = true; const ea = [], eb = []; for (let i = 0; i < 8; i++) { const q = G.E[i]; ea.push(q ? new T.Vector4(q.p[0], q.p[1], q.p[2], q.r) : new T.Vector4(0, 0, 0, 0)); eb.push(q ? new T.Vector4(q.sy, q.rot, q.kind, q.gl) : new T.Vector4(1, 0, 0, 0)); }
+  m.onBeforeCompile = sh => { sh.uniforms.e35a = { value: ea }; sh.uniforms.e35b = { value: eb }; sh.uniforms.k35 = { value: 1 }; sh.vertexShader = sh.vertexShader.replace('void main() {', 'attribute float aQ;\nattribute float aD;\nvarying float vQ;\nvarying float vD;\nvarying vec3 vB35;\nvoid main() { vQ = aQ; vD = aD; vB35 = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec4 e35a[8];\nuniform vec4 e35b[8];\nuniform float k35;\nvarying float vQ;\nvarying float vD;\nvarying vec3 vB35;\n' + N35 + 'void main() {').replace(/}\s*$/, F35 + '\n}'); };
+  m.customProgramCacheKey = () => 'a37'; return m; }
+/* the wood it has eaten under it, in the wood's own surface: bleached and pitted inside, a scorched broken ring, an inked edge in places, the damp
+   dark line where its pool meets the wood and its shadow to the back. Drawn under the body, so the thin wash shows it faintly through. */
+function etch35(T, x, z, r, pr) { const m = new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sd: { value: x * 7.3 + z * 3.1 + r }, pq: { value: new T.Vector2(pr[0] / r, pr[1] / r) } }, vertexShader: 'varying vec2 vU;\nvoid main() { vU = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform float sd;\nuniform vec2 pq;\nvarying vec2 vU;\n' + N35 + [
+      'void main() { float a = atan(vU.y, vU.x), wob = 0.8 + 0.16 * N35(vec3(cos(a) * 1.7, sin(a) * 1.7, sd)) + 0.05 * N35(vec3(cos(a) * 7.0, sin(a) * 7.0, sd + 4.0)), r = length(vU) / wob; if (r > 1.08) discard;',
+      '  float n1 = N35(vec3(vU * 6.0, sd + 2.0)), n2 = N35(vec3(vU * 17.0, sd + 7.0)); vec3 col = vec3(0.88, 0.82, 0.66); float al = 0.6 * (1.0 - smoothstep(0.8, 0.94, r)) * (0.5 + 0.5 * n1);',
+      '  float sc = smoothstep(0.8, 0.9, r) * (1.0 - smoothstep(0.95, 1.02, r)) * (0.55 + 0.55 * n2); col = mix(col, vec3(0.13, 0.08, 0.04), clamp(sc * 1.4, 0.0, 1.0)); al = max(al, 0.5 * sc * step(0.3, n1));',
+      '  vec2 g = vU * 16.0, ci = floor(g), cf = fract(g) - 0.5; float h0 = H35(vec3(ci, sd)); vec2 off = (vec2(H35(vec3(ci, sd + 1.0)), H35(vec3(ci, sd + 2.0))) - 0.5) * 0.5; float pd = length(cf - off), pz = 0.08 + 0.14 * h0, zin = step(0.5, h0) * (1.0 - smoothstep(0.86, 0.96, r));',
+      '  float pit = zin * (1.0 - smoothstep(pz, pz + 0.05, pd)), prm = zin * smoothstep(pz, pz + 0.04, pd) * (1.0 - smoothstep(pz + 0.05, pz + 0.11, pd)); col = mix(col, vec3(0.17, 0.10, 0.05), pit); al = max(al, 0.8 * pit); col = mix(col, vec3(0.95, 0.91, 0.78), 0.8 * prm); al = max(al, 0.5 * prm);',
+      '  float il = (1.0 - smoothstep(0.008, 0.022, abs(r - 0.95))) * step(0.45, N35(vec3(cos(a) * 4.0, sin(a) * 4.0, sd + 9.0))); col = mix(col, vec3(0.169, 0.141, 0.125), il); al = max(al, 0.9 * il);',
+      '  float pc = length(vU / pq), ct = 1.0 - smoothstep(0.0, 0.07, abs(pc - 1.0 - 0.08 * (n1 - 0.5))), sh = 1.0 - smoothstep(0.55, 1.18, length((vU - vec2(0.06, 0.12)) / (pq * vec2(1.12, 1.0))));',
+      '  col = mix(col, vec3(0.09, 0.06, 0.03), max(0.8 * ct, 0.7 * sh)); al = max(al, max(0.45 * ct, 0.32 * sh));',
+      '  gl_FragColor = vec4(col, al); }'].join('\n') });
+  const g = new T.PlaneGeometry(2 * r, 2 * r); g.rotateX(-PI / 2); g.computeBoundingSphere(); g.boundingBox = new T.Box3(new T.Vector3(-0.01, 0, -0.01), new T.Vector3(0.01, 0.01, 0.01)); /* the eaten wood does not count in the creature's size */ const q = new T.Mesh(g, m); q.userData.nobox = true; q.position.set(x, 0.012, z); q.renderOrder = 3; q.userData.plain = true; q.castShadow = false; return q; }
+function acid35Fig(T, stage, way) { stage = Math.max(1, Math.min(5, stage | 0 || 3)); way = 'a'; const G = geo35(T, stage, way), top = new T.Group(), grp = new T.Group(), bones = []; top.add(grp); if (stage === 1) grp.scale.setScalar(1.35);
   for (let i = 0; i < 5; i++) { const bn = new T.Bone(); bn.position.y = i ? G.H / 4 : 0; if (i) bones[i - 1].add(bn); bones.push(bn); }
-  const body = new T.SkinnedMesh(G.geo, mat35(T, G)); body.add(bones[0]); body.bind(new T.Skeleton(bones)); body.frustumCulled = false; body.castShadow = false; body.userData.plain = true; grp.add(body);
-  G.etch.forEach(q => grp.add(etch35(T, q[0], q[1], q[2], q[3])));
-  const S = { T, root: grp, body, bones, inv: body.skeleton.boneInverses, G: { geo: G.geo }, H: G.H, fumes: G.fumes, way, stage, jar: false }; S.pen = pen30(T, S); S.pen.body.seed = 3500 + stage * 97; S.pen.mesh.visible = true;
+  const body = new T.SkinnedMesh(G.geo, mat35(T, G)); body.add(bones[0]); body.bind(new T.Skeleton(bones)); body.frustumCulled = false; body.castShadow = false; body.userData.plain = true; body.renderOrder = 19; grp.add(body);
+  G.etch.forEach(q => grp.add(etch35(T, q[0], q[1], q[2], G.pr)));
+  const S = { T, root: grp, body, bones, inv: body.skeleton.boneInverses, G: { geo: G.geo }, H: G.H, fumes: G.fumes, bub: G.bub, smoke: G.smoke, way, stage, jar: false }; S.pen = pen30(T, S); S.pen.body.seed = 3500 + stage * 97; S.pen.mesh.visible = true;
   body.onBeforeRender = (ren, scene) => { if (scene && scene.isScene) hook35(T, scene); };
-  grp.userData.a35 = S; W35.figs.push(S); if (W35.figs.length > 24) W35.figs.splice(0, W35.figs.length - 24); return grp; }
-/* its line for this frame: the outline of the skin, and the wisps that rise off it */
+  grp.userData.a35 = top.userData.a35 = S; W35.figs.push(S); if (W35.figs.length > 24) W35.figs.splice(0, W35.figs.length - 24); return top; }
+/* a thread of fume as the pen draws it: a rise that leans, a break, then a curl over at the top (not the stock wavy line) */
+function fume35(f, i) { const [x, y, z, hg, s] = f, A = [], B = [], lean = 0.22 * s; for (let k = 0; k <= 7; k++) { const u = k / 7 * 0.44; A.push([x + lean * hg * Math.pow(u, 1.5) - 0.05 * hg * s * Math.sin(u * PI * 1.6), y + hg * u, z]); }
+  let last; for (let k = 0; k <= 7; k++) { const u = 0.56 + k / 7 * 0.3; last = [x + lean * hg * Math.pow(u, 1.5) - 0.05 * hg * s * Math.sin(u * PI * 1.6), y + hg * u, z]; B.push(last); }
+  const c = 0.1 * hg, cx = last[0] + s * c, cy = last[1]; for (let k = 1; k <= 9; k++) { const th = s > 0 ? PI - k / 9 * 1.6 * PI : k / 9 * 1.6 * PI, rr = c * (1 - 0.4 * k / 9); B.push([cx + rr * Math.cos(th), cy + rr * Math.sin(th), z]); } return [A, B]; }
+/* its line for this frame: the outline of the skin, the fume off it, the bubbles and fume on the eaten wood */
 function draw35(T, S, ren, cam) { const R = S.pen, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
   W30.m4 = W30.m4 || new T.Matrix4(); R.vp = (R.vp || new T.Matrix4()).multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); R.nv = 0; R.ni = 0; R.boil = 0;
   const mw = S.root.matrixWorld, ws = R.v.setFromMatrixScale(mw).x || 1, Hw = S.H * ws, d = 0.03 * Hw, v = R.v.setFromMatrixPosition(mw), u = R.v2.set(0, 1, 0).transformDirection(mw), e = R.vp.elements, pj = (x, y, z) => { const w = e[3] * x + e[7] * y + e[11] * z + e[15]; return [(e[0] * x + e[4] * y + e[8] * z + e[12]) / w * Wd / 2, (e[1] * x + e[5] * y + e[9] * z + e[13]) / w * Ht / 2]; }, a = pj(v.x, v.y, v.z), b = pj(v.x + u.x * Hw, v.y + u.y * Hw, v.z + u.z * Hw);
   const hpx = Math.hypot(b[0] - a[0], b[1] - a[1]), fs = Math.max(0.42, Math.min(1.7, hpx / (105 * sc))), lw = W30.lw * sc * fs * W35.lw, s2 = sc * Math.min(1.6, Math.max(0.5, fs)); R.lw = lw; R.hpx = hpx;
   R.body.o = { wob: Math.min(1.4, Math.max(0.5, fs)) }; proj30(R, R.body, R.vp, Wd, Ht, P10, P11, d, S.bones, S.inv); sil30(R, R.body, lw, s2, Wd, Ht);
-  S.fumes.forEach((f, i) => { const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10; pts.push(new T.Vector3(f[0] + f[4] * Math.sin(t * 7.5 + i * 2.1) * (0.3 + t), f[1] + f[3] * t, f[2]).applyMatrix4(mw)); } free30(R, pts, lw * 0.6, s2, Wd, Ht, P10, P11, d, 9700 + i * 40, { smooth: 2, wob: 0.8 }); });
+  const W = q => new T.Vector3(q[0], q[1], q[2]).applyMatrix4(mw);
+  S.fumes.forEach((f, i) => fume35(f, i).forEach((seg, j) => free30(R, seg.map(W), lw * (j ? 0.42 : 0.55), s2, Wd, Ht, P10, P11, d, 9700 + i * 40 + j * 13, { smooth: 2, wob: 0.7 })));
+  S.smoke.forEach((f, i) => fume35([f[0], 0.03, f[1], f[2], f[3]], i).forEach((seg, j) => free30(R, seg.map(W), lw * (j ? 0.34 : 0.42), s2, Wd, Ht, P10, P11, d, 9900 + i * 40 + j * 13, { smooth: 2, wob: 0.7 })));
+  S.bub.forEach((q, i) => { const pts = []; for (let k = 0; k <= 10; k++) { const th = k / 10 * 2 * PI + i; pts.push(W([q[0] + q[2] * Math.cos(th), 0.02 + q[2] * 0.9 * (1 + Math.sin(th)), q[1] + q[2] * 0.25 * Math.sin(th)])); } free30(R, pts, lw * 0.36, s2, Wd, Ht, P10, P11, d, 9500 + i * 17, { smooth: 2, wob: 0.5 }); });
   R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
 function hook35(T, scene) { if (!W35.scenes || W35.scenes.has(scene)) return; W35.scenes.add(scene); const f0 = scene.onBeforeRender;
   scene.onBeforeRender = function (ren, sc, cam) { if (f0) f0.apply(this, arguments); if (KIT.skip33) return; for (let i = W35.figs.length - 1; i >= 0; i--) { const S = W35.figs[i]; let top = S.root; while (top.parent) top = top.parent; if (top !== sc || !shown30(S.root, null)) continue; try { draw35(T, S, ren, cam); } catch (e) { W35.err = String(e && e.stack); } } }; }
 KIT.acid35Fig = acid35Fig; KIT.ACID35 = W35;
-/* behind the switch only: the bench figure of Acid is the chosen direction */
+/* behind the switch only: the bench figure of Acid is the maw */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid35 && SPEC35[KIT.acid35]) { try { grp.add(acid35Fig(T, (extra && extra.stage) || 3, KIT.acid35)); return true; } catch (e) { W35.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W35 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
