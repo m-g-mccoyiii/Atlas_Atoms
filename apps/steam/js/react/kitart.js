@@ -6026,6 +6026,92 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W82 = W82; KIT.e82dbg = () => { const e = W82.e; return { err: W82.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), dn: +e.dn.toFixed(2), sw: +e.sw.toFixed(2), er: +e.er.toFixed(2), fm: +e.fm.toFixed(2), home: +e.home.toFixed(2), rise: +e.rise.toFixed(2), fire: +e.fire.toFixed(2), hit: e.hit, tot: e.tot, old: e.old } : null }; };
 // ==== W82 END
+// ==== W92 BEGIN
+// (builder 92) BRIMSTONE'S ACT, REBUILT (AA.rxKit.v92, on by default; false or ?v92=0 gives builder 77's act and builder 82's change of stage).
+// The owner threw the old one out: messy drawing, stiff motion, too much going on. Now FEW MOVES, DONE WELL, and the creature is never taken apart:
+// the WHOLE figure (lump, flames, smoke, face) is carried by the page's own holder (place, hop height, size, squash and stretch, a lean, a turn), so
+// every frame is the figure of the rest pose with its one clean outline. Here only: the one timeline both files read (ph92), the smoke's overlap (the
+// column lags behind the lump and swings past it: a shear by height, nothing else is done to the skin), the face, the flames and coals. No thread, no
+// reaching arm, no bank of smoke. The page (scheme S77, its v92 branch) gives times and places and draws the one thing it does: a tongue of its own
+// blue fire spat onto each sulfur.
+//  ready: a crouch (down and wide), coals wide          hops: out in arcs, a squash on each landing, the smoke trailing and swinging past
+//  spit:  per sulfur: leans back and swells, snaps forward, a tongue of blue fire leaps from its mouth to the atom
+//  hit:   crouches, then draws itself up tall on the beat; the fires on the atoms flare once and gutter
+//  home:  turns its back, the same hops seen from behind, turns to the front, one squash, settles (spent: low flames, lids half down)
+KIT.v92 = KIT.v92 == null ? !(typeof location !== 'undefined' && /[?&]v92=0/.test(String(location.search))) : KIT.v92;
+const W92 = { err: null, e: null };
+const on92 = S => !!(S && S.way69 && !S.jar && KIT.v92 !== false && KIT.act77 !== false && on73(S));
+const eo92 = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return 1 - (1 - u) * (1 - u); }, ei92 = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return u * u; };
+/* the whole figure's box in its own units (every joint with its radius) */
+KIT.box92 = S => { const J = S.G.J; let x0 = 0, x1 = 0, top = 0; J.forEach(q => { if (!q || !q.p) return; const r = q.r || 0; x0 = Math.min(x0, q.p[0] - r); x1 = Math.max(x1, q.p[0] + r); top = Math.max(top, q.p[1] + r); }); return { x0, x1, H: Math.max(0.5, top) }; };
+/* one hop of u 0..1 between two places: push off (on the ground), the arc, the landing squash (which is the next hop's crouch) */
+function hop92(u, o) { const g0 = 0.14, g1 = 0.78;
+  if (u < g0) { const w = u / g0; o.p = 0; o.y = 0; o.sy = lp77(0.72, 1.2, ei92(w)); o.air = 0; o.v = 0; o.ld = 0; return o; }
+  if (u < g1) { const v = (u - g0) / (g1 - g0); o.p = v; o.y = 4 * v * (1 - v); o.sy = 1 + 0.2 * Math.abs(Math.cos(PI * v)) * (v < 0.5 ? 1 : 0.7); o.air = Math.sin(PI * v); o.v = v; o.ld = 0; return o; }
+  const w = (u - g1) / (1 - g1); o.p = 1; o.y = 0; o.sy = lp77(1.14, 0.72, eo92(w * 1.6)); o.air = 0; o.v = 1; o.ld = w; return o; }
+/* the act's numbers at t ms since the tap (Z: the page's plan, absolute times) */
+function ph92(t, Z) { const L = Z.L, H = Z.H, pl = Z.pl, kT = pl.k, dxs = Math.sign(pl.x - H.x) || 1, HW = Z.Hw || 3;
+  const e = { ph: 'wait', t, x: H.x, z: H.z, y: 0, k: 1, sy: 1, sx: 1, rz: 0, yaw: 0, lag: 0, lagz: 0, wide: 0, lid: 0, brow: null, flame: 1, glow: 1, open: 0, si: -1, fwd: 0, back: 0, done: false, home: false, spent: 0, tx: Z.mc.x, tz: Z.mc.z };
+  const fin = () => { e.sx = 1 + 0.6 * (1 - e.sy); if (e.sy > 1) e.sx = 1 - 0.35 * (e.sy - 1); return e; };
+  if (t < Z.tW) return e;
+  if (t < Z.tPour) { /* ready: down and wide, the coals open */ const c = eo92((t - Z.tW) / (Z.tPour - Z.tW)); e.ph = 'ready'; e.sy = 1 - 0.28 * c; e.wide = c; e.glow = 1 + 0.8 * c; e.brow = -0.6 * c; e.rz = 0.05 * dxs * c; e.lag = -0.25 * dxs * c; e.flame = 1 + 0.3 * c; return fin(); }
+  const hops = (t0, from, to, k0, k1, back) => { const n = Z.nH, TH = Z.TH, i = Math.min(n - 1, Math.floor((t - t0) / TH)), u = (t - t0 - i * TH) / TH, o = hop92(u, {}), a = (i + o.p) / n, dx = to.x - from.x, dz = to.z - from.z, dl = Math.hypot(dx, dz) || 1, sx = dx / dl, sz = dz / dl;
+    e.x = from.x + dx * a; e.z = from.z + dz * a; const ka = k0 + (k1 - k0) * ((i + sm52(o.p)) / n); e.k = ka; e.y = o.y * Z.hop * HW * ka; e.sy = o.sy;
+    /* the lean goes with the travel; the smoke trails in the first half of the arc, swings past on the landing and rocks back */
+    e.rz = -0.2 * sx * o.air * (o.v < 0.5 ? 1 : 0.5); const sw = o.ld > 0 ? 0.32 * Math.exp(-2.2 * o.ld) * Math.cos(5.5 * o.ld) : o.air > 0 ? -0.36 * Math.sin(PI * Math.min(1, o.v * 1.25)) + 0.32 * sm52((o.v - 0.7) / 0.3) : -0.14 * (1 - u / 0.14);
+    e.lag = sw * sx; e.lagz = sw * sz * 0.7; e.wide = 0.5; e.brow = -0.5; e.glow = 1.4; e.hi = i; e.hu = u; e.land = o.ld; e.flame = 0.7; };
+  if (t < Z.tRise) { e.ph = 'out'; hops(Z.tPour, H, pl, 1, kT, false); return fin(); }
+  e.x = pl.x; e.z = pl.z; e.k = kT;
+  /* the spring out of a landing squash: up past its height and back */ const spring = (t0, T, a) => { const w = Math.max(0, (t - t0) / T); return 1 + a * Math.exp(-4.2 * w) * Math.cos(9.5 * w); };
+  if (t < Z.tA) { e.ph = 'plant'; const w = (t - Z.tRise) / (Z.tA - Z.tRise); e.sy = spring(Z.tRise, Z.tA - Z.tRise, -0.28); e.lag = 0.2 * dxs * Math.exp(-3 * w) * Math.cos(7 * w); e.wide = 0.5 * (1 - w); e.glow = 1.4; e.brow = -0.5; e.flame = 0.7; return fin(); }
+  if (t < Z.tD) { e.ph = 'count'; e.glow = 1.5; e.brow = -0.7; e.lid = 0.25; e.flame = 0.6;
+    /* the spit: which atom, how far it leans back (back), how far it has snapped forward (fwd) */ const P = Z.P; let c = -1; for (let i = 0; i < P.length; i++) if (t >= P[i].a0) c = i;
+    if (c >= 0 && t < Z.tUp + 0.2 * L) { const p = P[c], g = p.g, a = sm52((t - p.a0) / (0.42 * L * g)), f = sm52((t - (p.t - 0.56 * L * g)) / (0.16 * L * g)), r = sm52((t - (p.t + 0.1 * L)) / (0.55 * L * g)), q = Z.tg[c] || Z.mc, d = Math.sign(q.x - pl.x) || 1;
+      e.si = c; e.back = a * (1 - f); e.fwd = f * (1 - r); e.rz = d * (0.12 * e.back - 0.2 * e.fwd); e.sy = 1 + 0.12 * e.back - 0.1 * e.fwd; e.lag = d * (-0.14 * e.back + 0.22 * e.fwd) + (r > 0 && r < 1 ? -0.08 * d * Math.sin(PI * 2 * r) * (1 - r) : 0);
+      e.open = Math.max(0.5 * e.back, e.fwd); e.wide = 0.7 * e.back; e.lid = 0.25 * (1 - e.back); e.flame = 0.6 + 0.2 * e.back; e.glow = 1.5 + 0.8 * e.fwd; e.tx = q.x; e.tz = q.z; }
+    if (t >= Z.tUp) { /* the crouch, then drawn up tall on the hit; the fire flares */ const c2 = sm52((t - Z.tUp) / (0.7 * (Z.tHit - Z.tUp))), up = sm52((t - (Z.tHit - 0.2 * L)) / (0.2 * L)), w = Math.max(0, (t - Z.tHit) / L), r = sm52((t - Z.tRel) / (1.2 * L));
+      e.ph = t >= Z.tHit ? 'hit' : 'up'; const s0 = 1 - 0.26 * c2, s1 = 1 + 0.3 * Math.exp(-2.6 * w) * Math.cos(7 * w) + 0.06 * (1 - r) * (1 - Math.exp(-3 * w));
+      e.sy = lp77(s0, t >= Z.tHit ? s1 : 1.3, up); e.wide = up * (1 - r); e.lid = 0.25 * (1 - up) + 0.2 * r; e.brow = -0.9; e.glow = 1.5 + 1.4 * up * (1 - r); e.flame = 0.6 + 0.1 * c2 + 0.45 * up * Math.exp(-1.2 * w); e.lag = 0; e.open = 0.8 * up * (1 - sm52(w / 1.2)); e.tx = Z.mc.x; e.tz = Z.mc.z; }
+    return fin(); }
+  const sp = SP92;
+  if (t < Z.tBk) { /* it turns its back: a dip, round, up */ const u = (t - Z.tD) / (Z.tBk - Z.tD); e.ph = 'turn'; e.yaw = PI * sm52((u - 0.3) / 0.36); e.sy = 1 - 0.16 * Math.sin(PI * Math.min(1, u * 1.2)) - 0.28 * sm52((u - 0.8) / 0.2); e.glow = 1.2; e.flame = 0.8; e.lid = 0.2; return fin(); }
+  if (t < Z.tHm) { e.ph = 'back'; hops(Z.tBk, pl, H, kT, 1, true); e.yaw = PI; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null; return fin(); }
+  if (t < Z.tEnd) { /* home: the spring out of the last landing, round to the front, one more small squash, settled and spent */ const T = Z.tEnd - Z.tHm, u = (t - Z.tHm) / T, s = sm52((u - 0.45) / 0.55);
+    e.ph = 'settle'; e.x = H.x; e.z = H.z; e.k = 1; e.yaw = PI * (1 + sm52((u - 0.2) / 0.2)); e.sy = spring(Z.tHm, T, -0.28) - 0.1 * Math.sin(PI * sm52((u - 0.55) / 0.3)); e.lag = -0.3 * dxs * Math.exp(-3 * u) * Math.cos(7 * u); e.flame = lp77(0.7, sp.flame, s); e.glow = lp77(1, sp.glow, s); e.lid = sp.lid * s; e.spent = s; return fin(); }
+  e.ph = 'done'; e.x = H.x; e.z = H.z; e.k = 1; e.done = e.home = true; e.spent = 1; e.flame = sp.flame; e.glow = sp.glow; e.lid = sp.lid; return e; }
+/* spent, at rest: the same whole figure, a little sunk, low fire, dim coals, lids half down */
+const SP92 = { flame: 0.3, glow: 0.45, lid: 0.5, sink: 0.9 };
+KIT.ph92 = ph92;
+/* the face goes over the idle's */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (!S || !S.way69) return; const X = S.x92;
+  if (!X) { if (S.sp92 && !S.jar) { q.lidx = Math.max(q.lidx || 0, SP92.lid); q.looky = -0.4; q.lookx = 0; q.wide = 0; } return; } const e = X.e;
+  q.wide = Math.max(q.wide || 0, e.wide); if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); if (e.brow != null) q.brow = e.brow; if (e.ph !== 'wait') q.blink = 0; if (S.lk92) { q.lookx = S.lk92[0]; q.looky = S.lk92[1]; } })(C26.rest);
+/* after the idle: the smoke's overlap, the fire, the coals; then where its head is, for the page */
+function post92(S, e, Z) { const F = fig77(S), K = S.k73, B = S.bones, J = S.G.J, R = S.root, T = S.T, cy = Math.cos(e.yaw || 0);
+  const lx = (e.lag || 0) * cy * F.H, lz = (e.lagz || 0) * cy * F.H, sink = e.spent ? lp77(1, SP92.sink, e.spent) : 1, wt = y => { const s = Math.max(0, Math.min(1.2, (y - F.P0.y) / F.H)); return s * s * (1.5 - 0.5 * s); };
+  if (lx || lz || sink !== 1) { F.sm.forEach(j => { const b = B[j], w = wt(J[j].p[1]); b.position.x += lx * w; b.position.z += lz * w; if (sink !== 1) b.position.y = F.P0.y + (b.position.y - F.P0.y) * sink; });
+    [K.mouth && K.mouth.m, K.haze].concat(K.sm.map(p => p.m)).forEach(m => { if (!m) return; const w = wt(m.position.y); m.position.x += lx * w; m.position.z += lz * w; if (sink !== 1) m.position.y = F.P0.y + (m.position.y - F.P0.y) * sink; }); }
+  K.fl.forEach(f => { if (!f.sp) return; f.sp.scale.y *= e.flame; f.sp.scale.x *= 0.6 + 0.4 * Math.min(1.5, e.flame); }); if (K.light) K.light.m.material.opacity *= Math.max(0.2, Math.min(1.6, e.flame));
+  if (S.u69) S.u69.value.y *= 0.6 + 0.4 * e.glow; K.eg.forEach(x => { x.g.material.opacity = Math.min(1, x.g.material.opacity * e.glow); x.g.scale.multiplyScalar(1 + 0.08 * (e.glow - 1)); x.e.gl.material.emissive.multiplyScalar(Math.min(1.6, 0.6 + 0.4 * e.glow)); });
+  if (e.spent > 0.5) { K.sm.forEach((p, i) => { if (i > 1) p.m.visible = false; }); (K.spit || []).forEach(x => { x.m.visible = false; }); }
+  if (e.ph !== 'wait' && e.ph !== 'done') { if (K.mouth) K.mouth.m.visible = false; if (K.haze) K.haze.visible = false; } else if (K.haze) K.haze.visible = true;
+  /* no thread: the whole skin is drawn */ if (S.u82) S.u82.value.x = 0; if (S.th82) { S.th82.sp.forEach(m => { m.visible = false; }); S.th82.up.forEach(q => { q.m.visible = false; }); }
+  S.ly92 = Z && e.ph !== 'wait' && e.ph !== 'done' ? { on: Math.max(0, Math.min(1, 1 + Z.floor(e.x, e.z) / 0.25)), y: e.y || 0 } : null;
+  if (!Z) return; R.updateWorldMatrix(true, false); const hp = B[K.hj].position.clone().applyMatrix4(R.matrixWorld), ws = new T.Vector3().setFromMatrixScale(R.matrixWorld).y || 1;
+  /* it looks where it spits (the head's own frame: turned away it does not matter) */ const dx = e.tx - hp.x, dz = e.tz - hp.z, hz = Math.hypot(dx, dz) || 1; S.lk92 = e.ph === 'wait' || e.ph === 'done' || e.ph === 'settle' ? null : [Math.max(-1.2, Math.min(1.2, dx / hz * 1.3)), Math.max(-0.9, Math.min(0.3, -0.25 - 0.5 * dz / hz))];
+  S.h77 = { head: [hp.x, hp.y, hp.z], hr: (K.hr || 0.5) * ws, ws, base: [e.x, 0, e.z], c: [hp.x, hp.y, hp.z], H: F.H * ws, Wd: (F.x1 - F.x0) * ws, tip: null }; }
+/* its scorch and the flames' light lie on the PAPER while it is on the book, and stay down while it is in the air (builder 69 laid them at the bench's height under the holder: on the book that floated a pale square through the lump) */
+lay69 = (f0 => function (T, S) { const q = S.ly92; if (!q || !S.lay69 || !S.lay69.parent) return f0(T, S); const e = S.lay69, p = e.parent, V = W69.v || (W69.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); p.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = lp77(V.b.y - q.y + W48.benchY * top.scale.y, 0.14, q.on); p.worldToLocal(V.a); e.position.copy(V.a); })(lay69);
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way69 || !on92(S)) return f0(grp, clip, t, o);
+  const inner = (c, tt, oo) => { const sp = S.spent77; S.spent77 = false; try { return f0(grp, c, tt, oo); } finally { S.spent77 = sp; } };
+  if (clip === 'act' && o && o.bites && o.bites.s77 && o.bites.s77.v92) { try { const Z = o.bites.s77, e = ph92(t, Z); S.x92 = { t, e, Z }; W92.e = e; S.sp92 = false; inner('rest', 0, {}); hz77(S); if (S.k73) post92(S, e, Z); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; } catch (err) { W92.err = String(err && err.stack); S.x92 = null; return f0(grp, clip, t, o); } }
+  if (S.x92) { S.x92 = null; S.lk92 = null; S.ly92 = null; }
+  if (clip === 'rest') { S.sp92 = !!S.spent77; const r = inner(clip, t, o); if (S.sp92 && S.k73) { try { hz77(S); post92(S, { ph: 'done', spent: 1, flame: SP92.flame, glow: SP92.glow, lag: 0, lagz: 0, yaw: 0 }, null); } catch (err) { W92.err = 'spent ' + String(err && err.stack); } } return r; }
+  return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26;
+KIT.W92 = W92;
+// ==== W92 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)

@@ -5850,7 +5850,54 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const s77Pg = x => (SAFE.L && x < (SAFE.L.x1 + SAFE.R.x0) / 2 ? SAFE.L : SAFE.R);
   /* per stage: pace (5 the slowest), and how tall it stands at the molecule as a share of the page */
   const S77F = [0.9, 0.95, 1, 1.1, 1.25], S77H = [0.4, 0.5, 0.6, 0.63, 0.66];
-  const s77Plan = (stg, L) => { const SP = s26Fig(), F = AA.rxKit.fig77(SP), f = S77F[stg - 1], v = S77.v, mb = a20MolBox() || { x0: C0.x - 5, x1: C0.x + 5, z0: C0.z - 4, z1: C0.z + 4 }, mc = { x: (mb.x0 + mb.x1) / 2, y: 0, z: (mb.z0 + mb.z1) / 2 };
+  /* ==== s92a BEGIN */
+  /* (builder 92) THE ACT REBUILT (AA.rxKit.v92, on by default; ?v92=0 gives the plan and scene above). The whole creature goes, carried by the page's
+     own holder (homJump's place, height, size, squash, lean, turn: kitart ph92 is the one timeline). It hops out in arcs to a place BESIDE the
+     molecule (the side toward the middle of the book; whole figure on the page, never over an atom), spits one tongue of its own blue fire onto each
+     counted atom, draws itself up on the hit (the fires flare once and gutter), turns its back, hops home, settles. Nothing else is drawn: no bank
+     of smoke, no scorch, no ring, no ember, no dimmed lamp; only the blue firelight on the paper under a burning atom. */
+  const S92H = [0.12, 0.135, 0.15, 0.16, 0.17];
+  const s92Plan = (stg, L) => { const SP = s26Fig(), Bx = AA.rxKit.box92(SP), f = S77F[stg - 1], v = S77.v, mb = a20MolBox() || { x0: C0.x - 5, x1: C0.x + 5, z0: C0.z - 4, z1: C0.z + 4 }, mc = { x: (mb.x0 + mb.x1) / 2, y: 0, z: (mb.z0 + mb.z1) / 2 };
+    const tg = s77Atoms().map(q => { q.b.mesh.getWorldPosition(v); return { x: v.x, y: v.y, z: v.z, R: s77R(q.b), a: q.a, kind: q.kind }; }).sort((p, q) => p.x - q.x);
+    if (center && center.balls) { let n = 0, sy = 0; center.balls.forEach(b => { b.mesh.getWorldPosition(v); sy += v.y; n++; }); mc.y = n ? sy / n : 0; }
+    SP.root.updateWorldMatrix(true, false); const RS = new T.Vector3().setFromMatrixScale(SP.root.matrixWorld).y || 1, pg = s77Pg(mc.x), R0 = tg.length ? tg.reduce((s, q) => s + q.R, 0) / tg.length : 0.7, mr = Math.max(1.5, Math.hypot(mb.x1 - mb.x0, mb.z1 - mb.z0) / 2);
+    const ab = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9 }; if (center && center.balls) center.balls.forEach((b, a) => { if (!a || a.fly) return; b.mesh.getWorldPosition(v); const r = s77R(b); ab.x0 = Math.min(ab.x0, v.x - r); ab.x1 = Math.max(ab.x1, v.x + r); ab.z0 = Math.min(ab.z0, v.z - r - 0.35 * v.y); ab.z1 = Math.max(ab.z1, v.z + r); }); if (ab.x0 > ab.x1) Object.assign(ab, mb);
+    cam.updateMatrixWorld(); const pr = (x, y, z) => { v.set(x, y, z).project(cam); return [(v.x + 1) / 2, (1 - v.y) / 2]; };
+    const xm = (pg.x0 + pg.x1) / 2, pH = pr(xm, 0, pg.z1)[1] - pr(xm, 0, pg.z0)[1], bz = Math.max(pg.z0 + 8, Math.min(pg.z1 - 3, (ab.z0 + ab.z1) / 2 + 0.5 * (ab.z1 - ab.z0))), b0 = pr(mc.x, 0, bz), b1 = pr(mc.x, 1, bz), dy1 = Math.max(1e-4, b0[1] - b1[1]);
+    const left = !SAFE || mc.x > (SAFE.L.x1 + SAFE.R.x0) / 2, xl = (SAFE ? SAFE.L.x0 : pg.x0) + 0.8, xr = pg.x1 - 0.8;
+    const place = k => (left ? Math.max(xl - Bx.x0 * k * RS, ab.x0 - 0.9 - Bx.x1 * k * RS) : Math.min(xr - Bx.x1 * k * RS, ab.x1 + 0.9 - Bx.x0 * k * RS)), clear = k => (left ? place(k) + Bx.x1 * k * RS <= ab.x0 - 0.5 : place(k) + Bx.x0 * k * RS >= ab.x1 + 0.5);
+    let k = Math.max(1, S92H[stg - 1] * pH / dy1 / (Bx.H * RS)); for (let i = 0; i < 40 && k > 1 && !clear(k); i++) k = Math.max(1, k * 0.95);
+    const pl = { x: place(k), z: bz, k }, dist = Math.hypot(pl.x - HOMP.x, pl.z - HOMP.z), nH = dist > 14 ? 3 : 2;
+    const R2 = b => Math.max(0.5, Math.round(b * f * 2) / 2) * L, TH = R2(stg >= 5 ? 1.5 : 1), Tw = R2(1), Tp = nH * TH, Tr = R2(1), J = Tw + Tp + Tr, n = tg.length, P = []; let t = R2(1.5);
+    for (let i = 0; i < n; i++) { if (i) t += R2(Math.max(0.5, 1.5 - 0.5 * (i - 1))); P.push({ t }); } P.forEach((p, i) => { const gap = i ? p.t - P[i - 1].t : 1.5 * L; p.g = Math.min(1, gap / L); p.a0 = p.t - 1.15 * L * p.g; p.r0 = p.a0; p.b = p.t; });
+    const last = n ? P[n - 1].t : R2(1.5), up = last + R2(1), hit = up + R2(1), rel = hit + R2(1), D = hit + R2(2), Tt = R2(1), Tb = nH * TH, Ts = R2(2), B = Tt + Tb + Ts;
+    return { v92: true, stg, L, f, pl, k, way0: s58Line([HOMP, pl]), wayB: s58Line([pl, HOMP]), mb, mc, mr, R0, tg, pg, Tw, Tp, Tr, J, P, up, hit, rel, D, Tt, Tb, Ts, B, RS, eE: -1, n, nH, TH, Hw: Bx.H * RS, bx: Bx }; };
+  const s92Frame = (now, Lq, SP, Kt, Pq) => { const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, live = !!(st.homAct === A && SP && SP.x92 && SP.h77);
+    Pq.emb.forEach(s => { s.visible = false; }); Pq.shade.visible = false; s77Lamp(now, null);
+    if (t > Z.tEnd + 3000) { S77.last = null; s77Hide(Pq); return; } dirty = true;
+    const h = live ? SP.h77 : null, sx = AA.sfx || {}, Lb = Z.L, once = (k, f) => { if (!j.f['s92' + k]) { j.f['s92' + k] = 1; try { f(); } catch (x) { /* no sound */ } } }, v = S77.v, same = Z.g === g;
+    if (live) { if (S27.ca) S27.ca.visible = false; S27.last = null; }
+    Z.tg.forEach(q => { const b = same ? s66Ball(q.a) : null; if (b) { b.mesh.getWorldPosition(v); q.x = v.x; q.y = v.y; q.z = v.z; q.live = true; } else q.live = false; });
+    /* the fire: a tongue leaves its mouth, flies a low arc and lands on the atom on the beat; there it stands (a pop as it catches), flares once on
+       the hit and gutters out */ const fs = [0.8, 0.9, 1, 1.1, 1.3][Z.st - 1], gut = 1 - ss77s((t - Z.tHit - 1.2 * Lb) / (1.8 * Lb)), fla = t >= Z.tHit ? 1 + 0.6 * Math.exp(-(t - Z.tHit) / 380) : 1, cp = cam.position, lights = []; let fi = 0;
+    Z.tg.forEach((q, i) => { const p = Z.P[i]; if (!p || !q.live || fi >= Pq.fire.length) return; const dx = cp.x - q.x, dy = cp.y - q.y, dz = cp.z - q.z, dl = Math.hypot(dx, dy, dz) || 1, fx = q.x + dx / dl * q.R * 1.05, fy = q.y + q.R * 0.25 + dy / dl * q.R * 1.05, fz = q.z + dz / dl * q.R * 1.05, T0 = p.t - 0.45 * Lb * p.g;
+      if (t >= T0 && t < p.t) { if (!h) return; const u = (t - T0) / (p.t - T0), d = Math.sign(q.x - h.head[0]) || 1, mx = h.head[0] + d * 0.7 * h.hr, my = h.head[1] - 0.2 * h.hr, mz = h.head[2] + 0.8 * h.hr, ds = Math.hypot(fx - mx, fy - my, fz - mz), m = Pq.fire[fi++], s = q.R * fs * (1.7 + 0.9 * u);
+        m.position.set(mx + (fx - mx) * u, my + (fy - my) * u + Math.sin(Math.PI * u) * 0.16 * ds, mz + (fz - mz) * u); m.scale.set(s * 0.8, s * 1.5, 1); m.material.opacity = Math.min(1, u * 5); m.material.rotation = -d * 1.1 * (1 - u); m.visible = true; return; }
+      const age = t - p.t; if (age < 0) return; const grow = ss77s(age / 160) * (1 + 0.5 * Math.exp(-age / 150) * Math.sin(Math.min(Math.PI, age / 60))), fl = 0.88 + 0.12 * Math.sin(now / 70 + i * 1.7) + 0.06 * Math.sin(now / 33 + i * 2.9), H = q.R * (2.7 + 0.25 * Math.min(6, i)) * fs * grow * fl * fla * gut;
+      if (H > 0.06) { const m = Pq.fire[fi++]; m.position.set(fx, fy, fz); m.scale.set(q.R * 1.7 * fs * (0.8 + 0.2 * gut) * (0.9 + 0.1 * fla), H, 1); m.material.opacity = Math.min(1, 0.3 + gut * 1.5); m.material.rotation = 0.1 * Math.sin(now / 160 + i); m.visible = true; lights.push([q.x, q.z + q.R * 0.4, Math.min(1, 0.3 + H / (q.R * 5))]); } });
+    for (let i = fi; i < Pq.fire.length; i++) Pq.fire[i].visible = false;
+    /* the blue firelight on the paper under the burning atoms, nothing more */ const pg = Z.pg, pm = Pq.page, U = pm.material.uniforms; if (same && pg && lights.length) { pm.visible = true; pm.position.set((pg.x0 + pg.x1) / 2, 0.02, (pg.z0 + pg.z1) / 2); pm.scale.set(pg.x1 - pg.x0, 1, pg.z1 - pg.z0); U.uRect.value.set(pg.x0, pg.z0, pg.x1, pg.z1); U.uC.value.set(Z.mc.x, Z.mc.z); U.uT.value = now / 1000; U.uR.value = 0; U.uA.value = 0; U.uCh.value = 0; U.uEd.value = 0;
+      U.uLR.value = 2.0 * (Z.mr0 || 0.7) * fs; U.uLn.value = Math.min(16, lights.length); lights.slice(0, 16).forEach((l, i) => U.uL.value[i].set(l[0], l[1], l[2])); } else pm.visible = false;
+    if (!live) return;
+    /* sound, on the beats */ once('wake', () => { if (sx.handoff) sx.handoff(); });
+    const hopS = (t0, tag) => { for (let i = 0; i < Z.nH; i++) { if (t >= t0 + (i + 0.14) * Z.TH) once(tag + 'u' + i, () => { if (sx.swish) sx.swish(0.3); }); if (t >= t0 + (i + 0.78) * Z.TH) once(tag + 'd' + i, () => { if (sx.tick) sx.tick(); if (i === Z.nH - 1 && sx.snap) sx.snap(1, 0.5); }); } };
+    if (t >= Z.tPour) hopS(Z.tPour, 'o'); if (t >= Z.tBk) hopS(Z.tBk, 'b');
+    Z.P.forEach((p, i) => { if (t >= p.t - 0.45 * Lb * p.g) once('s' + i, () => { if (sx.swish) sx.swish(0.45); }); if (t >= p.t) once('c' + i, () => { if (sx.reflex) sx.reflex('weld', i + 1, { bell: 1.2 }); }); });
+    if (t >= Z.tUp) once('up', () => { if (sx.draw) sx.draw(4, (Z.tHit - Z.tUp) / 1000); });
+    if (t >= Z.tHit) once('hit', () => { if (sx.boom) sx.boom(); if (sx.strike) sx.strike(2, 1.4); });
+    if (t >= Z.tD) once('turn', () => { if (sx.swish) sx.swish(0.3); }); };
+  /* ==== s92a END */
+  const s77Plan = (stg, L) => { if (AA.rxKit.v92 !== false && AA.rxKit.ph92 && AA.rxKit.box92) return s92Plan(stg, L); const SP = s26Fig(), F = AA.rxKit.fig77(SP), f = S77F[stg - 1], v = S77.v, mb = a20MolBox() || { x0: C0.x - 5, x1: C0.x + 5, z0: C0.z - 4, z1: C0.z + 4 }, mc = { x: (mb.x0 + mb.x1) / 2, y: 0, z: (mb.z0 + mb.z1) / 2 };
     const tg = s77Atoms().map(q => { q.b.mesh.getWorldPosition(v); return { x: v.x, y: v.y, z: v.z, R: s77R(q.b), a: q.a, kind: q.kind }; }).sort((p, q) => p.x - q.x);
     if (center && center.balls) { let n = 0, sy = 0; center.balls.forEach(b => { b.mesh.getWorldPosition(v); sy += v.y; n++; }); mc.y = n ? sy / n : 0; }
     SP.root.updateWorldMatrix(true, false); const RS = new T.Vector3().setFromMatrixScale(SP.root.matrixWorld).y || 1, pg = s77Pg(mc.x), R0 = tg.length ? tg.reduce((s, q) => s + q.R, 0) / tg.length : 0.7, mr = Math.max(1.5, Math.hypot(mb.x1 - mb.x0, mb.z1 - mb.z0) / 2);
@@ -5882,10 +5929,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const s77Z = (A, j) => { const p = S77.plan, W = j.W, tA = W + p.J;
     const Z = { st: p.stg, L: p.L, k: p.k, tW: W, tPour: W + p.Tw, tRise: W + p.Tw + p.Tp, tA, P: p.P.map(q => ({ r0: tA + q.r0, t: tA + q.t, b: tA + q.b })), tUp: tA + p.up, tHit: tA + p.hit, tRel: tA + p.rel, tD: tA + p.D, tBk: tA + p.D + p.Tt, tHm: tA + p.D + p.Tt + p.Tb, tEnd: tA + p.D + p.B,
       way0: p.way0, wayB: p.wayB, pl: p.pl, mb: p.mb, mc: Object.assign({}, p.mc), mr: p.mr, mr0: p.R0, pg: p.pg, eE: p.eE, tg: p.tg.map(q => Object.assign({}, q)), floor: s66Floor, dx: p.pl.x >= HOMP.x ? 1 : -1, g: g };
+    if (p.v92) { Object.assign(Z, { v92: true, H: { x: HOMP.x, z: HOMP.z }, nH: p.nH, TH: p.TH, Hw: p.Hw, hop: 0.5 }); Z.P.forEach((q, i) => { q.a0 = tA + p.P[i].a0; q.g = p.P[i].g; }); j.f.up = j.f.land = 1; }
     S77.Z = Z; j.bites.s77 = Z; return Z; };
   homJump = (f0 => function (A, now) { const j = A && A.j; if (!j || !j.s77 || !s77On()) return f0(A, now);
     let Z = j.bites && j.bites.s77; if (!Z) { try { Z = s77Z(A, j); } catch (e) { S77.err = String(e && e.stack); } }
-    const o = f0(A, now); if (!o || !Z) return o; o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; })(homJump);
+    const o = f0(A, now); if (!o || !Z) return o;
+    if (Z.v92) { const e = AA.rxKit.ph92(now - A.t, Z); o.hx = e.x; o.hz = e.z; o.y = e.y; o.k = e.k; o.sy = e.sy; o.sx = e.sx; o.rz = e.rz; o.ry = e.yaw; o.reach = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = o.k; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; }
+    o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; })(homJump);
   /* the lamp drawn in (a copy of S71's driving of builder 33's one-lamp pass, with its own state) */
   const s77Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S77.dim += (want - S77.dim) * 0.2; if (Math.abs(want - S77.dim) < 0.004) S77.dim = want; const d = S77.dim; if (A) S77.LA = A;
     if (d <= 0.002 || !S33.on() || !S77.LA) { if (S77.lit) { S77.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
@@ -5937,6 +5987,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     /* spent: the game holds Brimstone spent (this round after its tap, and for the rest of the run): it sits grey and cold at home */
     if (SP && SP.way69) { let sp = false; try { sp = !!(homObj && homObj.id === 'brimstone' && g && g.hom && P.homSpent && P.homSpent(g)); } catch (e) { sp = false; } SP.spent77 = sp && Kt.act77 !== false; }
     const Lq = S77.last; if (!Lq) { s77Hide(Pq); s77Lamp(now, null); return; }
+    if (Lq.Z.v92) { s92Frame(now, Lq, SP, Kt, Pq); return; }
     const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, live = !!(st.homAct === A && SP && SP.x77 && SP.h77);
     if (t > Z.tEnd + 12000) { S77.last = null; s77Hide(Pq); s77Lamp(now, null); return; } dirty = true;
     const e = live ? SP.x77.e : Kt.ph77(t, Z), h = live ? SP.h77 : null, sx = AA.sfx || {}, Lb = Z.L, once = (k, f) => { if (!j.f['s77' + k]) { j.f['s77' + k] = 1; try { f(); } catch (x) { /* no sound */ } } }, v = S77.v, same = Z.g === g;
