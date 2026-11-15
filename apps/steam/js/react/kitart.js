@@ -6380,7 +6380,7 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
     } catch (e) { W95.err = 'old ' + String(e && e.stack); } }
   const r = f0(grp, clip, t, o);
   /* its own blue light on the ground (W73) is a hard round: under the ball and under the rising form it would read as a pool, so it is low while it changes (the page lays the fire's soft glow) */
-  if (S && clip === 'evo' && on95(S)) { const e = S.q0 && S.q0.e31, k = e && e.go != null ? 1 - 0.72 * (KIT.g97 && KIT.f96 /* (builder 97) its light goes with the lump to the centre */ ? (e.b >= 0 ? RK.sm((e.b - 0.15) / 0.3) : 0) : Math.min(1, e.go * 3)) * (1 - (e.home || 0)) : 1; dim95(S, k); if (S.e31) dim95(S.e31.sp, k); S.d95 = true; }
+  if (S && clip === 'evo' && on95(S)) { const e = S.q0 && S.q0.e31, k = e && e.go != null ? 1 - (KIT.g97 && KIT.f96 /* (builder 97) its light goes with the lump to the centre and is out when the fire stands */ ? (e.b >= 0 ? RK.sm((e.b - 0.15) / 0.3) : 0) : 0.72 * Math.min(1, e.go * 3)) * (1 - (e.home || 0)) : 1; dim95(S, k); if (S.e31) dim95(S.e31.sp, k); S.d95 = true; }
   return r; })(play26);
 KIT.spirit26.play = play26;
 /* THE ACT is Water's clip (C26.act) on Brimstone's joints (scheme S95 feeds it as S26 feeds Water's; AA.rxKit.act95). The one thing changed in the
@@ -6512,31 +6512,34 @@ if (KIT.g97 && KIT.f96) KIT.gut96 = 1e9;
 /* its own times, from Water's three slots (a the gathering, b the standing, v after the hit): ph runs 0..2 before the hit */
 const tl97 = e => { const K = RK, pre = !(e.v >= 0), ph = pre ? (e.b >= 0 ? 1 + e.b : e.a) : 2, u = K.cl((ph - 0.14) / 0.98), v = pre ? 0 : e.v, p = v > 2.15 ? K.cl((v - 2.15) / 0.8) : 0;
   const g = { pre, ph, u, p, go: K.sm(u), sp: 4 * u * (1 - u), suck: K.sm((ph - 0.02) / 0.38), arr: K.sm((ph - 1.12) / 0.14) };
-  g.fl = 1 + 0.3 * g.sp + 0.9 * g.arr; g.heat = pre ? 0.45 * g.go + 0.9 * K.pulse(ph, 1.1, 1.55, 0.1) : 0.8 * (1 - K.sm(v / 1.2));
+  g.fl = (1 + 0.3 * g.sp + 0.9 * g.arr) * (1 - K.sm((ph - 1.48) / 0.2)) /* they go into the fire before the lump is changed inside it */; g.heat = pre ? 0.45 * g.go + 0.9 * K.pulse(ph, 1.1, 1.55, 0.1) : 0.8 * (1 - K.sm(v / 1.2));
   g.old = pre && ph < 1.72; g.rise = pre ? 0 : K.sm((v - 0.04) / 0.8); g.form = pre ? 0 : K.sm((v - 0.45) / 0.7); g.eyes = pre ? 0 : K.sm((v - 0.55) / 0.25);
   g.roll = K.pulse(p, 0.01, 0.15, 0.07) + K.pulse(p, 0.8, 0.92, 0.07); return g; };
 C26.evo = (f0 => function (S, t, o, q) { f0(S, t, o, q); if (!(o && o.e31 && on97(S))) return; const e = q.e31; if (!e || t < 0 || e.go == null) return;
   const K = RK, g = e.g97 = tl97(e), m = q.m; e.curl = 0; e.ball = 0; e.R = 0; e.cy = 0; e.go = g.go;
   if (g.pre) { e.old = g.old; if (m) m.body = g.old ? 0 : 1;
-    q.bow = 0; q.nod = 0.35 * K.sm(g.ph / 0.2); q.sq = -0.05 * g.suck; q.armR = q.armL = 0; q.hair = 0; q.sink = 0; q.px = q.pz = 1; q.lean = 0; q.open = 0;
+    q.bow = 0; q.nod = 0.35 * K.sm(g.ph / 0.2); q.sq = -0.05 * g.suck; q.armR = q.armL = 0; q.hair = 0; q.sink = 0; q.px = q.pz = g.old ? 1 : 0.4 /* the new form's ground sheet small until it rises, as Water's (at 1 it stood out of the fire as a blade) */; q.lean = 0; q.open = 0;
     q.wide = 0.5 * K.pulse(g.ph, 0, 0.12, 0.06); q.brow = 0.3; q.looky = -0.7 * g.suck; q.blink = K.sm((g.suck - 0.68) / 0.2); }
   else { const c0 = 1 - K.sm(e.v / 0.3); q.bow -= 1.7 * c0; q.nod -= c0; q.sq += 0.42 * c0; q.armL += 1.3 * c0; q.armR += 1.3 * c0; q.hair += 0.8 * c0; q.sink = 0; e.sk = K.sm((e.v - 0.12) / 0.75); }
   })(C26.evo);
 /* nothing of Water's ball: no mesh, no wash under it, no beads */
 stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X || !on97(S)) return; X.sph.visible = false; X.gw.visible = false; X.beads.forEach(b => { b.m.visible = false; }); })(stage31);
-play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!(S && clip === 'evo' && o && o.e31 && on97(S))) { if (S && S.rp97) { S.root.position.copy(S.rp97); S.rp97 = null; if (S.F) (S.F.brows || []).forEach(b => { const m = b && b.g; if (m && m.userData.s97) m.scale.copy(m.userData.s97); }); } return r; }
+play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!(S && clip === 'evo' && o && o.e31 && on97(S))) { if (S && S.rp97) { S.root.position.copy(S.rp97); S.rp97 = null; if (S.rs97 != null) { S.root.scale.setScalar(S.rs97); S.rs97 = null; } if (S.F) (S.F.brows || []).forEach(b => { const m = b && b.g; if (m && m.userData.s97) m.scale.copy(m.userData.s97); }); } return r; }
   try { const q = S.q0, e = q && q.e31, g = e && e.g97; if (!g) return r; const K = RK, O = S.e31 && S.e31.gg.visible ? S.e31.sp : null, F = O || S;
     /* the face goes small before it goes out, and comes small before it is there (nothing of it switches in one frame) */ const face = (Z, kf) => { const Fc = Z.F; if (!Fc) return; const vis = kf > 0.02; Fc.eyes.forEach(x => { if (x.g) { x.g.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) x.g.visible = false; } });
       (Fc.brows || []).forEach(b => { const m = b && b.g; if (!m) return; if (!m.userData.s97) m.userData.s97 = m.scale.clone(); m.scale.copy(m.userData.s97).multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; });
       [Fc.mouth, Fc.om].forEach(m => { if (m && m.isObject3D) { m.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; } });
       const Kz = Z.k73; if (Kz && Kz.eg) Kz.eg.forEach(x => { x.g.visible = vis && kf > 0.3; x.g.scale.setScalar(x.e.er * 3.0 * kf); x.g.material.opacity = 0.4 * kf; }); };
     if (O) { post82o(O, { suck: g.suck, bow: 0.7 * K.sm(g.ph / 0.25), lift: 0, flame: g.fl, cflame: 0, heat: g.heat, u: 0, c: [9, 9, 9] }); if (O.st > 1) face(O, 1 - K.sm((g.suck - 0.7) / 0.2)); }
-    else { /* (no idle runs in this clip to set the cracks' glow again: it is set here, not multiplied) */ if (S.u69) S.u69.value.y = 1 + 1.2 * g.heat; post82n(S, { rise: g.rise * (1 - 0.3 * g.roll), form: g.form, fm: g.form, eyes: 0, nflame: 1, heat: 0 }); if (S.st > 1) face(S, K.sm((g.rise - 0.62) / 0.3)); }
+    else { /* (no idle runs in this clip to set the cracks' glow again: it is set here, not multiplied) */ if (S.u69) S.u69.value.y = 1 + 1.2 * g.heat; post82n(S, { rise: g.rise * (1 - 0.3 * g.roll), form: g.form, fm: g.form, eyes: 0, nflame: 1, heat: 0 }); if (S.st > 1) face(S, K.sm((g.rise - 0.62) / 0.3)); /* no pen on the lump while it lies in the thick fire (the rolled limbs drew as stray strokes) */ if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = g.rise > 0.02; 
+      /* the skin's own flame limbs are folded into the lump (the idle does it at rest; here no idle runs) */ if (S.k73 && S.k73.fl) S.k73.fl.forEach(f => { if (f.jn && f.rf) f.jn.forEach(j => { if (S.bones[j]) { S.bones[j].position.set(f.rf.x, f.rf.y, f.rf.z); S.bones[j].scale.setScalar(0.05); } }); });
+      /* what of the new form is not smoke and stands above the lump (a rolled limb showed as a blade beside the fire) stays in the lump until the smoke is rising; no old embers */ if (g.rise < 0.3) { const X = fig82(S), kk = Math.max(0.02, K.sm(g.rise / 0.3)), J = S.G.J, B = S.bones, P0 = X.F.P0; for (let j = 1; j < B.length; j++) { if (!J[j] || X.hn.has(j) || J[j].p[1] < X.lump) continue; B[j].position.lerpVectors(P0, B[j].position, kk); B[j].scale.multiplyScalar(kk); } if (S.k73 && S.k73.emb) S.k73.emb.forEach(x => { if (x.m) x.m.visible = false; }); } }
     /* the lump on the ground: it leans against its start and its stop, rocks with the way gone, tips over the book's edge */
     let px = 0, rz = 0; const ge = o.ge97 == null ? 0.1 : o.ge97, G2 = x => Math.exp(-2 * x * x);
     if (g.pre) { const x = (g.go - ge) / 0.05; px = -0.2 * Math.sin(2 * PI * g.u) * (g.u < 0.5 ? 1 : 0.7) - 0.3 * G2(x + 0.4) + 0.2 * G2(x - 1.2); rz = 0.13 * Math.sin(2 * PI * 3 * g.go) * Math.sin(PI * g.u); }
     else if (g.p > 0) { const h = e.home || 0, uh = K.cl((g.p - 0.14) / 0.72), x = (h - (1 - ge)) / 0.05; px = 0.16 * Math.sin(2 * PI * uh) * (uh < 0.5 ? 1 : 0.7) - 0.3 * G2(x) + 0.15 * G2(x - 1.5); rz = 0.1 * Math.sin(2 * PI * 3 * h) * Math.sin(PI * uh); }
     F.root.rotation.x += px; F.root.rotation.z += rz; W97.g = g;
+    /* the lump is drawn in a little by the thick fire before it is changed inside it, and the new one swells from that size as its smoke rises (the change is then wholly inside the fire) */ { if (F.rs97 == null) F.rs97 = F.root.scale.x; F.root.scale.setScalar(F.rs97 * (O ? 1 - 0.3 * K.sm((g.ph - 1.42) / 0.26) : g.pre ? 0.7 : 0.7 + 0.3 * K.sm(e.v / 0.35))); }
     /* the heave at the edge: it comes a little off the ground as it tips over */ { const X = fig82(F), xx = g.pre ? (g.go - ge) / 0.05 : g.p > 0 ? ((e.home || 0) - (1 - ge)) / 0.05 : 9; if (!F.rp97) F.rp97 = F.root.position.clone(); F.root.position.y = F.rp97.y + 0.3 * X.lump * G2(xx + (g.pre ? 0.2 : -0.2)); }
   } catch (x) { W97.err = String(x && x.stack); } return r; })(play26);
 KIT.spirit26.play = play26;
