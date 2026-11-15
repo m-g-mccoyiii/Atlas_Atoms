@@ -4402,7 +4402,7 @@ function post71(S, e, old, o) { const K = S.k62; if (!K) return; const B = S.bon
   const top = (o.Hm71 ? KIT.top84 * o.Hm71 * P.pull : 2.5 * H * ws) / ws, hy = Math.max(0.12 * H, B[jh].position.y), lift = e.lift, Lt = lift * Math.max(0, top * (to === 5 ? 0.78 : 1) - Math.max(H * fy, hy + 0.25 * H)), th = e.thin * (to === 2 ? 0.6 : 0.95);
   const sd = o.sd71 || -1, lean = sd * e.over * (P.nc > 1 ? 0.5 : 1) * Lt * 0.55, sw = e.sway * Lt, y0 = 0.3 * hy, gOf = y => sm52((y - y0) / Math.max(1e-3, hy - y0));
   if (inP && Lt > 1e-4) {
-    B.forEach((b, j) => { if (!j) return; const p = b.position, g = gOf(p.y), nk = Math.pow(Math.sin(PI * Math.min(1, g)), 0.6), w = 1 - th * (0.35 + 0.6 * nk + 0.2 * g);
+    B.forEach((b, j) => { if (!j) return; const p = b.position, g = gOf(p.y), nk = Math.pow(Math.sin(PI * Math.min(1, Math.pow(g, 1.6))), 0.6) /* (87) narrowest just under the face: a neck */, w = 1 - th * (0.35 + 0.6 * nk + 0.2 * g);
       p.y += Lt * g; p.x = cx + (p.x - cx) * w + lean * g * g + sw * Math.sin(PI * g); p.z = cz + (p.z - cz) * w;
       if (J[j].role !== 'limb') { const s2 = Math.max(0.2, w); b.scale.x *= s2; b.scale.z *= s2; } });
     /* the face keeps its own size on the thinned head (only its place is drawn in) */ const hx = B[jh].scale.x, F = S.F; if (F && hx < 0.98) { const k2 = Math.min(1.8, 0.9 / Math.max(0.3, hx)); F.eyes.forEach(q => { q.g.scale.x *= k2; }); if (F.mouth) F.mouth.scale.x *= k2; if (F.om) F.om.scale.x *= k2; } }
@@ -4414,19 +4414,25 @@ function post71(S, e, old, o) { const K = S.k62; if (!K) return; const B = S.bon
       const want = Math.max(Lr, (top * ah - r.y) / Math.cos(spl)), Lf = to === 3 && e.u >= c[5] ? Lr * (1 + 0.7 * up) : Lr + (want - Lr) * (to === 3 && inP ? e.ext * (1 - f) : e.ext) + (to === 3 && inP ? 0.7 * Lr * f : 0);
       const Lc = Math.min(Lf, Math.max(0.5 * Lr, (top - r.y) / Math.cos(spl))), dx = side * Math.sin(spl), dy = Math.cos(spl), lw = to === 5 ? 0.85 : to === 4 ? 0.75 : 0.5;
       for (let k = 1; k < n; k++) { const q = B[jn[k]].position, u = cum[k] / Lr, bow = side * 0.06 * Lf * Math.sin(PI * u) + (inP ? sw * u : 0), tx = r.x + dx * Lc * u + bow, ty = r.y + dy * Lc * u, tz = r.z + 0.05 * Lc * u;
-        q.x += (tx - q.x) * up; q.y += (ty - q.y) * up; q.z += (tz - q.z) * up; const s = 1 - up * lw * Math.min(1, (Lf / Lr - 1) * 0.5) * Math.sin(PI * Math.min(1, u * 1.15)); if (k < n - 1) B[jn[k]].scale.multiplyScalar(Math.max(0.25, s)); } }); }
+        q.x += (tx - q.x) * up; q.y += (ty - q.y) * up; q.z += (tz - q.z) * up;
+        /* (87) a tapering arm of slime, thick at its root and thinning to a rounded tip: no thin stick with a bead on it */ const st87 = Math.min(1, (Lf / Lr - 1) * 0.6), s = 1 - up * st87 * (0.12 + 0.5 * Math.pow(u, 0.8)); B[jn[k]].scale.multiplyScalar(Math.max(0.42, s) * (k === n - 1 ? 1 - 0.25 * up * st87 : 1)); } }); }
   /* 3 to 4: lands half-risen with both arms flung out to catch its balance */
   if (!old && st === 4 && e.u >= c[5] && e.u < c[6]) { const fl = pl52(e.sl, 0.0, 0.55, 0.18); K.arms.forEach(ch => { const jn = ch.jn, n = jn.length, sd2 = Math.sign(J[jn[n - 1]].p[0] - J[jn[0]].p[0]) || 1;
       for (let k = 1; k < n; k++) { const fk = k / (n - 1), q = B[jn[k]].position; q.x += sd2 * 0.22 * H * fl * fk; q.y += 0.18 * H * fl * fk * fk; } }); }
   /* the strings: built again between the arms where they are now and where they land on the body (they stretch long and thin, or go slack) */
   if (inC || (!old && e.u < c[6]) || sink > 0.001) K.str.forEach(X => { try { str62(S, K, X, S.tt62 || 0, 1, 0); if (inP && lift > 0.01 && !X.drip) { const jn = X.c.jn; const kk = 1 - (X.i % 2 ? 0.97 : 0.7) * lift; for (let i = X.top + 1; i < jn.length; i++) B[jn[i]].scale.multiplyScalar(kk); } } catch (x) { W71.err = String(x && x.stack); } });
+  /* (87) from the pull until it has settled after landing: every string and drip is drawn back into the arm it hangs from (they re-form as it
+     settles), and the pen draws only the stretched body's one outer line (the draw30 wrapper below reads S.cl71) */
+  const rt = inP ? sm52(e.pu / 0.1) : (!old && e.u >= c[5] && e.u < c[6]) ? 1 - sm52((e.sl - 0.3) / 0.3) : 0;
+  if (rt > 0.001) { K.str.forEach(X => { const jn = X.c.jn, A = B[jn[X.top]].position; for (let i = X.top + 1; i < jn.length; i++) { const b = B[jn[i]]; b.position.lerp(A, 0.15 * rt); b.scale.multiplyScalar(Math.max(1e-4, 1 - rt)); } }); if (rt > 0.3) { K.beads.forEach(b => { b.visible = false; }); K.spots.forEach(b => { b.visible = false; }); } }
+  S.cl71 = inP || (!old && e.u >= c[5] && e.u < c[6] && e.sl < 0.62);
   /* for the page: where its foot is, how wide its slick, how tall it stands, where its tops are (for the drips it flings) (world) */
   V.set(cx, 0, cz).applyMatrix4(R.matrixWorld); o.a71 = [V.x, V.y, V.z]; o.r71 = (G.pl ? G.pl.rx : 0.8 * H) * ws; o.h71 = H * ws; o.lw71 = (H * fy + Lt) * ws;
   const tops = [jh]; if (up > 0.2) K.arms.forEach(ch => { if (!ch.l.flat) tops.push(ch.jn[ch.jn.length - 1]); }); o.tops71 = tops.map(j => { const p = B[j].position; V.set(p.x, p.y, p.z).applyMatrix4(R.matrixWorld); return [V.x, V.y, V.z]; }); }
 /* what is seen: the pen line and its beads go with the figure */
 function show71(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; const K = S.k62; if (!on && K) { K.beads.forEach(b => { b.visible = false; }); K.spots.forEach(b => { b.visible = false; }); } }
 function kill71(S) { const O = S.e71; if (O) { if (O.gg.parent) O.gg.parent.remove(O.gg); S.e71 = null; } }
-function end71(S) { kill71(S); show71(S, true); S.z71 = null; S.x71 = null; }
+function end71(S) { kill71(S); show71(S, true); S.z71 = null; S.x71 = null; S.cl71 = false; }
 function evo71(f0, grp, S, t, o) { const e = ph71(t, o), T = S.T; S.x71 = true; W71.e = e; e.dir = (o.c59 && o.c59.dir) || -1; let O = S.e71; const ro = { look: [0, 0.5] };
   if (e.old) { if (!O || O.from !== o.from) { kill71(S); const gg = slime61Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.root.position.z -= [0, 0, 0.3, 0.6, 0.7, 0.9][o.from] || 0; grp.parent.add(gg); O = S.e71 = { gg, sp, from: o.from }; }
     const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show71(S, false); sp.x71 = true;
@@ -4438,6 +4444,43 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
   if (!(clip === 'evo' && o && o.from && on71(S) && o.from !== S.st)) { if (S && S.x71 && clip !== 'evo') { try { end71(S); } catch (e) { W71.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
   try { return evo71(f0, grp, S, t, o); } catch (err) { W71.err = String(err && err.stack); const L = o.L || 500, tot = (PAR71[Math.max(2, Math.min(5, o.to | 0))] || PAR71[3]).b.reduce((a, b) => a + b, 0); try { end71(S); } catch (x) { /* shown as it is */ } return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
 KIT.spirit26.play = play26;
+/* (builder 87) the stretched figure in ONE clean outer line. While S.cl71 (the pull until it has settled after landing) its own pen marks (S.a61) and
+   bubble rings (K.lanes) are not drawn, and every pen run is kept only where it lies on the outside of the figure's own shape: the body's skin is
+   laid flat on the screen as a coarse cover (mask71, all its triangles), and a point of a run is inner (a crease of the stretched skin) when the
+   paper on both sides of it is covered. Inner points are dropped; what is left is written in pieces, as the pen would. */
+function mask71(R, Wd, Ht) { if (W71.mk) return W71.mk; const s = R.body, C = s.C, tp = s.tp, tr = tp.tris, nt = tp.nt, nv = tp.nv; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (let i = 0; i < nv; i++) { if (C[4 * i + 3] <= 1e-5) continue; const x = C[4 * i], y = C[4 * i + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (!(x1 > x0 && y1 > y0)) return null; const cs = Math.max(1.5, Math.max(x1 - x0, y1 - y0) / 300), gw = Math.ceil((x1 - x0) / cs) + 3, gh = Math.ceil((y1 - y0) / cs) + 3, g = new Uint8Array(gw * gh);
+  for (let t = 0; t < nt; t++) { const a = 4 * tr[3 * t], b = 4 * tr[3 * t + 1], c = 4 * tr[3 * t + 2]; if (C[a + 3] <= 1e-5 || C[b + 3] <= 1e-5 || C[c + 3] <= 1e-5) continue;
+    const ax = (C[a] - x0) / cs + 1, ay = (C[a + 1] - y0) / cs + 1, bx = (C[b] - x0) / cs + 1, by = (C[b + 1] - y0) / cs + 1, cx = (C[c] - x0) / cs + 1, cy = (C[c + 1] - y0) / cs + 1, ar = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax); if (Math.abs(ar) < 1e-6) continue;
+    const i0 = Math.max(0, Math.floor(Math.min(ax, bx, cx))), i1 = Math.min(gw - 1, Math.ceil(Math.max(ax, bx, cx))), j0 = Math.max(0, Math.floor(Math.min(ay, by, cy))), j1 = Math.min(gh - 1, Math.ceil(Math.max(ay, by, cy)));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const px = i + 0.5, py = j + 0.5, w0 = ((bx - px) * (cy - py) - (by - py) * (cx - px)) / ar, w1 = ((cx - px) * (ay - py) - (cy - py) * (ax - px)) / ar; if (w0 >= -0.02 && w1 >= -0.02 && 1 - w0 - w1 >= -0.02) g[j * gw + i] = 1; } }
+  return (W71.mk = { g, gw, gh, x0, y0, cs, at: (x, y) => { const i = Math.floor((x - x0) / cs + 1), j = Math.floor((y - y0) / cs + 1); return i >= 0 && j >= 0 && i < gw && j < gh && g[j * gw + i] === 1; } }); }
+/* the outer edge of the cover, followed round (the largest piece only), as points on the screen */
+function edge71(M) { const { g, gw, gh } = M, lab = new Int32Array(gw * gh), st = []; let best = 0, bl = 0, nl = 0;
+  for (let k = 0; k < gw * gh; k++) { if (!g[k] || lab[k]) continue; nl++; let sz = 0; st.push(k); lab[k] = nl; while (st.length) { const c = st.pop(), i = c % gw, j = (c - i) / gw; sz++;
+      if (i > 0 && g[c - 1] && !lab[c - 1]) { lab[c - 1] = nl; st.push(c - 1); } if (i < gw - 1 && g[c + 1] && !lab[c + 1]) { lab[c + 1] = nl; st.push(c + 1); } if (j > 0 && g[c - gw] && !lab[c - gw]) { lab[c - gw] = nl; st.push(c - gw); } if (j < gh - 1 && g[c + gw] && !lab[c + gw]) { lab[c + gw] = nl; st.push(c + gw); } }
+    if (sz > best) { best = sz; bl = nl; } }
+  if (best < 20) return null; let s0 = -1; for (let k = 0; k < gw * gh; k++) if (lab[k] === bl) { s0 = k; break; }
+  const D = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]], inn = (i, j) => i >= 0 && j >= 0 && i < gw && j < gh && lab[j * gw + i] === bl, ix = (dx, dy) => D.findIndex(d => d[0] === dx && d[1] === dy);
+  let ci = s0 % gw, cj = (s0 - ci) / gw, db = 4; const out = [[ci, cj]];
+  for (let n = 0; n < 40000; n++) { let moved = false; for (let k = 1; k <= 8; k++) { const nd = (db + k) % 8, qi = ci + D[nd][0], qj = cj + D[nd][1]; if (!inn(qi, qj)) continue; const pd = (db + k + 7) % 8, bi = ci + D[pd][0], bj = cj + D[pd][1]; db = ix(bi - qi, bj - qj); ci = qi; cj = qj; moved = true; break; }
+    if (!moved || (ci === s0 % gw && cj === (s0 - s0 % gw) / gw && out.length > 2)) break; out.push([ci, cj]); }
+  return out.map(q => [M.x0 + (q[0] - 0.5) * M.cs, M.y0 + (q[1] - 0.5) * M.cs]); }
+/* the one outline, written as three long strokes that overlap a little (where the pen is lifted and put down again) */
+function line71(S, R, sf, Wd, Ht) { const M = mask71(R, Wd, Ht); if (!M) return; const E = edge71(M); if (!E || E.length < 8) return; const n0 = E.length, s = R.body, C = s.C, nv = s.tp.nv; let zn = 1;
+  for (let i = 0; i < nv; i++) if (C[4 * i + 3] > 1e-5 && C[4 * i + 2] < zn) zn = C[4 * i + 2];
+  /* the cover's staircase smoothed away */ const P = E.map(p => p.slice()); for (let ps = 0; ps < 3; ps++) { const Q = P.map(p => p.slice()); for (let i = 0; i < n0; i++) { let x = 0, y = 0; for (let k = -2; k <= 2; k++) { const q = Q[(i + k + n0) % n0]; x += q[0]; y += q[1]; } P[i][0] = x / 5; P[i][1] = y / 5; } }
+  const lw = R.lw || 2, sc = Ht / 720, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), step = Math.max(1, Math.round(n0 / 900)), np = 3, ov = Math.round(0.04 * n0), st0 = Math.floor(h30(7) * n0);
+  for (let p = 0; p < np; p++) { const a = st0 + Math.floor(p * n0 / np), b = st0 + Math.floor((p + 1) * n0 / np) + ov; let m = 0; for (let i = a; i <= b && m < 1400; i += step) { const q = P[i % n0]; R.X[m] = q[0]; R.Y[m] = q[1]; R.Z[m] = zn - 1e-4; R.Sd[m] = 7100 + (i % n0) * 3; m++; } W71.st0(R, m, lw * 1.05, s2, Wd, Ht, { smooth: 2, wob: 0.8, min: 4 }); } }
+stroke30 = (f0 => { W71.st0 = f0; return function (R, n, lw, sc, Wd, Ht, o) { if (!W71.cut || W71.cut !== R || n < 2) return f0.apply(this, arguments); let M = null; try { M = mask71(R, Wd, Ht); } catch (e) { W71.err = String(e && e.stack); } if (!M) return f0.apply(this, arguments);
+  /* every run that lies on the figure's own shape (its outline and its creases) is left to line71; others (a bead off the body) are drawn */ const off = Math.max(2.2 * M.cs, 4 * sc); let on = 0;
+  for (let i = 0; i < n; i++) { const x = R.X[i], y = R.Y[i]; if (M.at(x, y) || M.at(x + off, y) || M.at(x - off, y) || M.at(x, y + off) || M.at(x, y - off)) on++; }
+  if (on > 0.5 * n) return; return f0.apply(this, arguments); }; })(stroke30);
+draw30 = (f0 => function (T, S, ren, cam) { if (!S || !S.cl71 || !S.x71 || !S.pen30) return f0(T, S, ren, cam); const K = S.k62, a61 = S.a61, ln = K ? K.lanes : null, R = S.pen30;
+  S.a61 = null; if (K) K.lanes = []; W71.cut = R; W71.mk = null; W71.S = S;
+  try { f0(T, S, ren, cam); W71.cut = null; const sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())); line71(S, R, 1, sz.x, sz.y); R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
+  catch (e) { W71.err = String(e && e.stack); } finally { S.a61 = a61; if (K) K.lanes = ln; W71.cut = null; W71.mk = null; W71.S = null; } })(draw30);
 KIT.W71 = W71; KIT.e71dbg = () => { const e = W71.e; return { err: W71.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), melt: +e.melt.toFixed(2), ga: +e.ga.toFixed(2), pu: +e.pu.toFixed(2), sl: +e.sl.toFixed(2), home: +e.home.toFixed(2), col: +e.col.toFixed(2), sy: +e.sy.toFixed(2), hit: e.hit, tot: e.tot, old: e.old, gone: e.gone } : null }; };
 // ==== W71 END
 // ==== W63 BEGIN
