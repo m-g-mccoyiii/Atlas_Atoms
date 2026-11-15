@@ -2837,81 +2837,159 @@ KIT.acid48Fig = acid48Fig; KIT.ACID48 = W48;
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid48 === 'a' && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = acid48Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W48.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W48 END
 // ==== W49 BEGIN
-// (builder 49) DRY ICE AS A SPIRIT, three versions of stage 3 (AA.rxKit.dry49 = 'a' | 'b' | 'c', or ?d49=a on the page; off by default). Stills only.
-// The owner's pick: "a spirit like Water too": a readable figure of fog rising from its own low spill, with a face. Built by Water's own code the
-// way builder 48 built Acid: each version is a set of numbers like a stage of S25; geo26 makes one closed skin on joints, fig26 gives the face,
-// set30 the pen and the wash. What is Dry ice's own: the shapes (heavy, wide at the foot, everything hangs and sinks), the spill (roll49: fat low
-// rolls of fog that leave the foot and lie out along the bench, so the outline of the spill is scalloped, not a neat pool), heavy lids, the wash
-// in cold white and grey-violet (the blues of F30 changed in the compiled shader, and the paper under it made a colder white), strokes of the pen
-// (wisps that FALL, a hard block drawn as its heart, a hood's rim), grains of frost on the wood (the drops, lying flat).
-//  a the dozer: a heavy mound slumped in its own cloud, head lolling to one side, lids nearly shut, breathing out a wisp that falls; one arm hangs, one lies out on a roll
-//  b the hooded one: tall and narrow, a peaked hood, chin up and looking away; one arm held out level with a long sleeve of fog falling from it, the other lost in a hanging sleeve; the block is its heart
-//  c the shy one: small and round, a big head, wide eyes looking down and aside, both hands holding the block to its middle, deep in a bank of fat rolls
-KIT.dry49 = KIT.dry49 == null ? ((typeof location !== 'undefined' && (/[?&]d49=([abc])/.exec(String(location.search)) || [])[1]) || null) : KIT.dry49;
-const W49 = { geo: {}, figs: [], err: null, ways: { a: 'the dozer', b: 'the hooded one', c: 'the shy one' }, TARGET: 8000,
-  C: { lite: [0.93, 0.945, 0.985], edge: [0.70, 0.725, 0.86], shade: [0.60, 0.62, 0.80], margin: [0.86, 0.88, 0.95], paper: [0.975, 0.975, 0.985], lid: 0xd3d6e4 } };
+// (builder 49, five stages by builder 53) DRY ICE AS A SPIRIT: "the shy one", the owner's pick (AA.rxKit.dry49 = 'c', or ?d49=c on the page; off by default). Stills only.
+// Built and drawn the way Water is, by Water's own code: each stage is a set of numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes
+// it one closed skin on joints, fig26 gives the face, set30 the pen and the wash. What is Dry ice's own: the shapes (round, heavy, everything hangs and
+// sinks), a head with a low heavy brow of fog and a soft peak that folds over and droops, fat arms like sleeves, the spill (roll49: fat low rolls of fog
+// lying along the bench, so the foot is a scalloped bank, not a pool), the wash in cold white and grey-violet, the pen line that BREAKS along the low and
+// outer edges of the bank (cut49) where the wash thins to dry brush and the wood shows (dry49 in the shader), the frosted block (box49: a real little
+// block of ice, cold blue, drawn round by the pen; from stage 4 lodged in the chest with a cold glow), wisps that fall, rime and frost ferns on the wood.
+//  1 a breath: the top of a round head and two wide eyes over one roll of fog, the block a glint under its chin
+//  2 the huddle: head and shoulders up, hugging the block tight in both fat arms, looking away, three rolls round it
+//  3 the shy one: as picked, holding the block out a little in both hands, deep in fat rolls, brows up
+//  4 the keeper: taller and calm, heavy lids, the block in its chest glowing cold, arms held low and out, fog pouring off them like wide sleeves, a skirt of rolls
+//  5 the old frost: large and still, a great hooded head bowed, long sleeves of falling fog, the block deep in its chest, a bank spilling far along the bench, frost ferns
+KIT.dry49 = KIT.dry49 == null ? ((typeof location !== 'undefined' && (/[?&]d49=(c)/.exec(String(location.search)) || [])[1]) || null) : KIT.dry49;
+const W49 = { geo: {}, figs: [], err: null, ways: { c: 'the shy one' }, TARGET: [0, 6000, 7000, 8000, 8800, 9400],
+  ROLE: [null, { chest: 2, neck: 3, head: 4, hair: 7 }, { chest: 4, neck: 5, head: 6, hair: 9 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }],
+  C: { lite: [0.935, 0.945, 0.99], edge: [0.74, 0.735, 0.885], shade: [0.62, 0.60, 0.80], margin: [0.88, 0.89, 0.97], paper: [0.975, 0.978, 0.992], lid: 0xd6d8ea, glint: 0x9fd8ff,
+    ice: [0xd8f0ff, 0xb2dcf6, 0xf2fbff, 0x7fb6de] } };
 /* a roll of fog lying on the bench at (X, Z): a low pillow that lies ALONG the rim of the spill; it is joined to the foot by a thread that runs under the spill and is not seen; zc is the foot's half depth */
 const roll49 = (zc, X, Z, r) => { const s = Z >= 0 ? 1 : -1, z0 = s * zc * 1.05, d = Math.hypot(X, Z) || 1, tx = -Z / d * r * 0.75, tz = X / d * r * 0.75, ax = X - tx, az = Z - tz, da = Math.hypot(ax, az) || 1, k = Math.max(0.2, 1 - 0.9 * r / da);
   return { k: 4.6, th: s * PI / 2, r0: 0.08, path: [[ax * k, -0.2, az * k - z0], [ax, r * 0.45 - 0.26, az - z0], [X + tx, r * 0.42 - 0.26, Z + tz - z0]], rad: [0.05, r, r * 0.9], flat: [0, 1, 0], fk: () => 0.55 }; };
 /* the spill: n rolls set round the foot on an oval (rx, rz), each a little out of place and of its own size, close enough to run together */
 const spill49 = (zc, rx, rz, n, r, sd) => Array.from({ length: n }, (_, i) => { const h = k => 0.5 + 0.5 * Math.sin(sd * 12.9898 + i * 78.233 + k * 37.719), a = (i + 0.5 * h(1)) / n * 2 * PI + 0.2, d = 0.9 + 0.22 * h(2); return roll49(zc, Math.cos(a) * rx * d, Math.sin(a) * rz * d, r * (0.78 + 0.5 * h(3))); });
-/* a wisp of fog in the air: it falls, sways once and curls away at the bottom */
+/* a wisp of fog in the air: it falls, sways once and curls away at the bottom (never rises: fog sinks) */
 const fall49 = (x, y, z, h, sd) => Array.from({ length: 12 }, (_, i) => { const t = i / 11, c = sm((t - 0.62) / 0.38); return [x + sd * h * (0.09 * Math.sin(t * 5) + 0.3 * c * c), y - h * (t - 0.1 * c * c), z]; });
-/* the block: a small hard cube drawn by the pen on the skin (six sides of its outline, three edges that meet in its middle, two scratches of frost) */
-const cube49 = (c, d, s, j) => { const v = a => [s * Math.cos(a * PI / 180), s * Math.sin(a * PI / 180)], o = { smooth: 0, wob: 0.25, min: 2, trim: 0 }, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  return [{ c, d, j, pts: [30, 90, 150, 210, 270, 330, 30, 90].map(v), w: 0.75, o }].concat([30, 150, 270].map(a => ({ c, d, j, pts: [[0, 0], mid([0, 0], v(a)), v(a)], w: 0.6, o })))
-    .concat([{ c, d, j, pts: [[-0.55 * s, -0.5 * s], [-0.4 * s, -0.3 * s], [-0.3 * s, -0.12 * s]], w: 0.4, o }, { c, d, j, pts: [[0.3 * s, -0.62 * s], [0.42 * s, -0.42 * s], [0.5 * s, -0.25 * s]], w: 0.4, o }]); };
-/* a star of frost on the wood: three short strokes that cross */
-const star49 = (x, z, r) => [0, 1, 2].map(i => { const a = i * PI / 3 + 0.3, cx = Math.cos(a) * r, cz = Math.sin(a) * r; return { air: [[x - cx, 0.02, z - cz], [x, 0.02, z], [x + cx, 0.02, z + cz]], j: 0, w: 0.42, o: { smooth: 0, wob: 0.3, min: 2, trim: 0 } }; });
-const SPEC49 = {
-  a: () => ({ keys: pool(0, 0, 2.7, 1.2, 0.95, 0.75).concat([[0, 0.62, 0, 1.0, 0.78], [0.04, 1.05, 0, 0.8, 0.66], [0.1, 1.45, 0.03, 0.84, 0.62], [0.18, 1.8, 0.06, 0.72, 0.52], [0.26, 2.02, 0.1, 0.5, 0.42], [0.44, 2.28, 0.22, 0.78, 0.66], [0.58, 2.62, 0.18, 0.68, 0.58],
-      [0.68, 2.84, 0.14, 0.48, 0.42], [0.75, 2.96, 0.12, 0.3, 0.26], [0.79, 3.02, 0.12, 0.15, 0.14], [0.81, 3.05, 0.12, 0.06, 0.06], [0.82, 3.06, 0.12, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 2.7, 1.2],
-    limbs: [{ k: 9, th: 0, r0: 0.26, ey: 1.25, path: [[0.28, -0.35, 0.14], [0.5, -0.85, 0.3], [0.58, -1.3, 0.4], [0.63, -1.65, 0.45]], rad: [0.26, 0.24, 0.27, 0.2] },
-      { k: 9, th: PI, r0: 0.26, ey: 1.25, path: [[-0.39, -0.3, 0.14], [-0.84, -0.75, 0.24], [-1.24, -1.0, 0.32], [-1.59, -1.1, 0.36]], rad: [0.26, 0.23, 0.2, 0.24] }]
-      .concat(spill49(0.75, 2.35, 0.95, 11, 0.4, 1)),
-    face: { c: [0.44, 2.34, 0.22], d: [0.1, -0.1, 1], k: 1.3, er: 1.1, dx: 0.24, lid: 0.62, brow: { y: 0.2, len: 0.16, ang: [-0.3, -0.3], arch: 0.01, r: 0.02 }, mouth: { o: 0.05, y: -0.25, x: 0.02, r: 0.022 } },
-    pen: [{ air: [[0.6, 1.93, 1.0], [0.74, 1.87, 1.0], [0.92, 1.86, 1.0], [1.06, 1.77, 1.0], [1.1, 1.61, 1.0], [1.01, 1.49, 1.0], [0.89, 1.5, 1.0], [0.86, 1.59, 1.0]], w: 0.5 }].concat(star49(3.3, 0.8, 0.14), star49(-3.3, 0.9, 0.12)),
-    drops: [[3.35, 0, 0.2, 0.06], [-3.4, 0, -0.2, 0.05], [3.0, 0, 1.2, 0.04], [-2.9, 0, 1.3, 0.045]] }),
-  b: () => ({ keys: pool(0, 0, 2.2, 1.1, 0.8, 0.62).concat([[0, 0.75, 0, 0.74, 0.58], [0.02, 1.4, 0, 0.6, 0.48], [0, 2.0, 0.02, 0.52, 0.42], [-0.02, 2.55, 0.04, 0.64, 0.42], [0, 2.84, 0.06, 0.4, 0.36], [0.04, 3.22, 0.1, 0.56, 0.52], [0.06, 3.62, 0.04, 0.54, 0.5],
-      [0.16, 3.88, 0, 0.42, 0.4], [0.36, 4.02, -0.02, 0.31, 0.3], [0.58, 3.98, -0.04, 0.23, 0.22], [0.74, 3.82, -0.04, 0.15, 0.15], [0.8, 3.66, -0.04, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 2.2, 1.1],
-    limbs: arm48(9, 0, 0.22, [[0.35, -0.05, 0.1], [0.8, 0.0, 0.2], [1.2, -0.02, 0.26]], [0.18, 0.16, 0.15], [[[0.2, -0.03, 0.02, 0.13], [0.36, -0.1, 0.03, 0.09]], [[-0.1, -0.33, 0, 0.23], [-0.2, -0.72, 0, 0.2], [-0.22, -1.1, 0, 0.13], [-0.18, -1.42, 0, 0.04]]])
-      .concat([{ k: 9, th: PI, r0: 0.2, ey: 1.25, path: [[-0.3, -0.4, 0.08], [-0.46, -0.95, 0.14], [-0.52, -1.5, 0.18], [-0.48, -2.0, 0.18], [-0.46, -2.38, 0.18]], rad: [0.18, 0.18, 0.23, 0.17, 0.05] }])
-      .concat(spill49(0.62, 1.95, 0.9, 10, 0.34, 2)),
-    face: { c: [0.04, 3.24, 0.1], d: [0.28, 0.08, 1], k: 1.15, er: 1.0, dx: 0.19, lid: 0.48, brow: { y: 0.21, len: 0.15, ang: [0.05, 0.05], arch: 0.035, r: 0.02 }, mouth: { w: 0.085, d: -0.02, y: -0.23, r: 0.024 } },
-    pen: [{ c: [0.04, 3.24, 0.1], d: [0.28, 0.08, 1], head: 1, pts: Array.from({ length: 17 }, (_, i) => { const a = (-62 + 304 * i / 16) * PI / 180; return [0.4 * Math.cos(a), 0.03 + 0.43 * Math.sin(a)]; }), w: 0.7, o: { smooth: 2, wob: 0.5, min: 3 } }]
-      .concat(cube49([-0.02, 2.02, 0.04], [0.1, 0, 1], 0.2), [{ air: fall49(2.5, 2.3, 0.34, 0.9, 1), w: 0.5 }], star49(2.7, 0.8, 0.13), star49(-2.75, 0.8, 0.11)),
-    drops: [[2.75, 0, 0.1, 0.05], [-2.8, 0, 0.1, 0.05], [2.3, 0, 1.2, 0.04], [-2.2, 0, 1.25, 0.04]] }),
-  c: () => ({ keys: pool(0, 0, 2.6, 1.2, 0.95, 0.78).concat([[0, 0.55, 0, 0.92, 0.76], [0, 0.9, 0.02, 0.86, 0.7], [0, 1.2, 0.04, 0.74, 0.6], [0, 1.45, 0.06, 0.72, 0.56], [0, 1.6, 0.08, 0.6, 0.5], [-0.06, 1.95, 0.12, 0.76, 0.64], [-0.06, 2.3, 0.1, 0.84, 0.68],
-      [-0.05, 2.52, 0.08, 0.64, 0.52], [-0.04, 2.63, 0.06, 0.4, 0.33], [-0.03, 2.69, 0.06, 0.2, 0.17], [-0.03, 2.72, 0.06, 0.08, 0.07], [-0.03, 2.73, 0.06, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 2.6, 1.2],
-    limbs: [{ k: 9, th: 0.3, r0: 0.22, ey: 1.25, path: [[0.3, -0.12, 0.1], [0.6, -0.4, 0.25], [0.38, -0.62, 0.62], [-0.15, -0.6, 0.76]], rad: [0.18, 0.17, 0.15, 0.18] },
-      { k: 9, th: PI - 0.3, r0: 0.22, ey: 1.25, path: [[-0.3, -0.12, 0.1], [-0.6, -0.4, 0.25], [-0.38, -0.62, 0.62], [0.15, -0.6, 0.76]], rad: [0.18, 0.17, 0.15, 0.18] }]
-      .concat(spill49(0.78, 2.25, 0.95, 10, 0.46, 3)),
-    face: { c: [-0.06, 1.98, 0.12], d: [-0.08, -0.2, 1], k: 1.35, er: 1.25, dx: 0.25, brow: { y: 0.215, len: 0.13, ang: [-0.38, -0.38], lift: [0.02, 0.02], arch: 0.01, r: 0.018 }, mouth: { w: 0.06, d: -0.025, y: -0.22, r: 0.02 } },
-    pen: cube49([0, 0.9, 0], [0, 0.25, 1], 0.2).concat(star49(3.2, 0.8, 0.13), star49(-3.2, 0.9, 0.12)),
-    drops: [[3.25, 0, 0.1, 0.055], [-3.3, 0, 0, 0.05], [2.9, 0, 1.2, 0.04], [-2.8, 0, 1.25, 0.045]] })
-};
-/* the wash turns cold: the same shader as Water's, its blues changed for white and grey-violet, and the paper under the wash a colder white */
-function tint49(T, S) { if (!S.m30) return; S.t49 = true; const C = W49.C, way = S.way49, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)], ['PAPER29 * (0.985', g(C.paper) + ' * (0.985'], ['smoothstep(0.80, 0.87, l9', 'smoothstep(0.52, 0.64, l9']];   /* the last: far more of the lit side is left bare, fog is mostly paper */
-  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd49' + way; m.needsUpdate = true; };
-  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
-function dry49Fig(T, way, extra) { const sp = SPEC49[way], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
-  S25[2] = sp; if (W49.geo[way]) W26.geo[3] = W49.geo[way]; else delete W26.geo[3]; W26.TARGET = W49.TARGET;
-  try { g = fig26(T, 3, extra); W49.geo[way] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
-  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way49 = way;
+const wisp49 = (x, y, z, h, sd, w) => ({ air: fall49(x, y, z, h, sd), w: w || 0.45, o: { smooth: 2, wob: 0.6, min: 3 } });
+/* a frost fern on the wood: a curving stem with barbs on both sides, all lying flat (j: 0 lies with the spill) */
+const fern49 = (x, z, L, a, sd) => { const o = { smooth: 1, wob: 0.3, min: 2, trim: 0 }, P = t => { const b = a + sd * 0.4 * t * t; return [x + Math.cos(b) * L * t, 0.02, z + Math.sin(b) * L * t]; }, out = [{ air: Array.from({ length: 7 }, (_, i) => P(i / 6)), j: 0, w: 0.5, o }];
+  [0.2, 0.38, 0.56, 0.74].forEach(t => [-1, 1].forEach(s => { const p = P(t), b = a + sd * 0.4 * t * t + s * 0.8, l = L * 0.34 * (1 - 0.55 * t); out.push({ air: [p, [p[0] + Math.cos(b) * l * 0.5, 0.02, p[2] + Math.sin(b) * l * 0.5], [p[0] + Math.cos(b - s * 0.2) * l, 0.02, p[2] + Math.sin(b - s * 0.2) * l]], j: 0, w: 0.4, o }); })); return out; };
+/* a star of frost on the wood: three strokes that cross */
+const star49 = (x, z, r) => [0, 1, 2].map(i => { const a = i * PI / 3 + 0.3, cx = Math.cos(a) * r, cz = Math.sin(a) * r; return { air: [[x - cx, 0.02, z - cz], [x, 0.02, z], [x + cx, 0.02, z + cz]], j: 0, w: 0.45, o: { smooth: 0, wob: 0.3, min: 2, trim: 0 } }; });
+/* the frost on the wood: rime patches (x, z, r) with ferns and stars drawn over them */
+const frost49 = (list) => list.reduce((a, q) => a.concat(fern49(q[0], q[1], q[2] * 1.5, q[3], q[4] || 1), star49(q[0] + Math.cos(q[3] + 2.2) * q[2] * 0.7, q[1] + Math.sin(q[3] + 2.2) * q[2] * 0.5, q[2] * 0.32)), []);
+const SPEC49 = [
+  // 1 a breath: only the top of the round head and two wide eyes over one roll of fog; the block a glint under its chin
+  () => ({ keys: pool(0, 0, 0.9, 0.7, 0.55, 0.45).concat([[0, 0.3, -0.06, 0.6, 0.5], [0, 0.44, -0.08, 0.68, 0.56], [0, 0.64, -0.1, 0.72, 0.58], [-0.02, 0.87, -0.1, 0.74, 0.58], [-0.02, 1.07, -0.12, 0.6, 0.48],
+      [0.12, 1.21, -0.1, 0.42, 0.36], [0.36, 1.31, -0.04, 0.32, 0.29], [0.6, 1.25, 0.02, 0.23, 0.22], [0.76, 1.09, 0.06, 0.15, 0.15], [0.82, 0.93, 0.06, 0.08, 0.08], [0.83, 0.87, 0.06, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 0.9, 0.7], bank: [0.03, 0.26],
+    limbs: [Object.assign(roll49(0.45, 0.05, 0.58, 0.72), { fk: () => 0.8 }), roll49(0.45, 0.1, -0.45, 0.36)],
+    face: { c: [-0.02, 0.97, -0.06], d: [0, 0.5, 1], k: 1.0, er: 1.4, dx: 0.25, brow: { y: 0.25, len: 0.13, ang: [-0.38, -0.38], lift: [0.03, 0.03], arch: 0.01, r: 0.02 } },
+    box: { c: [0.2, 0.74, 0.74], s: 0.17 },
+    pen: frost49([[1.1, 0.1, 0.26, 0.4], [-1.05, 0.15, 0.24, 2.6, -1]]),
+    rime: [[1.1, 0.1, 0.36], [-1.05, 0.15, 0.32]],
+    drops: [[0.9, 0, 0.5, 0.035], [-0.85, 0, 0.5, 0.03]] }),
+  // 2 the huddle: head and shoulders up, both fat arms hugging the block tight to its chest, looking away, three rolls round it
+  () => ({ keys: pool(0, 0, 1.9, 0.95, 0.75, 0.62).concat([[0, 0.5, 0, 0.78, 0.64], [0, 0.8, 0.02, 0.76, 0.62], [0, 1.05, 0.04, 0.7, 0.57], [0, 1.24, 0.06, 0.64, 0.52], [0.03, 1.52, 0.1, 0.76, 0.62],
+      [0.03, 1.8, 0.08, 0.8, 0.64], [0.05, 2.0, 0.04, 0.64, 0.5], [0.22, 2.14, 0.06, 0.46, 0.4], [0.5, 2.22, 0.12, 0.36, 0.33], [0.78, 2.14, 0.18, 0.26, 0.25], [0.96, 1.94, 0.22, 0.17, 0.17], [1.02, 1.76, 0.22, 0.09, 0.09], [1.03, 1.7, 0.22, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.9, 0.95], bank: [0.04, 0.28],
+    limbs: [{ k: 8, th: 0.55, r0: 0.27, ey: 1.25, path: [[0.22, -0.08, 0.16], [0.14, -0.26, 0.42], [-0.18, -0.32, 0.56], [-0.38, -0.26, 0.58]], rad: [0.28, 0.27, 0.25, 0.22] },
+      { k: 8, th: PI - 0.55, r0: 0.27, ey: 1.25, path: [[-0.22, -0.08, 0.16], [-0.14, -0.26, 0.42], [0.18, -0.32, 0.56], [0.38, -0.26, 0.58]], rad: [0.28, 0.27, 0.25, 0.22] },
+      roll49(0.62, 1.3, 0.38, 0.64), roll49(0.62, -1.25, 0.42, 0.62), roll49(0.62, 0.05, 0.85, 0.5), roll49(0.62, -0.4, -0.6, 0.42), roll49(0.62, 0.55, -0.6, 0.4)],
+    face: { c: [0.03, 1.55, 0.12], d: [-0.45, -0.05, 1], k: 1.1, er: 1.3, dx: 0.24, lid: 0.2, brow: { y: 0.22, len: 0.13, ang: [-0.3, -0.3], lift: [0.025, 0.025], arch: 0.01, r: 0.019 }, mouth: { w: 0.04, d: -0.02, y: -0.21, r: 0.018 } },
+    box: { c: [0, 1.02, 0.82], s: 0.26 },
+    pen: [{ c: [0.03, 1.55, 0.12], d: [0, 0, 1], head: 1, pts: [[-0.42, 0.36], [-0.18, 0.47], [0.1, 0.49], [0.34, 0.43], [0.52, 0.3]].map(q => [q[0] * 1.0, q[1] * 1.0]), w: 0.55, o: { smooth: 2, wob: 0.5, min: 3 } }, wisp49(1.05, 0.9, 0.5, 0.5, 1), wisp49(-1.05, 0.88, 0.52, 0.45, -1)].concat(frost49([[2.35, 0.1, 0.36, 0.3], [-2.3, 0.15, 0.34, 2.8, -1]])),
+    rime: [[2.35, 0.1, 0.5], [-2.3, 0.15, 0.48]],
+    drops: [[1.5, 0, 0.5, 0.045], [-1.45, 0, 0.5, 0.04]] }),
+  // 3 the shy one: as picked; holding the block out a little in both hands, deep in fat rolls, brows up
+  () => ({ keys: pool(0, 0, 2.6, 1.2, 0.95, 0.78).concat([[0, 0.55, 0, 0.94, 0.78], [0, 0.9, 0.02, 0.9, 0.74], [0, 1.2, 0.04, 0.8, 0.64], [0, 1.45, 0.06, 0.74, 0.58], [0, 1.64, 0.08, 0.68, 0.54], [-0.04, 1.95, 0.12, 0.8, 0.66],
+      [-0.05, 2.25, 0.1, 0.88, 0.7], [0, 2.48, 0.06, 0.74, 0.58], [0.16, 2.66, 0.06, 0.54, 0.46], [0.46, 2.76, 0.12, 0.42, 0.38], [0.8, 2.7, 0.2, 0.32, 0.3], [1.06, 2.48, 0.26, 0.22, 0.21], [1.16, 2.24, 0.28, 0.13, 0.13], [1.18, 2.1, 0.28, 0.06, 0.06], [1.18, 2.05, 0.28, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 2.6, 1.2], bank: [0.04, 0.3],
+    limbs: [{ k: 9, th: 0.3, r0: 0.3, ey: 1.25, path: [[0.26, -0.14, 0.12], [0.4, -0.45, 0.3], [0.2, -0.66, 0.6], [-0.18, -0.64, 0.74]], rad: [0.31, 0.3, 0.27, 0.24] },
+      { k: 9, th: PI - 0.3, r0: 0.3, ey: 1.25, path: [[-0.26, -0.14, 0.12], [-0.4, -0.45, 0.3], [-0.2, -0.66, 0.6], [0.18, -0.64, 0.74]], rad: [0.31, 0.3, 0.27, 0.24] }]
+      .concat(spill49(0.78, 2.25, 0.95, 10, 0.5, 3)),
+    face: { c: [-0.05, 2.0, 0.12], d: [-0.08, -0.15, 1], k: 1.35, er: 1.25, dx: 0.25, brow: { y: 0.215, len: 0.13, ang: [-0.38, -0.38], lift: [0.02, 0.02], arch: 0.01, r: 0.018 }, mouth: { w: 0.06, d: -0.025, y: -0.22, r: 0.02 } },
+    box: { c: [0, 0.92, 1.0], s: 0.4 },
+    pen: [{ c: [-0.05, 2.0, 0.12], d: [0, 0, 1], head: 1, pts: [[-0.42, 0.36], [-0.18, 0.47], [0.1, 0.49], [0.34, 0.43], [0.52, 0.3]].map(q => [q[0] * 1.15, q[1] * 1.15]), w: 0.55, o: { smooth: 2, wob: 0.5, min: 3 } }, wisp49(1.25, 1.05, 0.5, 0.7, 1), wisp49(-1.25, 1.0, 0.5, 0.6, -1), wisp49(1.0, 0.86, 0.8, 0.4, 1, 0.38)].concat(frost49([[3.15, 0.1, 0.42, 0.25], [-3.15, 0.15, 0.4, 2.9, -1], [2.6, -1.25, 0.3, 0.6]])),
+    rime: [[3.15, 0.1, 0.6], [-3.15, 0.15, 0.58], [2.6, -1.25, 0.42]],
+    drops: [[3.25, 0, 0.1, 0.055], [-3.3, 0, 0, 0.05], [2.4, 0, 0.5, 0.04], [-2.5, 0, 0.5, 0.045]] }),
+  // 4 the keeper: taller, calm, heavy-lidded; the block lodged in its chest glowing cold; arms held low and out with fog pouring off them like wide sleeves; a skirt of rolls
+  () => ({ keys: pool(0, 0, 3.0, 1.4, 1.0, 0.8).concat([[0, 0.6, 0, 0.98, 0.8], [0, 1.0, 0.02, 0.88, 0.7], [0, 1.45, 0.04, 0.76, 0.62], [0, 1.85, 0.06, 0.74, 0.58], [0, 2.12, 0.08, 0.62, 0.5], [0, 2.45, 0.1, 0.74, 0.62],
+      [0, 2.75, 0.08, 0.82, 0.64], [0.02, 2.98, 0.04, 0.64, 0.5], [0.18, 3.16, 0.04, 0.48, 0.42], [0.48, 3.26, 0.1, 0.38, 0.34], [0.8, 3.18, 0.18, 0.28, 0.26], [1.04, 2.96, 0.24, 0.19, 0.18], [1.14, 2.72, 0.26, 0.1, 0.1], [1.15, 2.64, 0.26, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 3.0, 1.4], bank: [0.05, 0.32],
+    limbs: arm48(9, 0.15, 0.27, [[0.25, -0.22, 0.06], [0.48, -0.56, 0.18], [0.56, -0.84, 0.52], [0.46, -0.9, 0.78]], [0.27, 0.29, 0.31, 0.3], [[[-0.04, -0.06, 0.14, 0.16], [-0.06, -0.1, 0.24, 0.06]], [[0.06, -0.26, -0.06, 0.3], [0.1, -0.52, -0.1, 0.22], [0.12, -0.72, -0.1, 0.08]]])
+      .concat(arm48(9, PI - 0.15, 0.27, [[-0.25, -0.22, 0.06], [-0.48, -0.56, 0.18], [-0.56, -0.84, 0.52], [-0.46, -0.9, 0.78]], [0.27, 0.29, 0.31, 0.3], [[[0.04, -0.06, 0.14, 0.16], [0.06, -0.1, 0.24, 0.06]], [[-0.06, -0.26, -0.06, 0.3], [-0.1, -0.52, -0.1, 0.22], [-0.12, -0.72, -0.1, 0.08]]]))
+      .concat(spill49(0.8, 2.75, 1.15, 12, 0.52, 4)),
+    face: { c: [0, 2.5, 0.12], d: [0, -0.1, 1], k: 1.3, er: 1.05, dx: 0.24, lid: 0.6, brow: { y: 0.2, len: 0.16, ang: [0.04, 0.04], arch: 0.02, r: 0.02 }, },
+    box: { c: [0, 1.62, 0.58], s: 0.4, glow: 1.5 },
+    pen: [{ c: [0, 2.5, 0.12], d: [0, 0, 1], head: 1, pts: [[-0.42, 0.36], [-0.18, 0.47], [0.1, 0.49], [0.34, 0.43], [0.52, 0.3]].map(q => [q[0] * 1.15, q[1] * 1.15]), w: 0.55, o: { smooth: 2, wob: 0.5, min: 3 } }, wisp49(1.65, 1.0, 0.45, 0.8, 1), wisp49(-1.65, 1.0, 0.45, 0.75, -1), wisp49(1.45, 1.35, 0.6, 0.6, -1, 0.38), wisp49(-1.45, 1.3, 0.6, 0.55, 1, 0.38)]
+      .concat(frost49([[3.65, 0.1, 0.5, 0.2], [-3.6, 0.15, 0.48, 2.95, -1], [2.8, -1.4, 0.36, 0.6], [-2.9, -1.35, 0.34, 2.5, -1]])),
+    rime: [[3.65, 0.1, 0.72], [-3.6, 0.15, 0.7], [2.8, -1.4, 0.5], [-2.9, -1.35, 0.48]],
+    drops: [[3.8, 0, 0.1, 0.06], [-3.8, 0, 0, 0.055], [2.9, 0, 0.5, 0.045], [-3.0, 0, 0.5, 0.045]] }),
+  // 5 the old frost: large and still; a great soft hood bowed, its tip drooping; long sleeves of falling fog; the block deep in its chest; a bank spilling far along the bench; frost ferns
+  () => ({ keys: pool(0, 0, 3.8, 1.6, 1.15, 0.9).concat([[0, 0.65, 0, 1.12, 0.9], [0, 1.1, 0.02, 1.02, 0.82], [0, 1.6, 0.06, 0.92, 0.74], [0, 2.02, 0.1, 0.88, 0.7], [0, 2.3, 0.18, 0.76, 0.62], [0, 2.55, 0.34, 0.84, 0.72],
+      [0, 2.86, 0.3, 0.98, 0.8], [0.02, 3.12, 0.16, 0.86, 0.7], [0.14, 3.34, 0.02, 0.64, 0.56], [0.46, 3.48, -0.02, 0.5, 0.45], [0.84, 3.4, 0.04, 0.38, 0.35], [1.14, 3.14, 0.12, 0.27, 0.25], [1.3, 2.82, 0.18, 0.18, 0.17], [1.36, 2.52, 0.2, 0.1, 0.1], [1.37, 2.4, 0.2, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 3.8, 1.6], bank: [0.05, 0.34],
+    limbs: arm48(9, 0.2, 0.3, [[0.3, -0.25, 0.15], [0.62, -0.62, 0.38], [0.66, -1.0, 0.58], [0.46, -1.24, 0.72]], [0.3, 0.32, 0.33, 0.3], [[[-0.06, -0.12, 0.1, 0.17], [-0.12, -0.2, 0.16, 0.06]], [[0.22, -0.36, -0.12, 0.36], [0.32, -0.8, -0.18, 0.32], [0.38, -1.12, -0.14, 0.2], [0.4, -1.3, -0.1, 0.06]]])
+      .concat(arm48(9, PI - 0.2, 0.3, [[-0.3, -0.25, 0.15], [-0.62, -0.62, 0.38], [-0.66, -1.0, 0.58], [-0.46, -1.24, 0.72]], [0.3, 0.32, 0.33, 0.3], [[[0.06, -0.12, 0.1, 0.17], [0.12, -0.2, 0.16, 0.06]], [[-0.22, -0.36, -0.12, 0.36], [-0.32, -0.8, -0.18, 0.32], [-0.38, -1.12, -0.14, 0.2], [-0.4, -1.3, -0.1, 0.06]]]))
+      .concat(spill49(0.9, 3.5, 1.35, 14, 0.56, 5), [roll49(0.9, 4.5, 0.45, 0.46), roll49(0.9, -4.45, 0.5, 0.46), roll49(0.9, 5.25, 0.25, 0.34), roll49(0.9, -5.2, 0.3, 0.34)]),
+    face: { c: [0, 2.62, 0.36], d: [0, -0.4, 1], k: 1.35, er: 0.95, dx: 0.25, lid: 0.72, brow: { y: 0.19, len: 0.22, ang: [0.32, 0.32], arch: 0.03, r: 0.024 } },
+    box: { c: [0, 1.72, 0.68], s: 0.42, glow: 1.9 },
+    pen: [{ c: [0, 2.7, 0.36], d: [0, -0.3, 1], head: 1, pts: Array.from({ length: 17 }, (_, i) => { const a = (-35 + 250 * i / 16) * PI / 180; return [0.62 * Math.cos(a), 0.06 + 0.56 * Math.sin(a)]; }), w: 0.75, o: { smooth: 2, wob: 0.5, min: 3 } },
+      wisp49(1.55, 1.0, 0.9, 0.9, 1), wisp49(-1.55, 1.0, 0.9, 0.85, -1), wisp49(1.25, 0.75, 1.2, 0.55, -1, 0.38), wisp49(-1.25, 0.72, 1.2, 0.5, 1, 0.38)]
+      .concat(frost49([[4.5, 0.2, 0.6, 0.15], [-4.5, 0.25, 0.58, 3.0, -1], [3.4, -1.6, 0.46, 0.6], [-3.5, -1.55, 0.44, 2.5, -1], [5.8, -0.2, 0.4, 0.4], [-5.7, -0.15, 0.4, 2.7, -1]])),
+    rime: [[4.5, 0.2, 0.85], [-4.5, 0.25, 0.82], [3.4, -1.6, 0.62], [-3.5, -1.55, 0.6], [5.8, -0.2, 0.55], [-5.7, -0.15, 0.55]],
+    drops: [[4.9, 0, 0.5, 0.06], [-4.9, 0, 0.5, 0.06], [3.4, 0, 0.5, 0.05], [-3.5, 0, 0.5, 0.05], [6.0, 0, 0.2, 0.05], [-6.0, 0, 0.25, 0.05]] })
+];
+/* the wash turns cold: the same shader as Water's, its blues changed for white and grey-violet, the paper under it a colder white, the lamp's warmth taken out
+   (so the fog never goes beige on the wood), and along the low and outer edges of the bank the wash thins out in dry brush and the wood shows through */
+function tint49(T, S) { if (!S.m30) return; S.t49 = true; const C = W49.C, way = S.way49, G = S.G, b = S.bank49 || [0.14, 0.6], g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4);
+  const dry = '{ vec3 q9 = bp * ' + f(G.H) + '; float lo9 = 1.0 - smoothstep(' + f(b[0]) + ', ' + f(b[1]) + ', q9.y), rr9 = length(vec2(q9.x / ' + f(G.pl.rx) + ', q9.z / ' + f(G.pl.rz) + '));'
+    + ' float st9 = N30(vec3(q9.x * 2.2, q9.y * 26.0, q9.z * 2.2)), st8 = N30(vec3(q9.x * 7.0, q9.y * 60.0, q9.z * 7.0) + 4.0);'
+    + ' float dr9 = lo9 * (0.2 + 0.55 * smoothstep(0.6, 1.1, rr9) + 0.45 * smoothstep(0.6, 0.15, nv) * step(q9.z, 0.4)) + 0.4 * smoothstep(0.03, -0.02, q9.y);'
+    + ' float gone9 = smoothstep(0.45, 0.68, dr9 + 0.55 * (st9 - 0.5) + 0.35 * (st8 - 0.5)); c9 = mix(c9, bg, gone9); }\n  gl_FragColor = vec4(c9, 1.0); }';
+  const sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)], ['PAPER29 * (0.985', g(C.paper) + ' * (0.985'],
+    ['smoothstep(0.80, 0.87, l9', 'smoothstep(0.52, 0.64, l9'],            /* far more of the lit side is left bare: fog is mostly paper */
+    ['vec3(1.0, 0.972, 0.91)', 'vec3(0.985, 0.99, 1.0)'], ['vec3(1.0, 0.95, 0.84)', 'vec3(0.93, 0.95, 1.0)'], ['vec3(0.70, 0.72, 0.82)', 'vec3(0.72, 0.71, 0.86)'],   /* the lamp: no warmth, a violet shade */
+    ['gl_FragColor = vec4(c9, 1.0); }', dry]];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd53' + way; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); if (S.m30.glint && S.m30.glint.color) S.m30.glint.color.copy(new T.Color(C.glint).convertSRGBToLinear()); }
+/* a soft round texture (white on black, read as alpha): a glow, or rime with needles of frost in it */
+const tex49 = (T, kind) => { const key = 't' + kind; if (W49[key]) return W49[key]; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, n, n);
+  const gr = x.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2); if (kind === 'glow') { gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, n, n); }
+  else { gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, n, n); let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    x.strokeStyle = 'rgba(255,255,255,0.85)'; x.lineCap = 'round'; for (let i = 0; i < 70; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.42, cx = n / 2 + Math.cos(a) * d, cy = n / 2 + Math.sin(a) * d, l = 3 + r() * 9, b = r() * PI; x.lineWidth = 0.8 + r() * 1.4; x.beginPath(); x.moveTo(cx - Math.cos(b) * l, cy - Math.sin(b) * l); x.lineTo(cx + Math.cos(b) * l, cy + Math.sin(b) * l); x.stroke(); }
+    for (let i = 0; i < 160; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.46; x.fillStyle = 'rgba(255,255,255,' + (0.4 + 0.6 * r()).toFixed(2) + ')'; x.fillRect(n / 2 + Math.cos(a) * d, n / 2 + Math.sin(a) * d, 1.5, 1.5); } }
+  return (W49[key] = new T.CanvasTexture(cv)); };
+/* (Lambert with its colour in the emissive: set30 leaves these alone, it only takes Basic, Toon and Standard materials) */
+const flat49 = (T, hex, o) => new T.MeshLambertMaterial(Object.assign({ color: 0x000000, emissive: new T.Color(hex) }, o || {}));
+/* the block: a little block of ice, three faces showing in cold blues, drawn round by the pen; from stage 4 lodged in the chest with a cold glow over it */
+function box49(T, S, bx, near, strokes) { const J = S.G.J, V3 = T.Vector3, E = new T.Euler(0.38, PI / 4 + 0.12, 0, 'XYZ'), c = bx.c, s = bx.s, j = near(c), jp = J[j].p, C = W49.C.ice;
+  const m = new T.Mesh(new T.BoxGeometry(s, s, s), [C[3], C[0], C[2], C[3], C[1], C[3]].map(h => flat49(T, h))); m.rotation.copy(E); m.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2]); m.renderOrder = 18; m.userData.plain = true; S.bones[j].add(m);
+  const P = (x, y, z) => new V3(x, y, z).multiplyScalar(s / 2).applyEuler(E).add(new V3().fromArray(c)).toArray(), o = { smooth: 0, wob: 0.25, min: 2, trim: 0 }, w = bx.glow ? 0.6 : 0.75;
+  [[P(1, 1, 1), P(-1, 1, 1), P(-1, 1, -1), P(1, 1, -1), P(1, 1, 1)], [P(-1, 1, 1), P(-1, -1, 1)], [P(1, 1, 1), P(1, -1, 1)], [P(-1, 1, -1), P(-1, -1, -1)], [P(1, -1, 1), P(-1, -1, 1), P(-1, -1, -1)]]
+    .forEach(pts => strokes.push({ air: pts, j, w, o }));
+  strokes.push({ air: [P(-1, 0.75, 0.2), P(-1, 0.35, 0.55)], j, w: 0.4, o });   /* a scratch of frost on its face */
+  if (bx.glow) { const gs = s * bx.glow * 2.2, g = new T.Mesh(new T.PlaneGeometry(gs, gs), flat49(T, 0x8fcbff, { transparent: true, alphaMap: tex49(T, 'glow'), depthWrite: false })); g.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2] + s * 0.75); g.renderOrder = 23; g.userData.plain = true; S.bones[j].add(g); } }
+/* rime on the wood: soft white patches with needles of frost, lying flat with the spill */
+function rime49(T, S, list) { const jp = S.G.J[0].p; list.forEach((q, i) => { const m = new T.Mesh(new T.PlaneGeometry(q[2] * 2, q[2] * 1.4), flat49(T, 0xf4f8ff, { transparent: true, alphaMap: tex49(T, 'rime'), depthWrite: false }));
+  m.rotation.set(-PI / 2, 0, 0.3 * Math.sin(i * 2.3)); m.position.set(q[0] - jp[0], 0.015, q[1] - jp[2]); m.renderOrder = 17; m.userData.plain = true; S.bones[0].add(m); }); }
+/* one stage of the shy one: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
+function dry49Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC49[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W49.geo[stage]) W26.geo[3] = W49.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W49.ROLE[stage]; W26.TARGET = W49.TARGET[stage];
+  try { g = fig26(T, 3, extra); W49.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way49 = 's' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage; S.bank49 = o.bank;
   /* the pen's own strokes: on the skin (rays from in front, as the face is laid) or in the air; each rides the joint of the spine it is nearest to (j: 0 lies with the spill) */
   const near = p => { let bj = 0, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && q.role !== 'limb' && dd < bd) { bd = dd; bj = j; } }); return bj; };
-  const strokes = (o.pen || []).map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
+  const src = (o.pen || []).slice(); if (o.box && !(extra && extra.jar)) { try { box49(T, S, o.box, near, src); } catch (e) { W49.err = String(e && e.stack); } }
+  if (o.rime && !(extra && extra.jar)) { try { rime49(T, S, o.rime); } catch (e) { W49.err = String(e && e.stack); } }
+  const strokes = src.map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
         pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } return null; }).filter(Boolean); }
     if (pts.length < 2) return null; const j = s.j != null ? s.j : s.head ? jh : near(s.c || pts[0]);
     return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
   /* ink48 (builder 48) writes these strokes with the figure's own pen; t48 is set so that it leaves the wash alone */ S.t48 = true; S.a48 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
   tint49(T, S); W49.figs.push(S); if (W49.figs.length > 24) W49.figs.splice(0, W49.figs.length - 24); return g; }
-draw30 = (f0 => function (T, S, ren, cam) { if (S.way49 && !S.t49) tint49(T, S); f0(T, S, ren, cam); })(draw30);
+/* the outline breaks along the low and outer edges of the bank: those parts of the skin are kept out of the pen's silhouette (in patches, so the line stops and starts) */
+function cut49(S, s) { const P = s.tp.P, n = s.tp.nv, b = S.bank49 || [0.14, 0.6], pl = S.pl49 || S.G.pl, m = new Uint8Array(n), h = (x, z) => { const v = Math.sin(Math.floor(x / 0.28) * 127.1 + Math.floor(z / 0.28) * 311.7) * 43758.5453; return v - Math.floor(v); };
+  for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2], rr = Math.hypot((x - pl.x) / pl.rx, (z - pl.z) / pl.rz), u = h(x, z); if (y > b[1] * 1.15) continue;
+    if (y < b[0]) m[i] = 1; else if (rr > 0.82) m[i] = u < 0.72 ? 1 : 0; else if (z < 0.1) m[i] = u < 0.55 ? 1 : 0; else m[i] = y < (b[0] + b[1]) * 0.5 && u < 0.3 ? 1 : 0; }
+  return m; }
+sil30 = (f0 => function (R, s) { const S = W49.cur; if (S && R === S.pen30 && s === R.body && s.tp && s.C) { try { const m = S.cut49 || (S.cut49 = cut49(S, s)), C = s.C; for (let i = 0; i < m.length; i++) if (m[i]) C[4 * i + 3] = 0; } catch (e) { W49.err = String(e && e.stack); } } return f0.apply(this, arguments); })(sil30);
+/* the pool's ripple strokes and the flow lines down the front are Water's: a bank of fog has none (G.pl and the chest are hidden from the pen for the moment of drawing) */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way49) return f0(T, S, ren, cam); if (!S.t49) tint49(T, S); const pl = S.G.pl, R0 = S.G.R; S.pl49 = pl; W49.cur = S; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); try { return f0(T, S, ren, cam); } finally { S.G.pl = pl; S.G.R = R0; W49.cur = null; } })(draw30);
 KIT.dry49Fig = dry49Fig; KIT.DRY49 = W49;
-/* behind the switch: Dry ice's bench figure is the spirit (the jar keeps the old Dry ice) */
-KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homco2' && KIT.dry49 && SPEC49[KIT.dry49] && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = dry49Fig(T, KIT.dry49, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W49.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+/* behind the switch: Dry ice's bench figure is the spirit at its stage (the jar keeps the old Dry ice) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homco2' && KIT.dry49 === 'c' && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = dry49Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W49.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W49 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
