@@ -718,3 +718,18 @@ Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (W34: `KIT.fix3
 - **To record**: same commands as the thirty-fourth, or `./e36.sh <name> <stage> "b.93,v.1,v.6,v1.8" 0 5 0.5 "" "&gone=1000"` (job `j_e36.js`: logs `s36dbg` at each key: `t` the set-back, `k` the shrink, `box` the form's screen box before the fit). Stage is the one it leaves (1 to 4).
 
 scheme.html: bump `scheme.js?v=` (398 to 399), `kitart.js?v=` (90 to 91).
+
+## Thirty-eighth builder (14 November)
+
+Branch `acid-builder-35` (worktree `acid35`; `steam` merged in first, the notes conflict settled by keeping both). File: `kitart.js` (block `W35`, the maw's five stages replaced). Stills only, stage 3 only. Shots in `C:\Work\atlas-atoms\.claude\shots`: `acid38-options.jpg` (A, B, C large on the bench), `acid38-game.jpg` (the three full game views at game size), `acid38-options.txt`. Switch: `AA.rxKit.acid35 = 'a' | 'b' | 'c'` (or `?a35=a` on the page); unset by default, so the game shows the old Acid.
+
+- **The monster body is gone** (`SPEC35` is now `{ a, b, c }`, one function each; every stage asked for gives the stage-3 figure; `geo35` keeps one skin a way). No head, brow, shoulders, horns or `lick` tongues in any of them. New helper `spike` (a neck rising to a bead).
+  - **a, the breaker**: a wave seen from its side, reared and curling over; three ribs across z make the slab, a swell behind it; the hollow of the curl is carved open on the near side only (so the far wall is the dark of the mouth); drips off the crest are teeth, the pool's lip rising in front is the lower jaw; one pit of an eye on the flank; two runs with hands in front.
+  - **b, the crown**: a pool leapt up round its middle: a closed ring (tube, `closed`) tipped to the eye, carved into a cup, nine points leaning in; two pits low on the wall; one run arched over the mouth, one out toward the page.
+  - **c, the cowl**: a standing gout, tip curled over, hollow down its front; drips from the top edge, a strand lip to lip; two pale beads back in the dark (new eye kind 3 in `F35`); one run raised, one at the lip.
+- **Wash** (`F35`): paler, a little more bare paper (`hl` from 0.72), nearly opaque (alpha 0.95, paper under the wash as Water has; the see-through over brown wood was the mud), fewer fizz rings. Program key `a38`.
+- **The eaten wood** (`etch35`): no longer a wobbling ellipse. The patch is found in warped space with a radius that swings from under half to nearly full by direction, so it runs out one way and hardly shows another; pale bleach inside, the scorched edge only in stretches, few pits, loose spots beyond it; no hard cut-off, so the contact line and shadow are whole.
+- **Weak** (from the sheets): a can read as a fish head, its lower lip and near arm run together; b is the least mouth-like (a bowl, an anemone), its arm a handle; c is the nearest to a figure (a hooded ghost), a large bare patch on its lit side; the eaten patch reads a little like spilt sand, fizz and pen fume are small at game size; the game's soft shadow is not under them; stages 1, 2, 4, 5 not drawn; not animated; the jar not looked at.
+- **To render** (bash, `.claude/r28` of this worktree, ports 9591/9592; start `python srv.py` and `python fsrv.py`, end them by PID): `for w in a b c; do NAME=o$w WSIZE=2584,1532 ./run.sh a35 "&a35=$w&part=one&stage=3&big=2" 200; done`, then `python opts38.py options.jpg game.jpg` (about 25 s a figure).
+
+scheme.html: bump `kitart.js?v=` (91 to 92).
