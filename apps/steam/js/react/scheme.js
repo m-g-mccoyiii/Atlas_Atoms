@@ -6326,6 +6326,150 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   homEvo19 = (f0 => function (now) { f0(now); try { s76Frame(now); } catch (x) { S76.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s76dbg = () => { const E = R21.evo; return { err: S76.err, kit: AA.rxKit.e76dbg && AA.rxKit.e76dbg(), c: E && E.c76 && [E.c76.x, E.c76.z, E.c76.R, E.c76.F].map(v => +(+v).toFixed(2)), mol: E && E.c76 && E.c76.mol, k: E && E.k59, S: E && E.S76 && +E.S76.toFixed(2), sh: E && E.sh76 && ['a0', 'a1', 'b0', 'b1', 'c0', 'c1', 'th'].map(q => +E.sh76[q].toFixed(2)), nb: E && E.sh76 && E.sh76.nb, ob: E && E.sh76 && E.sh76.ob, r01: E && E.sh76 && E.sh76.r01, pcs: E && E.g76 && E.g76.pcs.length, gr: E && E.gr76 && E.gr76.length, pa: E && E.pa76 && [E.pa76.cells.size, E.pa76.md], dim: +S76.dim.toFixed(2), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done, ax: E && E.sh76 && ['X', 'Y', 'Z', 'o'].map(q => E.sh76[q].toArray().map(x => +x.toFixed(3))), un: E && E.sh76 && +E.sh76.un.toFixed(3) }; };
   // ==== S76 END
+  // ==== S82 BEGIN
+  // (builder 82) BRIMSTONE'S OWN CHANGE OF STAGE ON THE PAGE, "the eruption" (kitart W82 has the figure and the timeline KIT.ph82; switch
+  // AA.rxKit.evo82, ?v82=0 gives the old one). Here: its way and size (from home over the open book to the place beside the molecule, worked out as
+  // S74 does with s59Place/s74Wide/s74Box; home again), lifted a little in a cradle of its own smoke puffs while it carries its lump; and every piece of
+  // the change that is not its skin: the scorch ring where the lump is set down and the dark ragged stain creeping out through the paper (browning the
+  // ruled lines, s77PageMat), the heat of the cracks (red to pale red-white glow, no yellow), molten beads oozing and running down onto the page,
+  // thin blue flames along the cracks, embers spat up; at the hit the pillar of blue fire (Brimstone's own drawn flame tongues, fire73, scaled up,
+  // reaching up the screen), dark puffs of its own smoke boiling round it, embers raining down and winking out on the page each leaving a fleck,
+  // a ring of blue fire running out across the paper; blue firelight on the page; the room giving way (builder 33's one-lamp pass, s82Lamp, a copy
+  // of s77Lamp with its own state, deeper); the sound on the beats; its new number beside it when it has settled. Nothing on the bench moves; the
+  // page is clean afterwards.
+  const S82 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, LA: null, was: null, K: null, shown: false, U: new T.Vector3(0, 0.697, -0.717), pi: 0, ei: 0, mi: 0 };
+  const ss82 = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
+  const s82Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S82.dim += (want - S82.dim) * 0.2; if (Math.abs(want - S82.dim) < 0.004) S82.dim = want; const d = S82.dim; if (A) S82.LA = A;
+    if (d <= 0.002 || !S33.on() || !S82.LA) { if (S82.lit) { S82.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
+    if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, Q = S82.LA; sh.visible = true; dirty = true; S82.lit = true;
+    cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
+    if (!S33.rtB || S82.n++ % 20 === 0 || S33.rtB.width !== ren.getDrawingBufferSize(S33.v2).x) s33Bench(null);
+    if (!S33.wet.some(w => w && w.r > 0)) U.w33.value.forEach(u => { u.z = 0; });
+    S33.A.set(Q.x, Q.y, Q.z); S33.L.set(Q.x - 22, 46, Q.z - 15); U.lpos.value.copy(S33.L); U.aim.value.copy(S33.A).sub(S33.L); U.lnf.value.w = U.aim.value.length(); U.aim.value.normalize(); U.lamp.value.z = 5 + 1.4 * Q.R; U.lamp.value.w = Math.min(1, d) * (1 - 0.6 * (Q.flash || 0));
+    if (l33) { S33.v.copy(S33.L).applyMatrix4(cam.matrixWorldInverse); l33.set(S33.v.x, S33.v.y, S33.v.z, Math.min(1, d * 1.5)); }
+    s33Light(null, Q.x, Q.y + 0.45 * Q.H * 0.697, Q.z - 0.45 * Q.H * 0.717, Math.max(0.9 * Q.H, 2.4 * Q.R)); U.shk.value = 0.85 * Math.min(1, d * 1.3); U.bs.value.w = 0; };
+  /* the scorch: a ragged stain burnt into the paper, darkest in the middle, a charred rim, the paper browned round it (drawn once) */
+  const s82ScTex = () => { const c = canvasTex(256, 256), x = c.x; let sd = 7; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; }; x.clearRect(0, 0, 256, 256);
+    const blob = (rad, jag) => { const n = 64, ph = [rnd() * 6, rnd() * 6, rnd() * 6]; x.beginPath(); for (let i = 0; i <= n; i++) { const a = 6.2832 * i / n, r = rad * (1 - jag * (0.5 + 0.25 * Math.sin(a * 3 + ph[0]) + 0.15 * Math.sin(a * 7 + ph[1]) + 0.1 * Math.sin(a * 13 + ph[2])) - jag * 0.3 * rnd()); const px = 128 + r * Math.cos(a), py = 128 + r * Math.sin(a); if (i) x.lineTo(px, py); else x.moveTo(px, py); } x.closePath(); };
+    let g = x.createRadialGradient(128, 128, 20, 128, 128, 126); g.addColorStop(0, 'rgba(150,96,46,0.0)'); g.addColorStop(0.7, 'rgba(150,96,46,0.22)'); g.addColorStop(1, 'rgba(150,96,46,0)'); blob(126, 0.12); x.fillStyle = g; x.fill();
+    g = x.createRadialGradient(128, 128, 0, 128, 128, 104); g.addColorStop(0, 'rgba(34,20,12,0.72)'); g.addColorStop(0.55, 'rgba(48,28,14,0.6)'); g.addColorStop(0.9, 'rgba(70,40,18,0.5)'); g.addColorStop(1, 'rgba(90,52,22,0.35)'); blob(104, 0.22); x.fillStyle = g; x.fill();
+    x.strokeStyle = 'rgba(26,14,8,0.55)'; x.lineWidth = 5; x.stroke(); x.strokeStyle = 'rgba(26,14,8,0.35)'; x.lineWidth = 11; x.stroke();
+    for (let i = 0; i < 140; i++) { const a = rnd() * 6.2832, r = 104 * Math.sqrt(rnd()), q = 1 + 3 * rnd(); x.fillStyle = 'rgba(' + (rnd() < 0.5 ? '20,12,8' : '120,80,40') + ',' + (0.12 + 0.2 * rnd()).toFixed(2) + ')'; x.beginPath(); x.arc(128 + r * Math.cos(a), 128 + r * Math.sin(a), q, 0, 6.2832); x.fill(); }
+    c.t.needsUpdate = true; return c.t; };
+  /* its pieces, made once */
+  const s82Make = () => { if (S82.K) return S82.K; const Kt = AA.rxKit, K = S82.K = { tx: { ember: s77Tex('ember'), scorch: s77Tex('scorch'), fire: Kt.fire77(T), fireB: Kt.fire77(T, true), puff: Kt.tex77(T), glow: s74Tex([[0, 1], [0.25, 0.55], [0.6, 0.12], [1, 0]]) } };
+    const spr = (map, add, ro, base) => { const s = new T.Sprite(new T.SpriteMaterial({ map, transparent: true, depthWrite: false, blending: add ? T.AdditiveBlending : T.NormalBlending, toneMapped: !add })); if (base) s.center.set(0.5, 0.0); s.visible = false; s.renderOrder = ro; s.userData.plain = true; s.userData.nobox = true; scene.add(s); return s; };
+    K.pil = []; for (let i = 0; i < 12; i++) K.pil.push(spr(i < 3 ? K.tx.fireB : K.tx.fire, i >= 3 && i < 9, i < 3 ? 9 : 31, true)); K.pil.forEach((m, i) => { if (i >= 3 && i < 9) m.material.color.copy(lin('#8c96ff')); }); K.col = [0, 1].map(() => { const g = spr(K.tx.glow, true, 30); g.material.color.copy(lin('#5a6cff')); return g; });
+    K.scm = (() => { const m = flatMesh(1, 1, s82ScTex(), 0); m.renderOrder = 1; m.visible = false; m.userData.plain = true; scene.add(m); return m; })();
+    K.cf = []; for (let i = 0; i < 8; i++) K.cf.push(spr(K.tx.fire, false, 31, true));
+    K.base = spr(K.tx.glow, true, 30); K.base.material.color.copy(lin('#9fb0ff'));
+    K.hot = spr(K.tx.ember, true, 30); K.heart = spr(K.tx.glow, true, 30); K.heart.material.color.copy(lin('#ffd8d2'));
+    K.emb = []; for (let i = 0; i < 64; i++) K.emb.push({ s: spr(K.tx.ember, false, 30), t0: -1e9 });
+    K.bead = []; for (let i = 0; i < 12; i++) K.bead.push(spr(K.tx.ember, false, 30));
+    K.puff = []; for (let i = 0; i < 48; i++) K.puff.push({ s: spr(K.tx.puff, false, 24), t0: -1e9 });
+    K.mk = []; for (let i = 0; i < 64; i++) { const m = flatMesh(1, 1, K.tx.scorch, 0); m.renderOrder = 1; m.visible = false; m.userData.plain = true; scene.add(m); K.mk.push({ m, t0: -1e9 }); }
+    const pm = ro => { const m = new T.Mesh(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), s77PageMat()); m.renderOrder = ro; m.visible = false; m.frustumCulled = false; m.userData.plain = true; scene.add(m); return m; };
+    K.sc = pm(1); K.ring = pm(6);
+    /* the room giving way: a dark veil over the whole picture (drawn after the bench, book and molecule, before the creature and its fire), clearer round the lump */
+    K.dk = new T.Mesh(new T.PlaneGeometry(1, 1), new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, uniforms: { c: { value: new T.Vector2(0.5, 0.5) }, rad: { value: 0.3 }, a: { value: 0 }, asp: { value: 1.6 } },
+      vertexShader: 'varying vec2 vU; void main() { vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec2 c; uniform float rad, a, asp; varying vec2 vU; void main() { float d = length((vU - c) * vec2(asp, 1.0)); float k = 0.45 + 0.55 * smoothstep(rad * 0.45, rad * 1.7, d); gl_FragColor = vec4(0.045, 0.03, 0.055, a * k); }' }));
+    K.dk.renderOrder = 5; K.dk.frustumCulled = false; K.dk.visible = false; K.dk.userData.plain = true; K.dk.userData.nobox = true; scene.add(K.dk);
+    K.red = new T.Mesh(new T.CircleGeometry(1, 40).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: K.tx.glow, color: lin('#d8401c'), transparent: true, depthWrite: false, opacity: 0 })); K.red.renderOrder = 6; K.red.visible = false; K.red.userData.plain = true; K.red.frustumCulled = false; scene.add(K.red);
+    return K; };
+  const s82Hide = () => { const K = S82.K; if (!K || !S82.shown) return; S82.shown = false; K.pil.concat(K.cf, K.bead, K.col, [K.base, K.hot, K.heart, K.sc, K.ring, K.red, K.scm, K.dk]).forEach(m => { m.visible = false; }); K.emb.forEach(q => { q.s.visible = false; q.t0 = -1e9; }); K.puff.forEach(q => { q.s.visible = false; q.t0 = -1e9; }); K.mk.forEach(q => { q.m.visible = false; q.t0 = -1e9; }); };
+  const s82Puff = (now, x, y, z, sz, col, op, life, rise, dx) => { const K = S82.K, w = K.puff[S82.pi++ % K.puff.length]; Object.assign(w, { x, y, z, sz, op, life, rise, dx: dx || 0, t0: now, rot: Math.random() * 6.28 }); w.s.material.color.copy(lin(col)); };
+  const s82Mark = (now, x, z, sz, a, life) => { const C = S82.C; if (C && C.mol && x > C.mol[0] - 0.3 && x < C.mol[1] + 0.3 && z > C.mol[2] - 0.3 && z < C.mol[3] + 0.3) return; const K = S82.K, w = K.mk[S82.mi++ % K.mk.length]; w.m.position.set(x, s66Floor(x, z) + 0.026 + 0.0002 * (S82.mi % 50), z); w.m.rotation.set(0, Math.random() * 6.28, 0); w.m.scale.set(sz, 1, sz * 0.8); Object.assign(w, { t0: now, life, a }); };
+  /* the height of the pillar: its top reaches the screen height wanted (0 the bottom, 1 the top), up the figures' up */
+  const s82Pillar = (b, want) => { const v = S82.v, U = S82.cu || S82.U; let lo = 0, hi = 400; for (let i = 0; i < 26; i++) { const m = (lo + hi) / 2; v.set(b[0] + U.x * m, b[1] + U.y * m, b[2] + U.z * m).project(cam); if ((v.y + 1) / 2 < want) lo = m; else hi = m; } return lo; };
+  const s82Frame = now => { const E = R21.evo, SP = s26Fig(), Kt = AA.rxKit, e = E && E.e82;
+    if (!E || !e || !SP || !SP.way69 || HEVO.done || Kt.evo82 === false) { if (S82.was && !R21.evo) { const L = S82.was.L; S82.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s82Hide(); s82Lamp(now, null); return; }
+    S82.was = E; dirty = true; const c = e.c, u = e.u, P = e.P, L = e.L, sx = sfx, once = (n, f) => { if (!E.q82[n]) { E.q82[n] = 1; try { f(); } catch (x) { /* no sound */ } } };
+    if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; } if (S27.s1 && u >= c[1] && u < c[5]) { S27.s1.visible = false; S27.s2.visible = false; } if (S27.ring) S27.ring.visible = false;
+    if (!E.c82) { s59Place(E, SP); E.c74 = E.c59; E.k59 = 1; s74Wide(E, SP); s74Box(E, SP); E.c82 = E.c74; E.q82 = {}; }
+    const C = S82.C = E.c82, RK = Kt.RK, Q = HEVO.pos || (HEVO.pos = {}), k = E.k59 || 1, Fk = C.F * k, R = C.R * k, ko = E.from === 1 ? 0.6 : 0.82, tt = now / 1000;
+    let x = C.x, z = C.z, s = (e.old ? E.s0 * ko : E.s1) * Fk;
+    if (u < c[1]) { const a = e.cr; x = HOMP.x + (C.x - HOMP.x) * a; z = HOMP.z + (C.z - HOMP.z) * a; s = E.s0 * (1 + (Fk * ko - 1) * RK.sm(Math.min(1, e.go * 1.1))); }
+    else if (u >= c[5]) { const h = 1 - e.cr; x = C.x + (HOMP.x - C.x) * h; z = C.z + (HOMP.z - C.z) * h; s = E.s1 * (Fk + (1 - Fk) * RK.sm(h)); }
+    const ft = E.h82 || 1; Q.x = x; Q.z = z; Q.y = 0.55 * ft * e.lift; Q.sx = 1; Q.sy = 1; homObj.s = s; E.ks31 = s / E.s0;
+    /* the whole form kept in the screen while it is at the place (made a little smaller if it must be) */
+    if (u >= c[3] && u < c[5] && E.p82) { const p = E.p82, v = S82.v; let hi = -9, xl = 9, xh = -9; for (let i = 0; i < p.length; i += 4) { if (p[i + 3] <= 0.02) continue; v.set(p[i], p[i + 1] + 0.697 * p[i + 3], p[i + 2] - 0.717 * p[i + 3]).project(cam); hi = Math.max(hi, v.y); v.set(p[i] - p[i + 3], p[i + 1], p[i + 2]).project(cam); xl = Math.min(xl, v.x); v.set(p[i] + p[i + 3], p[i + 1], p[i + 2]).project(cam); xh = Math.max(xh, v.x); }
+      E.fit82 = [xl, hi, xh].map(q => +q.toFixed(2)); if (hi > 0.86 || xl < -0.94 || xh > 0.94) E.k59 = Math.max(0.55, (E.k59 || 1) * 0.985); }
+    const K = s82Make(); S82.shown = true; const A = E.a82, Tp = E.t82, Ft = E.f82, r = E.r82 || R * 0.3; if (!A || !Tp || !Ft) return;
+    { cam.updateMatrixWorld(); const cu = S82.cu || (S82.cu = new T.Vector3()); cu.setFromMatrixColumn(cam.matrixWorld, 1).normalize(); }
+    const cp = cam.position, toC = S82.v2.set(cp.x - A[0], cp.y - A[1], cp.z - A[2]).normalize(), fl = s66Floor(Ft[0], Ft[2]);
+    /* the scorch: a ring where the lump is set down, then a dark ragged stain creeping out through the paper; fades away going home */
+    const pg = C.pg, scOn = u >= e.set - 0.05, scA = u < c[5] ? 1 : 1 - ss82((e.home - 0.05) / 0.45);
+    if (scOn && scA > 0.003 && pg) { const m = K.sc, U = m.material.uniforms, grow = u < c[1] ? 0 : ss82((u - c[1]) / (c[3] - c[1])), R0 = 1.15 * r, R1 = Math.max(R0 * 1.3, P.sc * C.R * k), rr = R0 + (R1 - R0) * (1 - Math.pow(1 - grow, 1.4));
+      m.visible = true; m.position.set((pg[0] + pg[1]) / 2, 0.02, (pg[2] + pg[3]) / 2); m.scale.set(pg[1] - pg[0], 1, pg[3] - pg[2]); U.uRect.value.set(pg[0], pg[2], pg[1], pg[3]); U.uC.value.set(Ft[0], Ft[2]); U.uT.value = tt;
+      U.uR.value = rr; U.uW.value = Math.max(0.3 * R0, 0.45 * rr); U.uA.value = 0; U.uCh.value = 0; U.uEd.value = 0;
+      { const sm = K.scm, rc = Math.min(rr, e.to >= 5 ? 1e9 : (C.mol ? Math.max(R0 * 1.2, Math.hypot(Math.max(C.mol[0] - Ft[0], 0, Ft[0] - C.mol[1]), Math.max(C.mol[2] - Ft[2], 0, Ft[2] - C.mol[3])) * 1.05) : rr)); sm.visible = true; sm.position.set(Ft[0], fl + 0.024, Ft[2]); sm.rotation.set(0, 0.7, 0); sm.scale.set(2.25 * rc, 1, 2.0 * rc); sm.material.opacity = 0.8 * Math.min(1, ss82((u - e.set) / 0.35)) * scA; }
+      /* blue firelight on the page */ const li = [], fI = Math.min(1.2, 0.9 * e.fire + 0.35 * e.cflame + 0.3 * e.nflame * (u < c[5] ? 1 : 0) + 0.6 * e.flash); if (fI > 0.02) li.push([Ft[0], Ft[2] + 0.3 * r, fI]);
+      U.uLR.value = r * (1.6 + 2.2 * e.fire); U.uLn.value = li.length; li.forEach((l, i) => U.uL.value[i].set(l[0], l[1], l[2])); }
+    else { K.sc.visible = false; K.scm.visible = false; }
+    /* the ring of blue fire running out across the paper on the hit (the act's ring, smaller), its char fading */
+    if (u >= c[3] && pg && u < c[5] + 0.6 * P.b[5]) { const m = K.ring, U = m.material.uniforms, Tr = (0.8 + 0.25 * (e.to - 2)) * 1, w = ss82(e.dh / Tr), Rr = P.ring * C.R * k;
+      m.visible = true; m.position.copy(K.sc.position); m.scale.copy(K.sc.scale); U.uRect.value.copy(K.sc.material.uniforms.uRect.value); U.uC.value.set(Ft[0], Ft[2]); U.uT.value = tt; U.uR.value = Rr * (1 - Math.pow(1 - Math.min(1, e.dh / Tr), 1.6)); U.uW.value = 0.5 + 0.12 * e.to;
+      U.uA.value = e.dh < Tr * 1.15 ? 1 - ss82((e.dh / Tr - 0.75) / 0.4) : 0; U.uCh.value = 0.55 * ss82(e.dh / 0.1) * scA * (1 - ss82((u - c[4]) / P.b[4])); U.uEd.value = 0; U.uLn.value = 0; if (w >= 1 && U.uA.value <= 0 && U.uCh.value <= 0.002) m.visible = false; }
+    else K.ring.visible = false;
+    /* the cracks' heat: a red glow on the lump, its heart pale red-white; its red light on the page */ const heat = e.heat, hv = heat > 0.03 && u < c[4];
+    K.hot.visible = hv; K.heart.visible = hv && heat > 0.5; K.red.visible = hv;
+    if (hv) { const o = r * 0.75; K.hot.position.set(A[0] + toC.x * o, A[1] + toC.y * o, A[2] + toC.z * o); K.hot.scale.setScalar(r * (1.7 + 0.8 * Math.min(1.4, heat)) * (1 + 0.6 * e.flash)); K.hot.material.opacity = Math.min(0.5, 0.28 * heat);
+      K.heart.position.copy(K.hot.position); K.heart.scale.setScalar(r * (0.5 + 0.5 * Math.min(1.4, heat))); K.heart.material.opacity = Math.min(0.7, 0.6 * (heat - 0.5));
+      K.red.position.set(Ft[0], fl + 0.03, Ft[2] + 0.2 * r); K.red.scale.setScalar(r * (2.2 + 1.6 * Math.min(1.4, heat))); K.red.material.opacity = Math.min(0.55, 0.32 * heat); }
+    /* thin blue flames along the cracks as it swells (and into the hit) */ const cfl = u < c[3] ? e.cflame : e.cflame * (1 - ss82(e.dh / 0.5));
+    K.cf.forEach((m, i) => { if (cfl < 0.03) { m.visible = false; return; } const an = -1.25 + 2.5 * (i + 0.5) / K.cf.length + 0.15 * Math.sin(i * 3.1), sd = Math.sin(an), dep = Math.cos(an), hh = A[1] - 0.35 * (E.h82 || r) + 0.55 * (E.h82 || r) * ((i * 0.37) % 1);
+      const px = A[0] + sd * r * 0.92 * (1 + 0.04 * e.pulse), pz = A[2] + dep * r * 0.5 + toC.z * r * 0.45; m.visible = true; m.position.set(px, hh, pz); const fk = 0.75 + 0.25 * Math.sin(now / (60 + 7 * i) + i * 1.9) + 0.12 * Math.sin(now / 23 + i);
+      m.scale.set(r * 0.32, r * (0.35 + 0.35 * ((i * 0.61) % 1)) * cfl * fk * (1 + 0.4 * e.pulse), 1); m.material.rotation = 0.5 * sd + 0.1 * Math.sin(now / 140 + i); m.material.opacity = Math.min(1, cfl * 1.4); });
+    /* molten beads oozing from the cracks and running down onto the page, cooling there */
+    K.bead.forEach((m, i) => { const t0 = c[2] + (0.15 + 0.6 * ((i * 0.618) % 1)) * P.b[2], du = (u - t0) * L / 1000; if (u < t0 || du > 3.2 || u >= c[5]) { m.visible = false; return; } const an = -1.1 + 2.2 * ((i * 0.37 + 0.11) % 1), sd = Math.sin(an), y0 = A[1] + 0.1 * (E.h82 || r), run = ss82(du / 1.1), y = y0 + (fl + 0.05 - y0) * run;
+      const px = A[0] + sd * r * (0.85 + 0.25 * run), pz = A[2] + Math.cos(an) * r * 0.5 + toC.z * r * (0.5 + 0.3 * run); m.visible = true; m.position.set(px, y, pz); const sc = r * (0.1 + 0.05 * (i % 3)) * (run >= 1 ? 1.25 : 0.8 + 0.2 * run); m.scale.set(sc, sc * (run > 0.05 && run < 1 ? 1.5 : 1), 1); m.material.opacity = run < 1 ? 1 : 1 - ss82((du - 1.1) / 2.0);
+      if (run >= 1) once('bd' + i, () => s82Mark(now, px, pz, r * 0.35, 0.5, 2.6 * L)); });
+    /* the pillar of blue fire: its own flame tongues, scaled up, roaring up out of the lump on the hit, then sinking into the new flames */
+    const fire = e.fire; if (fire > 0.02 && !E.pH82) E.pH82 = s82Pillar(Tp, P.fire);
+    const cu = S82.cu, Hm = (E.pH82 || 10) * fire, by = Tp[1] - 0.25 * (E.h82 || r), ST = [[0, 0.45, 0, 0.5], [0.16, 0.42, 0.05, 0.46], [0.32, 0.38, -0.05, 0.42], [0.47, 0.33, 0.06, 0.36], [0.6, 0.28, -0.04, 0.32], [0.72, 0.26, 0.03, 0.28]];
+    K.pil.forEach((m, i) => { if (fire <= 0.02) { m.visible = false; return; } const fk = 1 + 0.08 * Math.sin(now / (55 + 9 * i) + i) + 0.06 * Math.sin(now / 21 + 2 * i); let y0, h, xo, w, o;
+      if (i < 3) { y0 = 0; h = [0.42, 0.36, 0.3][i] * Hm; xo = [-0.55, 0.05, 0.6][i] * r; w = 0.5 * h; o = -0.2 * r; }
+      else if (i < 9) { const q = ST[i - 3]; y0 = q[0] * Hm; h = q[1] * Hm; xo = q[2] * r * 2 + 0.25 * r * Math.sin(now / 300 + i) * (q[0] + 0.2); w = q[3] * h * 1.7; o = 0.4 * r; }
+      else { y0 = 0; h = [0.22, 0.26, 0.18][i - 9] * Hm; xo = [-1.05, 1.0, -0.2][i - 9] * r; w = 0.5 * h; o = 0.6 * r; }
+      m.visible = true; m.position.set(Tp[0] + xo + cu.x * y0 + toC.x * o, by + cu.y * y0 + toC.y * o, Tp[2] + cu.z * y0 + toC.z * o); m.scale.set(Math.max(w, 0.35 * r) * (1 + 0.15 * e.flash), h * fk, 1); m.material.rotation = 0.05 * Math.sin(now / 170 + i) + (i >= 9 ? -0.25 * Math.sign(xo) : 0); m.material.opacity = Math.min(i >= 3 && i < 9 ? 0.8 : 1, 1.5 * fire); });
+    K.col.forEach((g, i) => { g.visible = fire > 0.02; if (!g.visible) return; const y = (i ? 0.62 : 0.3) * Hm; g.position.set(Tp[0] + cu.x * y + toC.x * r, by + cu.y * y + toC.y * r, Tp[2] + cu.z * y + toC.z * r); g.scale.set(0.6 * Hm * (i ? 0.75 : 1), 0.8 * Hm, 1); g.material.opacity = Math.min(0.9, 0.8 * fire); });
+    K.base.visible = fire > 0.02 || e.flash > 0.02; if (K.base.visible) { K.base.position.set(Tp[0] + toC.x * r, Tp[1] + toC.y * r, Tp[2] + toC.z * r); K.base.scale.setScalar(r * (3 + 2.5 * fire + 5 * e.flash)); K.base.material.opacity = Math.min(1, 0.45 * fire + 0.9 * e.flash); }
+    /* embers: spat up as it swells; rained down from the fire after the hit, winking out on the page, each leaving a small scorch fleck */
+    const G = 2.6 * C.Hc * k, unit = C.Hc * k, spawn = (x0, y0, z0, vx, vy, vz, life) => { const w = K.emb[S82.ei++ % K.emb.length]; Object.assign(w, { x0, y0, z0, vx, vy, vz, t0: now, life, land: false }); };
+    if (u >= c[2] && u < c[3] && !e.hold) { const bt = Math.floor(u + 1e-6); once('sp' + bt, () => { for (let i = 0; i < 2 + Math.floor(e.to / 2); i++) spawn(Tp[0] + (Math.random() - 0.5) * r, Tp[1], Tp[2], (Math.random() - 0.5) * 0.25 * unit, (0.35 + 0.3 * Math.random()) * unit, (Math.random() - 0.3) * 0.2 * unit, 1600); }); }
+    if (u >= c[3] && u < c[4] + 0.8 * P.b[4]) { const span = c[4] + 0.8 * P.b[4] - c[3], want = Math.floor(P.emb * Math.min(1, (u - c[3]) / span)), H0 = E.pH82 || unit; E.ne82 = E.ne82 || 0;
+      while (E.ne82 < want) { E.ne82++; const hgt = (0.25 + 0.7 * Math.random()) * H0 * Math.max(0.35, fire), ang = Math.random() * 6.283, sp = (0.12 + 0.3 * Math.random()) * unit * (e.to >= 5 ? 1.5 : 1); spawn(Tp[0] + S82.U.x * hgt, Tp[1] + S82.U.y * hgt, Tp[2] + S82.U.z * hgt, Math.cos(ang) * sp, 0.15 * unit * Math.random(), Math.sin(ang) * sp * 0.6, 4200); } }
+    K.emb.forEach(w => { const s2 = w.s, a = (now - w.t0) / 1000; if (a < 0 || a * 1000 > w.life) { s2.visible = false; return; } const x1 = w.x0 + w.vx * a, z1 = w.z0 + w.vz * a, y1 = w.y0 + w.vy * a - 0.5 * G * a * a, f1 = s66Floor(x1, z1) + 0.05;
+      if (!w.land && y1 <= f1) { w.land = true; w.la = a; w.lx = x1; w.lz = z1; s82Mark(now, x1, z1, r * (0.22 + 0.2 * Math.random()), 0.6, 2.2 * L + 600); }
+      s2.visible = true; const sz = r * 0.16; if (w.land) { const b = a - w.la; s2.position.set(w.lx, f1, w.lz); s2.scale.setScalar(sz * (1 - 0.5 * b / 0.5)); s2.material.opacity = 1 - ss82(b / 0.5); if (b > 0.5) s2.visible = false; }
+      else { s2.position.set(x1, y1, z1); s2.scale.setScalar(sz * (0.8 + 0.3 * Math.sin(now / 50 + w.x0 * 9))); s2.material.opacity = 0.85 + 0.15 * Math.sin(now / 37 + w.z0 * 7); } });
+    /* puffs of its own smoke: the cradle under the lump while it carries it; dark smoke boiling round the base of the fire */
+    if (e.lift > 0.05 && now - (S82.pt || 0) > 70) { S82.pt = now; const sd = Math.random() - 0.5; s82Puff(now, Ft[0] + sd * 2.2 * r, Ft[1] + 0.15 * r, Ft[2] + toC.z * r * 0.6, r * (0.9 + 0.5 * Math.random()), '#a39a93', 0.55 * e.lift, 1100, 0.5 * r, sd * 0.8 * r); }
+    if (u >= c[3] && e.dh < P.b[3] + 0.3 * P.b[4] && now - (S82.bt || 0) > 140) { S82.bt = now; const sd = Math.random() - 0.5; s82Puff(now, Tp[0] + sd * 2.2 * r, Tp[1] + 0.3 * r, Tp[2] + toC.z * r, r * (0.6 + 0.5 * Math.random()), Math.random() < 0.5 ? '#4a413d' : '#625955', 0.5, 1500, (1.2 + 1.5 * Math.random()) * r * (1 + 0.2 * e.to), sd * 3.0 * r); }
+    K.puff.forEach(w => { const s2 = w.s, a = (now - w.t0) / w.life; if (a < 0 || a >= 1) { s2.visible = false; return; } s2.visible = true; const sz = w.sz * (1 + 0.8 * a); s2.position.set(w.x + w.dx * a, w.y + w.rise * a, w.z); s2.scale.set(sz, sz * 0.85, 1); s2.material.opacity = w.op * Math.min(1, a / 0.15) * (1 - ss82((a - 0.35) / 0.65)); s2.material.rotation = w.rot + 0.6 * a; });
+    K.mk.forEach(w => { if (!w.m.visible && now - w.t0 > 50) { if (now - w.t0 < 30) w.m.visible = true; } const a = (now - w.t0) / (w.life || 1); if (a < 0 || a >= 1) { w.m.visible = false; return; } w.m.visible = true; w.m.material.opacity = w.a * Math.min(1, a * 8) * (1 - a * a); });
+    /* the room gives way: the deepest dimming of the changes, the lamp drawn in round the lump */
+    { const dk = K.dk, dd = S82.dim; dk.visible = dd > 0.01; if (dk.visible) { const dist = cam.near * 1.5, hh = 2 * dist * Math.tan(cam.fov * Math.PI / 360) * 1.05; S82.v.set(0, 0, -1).applyQuaternion(cam.quaternion); dk.position.copy(cam.position).addScaledVector(S82.v, dist); dk.quaternion.copy(cam.quaternion); dk.scale.set(hh * cam.aspect, hh, 1);
+        S82.v.set(A[0], A[1] + 0.3 * (E.h82 || r), A[2]).project(cam); const U = dk.material.uniforms; U.c.value.set((S82.v.x + 1) / 2, (S82.v.y + 1) / 2); U.asp.value = cam.aspect; U.rad.value = 0.22 + 0.1 * e.fire + 0.05 * (e.to - 2); U.a.value = Math.min(0.8, 0.78 * dd) * (1 - 0.5 * e.flash); } }
+    s82Lamp(now, { dim: e.dim, x: A[0], y: A[1], z: A[2], H: Math.max(C.Hc * k * 0.6, (E.pH82 || 0) * fire), R: R * 0.9, flash: e.flash });
+    /* the sound on the beats: low drones as it is drawn down and swells, silence held, a boom and a heavy strike on the hit */
+    if (u >= 0.05) once('go', () => { sx.swish(0.6); sx.drone(0.22, 0, (c[1] - 0.05) * L / 1000, 1); });
+    if (u >= e.set) once('set', () => sx.stamp());
+    if (u >= c[1]) once('down', () => { sx.drone(0.38, 0, P.b[1] * L / 1000, 1); sx.swish(0.9); });
+    if (u >= c[2]) once('swell', () => sx.drone(0.42, 1, (P.b[2] * (1 - P.hd)) * L / 1000, 1));
+    if (u >= c[2] && u < c[3] && !e.hold) { const bt = Math.floor(u + 1e-6); if (bt >= c[2]) once('pu' + bt, () => sx.drone(0.3, 2, 0.35, 1)); }
+    if (u >= c[3]) once('hit', () => { sx.boom(); sx.strike(2, 1.4); setTimeout(() => { try { sfx.swish(1.1); } catch (x) { /* no sound */ } }, 120); });
+    if (u >= c[3] + 0.3 * P.b[3]) once('rise', () => sx.draw(e.to + 1, (P.b[3] + 0.3 * P.b[4]) * L / 1000));
+    if (u >= c[5] + 0.08 * P.b[5]) once('turn', () => sx.swish(0.35));
+    if (u >= c[5] + 0.2 * P.b[5]) once('back', () => sx.drone(0.2, 0, 0.6 * P.b[5] * L / 1000, 1));
+    if (u >= c[5] + 0.86 * P.b[5]) once('setH', () => sx.snap(1, 0.6)); };
+  homEvo19 = (f0 => function (now) { f0(now); try { s82Frame(now); } catch (x) { S82.err = String(x && x.stack); } })(homEvo19);
+  /* no yellow: the old evolution's bursts (used only with the switch off, or for a figure that is not rigged) took Brimstone's yellow jar colour; for
+     Brimstone they are blue-violet and red-orange instead */
+  burst3 = (f0 => function (x, y, z, n, col) { try { if (homObj && homObj.id === 'brimstone' && typeof col === 'string' && /^#?c9a227$/i.test(col)) { const h = Math.max(1, Math.round(n / 2)); f0(x, y, z, h, '#6a5cff'); return f0(x, y, z, n - h, '#e8401a'); } } catch (e) { /* as it was */ } return f0(x, y, z, n, col); })(burst3);
+  if (AA.rxKit) AA.rxKit.s82dbg = () => { const E = R21.evo; return { err: S82.err, kit: AA.rxKit.e82dbg && AA.rxKit.e82dbg(), c: E && E.c82 && [E.c82.x, E.c82.z, E.c82.R, E.c82.F, E.c82.Hc].map(v => +(+v).toFixed(2)), mol: E && E.c82 && E.c82.mol, k: E && E.k59, fit: E && E.fit82, a82: E && E.a82 && E.a82.map(v => +v.toFixed(2)), r82: E && E.r82 && +E.r82.toFixed(2), lw: E && E.lw82 && +E.lw82.toFixed(2), pH: E && E.pH82 && +E.pH82.toFixed(1), dim: +S82.dim.toFixed(2), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done }; };
+  // ==== S82 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
