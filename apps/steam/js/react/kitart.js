@@ -2980,6 +2980,193 @@ function jar52(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'acid' && KIT.acid48 === 'a' && KIT.acid35 !== 'a' && T && T.SkinnedMesh) { try { jar52(T, j); } catch (e) { W52.err = String(e && e.stack); } } return j; })(KIT.jar);
 KIT.W52 = W52;
 // ==== W52 END
+// ==== W55 BEGIN
+// (builder 55) ACID'S OWN CHANGE OF STAGE, "eats itself, erupts" (AA.rxKit.evo55, on with the sneak; false or ?v55=0 gives the old one back).
+// The page (scheme S55) brings it from home to the middle of the screen over the open book, large and beside the molecule, and home again seen
+// from behind. Here: the motion and what the acid does to the page, on the music's beats (PAR55: go, sink, boil, erupt, look, home).
+//  1. THE SINK: it grins, folds its claws over its head and lets itself down into its own pit: every joint is carried straight down in the
+//     world through the page (the page hides what is under it), twisting and pinched at the rim like something swallowed, flame tip last.
+//  2. THE BOIL: the pit, now a hole in the page (pit55: a dark floor, the far wall lit, the near rim cut), boils (bubbles swell and burst,
+//     licks leap at the rim), eats outward in bites and deepens; the paper scorches brown at the rim and bleaches beyond; a column of fume
+//     (puffs of wash that rise, swell and thin, pen curls on them) pours up bending toward the lamp and shades the page; drops spit out and
+//     leave etched pocks that fade. The old body is changed for the new one while both are deep under the page. A held instant: only the fume moves.
+//  3. THE ERUPTION: on the hit the claws shoot up out of the pit through the fume and slap down on the rim; the new form hauls itself out
+//     (each step its own way: the imp pops, the sneak climbs out one arm first and peers, the fiend comes up hooked and straightens, the
+//     devourer rises slowly with its arms spread), acid running off it, the fume torn aside, head thrown back; then it looks down at the page.
+//  4. HOME: the pit closes to the new stage's own, the scorch fades (the page is clean after), it goes home seen from behind in a low sliding
+//     lick, flame tip bobbing, and settles.
+KIT.evo55 = KIT.evo55 == null ? !(typeof location !== 'undefined' && /[?&]v55=0/.test(String(location.search))) : KIT.evo55;
+const W55 = { err: null, e: null, v: null };
+const on55 = S => !!(S && S.a48 && !S.jar && KIT.evo55 !== false);
+const cl55 = x => (x < 0 ? 0 : x > 1 ? 1 : x), sm55 = x => { x = cl55(x); return x * x * (3 - 2 * x); }, pu55 = (x, a, b, w) => sm55((x - a) / w) * (1 - sm55((x - b) / w));
+/* each step: beats of go, sink, boil (the last hd of it held), erupt, look, home; the pit's widest (of the largest), the fume's height; how it comes out:
+   sh/sl the claws shoot up and slap the rim (per side), hl it hauls itself out (ov: overshoot of its height), rl the claws let go of the rim, hb head thrown back */
+const PAR55 = [null, null,
+  { b: [2, 0.75, 2.25, 1.0, 1.0, 2.0], hd: 0.4, pit: 0.62, fume: 0.6, tw: 1.5, sides: { 1: [0, 0.1, 0.2, 0.27], '-1': [0.02, 0.12, 0.22, 0.29] }, hl: [0.28, 0.52], ov: 0.16, rl: [0.4, 0.62], hb: [0.42, 0.72], shH: 0.55, spit: 0.32 },
+  { b: [2, 1.0, 3.0, 1.75, 1.0, 2.0], hd: 0.5, pit: 0.78, fume: 0.8, tw: 0.9, sides: { 1: [0, 0.08, 0.2, 0.26], '-1': [0.44, 0.5, 0.52, 0.57] }, peer: [0.27, 0.4], hl: [0.58, 0.85], ov: 0.0, rl: [0.7, 0.92], hb: [0.8, 0.98], shH: 0.5, spit: 0.26 },
+  { b: [2, 1.0, 4.0, 1.5, 1.25, 2.0], hd: 0.6, pit: 0.88, fume: 0.95, tw: 0.8, sides: { 1: [0, 0.1, 0.26, 0.33], '-1': [0.02, 0.12, 0.27, 0.34] }, hook: [0.5, 0.85], hl: [0.34, 0.66], ov: 0.06, rl: [0.55, 0.8], hb: [0.66, 0.9], shH: 0.65, spit: 0.22 },
+  { b: [2, 1.5, 4.5, 2.25, 1.25, 1.5], hd: 0.75, pit: 1.0, fume: 1.25, tw: 0.7, sides: { 1: [0, 0.1, 0.25, 0.32], '-1': [0, 0.1, 0.25, 0.32] }, hl: [0.32, 0.8], ov: 0.03, rl: [0.45, 0.78], hb: [0.62, 0.92], shH: 0.7, wide: 1, spit: 0.18 }];
+/* where it is in the change: every number the motion, the pit, the fume and the room read */
+function ph55(t, o) { const P = PAR55[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => cl55((u - c[i]) / b[i]), e = o.e55 || (o.e55 = {}), hf = P.hd / b[2];
+  e.u = u; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[3]; e.to = o.to; e.from = o.from; e.pre = u < 0;
+  e.go = at(0); e.sink = at(1); e.boil = at(2); e.v = at(3); e.look = at(4); e.home = at(5); e.bo = cl55(e.boil / (1 - hf)); e.hold = u >= c[2] && e.boil > 1 - hf && u < c[3] ? 1 : 0; e.done = u >= s; e.old = u < c[2];
+  const r0 = o.r055 || 0.3, r1 = o.r155 || 0.35, top = P.pit;
+  e.pr = u < c[2] ? r0 * (1 + 0.2 * sm55(e.sink)) : u < c[3] ? r0 * 1.2 + (top - r0 * 1.2) * cl55(sm55(e.bo) + 0.035 * Math.sin(e.bo * 29) * e.bo * (1 - e.bo) * 4) : u < c[4] ? top * (1 + 0.06 * Math.exp(-e.v * 5)) : top + (r1 - top) * sm55(e.look);
+  e.ha = u < c[2] ? sm55(e.sink / 0.4) : 1 - sm55((e.home - 0.05) / 0.45);
+  e.deep = u < c[2] ? 0.35 * e.sink : u < c[3] ? 0.35 + 0.65 * sm55(e.bo) : u < c[4] ? 1 : u < c[5] ? 1 - 0.7 * sm55(e.look) : 0.3 * (1 - sm55(e.home / 0.5));
+  e.scorch = u < c[2] ? 0.2 * e.sink : u < c[3] ? 0.2 + 0.8 * sm55(e.bo / 0.8) : u < c[4] ? 1 : u < c[5] ? 1 - 0.45 * e.look : 0.55 * (1 - sm55(e.home / 0.6));
+  e.fume = e.pre ? 0 : u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.6) : u < c[4] ? 1 - sm55(e.v / 0.4) : 0; e.reach = u < c[2] ? 0.25 * e.sink : u < c[3] ? 0.25 + 0.75 * sm55(e.bo / 0.75) : 1;
+  e.tear = u >= c[3] && u < c[4] ? sm55(e.v / 0.18) : 0;
+  e.dim = e.pre ? 0 : u < c[1] ? 0.75 * sm55((e.go - 0.2) / 0.8) : u < c[5] ? 0.75 + 0.25 * sm55(e.sink * 1.5) : 1 - sm55(e.home / 0.8);
+  e.flash = u >= c[3] ? Math.exp(-(u - c[3]) / 0.3) : 0; return e; }
+/* Water's rest clip numbers with ours laid over them (the face, the bow, the turn home) */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs), z = o && o.z55; if (z) { for (const k in z) { if (k === 'bow' || k === 'lean' || k === 'sq' || k === 'hturn' || k === 'lookx') q[k] = (q[k] || 0) + z[k]; else q[k] = z[k]; } } return r; })(C26.rest);
+/* the world's down in the joints' own space, and how high the figure stands above its pool along the world's up */
+function frame55(S) { const T = S.T, B = S.bones, par = B[0].parent, g = S.g55 || (S.g55 = { dn: new T.Vector3(), up: new T.Vector3(), xh: new T.Vector3(), fz: new T.Vector3(), c: new T.Vector3(), q: new T.Quaternion(), s: new T.Vector3(), a: new T.Vector3(), b: new T.Vector3(), top: 1 });
+  par.updateWorldMatrix(true, false); par.getWorldQuaternion(g.q); g.dn.set(0, -1, 0).applyQuaternion(g.q.invert()).normalize(); g.up.copy(g.dn).negate(); par.getWorldScale(g.s); g.ws = g.s.y;
+  g.xh.set(1, 0, 0).addScaledVector(g.up, -g.up.x).normalize(); g.fz.crossVectors(g.xh, g.up).normalize(); g.c.copy(B[0].position); return g; }
+const ht55 = (g, p) => (p.x - g.c.x) * g.up.x + (p.y - g.c.y) * g.up.y + (p.z - g.c.z) * g.up.z;
+function top55(S, g) { const B = S.bones, J = S.G.J; let top = 0; for (let j = 1; j < B.length; j++) { const h = ht55(g, B[j].position) + J[j].r * (B[j].scale.y || 1); if (h > top) top = h; } return top; }
+/* every joint goes down in the world by D (twisting about the pool's axis and pinched where it passes the rim); the loose drops go with it */
+function dive55(S, g, D, pinch, tw) { const B = S.bones, H = S.G.H, a = g.a, q = g.q; if (Math.abs(D) < 1e-5 && !tw) return;
+  for (let j = 0; j < B.length; j++) { const b = B[j], p = b.position, h = ht55(g, p), h2 = h - D;
+    if (tw) { const an = tw * sm55(1 - h2 / (0.7 * H)); if (Math.abs(an) > 1e-4) { q.setFromAxisAngle(g.up, an); a.copy(p).sub(g.c).applyQuaternion(q); p.copy(g.c).add(a); b.quaternion.premultiply(q); } }
+    p.addScaledVector(g.dn, D); if (pinch) { const k = 1 - pinch * Math.exp(-(h2 * h2) / (0.012 * H * H)); b.scale.x *= k; b.scale.z *= k; } }
+  S.drops.forEach(dp => dp.g.position.addScaledVector(g.dn, D)); S.drips.forEach(dp => dp.g.position.addScaledVector(g.dn, D)); }
+/* the hand of one side carried by a vector (all its fingers the same), the shoulder staying */
+function hand55(S, sd, dx, dy, dz) { const K = S.k52; (K.arm[sd] || []).forEach(c => push52(S, c.jn, c.l.arm, dx, dy, dz)); }
+const hp55 = (S, sd) => { const A = S.k52.arm[sd]; return A && A.length ? S.bones[A[0].jn[A[0].l.arm]].position : null; };
+/* the old form: grin, claws folded over its head, down into its own pit */
+function sink55(S, e) { const H = S.G.H, g = frame55(S), K = S.k52, s = e.sink, P = e.P; if (s <= 0 && !e.pre) return;
+  const w = sm55(s / 0.3), hd = S.bones[S.G.bj[S.G.R.head]].position;
+  [1, -1].forEach(sd => { const hp = hp55(S, sd); if (!hp || w <= 0) return; const tx = hd.x + g.up.x * 0.1 * H + g.xh.x * sd * 0.09 * H + g.fz.x * 0.06 * H, ty = hd.y + g.up.y * 0.1 * H + g.xh.y * sd * 0.09 * H + g.fz.y * 0.06 * H, tz = hd.z + g.up.z * 0.1 * H + g.xh.z * sd * 0.09 * H + g.fz.z * 0.06 * H;
+    hand55(S, sd, (tx - hp.x) * w, (ty - hp.y) * w, (tz - hp.z) * w); (K.arm[sd] || []).forEach(c => curl52(S, c, (c.cs52 || 1) * 0.7 * w)); });
+  const top = top55(S, g), Dm = top * 1.1 + 0.06 * H, x = cl55((s - 0.22) / 0.78), D = s < 0.22 ? -0.05 * H * Math.sin(PI * s / 0.22) : Dm * (Math.pow(x, 1.3) + 0.05 * Math.sin(3 * PI * x) * (1 - x));
+  dive55(S, g, D, 0.38 * sm55(s / 0.3), P.tw * sm55((s - 0.15) / 0.85)); e.D = D; e.Dm = Dm; }
+/* the new form: under the page through the boil; then the claws, the haul, the look */
+function rise55(S, e, o) { const H = S.G.H, g = frame55(S), P = e.P, v = e.u < e.hit ? 0 : e.v, K = S.k52; if (e.u >= e.c[4]) return;
+  const R = (o.c55 ? o.c55.R : 3) * e.pr / Math.max(1e-4, g.ws), top = top55(S, g), Dm = top * 1.12 + 0.08 * H, hl = P.hl, h = cl55((v - hl[0]) / (hl[1] - hl[0])), hs = sm55(h);
+  let D = Dm * (1 - hs) - P.ov * H * Math.sin(PI * Math.min(1, hs * 1.15)) * (h < 1 ? 1 : 0);
+  if (P.peer && v >= P.peer[0] && h <= 0) { const hh = ht55(g, S.bones[S.G.bj[S.G.R.head]].position), Dp = hh - 0.06 * H; D = Dm + (Dp - Dm) * sm55((v - P.peer[0]) / (P.peer[1] - P.peer[0])); }
+  if (h >= 1) D = -0.035 * H * Math.exp(-(v - hl[1]) * 9) * Math.sin((v - hl[1]) * 30);
+  /* the claws: up out of the pit through the fume, down on the rim, holding while it hauls, let go */ const rl = sm55((v - P.rl[0]) / (P.rl[1] - P.rl[0]));
+  [1, -1].forEach(sd => { const hp = hp55(S, sd), q = P.sides[sd]; if (!hp || !q || e.u < e.hit) return; const wu = sm55((v - q[0]) / Math.max(0.01, q[1] - q[0])), ws = sm55((v - q[2]) / Math.max(0.01, q[3] - q[2])); if (wu <= 0) return;
+    const nx = hp.x + g.dn.x * D, ny = hp.y + g.dn.y * D, nz = hp.z + g.dn.z * D, c = g.c, sx = (P.wide ? 0.7 : 0.45) * R * sd, shH = P.shH * H * 1.25, rx = (P.wide ? 1.0 : 0.9) * R * sd;
+    const ax = c.x + g.xh.x * sx + g.up.x * shH + g.fz.x * 0.1 * R, ay = c.y + g.xh.y * sx + g.up.y * shH + g.fz.y * 0.1 * R, az = c.z + g.xh.z * sx + g.up.z * shH + g.fz.z * 0.1 * R;
+    const bx = c.x + g.xh.x * rx + g.up.x * 0.03 * H + g.fz.x * 0.2 * R, by = c.y + g.xh.y * rx + g.up.y * 0.03 * H + g.fz.y * 0.2 * R, bz = c.z + g.xh.z * rx + g.up.z * 0.03 * H + g.fz.z * 0.2 * R;
+    let tx = nx + (ax - nx) * wu, ty = ny + (ay - ny) * wu, tz = nz + (az - nz) * wu; tx += (bx - tx) * ws; ty += (by - ty) * ws; tz += (bz - tz) * ws; const k = 1 - rl;
+    hand55(S, sd, (tx - nx) * k, (ty - ny) * k, (tz - nz) * k); (K.arm[sd] || []).forEach(c2 => curl52(S, c2, (c2.cs52 || 1) * (-0.35 * wu * (1 - ws) + 0.75 * ws) * k)); });
+  dive55(S, g, D, D > 0 ? 0.3 * cl55(D / Dm * 2) : 0, 0); e.D = D; e.Dm = Dm; }
+/* the face and the bow for each beat (laid over the rest clip by the C26.rest wrapper) */
+function face55(z, e, st, old) { const P = e.P, u = e.u;
+  if (old) { if (e.pre) { z.sq = -0.08; z.smile = 1.5; return; } const s = e.sink; z.smile = 1.5 + 0.5 * sm55(s / 0.2); z.lean = -0.12 * Math.sin(PI * e.go) * (1 - s); z.wide = 0.6 * pu55(s, 0.02, 0.3, 0.08); z.brow = 0.5 * s; z.looky = 0.5 * (1 - s); z.blink = sm55((s - 0.55) / 0.2); z.nod = -0.25 * sm55(s / 0.4); return; }
+  if (u < e.c[4]) { const v = u < e.hit ? 0 : e.v, hb = pu55(v, P.hb[0], P.hb[1], 0.08); z.smile = 1.3 + 0.6 * hb; z.nod = -0.75 * hb; z.looky = 0.9 * hb; z.wide = 0.7 * hb + 0.4 * pu55(v, 0, 0.3, 0.06); z.open = 0.8 * hb; z.brow = 0.6 * hb;
+    if (P.peer) { const pk = pu55(v, P.peer[0], P.hl[0] + 0.05, 0.05); z.hturn = 0.5 * Math.sin((v - P.peer[0]) * 22) * pk; z.lookx = 1.6 * Math.sin((v - P.peer[0]) * 22) * pk; z.lidx = 0.45 * pk; }
+    if (P.hook) { const k = 1 - sm55((v - P.hook[0]) / (P.hook[1] - P.hook[0])); z.bow = 1.0 * k; z.nod = (z.nod || 0) + 0.6 * k; }
+    if (P.ov > 0.1) z.sq = 0.16 * pu55(v, P.hl[0], P.hl[1], 0.1); return; }
+  /* it looks down at the page, its own way; then home */ const lk = pu55(u, e.c[4], e.c[5] + 0.3, 0.25), ATT = [null, null, { smile: 1.8, lidx: 0, brow: 0.3 }, { smile: 1.5, lidx: 0.45, brow: -0.3 }, { smile: 1.35, lidx: 0.2, brow: -0.6 }, { smile: 1.8, lidx: 0.3, brow: -0.2 }][st] || {};
+  z.nod = 0.35 * lk; z.looky = -0.75 * lk; z.lookx = 0.8 * lk; z.smile = 1 + (ATT.smile - 1) * lk; z.lidx = ATT.lidx * lk; z.brow = ATT.brow * lk;
+  if (e.home > 0) { const hm = e.home, tn = sm55(hm / 0.18) * (1 - sm55((hm - 0.86) / 0.14)); z.turn = PI * tn; z.lean = 0.14 * Math.sin(hm * PI * 6) * tn; z.sq = -0.12 * Math.abs(Math.sin(hm * PI * 3)) * tn; } }
+/* the pit as a hole in the page, the scorch round it, the pocks, the fume's shade */
+function pitMat55(T) { const pk = []; for (let i = 0; i < 8; i++) pk.push(new T.Vector4(0, 0, 0, 2));
+  return new T.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    uniforms: { cW: { value: new T.Vector2() }, R: { value: 1 }, ha: { value: 0 }, deep: { value: 0 }, sc: { value: 0 }, fu: { value: 0 }, fo: { value: new T.Vector2(0.5, 0.4) }, tm: { value: 0 }, sd: { value: 3.1 }, bo: { value: 0 }, pk: { value: pk } },
+    vertexShader: 'varying vec2 vW;\nvoid main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: 'uniform vec2 cW;\nuniform float R;\nuniform float ha;\nuniform float deep;\nuniform float sc;\nuniform float fu;\nuniform vec2 fo;\nuniform float tm;\nuniform float sd;\nuniform float bo;\nuniform vec4 pk[8];\nvarying vec2 vW;\n' + N35 + [
+      'void main() { vec2 q = (vW - cW) / R; float pc = length(q), a = atan(q.y, q.x); vec3 cs = vec3(cos(a), sin(a), sd);',
+      /* the edge it eats: ragged, gnawing slowly round */
+      '  float e = 1.0 + 0.11 * (N35(cs * vec3(2.2, 2.2, 1.0) + vec3(0.0, 0.0, tm * 0.12)) - 0.5) + 0.07 * (N35(cs * vec3(7.0, 7.0, 1.0) + vec3(3.0, 3.0, tm * 0.3)) - 0.5) + 0.035 * (N35(cs * vec3(19.0, 19.0, 1.0) + 5.0) - 0.5);',
+      '  float ins = 1.0 - smoothstep(e - 0.015, e + 0.004, pc), n1 = N35(vec3(q * 4.0, sd + 1.0)), n2 = N35(vec3(q * 13.0, sd + 4.0));',
+      /* the floor is seen nearer the eye the deeper it is; what is left between it and the far rim is the inner wall */
+      '  vec2 fc = vec2(0.0, 0.34 * deep); float fr = e * (1.0 - 0.22 * deep), fd = length((q - fc) * vec2(1.0, 1.06)) / fr, fl = 1.0 - smoothstep(0.97, 1.0, fd);',
+      '  vec3 liq = mix(vec3(0.10, 0.14, 0.05), vec3(0.30, 0.46, 0.10), 0.5 * smoothstep(0.3, 0.9, N35(vec3(q * 2.6, tm * 0.5 + sd))) * (1.0 - 0.5 * deep)) * (1.0 - 0.35 * deep * (1.0 - fd));',
+      /* bubbles on the floor: they swell and burst */
+      '  vec2 g5 = (q - fc) * 4.2, c5 = floor(g5), f5 = fract(g5) - 0.5; float h5 = H35(vec3(c5, sd + 5.0)), ph = fract(tm * (0.45 + 0.5 * h5) + h5 * 7.0), br = 0.08 + 0.34 * ph, d5 = length(f5 - (vec2(H35(vec3(c5, sd + 7.0)), H35(vec3(c5, sd + 8.0))) - 0.5) * 0.3);',
+      '  float bub = step(0.35, h5) * bo * fl * (1.0 - smoothstep(0.02, 0.05, abs(d5 - br))) * (ph < 0.86 ? 1.0 : step(0.5, N35(vec3(f5 * 9.0, ph * 40.0)))) * (1.0 - smoothstep(0.9, 1.0, ph));',
+      '  liq = mix(liq, vec3(0.80, 0.92, 0.50), 0.85 * bub); liq = mix(liq, vec3(0.62, 0.80, 0.30), 0.3 * bo * step(0.35, h5) * (1.0 - smoothstep(br - 0.06, br, d5)) * fl);',
+      /* the far wall: lit, streaked by what it ate, darker down into the floor */
+      '  float wy = clamp((fd - 1.0) / max(0.05, (e - fr) * 1.5), 0.0, 1.0); vec3 wall = mix(vec3(0.20, 0.17, 0.08), vec3(0.62, 0.55, 0.32), wy) * (0.82 + 0.3 * N35(vec3(a * 14.0, pc * 2.0, sd + 9.0))); wall = mix(wall, vec3(0.42, 0.56, 0.18), 0.35 * (1.0 - wy));',
+      '  vec3 col = mix(wall, liq, fl);',
+      /* the near rim: a thin lit lip, and the pen line on the edge, broken */
+      '  float lip = smoothstep(e - 0.07, e - 0.02, pc) * ins * smoothstep(-0.2, 0.4, q.y / max(pc, 1e-3)); col = mix(col, vec3(0.90, 0.93, 0.70), 0.7 * lip);',
+      '  float ink = (1.0 - smoothstep(0.01, 0.026, abs(pc - e))) * smoothstep(0.25, 0.42, N35(cs * vec3(3.0, 3.0, 1.0) + 13.0));',
+      /* outside: charred brown at the rim, bleached and yellowed beyond */
+      '  float o0 = smoothstep(e - 0.004, e + 0.01, pc), w1 = 0.2 + 0.1 * N35(cs * vec3(5.0, 5.0, 1.0) + 2.0), ch = o0 * (1.0 - smoothstep(e + w1 * 0.4, e + w1, pc)) * (0.75 + 0.35 * n1), bl = o0 * (1.0 - smoothstep(e + 0.25, e + 0.85 + 0.25 * n1, pc));',
+      '  vec3 oc = mix(vec3(0.97, 0.94, 0.80), vec3(0.24, 0.14, 0.06), clamp(ch * 1.2, 0.0, 1.0)); float oa = sc * max(ch * (0.85 + 0.15 * n2), 0.5 * bl);',
+      /* the fume's shade, thrown from the lamp, moving */
+      '  vec2 sv = fo; float st = clamp(dot(q, sv) / max(1e-3, dot(sv, sv)), 0.0, 1.0); float sdd = length(q - sv * st) / (0.55 + 0.35 * st + 0.25 * (N35(vec3(q * 1.8 - vec2(tm * 0.3, 0.0), sd + 11.0)) - 0.5)); float shd = fu * 0.32 * (1.0 - smoothstep(0.4, 1.0, sdd)) * (1.0 - ins);',
+      /* pocks where spat drops landed: an etched pit with a pale middle, fading */
+      '  float pkA = 0.0; vec3 pkC = vec3(0.0); for (int i = 0; i < 8; i++) { vec4 p = pk[i]; if (p.w >= 1.0 || p.z <= 0.0) continue; float d = length(vW - cW - p.xy) / p.z + 0.25 * (N35(vec3((vW - p.xy) * 9.0, float(i))) - 0.5); float pa = (1.0 - smoothstep(0.85, 1.0, d)) * (1.0 - smoothstep(0.5, 1.0, p.w)) * smoothstep(0.0, 0.05, p.w);',
+      '    vec3 pcol = mix(vec3(0.97, 0.96, 0.82), vec3(0.22, 0.15, 0.07), smoothstep(0.45, 0.8, d)); if (pa > pkA) { pkA = pa; pkC = pcol; } }',
+      '  vec4 o = vec4(oc, oa * (1.0 - ins)); o = vec4(mix(o.rgb, vec3(0.0), shd / max(0.001, o.a + shd)), max(o.a, shd)); if (pkA > 0.0) { o.rgb = mix(o.rgb, pkC, pkA / max(0.001, max(o.a, pkA))); o.a = max(o.a, pkA * (1.0 - ins)); }',
+      '  vec4 hole = vec4(col, ins); hole.rgb = mix(hole.rgb, vec3(0.08, 0.06, 0.05), 0.9 * ink); hole.a = max(hole.a, 0.9 * ink);',
+      '  float hA = hole.a * ha; vec3 rgb = mix(o.rgb, hole.rgb, hA / max(0.001, hA + o.a * (1.0 - hA))); gl_FragColor = vec4(rgb, clamp(hA + o.a * (1.0 - hA), 0.0, 1.0)); }'].join('\n') }); }
+/* a puff of the fume: wash, lit on the lamp's side, pooled at its edge */
+function puffMat55(T, sd) { return new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { al: { value: 0 }, sd: { value: sd }, lt: { value: 1 } },
+  vertexShader: 'varying vec2 vU;\nvoid main() { vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform float al;\nuniform float sd;\nuniform float lt;\nvarying vec2 vU;\n' + N35 + [
+    'void main() { vec2 p = vU * 2.0 - 1.0; float n = N35(vec3(p * 2.2, sd)), n2 = N35(vec3(p * 5.0, sd + 3.0)), d = length(p) + 0.38 * (n - 0.5) + 0.14 * (n2 - 0.5), a = 1.0 - smoothstep(0.5, 0.92, d);',
+    '  float lit = clamp(0.5 + 0.7 * dot(p / max(0.001, length(p)), vec2(-0.62, 0.78)) * smoothstep(0.1, 0.8, d), 0.0, 1.0); vec3 c = mix(vec3(0.56, 0.62, 0.52), vec3(0.94, 0.96, 0.86), lit * lt);',
+    '  c = mix(c, vec3(0.48, 0.58, 0.40), 0.45 * smoothstep(0.55, 0.88, d)); gl_FragColor = vec4(c, a * al * (0.72 + 0.28 * n2)); }'].join('\n') }); }
+const NP55 = 18;
+function make55(T, S) { const X = { live: false, puffs: [], sp: [], pk: [], tm: 0, tf: 0, last: 0, spT: 0, v: new T.Vector3(), w: new T.Vector3(), c: new T.Vector3(), pts: Array.from({ length: 40 }, () => new T.Vector3()) };
+  const pg = new T.PlaneGeometry(2, 2); pg.rotateX(-PI / 2); const pit = X.pit = new T.Mesh(pg, pitMat55(T)); pit.renderOrder = 3.5; pit.frustumCulled = false; pit.visible = false; pit.userData.plain = true; pit.userData.nobox = true; pit.castShadow = false;
+  const qg = new T.PlaneGeometry(1, 1); for (let i = 0; i < NP55; i++) { const m = new T.Mesh(qg, puffMat55(T, 1.7 + i * 2.3)); m.renderOrder = 21; m.frustumCulled = false; m.visible = false; m.userData.plain = true; m.userData.nobox = true; m.castShadow = false; X.puffs.push({ m, h: h30(i * 41 + 7), h2: h30(i * 13 + 3), p: 0, r: 0, a: 0 }); }
+  for (let i = 0; i < 8; i++) X.pk.push({ x: 0, z: 0, r: 0, t0: -1e9 }); return X; }
+function hide55(X) { if (!X) return; X.live = false; X.pit.visible = false; X.puffs.forEach(p => { p.m.visible = false; }); X.sp.length = 0; X.pk.forEach(p => { p.t0 = -1e9; }); }
+function kill55(S) { const O = S.e55; if (O) { if (O.gg.parent) O.gg.parent.remove(O.gg); S.e55 = null; } }
+function end55(S) { kill55(S); hide55(S.x55); S.root.visible = true; }
+/* one frame of the pit, the fume, the spat drops (world places from the figure's pool and the page's height) */
+function stage55(S, X, grp, e, o) { const T = S.T, now = (typeof performance !== 'undefined' ? performance.now() : 0) / 1000, dt = Math.min(0.1, Math.max(0, now - (X.last || now))); X.last = now; let top = grp; while (top.parent) top = top.parent;
+  [X.pit].concat(X.puffs.map(p => p.m)).forEach(m => { if (m.parent !== top) top.add(m); });
+  const C55 = o.c55 || { R: 3, y: 0.03, Hc: 8 }, Rm = C55.R, R = Rm * e.pr, cW = X.c; S.root.updateWorldMatrix(true, false); const pl = S.G.pl; cW.set(pl.x, 0, pl.z).applyMatrix4(S.root.matrixWorld); cW.y = C55.y; X.R = R; X.Rm = Rm;
+  if (!e.hold) X.tm += dt; X.tf += dt; const P = e.P, U = X.pit.material.uniforms, ext = 3.2 * Math.max(R, 0.4 * Rm);
+  X.pit.visible = e.ha > 0.002 || e.scorch > 0.002 || X.pk.some(p => now - p.t0 < 1.6); X.pit.position.set(cW.x, cW.y + 0.014, cW.z); X.pit.scale.set(ext / 2 * 2, 1, ext / 2 * 2);
+  U.cW.value.set(cW.x, cW.z); U.R.value = Math.max(1e-3, R); U.ha.value = e.ha; U.deep.value = e.deep; U.sc.value = e.scorch; U.fu.value = e.fume * e.reach; U.tm.value = X.tm; U.bo.value = e.old ? 0.5 * e.sink : e.u < e.hit ? 1 : 1 - sm55(e.v / 0.3);
+  /* the fume column: puffs rise from the pit, swell, lean toward the lamp, thin; the hit tears them aside */ const Hf = C55.Hc * P.fume * 0.95, Rp = Math.max(0.5 * R, 0.15 * Hf), lx = -1, UY = 0.697, UZ = -0.717; U.fo.value.set(0.48 * Hf * e.reach / Math.max(1e-3, R), 0.33 * Hf * e.reach / Math.max(1e-3, R));
+  X.Hf = Hf; X.puffs.forEach((pf, i) => { const m = pf.m, p = (X.tf * (0.2 + 0.06 * pf.h) + i / NP55) % 1, y = p * Hf, yy = y / Math.max(1e-3, Hf), lean = 0.16 * Hf * Math.pow(yy, 1.5), wob = 0.07 * Hf * yy * Math.sin(X.tf * 1.1 + i * 1.7), sd = i % 2 ? 1 : -1, tr = e.tear * R * (1.2 + 2.4 * yy) * (0.6 + 0.6 * pf.h2);
+    const a = e.fume * sm55(p / 0.08) * (1 - sm55((p - 0.62) / 0.38)) * (1 - sm55((yy - e.reach) / 0.12)) * (1 - 0.85 * e.tear); pf.p = p; pf.a = a; pf.r = Rp * (0.45 + 1.1 * p) * (1 + 0.4 * e.tear);
+    m.visible = a > 0.01; if (!m.visible) return; m.position.set(cW.x + lx * lean + wob + sd * tr, cW.y + UY * (y + 0.6 * pf.r), cW.z + UZ * (y + 0.6 * pf.r) + 0.15 * R); m.scale.set(pf.r * 2, pf.r * 2, 1); m.material.uniforms.al.value = a; if (W55.cam) { m.quaternion.copy(W55.cam.quaternion); } m.updateMatrixWorld(); });
+  /* spat drops: out of the boiling pit in arcs; each leaves a pock where it lands */ const spit = !e.old && e.u < e.hit ? (e.hold ? 0 : 1) : e.u >= e.hit && e.v < 0.6 ? 1.6 : e.sink > 0.5 ? 0.5 : 0;
+  if (spit > 0) { X.spT += dt * spit; const per = P.spit; while (X.spT > per) { X.spT -= per; const n = (X.sn = (X.sn || 0) + 1), an = 6.2832 * h30(n * 7 + 1), d = R * (1.15 + 0.95 * h30(n * 11 + 3)) * (e.u >= e.hit ? 1.25 : 1); X.sp.push({ t0: now, an, d, h: R * (0.5 + 0.7 * h30(n * 5 + 2)), r: R * (0.045 + 0.04 * h30(n * 3 + 9)), x0: Math.cos(an) * R * 0.4, z0: Math.sin(an) * R * 0.4 }); if (X.sp.length > 12) X.sp.shift(); } }
+  X.sp = X.sp.filter(s => { const f = (now - s.t0) / 0.5; if (f < 1) return true; const k = X.pk.reduce((a, b) => (a.t0 < b.t0 ? a : b)); k.x = Math.cos(s.an) * s.d; k.z = Math.sin(s.an) * s.d * 0.9; k.r = s.r; k.t0 = now; X.fz = X.fz || []; X.fz.push({ x: k.x, z: k.z, t0: now }); if (X.fz.length > 6) X.fz.shift(); return false; });
+  X.pk.forEach((p, i) => { const age = (now - p.t0) / 1.5; U.pk.value[i].set(p.x, p.z, age < 1 ? p.r : 0, Math.max(0, Math.min(1, age))); }); X.now = now; }
+/* the pen's part: curls on the fume, the column's edges, licks at the rim, big bubbles, spat drops and their fizz, acid running off the new form */
+function ink55(T, S, X, ren, cam) { const R = S.pen30, e = X.e, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
+  const lw = Math.max(R.lw || 2, 1.6 * sc), fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), pts = X.pts, C = X.c, Rr = X.R, ce = cam.matrixWorld.elements, rx = ce[0], ry = ce[1], rz = ce[2], ux = ce[4], uy = ce[5], uz = ce[6], d = 0.02 * Rr; let sd = 12000;
+  const st = (n, w, o) => free30(R, pts.slice(0, n), w, s2, Wd, Ht, P10, P11, d, sd++, o || { smooth: 2, wob: 0.7, min: 3 });
+  /* a curl on each puff */ X.puffs.forEach((pf, i) => { if (pf.a < 0.14 || !pf.m.visible || i % 2) return; const m = pf.m.position, a0 = 1.2 + 0.5 * Math.sin(X.tf * 0.7 + i), n = 9; for (let k = 0; k < n; k++) { const t = k / (n - 1), an = a0 + 2.4 * t, r = pf.r * 0.62 * (1 - 0.3 * t); pts[k].set(m.x + (rx * Math.cos(an) + ux * Math.sin(an)) * r, m.y + (ry * Math.cos(an) + uy * Math.sin(an)) * r, m.z + (rz * Math.cos(an) + uz * Math.sin(an)) * r); } st(n, lw * (0.35 + 0.45 * pf.a)); });
+  /* the column's two edges, wavering up */ if (e.fume * e.reach > 0.3 && e.tear < 0.5) { const Hf = X.Hf, Rp = Math.max(0.5 * Rr, 0.15 * Hf); [1, -1].forEach(s => { const n = 12, top = Hf * e.reach * 0.8; for (let k = 0; k < n; k++) { const y = top * k / (n - 1), yy = y / Hf, lean = 0.16 * Hf * Math.pow(yy, 1.5), w = s * Rp * (0.55 + 1.0 * yy) + 0.06 * Hf * yy * Math.sin(X.tf * 1.3 + yy * 6 + s); pts[k].set(C.x - lean + rx * w, C.y + 0.697 * y + 0.1 * Rr, C.z - 0.717 * y + rz * w + 0.15 * Rr); } st(n, lw * 0.5 * (1 - e.tear), { smooth: 2, wob: 1.0, min: 4 }); }); }
+  /* licks leaping at the rim */ const bo = e.old ? sm55((e.sink - 0.4) / 0.6) : e.u < e.hit ? 1 : 1 - sm55(e.v / 0.25); if (bo > 0.02 && e.ha > 0.3) { const nL = 5 + 2 * (e.to - 2); for (let i = 0; i < nL; i++) { const h = h30(i * 29 + 4), an = (i + 0.5 * h) / nL * 6.2832, ph = X.tm * (1.4 + 1.2 * h) + h * 9, lift = Math.max(0, Math.sin(ph)) * (0.25 + 0.45 * h30(i * 7 + Math.floor(ph / 6.2832))) * Rr * bo, ex = 1 + 0.08 * Math.sin(an * 3); if (lift < 0.04 * Rr) continue;
+      const bx = C.x + Math.cos(an) * Rr * ex, bz = C.z + Math.sin(an) * Rr * ex, ox = Math.cos(an), oz = Math.sin(an), n = 6; for (let k = 0; k < n; k++) { const t = k / (n - 1), out = 0.18 * Rr * Math.sin(t * 2.6) * (0.6 + h); pts[k].set(bx + ox * out - ox * 0.12 * Rr * t * t, C.y + lift * t, bz + oz * out * 0.9); } st(n, lw * 0.7); } }
+  /* big bubbles: they swell over the floor and burst */ if (bo > 0.05 && e.ha > 0.5) { const nb = 2 + (e.to >= 4 ? 1 : 0); for (let b = 0; b < nb; b++) { const x = X.tm / (1.1 + 0.3 * b) + b * 0.37, u = x % 1, id = Math.floor(x), an = 6.2832 * h30(id * 13 + b), rr = 0.5 * h30(id * 17 + b + 3), rb = Rr * (0.16 + 0.1 * h30(id + 7 * b)) * bo, bx = C.x + Math.cos(an) * Rr * rr, bz = C.z + Math.sin(an) * Rr * rr * 0.8 + 0.3 * e.deep * Rr, by = C.y + 0.01;
+      if (u < 0.8) { const r = rb * sm55(u / 0.8), n = 13; if (r < 0.02 * Rr) continue; for (let k = 0; k < n; k++) { const a = k / (n - 1) * 6.2832; pts[k].set(bx + rx * Math.cos(a) * r + ux * 0, by + r * 0.85 + uy * Math.sin(a) * r * 0.85, bz + rz * Math.cos(a) * r + uz * Math.sin(a) * r * 0.85); } st(n, lw * 0.7); }
+      else { const v = (u - 0.8) / 0.2; for (let k = 0; k < 5; k++) { const a = k / 5 * 6.2832 + 0.4, r1 = rb * (1 + 0.6 * v), r2 = rb * (1.35 + 1.0 * v); pts[0].set(bx + rx * Math.cos(a) * r1, by + rb * 0.85 + uy * Math.sin(a) * r1, bz + rz * Math.cos(a) * r1 + uz * Math.sin(a) * r1); pts[1].set(bx + rx * Math.cos(a) * r2, by + rb * 0.85 + uy * Math.sin(a) * r2, bz + rz * Math.cos(a) * r2 + uz * Math.sin(a) * r2); st(2, lw * 0.7 * (1 - v), { smooth: 0, wob: 0.3, min: 2 }); } } } }
+  /* the spat drops in flight, and a fizz where each landed */ const now = X.now || 0; X.sp.forEach(s => { const f = (now - s.t0) / 0.5; if (f < 0 || f >= 1) return; const x = C.x + s.x0 + (Math.cos(s.an) * s.d - s.x0) * f, z = C.z + s.z0 + (Math.sin(s.an) * s.d * 0.9 - s.z0) * f, y = C.y + 4 * s.h * f * (1 - f) + 0.02, r = s.r * 0.6, n = 9; for (let k = 0; k < n; k++) { const a = k / (n - 1) * 6.2832; pts[k].set(x + (rx * Math.cos(a) + ux * Math.sin(a)) * r, y + (ry * Math.cos(a) + uy * Math.sin(a)) * r, z + (rz * Math.cos(a) + uz * Math.sin(a)) * r); } st(n, lw * 0.65, { smooth: 1, wob: 0.3, min: 3 }); });
+  (X.fz || []).forEach(q => { const a = now - q.t0; if (a < 0 || a > 0.6) return; const r = Rr * 0.07 * (0.5 + 1.5 * sm55(a / 0.6)), n = 12; for (let k = 0; k < n; k++) { const an = k / (n - 1) * 6.2832; pts[k].set(C.x + q.x + Math.cos(an) * r, C.y + 0.02, C.z + q.z + Math.sin(an) * r * 0.8); } st(n, lw * 0.55 * (1 - a / 0.6) + 0.1 * lw, { smooth: 1, wob: 0.4, min: 3 }); });
+  /* acid running off the new form as it comes out */ if (!e.old && e.u >= e.hit && e.v > e.P.hl[0] && e.v < 1 && S === X.S) { const B = S.bones, J = S.G.J, ws = (S.g55 && S.g55.ws) || 1, H = S.G.H * ws, list = S.k52 ? [S.G.bj[S.G.R.chest], S.G.bj[Math.max(1, S.G.R.chest - 2)], S.G.bj[S.G.R.neck]].concat([1, -1].map(sd => { const A = S.k52.arm[sd]; return A && A.length ? A[0].jn[Math.max(1, A[0].l.arm - 1)] : 0; })) : [];
+    const cp = X.w.setFromMatrixPosition(cam.matrixWorld), fadeR = 1 - sm55((e.v - 0.75) / 0.25); list.forEach((j, i) => { if (!j) return; for (let q = 0; q < 2; q++) { const ph = (X.tf * 1.7 + i * 0.31 + q * 0.5) % 1, p = X.v.setFromMatrixPosition(B[j].matrixWorld), r = J[j].r * ws * Math.max(0.2, B[j].scale.x); const dx = cp.x - p.x, dy = cp.y - p.y, dz = cp.z - p.z, dl = Math.hypot(dx, dy, dz) || 1, sx = (q ? 0.45 : -0.35) * r;
+      const x0 = p.x + dx / dl * r * 1.05 + rx * sx, y0 = p.y + dy / dl * r * 1.05 + ry * sx - H * 0.16 * ph, z0 = p.z + dz / dl * r * 1.05 + rz * sx; if (y0 < C.y + 0.05) continue; pts[0].set(x0, y0, z0); pts[1].set(x0, y0 - H * 0.05, z0); pts[2].set(x0, y0 - H * 0.1, z0); st(3, lw * 0.55 * Math.sin(PI * ph) * fadeR, { smooth: 1, wob: 0.3, min: 2 }); } }); }
+  R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
+function evo55(f0, grp, S, t, o) { const e = ph55(t, o), T = S.T, X = S.x55 || (S.x55 = make55(T, S)); X.live = true; X.e = e; X.S = S; W55.e = e;
+  let O = S.e55; const ro = z => ({ look: [1, 0.5], z55: z });
+  if (e.old) { if (!O || O.from !== o.from) { kill55(S); const gg = acid48Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.o55 = S; grp.parent.add(gg); O = S.e55 = { gg, sp, from: o.from }; }
+    O.gg.visible = true; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); S.root.visible = false;
+    const z = O.sp.z55 || (O.sp.z55 = {}); for (const k in z) delete z[k]; face55(z, e, o.from, true); f0(O.gg, 'rest', t / e.L, ro(z)); if (O.sp.k52) sink55(O.sp, e);
+    const g = O.sp.g55; if (g) o.r055 = O.sp.G.pl.rx * 1.32 * g.ws / Math.max(1e-3, (o.c55 ? o.c55.R : 3)); }
+  else { if (O) kill55(S); S.root.visible = true; const z = S.z55 || (S.z55 = {}); for (const k in z) delete z[k]; face55(z, e, S.st, false); f0(grp, 'rest', t / e.L, ro(z)); if (S.k52) rise55(S, e, o); }
+  { const g = S.g55 || frame55(S); o.r155 = S.G.pl.rx * 1.32 * g.ws / Math.max(1e-3, (o.c55 ? o.c55.R : 3)); }
+  stage55(S, X, grp, e, o);
+  const c = e.c, P = e.P, u = e.u, sl = Math.min(P.sides[1][2], P.sides['-1'][2]) + 0.04; let n = -1; if (u >= e.hit + sl * P.b[3]) n = 0; if (u >= e.hit + P.hl[1] * P.b[3]) n = 1; if (u >= c[4]) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on55(S) && o.from !== S.st)) { if (S && S.x55 && S.x55.live && clip !== 'evo') { try { end55(S); } catch (e) { W55.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo55(f0, grp, S, t, o); } catch (err) { W55.err = String(err && err.stack); const L = o.L || 500, tot = (PAR55[Math.max(2, Math.min(5, o.to | 0))] || PAR55[3]).b.reduce((a, b) => a + b, 0); return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); const M = S.o55 || S, X = M.x55; if (X && X.live) W55.cam = cam; if (!X || !X.live || !X.e || !S.pen30) return; const fr = ren.info && ren.info.render ? ren.info.render.frame : 0; if (X.df === fr) return; X.df = fr; try { ink55(T, S, X, ren, cam); } catch (e) { W55.err = 'ink ' + String(e && e.stack); } })(draw30);
+KIT.W55 = W55; KIT.e55dbg = () => { const e = W55.e; return { err: W55.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), sink: +e.sink.toFixed(2), boil: +e.boil.toFixed(2), v: +e.v.toFixed(2), look: +e.look.toFixed(2), home: +e.home.toFixed(2), pr: +e.pr.toFixed(2), D: e.D != null ? +e.D.toFixed(2) : null, Dm: e.Dm != null ? +e.Dm.toFixed(2) : null, hit: e.hit, tot: e.tot, old: e.old } : null }; };
+// ==== W55 END
 // ==== W49 BEGIN
 // (builder 49, five stages by builder 53) DRY ICE AS A SPIRIT: "the shy one", the owner's pick (AA.rxKit.dry49 = 'c', or ?d49=c on the page; off by default). Stills only.
 // Built and drawn the way Water is, by Water's own code: each stage is a set of numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes

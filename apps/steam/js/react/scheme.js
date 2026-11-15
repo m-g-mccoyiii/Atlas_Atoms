@@ -3653,6 +3653,51 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // (builder 52) Acid the sneak in its shelf jar at its stage (the form kitart W52 puts in the jar's big2) idles like Water's form does.
   jarLife = (f0 => function (k, J, t, quick) { f0(k, J, t, quick); try { const c = k === 'acid' && J.j && J.j.userData.big2; if (c && c.visible) { let rg = null; c.traverse(o => { if (!rg && o.userData && o.userData.rig2 && o.userData.rig2.spirit) rg = o; }); if (rg) AA.rxKit.rigPlay(rg, 'rest', t * 0.9 + 3.3, { jar: true }); } } catch (e) { /* the jar never breaks the page */ } })(jarLife);
   // ==== S52 END
+  // ==== S55 BEGIN
+  // (builder 55) ACID'S OWN CHANGE OF STAGE ON THE PAGE (kitart W55 has the motion, the pit and the fume; switch AA.rxKit.evo55). Here: its way and
+  // size (from home over the open book to the middle of the screen and toward the eye, beside the molecule, so that the pit at its widest is about
+  // a third of the screen's width and the new form about half its height; home again), the room giving way (builder 33's one-lamp pass driven
+  // with Acid's numbers: the lamp's round on the place, the room in shade, the lamp's shadow of the form, the lamp on its wash), the sound on
+  // the beats, and the new number beside it when it has settled. Nothing on the bench is moved.
+  const S55 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, box: new T.Box3(), was: null };
+  const s55Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S55.dim += (want - S55.dim) * 0.2; if (Math.abs(want - S55.dim) < 0.004) S55.dim = want; const d = S55.dim; if (A) S55.A = A;
+    if (d <= 0.002 || !S33.on() || !S55.A) { if (S55.lit) { S55.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
+    if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S55.A; sh.visible = true; dirty = true; S55.lit = true;
+    cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
+    if (!S33.rtB || S55.n++ % 20 === 0 || S33.rtB.width !== ren.getDrawingBufferSize(S33.v2).x) s33Bench(null);
+    if (!S33.wet.some(w => w && w.r > 0)) U.w33.value.forEach(u => { u.z = 0; });
+    S33.A.set(P.x, P.y, P.z); S33.L.set(P.x - 22, 46, P.z - 15); U.lpos.value.copy(S33.L); U.aim.value.copy(S33.A).sub(S33.L); U.lnf.value.w = U.aim.value.length(); U.aim.value.normalize(); U.lamp.value.z = 8 + 1.7 * P.R; U.lamp.value.w = 0.85 * d * (1 - 0.55 * (P.flash || 0));
+    if (l33) { S33.v.copy(S33.L).applyMatrix4(cam.matrixWorldInverse); l33.set(S33.v.x, S33.v.y, S33.v.z, Math.min(1, d * 1.5)); }
+    s33Light(null, P.x, P.y + 0.45 * P.H * 0.697, P.z - 0.45 * P.H * 0.717, Math.max(0.9 * P.H, 2.4 * P.R)); U.shk.value = 0.85 * Math.min(1, d * 1.3); U.bs.value.w = 0; };
+  /* where it stands at the middle, worked out once: the new form half the screen tall with its middle at the middle, the pit at its widest a third of the screen's width, the pit beside the molecule, not under it */
+  const s55Place = (E, SP, fg) => { const v = S55.v, TY = 0.697, TZ = -0.717, py = 0.03; SP.root.updateWorldMatrix(true, false); SP.root.getWorldScale(S55.v2); const unit = S55.v2.y / Math.max(1e-6, homObj.grp.scale.y || 1), Hu = SP.G.H * unit;
+    let xc = 0, zc = 4, F = 1.5, R = 3; const solve = () => { for (let it = 0; it < 10; it++) { const H = Hu * E.s1 * F; v.set(xc, py, zc).project(cam); const fy = v.y; v.set(xc, py + H * TY, zc + H * TZ).project(cam); const hy = v.y - fy; F = Math.max(1, Math.min(9, F * 1.0 / Math.max(0.05, hy))); zc = Math.max(-8, Math.min(15, zc + ((v.y + fy) / 2 - 0.16) * 11)); }
+      v.set(xc, py, zc).project(cam); const x0 = v.x; v.set(xc + 1, py, zc).project(cam); R = 0.8 * (0.667 / 2) / Math.max(1e-3, Math.abs(v.x - x0)); };
+    solve(); let mol = null; try { if (center && center.group) { S55.box.setFromObject(center.group); if (!S55.box.isEmpty()) mol = S55.box.clone(); } } catch (x) { mol = null; }
+    if (mol && xc + 1.1 * R > mol.min.x && xc - 1.1 * R < mol.max.x && zc + R > mol.min.z && zc - R < mol.max.z) { xc = mol.min.x - 1.15 * R; solve(); if (xc + 1.1 * R > mol.min.x) { xc = mol.min.x - 1.15 * R; } }
+    v.set(xc - R, py, zc).project(cam); if (v.x < -0.9) { xc += (-0.9 - v.x) * R / 0.667 * 1.0; }
+    E.c55 = { x: xc, z: zc, y: py, F, R, Hc: Hu * E.s1 * F, unit, mol: mol ? [mol.min.x, mol.max.x, mol.min.z, mol.max.z].map(x => +x.toFixed(2)) : null }; E.k55 = 1; E.f55 = {}; };
+  /* the whole form stays in the screen: while it stands at the middle it is made a little smaller if any of it (above the page) would leave the middle 0.88 up and down, 0.94 across */
+  const s55Fit = (E, fig) => { if (!fig || !fig.root || !fig.root.visible) return; const v = S55.v, B = fig.bones, J = fig.G.J; let hi = -9, xl = 9, xh = -9; fig.root.updateWorldMatrix(true, true); const ws = fig.root.getWorldScale(S55.v2).y;
+    for (let j = 1; j < B.length; j += 1) { B[j].getWorldPosition(v); if (v.y < E.c55.y + 0.05) continue; const r = J[j].r * ws * Math.max(0.2, B[j].scale.y); v.y += r * 0.9; v.project(cam); if (v.y > hi) hi = v.y; if (v.x < xl) xl = v.x; if (v.x > xh) xh = v.x; }
+    if (hi > 0.88 || xl < -0.94 || xh > 0.94) E.k55 = Math.max(0.6, E.k55 * 0.985); E.box55 = [xl, hi, xh].map(x => +x.toFixed(3)); };
+  const s55Frame = now => { const E = R21.evo, fg = r21Fig(), SP = s26Fig(), K = AA.rxKit, e = E && E.e55;
+    if (!E || !e || !fg || !homObj || !SP || !SP.a48 || HEVO.done || K.evo55 === false) { if (S55.was && !R21.evo) { const L = S55.was.L; S55.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s55Lamp(now, null); return; }
+    S55.was = E; dirty = true; /* Water's ways on the bench are not Acid's: no wet trail, no lamp through water; its blob shadows give way to the lamp's own while it is at the middle */ if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; if (S27.s1 && e.u >= e.c[1] && e.u < e.c[5]) { S27.s1.visible = false; S27.s2.visible = false; } } if (!E.c55) s55Place(E, SP, fg); const C = E.c55, RK = K.RK, Q = HEVO.pos || (HEVO.pos = {}), c = e.c, k = E.k55 || 1, Fk = C.F * k, once = (n, f) => { if (!E.f55[n]) { E.f55[n] = 1; try { f(); } catch (x) { /* no sound */ } } };
+    let x = C.x, z = C.z, y = 0, s = (e.old ? E.s0 : E.s1) * Fk;
+    if (e.u < c[1]) { const g = RK.sm(e.go), a = Math.min(1, e.go * 1.15); x = HOMP.x + (C.x - HOMP.x) * RK.sm(a); z = HOMP.z + (C.z - HOMP.z) * RK.sm(a); y = 1.4 * Math.sin(Math.PI * a) + (e.pre ? 0 : 0); s = E.s0 * (1 + (Fk - 1) * g); }
+    else if (e.u >= c[5]) { const h = RK.sm(Math.min(1, e.home * 1.1)); x = C.x + (HOMP.x - C.x) * h; z = C.z + (HOMP.z - C.z) * h; y = 0.5 * Math.sin(Math.PI * Math.min(1, e.home * 1.1)); s = E.s1 * (Fk + (1 - Fk) * h); }
+    Q.x = x; Q.z = z; Q.y = y; Q.sx = 1; Q.sy = 1; homObj.s = s; E.ks31 = s / E.s0;
+    if (e.u >= c[1] && e.u < c[5]) { try { s55Fit(E, e.old ? (SP.e55 && SP.e55.sp) : SP); } catch (x2) { /* fits next frame */ } }
+    s55Lamp(now, { dim: e.dim, x: C.x, y: C.y, z: C.z, H: C.Hc * k, R: C.R * k * e.pr, flash: e.flash });
+    /* the sound on the beats: a gulp as it goes down, the hiss and spitting of the boil, the hit, a swish of fume torn aside; the base plays the slap, the fizz, the settling */
+    if (e.u >= c[1]) once('sink', () => AA.sfx.squish && AA.sfx.squish());
+    if (e.u >= c[2]) once('boil', () => { const ms = (e.hit - c[2]) * e.L; if (AA.sfx.draw) AA.sfx.draw(E.to + 2, ms / 1000); if (AA.sfx.pen) AA.sfx.pen(ms * (1 - e.P.hd / e.P.b[2]) * 0.8); });
+    if (e.u >= e.hit) once('hit', () => { if (AA.sfx.flag) AA.sfx.flag(Math.max(1, Math.min(3, E.to - 1))); if (E.to >= 4 && AA.sfx.boom) AA.sfx.boom(1); if (AA.sfx.swish) AA.sfx.swish(0.35); });
+    if (e.u >= c[5]) once('home', () => AA.sfx.swish && AA.sfx.swish(0.3)); };
+  homEvo19 = (f0 => function (now) { f0(now); try { s55Frame(now); } catch (x) { S55.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s55dbg = () => ({ err: S55.err, kit: AA.rxKit.e55dbg && AA.rxKit.e55dbg(), c: R21.evo && R21.evo.c55, k: R21.evo && R21.evo.k55, box: R21.evo && R21.evo.box55, dim: +S55.dim.toFixed(2), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +x.toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done });
+  // ==== S55 END
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; try { bleedMock(x); } catch (e) { /* a mock never breaks the page */ } if (BENCHV && LOSS.blank && st.mode === 'done' && !st.pass) { if (now - (st.doneT || now) > LOSS.end) { const nb = 9 * Math.sin(now / 260), n0 = px({ x: 4, z: 2 }), nx = [n0[0] + nb, n0[1]]; x.save(); x.translate(nx[0], nx[1]); x.scale(2.2, 2.2); x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(-78, 0, 24, 0.9, 6.0); x.stroke(); const ex = -78 + 24 * Math.cos(6.0), ey = 24 * Math.sin(6.0); x.beginPath(); x.moveTo(ex - 16, ey - 6); x.lineTo(ex, ey); x.lineTo(ex + 6, ey - 17); x.stroke(); x.beginPath(); x.moveTo(-30, 0); x.lineTo(30, 0); x.lineTo(8, -20); x.moveTo(30, 0); x.lineTo(8, 20); x.stroke(); x.restore(); } ink.t.needsUpdate = true; return; } pageStains(x);
     if (st.mode !== 'shop') marginalia(x, now);
