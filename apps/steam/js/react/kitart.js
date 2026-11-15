@@ -4937,6 +4937,7 @@ function body76(e, o, isOld) { const L = e.L, t = e.t, c = e.c, P = e.P, u = e.u
     r.chin = -0.12 * lkd; z.looky = -0.55 * lkd; z.lookx = 0.5 * (o.dir76 || -1) * lkd * (1 - sm52((d - 0.62) / 0.06)); z.lid = Math.max(z.lid, 0.48 * lkd); z.brow = 0.2 * lkd + 0.25 * pl52(d, 0.7, 0.95, 0.05);
     r.nod = nd > 0 ? 0.17 * sm52(nd / 90) * (1 - sm52((nd - 160) / 120)) + ck72(nd - 290, 0.05) : 0;
     r.pitch = ck72(db, 0.06);
+    /* its bed of crystals (all on the ground joint) grows back out of the rubble in four steps */ r.bed = d < 0.1 ? 0.02 : Math.min(1, 0.25 * (1 + Math.floor((d - 0.1) / 0.06)));
     if (st === 2) { /* the twin tries to straighten its hat: shard up, hat straight, held, slips back askew with a click */ const tr = (d - 0.42) * P.b[4] * L / 1000; z.sh = [0.85 * mv68(tr, 0.2, 0.55, 0.25)]; z.hat = mv68(tr - 0.12, 0.1, 0.4, 0.06, 1.8); if (tr > 0.95) z.brow = -0.6 * pl52(tr, 0.95, 1.5, 0.08); }
     if (st === 3) { /* the shards and the crest snap out of their fold */ const sn = (d - 0.06) * P.b[4] * L; r.fold = sn < 0 ? 1 : 1 - sn72(sn / 110) - ck72(sn - 110, 0.1); z.bud = sn < 60 ? 0.02 : Math.min(1.3, 1 + 0.3 * Math.exp(-(sn - 60) / 80) * Math.cos((sn - 60) / 30)) * cl76((sn - 60) / 50); }
     if (st === 4) { /* its pointing shard comes up as it looks the rubble over */ z.sh = [0.12 * sm52((d - 0.4) / 0.15)]; }
@@ -4956,6 +4957,7 @@ C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X 
 /* after the play: post72 turns the whole body about its standing corner; then 2 to 3's fold, 4 to 5's fan */
 function post76(S, r) { const K = S.k68; if (!K) return; post72(S, { e: r, Z: { P: [], tg: [], pl: { x: 0 }, st: S.st } }); const B = S.bones, V = S.v68;
   if (r.fold > 0.001) K.shards.forEach(s => { const jn = s.jn, r0 = B[jn[0]].position, tp = B[jn[jn.length - 1]].position; V.a.copy(tp).sub(r0).normalize(); V.b.set(s.side * 0.8, 0.55, 0.1).normalize(); if (V.a.dot(V.b) > 0.99999) return; V.q.setFromUnitVectors(V.a, V.b); V.q2.identity().slerp(V.q, Math.min(1.05, r.fold)); V.c.copy(r0); turn68(B, jn, V.c, V.q2); });
+  if (r.bed != null) B[0].scale.setScalar(Math.max(0.02, r.bed));
   if (r.fan && K.halo) { V.q.setFromAxisAngle(V.z, r.fan); V.c.copy(K.halo.c); turn68(B, [K.halo.j], V.c, V.q); } }
 /* what is seen: the pen line goes with the figure */
 function show76(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; if (!on) hide68(S); }
