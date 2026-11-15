@@ -4759,6 +4759,113 @@ function jar68(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'salt' && KIT.salt63 && KIT.idle68 !== false && T && T.SkinnedMesh) { try { jar68(T, j); } catch (e) { W68.err = String(e && e.stack); } } return j; })(KIT.jar);
 KIT.W68 = W68;
 // ==== W68 END
+// ==== W72 BEGIN
+// (builder 72) SALT'S OWN ACT (AA.rxKit.act72, on by default; false or ?a72=0 gives the old act, Water's clip on the crystal). A heavy crystal cannot
+// flow, so it WALKS LIKE A HEAVY BOX: it tips up onto one bottom corner, swivels about that corner, comes down with a click, and tips onto the other
+// corner: a brisk, exact march, every body box rigid all the way (the whole body turns about the corner it stands on and is set back on the wood; no
+// box is scaled, no box moves inside another). Its idle (W68: the face, buds, lids, light) keeps running under it; the act is laid over it. The page
+// (scheme S72) gives the times and the places (o.bites.s72, read with KIT.ph72: one timeline both files read) and draws what is not its body: the
+// crystal it grows on what it taps, the grains and marks it leaves, the sound.
+//  wait:  still, as at rest
+//  att:   it snaps to attention (a small exact hop, chin up, eyes wide), its shards come up off the wood to its sides
+//  out:   corner over corner: tip up on a corner, swivel, down with a click; at the book's edge it rocks back, tips up over the edge and comes down on
+//         the page; stage 1 tumbles like a thrown dice (a quarter turn a hop), stage 5 is too grand to tip and goes in straight stately shoves
+//  work:  set down square beside the molecule, chin up, looking down its nose; per thing the rule acts on, in the rule's order and on the beats: one
+//         shard turns to it with care (stage 1: it leans its corner over; stage 5: both shards at once), taps it once, twice, and holds still while
+//         the crystal grows from the tap; on the hit one short satisfied nod
+//  back:  two exact quarter turns, the blank back of its cube (a hopper square on it) to the eye, the march home, two quarter turns more at home,
+//         a last click and it straightens
+KIT.act72 = KIT.act72 == null ? !(typeof location !== 'undefined' && /[?&]a72=0/.test(String(location.search))) : KIT.act72;
+const W72 = { err: null, e: null };
+const on72 = S => !!(S && S.way63 && !S.jar && KIT.act72 !== false && on68(S));
+const cl72 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* fast out, hard stop (an exact move) */ const sn72 = u => (u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3));
+/* the click at an arrival d ms ago: a short damped overshoot */ const ck72 = (d, a) => (d > 0 && d < 450 ? a * Math.exp(-d / 65) * Math.sin(d / 26) : 0);
+/* one step of the march at u (0 to 1; it lands at u = 1): kind tip (stages 2 to 4), dice (1), shove (5) */
+function stp72(u, c, st) { const r = { roll: 0, yaw: 0, pitch: 0, hop: 0, mv: 0 }, sg = c.sg || 1;
+  if (st <= 1) { /* a thrown dice: crouch, a hop with a quarter turn, down */ const v = cl72((u - 0.12) / 0.88); r.hop = 4 * v * (1 - v); r.spin = -c.dx * (PI / 2) * sm52(v); r.mv = sm52(v); return r; }
+  if (st >= 5) { /* a stately shove: lean in, push straight on, settle back */ r.pitch = -0.07 * pl52(u, 0.12, 0.7, 0.12); r.mv = sn72(cl72((u - 0.25) / 0.6)); return r; }
+  const R = c.climb ? 0.2 : 0.3, Y = 0.3;
+  if (u < 0.12) return r;
+  if (u < 0.38) r.roll = sg * R * sn72((u - 0.12) / 0.26);
+  else if (u < 0.78) { const v = (u - 0.38) / 0.4; r.roll = sg * R; r.yaw = sg * Y * Math.sin(PI * v); r.mv = sm52(v); }
+  else { const w = (u - 0.78) / 0.22; r.roll = sg * R * (1 - w * w); r.mv = 1; }
+  if (c.climb) { /* the book's edge: rock back, then tip up and over it */ r.pitch = 0.16 * pl52(u, 0.04, 0.3, 0.1) - 0.42 * pl52(u, 0.4, 0.9, 0.14); r.hop = 0.35 * pl52(u, 0.42, 0.82, 0.16); }
+  return r; }
+/* where along a list of steps ({t0, t1, e0, e1, sg, climb}) at t */
+function walk72(t, C, st) { for (let i = 0; i < C.length; i++) { const c = C[i]; if (t < c.t1 || i === C.length - 1) { const u = cl72((t - c.t0) / Math.max(1, c.t1 - c.t0)), r = stp72(u, c, st); r.i = i; r.u = u; r.e = c.e0 + (c.e1 - c.e0) * r.mv; r.c = c; r.spin0 = st <= 1 ? -c.dx * (PI / 2) * c.n0 : 0; return r; } } return null; }
+/* the act's numbers at t ms since the tap (Z is S72's plan: absolute times) */
+function ph72(t, Z) { const e = { ph: 'wait', w: 'out', e: 0, roll: 0, yaw: 0, pitch: 0, hop: 0, spin: 0, tuck: 0, chin: 0, turn: 0, wide: 0, brow: 0, lid: 0, lookx: 0, looky: -0.1, pr: [], nod: 0, sh: -1, land: -1e9, lk: 0, lsg: 1, done: false, home: false, t };
+  const P = Z.P || [], st = Z.st; P.forEach(() => e.pr.push({ ext: 0, tap: 0 }));
+  for (let i = Z.lands.length - 1; i >= 0; i--) if (t >= Z.lands[i][0]) { e.land = Z.lands[i][0]; e.lk = Z.lands[i][1]; e.lsg = Z.lands[i][2] || 1; break; }
+  const clk = (a) => ck72(t - e.land, a * e.lk);
+  if (t < Z.tW) return e;
+  if (t < Z.tAt) { const u = cl72((t - Z.tW) / Math.max(1, Z.tAt - Z.tW)); e.ph = 'att'; e.tuck = sm52(u / 0.6); e.hop = 0.25 * pl52(u, 0.05, 0.32, 0.08); e.chin = -0.1 * sn72(u / 0.3); e.wide = pl52(u, 0.02, 0.7, 0.08); e.brow = 0.3 * pl52(u, 0.02, 0.7, 0.1); e.lookx = 0.8 * (Z.dx0 || 0) * sm52((u - 0.6) / 0.2); e.pitch = clk(1); return e; }
+  if (t < Z.tA) { const r = walk72(t, Z.out, st); e.ph = 'out'; e.tuck = 1; e.e = r.e; e.roll = r.roll + clk(0.05) * e.lsg; e.yaw = r.yaw; e.pitch = r.pitch + clk(0.4) * 0.1; e.hop = r.hop; e.spin = (r.spin0 || 0) + (r.spin || 0); e.cy = r; e.lookx = 0.7 * (r.c.dx || 0); e.looky = -0.1; e.lid = 0.15; return e; }
+  if (t < Z.tD) { const a = t - Z.tA; e.ph = 'work'; e.w = 'perch'; e.e = 1; e.tuck = 1; e.spin = Z.spinA || 0;
+    /* set down, then up goes the chin: it looks the molecule over down its nose */ e.chin = -0.12 * sm52((a - 120) / 260); e.looky = -0.45 * sm52((a - 120) / 260); e.lid = 0.45 * sm52((a - 120) / 260); e.lookx = -0.6 * sm52((a - 200) / 300) * (1 - sm52((a - 900) / 200));
+    e.pitch = clk(0.6) * 0.12; e.roll = clk(0.05) * e.lsg;
+    let lk = null; P.forEach((p, i) => { const s = e.pr[i]; if (t < p.r0) return; const tp = d => (d < -110 || d > 200 ? 0 : d < 0 ? -0.35 * sm52((d + 110) / 110) : d < 45 ? -0.35 + 1.35 * sm52(d / 45) : 1 - sm52((d - 45) / 155));
+      s.ext = sm52((t - p.r0) / Math.max(1, p.t1 - 140 - p.r0)) * (1 - sm52((t - p.h) / Math.max(1, p.b - p.h))); s.tap = tp(t - p.t1) + tp(t - p.t); if (t >= p.r0 - 250 && t < p.b) lk = i; if (t >= p.t1 - 120 && t < p.t + 300) e.brow = -0.4; });
+    if (lk != null && Z.tg[lk]) { e.lookx = Math.max(-1.2, Math.min(1.2, (Z.tg[lk].x - Z.pl.x) / 3)); e.looky = -0.5; e.chin = -0.06; }
+    if (t >= Z.tHit) { e.sh = t - Z.tHit; e.nod = 0.17 * sm52(e.sh / 90) * (1 - sm52((e.sh - 160) / 120)) + ck72(e.sh - 290, 0.05); e.lid = 0.62; e.brow = 0.25 * pl52(e.sh, 300, 2000, 200); e.lookx = 0; e.looky = -0.1; e.chin = -0.13 * sm52((e.sh - 400) / 300); }
+    return e; }
+  if (t < Z.tEnd) { e.w = 'back'; e.tuck = 1; e.lid = 0.3; e.spin = Z.spinA || 0; const q = (t0, d) => sn72((t - t0) / d) + ck72(t - t0 - d, 0.05), Tq = Z.Tq;
+    e.turn = (PI / 2) * (q(Z.tD, Tq) + q(Z.tD + Tq + Z.Tp, Tq));
+    if (t < Z.tTn) { e.ph = 'turn'; e.e = 0; e.roll = clk(0.05) * e.lsg; return e; }
+    if (t < Z.tSl) { const r = walk72(t, Z.back, st); e.ph = 'back'; e.e = r.e; e.roll = r.roll + clk(0.05) * e.lsg; e.yaw = r.yaw; e.pitch = r.pitch; e.hop = r.hop; e.spin = (Z.spinA || 0) + (r.spin0 || 0) + (r.spin || 0); e.cy = r; return e; }
+    e.ph = 'settle'; e.w = 'home'; e.e = 1; e.spin = Z.spinB || 0; e.turn += (PI / 2) * (q(Z.tSl + 80, Tq) + q(Z.tSl + 80 + Tq + Z.Tp, Tq)); const s0 = Z.tSl + 80 + 2 * Tq + Z.Tp;
+    /* it straightens itself: a small exact tip and back, a last click */ e.pitch = -0.08 * pl52(t, s0 + 60, s0 + 260, 50) + clk(0.5) * 0.1; e.roll = clk(0.05) * e.lsg; e.tuck = 1 - sm52((t - s0 - 200) / 300); e.lid = 0.3 * (1 - sm52((t - s0) / 300)); return e; }
+  e.ph = 'done'; e.w = 'home'; e.done = true; e.home = true; return e; }
+KIT.ph72 = ph72;
+/* the act's face numbers go over the idle's (W68's ev68, the clock of its idle: no tips, no drumming, no chin while it acts) */
+ev68 = (f0 => function (S, tt) { const E = f0(S, tt), X = S && S.x72; if (!X) return E; const e = X.e;
+  E.tip = 0; E.chin = 0; E.sh = []; E.lift = []; E.hat = 0; E.lookx = e.lookx; E.looky = e.looky; E.brow = e.brow; E.wide = e.wide; if (e.ph !== 'wait') E.blink = 0; E.kick = E.kick.filter(k => /puff/.test(k[1])); return E; })(ev68);
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X = S && S.x72; if (!X) return; const e = X.e; q.turn = e.turn; if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); })(C26.rest);
+/* the back of its cube: a stepped hopper square drawn on the blank face it turns to the eye going home (hidden by the cube whenever it faces us) */
+function back72(S, K) { const T = S.T, G = S.G, g = K.g, jh = G.bj[2], hb = S.bones[jh], hp = G.J[jh].p, c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  x.strokeStyle = 'rgba(70,82,110,0.75)'; x.lineCap = 'square'; [[54, 4], [38, 3], [22, 2.5]].forEach(([r, w], i) => { x.lineWidth = w; x.strokeRect(64 - r + i * 3, 64 - r - i * 3, 2 * r, 2 * r); }); x.strokeStyle = 'rgba(70,82,110,0.35)'; x.lineWidth = 2; [[10, 10], [118, 10], [10, 118], [118, 118]].forEach(([a, b], i) => { x.beginPath(); x.moveTo(a, b); x.lineTo(64 - 54 + (i % 2) * 108 + (i % 2 ? -0 : 0), 64 - 54 + (i > 1 ? 108 : 0)); x.stroke(); });
+  const tx = new T.CanvasTexture(c), m = new T.Mesh(new T.PlaneGeometry(2 * g.h[0] * 0.92, 2 * g.h[1] * 0.92), new T.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false }));
+  const a0 = new T.Vector3().fromArray(g.ax[0]).negate(), a1 = new T.Vector3().fromArray(g.ax[1]), a2 = new T.Vector3().fromArray(g.ax[2]).negate(); m.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(a0, a1, a2));
+  const bc = loc63(g, [0, 0, -1]); m.position.set(bc[0] - hp[0] - g.ax[2][0] * 0.012, bc[1] - hp[1] - g.ax[2][1] * 0.012, bc[2] - hp[2] - g.ax[2][2] * 0.012); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 3; hb.add(m); return m; }
+/* after the play (the idle's face, buds and light): the whole body turns rigidly about the corner it stands on and is set back on the wood; the
+   shards come up to its sides and turn to what it taps; then where its shard points are, for the page */
+function post72(S, X) { const K = S.k68, B = S.bones, V = S.v68, T = S.T, e = X.e, g = K.g, H = g.h[0], st = S.st, Z = X.Z, R = S.root;
+  if (!S.bk72) S.bk72 = back72(S, K);
+  const W = S.w72 || (S.w72 = { q: new T.Quaternion(), q1: new T.Quaternion(), q2: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3(), c: new T.Vector3(), d: new T.Vector3(), p: new T.Vector3(), m: new T.Matrix4(), y: new T.Vector3(0, 1, 0), x: new T.Vector3(1, 0, 0), z: new T.Vector3(0, 0, 1) });
+  /* stage 1 leans its corner over to what it taps */ let roll = e.roll, pitch = e.pitch + e.chin + e.nod; if (st <= 1 && e.ph === 'work') e.pr.forEach((s, i) => { const q = Z.tg[i]; if (!q) return; const sd = q.x >= Z.pl.x ? -1 : 1; roll += sd * (0.12 * s.ext + 0.16 * Math.max(0, s.tap)); });
+  /* the body's turn: yaw about up, roll about the picture's depth, pitch about across; then the dice's quarter turns */
+  W.q.setFromAxisAngle(W.y, e.yaw); W.q1.setFromAxisAngle(W.z, roll + (e.spin || 0)); W.q.multiply(W.q1); W.q2.setFromAxisAngle(W.x, pitch); W.q.multiply(W.q2);
+  /* the corner it comes to stand on, and how far the body must be set down (or up) so that corner is on the wood (lifted by any hop) */
+  let lo = 1e9, ci = 0; K.C.forEach((c, i) => { W.a.copy(c).sub(K.gc).applyQuaternion(W.q).add(K.gc); if (W.a.y < lo) { lo = W.a.y; ci = i; } });
+  const air = Math.max(0, e.hop) * H * (st <= 1 ? 1.1 : 0.6), hold = 1 - cl72(air / (0.15 * H)); W.a.copy(K.C[ci]).sub(K.gc).applyQuaternion(W.q).add(K.gc); const sx = (K.C[ci].x - W.a.x) * hold, sz = (K.C[ci].z - W.a.z) * hold, dy = K.lo - lo + air;
+  for (let j = 1; j < B.length; j++) { const b = B[j]; b.position.sub(K.gc).applyQuaternion(W.q).add(K.gc); b.position.x += sx; b.position.y += dy; b.position.z += sz; b.quaternion.premultiply(W.q); }
+  /* where the contact shade goes: under the corner it stands on, lighter when it is off the wood */ const cx = W.a.x + sx, cz = W.a.z + sz; if (S.sh63) { if (!S.sh72) S.sh72 = S.sh63.map(m => [m.position.x, m.position.z, m.material.opacity]); const s1 = S.sh63[1], s0 = S.sh63[0], o = 1 - cl72(air / (0.6 * H));
+    s1.position.x = cx; s1.position.z = cz + 0.05; s1.material.opacity = S.sh72[1][2] * o; s0.position.x = S.sh72[0][0] + (cx - K.loP.x) * 0.6; s0.position.z = S.sh72[0][1] + (cz - K.loP.z) * 0.6; s0.material.opacity = S.sh72[0][2] * (0.5 + 0.5 * o); }
+  /* the shards: up off the wood to its sides as it goes (they turn with the body), then each turns to what it taps */
+  R.updateWorldMatrix(true, false); const inv = W.m.copy(R.matrixWorld).invert(), tips = [];
+  K.shards.forEach(s => { const jn = s.jn, r0 = B[jn[0]].position, tp = B[jn[jn.length - 1]].position;
+    if (e.tuck > 0) { W.a.copy(tp).sub(r0).normalize(); W.b.set(s.side * 0.78, 0.42, 0.46).normalize().applyQuaternion(W.q); if (W.a.dot(W.b) < 0.99999) { W.q1.setFromUnitVectors(W.a, W.b); W.q2.identity().slerp(W.q1, e.tuck); W.c.copy(r0); turn68(B, jn, W.c, W.q2); } } });
+  const used = new Set(); (Z.P || []).forEach((p, i) => { const s = e.pr[i], q = Z.tg[i]; if (!s || !q || (s.ext <= 0.001 && s.tap === 0)) return;
+    W.p.set(q.x, q.y, q.z).applyMatrix4(inv); const sd = q.x >= Z.pl.x ? 1 : -1, list = st >= 5 ? K.shards.slice() : [K.shards.find(x => x.side === sd && !used.has(x)) || K.shards.find(x => !used.has(x))].filter(Boolean);
+    list.forEach(sh => { used.add(sh); const jn = sh.jn, r0 = B[jn[0]].position, tp = B[jn[jn.length - 1]].position; W.a.copy(tp).sub(r0).normalize(); W.b.copy(W.p).sub(r0); const dist = W.b.length(); W.b.normalize();
+      if (W.a.dot(W.b) < 0.99999) { W.q1.setFromUnitVectors(W.a, W.b); W.q2.identity().slerp(W.q1, s.ext); W.c.copy(r0); turn68(B, jn, W.c, W.q2); }
+      /* it reaches out with care, and taps: the whole shard slides along itself (out, then the two taps) */ W.a.copy(B[jn[jn.length - 1]].position).sub(r0).normalize(); const L = sh.len, out = Math.max(0, Math.min(0.45 * L, dist - L)) * s.ext * 0.85 + 0.14 * L * s.tap * s.ext;
+      jn.forEach(j => { B[j].position.addScaledVector(W.a, out); }); });
+    const sh0 = list[0]; if (sh0) { W.c.copy(B[sh0.jn[sh0.jn.length - 1]].position).applyMatrix4(R.matrixWorld); tips[i] = [W.c.x, W.c.y, W.c.z]; }
+    else { /* stage 1: the corner over toward it */ let best = -1e9, bc = null; K.C.forEach(c => { W.a.copy(c).sub(K.gc).applyQuaternion(W.q).add(K.gc); W.a.x += sx; W.a.y += dy; W.a.z += sz; W.b.copy(W.a).applyMatrix4(R.matrixWorld); const v = (W.b.x - Z.pl.x) * sd * 2 + W.b.y; if (v > best) { best = v; bc = [W.b.x, W.b.y, W.b.z]; } }); tips[i] = bc; } });
+  W.c.copy(K.gc); W.c.y += dy; W.c.applyMatrix4(R.matrixWorld); const ct = [W.c.x, W.c.y, W.c.z]; W.c.set(cx, 0, cz).applyMatrix4(R.matrixWorld);
+  S.h72 = { tips, c: ct, foot: [W.c.x, W.c.y, W.c.z], air, H };
+  /* the light: its bold glint only while its face is to the eye; the loose grains of the idle are hidden (the page throws its own) */ const fr = Math.cos(e.turn || 0) > 0.3; if (S.gl63 && !fr) S.gl63.visible = false; if (S.gl63 && fr) S.gl63.scale.multiplyScalar(0.55); if (S.tw63 && !fr) S.tw63.visible = false; (K.fx || []).forEach(f => { f.m.visible = false; }); }
+/* put the shade pads back where the idle keeps them */ const unpost72 = S => { if (S.sh72 && S.sh63) { S.sh63.forEach((m, i) => { m.position.x = S.sh72[i][0]; m.position.z = S.sh72[i][1]; m.material.opacity = S.sh72[i][2]; }); S.sh72 = null; } };
+function act72(f0, grp, S, t, o) { const Z = o.bites.s72, e = ph72(t, Z); S.x72 = { t, e, Z }; W72.e = e;
+  f0(grp, 'rest', 0, {}); if (S.k68) post72(S, S.x72); return { e: e.w === 'out' ? e.e : e.w === 'back' ? 1 - e.e : e.w === 'perch' ? 1 : 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip !== 'act' || !on72(S) || !(o && o.bites && o.bites.s72)) { if (S && S.x72) { S.x72 = null; unpost72(S); } return f0(grp, clip, t, o); }
+  try { return act72(f0, grp, S, t, o); } catch (err) { W72.err = String(err && err.stack); S.x72 = null; unpost72(S); return f0(grp, clip, t, o); } })(play26);
+KIT.spirit26.play = play26;
+KIT.W72 = W72; KIT.tex72 = tex63;
+// ==== W72 END
 // ==== W64 BEGIN
 // (builder 64) SEEDLING AS A SPIRIT, five stages, stills only (AA.rxKit.seed64 = 1, or ?g64=1 on the page; OFF by default: the game shows the old Seedling).
 // Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53) and Slime (61) were: each stage is a set of numbers like a stage of S25, put in
