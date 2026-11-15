@@ -4002,6 +4002,185 @@ KIT.slime61Fig = slime61Fig; KIT.SLIME61 = W61;
 /* behind the switch: Slime's bench figure is the spirit at its stage (the jar keeps the old Slime) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homslime' && KIT.slime61 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = slime61Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W61.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W61 END
+// ==== W62 BEGIN
+// (builder 62) SLIME ALIVE AT REST: its own idle, not Water's, Acid's or Dry ice's (AA.rxKit.idle62; false or ?i62=0 gives Water's rest back on it).
+// Slime never stops and never hurries. The whole heap slowly sags, spreads and plumps back up past its height; as it settles a wobble runs through
+// it and dies away, the top lagging the base like jelly (every body joint is moved by the same clock read later the higher it is). The slick creeps
+// out and draws back. A lifted arm droops under its own weight and the strings go slack and belly out; it hauls the arm back up past where it was,
+// the strings stretch thin, the thinnest snaps at its top and whips back down into the body, and a new one pulls up out of the body to the arm.
+// A bead gathers under a hand, stretches on its thread and drops (a bead of the scene from then on) into a glossy spot on the bench that is drawn
+// back into the slick. Bubbles rise inside it (pen rings riding the skin) and pop with a little dimple. Heavy lids droop, shut and jerk open
+// (the jerk sends a wobble through it); a slow yawn now and then.
+//  1 the dollop jiggles at every little thing (small knocks every two seconds or so) and nods off; the thread on its top swings after it
+//  2 puzzled: lifts its stub of an arm, studies it (eyes on it, a turn of the hand), lets it flop with a bounce that shakes the whole lump
+//  3 the slow sag-and-haul of the arched arm (strings slack, then thin, one snaps, a new one pulls out)
+//  4 sways tall like pulled taffy, slowly sinks and pulls itself up again; both arms and their curtains of strings swing out of step
+//  5 vast and nearly asleep: a deep slow swell, the two raised arms lazily lift and fall out of step, blisters swell, bubbles rise all over it
+// Everything is the one skin on its own joints except the falling bead and the popped bubbles. Strings are rebuilt each frame between the arm
+// and the place they land; a snapped one is drawn to nothing at both its free end and the joint it leaves (both hidden in arm or body), so
+// no sliver of skin is left across the gap.
+KIT.idle62 = KIT.idle62 == null ? !(typeof location !== 'undefined' && /[?&]i62=0/.test(String(location.search))) : KIT.idle62;
+const W62 = { err: null, n: 0, ms: 0, jar: 0.55 };
+/* the new Slime is ON by default from here (bench and jar both work at all five stages); ?s61=0 on the page gives the old Slime */
+if (KIT.slime61 == null && !(typeof location !== 'undefined' && /[?&]s61=0/.test(String(location.search)))) KIT.slime61 = 1;
+/* per stage: sag period (s) and depth, wobble period and size (share of H at the top), top lag (s), nod and yawn periods, arm cycle, bubble period, lanes [x, y0/H, y1/H, r] */
+const P62 = [null,
+  { sg: 5.2, sa: 0.13, pw: 0.42, wa: 0.11, lag: 0.16, nod: 9.5, yw: 17, cyc: 6.5, bp: 5.5, lanes: [[0.33, 0.16, 0.5, 0.075]] },
+  { sg: 7.0, sa: 0.15, pw: 0.62, wa: 0.08, lag: 0.28, nod: 11.5, yw: 19, cyc: 8.6, bp: 5.5, lanes: [[-0.55, 0.12, 0.5, 0.1]] },
+  { sg: 8.0, sa: 0.17, pw: 0.75, wa: 0.08, lag: 0.34, nod: 12.5, yw: 23, cyc: 9.4, bp: 6.0, lanes: [[-0.85, 0.1, 0.42, 0.13], [0.62, 0.1, 0.44, 0.11]] },
+  { sg: 9.5, sa: 0.2, pw: 0.95, wa: 0.07, lag: 0.45, nod: 14, yw: 13, cyc: 10.5, bp: 6.5, lanes: [[-0.75, 0.08, 0.5, 0.14], [0.65, 0.08, 0.42, 0.12]] },
+  { sg: 11.5, sa: 0.07, pw: 1.25, wa: 0.045, lag: 0.6, nod: 9, yw: 21, cyc: 12.5, bp: 5.0, lanes: [[-1.45, 0.07, 0.45, 0.18], [-0.6, 0.06, 0.4, 0.13], [0.45, 0.07, 0.42, 0.12], [1.35, 0.08, 0.45, 0.16], [0.05, 0.56, 0.74, 0.12]] }];
+const on62 = S => !!(S && S.way61 && KIT.idle62 !== false);
+const clk62 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W62.jar : 1) + S.st * 3.7;
+/* time since the last of a run of events (period per, first at off), and which one it was */
+const since62 = (tt, per, off) => { const x = (tt - off) / per, i = Math.floor(x); return [(x - i) * per, i]; };
+/* the sag: down slowly, plump back up past its height, settle */
+function sag62(P, tt) { const u = fr52(tt / P.sg); if (u < 0.6) return sm52(u / 0.6); if (u < 0.78) return 1 - 1.22 * sm52((u - 0.6) / 0.18); const d = (u - 0.78) * P.sg; return -0.22 * Math.exp(-d / (1.4 * P.pw)) * Math.cos(2 * PI * d / (1.6 * P.pw)); }
+/* the knocks that send a wobble through it: settling, the jerk awake, stage 1's little things, stage 2's flop, a snap */
+function ev62(S, tt) { const P = P62[S.st], E = [[since62(tt, P.sg, 0.78 * P.sg), 0.8], [since62(tt, P.nod, 0.68 * P.nod), S.st === 1 ? 1.3 : 0.7]];
+  if (S.st === 1) { const a = since62(tt, 2.3, 0.4); E.push([a, 0.35 + 0.5 * h52(a[1] * 3.1)]); }
+  if (S.st === 2) E.push([since62(tt, P.cyc, 0.62 * P.cyc + 0.3), 1.1]);
+  if (S.st >= 3) E.push([since62(tt, P.cyc, 0.72 * P.cyc), 0.5]);
+  return E; }
+function wob62(S, tt) { const P = P62[S.st], ta = 1.5 * P.pw; let x = 0, y = 0; ev62(S, tt).forEach(([[d, i], a]) => { if (d > 5 * ta) return; const e = a * Math.exp(-d / ta), sg = i % 2 ? 1 : -1; x += sg * e * Math.sin(2 * PI * d / P.pw); y += 0.5 * e * Math.sin(2 * PI * d / P.pw + 1.2); }); return { x, y }; }
+/* the nod: lids droop, shut, jerk open (0 to 1 of P.nod) */
+const nod62 = (P, tt) => fr52(tt / P.nod);
+/* the clip's numbers: the face and the slick (the body itself is moved in pose62) */
+function rest62(S, t, o, q) { const st = S.st, P = P62[st], k = S.jar ? 0.6 : 1, tt = clk62(S), f = (S.F && S.F.f) || {}, lid0 = f.l62 != null ? f.l62 : f.lid || 0.5, TAU = 2 * PI;
+  q.sq = 0; q.lean = 0; q.bow = 0; q.hair = 0; q.armR = q.armL = 0;
+  const s = sag62(P, tt - 0.6); q.px = 1 + k * (0.07 * s + 0.035 * Math.sin(TAU * tt / 7.7)); q.pz = 1 + k * (0.05 * s + 0.03 * Math.sin(TAU * tt / 7.7 + 1));
+  /* lids: droop, shut, jerk open */ const u = nod62(P, tt), dr = sm52(u / 0.55), sh = pl52(u, 0.55, 0.68, 0.02), jk = u > 0.68 ? Math.exp(-(u - 0.68) * P.nod / 0.5) : 0;
+  if (f.l62 == null) f.l62 = f.lid || 0.5; S.lid62 = f.l62; f.lid = S.lid62 * (u > 0.68 ? sm52((u - 0.69) * P.nod / 1.6) : 1); q.lidx = u < 0.68 ? lid0 + (0.97 - lid0) * dr : 0; q.blink = Math.max(sh, pl52(fr52(tt / 4.3 + 0.2), 0, 0.03, 0.012) * (u > 0.75 || u < 0.3 ? 1 : 0)); q.wide = 0.7 * jk; q.brow = 0.6 * jk;
+  q.nod = k * (st === 1 ? 0.16 : 0.06) * dr * (1 - sm52((u - 0.67) / 0.03)) - 0.05 * k * jk; q.tilt = k * 0.04 * Math.sin(TAU * tt / 6.1);
+  /* a slow yawn */ const y = fr52(tt / P.yw + 0.45), yo = pl52(y, 0.04, 0.13, 0.025); if (yo > 0.01) { q.open = 0.5 + 0.6 * yo; q.lidx = Math.max(q.lidx, lid0 + (1 - lid0) * 0.8 * yo); q.smile = 1 + 0.5 * yo; q.tilt -= k * 0.05 * yo; q.brow -= 0.2 * yo; } S.yo62 = yo;
+  q.lookx = 0.25 * Math.sin(TAU * tt / 9.3); q.looky = -0.15;
+  if (st === 2) { const a = fr52(tt / P.cyc), w = pl52(a, 0.06, 0.62, 0.05); q.lookx = q.lookx * (1 - w) + 1.0 * w; q.looky = q.looky * (1 - w) + 0.55 * w; q.brow += 0.4 * w; q.tilt += 0.1 * w * k; q.lidx *= 1 - w; q.wide += 0.25 * w; }
+  if (st === 3) { const a = fr52(tt / P.cyc), w = pl52(a, 0.58, 0.8, 0.04); q.lookx = q.lookx * (1 - w) + 0.9 * w; q.looky += 0.5 * w; q.brow += 0.3 * w; q.lidx *= 1 - 0.4 * w; }
+  if (o.land != null) { const ms = o.land; if (ms > 0 && ms < 3000) { const r = RK.ring(ms, 420, 520); q.sq -= 0.16 * r; q.px += 0.1 * r; q.pz += 0.1 * r; } } }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on62(S) && S.k62) return rest62(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* the parts it moves, found once: body joints with their heights, arms and the strings and drips that hang from them, stage 1's thread, blisters, bubble lanes */
+function init62(S) { const G = S.G, J = G.J, T = S.T, V3 = T.Vector3, H = G.H, st = S.st, K = { body: [], h: J.map(q => Math.max(0, Math.min(1, q.p[1] / H))), d: J.map(() => new V3()), arms: [], str: [], blis: [], thread: null, lanes: [], beads: [], spots: [] };
+  J.forEach((q, j) => { if (j && q.role !== 'limb') K.body.push(j); });
+  const same = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 1e-6, lims = G.chains.filter(c => c.kind === 'limb');
+  lims.forEach(c => { if (c.l.arm) K.arms.push(c); else if (c.l.blis) K.blis.push(c); });
+  lims.forEach(c => { if (!c.l.str) return; const a = K.arms.find(x => x.l.k === c.l.k && x.l.th === c.l.th); if (!a) { K.thread = c; return; } let m = 0; while (m < c.l.path.length && m < a.l.path.length && same(c.l.path[m], a.l.path[m])) m++;
+    const jn = c.jn, top = m, n = jn.length, A0 = J[jn[top]].p, E0 = J[jn[n - 1]].p, L0 = Math.hypot(E0[0] - A0[0], E0[1] - A0[1], E0[2] - A0[2]) || 1, t = [], off = [], dir = [];
+    for (let i = top; i < n; i++) { const p = J[jn[i]].p, tt = Math.max(0, Math.min(1, ((p[0] - A0[0]) * (E0[0] - A0[0]) + (p[1] - A0[1]) * (E0[1] - A0[1]) + (p[2] - A0[2]) * (E0[2] - A0[2])) / (L0 * L0))); t.push(tt); off.push([p[0] - A0[0] - (E0[0] - A0[0]) * tt, p[1] - A0[1] - (E0[1] - A0[1]) * tt, p[2] - A0[2] - (E0[2] - A0[2]) * tt]);
+      const pa = J[jn[Math.max(top, i - 1)]].p, pb = J[jn[Math.min(n - 1, i + 1)]].p; dir.push(new V3(pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]).normalize()); }
+    K.str.push({ c, a, top, t, off, dir, L0, drip: n - top - 1 === 3, side: a.side || 1, i: K.str.length, k: 0 }); });
+  K.str.filter(s => !s.drip).forEach((s, i) => { s.g = i; });
+  /* bubble lanes: rest points on the front of the skin, low to high */
+  const o = G.o, f = o.face || { c: [0, H * 0.5, 0], d: [0, 0, 1] }, Dv = new V3(f.d[0], 0, f.d[2]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize();
+  (P62[st].lanes || []).forEach((ln, li) => { const pts = []; for (let i = 0; i < 9; i++) { const y = H * (ln[1] + (ln[2] - ln[1]) * i / 8), p = new V3(f.c[0] + Rv.x * ln[0], y, f.c[2] + Rv.z * ln[0]).addScaledVector(Dv, H * 0.7); let hit = null;
+      for (let s = 0; s < 260; s++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { hit = p.clone(); break; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } if (hit) { let bj = 0, bd = 1e9; K.body.forEach(j => { const q = J[j].p, dd = Math.hypot(q[0] - hit.x, q[1] - hit.y, q[2] - hit.z); if (dd < bd) { bd = dd; bj = j; } }); pts.push({ p: hit, j: bj }); } }
+    if (pts.length >= 3) K.lanes.push({ pts, r: ln[3], i: li, Dv, Rv }); });
+  /* the falling beads and the glossy spots they leave (scene pieces on the figure's own floor) */
+  if (!S.jar) { const lin = h => new T.Color(h).convertSRGBToLinear(), bm = new T.MeshToonMaterial({ color: lin(0xb27ccf), gradientMap: ramp24 }), im = new T.MeshBasicMaterial({ color: lin(COL.ink), side: T.BackSide }), g = new T.SphereGeometry(1, 12, 9), cg = W62.cg || (W62.cg = new T.CircleGeometry(1, 28).rotateX(-PI / 2));
+    K.str.filter(s => s.drip).forEach(s => { const b = new T.Group(), a = new T.Mesh(g, bm), e = new T.Mesh(g, im); e.scale.setScalar(1 + G.ink * 0.8 / 0.14); a.userData.plain = e.userData.plain = true; b.add(a); b.add(e); b.visible = false; b.userData.nobox = true; S.root.add(b); K.beads.push(b);
+      const sp = new T.Group(), d1 = new T.Mesh(cg, new T.MeshBasicMaterial({ color: lin(0x8e5aad), transparent: true, opacity: 0.85, depthWrite: false })), d2 = new T.Mesh(cg, new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65, depthWrite: false })), d0 = new T.Mesh(cg, new T.MeshBasicMaterial({ color: lin(COL.ink), transparent: true, opacity: 0.55, depthWrite: false }));
+      d0.scale.setScalar(1.12); d0.position.y = 0.004; d1.position.y = 0.008; d2.scale.set(0.32, 1, 0.2); d2.position.set(-0.3, 0.012, -0.25); [d0, d1, d2].forEach(m => { m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 3; sp.add(m); }); sp.visible = false; sp.userData.nobox = true; S.root.add(sp); K.spots.push(sp); }); }
+  S.v62 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), q: new T.Quaternion(), z: new V3(0, 0, 1), y: new V3(0, 1, 0) }; if (!S.v52) S.v52 = { a: new V3(), b: new V3(), c: new V3(), q: new T.Quaternion(), q2: new T.Quaternion(), z: new V3(0, 0, 1), y: new V3(0, 1, 0) };
+  S.k62 = K; return K; }
+/* the arms, per stage: an angle about the shoulder (raise > 0), a droop of the hand end, a lift; out of step for two arms */
+function arm62(S, K, tt, k) { const st = S.st, P = P62[st], B = S.bones, V = S.v62, TAU = 2 * PI, out = { haul: 0 };
+  K.arms.forEach((c, ai) => { const jn = c.jn, n = jn.length, sd = c.side || 1, sh = B[jn[1]].position, flat = !!c.l.flat; let ang = 0, dro = 0, lift = 0, tw = 0;
+    if (flat) { ang = 0.05 * Math.sin(TAU * tt / 9.7); }
+    else if (st === 2) { const u = fr52(tt / P.cyc), d = (u - 0.62) * P.cyc; if (u < 0.62) { ang = 0.6 * sm52((u - 0.04) / 0.22); tw = 0.22 * Math.sin(TAU * tt * 0.7) * pl52(u, 0.28, 0.6, 0.04); } else ang = d < 0.3 ? 0.6 - 0.9 * Math.pow(d / 0.3, 2) : -0.3 * Math.exp(-(d - 0.3) / 0.45) * Math.cos(TAU * (d - 0.3) / 0.55); }
+    else if (st === 3) { const u = fr52(tt / P.cyc); if (u < 0.58) dro = sm52(u / 0.55); else if (u < 0.72) dro = 1 - 1.5 * sm52((u - 0.58) / 0.14); else dro = -0.5 * (1 - sm52((u - 0.74) / 0.24)); out.haul = Math.max(0, -dro); ang = -0.24 * dro; lift = 0.1 * Math.max(0, -dro); }
+    else if (st === 4) { const ph = ai * 2.1, w = Math.sin(TAU * tt / 5.3 + ph); ang = 0.16 * w; dro = 0.35 * (0.5 - 0.5 * Math.sin(TAU * tt / 7.1 + ph)); lift = 0.04 * w; out.haul = Math.max(out.haul, 0.6 * Math.max(0, w)); }
+    else if (st === 5) { const per = ai % 2 ? 10.7 : 8.3, w = 0.5 - 0.5 * Math.cos(TAU * tt / per + ai * 1.7); ang = 0.3 * w - 0.08; dro = 0.25 * (1 - w); out.haul = Math.max(out.haul, 0.7 * w); }
+    ang *= k; dro *= k; lift *= k;
+    if (ang) rot52(S, jn, 1, sh.x, sh.y, sh.z, V.z, sd * ang, kk => sm52(kk / 2.2));
+    if (dro && n > 4) { const m0 = Math.floor(n * 0.5), pv = B[jn[m0]].position; rot52(S, jn, m0 + 1, pv.x, pv.y, pv.z, V.z, -sd * 0.55 * dro, kk => Math.min(1, (kk - m0) / 2)); }
+    if (lift) push52(S, jn, 3, 0, lift * S.G.H, 0);
+    if (tw) { const pv = B[jn[n - 2]].position; rot52(S, jn, n - 1, pv.x, pv.y, pv.z, V.y, tw * 2); rot52(S, jn, n - 1, pv.x, pv.y, pv.z, V.z, sd * tw); }
+    /* the arm thins as it stretches on the haul */ if (out.haul) for (let i = 2; i < n; i++) { const s = 1 - 0.12 * out.haul * i / n; B[jn[i]].scale.x *= s; B[jn[i]].scale.z *= s; } });
+  return out; }
+/* a drip's cycle: at stages 2 and 3 it drops while the arm is held up */
+const drip62 = (S, X) => { const P = P62[S.st]; if (S.st === 2 || S.st === 3) return [P.cyc, (S.st === 3 ? 0.23 : -0.27) * P.cyc]; const per = 5.2 + 1.3 * h52(X.i * 5.7 + S.st); return [per, per * h52(X.i * 2.3)]; };
+/* a string (or a drip) between its arm and where it lands; snapped, regrowing; joints turned to lie along it */
+function str62(S, K, X, tt, k, haul) { const B = S.bones, J = S.G.J, V = S.v62, H = S.G.H, jn = X.c.jn, n = jn.length, aj = X.a.jn, st = S.st, P = P62[st], TAU = 2 * PI;
+  for (let i = 0; i <= X.top && i < aj.length; i++) { const b = B[jn[i]], a = B[aj[i]]; b.position.copy(a.position); b.quaternion.copy(a.quaternion); b.scale.copy(a.scale); }
+  const A = V.a.copy(B[jn[X.top]].position), E = V.b.copy(B[jn[n - 1]].position); let top = 1, sc = 1, cap = 1, bow = 0, swing = 0, thin = 1;
+  if (X.drip) { const [per, off] = drip62(S, X), [d, ci] = since62(tt, per, off), u = d / per, L = X.L0;
+    let Lf, bs; if (u < 0.55) { Lf = 0.45; bs = 0.45 + 1.0 * sm52(u / 0.55); } else if (u < 0.72) { const v = sm52((u - 0.55) / 0.17); Lf = 0.45 + 0.65 * v; bs = 1.45 - 0.1 * v; } else { const v = (u - 0.72) * per; Lf = 0.3 + 0.35 * Math.exp(-v / 0.25) * Math.cos(TAU * v / 0.5) + 0.15 * sm52(v / 2); bs = S.jar ? 1.2 : 0.15 + 0.3 * sm52((v - 0.5) / 2); }
+    if (S.jar) Lf = Math.min(Lf, 1.1);
+    for (let i = X.top + 1; i < n; i++) { const tt2 = X.t[i - X.top], b = B[jn[i]]; b.position.set(A.x, A.y - L * Lf * tt2, A.z); b.quaternion.identity(); const s = i === n - 1 ? bs : (u > 0.55 && u < 0.72 ? 1 - 0.5 * sm52((u - 0.55) / 0.17) : 1) * (u >= 0.72 ? 0.7 : 1); b.scale.setScalar(s * (i === n - 1 ? 1 : Math.min(1.2, 1 / Math.sqrt(Math.max(0.4, Lf))))); }
+    const bd = K.beads[K.str.filter(s => s.drip).indexOf(X)], sp = K.spots[K.str.filter(s => s.drip).indexOf(X)];
+    if (bd && sp) { const v = (u - 0.72) * per, r0 = J[jn[n - 1]].r * 1.35, y0 = A.y - L * 1.1, g = 5 * H, tf = Math.sqrt(2 * Math.max(0.05, y0) / g); if (X.lc !== ci) { X.lc = ci; X.land = null; } if (v >= 0 && !X.land) X.land = [A.x, A.z]; bd.visible = v >= 0 && v < tf; if (bd.visible) { const y = y0 - 0.5 * g * v * v, el = 1 + Math.min(0.6, g * v * 0.08); bd.position.set(X.land[0], Math.max(0.05, y), X.land[1]); bd.scale.set(r0 / Math.sqrt(el), r0 * el, r0 / Math.sqrt(el)); }
+      const w = v - tf, life = 0.24 * per; sp.visible = !!X.land && v >= tf && w < life; if (sp.visible) { const pl = S.G.pl || { x: J[0].p[0], z: J[0].p[2], rx: J[0].r, rz: J[0].r * 0.6 }, lx = X.land[0] - pl.x, lz = X.land[1] - pl.z, rr = Math.hypot(lx / pl.rx, lz / pl.rz) || 1, e = sm52(w / life), back = rr > 0.9 ? 1 - (1 - 0.9 / rr) * e : 1, s = 0.3 * (1 + 0.7 * sm52(w / 0.15)) * (1 - 0.75 * e);
+        sp.position.set(pl.x + lx * back, 0, pl.z + lz * back); sp.scale.set(s, 1, s * 0.75); [].concat(sp.children).forEach((m, mi) => { m.material.opacity = [0.8, 0.85, 0.7][mi] * (1 - sm52((w - life * 0.7) / (life * 0.3))); }); } }
+    return; }
+  /* the strings: slack, they belly out and swing; pulled long, they thin; one snaps at the top of the haul and pulls out again */
+  const L = Math.hypot(E.x - A.x, E.y - A.y, E.z - A.z) || 1e-3, L0 = X.L0; thin = L > L0 ? Math.max(0.3, Math.pow(L0 / L, 3)) * (1 - 0.25 * haul) : 1 - 0.2 * haul; bow = L < L0 ? 0.32 * Math.sqrt(Math.max(0, L0 * L0 - L * L)) : 0;
+  swing = k * L0 * (st === 4 ? 0.14 : st === 5 ? 0.06 : 0.05) * Math.sin(TAU * tt / (st === 4 ? 3.1 : 4.2) + X.i * 1.3);
+  const per = P.cyc, ns = K.str.filter(s => !s.drip).length, [d, ci] = since62(tt, per, 0.72 * per), mine = !S.jar && ns > 0 && ((ci % ns) + ns) % ns === X.g;
+  const nxt = !S.jar && ns > 0 && (((ci + 1) % ns) + ns) % ns === X.g && d > per - 0.9; if (nxt) thin *= 1 - 0.6 * sm52((d - per + 0.9) / 0.9);
+  if (mine && d < 2.6) { if (d < 0.45) { const v = d / 0.45; top = 1 - Math.pow(v, 1.3); sc = 0.8 - 0.7 * v; cap = 0; swing += X.side * 0.7 * L * Math.sin(PI * v) * (1 - 0.6 * v); } else if (d < 1.1) { top = 0; sc = 0; cap = 0; } else { const v = sm52((d - 1.1) / 1.4); top = v; sc = 0.25 + 0.75 * v; cap = v > 0.97 ? 1 : 0; thin = 0.5 + 0.5 * v; } }
+  /* the top of the string: at the arm (top 1), or down at the place it lands */
+  const At = V.c.copy(E).lerp(A, top), Ln = At.distanceTo(E) / L0, bx = (E.x + A.x) * 0.5 - S.bones[0].position.x;
+  V.d.set(Math.sign(bx || X.side) * 1, -0.35, 0); const dx = E.x - At.x, dy = E.y - At.y, dz = E.z - At.z, dl = Math.hypot(dx, dy, dz) || 1e-3, dot = (V.d.x * dx + V.d.y * dy + V.d.z * dz) / dl; V.d.x -= dot * dx / dl; V.d.y -= dot * dy / dl; V.d.z -= dot * dz / dl; V.d.normalize();
+  const pos = []; for (let i = X.top; i < n; i++) { const t = X.t[i - X.top], o = X.off[i - X.top], s = Math.sin(PI * t); pos.push([At.x + dx * t + o[0] * Ln + V.d.x * bow * s, At.y + dy * t + o[1] * Ln + V.d.y * bow * s, At.z + dz * t + o[2] * Ln + V.d.z * bow * s + swing * s]); }
+  for (let i = X.top; i < n; i++) { const b = B[jn[i]], p = pos[i - X.top], ia = Math.max(0, i - X.top - 1), ib = Math.min(pos.length - 1, i - X.top + 1); b.position.set(p[0], p[1], p[2]);
+    const nd = S.v62.b.set(pos[ib][0] - pos[ia][0], pos[ib][1] - pos[ia][1], pos[ib][2] - pos[ia][2]); if (nd.lengthSq() > 1e-10) { nd.normalize(); b.quaternion.setFromUnitVectors(X.dir[i - X.top], nd); }
+    const wq = i === X.top ? cap : i === n - 1 ? Math.max(sc, 0.3 * sc) : sc * thin; b.scale.setScalar(Math.max(0.0001, wq)); }
+  if (cap === 0) for (let i = 1; i < X.top; i++) B[jn[i]].scale.setScalar(0.0001);   /* the hair inside the arm goes with it: no skin is left across the gap */
+  }
+/* after the whole play chain: the body sags, spreads, plumps and wobbles (the top late); the arms, strings, drips, thread, blisters */
+function pose62(S, o) { const K = S.k62 || init62(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = S.jar ? 0.6 : 1, P = P62[st], tt = clk62(S), TAU = 2 * PI, cx = B[0].position.x, cz = B[0].position.z;
+  S.tt62 = tt; const s0 = k * sag62(P, tt);
+  K.body.forEach(j => { const h = K.h[j], lt = tt - P.lag * h, s = k * sag62(P, lt), w = wob62(S, lt), b = B[j], p = b.position, ox = p.x, oy = p.y, oz = p.z, a = k * P.wa * H;
+    let sx = 0; if (st === 4) sx = k * 0.1 * H * Math.sin(TAU * lt / 6.3) + k * 0.04 * H * Math.sin(TAU * lt / 2.9 + 1); if (st === 5) sx = k * 0.02 * H * Math.sin(TAU * lt / 7.9);
+    const sw = st === 5 ? k * 0.06 * Math.sin(TAU * lt / P.sg + 0.8) : 0, sp = 1 + 0.4 * P.sa * s + sw;
+    p.y = oy * (1 - P.sa * s - 0.6 * sw) + a * w.y * h; p.x = cx + (ox - cx) * sp + (a * w.x + sx) * Math.pow(h, 1.3); p.z = cz + (oz - cz) * sp + 0.3 * a * w.x * h;
+    const f = 1 + 0.65 * P.sa * s * (1 - 0.5 * h) + sw; b.scale.x *= f; b.scale.z *= f; b.scale.y *= 1 - 0.45 * P.sa * s - 0.5 * sw; K.d[j].set(p.x - ox, p.y - oy, p.z - oz); });
+  /* the limbs ride the joint they grow from; what lies low on the bench stays down and spreads outward as it sags */
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; const par = J[c.jn[0]].par, D = K.d[par] || K.d[0], low = !!c.l.slope || !!c.l.flat;
+    c.jn.forEach(jj => { const p = B[jj].position, w = low ? sm52((p.y - 0.12 * H) / (0.4 * H)) : sm52((p.y - 0.06 * H) / (0.25 * H)); p.x += D.x * w; p.y += D.y * w; p.z += D.z * w; if (low) { const e = 1 + 0.35 * P.sa * s0 * (1 - w); p.x = cx + (p.x - cx) * e; p.z = cz + (p.z - cz) * e; } }); });
+  const ar = arm62(S, K, tt, k);
+  K.str.forEach(X => { try { str62(S, K, X, tt, k, ar.haul); } catch (e) { W62.err = String(e && e.stack); } });
+  /* stage 1's thread on its top swings after the body, and droops as it nods off */
+  if (K.thread) { const jn = K.thread.jn, r = B[jn[0]].position, w = wob62(S, tt - 0.25), u = nod62(P, tt); rot52(S, jn, 1, r.x, r.y, r.z, S.v62.z, -k * (0.5 * w.x + 0.35 * sm52(u / 0.55) * (1 - sm52((u - 0.67) / 0.03)) + 0.12 * Math.sin(TAU * tt / 3.3)), kk => Math.pow(kk / (jn.length - 1), 1.2)); }
+  /* blisters swell and settle out of step */ K.blis.forEach((c, i) => { const s = 1 + k * 0.22 * Math.sin(TAU * tt / (3.3 + i) + i * 2); c.jn.slice(1).forEach(jj => { B[jj].scale.multiplyScalar(s); }); });
+  /* Water's drips are not slime */ S.drips.forEach(dp => { dp.g.visible = false; }); }
+function hide62(S) { const K = S.k62; if (!K) return; if (S.lid62 != null && S.F && S.F.f) S.F.f.lid = S.lid62; K.beads.forEach(b => { b.visible = false; }); K.spots.forEach(b => { b.visible = false; }); }
+/* the pen: bubbles rise inside the skin and pop, with a little dimple */
+function ink62(T, S, ren, cam) { const R = S.pen30, K = S.k62, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
+  const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = W62.pool || (W62.pool = Array.from({ length: 24 }, () => new T.Vector3())); if (lw < 1.2 || S.c62 !== 'rest' || S.tt62 == null || !K.lanes.length) return;
+  const tt = S.tt62, P = P62[S.st], J = S.G.J, B = S.bones, V = S.v62; let sd = 9900, any = false;
+  K.lanes.forEach(L => { const per = P.bp * (0.85 + 0.3 * h52(L.i * 3.3 + S.st)), u = fr52(tt / per + h52(L.i * 7.1)), n = L.pts.length; if (u > 0.97) return;
+    const rise = Math.min(1, u / 0.8), x = Math.pow(rise, 0.85) * (n - 1), i0 = Math.min(n - 2, Math.floor(x)), f = x - i0, a = L.pts[i0], b = L.pts[i0 + 1], j = f < 0.5 ? a.j : b.j, Mw = B[j].matrixWorld, Jp = J[j].p;
+    V.c.copy(a.p).lerp(b.p, f); const pop = u > 0.8 ? (u - 0.8) / 0.17 : 0, r = L.r * (0.35 + 0.65 * rise) * (1 + 0.7 * pop), m = 14, seg = pop > 0 ? 4 : 1;
+    for (let sgi = 0; sgi < seg; sgi++) { let c = 0; const a0 = sgi / seg * 2 * PI + 0.4, a1 = a0 + (pop > 0 ? 2 * PI / seg * (1 - 0.75 * pop) : 2 * PI); for (let q = 0; q <= m; q++) { const an = a0 + (a1 - a0) * q / m, rr = r * (1 + 0.25 * pop * (pop > 0 ? 1 : 0)); pool[c++].set(V.c.x - Jp[0] + rr * (Math.cos(an) * L.Rv.x), V.c.y - Jp[1] + rr * Math.sin(an), V.c.z - Jp[2] + rr * Math.cos(an) * L.Rv.z).applyMatrix4(Mw); }
+      free30(R, pool.slice(0, c), lw * 1.05 * (1 - 0.8 * pop), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.25, min: 3, trim: 0 }); }
+    if (pop > 0.25) { const v = (pop - 0.25) / 0.75; let c = 0; for (let q = 0; q <= 6; q++) { const an = PI * (1.15 + 0.7 * q / 6), rr = L.r * 0.7; pool[c++].set(V.c.x - Jp[0] + rr * Math.cos(an) * L.Rv.x, V.c.y - Jp[1] + rr * 0.6 * Math.sin(an) + 0.2 * rr, V.c.z - Jp[2] + rr * Math.cos(an) * L.Rv.z).applyMatrix4(Mw); }
+      free30(R, pool.slice(0, c), lw * 0.9 * (1 - v), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.2, min: 2, trim: 0 }); }
+    if (u < 0.8) { let c = 0; for (let q = 0; q <= 3; q++) { const an = PI * (0.62 + 0.25 * q / 3), rr = r * 0.55; pool[c++].set(V.c.x - Jp[0] + rr * Math.cos(an) * L.Rv.x, V.c.y - Jp[1] + rr * Math.sin(an), V.c.z - Jp[2] + rr * Math.cos(an) * L.Rv.z).applyMatrix4(Mw); } free30(R, pool.slice(0, c), lw * 0.7, s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.2, min: 2, trim: 0 }); }
+    any = true; });
+  if (any) { R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); } }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way61) return f0(grp, clip, t, o);
+  /* in the jar the margin's material carries no line width (W52 found this for Acid; W56 for Dry ice) */
+  const gw = () => { if (S.hull27 && !S.hull27.material.userData.w) { S.hull27.material.userData.w = { value: 0 }; return true; } return false; }, safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  const r = safe(); if (!on62(S)) return r; S.c62 = clip;
+  if (clip === 'rest') { const c0 = rn44(); try { if (!S.k62) { init62(S); safe(); } pose62(S, o || {}); } catch (e) { W62.err = String(e && e.stack); } W62.ms += rn44() - c0; W62.n++; }
+  else hide62(S); return r; })(play26);
+KIT.spirit26.play = play26;
+draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); if (on62(S) && S.k62 && S.c62 === 'rest' && S.pen30) { try { ink62(T, S, ren, cam); } catch (e) { W62.err = String(e && e.stack); } } })(draw30);
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Slime (fitted to the glass), each playing its rest as it is drawn */
+function drive62(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf62 === fr) return; S.jf62 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W62.err = String(e && e.stack); } }; }
+function jar62(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = slime61Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.35, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.3 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive62(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = slime61Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 1.02, sg >= 4 ? 1.5 : 1.35, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + (sg >= 3 ? 0.34 : 0.24) - q.y0 * q.s, -q.cz * q.s + 0.1);   /* sat up on the jar's level, pressed toward the glass */ drive62(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'slime' && KIT.slime61 && KIT.idle62 !== false && T && T.SkinnedMesh) { try { jar62(T, j); } catch (e) { W62.err = String(e && e.stack); } } return j; })(KIT.jar);
+/* at home on the bench the wide stages stand a little further back, so the slick keeps clear of the notebook's top edge */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { const r = f0.apply(this, arguments); try { const S = r && id === 'homslime' && grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp; if (S && S.way61 && !(extra && (extra.push || extra.jar))) S.root.position.z -= [0, 0, 0.3, 0.6, 0.7, 0.9][S.st] || 0; } catch (e) { W62.err = String(e && e.stack); } return r; })(KIT.build);
+KIT.W62 = W62;
+/* for the recorder: seconds until the next snap / bead drop of a figure */
+W62.until = (S, what) => { const K = S && S.k62, P = S && P62[S.st]; if (!K) return null; const tt = clk62(S);
+  if (what === 'snap') return P.cyc - since62(tt, P.cyc, 0.72 * P.cyc)[0];
+  const X = K.str.find(x => x.drip); if (!X) return null; const [per, off] = drip62(S, X), d = since62(tt, per, off)[0]; return ((0.72 * per - d) % per + per) % per; };
+// ==== W62 END
 // ==== W63 BEGIN
 // (builder 63) SALT AS A SPIRIT, five stages, stills only (AA.rxKit.salt63 = 1, or ?t63=1 on the page; OFF by default: the game shows the old Salt).
 // The line-up's figure B, "the hopper": a stepped crystal skirt narrowing upward to a body, a tilted cube head, straight arms with fists on hips.
