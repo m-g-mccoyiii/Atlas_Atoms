@@ -4338,4 +4338,142 @@ KIT.salt63Fig = salt63Fig; KIT.SALT63 = W63;
 /* behind the switch: Salt's bench figure is the spirit at its stage (the jar keeps the old Salt) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homsalt' && KIT.salt63 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = salt63Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W63.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W63 END
+// ==== W64 BEGIN
+// (builder 64) SEEDLING AS A SPIRIT, five stages, stills only (AA.rxKit.seed64 = 1, or ?g64=1 on the page; OFF by default: the game shows the old Seedling).
+// Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53) and Slime (61) were: each stage is a set of numbers like a stage of S25, put in
+// Water's stage-3 slot for the moment of building; geo26 makes it one closed skin on joints, fig26 gives the face, set30 the pen and the wash.
+// What is Seedling's own: NO pool (the pool is shrunk to a pad hidden under the tap root, and the wash never treats any of it as a pool); it stands on
+// ROOT FEET (limbs that run from the seed down to the bench, pinned there); a swollen SEED at its base with the split coat drawn as a zigzag rim and
+// two husk points; a thin stem with the HOOK of a just-sprouted shoot; a nodding BUD for a head (the spine itself turns over and runs down into it);
+// LEAVES (limbs flattened toward the eye, a leaf's outline, veins in pen); rolled new leaves; a tendril; petals; root hairs in pen; a few crumbs of soil.
+// TWO washes on one skin: the fourth number of w25a (Water's foam, which the pen-and-wash shader does not use) says what a place is made of:
+// 0 seed, root and young stem (brown-violet), 0.5 leaf and bud (leaf green), 1 petal (pink).
+//  1 the seed: a plump seed tipped over, cracked round its middle, two eyes peeping out of the crack, one pale root toe out on the bench
+//  2 the hook: a bent stem just up on two root feet, the bud bowed low and still wearing the top of the seed coat as a cap, squinting at the lamp
+//  3 the sprout (the line-up's figure): hooked stem, nodding bud head, one leaf arm thrown up and one held out, bright-eyed
+//  4 the sapling: upright, the bud lifted and starting to open, four leaves, one of them raised to its brow as it looks far off, a tendril
+//  5 the bloom: tall, a crown of petals round its face, two great leaves spread like open arms, roots spread wide, eyes half shut, proud
+KIT.seed64 = KIT.seed64 == null ? ((typeof location !== 'undefined' && /[?&]g64=1/.test(String(location.search))) ? 1 : null) : KIT.seed64;
+const W64 = { geo: {}, figs: [], err: null, TARGET: [0, 5000, 5600, 6000, 6600, 7200],
+  ROLE: [null, { chest: 1, neck: 2, head: 2, hair: 7 }, { chest: 4, neck: 9, head: 14, hair: 16 }, { chest: 4, neck: 10, head: 13, hair: 15 }, { chest: 4, neck: 9, head: 11, hair: 13 }, { chest: 4, neck: 9, head: 11, hair: 13 }],
+  C: { b: { lite: [0.85, 0.73, 0.65], edge: [0.56, 0.39, 0.34], shade: [0.43, 0.29, 0.34], margin: [0.80, 0.67, 0.60] },
+    g: { lite: [0.76, 0.87, 0.62], edge: [0.38, 0.60, 0.30], shade: [0.26, 0.46, 0.31], margin: [0.70, 0.83, 0.58] },
+    p: { lite: [0.98, 0.85, 0.91], edge: [0.91, 0.52, 0.71], shade: [0.74, 0.45, 0.70], margin: [0.96, 0.80, 0.88] }, lid: 0x8fbf6e } };
+/* the pad under the tap root that stands where Water's pool would be */
+const pad64 = (x, z, r) => [[x, 0, z, r, r], [x, 0.03, z, r * 0.98, r * 0.98], [x, 0.05, z, r * 0.9, r * 0.9], [x, 0.06, z, r * 0.8, r * 0.8]];
+/* where a limb leaves the body (as geo26 works it out), and a limb given by where its points ARE */
+const at64 = (K, k, th) => { const x = Math.max(0, Math.min(K.length - 5, k - 4)), i = Math.min(K.length - 6, Math.floor(x)), t = x - i, a = K[4 + i], b = K[5 + i], c = a.map((v, j) => v + (b[j] - v) * t); return [c[0] + Math.cos(th) * c[3], c[1], c[2] + Math.sin(th) * c[4]]; };
+const lim64 = (K, k, th, abs, rad, ex) => { const C = at64(K, k, th); return Object.assign({ k, th, r0: Math.min(rad[0], 0.12), ey: 1.2, path: abs.map(p => [p[0] - C[0], p[1] - C[1], p[2] - C[2]]), rad }, ex || {}); };
+/* a leaf: a short stalk, then a blade flattened toward the eye, widest a third of the way along, drawn to a point */
+const leafR64 = (n, w) => Array.from({ length: n }, (_, i) => i === 0 ? 0.1 : i === n - 1 ? 0.05 : Math.max(0.1, w * Math.pow(Math.sin(PI * (0.15 + 0.85 * i / (n - 1))), 0.75)));
+const leaf64 = (K, k, th, abs, w, tone) => lim64(K, k, th, abs, leafR64(abs.length, w), { flat: [0, 0, 1], fk: () => 0.3, foam: () => (tone == null ? 0.5 : tone), leaf: 1 });
+/* its veins, in pen: the midrib and a pair of side veins at each joint of the blade */
+const pen64 = (pts, w, sm0) => ({ c: [0, 0, 1.2], d: [0, 0, 1], pts, w: w || 0.5, o: { smooth: sm0 == null ? 2 : sm0, wob: 0.35, min: 2, trim: 0 } });
+const vein64 = (abs, w, few) => { const n = abs.length, R = leafR64(n, w), a = abs[n - 2], b = abs[n - 1], out = [pen64(abs.slice(0, n - 1).map(p => [p[0], p[1]]).concat([[a[0] + (b[0] - a[0]) * 0.6, a[1] + (b[1] - a[1]) * 0.6]]), 0.55)];
+  for (let i = 1; i < n - 1; i += (few ? 2 : 1)) { const p = abs[i], q = abs[i + 1], o = abs[i - 1], tx = q[0] - o[0], ty = q[1] - o[1], l = Math.hypot(tx, ty) || 1, ux = tx / l, uy = ty / l, r = R[i];
+    [-1, 1].forEach(s => out.push(pen64([[p[0] - ux * r * 0.25, p[1] - uy * r * 0.25], [p[0] + ux * r * 0.05 - s * uy * r * 0.36, p[1] + uy * r * 0.05 + s * ux * r * 0.36], [p[0] + ux * r * 0.3 - s * uy * r * 0.66, p[1] + uy * r * 0.3 + s * ux * r * 0.66]], 0.42))); }
+  return out; };
+/* a root: tapering, down to the bench, a toe at its end; and its hairs, in pen, standing off it */
+const root64 = (K, k, th, abs, rad) => lim64(K, k, th, abs, rad, { foam: () => 0, root: 1 });
+const hair64 = (abs, rad, s, from) => { const out = []; for (let i = from || 1; i < abs.length; i++) { const p = abs[i], r = rad[i]; [[s * 0.35, 0.94, 0], [s * 0.3, 0.2, 0.93]].forEach((n, q) => { const L = 0.17 + 0.07 * ((i + q) % 2); out.push({ air: [[p[0] + n[0] * r * 0.9, p[1] + n[1] * r * 0.9, p[2] + n[2] * r * 0.9], [p[0] + n[0] * (r + L * 0.6) + s * 0.02, p[1] + n[1] * (r + L * 0.6), p[2] + n[2] * (r + L * 0.6)], [p[0] + n[0] * (r + L) + s * 0.06, p[1] + n[1] * (r + L), p[2] + n[2] * (r + L)]], w: 0.4, o: { smooth: 1, wob: 0.2, min: 2, trim: 0 } }); }); } return out; };
+/* a tendril: a thread that curls */
+const tend64 = (K, k, th, abs) => lim64(K, k, th, abs, abs.map((p, i) => i === abs.length - 1 ? 0.06 : 0.078), { foam: () => 0.5, str: 1 });
+/* the broken edge of the seed coat: a zigzag across the front of the body between x0 and x1 at height y */
+const zig64 = (x0, x1, y, a, n, bow) => pen64(Array.from({ length: n + 1 }, (_, i) => { const t = i / n; return [x0 + (x1 - x0) * t, y + (i % 2 ? a : -a) - (bow || 0) * Math.sin(PI * t)]; }), 0.6, 0);
+/* the two feet it stands on, the lesser roots behind and between, the husk points at the rim of the seed */
+const feet64 = (K, k, f, lift) => { const R = [0.15 * f, 0.12 * f, 0.1 * f, 0.115 * f], A = [[0.5 * f, 0.5 * f, 0.22 * f], [0.9 * f, 0.27 * f, 0.4 * f], [1.2 * f, 0.07, 0.5 * f], [1.44 * f, 0.06, 0.54 * f]], B = [[-0.48 * f, 0.5 * f, 0.2 * f], [-0.84 * f, (0.29 + (lift || 0)) * f, 0.38 * f], [-1.1 * f, 0.08 + (lift || 0) * f, 0.48 * f], [-1.32 * f, 0.06 + (lift || 0) * 1.4 * f, 0.52 * f]];
+  return { limbs: [root64(K, k, 0.45, A, R), root64(K, k, PI - 0.45, B, R)], pen: hair64(A, R, 1, 2).concat(hair64(B, R, -1, 2)) }; };
+const back64 = (K, k, f) => { const R = [0.1 * f, 0.08 * f, 0.07 * f], A = [[0.5 * f, 0.42 * f, -0.25 * f], [0.92 * f, 0.16 * f, -0.4 * f], [1.2 * f, 0.06, -0.45 * f]], B = [[-0.5 * f, 0.42 * f, -0.25 * f], [-0.9 * f, 0.16 * f, -0.4 * f], [-1.15 * f, 0.06, -0.45 * f]];
+  return { limbs: [root64(K, k, -0.5, A, R), root64(K, k, PI + 0.5, B, R)], pen: hair64(A, R, 1, 1).concat(hair64(B, R, -1, 1)) }; };
+const husk64 = (K, k, y, x) => [lim64(K, k, 0, [[x + 0.1, y + 0.14, 0.04], [x + 0.24, y + 0.36, 0.04]], [0.15, 0.05], { flat: [0, 0, 1], fk: () => 0.4, foam: () => 0 }), lim64(K, k, PI, [[-x - 0.06, y + 0.14, 0.04], [-x - 0.2, y + 0.3, 0.04]], [0.14, 0.05], { flat: [0, 0, 1], fk: () => 0.4, foam: () => 0 })];
+const COM64 = { foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4 };
+const SPEC64 = [
+  // 1 the seed
+  () => { const K = pad64(0.2, 0, 0.3).concat([[0.25, 0.08, 0, 0.36, 0.34], [0.2, 0.3, 0, 0.64, 0.57], [0.1, 0.54, 0, 0.8, 0.7], [0.06, 0.62, 0, 0.69, 0.6], [-0.1, 0.92, 0, 0.67, 0.58], [-0.14, 1.0, 0, 0.78, 0.67], [-0.34, 1.22, 0, 0.6, 0.52], [-0.52, 1.42, 0, 0.32, 0.3], [-0.6, 1.52, 0, 0, 0]]);
+    const A = [[0.8, 0.2, 0.2], [1.12, 0.1, 0.32], [1.4, 0.07, 0.38], [1.58, 0.17, 0.38]], AR = [0.14, 0.11, 0.095, 0.105];
+    return Object.assign({ keys: K, wet: [0.2, 0.1, 1.05, 0.7], foam: (kp, th, y) => (y > 0.585 && y < 0.955 ? 0.5 : 0),
+      limbs: [root64(K, 4.7, 0.1, A, AR)],
+      face: { c: [-0.03, 0.775, 0.9], d: [0, 0.02, 1], k: 1.25, er: 1.12, dx: 0.235 }, eyes: [1, 1.1],
+      pen: [zig64(-0.74, 0.86, 0.57, 0.035, 15, 0.02), zig64(-0.86, 0.68, 0.975, 0.035, 15, 0.02), pen64([[-0.5, 1.02], [-0.42, 1.2], [-0.5, 1.32]], 0.45), pen64([[0.42, 0.5], [0.5, 0.34], [0.44, 0.2]], 0.45)].concat(hair64(A, AR, 1, 1)),
+      drops: [[-0.95, 0, 0.5, 0.05], [1.15, 0, 0.75, 0.04], [-0.6, 0, 0.85, 0.035]] }, COM64); },
+  // 2 the hook
+  () => { const K = pad64(0, 0, 0.22).concat([[0, 0.1, 0, 0.14, 0.14], [0, 0.38, 0, 0.17, 0.17], [0, 0.58, 0, 0.42, 0.38], [0, 0.82, 0, 0.54, 0.47], [0.02, 1.04, 0, 0.44, 0.4], [0.06, 1.24, 0, 0.2, 0.2], [0.16, 1.6, 0, 0.17, 0.17], [0.2, 2.0, 0, 0.165, 0.165], [0.06, 2.4, 0, 0.17, 0.17],
+      [-0.34, 2.64, 0.02, 0.18, 0.18], [-0.8, 2.56, 0.06, 0.24, 0.24], [-1.02, 2.34, 0.1, 0.52, 0.5], [-1.1, 2.13, 0.12, 0.76, 0.72], [-1.13, 2.03, 0.13, 0.6, 0.57], [-1.15, 1.71, 0.14, 0.63, 0.59], [-1.2, 1.36, 0.16, 0.5, 0.48], [-1.24, 1.1, 0.17, 0.22, 0.22], [-1.26, 0.96, 0.17, 0, 0]]);
+    const F = feet64(K, 5.9, 0.93, 0.1);
+    return Object.assign({ keys: K, wet: [0, 0.2, 1.3, 0.75], foam: (kp, th, y) => (kp < 11 ? 0 : kp < 14.3 ? 0.5 * sm((kp - 11) / 2) : y > 2.07 ? 0 : 0.5),
+      limbs: F.limbs.concat(husk64(K, 8, 1.04, 0.42),
+        /* two new leaves, rolled tight */ [lim64(K, 11, 0, [[0.42, 2.1, 0.05], [0.57, 2.38, 0.05], [0.6, 2.64, 0.05]], [0.1, 0.135, 0.05], { foam: () => 0.5 }), lim64(K, 10.6, PI, [[-0.1, 1.88, 0.05], [-0.27, 2.1, 0.05], [-0.31, 2.3, 0.05]], [0.09, 0.12, 0.05], { foam: () => 0.5 })]),
+      face: { c: [-1.15, 1.66, 0.95], d: [0, 0.04, 1], k: 1.55, er: 1.12, dx: 0.21, lid: 0.5, mouth: { o: 0.032, y: -0.215, r: 0.02 } }, eyes: [1.12, 0.95],
+      pen: F.pen.concat([zig64(-0.44, 0.48, 1.0, 0.04, 9, 0.03), zig64(-1.74, -0.5, 2.02, 0.035, 13, 0.03), pen64([[-1.42, 2.28], [-1.3, 2.44], [-1.36, 2.56]], 0.45), pen64([[-0.9, 2.22], [-0.84, 2.36]], 0.45), pen64([[0.47, 2.14], [0.55, 2.3], [0.57, 2.5]], 0.4)]),
+      drops: [[-1.5, 0, 0.75, 0.05], [1.55, 0, 0.5, 0.045], [0.5, 0, 1.0, 0.035]] }, COM64); },
+  // 3 the sprout (the line-up's figure)
+  () => { const K = pad64(0, 0, 0.22).concat([[0, 0.1, 0, 0.14, 0.14], [0, 0.4, 0, 0.17, 0.17], [0, 0.62, 0, 0.45, 0.4], [0, 0.9, 0, 0.58, 0.5], [0.02, 1.16, 0, 0.46, 0.41], [0.05, 1.38, 0, 0.2, 0.2], [0.12, 1.85, 0, 0.165, 0.165], [0.2, 2.4, 0, 0.155, 0.155], [0.16, 3.0, 0, 0.155, 0.155],
+      [-0.05, 3.55, 0, 0.16, 0.16], [-0.5, 3.82, 0.02, 0.165, 0.165], [-0.98, 3.67, 0.05, 0.21, 0.21], [-1.25, 3.33, 0.1, 0.52, 0.5], [-1.4, 2.85, 0.14, 0.8, 0.76], [-1.46, 2.37, 0.16, 0.62, 0.6], [-1.5, 2.05, 0.17, 0.28, 0.28], [-1.52, 1.85, 0.17, 0, 0]]);
+    const F = feet64(K, 5.9, 1, 0), B = back64(K, 5.9, 1), L1 = [[0.48, 2.3, 0.05], [0.95, 2.62, 0.08], [1.42, 3.02, 0.1], [1.8, 3.46, 0.1], [1.98, 3.78, 0.08]], L2 = [[-0.25, 1.62, 0.05], [-0.6, 1.66, 0.08], [-0.92, 1.56, 0.1], [-1.15, 1.4, 0.1], [-1.28, 1.26, 0.08]];
+    return Object.assign({ keys: K, wet: [0, 0.2, 1.45, 0.8], foam: kp => (kp < 9 ? 0 : 0.5 * sm((kp - 10.5) / 3)),
+      limbs: F.limbs.concat(B.limbs, husk64(K, 8, 1.16, 0.44), [leaf64(K, 10.6, 0, L1, 0.44), leaf64(K, 9.5, PI, L2, 0.25),
+        /* the next leaf, rolled tight */ lim64(K, 12.4, 0, [[0.36, 3.3, 0.04], [0.5, 3.56, 0.04], [0.54, 3.78, 0.04]], [0.09, 0.125, 0.05], { foam: () => 0.5 })]),
+      face: { c: [-1.4, 2.87, 1.1], d: [0, 0.05, 1], k: 1.85, er: 1.18, dx: 0.2, brow: { y: 0.255, len: 0.12, ang: [-0.2, -0.2], arch: 0.03, r: 0.017 }, mouth: { w: 0.1, d: 0.055, y: -0.2, tilt: 0.01, r: 0.021 } }, eyes: [1, 1.08],
+      pen: F.pen.concat(B.pen, vein64(L1, 0.44), vein64(L2, 0.25, 1), [zig64(-0.46, 0.5, 1.12, 0.04, 9, 0.03), pen64([[0.41, 3.32], [0.5, 3.54], [0.52, 3.7]], 0.4)]),
+      drops: [[-1.7, 0, 0.7, 0.05], [1.7, 0, 0.45, 0.045], [0.45, 0, 1.05, 0.035]] }, COM64); },
+  // 4 the sapling
+  () => { const K = pad64(0, 0, 0.24).concat([[0, 0.1, 0, 0.16, 0.16], [0, 0.45, 0, 0.2, 0.2], [0, 0.7, 0, 0.46, 0.42], [0, 0.98, 0, 0.56, 0.5], [0.02, 1.24, 0, 0.42, 0.38], [0.04, 1.48, 0, 0.22, 0.22], [0.1, 1.993, 0, 0.19, 0.19], [0.14, 2.556, 0, 0.18, 0.18], [0.08, 3.048, 0, 0.17, 0.17],
+      [-0.08, 3.45, 0.02, 0.17, 0.17], [-0.2, 3.7, 0.05, 0.55, 0.53], [-0.28, 4.15, 0.08, 0.88, 0.84], [-0.32, 4.62, 0.08, 0.7, 0.67], [-0.34, 4.95, 0.08, 0.42, 0.42], [-0.35, 5.22, 0.08, 0.2, 0.2], [-0.35, 5.42, 0.08, 0, 0]]);
+    const F = feet64(K, 5.9, 1.12, 0), B = back64(K, 5.9, 1.1), Rm = [0.11, 0.09, 0.08], Am = [[0.05, 0.4, 0.6], [0.12, 0.14, 0.95], [0.16, 0.06, 1.2]];
+    const L1 = [[0.5, 2.18, 0.05], [1.05, 2.45, 0.08], [1.6, 2.56, 0.1], [2.1, 2.42, 0.1], [2.4, 2.2, 0.08]], L2 = [[-0.3, 2, 0.05], [-0.85, 2.22, 0.08], [-1.4, 2.28, 0.1], [-1.9, 2.1, 0.1], [-2.15, 1.88, 0.08]],
+      L3 = [[0.45, 2.84, 0.05], [0.85, 3.24, 0.08], [1.22, 3.72, 0.1], [1.48, 4.22, 0.1], [1.56, 4.57, 0.08]], L4 = [[-0.4, 3.07, 0.1], [-1.1, 3.27, 0.12], [-1.85, 3.62, 0.15], [-2.25, 4.17, 0.2], [-2.12, 4.72, 0.25], [-1.7, 5, 0.3], [-1.32, 4.92, 0.3]];
+    return Object.assign({ keys: K, wet: [0, 0.25, 1.75, 0.95], foam: kp => (kp < 9 ? 0 : kp > 16.6 ? 0.5 + 0.5 * sm((kp - 16.6) / 0.4) : 0.5 * sm((kp - 9.2) / 2.5)),
+      limbs: F.limbs.concat(B.limbs, [root64(K, 5.6, PI / 2, Am, Rm)], [leaf64(K, 10.2, 0, L1, 0.42), leaf64(K, 10, PI, L2, 0.4), leaf64(K, 11.5, 0, L3, 0.36), leaf64(K, 12, PI, L4, 0.3),
+        /* the bud begins to open: two green sepals peel back from the pink tip */ lim64(K, 16.6, PI, [[-0.72, 4.94, 0.08], [-0.95, 5.22, 0.08], [-1.18, 5.26, 0.08], [-1.3, 5.12, 0.08]], [0.2, 0.15, 0.11, 0.05], { flat: [0, 0, 1], fk: () => 0.35, foam: () => 0.5 }), lim64(K, 16.6, 0, [[0.06, 4.94, 0.08], [0.3, 5.22, 0.08], [0.53, 5.26, 0.08], [0.65, 5.12, 0.08]], [0.2, 0.15, 0.11, 0.05], { flat: [0, 0, 1], fk: () => 0.35, foam: () => 0.5 }),
+        tend64(K, 9.2, PI, [[-0.38, 1.56, 0.05], [-0.8, 1.46, 0.06], [-1.22, 1.42, 0.07], [-1.56, 1.2, 0.07], [-1.52, 0.86, 0.07], [-1.24, 0.76, 0.07], [-1.08, 1, 0.07], [-1.24, 1.16, 0.07]])]),
+      face: { c: [-0.5, 4.1, 1.2], d: [-0.3, 0.04, 1], k: 1.95, er: 1.1, dx: 0.2, brow: { y: 0.25, len: 0.12, ang: [0.1, 0.1], arch: 0.02, r: 0.017 }, mouth: { w: 0.075, d: 0.03, y: -0.215, tilt: 0.02, r: 0.02 } }, eyes: [1, 1.06],
+      pen: F.pen.concat(B.pen, hair64(Am, Rm, 1, 1), vein64(L1, 0.42), vein64(L2, 0.4), vein64(L3, 0.36, 1), vein64(L4, 0.3, 1), [zig64(-0.42, 0.46, 1.2, 0.04, 9, 0.03)]),
+      drops: [[-2.0, 0, 0.7, 0.055], [2.0, 0, 0.45, 0.05], [0.7, 0, 1.4, 0.04], [-0.8, 0, 1.2, 0.035]] }, COM64); },
+  // 5 the bloom
+  () => { const K = pad64(0, 0, 0.3).concat([[0, 0.1, 0, 0.2, 0.2], [0, 0.5, 0, 0.26, 0.26], [0, 0.75, 0, 0.5, 0.46], [0, 1.02, 0, 0.6, 0.54], [0, 1.3, 0, 0.44, 0.4], [0, 1.55, 0, 0.26, 0.26], [0.03, 2.2, 0, 0.22, 0.22], [0.05, 2.875, 0, 0.2, 0.2], [0.03, 3.475, 0, 0.19, 0.19],
+      [0, 3.95, 0.02, 0.19, 0.19], [0, 4.2, 0.05, 0.55, 0.53], [0, 4.7, 0.1, 0.95, 0.9], [0, 5.23, 0.1, 0.7, 0.67], [0, 5.53, 0.1, 0.28, 0.28], [0, 5.65, 0.1, 0, 0]]);
+    const F = feet64(K, 5.9, 1.3, 0), B = back64(K, 5.9, 1.3), Rm = [0.13, 0.1, 0.08], Am = [[0, 0.45, 0.66], [-0.06, 0.16, 1.05], [-0.1, 0.06, 1.35]], Rs = [0.1, 0.085, 0.075, 0.07], As = [[0.7, 0.72, 0.05], [1.3, 0.5, 0.1], [1.8, 0.22, 0.15], [2.25, 0.06, 0.18]], Bs = As.map(p => [-p[0] * 0.96, p[1], p[2]]);
+    const L1 = [[0.5, 2.88, 0.05], [1.2, 3.18, 0.08], [2, 3.42, 0.1], [2.75, 3.6, 0.1], [3.3, 3.7, 0.08]], L2 = [[-0.5, 2.81, 0.05], [-1.2, 3.14, 0.08], [-2, 3.4, 0.1], [-2.75, 3.62, 0.1], [-3.3, 3.76, 0.08]],
+      L3 = [[0.45, 2.18, 0.05], [1.05, 2.16, 0.08], [1.65, 1.92, 0.1], [2.15, 1.58, 0.1], [2.42, 1.28, 0.08]], L4 = [[-0.45, 2.1, 0.05], [-1.05, 2.1, 0.08], [-1.65, 1.88, 0.1], [-2.15, 1.56, 0.1], [-2.44, 1.24, 0.08]];
+    const PA = [[90, 1], [52, 0.93], [14, 1], [-24, 0.9], [128, 0.95], [166, 1], [204, 0.9]], pet = PA.map(q => { const a = q[0] * PI / 180, ux = Math.cos(a), uy = Math.sin(a); return { ux, uy, abs: [0.84, 1.3, 1.68, 1.88].map((t, i) => [ux * t * (i ? q[1] : 1), 4.7 + uy * t * (i ? q[1] : 1), -0.02]) }; });
+    return Object.assign({ keys: K, wet: [0, 0.3, 2.2, 1.1], foam: kp => (kp < 9 ? 0 : 0.5 * sm((kp - 9.2) / 2.5)),
+      limbs: F.limbs.concat(B.limbs, [root64(K, 5.6, PI / 2, Am, Rm), root64(K, 6.3, 0.15, As, Rs), root64(K, 6.3, PI - 0.15, Bs, Rs)],
+        [leaf64(K, 11, 0, L1, 0.48), leaf64(K, 10.9, PI, L2, 0.48), leaf64(K, 10, 0, L3, 0.4), leaf64(K, 9.9, PI, L4, 0.4)],
+        pet.map(p => lim64(K, 15, p.ux > 0.1 ? 0 : p.ux < -0.1 ? PI : -PI / 2, p.abs, [0.27, 0.42, 0.34, 0.07], { flat: [0, 0, 1], fk: () => 0.3, foam: () => 1, petal: 1 })),
+        [
+          tend64(K, 9.1, 0, [[0.4, 1.62, 0.05], [0.8, 1.56, 0.06], [1.18, 1.5, 0.07], [1.46, 1.32, 0.07], [1.42, 1.06, 0.07], [1.2, 1.0, 0.07], [1.1, 1.18, 0.07], [1.22, 1.28, 0.07]]),
+          tend64(K, 9.05, PI, [[-0.4, 1.58, 0.05], [-0.8, 1.5, 0.06], [-1.14, 1.4, 0.07], [-1.3, 1.18, 0.07], [-1.14, 1.0, 0.07], [-0.98, 1.14, 0.07], [-1.08, 1.26, 0.07]])]),
+      face: { c: [0, 4.75, 1.25], d: [0, 0.1, 1], k: 2.25, er: 1.0, dx: 0.2, lid: 0.45, brow: { y: 0.245, len: 0.13, ang: [-0.25, -0.25], arch: 0.03, r: 0.015 }, mouth: { w: 0.11, d: 0.045, y: -0.2, tilt: 0, r: 0.018 } }, eyes: [1, 1],
+      pen: F.pen.concat(B.pen, hair64(Am, Rm, 1, 1), hair64(As, Rs, 1, 2), hair64(Bs, Rs, -1, 2), vein64(L1, 0.48), vein64(L2, 0.48), vein64(L3, 0.4, 1), vein64(L4, 0.4, 1),
+        pet.map(p => pen64([[p.abs[1][0] * 0.9, 4.7 + (p.abs[1][1] - 4.7) * 0.9], [p.abs[2][0], p.abs[2][1]], [p.abs[3][0] * 0.94, 4.7 + (p.abs[3][1] - 4.7) * 0.94]], 0.4)), [zig64(-0.44, 0.48, 1.26, 0.04, 9, 0.03)]),
+      drops: [[-2.6, 0, 0.7, 0.06], [2.6, 0, 0.5, 0.055], [0.9, 0, 1.7, 0.045], [-1.1, 0, 1.5, 0.04]] }, COM64); }
+];
+/* the wash: the same shader as Water's; its four blues become brown-violet, leaf green or pink by what the skin is made of there; nothing is a pool */
+function tint64(T, S) { if (!S.m30) return; S.t64 = true; S.t48 = true; const C = W64.C, way = S.way64, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', mx = k => 'mix(mix(' + g(C.b[k]) + ', ' + g(C.g[k]) + ', g64), ' + g(C.p[k]) + ', p64)',
+    sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float g64 = smoothstep(0.15, 0.35, vW29.w), p64 = smoothstep(0.65, 0.85, vW29.w), pl = 0.0,'], ['vec3(0.64, 0.80, 0.945)', mx('lite')], ['vec3(0.40, 0.59, 0.84)', mx('edge')], ['vec3(0.36, 0.52, 0.78)', mx('shade')], ['vec3(0.60, 0.76, 0.92)', mx('margin')]];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s64) return; m.userData.s64 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's64' + way; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+/* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
+function seed64Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC64[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W64.geo[stage]) W26.geo[3] = W64.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W64.ROLE[stage]; W26.TARGET = W64.TARGET[stage];
+  try { g = fig26(T, 3, extra); W64.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J; S.way64 = 'g' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  /* eyes not quite a pair */ if (o.eyes && S.F) S.F.eyes.forEach((e, i) => { const k = o.eyes[i] || 1; e.g.children.forEach(m => { m.scale.multiplyScalar(k); m.position.multiplyScalar(k); }); e.er *= k; });
+  /* the pen's own strokes (veins, the broken coat, root hairs): laid on the skin by rays from in front, or given in the air; each rides the joint nearest to it */
+  const near = p => { let bj = 1, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
+  const strokes = (o.pen || []).map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
+        pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); if (p.z < -G.H) break; } return null; }).filter(Boolean); }
+    if (pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+  S.a64 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  tint64(T, S); W64.figs.push(S); if (W64.figs.length > 24) W64.figs.splice(0, W64.figs.length - 24); return g; }
+/* no pool ripples and no flow lines down the front (as Dry ice and Slime: G.pl and the chest are hidden from the pen for the moment of drawing); its own
+   strokes are then written by builder 48's ink48 with the figure's own pen, S.a48 lent for that call only, so Acid's idle and act never run on it */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way64) return f0(T, S, ren, cam); if (!S.t64) tint64(T, S); const pl = S.G.pl, R0 = S.G.R; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 });
+  try { f0(T, S, ren, cam); } finally { S.G.pl = pl; S.G.R = R0; }
+  if (S.a64) { const a0 = S.a48; S.a48 = S.a64; try { ink48(T, S, ren, cam); } catch (e) { W64.err = String(e && e.stack); } finally { S.a48 = a0; } } })(draw30);
+KIT.seed64Fig = seed64Fig; KIT.SEED64 = W64;
+/* behind the switch: Seedling's bench figure is the spirit at its stage (the jar keeps the old Seedling) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homseed' && KIT.seed64 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = seed64Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W64.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W64 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
