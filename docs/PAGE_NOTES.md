@@ -944,3 +944,16 @@ Branch `dryice-builder-49` (worktree `dryice49`; `steam` merged in first). Files
   - `cd /c/Work/atlas-atoms/.claude/worktrees/dryice49/.claude/r49 && NAME=dryice57-act-5 SHOW=300 WSIZE=2584,1532 timeout 1100 ./run.sh d57 "&part=take&stage=5&secs=14" 1080 && python make4.py dryice57-act-5.mp4 dryice57-act-5`
 
 scheme.html: bump `kitart.js?v=` (99 to 100), `scheme.js?v=` (402 to 403).
+
+## Sixtieth builder (15 November)
+
+Branch `acid-builder-35` (worktree `acid35`; `steam` merged in first). One file of code: `scheme.js`, block `S58` only (`kitart.js` untouched). Shots in `C:\Work\atlas-atoms\.claude\shots`: `acid60-act-strip.jpg` (stage 3, twelve square crops of the act), `acid60-act-strip.txt`.
+
+- **Size.** `s58Fig` measures its trunk, head and flame (not the pool's licks, not the arms) off its own joints as the camera sees them at home; `S58K` per stage is the height wanted as a share of the page (a box with some padding: 0.28 / 0.34 / 0.42 / 0.45 / 0.48). Seen: about a quarter of the page at stage 1, a third at stage 3 (about as tall as the triol), a little under a third at stage 5. It grows along the way out (`k` eased by distance, as before) and shrinks going home. `a20Fig`'s box was not its body (its `k` sat at the clamp 1.3), which is why it was small.
+- **Where it stands.** Per atom, a grid search on that atom's page: its body box must keep clear of every atom (raised ones counted higher up the page), points on every bond, and the atoms it will eat and their bonds; nearest to the atom with its chest about level with it; head may rise past the page top over the bench; feet on the page. If any atom has no such place within reach (0.45 of its height), the scale steps down by 0.94 for all.
+- **Trip.** Glance 450, bench slide 1000, haul 800, fast slide, creep 850 (ms, times the stage factor); home at least 1600. Stage 3 on the triol: leaves at about 1.2 s, at the first atom at 5.0 s; home 10.9 to 13.0 s. First atom 1100 ms (was 1500), second 900 (1000), lick 800 (950), pit 600 (700). Act about 13.6 s (was 13.4).
+- **Eaten atoms.** The rules take them off with the fire and the act starts at the tap, so they cannot stay on without touching the rules: at the tap they come back as pencilled ghosts (paper-pale fill, a pencil ring from a back-face sphere, thin pale bond) and fill in solid as its claw reaches each one.
+- **Record**: same as the fifty-eighth (job `j_a58.js`); strip: `NAME=s60e WSIZE=1920,1200 ./run.sh a58 "&stage=3&smi=OC1CC(O)CC(O)C1&at=200,1300,2100,2700,3300,3900,4500,5100,5500,5900,6200,6500,6900,7300,7700,8100,8600,9100,9500,9900,10500,11300,12100,12900" 480` then `python pick60.py frames/s60e out.jpg 2,3,4,6,9,10,11,14,17,19,21,23 6 400` (new `pick60.py` in `.claude/r55`, square crop holding home and the molecule).
+- **Weak**: the ghost ring is thin and faint (reads as pale pink balls); on the bench it is still home size, so the first part of the trip is small; near the right page edge a claw pokes past the page; the wide mouth is hard to catch in a still; stage 5 is held a little smaller by the narrow strip left of the molecule and its broad sleeves may brush the atom it reaches for; stages 2 and 4, sound and a real graphics card not checked.
+
+scheme.html: bump `scheme.js?v=` (404 to 405); `kitart.js` unchanged.
