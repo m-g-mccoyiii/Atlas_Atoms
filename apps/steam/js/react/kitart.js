@@ -6069,17 +6069,17 @@ KIT.W74 = W74; KIT.e74dbg = () => { const e = W74.e; return { err: W74.err, e: e
 //  5 the squall: a tall narrow spire, a crest of blades, arms crossed like folded knives, long streamers swept back and upward, a taut thread of tail
 KIT.amm78 = KIT.amm78 == null ? ((typeof location !== 'undefined' && /[?&]m78=1/.test(String(location.search))) ? 1 : null) : KIT.amm78;
 const W78 = { geo: {}, figs: [], err: null, TARGET: [0, 4200, 5000, 6200, 7400, 8600], ROLE: [], pen: 0.9,
-  C: { lite: [0.800, 0.950, 0.940], edge: [0.300, 0.690, 0.720], shade: [0.520, 0.500, 0.800], margin: [0.840, 0.950, 0.940], hl: [0.66, 0.80], lid: 0xb9e2e0, rime: 0xe9f7f6, damp: 0x1c2630 } };
+  C: { lite: [0.700, 0.900, 0.890], edge: [0.250, 0.600, 0.660], shade: [0.500, 0.460, 0.800], margin: [0.780, 0.920, 0.920], hl: [0.80, 0.90],   /* (builder 81) more wash, bare paper only on the lit side */ lid: 0xb9e2e0, rime: 0xe9f7f6, damp: 0x1c2630 } };
 /*SPEC78*/
 /* the spine: a pad hidden in the foot, then balls along the slant (x, y, radius, z); role says which of them are chest, neck, head and the point.
    dx moves the whole picture sideways so that the game's shadow lies under the leaning body, next to the foot */
-const mk78 = (x0, pts, role, dx, ym) => ({ K: pad64(x0 + dx, 0, 0.06).concat(pts.map(p => [p[0] + dx, ym ? ym(p[1]) : p[1], p[3] || 0, p[2], p[2] * 0.88])), role, x0: x0 + dx, dx, ym: ym || (y => y) });
+const mk78 = (x0, pts, role, dx, ym) => ({ K: pad64(x0 + dx, 0, 0.06).concat(pts.map(p => { const r = p[2] * (p[2] > 0.1 ? 1.2 : p[2] > 0 ? 1.18 : 1); /* (builder 81) more body */ return [p[0] + dx, ym ? ym(p[1]) : p[1], p[3] || 0, r, r * 0.88]; })), role, x0: x0 + dx, dx, ym: ym || (y => y) });
 /* the head: a ball (the face) drawn up to one sharp point, a radians off upright, the way it leans */
 const head78 = (c, r, a) => { const s = Math.sin(a), k = Math.cos(a); return [[c[0], c[1], r], [c[0] + s * r * 0.62, c[1] + k * r * 0.62, r * 0.66], [c[0] + s * r * 1.15, c[1] + k * r * 1.15, r * 0.38], [c[0] + s * r * 1.62, c[1] + k * r * 1.62, r * 0.16], [c[0] + s * r * 2.05, c[1] + k * r * 2.05, 0]]; };
 /* a streak: a limb flattened toward the eye, widest a third of the way along, drawn out to a needle; it lies behind the body unless z is given */
-const blade78 = (B, i, th, abs, w, o) => lim64(B.K, 4 + i, th, abs.map(p => [p[0] + B.dx + (o ? o[0] : 0), B.ym(p[1] + (o ? o[1] : 0)), p[2] == null ? -0.22 : p[2]]), abs.map((p, j, a) => j === a.length - 1 ? 0.035 : Math.max(0.075, w * Math.pow(Math.sin(PI * (0.22 + 0.78 * j / (a.length - 1))), 0.8))), { flat: [0, 0, 1], fk: () => 0.3, foam: () => 0, blade: 1 });
+const blade78 = (B, i, th, abs, w, o) => { const P = abs.map(p => [p[0] + B.dx + (o ? o[0] : 0), B.ym(p[1] + (o ? o[1] : 0)), p[2] == null ? -0.22 : p[2]]); return lim64(B.K, 4 + i, th, P, abs.map((p, j, a) => j === a.length - 1 ? 0.035 : Math.max(0.075, w * Math.pow(Math.sin(PI * (0.22 + 0.78 * j / (a.length - 1))), 0.8))), { flat: [0, 0, 1], fk: () => 0.3, foam: () => 0, blade: 1, ab: P, wd: w, cu: o && o[2] }); };
 /* an arm: thin, in front of the body, ending in a needle */
-const arm78 = (B, i, th, abs, rad) => lim64(B.K, 4 + i, th, abs.map(p => [p[0] + B.dx, B.ym(p[1]), p[2] == null ? 0.14 : p[2]]), rad, { foam: () => 0, arm: 1 });
+const arm78 = (B, i, th, abs, rad) => lim64(B.K, 4 + i, th, abs.map(p => [p[0] + B.dx, B.ym(p[1]), p[2] == null ? 0.14 : p[2]]), rad.map((r, j, a) => r * (j === a.length - 1 ? 1.1 : 1.32)), { foam: () => 0, arm: 1 });   /* (builder 81) arms thicker, so they take wash */
 /* the three-pointed foot: three short toes on the wood where the thread of tail stands; and the frost round it, in pen */
 const foot78 = (B, f) => { const x = B.x0, R = [0.075 * f, 0.065 * f, 0.04 * f], toe = (th, dx, dz) => lim64(B.K, 4.3, th, [[x + dx * 0.3, 0.07, dz * 0.3], [x + dx * 0.68, 0.05, dz * 0.68], [x + dx, 0.04, dz]], R, { foam: () => 0, root: 1 });
   return [toe(0.6, 0.62 * f, 0.4 * f), toe(PI - 0.6, -0.62 * f, 0.4 * f), toe(-PI / 2, 0.03 * f, -0.68 * f)]; };
@@ -6090,39 +6090,41 @@ const face78 = (B, c, r, k, f) => Object.assign({ c: [c[0] + B.dx, B.ym(c[1]), r
 const COM78 = { foot: 0.02, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, foam: () => 0 };
 const SPEC78 = [
   // 1 the whiff
-  () => { const hc = [0.1, 1.4], hr = 0.62, B = mk78(0, [[0, 0.1, 0.09], [-0.02, 0.4, 0.09], [0, 0.72, 0.14], [0.03, 0.95, 0.3]].concat(head78(hc, hr, 0.42)), { chest: 3, neck: 3, head: 4, hair: 7 }, 0);
-    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.5, rime: [0.95, 0.6, 0.55], damp: [0.6, 0.4, 0.4],
-      limbs: foot78(B, 0.8),
-      face: face78(B, hc, hr, 1.75, { lid: 0.46, brow: { y: 0.215, len: 0.17, ang: [0.36, 0.36], arch: 0, r: 0.022 }, mouth: { w: 0.06, d: -0.015, y: -0.2, x: 0.05, r: 0.024 } }),
+  /* (builder 81) a sharp lick already leaning on its slant, point tilted up, one short streak: not a round drop */
+  () => { const hc = [0.46, 1.2], hr = 0.5, B = mk78(-0.1, [[-0.1, 0.1, 0.07], [-0.02, 0.34, 0.07], [0.1, 0.58, 0.11], [0.26, 0.84, 0.26]].concat(head78(hc, hr, 0.66)), { chest: 3, neck: 3, head: 4, hair: 7 }, 0.15);
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.75, rime: [1.25, 0.8, 0.5], damp: [0.75, 0.5, 0.42],
+      limbs: foot78(B, 0.85).concat([blade78(B, 4.4, PI, [[0.25, 1.5], [-0.25, 1.68], [-0.75, 1.62], [-1.15, 1.42]], 0.17)]),
+      face: face78(B, hc, hr, 1.6, { lid: 0.52, brow: { y: 0.2, len: 0.19, ang: [0.05, 0.05], arch: 0, r: 0.024 }, mouth: { w: 0.06, d: -0.012, y: -0.2, x: 0.05, r: 0.024 } }),
       pen: rime78(B, 0.8) }, COM78); },
   // 2 the sting
   () => { const hc = [0.56, 2.72], hr = 0.62, ho = [0.06, 0.22], B = mk78(-0.85, [[-0.85, 0.1, 0.085], [-0.8, 0.42, 0.085], [-0.66, 0.76, 0.11], [-0.44, 1.1, 0.2], [-0.2, 1.44, 0.34], [0.06, 1.78, 0.48], [0.32, 2.2, 0.28]].concat(head78(hc, hr, 0.6)), { chest: 5, neck: 6, head: 7, hair: 10 }, 0.3);
-    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.4, rime: [1.0, 0.64, 0.55], damp: [0.64, 0.42, 0.4],
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.5, rime: [1.3, 0.83, 0.5], damp: [0.8, 0.52, 0.42],
       limbs: foot78(B, 0.9).concat([arm78(B, 5, 0, [[0.6, 1.8], [1.1, 1.72], [1.65, 1.82], [2.15, 2.02]], [0.12, 0.11, 0.09, 0.045]),
         blade78(B, 7.3, PI, [[-0.1, 2.75], [-0.75, 2.9], [-1.4, 2.8], [-1.9, 2.55]], 0.19, ho), blade78(B, 5, PI, [[-0.45, 1.95], [-1.0, 2.0], [-1.5, 1.85]], 0.15)]),
-      face: face78(B, hc, hr, 1.85, { lid: 0.42, brow: { y: 0.215, len: 0.18, ang: [0.36, 0.2], lift: [0, 0.07], arch: 0, r: 0.022 }, mouth: { w: 0.085, d: 0.018, y: -0.2, x: 0.05, tilt: 0.03, r: 0.024 } }),
+      face: face78(B, hc, hr, 1.85, { lid: 0.5, brow: { y: 0.2, len: 0.2, ang: [0.05, 0.0], lift: [0, 0.07], arch: 0, r: 0.025 }, mouth: { w: 0.085, d: 0.018, y: -0.2, x: 0.05, tilt: 0.03, r: 0.024 } }),
       pen: rime78(B, 0.9) }, COM78); },
   // 3 the gust (the line-up's figure)
   () => { const hc = [0.62, 3.55], hr = 0.68, ho = [0.1, 0.25], B = mk78(-1.25, [[-1.25, 0.1, 0.08], [-1.22, 0.5, 0.08], [-1.1, 0.9, 0.09], [-0.9, 1.3, 0.12], [-0.62, 1.7, 0.2], [-0.3, 2.1, 0.4], [0.02, 2.5, 0.58], [0.34, 2.95, 0.3]].concat(head78(hc, hr, 0.52)), { chest: 6, neck: 7, head: 8, hair: 11 }, 0.55);
-    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.25, rime: [1.1, 0.7, 0.55], damp: [0.7, 0.46, 0.4],
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.25, rime: [1.45, 0.92, 0.5], damp: [0.88, 0.58, 0.42],
       limbs: foot78(B, 1).concat([arm78(B, 6, 0, [[0.62, 2.56], [1.15, 2.5], [1.7, 2.62], [2.25, 2.9]], [0.13, 0.12, 0.1, 0.045]), arm78(B, 6, PI, [[-0.5, 2.5, 0.1], [-1.0, 2.3, 0.1], [-1.05, 1.9, 0.14], [-0.62, 1.72, 0.2]], [0.12, 0.11, 0.105, 0.09]),
         blade78(B, 8.8, PI, [[-0.15, 3.7], [-0.8, 3.95], [-1.6, 3.95], [-2.4, 3.75]], 0.2, ho), blade78(B, 8.2, PI, [[-0.2, 3.25], [-0.9, 3.35], [-1.6, 3.25], [-2.1, 3.0]], 0.22, ho), blade78(B, 6, PI, [[-0.5, 2.75], [-1.15, 2.85], [-1.85, 2.7], [-2.45, 2.4]], 0.18)]),
-      face: face78(B, hc, hr, 2.0, { lid: 0.46, brow: { y: 0.215, len: 0.19, ang: [0.26, 0.26], arch: 0, r: 0.022 }, mouth: { w: 0.11, d: -0.02, y: -0.21, x: 0.04, tilt: 0.03, r: 0.024 } }),
+      face: face78(B, hc, hr, 2.0, { lid: 0.52, brow: { y: 0.2, len: 0.21, ang: [0.04, 0.04], arch: 0, r: 0.025 }, mouth: { w: 0.11, d: -0.02, y: -0.21, x: 0.04, tilt: 0.03, r: 0.024 } }),
       pen: rime78(B, 1) }, COM78); },
   // 4 the gale
   () => { const hc = [0.34, 4.4], hr = 0.74, ho = [0.04, 0.24], B = mk78(-0.75, [[-0.75, 0.1, 0.085], [-0.8, 0.5, 0.085], [-0.72, 0.95, 0.09], [-0.58, 1.4, 0.12], [-0.42, 1.9, 0.2], [-0.28, 2.4, 0.34], [-0.12, 2.9, 0.56], [0, 3.25, 0.66], [0.16, 3.78, 0.32]].concat(head78(hc, hr, 0.38)), { chest: 7, neck: 8, head: 9, hair: 12 }, 0.5, y => (y < 1.9 ? y * 0.75 : y - 0.475));
-    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.12, rime: [1.2, 0.76, 0.55], damp: [0.76, 0.5, 0.4],
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.12, rime: [1.6, 1.0, 0.5], damp: [0.96, 0.62, 0.42],
       limbs: foot78(B, 1.08).concat([arm78(B, 7, 0, [[0.7, 3.4], [1.2, 3.62], [1.7, 4.1], [2.1, 4.7]], [0.14, 0.13, 0.11, 0.05]), arm78(B, 7, PI, [[-0.72, 3.2, 0.05], [-1.15, 2.85, 0.05], [-1.5, 2.4, 0.05], [-1.75, 1.95, 0.05]], [0.13, 0.12, 0.1, 0.05]),
         blade78(B, 9.9, PI, [[0, 4.9], [-0.3, 5.3], [-0.75, 5.58], [-1.3, 5.68]], 0.18, ho), blade78(B, 9.5, PI, [[-0.25, 4.66], [-0.9, 5.05], [-1.7, 5.3], [-2.5, 5.35]], 0.22, ho), blade78(B, 9.1, PI, [[-0.42, 4.3], [-1.1, 4.42], [-1.8, 4.34], [-2.4, 4.1]], 0.22, ho), blade78(B, 8.6, PI, [[-0.4, 3.95], [-0.95, 3.85], [-1.5, 3.62], [-1.9, 3.3]], 0.17, ho)]),
-      face: face78(B, hc, hr, 2.1, { lid: 0.5, brow: { y: 0.215, len: 0.2, ang: [0.2, 0.3], lift: [0.05, 0], arch: 0, r: 0.023 }, mouth: { w: 0.13, d: 0.035, y: -0.21, x: 0.04, tilt: 0.045, tick: 1, r: 0.025 } }),
+      face: face78(B, hc, hr, 2.1, { lid: 0.52, brow: { y: 0.2, len: 0.22, ang: [0.04, 0.06], lift: [0.03, 0], arch: 0, r: 0.026 }, mouth: { w: 0.13, d: 0.035, y: -0.21, x: 0.04, tilt: 0.045, tick: 1, r: 0.025 } }),
       pen: rime78(B, 1.08) }, COM78); },
   // 5 the squall
-  () => { const hc = [0.22, 5.46], hr = 0.78, ho = [0.02, 0.28], B = mk78(-0.42, [[-0.42, 0.1, 0.085], [-0.4, 0.6, 0.085], [-0.36, 1.1, 0.085], [-0.32, 1.6, 0.09], [-0.26, 2.1, 0.13], [-0.2, 2.6, 0.24], [-0.12, 3.2, 0.42], [-0.04, 3.8, 0.66], [0.02, 4.2, 0.74], [0.1, 4.76, 0.34]].concat(head78(hc, hr, 0.26)), { chest: 8, neck: 9, head: 10, hair: 13 }, 0.6, y => (y < 2 ? y * 0.7 : y - 0.6));
-    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.2, rime: [1.3, 0.82, 0.55], damp: [0.82, 0.54, 0.4],
-      limbs: foot78(B, 1.15).concat([arm78(B, 8, 0, [[0.72, 4.2, 0.25], [0.55, 3.8, 0.6], [0.05, 3.62, 0.74], [-0.5, 3.8, 0.62], [-0.92, 4.12, 0.45]], [0.17, 0.16, 0.15, 0.12, 0.05]), arm78(B, 8, PI, [[-0.68, 4.2, 0.25], [-0.52, 3.74, 0.62], [0, 3.46, 0.8], [0.55, 3.56, 0.66], [0.98, 3.84, 0.48]], [0.17, 0.16, 0.15, 0.12, 0.05]),
-        blade78(B, 11, PI, [[0.1, 6.2], [0, 6.55], [-0.15, 6.85], [-0.35, 7.05]], 0.17), blade78(B, 10.6, PI, [[-0.3, 6.0], [-0.65, 6.4], [-1.1, 6.7], [-1.6, 6.85]], 0.19), blade78(B, 10.6, 0, [[0.85, 5.95], [1.2, 6.3], [1.6, 6.5]], 0.14),
-        blade78(B, 10.2, PI, [[-0.55, 5.6], [-1.3, 5.9], [-2.2, 6.1], [-3.0, 6.05]], 0.24), blade78(B, 10, PI, [[-0.55, 5.15], [-1.3, 5.2], [-2.1, 5.05], [-2.75, 4.7]], 0.24), blade78(B, 9.4, PI, [[-0.4, 4.8], [-1.0, 4.6], [-1.6, 4.3], [-2.0, 3.9]], 0.18)]),
-      face: face78(B, hc, hr, 2.2, { lid: 0.42, brow: { y: 0.22, len: 0.21, ang: [0.34, 0.34], arch: 0, r: 0.025 }, mouth: { w: 0.1, d: 0.004, y: -0.21, x: 0.02, tilt: 0.012, r: 0.025 } }),
+  /* (builder 81) a banner of six long streaks rising and spreading behind it, arms thick enough to take wash, a wide frost */
+  () => { const hc = [0.22, 5.46], hr = 0.78, B = mk78(-0.42, [[-0.42, 0.1, 0.085], [-0.4, 0.6, 0.085], [-0.36, 1.1, 0.085], [-0.32, 1.6, 0.09], [-0.26, 2.1, 0.13], [-0.2, 2.6, 0.24], [-0.12, 3.2, 0.42], [-0.04, 3.8, 0.66], [0.02, 4.2, 0.74], [0.1, 4.76, 0.34]].concat(head78(hc, hr, 0.26)), { chest: 8, neck: 9, head: 10, hair: 13 }, 0.6, y => (y < 2 ? y * 0.7 : y - 0.6));
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.2, rime: [1.9, 1.2, 0.55], damp: [1.15, 0.74, 0.42],
+      limbs: foot78(B, 1.2).concat([arm78(B, 8, 0, [[0.72, 4.2, 0.25], [0.55, 3.8, 0.6], [0.05, 3.62, 0.74], [-0.5, 3.8, 0.62], [-0.92, 4.12, 0.45]], [0.17, 0.16, 0.15, 0.12, 0.05]), arm78(B, 8, PI, [[-0.68, 4.2, 0.25], [-0.52, 3.74, 0.62], [0, 3.46, 0.8], [0.55, 3.56, 0.66], [0.98, 3.84, 0.48]], [0.17, 0.16, 0.15, 0.12, 0.05]),
+        blade78(B, 11, PI, [[0.15, 6.3], [-0.2, 6.8], [-0.9, 7.1], [-1.7, 7.2]], 0.26), blade78(B, 10.8, PI, [[-0.25, 6.05], [-1.0, 6.5], [-2.0, 6.75], [-3.0, 6.8]], 0.34), blade78(B, 10.5, PI, [[-0.45, 5.65], [-1.35, 5.95], [-2.4, 6.12], [-3.4, 6.1]], 0.36),
+        blade78(B, 10.2, PI, [[-0.55, 5.25], [-1.4, 5.42], [-2.4, 5.5], [-3.3, 5.4]], 0.32)]),
+      face: face78(B, hc, hr, 2.2, { lid: 0.5, brow: { y: 0.2, len: 0.23, ang: [0.04, 0.04], arch: 0, r: 0.027 }, mouth: { w: 0.1, d: 0.004, y: -0.21, x: 0.02, tilt: 0.012, r: 0.025 } }),
       pen: rime78(B, 1.15) }, COM78); }
 ];
 /*SPEC78 END*/
@@ -6135,9 +6137,9 @@ function tint78(T, S) { if (!S.m30) return; S.t78 = true; S.t48 = true; const C 
   const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s78) return; m.userData.s78 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's78'; m.needsUpdate = true; };
   one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
 /* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage */
-function amm78Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC78[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
-  S25[2] = sp; if (W78.geo[stage]) W26.geo[3] = W78.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W78.ROLE[stage] || (W78.ROLE[stage] = sp().role); W26.TARGET = W78.TARGET[stage];
-  try { g = fig26(T, 3, extra); W78.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+function amm78Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const rb = KIT.idle81 !== false, gk = stage + (rb ? 'r' : ''), sp = () => { const o = SPEC78[stage - 1](); if (rb) { o.rib = o.limbs.filter(l => l.blade); o.limbs = o.limbs.filter(l => !l.blade); } return o; }   /* (builder 81) with W81's idle on, the streaks are drawn ribbons of vapour, not skin */, keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W78.geo[gk]) W26.geo[3] = W78.geo[gk]; else delete W26.geo[3]; W26.ROLE[3] = W78.ROLE[stage] || (W78.ROLE[stage] = sp().role); W26.TARGET = W78.TARGET[stage];
+  try { g = fig26(T, 3, extra); W78.geo[gk] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
   const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, C = W78.C; S.way78 = 'm' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
   const near = p => { let bj = 1, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
   /* thin as it is, it stands a little taller than the game sizes a spirit (a group of its own between the game's holder and the figure) */
@@ -6151,6 +6153,7 @@ function amm78Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0))
   const strokes = (o.pen || []).map(s => { const pts = s.air; if (!pts || pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
     return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
   S.a78 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  if (W78.hook) { try { W78.hook(T, S, o, extra); } catch (e) { W78.err = 'hook ' + String(e && e.stack); } }
   tint78(T, S); W78.figs.push(S); if (W78.figs.length > 24) W78.figs.splice(0, W78.figs.length - 24); return g; }
 /* damp and rime lie on the bench under the foot, whatever way the figure is tipped */
 function lay78(T, S) { const e = S.lay78, p = e.parent, V = W78.v || (W78.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
@@ -6163,4 +6166,139 @@ KIT.amm78Fig = amm78Fig; KIT.AMM78 = W78;
 /* behind the switch: Ammonia's bench figure is the spirit at its stage (the jar keeps the old Ammonia) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homammonia' && KIT.amm78 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = amm78Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W78.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W78 END
+// ==== W81 BEGIN
+// (builder 81) AMMONIA ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle81; false or ?i81=0 gives Water's rest back on it and its streaks back
+// as skin; set it before the figure is first built). The new Ammonia (W78) is ON by default from here (bench and jar); ?m78=0 gives the old one.
+// High-strung and sharp: nothing bobs or sways soft; every move is quick, straight, and stops dead (kf81: a fast arrival with a small click).
+// The thread stays pinned at the foot while the body QUIVERS along its slant in bursts of fine shivers that stop (Water's own lean, bent from the
+// foot, so the body bends and never parts); its head jerks in quick sniffs, point up, turns sharply to look with its eyes narrowed, holds, turns
+// away with a toss (Water's tilt and turn of the neck); it leans out along its slant as if straining to be off and is tugged back; a needle arm
+// flicks out and back like a fencer testing a blade. Its streaks are drawn ribbons of vapour (wash with a broken pen line along their edges)
+// that stream back in one wind, curl at their ends, and now and then snap like a pennant. Tears of condensation bead at its point and are flung off
+// sideways when it snaps its head; rime creeps out from its foot and draws back; a thin cold wisp boils off the wet patch.
+//  1 the whiff: sniffs in every direction in tiny jerks and shivers
+//  2 the sting: practises one lunge with its needle arm, over and over, smirking
+//  3 the gust: strains forward on its slant, fist on hip, tosses its head, looks, flicks its arm
+//  4 the gale: stands taller, its mane whipping, points sharply at things one after another as if giving orders
+//  5 the squall: holds perfectly still, arms crossed, only its banner of streaks roaring behind it; then one slow turn of the head and a look
+KIT.idle81 = KIT.idle81 == null ? !(typeof location !== 'undefined' && /[?&]i81=0/.test(String(location.search))) : KIT.idle81;
+if (KIT.amm78 == null && !(typeof location !== 'undefined' && /[?&]m78=0/.test(String(location.search)))) KIT.amm78 = 1;
+const W81 = { err: null, n: 0, ms: 0, jar: 0.6 };
+const on81 = S => !!(S && S.way78 && KIT.idle81 !== false);
+const clk81 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W81.jar : 1) + S.st * 2.3;
+/* keys [t, dur, values...] in a cycle; each value is reached fast (or smoothly when dur > 0.5) with a small click on arrival, then held dead */
+const kf81 = (u, K) => { let i = -1; for (let k = 0; k < K.length; k++) if (K[k][0] <= u) i = k; const b = K[i < 0 ? K.length - 1 : i], a = K.length < 2 ? b : K[i < 0 ? K.length - 2 : (i - 1 + K.length) % K.length], n = b.length - 2, out = new Array(n);
+  const x = i < 0 ? 1 : (u - b[0]) / b[1], e = x >= 1 ? 1 : b[1] > 0.5 ? sm52(x) : 1 - Math.pow(1 - x, 3) + 0.2 * Math.sin(PI * x) * x * x; for (let k = 0; k < n; k++) out[k] = a[k + 2] + (b[k + 2] - a[k + 2]) * e; return out; };
+const win81 = (u, W) => { let v = 0; W.forEach(w => { v = Math.max(v, sm52((u - w[0]) / 0.04) * (1 - sm52((u - w[1]) / 0.04))); }); return v; };
+/* per stage: P the cycle; H keys of the head [tilt, hturn, lookx, narrow]; L keys of the lean and the arm [lean, armR]; Q bursts of quiver, A its
+   size; wind [size, speed] of the streaks; ev the head snaps that fling a tear [t, dir] */
+const P81 = [null,
+  { P: 6.2, A: 0.032, wind: [0.8, 2.1], ev: [[1.05, -1], [2.2, 1], [3.45, -1], [4.85, 1]], Q: [[0.2, 0.5], [1.2, 1.5], [2.6, 3.3], [3.9, 4.25], [5.6, 5.95]],
+    H: [[0, 0.08, 0.16, 0, 0, 0], [0.55, 0.07, 0.32, 0.38, 0.8, 0], [1.05, 0.07, 0.2, -0.42, -0.9, 0.2], [1.6, 0.08, 0.36, 0.1, 0, 0], [2.2, 0.07, 0.08, 0.5, 1, 0], [2.9, 0.07, 0.28, -0.34, -0.7, 0.2], [3.45, 0.08, 0.38, 0, 0, 0], [4.3, 0.07, 0.12, 0.46, 0.9, 0], [4.85, 0.07, 0.3, -0.24, -0.5, 0], [5.5, 0.1, 0.16, 0, 0, 0]],
+    L: [[0, 0.1, 0, 0], [2.3, 0.09, -0.08, 0], [2.6, 0.08, -0.13, 0], [3.3, 0.06, 0.05, 0], [3.42, 0.1, 0, 0]] },
+  { P: 3.4, A: 0.026, wind: [0.9, 2.3], ev: [[1.05, 1], [2.55, -1]], Q: [[1.15, 1.55], [2.95, 3.32]], smile: 1.5,
+    H: [[0, 0.12, 0.16, 0, 0, 0], [0.7, 0.16, 0.22, -0.1, -0.2, 0], [1.05, 0.07, 0.08, 0.06, 0.9, 0.25], [2.05, 0.1, 0.16, 0, 0.3, 0], [2.55, 0.07, 0.36, 0.28, -0.6, 0], [2.8, 0.08, 0.16, 0, 0, 0]],
+    L: [[0, 0.12, 0, 0], [0.7, 0.16, 0.08, -0.32], [1.05, 0.07, -0.19, 0.16], [1.6, 0.05, -0.19, 0.3], [1.72, 0.05, -0.19, 0.16], [2.05, 0.1, 0, 0]] },
+  { P: 7.2, A: 0.036, wind: [1, 2.4], ev: [[3.9, -1], [4.7, 1], [5.9, -1]], Q: [[1.45, 1.9], [2.3, 3.05], [4.2, 4.6], [6.7, 7.05]],
+    H: [[0, 0.1, 0.16, 0, 0.2, 0], [1.4, 0.09, 0.14, 0, 0.5, 0], [3.1, 0.06, 0.2, 0, 0, 0], [3.25, 0.1, 0.16, 0, 0, 0], [3.9, 0.07, 0.4, 0.12, 0, 0], [4.15, 0.09, 0.14, 0, 0, 0], [4.7, 0.08, 0.18, -0.52, -1, 0.35], [5.9, 0.08, 0.34, 0.22, 0.3, 0], [6.15, 0.1, 0.16, 0, 0, 0]],
+    L: [[0, 0.1, 0, 0], [0.8, 0.09, -0.07, 0], [1.4, 0.09, -0.14, 0], [1.95, 0.06, -0.14, 0.26], [2.12, 0.06, -0.14, -0.05], [2.25, 0.06, -0.14, 0], [3.1, 0.06, 0.05, 0], [3.25, 0.1, 0, 0], [6.5, 0.06, 0, 0.24], [6.65, 0.06, 0, -0.04], [6.75, 0.06, 0, 0]] },
+  { P: 8.4, A: 0.022, wind: [1.3, 3.0], ev: [[0.8, 1], [1.9, -1], [3.0, 1], [6.4, 1]], Q: [[1.0, 1.35], [3.1, 3.5], [5.4, 5.9], [7.4, 7.8]], sq: 0.05,
+    H: [[0, 0.1, 0.18, 0, 0, 0], [0.8, 0.07, 0.12, 0.28, 0.9, 0.2], [1.9, 0.07, 0.3, -0.12, 0.2, 0], [3.0, 0.07, 0.08, 0.36, 1, 0.3], [4.1, 0.07, 0.24, -0.3, -0.7, 0], [5.2, 0.08, 0.18, 0, 0, 0], [6.4, 0.07, 0.12, 0.3, 0.9, 0.2], [7.3, 0.1, 0.18, 0, 0, 0]],
+    L: [[0, 0.1, 0, 0], [0.8, 0.07, -0.04, -0.35], [1.9, 0.07, 0.02, 0.22], [3.0, 0.07, -0.06, -0.55], [4.1, 0.07, 0, -0.15], [5.2, 0.08, 0, 0], [6.4, 0.07, -0.04, -0.4], [7.3, 0.1, 0, 0]] },
+  { P: 11, A: 0.004, wind: [1.7, 3.4], ev: [], Q: [[0, 11]],
+    H: [[0, 1.2, 0.15, 0, 0, 0], [5.0, 1.3, 0.2, -0.5, -1, 0.3], [8.4, 1.1, 0.15, 0, 0, 0]], L: [[0, 0.1, 0, 0]] }];
+/* the numbers of this moment */
+function ev81(S, tt) { const st = S.st, P = P81[st] || P81[3], u = fr52(tt / P.P) * P.P, h = kf81(u, P.H), l = kf81(u, P.L), q = win81(u, P.Q) * P.A, TAU = 2 * PI;
+  const shv = q * (0.7 * Math.sin(TAU * 13.7 * tt) + 0.3 * Math.sin(TAU * 21.3 * tt + 1));
+  const bl = st === 5 ? pl52(fr52(tt / 11 + 0.15), 0, 0.06, 0.03) : pl52(fr52(tt / 4.3 + 0.2 * st), 0, 0.03, 0.012);
+  return { u, P, tilt: h[0] + 0.6 * shv, hturn: h[1], lookx: h[2], looky: -0.55 + 0.15 * h[3], blink: Math.max(bl, 0.32 * h[3]), brow: -0.25 - 0.45 * h[3], lean: l[0] + shv, armR: l[1], hair: (st === 1 ? 0.6 * (h[0] - 0.16) : 0) + 2 * shv, smile: P.smile || 1, sq: P.sq || 0, shv }; }
+/* the clip's numbers: Water's own bones bend it (lean from the foot, the neck's tilt and turn, the arm), so the body stays one and never parts */
+function rest81(S, t, o, q, lag) { const E = ev81(S, clk81(S) - 0.35 * (lag || 0) / 1000);
+  q.sq = E.sq; q.lean = E.lean; q.bow = 0; q.hair = E.hair; q.armR = E.armR; q.armL = 0; q.px = q.pz = 1; q.tilt = E.tilt; q.nod = 0; q.hturn = E.hturn; q.turn = 0; q.swell = 0; q.sink = 0;
+  q.lookx = E.lookx; q.looky = E.looky; q.brow = E.brow; q.blink = E.blink; q.wide = 0; q.lidx = 0; q.smile = E.smile; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on81(S)) return rest81(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* textures: a ribbon of vapour (u along it, v across: lilac below, teal, pale above, faint streaks, fading at the tip); a tear; the frost */
+function tex81(T, kind) { const key = 't' + kind; if (W81[key]) return W81[key]; const c = document.createElement('canvas'), x = c.getContext('2d'), r = rnd63(811);
+  if (kind === 'rib') { c.width = 256; c.height = 64; const g = x.createLinearGradient(0, 64, 0, 0); g.addColorStop(0, 'rgba(150,138,214,0.0)'); g.addColorStop(0.08, 'rgba(128,112,206,0.7)'); g.addColorStop(0.42, 'rgba(104,196,204,0.8)'); g.addColorStop(0.8, 'rgba(196,238,236,0.72)'); g.addColorStop(0.94, 'rgba(236,250,248,0.55)'); g.addColorStop(1, 'rgba(236,250,248,0.0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 64);
+    x.lineCap = 'round'; for (let i = 0; i < 9; i++) { const y = 10 + 44 * r(), a = 0.12 + 0.18 * r(); x.strokeStyle = i % 3 ? 'rgba(70,140,150,' + a + ')' : 'rgba(255,255,255,' + (a + 0.15) + ')'; x.lineWidth = 1 + 1.6 * r(); x.beginPath(); x.moveTo(256 * r() * 0.3, y); for (let k = 1; k <= 8; k++) x.lineTo(32 * k, y + (r() - 0.5) * 4); x.stroke(); }
+    x.globalCompositeOperation = 'destination-in'; const m = x.createLinearGradient(0, 0, 256, 0); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(0.06, 'rgba(0,0,0,1)'); m.addColorStop(0.55, 'rgba(0,0,0,0.9)'); m.addColorStop(1, 'rgba(0,0,0,0.1)'); x.fillStyle = m; x.fillRect(0, 0, 256, 64); }
+  else if (kind === 'tear') { c.width = 48; c.height = 64; x.beginPath(); x.moveTo(24, 4); x.bezierCurveTo(30, 22, 42, 32, 42, 44); x.arc(24, 44, 18, 0, PI); x.bezierCurveTo(6, 32, 18, 22, 24, 4); x.closePath(); const g = x.createRadialGradient(20, 44, 2, 24, 44, 22); g.addColorStop(0, 'rgba(236,252,250,1)'); g.addColorStop(1, 'rgba(120,196,204,1)'); x.fillStyle = g; x.fill(); x.strokeStyle = 'rgba(28,40,52,0.95)'; x.lineWidth = 3.4; x.stroke(); x.fillStyle = '#fff'; x.beginPath(); x.ellipse(18, 40, 4, 6, -0.4, 0, 2 * PI); x.fill(); }
+  else { c.width = c.height = 256; const C0 = 128;
+    const g = x.createRadialGradient(C0, C0, 18, C0, C0, 128); g.addColorStop(0, 'rgba(20,30,40,0.55)'); g.addColorStop(0.3, 'rgba(24,36,48,0.42)'); g.addColorStop(0.46, 'rgba(40,70,84,0.22)'); g.addColorStop(0.52, 'rgba(30,50,62,0.34)'); g.addColorStop(0.58, 'rgba(60,90,100,0.0)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    const star = (cx, cy, s, a) => { for (let pass = 0; pass < 2; pass++) { x.strokeStyle = pass ? 'rgba(248,254,255,1)' : 'rgba(26,40,54,0.95)'; x.lineWidth = pass ? 2.2 : 4.4; x.lineCap = 'round'; x.beginPath(); for (let k = 0; k < 3; k++) { const b = a + k * PI / 3; x.moveTo(cx - Math.cos(b) * s, cy - Math.sin(b) * s); x.lineTo(cx + Math.cos(b) * s, cy + Math.sin(b) * s); } x.stroke(); } };
+    const spike = (a, r0, r1) => { for (let pass = 0; pass < 2; pass++) { x.strokeStyle = pass ? 'rgba(244,252,255,1)' : 'rgba(26,40,54,0.9)'; x.lineWidth = pass ? 2.6 : 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(C0 + Math.cos(a) * r0, C0 + Math.sin(a) * r0); x.lineTo(C0 + Math.cos(a) * r1, C0 + Math.sin(a) * r1); x.stroke(); } };
+    for (let i = 0; i < 18; i++) { const a = i / 18 * 2 * PI + 0.2 * r(); spike(a, 30 + 6 * r(), 52 + 30 * r()); }
+    for (let i = 0; i < 26; i++) { const a = 2 * PI * r(), d = 46 + 70 * Math.sqrt(r()); star(C0 + Math.cos(a) * d, C0 + Math.sin(a) * d, 5 + 7 * r(), r() * PI); } }
+  const t = new T.CanvasTexture(c); W81[key] = t; return t; }
+/* a canvas drawn as it is, unlit, its alpha kept (Lambert, black, the canvas as emissive: the pen-and-wash swap leaves it alone, as flat49) */
+const lam81 = (T, kind, o) => { const t = tex81(T, kind); return new T.MeshLambertMaterial(Object.assign({ color: 0x000000, emissive: 0xffffff, emissiveMap: t, map: t, transparent: true, depthWrite: false }, o || {})); };
+/* a ribbon's rest line: its streak's path smoothed, then a curl at the end (up, or down for the low ones) */
+function line81(ab, cu) { let P = ab.map(p => [p[0], p[1], p[2]]); for (let it = 0; it < 2; it++) { const Q = [P[0]]; for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; Q.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1], a[2]], [0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1], b[2]]); } Q.push(P[P.length - 1]); P = Q; }
+  let L = 0; for (let i = 1; i < P.length; i++) L += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); const e = P[P.length - 1], f = P[P.length - 2]; let dx = e[0] - f[0], dy = e[1] - f[1]; const dl = Math.hypot(dx, dy) || 1, sg = cu ? 1 : -1; let sl = 0.075 * L; dx /= dl; dy /= dl;
+  const rot = sg * 0.19 * (dx < 0 ? 1 : -1); let x = e[0], y = e[1]; for (let k = 0; k < 9; k++) { const c = Math.cos(rot), s = Math.sin(rot), nx = dx * c - dy * s, ny = dx * s + dy * c; dx = nx; dy = ny; x += dx * sl; y += dy * sl; sl *= 0.86; P.push([x, y, e[2]]); }
+  /* resampled evenly by length */ const D = [0]; for (let i = 1; i < P.length; i++) D.push(D[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1])); const n = 24, out = [];
+  for (let k = 0; k < n; k++) { const d = D[D.length - 1] * k / (n - 1); let i = 1; while (i < D.length - 1 && D[i] < d) i++; const w = (d - D[i - 1]) / Math.max(1e-6, D[i] - D[i - 1]); out.push([P[i - 1][0] + (P[i][0] - P[i - 1][0]) * w, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * w, P[i - 1][2]]); }
+  return { c: out, L: D[D.length - 1] }; }
+/* built with the figure (so the jar's fit sees the ribbons): ribbons, their pen, the tear, the wisps, the frost and the contact shade */
+function mk81(T, S, o, extra) { if (KIT.idle81 === false) return; const G = S.G, J = G.J, rnd = rnd63(81 + S.st), V3 = T.Vector3, R = { rib: [], top: 0 }; J.forEach(q => { R.top = Math.max(R.top, q.p[1] + (q.r || 0)); }); R.U = R.top / 5;
+  const body = G.chains.find(c => c.kind === 'body'), sj = body ? body.jn.filter(j => j && J[j]) : []; R.tip = sj.length ? sj.reduce((a, b) => (J[b].p[1] > J[a].p[1] ? b : a), sj[0]) : 1;
+  const near = p => { let bj = 1, bd = 1e9; sj.forEach(j => { const d = Math.hypot(J[j].p[0] - p[0], J[j].p[1] - p[1]); if (d < bd) { bd = d; bj = j; } }); return bj; };
+  const mat = lam81(T, 'rib', { side: T.DoubleSide });
+  (o.rib || []).forEach((l, i) => { const ln = line81(l.ab, l.cu), n = ln.c.length, g = new T.BufferGeometry(), pos = new Float32Array(n * 6), uv = new Float32Array(n * 4), idx = [];
+    for (let k = 0; k < n; k++) { uv.set([k / (n - 1), 0, k / (n - 1), 1], k * 4); if (k) { const a = 2 * (k - 1); idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); } }
+    g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('uv', new T.BufferAttribute(uv, 2)); g.setAttribute('normal', new T.BufferAttribute(new Float32Array(n * 6).map((v, k) => (k % 3 === 2 ? 1 : 0)), 3)); g.setIndex(idx); const m = new T.Mesh(g, mat); m.frustumCulled = false; m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 4; S.root.add(m);
+    const s = ln.c.map((p, k) => k / (n - 1)), nr = ln.c.map((p, k) => { const a = ln.c[Math.max(0, k - 1)], b = ln.c[Math.min(n - 1, k + 1)], tx = b[0] - a[0], ty = b[1] - a[1], d = Math.hypot(tx, ty) || 1; return [-ty / d, tx / d]; });
+    const up = nr[Math.round(n * 0.3)][1] > 0 ? 1 : -1, W = (l.wd || 0.2) * 2.3, wid = s.map(u => W * Math.max(0.05, u < 0.22 ? 0.35 + 0.65 * sm52(u / 0.22) : 1 - 0.9 * sm52((u - 0.22) / 0.78)));
+    const pen = [[0.16, 0.42, up], [0.52, 0.8, up]].map(q => { const st = { j: 0, w: 0.4, o: { smooth: 1, wob: 0.35, min: 2, trim: 0 }, pts: [], off: true, t: 'r81' }; if (S.a78) S.a78.strokes.push(st); return { st, a: q[0], b: q[1], sd: q[2] }; });
+    R.rib.push({ m, g, pos, c: ln.c, L: ln.L, s, nr, wid, up, pen, j: near(ln.c[0]), A: 0.06 * ln.L, k: 0.9 + 0.3 * rnd(), ph: rnd() * 6, sp: 2.6 + 1.8 * rnd(), ph2: rnd(), i }); });
+  /* the tear at its point, and the wisps off the wet patch */
+  const spr = (map, hex, ro) => { const m = new T.Sprite(new T.SpriteMaterial({ map, color: new T.Color(hex).convertSRGBToLinear(), transparent: true, depthWrite: false })); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = ro; m.visible = false; S.root.add(m); return m; };
+  R.bead = spr(tex81(T, 'tear'), 0xffffff, 26); R.fly = spr(tex81(T, 'tear'), 0xffffff, 26); R.tf = { id: null, p: new V3() };
+  R.wisp = S.jar ? [] : [0, 1].map(i => ({ m: spr(tex73(T), 0xd6eeee, 7), ph: i * 0.5, per: 3.9 + 0.7 * i }));
+  /* the frost: sharp crystals and a damp ring IN the wood round the foot (with W78's damp and rime), a dark contact shade right under it */
+  if (S.lay78 && o.rime) { const soft = tex49(T, 'glow'), fl = (geo, mt, ro, y) => { const m = new T.Mesh(geo, mt); m.userData.plain = true; m.userData.nobox = true; m.rotation.x = -PI / 2; m.renderOrder = ro; m.position.y = y; S.lay78.add(m); return m; };
+    S.lay78.children.forEach(m => { if (m.renderOrder === 15) { m.scale.set(1.5, 1.5, 1); m.material.opacity = 0.3; } });   /* W78's pale bloom: a faint cold tint on the wood round it */
+    R.frost = fl(new T.PlaneGeometry(o.rime[0] * 2.1, o.rime[1] * 2.1), lam81(T, 'frost'), 17, 0.003);
+    R.shade = fl(new T.PlaneGeometry(o.rime[0] * 0.55, o.rime[1] * 0.45), flat49(T, 0x0a0e14, { transparent: true, alphaMap: soft, depthWrite: false, opacity: 0.7 }), 18, 0.004); }
+  R.v = { a: new V3(), b: new V3(), m: new T.Matrix4() }; S.r81 = R; pose81(S, false); }
+W78.hook = mk81;
+/* the ribbons: anchored at the joint they leave (so they never come away), streaming back in one wind, a pennant snap now and then */
+function rib81(S, R, r, tt, E) { const B = S.bones, J = S.G.J, jb = B[r.j], p0 = J[r.j].p, ox = jb.position.x - p0[0], oy = jb.position.y - p0[1], oz = jb.position.z - p0[2], st = S.st, P = P81[st] || P81[3], wa = P.wind[0], wf = P.wind[1], TAU = 2 * PI, n = r.c.length, pos = r.pos;
+  const ts = fr52(tt / r.sp + r.ph2) * r.sp, snap = ts < 0.55 ? 1 - ts / 0.55 : 0, sf = ts / 0.32, q = E ? E.shv : 0, ED = r.ed || (r.ed = r.c.map(() => [0, 0, 0, 0]));
+  for (let k = 0; k < n; k++) { const s = r.s[k], c = r.c[k], nr = r.nr[k], lag = 1 - 0.3 * s;
+    let off = wa * r.A * Math.pow(s, 1.15) * Math.sin(TAU * (r.k * s - wf * tt / 2.2) + r.ph) + wa * 0.35 * r.A * s * Math.sin(TAU * (2.3 * s - wf * tt * 0.9) + r.ph * 1.7);
+    if (snap) off += 1.5 * r.A * snap * Math.exp(-(s - sf) * (s - sf) / 0.02) * Math.sin(TAU * (4 * s - ts * 5)) * (0.4 + s);
+    off += 1.8 * q * s * r.L;
+    const x = c[0] + ox * lag + nr[0] * off, y = c[1] + oy * lag + nr[1] * off, z = c[2] + oz * lag, w = r.wid[k] * (1 + 0.12 * Math.sin(TAU * (1.4 * s - wf * tt * 0.5) + r.ph)) * 0.5;
+    pos[k * 6] = x + nr[0] * w; pos[k * 6 + 1] = y + nr[1] * w; pos[k * 6 + 2] = z; pos[k * 6 + 3] = x - nr[0] * w; pos[k * 6 + 4] = y - nr[1] * w; pos[k * 6 + 5] = z; ED[k][0] = x; ED[k][1] = y; ED[k][2] = z; ED[k][3] = w; }
+  r.g.attributes.position.needsUpdate = true;
+  /* the broken pen line along its edges, written in the root bone's frame */
+  const V = R.v, b0 = B[0]; V.m.compose(b0.position, b0.quaternion, b0.scale).invert();
+  r.pen.forEach(pq => { const st2 = pq.st, a = Math.round(pq.a * (n - 1)), b = Math.round(pq.b * (n - 1)); st2.pts.length = 0; for (let k = a; k <= b; k++) { const e = ED[k], nr = r.nr[k], w = e[3] * 0.82 * pq.sd; V.a.set(e[0] + nr[0] * w, e[1] + nr[1] * w, e[2] + 0.02).applyMatrix4(V.m); st2.pts.push([V.a.x, V.a.y, V.a.z]); } st2.off = st2.pts.length < 2; }); }
+/* after the whole play chain: ribbons; then the tear, the wisps, the frost */
+function pose81(S, rest) { const R = S.r81; if (!R) return; const tt = clk81(S), E = rest !== false ? ev81(S, tt) : null, B = S.bones, U = R.U, TAU = 2 * PI;
+  R.rib.forEach(r => rib81(S, R, r, tt, E));
+  /* the tear: beads at the point, is flung off sideways at a head snap, falls and fades */
+  const tp = B[R.tip] ? B[R.tip].position : null; if (tp) { let since = 9, dir = 1, id = null; if (E && E.P.ev.length) { const P = E.P, c0 = tt - E.u; let te = null; P.ev.forEach(e => { if (e[0] <= E.u) { te = c0 + e[0]; dir = e[1]; } }); if (te == null) { const e = P.ev[P.ev.length - 1]; te = c0 - P.P + e[0]; dir = e[1]; } id = Math.round(te * 100); since = tt - te; }
+    const grow = sm52((since - 0.25) / 1.4), bs = 0.2 * U * grow; R.bead.visible = !!E && grow > 0.05; R.bead.position.set(tp.x + 0.04 * U, tp.y - 0.12 * U - 0.1 * bs, tp.z + 0.35); R.bead.scale.set(bs * 0.75, bs, 1);
+    if (E && since < 0.8 && E.P.ev.length) { if (R.tf.id !== id) { R.tf.id = id; R.tf.p.copy(tp); } const f = R.fly; f.visible = true; f.position.set(R.tf.p.x + dir * 2.4 * U * since, R.tf.p.y - 0.1 * U + 1.1 * U * since - 4.5 * U * since * since, R.tf.p.z + 0.35); f.scale.set(0.15 * U, 0.2 * U, 1); f.material.rotation = -dir * (0.6 + 2 * since); f.material.opacity = 1 - sm52((since - 0.45) / 0.35); } else R.fly.visible = false; }
+  /* a thin cold wisp boils off the wet patch, drifting back with the wind */
+  const ft = B[0].position; R.wisp.forEach(w => { const u = fr52(tt / w.per + w.ph), m = w.m; m.visible = !!E; const sz = U * (0.3 + 0.8 * u); m.position.set(ft.x - 0.2 * U - 0.8 * U * u, 0.1 * U + 1.3 * U * sm52(u), ft.z + 0.2); m.scale.set(sz, sz * 0.8, 1); m.material.rotation = 0.8 * u; m.material.opacity = 0.55 * Math.min(1, u / 0.15) * (1 - sm52((u - 0.35) / 0.65)); });
+  /* the rime creeps out from its foot and draws back */
+  if (R.frost) { const k = 0.9 + 0.14 * (0.5 - 0.5 * Math.cos(TAU * tt / 7.3)); R.frost.scale.set(k, k, 1); } }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way78) return f0(grp, clip, t, o);
+  /* the old error at play27 (line ~1753): the margin's material carries no line width once the pen and wash has swapped it; give it one (as builders 68 and 73 did) */
+  const gw = () => { const m = S.hull27 && S.hull27.material; if (m && !m.userData.w) { m.userData.w = { value: 0 }; return true; } return false; }; gw();
+  const safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  const r = safe(); if (!on81(S)) return r; S.c81 = clip; const c0 = rn44(); try { pose81(S, clip === 'rest'); } catch (e) { W81.err = 'pose ' + String(e && e.stack); } if (clip === 'rest') { W81.ms += rn44() - c0; W81.n++; } return r; })(play26);
+KIT.spirit26.play = play26;
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Ammonia (fitted to the glass), each playing its rest as it is drawn */
+function drive81(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf81 === fr) return; S.jf81 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W81.err = String(e && e.stack); } }; }
+function jar81(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = amm78Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.35, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.3 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive81(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = amm78Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 1.02, sg >= 4 ? 1.5 : 1.35, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + (sg >= 3 ? 0.4 : 0.34) - q.y0 * q.s, -q.cz * q.s + 0.1); drive81(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'ammonia' && KIT.amm78 && KIT.idle81 !== false && T && T.SkinnedMesh) { try { jar81(T, j); } catch (e) { W81.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W81 = W81;
+// ==== W81 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
