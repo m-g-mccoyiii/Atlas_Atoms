@@ -2993,7 +2993,7 @@ KIT.W52 = W52;
 //  3 the shy one: as picked, holding the block out a little in both hands, deep in fat rolls, brows up
 //  4 the keeper: taller and calm, heavy lids, the block in its chest glowing cold, arms held low and out, fog pouring off them like wide sleeves, a skirt of rolls
 //  5 the old frost: large and still, a great hooded head bowed, long sleeves of falling fog, the block deep in its chest, a bank spilling far along the bench, frost ferns
-KIT.dry49 = KIT.dry49 == null ? ((typeof location !== 'undefined' && (/[?&]d49=(c)/.exec(String(location.search)) || [])[1]) || null) : KIT.dry49;
+KIT.dry49 = KIT.dry49 == null ? ((typeof location !== 'undefined' && /[?&]d49=0/.test(String(location.search))) ? null : 'c') : KIT.dry49;   /* (builder 56) on by default; ?d49=0 gives the old Dry ice */
 const W49 = { geo: {}, figs: [], err: null, ways: { c: 'the shy one' }, TARGET: [0, 6000, 7000, 8000, 8800, 9400],
   ROLE: [null, { chest: 2, neck: 3, head: 4, hair: 7 }, { chest: 4, neck: 5, head: 6, hair: 9 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }],
   C: { lite: [0.935, 0.945, 0.99], edge: [0.74, 0.735, 0.885], shade: [0.62, 0.60, 0.80], margin: [0.88, 0.89, 0.97], paper: [0.975, 0.978, 0.992], lid: 0xd6d8ea, glint: 0x9fd8ff,
@@ -3005,14 +3005,15 @@ const roll49 = (zc, X, Z, r) => { const s = Z >= 0 ? 1 : -1, z0 = s * zc * 1.05,
 const spill49 = (zc, rx, rz, n, r, sd) => Array.from({ length: n }, (_, i) => { const h = k => 0.5 + 0.5 * Math.sin(sd * 12.9898 + i * 78.233 + k * 37.719), a = (i + 0.5 * h(1)) / n * 2 * PI + 0.2, d = 0.9 + 0.22 * h(2); return roll49(zc, Math.cos(a) * rx * d, Math.sin(a) * rz * d, r * (0.78 + 0.5 * h(3))); });
 /* a wisp of fog in the air: it falls, sways once and curls away at the bottom (never rises: fog sinks) */
 const fall49 = (x, y, z, h, sd) => Array.from({ length: 12 }, (_, i) => { const t = i / 11, c = sm((t - 0.62) / 0.38); return [x + sd * h * (0.09 * Math.sin(t * 5) + 0.3 * c * c), y - h * (t - 0.1 * c * c), z]; });
-const wisp49 = (x, y, z, h, sd, w) => ({ air: fall49(x, y, z, h, sd), w: w || 0.45, o: { smooth: 2, wob: 0.6, min: 3 } });
+const wisp49 = (x, y, z, h, sd, w) => ({ air: fall49(x, y, z, h, sd), w: w || 0.45, o: { smooth: 2, wob: 0.6, min: 3 }, t: 'wisp' });
 /* a frost fern on the wood: a curving stem with barbs on both sides, all lying flat (j: 0 lies with the spill) */
 const fern49 = (x, z, L, a, sd) => { const o = { smooth: 1, wob: 0.3, min: 2, trim: 0 }, P = t => { const b = a + sd * 0.4 * t * t; return [x + Math.cos(b) * L * t, 0.02, z + Math.sin(b) * L * t]; }, out = [{ air: Array.from({ length: 7 }, (_, i) => P(i / 6)), j: 0, w: 0.5, o }];
   [0.2, 0.38, 0.56, 0.74].forEach(t => [-1, 1].forEach(s => { const p = P(t), b = a + sd * 0.4 * t * t + s * 0.8, l = L * 0.34 * (1 - 0.55 * t); out.push({ air: [p, [p[0] + Math.cos(b) * l * 0.5, 0.02, p[2] + Math.sin(b) * l * 0.5], [p[0] + Math.cos(b - s * 0.2) * l, 0.02, p[2] + Math.sin(b - s * 0.2) * l]], j: 0, w: 0.4, o }); })); return out; };
 /* a star of frost on the wood: three strokes that cross */
 const star49 = (x, z, r) => [0, 1, 2].map(i => { const a = i * PI / 3 + 0.3, cx = Math.cos(a) * r, cz = Math.sin(a) * r; return { air: [[x - cx, 0.02, z - cz], [x, 0.02, z], [x + cx, 0.02, z + cz]], j: 0, w: 0.45, o: { smooth: 0, wob: 0.3, min: 2, trim: 0 } }; });
 /* the frost on the wood: rime patches (x, z, r) with ferns and stars drawn over them */
-const frost49 = (list) => list.reduce((a, q) => a.concat(fern49(q[0], q[1], q[2] * 1.5, q[3], q[4] || 1), star49(q[0] + Math.cos(q[3] + 2.2) * q[2] * 0.7, q[1] + Math.sin(q[3] + 2.2) * q[2] * 0.5, q[2] * 0.32)), []);
+/* (builder 56) each stroke is tagged with its patch (g) and how far up the fern it starts (ft), so the idle can grow and fade them */
+const frost49 = (list) => list.reduce((a, q, g) => a.concat(fern49(q[0], q[1], q[2] * 1.5, q[3], q[4] || 1).map((s, k) => Object.assign(s, { t: 'fern', g, ft: k ? [0.2, 0.38, 0.56, 0.74][(k - 1) >> 1] : 0 })), star49(q[0] + Math.cos(q[3] + 2.2) * q[2] * 0.7, q[1] + Math.sin(q[3] + 2.2) * q[2] * 0.5, q[2] * 0.32).map(s => Object.assign(s, { t: 'fern', g, ft: 0.9 }))), []);
 const SPEC49 = [
   // 1 a breath: only the top of the round head and two wide eyes over one roll of fog; the block a glint under its chin
   () => ({ keys: pool(0, 0, 0.9, 0.7, 0.55, 0.45).concat([[0, 0.3, -0.06, 0.6, 0.5], [0, 0.44, -0.08, 0.68, 0.56], [0, 0.64, -0.1, 0.72, 0.58], [-0.02, 0.87, -0.1, 0.74, 0.58], [-0.02, 1.07, -0.12, 0.6, 0.48],
@@ -3078,16 +3079,19 @@ const SPEC49 = [
 ];
 /* the wash turns cold: the same shader as Water's, its blues changed for white and grey-violet, the paper under it a colder white, the lamp's warmth taken out
    (so the fog never goes beige on the wood), and along the low and outer edges of the bank the wash thins out in dry brush and the wood shows through */
-function tint49(T, S) { if (!S.m30) return; S.t49 = true; const C = W49.C, way = S.way49, G = S.G, b = S.bank49 || [0.14, 0.6], g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4);
+function tint49(T, S) { if (!S.m30) return; S.t49 = true; S.u49 = S.u49 || { value: 0 }; const C = W49.C, way = S.way49, G = S.G, b = S.bank49 || [0.14, 0.6], g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4);
+  /* (builder 56) u49 is the idle's clock: the dry-brush streaks creep outward along the bench, the body's edges thin and fill again in patches that sink, faint grey streaks sink through the wash */
   const dry = '{ vec3 q9 = bp * ' + f(G.H) + '; float lo9 = 1.0 - smoothstep(' + f(b[0]) + ', ' + f(b[1]) + ', q9.y), rr9 = length(vec2(q9.x / ' + f(G.pl.rx) + ', q9.z / ' + f(G.pl.rz) + '));'
-    + ' float st9 = N30(vec3(q9.x * 2.2, q9.y * 26.0, q9.z * 2.2)), st8 = N30(vec3(q9.x * 7.0, q9.y * 60.0, q9.z * 7.0) + 4.0);'
-    + ' float dr9 = lo9 * (0.2 + 0.55 * smoothstep(0.6, 1.1, rr9) + 0.45 * smoothstep(0.6, 0.15, nv) * step(q9.z, 0.4)) + 0.4 * smoothstep(0.03, -0.02, q9.y);'
-    + ' float gone9 = smoothstep(0.45, 0.68, dr9 + 0.55 * (st9 - 0.5) + 0.35 * (st8 - 0.5)); c9 = mix(c9, bg, gone9); }\n  gl_FragColor = vec4(c9, 1.0); }';
+    + ' vec2 rd9 = q9.xz / max(0.08, length(q9.xz)); vec3 m9 = vec3(q9.x - rd9.x * u49 * 0.2, q9.y, q9.z - rd9.y * u49 * 0.2);'
+    + ' float st9 = N30(vec3(m9.x * 2.2, m9.y * 26.0, m9.z * 2.2)), st8 = N30(vec3(m9.x * 7.0, m9.y * 60.0, m9.z * 7.0) + 4.0), sk9 = N30(vec3(q9.x * 3.0, q9.y * 3.5 + u49 * 0.45, q9.z * 3.0) + 9.0);'
+    + ' float dr9 = lo9 * (0.2 + 0.55 * smoothstep(0.6, 1.1, rr9) + 0.45 * smoothstep(0.6, 0.15, nv) * step(q9.z, 0.4)) + 0.4 * smoothstep(0.03, -0.02, q9.y) + (1.0 - lo9) * K56E * smoothstep(0.38, 0.03, nv) * sk9;'
+    + ' float gone9 = smoothstep(0.45, 0.68, dr9 + 0.55 * (st9 - 0.5) + 0.35 * (st8 - 0.5)); c9 = mix(c9, bg, gone9);'
+    + ' c9 = mix(c9, c9 * vec3(0.88, 0.885, 0.96), (1.0 - gone9) * K56S * smoothstep(0.5, 0.78, N30(vec3(q9.x * 2.0, q9.y * 2.6 + u49 * 0.3, q9.z * 2.0) + 2.0))); }\n  gl_FragColor = vec4(c9, 1.0); }';
   const sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)], ['PAPER29 * (0.985', g(C.paper) + ' * (0.985'],
     ['smoothstep(0.80, 0.87, l9', 'smoothstep(0.52, 0.64, l9'],            /* far more of the lit side is left bare: fog is mostly paper */
     ['vec3(1.0, 0.972, 0.91)', 'vec3(0.985, 0.99, 1.0)'], ['vec3(1.0, 0.95, 0.84)', 'vec3(0.93, 0.95, 1.0)'], ['vec3(0.70, 0.72, 0.82)', 'vec3(0.72, 0.71, 0.86)'],   /* the lamp: no warmth, a violet shade */
     ['gl_FragColor = vec4(c9, 1.0); }', dry]];
-  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd53' + way; m.needsUpdate = true; };
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.d49) return; m.userData.d49 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); sh.uniforms.u49 = S.u49; sh.fragmentShader = 'uniform float u49;\n#define K56E ' + (+(KIT.edge56 == null ? 1.0 : KIT.edge56)).toFixed(3) + '\n#define K56S ' + (+(KIT.streak56 == null ? 0.5 : KIT.streak56)).toFixed(3) + '\n' + sh.fragmentShader; }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd53' + way; m.needsUpdate = true; };
   one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); if (S.m30.glint && S.m30.glint.color) S.m30.glint.color.copy(new T.Color(C.glint).convertSRGBToLinear()); }
 /* a soft round texture (white on black, read as alpha): a glow, or rime with needles of frost in it */
 const tex49 = (T, kind) => { const key = 't' + kind; if (W49[key]) return W49[key]; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, n, n);
@@ -3100,15 +3104,15 @@ const tex49 = (T, kind) => { const key = 't' + kind; if (W49[key]) return W49[ke
 const flat49 = (T, hex, o) => new T.MeshLambertMaterial(Object.assign({ color: 0x000000, emissive: new T.Color(hex) }, o || {}));
 /* the block: a little block of ice, three faces showing in cold blues, drawn round by the pen; from stage 4 lodged in the chest with a cold glow over it */
 function box49(T, S, bx, near, strokes) { const J = S.G.J, V3 = T.Vector3, E = new T.Euler(0.38, PI / 4 + 0.12, 0, 'XYZ'), c = bx.c, s = bx.s, j = near(c), jp = J[j].p, C = W49.C.ice;
-  const m = new T.Mesh(new T.BoxGeometry(s, s, s), [C[3], C[0], C[2], C[3], C[1], C[3]].map(h => flat49(T, h))); m.rotation.copy(E); m.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2]); m.renderOrder = 18; m.userData.plain = true; S.bones[j].add(m);
+  const m = new T.Mesh(new T.BoxGeometry(s, s, s), [C[3], C[0], C[2], C[3], C[1], C[3]].map(h => flat49(T, h))); m.rotation.copy(E); m.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2]); m.renderOrder = 18; m.userData.plain = true; m.userData.box49 = 1; S.bones[j].add(m);
   const P = (x, y, z) => new V3(x, y, z).multiplyScalar(s / 2).applyEuler(E).add(new V3().fromArray(c)).toArray(), o = { smooth: 0, wob: 0.25, min: 2, trim: 0 }, w = bx.glow ? 0.6 : 0.75;
   [[P(1, 1, 1), P(-1, 1, 1), P(-1, 1, -1), P(1, 1, -1), P(1, 1, 1)], [P(-1, 1, 1), P(-1, -1, 1)], [P(1, 1, 1), P(1, -1, 1)], [P(-1, 1, -1), P(-1, -1, -1)], [P(1, -1, 1), P(-1, -1, 1), P(-1, -1, -1)]]
-    .forEach(pts => strokes.push({ air: pts, j, w, o }));
-  strokes.push({ air: [P(-1, 0.75, 0.2), P(-1, 0.35, 0.55)], j, w: 0.4, o });   /* a scratch of frost on its face */
-  if (bx.glow) { const gs = s * bx.glow * 2.2, g = new T.Mesh(new T.PlaneGeometry(gs, gs), flat49(T, 0x8fcbff, { transparent: true, alphaMap: tex49(T, 'glow'), depthWrite: false })); g.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2] + s * 0.75); g.renderOrder = 23; g.userData.plain = true; S.bones[j].add(g); } }
+    .forEach(pts => strokes.push({ air: pts, j, w, o, t: 'box' }));
+  strokes.push({ air: [P(-1, 0.75, 0.2), P(-1, 0.35, 0.55)], j, w: 0.4, o, t: 'box' });   /* a scratch of frost on its face */
+  if (bx.glow) { const gs = s * bx.glow * 2.2, g = new T.Mesh(new T.PlaneGeometry(gs, gs), flat49(T, 0x8fcbff, { transparent: true, alphaMap: tex49(T, 'glow'), depthWrite: false })); g.position.set(c[0] - jp[0], c[1] - jp[1], c[2] - jp[2] + s * 0.75); g.renderOrder = 23; g.userData.plain = true; g.userData.box49 = 2; S.bones[j].add(g); } }
 /* rime on the wood: soft white patches with needles of frost, lying flat with the spill */
 function rime49(T, S, list) { const jp = S.G.J[0].p; list.forEach((q, i) => { const m = new T.Mesh(new T.PlaneGeometry(q[2] * 2, q[2] * 1.4), flat49(T, 0xf4f8ff, { transparent: true, alphaMap: tex49(T, 'rime'), depthWrite: false }));
-  m.rotation.set(-PI / 2, 0, 0.3 * Math.sin(i * 2.3)); m.position.set(q[0] - jp[0], 0.015, q[1] - jp[2]); m.renderOrder = 17; m.userData.plain = true; S.bones[0].add(m); }); }
+  m.rotation.set(-PI / 2, 0, 0.3 * Math.sin(i * 2.3)); m.position.set(q[0] - jp[0], 0.015, q[1] - jp[2]); m.renderOrder = 17; m.userData.plain = true; m.userData.r56 = i; S.bones[0].add(m); }); }
 /* one stage of the shy one: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
 function dry49Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC49[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
   S25[2] = sp; if (W49.geo[stage]) W26.geo[3] = W49.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W49.ROLE[stage]; W26.TARGET = W49.TARGET[stage];
@@ -3121,7 +3125,7 @@ function dry49Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0))
   const strokes = src.map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
         pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } return null; }).filter(Boolean); }
     if (pts.length < 2) return null; const j = s.j != null ? s.j : s.head ? jh : near(s.c || pts[0]);
-    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, t: s.t, g: s.g, ft: s.ft, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
   /* ink48 (builder 48) writes these strokes with the figure's own pen; t48 is set so that it leaves the wash alone */ S.t48 = true; S.a48 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
   tint49(T, S); W49.figs.push(S); if (W49.figs.length > 24) W49.figs.splice(0, W49.figs.length - 24); return g; }
 /* the outline breaks along the low and outer edges of the bank: those parts of the skin are kept out of the pen's silhouette (in patches, so the line stops and starts) */
@@ -3136,4 +3140,148 @@ KIT.dry49Fig = dry49Fig; KIT.DRY49 = W49;
 /* behind the switch: Dry ice's bench figure is the spirit at its stage (the jar keeps the old Dry ice) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homco2' && KIT.dry49 === 'c' && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = dry49Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W49.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W49 END
+// ==== W56 BEGIN
+// (builder 56) DRY ICE THE SHY ONE ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle56, on with the shy one; false or ?i56=0 gives Water's rest back on it).
+// The fog is what moves. The bank of rolls is never still: each roll wells up small under the figure, swells, creeps out along the bench, flattens,
+// thins and is gone at the rim while the next wells up behind it, out of step, so the bank is always pouring outward and being renewed. Soft mist
+// lies on the wood round the bank and creeps outward, spreading and thinning. In the wash the dry-brush streaks creep outward with the fog, the edges
+// of the body thin and fill again in patches that sink, faint grey streaks sink through it (u49 in W49's shader), and the broken pen line at the bank's
+// edge shifts as the fog does (the cut moves). Wisps peel off the drooping tip, the hands, the sleeves and the block and SINK into the bank, curling
+// out along it. The body breathes and its girth swells and settles out of step, so it is dense fog holding a shape. The block stays hard, with a slow
+// cold glint. Frost ferns grow on the wood and fade, the rime with them. A shiver now and then sends a puff rolling off the bank.
+// Its manner, shy and cold: slow blinks, glances that slide away; now and then it notices the viewer (eyes to the front, wide), ducks, then peeks.
+//  1 only eyes over a roll: it ducks under the roll and peeps up somewhere else along it
+//  2 rocks as it hugs the block, squeezing it closer; face turned away, turning back when it notices you, then away and down
+//  3 holds the block out a little, notices you, pulls it back and ducks its chin behind it, then peeks over it
+//  4 calm, slow, heavy-lidded; the sleeves pour steadily; a slow nod
+//  5 almost still, asleep: a slow deep breath, the head bowing a little on each breath out; the bank spilling far, ferns growing and fading
+// The one skin moves only on its own joints (the rolls are limbs joined under the bank), so nothing comes apart; wisps and puffs are pen strokes that fade.
+// While it plays, S.a48 is hidden from the play chain, so builder 52's idle for Acid (which keys on S.a48) never runs on Dry ice.
+KIT.idle56 = KIT.idle56 == null ? !(typeof location !== 'undefined' && /[?&]i56=0/.test(String(location.search))) : KIT.idle56;
+const W56 = { err: null, n: 0, ms: 0, jar: 0.6 };
+/* knobs for trying looks from the page's query (e56: how much the body's edges thin, s56: the sinking grey streaks, g56: gaps in the pen line, m56: the mist, w56: wisp weight) */
+{ const qs = typeof location !== 'undefined' ? String(location.search) : '', g = k => { const m = new RegExp('[?&]' + k + '=([0-9.]+)').exec(qs); return m ? +m[1] : null; }; [['e56', 'edge56'], ['s56', 'streak56'], ['g56', 'gap56'], ['m56', 'mist56'], ['w56', 'wisp56']].forEach(([q, k]) => { const v = g(q); if (v != null && KIT[k] == null) KIT[k] = v; }); }
+/* per stage: breath period and size, blink and glance periods, shiver, the manner's cycle, a roll's life and travel, mist pieces, wisp and fern periods, duck depth */
+const P56 = [null,
+  { br: 4.4, ba: 0.035, bk: 5.3, gp: 6.1, sv: 8.3, cyc: 7.4, rp: 7.5, rt: 0.5, mist: 5, wp: 2.4, fp: 9, dk: 0.62 },
+  { br: 4.0, ba: 0.03, bk: 4.9, gp: 7.3, sv: 7.7, cyc: 6.6, rp: 8.0, rt: 0.6, mist: 6, wp: 2.2, fp: 10, dk: 0.13 },
+  { br: 4.4, ba: 0.03, bk: 5.6, gp: 6.7, sv: 9.1, cyc: 8.0, rp: 8.5, rt: 0.85, mist: 8, wp: 2.2, fp: 10, dk: 0.14 },
+  { br: 5.6, ba: 0.025, bk: 7.2, gp: 9.0, sv: 11.3, cyc: 10.0, rp: 9.5, rt: 0.95, mist: 9, wp: 2.0, fp: 11, dk: 0.05 },
+  { br: 7.0, ba: 0.04, bk: 1e9, gp: 1e9, sv: 13.7, cyc: 1e9, rp: 11, rt: 0.8, mist: 11, wp: 2.4, fp: 12, dk: 0 }];
+const on56 = S => !!(S && S.way49 && KIT.idle56 !== false);
+const clk56 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W56.jar : 1) + S.st * 2.9;
+const vn56 = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy), h = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); }, a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy; };
+/* the manner at time tt: notice, duck, peek; stage 1's place along its roll; stage 3's offering */
+function man56(S, tt) { const st = S.st, P = P56[st] || P56[3], u = fr52(tt / P.cyc), M = { notice: 0, duck: 0, peek: 0, dx: 0, off: 0, sd: Math.floor(tt / P.cyc) % 2 ? 1 : -1 };
+  if (st < 5) { M.notice = pl52(u, 0.3, 0.4, 0.04); M.duck = pl52(u, 0.4, 0.66, 0.06); M.peek = pl52(u, 0.62, 0.8, 0.05); }
+  if (st === 1) { const n = Math.floor(tt / P.cyc), xp = m => 0.3 * (2 * h52(m * 3.7 + 1) - 1); M.dx = xp(n - 1) + (xp(n) - xp(n - 1)) * sm52((u - 0.47) / 0.12); }
+  if (st === 3) M.off = pl52(u, 0.04, 0.34, 0.1) * (1 - M.duck);
+  return M; }
+/* the clip's numbers, its own */
+function rest56(S, t, o, q, lagMs) { const st = S.st, k = S.jar ? 0.6 : 1, tt = clk56(S) - lagMs / 1000 * (S.jar ? W56.jar : 1), P = P56[st] || P56[3], TAU = 2 * PI, M = man56(S, tt), sp = o.spent || 0, br = Math.sin(TAU * tt / P.br);
+  q.sq = k * P.ba * br; q.px = q.pz = 1 + 0.025 * k * Math.sin(TAU * tt / P.br - 1.0); q.lean = k * 0.025 * Math.sin(TAU * tt / (P.br * 1.9) + 0.7); q.bow = 0; q.hair = k * 0.12 * Math.sin(TAU * tt / (P.br * 1.4) + 1.1);
+  /* a slow blink: the lids come down, hold, and lift */ q.blink = pl52(fr52(tt / P.bk + 0.35), 0, 0.08, 0.035);
+  /* the glance slides away to one side and holds */ const gu = fr52(tt / P.gp + 0.6), g = pl52(gu, 0.12, 0.5, 0.1) * (1 - M.notice) * (1 - M.duck), gs = Math.floor(tt / P.gp + 0.6) % 2 ? 1 : -1;
+  q.lookx = gs * 1.4 * g + M.sd * 1.3 * M.peek; q.looky = -0.35 * g + 0.25 * M.notice - 0.6 * M.duck + 0.25 * M.peek; q.hturn = k * (gs * 0.22 * g + M.sd * 0.15 * M.peek); q.brow = 0.45 * M.notice + 0.3 * M.peek; q.wide = 0.5 * M.notice + 0.35 * M.peek;
+  q.bow = k * M.duck * [0, 0.05, 0.2, 0.15, 0.1, 0][st]; q.nod = k * M.duck * [0, 0, 0.3, 0.25, 0.2, 0][st]; q.lidx = st < 4 ? 0.3 * M.duck : 0;
+  /* a shiver */ const sv = pl52(fr52(tt / P.sv + 0.15), 0, 0.07, 0.015); q.lean += k * 0.04 * sv * Math.sin(TAU * tt * 9); q.tilt = k * 0.03 * sv * Math.sin(TAU * tt * 7 + 1);
+  if (st === 2) { const aw = pl52(fr52(tt / P.gp + 0.1), 0.15, 0.6, 0.12); q.lean += k * 0.07 * Math.sin(TAU * tt / 3.4); q.tilt += k * 0.07 * Math.sin(TAU * tt / 3.4 + 0.5); q.hturn += k * (-0.35 * aw * (1 - M.notice) + 0.35 * M.notice - 0.35 * M.duck); }
+  else if (st === 3) { q.bow += k * 0.06 * M.off; q.wide += 0.15 * M.off; q.looky += 0.15 * M.off; }
+  else if (st === 4) { q.nod = (q.nod || 0) + k * 0.1 * (0.5 - 0.5 * br); q.tilt += k * 0.05 * Math.sin(TAU * tt / (P.br * 2)); }
+  else if (st === 5) { q.nod = k * (0.06 + 0.12 * (0.5 - 0.5 * br)); q.bow = k * 0.05 * (0.5 - 0.5 * br); q.lean = k * 0.015 * Math.sin(TAU * tt / (P.br * 2.3)); q.hair *= 0.5; }
+  if (o.land != null) { const ms = o.land - lagMs; if (ms > 0 && ms < 3000) { const r = RK.ring(ms, 420, 520); q.sq -= 0.16 * r; q.px += 0.1 * r; q.pz += 0.1 * r; } }
+  if (sp) { q.bow += 0.2 * sp; q.nod = (q.nod || 0) + 0.3 * sp; q.lidx = Math.max(q.lidx || 0, 0.6 * sp); q.brow -= 0.3 * sp; } }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on56(S) && S.k56) return rest56(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* soft cloudy mist (white on black, read as alpha) */
+const tex56 = T => { if (W56.tm) return W56.tm; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, n, n); let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 14; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.26, cx = n / 2 + Math.cos(a) * d, cy = n / 2 + Math.sin(a) * d * 0.7, rr = n * (0.12 + 0.14 * r()), g = x.createRadialGradient(cx, cy, 0, cx, cy, rr); g.addColorStop(0, 'rgba(255,255,255,0.32)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, n, n); }
+  return (W56.tm = new T.CanvasTexture(cv)); };
+/* the parts it moves, found once */
+function init56(S) { const G = S.G, J = G.J, R = G.R, bj = G.bj, T = S.T, st = S.st, V3 = T.Vector3, K = { top: bj.slice(R.head), rolls: [], arm: { 1: [], '-1': [] }, body: J.map((q, j) => (j && (q.role !== 'limb' || q.side) ? sm52((q.p[1] - 0.18 * G.H) / (0.4 * G.H)) : 0)), box: [], rime: [], mist: [], op: J.map(() => new V3()) };
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; if (!c.side && c.l.flat) { const n = c.jn.length, a = J[c.jn[n - 2]].p, b = J[c.jn[n - 1]].p, cx = (a[0] + b[0]) / 2 - J[0].p[0], cz = (a[2] + b[2]) / 2 - J[0].p[2], d = Math.hypot(cx, cz) || 1, r = J[c.jn[n - 2]].r;
+      K.rolls.push({ c, dx: cx / d, dz: cz / d, r, ph: h52(K.rolls.length * 7.3 + st), big: st <= 2 && r > 0.55 }); }
+    else if (c.side) (K.arm[c.side] || (K.arm[c.side] = [])).push(c); });
+  S.bones.forEach((b, j) => b.children.forEach(m => { const u = m.userData; if (u.box49) K.box.push({ m, j, p0: m.position.clone(), em: [].concat(m.material).map(x => x.emissive && x.emissive.clone()), op: [].concat(m.material)[0].opacity }); if (u.r56 != null) K.rime.push({ m, i: u.r56, op: m.material.opacity, s: m.scale.clone() }); }));
+  if (!S.jar) { const g = W56.mg || (W56.mg = new T.PlaneGeometry(1, 1).rotateX(-PI / 2)); for (let i = 0; i < (P56[st] || P56[3]).mist; i++) { const m = new T.Mesh(g, flat49(T, 0xf3f6ff, { transparent: true, alphaMap: tex56(T), depthWrite: false, depthTest: false, opacity: 0 })); m.renderOrder = 25; m.userData.plain = true; m.userData.nobox = true; m.visible = false; S.bones[0].add(m); K.mist.push({ m, i }); } }
+  S.v56 = S.v52 = S.v52 || { a: new V3(), b: new V3(), c: new V3(), q: new T.Quaternion(), q2: new T.Quaternion(), z: new V3(0, 0, 1), y: new V3(0, 1, 0) }; S.k56 = K; return K; }
+/* a run of joints bends (the drooping tip): each from `from` on is pushed aside more toward the tip and turned to lie along its new way */
+function bend56(S, K, jn, from, lx, ly, lz) { const B = S.bones, n = jn.length, V = S.v56, O = K.op; if (n <= from) return; const cnt = n - from; for (let k = from - 1; k < n; k++) O[jn[k]].copy(B[jn[k]].position);
+  for (let k = from; k < n; k++) { const e = Math.pow((k - from + 1) / cnt, 1.6), p = B[jn[k]].position; p.x += lx * e; p.y += ly * e; p.z += lz * e; }
+  for (let k = from; k < n; k++) { const a = jn[k - 1], b = jn[k]; V.a.copy(O[b]).sub(O[a]); V.b.copy(B[b].position).sub(B[a].position); if (V.a.lengthSq() < 1e-10 || V.b.lengthSq() < 1e-10) continue; V.q.setFromUnitVectors(V.a.normalize(), V.b.normalize()); B[b].quaternion.premultiply(V.q); } }
+/* a fern patch's life: it grows, holds, and fades */
+const fern56 = (tt, g, P) => { const u = fr52(tt / P.fp + h52(g * 4.7 + 1)); return { grow: sm52(u / 0.4), fade: 1 - sm52((u - 0.72) / 0.28) }; };
+/* the pen line's breaks: along the bank they creep outward with the fog; on the body a few gaps open and close as patches sink (the face is kept nearly whole) */
+function cut56(S, tt) { const R = S.pen30, s = R && R.body; if (!s || !s.tp || !s.tp.P) return; const P = s.tp.P, n = s.tp.nv, b = S.bank49 || [0.14, 0.6], pl = S.pl49 || S.G.pl; if (!pl) return; let m = S.cut49; if (!m || m.length !== n) m = S.cut49 = new Uint8Array(n);
+  const G = S.G, Jh = G.J[G.bj[G.R.head]], hy = Jh.p[1] - 0.6 * Jh.r, dr = 0.22 * tt, y1 = b[1] * 1.15, ga = KIT.gap56 == null ? 0.78 : KIT.gap56;
+  for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2];
+    if (y <= y1) { const ex = x - pl.x, ez = z - pl.z, L = Math.hypot(ex, ez) || 1, rr = Math.hypot(ex / pl.rx, ez / pl.rz), u = vn56((x - ex / L * dr) / 0.3, (z - ez / L * dr) / 0.3 + 5.1);
+      m[i] = y < b[0] ? 1 : rr > 0.82 ? (u < 0.66 ? 1 : 0) : z < 0.1 ? (u < 0.5 ? 1 : 0) : (y < (b[0] + b[1]) * 0.5 && u < 0.35 ? 1 : 0); }
+    else { const v = vn56(x * 1.7 + z * 0.8 + 11.3, (y + 0.3 * tt) * 2.2); m[i] = v > (y > hy ? 0.92 : ga) ? 1 : 0; } } }
+/* after the whole play chain: the joints, the mist, the frost */
+function pose56(S, o) { const K = S.k56 || init56(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, V = S.v56, k = S.jar ? 0.6 : 1, P = P56[st] || P56[3], tt = clk56(S), TAU = 2 * PI, M = man56(S, tt), br = Math.sin(TAU * tt / P.br);
+  if (S.u49) S.u49.value = tt; S.tt56 = tt; S.m56 = M; S.br56 = br;
+  /* the body breathes, and its girth swells and settles out of step joint by joint: fog holding a shape */
+  J.forEach((q, j) => { if (!j || q.role === 'limb' || K.body[j] <= 0) return; const f = 1 + k * (0.03 * br * (q.role === 'spine' ? 1 : 0.4) + 0.035 * n52(tt * 0.55, j * 1.7)); B[j].scale.x *= f; B[j].scale.z *= f; });
+  /* the duck (and stage 1's change of place under its roll) */ const dy = -k * H * M.duck * P.dk, dx = k * M.dx;
+  if (dy || dx) J.forEach((q, j) => { const w = K.body[j]; if (w > 0) { B[j].position.y += dy * w; B[j].position.x += dx * w; } });
+  /* the arms: hug, offer */ const A = s => K.arm[s] || [], hand = c => c.l.arm || c.jn.length - 1; let bo = null;
+  if (st === 2) { const hg = 0.5 + 0.5 * Math.sin(TAU * tt / 3.4), sq = k * H * (0.05 * hg + 0.04 * M.duck); [1, -1].forEach(s => A(s).forEach(c => push52(S, c.jn, hand(c), -s * sq * 0.5, 0.02 * H * M.duck * k, -sq * 0.6))); bo = [0, 0.02 * H * M.duck * k, -sq * 0.6]; }
+  else if (st === 3) { const z = k * H * (0.17 * M.off - 0.03 * M.duck), y = k * H * (0.05 * M.off + 0.07 * M.duck + 0.01 * br); [1, -1].forEach(s => A(s).forEach(c => push52(S, c.jn, hand(c), 0, y, z))); bo = [0, y, z]; }
+  else if (st === 4) [1, -1].forEach(s => A(s).forEach(c => { const p = B[c.jn[0]].position; rot52(S, c.jn, 1, p.x, p.y, p.z, V.z, s * k * 0.05 * Math.sin(TAU * tt / P.br + s)); }));
+  /* the block keeps its place in the hands; a slow cold glint */ const gl = pl52(fr52(tt / 3.7 + 0.2), 0, 0.14, 0.05); K.gl = gl;
+  K.box.forEach(e => { const b = B[e.j]; e.m.position.copy(e.p0); if (bo) { V.a.set(bo[0], bo[1], bo[2]).applyQuaternion(V.q.copy(b.quaternion).invert()).divide(b.scale); e.m.position.add(V.a); S.bo56 = [V.a.x, V.a.y, V.a.z]; } else S.bo56 = null;
+    [].concat(e.m.material).forEach((x, i) => { if (e.em[i]) x.emissive.copy(e.em[i]).multiplyScalar(1 + 0.3 * gl); }); if (e.m.userData.box49 === 2) [].concat(e.m.material)[0].opacity = e.op * (0.8 + 0.2 * Math.sin(TAU * tt / 3.1)); });
+  /* the drooping tip sways and droops further on each breath out */ bend56(S, K, K.top, 1, k * 0.05 * H * Math.sin(TAU * tt / (P.br * 1.3)), -k * 0.03 * H * (0.5 - 0.5 * br), 0);
+  /* the rolls pour outward: each wells up small under the figure, swells, creeps out, flattens, thins and is gone; the big ones that make the shape only swell and lean out */
+  K.rolls.forEach(R0 => { const jn = R0.c.jn, n = jn.length; let s, sy, out;
+    if (R0.big) { const w = Math.sin(TAU * (tt / P.rp + R0.ph)); s = 1 + 0.07 * w + 0.03 * br + (st === 1 ? 0.05 * M.duck : 0); sy = 1 - 0.04 * w; out = 0.07 * R0.r * Math.sin(TAU * (tt / (P.rp * 1.3) + R0.ph)); }
+    else { const u = fr52(tt / (P.rp * (0.85 + 0.3 * R0.ph)) + R0.ph), grow = sm52(u / 0.22), thin = 1 - sm52((u - 0.62) / 0.38); const s0 = [0, 0.3, 0.3, 0.3, 0.4, 0.45][st]; s = s0 + (1.22 - s0) * grow * thin + 0.03 * br; sy = 1.04 - 0.24 * sm52((u - 0.3) / 0.7); out = P.rt * R0.r * (u - 0.4); }
+    const qa = J[jn[n - 2]].p, qb = J[jn[n - 1]].p, mx = (qa[0] + qb[0]) / 2, mz = (qa[2] + qb[2]) / 2, ln = Math.min(1, 0.25 + 0.75 * s);   /* a small roll is short as well as thin, never a long sausage */
+    for (let i = 1; i < n; i++) { const jj = jn[i], p = J[jj].p, pil = i >= n - 2; B[jj].position.set((pil ? mx + (p[0] - mx) * ln : p[0]) + R0.dx * out, pil ? p[1] * (0.8 + 0.2 * Math.min(1, s * sy)) : p[1], (pil ? mz + (p[2] - mz) * ln : p[2]) + R0.dz * out); B[jj].quaternion.identity(); if (pil) B[jj].scale.set(s, s * sy, s); else B[jj].scale.setScalar(Math.min(1, 0.45 + 0.55 * s)); } });
+  /* Water's drips are not fog */ S.drips.forEach(dp => { dp.g.visible = false; });
+  /* the mist on the wood creeps outward from under the bank, spreading and thinning */ const pl = S.pl49 || G.pl, j0 = J[0].p;
+  K.mist.forEach(e => { const L = 6 + 3 * h52(e.i + st * 5), x = tt / L + h52(e.i * 3.1), u = fr52(x), id = Math.floor(x), a = PI * (-0.1 + 1.2 * h52(id * 7.7 + e.i)), d = 0.5 + 0.85 * u, sz = (0.7 + 1.1 * u) * pl.rz * (0.8 + 0.4 * h52(id + e.i * 2.3)), op = (KIT.mist56 || 0.85) * Math.pow(Math.sin(PI * u), 1.2) * (1 - 0.35 * Math.max(0, -Math.sin(a)));
+    e.m.position.set(pl.x + Math.cos(a) * pl.rx * d - j0[0], 0.04 + 0.12 * (1 - u), pl.z + Math.sin(a) * pl.rz * d * 0.9 - j0[2]); e.m.scale.set(sz * 1.7, sz, 1); e.m.rotation.y = 0.3 * Math.cos(a); e.m.material.opacity = op; e.m.visible = op > 0.01; });
+  /* rime grows and fades with its ferns */ K.rime.forEach(r => { const f = fern56(tt, r.i, P), v = f.grow * f.fade; r.m.material.opacity = r.op * (0.3 + 0.7 * v); r.m.scale.copy(r.s).multiplyScalar(0.7 + 0.4 * v); });
+  try { cut56(S, tt); } catch (e) { W56.err = String(e && e.stack); } }
+/* the figure's own pen strokes move: the wisps slide down and thin; the ferns grow and fade; the block's lines go with the block */
+function pen56(S) { const X = S.a48, tt = S.tt56, P = P56[S.st] || P56[3]; if (!X || !X.strokes || tt == null) return;
+  X.strokes.forEach((s, si) => { if (!s.p0) { s.p0 = s.pts.map(p => p.slice()); s.w0 = s.w; } const p0 = s.p0, n = p0.length;
+    if (s.t === 'wisp') { const u = fr52(tt / P.wp + si * 0.37), h = Math.abs(p0[0][1] - p0[n - 1][1]) || 0.3, a = Math.floor((n - 2) * sm52((u - 0.35) / 0.65)), b = Math.min(n, 2 + Math.ceil((n - 2) * sm52(u / 0.45)));
+      s.pts = p0.slice(a, b).map(p => [p[0], p[1] - u * 0.4 * h, p[2]]); s.w = s.w0 * 1.6 * (1 - 0.6 * sm52((u - 0.4) / 0.6)); s.off = b - a < 2; }
+    else if (s.t === 'fern') { const f = fern56(tt, s.g || 0, P); if (!s.ft && n > 2) s.pts = p0.slice(0, Math.max(2, Math.ceil(n * f.grow))); s.off = f.grow < (s.ft || 0) + 0.03 || f.fade < 0.04; s.w = s.w0 * (0.35 + 0.65 * f.fade); }
+    else if (s.t === 'box') { const b = S.bo56; s.pts = b ? p0.map(p => [p[0] + b[0], p[1] + b[1], p[2] + b[2]]) : p0; } }); }
+function hide56(S) { const K = S.k56; if (!K) return; K.mist.forEach(e => { e.m.visible = false; }); K.box.forEach(e => e.m.position.copy(e.p0)); S.bo56 = null; if (S.a48) S.a48.strokes.forEach(s => { if (s.p0) { s.pts = s.p0; s.w = s.w0; s.off = false; } }); if (S.cut49 && S.pen30) S.cut49 = null; }
+/* the pen's strokes in the air: wisps sinking off the tip, hands, sleeves and block, the breath out, a puff rolling off on a shiver, the block's glint */
+function ink56(T, S, ren, cam) { const R = S.pen30, K = S.k56, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
+  const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = W56.pool || (W56.pool = Array.from({ length: 24 }, () => new T.Vector3())); if (lw < 1.2 || S.c56 !== 'rest' || S.tt56 == null) return;
+  const tt = S.tt56, st = S.st, P = P56[st] || P56[3], G = S.G, H = G.H, B = S.bones, J = G.J, rm = S.root.matrixWorld, TAU = 2 * PI, top = (S.bank49 ? S.bank49[1] : 0.3) * 0.9, pl = S.pl49 || G.pl, V = S.v56, wk = KIT.wisp56 || 1; let sd = 9300;
+  const fall = (x, y, z, ox, u, len, w, ph) => { const Lf = Math.max(0.06 * H, y - top), hd = Math.min(1, 1.25 * u), tl = Math.max(0, hd - len); if (u <= 0 || u >= 1 || hd - tl < 0.03) return; const m = 8;
+    for (let i = 0; i < m; i++) { const f = tl + (hd - tl) * i / (m - 1), c = sm52((f - 0.55) / 0.45); pool[i].set(x + ox * (0.1 * Lf * Math.sin(f * 4 + ph) * f + 0.6 * Lf * c * c), y - Lf * (f - 0.1 * c * c), z + 0.2 * Lf * f).applyMatrix4(rm); }
+    free30(R, pool.slice(0, m), lw * w * wk * Math.sin(PI * u), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.4, min: 3 }); };
+  const src = (p, ox, per, nn, len, w, k0) => { for (let i = 0; i < nn; i++) fall(p.x, p.y, p.z, ox, fr52(tt / per + i / nn + h52(k0)), len, w, k0 * 1.3 + i); };
+  /* the drooping tip */ { const p = B[K.top[K.top.length - 1]].position; src(p, p.x >= B[K.top[0]].position.x ? 1 : -1, P.wp * 1.3, 2, 0.45, 1.0, 1); }
+  /* the hands and the sleeves */ [1, -1].forEach(s => (K.arm[s] || []).forEach((c, ci) => { const p = B[c.jn[c.jn.length - 1]].position, slv = st >= 4 && ci > 0; src(p, s, P.wp * (slv ? 0.8 : 1.15), slv ? 3 : 1, slv ? 0.5 : 0.4, slv ? 1.0 : 0.8, 3 + ci + (s > 0 ? 0 : 5)); }));
+  /* the block: fog streams down off it */ K.box.forEach((e, i) => { if (e.m.userData.box49 !== 1) return; const b = B[e.j]; V.c.copy(e.m.position).multiply(b.scale).applyQuaternion(b.quaternion).add(b.position); V.c.y -= 0.15 * H * 0.15; [-1, 1].forEach(s => src({ x: V.c.x + s * 0.05 * H, y: V.c.y, z: V.c.z + 0.05 * H }, s, P.wp * 0.9, 1, 0.4, 0.8, 11 + s));
+    /* its glint: a small star at its top corner */ if (K.gl > 0.04 && st < 4) { const r = 0.05 * H * K.gl; [[1, 1], [1, -1]].forEach(([a, c2], q2) => { pool[0].set(V.c.x + 0.05 * H - r * a, V.c.y + 0.1 * H - r * c2, V.c.z + 0.1 * H).applyMatrix4(rm); pool[1].set(V.c.x + 0.05 * H + r * a, V.c.y + 0.1 * H + r * c2, V.c.z + 0.1 * H).applyMatrix4(rm); free30(R, pool.slice(0, 2), lw * 0.5 * K.gl, s2, Wd, Ht, P10, P11, d, sd++, { smooth: 0, wob: 0.2, min: 2 }); }); } });
+  /* the breath out falls as a wisp */ if (G.o.face && st >= 2) { const jh = G.bj[G.R.head], b = B[jh], fc = G.o.face.c; V.c.set(fc[0] - J[jh].p[0], fc[1] - J[jh].p[1] - 0.25, fc[2] - J[jh].p[2] + 0.45).multiply(b.scale).applyQuaternion(b.quaternion).add(b.position); fall(V.c.x, V.c.y, V.c.z, -1, fr52(tt / P.br + 0.3) * 1.4, 0.35, 0.8, 2); }
+  /* a shiver sends a puff rolling off the bank on each side */ if (pl) { const v = fr52(tt / P.sv + 0.15) * P.sv / 1.8; if (v < 1) [-1, 1].forEach(s => { const cx = pl.x + s * (pl.rx * 0.88 + 0.4 * pl.rx * v), cy = top * 0.75 + 0.06 * H * Math.sin(PI * v), cz = pl.z + 0.45 * pl.rz, r = 0.06 * H * (0.6 + 0.9 * v), a0 = -s * v * 5; let m = 0;
+    for (let i = 0; i <= 10; i++) { const a = a0 + i / 10 * 1.5 * PI; pool[m++].set(cx + r * Math.cos(a), cy + r * Math.sin(a), cz).applyMatrix4(rm); } free30(R, pool.slice(0, m), lw * 1.0 * wk * (1 - v), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.4, min: 3 }); }); }
+  R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way49) return f0(grp, clip, t, o);
+    /* in the jar the margin's material carries no line width (W52 found this for Acid) */ if (S.hull27 && !S.hull27.material.userData.w) S.hull27.material.userData.w = { value: 0 };
+    const a48 = S.a48, run = () => { S.a48 = null; try { return f0(grp, clip, t, o); } finally { S.a48 = a48; } }; const safe = () => { try { return run(); } catch (e) { if (S.hull27 && !S.hull27.material.userData.w) { S.hull27.material.userData.w = { value: 0 }; return run(); } throw e; } }; const r = safe(); if (!on56(S)) return r; S.c56 = clip;
+    if (clip === 'rest') { const c0 = rn44(); try { if (!S.k56) { init56(S); safe(); } pose56(S, o || {}); } catch (e) { W56.err = String(e && e.stack); } W56.ms += rn44() - c0; W56.n++; }
+    else if (S.k56) hide56(S); return r; })(play26);
+KIT.spirit26.play = play26;
+draw30 = (f0 => function (T, S, ren, cam) { const on = on56(S) && S.k56 && S.c56 === 'rest'; if (on) { try { pen56(S); } catch (e) { W56.err = String(e && e.stack); } } f0(T, S, ren, cam); if (on && S.pen30) { try { ink56(T, S, ren, cam); } catch (e) { W56.err = String(e && e.stack); } } })(draw30);
+/* the shelf jar: the half-grown and ready figures and the stage form are the shy one (fitted to the glass); the stage form plays its rest as it is drawn */
+function drive56(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf56 === fr) return; S.jf56 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W56.err = String(e && e.stack); } }; }
+function jar56(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; c.children.slice().forEach(o => c.remove(o)); const f = dry49Fig(T, k < 1 ? 2 : 3, { jar: true }), q = fit44(T, f, 0.86, 1.95, 1.3), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); if (k < 1) drive56(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = dry49Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, sg >= 3 ? 1.12 : 0.9, 1.95, 1.6), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + (sg >= 3 ? 0.3 : 0.08) - q.y0 * q.s, -q.cz * q.s); drive56(f);   /* lifted clear of the jar's front lip */
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'co2' && KIT.dry49 === 'c' && KIT.idle56 !== false && T && T.SkinnedMesh) { try { jar56(T, j); } catch (e) { W56.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W56 = W56;
+// ==== W56 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
