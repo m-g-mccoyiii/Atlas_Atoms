@@ -1467,3 +1467,19 @@ Branch `brimstone-builder-69` (worktree `brim69`; `steam` merged in first; the p
 - **Weak**: see `brimstone82-evolve-strip.txt`. Also: the new smoke reads pale, nearly white, under the lamp pass (the smoke's wash takes the lit scene behind it); the pillar's stacked tongues are additive and read white-hot more than blue where they overlap; the scorch is one drawn stain scaled up (the same shape every time); the veil darkens the molecule and the cards as much as the bench; the lump is very large at the place in 1 to 2; the arms' unfolding (3 to 4) is a straight pull from the shoulder; looked at in stills only, sound not heard, the switch off checked only for a clean start and no error, no timing on a real graphics card (up to 12 fire sprites, 64 embers, 48 puffs, 64 flecks, 2 page planes and one veil plane, plus the old figure while it lives).
 
 scheme.html: bump `kitart.js?v=` (120 to 121, or one past any other builder's bump), `scheme.js?v=` (412 to 413, or one past any other builder's bump).
+## Eighty-seventh builder (15 November)
+
+Branch `slime-builder-61` (worktree `slime61`; `steam` merged in first). Files: `kitart.js` (block `W71` only), `scheme.js` (block `S71` only). Shots in `C:\Work\atlas-atoms\.claude\shots`: `slime87-pulls.jpg` (the four pulls at their tallest, now, over the same moment before from `slime84-pulls.jpg`), `slime87-pulls.txt`.
+
+- **The fault**: at the pull the stretched Slime was covered in heavy black vertical pen streaks (its own pen marks, its strings and the outline's inner creases, all stretched with the skin) and read as a scribbled-over draped ghost.
+- **What changed**:
+  1. **One clean outer line** while `S.cl71` (from the pull until `e.sl` 0.62 after landing; set in `post71`, cleared in `end71`). A `draw30` wrapper in `W71` lends `S.a61 = null` (no own pen marks) and empty `K.lanes` (no bubble rings) for the call; a `stroke30` wrapper drops every pen run that lies on the body's own shape; then `line71` traces the outer edge of the body's skin laid flat on the screen (`mask71`: a coarse cover from all its triangles; `edge71`: the largest piece followed round, smoothed) and writes it as three long overlapping strokes in the figure's own pen weight. Beads off the body are still drawn.
+  2. **Strings drawn in**: for the pull every string and drip of the arms is shrunk to nothing where it hangs (scale to 0, hardly moved, so the body's skin is not dragged into a sail); they re-form between `e.sl` 0.3 and 0.6 after landing. Drip beads and spots hidden meanwhile.
+  3. **Neck**: the thinning along the pull is narrowest just under the face (`nk` peaks at g about 0.65 instead of 0.5).
+  4. **Arm**: a hauled arm tapers from root to a slightly smaller rounded tip (scale 1 to about 0.4 along it, tip included) instead of a stick with a full-size bead.
+  5. **Drips** (`S71`): flat violet wash (`K.dw`, `#c9abe8`, 0.88) with a thin dark violet rim (`K.dr`, 1.07), and smaller (0.018 to 0.036 R).
+  6. Nothing else: timing, melt, gathering, slump, sounds, switch as the eighty-fourth.
+- **To render**: as the eighty-fourth; new `p87.sh <prefix>` renders only the pull at its tallest and just landed for each step (`frames/<prefix>_1..4`), then `python strip84.py --pulls out.jpg <p>_1:0 <p>_2:0 <p>_3:0 <p>_4:0`; `python make87.py <after> <before> <out>` the now-over-before sheet.
+- **Weak** (from `slime87-pulls.jpg`): no streaks or fringe left, but the traced outline follows the true outer shape, so at 2 to 3 and 3 to 4 it runs along thin stretched webs of skin from the raised arm to the base (two or three long lines), and it loops round the slick's bare-paper rim below the visible wash; the body still stretches as a bell rather than a pinched taffy neck (too few joints); the wash is not paler where thinnest; stills only, no clip, sound not heard.
+
+scheme.html: bump `kitart.js?v=` (126 to 127), `scheme.js?v=` (415 to 416).
