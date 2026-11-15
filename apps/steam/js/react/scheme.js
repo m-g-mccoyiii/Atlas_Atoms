@@ -5332,8 +5332,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (!E.c71) { s59Place(E, SP); E.c71 = E.c59; E.f71 = {}; E.k59 = 1; s71Wide(E, SP); }
     const C = E.c71, RK = Kt.RK, Q = HEVO.pos || (HEVO.pos = {}), k = E.k59 || 1, Fk = C.F * k;
     if (!E.d71) { const dx = C.x - HOMP.x, dz = C.z - HOMP.z, l = Math.hypot(dx, dz) || 1; E.d71 = [dx / l, dz / l]; }
-    let x = C.x, z = C.z, s = (e.old ? E.s0 : E.s1) * Fk;
-    if (u < c[1]) { const a = e.cr; x = HOMP.x + (C.x - HOMP.x) * a; z = HOMP.z + (C.z - HOMP.z) * a; s = E.s0 * (1 + (Fk - 1) * RK.sm(Math.min(1, e.go * 1.15))); }
+    if (E.ko71 == null && SP.e71 && SP.e71.sp) { /* the old stage's width, too, between the screen's edge and the molecule */ const J = SP.e71.sp.G.J, v = S71.v, nx = xx => { v.set(xx, C.y, C.z).project(cam); return v.x; }, pu = Math.max(1e-4, nx(C.x + 1) - nx(C.x)); let hw = 0; J.forEach(q => { hw = Math.max(hw, Math.abs(q.p[0]) + q.r); }); hw *= C.unit * E.s0 * C.F;
+      const xL = C.x + (-0.92 - nx(C.x)) / pu, xR = C.mol && C.x < C.mol[0] ? C.mol[0] - 0.3 : C.x + (0.92 - nx(C.x)) / pu; E.ko71 = Math.max(0.5, Math.min(1, (xR - C.x) / Math.max(1e-3, hw), (C.x - xL) / Math.max(1e-3, hw))); }
+    const ko = E.ko71 || 1; let x = C.x, z = C.z, s = (e.old ? E.s0 * ko : E.s1) * Fk;
+    if (u < c[1]) { const a = e.cr; x = HOMP.x + (C.x - HOMP.x) * a; z = HOMP.z + (C.z - HOMP.z) * a; s = E.s0 * (1 + (Fk * ko - 1) * RK.sm(Math.min(1, e.go * 1.15))); }
     else if (u >= c[6]) { const h = 1 - e.cr; x = C.x + (HOMP.x - C.x) * h; z = C.z + (HOMP.z - C.z) * h; s = E.s1 * (Fk + (1 - Fk) * RK.sm(h)); }
     Q.x = x; Q.z = z; Q.y = 0; Q.sx = 1; Q.sy = 1; homObj.s = s; E.ks31 = s / E.s0;
     if ((u >= c[1] && u < c[2]) || (u >= c[5] && u < c[6])) { try { s59Fit(E, e.old ? (SP.e71 && SP.e71.sp) : SP); } catch (x2) { /* fits next frame */ } }
@@ -5381,7 +5383,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (e.fling > 0 && e.fall < 0.95) { const want = Math.floor(e.fling * (P.nc > 1 ? ND71 : ND71 * 0.6)); let lv = K.drops.filter(d2 => d2.n71 === E).length; K.drops.forEach(d2 => { if (lv >= want || d2.live) return; const cl = cols[lv % cols.length], v0 = 0.45 + 0.4 * Math.random(), p0 = s71ColAt(cl.B, cl.h, cl.ln, cl.sw, 1, tw, v0), sdd = Math.random() < 0.5 ? -1 : 1;
           d2.live = true; d2.n71 = E; d2.p = p0.slice(); d2.v = [sdd * (3 + 5 * Math.random()) * R * 0.12, (1 + 3 * Math.random()) * R * 0.12, (Math.random() - 0.3) * 3 * R * 0.12]; d2.r = R * (0.035 + 0.04 * Math.random()); lv++; }); } }
     K.drops.forEach(d2 => { if (!d2.live) { d2.g.visible = false; return; } const dt = Math.min(0.05, bdt || 0.033); d2.v[1] -= 9.8 * R * 0.25 * dt; d2.p[0] += d2.v[0] * dt; d2.p[1] += d2.v[1] * dt; d2.p[2] += d2.v[2] * dt; const fl = s66Floor(d2.p[0], d2.p[2]) + 0.03;
-      if (d2.p[1] <= fl) { d2.live = false; d2.g.visible = false; const on = !C.mol || d2.p[0] < C.mol[0] - 0.2 || d2.p[0] > C.mol[1] + 0.2 || d2.p[2] < C.mol[2] - 0.2 || d2.p[2] > C.mol[3] + 0.2; if (on) s66Mark(d2.p[0], d2.p[2], 1, 0, d2.r * 4, d2.r * 3.2, now, 2200); return; }
+      if (d2.p[1] <= fl) { d2.live = false; d2.g.visible = false; const on = !C.mol || d2.p[0] < C.mol[0] - 0.2 || d2.p[0] > C.mol[1] + 0.2 || d2.p[2] < C.mol[2] - 0.2 || d2.p[2] > C.mol[3] + 0.2; if (on) s66Mark(d2.p[0], d2.p[2], 1, 0, d2.r * 4, d2.r * 3.2, now, 1500); return; }
       d2.g.visible = true; d2.g.position.set(d2.p[0], d2.p[1], d2.p[2]); const sp = Math.hypot(d2.v[0], d2.v[1]); d2.g.scale.set(d2.r, d2.r * (1 + 0.04 * sp / R), d2.r); });
     for (; ti < K.tubes.length; ti++) { K.tubes[ti].m.visible = K.tubes[ti].h.visible = false; }
     /* the face floating on the pool, sleepy, blinking, then wide at the held instant */
