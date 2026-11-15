@@ -6087,10 +6087,13 @@ const cl74 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
    hd the held part of the swell; seed the seed's height (of the new form's); nst steps out, nbk steps home; nr roots drawn into the page, rl their
    length (in R, the place's radius); ring the damp ring's radius (in R) */
 const PAR74 = [null, null,
-  { b: [2.0, 0.75, 0.75, 1.5, 0.75, 1.5, 2.0], hd: 0.3, seed: 0.42, nst: 4, nbk: 4, nr: 7, rl: 1.3, ring: 0.8 },
-  { b: [2.0, 1.0, 1.5, 2.5, 1.0, 2.0, 2.25], hd: 0.3, seed: 0.48, nst: 5, nbk: 5, nr: 10, rl: 1.9, ring: 0.95 },
-  { b: [2.25, 1.0, 1.75, 3.0, 1.25, 2.75, 2.25], hd: 0.3, seed: 0.55, nst: 5, nbk: 5, nr: 13, rl: 2.5, ring: 1.1 },
-  { b: [2.5, 1.25, 2.25, 5.0, 1.5, 4.0, 2.5], hd: 0.26, seed: 0.66, nst: 6, nbk: 6, nr: 18, rl: 4.0, ring: 1.35 }];
+  { b: [2.0, 0.5, 1.25, 1.25, 0.75, 1.5, 2.0], hd: 0.3, seed: 0.42, nst: 4, nbk: 4, nr: 7, rl: 1.3, ring: 0.8 },
+  /* (builder 83) the winding down 3.75 beats at 2 to 3, 3 to 4 and 4 to 5 (about 1.9 s at pace 2), taken from the look and the swelling */
+  { b: [2.0, 0.75, 3.75, 1.5, 1.0, 2.0, 2.25], hd: 0.3, seed: 0.48, nst: 5, nbk: 5, nr: 10, rl: 1.9, ring: 0.95 },
+  { b: [2.25, 0.75, 3.75, 2.25, 1.25, 2.75, 2.25], hd: 0.3, seed: 0.55, nst: 5, nbk: 5, nr: 13, rl: 2.5, ring: 1.1 },
+  { b: [2.5, 1.0, 3.75, 3.75, 1.5, 4.0, 2.5], hd: 0.3, seed: 0.66, nst: 6, nbk: 6, nr: 18, rl: 4.0, ring: 1.35 }];
+/* (builder 83) the width of its own husk at its foot, in the figure's units, by stage (1: the whole seed) */
+const HB74 = [0, 1.55, 1.08, 1.16, 1.12, 1.12];
 /* a leaf, petal or tendril snapping open d beats after its time: 0 shut, 1 open, a springy overshoot */
 const snap74 = d => (d <= 0 ? 0 : 1 - Math.exp(-d / 0.13) * Math.cos(2 * PI * d / 0.5));
 /* where it is in the change: every number the figure and the page read */
@@ -6105,12 +6108,15 @@ function ph74(t, o) { const P = PAR74[Math.max(2, Math.min(5, o.to | 0))], b = P
   if (u >= c[6]) { const h = e.hb, k = Math.min(P.nbk - 0.001, h * P.nbk), i = Math.floor(k); if (h > 0 && h < 1) e.stp = { i, u: k - i }; e.cr = 1 - (h >= 1 ? 1 : (i + sm52(k - i)) / P.nbk); }
   /* planting and looking up: a wiggle, the look up at the lamp, the great breath */
   e.plant = u >= c[1] && u < c[3] ? Math.exp(-(u - c[1]) / 0.3) * Math.sin(2 * PI * (u - c[1]) / 0.45) : 0;
-  e.up = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.1) / 0.35) : u < c[3] ? 1 - sm52(e.wind / 0.35) : 0;
-  e.breath = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.35) / 0.55) : u < c[3] ? 1 - sm52(e.wind / 0.3) : 0;
-  /* the winding down: f the fold; cl the coat closing over it (the click at its end); gone: inside the shut seed */
-  e.f = u < c[2] ? 0 : u < c[3] ? sm52(e.wind / 0.85) : 1;
-  e.cl = u < c[2] ? 0 : u < c[4] ? sm52((e.wind - 0.1) / 0.75) : 1;
-  e.click = c[2] + 0.85 * b[2]; e.gone = u >= e.click && u < c[4];
+  e.up = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.1) / 0.35) : u < c[3] ? 1 - 0.35 * sm52(e.wind) : 0;
+  e.breath = u < c[1] ? 0 : u < c[2] ? sm52((e.look - 0.35) / 0.55) : u < c[3] ? 1 - sm52(e.wind / 0.2) : 0;
+  /* the winding down (builder 83): the leaves roll (0 to 0.5 of it), f the stem coiling down (0.12 to 0.8); its own husk at its foot: hf it is taken
+     up (0 to 0.1), gr it swells from its own size to the seed's and its two halves rise from flared to upright (0.2 to 0.65); cl the halves' lips
+     closing over the top from the zigzag (0.61, the seam) to the point (1) from 0.64; the click at 0.95; gone: inside the shut seed */
+  const w = e.wind; e.f = u < c[2] ? 0 : u < c[3] ? sm52((w - 0.12) / 0.68) : 1;
+  e.hf = u < c[2] ? 0 : sm52(w / 0.1); e.gr = u < c[2] ? 0 : u < c[3] ? sm52((w - 0.2) / 0.45) : 1;
+  e.cl = u < c[2] ? 0 : u < c[3] ? 0.61 + 0.39 * sm52((w - 0.64) / 0.31) : 1;
+  e.click = c[2] + 0.95 * b[2]; e.gone = u >= e.click && u < c[4];
   /* the roots drawn into the paper and the damp ring: from the middle of the winding down to the hit; they dry away going home */
   const r0 = c[2] + 0.4 * b[2], rx = cl74((u - r0) / Math.max(0.5, c[4] - r0)); e.rt = u < r0 ? 0 : 1 - Math.pow(1 - rx, 2); e.ring = u < r0 ? 0 : sm52(rx * 1.2);
   e.rf = u < c[6] ? 1 : 1 - sm52((e.home - 0.04) / 0.5);
@@ -6153,7 +6159,9 @@ function face74(e, old, st) { const z = {}, u = e.u, c = e.c;
   if (old) {
     if (u < c[1]) { z.lookx = 0.6 * (e.dir || 0); z.looky = -0.2; z.smile = 1.4; z.lidMax = st === 1 ? 0.12 : 0.3; z.turn = (e.tn || 0) * sm52(e.go / 0.15); return z; }
     if (u < c[2]) { const k = e.up; z.lookx = -0.65 * k; z.looky = 0.95 * k; z.wide = 0.5 * pl52(e.look, 0.1, 0.45, 0.1); z.brow = 0.4 * k; z.open = e.breath > 0.15 && e.breath < 0.97 ? 0.4 + 0.4 * e.breath : 0; z.smile = 1.3 + 0.3 * k; z.lidMax = 0.2; return z; }
-    z.blink = sm52((e.wind - 0.05) / 0.25); z.smile = 1.5; z.looky = 0.5 * (1 - e.f); z.lookx = -0.4; return z; }
+    /* (builder 83) eyes open, looking up at the lamp, till the lips close over them */
+    if (st === 1) { z.blink = sm52((e.wind - 0.05) / 0.25); z.smile = 1.5; z.looky = 0.5 * (1 - e.f); z.lookx = -0.4; return z; }
+    z.blink = sm52((e.wind - 0.86) / 0.07); z.smile = 1.5; z.looky = 0.9; z.lookx = -0.3; z.lidMax = 0.2; return z; }
   if (u < c[5]) { const p = e.bu; z.blink = Math.max(1 - sm52((p - 0.45) / 0.1), pl52(p, 0.74, 0.8, 0.02)); z.wide = 0.8 * pl52(p, 0.5, 0.85, 0.08); z.brow = 0.6 * pl52(p, 0.5, 0.9, 0.1); z.looky = 0.3; z.lookx = 0.5 * Math.sin(e.dh * 9) * e.shake; z.smile = 1.3; z.lidMax = 0.1; return z; }
   if (u < c[6]) { const s = e.str; z.lookx = 0.8 * Math.sin(e.d5 * 2.4) * (1 - s) - 0.65 * s; z.looky = 0.15 * (1 - s) + 0.95 * s; z.smile = 1.5 + 0.45 * s; z.lidx = 0.6 * s; z.wide = 0.35 * (1 - s); z.brow = 0.25 + 0.2 * s; if (s < 0.1) z.lidMax = 0.25; return z; }
   const h = e.home; z.turn = PI * sm52((h - 0.04) / 0.12) * (1 - sm52((h - 0.86) / 0.1)); z.smile = 1.4; z.lidx = 0.4 * sm52((h - 0.9) / 0.1); return z; }
@@ -6179,7 +6187,9 @@ function post74(S, e, old) { const K = S.k67 || init67(S), st = S.st, G = S.G, H
     if (e.plant) tilt(Zx, 0.12 * e.plant, P0());
     if (e.breath > 0) { stretch(0.13 * e.breath * (st === 1 ? 0.4 : 1)); leaves(0.4 * e.breath); }
     if (e.up > 0) { head(Xx, -0.32 * e.up); bend(Zx, 0.12 * e.up); if (st === 1) tilt(Xx, -0.2 * e.up, P0()); }
-    if (e.f > 0) { const nl = Math.max(1, K.leaves.length - 1), w = e.wind; fold74(S, K, e.f, e.f, i => sm52((w - 0.04 - 0.42 * i / nl) / 0.28), i => sm52((w - 0.1) / 0.3), i => sm52((w - 0.02 - 0.03 * i) / 0.3));
+    if (u >= c[2]) { const nl = Math.max(1, K.leaves.length - 1), w = e.wind;
+      /* (builder 83) the leaves roll one by one, the top one first */ const rk = K.rk74 || (K.rk74 = (() => { const h = K.leaves.map((R, i) => [J[R.c.jn[R.c.jn.length - 1]].p[1], i]).sort((a, b2) => b2[0] - a[0]), r = []; h.forEach((q, n) => { r[q[1]] = n; }); return r; })());
+      fold74(S, K, e.f, e.f, i => sm52((w - 0.02 - 0.32 * rk[i] / nl) / 0.16), i => sm52((w - 0.1) / 0.3), i => sm52((w - 0.02 - 0.03 * i) / 0.3));
       if (st === 1) tilt(Zx, 0.1 * Math.sin(TAU * w * 2) * (1 - w), P0()); }
     return; }
   /* the new stage: shut tight inside the seed at the hit, then the surge, the opening, the stretch */
@@ -6205,9 +6215,10 @@ function evo74(f0, grp, S, t, o) { const e = ph74(t, o), T = S.T; W74.e = e; con
     const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show74(S, false); sp.x74 = { k: u74k(e) };
     /* folded, it fits inside the seed */ const Ho = hw74(sp, O.rs), mf = sz > 0 ? Math.min(1, (o.from === 1 ? 0.8 : 0.62) * sz / (Ho * (o.from === 1 ? 0.95 : 0.5))) : 1, m = 1 + (mf - 1) * Math.pow(e.f, 0.7); sp.root.scale.setScalar(O.rs * m);
     sp.z74 = face74(e, true, o.from); f0(O.gg, 'rest', t / e.L, ro); post74(sp, e, true); O.gg.visible = !e.gone; show74(sp, !e.gone); where74(sp, o, Ho * m);
+    /* (builder 83) the egg-height of its own husk at its foot, in the world, now (the page's seed grows from it) */ o.hb74 = Ho * m * (HB74[o.from] || 1.1) / 0.72 / Math.max(1e-3, sp.G.H) * 1.06;
     /* while both are hidden in the shut seed: the new stage stood at rest, unseen, so the page can fit its whole drawing inside the screen */
     if (e.gone) { S.root.scale.setScalar(S.rs74); S.z74 = null; f0(grp, 'rest', t / e.L, ro); show74(S, false); o.pts74 = pts74(S); } }
-  else { if (O) kill74(S); show74(S, true); S.x74.k = u74k(e); const Hn = hw74(S, S.rs74), m0 = sz > 0 ? Math.min(1, 0.7 * sz / (0.5 * Hn)) : 1, m = e.u < e.c[5] ? m0 + (1 - m0) * Math.min(1, e.g) : 1; S.root.scale.setScalar(S.rs74 * m);
+  else { if (O) kill74(S); show74(S, true); S.x74.k = u74k(e); const Hn = hw74(S, S.rs74), m0 = sz > 0 ? Math.min(1, 0.7 * sz / (0.5 * Hn)) : 1, m = e.u < e.c[5] ? (m0 + (1 - m0) * Math.min(1, e.g)) * (0.3 + 0.7 * sm52(e.dh / 0.4)) : 1; /* (builder 83) it grows out of the seed from small, never shown at size in the first frame */ S.root.scale.setScalar(S.rs74 * m);
     S.z74 = face74(e, false, S.st); f0(grp, 'rest', t / e.L, ro); post74(S, e, false); where74(S, o, Hn * m); if (!o.snap74 && S.k67 && S.k67.t74) o.snap74 = S.k67.t74; }
   const c = e.c, b5 = e.P.b[5], u = e.u; let n = -1; if (u >= c[4]) n = 0; if (u >= c[5] + 0.3 * b5) n = 1; if (u >= c[5] + 0.65 * b5) n = 2; if (u >= c[6]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
   return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }

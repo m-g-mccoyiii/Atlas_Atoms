@@ -1348,3 +1348,16 @@ Branch `ammonia-builder-78` (worktree `amm78`; `steam` merged in first; the page
   - `cd /c/Work/atlas-atoms/.claude/worktrees/amm78/.claude/r78 && ./t81.sh ammonia81-idle-5 5 10` (10 s at rest, stage 5)
 
 scheme.html: bump `kitart.js?v=` (119 to 120).
+## Eighty-third builder (15 November)
+
+Branch `seedling-builder-64` (worktree `seedling64`; `steam` merged in first). Only blocks `W74` (`kitart.js`) and `S74` (`scheme.js`) changed. The owner, on a phone: "The seedling egg just pops out of nowhere?" Now the plant visibly winds down into its OWN husk.
+
+- **The winding down** (3.75 beats, about 1.9 s at pace 2, at 2 to 3, 3 to 4 and 4 to 5; was 1.5, 1.75, 2.25): the leaves roll one by one, top first (0 to 0.5 of the span); the stem coils down (`e.f`, 0.12 to 0.8); the page's coat is taken up from the husk at the figure's foot (`o.hb74`, the husk's width per stage `HB74`, given by W74 every frame; faded up over that husk in the first 0.1, `e.hf`), then swells from that size to the seed's while its two halves rise from flared open to upright (`e.gr`, 0.2 to 0.65); the lips close over the top from the zigzag to a point (`e.cl` 0.61 to 1, from 0.64); the eyes stay open looking up till 0.86 and are the last thing seen in the gap; the click at 0.95 (was 0.85).
+- **Beats** (go, look, wind, swell, ...): 1 to 2 `[2, 0.5, 1.25, 1.25, ...]` hit on 5 (same); 2 to 3 `[2, 0.75, 3.75, 1.5, ...]` hit on 8 (was 7); 3 to 4 `[2.25, 0.75, 3.75, 2.25, ...]` hit on 9 (was 8); 4 to 5 `[2.5, 1, 3.75, 3.75, ...]` hit on 11 (same). The rest unchanged.
+- **1 to 2**: the coat takes up the lying seed tilted with it (`K.bd.rotation.z`) and rights itself as it swells; its eyes shut early as before.
+- **The coat's look**: the figure husk's tan-brown (`#dcbfa8`), a canvas texture of wash, grain and short pen strokes (`s74Grain`, uv written by `s74Fill`). The inside of the shell is drawn before the figure (renderOrder 12, BackSide), its outside after it (`m2`, 24, FrontSide), so the plant never shows through; the seam, tip and halo moved above it (24.5, 24.7, 25).
+- **The burst**: the new plant starts at 0.3 of its folded size and grows to it over 0.4 beats (no full-size first frame).
+- **Weak**: see `C:\Work\atlas-atoms\.claude\shots\seedling83-fold-strip.txt`. Placement still left of centre; the face looks forward more than up; inside the gap the bud is a green blob crossed by pen strokes; 1 to 2's righting is quick; 2 to 3 and 4 to 5 not rendered after the change; stills only.
+- **To render**: same as the seventy-fourth (`./e74.sh`), plus `fold83.py` in `.claude/r64` (the square-crop strip: `python fold83.py <out.jpg> f83_3 0.33,0.5,0.72 f83_1 0.25,0.5,0.6 "<labels>" "<labels>"` after `COLS=5 ./e74.sh f83_3 3 "2.7,3.13,3.57,4.0,4.43,4.87,5.3,5.73,6.17,6.6" ""` and `COLS=5 ./e74.sh f83_1 1 "2.55,2.9,3.25,3.6,4.4" ""`).
+
+scheme.html: bump `kitart.js?v=` (120 to 121), `scheme.js?v=` (412 to 413, or one past any other builder's bump).
