@@ -5680,6 +5680,159 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     own: p && JSON.stringify(p.own), tg: p && p.tg.map(q => q.kind + ':' + [q.x, q.y, q.z, q.R].map(v => v.toFixed(1)).join(',')).join(' '), rec: S72.rec.map(r => r.ti + r.id + ':' + r.atoms.length).join(' '), pl: p && [p.pl.x, p.pl.z, p.pl.k].map(v => +v.toFixed(2)), F: p && p.F, nC: p && p.nC, nB: p && p.nB, Tc: p && Math.round(p.Tc), J: p && Math.round(p.J), D: p && Math.round(p.D), B: p && Math.round(p.B), hit: p && Math.round(p.hit), L: p && Math.round(p.L), wayL: p && +p.way0.L.toFixed(1), climb: p && p.out.map(c => c.climb ? 1 : 0).join(''),
     Z: S72.Z ? { tW: Math.round(S72.Z.tW), tA: Math.round(S72.Z.tA), P: S72.Z.P.map(q => Math.round(q.t)).join(','), tHit: Math.round(S72.Z.tHit), tD: Math.round(S72.Z.tD), tSl: Math.round(S72.Z.tSl), tEnd: Math.round(S72.Z.tEnd) } : null, G: G && [G.position.x, G.position.y, G.position.z, G.scale.x].map(v => +v.toFixed(2)), h72: SP && SP.h72 ? JSON.stringify(SP.h72.tips.map(q => q && q.map(v => +v.toFixed(1)))) : null, HOMP: [HOMP.x, HOMP.z], cr: S72.cr.map(C => C.q.kind + (C.keep ? 'K' : '') + (C.crack ? 'x' : '')).join(','), left: g && JSON.stringify(g.left) }; };
   // ==== S72 END
+  // ==== S77 BEGIN
+  // (builder 77) BRIMSTONE'S OWN ACT ON THE PAGE (kitart W77 has the body; switch AA.rxKit.act77, ?a77=0 gives the old act). The rule (HOMS2 with
+  // RULE.homCount): Brimstone is lit when sulfur went on the molecule this page; the tap multiplies the yield by its stage's number for the first
+  // sulfur on the molecule and by 1.12 for each sulfur more (while the sigil Sulphur's Mask is held every OH counts as a sulfur too), ends the round on
+  // the spot with the task counted as met, and is spent for the run (run.homSpent.brimstone, written at the round's end; P.homSpent(g) says so). No
+  // atom changes. So it touches every atom the rule counts (each S; with the Mask each OH), one beat each, slow at first and quicker after; the hit (on
+  // a beat: jumpPlan20 puts it there) is where the page lets the yield through. Here: those atoms, the times, the place it rises (behind the molecule,
+  // as tall as the screen allows: up to about two thirds of the page), the way (along the bench by the book's top edge, over the edge, onto the page);
+  // and what is not its body: the blue fire that stays on each atom it touches with an ember in it, the ring of blue fire that runs out across the
+  // page on the hit and the char it leaves (a scene plane on the paper, so the creature and the atoms stand over it), the blue firelight on the page,
+  // the smoke of the bank on the bench and the scorch it leaves in the wood and paper (fading), its broad shade, the lamp drawn in (builder 33's one-
+  // lamp pass, lightly: this act alone dims the room, as it comes once a run), and the sound. Nothing on the bench moves. No yellow.
+  const S77 = { err: null, np: false, v: new T.Vector3(), v2: new T.Vector3(), plan: null, Z: null, A: null, j: null, last: null, dim: 0, n: 0, lit: false, LA: null, pool: null, bank: [], mk: [], lm: null, bt: 0, sm: [], st: 0 };
+  const s77On = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way69 && !SP.jar && K && K.act77 !== false && K.idle73 !== false && K.ph77 && K.fig77); };
+  const ss77s = u => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+  /* the atoms the rule counts, left to right: every S on the molecule; with Sulphur's Mask each OH too */
+  const s77Atoms = () => { const out = []; if (!center || !center.balls || !g || !g.m) return out; let mask = false; try { mask = !!(P.HOMCOUNT && P.HOMCOUNT.maskOH && P.sigOn && P.sigOn('sulphurs_mask')); } catch (e) { mask = false; }
+    center.balls.forEach((b, a) => { if (!a || a.fly || !b || !b.mesh) return; if (a.el === 'S') out.push({ a, b, kind: 'S' }); else if (mask && a.el === 'O') { let nb = []; try { nb = g.m.neighbors(a); } catch (e) { nb = []; } if (nb.length === 2 && nb.every(q => q.bond.order === 1) && nb.some(q => q.atom.el === 'H')) out.push({ a, b, kind: 'OH' }); } }); return out; };
+  /* an atom's radius as drawn (its sphere's radius times its scale) */
+  const s77R = b => { const m = b.mesh, gq = m.geometry; if (gq && !gq.boundingSphere && gq.computeBoundingSphere) gq.computeBoundingSphere(); m.getWorldScale(S77.v2); return S77.v2.x * (gq && gq.boundingSphere ? gq.boundingSphere.radius : 1); };
+  const s77Pg = x => (SAFE.L && x < (SAFE.L.x1 + SAFE.R.x0) / 2 ? SAFE.L : SAFE.R);
+  /* per stage: pace (5 the slowest), and how tall it stands at the molecule as a share of the page */
+  const S77F = [0.9, 0.95, 1, 1.1, 1.25], S77H = [0.4, 0.5, 0.6, 0.63, 0.66];
+  const s77Plan = (stg, L) => { const SP = s26Fig(), F = AA.rxKit.fig77(SP), f = S77F[stg - 1], v = S77.v, mb = a20MolBox() || { x0: C0.x - 5, x1: C0.x + 5, z0: C0.z - 4, z1: C0.z + 4 }, mc = { x: (mb.x0 + mb.x1) / 2, y: 0, z: (mb.z0 + mb.z1) / 2 };
+    const tg = s77Atoms().map(q => { q.b.mesh.getWorldPosition(v); return { x: v.x, y: v.y, z: v.z, R: s77R(q.b), a: q.a, kind: q.kind }; }).sort((p, q) => p.x - q.x);
+    if (center && center.balls) { let n = 0, sy = 0; center.balls.forEach(b => { b.mesh.getWorldPosition(v); sy += v.y; n++; }); mc.y = n ? sy / n : 0; }
+    SP.root.updateWorldMatrix(true, false); const RS = new T.Vector3().setFromMatrixScale(SP.root.matrixWorld).y || 1, pg = s77Pg(mc.x), R0 = tg.length ? tg.reduce((s, q) => s + q.R, 0) / tg.length : 0.7, mr = Math.max(1.5, Math.hypot(mb.x1 - mb.x0, mb.z1 - mb.z0) / 2);
+    /* the heavy atoms' own box (the molecule's box carries a margin) */ const ab = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9 }; if (center && center.balls) center.balls.forEach((b, a) => { if (!a || a.el === 'H' || a.fly) return; b.mesh.getWorldPosition(v); const r = s77R(b); ab.x0 = Math.min(ab.x0, v.x - r); ab.x1 = Math.max(ab.x1, v.x + r); ab.z0 = Math.min(ab.z0, v.z - r); ab.z1 = Math.max(ab.z1, v.z + r); }); if (ab.x0 > ab.x1) Object.assign(ab, mb);
+    let pl = { x: HOMP.x, z: HOMP.z, k: 1 };
+    if (stg > 1) { cam.updateMatrixWorld(); const pr = (x, y, z) => { v.set(x, y, z).project(cam); return [(v.x + 1) / 2, (1 - v.y) / 2]; };
+      /* behind the molecule, as tall as asked if the screen allows it (its whole box inside the screen); its bowed head toward the molecule */
+      const bz = Math.max(pg.z0 + 0.8, ab.z0 - 0.5), xm = (pg.x0 + pg.x1) / 2, pH = pr(xm, 0, pg.z1)[1] - pr(xm, 0, pg.z0)[1], b0 = pr(mc.x, 0, bz), b1 = pr(mc.x, 1, bz), dy1 = Math.max(1e-4, b0[1] - b1[1]);
+      const place = k => { let bx = mc.x - F.hx * k * RS * 0.6; const lo = pg.x0 + 0.4 - F.x0 * k * RS, hi = pg.x1 - 0.4 - F.x1 * k * RS; bx = lo <= hi ? Math.max(lo, Math.min(hi, bx)) : (pg.x0 + pg.x1) / 2 - (F.x0 + F.x1) / 2 * k * RS; return bx; };
+      const fits = k => { const bx = place(k); let ok = true; [F.x0, F.x1].forEach(x => [0, F.H].forEach(y => [-1, 1.6].forEach(z => { const q = pr(bx + x * k * RS, (y + 0.2) * k * RS, bz + z * k * RS); if (q[1] < 0.07 || q[0] < 0.02 || q[0] > 0.98) ok = false; }))); return ok; };
+      let k = Math.max(1.2, S77H[stg - 1] * pH / dy1 / (F.H * RS)); for (let i = 0; i < 40 && k > 1.2 && !fits(k); i++) k *= 0.95;
+      pl = { x: place(k), z: bz, k }; }
+    /* the way: along the bench by the book's top edge, then over it and down the page to its place */
+    const mid = stg > 1 && Math.abs(pl.x - HOMP.x) > 3 ? [{ x: HOMP.x + (pl.x - HOMP.x) * 0.82, z: Math.max(HOMP.z + 1.2, pg.z0 - 1.7) }] : [], way0 = s58Line([HOMP].concat(mid, [pl])), wayB = s58Line([pl].concat(mid.slice().reverse(), [HOMP]));
+    const R2 = b => Math.max(0.5, Math.round(b * f * 2) / 2) * L, Tw = R2(3), Tp = stg <= 1 ? R2(4) : R2(7), Tr = stg <= 1 ? 0 : R2(3), J = Tw + Tp + Tr, n = tg.length, P = []; let t = R2(2.5);
+    for (let i = 0; i < n; i++) { if (i) t += R2(Math.max(0.5, 2 - 0.5 * (i - 1))); P.push({ t }); } P.forEach((p, i) => { p.r0 = i ? p.t - 0.7 * (p.t - P[i - 1].t) : p.t - R2(1.5); p.b = p.t + 0.3 * L; });
+    const last = n ? P[n - 1].t : R2(2.5), up = last + R2(1), hit = up + R2(2), rel = hit + R2(1), D = hit + R2(4), Tt = stg <= 1 ? 0 : R2(1.5), Tb = stg <= 1 ? R2(3) : R2(6), Ts = R2(3), B = Tt + Tb + Ts;
+    let eE = -1; for (let i = 1; i <= 200; i++) { const q = way0.at(i / 200); if (s27K(q.x, q.z, 0.01) > 0.5) { eE = i / 200; break; } }
+    return { stg, L, f, pl, k: pl.k, way0, wayB, mb, mc, mr, R0, tg, pg, Tw, Tp, Tr, J, P, up, hit, rel, D, Tt, Tb, Ts, B, RS, eE, n }; };
+  jumpPlan = (f0 => function (id, to) { S77.np = false; if (id !== 'brimstone' || !s77On()) return f0(id, to);
+    try { const stg = Math.max(1, Math.min(5, homObj.stage || 3)), L = Math.max(380, Math.min(700, kinLen(performance.now()))), pf = paceK(), p = s77Plan(stg, L); S77.plan = p; R21T.brimstone = [p.J / pf, p.D / pf, p.B / pf]; S77.np = true; } catch (e) { S77.err = String(e && e.stack); S77.plan = null; }
+    try { return f0(id, to); } finally { S77.np = false; } })(jumpPlan);
+  actPiece = (f0 => function (kind) { if (S77.np && kind === 'puff') return null; return f0.apply(this, arguments); })(actPiece);
+  A20ACT.brimstone = (f0 => function (j, c) { if (!s77On() || !S77.plan) return f0(j, c); const p = S77.plan; j.r21 = true; j.s77 = true; j.bites = []; j.N = 3;
+    return { want: { x: HOMP.x, z: HOMP.z }, hitU: p.hit / p.D, dur: j.D + j.B + 1500, pad: 0.6,
+      after(pl) { pl.x = j.perch.x = HOMP.x; pl.z = j.perch.z = HOMP.z; pl.k = j.k = 1; j.sd = 1; j.spot = { x: p.mc.x, z: p.mc.z }; this.tgt = j.spot; },
+      draw() { /* all of it is in the scene */ } }; })(A20ACT.brimstone);
+  /* the plan in times since the tap, once the wind-up is known; the clip gets it as o.bites.s77 */
+  const s77Z = (A, j) => { const p = S77.plan, W = j.W, tA = W + p.J;
+    const Z = { st: p.stg, L: p.L, k: p.k, tW: W, tPour: W + p.Tw, tRise: W + p.Tw + p.Tp, tA, P: p.P.map(q => ({ r0: tA + q.r0, t: tA + q.t, b: tA + q.b })), tUp: tA + p.up, tHit: tA + p.hit, tRel: tA + p.rel, tD: tA + p.D, tBk: tA + p.D + p.Tt, tHm: tA + p.D + p.Tt + p.Tb, tEnd: tA + p.D + p.B,
+      way0: p.way0, wayB: p.wayB, pl: p.pl, mb: p.mb, mc: Object.assign({}, p.mc), mr: p.mr, mr0: p.R0, pg: p.pg, eE: p.eE, tg: p.tg.map(q => Object.assign({}, q)), floor: s66Floor, dx: p.pl.x >= HOMP.x ? 1 : -1, g: g };
+    S77.Z = Z; j.bites.s77 = Z; return Z; };
+  homJump = (f0 => function (A, now) { const j = A && A.j; if (!j || !j.s77 || !s77On()) return f0(A, now);
+    let Z = j.bites && j.bites.s77; if (!Z) { try { Z = s77Z(A, j); } catch (e) { S77.err = String(e && e.stack); } }
+    const o = f0(A, now); if (!o || !Z) return o; o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; })(homJump);
+  /* the lamp drawn in (a copy of S71's driving of builder 33's one-lamp pass, with its own state) */
+  const s77Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S77.dim += (want - S77.dim) * 0.2; if (Math.abs(want - S77.dim) < 0.004) S77.dim = want; const d = S77.dim; if (A) S77.LA = A;
+    if (d <= 0.002 || !S33.on() || !S77.LA) { if (S77.lit) { S77.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
+    if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, Q = S77.LA; sh.visible = true; dirty = true; S77.lit = true;
+    cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
+    if (!S33.rtB || S77.n++ % 20 === 0 || S33.rtB.width !== ren.getDrawingBufferSize(S33.v2).x) s33Bench(null);
+    if (!S33.wet.some(w => w && w.r > 0)) U.w33.value.forEach(u => { u.z = 0; });
+    S33.A.set(Q.x, Q.y, Q.z); S33.L.set(Q.x - 22, 46, Q.z - 15); U.lpos.value.copy(S33.L); U.aim.value.copy(S33.A).sub(S33.L); U.lnf.value.w = U.aim.value.length(); U.aim.value.normalize(); U.lamp.value.z = 8 + 1.7 * Q.R; U.lamp.value.w = 0.85 * d * (1 - 0.55 * (Q.flash || 0));
+    if (l33) { S33.v.copy(S33.L).applyMatrix4(cam.matrixWorldInverse); l33.set(S33.v.x, S33.v.y, S33.v.z, Math.min(1, d * 1.5)); }
+    s33Light(null, Q.x, Q.y, Q.z, Math.max(0.6 * Q.H, 2.4 * Q.R)); U.shk.value = 0.85 * Math.min(1, d * 1.3); U.bs.value.w = 0; };
+  /* its pieces, made once and lent out each frame */
+  const s77Tex = kind => { const c = canvasTex(128, 128), x = c.x; x.clearRect(0, 0, 128, 128);
+    if (kind === 'ember') { const g2 = x.createRadialGradient(64, 64, 2, 64, 64, 62); g2.addColorStop(0, 'rgba(255,200,186,1)'); g2.addColorStop(0.16, 'rgba(255,64,26,1)'); g2.addColorStop(0.42, 'rgba(176,20,8,0.85)'); g2.addColorStop(0.7, 'rgba(90,8,4,0.35)'); g2.addColorStop(1, 'rgba(60,4,0,0)'); x.fillStyle = g2; x.fillRect(0, 0, 128, 128); }
+    else if (kind === 'scorch') { for (let i = 0; i < 7; i++) { const cx = 64 + 22 * Math.cos(i * 2.4) * (i ? 1 : 0), cy = 64 + 14 * Math.sin(i * 2.4) * (i ? 1 : 0), r = i ? 30 : 52, g2 = x.createRadialGradient(cx, cy, 2, cx, cy, r); g2.addColorStop(0, 'rgba(26,14,10,0.55)'); g2.addColorStop(0.6, 'rgba(40,22,14,0.3)'); g2.addColorStop(1, 'rgba(50,28,16,0)'); x.fillStyle = g2; x.fillRect(0, 0, 128, 128); } }
+    else if (kind === 'smoke') { [[64, 70, 46, 1], [42, 62, 30, 0.8], [86, 60, 30, 0.8], [62, 44, 28, 0.7]].forEach(q => { const g2 = x.createRadialGradient(q[0], q[1], 0, q[0], q[1], q[2]); g2.addColorStop(0, 'rgba(255,255,255,' + 0.8 * q[3] + ')'); g2.addColorStop(0.55, 'rgba(255,255,255,' + 0.4 * q[3] + ')'); g2.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g2; x.fillRect(0, 0, 128, 128); }); }
+    else { const g2 = x.createRadialGradient(64, 64, 4, 64, 64, 62); g2.addColorStop(0, 'rgba(20,16,22,0.6)'); g2.addColorStop(0.55, 'rgba(24,20,26,0.3)'); g2.addColorStop(1, 'rgba(30,24,30,0)'); x.fillStyle = g2; x.fillRect(0, 0, 128, 128); }
+    c.t.needsUpdate = true; return c.t; };
+  const s77PageMat = () => new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uC: { value: new T.Vector2() }, uR: { value: 0 }, uW: { value: 1 }, uA: { value: 0 }, uCh: { value: 0 }, uEd: { value: 0 }, uT: { value: 0 }, uRect: { value: new T.Vector4() }, uL: { value: Array.from({ length: 16 }, () => new T.Vector3()) }, uLn: { value: 0 }, uLR: { value: 2 } },
+    vertexShader: 'varying vec2 vP; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vP = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: ['uniform vec2 uC; uniform float uR, uW, uA, uCh, uEd, uT, uLR; uniform vec4 uRect; uniform vec3 uL[16]; uniform int uLn; varying vec2 vP;',
+      'float h1(float n) { return fract(sin(n) * 43758.5453); } float n1(float x) { float i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(h1(i), h1(i + 1.0), f); }',
+      'float n2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); float a = h1(dot(i, vec2(1.0, 57.0))), b = h1(dot(i + vec2(1.0, 0.0), vec2(1.0, 57.0))), c = h1(dot(i + vec2(0.0, 1.0), vec2(1.0, 57.0))), d = h1(dot(i + vec2(1.0, 1.0), vec2(1.0, 57.0))); return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); }',
+      'void main() { vec2 d = vP - uC; float r = length(d), an = atan(d.y, d.x);',
+      '  float li = 0.0; for (int i = 0; i < 16; i++) { if (i >= uLn) break; vec2 q = vP - uL[i].xy; li += uL[i].z * exp(-dot(q, q) / (uLR * uLR)); } li = clamp(li, 0.0, 1.2) * (0.85 + 0.15 * sin(uT * 17.0 + vP.x));',
+      '  float nz = n2(vP * 0.9), beh = uR - r, ch = uCh * (beh > 0.0 ? 0.42 * exp(-beh / (uW * 1.6)) * (0.55 + 0.7 * nz) : 0.0);',
+      '  float e = min(min(vP.x - uRect.x, uRect.z - vP.x), min(vP.y - uRect.y, uRect.w - vP.y)), ed = uEd * (1.0 - smoothstep(0.0, 0.4 + 1.1 * n2(vP * 0.7 + 3.0), e)) * 0.55;',
+      '  float dark = clamp(ch + ed, 0.0, 0.8);',
+      '  float tn = 0.6 * n1(an * 11.0 + uT * 2.0) + 0.4 * n1(an * 27.0 - uT * 3.3), hgt = uW * (0.3 + 1.2 * tn), o = r - uR;',
+      '  float fl = uA * (1.0 - smoothstep(0.0, hgt, o)) * smoothstep(-uW * 0.35, 0.0, o);',
+      '  vec3 cF = mix(vec3(0.36, 0.22, 0.86), vec3(0.32, 0.46, 1.0), smoothstep(hgt, 0.0, o)); cF = mix(cF, vec3(0.86, 0.9, 1.0), 0.75 * smoothstep(hgt * 0.32, 0.0, abs(o)));',
+      '  vec3 col = vec3(0.17, 0.09, 0.06); float a = dark; float lb = li * 0.42; col = mix(col, vec3(0.32, 0.42, 1.0), lb / max(1e-4, a + lb)); a = a + lb * (1.0 - a);',
+      '  col = mix(col, cF, fl); a = max(a, 0.95 * fl); gl_FragColor = vec4(col, a); }'].join('\n') });
+  const s77Pool = () => { if (S77.pool) return S77.pool; const K = AA.rxKit, Pq = { fire: [], emb: [], puff: [], mark: [], tx: { ember: s77Tex('ember'), scorch: s77Tex('scorch'), shade: s77Tex('shade'), smoke: s77Tex('smoke'), fire: K.fire77(T), puff: K.tex77(T) } };
+    const spr = (map, add, ro) => { const s = new T.Sprite(new T.SpriteMaterial({ map, transparent: true, depthWrite: false, blending: add ? T.AdditiveBlending : T.NormalBlending })); s.visible = false; s.renderOrder = ro; s.userData.plain = true; s.userData.nobox = true; scene.add(s); return s; };
+    for (let i = 0; i < 40; i++) { const s = spr(Pq.tx.fire, false, 31); s.center.set(0.5, 0.0); Pq.fire.push(s); } for (let i = 0; i < 24; i++) Pq.emb.push(spr(Pq.tx.ember, false, 30));
+    for (let i = 0; i < 70; i++) { const s = spr(Pq.tx.puff, false, 8); Pq.puff.push({ s, t0: -1e9 }); }
+    for (let i = 0; i < 60; i++) { const m = flatMesh(1, 1, Pq.tx.scorch, 0); m.renderOrder = 1; m.visible = false; m.userData.plain = true; scene.add(m); Pq.mark.push({ m, t0: -1e9 }); }
+    Pq.shade = flatMesh(1, 1, Pq.tx.shade, 0); Pq.shade.renderOrder = 2; Pq.shade.visible = false; Pq.shade.userData.plain = true; scene.add(Pq.shade);
+    Pq.page = new T.Mesh(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), s77PageMat()); Pq.page.renderOrder = 1; Pq.page.visible = false; Pq.page.frustumCulled = false; Pq.page.userData.plain = true; scene.add(Pq.page);
+    Pq.mi = 0; Pq.pi = 0; return (S77.pool = Pq); };
+  const s77Hide = Pq => { Pq.fire.forEach(s => { s.visible = false; }); Pq.emb.forEach(s => { s.visible = false; }); Pq.shade.visible = false; Pq.page.visible = false; };
+  /* a puff of smoke: the bank's, low on the bench and dark; or one rising off a guttering atom */
+  const s77Puff = (x, y, z, sz, col, op, life, rise, now, pen) => { const Pq = S77.pool, w = Pq.puff[Pq.pi++ % Pq.puff.length]; w.s.material.map = pen ? Pq.tx.puff : Pq.tx.smoke; Object.assign(w, { x, y, z, sz, op, life, rise, t0: now, rot: Math.random() * 6.28, dx: (Math.random() - 0.5) * 0.6 * sz }); w.s.material.color.copy(lin(col)); w.s.visible = true; };
+  const s77Mark = (x, z, sz, now) => { const Pq = S77.pool, w = Pq.mark[Pq.mi++ % Pq.mark.length], on = s27K(x, z, 0.01) > 0.5; w.m.position.set(x, s66Floor(x, z) + 0.025 + 0.0002 * (Pq.mi % 50), z); w.m.rotation.set(0, Math.random() * 6.28, 0); w.m.scale.set(sz, 1, sz * 0.8); w.t0 = now; w.life = on ? 4800 : 7500; w.a = on ? 0.55 : 0.9; w.m.visible = true; };
+  const s77Fade = now => { const Pq = S77.pool; Pq.puff.forEach(w => { if (!w.s.visible) return; const u = (now - w.t0) / w.life; if (u >= 1) { w.s.visible = false; return; } const s = w.sz * (1 + 0.7 * u); w.s.position.set(w.x + w.dx * u, w.y + w.rise * u, w.z); w.s.scale.set(s, s * 0.8, 1); w.s.material.opacity = w.op * Math.min(1, u / 0.12) * (1 - ss77s((u - 0.35) / 0.65)); w.s.material.rotation = w.rot + 0.5 * u; dirty = true; });
+    Pq.mark.forEach(w => { if (!w.m.visible) return; const u = (now - w.t0) / w.life; if (u >= 1) { w.m.visible = false; return; } w.m.material.opacity = w.a * Math.min(1, u * 6) * (1 - u * u); dirty = true; }); };
+  /* one frame after the figure is played */
+  const s77Frame = now => { const SP = s26Fig(), Kt = AA.rxKit, Pq = s77Pool(); s77Fade(now);
+    /* spent: the game holds Brimstone spent (this round after its tap, and for the rest of the run): it sits grey and cold at home */
+    if (SP && SP.way69) { let sp = false; try { sp = !!(homObj && homObj.id === 'brimstone' && g && g.hom && P.homSpent && P.homSpent(g)); } catch (e) { sp = false; } SP.spent77 = sp && Kt.act77 !== false; }
+    const Lq = S77.last; if (!Lq) { s77Hide(Pq); s77Lamp(now, null); return; }
+    const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, live = !!(st.homAct === A && SP && SP.x77 && SP.h77);
+    if (t > Z.tEnd + 12000) { S77.last = null; s77Hide(Pq); s77Lamp(now, null); return; } dirty = true;
+    const e = live ? SP.x77.e : Kt.ph77(t, Z), h = live ? SP.h77 : null, sx = AA.sfx || {}, Lb = Z.L, once = (k, f) => { if (!j.f['s77' + k]) { j.f['s77' + k] = 1; try { f(); } catch (x) { /* no sound */ } } }, v = S77.v, same = Z.g === g;
+    if (live) { if (S27.ca) S27.ca.visible = false; S27.last = null; }
+    /* the atoms where they are now */ Z.tg.forEach(q => { const b = same ? s66Ball(q.a) : null; if (b) { b.mesh.getWorldPosition(v); q.x = v.x; q.y = v.y; q.z = v.z; q.live = true; } else q.live = false; });
+    /* the fire on each atom it touched: a blue flame that stays (taller for each further atom), an ember glowing in it; at the hit they flare, then
+       gutter to embers and smoke */ const fs = [0.8, 0.9, 1, 1.1, 1.3][Z.st - 1], gut = 1 - ss77s((t - Z.tHit - 1.5 * Lb) / (2.5 * Lb)), fla = t >= Z.tHit ? 1 + 0.45 * Math.exp(-(t - Z.tHit) / 450) : 1, cp = cam.position, lights = [];
+    let fi = 0, ei = 0; const burn = (q, i, t0, big) => { const age = t - t0; if (age < 0 || !q.live) return; const grow = ss77s(age / 380), fl = 0.86 + 0.14 * Math.sin(now / 70 + i * 1.7) + 0.07 * Math.sin(now / 33 + i * 2.9), H = q.R * big * fs * grow * fl * fla * gut, dx = cp.x - q.x, dy = cp.y - q.y, dz = cp.z - q.z, dl = Math.hypot(dx, dy, dz) || 1;
+      if (H > 0.06 && fi < Pq.fire.length) { const m = Pq.fire[fi++]; m.position.set(q.x + dx / dl * q.R * 1.05, q.y + q.R * 0.25 + dy / dl * q.R * 1.05, q.z + dz / dl * q.R * 1.05); m.scale.set(q.R * (1.5 + 0.3 * grow + 0.08 * Math.min(8, i)) * fs * (0.8 + 0.2 * gut), H, 1); m.material.opacity = Math.min(1, 0.4 + gut); m.material.rotation = 0.12 * Math.sin(now / 160 + i); m.visible = true; }
+      const eo = ss77s(age / 220) * (1 - ss77s((t - Z.tD - 1.5 * Lb) / (2.5 * Lb))); if (eo > 0.02 && ei < Pq.emb.length) { const m = Pq.emb[ei++]; m.position.set(q.x + dx / dl * q.R * 1.05, q.y + dy / dl * q.R * 1.05, q.z + dz / dl * q.R * 1.05); const s = q.R * (0.95 + 0.12 * Math.sin(now / 95 + i)) * (0.7 + 0.3 * gut); m.scale.set(s, s, 1); m.material.opacity = eo * (0.7 + 0.25 * Math.sin(now / 130 + i * 3)); m.visible = true; }
+      if (H > 0.06) lights.push([q.x, q.z + q.R * 0.4, Math.min(1, 0.35 + H / (q.R * 4))]);
+      /* the smoke off it as it gutters */ if (t > Z.tHit + 1.5 * Lb && t < Z.tD + 2.5 * Lb && (now - (q.pt || 0)) > 260 + 140 * Math.random()) { q.pt = now; s77Puff(q.x, q.y + q.R, q.z, q.R * 1.6, 0x8d8580, 0.5, 2000, 2.2 * q.R, now, Math.random() < 0.4); } };
+    Z.tg.forEach((q, i) => { const p = Z.P[i]; if (p) burn(q, i, p.t, 2.6 + 0.7 * Math.min(10, i)); });
+    /* the burning mountain: when it draws itself up, the fire climbs the whole molecule */ if (Z.st >= 5 && same && center && center.balls && t >= Z.tUp) { let k2 = 0; center.balls.forEach((b, a) => { if (!a || a.el === 'H' || a.fly || Z.tg.some(q => q.a === a)) return; b.mesh.getWorldPosition(v); const q = { x: v.x, y: v.y, z: v.z, R: s77R(b), live: true }, d = Math.hypot(q.x - Z.mc.x, q.z - Z.mc.z); burn(q, 20 + k2++, Z.tUp + 90 * d, 1.1); }); }
+    for (let i = fi; i < Pq.fire.length; i++) Pq.fire[i].visible = false; for (let i = ei; i < Pq.emb.length; i++) Pq.emb[i].visible = false;
+    /* the page: blue firelight under the burning atoms; the ring of blue fire on the hit, the char behind it, the edge left scorched (fading) */
+    const pg = Z.pg, pm = Pq.page, U = pm.material.uniforms; if (same && pg) { pm.visible = true; pm.position.set((pg.x0 + pg.x1) / 2, 0.02, (pg.z0 + pg.z1) / 2); pm.scale.set(pg.x1 - pg.x0, 1, pg.z1 - pg.z0); U.uRect.value.set(pg.x0, pg.z0, pg.x1, pg.z1); U.uC.value.set(Z.mc.x, Z.mc.z); U.uT.value = now / 1000;
+      const Rmax = Z.st <= 1 ? 2.2 * Z.mr : Math.max(...[[pg.x0, pg.z0], [pg.x1, pg.z0], [pg.x0, pg.z1], [pg.x1, pg.z1]].map(c => Math.hypot(c[0] - Z.mc.x, c[1] - Z.mc.z))) + 1, Tr = (Z.st <= 1 ? 1.5 : 2.5 + 0.25 * (Z.st - 3)) * Lb, u = (t - Z.tHit) / Tr;
+      U.uW.value = 0.8 + 0.22 * Z.st; U.uR.value = u > 0 ? Rmax * (1 - Math.pow(1 - Math.min(1, u), 1.6)) : 0; U.uA.value = u > 0 && u < 1.15 ? 1 - ss77s((u - 0.8) / 0.35) : 0;
+      U.uCh.value = u > 0 ? ss77s(u / 0.08) * (1 - ss77s((t - Z.tHit - Tr - 2500) / 4500)) * (Z.st <= 1 ? 0.6 : 1) : 0; U.uEd.value = Z.st <= 1 ? 0 : ss77s((u - 0.6) / 0.4) * (1 - ss77s((t - Z.tHit - Tr - 3500) / 6000));
+      U.uLR.value = 2.2 * (Z.mr0 || 0.7) * fs; U.uLn.value = Math.min(16, lights.length); lights.slice(0, 16).forEach((l, i) => U.uL.value[i].set(l[0], l[1], l[2])); if (U.uA.value <= 0 && U.uCh.value <= 0 && U.uEd.value <= 0 && !lights.length) pm.visible = false; } else pm.visible = false;
+    /* the bank: dark smoke rolling low on the bench where it pours, a scorch left in the wood and fainter on the paper; its broad shade */
+    const moving = !!(h && (e.ph === 'pour' || e.ph === 'back') && Z.st > 1);
+    if (moving) { const b = h.base, fl = s66Floor(b[0], b[2]), W = Math.max(1.2, h.Wd); if (now - S77.bt > 70) { S77.bt = now; const bk = e.ph === 'back' ? 0.6 : 1; S77.bn = (S77.bn || 0) + 1; s77Puff(b[0] + (Math.random() - 0.5) * 0.8 * W, fl + 0.12 * W * Math.random() + 0.15, b[2] + (Math.random() - 0.5) * 0.4 * W, W * (0.36 + 0.22 * Math.random()) * bk, 0x463e3b, 0.5 * bk, 1900, 0.18 * W, now, S77.bn % 5 === 0); }
+      if (!S77.lm || Math.hypot(b[0] - S77.lm[0], b[2] - S77.lm[1]) > 0.9) { S77.lm = [b[0], b[2]]; s77Mark(b[0], b[2], Math.max(1.4, Math.min(5, 0.6 * W)), now); } } else S77.lm = null;
+    if (h && e.away > 0.05 && Z.st > 1) { const b = h.base, W = Math.max(1.2, h.Wd), sd = Pq.shade; sd.visible = true; sd.position.set(b[0] + 0.15 * W, s66Floor(b[0], b[2]) + 0.03, b[2] + 0.12 * W); sd.scale.set(1.5 * W, 1, 0.8 * W); sd.material.opacity = 0.75 * e.away; } else Pq.shade.visible = false;
+    /* the lamp drawn in: lightly, and only while it acts */ s77Lamp(now, live && e.dim > 0.01 && h ? { dim: 0.55 * e.dim, x: h.c[0], y: h.c[1], z: h.c[2], H: h.H, R: 0.5 * Math.max(1, h.Wd), flash: t >= Z.tHit ? Math.exp(-(t - Z.tHit) / 500) : 0 } : null);
+    /* sound, on the beats: low and slow; a rising one through the count; the biggest at the hit */
+    if (live) { if (t >= Z.tW + 0.5 * Lb) once('wake', () => { if (sx.handoff) sx.handoff(); if (sx.drone) sx.drone(0.35, 0, (Z.tPour - Z.tW) / 1000, 1); });
+      if (t >= Z.tPour) once('pour', () => { if (sx.drone) sx.drone(0.3, 0, (Z.tA - Z.tPour) / 1000, 1); if (sx.swish) sx.swish(0.7); });
+      if (Z.eE > 0 && e.ph === 'pour' && e.u >= Z.eE) once('edge', () => { if (sx.swish) sx.swish(0.35); });
+      if (Z.st > 1 && t >= Z.tRise) once('rise', () => { if (sx.draw) sx.draw(2, (Z.tA - Z.tRise) / 1000); });
+      Z.P.forEach((p, i) => { if (t >= p.t) once('c' + i, () => { if (sx.reflex) sx.reflex('weld', i + 1, { bell: 1.2 }); if (sx.drone) sx.drone(0.28 + 0.06 * Math.min(8, i), i, 0.6, 1); }); });
+      if (t >= Z.tUp) once('up', () => { if (sx.draw) sx.draw(6, (Z.tHit - Z.tUp) / 1000); });
+      if (t >= Z.tHit) once('hit', () => { if (sx.boom) sx.boom(); if (sx.strike) sx.strike(2, 1.4); setTimeout(() => { try { if (sx.swish) sx.swish(1.1); } catch (x) { /* no sound */ } }, 120); });
+      if (t >= Z.tD) once('turn', () => { if (sx.swish) sx.swish(0.3); });
+      if (t >= Z.tBk && Z.st > 1) once('back', () => { if (sx.drone) sx.drone(0.2, 0, (Z.tHm - Z.tBk) / 1000, 1); });
+      if (t >= Z.tHm) once('home', () => { if (sx.snap) sx.snap(1, 0.6); }); } };
+  a20Spent = (f0 => function (now) { const r = f0(now); try { s77Frame(now); } catch (x) { S77.err = String(x && x.stack); } return r; })(a20Spent);
+  AA.rxKit.s77dbg = () => { const p = S77.plan, Z = S77.Z, SP = s26Fig(), e = SP && SP.x77 ? SP.x77.e : null; return { err: S77.err, kit: AA.rxKit.W77 && AA.rxKit.W77.err, w73: AA.rxKit.W73 && AA.rxKit.W73.err, on: s77On(), ph: e ? e.ph : null, k: e ? +e.k.toFixed(2) : null, sy: e ? +e.sy.toFixed(2) : null, ri: e ? e.ri : null, spent: SP ? !!SP.spent77 : null,
+    count: g && g.hom ? g.hom.count : null, n: p && p.n, tg: p && p.tg.map(q => q.kind + ':' + [q.x, q.y, q.z, q.R].map(x => x.toFixed(1)).join(',')).join(' '), pl: p && [p.pl.x, p.pl.z, p.pl.k].map(x => +x.toFixed(2)), RS: p && +p.RS.toFixed(3), wayL: p && +p.way0.L.toFixed(1), eE: p && p.eE, L: p && Math.round(p.L), J: p && Math.round(p.J), D: p && Math.round(p.D), B: p && Math.round(p.B), hit: p && Math.round(p.hit),
+    Z: Z ? { tW: Math.round(Z.tW), tPour: Math.round(Z.tPour), tRise: Math.round(Z.tRise), tA: Math.round(Z.tA), P: Z.P.map(q => Math.round(q.t)).join(','), tUp: Math.round(Z.tUp), tHit: Math.round(Z.tHit), tD: Math.round(Z.tD), tBk: Math.round(Z.tBk), tHm: Math.round(Z.tHm), tEnd: Math.round(Z.tEnd) } : null, h77: SP && SP.h77 ? JSON.stringify({ b: SP.h77.base.map(x => +x.toFixed(1)), H: +SP.h77.H.toFixed(1), W: +SP.h77.Wd.toFixed(1), tip: SP.h77.tip && SP.h77.tip.map(x => +x.toFixed(1)) }) : null, HOMP: [HOMP.x, HOMP.z], hs: SP && SP.root ? +new T.Vector3().setFromMatrixScale(SP.root.matrixWorld).y.toFixed(3) : null }; };
+  // ==== S77 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
