@@ -6205,8 +6205,8 @@ void main() {
     float ht = (0.66 - 0.24 * far) * (0.5 + 0.85 * vn(vec2(uT * 0.8 + k * 17.3, k * 5.1 + 0.5))), yt = yc / ht;
     float pt = yt > 1.0 ? -(pow(yt, 1.3) - 1.0) : bot * (1.0 - pow(yt, 1.3));
     float cc = sg * (0.4 + 0.3 * far) * pinch + sg * (0.1 + 0.45 * vn(vec2(uT * 0.55 + k * 3.1, 7.7))) * yt * yt * ht;
-    f = smx(f, (0.36 - 0.07 * far) * pt * pinch * (1.0 - smoothstep(0.15, 0.6, D)) - abs(nx - cc), 0.14); }
-  f += amp * (n - 0.5) + min(0.0, yy - 0.05 * vn(vec2(nx * 2.2 + uT * 0.35, uT * 0.5))) * 9.0;
+    float kl = pinch * (1.0 - smoothstep(0.15, 0.6, D)); f = smx(f, (0.36 - 0.07 * far) * pt * kl - abs(nx - cc) - 0.3 * (1.0 - kl), 0.14); }
+  f += amp * (n - 0.5) - 0.2 * smoothstep(0.75, 1.0, D) + min(0.0, yy - 0.05 * vn(vec2(nx * 2.2 + uT * 0.35, uT * 0.5))) * 9.0;
   /* how far from the edge, in the sheet's own units (the field's slope taken from the screen) */
   float upp = length(vec2(dFdx(p.x), dFdy(p.x))), gl = max(length(vec2(dFdx(f), dFdy(f))), 1e-5), dist = f / gl * upp;
   float grain = 0.5 * vn(p * 190.0) + 0.5 * vn(p * 83.0 + 7.0), blot = vn(p * 5.0 + 3.0), soft = mix(0.003, 0.013, vn(vec2(nx * 2.6 + 2.0, ny * 4.2 - uT * 1.5)));
