@@ -5688,6 +5688,145 @@ brk69 = (f0 => function (S, s) { const m = f0(S, s); try { if (S && S.u82 && S.u
     const a = tp[key]; for (let i = 0; i < a.length; i++) if (a[i]) m[i] = 1; } } catch (e) { W77.err = 'brk82 ' + String(e && e.stack); } return m; })(brk69);
 KIT.W77 = W77; KIT.fire77 = fire73; KIT.tex77 = tex73;
 // ==== W77 END
+// ==== W82 BEGIN
+// (builder 82) BRIMSTONE'S OWN CHANGE OF STAGE, "the eruption" (AA.rxKit.evo82, on by default; false or ?v82=0 gives the old one, Water's evo played
+// on the smoke's joints). Slow, dark and volcanic. The page (scheme S82) gives the place, moves it and draws all that is not its skin: the scorch
+// creeping through the paper, the glow of the cracks, the molten beads, the blue flames along the cracks, the pillar of blue fire (its own drawn
+// tongues, scaled up), the embers and their flecks, the ring of fire, the lamp drawn in, the sound. Here, on the music's beats (PAR82: go, down,
+// swell, erupt, form, home; ph82 is the one timeline both files read):
+//  1. GO: the OLD stage gathers its lump up into itself (lifted a little in a cradle of its own smoke puffs, drawn by the page) and drifts low and slow
+//     to the place by the open book, growing on the way, and sets the lump down.
+//  2. THE DRAWING-DOWN: it bows lower and lower and its smoke (its own bones) is drawn down into the lump in a slow spiral, the lower smoke thinning
+//     first, the head last, the coal eyes going out last of all; the flames gutter out; only the dark lump is left with a few red cracks.
+//  3. THE SWELLING: the lump swells and shudders in pulses on the beat, its cracks widening (the page lays the heat over them); held: still, blazing.
+//  4. THE ERUPTION: on the hit the old figure is removed and the NEW one put in its place, its smoke shut inside its lump (the lump the same size as
+//     the swollen old one; the flash and the pillar of fire over it), and its own smoke boils up out of the lump through the fire, swirling, the
+//     lower parts first, the head last; its coal eyes open blazing.
+//  5. THE FORMING: each step its own: 1 to 2 one puff pops up and settles on the lump like a hood and scowls at its first flame; 2 to 3 a straight
+//     rising column that then bends over and lets its head hang; 3 to 4 the shoulders spread broad and one hand is raised; 4 to 5 the mantle spreads
+//     slow and wide like a storm cloud. The new flames come up round the lump as the pillar sinks into them.
+//  6. HOME: it gathers its lump up again, turns its back and drifts home seen from behind, sets the lump down and turns to face front.
+KIT.evo82 = KIT.evo82 == null ? !(typeof location !== 'undefined' && /[?&]v82=0/.test(String(location.search))) : KIT.evo82;
+const W82 = { err: null, e: null };
+const on82 = S => !!(S && S.way69 && !S.jar && KIT.evo82 !== false && on73(S));
+const cl82 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* each step, by the stage it becomes: beats of go, down, swell, erupt, form, home (go to the swell's end a whole number: the hit); hd the held part of
+   the swell; fire the pillar's top (screen height, 0 bottom 1 top); sc the scorch's reach (in R); emb embers rained; ring the ring of fire (in R) */
+const PAR82 = [null, null,
+  { b: [2.0, 1.5, 1.5, 1.0, 2.0, 2.0], hd: 0.3, fire: 0.5, sc: 0.8, emb: 14, ring: 1.6, sw: 0.14 },
+  { b: [2.0, 2.0, 2.0, 1.25, 2.5, 2.25], hd: 0.3, fire: 0.68, sc: 1.1, emb: 22, ring: 2.2, sw: 0.18 },
+  { b: [2.25, 2.25, 2.5, 1.5, 2.75, 2.5], hd: 0.28, fire: 0.8, sc: 1.4, emb: 32, ring: 2.8, sw: 0.22 },
+  { b: [2.5, 2.5, 4.0, 2.0, 3.5, 2.75], hd: 0.25, fire: 0.93, sc: 3.0, emb: 52, ring: 3.6, sw: 0.28 }];
+/* where it is in the change: every number the figure and the page read */
+function ph82(t, o) { const P = PAR82[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => cl82((u - c[i]) / b[i]), e = o.e82 || (o.e82 = {}), rise = 1 - P.hd;
+  e.u = u; e.t = t; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[3]; e.to = o.to; e.from = o.from; e.pre = u < 0;
+  e.go = at(0); e.dn = at(1); e.sw = at(2); e.er = at(3); e.fm = at(4); e.home = at(5); e.done = u >= s; e.old = u < c[3]; e.dh = u - c[3];
+  /* the drift out and home: lifted in its smoke, carried, set down; cr how far along (0 home, 1 the place) */
+  e.lift = 0; e.cr = u < 0 ? 0 : 1; e.turn = 0;
+  if (u >= 0 && u < c[1]) { e.lift = sm52(e.go / 0.18) * (1 - sm52((e.go - 0.8) / 0.17)); e.cr = sm52((e.go - 0.12) / 0.72); }
+  if (u >= c[5]) { const h = e.home; e.lift = sm52((h - 0.02) / 0.14) * (1 - sm52((h - 0.82) / 0.14)); e.cr = 1 - sm52((h - 0.2) / 0.6); e.turn = PI * sm52((h - 0.08) / 0.14) * (1 - sm52((h - 0.84) / 0.14)); }
+  e.set = c[0] + 0.94 * b[0];
+  /* the drawing-down: it bows, then its smoke is drawn down in a spiral (suck), the flames gutter out */
+  e.bow = u < c[1] ? 0.12 * e.lift : u < c[2] ? sm52(e.dn / 0.4) : 1; e.suck = u < c[1] ? 0 : sm52((e.dn - 0.12) / 0.83);
+  e.flame = u < c[1] ? 1 - 0.45 * e.lift : u < c[2] ? 0.55 * (1 - sm52(e.dn / 0.45)) : 0;
+  /* the swelling: in pulses on the beat; heat of the cracks; held still and blazing at its end */
+  const bp = u - Math.floor(u + 1e-6); e.swell = u < c[2] ? 0 : u < c[3] ? sm52(e.sw / rise) : 1; e.hold = u >= c[2] && u < c[3] && e.sw >= rise ? 1 : 0;
+  e.pulse = u >= c[2] && u < c[3] && !e.hold ? Math.exp(-bp / 0.22) * sm52(e.sw / 0.08) : 0;
+  e.heat = u < c[1] ? 0 : u < c[2] ? 0.15 * sm52((e.dn - 0.5) / 0.5) : u < c[3] ? 0.2 + 0.5 * e.swell + 0.35 * e.pulse + 0.35 * e.hold : 1.4 * Math.exp(-e.dh / 0.5);
+  e.shud = u >= c[2] && u < c[3] && !e.hold ? e.swell : 0; e.cflame = u >= c[2] && u < c[3] ? sm52((e.sw - 0.15) / 0.4) : 0;
+  /* the eruption: the pillar of fire (roars up, holds, sinks into the new flames); the new smoke boiling up (rise); its eyes opening */
+  e.flash = u >= c[3] ? Math.exp(-e.dh / 0.16) : 0;
+  e.fire = u < c[3] ? 0 : (1 - Math.pow(1 - cl82(e.dh / 0.35), 3)) * (1 - 0.5 * sm52((u - c[3] - 0.45 * b[3]) / (0.55 * b[3] + 0.3 * b[4]))) * (1 - sm52((e.fm - 0.45) / 0.45)) * (1 + 0.06 * Math.sin(u * 9.1) + 0.04 * Math.sin(u * 23.7));
+  e.rise = u < c[3] ? 0 : cl82((u - c[3] - 0.1 * b[3]) / (0.9 * b[3] + 0.35 * b[4]));
+  e.eyes = sm52((e.rise - 0.88) / 0.12); e.form = u < c[4] ? 0 : u < c[5] ? sm52(e.fm / 0.75) : 1;
+  e.nflame = u < c[3] ? 0 : u < c[5] ? sm52((e.fm - 0.3) / 0.55) : 1;
+  /* the lump of the new stage, from the swollen old size to its own */ e.lk = u < c[3] ? 0 : sm52((u - c[3]) / (b[3] + 0.6 * b[4]));
+  e.dim = e.pre ? 0 : u < c[1] ? 0.3 * sm52(e.go) : u < c[2] ? 0.3 + 0.6 * e.dn : u < c[3] ? 0.9 + 0.1 * e.swell : u < c[4] ? 1 : u < c[5] ? 1 - 0.3 * sm52(e.fm / 0.9) : 0.7 * (1 - sm52(e.home / 0.55));
+  return e; }
+KIT.ph82 = ph82;
+/* the face of each beat, laid over the idle's */
+function face82(e, old, st) { const z = {}, u = e.u, c = e.c;
+  if (old) { if (u < c[1]) { z.brow = -0.6; z.lidx = 0.25; z.looky = -0.3; return z; }
+    if (u < c[2]) { z.brow = -1.0; z.wide = 0.35 * (1 - e.suck); z.looky = -0.6 * e.bow; z.lookx = 0; z.blink = 0; return z; } z.blink = 1; return z; }
+  if (u < c[4]) { if (e.eyes < 0.02) { z.blink = 1; return z; } z.blink = 0; z.wide = 0.3 * e.eyes; z.brow = -1.1; z.looky = -0.1; z.lookx = 0; return z; }
+  if (u < c[5]) { const f = e.form; z.blink = 0; z.brow = -1.0; z.wide = 0.25 * (1 - f);
+    if (st === 2) { z.lookx = 0.7 * f; z.looky = -0.35 * f; z.brow = -1.3; }
+    else if (st === 3) { z.looky = -0.45 * f; z.lidx = 0.35 * f; }
+    else if (st === 4) { z.looky = -0.1; z.lookx = 0.3 * Math.sin(e.fm * 3); }
+    else { z.looky = -0.45 * f; z.lidx = 0.3 * f; }
+    return z; }
+  z.turn = e.turn; z.brow = -0.6; z.lidx = 0.3; return z; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs), z = S && S.z82; if (!z || !S.x82) return r;
+  if (z.turn != null) q.turn = z.turn;
+  ['lookx', 'looky'].forEach(k => { if (z[k] != null) q[k] = z[k]; });
+  if (z.wide != null) q.wide = Math.max(q.wide || 0, z.wide); if (z.brow != null) q.brow = z.brow;
+  if (z.lidx != null) q.lidx = Math.max(q.lidx || 0, z.lidx); if (z.blink != null) q.blink = z.blink; return r; })(C26.rest);
+/* the parts of the figure it moves (from fig77: the smoke's bones, the foot of the smoke) and a few more: each smoke bone's height (0 foot, 1 top),
+   which arm it is on and how far along */
+function fig82(S) { if (S.f82) return S.f82; const F = fig77(S), J = S.G.J, K = S.k73, arm = new Map(); (F.arms || []).forEach((a, ai) => { a.jn.forEach((j, i) => arm.set(j, { ai, f: i / Math.max(1, a.jn.length - 1), r: a.jn[0] })); (a.fg || []).forEach(fg => fg.jn.forEach(j => { if (!arm.has(j)) arm.set(j, { ai, f: 1, r: a.jn[0] }); })); });
+  const hn = new Map(); F.sm.forEach(j => hn.set(j, cl82((J[j].p[1] - F.P0.y) / F.H)));
+  return (S.f82 = { F, arm, hn, lump: (K && K.lump) || S.G.o.lump || 1 }); }
+/* the old stage: lifted, bowed, its smoke drawn down into the lump in a spiral (the lower first, the head last); the lump swelling and shuddering */
+function post82o(S, e) { const X = fig82(S), F = X.F, K = S.k73, B = S.bones, T = S.T, P0 = F.P0, W = S.w82 || (S.w82 = { a: new T.Vector3(), q: new T.Quaternion(), q1: new T.Quaternion(), y: new T.Vector3(0, 1, 0), x: new T.Vector3(1, 0, 0) });
+  const s = e.suck, G = Math.pow(s, 0.85), bow = 0.42 * e.bow * (1 - G) + 0.1 * e.lift;
+  if (s > 0.0005 || bow > 0.001) F.sm.forEach(j => { const b = B[j], h = X.hn.get(j) || 0, f = sm52((s - 0.42 * h) / 0.58), yaw = 2.6 * PI * Math.pow(G, 1.3) + 1.1 * f;
+    W.q.setFromAxisAngle(W.y, yaw); W.q1.setFromAxisAngle(W.x, bow * (0.4 + 0.6 * h)); W.q.premultiply(W.q1);
+    W.a.copy(b.position).sub(P0); W.a.multiplyScalar(1 - G); W.a.y *= 1 - 0.25 * G; W.a.x *= 1 + 0.35 * Math.sin(PI * G) * (1 - h); W.a.z *= 1 + 0.35 * Math.sin(PI * G) * (1 - h); W.a.applyQuaternion(W.q).add(P0); b.position.copy(W.a);
+    const k = Math.max(0.015, (1 - 0.985 * f) * (1 - 0.6 * G)); b.scale.multiplyScalar(k); b.quaternion.premultiply(W.q); });
+  if (!K) return;
+  /* what leaves the smoke goes with it */ const gone = s > 0.08; K.sm.forEach(p => { if (gone) p.m.visible = false; }); if (K.mouth && gone) K.mouth.m.visible = false; K.wisp.forEach(w => { if (gone) w.s.off = true; }); if (K.haze) K.haze.material.opacity *= 1 - G;
+  (K.spit || []).forEach(x => { if (e.u >= e.c[1]) x.m.visible = false; }); K.emb.forEach(x => { x.m.material.opacity *= 1 - G; });
+  K.eg.forEach(x => { x.g.material.opacity *= 1 + 0.8 * s * (1 - s); if (s > 0.94) x.g.visible = false; });
+  K.fl.forEach(f => { if (!f.sp) return; const fl = Math.max(e.flame, e.cflame * 0.75); f.sp.scale.y *= fl; f.sp.scale.x *= 0.45 + 0.55 * fl; if (fl < 0.05) f.sp.visible = false; else if (e.cflame > 0.05) f.sp.visible = true; }); if (K.light) K.light.m.material.opacity *= Math.max(0.1, Math.max(e.flame, e.cflame));
+  if (S.u69) S.u69.value.y *= 1 + 1.7 * e.heat;
+  /* the face goes out with the smoke (stage 1's face is on its lump) */ if (S.F) { const off = s > 0.93; S.F.eyes.forEach(q => { if (q.g) q.g.visible = !off; }); (S.F.brows || []).forEach(q => { const m = q && (q.m || q.g || q); if (m && m.isObject3D) m.visible = !off; }); const mo = S.F.mouth && (S.F.mouth.m || S.F.mouth); if (mo && mo.isObject3D) mo.visible = !off; } }
+/* the new stage: its smoke boiling up out of the lump (the lower parts first, the head last), swirling and billowing, then each step's own forming */
+function post82n(S, e) { const X = fig82(S), F = X.F, K = S.k73, B = S.bones, T = S.T, P0 = F.P0, st = S.st, W = S.w82 || (S.w82 = { a: new T.Vector3(), q: new T.Quaternion(), q1: new T.Quaternion(), y: new T.Vector3(0, 1, 0), x: new T.Vector3(1, 0, 0) });
+  const r = e.rise, f = e.form, sp = st === 4 ? 1 - Math.exp(-f * 3.2) * Math.cos(f * 7.5) : st === 5 ? 1 - Math.exp(-f * 2.4) * Math.cos(f * 5.2) : f;
+  const bend = st === 3 ? sm52((e.fm - 0.05) / 0.55) : 1, wide = st === 4 ? lp77(0.55, 1, cl82(sp)) * (1 + 0.1 * Math.max(0, sp - 1)) : st === 5 ? lp77(0.3, 1, cl82(sp)) + 0.12 * Math.max(0, sp - 1) : 1;
+  if (r < 0.999 || f < 0.999) F.sm.forEach(j => { const b = B[j], h = X.hn.get(j) || 0, am = X.arm.get(j), a = st === 2 ? 0.05 + 0.25 * h : 0.08 + 0.6 * h + (am ? 0.12 * am.f : 0), x = cl82((r - a) / (st === 2 ? 0.45 : 0.3));
+    let g = 1 - Math.pow(1 - x, 3) + (st === 2 ? 0.28 : 0.1) * Math.sin(PI * x); if (x <= 0) g = 0;
+    W.a.copy(b.position).sub(P0);
+    /* each step's forming: the hood pops up and settles; the column rises straight and then bends over; shoulders and mantle spread */
+    if (st === 3) { W.a.x *= lp77(0.25, 1, bend); W.a.y *= lp77(1.18, 1, bend); }
+    if (st >= 4) { const k2 = wide; W.a.x *= k2; W.a.z *= 0.6 + 0.4 * k2; }
+    if (am && st >= 3) { /* the arms unfold from the shoulder */ const uf = st === 4 && am.ai === 0 ? sm52((f - 0.15) / 0.5) : sm52((f - 0.05 * am.ai) / 0.45); if (uf < 1) { const base = W.c || (W.c = new T.Vector3()); base.copy(B[am.r].position).sub(P0); W.a.sub(base).multiplyScalar(lp77(0.2, 1, uf)).add(base); } }
+    const yaw = (1 - Math.min(1, g)) * (st === 5 ? 2.4 : 1.8);
+    W.q.setFromAxisAngle(W.y, yaw); W.a.multiplyScalar(g); W.a.x *= 1 + 0.25 * Math.sin(PI * cl82(x)); W.a.z *= 1 + 0.25 * Math.sin(PI * cl82(x)); W.a.applyQuaternion(W.q).add(P0); b.position.copy(W.a);
+    b.scale.multiplyScalar(Math.max(0.015, Math.min(1.15, g))); b.quaternion.premultiply(W.q); });
+  if (!K) return;
+  const hide = r < 0.7; K.sm.forEach(p => { if (hide) p.m.visible = false; else p.m.material.opacity *= sm52((r - 0.7) / 0.3); }); if (K.mouth && r < 0.95) K.mouth.m.visible = false; K.wisp.forEach(w => { if (r < 0.95) w.s.off = true; });
+  if (K.haze) K.haze.material.opacity *= r;
+  K.eg.forEach(x => { if (e.eyes < 0.05) x.g.visible = false; else { x.g.material.opacity = Math.min(1, x.g.material.opacity * (1 + 1.6 * e.eyes * (1 - f))); x.g.scale.multiplyScalar(1 + 0.5 * (1 - f) * e.eyes); x.e.gl.material.emissive.multiplyScalar(1 + 0.6 * (1 - f)); } });
+  K.fl.forEach(fl => { if (!fl.sp) return; const n = e.nflame; fl.sp.scale.y *= n; fl.sp.scale.x *= 0.4 + 0.6 * n; if (n < 0.05) fl.sp.visible = false; }); if (K.light) K.light.m.material.opacity *= Math.max(0.15, e.nflame);
+  if (S.u69) S.u69.value.y *= 1 + 1.5 * e.heat; }
+/* what is seen: the pen line goes with the figure */
+function show82(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; }
+function kill82(S) { const O = S.e82; if (O) { show82(O.sp, false); if (O.gg.parent) O.gg.parent.remove(O.gg); S.e82 = null; } }
+function end82(S) { kill82(S); show82(S, true); if (S.rs82 != null) { S.root.scale.setScalar(S.rs82); S.rs82 = null; } if (S.rp82) { S.root.position.copy(S.rp82); S.rp82 = null; } S.z82 = null; S.x82 = null; }
+/* for the page: the lump (centre, radius, top) and the figure's top, in the world */
+function where82(S, o, e) { const R = S.root, X = fig82(S), F = X.F, B = S.bones, T = S.T, V = new T.Vector3(); R.updateWorldMatrix(true, false); const ws = new T.Vector3().setFromMatrixScale(R.matrixWorld).y;
+  V.set(F.P0.x, 0.5 * X.lump, 0).applyMatrix4(R.matrixWorld); o.a82 = [V.x, V.y, V.z]; V.set(F.P0.x, X.lump, 0).applyMatrix4(R.matrixWorld); o.t82 = [V.x, V.y, V.z]; V.set(F.P0.x, 0, 0).applyMatrix4(R.matrixWorld); o.f82 = [V.x, V.y, V.z];
+  let rw = 0; const J = S.G.J; for (let j = 1; j < J.length; j++) if (J[j] && !X.hn.has(j) && J[j].p[1] < X.lump) rw = Math.max(rw, Math.abs(J[j].p[0] - F.P0.x) + (J[j].r || 0)); o.r82 = Math.max(0.5 * X.lump, rw) * ws; o.h82 = X.lump * ws; o.ws82 = ws;
+  /* the figure's top and sides (for the fit) */ let hi = -1e9; const P = []; for (let j = 1; j < B.length; j++) { if (!J[j]) continue; V.copy(B[j].position).applyMatrix4(R.matrixWorld); const rr = (J[j].r || 0) * ws * Math.max(B[j].scale.x, B[j].scale.y); P.push(V.x, V.y, V.z, rr); hi = Math.max(hi, V.y + rr); } o.p82 = P; }
+function evo82(f0, grp, S, t, o) { const e = ph82(t, o), T = S.T; W82.e = e; let O = S.e82; const ro = {}; if (S.rs82 == null) S.rs82 = S.root.scale.x; if (!S.rp82) S.rp82 = S.root.position.clone(); S.x82 = { k: 0.4 };
+  if (e.old) { if (!O || O.from !== o.from) { kill82(S); const gg = brim69Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; grp.parent.add(gg); O = S.e82 = { gg, sp, from: o.from, rs: sp.root.scale.x, rp: sp.root.position.clone() }; }
+    const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show82(S, false); sp.x82 = { k: 1 };
+    /* the swelling: bigger in pulses, a shudder */ const sw = 1 + e.P.sw * e.swell + 0.05 * e.pulse; sp.root.scale.setScalar(O.rs * sw); sp.root.position.copy(O.rp); sp.root.position.x += 0.035 * e.shud * Math.sin(t * 0.09) * Math.sin(t * 0.023);
+    sp.z82 = face82(e, true, o.from); f0(O.gg, 'rest', t / e.L, ro); try { post82o(sp, e); } catch (x) { W82.err = 'old ' + String(x && x.stack); } O.gg.visible = true; show82(sp, true); where82(sp, o, e);
+    /* the old lump's size in the world at the end of the swelling: the new lump starts at it */ if (e.u >= e.c[2]) o.lw82 = o.h82; }
+  else { if (O) kill82(S); show82(S, true); S.root.position.copy(S.rp82);
+    /* the new lump from the swollen old one's size to its own */ const X = fig82(S); S.root.scale.setScalar(S.rs82); S.root.updateWorldMatrix(true, false); const wsN = new T.Vector3().setFromMatrixScale(S.root.matrixWorld).y, hN = X.lump * wsN, m0 = o.lw82 && hN > 0 ? Math.max(0.35, Math.min(2.5, o.lw82 / hN)) : 1, m = m0 + (1 - m0) * e.lk;
+    S.root.scale.setScalar(S.rs82 * m); S.z82 = face82(e, false, S.st); const sp77 = S.spent77; S.spent77 = false; f0(grp, 'rest', t / e.L, ro); S.spent77 = sp77; try { post82n(S, e); } catch (x) { W82.err = 'new ' + String(x && x.stack); } where82(S, o, e); }
+  const c = e.c, u = e.u; let n = -1; if (u >= c[3]) n = 0; if (u >= c[4]) n = 1; if (u >= c[4] + 0.5 * e.P.b[4]) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on82(S) && o.from !== S.st)) { if (S && S.x82 && clip !== 'evo') { try { end82(S); } catch (e) { W82.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo82(f0, grp, S, t, o); } catch (err) { W82.err = String(err && err.stack); const L = o.L || 500, tot = (PAR82[Math.max(2, Math.min(5, o.to | 0))] || PAR82[3]).b.reduce((a, b) => a + b, 0); try { end82(S); } catch (x) { /* shown as it is */ } return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+KIT.W82 = W82; KIT.e82dbg = () => { const e = W82.e; return { err: W82.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), dn: +e.dn.toFixed(2), sw: +e.sw.toFixed(2), er: +e.er.toFixed(2), fm: +e.fm.toFixed(2), home: +e.home.toFixed(2), rise: +e.rise.toFixed(2), fire: +e.fire.toFixed(2), hit: e.hit, tot: e.tot, old: e.old } : null }; };
+// ==== W82 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
