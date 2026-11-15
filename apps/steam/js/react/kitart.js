@@ -4264,6 +4264,139 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W66 = W66;
 // ==== W66 END
+// ==== W71 BEGIN
+// (builder 71) SLIME'S OWN CHANGE OF STAGE, "the pull" (AA.rxKit.evo71, on by default; false or ?v71=0 gives the old one, Water's evo played on its
+// joints). Slow and gooey where Acid's is violent and Dry ice's hushed. The page (scheme S71) gives the place, moves it, and draws all that is not its
+// skin: the pool, the dome, the pulled column, the bubbles, the drips, the ripples, the floating face, the arm it throws as it hauls. Here, on the
+// music's beats (PAR71: go, well, melt, gather, pull, slump, home; ph71 is the one timeline both files read):
+//  1. GO: the OLD stage hauls itself to the middle by its act's throw, stick, haul (cyc66 and post66 of W66), then wells up there, large.
+//  2. THE MELT: a huge yawn, the eyes roll shut, the whole heap sags flat and spreads (arms last) into the page's pool, and is gone into it.
+//  3. THE GATHERING / 4. THE PULL: wholly the page's (the figure is hidden; the old one is removed and the new one put in place while both are hidden).
+//  5. THE SLUMP: the NEW stage lands squashed out of the falling column and wobbles hugely up to its height (3 to 4: it lands half-risen, taller than
+//     itself, both arms flung out; 2 to 3: its lifted arm is still the page's hanging arm and grows back into it as that arches over); it opens its
+//     eyes, looks itself over (1 to 2: at its first stub of an arm, puzzled) and smiles its slow smile.
+//  6. HOME: it turns its smooth back and hauls itself home the same way, and slumps into its slick.
+KIT.evo71 = KIT.evo71 == null ? !(typeof location !== 'undefined' && /[?&]v71=0/.test(String(location.search))) : KIT.evo71;
+const W71 = { err: null, e: null };
+const on71 = S => !!(S && S.way61 && !S.jar && KIT.evo71 !== false && on62(S));
+const cl71 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* each step, by the stage it becomes: beats of go, well, melt, gather, pull, slump, home (go to the gather's end a whole number: the hit, where it is
+   pulled up); hd the held part of the gather; pool the pool's radius, dome the drawn-in dome's (in R, the place's radius); pull how tall the column
+   (of the room up to the screen's top); nc columns; nb haul cycles out; sq0 how squashed the new form lands (below 1 flat, above 1 tall); end how
+   far the column comes down before it lands (of its height) */
+const PAR71 = [null, null,
+  { b: [1.75, 0.75, 1.0, 1.5, 1.0, 2.25, 1.75], hd: 0.3, pool: 0.8, dome: 0.5, pull: 0.42, nc: 1, nb: 3, sq0: 0.42, end: 0.12 },
+  { b: [2.0, 0.75, 1.5, 1.75, 1.5, 3.0, 2.0], hd: 0.32, pool: 1.3, dome: 0.62, pull: 0.92, nc: 1, nb: 3, sq0: 0.32, end: 0.1 },
+  { b: [2.0, 0.75, 1.5, 2.75, 1.5, 2.75, 2.0], hd: 0.34, pool: 1.55, dome: 0.7, pull: 0.9, nc: 1, nb: 4, sq0: 1.3, end: 0.42 },
+  { b: [2.25, 0.75, 2.0, 4.0, 2.0, 3.25, 2.25], hd: 0.36, pool: 2.7, dome: 0.9, pull: 1.0, nc: 3, nb: 4, sq0: 0.3, end: 0.1 }];
+/* where it is in the change: every number the figure and the page read */
+function ph71(t, o) { const P = PAR71[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => cl71((u - c[i]) / b[i]), e = o.e71 || (o.e71 = {}), rise = 1 - P.hd;
+  e.u = u; e.t = t; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[4]; e.to = o.to; e.from = o.from; e.pre = u < 0; e.rise = rise;
+  e.go = at(0); e.well = at(1); e.melt = at(2); e.ga = at(3); e.pu = at(4); e.sl = at(5); e.home = at(6); e.done = u >= s; e.old = u < c[5];
+  e.hold = u >= c[3] && u < c[4] && e.ga >= rise ? 1 : 0;
+  /* the haul out and home: cycles of throw, stick, haul (cyc66); cr how far along (0 home, 1 the place) */
+  e.cy = null; e.cr = u < c[1] ? 0 : 1; e.ci = -1;
+  if (u >= 0 && u < c[1]) { const k = Math.min(P.nb - 0.001, e.go * P.nb), i = Math.floor(k), r = cyc66(k - i); r.i = i; e.cy = r; e.ci = i; e.cr = (i + r.mv) / P.nb; }
+  e.nbB = Math.max(2, P.nb - 1); e.hb = cl71((e.home - 0.14) / 0.72);
+  if (u >= c[6]) { const nb = e.nbB, h = e.hb, k = Math.min(nb - 0.001, h * nb), i = Math.floor(k), r = cyc66(k - i); r.i = i; if (h > 0 && h < 1) { e.cy = r; e.ci = i; } e.cr = 1 - (h >= 1 ? 1 : (i + r.mv) / nb); }
+  /* the well: it heaves up large; the yawn runs from the well's end into the melt */
+  e.heave = u < c[1] ? 0 : u < c[2] ? sm52(e.well / 0.7) : 1 - sm52(e.melt / 0.5);
+  e.yawn = u < c[1] ? 0 : u < c[2] ? sm52((e.well - 0.35) / 0.5) : u < c[3] ? 1 - sm52((e.melt - 0.15) / 0.3) : 0;
+  /* the melt: flat the heap sagging flat, armF the arms sinking last, pool how far the pool has spread; gone: the old figure is the pool now */
+  e.flat = u < c[2] ? 0 : u < c[3] ? sm52((e.melt - 0.08) / 0.72) : 1;
+  e.armF = u < c[2] ? 0 : u < c[3] ? sm52((e.melt - 0.3) / 0.6) : 1;
+  e.pool = u < c[2] ? 0 : u < c[3] ? sm52((e.melt - 0.05) / 0.8) : 1;
+  e.gone = u >= c[2] && u < c[5] && (u >= c[3] || e.melt >= 0.84);
+  /* the gathering: draw (pool to dome), bubbles, tremble; then the pull: col (its height of its full), lean, fall, thin, split */
+  e.draw = u < c[3] ? 0 : u < c[4] ? sm52(e.ga / rise) : 1;
+  e.bub = u < c[2] ? 0 : u < c[3] ? 0.12 * sm52((e.melt - 0.7) / 0.3) : u < c[4] ? 0.12 + 0.88 * sm52(e.ga / (rise * 0.8)) : 0;
+  e.trem = u < c[3] ? 0 : u < c[4] ? 0.25 + 0.75 * sm52(e.ga / rise) + 0.6 * e.hold : 0;
+  const p = e.pu, fall = sm52((p - 0.7) / 0.3), sh = 1 - Math.pow(1 - cl71(p / 0.26), 3);
+  e.fall = u >= c[4] && u < c[5] ? fall : u >= c[5] ? 1 : 0;
+  e.col = u < c[4] || u >= c[5] ? 0 : (sh * (1 + 0.07 * Math.sin(PI * cl71((p - 0.18) / 0.2)))) * (1 - (1 - P.end) * fall);
+  e.thin = u < c[4] ? 0 : sm52(p / 0.5) * (1 - 0.7 * fall);
+  e.sway = u < c[4] || u >= c[5] ? 0 : 0.06 * Math.sin(2 * PI * (p - 0.2) * 2.2) * sm52((p - 0.2) / 0.1) * (1 - fall);
+  e.over = u < c[4] ? 0 : sm52((p - 0.5) / 0.3) * 0.22 + 0.55 * fall;
+  e.split = P.nc > 1 && u >= c[4] ? sm52((p - 0.16) / 0.2) : 0;
+  e.peel = u < c[4] ? 0 : sm52((p - 0.3) / 0.2) * (1 - sm52((p - 0.8) / 0.15));
+  e.fling = u < c[4] ? 0 : sm52((p - 0.55) / 0.15);
+  e.flash = u >= c[4] ? Math.exp(-(u - c[4]) / 0.12) : 0;
+  /* the slump: the new form lands (d beats since), squashed, and wobbles up; the ripples; the wet mark dries by the way home's middle */
+  const d = u - c[5]; e.d = d;
+  e.sy = u < c[5] ? 1 : 1 - (1 - P.sq0) * Math.exp(-Math.max(0, d) / 0.55) * Math.cos(2 * PI * Math.max(0, d) / 1.0);
+  e.rip = u < c[5] ? 0 : cl71(d / 1.6);
+  e.wet = u < c[2] ? 0 : u < c[5] ? 1 : u < c[6] ? 1 - 0.35 * sm52(e.sl / 0.9) : 0.65 * (1 - sm52(e.home / 0.5));
+  e.arch = o.to === 3 && u >= c[5] ? sm52((e.sl - 0.24) / 0.36) : o.to === 3 && u >= c[4] ? 0 : 1;
+  e.dim = e.pre ? 0 : u < c[1] ? 0.25 * sm52(e.go) : u < c[2] ? 0.25 + 0.15 * e.well : u < c[3] ? 0.4 + 0.15 * e.melt : u < c[4] ? 0.55 + 0.45 * e.draw : u < c[5] ? 1 : u < c[6] ? 1 - 0.3 * sm52(e.sl / 0.7) : 0.7 * (1 - sm52(e.home / 0.6));
+  return e; }
+KIT.ph71 = ph71;
+/* the face and body numbers of each beat, laid over its own idle (the C26.rest wrapper below) */
+function face71(e, old, st) { const z = {}, dir = e.dir || -1;
+  if (old) {
+    if (e.u < e.c[1]) { z.lidx = 0.3; z.looky = -0.3; z.lookx = 0.6 * dir; z.brow = 0.15; return z; }
+    if (e.u < e.c[2]) { const w = e.well; z.wide = 0.3 * pl52(w, 0.05, 0.4, 0.08); z.looky = 0.1; z.lookx = 0; z.lidx = 0.2 * (1 - e.yawn); }
+    else { z.lookx = 0; z.looky = -0.2; z.blink = sm52((e.melt - 0.2) / 0.15); }
+    if (e.yawn > 0.01) { z.open = 0.5 + 0.9 * e.yawn; z.smile = 1 + 0.6 * e.yawn; z.lidx = Math.max(z.lidx || 0, 0.85 * e.yawn); z.brow = -0.3 * e.yawn; z.tilt = -0.08 * e.yawn; }
+    return z; }
+  if (e.u < e.c[6]) { const s = e.sl, op = sm52((s - 0.2) / 0.08), lk = pl52(s, 0.3, 0.64, 0.06), sm = sm52((s - 0.6) / 0.2);
+    z.blink = 1 - op; z.wide = 0.5 * pl52(s, 0.22, 0.34, 0.04); z.brow = 0.35 * pl52(s, 0.22, 0.4, 0.05);
+    if (st === 2) { z.lookx = 1.0 * lk; z.looky = 0.55 * lk; z.brow += 0.5 * lk; z.tilt = 0.12 * lk; }
+    else { z.looky = -0.85 * lk; z.lookx = 0.5 * Math.sin((s - 0.3) * 16) * lk; z.nod = 0.25 * lk; }
+    if (st === 4) { const fl = pl52(s, 0, 0.5, 0.12); z.wide = Math.max(z.wide, 0.4 * fl * op); z.brow += 0.3 * fl; }
+    z.smile = 1 + 1.2 * sm; z.lidx = 0.5 * sm; return z; }
+  const h = e.home; z.turn = PI * sm52((h - 0.03) / 0.12) * (1 - sm52((h - 0.88) / 0.1)); z.lidx = 0.5 + 0.4 * sm52((h - 0.85) / 0.15); z.smile = 1 + 0.6 * (1 - sm52(h / 0.3)); return z; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs), z = S && S.z71; if (!z || !S.x71) return r;
+  ['turn', 'lookx', 'looky', 'open'].forEach(k => { if (z[k] != null) q[k] = z[k]; });
+  ['wide', 'brow', 'nod', 'tilt'].forEach(k => { if (z[k] != null) q[k] = (q[k] || 0) + z[k]; });
+  if (z.smile != null) q.smile = Math.max(q.smile || 0, z.smile);
+  ['blink', 'lidx'].forEach(k => { if (z[k] != null) q[k] = Math.max(q[k] || 0, z[k]); });
+  if (z.blink >= 0.99) q.wide = 0; return r; })(C26.rest);
+/* a stand-in for the act's plan (W66's post66 reads its knocks: each haul's snap up to the hand wobbles through the heap) */
+function z71(e, L) { const P = e.P, c = e.c, out = [], back = [], T0 = c[0] * L, Tg = P.b[0] * L / P.nb, T6 = c[6] * L, nbB = e.nbB, Tb = P.b[6] * L * 0.72 / nbB;
+  for (let i = 0; i < P.nb; i++) out.push({ t0: T0 + i * Tg, t1: T0 + (i + 1) * Tg, e0: i / P.nb, e1: (i + 1) / P.nb });
+  for (let i = 0; i < nbB; i++) back.push({ t0: T6 + 0.14 * P.b[6] * L + i * Tb, t1: T6 + 0.14 * P.b[6] * L + (i + 1) * Tb, e0: i / nbB, e1: (i + 1) / nbB });
+  return { tW: -1e9, out, tHv: -1e9, P: [], tHit: -1e9, back, tSl: -1e9 }; }
+/* after its idle: the haul (post66), the heave, the melt flat (arms last), the landing squash and its wobble, 3 to 4's arms flung out, 2 to 3's arm
+   gathered into its root while the page's hanging arm stands for it */
+function post71(S, e, old, o) { const K = S.k62; if (!K) return; const B = S.bones, G = S.G, H = G.H, J = G.J, st = S.st, cx = B[0].position.x, cz = B[0].position.z;
+  const Z = o.z71 || (o.z71 = z71(e, e.L)), dirOut = o.d71 || [1, 0], home = e.u >= e.c[6];
+  const ex = { cy: e.cy, turn: home && S.z71 ? S.z71.turn || 0 : 0, lean: 0, rise: old ? 0.7 * e.heave : 0, sq: e.cy ? e.cy.sq : 0 };
+  post66(S, ex, { Z, t: e.t, d: home ? [-dirOut[0], -dirOut[1]] : dirOut, b: [0, 0] });
+  const d = K.d71 || (K.d71 = J.map(() => [0, 0, 0])); d.forEach(q => { q[0] = q[1] = q[2] = 0; });
+  let fy = 1, fs = 1, ay = 1;
+  if (old && e.flat > 0) { fy = 1 - 0.93 * e.flat; fs = 1 + 0.75 * e.flat; ay = 1 - 0.96 * e.armF; }
+  if (!old && e.u < e.c[6]) { fy = e.sy; fs = 1 / Math.sqrt(Math.max(0.3, e.sy)); }
+  if (fy !== 1 || fs !== 1) {
+    K.body.forEach(j => { const b = B[j], p = b.position, ox = p.x, oy = p.y, oz = p.z; p.y = oy * fy; p.x = cx + (ox - cx) * fs; p.z = cz + (oz - cz) * fs; b.scale.y *= 0.4 + 0.6 * fy; b.scale.x *= fs; b.scale.z *= fs; d[j][0] = p.x - ox; d[j][1] = p.y - oy; d[j][2] = p.z - oz; });
+    G.chains.forEach(c => { if (c.kind !== 'limb') return; const par = J[c.jn[0]].par, D = d[par] || d[0], low = !!c.l.slope || !!c.l.flat;
+      c.jn.forEach(jj => { const q = B[jj].position; q.x += D[0]; q.z += D[2]; if (low) { q.x = cx + (q.x - cx) * (1 + 0.3 * (fs - 1)); q.z = cz + (q.z - cz) * (1 + 0.3 * (fs - 1)); q.y *= Math.min(1, fy * 1.5); } else q.y = q.y * (old ? ay : fy) + (old ? 0 : 0) ; }); }); }
+  /* 3 to 4: lands half-risen with both arms flung out to catch its balance */
+  if (!old && st === 4 && e.u < e.c[6]) { const fl = pl52(e.sl, 0.0, 0.55, 0.18); K.arms.forEach(c => { const jn = c.jn, n = jn.length, r = B[jn[0]].position, sd = Math.sign(J[jn[n - 1]].p[0] - J[jn[0]].p[0]) || 1;
+      for (let k = 1; k < n; k++) { const f = k / (n - 1), q = B[jn[k]].position; q.x += sd * 0.22 * H * fl * f; q.y += 0.18 * H * fl * f * f; } }); }
+  /* 2 to 3: its lifted arm is left standing straight up in the air, stretched long, after the body has dropped; then it arches over into the heap's lifted arm */
+  if (!old && st === 3 && e.arch < 1) { const k = 1 - e.arch; K.arms.forEach(c => { const jn = c.jn, r = B[jn[0]].position, n = jn.length, tp = B[jn[n - 1]].position, sd = Math.sign(tp.x - r.x) || 1, an = sd * 1.35 * k + 0.12 * k * Math.sin(e.t / 180), ca = Math.cos(an), sa = Math.sin(an), st2 = 1 + 0.7 * k; for (let i = 1; i < n; i++) { const q = B[jn[i]].position, dx = (q.x - r.x) * st2, dy = (q.y - r.y) * st2; q.x = r.x + dx * ca - dy * sa; q.y = r.y + dx * sa + dy * ca; } }); }
+  /* for the page: where its foot is, how wide its slick, where its face is, where 2 to 3's arm grows from and reaches to (world) */
+  const R = S.root, V = S.v71 || (S.v71 = new S.T.Vector3()); R.updateWorldMatrix(true, false); const ws = R.getWorldScale(new S.T.Vector3()).x;
+  V.set(cx, 0, cz).applyMatrix4(R.matrixWorld); o.a71 = [V.x, V.y, V.z]; o.r71 = (G.pl ? G.pl.rx : 0.8 * H) * ws; o.h71 = H * ws;
+  if (st === 3 && K.arms[0]) { const jn = K.arms[0].jn, a = J[jn[0]].p, b = J[jn[jn.length - 1]].p; V.set(a[0], a[1], a[2]).applyMatrix4(R.matrixWorld); const A0 = [V.x, V.y, V.z]; V.set(b[0], b[1], b[2]).applyMatrix4(R.matrixWorld); o.arm71 = { a: A0, b: [V.x, V.y, V.z], r: (J[jn[1]] ? J[jn[1]].r : 0.1 * H) * ws }; } }
+/* what is seen: the pen line and its beads go with the figure */
+function show71(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; const K = S.k62; if (!on && K) { K.beads.forEach(b => { b.visible = false; }); K.spots.forEach(b => { b.visible = false; }); } }
+function kill71(S) { const O = S.e71; if (O) { if (O.gg.parent) O.gg.parent.remove(O.gg); S.e71 = null; } }
+function end71(S) { kill71(S); show71(S, true); S.z71 = null; S.x71 = null; }
+function evo71(f0, grp, S, t, o) { const e = ph71(t, o), T = S.T; S.x71 = true; W71.e = e; e.dir = (o.c59 && o.c59.dir) || -1; let O = S.e71; const ro = { look: [0, 0.5] };
+  if (e.old) { if (!O || O.from !== o.from) { kill71(S); const gg = slime61Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.root.position.z -= [0, 0, 0.3, 0.6, 0.7, 0.9][o.from] || 0; grp.parent.add(gg); O = S.e71 = { gg, sp, from: o.from }; }
+    const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show71(S, false); sp.x71 = true;
+    sp.z71 = face71(e, true, o.from); f0(O.gg, 'rest', t / e.L, ro); post71(sp, e, true, o); O.gg.visible = !e.gone; show71(sp, !e.gone); }
+  else { if (O) kill71(S); show71(S, true); S.z71 = face71(e, false, S.st); f0(grp, 'rest', t / e.L, ro); post71(S, e, false, o); }
+  const c = e.c, b5 = e.P.b[5], u = e.u; let n = -1; if (u >= c[5]) n = 0; if (u >= c[5] + 0.4 * b5) n = 1; if (u >= c[5] + 0.65 * b5) n = 2; if (u >= c[6]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on71(S) && o.from !== S.st)) { if (S && S.x71 && clip !== 'evo') { try { end71(S); } catch (e) { W71.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo71(f0, grp, S, t, o); } catch (err) { W71.err = String(err && err.stack); const L = o.L || 500, tot = (PAR71[Math.max(2, Math.min(5, o.to | 0))] || PAR71[3]).b.reduce((a, b) => a + b, 0); try { end71(S); } catch (x) { /* shown as it is */ } return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+KIT.W71 = W71; KIT.e71dbg = () => { const e = W71.e; return { err: W71.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), melt: +e.melt.toFixed(2), ga: +e.ga.toFixed(2), pu: +e.pu.toFixed(2), sl: +e.sl.toFixed(2), home: +e.home.toFixed(2), col: +e.col.toFixed(2), sy: +e.sy.toFixed(2), hit: e.hit, tot: e.tot, old: e.old, gone: e.gone } : null }; };
+// ==== W71 END
 // ==== W63 BEGIN
 // (builders 63, 65) SALT AS A LIVING CRYSTAL CLUSTER, five stages, stills only (AA.rxKit.salt63 = 1, or ?t63=1 on the page; OFF by default: the
 // game shows the old Salt). Builder 63's figure (a box head on a stepped box body with jointed box arms) read as a cardboard robot and is gone.
