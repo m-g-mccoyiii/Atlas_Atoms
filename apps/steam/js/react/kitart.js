@@ -6154,6 +6154,119 @@ KIT.spirit26.play = play26;
 draw30 = (f0 => function (T, S, ren, cam) { const X = S && S.way69 && (S.x92 || S.e92x); if (!X || !S.a69 || !(Math.cos(X.e.yaw || 0) < 0)) return f0(T, S, ren, cam); const a = S.a69; S.a69 = Object.assign({}, a, { strokes: [] }); try { return f0(T, S, ren, cam); } finally { S.a69 = a; } })(draw30);
 KIT.W92 = W92;
 // ==== W92 END
+// ==== W94 BEGIN
+// (builder 94) THE ONE GREAT FLAME, ALIVE: AA.rxKit.flame94 = { make(T), update(m, o), light(o) }. Nothing here is called by the game yet: it is
+// one self-contained drawing for Brimstone's change of stage, to be put where the page's flat tongue (scheme S92, K.fl) is now.
+// PEN AND WASH, all in one small shader on one flat sheet that faces the eye, so every frame is drawn afresh from continuous time (nothing is
+// stepped, nothing loops that the eye can find):
+//  - the SHAPE is one field: a broad-footed tongue whose middle line sways in waves that travel UP, less a slow noise that streams upward and is
+//    stretched tall, so the edge licks, the top splits into tongues, and above the tip the field only just fails: islands break off, rise, shrink
+//    and are gone (the shed flamelets);
+//  - the WASH is that field cut at three depths: deep blue-violet to the edge (darker in a rim where the pigment pooled), a lighter blue inside it,
+//    a pale blue-white heart low and left of the middle, a touch of red-orange at the very root; the edge is soft in some places and crisp in
+//    others, and toward the tips the paper's grain shows through. Never yellow. The lower two thirds are all but opaque;
+//  - the PEN is the same edge, a hair off the wash, in dark blue-violet: heavy low on the right, light high on the left, broken where a second
+//    stream of noise runs thin, so the strokes travel with the tongues; a few open strokes inside follow the lighter blue;
+//  - three thin grey wisps of smoke leave the tip.
+// make(T) -> a THREE.Mesh (its origin is the flame's FOOT; add it to the scene, not to a turned parent).
+// update(m, o): o.t seconds (any clock that runs on), o.rise 0..1 (grown up from the lump), o.h o.w world units (height to the tip at rise 1, the
+//   widest width), o.breath a phase in radians (the stand's slow swell), o.draw 0..1 (pinched at the foot, drawn up to a thread and gone),
+//   o.face the camera (the sheet takes its turn), o.sway lean in radians-ish, o.a opacity (1), o.smoke 0..1 (1), o.seed.
+// light(o) -> 0..1: how bright the flame is now (rise, draw, and the same flicker that moves its height), for the page's light on the paper.
+KIT.flame94 = (() => {
+  const VS = 'varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
+  const FS = `
+precision highp float;
+varying vec2 vP;
+uniform float uT, uRise, uDraw, uWr, uBr, uFl, uSway, uSeed, uA, uSm;
+float h1(vec2 p) { vec3 q = fract(vec3(p.xyx) * 0.1031 + uSeed * 0.071); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  return mix(mix(h1(i), h1(i + vec2(1.0, 0.0)), u.x), mix(h1(i + vec2(0.0, 1.0)), h1(i + vec2(1.0, 1.0)), u.x), u.y); }
+float smx(float a, float b, float k) { float h = max(k - abs(a - b), 0.0) / k; return max(a, b) + h * h * k * 0.25; }
+float mid(float yc, float hg) { return uSway * yc * yc * hg + uWr * pow(yc, 1.6) * (0.2 * (vn(vec2(yc * 1.5 - uT * 0.5, 3.7)) - 0.5) + 0.1 * (vn(vec2(yc * 3.1 - uT * 0.95, 9.2)) - 0.5)); }
+void main() {
+  vec2 p = vP; float D = clamp(uDraw, 0.0, 1.0), sD = D * D * (3.0 - 2.0 * D), R = clamp(uRise, 0.0, 1.0);
+  float hg = max(0.02, R * (1.0 + 0.035 * sin(uBr) + 0.05 * (uFl - 0.5)) * (1.0 + 0.3 * sD));
+  float y0 = hg * 0.55 * smoothstep(0.4, 1.0, D), yy = (p.y - y0) / hg, yc = max(yy, 0.0);
+  float hw = 0.5 * uWr * (0.55 + 0.45 * R) * smoothstep(0.0, 0.12, R) * (1.0 + 0.04 * sin(uBr * 0.5 + 1.0));
+  float pinch = max(1.0 - smoothstep(0.0, 1.0, D * 1.8 - yy * 0.4), 0.065 * (1.0 - smoothstep(0.7, 1.0, D)) * smoothstep(-0.05, 0.3, yy));
+  float cx = mid(yc, hg), nx = (p.x - cx) / max(hw, 0.001), ny = p.y / (0.4 + 0.6 * R);
+  /* the stream: it runs upward; a slow sideways push bends the tongues over as they climb */
+  nx += (vn(vec2(nx * 0.9 + 4.0, ny * 2.0 - uT * 1.05)) - 0.5) * 0.7 * min(yc, 1.3) * mix(0.12, 1.0, pinch);
+  float n = 0.6 * vn(vec2(nx * 2.2, ny * 2.3 - uT * 1.5)) + 0.4 * vn(vec2(nx * 4.1 + 9.0, ny * 4.6 - uT * 2.5));
+  float n2 = vn(vec2(nx * 2.3 + 21.0, ny * 3.0 - uT * 1.9));
+  float bot = yy < 0.09 ? sqrt(max(0.0, 1.0 - (1.0 - yy / 0.09) * (1.0 - yy / 0.09))) : 1.0;
+  float prof = 0.88 * bot * (1.0 - pow(yc, 1.75)) * (1.0 + 0.2 * exp(-(yy - 0.17) * (yy - 0.17) / 0.03));
+  if (yy > 1.0) prof = -(pow(yc, 1.75) - 1.0) * 1.3;
+  float amp = mix(0.16, 0.5, smoothstep(0.05, 0.95, yc)) * mix(0.3, 1.0, pinch);
+  float f = (yy > 1.0 ? prof : prof * pinch) - abs(nx);
+  /* the side tongues: each grows and sinks on its own slow time and leans out; with the great one they are one shape */
+  for (int i = 0; i < 4; i++) { float k = float(i), sg = mod(k, 2.0) < 0.5 ? -1.0 : 1.0, far = floor(k * 0.5);
+    float ht = (0.66 - 0.24 * far) * (0.5 + 0.85 * vn(vec2(uT * 0.8 + k * 17.3, k * 5.1 + 0.5))), yt = yc / ht;
+    float pt = yt > 1.0 ? -(pow(yt, 1.3) - 1.0) : bot * (1.0 - pow(yt, 1.3));
+    float cc = sg * (0.4 + 0.3 * far) * pinch + sg * (0.1 + 0.45 * vn(vec2(uT * 0.55 + k * 3.1, 7.7))) * yt * yt * ht;
+    f = smx(f, (0.36 - 0.07 * far) * pt * pinch * (1.0 - smoothstep(0.15, 0.6, D)) - abs(nx - cc), 0.14); }
+  f += amp * (n - 0.5) + min(0.0, yy - 0.05 * vn(vec2(nx * 2.2 + uT * 0.35, uT * 0.5))) * 9.0;
+  /* how far from the edge, in the sheet's own units (the field's slope taken from the screen) */
+  float upp = length(vec2(dFdx(p.x), dFdy(p.x))), gl = max(length(vec2(dFdx(f), dFdy(f))), 1e-5), dist = f / gl * upp;
+  float grain = 0.5 * vn(p * 190.0) + 0.5 * vn(p * 83.0 + 7.0), blot = vn(p * 5.0 + 3.0), soft = mix(0.003, 0.013, vn(vec2(nx * 2.6 + 2.0, ny * 4.2 - uT * 1.5)));
+  float a = smoothstep(-soft, soft, dist + 0.006 * (grain - 0.5));
+  vec3 cOut = vec3(0.33, 0.26, 0.78), cMid = vec3(0.33, 0.50, 0.95), cHot = vec3(0.90, 0.94, 1.0), cRoot = vec3(0.93, 0.40, 0.22), cPen = vec3(0.10, 0.08, 0.30);
+  vec3 col = cOut * (0.9 + 0.22 * blot);
+  col *= 1.0 - 0.2 * (1.0 - smoothstep(0.0, 0.03, dist));
+  /* the lighter blue, well inside and lower */
+  float fm = f - 0.2 - 0.34 * yc * yc + 0.3 * (n2 - 0.5), am = smoothstep(-0.05, 0.07, fm + 0.05 * (grain - 0.5));
+  col = mix(col, cMid * (0.9 + 0.2 * vn(p * 4.0 + 11.0)), am * (0.8 + 0.15 * blot));
+  /* the heart: pale, low, left of the middle */
+  float yh = yy / 0.56, ph = (yy < 0.1 ? sqrt(max(0.0, yy / 0.1)) : 1.0) * (1.0 - pow(max(yh, 0.0), 1.3)) * 0.36;
+  float fh = ph * pinch - abs(nx + 0.16) + 0.34 * (n2 - 0.5) * (0.4 + yh), ah = smoothstep(-0.05, 0.16, fh + 0.06 * (grain - 0.5)) * (1.0 - smoothstep(0.1, 0.7, D));
+  col = mix(col, cHot, ah * 0.88);
+  /* the root */
+  float fr = 1.0 - length(vec2((nx + 0.05) * 1.9, yy / 0.085));
+  col = mix(col, cRoot, smoothstep(0.0, 0.7, fr + 0.3 * (n - 0.5)) * 0.85 * (1.0 - smoothstep(0.0, 0.5, D)));
+  /* paper through the tips */
+  float tipf = smoothstep(0.66, 1.15, yy);
+  a *= 0.97 - tipf * (0.12 + 0.5 * smoothstep(0.3, 0.75, grain * 0.5 + blot * 0.5)) - 0.25 * smoothstep(0.5, 1.0, D);
+  /* the pen */
+  float side = 0.5 + 0.5 * clamp(nx * 0.8 - (yy - 0.45) * 0.9, -1.0, 1.0);
+  float wg = max(0.0062 * (0.55 + 1.25 * side) * (0.45 + 1.1 * vn(vec2(nx * 2.9 + 31.0, ny * 5.2 - uT * 1.5))), 0.75 * upp);
+  float brk = smoothstep(0.34, 0.46, vn(vec2(nx * 2.3 + 13.0, ny * 3.9 - uT * 1.5)));
+  float off = 0.006 * (vn(vec2(nx * 2.0 + 40.0, ny * 2.0 - uT * 1.5)) - 0.35);
+  float ln = (1.0 - smoothstep(wg * 0.55, wg + upp, abs(dist - off))) * brk;
+  float gm = max(length(vec2(dFdx(fm), dFdy(fm))), 1e-5), dm = fm / gm * upp;
+  float ln2 = (1.0 - smoothstep(0.0012, 0.0026 + upp, abs(dm))) * smoothstep(0.56, 0.7, vn(vec2(nx * 1.4 + 55.0, ny * 2.4 - uT * 1.9))) * 0.55 * (1.0 - tipf);
+  ln = max(ln, ln2 * a) * 0.92 * (1.0 - smoothstep(0.85, 1.0, D));
+  col = mix(col, cPen, ln); a = max(a, ln);
+  /* the smoke: three thin wisps off the tip */
+  float ty = y0 + hg * 0.98, tx = mid(1.0, hg), as = 0.0;
+  for (int i = 0; i < 3; i++) { float k = float(i), u = (p.y - ty) / (0.26 + 0.07 * k);
+    float xw = tx + (k - 1.0) * 0.022 + u * (0.05 * (k - 1.0) + 0.05 * sin(p.y * 8.0 - uT * 2.3 + k * 2.1) + 0.03 * sin(p.y * 17.0 - uT * 3.7 + k * 4.0));
+    float wd = 0.004 + 0.011 * u * (1.0 + 0.5 * k), d = abs(p.x - xw);
+    as = max(as, (1.0 - smoothstep(wd * 0.4, wd + upp, d)) * smoothstep(0.0, 0.2, u) * (1.0 - smoothstep(0.45, 1.0, u)) * smoothstep(0.3, 0.6, vn(vec2(k * 7.3, p.y * 2.6 - uT * 1.1))) * (0.55 - 0.1 * k)); }
+  as *= uSm * smoothstep(0.3, 0.9, R) * (1.0 - smoothstep(0.75, 1.0, D)) * (0.75 + 0.5 * grain);
+  vec3 cS = vec3(0.42, 0.42, 0.47);
+  float oa = a + as * (1.0 - a);
+  gl_FragColor = vec4((col * a + cS * as * (1.0 - a)) / max(oa, 1e-4), oa * uA);
+}`;
+  const sm = u => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+  /* the flicker: three sines that never agree; it moves the flame's height and the page's light together */
+  const flick = t => 0.5 + 0.5 * (0.5 * Math.sin(7.3 * t) + 0.3 * Math.sin(11.9 * t + 1.3) + 0.2 * Math.sin(19.1 * t + 2.1));
+  const tOf = o => (o.t == null ? (o.time || 0) : o.t) % 3600;
+  return {
+    make(T) { T = T || (typeof THREE !== 'undefined' ? THREE : null);
+      const g = new T.PlaneGeometry(1.7, 2.2); g.translate(0, 1.0, 0);
+      const U = { uT: { value: 0 }, uRise: { value: 0 }, uDraw: { value: 0 }, uWr: { value: 0.6 }, uBr: { value: 0 }, uFl: { value: 0.5 }, uSway: { value: 0 }, uSeed: { value: 0 }, uA: { value: 1 }, uSm: { value: 1 } };
+      const mat = new T.ShaderMaterial({ uniforms: U, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, depthTest: false, side: T.DoubleSide });
+      mat.extensions = { derivatives: true }; mat.toneMapped = false;
+      const m = new T.Mesh(g, mat); m.renderOrder = 32; m.frustumCulled = false; m.visible = false; m.userData.plain = true; m.userData.nobox = true; m.userData.flame94 = true; return m; },
+    update(m, o) { o = o || {}; const u = m.material.uniforms, h = o.h || 1, w = o.w || 0.6 * h, t = tOf(o), rise = o.rise == null ? 1 : Math.max(0, Math.min(1, o.rise)), draw = Math.max(0, Math.min(1, o.draw || 0)), a = o.a == null ? 1 : o.a;
+      u.uT.value = t; u.uRise.value = rise; u.uDraw.value = draw; u.uWr.value = w / h; u.uBr.value = o.breath || 0; u.uFl.value = flick(t); u.uSway.value = o.sway || 0; u.uSeed.value = o.seed || 0; u.uA.value = Math.max(0, Math.min(1, a)); u.uSm.value = o.smoke == null ? 1 : o.smoke;
+      m.scale.set(h, h, h); if (o.face && o.face.quaternion) m.quaternion.copy(o.face.quaternion); m.visible = rise > 0.004 && draw < 0.998 && a > 0.01; return m; },
+    light(o) { o = o || {}; const rise = o.rise == null ? 1 : Math.max(0, Math.min(1, o.rise)), draw = Math.max(0, Math.min(1, o.draw || 0)), f = flick(tOf(o));
+      return Math.max(0, Math.min(1, sm(rise / 0.8) * (1 - sm(draw / 0.85)) * (0.74 + 0.2 * f + 0.06 * Math.sin(o.breath || 0)))); },
+  };
+})();
+// ==== W94 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
