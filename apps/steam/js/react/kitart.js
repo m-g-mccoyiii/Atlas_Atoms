@@ -6354,7 +6354,9 @@ KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homammonia' 
 //  5 the distiller: seated upright and broad as if enthroned, knees wide, both arms open with a flame on each palm, a tall plume off its head
 KIT.wood80 = KIT.wood80 == null ? ((typeof location !== 'undefined' && /[?&]w80=1/.test(String(location.search))) ? 1 : null) : KIT.wood80;
 const W80 = { geo: {}, figs: [], err: null, TARGET: [0, 5200, 6400, 7400, 8400, 9200], ROLE: [], pen: 0.95,
-  C: { lite: [0.985, 0.915, 0.925], edge: [0.900, 0.480, 0.560], shade: [0.640, 0.390, 0.520], margin: [0.985, 0.925, 0.930], hl: [0.60, 0.76], lid: 0xfbeeed, ring: 0xf6e4dc, damp: 0x24181a, glow: 0xcdc4ff } };
+  /* (builder 85) clear spirit, not flesh: a very pale neutral grey body (mostly paper), the colour only at the rim and in the shade (a thin rose-wine
+     edge, like the edge of spirit in a glass), the wood seen faintly through it (see85 in tint80) */
+  C: { lite: [0.955, 0.950, 0.950], edge: [0.700, 0.420, 0.540], shade: [0.700, 0.640, 0.680], margin: [0.975, 0.965, 0.965], hl: [0.50, 0.62], lid: 0xf1edee, ring: 0xf2ebe8, damp: 0x1c1416, glow: 0xcdc4ff, see: 0.6 } };
 /*SPEC80*/
 /* the spine: a pad hidden under the seat, then balls up the body (x, y, radius, z, depth as a part of the radius); role says which of them are
    chest, neck, head and the first of the thread of vapour. dx moves the whole picture sideways so the game's shadow lies under the seat */
@@ -6371,51 +6373,52 @@ const spill80 = (B, cx, rx, rz, arcs) => arcs.map(q => air80(Array.from({ length
 const face80 = (B, c, r, k, f) => Object.assign({ c: [c[0] + B.dx, c[1], r * 0.9], d: [0.1, 0.05, 1], k, er: 1.12, dx: 0.18 }, f);
 const bub80 = (B, x, y, r) => bub(x + B.dx, y, r);
 const COM80 = { foot: 0.02, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, foam: () => 0 };
+const head85 = (c, r, s) => [[c[0] - 0.02 * s, c[1] - r * 0.52, r * 0.78], [c[0], c[1], r], [c[0] + 0.03 * s, c[1] + r * 0.48, r * 0.82], [c[0] + 0.06 * s, c[1] + r * 0.82, r * 0.5], [c[0] + 0.08 * s, c[1] + r * 1.0, 0.14], [c[0] + 0.09 * s, c[1] + r * 1.08, 0]];
+/* (builder 85) not a baby: a longer body with a paunch, a smaller head with a jaw and a brow, long loose limbs running to a point (no toes, no
+   fingers), smaller heavy-lidded eyes, a broad easy smile; sat like someone lounging by a fire. r85: fa the flame arms, prop the arm it leans on,
+   knee the leg it shifts. A flame's 7th number 1 hangs it on the body itself (not a hand). The pen's flicks and shimmer are W85's (they move). */
 const SPEC80 = [
-  // 1 the drop
-  () => { const hc = [0, 0.62], B = mk80(0.4, [[0, 0.12, 0.56], [0, 0.6, 0.78], [0.03, 1.02, 0.58], [0.07, 1.3, 0.3], [0.1, 1.46, 0.16], [0.22, 1.64, 0.11], [0.16, 1.82, 0]], { chest: 0, neck: 0, head: 1, hair: 4 }, 0);
-    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 1.5, ring: [1.5, 1.05, 0.5], damp: [1.0, 0.7, 0.4],
-      limbs: [lim80(B, 0.4, 1.0, [[0.36, 0.14, 0.6], [0.46, 0.15, 0.82], [0.5, 0.2, 0.98]], [0.17, 0.17, 0.18]), lim80(B, 0.4, PI - 1.0, [[-0.36, 0.14, 0.6], [-0.46, 0.15, 0.82], [-0.5, 0.2, 0.98]], [0.17, 0.17, 0.18])],
-      face: face80(B, hc, 0.78, 1.55, { lid: 0.55, er: 1.25, brow: { y: 0.24, len: 0.13, ang: [-0.2, -0.2], arch: 0.03, r: 0.018 }, mouth: { w: 0.07, d: 0.03, y: -0.2, r: 0.022 } }),
-      flames: [[0.2, 1.84, 0.1, 0.6, 0.15, 0.3]], vap: [[-0.05, 2.2, 0, 1.1, 0.7]],
-      pen: [shim80(B, -0.5, 1.5, 0.7, 0.07, 0), flick80(B, -0.7, 0.95, 0.2, -1), flick80(B, 0.72, 1.0, 0.2, 1)] }, COM80); },
-  // 2 the tot
-  () => { const hc = [-0.05, 2.12], hr = 0.66, B = mk80(0.45, [[0, 0.12, 0.62], [0, 0.55, 0.88], [-0.02, 1.0, 0.78], [-0.04, 1.36, 0.52], [-0.05, 1.58, 0.32]].concat(head80(hc, hr, 0.95, 1)), { chest: 3, neck: 4, head: 5, hair: 8 }, 0);
-    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 1.45, ring: [2.1, 1.3, 0.5], damp: [1.5, 0.9, 0.4],
-      limbs: [lim80(B, 0.6, 0.6, [[0.75, 0.3, 0.45], [1.15, 0.26, 0.62], [1.5, 0.28, 0.72], [1.62, 0.56, 0.74]], [0.26, 0.24, 0.22, 0.24]), lim80(B, 0.6, PI - 0.6, [[-0.75, 0.3, 0.45], [-1.15, 0.26, 0.62], [-1.5, 0.28, 0.72], [-1.62, 0.56, 0.74]], [0.26, 0.24, 0.22, 0.24]),
-        lim80(B, 3, 0.3, [[0.6, 1.36, 0.25], [0.98, 1.5, 0.3], [1.18, 1.86, 0.3], [1.2, 2.16, 0.3]], [0.15, 0.14, 0.13, 0.15]), lim80(B, 3, PI - 0.3, [[-0.6, 1.3, 0.25], [-0.95, 1.0, 0.4], [-1.12, 0.66, 0.55]], [0.15, 0.14, 0.16])],
-      face: face80(B, hc, hr, 1.75, { d: [0.3, 0.05, 1], er: 1.2, brow: { y: 0.25, len: 0.14, ang: [0.1, 0.25], lift: [0, 0.05], arch: 0.03, r: 0.02 }, mouth: { o: 0.045, y: -0.22, x: 0.03, r: 0.022 } }),
-      marks: [bub80(B, 0.12, 0.55, 0.08), bub80(B, -0.22, 0.9, 0.055), bub80(B, 0.2, 1.1, 0.04)], flames: [[1.22, 2.3, 0.3, 0.95, 0.1]], vap: [[0.15, 3.3, 0, 1.5, 0.8]],
-      pen: [shim80(B, -0.7, 3.0, 0.9, 0.08, 0), shim80(B, 0.5, 3.3, 0.7, 0.07, 2), flick80(B, -0.86, 2.2, 0.22, -1), flick80(B, -1.0, 1.2, 0.2, -1)] }, COM80); },
-  // 3 the toast (the line-up's figure)
-  () => { const hc = [-0.5, 2.72], hr = 0.7, B = mk80(0.5, [[0, 0.12, 0.7], [0, 0.5, 1.0], [-0.06, 0.95, 1.06], [-0.18, 1.4, 0.86], [-0.3, 1.78, 0.6], [-0.42, 2.08, 0.34]].concat(head80(hc, hr, 1.3, -1)), { chest: 4, neck: 5, head: 6, hair: 9 }, 0.2);
-    return Object.assign({ keys: B.K, role: B.role, fx: 0.4, sz: 1.12, ring: [3.0, 1.5, 0.5], damp: [2.2, 1.0, 0.4],
-      limbs: [lim80(B, 1, 0.55, [[0.95, 0.42, 0.5], [1.6, 0.34, 0.56], [2.25, 0.3, 0.58], [2.75, 0.34, 0.58], [2.9, 0.72, 0.58]], [0.32, 0.29, 0.26, 0.25, 0.26]),
-        lim80(B, 1, -0.35, [[0.95, 0.5, -0.3], [1.5, 0.9, -0.35], [2.0, 0.66, -0.35], [2.5, 0.42, -0.32], [2.66, 0.8, -0.3]], [0.3, 0.28, 0.26, 0.24, 0.25]),
-        lim80(B, 4, PI, [[-0.86, 1.7, 0], [-1.3, 1.35, 0], [-1.62, 0.8, 0.05], [-1.72, 0.24, 0.1], [-1.98, 0.14, 0.2]], [0.19, 0.17, 0.16, 0.17, 0.19]),
-        lim80(B, 4, 0, [[0.28, 1.86, 0.25], [0.8, 2.02, 0.3], [1.2, 2.5, 0.3], [1.38, 3.05, 0.3], [1.4, 3.3, 0.3]], [0.19, 0.17, 0.15, 0.15, 0.18])],
-      face: face80(B, hc, hr, 1.9, { lid: 0.4, er: 1.15, brow: { y: 0.3, len: 0.14, ang: [-0.12, -0.12], arch: 0.045, r: 0.021 }, mouth: { w: 0.17, d: 0.085, y: -0.2, x: 0.02, r: 0.026 } }),
-      marks: [bub80(B, 0.15, 0.62, 0.1), bub80(B, -0.3, 1.0, 0.07), bub80(B, 0.3, 1.25, 0.055), bub80(B, -0.05, 1.5, 0.04)], flames: [[1.42, 3.44, 0.3, 1.25, 0.12]], vap: [[-0.8, 3.95, 0, 2.0, 0.9]],
-      pen: [shim80(B, -1.25, 3.6, 1.1, 0.09, 0), shim80(B, 0.1, 3.9, 0.9, 0.08, 2), shim80(B, 2.1, 1.5, 0.8, 0.07, 4), flick80(B, -1.3, 2.9, 0.24, -1), flick80(B, -1.05, 2.0, 0.22, -1), flick80(B, 2.95, 1.1, 0.2, 1), flick80(B, 1.5, 1.25, 0.2, 1, -0.3)] }, COM80); },
-  // 4 the host
-  () => { const hc = [-1.5, 2.98], hr = 0.78, B = mk80(0.55, [[0, 0.12, 0.76], [0, 0.52, 1.1], [-0.2, 0.98, 1.18], [-0.62, 1.42, 1.0], [-1.0, 1.82, 0.74], [-1.3, 2.2, 0.4]].concat(head80(hc, hr, 1.5, -1)), { chest: 4, neck: 5, head: 6, hair: 9 }, 0.5);
-    return Object.assign({ keys: B.K, role: B.role, fx: 0.4, sz: 1.08, ring: [3.9, 1.7, 0.5], damp: [3.0, 1.15, 0.4],
-      limbs: [lim80(B, 1, 0.5, [[1.0, 0.45, 0.5], [1.7, 0.36, 0.58], [2.4, 0.32, 0.6], [3.1, 0.32, 0.6], [3.5, 0.4, 0.6], [3.66, 0.82, 0.6]], [0.34, 0.31, 0.28, 0.26, 0.26, 0.27]),
-        lim80(B, 1, -0.3, [[0.95, 0.7, -0.3], [1.45, 1.3, -0.35], [1.8, 1.72, -0.35], [2.15, 1.1, -0.35], [2.4, 0.45, -0.32], [2.75, 0.4, -0.3]], [0.32, 0.3, 0.28, 0.26, 0.25, 0.26]),
-        lim80(B, 4, PI, [[-1.72, 1.6, 0.05], [-2.15, 1.1, 0.1], [-2.3, 0.3, 0.2], [-1.75, 0.2, 0.55], [-1.2, 0.2, 0.8]], [0.21, 0.19, 0.19, 0.18, 0.2]),
-        lim80(B, 4, 0.2, [[-0.32, 2.05, 0.3], [0.2, 2.42, 0.35], [0.56, 3.05, 0.35], [0.7, 3.7, 0.35], [0.72, 4.0, 0.35]], [0.21, 0.19, 0.17, 0.16, 0.19])],
-      face: face80(B, hc, hr, 2.05, { lid: 0.5, brow: { y: 0.255, len: 0.17, ang: [-0.05, 0.14], lift: [0, 0.04], arch: 0.045, r: 0.022 }, mouth: { w: 0.19, d: 0.1, y: -0.2, x: 0.03, tilt: 0.02, tick: 1, r: 0.027 } }),
-      marks: [bub80(B, 0.2, 0.62, 0.11), bub80(B, -0.3, 1.0, 0.08), bub80(B, 0.05, 1.3, 0.06), bub80(B, -0.6, 1.55, 0.045)], vap: [[-1.8, 4.3, 0, 2.3, 0.9], [-0.4, 2.9, -0.4, 1.3, 0.5]], flames: [[0.74, 4.16, 0.35, 1.25, 0.1], [0.3, 2.92, 0.5, 0.45, -0.25, 0.25], [1.82, 1.98, -0.3, 0.36, 0.15, 0.2]],
-      pen: [shim80(B, -2.3, 3.9, 1.2, 0.09, 0), shim80(B, -0.75, 4.3, 1.0, 0.08, 2), shim80(B, 2.7, 1.5, 0.9, 0.07, 4), flick80(B, -2.38, 3.2, 0.26, -1), flick80(B, -0.62, 3.3, 0.24, 1), flick80(B, 3.72, 1.2, 0.22, 1), flick80(B, -2.5, 1.5, 0.22, -1)] }, COM80); },
-  // 5 the distiller
-  () => { const hc = [0, 3.62], hr = 0.86, B = mk80(0.7, [[0, 0.12, 0.95], [0, 0.6, 1.36], [0, 1.2, 1.42], [0, 1.8, 1.2], [0, 2.3, 0.98], [0, 2.78, 0.5]].concat(head80(hc, hr, 2.0, 1)), { chest: 4, neck: 5, head: 6, hair: 9 }, 0);
-    const side = s => [lim80(B, 1, s > 0 ? 0.5 : PI - 0.5, [[1.3 * s, 0.52, 0.6], [1.95 * s, 0.44, 0.85], [2.6 * s, 0.4, 1.0], [3.15 * s, 0.4, 1.08], [3.3 * s, 0.84, 1.08]], [0.4, 0.37, 0.33, 0.3, 0.3]),
-      lim80(B, 4, s > 0 ? 0.1 : PI - 0.1, [[1.1 * s, 2.3, 0.2], [1.75 * s, 2.2, 0.3], [2.35 * s, 2.5, 0.35], [2.8 * s, 3.0, 0.35], [3.05 * s, 3.12, 0.35]], [0.25, 0.23, 0.2, 0.19, 0.22])];
-    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 1.3, ring: [4.3, 2.0, 0.5], damp: [3.3, 1.4, 0.4],
+  // 1 the drop: a sleepy drop with a spark over its point
+  () => { const hc = [0, 0.66], B = mk80(0.42, [[0, 0.12, 0.6], [0, 0.55, 0.76], [0.02, 0.98, 0.6], [0.05, 1.3, 0.36], [0.09, 1.52, 0.18], [0.13, 1.66, 0.07], [0.15, 1.72, 0]], { chest: 0, neck: 0, head: 1, hair: 4 }, 0);
+    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 2.0, ring: [1.45, 1.0, 0.5], damp: [1.0, 0.7, 0.42], r85: { fa: [], knee: -1, prop: -1 },
+      limbs: [],
+      face: face80(B, hc, 0.76, 1.35, { lid: 0.62, er: 0.8, brow: { y: 0.2, len: 0.15, ang: [-0.05, -0.05], arch: 0.02, r: 0.022 }, mouth: { w: 0.1, d: 0.035, y: -0.2, r: 0.022 } }),
+      marks: [bub80(B, 0.2, 0.32, 0.07), bub80(B, -0.22, 1.0, 0.05)], flames: [[0.2, 1.95, 0.1, 0.62, 0.15, 0.4, 1]], vap: [[0.0, 1.8, 0, 0.75, 0.85, 0.55]], pen: [] }, COM80); },
+  // 2 the tot: sat cross-legged, warming its hands at its first flame
+  () => { const hc = [-0.04, 1.98], hr = 0.55, B = mk80(0.45, [[0, 0.12, 0.62], [0, 0.5, 0.84], [-0.02, 0.95, 0.76], [-0.03, 1.3, 0.56], [-0.04, 1.55, 0.38], [-0.04, 1.7, 0.31]].concat(head85(hc, hr, 1)), { chest: 3, neck: 4, head: 7, hair: 9 }, 0);
+    const leg = s => { const y = s < 0 ? 0.08 : 0; return lim80(B, 0.5, s > 0 ? 0.55 : PI - 0.55, [[0.75 * s, 0.22 + y, 0.55], [0.92 * s, 0.2 + y, 0.86], [0.62 * s, 0.18 + y, 1.12], [0.2 * s, 0.2 + y, 1.22], [-0.22 * s, 0.22 + y, 1.16]], [0.22, 0.2, 0.17, 0.12, 0.06]); };
+    const arm = s => lim80(B, 3, s > 0 ? 0.35 : PI - 0.35, [[0.64 * s, 1.1, 0.4], [0.66 * s, 0.84, 0.7], [0.52 * s, 0.72, 0.98], [0.32 * s, 0.74, 1.14]], [0.13, 0.12, 0.1, 0.06]);
+    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 1.75, ring: [2.0, 1.3, 0.5], damp: [1.45, 0.9, 0.42], r85: { fa: [2, 3], knee: -1, prop: -1, cup: 1 },
+      limbs: [leg(1), leg(-1), arm(1), arm(-1)],
+      face: face80(B, hc, hr, 1.9, { d: [0.05, 0.05, 1], lid: 0.3, er: 0.9, brow: { y: 0.24, len: 0.15, ang: [0.12, 0.12], lift: [0.03, 0.03], arch: 0.03, r: 0.022 }, mouth: { w: 0.12, d: 0.05, y: -0.22, r: 0.022 } }),
+      marks: [bub80(B, 0.2, 0.45, 0.08), bub80(B, -0.25, 0.75, 0.055), bub80(B, 0.15, 1.2, 0.04)], flames: [[0, 0.62, 1.3, 1.15, 0, 0.5, 1]], vap: [[0.05, 2.72, 0, 0.9, 0.85, 0.5]], pen: [] }, COM80); },
+  // 3 the toast (the line-up's figure): sat back on one arm, one leg out long and one knee up, the other arm raised with the flame
+  () => { const hc = [-0.52, 2.84], hr = 0.58, B = mk80(0.5, [[0, 0.12, 0.72], [0, 0.5, 0.98], [-0.05, 0.95, 1.04], [-0.16, 1.45, 0.8], [-0.28, 1.92, 0.64], [-0.38, 2.3, 0.46], [-0.45, 2.52, 0.42]].concat(head85(hc, hr, -1)), { chest: 4, neck: 5, head: 8, hair: 10 }, 0.2);
+    return Object.assign({ keys: B.K, role: B.role, fx: 0.4, sz: 1.14, ring: [3.1, 1.5, 0.5], damp: [2.3, 1.0, 0.42], r85: { fa: [3], knee: 1, prop: 2 },
+      limbs: [lim80(B, 1, 0.55, [[0.9, 0.42, 0.45], [1.6, 0.36, 0.55], [2.3, 0.3, 0.6], [2.95, 0.26, 0.62], [3.4, 0.2, 0.62]], [0.27, 0.22, 0.19, 0.15, 0.06]),
+        lim80(B, 1, -0.35, [[0.85, 0.55, -0.25], [1.35, 1.05, -0.3], [1.75, 1.32, -0.3], [2.2, 0.78, -0.3], [2.6, 0.3, -0.28], [2.98, 0.2, -0.26]], [0.28, 0.24, 0.21, 0.18, 0.12, 0.06]),
+        lim80(B, 4, PI, [[-0.85, 1.78, 0], [-1.25, 1.36, 0], [-1.52, 0.8, 0.05], [-1.66, 0.3, 0.1], [-1.98, 0.13, 0.2]], [0.17, 0.15, 0.13, 0.1, 0.06]),
+        lim80(B, 4, 0, [[0.45, 2.0, 0.25], [0.8, 2.22, 0.3], [1.12, 2.66, 0.3], [1.3, 3.16, 0.3], [1.36, 3.46, 0.3]], [0.17, 0.15, 0.13, 0.1, 0.06])],
+      face: face80(B, hc, hr, 2.15, { d: [0.12, 0.05, 1], lid: 0.5, er: 0.8, brow: { y: 0.27, len: 0.19, ang: [-0.04, -0.04], arch: 0.03, r: 0.027 }, mouth: { w: 0.21, d: 0.08, y: -0.24, x: 0.02, r: 0.026 } }),
+      marks: [bub80(B, 0.2, 0.62, 0.1), bub80(B, -0.3, 1.0, 0.07), bub80(B, 0.3, 1.25, 0.055), bub80(B, -0.1, 1.55, 0.04)], flames: [[1.38, 3.5, 0.3, 1.3, 0.1]], vap: [[-0.6, 3.45, 0, 1.1, 0.9, 0.7]], pen: [] }, COM80); },
+  // 4 the host: lying back on its elbow, one knee up, the flame held high
+  () => { const hc = [-1.6, 2.64], hr = 0.6, B = mk80(0.55, [[0, 0.12, 0.76], [0, 0.52, 1.06], [-0.2, 0.98, 1.1], [-0.6, 1.4, 0.86], [-1.0, 1.78, 0.68], [-1.3, 2.1, 0.5], [-1.44, 2.3, 0.44]].concat(head85(hc, hr, -1)), { chest: 4, neck: 5, head: 8, hair: 10 }, 0.5);
+    return Object.assign({ keys: B.K, role: B.role, fx: 0.4, sz: 1.1, ring: [3.9, 1.7, 0.5], damp: [3.0, 1.15, 0.42], r85: { fa: [3], knee: 1, prop: 2, toss: 1 },
+      limbs: [lim80(B, 1, 0.5, [[1.0, 0.45, 0.45], [1.75, 0.36, 0.5], [2.5, 0.3, 0.55], [3.2, 0.26, 0.55], [3.66, 0.2, 0.55]], [0.29, 0.24, 0.2, 0.15, 0.06]),
+        lim80(B, 1, -0.3, [[0.95, 0.7, -0.3], [1.4, 1.3, -0.35], [1.75, 1.76, -0.35], [2.1, 1.15, -0.35], [2.36, 0.5, -0.32], [2.72, 0.22, -0.3]], [0.3, 0.26, 0.23, 0.19, 0.13, 0.06]),
+        lim80(B, 4, PI, [[-1.75, 1.6, 0.05], [-2.1, 1.1, 0.1], [-2.25, 0.35, 0.2], [-1.82, 0.22, 0.5], [-1.38, 0.17, 0.7]], [0.18, 0.16, 0.15, 0.11, 0.06]),
+        lim80(B, 4, 0.2, [[-0.6, 2.02, 0.3], [-0.1, 2.36, 0.35], [0.3, 2.95, 0.35], [0.5, 3.55, 0.35], [0.56, 3.86, 0.35]], [0.18, 0.16, 0.14, 0.1, 0.06])],
+      face: face80(B, hc, hr, 2.25, { d: [0.15, 0.05, 1], lid: 0.55, er: 0.8, brow: { y: 0.27, len: 0.2, ang: [-0.02, 0.1], lift: [0, 0.03], arch: 0.03, r: 0.028 }, mouth: { w: 0.23, d: 0.09, y: -0.24, x: 0.03, tilt: 0.02, tick: 1, r: 0.027 } }),
+      marks: [bub80(B, 0.2, 0.62, 0.11), bub80(B, -0.3, 1.0, 0.08), bub80(B, 0.05, 1.3, 0.06), bub80(B, -0.6, 1.55, 0.045)], vap: [[-1.75, 3.42, 0, 1.15, 0.9, 0.65]], flames: [[0.58, 3.9, 0.35, 1.3, 0.1], [0.08, 2.62, 0.5, 0.42, -0.25, 0.25], [0.42, 3.28, 0.5, 0.38, -0.1, 0.2]], pen: [] }, COM80); },
+  // 5 the distiller: enthroned, broad and upright, knees wide, both arms open with a flame on each palm, a thin flame along the shoulders
+  () => { const hc = [0, 3.42], hr = 0.64, B = mk80(0.72, [[0, 0.12, 1.02], [0, 0.6, 1.4], [0, 1.2, 1.44], [0, 1.85, 1.18], [0, 2.4, 1.02], [0, 2.85, 0.6], [0, 3.06, 0.48]].concat(head85(hc, hr, 1)), { chest: 4, neck: 5, head: 8, hair: 10 }, 0);
+    const side = s => [lim80(B, 1, s > 0 ? 0.55 : PI - 0.55, [[1.25 * s, 0.55, 0.45], [1.9 * s, 0.78, 0.55], [2.45 * s, 0.98, 0.58], [2.82 * s, 0.52, 0.58], [3.06 * s, 0.18, 0.55], [3.34 * s, 0.12, 0.5]], [0.4, 0.34, 0.3, 0.24, 0.15, 0.07]),
+      lim80(B, 4, s > 0 ? 0.1 : PI - 0.1, [[1.15 * s, 2.42, 0.2], [1.8 * s, 2.28, 0.3], [2.4 * s, 2.52, 0.35], [2.84 * s, 2.96, 0.35], [3.0 * s, 3.2, 0.35]], [0.24, 0.21, 0.18, 0.13, 0.07])];
+    return Object.assign({ keys: B.K, role: B.role, fx: 0, sz: 1.3, ring: [4.4, 1.9, 0.5], damp: [3.4, 1.3, 0.42], r85: { fa: [1, 3], knee: -1, prop: -1, bless: 1 },
       limbs: side(1).concat(side(-1)),
-      face: face80(B, hc, hr, 2.25, { d: [0, 0.05, 1], lid: 0.46, brow: { y: 0.26, len: 0.18, ang: [-0.1, -0.1], arch: 0.05, r: 0.023 }, mouth: { w: 0.2, d: 0.1, y: -0.2, r: 0.028 } }),
-      marks: [bub80(B, 0.3, 0.7, 0.12), bub80(B, -0.4, 1.1, 0.09), bub80(B, 0.2, 1.5, 0.07), bub80(B, -0.2, 1.95, 0.055), bub80(B, 0.4, 2.2, 0.04)], vap: [[0.15, 5.1, 0, 3.0, 1], [-1.5, 3.4, -0.5, 1.5, 0.5], [1.5, 3.4, -0.5, 1.5, 0.5]], flames: [[3.08, 3.32, 0.35, 1.3, 0.1], [-3.08, 3.32, 0.35, 1.3, -0.1], [1.45, 2.72, 0.5, 0.45, 0.2, 0.25], [-1.45, 2.72, 0.5, 0.45, -0.2, 0.25], [2.3, 0.8, 1.0, 0.4, 0.15, 0.2], [-2.3, 0.8, 1.0, 0.4, -0.15, 0.2]],
-      pen: [shim80(B, -0.95, 4.7, 1.4, 0.1, 0), shim80(B, 1.2, 4.8, 1.2, 0.09, 2), shim80(B, -2.2, 3.6, 0.9, 0.08, 4), shim80(B, 2.3, 3.9, 0.8, 0.08, 1), flick80(B, -1.0, 4.1, 0.26, -1), flick80(B, 1.0, 4.1, 0.26, 1), flick80(B, -3.4, 1.2, 0.22, -1), flick80(B, 3.4, 1.2, 0.22, 1)] }, COM80); }
+      face: face80(B, hc, hr, 2.35, { d: [0, 0.05, 1], lid: 0.52, er: 0.8, brow: { y: 0.27, len: 0.21, ang: [-0.06, -0.06], arch: 0.035, r: 0.03 }, mouth: { w: 0.24, d: 0.1, y: -0.24, r: 0.028 } }),
+      marks: [bub80(B, 0.3, 0.7, 0.12), bub80(B, -0.4, 1.1, 0.09), bub80(B, 0.2, 1.5, 0.07), bub80(B, -0.2, 1.95, 0.055), bub80(B, 0.45, 2.2, 0.04)], vap: [[0.1, 4.25, 0, 1.2, 1, 0.15]],
+      flames: [[3.02, 3.25, 0.35, 1.55, 0.1], [-3.02, 3.25, 0.35, 1.55, -0.1], [1.15, 2.98, 0.5, 0.5, 0.25, 0.2], [-1.15, 2.98, 0.5, 0.5, -0.25, 0.2], [0.62, 3.14, 0.45, 0.4, 0.1, 0.15], [-0.62, 3.14, 0.45, 0.4, -0.1, 0.15], [1.7, 2.66, 0.5, 0.4, 0.3, 0.15], [-1.7, 2.66, 0.5, 0.4, -0.3, 0.15]], pen: [] }, COM80); }
 ];
 /*SPEC80 END*/
 /* the pale flame: a drawn tongue. Bare paper inside, a breath of blue-lilac low down and at the edge, the outline a BROKEN fine line */
@@ -6429,8 +6432,9 @@ function flame80(T) { if (W80.fl) return W80.fl; const c = document.createElemen
 function vap80(T) { if (W80.vp) return W80.vp; const c = document.createElement('canvas'); c.width = 128; c.height = 256; const x = c.getContext('2d'); x.lineCap = 'round';
   const wav = (x0, a, ph, t) => x0 + a * Math.sin(ph + t * 7.5) * (0.35 + 0.65 * t) + 10 * t, band = (x0, a, ph, w, col, al, dash) => { for (let i = 0; i < 40; i++) { const t0 = i / 40, t1 = (i + 1.3) / 40, k = Math.sin(PI * Math.pow(t0, 0.7)) * (1 - 0.5 * t0); if (dash && (i % 7) > 3 + (i % 3)) continue; x.strokeStyle = 'rgba(' + col + ',' + (al * k).toFixed(3) + ')'; x.lineWidth = w * (0.6 + 0.8 * t0);
       x.beginPath(); x.moveTo(wav(x0, a, ph, t0), 252 - 248 * t0); x.lineTo(wav(x0, a, ph, t1), 252 - 248 * t1); x.stroke(); } };
-  band(58, 12, 0, 30, '255,244,242', 0.2); band(50, 14, 1.2, 18, '255,250,250', 0.28); band(70, 11, 2.6, 14, '250,236,238', 0.24);
-  band(44, 14, 1.2, 2.2, '70,50,60', 0.75, 1); band(64, 12, 0.2, 2.0, '70,50,60', 0.65, 1); band(80, 11, 2.6, 1.8, '70,50,60', 0.55, 1);
+  /* (builder 85) thicker: a wide soft body of vapour, two paler streams in it, and the broken pen lines */
+  band(60, 12, 0, 54, '250,246,248', 0.26); band(58, 12, 0, 36, '255,252,252', 0.3); band(50, 14, 1.2, 22, '255,250,252', 0.34); band(72, 11, 2.6, 18, '246,238,244', 0.3);
+  band(40, 14, 1.2, 2.6, '60,44,56', 0.8, 1); band(62, 12, 0.2, 2.4, '60,44,56', 0.7, 1); band(84, 11, 2.6, 2.2, '60,44,56', 0.6, 1);
   return (W80.vp = new T.CanvasTexture(c)); }
 /* the ring where the spill has dried on the wood (an alpha map: an uneven broken ring, a faint film inside it) */
 function ring80(T) { if (W80.rg) return W80.rg; const n = 256, c = document.createElement('canvas'); c.width = c.height = n; const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, n, n); let s = 80; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -6442,7 +6446,13 @@ function ring80(T) { if (W80.rg) return W80.rg; const n = 256, c = document.crea
 function tint80(T, S) { if (!S.m30) return; S.t80 = true; S.t48 = true; const C = W80.C, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(3),
     sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float pl = 0.0,'],
       ['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)],
-      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.2 *']];
+      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.2 *'],
+      /* (builder 85) a clear liquid: where it faces us and is thin, the bench is seen through it (its grain in grey, a touch cool); a bright curved
+         highlight on each round part */
+      ['vec3 c9 = base * mix(vec3(1.0), wash, a9);', 'vec3 c9 = base * mix(vec3(1.0), wash, a9);\n#ifndef MARGIN30\n{ float lm85 = dot(bg, vec3(0.3, 0.59, 0.11)), g85 = clamp((lm85 - 0.15) * 4.2, 0.0, 1.0); vec3 see85 = mix(vec3(0.40, 0.37, 0.42), vec3(0.94, 0.93, 0.94), g85);'
+        + ' float th85 = smoothstep(0.22, 0.8, nv) * (0.75 + 0.5 * (nz3 - 0.5)) * (1.0 - smoothstep(0.62, 0.74, lm85)); c9 = mix(c9, see85, ' + f(C.see) + ' * th85);'
+        + ' float rs85 = smoothstep(0.5, 0.9, 1.0 - nv + 0.2 * (nz - 0.5)) * smoothstep(0.25, -0.35, l9); c9 = mix(c9, ' + g(C.edge) + ', 0.55 * rs85);'
+        + ' float d85 = dot(n9, normalize(vec3(-0.45, 0.55, 0.70))) + 0.015 * (nz2 - 0.5), hb85 = smoothstep(0.905, 0.93, d85) * (1.0 - smoothstep(0.958, 0.985, d85)); c9 = mix(c9, vec3(1.0), 0.95 * hb85); }\n#endif\n']];
   const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s80) return; m.userData.s80 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's80'; m.needsUpdate = true; };
   one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
 /* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage */
@@ -6454,22 +6464,22 @@ function wood80Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)
   /* a seated figure is low: it is drawn a little larger than the game sizes a spirit (a group of its own between the game's holder and the figure) */
   if (!(extra && extra.jar)) { const mid = new T.Group(); mid.scale.setScalar(o.sz || 1); mid.add(S.root); g.add(mid); S.mid80 = mid; }
   if (S.wet) S.wet.visible = false; (S.drips || []).forEach(d => { if (d.g) d.g.visible = false; });
-  if (!(extra && extra.jar)) { try {
+  { try {
       /* on the wood under it (laid on the bench itself every draw, lay80): the damp patch it sits in, and round that the pale ring of a dried spill */
       const soft = tex49(T, 'glow'), flat = (hex, q, ro, map) => { const m = new T.Mesh(new T.PlaneGeometry(q[0] * 2, q[1] * 2), flat49(T, hex, { transparent: true, alphaMap: map || soft, depthWrite: false, opacity: q[2] })); m.userData.plain = true; m.userData.nobox = true; m.rotation.x = -PI / 2; m.renderOrder = ro; return m; };
-      const lay = new T.Group(); S.root.add(lay); S.lay80 = lay; S.fx80 = o.fx || 0; if (o.ring) { const m = flat(C.ring, o.ring, 15, ring80(T)); m.position.y = 0.001; lay.add(m); } if (o.damp) { const m = flat(C.damp, o.damp, 16); m.position.y = 0.002; lay.add(m); }
-      /* the flames: drawn tongues stood on the hand (or the skin) toward the eye, each in a faint lilac light */
-      S.fl80 = (o.flames || []).map(q => { const j = near(q), bn = S.bones && S.bones[j], par = bn || S.root, P = bn ? [q[0] - J[j].p[0], q[1] - J[j].p[1], q[2] - J[j].p[2]] : q;
+      if (!(extra && extra.jar)) { const lay = new T.Group(); S.root.add(lay); S.lay80 = lay; S.fx80 = o.fx || 0; if (o.ring) { const m = flat(C.ring, o.ring, 15, ring80(T)); m.position.y = 0.001; lay.add(m); } if (o.damp) { const m = flat(C.damp, o.damp, 16); m.position.y = 0.002; lay.add(m); } }
+      /* the flames: drawn tongues stood on the hand (or the skin) toward the eye, each in a faint lilac light (builder 85: in the jar too; a 7th number 1 hangs it on the body) */
+      S.fl80 = (o.flames || []).map(q => { const j = q[6] ? 0 : near(q), bn = !q[6] && S.bones && S.bones[j], par = bn || S.root, P = bn ? [q[0] - J[j].p[0], q[1] - J[j].p[1], q[2] - J[j].p[2]] : q;
         const hz = new T.Sprite(new T.SpriteMaterial({ color: C.glow, alphaMap: soft, transparent: true, depthWrite: false, opacity: q[5] == null ? 0.42 : q[5] })); hz.scale.set(q[3] * 2.3, q[3] * 2.3, 1); hz.position.set(P[0], P[1] + q[3] * 0.45, P[2]); hz.userData.plain = true; hz.userData.nobox = true; hz.renderOrder = 20; par.add(hz);
-        const m = new T.Sprite(new T.SpriteMaterial({ map: flame80(T), transparent: true, depthWrite: false, rotation: q[4] || 0 })); m.center.set(0.5, 0.04); m.scale.set(q[3] * 0.6, q[3], 1); m.position.set(P[0], P[1], P[2]); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 21; par.add(m); return { m, hz, j }; });
-      S.vp80 = (o.vap || []).map(q => { const j = near(q), bn = S.bones && S.bones[j], par = bn || S.root, P = bn ? [q[0] - J[j].p[0], q[1] - J[j].p[1], q[2] - J[j].p[2]] : q;
-        const m = new T.Sprite(new T.SpriteMaterial({ map: vap80(T), transparent: true, depthWrite: false, opacity: q[4] == null ? 1 : q[4] })); m.center.set(0.5, 0.0); m.scale.set(q[3] * 0.5, q[3], 1); m.position.set(P[0], P[1], P[2]); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 19; par.add(m); return { m, j }; });
+        const m = new T.Sprite(new T.SpriteMaterial({ map: flame80(T), transparent: true, depthWrite: false, rotation: q[4] || 0 })); m.center.set(0.5, 0.04); m.scale.set(q[3] * 0.6, q[3], 1); m.position.set(P[0], P[1], P[2]); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 21; par.add(m); return { m, hz, j, q, P, op: hz.material.opacity }; });
+      if (!(extra && extra.jar)) S.vp80 = (o.vap || []).map(q => { const j = near(q), bn = S.bones && S.bones[j], par = bn || S.root, P = bn ? [q[0] - J[j].p[0], q[1] - J[j].p[1], q[2] - J[j].p[2]] : q;
+        const m = new T.Sprite(new T.SpriteMaterial({ map: vap80(T), transparent: true, depthWrite: false, opacity: q[4] == null ? 1 : q[4] })); m.center.set(0.5, 0.0); m.scale.set(q[3] * 0.72, q[3], 1); m.position.set(P[0], P[1], P[2]); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = 19; par.add(m); return { m, j, q, op: m.material.opacity }; });
     } catch (e) { W80.err = String(e && e.stack); } }
   /* the pen's own strokes (shimmer lines, boiling-off flicks, the edge of the spill): given in the air as they are; each rides the joint nearest to it */
   const strokes = (o.pen || []).map(s => { const pts = s.air; if (!pts || pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
     return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
   S.a80 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
-  tint80(T, S); W80.figs.push(S); if (W80.figs.length > 24) W80.figs.splice(0, W80.figs.length - 24); return g; }
+  tint80(T, S); if (W80.hook) { try { W80.hook(T, S, o, extra); } catch (e) { W80.err = 'hook ' + String(e && e.stack); } } W80.figs.push(S); if (W80.figs.length > 24) W80.figs.splice(0, W80.figs.length - 24); return g; }
 /* damp and ring lie on the bench under the seat, whatever way the figure is tipped */
 function lay80(T, S) { const e = S.lay80, p = e.parent, V = W80.v || (W80.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
   p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); V.a.set(S.fx80, 0, 0); p.localToWorld(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a); }
@@ -6481,6 +6491,163 @@ KIT.wood80Fig = wood80Fig; KIT.WOOD80 = W80;
 /* behind the switch: Wood spirit's bench figure is the spirit at its stage (the jar keeps the old Wood spirit) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homwood' && KIT.wood80 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = wood80Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W80.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W80 END
+// ==== W85 BEGIN
+// (builder 85) WOOD SPIRIT ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle85; false or ?i85=0 gives Water's rest back on it). The new Wood
+// spirit (W80) is ON by default from here (bench and jar); ?w80=0 gives the old one. At ease by its fire: slow, warm, unhurried. It sits and
+// breathes (the belly swells and settles: Water's own swell and lean, bent from the seat, so the body stays one and the legs stay planted). Its
+// flame is the life of it: it wavers, dwindles nearly to nothing and is brought back by a slow breath across the fingertips; now and then it goes
+// out with a curl of smoke, the spirit looks at its fingers, mildly surprised, snaps them and the flame pops back with a flash. It shifts its seat
+// and lifts a knee, gives a slow contented blink and a wider smile. All the while it evaporates: pen flicks fly up off its crown, shoulders and the
+// back of the raised arm and form again, wavering shimmer lines climb off it, the vapour ribbon wavers up, a bead of spirit runs down its side and
+// soaks into its damp patch, the dried ring round it slowly widens and fades. Arms, knee and forearm turn rigidly about their own roots after the
+// whole play chain (pose85), so nothing comes apart; the flame rides its hand bone.
+//  1 the drop: dozes, its spark winks off and pops back; it opens one eye at it, then dozes again
+//  2 the tot: hands held to its little flame; the flame flares, it snatches its hands back, giggles, creeps them back, blows it bright again
+//  3 the toast: raises its flame as if in greeting, lowers it, watches it lazily; dwindle and breath, out and snap, a shift of seat
+//  4 the host: lounges on its elbow; lifts its resting forearm and tosses the flame across to it and back; small flames run along its arm
+//  5 the distiller: enthroned; raises both flames slowly together like a blessing while the shimmer above it rises tall; a flame runs along its shoulders
+KIT.idle85 = KIT.idle85 == null ? !(typeof location !== 'undefined' && /[?&]i85=0/.test(String(location.search))) : KIT.idle85;
+if (KIT.wood80 == null && !(typeof location !== 'undefined' && /[?&]w80=0/.test(String(location.search)))) KIT.wood80 = 1;
+const W85 = { err: null, n: 0, ms: 0, jar: 0.6, P: [null, 10, 12, 18, 16, 16] };
+const on85 = S => !!(S && S.way80 && KIT.idle85 !== false);
+const clk85 = S => W85.fix != null ? W85.fix : (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W85.jar : 1) + S.st * 3.1;
+const pu85 = (u, a, b, e) => sm52((u - a) / e) * (1 - sm52((u - b) / e));
+const rg85 = x => (x > 0 ? Math.exp(-x * 5) * Math.sin(x * 26) : 0);   /* a small damped spring x seconds after a jolt */
+/* the numbers of this moment (one cycle per stage, P85 seconds) */
+function ev85(S, tt) { const st = S.st, Pp = W85.P[st] || 18, u = fr52(tt / Pp) * Pp, TAU = 2 * PI, R = S.r85 || {}, sd = R.sd || [1, -1];
+  const E = { u, br: Math.sin(TAU * tt / (st === 1 ? 5.2 : 4.6)), fk: [1, 1], puff: [-1, -1], flash: [0, 0], arm: [0, 0], lean: 0, turn: 0, knee: 0, fore: 0, toss: -1, held: 0, tilt: 0, nod: 0, hturn: 0,
+    lookx: 0.45 * sd[0], looky: 0.3, blink: pu52b(tt), smile: 1.15, brow: 0, wide: 0, gig: 0, peek: 0, tall: 1, blow: 0 };
+  if (st === 1) {
+    E.peek = pu85(u, 4.4, 7.2, 0.3); E.blink = 0.9 * (1 - E.peek); E.looky = 0.7 * E.peek; E.lookx = 0.35 * E.peek; E.brow = 0.35 * E.peek; E.smile = 1 + 0.35 * E.peek; E.nod = 0.07 * (1 - E.peek);
+    E.fk[0] = Math.max(0, 1 - pu85(u, 1.6, 3.0, 0.25) - pu85(u, 7.8, 8.6, 0.2)) * (1 + 0.6 * Math.max(0, rg85(u - 3.0)) + 0.6 * Math.max(0, rg85(u - 8.6)));
+    E.flash[0] = pu85(u, 3.0, 3.3, 0.06) + pu85(u, 8.6, 8.9, 0.06); E.lean = 0.03 * Math.sin(TAU * tt / 7.3); return E; }
+  if (st === 2) { const fl = pu85(u, 3.4, 4.2, 0.12), bw = pu85(u, 8.6, 10.2, 0.4);
+    E.fk[0] = 0.9 + 1.0 * fl - 0.7 * pu85(u, 7.2, 9.6, 0.8) + 0.25 * bw; E.flash[0] = 0.8 * fl;
+    E.arm[0] = E.arm[1] = -0.1 * pu85(u, 1.4, 3.4, 0.7) + 0.6 * pu85(u, 3.45, 6.6, 0.16) - 0.08 * pu85(u, 9.0, 11.5, 0.6);
+    E.lean = -0.08 * pu85(u, 3.45, 5.8, 0.2) + 0.07 * bw; E.gig = pu85(u, 4.3, 6.0, 0.15);
+    E.smile = 1.1 + 0.9 * E.gig + 0.3 * pu85(u, 6, 11.8, 1); E.wide = 0.9 * pu85(u, 3.4, 4.4, 0.1); E.brow = 0.9 * pu85(u, 3.4, 4.5, 0.1) + 0.3 * E.gig;
+    E.blink = Math.max(E.blink, 0.6 * E.gig); E.looky = -0.55 + 0.8 * E.gig; E.lookx = 0; E.blow = bw; E.nod = 0.06 + 0.12 * bw; return E; }
+  /* 3, 4, 5 */
+  if (st === 3) { const g = pu85(u, 1.8, 4.2, 0.7); E.arm[0] = 0.42 * g; E.nod = -0.08 * g + 0.1 * pu85(u, 2.6, 3.5, 0.3); E.smile = 1.15 + 0.5 * g; E.looky = 0.3 - 0.4 * pu85(u, 2.4, 3.6, 0.3); E.lookx = 0.45 * sd[0] * (1 - 0.8 * pu85(u, 2.4, 3.6, 0.3)); }
+  if (st === 5) { const g = pu85(u, 0.8, 5.8, 1.7); E.arm[0] = E.arm[1] = 0.36 * g; E.tall = 1 + 0.9 * g; E.fk[0] = E.fk[1] = 1 + 0.4 * g; E.nod = -0.12 * g; E.looky = 0.55 * g; E.lookx = 0; E.smile = 1.2 + 0.25 * g; E.blink = Math.max(E.blink, 0.55 * g); }
+  if (st === 4) { /* the toss: the resting forearm comes up, the flame flies across to it, is held, flies back */
+    E.fore = pu85(u, 1.0, 5.0, 0.55); const a = (u - 1.7) / 0.7, b = (u - 3.9) / 0.7;
+    if (a >= 0 && a < 1) { E.toss = a; E.tdir = 1; } else if (b >= 0 && b < 1) { E.toss = b; E.tdir = -1; }
+    E.fk[0] = u < 1.7 || u >= 4.6 ? 1 + 0.5 * Math.max(0, rg85(u - 4.6)) : 0; E.held = u >= 2.4 && u < 3.9 ? 1 + 0.5 * Math.max(0, rg85(u - 2.4)) : 0;
+    const fx = E.toss >= 0 ? (E.tdir > 0 ? 1 - 2 * E.toss : -1 + 2 * E.toss) : E.held ? -1 : 1, on = pu85(u, 1.4, 4.9, 0.3); E.lookx = E.lookx * (1 - on) + on * 0.8 * fx * Math.abs(sd[0]) * (sd[0] > 0 ? 1 : -1); E.looky = 0.3 + on * (E.toss >= 0 ? 0.5 * Math.sin(PI * E.toss) : -0.2);
+    E.hturn = 0.25 * on * fx * sd[0]; E.smile = 1.2 + 0.4 * on; E.arm[0] = 0.12 * pu85(u, 1.4, 1.75, 0.12) - 0.1 * pu85(u, 4.5, 4.9, 0.12); }
+  /* it dwindles; a slow breath across the fingertips brings it back */
+  const dw = pu85(u, 6.0, 8.6, 0.9), bw = pu85(u, 7.3, 8.5, 0.3); E.fk[0] *= 1 - 0.85 * dw; E.fk[0] += 0.4 * Math.max(0, rg85(u - 8.4));
+  E.blow = bw; E.hturn += 0.28 * bw * sd[0]; E.lookx += (0.75 * sd[0] - E.lookx) * bw; E.looky += (0.4 - E.looky) * bw; E.arm[0] += 0.1 * bw; E.smile *= 1 - 0.45 * bw; E.nod += 0.06 * bw;
+  /* it goes out with a curl of smoke; it looks at its fingers, snaps them, the flame pops back */
+  const oi = st === 5 ? 1 : 0, ot = 11.2, so = sd[oi] || 1, gone = sm52((u - ot) / 0.3) * (1 - sm52((u - ot - 2.6) / 0.08)), lk = pu85(u, ot + 0.4, ot + 2.8, 0.3);
+  E.fk[oi] = E.fk[oi] * (1 - gone) * (1 + 0.6 * Math.max(0, rg85(u - ot - 2.6))); E.puff[oi] = u > ot && u < ot + 3.2 ? (u - ot) / 3.2 : -1; E.flash[oi] += pu85(u, ot + 2.6, ot + 2.9, 0.05);
+  E.lookx += (0.95 * so - E.lookx) * lk; E.looky += (0.35 - E.looky) * lk; E.hturn += 0.3 * so * lk; E.wide += 0.55 * lk; E.brow += 0.7 * lk; E.smile += (0.8 - E.smile) * lk; E.arm[oi] += 0.16 * Math.max(-0.3, rg85(u - ot - 2.5)) + 0.05 * lk;
+  /* a shift of seat: it leans back a little more and draws up a knee, holds, lets it down */
+  if (st !== 5) { const sh = pu85(u, 9.0, 15.6, 0.8); E.lean += 0.06 * sh + 0.02 * rg85(u - 9.0); E.turn = 0.07 * pu85(u, 8.9, 10.2, 0.4); E.knee = 0.28 * sh; }
+  else { const sh = pu85(u, 9.0, 10.6, 0.5); E.turn = 0.06 * sh; E.lean = 0.025 * sh; }
+  /* a slow contented blink, a wider smile */
+  const cb = pu85(u, 15.2, 16.5, 0.4); E.blink = Math.max(E.blink, 0.95 * cb); E.smile += 0.55 * pu85(u, 14.9, 17.2, 0.6); E.tilt = 0.05 * cb * sd[0];
+  return E; }
+/* a slow blink now and then */
+function pu52b(tt) { return pu85(fr52((tt + 1.3) / 6.1) * 6.1, 0, 0.26, 0.1); }
+/* the clip's numbers: the face, the head (Water's neck), the breath (Water's swell of the spine) and the lean from the seat */
+function rest85(S, t, o, q, lag) { const tt = clk85(S) - 0.5 * (lag || 0) / 1000, E = ev85(S, tt), gig = E.gig ? 0.04 * E.gig * Math.sin(2 * PI * 7.5 * tt) : 0;
+  q.sq = 0.014 * E.br; q.swell = 0.05 * E.br; q.lean = E.lean + gig; q.bow = 0.02 * E.br; q.hair = 0; q.armR = q.armL = 0; q.px = q.pz = 1; q.tilt = E.tilt + 0.6 * gig; q.nod = E.nod; q.hturn = E.hturn; q.turn = E.turn; q.sink = 0;
+  q.lookx = E.lookx; q.looky = E.looky; q.brow = E.brow; q.blink = Math.min(1, E.blink); q.wide = E.wide; q.lidx = 0; q.smile = E.smile; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on85(S)) return rest85(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* a bead of spirit (clear, a pen edge, a white glint) */
+function bead85(T) { if (W85.bd) return W85.bd; const c = document.createElement('canvas'); c.width = 48; c.height = 64; const x = c.getContext('2d'); x.beginPath(); x.moveTo(24, 4); x.bezierCurveTo(30, 22, 42, 32, 42, 44); x.arc(24, 44, 18, 0, PI); x.bezierCurveTo(6, 32, 18, 22, 24, 4); x.closePath();
+  const g = x.createRadialGradient(20, 44, 2, 24, 44, 22); g.addColorStop(0, 'rgba(250,248,250,1)'); g.addColorStop(1, 'rgba(206,184,200,1)'); x.fillStyle = g; x.fill(); x.strokeStyle = 'rgba(40,30,38,0.95)'; x.lineWidth = 3.4; x.stroke(); x.fillStyle = '#fff'; x.beginPath(); x.ellipse(18, 40, 4, 6, -0.4, 0, 2 * PI); x.fill();
+  return (W85.bd = new T.CanvasTexture(c)); }
+/* turn joints rigidly about a point (bones are the root's children, in its frame) */
+function rot85(S, jn, pv, ax, a, V) { V.q.setFromAxisAngle(ax, a); V.p.copy(pv); jn.forEach(j => { const b = S.bones[j]; if (!b) return; b.position.sub(V.p).applyQuaternion(V.q).add(V.p); b.quaternion.premultiply(V.q); }); }
+/* where a sprite hung on a bone (or the root) is, in the root's frame */
+function at85(S, f, out) { const m = f.m || f, p = m.parent; out.copy(m.position); if (p && p !== S.root && p.isBone) out.multiply(p.scale).applyQuaternion(p.quaternion).add(p.position); return out; }
+/* built with the figure (W80.hook): which limbs move, the extra flames, smoke, light, bead, second ring, contact shade, the pen's flicks and shimmer */
+function mk85(T, S, o, extra) { if (KIT.idle85 === false) return; const G = S.G, J = G.J, V3 = T.Vector3, rnd = rnd63(85 + S.st), R = { fa: [], fl: [], ink: [], top: 0 }, r85 = o.r85 || {}, jar = !!(extra && extra.jar);
+  J.forEach(q => { R.top = Math.max(R.top, q.p[1] + (q.r || 0)); }); R.U = R.top / 5; const hj = G.bj[G.R.head], hx = J[hj].p[0], cj = G.bj[G.R.chest];
+  const limbs = G.chains.filter(c => c.kind === 'limb'), L = li => { const c = limbs.find(c => c.li === li); if (!c) return null; const jn = c.jn, a = J[jn[0]].p, b = J[jn[jn.length - 1]].p; return { jn, sg: r85.cup ? (c.side || 1) : (b[0] >= a[0] ? 1 : -1), pin: c.pin }; };
+  R.fa = (r85.fa || []).map(L).filter(Boolean); R.knee = r85.knee >= 0 ? L(r85.knee) : null; R.prop = r85.prop >= 0 ? L(r85.prop) : null; R.pins = limbs.filter(c => c.pin).map(c => c.jn[c.jn.length - 1]);
+  (S.fl80 || []).forEach((f, i) => { const main = i === 0 || (S.st === 5 && i === 1); f.role = main ? 'main' : 'run'; f.n = main ? i : i - (S.st === 5 ? 2 : 1); R.fl.push(f); });
+  R.sd = R.fl.filter(f => f.role === 'main').map(f => (f.q[0] - hx >= 0 ? 1 : -1)); if (!R.sd.length) R.sd = [1];
+  const soft = tex49(T, 'glow'), spr = (map, hex, ro, par, alpha) => { const m = new T.Sprite(new T.SpriteMaterial(Object.assign({ map, color: new T.Color(hex).convertSRGBToLinear(), transparent: true, depthWrite: false }, alpha ? { map: null, alphaMap: map } : {}))); m.userData.plain = true; m.userData.nobox = true; m.renderOrder = ro; m.visible = false; (par || S.root).add(m); return m; };
+  R.puff = jar ? [] : [0, 1].map(() => spr(tex73(T), 0xd9d3d9, 22));
+  /* the host's toss: a flame held on the resting hand, and one in the air between */
+  if (r85.toss && R.prop) { const tb = S.bones[R.prop.jn[R.prop.jn.length - 1]], h = R.fl[0] ? R.fl[0].q[3] : 1; R.held = spr(flame80(T), 0xffffff, 21, tb); R.held.center.set(0.5, 0.04); R.held.position.set(0, 0.05, 0.05); R.hh = h;
+    R.air = spr(flame80(T), 0xffffff, 21); R.air.center.set(0.5, 0.3); R.airg = spr(soft, W80.C.glow, 20, null, true); }
+  /* a faint lilac light the flame throws on its own face */
+  R.face = spr(soft, W80.C.glow, 18, S.bones[hj], true); R.face.position.set(0.55 * (R.sd[0] || 1) * (J[hj].r || 0.5), 0.1, 0.5 * (J[hj].r || 0.5)); R.face.scale.setScalar(1.3 * (J[hj].r || 0.5));
+  if (!jar && S.lay80) { const lay = S.lay80, fl = (hex, w, d, op, ro, map, add) => { const m = new T.Mesh(new T.PlaneGeometry(w, d), flat49(T, hex, Object.assign({ transparent: true, alphaMap: map || soft, depthWrite: false, opacity: op }, add ? { blending: T.AdditiveBlending } : {}))); m.userData.plain = true; m.userData.nobox = true; m.rotation.x = -PI / 2; m.renderOrder = ro; m.position.y = 0.004; lay.add(m); return m; };
+    R.ring = lay.children.find(m => m.renderOrder === 15); R.damp = lay.children.find(m => m.renderOrder === 16); if (R.ring) { R.ring0 = R.ring.material.opacity; R.ring2 = R.ring.clone(); R.ring2.material = R.ring.material.clone(); lay.add(R.ring2); } if (R.damp) R.damp0 = R.damp.material.opacity;
+    /* the flames' pale light on the bench, and a true contact shade under the seat and under each hand and foot on the wood */
+    R.lt = R.fl.filter(f => f.role === 'main').map(f => fl(0x7c70c8, f.q[3] * 2.6, f.q[3] * 1.8, 0.0, 17, null, true));
+    const sr = o.damp ? o.damp[0] : 1; R.seat = fl(0x0a0608, sr * 1.25, sr * 0.6, 0.55, 18); R.tips = R.pins.map(j => ({ j, m: fl(0x0a0608, 0.55, 0.3, 0.5, 18) }));
+    R.bead = spr(bead85(T), 0xffffff, 23); }
+  /* the pen: flicks boiling off the upper edges (crown, shoulders, the back of the raised arm), shimmer climbing off it */
+  const ink = S.a80 ? S.a80.strokes : null; if (ink) { const add = (j, kind, d) => { const st = { j, w: 0, o: { smooth: 1, wob: 0.25, min: 2, trim: 0 }, pts: [], off: true, t: 'k85' }; ink.push(st); R.ink.push(Object.assign({ st, kind, j }, d)); };
+    const flick = (j, a, k) => { const r = J[j].r || 0.3, c = Math.cos(a), s = Math.sin(a), l = (0.3 + 0.2 * rnd()) * (k || 1) * Math.max(0.8, Math.min(1.4, R.U / 0.8)); add(j, 'f', { s0: [c * r * 0.92, s * r * 0.92, 0.3 * r], d: [0.35 * c, 1, 0], l, ph: rnd(), per: 1.5 + 0.9 * rnd(), lean: (c > 0 ? 1 : -1) * 0.25 }); };
+    const top = J.map((q, j) => j).filter(j => J[j].role === 'top'), cr = top.length ? top[0] : hj;
+    [[hj, 1.15], [hj, 1.75], [hj, 2.3], [cr, 1.4]].forEach(q => flick(q[0], q[1]));
+    if (S.st > 1) [[cj, 0.45], [cj, 2.7], [cj, 0.9], [cj, 2.25]].forEach(q => flick(q[0], q[1], 0.9));
+    R.fa.forEach(L => { const n = L.jn.length; [2, 3].forEach(i => { if (L.jn[i]) flick(L.jn[i], PI / 2 + 0.3 * (L.sg > 0 ? 1 : -1), 0.7); }); });
+    if (!jar) { const r = J[hj].r || 0.5, sh = (j, x0, y0, h, a) => add(j, 's', { x0, y0, h, a, ph: rnd(), per: 2.4 + 1.2 * rnd() });
+      sh(hj, -0.55 * r, 1.25 * r, 0.75 * R.U, 0.09 * R.U); sh(hj, 0.15 * r, 1.4 * r, 0.85 * R.U, 0.1 * R.U); sh(hj, 0.75 * r, 1.15 * r, 0.7 * R.U, 0.08 * R.U);
+      if (S.st > 1) { const rc = J[cj].r || 0.6; sh(cj, -1.0 * rc, 0.7 * rc, 0.8 * R.U, 0.07 * R.U); sh(cj, 1.0 * rc, 0.7 * rc, 0.8 * R.U, 0.07 * R.U); } } }
+  R.v = { q: new T.Quaternion(), qi: new T.Quaternion(), p: new V3(), a: new V3(), b: new V3(), c: new V3(), d: new V3(), ax: new V3(), z: new V3(0, 0, 1), up: new V3(0, 1, 0) };
+  R.cj = cj; R.sj = G.bj[0]; S.r85 = R; }
+W80.hook = mk85;
+/* a point of the root's frame in the frame of the group laid on the bench */
+function lay85(S, X, out, V) { const e = S.lay80; out.copy(X).sub(e.position).applyQuaternion(V.qi.copy(e.quaternion).invert()); return out; }
+/* after the whole play chain */
+function pose85(S, rest) { const R = S.r85; if (!R) return; const tt = clk85(S), E = rest ? ev85(S, tt) : null, B = S.bones, V = R.v, TAU = 2 * PI, U = R.U;
+  if (E) { R.fa.forEach((L, i) => { const a = (E.arm[i] || 0) * L.sg; if (Math.abs(a) > 1e-4) rot85(S, L.jn.slice(1), B[L.jn[0]].position, V.z, a, V); });
+    if (R.knee && E.knee) rot85(S, R.knee.jn.slice(1), B[R.knee.jn[0]].position, V.z, E.knee * R.knee.sg, V);
+    if (R.prop && E.fore > 0.001) { const jn = R.prop.jn, e = B[jn[3]].position, tp = B[jn[jn.length - 1]].position; V.d.copy(tp).sub(e).normalize(); V.ax.crossVectors(V.d, V.up).normalize(); rot85(S, jn.slice(4), e, V.ax, 1.25 * E.fore, V); }
+    if (E.peek > 0.02 && S.F && S.F.eyes && S.F.eyes[1]) S.F.eyes[1].g.scale.y *= 1 - 0.85 * E.peek; }
+  /* the flames: waver, dwindle, go out, pop back; the small ones run along the arm or the shoulders */
+  const ph = S.st * 1.7; R.fl.forEach((f, i) => { const h = f.q[3], m = f.m, hz = f.hz; let k = 1;
+    if (E) { const w = 1 + 0.13 * Math.sin(TAU * 1.7 * tt + 1.9 * i + ph) + 0.08 * Math.sin(TAU * 3.3 * tt + i);
+      k = f.role === 'main' ? (E.fk[f.n] == null ? 1 : E.fk[f.n]) * w : (0.3 + 0.7 * Math.pow(Math.max(0, Math.sin(TAU * tt / 1.9 - f.n * 1.1)), 1.5)) * w * (1 + 0.5 * (E.tall - 1)); }
+    k = Math.max(0, k); m.visible = k > 0.04; m.scale.set(h * 0.6 * (0.7 + 0.3 * Math.min(1.3, k)), h * k, 1); m.material.rotation = (f.q[4] || 0) + (E ? 0.07 * Math.sin(TAU * 0.8 * tt + i) : 0);
+    hz.visible = k > 0.02 || !!(E && f.role === 'main' && E.flash[f.n] > 0.02); hz.material.opacity = f.op * Math.min(1.4, k) + (E && f.role === 'main' ? 0.6 * (E.flash[f.n] || 0) : 0); hz.scale.setScalar(h * 2.3 * (0.55 + 0.45 * Math.min(1.5, k + (E && f.role === 'main' ? E.flash[f.n] || 0 : 0)))); f.k85 = k; });
+  const mk = R.fl.filter(f => f.role === 'main'), kf = mk.length ? mk.reduce((s, f) => s + f.k85, 0) / mk.length : 0;
+  if (R.face) { R.face.visible = !!E; R.face.material.opacity = 0.16 * Math.min(1.3, kf + (R.held && R.held.visible ? 0.6 : 0)); }
+  /* the toss */
+  if (R.air) { const on = E && E.toss >= 0, hk = E ? E.held : 0; R.held.visible = hk > 0.02; R.held.scale.set(R.hh * 0.6, R.hh * hk, 1); R.air.visible = R.airg.visible = !!on;
+    if (on) { at85(S, R.fl[0], V.a); at85(S, R.held, V.b); const p = E.tdir > 0 ? E.toss : 1 - E.toss, s = sm52(p); V.c.copy(V.a).lerp(V.b, s); V.c.y += 1.6 * U * 4 * p * (1 - p); R.air.position.copy(V.c); R.air.scale.set(R.hh * 0.5, R.hh * 0.8, 1); R.air.material.rotation = 0.6 * Math.sin(TAU * p); R.airg.position.copy(V.c); R.airg.scale.setScalar(R.hh * 1.8); R.airg.material.opacity = 0.35; } }
+  /* a curl of smoke where the flame went out */
+  R.puff.forEach((m, i) => { const p = E ? E.puff[i] : -1, f = mk[i]; m.visible = p >= 0 && !!f; if (!m.visible) return; at85(S, f, V.a); const sz = U * (0.22 + 0.55 * p); m.position.set(V.a.x + 0.35 * U * Math.sin(p * 5.5), V.a.y + 0.25 * U + 1.5 * U * sm52(p), V.a.z + 0.2); m.scale.set(sz, sz * 1.1, 1); m.material.rotation = 2.2 * p; m.material.opacity = 0.8 * sm52(p / 0.08) * (1 - sm52((p - 0.35) / 0.65)); });
+  /* the vapour ribbon wavers up (tall at the blessing) */
+  (S.vp80 || []).forEach((v, i) => { const q = v.q, tl = E ? E.tall : 1, m = v.m; m.scale.set(q[3] * 0.72 * (1 + 0.12 * Math.sin(TAU * tt / 2.9 + i)), q[3] * (1 + 0.1 * Math.sin(TAU * tt / 3.7 + i)) * (1 + 0.35 * (tl - 1)), 1); m.material.rotation = (q[5] || 0) * (R.sd[0] > 0 ? 1 : -1) + (E ? 1 : 0) * (0.09 * Math.sin(TAU * tt / 5.3 + i) + 0.04 * Math.sin(TAU * tt / 1.9)); m.material.opacity = v.op * (0.82 + 0.18 * Math.sin(TAU * tt / 2.3 + i)); });
+  /* in the wood: the light, the contact shade, the bead that runs down its side and soaks in, the dried ring widening and fading */
+  if (S.lay80 && R.lt) { R.lt.forEach((m, i) => { const f = mk[i]; if (!f) return; at85(S, f, V.a); V.a.y = 0; lay85(S, V.a, V.b, V); m.position.x = V.b.x; m.position.z = V.b.z + 0.25 * f.q[3]; m.material.opacity = 0.32 * Math.min(1.4, f.k85) * (0.85 + 0.15 * Math.sin(TAU * 4.1 * tt + i)); });
+    V.a.copy(B[R.sj].position); V.a.y = 0; lay85(S, V.a, V.b, V); R.seat.position.x = V.b.x; R.seat.position.z = V.b.z;
+    R.tips.forEach(t => { V.a.copy(B[t.j].position); const hgt = V.a.y; V.a.y = 0; lay85(S, V.a, V.b, V); t.m.position.x = V.b.x; t.m.position.z = V.b.z; t.m.material.opacity = 0.5 * (1 - sm52((hgt - 0.2) / 0.5)); });
+    const ub = fr52(tt / 7.5 + 0.3) * 7.5, cj = B[R.cj].position, sj = B[R.sj].position, rc = S.G.J[R.cj].r || 0.5, rs = S.G.J[R.sj].r || 0.6, bs = -(R.sd[0] || 1), run = ub / 2.8, soak = (ub - 2.8) / 0.9;
+    if (E && R.bead) { const b = R.bead; b.visible = run >= 0 && soak < 1; if (b.visible) { const s = sm52(Math.min(1, run)), y = cj.y + (0.04 - cj.y) * s, x = cj.x + bs * rc * 0.95 + ((sj.x + bs * rs * 1.02) - (cj.x + bs * rc * 0.95)) * s, sz = 0.13 * U * (soak > 0 ? 1 - soak : 1); b.position.set(x, Math.max(0.04, y), cj.z + 0.55 * rs); b.scale.set(sz * 0.75, sz * (soak > 0 ? 0.6 : 1), 1); } }
+    if (R.damp) R.damp.material.opacity = R.damp0 * (1 + 0.35 * pu85(ub, 2.9, 4.6, 0.4));
+    if (R.ring && R.ring2) [[R.ring, 0], [R.ring2, 0.5]].forEach(([m, o]) => { const u = fr52(tt / 16 + o); m.scale.set(1 + 0.16 * u, 1 + 0.16 * u, 1); m.material.opacity = R.ring0 * 1.2 * Math.sin(PI * u); }); }
+  /* the pen: flicks fly up off the edges and form again; shimmer lines climb */
+  R.ink.forEach(d => { const st = d.st; if (!E) { st.off = true; return; } st.pts.length = 0;
+    if (d.kind === 'f') { const u = fr52(tt / d.per + d.ph), s = Math.sin(PI * u), L = d.l * Math.pow(s, 0.7), lift = d.l * (0.3 + 0.9 * u), n = Math.hypot(d.d[0], d.d[1]), dx = d.d[0] / n, dy = d.d[1] / n;
+      for (let i = 0; i < 3; i++) { const t = i / 2, a = lift + L * t; st.pts.push([d.s0[0] + dx * a + d.lean * L * (t * t * 0.5 + 0.18 * Math.sin(PI * t)), d.s0[1] + dy * a, d.s0[2]]); } st.w = 0.7 * s; st.off = L < 0.03; return; }
+    const r = fr52(tt / d.per + d.ph), tl = E.tall, h = d.h * tl; for (let i = 0; i < 10; i++) { const t = i / 9; st.pts.push([d.x0 + d.a * Math.sin(d.ph * 6 + t * 6.4 - tt * 2.6) * (0.4 + 0.6 * t), d.y0 + 0.55 * d.h * r + h * t, 0.15]); } st.w = 0.62 * Math.sin(PI * r); st.off = st.w < 0.05; }); }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way80) return f0(grp, clip, t, o);
+  /* the old error at play27 (line ~1753): the margin's material carries no line width once the pen and wash has swapped it; give it one (as builders 68, 73 and 81 did) */
+  const gw = () => { const m = S.hull27 && S.hull27.material; if (m && !m.userData.w) { m.userData.w = { value: 0 }; return true; } return false; }; gw();
+  const safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  const r = safe(); if (!on85(S)) return r; S.c85 = clip; const c0 = rn44(); try { pose85(S, clip === 'rest'); } catch (e) { W85.err = 'pose ' + String(e && e.stack); } if (clip === 'rest') { W85.ms += rn44() - c0; W85.n++; } return r; })(play26);
+KIT.spirit26.play = play26;
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Wood spirit (fitted to the glass), each playing its rest as it is drawn */
+function drive85(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf85 === fr) return; S.jf85 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W85.err = String(e && e.stack); } }; }
+function jar85(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = wood80Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.2, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.3 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive85(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = wood80Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 1.02, sg >= 3 ? 1.3 : 1.2, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + 0.34 - q.y0 * q.s, -q.cz * q.s + 0.1); drive85(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'wood' && KIT.wood80 && KIT.idle85 !== false && T && T.SkinnedMesh) { try { jar85(T, j); } catch (e) { W85.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W85 = W85;
+// ==== W85 END
 // ==== W81 BEGIN
 // (builder 81) AMMONIA ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle81; false or ?i81=0 gives Water's rest back on it and its streaks back
 // as skin; set it before the figure is first built). The new Ammonia (W78) is ON by default from here (bench and jar); ?m78=0 gives the old one.
