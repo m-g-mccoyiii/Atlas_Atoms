@@ -4650,4 +4650,164 @@ KIT.W67 = W67;
 /* for the recorder: seconds until the next catch of the lean */
 W67.until = S => { const P = S && P67[S.st]; if (!P) return null; return ((0.6 - fr52(clk67(S) / P.Pl)) * P.Pl + P.Pl) % P.Pl; };
 // ==== W67 END
+// ==== W69 BEGIN
+// (builder 69) BRIMSTONE AS A SPIRIT, five stages, stills only (AA.rxKit.brim69 = 1, or ?b69=1 on the page; OFF by default: the game shows the old Brimstone).
+// Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53), Slime (61) and Seedling (64) were: each stage is a set of numbers like a stage
+// of S25, put in Water's stage-3 slot for the moment of building; geo26 makes it one closed skin on joints, fig26 gives the face, set30 the pen and wash.
+// What is Brimstone's own: NO pool (a pad hidden under the lump). Its foot and heart is a LUMP of burning sulfur: dark, crusted, the crust crazed with
+// cracks that glow red (drawn by the wash itself, from noise, only where the skin is lump). Out of the lump rises SMOKE, and the smoke is the creature:
+// a plume built of billows (short fat limbs), a hanging head with two EMBER EYES (the eye's glint is made a coal), a heavy brow, a mouth turned down,
+// long slow arms that end in a curl. Small BLUE FLAMES lick round the lump (flat pointed limbs). Embers (small coals in the air), a scorched ring and
+// a cold blue light on the wood. No yellow anywhere: umber and charcoal, blood red in the cracks, blue-violet flame, warm grey smoke.
+// THREE washes on one skin, by the fourth number of w25a: 0 lump, 0.5 smoke, 1 flame; where lump turns to smoke the smoke is lit red from below.
+//  1 the ember: a crusted lump tipped to one side, two coals peering out of a crack, one thin wisp of smoke with a curl at its tip
+//  2 the smoulder: a hunched hood of smoke squatting on the lump, glaring sideways at its first small blue flame
+//  3 the plume (the line-up's figure): a tall plume risen from the lump, bent right over, the head hanging, two long arms of smoke trailing down
+//  4 the pall: upright and broad-shouldered, head sunk in a mantle of billows, one hand of smoke raised slowly, a ring of flames, embers
+//  5 the burning mountain: a great column, a vast bowed head under a mantle spread like a storm cloud, both hands down on the bench, the lump
+//    cracked wide and red, a crown of blue fire, embers everywhere; eyes nearly shut
+KIT.brim69 = KIT.brim69 == null ? ((typeof location !== 'undefined' && /[?&]b69=1/.test(String(location.search))) ? 1 : null) : KIT.brim69;
+const W69 = { geo: {}, figs: [], err: null, TARGET: [0, 5200, 6400, 8200, 9000, 10000],
+  ROLE: [null, { chest: 1, neck: 2, head: 2, hair: 6 }, { chest: 3, neck: 5, head: 6, hair: 8 }, { chest: 4, neck: 10, head: 13, hair: 15 }, { chest: 4, neck: 9, head: 10, hair: 12 }, { chest: 4, neck: 9, head: 10, hair: 12 }],
+  C: { l: { lite: [0.50, 0.46, 0.47], edge: [0.21, 0.18, 0.20], shade: [0.13, 0.11, 0.14], margin: [0.34, 0.30, 0.31] },
+    s: { lite: [0.62, 0.57, 0.555], edge: [0.35, 0.30, 0.31], shade: [0.23, 0.19, 0.24], margin: [0.58, 0.53, 0.52] },
+    f: { lite: [0.42, 0.60, 1.00], edge: [0.13, 0.22, 0.90], shade: [0.32, 0.16, 0.78], margin: [0.30, 0.46, 1.00] },
+    coal: 0xff0c00, hot: 0xff0e00, lid: [0, 0x4b3d3c, 0x6b6061, 0x6b6061, 0x6b6061, 0x6b6061], scorch: 0x140d0b, light: 0x2a40ff } };
+/* a billow: a short fat limb, all smoke; it leaves the body at the back so it is not counted as an arm */
+const puff69 = (K, k, p, r, r2) => lim64(K, k, -PI / 2, r2 ? [p, [p[0] + r2[0], p[1] + r2[1], p[2] + (r2[2] || 0)]] : [p], r2 ? [r, r2[3]] : [r], { foam: () => 0.5, puff: 1 });
+/* an arm of smoke: fat at the shoulder, ending in a curl */
+const arm69 = (K, k, th, abs, rad) => lim64(K, k, th, abs, rad, { foam: () => 0.5, arm: 1 });
+/* a hand of smoke: the arm, and fingers that run as threads inside it and leave it at its end (as Slime's strings do) */
+const hand69 = (K, k, th, abs, rad, fing) => [arm69(K, k, th, abs, rad)].concat(fing.map(f => { const e = abs[abs.length - 1]; return lim64(K, k, th, abs.concat([[e[0] + f[0] * 0.55, e[1] + f[1] * 0.55, e[2]], [e[0] + f[0], e[1] + f[1], e[2]]]), abs.map(() => 0.07).concat([f[2] || 0.13, 0.05]), { foam: () => 0.5, str: 1 }); }));
+/* a knob of crust on the lump */
+const knob69 = (K, k, th, p, r) => lim64(K, k, th, [p], [r], { foam: () => 0 });
+/* a small flame: a flat pointed tongue with a lick in it, standing at b */
+const flame69 = (K, k, th, b, h0, lean, w0) => { const h = h0 * 1.7, w = w0 * 1.6; return lim64(K, k, th, [[b[0], b[1], b[2]], [b[0] + lean * h * 0.05, b[1] + h * 0.36, b[2]], [b[0] - lean * h * 0.02, b[1] + h * 0.7, b[2]], [b[0] + lean * h * 0.16, b[1] + h, b[2]]], [w * 0.8, w, w * 0.5, 0.03], { flat: [0, 0, 1], fk: () => 0.4, foam: () => 1, flame: 1 }); };
+/* flames set round the lump: [angle (0 right, PI/2 front, PI left, below 0 behind), height, lean, width] */
+const ring69 = (K, k, Rx, Rz, y, list) => list.map(q => flame69(K, k, q[0], [Math.cos(q[0]) * Rx, y, Math.sin(q[0]) * Rz], q[1], q[2], q[3]));
+/* pen: a fold of smoke that curls in on itself, and a crack */
+const curl69 = (x, y, r, dir, turn, w) => pen64(Array.from({ length: 12 }, (_, i) => { const a = (turn || 0) + dir * i * 0.52, rr = r * (1 - i / 15); return [x + Math.cos(a) * rr - Math.cos(turn || 0) * r, y + Math.sin(a) * rr * 0.9 - Math.sin(turn || 0) * r * 0.9]; }), w || 0.45, 2);
+const crack69 = (pts, w) => pen64(pts, w || 0.55, 0);
+const COM69 = { foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4 };
+const SPEC69 = [
+  // 1 the ember
+  () => { const K = pad64(0.1, 0, 0.3).concat([[0.14, 0.07, 0, 0.8, 0.62], [0.12, 0.3, 0, 1.22, 0.92], [0.02, 0.62, 0, 1.2, 0.9], [-0.1, 0.9, 0, 0.86, 0.7], [-0.3, 1.06, 0, 0.44, 0.38], [-0.46, 1.16, 0, 0.16, 0.15],
+      [-0.5, 1.32, 0, 0.09, 0.09], [-0.5, 1.52, 0, 0.09, 0.09], [-0.36, 1.72, 0, 0.09, 0.09], [-0.1, 1.84, 0, 0.09, 0.09], [0.16, 1.94, 0, 0.09, 0.09], [0.34, 2.12, 0, 0.09, 0.09], [0.3, 2.34, 0, 0.085, 0.085], [0.1, 2.38, 0, 0.08, 0.08], [0.02, 2.26, 0, 0, 0]]);
+    return Object.assign({ keys: K, wet: [0.05, 0.1, 1.45, 1.0], foam: (kp, th, y) => (kp < 9.2 ? 0 : 0.5), crk: 3.8, lump: 1.3,
+      limbs: [knob69(K, 5.3, 0.25, [1.26, 0.34, 0.2], 0.4), knob69(K, 6.6, PI - 0.3, [-1.16, 0.74, 0.1], 0.36), knob69(K, 7.2, 0.5, [0.74, 0.98, 0.1], 0.34)],
+      face: { c: [0.0, 0.62, 1.0], d: [0, 0.03, 1], k: 1.6, er: 1.2, dx: 0.23, lid: 0.3 }, eyes: [1, 1.12], look: [0.1, 0.1], coal: 1.55,
+      pen: [crack69([[-0.96, 0.84], [-0.66, 0.92], [-0.44, 0.85], [-0.2, 0.94], [0.06, 0.87], [0.32, 0.95], [0.56, 0.87], [0.86, 0.92]], 0.7), crack69([[-0.94, 0.42], [-0.62, 0.36], [-0.38, 0.43], [-0.1, 0.35], [0.16, 0.42], [0.44, 0.34], [0.7, 0.41], [0.96, 0.36]], 0.7),
+        crack69([[0.56, 0.87], [0.68, 1.06], [0.62, 1.18]], 0.5), crack69([[-0.38, 0.43], [-0.46, 0.24], [-0.38, 0.1]], 0.5), crack69([[0.7, 0.41], [0.98, 0.56]], 0.45)],
+      embers: [[0.9, 1.6, 0.2, 0.1], [-0.9, 1.7, 0.2, 0.075]], scorch: [0.05, 0.1, 1.9, 1.3], light: 0 }, COM69); },
+  // 2 the smoulder
+  () => { const K = pad64(0, 0, 0.3).concat([[0, 0.07, 0, 0.74, 0.6], [0, 0.3, 0, 1.12, 0.9], [0, 0.6, 0, 1.1, 0.88], [0, 0.86, 0, 0.78, 0.64],
+      [-0.04, 1.08, 0, 0.58, 0.52], [-0.16, 1.42, 0.04, 0.82, 0.72], [-0.34, 1.84, 0.1, 1.0, 0.88], [-0.52, 2.26, 0.08, 0.8, 0.7], [-0.64, 2.5, 0.04, 0.45, 0.4], [-0.7, 2.62, 0, 0, 0]]);
+    return Object.assign({ keys: K, wet: [0, 0.1, 1.4, 1.0], foam: kp => (kp < 7.6 ? 0 : 0.5 * sm((kp - 7.6) / 0.8)), crk: 3.8, lump: 1.15,
+      limbs: [knob69(K, 5.4, PI - 0.3, [-1.16, 0.34, 0.2], 0.34), knob69(K, 6.5, 0.4, [1.04, 0.7, 0.1], 0.3),
+        puff69(K, 10, [0.62, 2.12, 0], 0.58), puff69(K, 10, [-1.34, 1.96, 0], 0.62), puff69(K, 11, [-0.06, 2.66, 0], 0.52), puff69(K, 11, [-1.0, 2.56, 0], 0.48), puff69(K, 9, [0.7, 1.4, 0], 0.36), puff69(K, 9, [-1.1, 1.36, 0], 0.36)],
+      flames: ring69(K, 5.2, 1.12, 0.9, 0.16, [[0.25, 0.8, 1, 0.19]]),
+      face: { c: [-0.34, 1.76, 1.2], d: [0, 0.04, 1], k: 1.95, er: 1.12, dx: 0.215, lid: 0.35, brow: { y: 0.27, len: 0.2, ang: [0.42, 0.3], arch: 0.0, r: 0.03 }, mouth: { w: 0.085, d: -0.045, y: -0.25, x: 0.03, tilt: -0.01, r: 0.024 } }, eyes: [1, 1.08], look: [0.34, -0.14], coal: 1.5,
+      pen: [crack69([[-0.74, 0.62], [-0.5, 0.52], [-0.28, 0.6], [-0.04, 0.5], [0.2, 0.58], [0.44, 0.5]], 0.65), crack69([[-0.28, 0.6], [-0.36, 0.34], [-0.26, 0.16]], 0.5), crack69([[0.2, 0.58], [0.3, 0.78]], 0.5),
+        curl69(0.66, 2.16, 0.3, 1, 0.4), curl69(-1.36, 2.02, 0.32, -1, 2.6)],
+      embers: [[1.3, 1.5, 0.3, 0.1], [1.5, 2.3, 0.2, 0.075], [-1.5, 2.9, 0.2, 0.07]], scorch: [0, 0.1, 1.9, 1.35], light: 0.45 }, COM69); },
+  // 3 the plume (the line-up's figure)
+  () => { const K = pad64(0, 0, 0.3).concat([[0, 0.08, 0, 0.86, 0.72], [0, 0.36, 0, 1.3, 1.06], [0.02, 0.7, 0, 1.26, 1.02], [0.04, 0.98, 0, 0.86, 0.72],
+      [0.08, 1.18, 0, 0.4, 0.36], [0.2, 1.46, 0, 0.36, 0.33], [0.4, 1.86, 0, 0.4, 0.36], [0.56, 2.36, 0, 0.48, 0.42], [0.56, 2.9, 0, 0.58, 0.5], [0.3, 3.42, 0, 0.7, 0.6],
+      [-0.3, 3.78, 0.02, 0.78, 0.66], [-1.05, 3.74, 0.06, 0.76, 0.66], [-1.66, 3.36, 0.1, 0.8, 0.72], [-1.9, 2.8, 0.14, 0.92, 0.84], [-1.92, 2.3, 0.16, 0.64, 0.6], [-1.88, 2.0, 0.17, 0.3, 0.3], [-1.82, 1.84, 0.17, 0, 0]]);
+    const AR = [[1.1, 2.92, 0.12], [1.72, 3.04, 0.18], [2.24, 2.86, 0.22], [2.56, 2.46, 0.24]], AL = [[-0.46, 3.0, 0.3], [-0.6, 2.62, 0.4], [-0.58, 2.28, 0.45]];
+    return Object.assign({ keys: K, wet: [0, 0.1, 1.4, 1.0], foam: kp => (kp < 7.6 ? 0 : 0.5 * sm((kp - 7.6) / 0.8)), crk: 3.8, lump: 1.1,
+      limbs: hand69(K, 12.2, 0, AR, [0.3, 0.25, 0.22, 0.27], [[-0.22, -0.56, 0.14], [0.16, -0.68, 0.15], [0.5, -0.46, 0.14]]).concat(hand69(K, 13.4, PI, AL, [0.22, 0.2, 0.23], [[-0.26, -0.4], [0.0, -0.52], [0.26, -0.4]]), [
+        knob69(K, 5.4, 0.3, [1.34, 0.4, 0.2], 0.38), knob69(K, 6.5, PI - 0.4, [-1.2, 0.84, 0.1], 0.34),
+        puff69(K, 13, [0.96, 3.6, 0], 0.62), puff69(K, 14.3, [-0.3, 4.4, 0], 0.7), puff69(K, 15.6, [-1.66, 4.1, 0], 0.64), puff69(K, 16.6, [-2.62, 3.2, 0], 0.56),
+        puff69(K, 11, [1.06, 2.2, 0], 0.3)]),
+      flames: ring69(K, 5.2, 1.3, 1.06, 0.16, [[0.15, 0.85, 1, 0.19], [2.95, 0.95, -1, 0.2], [-0.9, 1.2, 1, 0.2], [1.4, 0.45, 1, 0.15]]),
+      face: { c: [-1.9, 2.74, 1.2], d: [0, 0.04, 1], k: 2.1, er: 1.1, dx: 0.21, lid: 0.42, brow: { y: 0.275, len: 0.23, ang: [0.36, 0.36], arch: -0.015, r: 0.033 }, mouth: { w: 0.1, d: -0.04, y: -0.26, tilt: 0, r: 0.024 } }, eyes: [1, 1.05], look: [0.05, -0.3], coal: 1.5,
+      pen: [crack69([[-0.92, 0.7], [-0.6, 0.58], [-0.3, 0.7], [0, 0.58], [0.3, 0.68], [0.6, 0.56], [0.94, 0.66]], 0.65), crack69([[-0.3, 0.7], [-0.4, 0.4], [-0.28, 0.18]], 0.5), crack69([[0.3, 0.68], [0.4, 0.94]], 0.5),
+        curl69(1.0, 3.66, 0.34, 1, 0.3), curl69(-0.3, 4.46, 0.38, -1, 1.6), curl69(-2.5, 3.3, 0.3, -1, 2.9)],
+      embers: [[1.0, 1.5, 0.3, 0.1], [-0.9, 2.0, 0.3, 0.085], [1.5, 3.3, 0.2, 0.075], [-0.2, 2.7, 0.3, 0.07], [-1.3, 1.2, 0.3, 0.08]], scorch: [0, 0.1, 2.2, 1.5], light: 0.6 }, COM69); },
+  // 4 the pall
+  () => { const K = pad64(0, 0, 0.32).concat([[0, 0.08, 0, 0.78, 0.64], [0, 0.32, 0, 1.16, 0.95], [0, 0.64, 0, 1.12, 0.92], [0, 0.9, 0, 0.8, 0.66],
+      [0.02, 1.12, 0, 0.46, 0.4], [0.05, 1.5, 0, 0.46, 0.4], [0.07, 2.0, 0, 0.58, 0.5], [0.05, 2.6, 0, 0.84, 0.64], [0, 3.2, 0, 1.12, 0.78],
+      [-0.06, 3.7, 0.12, 0.76, 0.66], [-0.12, 4.08, 0.22, 0.9, 0.84], [-0.12, 4.56, 0.16, 0.7, 0.64], [-0.04, 4.9, 0.06, 0.36, 0.32], [0.1, 5.12, 0, 0.14, 0.14], [0.24, 5.28, 0, 0, 0]]);
+    const AR = [[1.9, 2.95, 0.2], [2.42, 3.08, 0.3], [2.76, 3.56, 0.36], [2.78, 4.14, 0.36]], AL = [[-1.9, 2.8, 0.2], [-2.26, 2.24, 0.26], [-2.34, 1.66, 0.3], [-2.26, 1.22, 0.3]];
+    return Object.assign({ keys: K, wet: [0, 0.1, 1.5, 1.1], foam: kp => (kp < 7.6 ? 0 : 0.5 * sm((kp - 7.6) / 0.8)), crk: 3.8, lump: 1.2,
+      limbs: hand69(K, 12, 0, AR, [0.32, 0.27, 0.24, 0.32], [[-0.5, 0.66, 0.15], [0.02, 0.92, 0.16], [0.54, 0.6, 0.15]]).concat(hand69(K, 12, PI, AL, [0.32, 0.27, 0.23, 0.27], [[-0.34, -0.5, 0.14], [0.02, -0.64, 0.15], [0.36, -0.48, 0.14]]), [
+        knob69(K, 5.4, 0.3, [1.2, 0.36, 0.2], 0.36), knob69(K, 6.5, PI - 0.4, [-1.1, 0.74, 0.1], 0.32),
+        puff69(K, 12, [1.26, 3.34, 0], 0.66), puff69(K, 12, [-1.3, 3.34, 0], 0.66), puff69(K, 12, [1.78, 2.9, 0], 0.44), puff69(K, 12, [-1.8, 2.86, 0], 0.44), puff69(K, 13, [0.82, 3.96, -0.1], 0.5), puff69(K, 13, [-0.96, 3.98, -0.1], 0.52),
+        puff69(K, 15, [0.5, 4.66, 0], 0.4), puff69(K, 15, [-0.72, 4.62, 0], 0.4), puff69(K, 11, [0.98, 2.5, 0], 0.36), puff69(K, 11, [-0.9, 2.44, 0], 0.36)]),
+      flames: ring69(K, 5.2, 1.16, 0.95, 0.16, [[0.1, 0.9, 1, 0.2], [3.04, 0.95, -1, 0.2], [-0.75, 1.25, 1, 0.2], [-2.4, 1.2, -1, 0.2], [1.1, 0.45, 1, 0.15], [2.1, 0.5, -1, 0.15]]),
+      face: { c: [-0.12, 4.02, 1.3], d: [0, 0.06, 1], k: 2.2, er: 1.08, dx: 0.215, lid: 0.3, brow: { y: 0.265, len: 0.23, ang: [0.34, 0.34], arch: -0.01, r: 0.032 }, mouth: { w: 0.11, d: -0.04, y: -0.26, tilt: 0.012, r: 0.025 } }, eyes: [1, 1], look: [0.12, -0.05], coal: 1.5,
+      pen: [crack69([[-0.82, 0.64], [-0.54, 0.54], [-0.28, 0.64], [0, 0.54], [0.28, 0.62], [0.54, 0.52], [0.84, 0.6]], 0.65), crack69([[-0.28, 0.64], [-0.36, 0.36], [-0.26, 0.18]], 0.5), crack69([[0.28, 0.62], [0.36, 0.84]], 0.5), crack69([[0.54, 0.52], [0.66, 0.3]], 0.5),
+        curl69(1.3, 3.4, 0.3, 1, 0.3), curl69(-1.32, 3.4, 0.3, -1, 2.8), curl69(0.84, 4.02, 0.22, 1, 0.8), curl69(-0.98, 4.04, 0.22, -1, 2.3), curl69(0.1, 2.5, 0.24, 1, 0.2), curl69(1.8, 2.92, 0.2, 1, 5.6), curl69(-1.82, 2.9, 0.2, -1, 3.6)],
+      embers: [[1.3, 1.6, 0.3, 0.1], [-1.2, 1.9, 0.3, 0.09], [1.7, 2.2, 0.2, 0.075], [-0.7, 1.4, 0.4, 0.07], [0.8, 5.0, 0.2, 0.08], [-1.5, 4.5, 0.2, 0.07], [2.9, 4.9, 0.2, 0.065]], scorch: [0, 0.1, 2.1, 1.5], light: 0.75 }, COM69); },
+  // 5 the burning mountain
+  () => { const K = pad64(0, 0, 0.36).concat([[0, 0.09, 0, 0.96, 0.78], [0, 0.38, 0, 1.46, 1.14], [0, 0.76, 0, 1.4, 1.1], [0, 1.06, 0, 1.0, 0.82],
+      [0, 1.3, 0, 0.74, 0.62], [0, 1.8, 0, 0.84, 0.68], [0, 2.4, 0, 1.04, 0.78], [0, 3.0, 0, 1.3, 0.88], [0, 3.55, 0.04, 1.46, 0.92],
+      [0, 3.95, 0.3, 1.0, 0.88], [0, 4.2, 0.5, 1.06, 0.96], [0, 4.8, 0.2, 1.2, 0.94], [0, 5.3, 0, 0.9, 0.76], [0, 5.62, 0, 0.36, 0.34], [0, 5.78, 0, 0, 0]]);
+    const AR = [[1.76, 3.0, 0.3], [2.3, 2.3, 0.46], [2.46, 1.5, 0.56], [2.3, 0.74, 0.62], [2.1, 0.26, 0.66], [1.76, 0.2, 0.7]], AL = [[-1.76, 3.0, 0.3], [-2.34, 2.34, 0.46], [-2.52, 1.52, 0.56], [-2.38, 0.76, 0.62], [-2.2, 0.26, 0.66], [-1.86, 0.2, 0.7]];
+    return Object.assign({ keys: K, wet: [0, 0.1, 2.0, 1.4], foam: kp => (kp < 7.6 ? 0 : 0.5 * sm((kp - 7.6) / 0.8)), crk: 3.3, lump: 1.55, wide: 1,
+      limbs: [arm69(K, 11.6, 0, AR, [0.4, 0.34, 0.3, 0.3, 0.34, 0.2]), arm69(K, 11.6, PI, AL, [0.4, 0.34, 0.3, 0.3, 0.34, 0.2]),
+        knob69(K, 5.4, 0.3, [1.5, 0.4, 0.2], 0.42), knob69(K, 6.5, PI - 0.4, [-1.42, 0.86, 0.1], 0.38), knob69(K, 6.9, 0.6, [1.2, 1.0, 0.1], 0.34),
+        puff69(K, 12, [1.62, 4.1, 0], 0.84), puff69(K, 12, [-1.66, 4.14, 0], 0.84), puff69(K, 12, [2.6, 3.9, 0], 0.66), puff69(K, 12, [-2.66, 3.94, 0], 0.66), puff69(K, 12, [3.36, 3.56, 0], 0.48), puff69(K, 12, [-3.44, 3.6, 0], 0.48),
+        puff69(K, 15, [1.0, 5.1, 0], 0.72), puff69(K, 15, [-1.06, 5.14, 0], 0.72), puff69(K, 15, [2.0, 4.8, 0], 0.6), puff69(K, 15, [-2.1, 4.84, 0], 0.6), puff69(K, 16, [0.36, 5.7, 0], 0.5), puff69(K, 16, [-0.5, 5.66, 0], 0.5),
+        puff69(K, 11, [1.2, 2.9, 0], 0.4), puff69(K, 10, [-1.06, 2.3, 0], 0.36)],
+      flames: ring69(K, 5.2, 1.46, 1.14, 0.18, [[0.1, 1.0, 1, 0.22], [3.04, 1.05, -1, 0.22], [-0.6, 1.4, 1, 0.22], [-1.2, 1.2, 1, 0.2], [-1.95, 1.25, -1, 0.2], [-2.55, 1.45, -1, 0.22], [0.95, 0.5, 1, 0.16], [2.2, 0.55, -1, 0.16]]),
+      face: { c: [0, 4.1, 1.7], d: [0, 0.1, 1], k: 3.3, er: 1.02, dx: 0.215, lid: 0.55, brow: { y: 0.25, len: 0.24, ang: [0.16, 0.16], arch: -0.02, r: 0.03 }, mouth: { w: 0.1, d: -0.03, y: -0.25, tilt: 0, r: 0.023 } }, eyes: [1, 1], look: [0, -0.25], coal: 1.45,
+      pen: [crack69([[-1.1, 0.76], [-0.76, 0.62], [-0.4, 0.76], [0, 0.62], [0.4, 0.74], [0.76, 0.6], [1.12, 0.72]], 0.7), crack69([[-0.4, 0.76], [-0.5, 0.42], [-0.36, 0.2]], 0.55), crack69([[0.4, 0.74], [0.5, 1.0]], 0.55), crack69([[0.76, 0.6], [0.92, 0.34]], 0.55), crack69([[-0.76, 0.62], [-0.9, 0.9]], 0.55),
+        curl69(1.64, 4.18, 0.36, 1, 0.3), curl69(-1.68, 4.2, 0.36, -1, 2.8), curl69(2.62, 3.94, 0.28, 1, 0.1), curl69(-2.68, 3.98, 0.28, -1, 3.0), curl69(1.0, 5.16, 0.3, 1, 0.9), curl69(-1.08, 5.2, 0.3, -1, 2.2), curl69(0.2, 2.6, 0.3, 1, 0.2), curl69(-0.4, 1.9, 0.22, -1, 2.9)],
+      embers: [[1.8, 1.7, 0.4, 0.11], [-1.7, 2.0, 0.4, 0.1], [1.3, 2.3, 0.6, 0.08], [-1.0, 1.5, 0.6, 0.075], [3.0, 2.6, 0.2, 0.085], [-3.1, 2.9, 0.2, 0.08], [3.6, 4.6, 0.2, 0.07], [-3.7, 4.9, 0.2, 0.075], [1.6, 6.0, 0.2, 0.08], [-1.3, 6.2, 0.2, 0.07], [0.3, 6.5, 0.2, 0.06], [-2.8, 5.6, 0.2, 0.065]], scorch: [0, 0.1, 2.8, 1.9], light: 0.95 }, COM69); }
+];
+/* the wash: the same shader as Water's; its four blues become charcoal, smoke grey or flame blue by what the skin is made of there; the crust is
+   crazed with red by noise; smoke just above the lump is lit red; nothing is a pool; the lump keeps little bare paper */
+function tint69(T, S) { if (!S.m30) return; S.t69 = true; S.t48 = true; const C = W69.C, way = S.way69, o = S.G.o, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(4), mx = k => 'mix(mix(' + g(C.l[k]) + ', ' + g(C.s[k]) + ', s69), ' + g(C.f[k]) + ', f69)',
+    glow = '\n#ifndef MARGIN30\n{ vec3 q69 = bp * ' + f(S.G.H) + '; float n69 = N30(q69 * ' + f(o.crk || 3) + ' + 3.7), d69 = abs(n69 - 0.5), up69 = 1.0 - smoothstep(' + f(0.5 * (o.lump || 1)) + ', ' + f(o.lump || 1) + ', q69.y);'
+      + ' c9 = mix(c9, vec3(0.50, 0.10, 0.07), 0.4 * r69 * (1.0 - smoothstep(0.0, 0.06, d69)) * (0.45 + 0.55 * up69));'
+      + ' c9 = mix(c9, vec3(0.96, 0.25, 0.12), r69 * (1.0 - smoothstep(0.010, 0.026, d69)) * (0.55 + 0.45 * up69));'
+      + ' c9 = mix(c9, vec3(1.0, 0.60, 0.50), 0.8 * r69 * (1.0 - smoothstep(0.003, 0.010, d69)) * up69);'
+      + ' c9 = mix(c9, vec3(0.86, 0.33, 0.24), 0.62 * e69); }\n#endif\n',
+    sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float w69 = vW29.w, s69 = smoothstep(0.30, 0.46, w69), f69 = smoothstep(0.62, 0.85, w69), e69 = smoothstep(0.08, 0.22, w69) * (1.0 - smoothstep(0.28, 0.46, w69)), r69 = 1.0 - smoothstep(0.02, 0.16, w69), pl = 0.0,'],
+      ['vec3(0.64, 0.80, 0.945)', mx('lite')], ['vec3(0.40, 0.59, 0.84)', mx('edge')], ['vec3(0.36, 0.52, 0.78)', mx('shade')], ['vec3(0.60, 0.76, 0.92)', mx('margin')],
+      ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = smoothstep(0.42, 0.02, bp.y) * (1.0 - s69); hl *= (1.0 - 0.55 * r69) * (1.0 - 0.85 * f69) * (1.0 - 0.5 * s69 * (1.0 - f69));'],
+      ['vec3 c9 = base * mix(vec3(1.0), wash, a9);', 'vec3 c9 = base * mix(vec3(1.0), wash, a9);' + glow]];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s69) return; m.userData.s69 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's69' + way; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid[S.st] || C.lid[3]).convertSRGBToLinear()); }
+/* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
+function brim69Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = () => { const o = SPEC69[stage - 1](); o.limbs = (o.limbs || []).concat(o.flames || []); return o; }, keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W69.geo[stage]) W26.geo[3] = W69.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W69.ROLE[stage]; W26.TARGET = W69.TARGET[stage];
+  try { g = fig26(T, 3, extra); W69.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, C = W69.C; S.way69 = 'b' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  const near = p => { let bj = 1, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
+  /* the eyes are coals: the glint of each is made a red ember that fills the dark of the eye, set off-centre where it looks; not quite a pair */
+  if (S.F) S.F.eyes.forEach((e, i) => { const k = (o.eyes && o.eyes[i]) || 1, lk = o.look || [0, 0], cs = o.coal || 1.9; e.g.children.forEach(m => { m.scale.multiplyScalar(k); m.position.multiplyScalar(k); }); e.er *= k;
+    if (e.gl) { e.gl.material = flat49(T, C.coal); e.gl.scale.set(cs * k, cs * 1.2 * k, 0.7 * k); e.gl.position.set(lk[0] * e.er * 0.5, lk[1] * e.er * 0.5, e.er * 0.3);
+      const hot = new T.Mesh(new T.SphereGeometry(e.er * 0.2, 8, 6), flat49(T, 0xffc4b4)); hot.scale.set(1, 1.2, 0.5); hot.position.set(lk[0] * e.er * 0.5 - e.er * 0.16, lk[1] * e.er * 0.5 + e.er * 0.22, e.er * 0.52); hot.userData.plain = true; e.g.add(hot); } });
+  if (!(extra && extra.jar)) { try { const lay = new T.Group(), soft = tex49(T, 'glow'), flat = (hex, w, h, op, add) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), flat49(T, hex, { transparent: true, alphaMap: soft, depthWrite: false, opacity: op, blending: add ? T.AdditiveBlending : T.NormalBlending })); m.userData.plain = true; m.userData.nobox = true; return m; };
+      /* the scorched ring on the wood, and the flames' cold light on it: they lie on the bench itself (lay69), whatever way the figure is tipped */ S.root.add(lay); S.lay69 = lay;
+      if (o.scorch) { const q = o.scorch, m = flat(C.scorch, q[2] * 2, q[3] * 2, 0.85); m.rotation.x = -PI / 2; m.position.set(q[0], 0, q[1]); m.renderOrder = 16; m.userData.b69 = 'scorch'; lay.add(m); }
+      if (o.light) { const q = o.scorch, m = flat(C.light, q[2] * 2.7, q[3] * 2.7, o.light, 1); m.rotation.x = -PI / 2; m.position.set(q[0], 0.004, q[1] + 0.2); m.renderOrder = 17; m.userData.b69 = 'light'; lay.add(m); }
+      /* embers in the air: a small coal with a hot heart, each riding the joint nearest to it */
+      (o.embers || []).forEach((q, i) => { const j = near(q), a = flat(C.hot, q[3] * 5, q[3] * 5, 0.9), b = flat(0xffd2c4, q[3] * 1.8, q[3] * 1.8, 1); a.position.set(q[0] - J[j].p[0], q[1] - J[j].p[1], q[2] - J[j].p[2]); b.position.z = 0.01; a.add(b); a.renderOrder = 24; b.renderOrder = 25; a.userData.b69 = 'ember'; a.userData.n69 = i; S.bones[j].add(a); });
+    } catch (e) { W69.err = String(e && e.stack); } }
+  /* the pen's own strokes (cracks in the crust, folds of smoke): laid on the skin by rays from in front; each rides the joint nearest to it */
+  const strokes = (o.pen || []).map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
+        pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); if (p.z < -G.H) break; } return null; }).filter(Boolean); }
+    if (pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+  S.a69 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  tint69(T, S); W69.figs.push(S); if (W69.figs.length > 24) W69.figs.splice(0, W69.figs.length - 24); return g; }
+/* no pool ripples and no flow lines down the front (G.pl and the chest are hidden from the pen for the moment of drawing); its own strokes are then
+   written by builder 48's ink48 with the figure's own pen, S.a48 lent for that call only, so Acid's idle and act never run on it */
+/* the flames have no pen line: their part of the skin is kept out of the pen's silhouette (as the low edge of Dry ice's bank is) */
+function cut69(S, s) { const P = s.tp.P, n = s.tp.nv, m = new Uint8Array(n), g = S.body.geometry, gp = g.attributes.position, ga = g.attributes.w25a, M = new Map(), key = (x, y, z) => Math.round(x * 400) + ',' + Math.round(y * 400) + ',' + Math.round(z * 400);
+  for (let i = 0; i < gp.count; i++) M.set(key(gp.getX(i), gp.getY(i), gp.getZ(i)), ga.getW(i)); for (let i = 0; i < n; i++) { const w = M.get(key(P[3 * i], P[3 * i + 1], P[3 * i + 2])); m[i] = w != null && w > 0.8 ? 1 : 0; } return m; }
+sil30 = (f0 => function (R, s) { const S = W69.cur; if (S && R === S.pen30 && s === R.body && s.tp && s.C) { try { const m = S.cut69 || (S.cut69 = cut69(S, s)), C = s.C; for (let i = 0; i < m.length; i++) if (m[i]) C[4 * i + 3] = 0; } catch (e) { W69.err = String(e && e.stack); } } return f0.apply(this, arguments); })(sil30);
+function lay69(T, S) { const e = S.lay69, p = e.parent, V = W69.v || (W69.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); p.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a); }
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way69) return f0(T, S, ren, cam); if (!S.t69) tint69(T, S); if (S.lay69) { try { lay69(T, S); } catch (e) { W69.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W69.cur = S;
+  try { f0(T, S, ren, cam); } finally { S.G.pl = pl; S.G.R = R0; W69.cur = null; }
+  if (S.a69) { const a0 = S.a48; S.a48 = S.a69; try { ink48(T, S, ren, cam); } catch (e) { W69.err = String(e && e.stack); } finally { S.a48 = a0; } } })(draw30);
+KIT.brim69Fig = brim69Fig; KIT.BRIM69 = W69;
+/* behind the switch: Brimstone's bench figure is the spirit at its stage (the jar keeps the old Brimstone) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'hombrimstone' && KIT.brim69 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = brim69Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W69.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W69 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
