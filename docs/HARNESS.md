@@ -142,6 +142,8 @@ AX. The reference book (13 November): "The in game manual should just be picture
 
 **BN (2026-11-15).** "Keep working until sprites are done". Standing order: all ten creatures are carried through (figure and five stages, alive at rest, its own act, its own evolution) without stopping for approvals; every clip is sent as it lands, cropped square and zoomed for a phone ("I can't see anything on my phone": "Too small, zoom fixes it"); the owner redirects if they dislike something. Order after Acid and Dry ice: Slime, Salt, Seedling, Brimstone, Hydrogen, Ammonia, Wood spirit, then Water's leftovers. Body ideas from `lineup54-sheet.jpg`. The lead picked Dry ice's evolution ("the whiteout") without asking, under this order.
 
+**BO (2026-11-15).** On the evolutions as built: "Each evolution has the same random stalk with a face? Is this a stock animation you're using" (Slime's pull: one plain tube with a ball head and a generic face, the same in all four changes) and "The seedling egg just pops out of nowhere?". And of Brimstone's act: "It looks fine except look at this" (the thread back to its lump drawn as a hard dark rod). So, for every evolution and act: what is on screen is the CREATURE ITSELF, its own drawn body and face changing shape; never a stand-in prop that replaces it; nothing switches on in one frame (things grow, fold, stretch, fall or fade); the four stage changes of a creature must differ at a glance; and nothing joined to a creature may read as a hard object.
+
 
 AM. On the margin notes and the feel of the page (12 November): "It should become more unhinged the deeper into chemistry as we go." The game starts sane and gets madder the further a run goes.
 
