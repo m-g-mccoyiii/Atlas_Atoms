@@ -761,3 +761,16 @@ Branch `acid-builder-35` (worktree `acid35`). File: `kitart.js` (block `W35`). S
 - **To render** (bash, `.claude/r28` of this worktree, ports 9591/9592; start `python srv.py` and `python fsrv.py`, end them by PID): `./st40.sh` (job `j_a40.js`: five stages into `frames/s40`, f00002 = stage 5 ... f00006 = stage 1, then their silhouettes f00007 ... f00011, about 130 s), then `python sheet40.py stages.jpg silhouettes.jpg game.jpg` (crops to the five figures' joint outline).
 
 scheme.html: bump `kitart.js?v=` (91 to 92).
+
+## Forty-second builder (14 November)
+
+Branch `acid-builder-35` (worktree `acid35`). File: `kitart.js` (block `W35`). Stills only. The owner chose "Mix the two" of the 39th and 40th sets. Shots in `C:\Work\atlas-atoms\.claude\shots`: `acid42-stages.jpg` (five stages on the bench, labelled), `acid42-game.jpg` (stages 1, 3, 5 in the full game view), `acid42-stages.txt`. Switch unchanged: `AA.rxKit.acid35 = 'a'` (or `?a35=a`); unset by default.
+
+- **The mix**: stages 1, 2 and 5 keep the 40th set's postures (shy lick, greedy swell on both palms, standing sea with a second curl behind); stages 3 and 4 are the 39th set's waves again (the reared breaker; the tall wave reared right over with both hands out in front), with the 40th's fixes: the mouth is `mouth()`'s long slot under the curl (lit far wall at top, dark at bottom), no round cut and no lower back ellipsoid, a long slope up the back with `sag` runs. Stage 4 is taller (crest 1.66 against 1.12), leans further forward, `W35.rot[3]` -0.1. Hands reach forward, never up. The curl tip is lifted and the mouth wall stops at the tip (`fy` 0.1 / 0.12) so the front stays open.
+- **Teeth**: `tooth` is one smooth tapering drip (no pinched neck); tooth shapes carry `th`, and in `geo35` every vertex on a tooth gets `aQ` -1 (pale). `draw35` draws the body's outline with the teeth left out, then the teeth alone with a nib 0.42 as thick, so they are pale drips with a thin edge, not loops.
+- **Pen**: body line `{ wob: 0.45, smooth: 4, min: 9 }` (steadier, no tiny scribbled runs).
+- **Sizes in the game** (`homStand` fits by `min(h / height, w / width)` times `stageSize`): stage 1 drawn 1.55 times (was 1.32) on a smaller pool; stage 5's pool and second wave drawn in and its crest raised to 2.38, so it is fitted by its height and stands taller than 4 (fit `s` 3.16 against 3.06; heights about 7.9 against 6.1).
+- **Weak** (from the pictures): stage 1 still small at game size, its crack barely reads; at 3 and 4 a rounded bulge of the mouth's back wall shows beside the curl tip and a see-through gap under the slot, so a little of the "face" remains; a few tooth roots at 3 keep a dark edge; stage 2 stands lower than 1 in the game (width-fitted, low by posture); spray faint; not animated; the jar not looked at.
+- **To render**: as the 40th (`./st40.sh`, then `python sheet40.py stages.jpg silhouettes.jpg game.jpg`; servers `python srv.py`, `python fsrv.py` on 9591/9592, ended by PID).
+
+scheme.html: bump `kitart.js?v=` (91 to 92).
