@@ -5632,11 +5632,11 @@ KIT.W70 = W70;
 //  4 the pair: a second, smaller mote swung round it on a thread of light, one arm up to it, a fist on its hip, one brow up
 //  5 the swarm-star: four small motes on threads flung out round it like a pinwheel, arms wide, a long wavering tail, a wide glow, laughing
 KIT.hyd75 = KIT.hyd75 == null ? ((typeof location !== 'undefined' && /[?&]h75=1/.test(String(location.search))) ? 1 : null) : KIT.hyd75;
-const W75 = { geo: {}, figs: [], err: null, TARGET: [0, 3600, 4200, 5000, 6200, 7600], ROLE: [], pen: 0.82,
+const W75 = { geo: {}, figs: [], err: null, TARGET: [0, 3600, 4200, 5000, 6200, 7600], ROLE: [], pen: 1.05,   /* (builder 79) firmer pen: was 0.82 */
   /* the height the game gives a spirit at each stage (scheme.js sizes it by its tallest joint); `fit` below is how tall lift and figure are to be in all */
   SIZE: [0, 3.3, 4.5, 6.4, 7.0, 6.9],
   C: { lite: [0.800, 0.890, 1.000], edge: [0.800, 0.580, 0.860], shade: [0.560, 0.560, 0.920], margin: [0.900, 0.840, 0.960], thread: [1.0, 0.93, 0.98], hl: [0.62, 0.76],
-    lid: 0xd6cdf0, shadow: 0x120a07, light: 0x8890c8, halo: 0x8f97e6, core: 0xd9a6c8 } };
+    lid: 0xd6cdf0, shadow: 0x0c0604, light: 0xa8b0f0, halo: 0x9aa2f2, core: 0xe4b0d4 } };
 /* the spine: tail, lower lobe, pinch, head lobe, lick. A key is a BALL on the spine (the skin is the hull of the balls along it), so a lobe is one
    ball with a slightly smaller one close above and below it, and the pinch a small ball where the two lobes meet. sh the shoulders, kb the lower
    lobe, kh the head (places on the spine for limbs) */
@@ -5648,9 +5648,11 @@ const mk75 = (tail, L, Hd, lick, pr) => { const dx = Hd[0] - L[0], dy = Hd[1] - 
 const arm75 = (B, th, abs, rad) => lim64(B.K, B.sh, th, abs.map(p => [p[0], p[1], p[2] == null ? 0.05 : p[2]]), rad, { foam: () => 0, arm: 1 });
 /* a companion: a thread of light from the back of the body (so it is not counted as an arm) that swells, at its end, into a mote of two lobes
    pointing along u; s its size. The thread is washed white and left out of the pen's line (foam 1); the mote is drawn like the body (foam 0) */
+/* (builder 79) a thread's path made dense (Catmull-Rom, m points a span), so the hull of its balls is a smooth line of light, not a string of beads */
+const dens75 = (P, m) => { const out = [], n = P.length, g = i => P[Math.max(0, Math.min(n - 1, i))]; for (let i = 0; i < n - 1; i++) { const a = g(i - 1), b = g(i), c = g(i + 1), d = g(i + 2); for (let k = 0; k < m; k++) { const t = k / m, t2 = t * t, t3 = t2 * t; out.push([0, 1, 2].map(e => 0.5 * ((2 * b[e]) + (-a[e] + c[e]) * t + (2 * a[e] - 5 * b[e] + 4 * c[e] - d[e]) * t2 + (-a[e] + 3 * b[e] - 3 * c[e] + d[e]) * t3))); } } out.push(P[n - 1].slice()); return out; };
 const BEAD75 = [[0.1, 0.1], [0.24, 0.2], [0.3, 0.19], [0.47, 0.1], [0.72, 0.28], [0.8, 0.3], [0.88, 0.28], [1.14, 0.07]];
-const bead75 = (B, k, path, s, u0) => { const ul = Math.hypot(u0[0], u0[1]), u = [u0[0] / ul, u0[1] / ul], e = path[path.length - 1], n0 = path.length,
-    pts = path.map(p => [p[0], p[1], p[2] || 0]).concat(BEAD75.map(d => [e[0] + u[0] * d[0] * s, e[1] + u[1] * d[0] * s, 0])), rad = path.map(() => 0.03).concat(BEAD75.map(d => d[1] * s)), cut = (n0 + 0.45) / pts.length;
+const bead75 = (B, k, path0, s, u0) => { const path = dens75(path0.map(p => [p[0], p[1], p[2] || 0]), 3), ul = Math.hypot(u0[0], u0[1]), u = [u0[0] / ul, u0[1] / ul], e = path[path.length - 1], n0 = path.length,
+    pts = path.map(p => [p[0], p[1], p[2] || 0]).concat(BEAD75.map(d => [e[0] + u[0] * d[0] * s, e[1] + u[1] * d[0] * s, 0])), rad = path.map(() => 0.034).concat(BEAD75.map(d => d[1] * s)), cut = (n0 + 0.45) / pts.length;
   const L = lim64(B.K, k, -PI / 2, pts, rad, { foam: kp => (kp < cut ? 1 : 0), bead: 1 }); L.eye = { c: [e[0] + u[0] * 0.82 * s, e[1] + u[1] * 0.82 * s], u, s }; return L; };
 /* a thread that swings out round c the way a pinwheel's arm does: from angle a0 it turns `turn` further while its distance grows to R (the picture is
    squeezed to 0.7 in height); the mote at its end heads on along the swing */
@@ -5664,41 +5666,44 @@ const air75 = (pts, w) => ({ air: pts.map(p => [p[0], p[1], p[2] == null ? 0.3 :
 const COM75 = { foot: 0.02, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 0.02, 0.02], foam: () => 0 };
 const SPEC75 = [
   // 1 the mote
-  () => { const B = mk75([[0.12, 0.1, 0.2], [0.12, 0.22, 0.32]], [0.12, 0.6, 0.48], [-0.1, 1.62, 0.72], [[-0.1, 2.38, 0.08], [-0.06, 2.52, 0.06], [0.03, 2.6, 0.045], [0.11, 2.55, 0]], 0.3);
-    return Object.assign({ keys: B.K, role: B.role, lift: 0.4, fit: 4.2, limbs: [],
+  () => { const B = mk75([[0.12, 0.1, 0.2], [0.12, 0.22, 0.32]], [0.12, 0.6, 0.48], [-0.1, 1.62, 0.72], [[-0.1, 2.38, 0.08], [-0.06, 2.52, 0.06], [0.03, 2.6, 0.045], [0.11, 2.55, 0]], 0.24);
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.15, fit: 5.7, up: 1.0,
+      limbs: [arm75(B, 0, [[0.52, 0.74], [0.74, 0.84], [0.9, 1.0]], [0.12, 0.11, 0.065]), arm75(B, PI, [[-0.28, 0.74], [-0.5, 0.84], [-0.66, 1.0]], [0.12, 0.11, 0.065])],
       face: { c: [-0.1, 1.64, 1.0], d: [0, 0, 1], k: 1.75, er: 1.3, dx: 0.2, lid: 0, brow: { y: 0.3, len: 0.12, ang: [-0.3, -0.3], arch: 0.01, r: 0.02 }, mouth: { o: 0.028, y: -0.2 } },
       pen: [air75([[-0.98, 1.95], [-1.06, 1.72], [-1.0, 1.48]]), air75([[0.8, 1.85], [0.88, 1.62], [0.82, 1.4]]), air75([[0.76, 0.8], [0.82, 0.62], [0.78, 0.46]], 0.36)],
-      shadow: [1.1, 0.6, 0.6], light: 0, halo: [1.25, 0.21], core: [0.9, 0.22] }, COM75); },
+      shadow: [0.85, 0.42, 0.8], light: 0.3, halo: [1.6, 0.42], core: [1.0, 0.34] }, COM75); },
   // 2 the bubble
   () => { const B = mk75([[0.24, 0.08, 0.05], [0.3, 0.3, 0.06], [0.18, 0.5, 0.08], [0.07, 0.64, 0.1]], [0, 1.15, 0.46], [0.05, 2.38, 0.8], [[0.05, 3.22, 0.08], [0, 3.36, 0.06], [-0.1, 3.45, 0.045], [-0.2, 3.4, 0]]);
-    return Object.assign({ keys: B.K, role: B.role, lift: 0.8, fit: 5.8,
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.33, fit: 6.8, up: 1.0,
       limbs: [arm75(B, 0, [[0.55, 1.3], [0.95, 1.42], [1.3, 1.5], [1.62, 1.68]], [0.12, 0.115, 0.1, 0.06]), arm75(B, PI, [[-0.55, 1.24], [-0.95, 1.18], [-1.3, 1.12], [-1.62, 1.2]], [0.12, 0.115, 0.1, 0.06])],
       face: { c: [0.05, 2.4, 1.0], d: [0, 0, 1], k: 1.8, er: 1.15, dx: 0.2, lid: 0, brow: { y: 0.29, len: 0.15, ang: [0, 0], arch: 0.04, r: 0.022 }, mouth: { w: 0.12, d: 0.08, y: -0.2, r: 0.025 } },
       pen: [air75([[-0.5, 0.56], [-0.5, 0.2]]), air75([[0.62, 0.5], [0.62, 0.22]], 0.36)],
-      shadow: [1.1, 0.6, 0.52], light: 0.16, halo: [1.7, 0.30], core: [1.1, 0.25] }, COM75); },
+      shadow: [0.95, 0.45, 0.78], light: 0.36, halo: [2.1, 0.5], core: [1.25, 0.38] }, COM75); },
   // 3 the sprite (the line-up's figure)
   () => { const B = mk75([[0.5, 0.1, 0.05], [0.62, 0.36, 0.06], [0.5, 0.62, 0.075], [0.26, 0.82, 0.09], [0.08, 0.98, 0.12]], [0, 1.52, 0.55], [-0.14, 2.86, 0.85], [[-0.14, 3.76, 0.09], [-0.08, 3.92, 0.07], [0.06, 4.04, 0.055], [0.2, 3.98, 0.045], [0.22, 3.86, 0]]);
-    return Object.assign({ keys: B.K, role: B.role, lift: 1.2, fit: 7.6,
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.42, fit: 7.5, up: 1.4,
       limbs: [arm75(B, 0, [[0.68, 1.85], [1.05, 2.08], [1.25, 2.5], [1.32, 2.9], [1.22, 3.18]], [0.13, 0.12, 0.11, 0.1, 0.06]), arm75(B, PI, [[-0.68, 1.8], [-1.15, 1.92], [-1.5, 2.24], [-1.68, 2.66], [-1.6, 2.98]], [0.13, 0.12, 0.11, 0.1, 0.06])],
       face: { c: [-0.14, 2.88, 1.0], d: [0, 0, 1], k: 1.85, er: 1.1, dx: 0.2, lid: 0, brow: { y: 0.285, len: 0.16, ang: [0.1, -0.05], lift: [0, 0.03], arch: 0.03, r: 0.023 }, mouth: { w: 0.15, d: 0.095, y: -0.2, tilt: 0.02, r: 0.026 } },
       pen: [air75([[-0.6, 0.9], [-0.6, 0.4]]), air75([[-0.3, 0.6], [-0.3, 0.2]], 0.36), air75([[0.95, 1.0], [0.95, 0.6]], 0.36)],
-      shadow: [1.1, 0.58, 0.46], light: 0.22, halo: [2.2, 0.39], core: [1.3, 0.29] }, COM75); },
+      shadow: [1.0, 0.46, 0.76], light: 0.42, halo: [2.6, 0.58], core: [1.45, 0.42] }, COM75); },
   // 4 the pair
   () => { const B = mk75([[-0.4, 0.1, 0.05], [-0.56, 0.4, 0.06], [-0.44, 0.7, 0.07], [-0.2, 0.94, 0.085], [-0.05, 1.1, 0.12]], [0, 1.74, 0.54], [0.1, 3.14, 0.9], [[0.1, 4.09, 0.09], [0.2, 4.26, 0.07], [0.34, 4.36, 0.055], [0.46, 4.28, 0.045], [0.46, 4.14, 0]]);
-    const M = bead75(B, B.kb, [[0.3, 1.5, -0.45], [1.0, 1.1, -0.25], [1.8, 1.1], [2.42, 1.5], [2.74, 2.15], [2.7, 2.8], [2.5, 3.2]], 1.3, [-0.3, 1]);
-    return Object.assign({ keys: B.K, role: B.role, lift: 1.0, fit: 8.0,
-      limbs: [arm75(B, 0, [[0.74, 2.06], [1.2, 2.26], [1.55, 2.66], [1.72, 3.08]], [0.17, 0.16, 0.14, 0.08]), arm75(B, PI, [[-0.68, 1.94], [-1.1, 1.76], [-1.04, 1.42], [-0.6, 1.4]], [0.16, 0.15, 0.14, 0.12]), M],
+    /* (builder 79) the companion out to the side at head height, tipped toward its thread like a small copy of itself in flight (was upright on top of a
+       hanging loop: a balloon); the hip arm a clean wisp held low (was a loop back to the body: a jug handle) */
+    const M = bead75(B, B.kb, [[0.3, 1.6, -0.45], [0.95, 1.3, -0.3], [1.65, 1.25, -0.1], [2.2, 1.45], [2.55, 1.85]], 1.55, [0.5, 1]);
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.36, fit: 7.8, up: 1.0,
+      limbs: [arm75(B, 0, [[0.74, 2.06], [1.2, 2.26], [1.55, 2.66], [1.72, 3.08]], [0.17, 0.16, 0.14, 0.08]), arm75(B, PI, [[-0.68, 1.94], [-1.1, 1.8], [-1.48, 1.6], [-1.78, 1.38]], [0.16, 0.14, 0.11, 0.06]), M],
       face: { c: [0.1, 3.16, 1.0], d: [0, 0, 1], k: 1.9, er: 1.05, dx: 0.2, lid: 0.3, brow: { y: 0.285, len: 0.17, ang: [0.12, 0.2], lift: [0, 0.05], arch: 0.01, r: 0.024 }, mouth: { w: 0.13, d: 0.06, y: -0.21, x: 0.03, tilt: 0.035, r: 0.026 } },
       pen: eyes75(M).concat([air75([[0.5, 0.9], [0.5, 0.4]]), air75([[0.2, 0.6], [0.2, 0.2]], 0.36), air75([[-0.9, 1.1], [-0.9, 0.7]], 0.36)]),
-      shadow: [1.3, 0.62, 0.46], light: 0.26, halo: [2.6, 0.45], core: [1.45, 0.32], glows: [[M.eye.c[0], M.eye.c[1], 0.8, 0.2]] }, COM75); },
+      shadow: [1.15, 0.5, 0.74], light: 0.44, halo: [3.0, 0.6], core: [1.6, 0.44], glows: [[M.eye.c[0], M.eye.c[1], 1.0, 0.36]] }, COM75); },
   // 5 the swarm-star
   () => { const B = mk75([[0.3, 0.1, 0.05], [0.46, 0.4, 0.06], [0.3, 0.72, 0.07], [0.04, 0.98, 0.08], [-0.14, 1.26, 0.09], [-0.06, 1.5, 0.11], [0, 1.62, 0.13]], [0, 2.26, 0.58], [0, 3.78, 0.98], [[0, 4.82, 0.1], [-0.08, 5.0, 0.08], [-0.2, 5.14, 0.055], [-0.34, 5.1, 0.045], [-0.36, 4.98, 0]]);
-    const c = [0, 3.05], Ms = [swirl75(B, c, -1.0, 2.75, 1.15), swirl75(B, c, 0.55, 2.45, 1.0), swirl75(B, c, 2.15, 2.5, 1.0), swirl75(B, c, 3.7, 2.9, 1.15)];
-    return Object.assign({ keys: B.K, role: B.role, lift: 0.7, fit: 8.2,
+    const c = [0, 3.05], Ms = [swirl75(B, c, -0.9, 2.8, 1.3), swirl75(B, c, 1.25, 2.6, 1.2), swirl75(B, c, 3.35, 2.9, 1.3)];   /* (builder 79) three, not four: it reads */
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.34, fit: 8.1, up: 0.8,
       limbs: [arm75(B, 0, [[0.8, 2.45], [1.3, 2.58], [1.8, 2.5], [2.2, 2.62], [2.46, 2.9]], [0.18, 0.17, 0.16, 0.14, 0.08]), arm75(B, PI, [[-0.8, 2.45], [-1.3, 2.52], [-1.8, 2.4], [-2.2, 2.5], [-2.44, 2.78]], [0.18, 0.17, 0.16, 0.14, 0.08])].concat(Ms),
       face: { c: [0, 3.82, 1.1], d: [0, 0, 1], k: 2.05, er: 1.05, dx: 0.2, lid: 0, brow: { y: 0.29, len: 0.17, ang: [-0.06, -0.06], arch: 0.05, r: 0.025 }, mouth: { w: 0.17, d: 0.115, y: -0.19, r: 0.027 } },
       pen: Ms.reduce((a, m) => a.concat(eyes75(m)), []).concat([air75([[-0.5, 1.2], [-0.5, 0.6]]), air75([[0.8, 0.9], [0.8, 0.4]], 0.36)]),
-      shadow: [1.7, 0.75, 0.44], light: 0.3, halo: [3.6, 0.51], core: [1.7, 0.36], glows: Ms.map(m => [m.eye.c[0], m.eye.c[1], 0.6 * m.eye.s, 0.2]) }, COM75); }
+      shadow: [1.4, 0.6, 0.72], light: 0.46, halo: [3.8, 0.62], core: [1.9, 0.44], glows: Ms.map(m => [m.eye.c[0], m.eye.c[1], 0.75 * m.eye.s, 0.34]) }, COM75); }
 ];
 /* the wash: the same shader as Water's; its four blues become pale sky and rose-lilac, far more paper is left bare (a bright core), nothing is a
    pool, nothing gathers low down; the threads are left almost white */
@@ -5719,8 +5724,8 @@ function hyd75Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0))
   const mid = new T.Group(), k = extra && extra.jar ? 1 : o.fit * G.H / (W75.SIZE[stage] * (G.H + o.lift)); mid.scale.setScalar(k); mid.position.y = (extra && extra.jar ? 0 : o.lift) * k; mid.add(S.root); g.add(mid); S.mid75 = mid;
   if (!(extra && extra.jar)) { try { const soft = tex49(T, 'glow'), flat = (hex, w, h, op, add) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), flat49(T, hex, { transparent: true, alphaMap: soft, depthWrite: false, opacity: op, blending: add ? T.AdditiveBlending : T.NormalBlending })); m.userData.plain = true; m.userData.nobox = true; return m; };
       /* on the wood under it: its shadow, small and soft because it hangs high, and the pale light it sheds (lay75 lays them on the bench itself) */
-      const lay = new T.Group(); S.root.add(lay); S.lay75 = lay; const q = o.shadow, sh = flat(C.shadow, q[0] * 2, q[1] * 2, q[2]); sh.rotation.x = -PI / 2; sh.position.y = 0.002; sh.renderOrder = 16; sh.userData.h75 = 'shadow'; lay.add(sh);
-      if (o.light) { const m = flat(C.light, q[0] * 6, q[1] * 7, o.light, 1); m.rotation.x = -PI / 2; m.position.y = 0.001; m.renderOrder = 15; m.userData.h75 = 'light'; lay.add(m); }
+      const lay = new T.Group(); S.root.add(lay); S.lay75 = lay; const q = o.shadow, sh = flat(C.shadow, q[0] * 2, q[1] * 2, q[2]); sh.rotation.x = -PI / 2; sh.position.y = 0.002; sh.renderOrder = 16; sh.userData.h75 = 'shadow'; sh.userData.o0 = q[2]; lay.add(sh);
+      if (o.light) { const m = flat(C.light, q[0] * 3.4, q[1] * 3.6, o.light, 1);   /* (builder 79) a round pool, not a long beam */ m.rotation.x = -PI / 2; m.position.y = 0.001; m.renderOrder = 15; m.userData.h75 = 'light'; m.userData.o0 = o.light; lay.add(m); }
       /* the glow behind it: a wide pale one and a small warm one, riding the head; and a small one behind each companion */
       const jh = G.bj[G.R.head], hp = J[jh].p, glow = (hex, x, y, r, op, par, pj) => { const m = flat(hex, r * 2, r * 2, op, 1); m.position.set(x - pj[0], y - pj[1], -0.9 - pj[2]); m.renderOrder = 14; m.userData.h75 = 'glow'; par.add(m); return m; };
       if (o.halo) glow(C.halo, hp[0], hp[1] - 0.25 * o.halo[0], o.halo[0], o.halo[1], S.bones[jh], hp); if (o.core) glow(C.core, hp[0], hp[1], o.core[0], o.core[1], S.bones[jh], hp);
@@ -5739,7 +5744,9 @@ function cut75(S, s) { const P = s.tp.P, n = s.tp.nv, m = new Uint8Array(n), g =
 sil30 = (f0 => function (R, s) { const S = W75.cur; if (S && R === S.pen30 && s === R.body && s.tp && s.C) { try { const m = S.cut75 || (S.cut75 = cut75(S, s)), C = s.C; for (let i = 0; i < m.length; i++) if (m[i]) C[4 * i + 3] = 0; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(sil30);
 /* shadow and light lie on the bench, straight under where the figure would stand, whatever way the figure is tipped and however high it hangs */
 function lay75(T, S) { const e = S.lay75, p = e.parent, base = S.mid75 && S.mid75.parent, V = W75.v || (W75.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p || !base) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
-  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); base.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a); }
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); (S.k79 ? S.mid75 : base).getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a);
+  /* (builder 79) higher: wider and paler; dipped low: smaller and darker (S.h79, the height over its place, 1 at the top of a drift) */
+  const h = S.h79 || 0; e.children.forEach(m => { const o0 = m.userData.o0; if (o0 == null) return; if (m.userData.h75 === 'shadow') { m.scale.setScalar(Math.max(0.55, 1 + 0.55 * h)); m.material.opacity = Math.min(1, o0 * (1 - 0.42 * h)); } else { m.scale.setScalar(Math.max(0.6, 1 + 0.35 * h)); m.material.opacity = o0 * Math.max(0.35, 1 - 0.45 * h); } }); }
 /* no pool ripples and no flow lines down the front; a finer pen; its own strokes are then written by builder 48's ink48 with the figure's own pen,
    S.a48 lent for that call only, so Acid's idle and act never run on it */
 draw30 = (f0 => function (T, S, ren, cam) { if (!S.way75) return f0(T, S, ren, cam); if (!S.t75) tint75(T, S); if (S.lay75) { try { lay75(T, S); } catch (e) { W75.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R, lw0 = W30.lw; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W30.lw = lw0 * W75.pen; W75.cur = S;
@@ -5748,6 +5755,170 @@ KIT.hyd75Fig = hyd75Fig; KIT.HYD75 = W75;
 /* behind the switch: Hydrogen's bench figure is the spirit at its stage (the jar keeps the old Hydrogen) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homh2' && KIT.hyd75 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = hyd75Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W75 END
+// ==== W79 BEGIN
+// (builder 79) HYDROGEN ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle79; false or ?i79=0 gives Water's rest back on it). Keyed on S.way75 only.
+// It CANNOT STAY DOWN: it keeps drifting up as if the air pulled it, notices, paddles its little arms and tugs itself back down to its place,
+// overshoots, bobs, and drifts up again; each drift a different height, length and lean. The lick and the tail stream and waver like a pilot flame
+// (they trail its motion; the lick stretches up as it tugs down). Its two lobes squash and stretch about the pinch with its bobbing (the whole skin
+// is one linear map: nothing can come apart). Now and then: a tiny pale POP of light goes off beside it and it flinches, delighted; it peers down
+// over its lower lobe at its shadow and waves; it spins round once; it darts sideways and zips back, leaving a faint streak. The shadow and the pool
+// of light on the wood stay under it, smaller and darker low, wider and paler high (lay75 reads S.h79).
+//  1 the mote: hops, floats a hand's breadth, settles with a wobble
+//  2 the bubble: wobbles along an invisible tightrope, arms out balancing against its tilt, nearly tips now and then
+//  3 the sprite: the full drift-and-tug, a loop now and then, a dart
+//  4 the pair: the companion swings round it on its thread, lagging; the two keep turning to face each other; it tugs the thread and the little one bobs
+//  5 the swarm-star: the companions wheel round it slowly like a mobile, threads lagging; it conducts them; the whole rises and sinks together
+// Moves are rigid turns of whole limbs about their roots, and one transform of the whole (the group mid75): every joint stays on the one skin.
+KIT.idle79 = KIT.idle79 == null ? !(typeof location !== 'undefined' && /[?&]i79=0/.test(String(location.search))) : KIT.idle79;
+/* the new Hydrogen is ON by default from here (bench and jar); ?h75=0 on the page gives the old one */
+if (KIT.hyd75 == null && !(typeof location !== 'undefined' && /[?&]h75=0/.test(String(location.search)))) KIT.hyd75 = 1;
+const W79 = { err: null, n: 0, ms: 0, jar: 0.75, TOP: 8.75 };
+const on79 = S => !!(S && S.way75 && KIT.idle79 !== false);
+const clk79 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W79.jar : 1) + S.st * 2.7 + (S.jar ? 1.3 : 0);
+const h79 = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const cl79 = (x, a, b) => (x < a ? a : x > b ? b : x);
+/* an event of length W s somewhere in each period P s (its start jittered per period); its phase 0..1, or null outside */
+const evt79 = (tt, P, W, sd) => { const n = Math.floor(tt / P), s0 = n * P + h79(n + sd) * (P - W - 0.2); return tt >= s0 && tt < s0 + W ? { v: (tt - s0) / W, n } : null; };
+/* the drift and tug: up (slow), notices, tugs down past its place, bobs back; a cycle of cy s, heights vary per cycle; game units */
+function drift79(tt, cy, A, sd) { const n = Math.floor(tt / cy), u = tt / cy - n, r1 = h79(n * 3.1 + sd), r2 = h79(n * 1.7 + sd + 5), a = A * (0.55 + 0.45 * r1), uT = 0.44 + 0.14 * r2, uN = uT + 0.08, uD = uN + 0.14, ov = 0.22 * a;
+  const D = { y: 0, a, n, nt: 0, tug: 0, bob: 0, pad: 0, up: 0, side: h79(n * 5.3 + sd) < 0.5 ? -1 : 1 };
+  if (u < uT) { const v = u / uT; D.y = a * sm52(v); D.up = 1 - v; }
+  else if (u < uN) { const v = (u - uT) / (uN - uT); D.y = a + 0.05 * a * Math.sin(PI * v); D.nt = sm52(v); D.pad = sm52(v); }
+  else if (u < uD) { const v = (u - uN) / (uD - uN); D.y = a - (a + ov) * sm52(v); D.tug = 1; D.pad = 1 - sm52(v); }
+  else { const v = (u - uD) / (1 - uD), e = (1 - v) * (1 - v) * (1 + 2 * v); D.y = -ov * Math.cos(3 * PI * v) * e; D.bob = e; }
+  D.x = D.side * 0.16 * D.y; return D; }
+/* stage 1: a hop, a float of a hand's breadth, a settle with a wobble */
+function hop79(tt, cy, A, sd) { const n = Math.floor(tt / cy), u = tt / cy - n, a = A * (0.55 + 0.45 * h79(n * 2.3 + sd)), D = { y: 0, rz: 0, sq: 0, pad: 0, nt: 0, tug: 0, bob: 0, up: 0, x: 0, side: h79(n + 9) < 0.5 ? -1 : 1 };
+  if (u < 0.12) { D.sq = -0.13 * Math.sin(PI * u / 0.12); }
+  else if (u < 0.26) { const v = (u - 0.12) / 0.14; D.y = a * (1 - (1 - v) * (1 - v)); D.up = 1; }
+  else if (u < 0.6) { const v = (u - 0.26) / 0.34; D.y = a * (1 + 0.1 * Math.sin(PI * v)); D.pad = 0.5 * Math.sin(PI * v); }
+  else if (u < 0.78) { const v = (u - 0.6) / 0.18; D.y = a * (1 - sm52(v)) - 0.12 * a * sm52(v); D.tug = 1; }
+  else { const v = (u - 0.78) / 0.22, e = (1 - v) * (1 - v) * (1 + 2 * v); D.y = -0.12 * a * Math.cos(3 * PI * v) * e; D.rz = D.side * 0.16 * Math.sin(4 * PI * v) * e; D.bob = e; }
+  D.x = D.side * 0.12 * D.y; return D; }
+const P79 = [null, { cy: 3.4 }, { cy: 6.4 }, { cy: 5.4 }, { cy: 6.2 }, { cy: 7.6 }];
+/* the whole at time tt: offset (game units), turns, and the events in it */
+function mo79(S, K, tt) { const st = S.st, TAU = 2 * PI, A = K.up, M = { x: 0, y: 0, rx: 0, ry: 0, rz: 0, sq: 0, pad: 0, nt: 0, tug: 0, bob: 0, up: 0, side: 1, dart: null, pop: null, peer: null, spin: null, loop: null, tip: 0 };
+  if (S.jar) { const u = fr52(tt / 3.3), J = K.jarUp;
+    if (u < 0.46) { const v = u / 0.46; M.y = J * v * v; M.up = 1; } else if (u < 0.6) { const v = (u - 0.46) / 0.14; M.y = J - 0.16 * J * Math.sin(PI * v); M.sq = -0.12 * Math.sin(PI * v); M.nt = Math.sin(PI * v); } else { const v = (u - 0.6) / 0.4; M.y = J * (1 - sm52(v)); M.pad = 0.5 * Math.sin(PI * v); }
+    return M; }
+  const D = st === 1 ? hop79(tt, P79[1].cy, A, 1) : drift79(tt, P79[st].cy, A, st * 13);
+  Object.assign(M, { x: D.x, y: D.y, rz: D.rz || 0, sq: D.sq || 0, pad: D.pad, nt: D.nt, tug: D.tug, bob: D.bob, up: D.up, side: D.side });
+  if (st === 2) { /* the tightrope: walks along it, sways, and now and then nearly tips over and windmills back */ M.x += 0.5 * Math.sin(TAU * tt / 10.5); M.rz += 0.07 * Math.sin(TAU * tt / 2.6) + 0.035 * Math.sin(TAU * tt / 1.55 + 1);
+    const e = evt79(tt, 8.9, 2.2, 21); if (e) { const v = e.v, d = h79(e.n + 4) < 0.5 ? -1 : 1, ti = v < 0.3 ? sm52(v / 0.3) : v < 0.45 ? 1 : (1 - sm52((v - 0.45) / 0.35)) - 0.25 * Math.sin(PI * cl79((v - 0.6) / 0.4, 0, 1)); M.rz += d * 0.34 * ti; M.x += d * 0.18 * ti; M.tip = d * ti; M.pad = Math.max(M.pad, pl52(v, 0.22, 0.75, 0.1)); M.nt = Math.max(M.nt, pl52(v, 0.15, 0.6, 0.1)); } }
+  if (st === 5) M.y += 0.28 * Math.sin(TAU * tt / 8.3);
+  if (st === 4) M.ry += 0.3 * Math.sin(TAU * (tt - 0.8) / 6.4);
+  /* a loop (3) */ if (st === 3) { const e = evt79(tt, 12.7, 1.6, 31); if (e) { const w = sm52(e.v), d = h79(e.n + 2) < 0.5 ? -1 : 1, an = TAU * w, R = 0.5; M.x += d * R * Math.sin(an); M.y += R * (1 - Math.cos(an)); M.rz += d * an; M.loop = e; } }
+  /* a spin round (2, 4, 5; 3 seldom) */ if (st >= 2 && !M.loop) { const e = evt79(tt, st === 3 ? 19.3 : st === 2 ? 15.7 : 14.1, 0.95, 41 + st); if (e) { M.ry += TAU * sm52(e.v); M.y += 0.3 * Math.sin(PI * e.v); M.spin = e; } }
+  /* a dart sideways and back (3, 4, 5; 2 a short one) */ if (st >= 2) { const e = evt79(tt, st === 3 ? 9.7 : st === 2 ? 13.3 : 11.3, 0.7, 51 + st); if (e) { const v = e.v, d = h79(e.n + 7) < 0.5 ? -1 : 1, D2 = st === 2 ? 0.8 : 1.6, s = v < 0.14 ? sm52(v / 0.14) : v < 0.3 ? 1 : 1 - sm52((v - 0.3) / 0.45) + 0.08 * Math.sin(PI * cl79((v - 0.62) / 0.38, 0, 1)); M.x += d * D2 * s; M.dart = { v, d, D: D2, s }; } }
+  /* a pop of light beside it: it flinches, then is delighted */ { const e = evt79(tt, st === 1 ? 6.1 : 7.3, 1.9, 61 + st); if (e) { const v = e.v, d = h79(e.n + 3) < 0.5 ? -1 : 1, j = Math.sin(PI * cl79(v / 0.2, 0, 1)); M.y += 0.32 * j; M.x -= d * 0.22 * Math.sin(PI * cl79(v / 0.32, 0, 1)); M.sq -= 0.1 * Math.sin(PI * cl79(v / 0.12, 0, 1)); M.pop = { v, d }; } }
+  /* it peers down at its shadow and waves at it */ { const e = evt79(tt, st === 1 ? 9.1 : 11.9, 2.6, 71 + st); if (e && !M.loop && !M.spin) { const v = e.v, en = pl52(v, 0.08, 0.9, 0.1); M.rx += 0.22 * en; M.peer = { v, en, wv: pl52(v, 0.3, 0.86, 0.08) }; } }
+  return M; }
+/* the face: looks, brows, blinks, smile, by what it is doing */
+function face79(S, M, tt) { const TAU = 2 * PI, F = { lookx: 0.45 * Math.sin(TAU * tt / 3.1) + 0.2 * Math.sin(TAU * tt / 1.7), looky: 0.25 + 0.15 * Math.sin(TAU * tt / 2.3), brow: 0.25, wide: 0.1, blink: 0, smile: 1.15, nod: 0, tilt: 0.08 * Math.sin(TAU * tt / 4.4), hturn: 0 };
+  const bu = fr52(tt / 3.9 + 0.17 * S.st); F.blink = pl52(bu, 0, 0.035, 0.012);
+  F.looky -= 1.0 * M.nt; F.lookx *= 1 - M.nt; F.wide += 0.8 * M.nt; F.brow += 0.4 * M.nt;
+  if (M.tug) { F.brow = -0.35; F.looky = -0.45; F.smile = 0.9; F.wide = 0.2; }
+  F.smile += 0.45 * M.bob; F.brow += 0.25 * M.bob;
+  if (M.tip) { F.wide += 0.7 * Math.abs(M.tip); F.lookx = -Math.sign(M.tip) * 0.8 * Math.abs(M.tip); F.smile -= 0.3 * Math.abs(M.tip); }
+  if (M.peer) { const en = M.peer.en; F.looky = F.looky * (1 - en) - 1.0 * en; F.lookx *= 1 - en; F.nod = 0.4 * en; F.smile += 0.35 * en; F.brow += 0.3 * en; }
+  if (M.pop) { const v = M.pop.v, fl = pl52(v, 0.0, 0.3, 0.06), dl = pl52(v, 0.25, 0.95, 0.1); F.wide = Math.max(F.wide, fl); F.brow += 0.6 * fl + 0.3 * dl; F.lookx = F.lookx * Math.max(0, 1 - fl - dl) + M.pop.d * (fl + dl) * 0.9; F.looky *= 1 - fl; F.smile += 0.6 * dl; F.blink *= 1 - fl; F.hturn = 0.35 * M.pop.d * dl; }
+  if (M.spin || M.loop) { F.smile += 0.4; F.blink = 0; }
+  if (S.st === 4) { F.hturn += 0.3 * Math.sin(2 * PI * (tt - 0.3) / 6.4); F.lookx = 0.7 + 0.3 * Math.sin(2 * PI * tt / 6.4); }
+  return F; }
+function rest79(S, t, o, q) { const K = S.k79, F = K.F || face79(S, mo79(S, K, clk79(S)), clk79(S)); q.sq = 0; q.lean = 0; q.bow = 0; q.hair = 0; q.armR = q.armL = 0; q.px = q.pz = 1; q.sink = 0; q.swell = 0;
+  q.tilt = F.tilt; q.nod = F.nod; q.hturn = F.hturn; q.lookx = F.lookx; q.looky = F.looky; q.brow = F.brow; q.blink = F.blink; q.wide = F.wide; q.lidx = 0; q.smile = F.smile; }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on79(S) && S.k79) return rest79(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* a little pop of pale light, drawn once: a soft core and six short rays */
+function pop79(T) { if (W79.tex) return W79.tex; const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(235,225,255,0.7)'); g.addColorStop(1, 'rgba(220,200,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+  x.strokeStyle = 'rgba(245,240,255,0.95)'; x.lineCap = 'round'; x.lineWidth = 3; for (let i = 0; i < 6; i++) { const a = i * PI / 3 + 0.3; x.beginPath(); x.moveTo(32 + 17 * Math.cos(a), 32 + 17 * Math.sin(a)); x.lineTo(32 + 29 * Math.cos(a), 32 + 29 * Math.sin(a)); x.stroke(); }
+  const t = new T.CanvasTexture(c); W79.tex = t; return t; }
+/* the parts it moves, found once */
+function init79(S) { const G = S.G, J = G.J, o = G.o, T = S.T, V3 = T.Vector3, st = S.st, K = { arm: [], bead: [], lick: [], tail: [], glow: [] };
+  const body = G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && J[j]) : [];
+  const hj = G.bj[G.R.head], nj = G.bj[G.R.neck], cj = G.bj[G.R.chest]; K.hj = hj; K.hy = J[hj].p[1]; K.hr = J[hj].r || 0.7; K.py = J[nj].p[1]; K.ly = J[cj].p[1]; K.lr = J[cj].r || 0.5;
+  sp.forEach(j => { const y = J[j].p[1]; if (y > K.hy + 0.72 * K.hr) K.lick.push(j); else if (y < K.ly - 0.62 * K.lr) K.tail.push(j); });
+  K.lick0 = new V3(J[hj].p[0], K.hy + 0.72 * K.hr, 0); K.lickL = Math.max(0.2, Math.max(K.lick0.y + 0.2, ...K.lick.map(j => J[j].p[1])) - K.lick0.y);
+  K.tail0 = new V3(J[cj].p[0], K.ly - 0.62 * K.lr, 0); K.tailL = Math.max(0.2, K.tail0.y);
+  G.chains.forEach(c => { if (c.kind !== 'limb' || !c.l) return; const jn = c.jn.filter(j => j && J[j]); if (!jn.length) return;
+    if (c.l.bead) K.bead.push({ jn, nt: Math.max(1, jn.length - BEAD75.length), i: K.bead.length }); else if (c.l.arm) K.arm.push({ jn, side: J[jn[jn.length - 1]].p[0] >= J[hj].p[0] ? 1 : -1, i: K.arm.length }); });
+  K.top = 0; J.forEach(q => { K.top = Math.max(K.top, q.p[1] + (q.r || 0)); });
+  /* units: the game's size of this stage over the figure's height (the group mid75 hangs in the game's holder) */
+  K.ug = G.H / (W75.SIZE[st] || 4); const mid = S.mid75; K.m0 = mid ? { k: mid.scale.x, y: mid.position.y, x: mid.position.x } : { k: 1, y: 0, x: 0 };
+  K.up = o.up || 1; K.rest = (o.fit || 6) * (o.lift || 0) / (G.H + (o.lift || 0)); K.room = Math.max(0.3, W79.TOP - (o.fit || 6)); K.jarUp = 0.62 * G.H;
+  S.root.traverse(m => { if (m.userData && m.userData.h75 === 'glow') K.glow.push({ m, o0: m.material.opacity }); });
+  S.v79 = { a: new V3(), b: new V3(), c: new V3(), p: new V3(), q: new T.Quaternion(), z: new V3(0, 0, 1), y: new V3(0, 1, 0), x: new V3(1, 0, 0), e: new T.Euler() };
+  S.k79 = K; return K; }
+/* things laid in the holder beside it (they must not ride the figure): the pop and the dart's streak */
+function fx79(S, K) { if (K.fx || !S.mid75 || !S.mid75.parent || S.jar) return; const T = S.T, par = S.mid75.parent;
+  const pop = new T.Sprite(new T.SpriteMaterial({ map: pop79(T), transparent: true, depthWrite: false, blending: T.AdditiveBlending })); pop.userData.plain = true; pop.userData.nobox = true; pop.renderOrder = 26; pop.visible = false; par.add(pop);
+  const sk = new T.Mesh(new T.PlaneGeometry(1, 1), flat49(T, 0xd8d0ff, { transparent: true, alphaMap: tex49(T, 'glow'), depthWrite: false, opacity: 0, blending: T.AdditiveBlending })); sk.userData.plain = true; sk.userData.nobox = true; sk.renderOrder = 13; sk.visible = false; par.add(sk);
+  K.fx = { pop, sk }; }
+/* turn the joints jn about c round ax by ang (times wf(i, n) for each) */
+function rot79(S, jn, c, ax, ang, wf) { const B = S.bones, Q = S.v79.q; for (let i = 0; i < jn.length; i++) { const a = ang * (wf ? wf(i, jn.length) : 1); if (Math.abs(a) < 1e-5) continue; Q.setFromAxisAngle(ax, a); const b = B[jn[i]]; b.position.sub(c).applyQuaternion(Q).add(c); b.quaternion.premultiply(Q); } }
+function pose79(S, o) { const K = S.k79 || init79(S), B = S.bones, V = S.v79, tt = clk79(S), st = S.st, TAU = 2 * PI, J = S.G.J; fx79(S, K);
+  const M = mo79(S, K, tt), h = 0.05, ya = mo79(S, K, tt - h), yb = mo79(S, K, tt + h), acc = (yb.y - 2 * M.y + ya.y) / (h * h), vy = (yb.y - ya.y) / (2 * h), vx = (yb.x - ya.x) / (2 * h);
+  /* the soft top: never off the top of the screen; never into the wood */
+  if (!S.jar) { const r = K.room, y0 = 0.6 * r; if (M.y > y0) M.y = y0 + (r - y0) * Math.tanh((M.y - y0) / (r - y0)); const lo = Math.max(0.05, K.rest - 0.12); if (M.y < -0.6 * lo) M.y = -0.6 * lo - 0.4 * lo * Math.tanh((-M.y - 0.6 * lo) / (0.4 * lo)); }
+  /* arms: alive, paddling when it tugs, balancing on the rope, waving at its shadow, conducting the swarm */
+  K.tug4 = -1; if (st === 4) { const e = evt79(tt, 5.3, 1.5, 81); if (e) K.tug4 = e.v; }
+  K.arm.forEach(a => { const sd = a.side; let an = 0.07 * Math.sin(TAU * tt / 2.9 + a.i * 1.7) + M.pad * 0.5 * Math.sin(TAU * tt * 2.6 + a.i * PI * 0.5);
+    if (st === 2) an += -M.rz * 0.9; if (st === 5) an += sd * (0.22 * Math.sin(TAU * tt / 9.5 + (sd > 0 ? 0 : PI * 0.6)) + 0.08 * Math.sin(TAU * tt / 1.6));
+    if (M.peer && sd > 0) an += M.peer.wv * (0.45 + 0.35 * Math.sin(TAU * M.peer.v * 6));
+    if (st === 4 && sd > 0 && K.tug4 >= 0) an -= 0.32 * pl52(K.tug4, 0, 0.1, 0.05);
+    if (M.pop) an += sd * 0.35 * pl52(M.pop.v, 0, 0.25, 0.06);
+    V.c.copy(B[a.jn[0]].position); rot79(S, a.jn, V.c, V.z, an, (i, n) => 0.7 + 0.3 * i / Math.max(1, n - 1)); });
+  /* companions on their threads: the root stays on the body, the turn grows along the thread and lags behind */
+  K.bead.forEach(b => { const n = b.jn.length, w = i => (i < b.nt ? sm52(i / b.nt) : 1), Bj = B[K.hj].position;
+    if (st === 4) { const th = t => 0.55 * Math.sin(TAU * t / 6.4), ph = t => -0.12 + 0.2 * Math.sin(TAU * t / 6.4 + 1.3)   /* swung low at the side, never up over its head */, g = K.tug4;
+      const pull = g >= 0 ? (g < 0.12 ? sm52(g / 0.12) : Math.cos(TAU * 1.5 * (g - 0.12) / 0.88) * Math.pow(1 - (g - 0.12) / 0.88, 2)) : 0;
+      V.c.copy(B[b.jn[0]].position); for (let i = 0; i < n; i++) { const p = B[b.jn[i]].position, wi = w(i); p.sub(V.c).multiplyScalar(1 - 0.16 * pull * wi).add(V.c); p.y -= 0.18 * pull * wi * wi; }
+      rot79(S, b.jn, V.c, V.z, 1, i => ph(tt - 0.45 * w(i)) * w(i));
+      V.a.set(Bj.x, 0, Bj.z); rot79(S, b.jn, V.a, V.y, 1, i => th(tt - 0.5 * w(i)) * Math.pow(w(i), 0.8)); }
+    if (st === 5) { const ph0 = b.i * 2.1, th = t => 0.7 * Math.sin(TAU * t / 9.5 + ph0), ph = t => 0.2 * Math.sin(TAU * t / 9.5 + ph0 + 1.2) + 0.05 * Math.sin(TAU * t / 2.3 + ph0);
+      V.c.copy(B[b.jn[0]].position); rot79(S, b.jn, V.c, V.z, 1, i => ph(tt - 0.6 * w(i)) * w(i));
+      V.a.set(Bj.x, 0, Bj.z); rot79(S, b.jn, V.a, V.y, 1, i => th(tt - 0.7 * w(i)) * Math.pow(w(i), 0.8)); } });
+  /* the lick streams up and wavers like a pilot flame (stretched up as it tugs down), the tail trails */
+  { const L = K.lickL, ang = 0.15 * Math.sin(TAU * tt / 0.83) + 0.08 * Math.sin(TAU * tt / 0.47 + 1) - 0.35 * cl79(vx, -1.5, 1.5) + 0.25 * M.tip, str = 0.35 * cl79(-vy / 3, 0, 1) + 0.1 * Math.sin(TAU * tt / 0.61) + 0.06;
+    K.lick.forEach(j => { const p = B[j].position, w = cl79((J[j].p[1] - K.lick0.y) / L, 0, 1); p.y += (p.y - K.lick0.y) * str * w; B[j].scale.x *= 1 - 0.25 * str * w; B[j].scale.z *= 1 - 0.25 * str * w; });
+    V.c.copy(K.lick0); rot79(S, K.lick, V.c, V.z, ang, i => 0.4 + 0.6 * i / Math.max(1, K.lick.length - 1)); }
+  { const L = K.tailL, ang = 0.2 * Math.sin(TAU * tt / 1.7 + 0.5) + 0.07 * Math.sin(TAU * tt / 0.73) + 0.3 * cl79(vx, -1.5, 1.5), str = 0.3 * cl79(vy / 3, 0, 1);
+    K.tail.forEach(j => { const p = B[j].position, w = cl79((K.tail0.y - J[j].p[1]) / L, 0, 1); p.y -= (K.tail0.y - p.y) * str * w; });
+    V.c.copy(K.tail0); rot79(S, K.tail, V.c, V.z, ang, i => cl79((K.tail0.y - J[K.tail[i]].p[1]) / L, 0, 1)); }
+  /* the whole: moved, turned about its middle, squashed and stretched about the pinch */
+  const sq = S.jar ? M.sq : cl79(-0.0085 * acc, -0.15, 0.15) + M.sq, mid = S.mid75, m0 = K.m0, k = m0.k, ug = S.jar ? 1 : K.ug;
+  if (mid) { mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); V.e.set(M.rx, M.ry, M.rz); mid.rotation.copy(V.e);
+    const cy = K.py, pr = V.b.set(0, cy * (1 + sq), 0).multiplyScalar(k).applyEuler(V.e);
+    mid.position.set(m0.x + M.x * ug - pr.x, m0.y + M.y * ug + cy * k - pr.y, -pr.z); }
+  S.h79 = S.jar ? 0 : cl79(M.y / Math.max(0.3, K.up), -0.8, 1.6); S.c79 = 'rest';
+  /* the glow breathes, and flares with the pop */ const fl = M.pop ? pl52(M.pop.v, 0, 0.3, 0.05) : 0; K.glow.forEach(g => { g.m.material.opacity = g.o0 * (1 + 0.12 * Math.sin(TAU * tt / 2.3) + 0.6 * fl); });
+  if (K.fx) { const P = K.fx.pop, SK = K.fx.sk;
+    if (M.pop) { const v = M.pop.v, s = (0.9 + 2.3 * sm52(v / 0.22)) * ug, op = cl79(v / 0.05, 0, 1) * (1 - sm52((v - 0.06) / 0.34)); P.visible = op > 0.01; P.scale.set(s, s, 1); P.material.opacity = op; P.material.rotation = 0.4 * v;
+      P.position.set(m0.x + M.pop.d * (0.75 * K.hr * k + 0.9 * ug) + M.pop.d * 0.6 * ug * v, m0.y + (K.hy + 0.4 * K.hr) * k, 0.3 * ug); } else P.visible = false;
+    if (M.dart && M.dart.v < 0.62) { const d = M.dart, op = d.v < 0.14 ? 0.85 : 0.85 * (1 - sm52((d.v - 0.14) / 0.42)), len = Math.max(0.05, Math.abs(d.D * d.s)) * ug; SK.visible = true; SK.material.opacity = op; SK.scale.set(len + 0.6 * ug, 0.55 * K.hr * k, 1);
+      SK.position.set(m0.x + d.d * (len / 2), m0.y + (K.py + 0.2 * K.hr) * k, -0.2 * ug); } else SK.visible = false; } }
+function hide79(S) { const K = S.k79; if (!K) return; const mid = S.mid75, m0 = K.m0; if (mid) { mid.scale.setScalar(m0.k); mid.rotation.set(0, 0, 0); mid.position.set(m0.x, m0.y, 0); } S.h79 = 0; if (K.fx) { K.fx.pop.visible = false; K.fx.sk.visible = false; } K.glow.forEach(g => { g.m.material.opacity = g.o0; }); K.F = null; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75) return f0(grp, clip, t, o);
+  /* the old error at play27 (line ~1753): the margin's material carries no line width once the pen and wash has swapped it; give it one (as builders 68 and 73 did) */
+  const gw = () => { const m = S.hull27 && S.hull27.material; if (m && !m.userData.w) { m.userData.w = { value: 0 }; return true; } return false; }; gw();
+  const safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  if (!on79(S)) return safe(); if (clip === 'rest' && !S.k79) { try { init79(S); } catch (e) { W79.err = 'init ' + String(e && e.stack); } }
+  if (clip === 'rest' && S.k79) { try { const tt = clk79(S); S.k79.F = face79(S, mo79(S, S.k79, tt), tt); } catch (e) { W79.err = 'face ' + String(e && e.stack); } }
+  const r = safe(); S.c79 = clip;
+  if (clip === 'rest') { const c0 = rn44(); try { pose79(S, o || {}); } catch (e) { W79.err = 'pose ' + String(e && e.stack); } W79.ms += rn44() - c0; W79.n++; }
+  else hide79(S); return r; })(play26);
+KIT.spirit26.play = play26;
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Hydrogen (fitted to the glass, low, room above it to bob up to the lid) */
+/* the jar figure is posed when it is drawn (draw30 runs for it every frame it shows; its body's own draw hook fires only once): once a moment */
+const tick79 = S => { const f = S.f79, c = clk79(S); if (!f || (S.jf79 != null && Math.abs(c - S.jf79) < 0.004)) return; S.jf79 = c; W79.jb = (W79.jb || 0) + 1; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W79.err = String(e && e.stack); } };
+function drive79(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; S.f79 = f; b.onBeforeRender = function () { if (f0) f0.apply(this, arguments); tick79(S); }; }
+draw30 = (f0 => function (T, S, ren, cam) { if (S && S.f79 && S.jar && on79(S)) tick79(S); return f0(T, S, ren, cam); })(draw30);
+function jar79(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = hyd75Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.05, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.12 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive79(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = hyd75Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 1.0, sg >= 4 ? 1.25 : 1.1, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + 0.12 - q.y0 * q.s, -q.cz * q.s + 0.1); drive79(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'h2' && KIT.hyd75 && KIT.idle79 !== false && T && T.SkinnedMesh) { try { jar79(T, j); } catch (e) { W79.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W79 = W79;
+// ==== W79 END
 // ==== W74 BEGIN
 // (builder 74) SEEDLING'S OWN CHANGE OF STAGE, "the sprouting" (AA.rxKit.evo74, on by default; false or ?v74=0 gives the old one, Water's evo played
 // on its joints). Bright and joyful: the one that is simply growing. The page (scheme S74) gives the place, moves it, and draws all that is not its
