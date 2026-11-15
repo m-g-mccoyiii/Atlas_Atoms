@@ -3480,6 +3480,7 @@ const clk56 = S => (typeof performance !== 'undefined' ? performance.now() : 0) 
 const vn56 = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy), h = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); }, a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1); return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy; };
 /* the manner at time tt: notice, duck, peek; stage 1's place along its roll; stage 3's offering */
 function man56(S, tt) { const st = S.st, P = P56[st] || P56[3], u = fr52(tt / P.cyc), M = { notice: 0, duck: 0, peek: 0, dx: 0, off: 0, sd: Math.floor(tt / P.cyc) % 2 ? 1 : -1 };
+  if (S.x57) return M;   /* (builder 57) while it acts, its act sets its manner */
   if (st < 5) { M.notice = pl52(u, 0.3, 0.4, 0.04); M.duck = pl52(u, 0.4, 0.66, 0.06); M.peek = pl52(u, 0.62, 0.8, 0.05); }
   if (st === 1) { const n = Math.floor(tt / P.cyc), xp = m => 0.3 * (2 * h52(m * 3.7 + 1) - 1); M.dx = xp(n - 1) + (xp(n) - xp(n - 1)) * sm52((u - 0.47) / 0.12); }
   if (st === 3) M.off = pl52(u, 0.04, 0.34, 0.1) * (1 - M.duck);
@@ -3591,4 +3592,87 @@ function jar56(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'co2' && KIT.dry49 === 'c' && KIT.idle56 !== false && T && T.SkinnedMesh) { try { jar56(T, j); } catch (e) { W56.err = String(e && e.stack); } } return j; })(KIT.jar);
 KIT.W56 = W56;
 // ==== W56 END
+// ==== W57 BEGIN
+// (builder 57) DRY ICE THE SHY ONE'S OWN ACT (AA.rxKit.act57, on by default; false or ?a57=0 gives the old act, Water's clip on its body). It is fog: it
+// never walks, slides as a puddle or flies. Its idle (W56) keeps running under the act, so the rolls, mist, wisps and frost go on moving; the act is
+// laid over it. The page (scheme S57) gives the trip, the atoms (o.bites.d57: P world centres, T the touch times in ms of the work, r an atom's radius,
+// h home, p where it stands) and draws the tide, the welling bank, the frost on the atoms and on the bench.
+//  gather: it pulls its block to its chest, looks the way it will go, and sinks into its bank till only its head and eyes ride above the rolls
+//  pour:   the bank pours off along the bench and over the book as a low tide, its rolls running ahead and trailing, the head riding in it, peeping
+//  rise:   at the molecule it comes up out of the welling bank beside the atoms, a small overshoot, then holds back, looks, looks at you, a false start
+//  touch:  it holds the block out (from stage 4 its hands, cupped, the block glowing in its chest) to each atom in turn, each touch quicker than the
+//          last, eyes squeezed shut at the touch; between touches the block stays half out; after the last it hugs the block back
+//  home:   it ducks, turns its back, sinks till only the back of its drooping head rides in the rolls, the tide pours home, it turns and settles
+KIT.act57 = KIT.act57 == null ? !(typeof location !== 'undefined' && /[?&]a57=0/.test(String(location.search))) : KIT.act57;
+const W57 = { err: null, e: null };
+const on57 = S => !!(S && S.way49 && !S.jar && KIT.act57 !== false && on56(S));
+/* per stage: how deep it rides in its bank (sk), on the way home (skb), lean while it pours, how far the block may reach (in its heights), how long a reach takes (ms) */
+const P57 = [null,
+  { sk: 0.5, skb: 0.6, lean: 0.06, rch: 0.7, R: 260, hes: 0.5 },
+  { sk: 0.55, skb: 0.5, lean: 0.05, rch: 0.55, R: 380, hes: 1 },
+  { sk: 0.56, skb: 0.48, lean: 0.05, rch: 0.55, R: 420, hes: 1 },
+  { sk: 0.58, skb: 0.48, lean: 0.04, rch: 0.5, R: 520, hes: 0.8 },
+  { sk: 0.6, skb: 0.5, lean: 0.03, rch: 0.5, R: 640, hes: 0.6 }];
+const cl57 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* the act's numbers at t ms (the whole clip: W wind-up, J the trip, D the work, B home) */
+function ph57(t, o) { const W = o.W || 0, J = o.J || 1, D = o.D || 1, B = o.B || 1, d = (o.bites && o.bites.d57) || {}, st = d.st || 3, P = P57[st] || P57[3], sk = P.sk, dir = o.dir || 1, sd = o.sd || 1;
+  const e = { ph: 0, e: 0, sink: 0, turn: 0, lean: 0, bow: 0, nod: 0, lookx: 0, looky: 0, wide: 0, brow: 0, blink: 0, lidx: 0, hturn: 0, sq: 0, hug: 0, reach: 0, ti: 0, tw: 1, mv: 0, lunge: 0, well: 0, home: false };
+  const g1 = W + 0.26 * J;
+  if (t < g1) { const u = cl57(t / g1); e.hug = sm52(u / 0.4); e.sink = sk * sm52((u - 0.3) / 0.7); e.lookx = dir * 0.9 * pl52(u, 0.1, 1.2, 0.15); e.hturn = 0.25 * dir * pl52(u, 0.1, 1.2, 0.15); e.wide = 0.4 * pl52(u, 0.05, 0.45, 0.1); e.brow = 0.4 * pl52(u, 0, 0.6, 0.1); e.sq = -0.05 * pl52(u, 0.05, 0.35, 0.1) + 0.04 * pl52(u, 0.4, 0.8, 0.1); e.bow = 0.1 * e.hug; e.blink = pl52(u, 0.3, 0.38, 0.04); return e; }
+  if (t < W + J) { const u = (t - g1) / (W + J - g1); e.ph = 1; e.hug = 1; e.sink = sk; e.e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u); e.mv = Math.sin(PI * u); e.lean = -dir * P.lean * e.mv; e.lookx = dir * (0.9 - 0.5 * pl52(u, 0.45, 0.6, 0.05)); e.hturn = 0.2 * dir; e.looky = -0.1; e.sq = 0.03 * Math.sin(t / 150) * e.mv; e.blink = pl52(fr52(t / 1500 + 0.3), 0.5, 0.56, 0.03); e.well = 0; return e; }
+  const a = t - W - J;
+  if (a < D) { const p = a / D, Tt = d.T && d.T.length ? d.T : [0.75 * D], n = Tt.length, T0 = Tt[0], TL = Tt[n - 1], Hd = st === 1 ? 110 : st >= 5 ? 300 : 200; e.ph = 2; e.e = 1; e.hug = 1;
+    /* the bank wells up round the atoms, then it rises out of it */ e.well = sm52(p / 0.12); const r0 = Math.max(0.1, (T0 - P.R - 420 * P.hes) / D), rs = sm52((p - 0.04) / (0.6 * r0));
+    e.sink = sk * (1 - rs); e.sq = 0.06 * pl52(a, (0.04 + 0.6 * r0) * D - 60, (0.04 + 0.6 * r0) * D + 140, 80) - 0.03 * pl52(a, (0.04 + 0.6 * r0) * D + 140, (0.04 + 0.6 * r0) * D + 340, 90);
+    /* it holds back and looks: at the atom, at you, at the atom; a false start */ const hz = pl52(a, (0.04 + 0.6 * r0) * D, T0 - P.R, 100); e.lean = -sd * 0.05 * hz * P.hes; e.lookx = sd * hz; e.looky = -0.35 * hz;
+    const lk = pl52(a, T0 - P.R - 380 * P.hes, T0 - P.R - 170 * P.hes, 60) * (st > 1 ? 1 : 0); e.lookx *= 1 - lk; e.looky += 0.3 * lk; e.wide += 0.45 * lk; e.brow += 0.4 * lk + 0.2 * hz; e.blink = Math.max(e.blink, pl52(a, T0 - P.R - 160 * P.hes, T0 - P.R - 90 * P.hes, 30));
+    const fs = st > 1 ? 0.28 * pl52(a, T0 - P.R - 820 * P.hes, T0 - P.R - 520 * P.hes, 140) : 0;
+    /* the touches */ let ti = 0; for (let i = 0; i < n; i++) if (a >= Tt[i] - (i ? Math.min(P.R, 0.6 * (Tt[i] - Tt[i - 1])) : P.R)) ti = i;
+    const Ti = Tt[ti], Ri = ti ? Math.min(P.R, 0.6 * (Ti - Tt[ti - 1])) : P.R, mid = 0.3, last = ti === n - 1; let r;
+    if (a < Ti - Ri) r = fs; else if (a < Ti) { const u = sm52((a - (Ti - Ri)) / Ri); r = (ti ? mid : fs) + (1 - (ti ? mid : fs)) * u; e.tw = ti ? u : 1; } else if (a < Ti + Hd) r = 1; else r = last ? 1 - sm52((a - Ti - Hd) / 480) : 1 - (1 - mid) * sm52((a - Ti - Hd) / 200);
+    e.reach = r; e.ti = ti; if (a < Ti - Ri) e.tw = 1; e.lunge = 0.45 * r; e.lookx = e.lookx * (1 - r) + sd * r; e.looky = e.looky * (1 - r) - 0.45 * r; e.bow += 0.12 * r; e.lean += sd * 0.05 * r;
+    const at = a - Ti; if (at > -60 && at < Hd + 220) { e.lidx = Math.max(e.lidx, 0.75 * pl52(at, 0, Hd + 60, 50)); e.sq -= 0.05 * pl52(at, -40, Hd, 40); e.brow -= 0.3 * pl52(at, 0, Hd, 50); }
+    if (a > TL + Hd + 200) { const u = sm52((a - TL - Hd - 200) / 380); e.lookx = sd * 0.6 * (1 - u); e.looky = -0.3 * (1 - u) + 0.15 * u; e.wide = 0.3 * pl52(a, TL + Hd + 380, D, 60); e.bow += 0.08 * u; e.blink = Math.max(e.blink, pl52(a, TL + Hd + 560, TL + Hd + 650, 30)); }
+    return e; }
+  const b = (a - D) / B; e.ph = 3; e.hug = 1 - sm52((b - 0.9) / 0.1);
+  if (b >= 1) { e.ph = 4; e.home = true; return e; }
+  /* it ducks, turns its back, sinks, and the tide pours home; it turns and settles */ const sb = P.skb;
+  e.bow = 0.16 * pl52(b, 0, 0.2, 0.06); e.lookx = -dir * 0.4 * pl52(b, 0.02, 0.14, 0.04); e.blink = pl52(b, 0.03, 0.08, 0.02);
+  e.turn = PI * sm52((b - 0.06) / 0.16) + PI * sm52((b - 0.82) / 0.12); e.sink = sb * sm52((b - 0.04) / 0.2) * (1 - sm52((b - 0.86) / 0.12)); e.sq = -0.05 * pl52(b, 0.93, 0.99, 0.02);
+  const u = cl57((b - 0.2) / 0.62); e.e = 1 - (u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u)); e.mv = Math.sin(PI * u) * (b > 0.2 && b < 0.82 ? 1 : 0); e.lean = dir * P.lean * e.mv; e.nod = 0.25 * e.mv; return e; }
+/* the act's face and body numbers go into the rest clip's, each joint at its own lag */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X = S && S.x57; if (!X) return; const e = ph57(X.t - (lagMs || 0), X.o);
+  q.sink = e.sink; q.turn = e.turn; q.lean += e.lean; q.bow += e.bow; q.nod = (q.nod || 0) + e.nod; q.lookx = e.lookx; q.looky = e.looky; q.wide += e.wide; q.brow += e.brow; q.blink = Math.max(q.blink || 0, e.blink); q.lidx = Math.max(q.lidx || 0, e.lidx); q.hturn = e.hturn; q.sq += e.sq; q.mv = 0; })(C26.rest);
+/* after the play: the block and the hands (hug, reach to the atom), the rolls pouring ahead along the way, the bank welling */
+function post57(S, e, o) { const K = S.k56; if (!K) return; const B = S.bones, G = S.G, H = G.H, J = G.J, d = (o.bites && o.bites.d57) || {}, st = S.st, P = P57[st] || P57[3], V = S.v56, R = S.root;
+  R.updateWorldMatrix(true, false); const ws = V.c.setFromMatrixScale(R.matrixWorld).x || 1, off = [0, 0, 0];
+  /* hugged in */ const hg = e.hug * (1 - e.reach); off[1] += 0.03 * H * hg; off[2] -= 0.06 * H * hg;
+  /* the reach: from where the block is to the atom's near side, as far as it can */ let ctr = null; K.box.forEach(x => { if (x.m.userData.box49 !== 1 || ctr) return; const b = B[x.j]; ctr = V.b.copy(x.p0).multiply(b.scale).applyQuaternion(b.quaternion).add(b.position).clone(); });
+  if (!ctr) { const ch = G.bj[G.R.chest] || 1; ctr = B[ch].position.clone(); ctr.z += 0.3 * H; }
+  if (e.reach > 0.001 && d.P && d.P.length) { const P1 = d.P[Math.min(e.ti, d.P.length - 1)], P0 = d.P[Math.max(0, Math.min(e.ti - 1, d.P.length - 1))], w = e.tw;
+    const tg = R.worldToLocal(V.a.set(P0[0] + (P1[0] - P0[0]) * w, P0[1] + (P1[1] - P0[1]) * w, P0[2] + (P1[2] - P0[2]) * w)), dv = tg.sub(ctr), L = dv.length() || 1, keep = (d.r || 0.5) / ws + 0.45 * ((G.o.box && G.o.box.s) || 0.2), go = Math.min(Math.max(0, L - keep), P.rch * H) * e.reach;
+    off[0] += dv.x / L * go; off[1] += dv.y / L * go; off[2] += dv.z / L * go; W57.go = +go.toFixed(2); W57.L = +L.toFixed(2); }
+  /* the block goes with the hands (till stage 3; from stage 4 it stays in the chest and glows at the touch) */
+  if (st <= 3) { let bo = null; K.box.forEach(x => { const b = B[x.j]; V.a.set(off[0], off[1], off[2]).applyQuaternion(V.q.copy(b.quaternion).invert()).divide(b.scale); x.m.position.copy(x.p0).add(V.a); bo = [V.a.x, V.a.y, V.a.z]; }); S.bo56 = bo; }
+  else K.box.forEach((x, i) => { [].concat(x.m.material).forEach((m, k) => { if (x.em[k]) m.emissive.copy(x.em[k]).multiplyScalar(1 + 0.6 * e.reach); }); });
+  const hand = c => c.l.arm || c.jn.length - 1; [1, -1].forEach(s => (K.arm[s] || []).forEach((c, ci) => { if (ci > 0 && st >= 4) return; const k = st >= 4 ? 1 : 1; push52(S, c.jn, hand(c), off[0] * k + (st >= 4 ? -s * 0.06 * H * e.reach : 0), off[1] * k, off[2] * k); }));
+  /* the rolls: the bank pours ahead along the way and trails behind; at the molecule it wells up round it */
+  const pl = S.pl49 || G.pl; if ((e.mv > 0.001 || e.well > 0.001) && d.h && d.p) { const A = R.worldToLocal(V.a.set(d.h[0], 0, d.h[2])).clone(), Bp = R.worldToLocal(V.b.set(d.p[0], 0, d.p[2])); let dx = Bp.x - A.x, dz = Bp.z - A.z; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l; if (e.ph === 3) { dx = -dx; dz = -dz; }
+    K.rolls.forEach(R0 => { const jn = R0.c.jn, n = jn.length, dt = R0.dx * dx + R0.dz * dz, amt = pl.rx * e.mv * (0.2 + 0.5 * Math.max(0, dt) - 0.35 * Math.max(0, -dt)), sw = 1 + 0.25 * e.mv + 0.35 * e.well * (1 - e.reach * 0.5);
+      for (let i = 1; i < n; i++) { const jj = jn[i]; B[jj].position.x += dx * amt * (i / (n - 1)); B[jj].position.z += dz * amt * (i / (n - 1)); if (i >= n - 2) { B[jj].scale.x *= sw; B[jj].scale.z *= sw; B[jj].scale.y *= 1 + 0.5 * (sw - 1); } } }); } }
+function act57(f0, grp, S, t, o) { const e = ph57(t, o); S.x57 = { t, o }; W57.e = e;
+  f0(grp, 'rest', 0, {}); post57(S, e, o); S.q57 = e; return { e: e.e, y: 0, lunge: e.lunge, n: 0, big: 0, done: e.ph >= 4, home: e.ph >= 4 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip !== 'act' || !on57(S)) { if (S && S.x57) { S.x57 = null; S.q57 = null; } return f0(grp, clip, t, o); }
+  try { return act57(f0, grp, S, t, o || {}); } catch (err) { W57.err = String(err && err.stack); S.x57 = null; S.q57 = null; return f0(grp, clip, t, o); } })(play26);
+KIT.spirit26.play = play26;
+/* a soft cloud for the page's fog (white, its alpha in the picture) */
+KIT.fog57 = function (T, kind) { const key = 'tx_' + kind; if (W57[key]) return W57[key]; const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n; const x = cv.getContext('2d'); let s = kind === 'rime' ? 29 : 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  if (kind === 'rime') { /* frost on a surface: a soft white patch and needles of frost that branch */ const g = x.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n * 0.48); g.addColorStop(0, 'rgba(255,255,255,0.5)'); g.addColorStop(0.6, 'rgba(255,255,255,0.22)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, n, n);
+    x.lineCap = 'round'; for (let i = 0; i < 9; i++) { const a = i / 9 * 2 * PI + r() * 0.5, L = n * (0.24 + 0.2 * r()); x.strokeStyle = 'rgba(255,255,255,0.95)'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(n / 2, n / 2); x.lineTo(n / 2 + Math.cos(a) * L, n / 2 + Math.sin(a) * L); for (let k = 1; k < 5; k++) { const bx = n / 2 + Math.cos(a) * L * k / 5, by = n / 2 + Math.sin(a) * L * k / 5, bl = L * 0.3 * (1 - k / 6); [0.8, -0.8].forEach(q => { x.moveTo(bx, by); x.lineTo(bx + Math.cos(a + q) * bl, by + Math.sin(a + q) * bl); }); } x.stroke(); }
+    for (let i = 0; i < 90; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.44; x.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.5 * r()).toFixed(2) + ')'; x.fillRect(n / 2 + Math.cos(a) * d, n / 2 + Math.sin(a) * d, 1.6, 1.6); } }
+  else for (let i = 0; i < 16; i++) { const a = r() * 2 * PI, d = Math.sqrt(r()) * n * 0.24, cx = n / 2 + Math.cos(a) * d, cy = n / 2 + Math.sin(a) * d * 0.75, rr = n * (0.13 + 0.14 * r()), g = x.createRadialGradient(cx, cy, 0, cx, cy, rr); g.addColorStop(0, 'rgba(255,255,255,0.7)'); g.addColorStop(0.5, 'rgba(255,255,255,0.3)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, n, n); }
+  return (W57[key] = new T.CanvasTexture(cv)); };
+KIT.W57 = W57; KIT.d57dbg = () => ({ err: W57.err, go: W57.go, L: W57.L, e: W57.e ? { ph: W57.e.ph, e: +W57.e.e.toFixed(2), sink: +W57.e.sink.toFixed(2), reach: +W57.e.reach.toFixed(2), ti: W57.e.ti, turn: +W57.e.turn.toFixed(2) } : null });
+// ==== W57 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
