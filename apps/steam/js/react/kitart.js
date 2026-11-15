@@ -6170,6 +6170,13 @@ const W75 = { geo: {}, figs: [], err: null, TARGET: [0, 3600, 4200, 5000, 6200, 
   SIZE: [0, 3.3, 4.5, 6.4, 7.0, 6.9],
   C: { lite: [0.800, 0.890, 1.000], edge: [0.800, 0.580, 0.860], shade: [0.560, 0.560, 0.920], margin: [0.900, 0.840, 0.960], thread: [1.0, 0.93, 0.98], hl: [0.62, 0.76],
     lid: 0xd6cdf0, shadow: 0x0c0604, light: 0xa8b0f0, halo: 0x9aa2f2, core: 0xe4b0d4 } };
+/* (builder 89) READABLE ON WHITE PAPER (AA.rxKit.ink89, on; ?k89=0 gives builder 79's pale look): a real lilac wash with a deeper violet shade side
+   (as Water is plainly blue), one small bare highlight, no bare specks or pale blooms (it read as a glossy balloon), a firm dark-violet pen line
+   of even weight with less wobble (no doubled scratchy edges), and a soft violet shade (not an additive light, which vanishes on white paper)
+   lying on the paper under and round it, with a violet halo behind it */
+KIT.ink89 = KIT.ink89 == null ? !(typeof location !== 'undefined' && /[?&]k89=0/.test(String(location.search))) : KIT.ink89;
+if (KIT.ink89) Object.assign(W75.C, { lite: [0.760, 0.660, 0.960], edge: [0.530, 0.380, 0.860], shade: [0.470, 0.340, 0.800], margin: [0.700, 0.580, 0.930], thread: [0.880, 0.800, 1.000], hl: [0.96, 0.995],
+  lid: 0xc9b8f0, light: 0x8a6ad8, halo: 0xa58ae8, pen: 0x2e1650, wob: 0.35, add: false });
 /* the spine: tail, lower lobe, pinch, head lobe, lick. A key is a BALL on the spine (the skin is the hull of the balls along it), so a lobe is one
    ball with a slightly smaller one close above and below it, and the pinch a small ball where the two lobes meet. sh the shoulders, kb the lower
    lobe, kh the head (places on the spine for limbs) */
@@ -6243,9 +6250,11 @@ const SPEC75 = [
 function tint75(T, S) { if (!S.m30) return; S.t75 = true; S.t48 = true; const C = W75.C, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(3), mx = k => 'mix(' + g(C[k]) + ', ' + g(C.thread) + ', f75)',
     sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float f75 = smoothstep(0.5, 0.8, vW29.w), pl = 0.0,'],
       ['vec3(0.64, 0.80, 0.945)', mx('lite')], ['vec3(0.40, 0.59, 0.84)', mx('edge')], ['vec3(0.36, 0.52, 0.78)', mx('shade')], ['vec3(0.60, 0.76, 0.92)', mx('margin')],
-      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.12 *']];
+      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.12 *']].concat(C.pen ? [
+      /* (builder 89) flat pen and wash: no bare specks, no pale blooms, a full wash */ ['hl = max(hl, smoothstep(0.84, 0.88, nz2)', 'hl = max(hl, 0.0 * smoothstep(0.84, 0.88, nz2)'], ['wash = mix(wash, vec3(1.0), 0.3 * inb); wash *= 1.0 - 0.16 * ring;', 'wash *= 1.0 - 0.05 * ring;'], ['float a9 = (1.0 - hl) * (0.80 + 0.20 * nz2)', 'float a9 = (1.0 - hl) * (0.92 + 0.08 * nz2)']] : []);
   const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s75) return; m.userData.s75 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's75'; m.needsUpdate = true; };
-  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear());
+  /* (builder 89) the pen dark violet */ if (C.pen && S.pen30 && S.pen30.mesh && S.pen30.mesh.material.uniforms && S.pen30.mesh.material.uniforms.col) { const c = new T.Color(C.pen); S.pen30.mesh.material.uniforms.col.value.set(c.r, c.g, c.b); } }
 /* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage */
 function hyd75Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC75[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
   S25[2] = sp; if (W75.geo[stage]) W26.geo[3] = W75.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W75.ROLE[stage] || (W75.ROLE[stage] = sp().role); W26.TARGET = W75.TARGET[stage];
@@ -6258,10 +6267,10 @@ function hyd75Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0))
   if (!(extra && extra.jar)) { try { const soft = tex49(T, 'glow'), flat = (hex, w, h, op, add) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), flat49(T, hex, { transparent: true, alphaMap: soft, depthWrite: false, opacity: op, blending: add ? T.AdditiveBlending : T.NormalBlending })); m.userData.plain = true; m.userData.nobox = true; return m; };
       /* on the wood under it: its shadow, small and soft because it hangs high, and the pale light it sheds (lay75 lays them on the bench itself) */
       const lay = new T.Group(); S.root.add(lay); S.lay75 = lay; const q = o.shadow, sh = flat(C.shadow, q[0] * 2, q[1] * 2, q[2]); sh.rotation.x = -PI / 2; sh.position.y = 0.002; sh.renderOrder = 16; sh.userData.h75 = 'shadow'; sh.userData.o0 = q[2]; lay.add(sh);
-      if (o.light) { const m = flat(C.light, q[0] * 3.4, q[1] * 3.6, o.light, 1);   /* (builder 79) a round pool, not a long beam */ m.rotation.x = -PI / 2; m.position.y = 0.001; m.renderOrder = 15; m.userData.h75 = 'light'; m.userData.o0 = o.light; lay.add(m); }
+      if (o.light) { const m = flat(C.light, q[0] * 3.4, q[1] * 3.6, C.add === false ? 0.42 * o.light : o.light, C.add === false ? 0 : 1);   /* (builder 79) a round pool, not a long beam */ m.rotation.x = -PI / 2; m.position.y = 0.001; m.renderOrder = 15; m.userData.h75 = 'light'; m.userData.o0 = m.material.opacity; lay.add(m); }
       /* the glow behind it: a wide pale one and a small warm one, riding the head; and a small one behind each companion */
-      const jh = G.bj[G.R.head], hp = J[jh].p, glow = (hex, x, y, r, op, par, pj) => { const m = flat(hex, r * 2, r * 2, op, 1); m.position.set(x - pj[0], y - pj[1], -0.9 - pj[2]); m.renderOrder = 14; m.userData.h75 = 'glow'; par.add(m); return m; };
-      if (o.halo) glow(C.halo, hp[0], hp[1] - 0.25 * o.halo[0], o.halo[0], o.halo[1], S.bones[jh], hp); if (o.core) glow(C.core, hp[0], hp[1], o.core[0], o.core[1], S.bones[jh], hp);
+      const jh = G.bj[G.R.head], hp = J[jh].p, glow = (hex, x, y, r, op, par, pj, nb) => { const m = flat(hex, r * 2, r * 2, nb ? 0.45 * op : op, nb ? 0 : 1); m.position.set(x - pj[0], y - pj[1], -0.9 - pj[2]); m.renderOrder = 14; m.userData.h75 = 'glow'; par.add(m); return m; };
+      if (o.halo) glow(C.halo, hp[0], hp[1] - 0.25 * o.halo[0], o.halo[0], o.halo[1], S.bones[jh], hp, C.add === false); if (o.core) glow(C.core, hp[0], hp[1], o.core[0], C.add === false ? 0.3 * o.core[1] : o.core[1], S.bones[jh], hp);
       (o.glows || []).forEach(q2 => { const j = near([q2[0], q2[1], 0]); glow(C.halo, q2[0], q2[1], q2[2], q2[3], S.bones[j], J[j].p); });
     } catch (e) { W75.err = String(e && e.stack); } }
   /* the pen's own strokes: the companions' eyes are laid on the skin by rays from in front, the strokes in the air are given as they are; each rides the joint nearest to it */
@@ -6282,8 +6291,8 @@ function lay75(T, S) { const e = S.lay75, p = e.parent, base = S.mid75 && S.mid7
   const h = S.h79 || 0; e.children.forEach(m => { const o0 = m.userData.o0; if (o0 == null) return; if (m.userData.h75 === 'shadow') { m.scale.setScalar(Math.max(0.55, 1 + 0.55 * h)); m.material.opacity = Math.min(1, o0 * (1 - 0.42 * h)); } else { m.scale.setScalar(Math.max(0.6, 1 + 0.35 * h)); m.material.opacity = o0 * Math.max(0.35, 1 - 0.45 * h); } }); }
 /* no pool ripples and no flow lines down the front; a finer pen; its own strokes are then written by builder 48's ink48 with the figure's own pen,
    S.a48 lent for that call only, so Acid's idle and act never run on it */
-draw30 = (f0 => function (T, S, ren, cam) { if (!S.way75) return f0(T, S, ren, cam); if (!S.t75) tint75(T, S); if (S.lay75) { try { lay75(T, S); } catch (e) { W75.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R, lw0 = W30.lw; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W30.lw = lw0 * W75.pen; W75.cur = S;
-  try { f0(T, S, ren, cam); if (S.a75) { const a0 = S.a48; S.a48 = S.a75; try { ink48(T, S, ren, cam); } catch (e) { W75.err = String(e && e.stack); } finally { S.a48 = a0; } } } finally { S.G.pl = pl; S.G.R = R0; W30.lw = lw0; W75.cur = null; } })(draw30);
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way75) return f0(T, S, ren, cam); if (!S.t75) tint75(T, S); if (S.lay75) { try { lay75(T, S); } catch (e) { W75.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R, lw0 = W30.lw; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W30.lw = lw0 * W75.pen * (W75.C.pen ? 1.25 : 1) * (S.pw89 == null ? 1 : S.pw89); W75.cur = S; const wb0 = W30.wob; if (W75.C.wob != null) W30.wob = W75.C.wob;
+  try { f0(T, S, ren, cam); if (S.a75) { const a0 = S.a48; S.a48 = S.a75; try { ink48(T, S, ren, cam); } catch (e) { W75.err = String(e && e.stack); } finally { S.a48 = a0; } } } finally { S.G.pl = pl; S.G.R = R0; W30.lw = lw0; W30.wob = wb0; W75.cur = null; } })(draw30);
 KIT.hyd75Fig = hyd75Fig; KIT.HYD75 = W75;
 /* behind the switch: Hydrogen's bench figure is the spirit at its stage (the jar keeps the old Hydrogen) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homh2' && KIT.hyd75 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = hyd75Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
