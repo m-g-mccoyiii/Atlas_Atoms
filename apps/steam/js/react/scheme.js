@@ -3649,6 +3649,10 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // (builder 44) Acid in its jar: the living breaker (kitart W44) does its own slow idle, so the jar does not squash it; it only turns a little.
   JLIFE.acid = (f0 => function (c, t) { let a = null; c.traverse(o => { if (!a && o.userData && o.userData.a35 && o.userData.a35.a44) a = o.userData.a35; }); if (!a) return f0(c, t); c.rotation.y = 0.12 * Math.sin(t * 0.5); })(JLIFE.acid);
   // ==== S44 END
+  // ==== S52 BEGIN
+  // (builder 52) Acid the sneak in its shelf jar at its stage (the form kitart W52 puts in the jar's big2) idles like Water's form does.
+  jarLife = (f0 => function (k, J, t, quick) { f0(k, J, t, quick); try { const c = k === 'acid' && J.j && J.j.userData.big2; if (c && c.visible) { let rg = null; c.traverse(o => { if (!rg && o.userData && o.userData.rig2 && o.userData.rig2.spirit) rg = o; }); if (rg) AA.rxKit.rigPlay(rg, 'rest', t * 0.9 + 3.3, { jar: true }); } } catch (e) { /* the jar never breaks the page */ } })(jarLife);
+  // ==== S52 END
   function drawInk(now) {
     const x = ink.x; x.clearRect(0, 0, IW, IH); x.textBaseline = 'alphabetic'; try { bleedMock(x); } catch (e) { /* a mock never breaks the page */ } if (BENCHV && LOSS.blank && st.mode === 'done' && !st.pass) { if (now - (st.doneT || now) > LOSS.end) { const nb = 9 * Math.sin(now / 260), n0 = px({ x: 4, z: 2 }), nx = [n0[0] + nb, n0[1]]; x.save(); x.translate(nx[0], nx[1]); x.scale(2.2, 2.2); x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.arc(-78, 0, 24, 0.9, 6.0); x.stroke(); const ex = -78 + 24 * Math.cos(6.0), ey = 24 * Math.sin(6.0); x.beginPath(); x.moveTo(ex - 16, ey - 6); x.lineTo(ex, ey); x.lineTo(ex + 6, ey - 17); x.stroke(); x.beginPath(); x.moveTo(-30, 0); x.lineTo(30, 0); x.lineTo(8, -20); x.moveTo(30, 0); x.lineTo(8, 20); x.stroke(); x.restore(); } ink.t.needsUpdate = true; return; } pageStains(x);
     if (st.mode !== 'shop') marginalia(x, now);
