@@ -6415,7 +6415,7 @@ const N96 = ['float H96(vec3 p) { p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3))
   'float N96(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);',
   '  return mix(mix(mix(H96(i), H96(i + vec3(1.0, 0.0, 0.0)), f.x), mix(H96(i + vec3(0.0, 1.0, 0.0)), H96(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),',
   '    mix(mix(H96(i + vec3(0.0, 0.0, 1.0)), H96(i + vec3(1.0, 0.0, 1.0)), f.x), mix(H96(i + vec3(0.0, 1.0, 1.0)), H96(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }'].join('\n');
-const VS96 = ['uniform float uT;\nuniform float uGrow;\nuniform float uDraw;\nuniform float uSpin;\nuniform float uSeed;\nuniform float uBreath;\nuniform float uLobe;\nuniform float uTall;',
+const VS96 = ['uniform float uT;\nuniform float uGrow;\nuniform float uDraw;\nuniform float uSpin;\nuniform float uSeed;\nuniform float uBreath;\nuniform float uLobe;\nuniform float uTall;\nuniform float uFl;\nuniform vec2 uLean;',
   'varying float vS;\nvarying float vSl;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying vec3 vO;', N96,
   /* the body: u round the axis, s from the bottom pole (0) to the tip (1); returns the place and (in w) how far along its own tongue the point is */
   'vec4 surf(float u, float s) { float th = 6.2832 * u + uSpin; vec3 d = vec3(cos(th), 0.0, sin(th));',
@@ -6423,44 +6423,51 @@ const VS96 = ['uniform float uT;\nuniform float uGrow;\nuniform float uDraw;\nun
   '  float n1 = N96(vec3(d.x * 1.3 + uSeed, s * 3.0 - uT * 1.5, d.z * 1.3)), n2 = N96(vec3(d.x * 2.9, s * 6.5 - uT * 2.7, d.z * 2.9 + uSeed));',
   '  float HN = (mix(2.3, 3.7, uGrow) + uTall) * (1.0 + 0.045 * sin(uBreath)), y = -1.0 + HN * pow(s, 1.15);',
   '  float r = pow(max(sin(min(3.14159 * pow(s, 0.62), 1.5708)), 0.0), 0.9) * pow(1.0 - smoothstep(0.3, 1.0, sl), 0.62) * (1.0 + 0.03 * sin(uBreath + 1.0));',
+  /* (builder 98) the small flames are not drops: a narrow foot, a belly low down, a pinched waist that wanders, a long pointed tongue */
+  '  if (uFl > 0.0) { float bf = pow(sin(3.14159 * pow(s, 0.6)), 1.3) * (1.0 - 0.4 * smoothstep(0.5, 1.0, s)), wz = (s - 0.52 - 0.07 * sin(uT * 2.3 + uSeed)) / 0.1; bf *= 1.0 - 0.4 * exp(-wz * wz); r = mix(r, 0.66 * bf * pow(1.0 - smoothstep(0.3, 1.0, sl), 0.62), uFl); }',
   '  float amp = smoothstep(0.14, 0.7, s); r *= 1.0 + amp * (1.05 * (n1 - 0.5) + 0.42 * (n2 - 0.5)) + 0.16 * (n2 - 0.5);',
   '  float th2 = smoothstep(0.0, 1.0, (uDraw * 1.75 - s) / 0.75); r *= mix(1.0, 0.06, th2); y += uDraw * uDraw * 2.2 * (0.25 + s);',
   '  vec2 ax = (vec2(N96(vec3(s * 1.5 - uT * 0.8, uSeed, 0.0)), N96(vec3(uSeed, s * 1.5 - uT * 0.8, 4.0))) - 0.5) * 1.5 * s * s;',
+  '  ax += uLean * s * s * HN * 0.6;',
   '  ax += d.xz * 0.5 * smoothstep(0.3, 1.0, s) * (1.0 - L) * uLobe * 2.0 * (1.0 - th2);',
   '  return vec4(d.x * r + ax.x, y, d.z * r + ax.y, sl); }',
   'void main() { float u = position.x, s = position.y; vec4 p = surf(u, s); vec3 pu = surf(u + 0.006, s).xyz - p.xyz, ps = surf(u, min(1.0, s + 0.006)).xyz - surf(u, max(0.0, s - 0.006)).xyz;',
   '  vec3 n = cross(ps, pu); n = length(n) > 1.0e-7 ? normalize(n) : vec3(0.0, 1.0, 0.0); vS = s; vSl = p.w; vO = p.xyz;',
   '  vec4 mv = modelViewMatrix * vec4(p.xyz, 1.0); vN = normalMatrix * n; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }'].join('\n');
-const FS96 = ['uniform float uT;\nuniform float uThick;\nuniform float uA;\nuniform float uSeed;\nuniform float uH;\nuniform float uDraw;\nuniform float uPale;',
+const FS96 = ['uniform float uT;\nuniform float uThick;\nuniform float uA;\nuniform float uSeed;\nuniform float uH;\nuniform float uDraw;\nuniform float uPale;\nuniform float uFl;',
   'varying float vS;\nvarying float vSl;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying vec3 vO;', N96,
   'void main() { float nv = abs(dot(normalize(vN), normalize(vV))), up = vO.y * 0.9 - uT * 1.7;',
   '  float a1 = N96(vec3(vO.x * 1.5 + uSeed, up, vO.z * 1.5)), a2 = N96(vec3(vO.x * 3.8, up * 2.3, vO.z * 3.8 + uSeed) + 7.0), gr = N96(vec3(gl_FragCoord.xy * (0.9 * 720.0 / uH), 3.0));',
   '  float tip = clamp(vSl, 0.0, 1.3), low = 1.0 - smoothstep(0.1, 0.5, vS + 0.14 * (a2 - 0.5));',
   /* the wash, cut at three depths: blue-violet at the rim, lighter blue where the eye looks into it, a pale heart low inside */
-  '  float core = smoothstep(0.42, 0.62, nv + 0.34 * (a1 - 0.5)), heart = smoothstep(0.66, 0.8, nv + 0.3 * (a1 - 0.5) + 0.25 * low - 0.3 * tip) * (1.0 - smoothstep(0.35, 0.7, vS));',
-  '  vec3 col = mix(vec3(0.30, 0.27, 0.85), vec3(0.41, 0.50, 0.97), core); col = mix(col, vec3(0.64, 0.79, 1.0), 0.7 * heart);',
-  '  col *= 0.86 + 0.14 * smoothstep(0.42, 0.56, a2 + 0.3 * (a1 - 0.5)); float rim = smoothstep(0.44, 0.2, nv + 0.1 * (a2 - 0.5)); col = mix(col, vec3(0.21, 0.17, 0.66), 0.6 * rim);',
+  /* (builder 98) three washes laid one in another, each with a hard wandering edge where it stopped and pooled, the paper's grain in the lighter ones (it read as glass while they ran smoothly into each other) */
+  '  float bx = nv + 0.30 * (a1 - 0.5) + 0.10 * (a2 - 0.5), e1 = 0.47, e2 = 0.67 + 0.12 * tip;',
+  '  float core = smoothstep(e1 - 0.02, e1 + 0.02, bx), mid = smoothstep(e2 - 0.02, e2 + 0.02, bx), heart = smoothstep(0.80, 0.84, bx + 0.22 * low - 0.3 * tip) * (1.0 - smoothstep(0.35, 0.7, vS));',
+  '  vec3 col = mix(vec3(0.31, 0.26, 0.84), vec3(0.42, 0.49, 0.96), core); col = mix(col, vec3(0.56, 0.67, 0.99), mid); col = mix(col, vec3(0.76, 0.86, 1.0), 0.8 * heart);',
+  '  float pool = max(1.0 - smoothstep(0.0, 0.035, abs(bx - e1)), 0.7 * (1.0 - smoothstep(0.0, 0.03, abs(bx - e2)))); col *= 1.0 - 0.2 * pool; col = mix(col, vec3(0.93, 0.92, 0.90), 0.2 * gr * (0.3 + 0.7 * core));',
+  '  float rim = smoothstep(0.40, 0.28, nv + 0.1 * (a2 - 0.5)); col = mix(col, vec3(0.22, 0.17, 0.66), 0.55 * rim);',
   '  col = mix(col, vec3(0.80, 0.88, 1.0), uPale * (0.35 + 0.5 * core)); float al;',
   '  if (gl_FrontFacing) { al = mix(0.4, 0.95, uThick); al *= 1.0 - (1.0 - uThick) * 0.72 * core * (1.0 - smoothstep(0.2, 0.6, vS)); }',
   '  else { col = mix(col, mix(vec3(0.40, 0.47, 0.95), vec3(0.80, 0.88, 1.0), low), 0.7); col = mix(col, vec3(0.95, 0.42, 0.24), 0.75 * (1.0 - smoothstep(0.0, 0.12, vS + 0.05 * (a1 - 0.5))) * (1.0 - smoothstep(0.0, 0.3, uDraw))); al = 0.93; }',
   /* the pen: the rim in loose broken strokes, and a few strokes inside that travel up with the tongues */
   '  float pen = smoothstep(0.25, 0.17, nv) * smoothstep(0.02, 0.07, nv) * smoothstep(0.3, 0.42, a2 + 0.2 * (a1 - 0.5));',
   '  float st = (1.0 - smoothstep(0.012, 0.03, abs(a1 - 0.5))) * smoothstep(0.52, 0.66, a2) * smoothstep(0.15, 0.4, vS) * (gl_FrontFacing ? 1.0 : 0.0);',
-  '  float ink = max(pen, 0.75 * st);',
+  '  float st2 = (1.0 - smoothstep(0.010, 0.026, abs(a2 - 0.47))) * smoothstep(0.50, 0.62, a1) * smoothstep(0.1, 0.35, vS) * (gl_FrontFacing ? 1.0 : 0.0);',
+  '  float ink = max(pen, max(0.85 * st, 0.7 * st2));',
   /* tips and glancing edges are thin and ragged, the paper shows in them */
-  '  float hi = smoothstep(0.28, 0.6, vS); al *= 1.0 - 0.9 * hi * smoothstep(0.6, 1.0, tip + 0.4 * (a1 - 0.5)); al *= mix(1.0, 0.6 + 0.6 * gr, hi * smoothstep(0.45, 0.9, tip));',
+  '  float hi = smoothstep(0.28, 0.6, vS); al *= 1.0 - 0.92 * hi * smoothstep(0.48, 0.98, tip + 0.45 * (a1 - 0.5)); al *= mix(1.0, 0.35 + 0.9 * gr, hi * smoothstep(0.35, 0.8, tip)); al *= 1.0 - 0.8 * uFl * smoothstep(0.3, 0.95, vS);',
   '  al *= smoothstep(0.0, 0.09, nv + 0.06 * (a2 - 0.5)); col = mix(col, vec3(0.11, 0.09, 0.34), 0.85 * ink); al = max(al, 0.86 * ink * (1.0 - smoothstep(0.75, 1.05, tip)));',
   '  gl_FragColor = vec4(col, clamp(al * uA, 0.0, 1.0)); }'].join('\n');
 function make96(T) { const NU = 56, NS = 44, pos = new Float32Array((NU + 1) * (NS + 1) * 3), idx = []; let k = 0;
   for (let j = 0; j <= NS; j++) for (let i = 0; i <= NU; i++) { pos[k++] = i / NU; pos[k++] = j / NS; pos[k++] = 0; }
   for (let j = 0; j < NS; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setIndex(idx);
-  const uni = sd => ({ uT: { value: 0 }, uGrow: { value: 1 }, uDraw: { value: 0 }, uSpin: { value: 0 }, uSeed: { value: sd }, uBreath: { value: 0 }, uLobe: { value: 1 }, uThick: { value: 1 }, uA: { value: 1 }, uH: { value: 720 }, uTall: { value: 0 }, uPale: { value: 0 } });
+  const uni = sd => ({ uT: { value: 0 }, uGrow: { value: 1 }, uDraw: { value: 0 }, uSpin: { value: 0 }, uSeed: { value: sd }, uBreath: { value: 0 }, uLobe: { value: 1 }, uThick: { value: 1 }, uA: { value: 1 }, uH: { value: 720 }, uTall: { value: 0 }, uPale: { value: 0 }, uFl: { value: 0 }, uLean: { value: new T.Vector2() } });
   const mat = (U, side) => { const m = new T.ShaderMaterial({ uniforms: U, vertexShader: VS96, fragmentShader: FS96, transparent: true, depthWrite: false, depthTest: true, side }); m.toneMapped = false; return m; };
   const mesh = (m, ro) => { const o = new T.Mesh(g, m); o.frustumCulled = false; o.renderOrder = ro; o.visible = false; o.castShadow = false; o.userData.plain = true; o.userData.nobox = true; return o; };
   const U = uni(3.7), B = { U, back: mesh(mat(U, T.BackSide), 19.2), front: mesh(mat(U, T.FrontSide), 32), lets: [], smoke: [], all: [], q: new T.Quaternion(), up: new T.Vector3(0, 1, 0), v: new T.Vector3(), x: new T.Vector3(), z: new T.Vector3() };
   { const u3 = uni(8.9); u3.uPale.value = 1; B.U3 = u3; B.heart = mesh(mat(u3, T.FrontSide), 19.3); }
-  for (let i = 0; i < 4; i++) { const u2 = uni(11.3 + 5.1 * i); u2.uLobe.value = 0; u2.uGrow.value = 0.25; u2.uThick.value = 0.55; B.lets.push({ U: u2, m: mesh(mat(u2, T.DoubleSide), 32.1) }); }
+  for (let i = 0; i < 4; i++) { const u2 = uni(11.3 + 5.1 * i); u2.uLobe.value = 0; u2.uFl.value = KIT.g98 === false ? 0 : 1; u2.uGrow.value = 0.25; u2.uThick.value = 0.55; B.lets.push({ U: u2, m: mesh(mat(u2, T.DoubleSide), 32.1) }); }
   const sg = new T.SphereGeometry(1, 14, 10);
   for (let i = 0; i < 3; i++) { const sm = new T.ShaderMaterial({ uniforms: { uA: { value: 0 } }, transparent: true, depthWrite: false,
       vertexShader: 'varying vec3 vN;\nvarying vec3 vV;\nvoid main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
@@ -6471,15 +6478,15 @@ function make96(T) { const NU = 56, NS = 44, pos = new Float32Array((NU + 1) * (
    grow 0..1, draw 0..1, thick 0..1 (the near wall), a (opacity), spin, breath (radians), H (the picture's height in pixels) */
 function up96(B, o) { const U = B.U, K = RK, hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
   const show = o.a > 0.004 && o.R > 1e-4; B.back.visible = B.front.visible = B.heart.visible = show; if (!show) { B.all.forEach(m => { m.visible = false; }); return; }
-  U.uT.value = o.t; U.uGrow.value = o.grow; U.uDraw.value = o.draw; U.uSpin.value = o.spin; U.uBreath.value = o.breath; U.uThick.value = o.thick; U.uA.value = o.a; U.uH.value = o.H || 720; U.uLobe.value = K.sm((o.grow - 0.3) / 0.5); U.uTall.value = o.tall || 0;
-  /* the pale heart: a smaller body low inside, behind the figure */ { const H = B.U3; H.uT.value = o.t * 1.2 + 9; H.uGrow.value = o.grow; H.uDraw.value = Math.min(1, o.draw * 1.3); H.uSpin.value = -0.8 * o.spin; H.uBreath.value = o.breath * 1.3 + 2; H.uThick.value = 1; H.uA.value = o.a * 0.9; H.uH.value = U.uH.value; H.uLobe.value = U.uLobe.value; H.uTall.value = 0.5 * (o.tall || 0); }
+  U.uT.value = o.t; U.uGrow.value = o.grow; U.uDraw.value = o.draw; U.uSpin.value = o.spin; U.uBreath.value = o.breath; U.uThick.value = o.thick; U.uA.value = o.a; U.uH.value = o.H || 720; U.uLobe.value = o.lobe != null ? o.lobe : K.sm((o.grow - 0.3) / 0.5); U.uTall.value = o.tall || 0; U.uFl.value = o.fl || 0; if (o.lean) U.uLean.value.copy(o.lean); else U.uLean.value.set(0, 0);
+  /* the pale heart: a smaller body low inside, behind the figure */ { const H = B.U3; H.uT.value = o.t * 1.2 + 9; H.uGrow.value = o.grow; H.uDraw.value = Math.min(1, o.draw * 1.3); H.uSpin.value = -0.8 * o.spin; H.uBreath.value = o.breath * 1.3 + 2; H.uThick.value = 1; H.uA.value = o.a * 0.9; H.uH.value = U.uH.value; H.uLobe.value = U.uLobe.value; H.uTall.value = 0.5 * (o.tall || 0); H.uFl.value = U.uFl.value; H.uLean.value.copy(U.uLean.value); }
   B.q.setFromUnitVectors(B.up, o.axis); [B.back, B.front].forEach(m => { m.position.copy(o.pos); m.quaternion.copy(B.q); m.scale.setScalar(o.R); }); B.heart.position.copy(o.pos).addScaledVector(o.axis, -0.36 * o.R); B.heart.quaternion.copy(B.q); B.heart.scale.setScalar(0.6 * o.R);
   B.x.set(1, 0, 0).applyQuaternion(B.q); B.z.set(0, 0, 1).applyQuaternion(B.q);
   const HN = 2.3 + 1.4 * o.grow + (o.tall || 0), tipY = (-1 + HN * 0.74) * o.R, live = K.sm((o.grow - 0.75) / 0.25) * (1 - K.sm(o.draw / 0.5));
   /* shed flamelets: born in the tongues, they rise, shrink and are gone */
   B.lets.forEach((l, i) => { const ph = o.t / 1.5 + i * 0.27, c = Math.floor(ph), p = ph - c, h1 = hash(c * 7 + i * 13 + 1), h2 = hash(c * 3 + i * 29 + 5), sc = o.R * (0.17 + 0.1 * h1) * K.sm(p / 0.2) * (1 - p) * live; l.m.visible = sc > o.R * 0.004; if (!l.m.visible) return;
     const sx = (h1 - 0.5) * 1.1 * o.R * (1 + 0.3 * p), sz = (h2 - 0.5) * 1.1 * o.R; l.m.position.copy(o.pos).addScaledVector(o.axis, tipY + o.R * (0.1 + 1.3 * p + 0.5 * h2)).addScaledVector(B.x, sx).addScaledVector(B.z, sz); l.m.quaternion.copy(B.q); l.m.scale.setScalar(sc);
-    l.U.uT.value = o.t + 3 * i; l.U.uSpin.value = o.spin + i; l.U.uA.value = o.a * (1 - 0.6 * p); l.U.uH.value = U.uH.value; });
+    l.U.uT.value = o.t + 3 * i; l.U.uSpin.value = o.spin + i; l.U.uA.value = o.a * (1 - 0.6 * p); l.U.uH.value = U.uH.value; l.U.uLean.value.set(0.3 * Math.sin(o.t * 2.1 + 2 * i), 0.25 * Math.cos(o.t * 1.7 + 3 * i)); });
   /* thin grey smoke off the tip */
   B.smoke.forEach((m, i) => { const ph = o.t / 2.6 + i / 3, c = Math.floor(ph), p = ph - c, h1 = hash(c * 5 + i * 17 + 2), a = 0.2 * K.sm(p / 0.25) * (1 - p) * live * o.a; m.visible = a > 0.004; if (!m.visible) return;
     const s = o.R * (0.1 + 0.26 * p); m.position.copy(o.pos).addScaledVector(o.axis, (-1 + HN) * o.R * 0.92 + o.R * 1.5 * p).addScaledVector(B.x, (h1 - 0.5) * 0.7 * o.R + 0.2 * o.R * Math.sin(o.t * 1.3 + i * 2)); m.quaternion.copy(B.q); m.scale.set(s, 1.9 * s, s); m.material.uniforms.uA.value = a; }); }
@@ -6545,6 +6552,30 @@ play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = 
 KIT.spirit26.play = play26;
 KIT.W97 = W97;
 // ==== W97 END
+// ==== W98 BEGIN
+// (builder 98) BRIMSTONE'S CHANGE OF STAGE: THE LAST FAULTS OUT (AA.rxKit.g98; false or ?g98=0 gives builder 97's back). Nothing new is shown.
+//  - the new form is held inside the fire's outline (every part above the lump drawn toward the middle, the arms short) until the fire has
+//    been drawn up thin; then it unfolds, eased;
+//  - when the clip is over the figure goes into its idle pose over ten frames (bones and root blended from the clip's last pose), so its
+//    drawn flames grow out of the lump and nothing changes in one frame.
+// (The small flames' own shape, the skin's wash bands and pen, are in W96's shaders behind the uniform uFl and in the text itself.)
+KIT.g98 = KIT.g98 == null ? !(typeof location !== 'undefined' && /[?&]g98=0/.test(String(location.search))) : KIT.g98;
+const W98 = { err: null };
+play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !KIT.g98 || !S.way69 || S.g28 === 31) return r;
+  try { const B = S.bones, T = S.T, evo = clip === 'evo' && o && o.e31 && on97(S), q = S.q0, e = q && q.e31, g = e && e.g97;
+    if (evo && g) { if (!g.pre && !(S.e31 && S.e31.gg.visible)) { const c = 0.3 + 0.7 * RK.sm((e.v - 0.95) / 0.75);
+        if (c < 0.999) { const X = fig82(S), J = S.G.J, P0 = X.F.P0; for (let j = 1; j < B.length; j++) { if (!B[j] || !J[j] || J[j].p[1] < X.lump) continue; const p = B[j].position; p.x = P0.x + (p.x - P0.x) * c; p.z = P0.z + (p.z - P0.z) * c; if (X.arm.has(j)) B[j].scale.multiplyScalar(0.5 + 0.5 * c); } }
+        /* the clip's last pose is kept */ const Z = S.b98 || (S.b98 = { P: [], Q: [], C: [], rp: new T.Vector3(), rr: new T.Vector3(), rs: 1, q: new T.Quaternion() }); Z.n = 0; Z.live = true;
+        for (let j = 0; j < B.length; j++) { if (!B[j]) continue; (Z.P[j] || (Z.P[j] = new T.Vector3())).copy(B[j].position); (Z.Q[j] || (Z.Q[j] = new T.Quaternion())).copy(B[j].quaternion); (Z.C[j] || (Z.C[j] = new T.Vector3())).copy(B[j].scale); }
+        Z.rp.copy(S.root.position); Z.rr.set(S.root.rotation.x, S.root.rotation.y, S.root.rotation.z); Z.rs = S.root.scale.x; } }
+    else if (clip !== 'evo' && S.b98 && S.b98.live) { const Z = S.b98, k = RK.sm((Z.n + 1) / 11); Z.n++; if (Z.n >= 10) Z.live = false;
+      for (let j = 0; j < B.length; j++) { if (!B[j] || !Z.P[j]) continue; B[j].position.lerpVectors(Z.P[j], B[j].position, k); Z.q.copy(Z.Q[j]).slerp(B[j].quaternion, k); B[j].quaternion.copy(Z.q); B[j].scale.lerpVectors(Z.C[j], B[j].scale, k); }
+      const R = S.root; R.position.lerpVectors(Z.rp, R.position, k); R.rotation.x = Z.rr.x + (R.rotation.x - Z.rr.x) * k; { /* the turn is finished, not cut: the short way round to where the idle faces */ const y1 = R.rotation.y, y0 = Z.rr.y - 2 * PI * Math.round((Z.rr.y - y1) / (2 * PI)); R.rotation.y = y0 + (y1 - y0) * k; } R.rotation.z = Z.rr.z + (R.rotation.z - Z.rr.z) * k; R.scale.setScalar(Z.rs + (R.scale.x - Z.rs) * k); W98.blend = Z.n; }
+    else if (S.b98 && clip === 'evo') S.b98.live = false;
+  } catch (x) { W98.err = String(x && x.stack); } return r; })(play26);
+KIT.spirit26.play = play26;
+KIT.W98 = W98;
+// ==== W98 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
