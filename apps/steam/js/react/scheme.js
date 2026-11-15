@@ -5039,18 +5039,21 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     solve(); let mol = null; try { if (center && center.group) { S59.box.setFromObject(center.group); if (!S59.box.isEmpty()) mol = S59.box.clone(); } } catch (x) { mol = null; }
     /* its bank is wide: it keeps clear of the molecule by the bank's half-width */ const bw = () => Math.max(1.1 * R, 1.05 * SP.G.pl.rx * unit * E.s1 * F);
     if (mol && xc + bw() > mol.min.x && xc - bw() < mol.max.x && zc + R > mol.min.z && zc - R < mol.max.z) { xc = mol.min.x - bw() - 0.05 * R; solve(); if (xc + bw() > mol.min.x) { xc = mol.min.x - bw() - 0.05 * R; } }
-    v.set(xc - R, py, zc).project(cam); if (v.x < -0.9) { xc += (-0.9 - v.x) * R / 0.667 * 1.0; }
+    /* the bank inside the screen: if it cannot lie between the screen's edge and the molecule, the form is made smaller till it does */
+    { const ndc = x => { v.set(x, py, zc).project(cam); return v.x; }, pu = Math.max(1e-4, ndc(xc + 1) - ndc(xc)), xL = xc + (-0.92 - ndc(xc)) / pu, xR = xc + (0.92 - ndc(xc)) / pu, lim = mol && xc < mol.min.x ? mol.min.x - 0.05 * R : xR;
+      if (xc - bw() < xL) { const room = lim - xL; if (2 * bw() > room) F *= Math.max(0.78, room / (2 * bw())); xc = Math.min(xL + bw(), lim - bw()); } }
     E.c59 = { x: xc, z: zc, y: py, F, R, Hc: Hu * E.s1 * F, unit, dir: xc >= HOMP.x ? 1 : -1, pg: [SHP.x0 + 0.5, SHP.x1 - 0.5, -22.5, SHP.z1 - 0.3], mol: mol ? [mol.min.x, mol.max.x, mol.min.z, mol.max.z].map(x => +x.toFixed(2)) : null }; E.k59 = 1; E.f59 = {}; };
   /* the whole form stays in the screen: while it is at the middle it is made a little smaller if any of it (above the page) would leave the middle 0.88 up and down, 0.94 across */
   const s59Fit = (E, fig) => { if (!fig || !fig.root || !fig.root.visible) return; const v = S59.v, B = fig.bones, J = fig.G.J; let hi = -9, xl = 9, xh = -9; fig.root.updateWorldMatrix(true, true); const ws = fig.root.getWorldScale(S59.v2).y;
     for (let j = 1; j < B.length; j += 1) { B[j].getWorldPosition(v); if (v.y < E.c59.y + 0.05) continue; const r = J[j].r * ws * Math.max(0.2, B[j].scale.y); v.y += r * 0.9; v.project(cam); if (v.y > hi) hi = v.y; if (v.x < xl) xl = v.x; if (v.x > xh) xh = v.x; }
-    if (hi > 0.88 || xl < -0.94 || xh > 0.94) E.k59 = Math.max(0.6, E.k59 * 0.985); E.box59 = [xl, hi, xh].map(x => +x.toFixed(3)); };
-  /* the tide: soft fog lying on the surfaces along its way (S57's pieces), a cold damp on the paper going out only, so the page is clean after */
+    /* too tall: a little smaller; its wide bank off a side: it slides over instead (it may then lie in front of the molecule's edge) */
+    if (hi > 0.88) E.k59 = Math.max(0.6, E.k59 * 0.985); const pu = 0.2667 / Math.max(1e-3, E.c59.R); if (xl < -0.94 && xh < 0.9) E.c59.x += 0.35 * (-0.94 - xl) / pu; else if (xh > 0.94 && xl > -0.9) E.c59.x -= 0.35 * (xh - 0.94) / pu; else if (xl < -0.94 || xh > 0.94) E.k59 = Math.max(0.6, E.k59 * 0.985); E.box59 = [xl, hi, xh].map(x => +x.toFixed(3)); };
+  /* the tide: soft fog lying on the surfaces along its way (S57's pieces), rime on the wood going out only (none on the paper, so the page is clean after) */
   const s59Tide = (now, x, z, R, back) => { if (!S57.tf) s57Init(); const L = S59.last; if (!L) { S59.last = { x, z, n: 0, fx: x, fz: z }; return; } const mv = Math.hypot(x - L.x, z - L.z); if (mv < 0.3 * R) return;
     const dx = (x - L.x) / mv, dz = (z - L.z) / mv, k = s27K(x, z, R), edge = 4 * k * (1 - k), onP = k > 0.5, col = onP ? 0xd4d9ea : 0xf2f4fb, a = (onP ? 0.45 : 0.72) * (1 + 0.4 * edge), life = back ? 1500 : 2600; L.n++;
     s57Puff(now, x - dx * 0.3 * R, s57Y(x, z) + 0.04 + 0.12 * edge, z - dz * 0.3 * R, R * (0.9 + 0.3 * edge), life, { gr: 0.8, a, col, vx: -dz * 0.2 * R, vz: dx * 0.2 * R, fi: 0.08, ho: 0.3 });
     const sd = L.n % 2 ? 1 : -1; s57Puff(now, x - dx * 0.8 * R - dz * sd * 0.7 * R, s57Y(x, z) + 0.03, z - dz * 0.8 * R + dx * sd * 0.7 * R, R * 0.7, life * 0.8, { gr: 0.7, a: a * 0.8, col, vx: -dz * sd * 0.5 * R, vz: dx * sd * 0.5 * R, fi: 0.1, ho: 0.3 });
-    if (!back && Math.hypot(x - L.fx, z - L.fz) > 0.9 * R) { s57Mark(now, x - dx * 0.5 * R, z - dz * 0.5 * R, R * (onP ? 0.9 : 0.65), !onP, onP ? 3000 : 4200); L.fx = x; L.fz = z; } L.x = x; L.z = z; };
+    if (!back && !onP && Math.hypot(x - L.fx, z - L.fz) > 0.9 * R) { s57Mark(now, x - dx * 0.5 * R, z - dz * 0.5 * R, R * 0.65, true, 2600); L.fx = x; L.fz = z; } L.x = x; L.z = z; };
   const s59Frame = now => { const E = R21.evo, SP = s26Fig(), K = AA.rxKit, e = E && E.e59;
     if (!E || !e || !SP || !SP.way49 || HEVO.done || K.evo59 === false) { if (S59.was && !R21.evo) { const L = S59.was.L; S59.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s59Lamp(now, null); return; }
     S59.was = E; dirty = true; if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; if (S27.s1 && e.u >= e.c[1] && e.u < e.c[5]) { S27.s1.visible = false; S27.s2.visible = false; } } if (S27.ring) S27.ring.visible = false;

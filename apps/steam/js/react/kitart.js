@@ -3719,7 +3719,7 @@ function ph59(t, o) { const P = PAR59[Math.max(2, Math.min(5, o.to | 0))], b = P
   e.thin = u < c[2] ? 0 : u < c[3] ? sm52((e.ga - 0.12) / 0.8) : 1;
   e.cut = u < c[4] ? 1 : 1 - sm52((e.v - 0.1) / P.rv);
   e.flash = u >= c[4] ? Math.exp(-(u - c[4]) / 0.12) : 0;
-  e.glow = u < c[1] ? 0 : u < c[2] ? 0.2 * e.well : u < c[3] ? 0.2 + 0.6 * sm52(e.ga / 0.8) : u < c[4] ? 0.8 + 0.7 * e.pulse : (0.8 + 1.4 * e.flash) * (1 - sm52(e.v / 0.22));
+  e.glow = u < c[1] ? 0 : u < c[2] ? 0.2 * e.well : u < c[3] ? 0.2 + 0.6 * sm52(e.ga / 0.8) : u < c[4] ? 0.8 + 1.1 * e.pulse : (0.8 + 1.4 * e.flash) * (1 - sm52(e.v / 0.22));
   e.fern = u < c[2] ? 0 : sm52((e.ga - 0.04) / 0.72);
   e.melt = u < c[5] ? 0 : sm52((e.home - P.lin) / 0.5);
   e.motes = u < c[3] ? 0 : u < c[4] ? sm52(e.wo / rise) : 1 - sm52(e.v / 0.3);
@@ -3736,7 +3736,7 @@ function face59(e, old, st) { const z = {}, P = e.P, dir = e.dir || -1;
   if (e.u < e.c[5]) { const v = e.v, op = sm52((v - 0.5) / 0.06), hd = pl52(v, 0.6, 0.76, 0.05), sv = sm52((v - 0.78) / 0.06), lid = sm52((v - 0.88) / 0.06);
     z.blink = 1 - op; z.sink = 0.35 * (1 - sm52((v - 0.12) / 0.45)); z.wide = 0.45 * pl52(v, 0.5, 0.62, 0.04) + 0.35 * pl52(v, 0.78, 0.9, 0.03);
     z.looky = -0.85 * hd + 0.15 * sv; z.lookx = 0.3 * Math.sin((v - 0.6) * 25) * hd - 0.5 * dir * lid; z.nod = 0.35 * hd; z.bow = 0.05 * hd + 0.06 * sv; z.brow = 0.35 * pl52(v, 0.78, 0.92, 0.04); z.lidx = 0.35 * lid; z.hturn = 0.2 * dir * lid;
-    if (st === 5) { const bw = 1 - 0.5 * sm52((v - 0.7) / 0.3); z.bow += 0.16 * bw; z.nod += 0.35 * bw; }
+    if (st === 5) { const bw = 1 - 0.6 * sm52((v - 0.62) / 0.3); z.bow += 0.14 * bw; z.nod += 0.35 * bw; }
     if (st === 4) z.sq = 0.07 * pl52(v, 0.42, 0.74, 0.1);
     if (st === 2) z.sq = 0.06 * pl52(v, 0.6, 0.75, 0.05);
     return z; }
@@ -3824,7 +3824,7 @@ function stage59(S, X, e, o) { const now = (typeof performance !== 'undefined' ?
     const rf = 1 - e.cut, a = 0.97 * sm52((rise - 0.04 * q.k) / 0.25) * (1 - sm52((din - 0.5) / 0.5)) * (1 - sm52((rf - (1 - q.hh) + 0.05) / 0.3)); q.o = a; m.visible = a > 0.01 && !!cam; if (!m.visible) return;
     q.x = cW.x + Math.cos(q.a) * rr + wob; q.y = C.y + UY59 * (hh + 0.4 * r); q.z = cW.z + Math.sin(q.a) * rr * 0.6 + UZ59 * (hh + 0.4 * r); q.r = r; m.position.set(q.x, q.y, q.z); m.quaternion.copy(cam.quaternion); m.rotateZ(q.h * 6 + 0.15 * Math.sin(X.tf * 0.3 + i)); m.scale.set(2.3 * r, 2.1 * r, 1); m.material.opacity = a; });
   /* the block's cold glow, its light on the page, the flash and the ring of frost light at the crack */
-  const gl = e.glow; X.glow.visible = gl > 0.01 && !!cam; if (X.glow.visible) { X.glow.position.copy(X.bp); X.glow.quaternion.copy(cam.quaternion); const s = R * (0.35 + 0.45 * gl); X.glow.scale.set(s, s, 1); X.glow.material.opacity = Math.min(0.9, 0.75 * gl); }
+  const gl = e.glow; X.glow.visible = gl > 0.01 && !!cam; if (X.glow.visible) { X.glow.position.copy(X.bp); X.glow.quaternion.copy(cam.quaternion); const s = R * (0.35 + 0.5 * gl); X.glow.scale.set(s, s, 1); X.glow.material.opacity = Math.min(0.95, 0.85 * gl); }
   X.pg.visible = gl > 0.01; if (X.pg.visible) { X.pg.position.set(cW.x, C.y + 0.03, cW.z); const s = R * (2.2 + 1.2 * gl); X.pg.scale.set(s * 1.2, 1, s); X.pg.material.opacity = 0.3 * Math.min(1, gl); }
   X.flash.visible = e.flash > 0.01 && !!cam; if (X.flash.visible) { X.flash.position.copy(X.bp); X.flash.quaternion.copy(cam.quaternion); const s = R * (0.6 + 1.6 * (1 - e.flash)); X.flash.scale.set(s, s, 1); X.flash.material.opacity = e.flash; }
   X.ring.visible = e.ring > 0 && e.ring < 1; if (X.ring.visible) { const s = 2 * R * (0.6 + P.fog * 1.3 * sm52(e.ring)); X.ring.position.set(cW.x, C.y + 0.04, cW.z); X.ring.scale.set(s, 1, s * 0.92); X.ring.material.opacity = 0.95 * (1 - sm52(e.ring)); }
