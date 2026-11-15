@@ -2682,66 +2682,138 @@ function jar44(T, g) { const U = g.userData;
 if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'acid' && KIT.acid35 === 'a' && KIT.acid44 !== false && T && T.SkinnedMesh) { try { jar44(T, j); } catch (e) { W44.err = String(e && e.stack); } } return j; })(KIT.jar);
 // ==== W44 END
 // ==== W48 BEGIN
-// (builder 48) ACID AS A SPIRIT, three versions of stage 3 (AA.rxKit.acid48 = 'a' | 'b' | 'c', or ?a48=a on the page; off by default). Stills only.
-// The owner rejected the wave ("a spirit like Water"). So this is built and drawn the way Water is, by Water's own code: each version is a set of
-// numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes it one closed skin on joints, fig26 gives it the face and the drops,
-// set30 the pen and the wash. What is Acid's own: the shapes (lean, pointed, a flame of a head, long arms that end in three sharp fingers; every
-// finger is a limb that runs down the same arm and parts from it at the hand), the wash in green (the blue of F30 is changed for green in the
-// compiled shader, nothing else), slanted eyes, strokes the pen adds (o.pen: teeth and marks laid on the skin, fume in the air above it, each
-// tied to a joint), licks of acid standing up from the pool's edge, beads of fizz, and the eaten wood under it (etch35).
-//  a the sneak: lean and bent like a flame, craning toward the page, one hand out to take, the other raised with its claws spread
-//  b the glutton: squat, all head and grin, teeth, two big grabbing hands held up
-//  c the countess: tall, a long neck, a small head with a crest swept back, one hand raised in a pinch, the other hanging, sleeves that drip
-KIT.acid48 = KIT.acid48 == null ? ((typeof location !== 'undefined' && (/[?&]a48=([abc])/.exec(String(location.search)) || [])[1]) || null) : KIT.acid48;
-const W48 = { geo: {}, figs: [], err: null, ways: { a: 'the sneak', b: 'the glutton', c: 'the countess' }, ROLE: { c: { chest: 5, neck: 7, head: 8, hair: 11 } }, TARGET: 7000, fl: 1.35,
+// (builder 48, five stages by builder 50) ACID AS A SPIRIT: "the sneak", the owner's pick (AA.rxKit.acid48 = 'a', or ?a48=a on the page; off by default).
+// Built and drawn the way Water is, by Water's own code: each stage is a set of numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes
+// it one closed skin on joints, fig26 gives it the face and the drops, set30 the pen and the wash. What is Acid's own: the shapes (lean, a flame of a
+// head, long arms ending in three long pointed fingers; every finger is a limb that runs down the same arm and parts from it at the hand), the wash
+// in green (the blues of F30 changed in the compiled shader), slanted eyes, the pen's own strokes (o.pen: teeth on the skin, fume and fizz in the air,
+// each tied to a joint), licks of acid standing up from the pool's edge, and a ragged pit eaten into the wood all round the pool (etch48).
+//  1 the spark: a small flame-headed drop peeking over the lip of its pit, only slanted eyes and two sets of fingertips showing
+//  2 the imp: up to its waist, hunched forward, claws steepled in front of its chest, a sharp toothy grin
+//  3 the sneak: lean and bent like a flame, one long arm reaching for the page with fingers spread, the other claw raised
+//  4 the fiend: tall and hooked over, head hung toward the page, long arms spread wide with long dripping fingers, a tall curling flame
+//  5 the devourer: tall, lean and regal, a crown of five flames, a wide thin grin with drip teeth, arms raised, sleeves of acid pouring into a wide pit
+KIT.acid48 = KIT.acid48 == null ? ((typeof location !== 'undefined' && (/[?&]a48=(a)/.exec(String(location.search)) || [])[1]) || null) : KIT.acid48;
+const W48 = { geo: {}, figs: [], err: null, ways: { a: 'the sneak' }, TARGET: [0, 5200, 6200, 7000, 7600, 8400], benchY: 0.03,
+  ROLE: [null, { chest: 3, neck: 4, head: 5, hair: 9 }, { chest: 3, neck: 5, head: 6, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 7, head: 8, hair: 12 }, { chest: 5, neck: 6, head: 7, hair: 11 }],
   C: { lite: [0.68, 0.90, 0.45], edge: [0.35, 0.66, 0.21], shade: [0.27, 0.53, 0.23], margin: [0.62, 0.86, 0.47], lid: 0x9fd07e } };
+/* a long pointed finger leaving the hand along d: three points, thick at the root, a needle at the tip, bent at the end by b */
+const fin48 = (d, L, r0, b) => { const n = Math.hypot(d[0], d[1], d[2]) || 1, u = d.map(v => v / n), bb = b || [0, 0, 0]; return [0.36, 0.7, 1].map((t, i) => [u[0] * L * t + bb[0] * t * t, u[1] * L * t + bb[1] * t * t, u[2] * L * t + bb[2] * t * t, [r0, r0 * 0.6, 0.014][i]]); };
 /* an arm that ends in fingers: one limb a finger, all of them the same down to the hand */
-const arm48 = (k, th, r0, path, rad, fingers, ex) => { const h = path[path.length - 1]; return fingers.map(fg => Object.assign({ k, th, r0, ey: 1.25, path: path.concat(fg.map(q => [h[0] + q[0] * W48.fl, h[1] + q[1] * W48.fl, h[2] + q[2] * W48.fl])), rad: rad.concat(fg.map(q => q[3])) }, ex || {})); };
-/* a lick of acid standing up from the pool: it leaves the body low in front (or behind) and runs out under the pool to its edge */
-const lick48 = (front, pts, rad) => ({ k: 4.6, th: front ? PI / 2 : -PI / 2, r0: 0.2, path: pts, rad });
+const arm48 = (k, th, r0, path, rad, fingers, ex) => { const h = path[path.length - 1]; return fingers.map(fg => Object.assign({ k, th, r0, ey: 1.25, path: path.concat(fg.map(q => [h[0] + q[0], h[1] + q[1], h[2] + q[2]])), rad: rad.concat(fg.map(q => q[3])) }, ex || {})); };
+/* a lick of acid standing up from the pool: it leaves the body low and runs out under the pool to its edge */
+const lick48 = (th, pts, rad) => ({ k: 4.6, th, r0: 0.2, path: pts, rad });
+/* a ring of licks standing all round the pool's edge, so the pool is ragged and boiling, not a smooth round puddle: [angle, height] each */
+const licks48 = (R, Rz, rf, sc, list) => list.map(q => { const c = Math.cos(q[0]), s = Math.sin(q[0]), h = q[1], ox = R - rf, oz = Rz - rf * 0.85, P = (t, y) => [c * ox * t, y, s * oz * t];
+  return lick48(q[0], [P(0.35, -0.1), P(0.72, -0.1), P(0.84, 0.25 * h), P(0.88, 0.62 * h), P(0.85, h)], [0.15, 0.13, 0.1, 0.055, 0.018].map(r => r * sc)); });
+/* a tongue of flame leaving the head: the fork that makes the head a flame and not a drop */
+const tongue48 = (k, th, path, sc) => ({ k, th, r0: 0.16 * sc, ey: 1.2, path, rad: [0.13, 0.09, 0.05, 0.014].map(r => r * sc) });
 /* a thread of fume: it rises and curls over */
-const fume48 = (x, y, z, h, sd) => Array.from({ length: 12 }, (_, i) => { const t = i / 11, a = t * 4.4; return [x + sd * h * (0.16 * Math.sin(a) * (0.4 + t) + 0.1 * t), y + h * (t * 0.9 + 0.1 * (1 - Math.cos(a)) * t), z]; });
-const SPEC48 = {
-  a: () => ({ keys: pool(0, 0, 1.4, 1.05, 0.36, 0.31).concat([[-0.06, 0.7, 0, 0.26, 0.23], [-0.16, 1.2, 0.02, 0.2, 0.18], [-0.08, 1.68, 0.08, 0.26, 0.2], [0.1, 2.05, 0.16, 0.4, 0.25], [0.22, 2.27, 0.24, 0.15, 0.14], [0.36, 2.6, 0.32, 0.48, 0.43], [0.34, 2.93, 0.28, 0.37, 0.35],
-      [0.26, 3.14, 0.2, 0.23, 0.22], [0.12, 3.32, 0.12, 0.16, 0.15], [-0.05, 3.5, 0.06, 0.11, 0.105], [-0.1, 3.7, 0.02, 0.07, 0.07], [0.02, 3.86, 0, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.4, 1.05], etch: 2.05,
-    limbs: arm48(9, 0, 0.18, [[0.3, -0.25, 0.2], [0.62, -0.42, 0.55], [0.8, -0.5, 0.75]], [0.1, 0.085, 0.11], [[[0.2, 0.12, 0.1, 0.055], [0.42, 0.22, 0.18, 0.02]], [[0.24, -0.02, 0.18, 0.055], [0.5, -0.06, 0.34, 0.02]], [[0.16, -0.16, 0.2, 0.055], [0.3, -0.38, 0.36, 0.02]]])
-      .concat(arm48(9, PI, 0.18, [[-0.3, -0.3, 0.1], [-0.44, 0.0, 0.3], [-0.38, 0.3, 0.4]], [0.1, 0.085, 0.11], [[[0.05, 0.2, 0.02, 0.055], [0.16, 0.4, 0.0, 0.02]], [[-0.06, 0.23, 0.04, 0.055], [-0.05, 0.47, 0.02, 0.02]], [[-0.16, 0.18, 0.04, 0.055], [-0.27, 0.37, 0.04, 0.02]]]))
-      .concat([lick48(true, [[0.5, -0.1, 0.2], [0.95, -0.1, 0.42], [1.12, 0.12, 0.5], [1.2, 0.4, 0.52], [1.14, 0.62, 0.52]], [0.16, 0.14, 0.1, 0.06, 0.02]), lick48(false, [[-0.5, -0.1, -0.1], [-1.0, -0.1, -0.2], [-1.2, 0.1, -0.24], [-1.3, 0.34, -0.26], [-1.26, 0.5, -0.26]], [0.16, 0.14, 0.09, 0.05, 0.02])]),
-    face: { c: [0.36, 2.64, 0.32], d: [0.22, -0.12, 1], k: 1.08, er: 1.25, dx: 0.2, brow: { y: 0.19, len: 0.19, ang: [0.6, 0.6], arch: 0, r: 0.024 }, mouth: { w: 0.25, d: 0.1, y: -0.2, tilt: 0.06, tick: 1, r: 0.028 } }, eye: { sy: 0.55, slant: 0.5 },
-    pen: [{ air: fume48(0.04, 3.94, 0, 0.9, 1), w: 0.6 }, { air: fume48(-0.32, 3.76, 0, 0.6, -1), w: 0.5 },
-      { air: [[1.3, 0.8, 0.5], [1.38, 0.95, 0.5], [1.3, 1.08, 0.5], [1.36, 1.2, 0.5]], w: 0.45 }, { air: [[-1.42, 0.66, -0.26], [-1.5, 0.8, -0.26], [-1.42, 0.94, -0.26]], w: 0.45 }],
-    drops: [[1.5, 0.3, 0.3, 0.05, 1], [1.72, 0.52, 0.2, 0.032, 1], [-1.05, 0.26, 0.75, 0.045, 1], [-0.82, 0.5, 0.86, 0.03, 1], [0.5, 0.22, 1.02, 0.04, 1], [1.62, 1.2, 1.1, 0.04, 1], [1.62, 0.92, 1.1, 0.028, 1], [-1.9, 0, 0.3, 0.05], [1.95, 0, -0.2, 0.04]] }),
-  b: () => ({ keys: pool(0, 0, 1.8, 1.3, 0.8, 0.66).concat([[0, 0.62, 0, 0.78, 0.64], [0, 1.0, 0.03, 0.8, 0.64], [0, 1.36, 0.06, 0.76, 0.6], [0, 1.66, 0.1, 0.72, 0.54], [0, 1.86, 0.12, 0.62, 0.5], [0, 2.24, 0.16, 0.8, 0.64], [0, 2.62, 0.12, 0.62, 0.52],
-      [0.02, 2.86, 0.06, 0.38, 0.32], [0.08, 3.08, 0.02, 0.24, 0.21], [0.2, 3.3, 0, 0.15, 0.14], [0.4, 3.46, 0, 0.085, 0.085], [0.6, 3.44, 0, 0.05, 0.05], [0.7, 3.3, 0, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.8, 1.3], etch: 2.5,
-    limbs: arm48(9, 0.15, 0.3, [[0.3, 0.1, 0.1], [0.52, 0.4, 0.2], [0.64, 0.7, 0.28]], [0.17, 0.15, 0.2], [[[-0.14, 0.26, 0, 0.085], [-0.26, 0.52, 0, 0.03]], [[0.04, 0.3, 0.02, 0.085], [0.07, 0.6, 0.02, 0.03]], [[0.2, 0.2, 0.04, 0.085], [0.42, 0.4, 0.04, 0.03]]])
-      .concat(arm48(9, PI - 0.15, 0.3, [[-0.32, 0.0, 0.14], [-0.6, 0.2, 0.3], [-0.76, 0.44, 0.4]], [0.17, 0.15, 0.2], [[[0.12, 0.27, 0, 0.085], [0.22, 0.54, 0, 0.03]], [[-0.06, 0.3, 0.02, 0.085], [-0.1, 0.6, 0.02, 0.03]], [[-0.22, 0.18, 0.04, 0.085], [-0.46, 0.34, 0.04, 0.03]]]))
-      .concat([lick48(true, [[0.7, -0.1, 0.2], [1.3, -0.1, 0.3], [1.5, 0.12, 0.34], [1.6, 0.4, 0.36], [1.54, 0.6, 0.36]], [0.18, 0.16, 0.11, 0.06, 0.02]), lick48(false, [[-0.7, -0.1, -0.1], [-1.35, -0.1, -0.2], [-1.6, 0.1, -0.24], [-1.7, 0.36, -0.26]], [0.18, 0.16, 0.1, 0.02])]),
-    face: { c: [0, 2.3, 0.16], d: [0, -0.1, 1], k: 1.25, er: 1.15, dx: 0.27, brow: { y: 0.2, len: 0.2, ang: [0.5, 0.5], arch: 0, r: 0.022 }, mouth: { w: 0.4, d: 0.13, y: -0.2, r: 0.026 } }, eye: { sy: 0.6, slant: 0.42 },
-    pen: [{ c: [0, 2.3, 0.16], d: [0, -0.1, 1], pts: Array.from({ length: 13 }, (_, i) => { const s = (i - 6) / 6; return [s * 0.5, -0.25 - 0.1625 * (1 - s * s) - 0.2 * (1 - s * s)]; }), w: 0.8, o: { smooth: 1, wob: 0.5, min: 3 } },
-      { c: [0, 2.3, 0.16], d: [0, -0.1, 1], pts: Array.from({ length: 9 }, (_, i) => { const s = (i - 4) / 4; return [s * 0.42, -0.25 - 0.1625 * (1 - s * s) - (i % 2 ? 0.17 : 0)]; }), w: 0.7, o: { smooth: 0, wob: 0.3, min: 3, trim: 0 } },
-      { air: fume48(0.74, 3.36, 0, 0.8, 1), w: 0.6 }, { air: fume48(-0.5, 3.12, 0, 0.55, -1), w: 0.5 }, { air: [[1.72, 0.76, 0.36], [1.8, 0.9, 0.36], [1.72, 1.04, 0.36]], w: 0.45 }],
-    drops: [[1.9, 0.28, 0.5, 0.055, 1], [2.14, 0.5, 0.36, 0.035, 1], [-1.5, 0.26, 0.9, 0.05, 1], [-1.26, 0.5, 1.02, 0.032, 1], [0.6, 0.22, 1.3, 0.045, 1], [-2.4, 0, 0.3, 0.055], [2.5, 0, -0.2, 0.045]] }),
-  c: () => ({ keys: pool(0, 0, 1.3, 1.0, 0.36, 0.31).concat([[0.02, 0.85, 0, 0.3, 0.25], [0.08, 1.55, 0, 0.25, 0.22], [0.04, 2.2, 0.03, 0.31, 0.24], [0.02, 2.72, 0.06, 0.56, 0.27], [0.06, 2.98, 0.08, 0.15, 0.15], [0.16, 3.36, 0.14, 0.12, 0.12], [0.22, 3.74, 0.22, 0.44, 0.41],
-      [0.18, 4.04, 0.16, 0.35, 0.34], [0.06, 4.24, 0.06, 0.21, 0.2], [-0.14, 4.38, -0.04, 0.13, 0.125], [-0.42, 4.45, -0.1, 0.08, 0.08], [-0.7, 4.34, -0.14, 0, 0]]),
-    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.3, 1.0], etch: 1.9,
-    limbs: arm48(9, 0, 0.18, [[0.34, -0.42, 0.1], [0.68, -0.06, 0.25], [0.78, 0.3, 0.3]], [0.1, 0.085, 0.1], [[[-0.1, 0.2, 0.05, 0.055], [-0.02, 0.4, 0.08, 0.02]], [[0.1, 0.2, 0.05, 0.055], [0.03, 0.4, 0.08, 0.02]], [[0.2, 0.06, 0, 0.055], [0.42, 0.16, 0, 0.02]]])
-      .concat([{ k: 9, th: PI, r0: 0.18, path: [[-0.4, -0.3, 0.05], [-0.72, -0.72, 0.1], [-0.5, -1.0, 0.2], [-0.2, -1.12, 0.26]], rad: [0.1, 0.09, 0.085, 0.1] },
-        { k: 9, th: 0, r0: 0.18, path: [[0.34, -0.42, 0.1], [0.5, -0.5, 0.14], [0.56, -0.95, 0.14], [0.52, -1.4, 0.14], [0.55, -1.75, 0.14]], rad: [0.1, 0.11, 0.1, 0.06, 0.02], flat: [0, 0, 1], fk: s => 0.6 },
-        lick48(true, [[0.45, -0.1, 0.2], [0.9, -0.1, 0.4], [1.05, 0.12, 0.46], [1.13, 0.42, 0.48], [1.07, 0.66, 0.48]], [0.15, 0.13, 0.09, 0.05, 0.02])]),
-    face: { c: [0.22, 3.78, 0.22], d: [0.2, -0.2, 1], k: 1.0, er: 1.2, dx: 0.2, brow: { y: 0.2, len: 0.2, ang: [0.42, 0.42], arch: 0.02, r: 0.024 }, mouth: { w: 0.15, d: 0.05, y: -0.22, tilt: 0.04, tick: 1, r: 0.03 } }, eye: { sy: 0.5, slant: 0.45 },
-    pen: [{ air: fume48(-0.76, 4.4, -0.14, 0.75, -1), w: 0.6 }, { air: fume48(1.36, 3.72, 0.4, 0.5, 1), w: 0.5 }, { air: [[1.2, 0.84, 0.48], [1.28, 0.98, 0.48], [1.2, 1.12, 0.48]], w: 0.45 }],
-    drops: [[1.4, 0.3, 0.3, 0.045, 1], [1.6, 0.52, 0.2, 0.03, 1], [-0.95, 0.26, 0.7, 0.04, 1], [-0.74, 0.5, 0.8, 0.028, 1], [0.4, 0.22, 0.95, 0.04, 1], [1.12, 0.8, 0.2, 0.04, 1], [1.12, 0.52, 0.2, 0.028, 1], [-1.8, 0, 0.3, 0.045], [1.85, 0, -0.2, 0.04]] })
-};
+const fume48 = (x, y, z, h, sd) => Array.from({ length: 14 }, (_, i) => { const t = i / 13, a = t * 4.6; return [x + sd * h * (0.2 * Math.sin(a) * (0.4 + t) + 0.12 * t), y + h * (t * 0.9 + 0.1 * (1 - Math.cos(a)) * t), z]; });
+/* fizz: a small ring of a bubble, and a little rising curl */
+const ring48 = (x, y, z, r) => Array.from({ length: 11 }, (_, i) => { const a = i / 10 * 2 * PI + 0.4; return [x + r * Math.cos(a), y + r * Math.sin(a), z]; });
+const curl48 = (x, y, z, r, sd) => Array.from({ length: 10 }, (_, i) => { const t = i / 9, a = t * 2 * PI * 1.1; return [x + sd * r * Math.sin(a) * (1 - 0.5 * t), y + r * (1 - Math.cos(a)) * 0.6 + r * 2.2 * t, z]; });
+/* teeth along a grin (face units times k): a zigzag on the mouth's own curve */
+const teeth48 = (c, d, w, y, dp, n, h, k) => ({ c, d, pts: Array.from({ length: 2 * n + 1 }, (_, i) => { const s = (i - n) / n; return [s * w * k, (y - dp * (1 - s * s)) * k + (i % 2 ? h : 0)]; }), w: 0.75, o: { smooth: 0, wob: 0.3, min: 3, trim: 0 } });
+const fizz48 = (R, Rz, y, list) => list.map(q => { const r = q[3] * 1.7; return { air: q[2] ? curl48(R * Math.cos(q[0]) * q[1], y, Rz * Math.sin(q[0]) * q[1], r, q[2]) : ring48(R * Math.cos(q[0]) * q[1], y + r * 1.2, Rz * Math.sin(q[0]) * q[1], r), w: q[4] || 0.8 }; });
+const SPEC48 = [
+  // 1 the spark: a small flame standing up out of its pit, leaning, two little claws up by its face
+  () => ({ keys: pool(0, 0, 1.0, 0.8, 0.3, 0.26).concat([[0.02, 0.45, 0, 0.26, 0.23], [0.04, 0.75, 0.02, 0.3, 0.26], [0.06, 0.95, 0.04, 0.21, 0.2], [0.1, 1.22, 0.08, 0.36, 0.33], [0.14, 1.48, 0.06, 0.28, 0.26],
+      [0.18, 1.7, 0.03, 0.18, 0.17], [0.24, 1.9, 0, 0.1, 0.1], [0.3, 2.08, 0, 0.05, 0.05], [0.34, 2.22, 0, 0, 0]]),
+    foot: 0.3, thin: 0.14, hp: 1.1, rings: 2, frho: 0.46, wet: [0, 0, 1.0, 0.8], etch: 1,
+    limbs: arm48(7, 0, 0.14, [[0.16, -0.02, 0.06], [0.34, 0.14, 0.12], [0.42, 0.36, 0.16]], [0.095, 0.09, 0.1], [fin48([0.6, 1, 0], 0.42, 0.048, [0, 0, 0.05]), fin48([0.1, 1, 0.1], 0.44, 0.048, [0, 0, 0.05]), fin48([-0.3, 0.9, 0.15], 0.38, 0.048, [0, 0, 0.05])])
+      .concat(arm48(7, PI, 0.14, [[-0.16, -0.04, 0.06], [-0.34, 0.02, 0.14], [-0.46, 0.16, 0.2]], [0.095, 0.09, 0.1], [fin48([-0.8, 0.7, 0.1], 0.4, 0.048, [0, 0, 0.05]), fin48([-0.35, 1, 0.2], 0.42, 0.048, [0, 0, 0.05]), fin48([0.1, 1, 0.25], 0.36, 0.048, [0, 0, 0.05])]))
+      .concat(licks48(1.0, 0.8, 0.3, 0.7, [[0.5, 0.5], [2.3, 0.42], [3.7, 0.55], [5.2, 0.45]])),
+    face: { c: [0.1, 1.22, 0.08], d: [0.1, 0, 1], k: 1.0, er: 1.25, dx: 0.2, brow: { y: 0.2, len: 0.14, ang: [0.55, 0.55], arch: 0, r: 0.022 }, mouth: { w: 0.14, d: 0.05, y: -0.2, tilt: 0.1, tick: 1, r: 0.026 } }, eye: { sy: 0.55, slant: 0.5 },
+    pen: [{ air: fume48(0.36, 2.3, 0, 0.75, 1), w: 0.85 }].concat(fizz48(1.0, 0.8, 0.22, [[0.2, 1.12, 0, 0.06], [1.4, 1.12, 1, 0.07], [2.9, 1.12, 0, 0.05], [4.3, 1.1, -1, 0.07]])),
+    drops: [[-1.3, 0, 0.3, 0.05], [1.25, 0, -0.45, 0.04]] }),
+  // 2 the imp
+  () => ({ keys: pool(0, 0, 1.5, 1.12, 0.5, 0.44).concat([[0, 0.55, 0, 0.46, 0.4], [0, 0.92, 0.06, 0.46, 0.38], [0, 1.18, 0.16, 0.36, 0.32], [0, 1.32, 0.24, 0.24, 0.22], [0, 1.62, 0.32, 0.52, 0.48], [0.02, 1.92, 0.28, 0.4, 0.38],
+      [0.06, 2.16, 0.22, 0.26, 0.25], [0.1, 2.36, 0.16, 0.16, 0.16], [0.14, 2.52, 0.12, 0.085, 0.085], [0.16, 2.64, 0.1, 0.045, 0.045], [0.16, 2.72, 0.1, 0, 0]]),
+    foot: 0.36, thin: 0.13, hp: 1.3, rings: 2.2, frho: 0.42, wet: [0, 0, 1.5, 1.12], etch: 1,
+    limbs: arm48(7.2, 0, 0.2, [[0.2, -0.14, 0.08], [0.4, -0.34, 0.3], [0.3, -0.2, 0.62], [-0.06, -0.06, 0.8]], [0.14, 0.13, 0.12, 0.15], [fin48([-0.15, 1, 0.15], 0.4, 0.065, [0, 0, 0.05]), fin48([-0.6, 1, 0.15], 0.42, 0.065, [0, 0, 0.05]), fin48([-1, 0.6, 0.15], 0.4, 0.065, [0, 0, 0.05])])
+      .concat(arm48(7.2, PI, 0.2, [[-0.2, -0.14, 0.08], [-0.4, -0.34, 0.3], [-0.3, -0.2, 0.62], [0.06, -0.06, 0.8]], [0.14, 0.13, 0.12, 0.15], [fin48([0.15, 1, 0.2], 0.4, 0.065, [0, 0, 0.05]), fin48([0.6, 1, 0.2], 0.42, 0.065, [0, 0, 0.05]), fin48([1, 0.6, 0.2], 0.4, 0.065, [0, 0, 0.05])]))
+      .concat([tongue48(11, PI, [[-0.14, 0.1, 0], [-0.3, 0.3, -0.02], [-0.38, 0.52, -0.04], [-0.4, 0.66, -0.04]], 0.95)])
+      .concat(licks48(1.5, 1.12, 0.5, 0.9, [[0.4, 0.7], [1.5, 0.6], [2.6, 0.8], [3.9, 0.65], [5.2, 0.75]])),
+    face: { c: [0, 1.64, 0.34], d: [0, 0.05, 1], k: 1.05, er: 1.3, dx: 0.22, brow: { y: 0.21, len: 0.17, ang: [0.6, 0.6], arch: 0, r: 0.026 }, mouth: { w: 0.3, d: 0.14, y: -0.2, r: 0.03 } }, eye: { sy: 0.55, slant: 0.5 },
+    pen: [teeth48([0, 1.64, 0.34], [0, 0.05, 1], 0.27, -0.2, 0.13, 5, 0.075, 1.05), { air: fume48(0.18, 2.8, 0.1, 0.95, 1), w: 0.9 }, { air: fume48(-0.62, 2.62, 0.2, 0.6, -1), w: 0.7 }]
+      .concat(fizz48(1.5, 1.12, 0.3, [[0.1, 1.08, 0, 0.07], [2.9, 1.1, 0, 0.06], [0.75, 1.08, 1, 0.08], [3.8, 1.08, -1, 0.08], [5.6, 1.1, 0, 0.05]])),
+    drops: [[1.4, 0.3, 0.6, 0.05, 1], [1.55, 0.55, 0.5, 0.032, 1], [-1.35, 0.3, 0.45, 0.045, 1], [-1.9, 0, 0.3, 0.05], [1.95, 0, -0.2, 0.04]] }),
+  // 3 the sneak (the owner's pick, A of builder 48): bigger hands, long pointed fingers, thicker arms, a bigger head
+  () => ({ keys: pool(0, 0, 1.4, 1.05, 0.36, 0.31).concat([[-0.06, 0.7, 0, 0.27, 0.24], [-0.16, 1.2, 0.02, 0.22, 0.2], [-0.08, 1.68, 0.08, 0.27, 0.21], [0.1, 2.05, 0.16, 0.42, 0.26], [0.22, 2.27, 0.24, 0.16, 0.15], [0.36, 2.62, 0.32, 0.52, 0.47], [0.34, 2.97, 0.28, 0.4, 0.38],
+      [0.26, 3.18, 0.2, 0.25, 0.24], [0.12, 3.36, 0.12, 0.17, 0.16], [-0.05, 3.54, 0.06, 0.11, 0.105], [-0.1, 3.74, 0.02, 0.07, 0.07], [0.02, 3.9, 0, 0, 0]]),
+    foot: 0.4, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 1.4, 1.05], etch: 1,
+    limbs: arm48(9, 0, 0.2, [[0.32, -0.24, 0.22], [0.66, -0.42, 0.56], [0.88, -0.5, 0.78]], [0.145, 0.13, 0.17], [fin48([0.6, 0.4, 0.45], 0.62, 0.075, [0, -0.08, 0.04]), fin48([0.8, -0.05, 0.6], 0.66, 0.075, [0, -0.08, 0.04]), fin48([0.4, -0.6, 0.6], 0.58, 0.075, [0, -0.04, 0.06])])
+      .concat(arm48(9, PI, 0.2, [[-0.3, -0.3, 0.1], [-0.48, 0.02, 0.3], [-0.42, 0.38, 0.4]], [0.145, 0.13, 0.17], [fin48([0.35, 1, 0.05], 0.56, 0.075, [0, 0, 0.1]), fin48([-0.1, 1, 0.1], 0.6, 0.075, [0, 0, 0.1]), fin48([-0.6, 0.8, 0.1], 0.54, 0.075, [0, 0, 0.1])]))
+      .concat([tongue48(12, 0, [[0.14, 0.12, 0], [0.3, 0.32, 0], [0.36, 0.55, 0], [0.34, 0.72, 0]], 1)])
+      .concat(licks48(1.4, 1.05, 0.36, 1, [[0.9, 0.75], [2.1, 0.6], [3.2, 0.8], [4.3, 0.62], [5.6, 0.7]])),
+    face: { c: [0.36, 2.66, 0.32], d: [0.22, -0.12, 1], k: 1.18, er: 1.25, dx: 0.2, brow: { y: 0.19, len: 0.19, ang: [0.6, 0.6], arch: 0, r: 0.026 }, mouth: { w: 0.25, d: 0.1, y: -0.2, tilt: 0.06, tick: 1, r: 0.03 } }, eye: { sy: 0.55, slant: 0.5 },
+    pen: [{ air: fume48(0.04, 3.98, 0, 1.15, 1), w: 1.0 }, { air: fume48(-0.3, 3.8, 0, 0.75, -1), w: 0.8 }].concat(fizz48(1.4, 1.05, 0.3, [[0.2, 1.1, 0, 0.08], [1.2, 1.12, 1, 0.09], [2.7, 1.1, 0, 0.07], [3.5, 1.1, -1, 0.09], [5.5, 1.1, 0, 0.06]])),
+    drops: [[1.5, 0.3, 0.3, 0.05, 1], [1.72, 0.52, 0.2, 0.032, 1], [-1.05, 0.26, 0.75, 0.045, 1], [0.5, 0.22, 1.02, 0.04, 1], [-1.9, 0, 0.3, 0.05], [1.95, 0, -0.2, 0.04]] }),
+  // 4 the fiend
+  () => ({ keys: pool(0, 0, 2.0, 1.5, 0.5, 0.42).concat([[-0.1, 0.9, 0, 0.4, 0.34], [-0.22, 1.6, 0, 0.34, 0.3], [-0.22, 2.3, 0.04, 0.38, 0.3], [-0.1, 2.85, 0.1, 0.5, 0.32], [0.1, 3.18, 0.14, 0.21, 0.21], [0.36, 3.4, 0.24, 0.18, 0.18], [0.68, 3.36, 0.38, 0.47, 0.44],
+      [0.76, 3.72, 0.36, 0.36, 0.34], [0.76, 4.0, 0.28, 0.24, 0.23], [0.7, 4.26, 0.18, 0.16, 0.15], [0.62, 4.5, 0.12, 0.11, 0.11], [0.52, 4.72, 0.06, 0.07, 0.07], [0.4, 4.9, 0.02, 0.04, 0.04], [0.32, 5.02, 0, 0, 0]]),
+    foot: 0.42, thin: 0.1, hp: 2.0, rings: 3, frho: 0.34, wet: [0, 0, 2.0, 1.5], etch: 1,
+    limbs: arm48(9, 0, 0.22, [[0.42, -0.05, 0.08], [0.9, -0.3, 0.22], [1.35, -0.62, 0.36], [1.62, -1.0, 0.46]], [0.155, 0.14, 0.13, 0.18], [fin48([0.7, -0.4, 0.3], 0.8, 0.08, [0, -0.14, 0]), fin48([0.3, -1, 0.25], 0.86, 0.08, [0.06, -0.06, 0]), fin48([-0.1, -1, 0.35], 0.78, 0.08, [-0.06, -0.06, 0])])
+      .concat(arm48(9, PI, 0.22, [[-0.42, 0.0, 0.05], [-0.9, -0.2, 0.15], [-1.35, -0.5, 0.26], [-1.62, -0.88, 0.36]], [0.155, 0.14, 0.13, 0.18], [fin48([-0.7, -0.4, 0.3], 0.8, 0.08, [0, -0.14, 0]), fin48([-0.3, -1, 0.25], 0.86, 0.08, [-0.06, -0.06, 0]), fin48([0.1, -1, 0.35], 0.78, 0.08, [0.06, -0.06, 0])]))
+      .concat([tongue48(13, 0, [[0.18, 0.1, 0], [0.38, 0.34, 0], [0.5, 0.62, 0], [0.5, 0.82, 0]], 1.1), tongue48(13, PI, [[-0.18, 0.12, 0], [-0.36, 0.4, 0], [-0.42, 0.7, 0], [-0.38, 0.92, 0]], 1.1)])
+      .concat(licks48(2.0, 1.5, 0.5, 1.2, [[0.3, 0.9], [1.3, 0.75], [2.2, 1.0], [3.1, 0.8], [4.1, 0.95], [5.2, 0.8]])),
+    face: { c: [0.7, 3.36, 0.4], d: [0.35, -0.4, 1], k: 1.12, er: 1.2, dx: 0.2, brow: { y: 0.19, len: 0.19, ang: [0.65, 0.65], arch: 0, r: 0.026 }, mouth: { w: 0.25, d: 0.09, y: -0.21, tilt: 0.08, tick: 1, r: 0.03 } }, eye: { sy: 0.5, slant: 0.55 },
+    pen: [teeth48([0.7, 3.36, 0.4], [0.35, -0.4, 1], 0.2, -0.21, 0.08, 3, -0.06, 1.12), { air: fume48(0.34, 5.1, 0, 1.35, -1), w: 1.0 }, { air: fume48(0.0, 4.72, 0.36, 0.9, -1), w: 0.8 }, { air: fume48(1.64, 4.62, 0.36, 0.8, 1), w: 0.8 }]
+      .concat(fizz48(2.0, 1.5, 0.3, [[0.3, 1.1, 0, 0.09], [1.0, 1.1, 1, 0.1], [2.5, 1.1, 0, 0.08], [3.4, 1.1, -1, 0.1], [4.6, 1.1, 0, 0.07], [5.6, 1.1, 1, 0.09]])),
+    drops: [[2.62, 1.0, 0.75, 0.06, 1], [2.62, 0.7, 0.75, 0.042, 1], [2.2, 0.82, 0.92, 0.05, 1], [-2.82, 1.1, 0.65, 0.06, 1], [-2.82, 0.8, 0.65, 0.042, 1], [-2.4, 0.92, 0.82, 0.05, 1], [-2.5, 0, 0.6, 0.06], [2.6, 0, -0.3, 0.05]] }),
+  // 5 the devourer
+  () => { const crown = (th, h, o) => ({ k: 12.4, th, r0: 0.2, ey: 1.2, path: [[o * 0.16 * Math.cos(th), 0.22 * h, o * 0.16 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.52 * h, o * 0.3 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.82 * h, o * 0.3 * Math.sin(th)], [o * 0.42 * Math.cos(th), h, o * 0.42 * Math.sin(th)]], rad: [0.15, 0.12, 0.075, 0.016] });
+    const sleeve = s => ({ k: 9, th: s > 0 ? 0 : PI, r0: 0.3, ey: 1.25, path: [[0.42 * s, 0.0, 0.1], [0.88 * s, 0.22, 0.2], [1.15 * s, 0.45, 0.1], [1.5 * s, -0.6, -0.15], [1.9 * s, -1.9, -0.3], [2.3 * s, -3.0, -0.3], [2.5 * s, -3.72, -0.2]], rad: [0.21, 0.19, 0.2, 0.3, 0.45, 0.6, 0.7], flat: [0, 0, 1], fk: t => 1 - 0.75 * sm((t - 0.35) * 3) });
+    return { keys: pool(0, 0, 3.4, 2.3, 0.62, 0.5).concat([[0, 1.2, 0, 0.56, 0.46], [0, 2.2, 0, 0.46, 0.4], [0, 3.1, 0.04, 0.54, 0.4], [0, 3.8, 0.08, 0.8, 0.46], [0, 4.15, 0.1, 0.28, 0.28], [0, 4.66, 0.16, 0.74, 0.68], [0, 5.16, 0.12, 0.6, 0.56],
+      [0, 5.38, 0.08, 0.38, 0.36], [0.02, 5.66, 0.04, 0.25, 0.24], [0.08, 5.94, 0, 0.16, 0.16], [0.16, 6.18, 0, 0.1, 0.1], [0.24, 6.38, 0, 0.055, 0.055], [0.28, 6.52, 0, 0, 0]]),
+    foot: 0.6, thin: 0.12, hp: 2.6, rings: 4, frho: 0.3, wet: [0, 0, 3.4, 2.3], etch: 1,
+    limbs: arm48(9, 0, 0.3, [[0.42, 0.0, 0.1], [0.88, 0.22, 0.2], [1.2, 0.58, 0.3], [1.34, 0.95, 0.36]], [0.21, 0.19, 0.17, 0.22], [fin48([0.5, 1, 0.1], 0.8, 0.095, [0.1, 0, 0.08]), fin48([0.05, 1, 0.15], 0.88, 0.095, [0, 0, 0.1]), fin48([-0.4, 1, 0.15], 0.76, 0.095, [-0.08, 0, 0.1])])
+      .concat(arm48(9, PI, 0.3, [[-0.42, 0.0, 0.1], [-0.88, 0.22, 0.2], [-1.2, 0.58, 0.3], [-1.34, 0.95, 0.36]], [0.21, 0.19, 0.17, 0.22], [fin48([-0.5, 1, 0.1], 0.8, 0.095, [-0.1, 0, 0.08]), fin48([-0.05, 1, 0.15], 0.88, 0.095, [0, 0, 0.1]), fin48([0.4, 1, 0.15], 0.76, 0.095, [0.08, 0, 0.1])]))
+      .concat([sleeve(1), sleeve(-1), crown(0.1, 0.95, 1.8), crown(PI - 0.1, 0.95, 1.8), crown(-PI / 2 + 0.55, 1.25, 0.9), crown(-PI / 2 - 0.55, 1.25, 0.9)])
+      .concat(licks48(3.4, 2.3, 0.62, 1.5, [[0.2, 1.1], [0.95, 0.9], [1.9, 1.25], [2.3, 0.95], [3.0, 1.2], [3.8, 0.9], [4.6, 1.1], [5.5, 0.95]])),
+    face: { c: [0, 4.7, 0.2], d: [0, -0.05, 1], k: 1.9, er: 1.0, dx: 0.21, lid: 0.25, brow: { y: 0.19, len: 0.2, ang: [0.55, 0.55], arch: 0, r: 0.028 }, mouth: { w: 0.34, d: 0.07, y: -0.22, r: 0.026 } }, eye: { sy: 0.5, slant: 0.5 },
+    pen: [teeth48([0, 4.7, 0.2], [0, -0.05, 1], 0.3, -0.22, 0.07, 6, -0.07, 1.9),
+      { c: [0, 4.7, 0.2], d: [0, -0.05, 1], pts: [[-0.32 * 1.9, -0.22 * 1.9 + 0.01], [-0.33 * 1.9, -0.3 * 1.9], [-0.32 * 1.9, -0.36 * 1.9]], w: 0.8, o: { smooth: 1, wob: 0.3, min: 3 } }, { c: [0, 4.7, 0.2], d: [0, -0.05, 1], pts: [[0.3 * 1.9, -0.23 * 1.9], [0.31 * 1.9, -0.33 * 1.9]], w: 0.8, o: { smooth: 1, wob: 0.3, min: 3 } },
+      { air: fume48(0.3, 6.6, 0, 1.4, 1), w: 1.0 }, { air: fume48(-1.24, 6.2, 0.1, 1.0, -1), w: 0.9 }, { air: fume48(1.26, 6.2, 0.1, 1.0, 1), w: 0.9 }, { air: fume48(-0.5, 6.5, -0.6, 0.9, -1), w: 0.8 }, { air: fume48(0.52, 6.5, -0.6, 0.9, 1), w: 0.8 },
+      { air: fume48(-1.9, 5.6, 0.4, 0.7, -1), w: 0.7 }, { air: fume48(1.92, 5.6, 0.4, 0.7, 1), w: 0.7 }]
+      .concat(fizz48(3.4, 2.3, 0.35, [[0.2, 1.08, 0, 0.11], [0.8, 1.08, 1, 0.13], [1.25, 1.08, 0, 0.09], [2.0, 1.08, -1, 0.13], [2.6, 1.08, 0, 0.1], [3.4, 1.06, 1, 0.12], [4.4, 1.06, 0, 0.1], [5.4, 1.06, -1, 0.12], [-0.4, 1.06, 0, 0.08]])),
+    drops: [[3.9, 0, 0.9, 0.07], [-4.0, 0, -0.4, 0.06], [2.6, 0, 2.1, 0.06], [-2.4, 0, 2.2, 0.06]] }; }
+];
+/* the pit the acid eats into the bench: an even ragged ring all round the pool, a dark floor, a pale bleached lip, a pen line at its edge */
+function etch48(T, rx, rz, sd) { const R = 1.8 * Math.max(rx, rz), m = new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { sd: { value: sd }, pq: { value: new T.Vector2(rx / R, rz / R) } },
+    vertexShader: 'varying vec2 vU;\nvoid main() { vU = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform float sd;\nuniform vec2 pq;\nvarying vec2 vU;\n' + N35 + [
+      'void main() { vec2 q = vU / pq; float pc = length(q), a = atan(q.y, q.x); vec3 cs = vec3(cos(a), sin(a), sd);',
+      '  float e = 1.3 + 0.16 * (N35(cs * vec3(1.8, 1.8, 1.0)) - 0.5) + 0.1 * (N35(cs * vec3(6.0, 6.0, 1.0) + 3.0) - 0.5) + 0.05 * (N35(cs * vec3(17.0, 17.0, 1.0) + 5.0) - 0.5);',
+      '  float lw = 0.07 + 0.06 * N35(cs * vec3(4.0, 4.0, 1.0) + 9.0), ins = 1.0 - smoothstep(e - 0.01, e + 0.004, pc), rel = pc / e;',
+      '  float gw = N35(vec3(vU.x * 1.6, vU.y * 26.0 + 2.0 * N35(vec3(vU * 2.5, sd + 1.0)), sd + 2.0)), n1 = N35(vec3(vU * 7.0, sd + 2.0)), n2 = N35(vec3(vU * 18.0, sd + 7.0));',
+      /* the floor: dark, eaten, the grain left in olive streaks; wet green near the pool */
+      '  vec3 col = mix(vec3(0.24, 0.16, 0.08), vec3(0.40, 0.34, 0.15), smoothstep(0.4, 0.75, gw) * (0.6 + 0.4 * n1)); col = mix(col, vec3(0.50, 0.60, 0.24), 0.45 * (1.0 - smoothstep(1.0, 1.12, pc)));',
+      /* the wall: in shade toward the lamp, lit away from it */
+      '  vec2 dn = q / max(pc, 1e-4); float fl = dot(dn, vec2(-0.7, -0.7)), wall = smoothstep(0.84, 0.98, rel) * ins; col = mix(col, vec3(0.10, 0.06, 0.03), 0.7 * wall * smoothstep(-0.2, 0.7, fl)); col = mix(col, vec3(0.80, 0.74, 0.55), 0.55 * wall * smoothstep(0.0, 0.7, -fl));',
+      /* fizz on the floor: small pale rings */
+      '  vec2 g5 = vU * 26.0, c5 = floor(g5), f5 = fract(g5) - 0.5; float h5 = H35(vec3(c5, sd + 5.0)), d5 = length(f5 - (vec2(H35(vec3(c5, sd + 7.0)), H35(vec3(c5, sd + 8.0))) - 0.5) * 0.4), rb = step(0.72, h5) * ins * (1.0 - smoothstep(0.9, 1.0, rel)) * (1.0 - smoothstep(0.03, 0.06, abs(d5 - 0.2 - 0.1 * h5)));',
+      '  col = mix(col, vec3(0.88, 0.95, 0.72), 0.85 * rb);',
+      /* the bleached lip just outside the edge, ragged, pale */
+      '  float lip = smoothstep(e - 0.004, e + 0.012, pc) * (1.0 - smoothstep(e + lw - 0.025, e + lw, pc)); col = mix(col, vec3(0.94, 0.90, 0.76) * (0.92 + 0.08 * n2), lip);',
+      /* a faint scorch beyond the lip */
+      '  float halo = smoothstep(e + lw - 0.03, e + lw, pc) * (1.0 - smoothstep(e + lw, e + lw + 0.16, pc)); col = mix(col, vec3(0.22, 0.13, 0.06), halo * (1.0 - lip));',
+      /* the pen line on the edge, broken here and there */
+      '  float ink = (1.0 - smoothstep(0.008, 0.022, abs(pc - e))) * smoothstep(0.22, 0.4, N35(cs * vec3(3.0, 3.0, 1.0) + 13.0)); col = mix(col, vec3(0.08, 0.06, 0.05), 0.9 * ink);',
+      '  float al = max(max(0.93 * ins, 0.96 * lip), max(0.32 * halo * (0.6 + 0.4 * n1), 0.9 * ink)); al *= 1.0 - smoothstep(0.96, 1.0, length(vU));',
+      '  gl_FragColor = vec4(col, al); }'].join('\n') });
+  const g = new T.PlaneGeometry(2 * R, 2 * R); g.rotateX(-PI / 2); g.computeBoundingSphere(); g.boundingBox = new T.Box3(new T.Vector3(-0.01, 0, -0.01), new T.Vector3(0.01, 0.01, 0.01)); /* the pit does not count in the creature's size */
+  const q = new T.Mesh(g, m); q.userData.nobox = true; q.userData.plain = true; q.position.set(0, 0.012, 0); q.renderOrder = 3; q.castShadow = false; return q; }
 /* the wash turns green: the same shader as Water's, its blues changed */
 function tint48(T, S) { if (!S.m30) return; S.t48 = true; const C = W48.C, way = S.way48, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', sw = [['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)]];
   const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.a48) return; m.userData.a48 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'a48' + way; m.needsUpdate = true; };
   one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
-function acid48Fig(T, way, extra) { const sp = SPEC48[way], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
-  S25[2] = sp; if (W48.geo[way]) W26.geo[3] = W48.geo[way]; else delete W26.geo[3]; W26.ROLE[3] = W48.ROLE[way] || keep[2]; W26.TARGET = W48.TARGET;
-  try { g = fig26(T, 3, extra); W48.geo[way] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
-  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way48 = way;
+/* one stage of the sneak: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage (sizes, rest) */
+function acid48Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC48[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W48.geo[stage]) W26.geo[3] = W48.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W48.ROLE[stage]; W26.TARGET = W48.TARGET[stage];
+  try { g = fig26(T, 3, extra); W48.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, jh = G.bj[G.R.head]; S.way48 = 's' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
   /* narrow slanted eyes: the same eyes as Water's, pressed flat and tipped */ if (o.eye && S.F) S.F.eyes.forEach((e, i) => { const s = i ? 1 : -1, q = new T.Quaternion().setFromAxisAngle(new V3(0, 0, 1), s * o.eye.slant); e.g.userData.q0.multiply(q); e.g.quaternion.copy(e.g.userData.q0); e.g.children.forEach(m => { if (m !== e.gl) m.scale.y *= o.eye.sy; }); });
   /* the pen's own strokes: on the skin (rays from in front, as the face is laid) or in the air; each rides the joint it is nearest to */
   const near = p => { let bj = 0, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
@@ -2749,15 +2821,19 @@ function acid48Fig(T, way, extra) { const sp = SPEC48[way], keep = [S25[2], W26.
         pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } return null; }).filter(Boolean); }
     return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(s => s.pts.length > 1);
   S.a48 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
-  /* the wood it stands on is eaten */ if (o.etch && !(extra && extra.jar)) { try { const e = etch35(T, 0, 0, o.etch, [G.pl.rx, G.pl.rz]); e.userData.nobox = true; S.bones[0].add(e); S.etch48 = e; } catch (e) { W48.err = String(e && e.stack); } }
+  /* the wood it stands on is eaten */ if (o.etch && !(extra && extra.jar)) { try { const e = etch48(T, G.pl.rx, G.pl.rz, 3.7 + stage * 1.3); e.position.set(G.pl.x, 0.012, G.pl.z); S.root.add(e); S.etch48 = e; } catch (e) { W48.err = String(e && e.stack); } }
   tint48(T, S); W48.figs.push(S); if (W48.figs.length > 24) W48.figs.splice(0, W48.figs.length - 24); return g; }
 function ink48(T, S, ren, cam) { if (!S.t48) tint48(T, S); const R = S.pen30, X = S.a48, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
   const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = X.pts; if (lw < 1.2 || (S.q0 && S.q0.sink > 0.45)) return;
   X.strokes.forEach((s, si) => { const M = S.bones[s.j].matrixWorld, n = Math.min(pool.length, s.pts.length); for (let i = 0; i < n; i++) pool[i].set(s.pts[i][0], s.pts[i][1], s.pts[i][2]).applyMatrix4(M); free30(R, pool.slice(0, n), lw * s.w, s2, Wd, Ht, P10, P11, d, 9700 + si * 41, s.o); });
   R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
-draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); if (S.a48) { try { ink48(T, S, ren, cam); } catch (e) { W48.err = String(e && e.stack); } } })(draw30);
+/* the pit lies flat on the bench itself, not in the figure's own (tilted) floor: turned back flat in the world each frame, set at the bench's height under the pool */
+function lay48(T, S) { const e = S.etch48, p = e.parent, V = W48.v || (W48.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); p.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a);
+  if (S.wet) e.scale.set(S.wet.scale.x / S.wet.userData.s[0], 1, S.wet.scale.y / S.wet.userData.s[1]); }
+draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); if (S.a48) { try { if (S.etch48) lay48(T, S); ink48(T, S, ren, cam); } catch (e) { W48.err = String(e && e.stack); } } })(draw30);
 KIT.acid48Fig = acid48Fig; KIT.ACID48 = W48;
-/* behind the switch: Acid's bench figure is the spirit (the jar keeps the old Acid) */
-KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid48 && SPEC48[KIT.acid48] && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = acid48Fig(T, KIT.acid48, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W48.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+/* behind the switch: Acid's bench figure is the spirit at its stage (the jar keeps the old Acid) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid48 === 'a' && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = acid48Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W48.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W48 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
