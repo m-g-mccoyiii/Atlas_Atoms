@@ -1642,3 +1642,25 @@ Branch `brimstone-builder-69` (worktree `brim69`). Brimstone only, ONE job: its 
 - **Weak / not done.** See the hand-back. In short: the book's edge is close to home where the lump is tiny, so the heave over it is hardly seen; the flame bodies read a little as blue drops; one frame of the new figure shown large at home before the change starts (frames 30/31, in the 96 clip too: the engine shows the new stage for a frame before `evo` begins; not found); a small step in the page light on the frame the lump is changed inside the fire; the hit comes on in one or two frames (Water's); one-frame change at home near frame 250 (in 96 too, not found); the new form's long left arm reaches out of the fire (a limb pinned by Water's clip to its pool rim, `G.pins`: try `m.armL/armR/hair = 0` until the fire has thinned); 1 to 2 shows the change of lump more than the others (stage 1 has no smoke to draw down); no flames on the new form's lump on its way home; software rendering only; sound not heard.
 
 scheme.html: bump `kitart.js?v=` (132 to 135), `scheme.js?v=` (421 to 424), or one past any other builder's bump.
+
+## Ninety-eighth builder (15 November)
+
+Branch `brimstone-builder-69` (worktree `brim69`). Brimstone only, ONE job: the last known faults out of its change of stage; nothing new shown. Files: `kitart.js` (new block `W98` after `W97`; edits in `W96`: shader text and `up96`), `scheme.js` (new block `S98` after `S97`; one expression in `S95`, two in `S96`, the flame and shade part of `S97`). No Water block and no other creature's block edited. Sources in `.claude/r69` (not in git): `w98.js`, `s98.js`, `edits98.py` (every small edit as old/new text), `apply98.py` (run on the 97 files: blocks in, then the edits), `j_e98.js` / `e98.sh` (stills, with `&pre=N` frames from the start and `s98dbg` each frame), `dbg98.py` (what changed frame to frame), `diff98.py`, `look98.py`, `out98.sh`.
+
+- **Switch.** `AA.rxKit.g98` (`?g98=0` gives builder 97's back).
+- **Jumps, what each was.**
+  1. Change of lump inside the fire: the lamp's round (`lamp.z`) and the shade's round (`bs.z`) took the new figure's size in one frame. `S98` follows both over about seven frames once the lump is at the centre.
+  2. The hit: Water's flash (`lamp.w`) came on in three frames; now `1.3 * sm(v / 0.6) * exp(-v / 0.4)` (S95). The fire's `tall` and widening at the hit run over `v` 0.9 and 0.75 (S96).
+  3. First frame: the engine stands the new stage up (`homStand`) at its raw size and height and the old figure's copy is shown so for one frame. `S98` keeps the home group's scale and height from the frame before and puts them back on that frame.
+  4. At home: the clip ends with the turn at 5.3 of 6.28 radians and the idle snapped it to 0. `W98` keeps the clip's last pose (bones and root) and blends into the idle over ten frames, the turn the short way round; the drawn flames grow out of the lump in the same blend.
+  5. The "blip at frame 250" of the ffmpeg check is the encoder's keyframe (x264, every 250 frames), not the picture: raw frames 249 to 251 differ by 0.31 each. Check raw frames with `jump95.py` before chasing it.
+- **The new form inside the fire.** `W98`: from the hit every bone above the lump is drawn toward the middle (0.3 of its distance) and the arm bones halved until `v` 0.95, eased out by 1.7.
+- **Flames.** `uFl` in W96's shaders: a narrow foot, a belly, a pinched waist that wanders, a long tongue, see-through above; `uLean` bends them back from the way the lump goes (S97 `vel`). At least three round a lump (stage 1 has one drawn tongue); the new form's lump has three from `v` 1.3 to home. The shed flamelets use the same shape.
+- **Skin.** Three washes with hard wandering edges and a darker pooled line at each, paper grain in the lighter ones, more paper in the tips, a second family of pen strokes.
+- **Shade.** `depthTest` on with polygon offset. **Edge.** `S98` multiplies `homObj.s` by up to 1.45 near home (out and back), 1 from 0.6 of the way.
+- **Takes**: `JOBN=a95 TMO=400 ./t.sh ev98_<N> "&hom=brimstone&part=evo&stage=<N>&lead=1000&hold=8400" 24`, `python jump95.py ev98_<N> [x,y,s]`, then `./out98.sh`.
+- **Shots**: `small\brimstone98-evolve-phone.mp4`, `brimstone98-evolve-sheet.jpg`, `small\brimstone98-evolve-3-phone.mp4`.
+- **Jump check (raw frames, whole picture)**: none over 2.2 times its neighbours in any of the four. Home spot only: frames 31/32 (7.1 against 1.9 in 3 to 4, was 23 against 5): the engine's copy of the old figure replaces the idle one (wisps go, the light under it flattens).
+- **Weak / not done.** Small flames still read partly as drops at phone size; the skin is still a little glassy; the new lump's flames and the 1 to 2 change of lump were not looked at frame by frame; software rendering only; sound not heard.
+
+scheme.html: bump `kitart.js?v=` (132 to 136), `scheme.js?v=` (421 to 425), or one past any other builder's bump.
