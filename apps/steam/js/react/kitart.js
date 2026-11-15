@@ -4668,8 +4668,8 @@ const turn67s = (S, js, p, ax, ang, w) => { if (Math.abs(ang) > 1e-5) rot52(S, j
 function bend67(S, jn, i0, ang, ax) { const n = jn.length; if (Math.abs(ang) < 1e-5 || n - i0 < 1) return; const a = ang / (n - i0), B = S.bones, pv = S.v67.a;
   for (let k = i0; k < n; k++) { pv.copy(B[jn[k - 1]].position); rot52(S, jn, k, pv.x, pv.y, pv.z, ax, a); } }
 /* after the whole play chain: leaves, tendrils, petals; the head on its springy stem; the stem's lean; the sway on its feet; the step */
-function pose67(S) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = S.jar ? 0.6 : 1, P = P67[st], tt = clk67(S), TAU = 2 * PI, V = S.v52, Z = V.z, Y = V.y, U = S.v67, SP = K.SP;
-  const l = lean67(P, tt), L = k * P.Lm * l.L, sp = S.jar ? [0, 0] : step67(P, l), knocks = [[l.d, 1], [l.d - 0.5, P.st ? 0.55 : 0]];
+function pose67(S) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = (S.jar ? 0.6 : 1) * (S.x70 ? S.x70.k : 1) /* (builder 70) its act damps the idle under it */, P = P67[st], tt = clk67(S), TAU = 2 * PI, V = S.v52, Z = V.z, Y = V.y, U = S.v67, SP = K.SP;
+  const l = lean67(P, tt), L = k * P.Lm * l.L, sp = S.jar || S.x70 ? [0, 0] : step67(P, l), knocks = [[l.d, 1], [l.d - 0.5, P.st ? 0.55 : 0]];
   /* the leaves breathe (lift and settle), turn their faces to the light, and one at a time gives a quick flutter */
   const nl = K.leaves.length, [fd, fi] = since67(tt, 4.3, 1.1), fl = nl ? ((fi % nl) + nl) % nl : -1;
   K.leaves.forEach((X, i) => { const jn = X.c.jn, b = B[jn[0]].position, sd = X.side, big = st === 5 && i < 2;
@@ -4733,4 +4733,126 @@ KIT.W67 = W67;
 /* for the recorder: seconds until the next catch of the lean */
 W67.until = S => { const P = S && P67[S.st]; if (!P) return null; return ((0.6 - fr52(clk67(S) / P.Pl)) * P.Pl + P.Pl) % P.Pl; };
 // ==== W67 END
+// ==== W70 BEGIN
+// (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
+// act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
+// gives the times and places (o.bites.s70, read with KIT.ph70: one timeline both files read) and draws what is not its body: the tendril that reaches
+// each atom, the leaf marks left on the atoms, the damp footprints, the sparks and seeds at the hit.
+//  perk:  it perks up (stretches, leaves up, eyes wide) and pulls its root feet off the wood one at a time, a little pop each
+//  out:   it toddles: quick wobbly steps on its root feet, bud bobbing, leaves out for balance, half way it nearly tips over and catches itself;
+//         at the book's edge it hooks a leaf over and clambers up. Stage 1 the seed rocks and pushes itself along with its root toe
+//  work:  it plants its feet with a wiggle and looks the new growth over, delighted; then counts the atoms added, one beat each, in order: a leaf
+//         (stage 1: the toe) reaches for each, a tendril runs out and wraps it, and with each one it puts out something new of its own at once (a
+//         leaf unrolls, a bud swells, a root creeps out); past the sixth they come quicker and the new parts bigger. On the hit it stretches up to
+//         the lamp with every leaf open. The new parts fold away as it leaves (its stage has not changed)
+//  home:  it turns its back (faceless bud, pale leaf undersides), toddles home seen from behind, plants its feet with a wiggle and settles
+KIT.act70 = KIT.act70 == null ? !(typeof location !== 'undefined' && /[?&]a70=0/.test(String(location.search))) : KIT.act70;
+const W70 = { err: null, e: null, N: 14 };
+const on70 = S => !!(S && S.way64 && !S.jar && KIT.act70 !== false && on67(S));
+const cl70 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* where along a list of segments ({t0, t1, e0, e1, i, clb}) at t */
+function seg70(t, C) { for (let i = 0; i < C.length; i++) { const c = C[i]; if (t < c.t1 || i === C.length - 1) { const u = cl70((t - c.t0) / Math.max(1, c.t1 - c.t0)); return { c, u, e: c.e0 + (c.e1 - c.e0) * sm52(u) }; } } return null; }
+/* the act's numbers at t ms since the tap (Z is S70's plan: absolute times) */
+function ph70(t, Z) { const L = Z.L, P = Z.P || [], e = { ph: 'rest', w: 'out', e: 0, t, st: null, perk: 0, pops: [0, 0], clb: -1, tip: 0, wig: 0, look: 0, la: 0, pr: [], cur: -1, n: 0, hit: 0, sh: -1, str: 0, fold: 0, turn: 0, settle: 0, done: false, home: false };
+  P.forEach(() => e.pr.push({ ext: 0, wrap: 0, pat: 0, g: 0 }));
+  if (t < Z.tW) return e;
+  if (t < Z.tPk) { const u = (t - Z.tW) / Math.max(1, Z.tPk - Z.tW); e.ph = 'perk'; e.perk = sm52(u / 0.3) * (1 - 0.3 * sm52((u - 0.85) / 0.15)); e.pops = [pl52(u, 0.42, 0.54, 0.05), pl52(u, 0.7, 0.82, 0.05)]; return e; }
+  if (t < Z.tA) { const s = seg70(t, Z.out); e.ph = 'out'; e.e = s.e; if (s.c.clb) e.clb = s.u; else { e.st = { i: s.c.i, u: s.u }; if (Z.iTip >= 0) { const v = (s.c.i - Z.iTip + s.u) / 2.2; if (v > 0 && v < 1.6) e.tip = 0.42 * pl52(v, 0.04, 0.42, 0.14) + 0.12 * spr67(v - 0.5, 0.32, 0.22); } } return e; }
+  if (t < Z.tD) { const a = t - Z.tA; e.ph = 'work'; e.w = 'perch'; e.e = 1;
+    e.wig = a < 1.6 * L ? Math.exp(-a / (0.4 * L)) * Math.sin(2 * PI * a / (0.5 * L)) : 0;
+    e.look = pl52(t, Z.tA + 0.7 * L, Z.tC - 0.3 * L, 0.25 * L); e.la = Math.sin(2 * PI * (t - Z.tA - 0.7 * L) / (2.2 * L));
+    P.forEach((p, i) => { const s = e.pr[i]; if (t < p.r0) return;
+      s.ext = t < p.t ? sm52((t - p.r0) / Math.max(1, p.t - p.r0)) : t < p.b ? 1 : 1 - sm52((t - p.b) / Math.max(1, p.e - p.b));
+      s.wrap = t < p.t - 90 ? 0 : sm52((t - p.t + 90) / 150) * (t < p.b ? 1 : 1 - sm52((t - p.b) / Math.max(1, 0.6 * (p.e - p.b))));
+      s.pat = pl52(t, p.t - 30, p.t + 110, 45); s.g = t < p.t ? 0 : cl70((t - p.t) / (p.x ? 190 : 300));
+      if (t >= p.t) e.n = i + 1; if (t >= p.r0 && t < p.b + 60) e.cur = i; });
+    if (t >= Z.tHit) { e.hit = 1; e.sh = t - Z.tHit; e.str = sm52(e.sh / 220) * (1 - sm52((e.sh - 1.5 * L) / (0.8 * L))); }
+    e.fold = sm52((t - Z.tHit - 1.6 * L) / (1.0 * L)); return e; }
+  if (t < Z.tEnd) { e.w = 'back'; e.fold = 1;
+    if (t < Z.tTn) { e.ph = 'turn'; e.turn = sm52((t - Z.tD) / Math.max(1, Z.tTn - Z.tD)); return e; }
+    if (t < Z.tSl) { const s = seg70(t, Z.back); e.ph = 'back'; e.turn = 1; e.e = s.e; if (s.c.clb) e.clb = s.u; else e.st = { i: s.c.i, u: s.u }; return e; }
+    const u = (t - Z.tSl) / Math.max(1, Z.tEnd - Z.tSl), a = t - Z.tSl; e.ph = 'settle'; e.e = 1; e.turn = 1 - sm52((u - 0.3) / 0.4); e.settle = u; e.wig = Math.exp(-a / (0.4 * L)) * Math.sin(2 * PI * a / (0.5 * L)); return e; }
+  e.ph = 'done'; e.w = 'home'; e.done = true; e.home = true; return e; }
+KIT.ph70 = ph70;
+/* the act's face goes over the idle's */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X = S && S.x70; if (!X) return; const e = X.e, st = S.st;
+  q.turn = X.turn || 0; if (st === 1 && e.ph !== 'rest') { q.lidx = Math.min(q.lidx, 0.15); q.blink *= 0.3; }
+  if (e.ph === 'perk') { q.wide += 0.7 * e.perk; q.brow += 0.5 * e.perk; q.smile = 1.2 + 0.5 * e.perk; q.looky = 0.5 * e.perk; q.lidx *= 1 - e.perk; q.blink = 0; }
+  if (e.ph === 'out' || e.ph === 'back') { q.lookx = X.lx || 0; q.looky = -0.25; q.smile = 1.35; q.lidx *= 0.4; if (e.tip > 0.05) { q.wide += 2 * e.tip; q.brow += 1.4 * e.tip; q.smile = 1; q.open = e.tip > 0.25 ? 0.7 : 0; } if (e.clb >= 0) { const c = Math.sin(PI * e.clb); q.lidx = Math.max(q.lidx, 0.55 * c); q.brow -= 0.4 * c; q.looky = 0.3; } }
+  if (e.ph === 'work') { q.smile = 1.6; q.lidx *= 0.3; q.blink *= 0.5; if (e.look > 0) { q.lookx = 0.9 * e.la * e.look + (q.lookx || 0) * (1 - e.look); q.wide += 0.5 * e.look; q.brow += 0.4 * e.look; q.smile = 1.6 + 0.4 * e.look; }
+    if (e.cur >= 0) { const s = e.pr[e.cur]; q.lookx = X.tx || 0; q.looky = X.ty || 0; q.wide += 0.3 * s.ext + (e.cur >= 6 ? 0.4 * s.ext : 0); q.lidx = Math.max(q.lidx, 0.6 * s.pat); q.smile = 1.6 + 0.6 * s.pat + (e.cur >= 6 ? 0.3 : 0); q.brow += 0.3 * s.ext; }
+    if (e.str > 0) { q.looky = q.looky * (1 - e.str) + 1.0 * e.str; q.lookx = q.lookx * (1 - e.str) - 0.5 * e.str; q.lidx = Math.max(q.lidx, 0.5 * e.str); q.smile = 1.6 + 0.8 * e.str; q.brow += 0.4 * e.str; q.blink = 0; } }
+  if (e.ph === 'settle') { const u = e.settle; q.smile = 1.3; q.lidx = Math.max(q.lidx, 0.5 * pl52(u, 0.5, 0.95, 0.1)); } })(C26.rest);
+/* the new parts it puts out as it counts: leaves that unroll, buds that swell, roots that creep out (pieces of the figure on its root) */
+function leafGeo70(T) { if (W70.lg) return W70.lg; const sh = new T.Shape(); sh.moveTo(0, 0); sh.bezierCurveTo(0.22, 0.3, 0.68, 0.3, 1, 0); sh.bezierCurveTo(0.68, -0.24, 0.22, -0.26, 0, 0);
+  const g = new T.ShapeGeometry(sh, 10), o = g.clone(); o.translate(-0.5, 0, 0); o.scale(1.12, 1.4, 1); o.translate(0.5, 0, 0); const r = new T.PlaneGeometry(0.8, 0.035); r.translate(0.42, 0.005, 0.004);
+  W70.lg = { g, o, r }; return W70.lg; }
+function mats70(T) { if (W70.m) return W70.m; const ink = new T.Color(COL.ink).convertSRGBToLinear(), c = h => new T.Color(h).convertSRGBToLinear();
+  W70.m = { f: new T.MeshLambertMaterial({ color: c(0x7fbf5a), side: T.FrontSide }), b: new T.MeshLambertMaterial({ color: c(0xd4e8b4), side: T.BackSide }), fx: new T.MeshLambertMaterial({ color: c(0x9ed36a), side: T.FrontSide, emissive: c(0x2c5a10), emissiveIntensity: 0.35 }),
+    o: new T.MeshBasicMaterial({ color: ink, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 6 }), rib: new T.MeshBasicMaterial({ color: c(0x3f7a33), side: T.DoubleSide }),
+    bud: new T.MeshLambertMaterial({ color: c(0x9fd27a) }), bud2: new T.MeshLambertMaterial({ color: c(0xf0a8c8) }), oi: new T.MeshBasicMaterial({ color: ink, side: T.BackSide }), root: new T.MeshLambertMaterial({ color: c(0xc9a487), side: T.DoubleSide }) }; return W70.m; }
+function sprouts70(S) { if (S.sp70) return S.sp70; const T = S.T, K = S.k67, M = mats70(T), Gm = leafGeo70(T), H = S.G.H, SP = K.SP, st = S.st, out = [], sph = W70.sph || (W70.sph = new T.SphereGeometry(1, 14, 10));
+  const lo = st === 1 ? 0 : Math.max(0, K.sb), hi = st === 1 ? Math.max(1, SP.length - 2) : Math.max(lo + 1, lo + Math.round(0.5 * (K.ap - lo))), stem = []; for (let i = lo; i <= hi; i++) stem.push(i);
+  for (let i = 0; i < W70.N; i++) { const kind = st === 1 ? (i % 3 === 2 ? 'root' : 'leaf') : ['leaf', 'leaf', 'bud', 'leaf', 'root'][i % 5], side = i % 2 ? 1 : -1, g = new T.Group(), inner = new T.Group(); g.add(inner); g.visible = false; g.userData.nobox = true;
+    if (kind === 'bud') { const b = new T.Mesh(sph, i % 10 === 2 && st >= 4 ? M.bud2 : M.bud), o = new T.Mesh(sph, M.oi); o.scale.setScalar(1.16); [b, o].forEach(m => { m.userData.plain = true; inner.add(m); }); }
+    else { const m = kind === 'root' ? M.root : M.f, a = new T.Mesh(Gm.g, m), b = new T.Mesh(Gm.g, M.b), o = new T.Mesh(Gm.o, M.o), r = new T.Mesh(Gm.r, M.rib); [a, b, o, r].forEach(q => { q.userData.plain = true; inner.add(q); }); if (kind === 'root') { b.visible = false; r.visible = false; } g.userData.fx = a; }
+    const si = st === 1 ? SP.length - 1 : stem[(i * 3 + 1) % stem.length], at = SP[si], ang = kind === 'root' ? side * (0.9 + 0.35 * ((i / 5) % 2)) : side * (0.85 + 0.5 * (((i * 7) % 5) / 4));
+    out.push({ g, inner, kind, side, at, ang, len: (kind === 'root' ? 0.46 : kind === 'bud' ? 0.075 : 0.46) * H * (st === 1 ? 1.2 : st >= 5 ? 0.85 : 1), ph: i * 1.7 }); S.root.add(g); }
+  S.sp70 = out; return out; }
+function hideSp70(S) { if (S.sp70) S.sp70.forEach(q => { q.g.visible = false; }); }
+/* after the play: the trip, the count, the stretch, the trip home, on its own joints; the new parts placed on its stem */
+function post70(S, e, X) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, SP = K.SP, V = S.v52, Zx = V.z, Yx = V.y, Xx = S.v67.x, U = S.v67, TAU = 2 * PI;
+  const P0 = () => U.b.set(B[0].position.x, 0, B[0].position.z), feet = K.feet70 || (K.feet70 = K.roots.filter(R => J[R.c.jn[R.c.jn.length - 1]].p[1] < 0.3));
+  const shift = (dx, dy, dz, ft) => { K.all.forEach(j => { const p = B[j].position; p.x += dx; p.y += dy; p.z += dz; }); K.roots.forEach(R => { const jn = R.c.jn, n = jn.length; for (let k = 0; k < n; k++) { const w = ft ? 1 : Math.max(0, 1 - k / (n - 1)), p = B[jn[k]].position; p.x += dx * w; p.y += dy * w; p.z += dz * w; } }); };
+  const tilt = (ax, ang, p, ft) => { if (Math.abs(ang) < 1e-5) return; turn67s(S, K.all, p, ax, ang); K.roots.forEach(R => { const jn = R.c.jn, n = jn.length; rot52(S, jn, 0, p.x, p.y, p.z, ax, ang, ft ? null : kk => Math.max(0, 1 - kk / (n - 1))); }); };
+  const bend = (ax, ang) => { if (Math.abs(ang) < 1e-5) return; if (K.sb < 0 || st === 1) { tilt(ax, ang, P0()); return; } const n = Math.max(1, K.ap - K.sb); for (let i = K.ap - 1; i >= K.sb; i--) turn67s(S, K.ride[i], U.b.copy(B[SP[i]].position), ax, ang / n); };
+  const head = (ax, ang) => { if (K.ap >= 0 && st > 1 && Math.abs(ang) > 1e-5) turn67s(S, K.ride[K.ap], U.b.copy(B[SP[K.ap]].position), ax, ang); };
+  const stretch = s => { if (Math.abs(s) < 1e-4) return; K.all.forEach(j => { B[j].position.y *= 1 + s; }); };
+  const leaves = (a, fl) => K.leaves.forEach((R, i) => { const jn = R.c.jn; turn67s(S, jn, U.b.copy(B[jn[0]].position), Zx, R.side * (a + (fl || 0) * Math.sin(TAU * e.t / 260 + i * 2))); });
+  const step = (u, sw, amp, lz) => feet.forEach(R => { const jn = R.c.jn, n = jn.length; if (R.side === sw) push52(S, jn, n, 0, H * 0.13 * amp * Math.sin(PI * u), lz * (2 * sm52(u) - 1)); else push52(S, jn, n, 0, 0, lz * (1 - 2 * u)); });
+  /* perking up: taller, leaves up, then each foot popped off the wood */
+  if (e.ph === 'perk') { stretch(0.1 * e.perk); leaves(0.45 * e.perk); head(Xx, -0.18 * e.perk); const sd = [-1, 1]; e.pops.forEach((p, i) => { if (p <= 0) return; feet.forEach(R => { if (R.side === sd[i]) push52(S, R.c.jn, R.c.jn.length, 0, H * 0.16 * p, 0.04 * H * p); }); tilt(Zx, -sd[i] * 0.08 * p, P0()); }); if (st === 1) tilt(Xx, -0.25 * e.perk, P0()); }
+  /* the trip: toddling (stage 1 rocks and pushes with its toe), the near-tip and catch, the clamber over the book's edge */
+  if ((e.ph === 'out' || e.ph === 'back') && e.st) { const i = e.st.i, u = e.st.u, sw = i % 2 ? 1 : -1, amp = st >= 5 ? 0.65 : st === 2 ? 1.15 : 1, back = e.ph === 'back';
+    if (st === 1) { const r = Math.sin(PI * u); tilt(Xx, 0.42 * r, U.b.set(B[0].position.x, 0, B[0].position.z + 0.3 * H)); tilt(Zx, sw * 0.3 * r, U.b.set(B[0].position.x + sw * 0.3 * H, 0, B[0].position.z)); if (K.roots[0]) { const jn = K.roots[0].c.jn; push52(S, jn, jn.length, 0, H * 0.06 * Math.sin(PI * u), -0.35 * H * Math.sin(PI * Math.min(1, u * 1.4))); } shift(0, H * 0.05 * r, 0, true); }
+    else { const bob = H * 0.06 * amp * Math.abs(Math.sin(PI * u)); shift(0, bob, 0, false); tilt(Zx, -sw * 0.13 * amp * Math.sin(PI * u), P0()); bend(Xx, 0.16 * amp); head(Xx, 0.14 * amp * Math.sin(TAU * u)); leaves(0.7 * amp, 0.22); step(u, sw, amp, 0.11 * H);
+      if (e.tip > 0) { tilt(Zx, e.tip, U.b.set(B[0].position.x - 0.2 * H, 0, B[0].position.z)); K.leaves.forEach((R, k) => { const jn = R.c.jn; turn67s(S, jn, U.b.copy(B[jn[0]].position), Zx, R.side * 1.2 * Math.abs(e.tip) * (1 + 0.5 * Math.sin(e.t / 45 + k))); }); }
+      if (back) { /* the heels: the lifted foot shows its underside */ } } }
+  if (e.clb >= 0) { const c = e.clb, s = Math.sin(PI * c); if (st === 1) { tilt(Xx, 0.6 * s, U.b.set(B[0].position.x, 0, B[0].position.z + 0.3 * H)); shift(0, H * 0.2 * s, 0, true); }
+    else { bend(Xx, 0.6 * s); const lf = K.leaves.find(R => R.side < 0) || K.leaves[0]; if (lf) { const jn = lf.c.jn; turn67s(S, jn, U.b.copy(B[jn[0]].position), Xx, 1.1 * s); turn67s(S, jn, U.b.copy(B[jn[0]].position), Zx, 0.5 * s); } feet.forEach((R, k) => push52(S, R.c.jn, R.c.jn.length, 0, H * 0.22 * pl52(c, 0.25 + 0.15 * k, 0.75, 0.12), 0.08 * H * s)); shift(0, H * 0.14 * pl52(c, 0.2, 0.8, 0.15), 0, false); } }
+  /* at the molecule: planted with a wiggle, looks it over, counts (reach, wrap, pat), stretches up at the hit */
+  if (e.ph === 'work' || e.ph === 'settle') { tilt(Zx, 0.13 * e.wig, P0()); }
+  if (e.ph === 'work') { if (e.look > 0) { head(Yx, 0.5 * e.la * e.look); shift(0, H * 0.035 * e.look * Math.abs(Math.sin(TAU * e.t / 520)), 0, false); }
+    if (st >= 5 && K.pets.length) { const op = Math.min(0.5, 0.045 * e.n + 0.15 * e.str); K.pets.forEach(R => { const jn = R.c.jn, b = U.b.copy(B[jn[0]].position); for (let i = 1; i < jn.length; i++) { const p = B[jn[i]].position; p.sub(b).multiplyScalar(1 + op).add(b); } }); }
+    if (e.cur >= 0 && X.tl) { const s = e.pr[e.cur], tl = X.tl[e.cur]; if (tl) { const sd = tl[0] >= B[0].position.x ? 1 : -1; tilt(Zx, -sd * (0.12 * s.ext + 0.06 * s.pat), P0()); head(Xx, 0.12 * s.pat);
+        if (st === 1) { const R = K.roots[0]; if (R) { const jn = R.c.jn, tp = B[jn[jn.length - 1]].position, d = U.a.set(tl[0] - tp.x, tl[1] - tp.y, tl[2] - tp.z), l = d.length() || 1, r = Math.min(0.35 * H, l) * s.ext; push52(S, jn, jn.length, d.x / l * r, d.y / l * r + 0.12 * H * s.ext, d.z / l * r); X.tipJ = jn[jn.length - 1]; } }
+        else { const lf = K.leaves.filter(R => R.side === sd).sort((a, b) => J[b.c.jn[0]].p[1] - J[a.c.jn[0]].p[1])[0] || K.leaves[0]; if (lf) { const jn = lf.c.jn, b = U.b.copy(B[jn[0]].position), tp = B[jn[jn.length - 1]].position, aL = Math.atan2(tp.y - b.y, tp.x - b.x), aT = Math.atan2(tl[1] - b.y, tl[0] - b.x); let da = aT - aL; while (da > PI) da -= TAU; while (da < -PI) da += TAU;
+            turn67s(S, jn, b, Zx, da * s.ext * 0.9); for (let k = 1; k < jn.length; k++) B[jn[k]].position.sub(b).multiplyScalar(1 + 0.3 * s.ext).add(b); bend67(S, jn, 2, -sd * 0.5 * s.pat, Zx); X.tipJ = jn[jn.length - 1]; } } } }
+    if (e.str > 0) { stretch(0.14 * e.str); leaves(0.8 * e.str); head(Xx, -0.35 * e.str); K.tends.forEach(R => bend67(S, R.c.jn, 2, -R.tw * 1.2 * e.str, Zx)); }
+    if (e.n > 0 && e.str <= 0) { /* each count a little bounce of pride */ const p = e.pr[e.n - 1]; if (p) shift(0, H * 0.03 * Math.sin(PI * cl70(p.g * 1.5)), 0, false); } }
+  if (e.ph === 'settle') { stretch(-0.07 * pl52(e.settle, 0.05, 0.6, 0.15)); }
+  if (e.ph === 'turn') { const s = Math.sin(PI * e.turn); feet.forEach((R, k) => push52(S, R.c.jn, R.c.jn.length, 0, H * 0.1 * pl52(e.turn, 0.1 + 0.35 * k, 0.45 + 0.35 * k, 0.1), 0)); shift(0, H * 0.04 * s, 0, false); }
+  /* the new parts: grown at each count, folded away as it leaves; on its stem joints, lit by the lamp, pale undersides from behind */
+  const spr = sprouts70(S), nG = e.pr.length; spr.forEach((q, i) => { const s = i < nG ? e.pr[i] : null, gr = s ? s.g : 0, big = i >= 6 ? 1.35 : 1, k = gr <= 0 ? 0 : (sm52(gr) + 0.3 * Math.sin(PI * gr) * (i >= 6 ? 1.4 : 1)) * (1 - e.fold) * big; q.g.visible = k > 0.01; if (!q.g.visible) return;
+    const bp = B[q.at].position, wv = 0.08 * Math.sin(TAU * e.t / 900 + q.ph) + (e.str > 0 ? 0.35 * e.str : 0) + 0.25 * spr67((e.t - (X.Z.P[i] ? X.Z.P[i].t : 0)) / 1000, 0.3, 0.25);
+    if (q.kind === 'root') { q.g.position.set(B[0].position.x + q.side * 0.05 * H, 0.012, B[0].position.z); q.g.rotation.set(-PI / 2, 0, q.side > 0 ? -0.35 - 0.3 * (i % 3) : PI + 0.35 + 0.3 * (i % 3)); q.inner.rotation.set(0, 0, 0); q.inner.scale.set(q.len * k, q.len * 0.32 * Math.min(1, k), 1); return; }
+    if (q.kind === 'bud') { q.g.position.set(bp.x + q.side * 0.11 * H, bp.y + 0.02 * H, bp.z + 0.06 * H); q.g.rotation.set(0, 0, 0); q.inner.scale.set(q.len * k, q.len * 1.25 * k, q.len * k); return; }
+    q.g.position.set(bp.x + q.side * 0.05 * H, bp.y, bp.z + (st === 1 ? -0.25 * H : 0.03 * H)); q.g.rotation.set(0, 0, PI / 2 - q.ang + q.side * (wv - 0.35 * e.str) - q.side * 0.5 * e.str); q.inner.rotation.set(PI * 0.45 * (1 - sm52(gr * 1.2)), 0, 0); q.inner.scale.set(q.len * k, q.len * k * (0.35 + 0.65 * sm52(gr * 1.4)), q.len * k);
+    if (q.kind === 'leaf' && q.g.userData.fx) q.g.userData.fx.material = i >= 6 ? mats70(S.T).fx : mats70(S.T).f; });
+  /* where its parts are in the world, for the page */ const R = S.root; R.updateWorldMatrix(true, true); const W = v => { const w = U.a.copy(v).applyMatrix4(R.matrixWorld); return [w.x, w.y, w.z]; };
+  const h = { tip: X.tipJ != null ? W(B[X.tipJ].position) : null, top: W(B[G.bj[G.R.head]].position), c: W(B[G.bj[G.R.chest]].position), feet: feet.map(F => { const p = B[F.c.jn[F.c.jn.length - 1]].position, w = W(p); w.push(p.y); return w; }), tips: [] };
+  K.leaves.forEach(L => h.tips.push(W(B[L.c.jn[L.c.jn.length - 1]].position))); spr.forEach(q => { if (q.g.visible && q.kind === 'leaf') { q.g.updateWorldMatrix(true, true); const w = U.a.set(1, 0, 0).applyMatrix4(q.inner.matrixWorld); h.tips.push([w.x, w.y, w.z]); } }); S.h70 = h; }
+function act70(f0, grp, S, t, o) { const Z = o.bites.s70, e = ph70(t, Z), d = Z.dirOf ? Z.dirOf(e) : [0, 1]; let hd = Math.atan2(d[0], d[1]);
+  let turn = 0; if (e.ph === 'out' || e.ph === 'perk') turn = 0.5 * Math.max(-1.1, Math.min(1.1, hd)); else if (e.w === 'back') { const hb = Z.hdB != null ? Z.hdB : (hd < 0 ? hd + 2 * PI : hd), tgt = hb > PI ? 2 * PI : 0; turn = e.ph === 'settle' ? tgt + (hb - tgt) * e.turn : hb * e.turn; if (e.ph === 'back') turn = hd < 0 ? hd + 2 * PI : hd; } else if (e.ph === 'work') turn = 0;
+  const X = S.x70 = { t, e, Z, k: e.ph === 'rest' ? 1 : 0.35, turn, lx: Math.max(-1, Math.min(1, 1.3 * Math.sin(hd))) * (e.ph === 'out' ? 1 : 0), tl: null, tx: 0, ty: 0, tipJ: null }; W70.e = e;
+  if (e.ph === 'work' && Z.tg && Z.tg.length) { S.root.updateWorldMatrix(true, false); const inv = W70.inv || (W70.inv = new S.T.Matrix4()); inv.copy(S.root.matrixWorld).invert(); X.tl = Z.tg.map(q => { const v = S.v67.b.set(q.x, q.y, q.z).applyMatrix4(inv); return [v.x, v.y, v.z]; });
+    if (e.cur >= 0 && X.tl[e.cur]) { const c = X.tl[e.cur], hp = S.bones[S.G.bj[S.G.R.head]].position; X.tx = Math.max(-1, Math.min(1, (c[0] - hp.x) / (0.6 * S.G.H))); X.ty = Math.max(-1, Math.min(1, (c[1] - hp.y) / (0.6 * S.G.H))); } }
+  f0(grp, 'rest', 0, {}); post70(S, e, X); try { shade67(S); } catch (x) { /* no shade */ }
+  return { e: e.w === 'out' ? e.e : e.w === 'back' ? 1 - e.e : e.w === 'perch' ? 1 : 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip !== 'act' || !on70(S) || !(o && o.bites && o.bites.s70)) { if (S && S.x70) { S.x70 = null; hideSp70(S); } return f0(grp, clip, t, o); }
+  try { return act70(f0, grp, S, t, o); } catch (err) { W70.err = String(err && err.stack); S.x70 = null; hideSp70(S); return f0(grp, clip, t, o); } })(play26);
+KIT.spirit26.play = play26;
+KIT.W70 = W70;
+// ==== W70 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
