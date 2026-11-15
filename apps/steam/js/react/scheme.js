@@ -5864,14 +5864,20 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const ab = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9 }; if (center && center.balls) center.balls.forEach((b, a) => { if (!a || a.fly) return; b.mesh.getWorldPosition(v); const r = s77R(b); ab.x0 = Math.min(ab.x0, v.x - r); ab.x1 = Math.max(ab.x1, v.x + r); ab.z0 = Math.min(ab.z0, v.z - r - 0.35 * v.y); ab.z1 = Math.max(ab.z1, v.z + r); }); if (ab.x0 > ab.x1) Object.assign(ab, mb);
     cam.updateMatrixWorld(); const pr = (x, y, z) => { v.set(x, y, z).project(cam); return [(v.x + 1) / 2, (1 - v.y) / 2]; };
     const xm = (pg.x0 + pg.x1) / 2, pH = pr(xm, 0, pg.z1)[1] - pr(xm, 0, pg.z0)[1], bz = Math.max(pg.z0 + 8, Math.min(pg.z1 - 3, (ab.z0 + ab.z1) / 2 + 0.5 * (ab.z1 - ab.z0))), b0 = pr(mc.x, 0, bz), b1 = pr(mc.x, 1, bz), dy1 = Math.max(1e-4, b0[1] - b1[1]);
-    const left = !SAFE || mc.x > (SAFE.L.x1 + SAFE.R.x0) / 2, xl = (SAFE ? SAFE.L.x0 : pg.x0) + 0.8, xr = pg.x1 - 0.8;
-    const place = k => (left ? Math.max(xl - Bx.x0 * k * RS, ab.x0 - 0.9 - Bx.x1 * k * RS) : Math.min(xr - Bx.x1 * k * RS, ab.x1 + 0.9 - Bx.x0 * k * RS)), clear = k => (left ? place(k) + Bx.x1 * k * RS <= ab.x0 - 0.5 : place(k) + Bx.x0 * k * RS >= ab.x1 + 0.5);
-    let k = Math.max(1, S92H[stg - 1] * pH / dy1 / (Bx.H * RS)); for (let i = 0; i < 40 && k > 1 && !clear(k); i++) k = Math.max(1, k * 0.95);
-    const pl = { x: place(k), z: bz, k }, dist = Math.hypot(pl.x - HOMP.x, pl.z - HOMP.z), nH = dist > 14 ? 3 : 2;
-    const R2 = b => Math.max(0.5, Math.round(b * f * 2) / 2) * L, TH = R2(stg >= 5 ? 1.5 : 1), Tw = R2(1), Tp = nH * TH, Tr = R2(1), J = Tw + Tp + Tr, n = tg.length, P = []; let t = R2(1.5);
-    for (let i = 0; i < n; i++) { if (i) t += R2(Math.max(0.5, 1.5 - 0.5 * (i - 1))); P.push({ t }); } P.forEach((p, i) => { const gap = i ? p.t - P[i - 1].t : 1.5 * L; p.g = Math.min(1, gap / L); p.a0 = p.t - 1.15 * L * p.g; p.r0 = p.a0; p.b = p.t; });
-    const last = n ? P[n - 1].t : R2(1.5), up = last + R2(1), hit = up + R2(1), rel = hit + R2(1), D = hit + R2(2), Tt = R2(1), Tb = nH * TH, Ts = R2(2), B = Tt + Tb + Ts;
-    return { v92: true, stg, L, f, pl, k, way0: s58Line([HOMP, pl]), wayB: s58Line([pl, HOMP]), mb, mc, mr, R0, tg, pg, Tw, Tp, Tr, J, P, up, hit, rel, D, Tt, Tb, Ts, B, RS, eE: -1, n, nH, TH, Hw: Bx.H * RS, bx: Bx }; };
+    /* its place: on the molecule's own page, the whole figure inside the page and above the score, clear of every atom; as large as asked if a
+       place that large is free, else smaller; of the free places the one nearest the molecule */
+    const ats = []; if (center && center.balls) center.balls.forEach((b, a) => { if (!a || a.fly) return; b.mesh.getWorldPosition(v); const r = s77R(b) + 0.3; ats.push([v.x, v.z, r], [v.x, v.z - v.y, r]); });
+    const zmax = pg.z1 - 5.5, free = (bx, bz, k) => { const u = Bx.H * RS * k * 1.18, x0 = bx + Bx.x0 * RS * k - 0.3, x1 = bx + Bx.x1 * RS * k + 0.3, z0 = bz - u, z1 = bz + 0.08 * u; if (x0 < pg.x0 + 0.5 || x1 > pg.x1 - 0.5 || z0 < pg.z0 + 0.4 || z1 > zmax) return false;
+      return !ats.some(q => { const cx = Math.max(x0, Math.min(x1, q[0])), cz = Math.max(z0, Math.min(z1, q[1])); return Math.hypot(q[0] - cx, q[1] - cz) < q[2]; }); };
+    let k = Math.max(1, S92H[stg - 1] * pH / dy1 / (Bx.H * RS)), pl = null; for (let i = 0; i < 40 && !pl; i++) { let bd = 1e9; for (let ix = 0; ix <= 24; ix++) for (let iz = 0; iz <= 20; iz++) { const bx = pg.x0 + (pg.x1 - pg.x0) * ix / 24, bz2 = pg.z0 + (zmax - pg.z0) * iz / 20; if (!free(bx, bz2, k)) continue; const d = Math.hypot(bx - mc.x, bz2 - 0.5 * Bx.H * RS * k - mc.z); if (d < bd) { bd = d; pl = { x: bx, z: bz2, k }; } } if (!pl) { if (k <= 0.7) break; k *= 0.93; } }
+    if (!pl) pl = { x: Math.max(pg.x0 + 2, ab.x0 - 2), z: Math.min(zmax, bz), k: Math.max(0.7, k) };
+    const dist = Math.hypot(pl.x - HOMP.x, pl.z - HOMP.z), nH = dist > 14 ? 3 : 2;
+    /* the landings between: beside the straight way if an atom lies on it */ const way = [{ x: HOMP.x, z: HOMP.z }], pX = -(pl.z - HOMP.z) / Math.max(1e-6, dist), pZ = (pl.x - HOMP.x) / Math.max(1e-6, dist), rr = 0.5 * (Bx.x1 - Bx.x0) * RS;
+    for (let i = 1; i < nH; i++) { const a = i / nH, wx = HOMP.x + (pl.x - HOMP.x) * a, wz = HOMP.z + (pl.z - HOMP.z) * a, kk = 1 + (pl.k - 1) * a; let best = null; for (const o of [0, 2, -2, 4, -4, 6, -6, 8, -8, 10, -10, 12, -12]) { const x = wx + pX * o, z = wz + pZ * o; if (x < pg.x0 + 1 || x > pg.x1 - 1) continue; if (!ats.some(q => Math.hypot(q[0] - x, q[1] - z) < q[2] + 1.6 + rr * kk)) { best = { x, z }; break; } } way.push(best || { x: wx, z: wz }); } way.push({ x: pl.x, z: pl.z });
+    const R2 = b => Math.max(0.5, Math.round(b * f * 2) / 2) * L, TH = R2(stg >= 5 ? 1.5 : 1), Tw = R2(1), Tp = nH * TH, Tr = R2(1), J = Tw + Tp + Tr, n = tg.length, P = []; let t = R2(2);
+    for (let i = 0; i < n; i++) { if (i) t += R2(1); P.push({ t }); } P.forEach((p, i) => { const gap = i ? p.t - P[i - 1].t : 1.5 * L; p.g = 1; p.a0 = p.t - 1.0 * L; p.r0 = p.a0; p.b = p.t; });
+    const last = n ? P[n - 1].t : R2(2), up = last + R2(1), hit = up + R2(1), rel = hit + R2(1), D = hit + R2(2), Tt = R2(0.5), Tb = nH * TH, Ts = R2(2), B = Tt + Tb + Ts;
+    return { v92: true, stg, L, f, pl, k, way0: s58Line([HOMP, pl]), wayB: s58Line([pl, HOMP]), mb, mc, mr, R0, tg, pg, Tw, Tp, Tr, J, P, up, hit, rel, D, Tt, Tb, Ts, B, RS, eE: -1, n, nH, TH, Hw: Bx.H * RS, bx: Bx, way }; };
   const s92Frame = (now, Lq, SP, Kt, Pq) => { const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, live = !!(st.homAct === A && SP && SP.x92 && SP.h77);
     Pq.emb.forEach(s => { s.visible = false; }); Pq.shade.visible = false; s77Lamp(now, null);
     if (t > Z.tEnd + 3000) { S77.last = null; s77Hide(Pq); return; } dirty = true;
@@ -5880,9 +5886,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     Z.tg.forEach(q => { const b = same ? s66Ball(q.a) : null; if (b) { b.mesh.getWorldPosition(v); q.x = v.x; q.y = v.y; q.z = v.z; q.live = true; } else q.live = false; });
     /* the fire: a tongue leaves its mouth, flies a low arc and lands on the atom on the beat; there it stands (a pop as it catches), flares once on
        the hit and gutters out */ const fs = [0.8, 0.9, 1, 1.1, 1.3][Z.st - 1], gut = 1 - ss77s((t - Z.tHit - 1.2 * Lb) / (1.8 * Lb)), fla = t >= Z.tHit ? 1 + 0.6 * Math.exp(-(t - Z.tHit) / 380) : 1, cp = cam.position, lights = []; let fi = 0;
-    Z.tg.forEach((q, i) => { const p = Z.P[i]; if (!p || !q.live || fi >= Pq.fire.length) return; const dx = cp.x - q.x, dy = cp.y - q.y, dz = cp.z - q.z, dl = Math.hypot(dx, dy, dz) || 1, fx = q.x + dx / dl * q.R * 1.05, fy = q.y + q.R * 0.25 + dy / dl * q.R * 1.05, fz = q.z + dz / dl * q.R * 1.05, T0 = p.t - 0.45 * Lb * p.g;
-      if (t >= T0 && t < p.t) { if (!h) return; const u = (t - T0) / (p.t - T0), d = Math.sign(q.x - h.head[0]) || 1, mx = h.head[0] + d * 0.7 * h.hr, my = h.head[1] - 0.2 * h.hr, mz = h.head[2] + 0.8 * h.hr, ds = Math.hypot(fx - mx, fy - my, fz - mz), m = Pq.fire[fi++], s = q.R * fs * (1.7 + 0.9 * u);
-        m.position.set(mx + (fx - mx) * u, my + (fy - my) * u + Math.sin(Math.PI * u) * 0.16 * ds, mz + (fz - mz) * u); m.scale.set(s * 0.8, s * 1.5, 1); m.material.opacity = Math.min(1, u * 5); m.material.rotation = -d * 1.1 * (1 - u); m.visible = true; return; }
+    Z.tg.forEach((q, i) => { const p = Z.P[i]; if (!p || !q.live || fi >= Pq.fire.length) return; const dx = cp.x - q.x, dy = cp.y - q.y, dz = cp.z - q.z, dl = Math.hypot(dx, dy, dz) || 1, fx = q.x + dx / dl * q.R * 1.05, fy = q.y + q.R * 0.25 + dy / dl * q.R * 1.05, fz = q.z + dz / dl * q.R * 1.05, T0 = p.t - 0.6 * Lb;
+      if (t >= T0 && t < p.t) { if (!h) return; const u = (t - T0) / (p.t - T0), d = Math.sign(q.x - h.head[0]) || 1, mx = h.head[0] + d * 0.7 * h.hr, my = h.head[1] - 0.2 * h.hr, mz = h.head[2] + 0.8 * h.hr, ds = Math.hypot(fx - mx, fy - my, fz - mz), m = Pq.fire[fi++], s = q.R * fs * (2.3 + 0.7 * u);
+        m.position.set(mx + (fx - mx) * u, my + (fy - my) * u + Math.sin(Math.PI * u) * 0.3 * ds, mz + (fz - mz) * u); m.scale.set(s * 0.8, s * 1.5, 1); m.material.opacity = Math.min(1, u * 5); m.material.rotation = -d * (0.9 - 1.3 * u) * (1 - u * u); m.visible = true; return; }
       const age = t - p.t; if (age < 0) return; const grow = ss77s(age / 160) * (1 + 0.5 * Math.exp(-age / 150) * Math.sin(Math.min(Math.PI, age / 60))), fl = 0.88 + 0.12 * Math.sin(now / 70 + i * 1.7) + 0.06 * Math.sin(now / 33 + i * 2.9), H = q.R * (2.7 + 0.25 * Math.min(6, i)) * fs * grow * fl * fla * gut;
       if (H > 0.06) { const m = Pq.fire[fi++]; m.position.set(fx, fy, fz); m.scale.set(q.R * 1.7 * fs * (0.8 + 0.2 * gut) * (0.9 + 0.1 * fla), H, 1); m.material.opacity = Math.min(1, 0.3 + gut * 1.5); m.material.rotation = 0.1 * Math.sin(now / 160 + i); m.visible = true; lights.push([q.x, q.z + q.R * 0.4, Math.min(1, 0.3 + H / (q.R * 5))]); } });
     for (let i = fi; i < Pq.fire.length; i++) Pq.fire[i].visible = false;
@@ -5892,7 +5898,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     /* sound, on the beats */ once('wake', () => { if (sx.handoff) sx.handoff(); });
     const hopS = (t0, tag) => { for (let i = 0; i < Z.nH; i++) { if (t >= t0 + (i + 0.14) * Z.TH) once(tag + 'u' + i, () => { if (sx.swish) sx.swish(0.3); }); if (t >= t0 + (i + 0.78) * Z.TH) once(tag + 'd' + i, () => { if (sx.tick) sx.tick(); if (i === Z.nH - 1 && sx.snap) sx.snap(1, 0.5); }); } };
     if (t >= Z.tPour) hopS(Z.tPour, 'o'); if (t >= Z.tBk) hopS(Z.tBk, 'b');
-    Z.P.forEach((p, i) => { if (t >= p.t - 0.45 * Lb * p.g) once('s' + i, () => { if (sx.swish) sx.swish(0.45); }); if (t >= p.t) once('c' + i, () => { if (sx.reflex) sx.reflex('weld', i + 1, { bell: 1.2 }); }); });
+    Z.P.forEach((p, i) => { if (t >= p.t - 0.6 * Lb) once('s' + i, () => { if (sx.swish) sx.swish(0.45); }); if (t >= p.t) once('c' + i, () => { if (sx.reflex) sx.reflex('weld', i + 1, { bell: 1.2 }); }); });
     if (t >= Z.tUp) once('up', () => { if (sx.draw) sx.draw(4, (Z.tHit - Z.tUp) / 1000); });
     if (t >= Z.tHit) once('hit', () => { if (sx.boom) sx.boom(); if (sx.strike) sx.strike(2, 1.4); });
     if (t >= Z.tD) once('turn', () => { if (sx.swish) sx.swish(0.3); }); };
@@ -5929,7 +5935,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const s77Z = (A, j) => { const p = S77.plan, W = j.W, tA = W + p.J;
     const Z = { st: p.stg, L: p.L, k: p.k, tW: W, tPour: W + p.Tw, tRise: W + p.Tw + p.Tp, tA, P: p.P.map(q => ({ r0: tA + q.r0, t: tA + q.t, b: tA + q.b })), tUp: tA + p.up, tHit: tA + p.hit, tRel: tA + p.rel, tD: tA + p.D, tBk: tA + p.D + p.Tt, tHm: tA + p.D + p.Tt + p.Tb, tEnd: tA + p.D + p.B,
       way0: p.way0, wayB: p.wayB, pl: p.pl, mb: p.mb, mc: Object.assign({}, p.mc), mr: p.mr, mr0: p.R0, pg: p.pg, eE: p.eE, tg: p.tg.map(q => Object.assign({}, q)), floor: s66Floor, dx: p.pl.x >= HOMP.x ? 1 : -1, g: g };
-    if (p.v92) { Object.assign(Z, { v92: true, H: { x: HOMP.x, z: HOMP.z }, nH: p.nH, TH: p.TH, Hw: p.Hw, hop: 0.5 }); Z.P.forEach((q, i) => { q.a0 = tA + p.P[i].a0; q.g = p.P[i].g; }); j.f.up = j.f.land = 1; }
+    if (p.v92) { Object.assign(Z, { v92: true, H: { x: HOMP.x, z: HOMP.z }, nH: p.nH, TH: p.TH, Hw: p.Hw, hop: 0.5, way: p.way, wayR: p.way.slice().reverse() }); Z.P.forEach((q, i) => { q.a0 = tA + p.P[i].a0; q.g = p.P[i].g; }); j.f.up = j.f.land = 1; }
     S77.Z = Z; j.bites.s77 = Z; return Z; };
   homJump = (f0 => function (A, now) { const j = A && A.j; if (!j || !j.s77 || !s77On()) return f0(A, now);
     let Z = j.bites && j.bites.s77; if (!Z) { try { Z = s77Z(A, j); } catch (e) { S77.err = String(e && e.stack); } }
@@ -6652,6 +6658,50 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   burst3 = (f0 => function (x, y, z, n, col) { try { if (homObj && homObj.id === 'brimstone' && typeof col === 'string' && /^#?c9a227$/i.test(col)) { const h = Math.max(1, Math.round(n / 2)); f0(x, y, z, h, '#6a5cff'); return f0(x, y, z, n - h, '#e8401a'); } } catch (e) { /* as it was */ } return f0(x, y, z, n, col); })(burst3);
   if (AA.rxKit) AA.rxKit.s82dbg = () => { const E = R21.evo; return { err: S82.err, kit: AA.rxKit.e82dbg && AA.rxKit.e82dbg(), c: E && E.c82 && [E.c82.x, E.c82.z, E.c82.R, E.c82.F, E.c82.Hc].map(v => +(+v).toFixed(2)), mol: E && E.c82 && E.c82.mol, k: E && E.k59, fit: E && E.fit82, a82: E && E.a82 && E.a82.map(v => +v.toFixed(2)), r82: E && E.r82 && +E.r82.toFixed(2), lw: E && E.lw82 && +E.lw82.toFixed(2), pH: E && E.pH82 && +E.pH82.toFixed(1), dim: +S82.dim.toFixed(2), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done }; };
   // ==== S82 END
+  // ==== S92 BEGIN
+  // (builder 92) BRIMSTONE'S CHANGE OF STAGE ON THE PAGE, REBUILT: "the one flame" (kitart W92 has the figure and the timeline KIT.ph92e; switch
+  // AA.rxKit.v92, ?v92=0 gives builder 82's eruption). Here: its way and size (two hops from home to the place beside the molecule that S82 uses:
+  // s59Place, s74Wide, s74Box; two hops home), and the ONE thing that is not its skin: a single great tongue of its own blue fire (a sprite drawn
+  // once, large: violet edge, blue body, pale heart, one ink outline) that rises round it, stands alone, and is drawn up thin and gone on the hit;
+  // with its blue light lying on the paper under it. Nothing else: the room is not dimmed, nothing is burnt, nothing is left on the page.
+  const S92 = { err: null, v: new T.Vector3(), was: null, K: null };
+  const s92Tex = () => { const c = canvasTex(512, 1024), x = c.x, q = 8; x.clearRect(0, 0, 512, 1024);
+    const tongue = (k, dx) => { x.beginPath(); x.moveTo((32 + dx) * q, 124 * q); x.bezierCurveTo((32 - 30 * k + dx) * q, 122 * q, (32 - 26 * k + dx) * q, 84 * q, (32 - 12 * k + dx) * q, 62 * q); x.bezierCurveTo((32 - 2 * k + dx) * q, 44 * q, (30 + dx) * q, 30 * q, (40 + dx * 0.3) * q, (4 + (1 - k) * 40) * q); x.bezierCurveTo((44 + dx) * q, 34 * q, (32 + 24 * k + dx) * q, 60 * q, (32 + 26 * k + dx) * q, 92 * q); x.bezierCurveTo((32 + 26 * k + dx) * q, 116 * q, (32 + 14 * k + dx) * q, 124 * q, (32 + dx) * q, 124 * q); x.closePath(); };
+    /* two low side tongues first, then the great one over them: one flame with three points */ const side = (sx2, ox, oy, k2) => { x.save(); x.translate(ox, oy); x.scale(sx2 * k2, k2); x.translate(-256, -992); const g2 = x.createLinearGradient(0, 1024, 0, 0); g2.addColorStop(0, 'rgba(110,128,250,1)'); g2.addColorStop(0.6, 'rgba(88,84,238,1)'); g2.addColorStop(1, 'rgba(112,74,232,1)'); tongue(1, 0); x.fillStyle = g2; x.fill(); x.strokeStyle = 'rgba(22,24,70,0.92)'; x.lineWidth = 9 / k2; x.lineJoin = 'round'; x.stroke(); x.restore(); };
+    side(1, 150, 1000, 0.46); side(-1, 372, 1000, 0.38);
+    let g = x.createLinearGradient(0, 1024, 0, 0); g.addColorStop(0, 'rgba(126,146,255,1)'); g.addColorStop(0.45, 'rgba(74,100,255,1)'); g.addColorStop(0.82, 'rgba(98,74,236,1)'); g.addColorStop(1, 'rgba(112,74,232,0.96)'); tongue(1, 0); x.fillStyle = g; x.fill();
+    g = x.createLinearGradient(0, 1024, 0, 300); g.addColorStop(0, 'rgba(240,246,255,1)'); g.addColorStop(0.55, 'rgba(204,218,255,0.8)'); g.addColorStop(1, 'rgba(160,184,255,0.0)'); tongue(0.62, 1); x.fillStyle = g; x.fill();
+    tongue(1, 0); x.strokeStyle = 'rgba(22,24,70,0.92)'; x.lineWidth = 9; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke();
+    c.t.needsUpdate = true; return c.t; };
+  const s92Make = () => { if (S92.K) return S92.K; const K = S92.K = {};
+    K.fl = new T.Sprite(new T.SpriteMaterial({ map: s92Tex(), transparent: true, depthWrite: false, depthTest: false })); K.fl.center.set(0.5, 0.03); K.fl.renderOrder = 32; K.fl.visible = false; K.fl.userData.plain = true; K.fl.userData.nobox = true; scene.add(K.fl);
+    K.gl = new T.Mesh(new T.CircleGeometry(1, 40).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: s74Tex([[0, 1], [0.3, 0.5], [0.65, 0.12], [1, 0]]), color: lin('#7f95ff'), transparent: true, depthWrite: false, opacity: 0 })); K.gl.renderOrder = 6; K.gl.visible = false; K.gl.frustumCulled = false; K.gl.userData.plain = true; scene.add(K.gl);
+    return K; };
+  const s92Hide = () => { const K = S92.K; if (K) { K.fl.visible = false; K.gl.visible = false; } };
+  const s92Evo = now => { const E = R21.evo, SP = s26Fig(), Kt = AA.rxKit, e = E && E.e92;
+    if (!E || !e || !SP || !SP.way69 || HEVO.done || Kt.v92 === false) { if (S92.was && !R21.evo) { const L = S92.was.L; S92.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s92Hide(); return; }
+    S92.was = E; dirty = true; const c = e.c, u = e.u, P = e.P, L = e.L, sx = sfx, once = (n, f) => { if (!E.q92[n]) { E.q92[n] = 1; try { f(); } catch (x) { /* no sound */ } } };
+    if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; } if (S27.ring) S27.ring.visible = false;
+    if (!E.c92) { s59Place(E, SP); E.c74 = E.c59; E.k59 = 1; s74Wide(E, SP); s74Box(E, SP); E.c92 = E.c74; E.q92 = {}; E.dx92 = E.c92.x >= HOMP.x ? 1 : -1; }
+    const C = E.c92, Q = HEVO.pos || (HEVO.pos = {}), k = E.k59 || 1, Fk = C.F * k, ko = E.from === 1 ? 0.6 : 0.82, a = e.cr;
+    const s = e.show === 'new' ? E.s1 * (1 + (Fk - 1) * a) * e.ks : E.s0 * (1 + (Fk * ko - 1) * a) * e.ks;
+    Q.x = HOMP.x + (C.x - HOMP.x) * a; Q.z = HOMP.z + (C.z - HOMP.z) * a; Q.y = e.hy * 0.3 * C.Hc * k * (0.4 + 0.6 * a); Q.sx = e.sx; Q.sy = e.sy; homObj.s = s; E.ks31 = s / E.s0;
+    /* the whole new form kept in the screen while it stands at the place (made a little smaller if it must be) */
+    if (u >= c[3] && u < c[5] && E.p82) { const p = E.p82, v = S92.v; let hi = -9, xl = 9, xh = -9; for (let i = 0; i < p.length; i += 4) { if (p[i + 3] <= 0.02) continue; v.set(p[i], p[i + 1] + 0.697 * p[i + 3], p[i + 2] - 0.717 * p[i + 3]).project(cam); hi = Math.max(hi, v.y); v.set(p[i] - p[i + 3], p[i + 1], p[i + 2]).project(cam); xl = Math.min(xl, v.x); v.set(p[i] + p[i + 3], p[i + 1], p[i + 2]).project(cam); xh = Math.max(xh, v.x); }
+      if (hi > 0.86 || xl < -0.94 || xh > 0.94) E.k59 = Math.max(0.55, (E.k59 || 1) * 0.985); }
+    /* the one flame */ const K = s92Make(), Ft = E.f82, r = E.r82 || 1;
+    if (Ft && e.fa > 0.01 && e.fl > 0.01) { const v = S92.v, m = K.fl; if (!E.fH92) { v.set(C.x, 0, C.z).project(cam); const fy = (v.y + 1) / 2; cam.updateMatrixWorld(); const cu = new T.Vector3().setFromMatrixColumn(cam.matrixWorld, 1).normalize(), want = Math.min(0.95, fy + P.fl); let lo = 0, hi = 400; for (let i = 0; i < 26; i++) { const mm = (lo + hi) / 2; v.set(C.x + cu.x * mm, cu.y * mm, C.z + cu.z * mm).project(cam); if ((v.y + 1) / 2 < want) lo = mm; else hi = mm; } E.fH92 = lo; }
+      const H = E.fH92 * e.fl, fk = 1 + 0.025 * Math.sin(now / 61) + 0.02 * Math.sin(now / 23); m.visible = true; m.position.set((E.a82 ? E.a82[0] : C.x) - 0.3 * r, s66Floor(C.x, C.z) + 0.02, C.z + 0.25 * r); m.scale.set(E.fH92 * 0.66 * e.fw * (0.85 + 0.15 * Math.min(1, e.fl)), H * fk, 1); m.material.rotation = e.sway + 0.012 * Math.sin(now / 140); m.material.opacity = Math.min(1, e.fa);
+      K.gl.visible = true; K.gl.position.set(C.x, s66Floor(C.x, C.z) + 0.03, C.z + 0.2 * r); K.gl.scale.setScalar(E.fH92 * (0.28 + 0.2 * Math.min(1.2, e.fl))); K.gl.material.opacity = 0.42 * Math.min(1, e.fa) * Math.min(1, e.fl) * (0.92 + 0.08 * Math.sin(now / 47)); }
+    else s92Hide();
+    /* the sound, on the beats */ for (let i = 0; i < 2; i++) { if (u >= i + 0.14) once('gu' + i, () => sx.swish(0.3)); if (u >= i + 0.78) once('gd' + i, () => sx.tick()); }
+    if (u >= c[1]) once('wrap', () => sx.draw(e.to, (P.b[1] + P.b[2]) * L / 1000));
+    if (u >= c[3]) once('hit', () => { sx.boom(); sx.strike(2, 1.2); sx.swish(0.9); });
+    if (u >= c[5] + 0.3) once('turn', () => sx.swish(0.3));
+    for (let i = 0; i < 2; i++) { if (u >= c[5] + 0.5 + i + 0.78) once('hd' + i, () => { sx.tick(); if (i === 1) sx.snap(1, 0.6); }); } };
+  homEvo19 = (f0 => function (now) { f0(now); try { s92Evo(now); } catch (x) { S92.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s92dbg = () => { const E = R21.evo; return { err: S92.err, s77: S77.err, kit: AA.rxKit.W92 && AA.rxKit.W92.err, u: E && E.e92 && +E.e92.u.toFixed(2), c: E && E.c92 && [E.c92.x, E.c92.z, E.c92.F, E.c92.Hc].map(v => +(+v).toFixed(2)), fH: E && E.fH92, k: E && E.k59 }; };
+  // ==== S92 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

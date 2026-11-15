@@ -5473,7 +5473,7 @@ function tint69(T, S) { if (!S.m30) return; S.t69 = true; S.t48 = true; S.u69 = 
       + ' float sm73 = s69 * (1.0 - f69), rz73 = N30(vec3(q69.x * 1.2, q69.y * 0.75 - u69.x * 0.42, q69.z * 1.2) + 7.0), rw73 = N30(vec3(q69.x * 3.0, q69.y * 1.8 - u69.x * 0.8, q69.z * 3.0) + 2.0), hi73 = smoothstep(0.40, 1.0, bp.y), ed73 = smoothstep(0.30, 0.85, 1.0 - nv);'
       + ' c9 *= 1.0 - sm73 * (0.24 * smoothstep(0.42, 0.72, rz73) - 0.10 * smoothstep(0.55, 0.8, rw73));'
       + ' c9 *= 1.0 - 0.30 * sm73 * smoothstep(0.50, 0.16, bp.y);'
-      + ' c9 = mix(c9, mix(bg, vec3(0.80, 0.77, 0.74), 0.45), sm73 * clamp(0.50 * hi73 + 0.42 * ed73 * (0.35 + 0.65 * hi73) + 0.3 * (rw73 - 0.5) * hi73, 0.0, 0.78));'
+      + ' c9 = mix(c9, mix(bg, vec3(0.80, 0.77, 0.74), 0.45 + 0.55 * u69.z), sm73 * clamp(0.50 * hi73 + 0.42 * ed73 * (0.35 + 0.65 * hi73) + 0.3 * (rw73 - 0.5) * hi73, 0.0, 0.78));'
       + ' c9 = mix(c9, vec3(0.97, 0.94, 0.89), 0.6 * sm73 * smoothstep(0.52, 0.9, 1.0 - nv) * smoothstep(0.05, 0.55, l9)); }\n#endif\n#ifdef MARGIN30\nc9 = mix(c9, bg, s69 * (1.0 - f69) * smoothstep(0.22, 0.5, bp.y));\n#endif\n',   /* (builder 73) the paper margin round the smoke fades out up the column */
     sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float w69 = vW29.w, s69 = smoothstep(0.30, 0.46, w69), f69 = smoothstep(0.62, 0.85, w69), e69 = smoothstep(0.08, 0.22, w69) * (1.0 - smoothstep(0.28, 0.46, w69)), r69 = 1.0 - smoothstep(0.02, 0.16, w69), pl = 0.0,'],
       ['vec3(0.64, 0.80, 0.945)', mx('lite')], ['vec3(0.40, 0.59, 0.84)', mx('edge')], ['vec3(0.36, 0.52, 0.78)', mx('shade')], ['vec3(0.60, 0.76, 0.92)', mx('margin')],
@@ -6052,64 +6052,106 @@ function hop92(u, o) { const g0 = 0.14, g1 = 0.78;
 /* the act's numbers at t ms since the tap (Z: the page's plan, absolute times) */
 function ph92(t, Z) { const L = Z.L, H = Z.H, pl = Z.pl, kT = pl.k, dxs = Math.sign(pl.x - H.x) || 1, HW = Z.Hw || 3;
   const e = { ph: 'wait', t, x: H.x, z: H.z, y: 0, k: 1, sy: 1, sx: 1, rz: 0, yaw: 0, lag: 0, lagz: 0, wide: 0, lid: 0, brow: null, flame: 1, glow: 1, open: 0, si: -1, fwd: 0, back: 0, done: false, home: false, spent: 0, tx: Z.mc.x, tz: Z.mc.z };
-  const fin = () => { e.sx = 1 + 0.6 * (1 - e.sy); if (e.sy > 1) e.sx = 1 - 0.35 * (e.sy - 1); return e; };
+  const fin = () => { e.sx = 1 + 0.6 * (1 - e.sy); if (e.sy > 1) e.sx = 1 - 0.35 * (e.sy - 1); e.sx += e.puff || 0; return e; };
   if (t < Z.tW) return e;
-  if (t < Z.tPour) { /* ready: down and wide, the coals open */ const c = eo92((t - Z.tW) / (Z.tPour - Z.tW)); e.ph = 'ready'; e.sy = 1 - 0.28 * c; e.wide = c; e.glow = 1 + 0.8 * c; e.brow = -0.6 * c; e.rz = 0.05 * dxs * c; e.lag = -0.25 * dxs * c; e.flame = 1 + 0.3 * c; return fin(); }
-  const hops = (t0, from, to, k0, k1, back) => { const n = Z.nH, TH = Z.TH, i = Math.min(n - 1, Math.floor((t - t0) / TH)), u = (t - t0 - i * TH) / TH, o = hop92(u, {}), a = (i + o.p) / n, dx = to.x - from.x, dz = to.z - from.z, dl = Math.hypot(dx, dz) || 1, sx = dx / dl, sz = dz / dl;
-    e.x = from.x + dx * a; e.z = from.z + dz * a; const ka = k0 + (k1 - k0) * ((i + sm52(o.p)) / n); e.k = ka; e.y = o.y * Z.hop * HW * ka; e.sy = o.sy;
+  if (t < Z.tPour) { /* ready: down and wide, the coals open */ const c = eo92((t - Z.tW) / (Z.tPour - Z.tW)); e.ph = 'ready'; e.sy = 1 - 0.28 * c; e.wide = c; e.glow = 1 + 0.8 * c; e.brow = -0.6 * c; e.rz = 0.05 * dxs * c; e.lag = -0.25 * dxs * c; e.flame = 1 + 0.3 * c; e.op = c; return fin(); }
+  e.op = 1;
+  const hops = (t0, W, k0, k1) => { const n = Z.nH, TH = Z.TH, i = Math.min(n - 1, Math.floor((t - t0) / TH)), u = (t - t0 - i * TH) / TH, o = hop92(u, {}), from = W[i], to = W[i + 1], dx = to.x - from.x, dz = to.z - from.z, dl = Math.hypot(dx, dz) || 1, sx = dx / dl, sz = dz / dl;
+    e.x = from.x + dx * o.p; e.z = from.z + dz * o.p; const ka = k0 + (k1 - k0) * ((i + sm52(o.p)) / n); e.k = ka; e.y = o.y * Z.hop * HW * ka; e.sy = o.sy;
     /* the lean goes with the travel; the smoke trails in the first half of the arc, swings past on the landing and rocks back */
     e.rz = -0.2 * sx * o.air * (o.v < 0.5 ? 1 : 0.5); const sw = o.ld > 0 ? 0.32 * Math.exp(-2.2 * o.ld) * Math.cos(5.5 * o.ld) : o.air > 0 ? -0.36 * Math.sin(PI * Math.min(1, o.v * 1.25)) + 0.32 * sm52((o.v - 0.7) / 0.3) : -0.14 * (1 - u / 0.14);
     e.lag = sw * sx; e.lagz = sw * sz * 0.7; e.wide = 0.5; e.brow = -0.5; e.glow = 1.4; e.hi = i; e.hu = u; e.land = o.ld; e.flame = 0.7; };
-  if (t < Z.tRise) { e.ph = 'out'; hops(Z.tPour, H, pl, 1, kT, false); return fin(); }
+  if (t < Z.tRise) { e.ph = 'out'; hops(Z.tPour, Z.way, 1, kT); return fin(); }
   e.x = pl.x; e.z = pl.z; e.k = kT;
   /* the spring out of a landing squash: up past its height and back */ const spring = (t0, T, a) => { const w = Math.max(0, (t - t0) / T); return 1 + a * Math.exp(-4.2 * w) * Math.cos(9.5 * w); };
   if (t < Z.tA) { e.ph = 'plant'; const w = (t - Z.tRise) / (Z.tA - Z.tRise); e.sy = spring(Z.tRise, Z.tA - Z.tRise, -0.28); e.lag = 0.2 * dxs * Math.exp(-3 * w) * Math.cos(7 * w); e.wide = 0.5 * (1 - w); e.glow = 1.4; e.brow = -0.5; e.flame = 0.7; return fin(); }
   if (t < Z.tD) { e.ph = 'count'; e.glow = 1.5; e.brow = -0.7; e.lid = 0.25; e.flame = 0.6;
     /* the spit: which atom, how far it leans back (back), how far it has snapped forward (fwd) */ const P = Z.P; let c = -1; for (let i = 0; i < P.length; i++) if (t >= P[i].a0) c = i;
-    if (c >= 0 && t < Z.tUp + 0.2 * L) { const p = P[c], g = p.g, a = sm52((t - p.a0) / (0.42 * L * g)), f = sm52((t - (p.t - 0.56 * L * g)) / (0.16 * L * g)), r = sm52((t - (p.t + 0.1 * L)) / (0.55 * L * g)), q = Z.tg[c] || Z.mc, d = Math.sign(q.x - pl.x) || 1;
-      e.si = c; e.back = a * (1 - f); e.fwd = f * (1 - r); e.rz = d * (0.12 * e.back - 0.2 * e.fwd); e.sy = 1 + 0.12 * e.back - 0.1 * e.fwd; e.lag = d * (-0.14 * e.back + 0.22 * e.fwd) + (r > 0 && r < 1 ? -0.08 * d * Math.sin(PI * 2 * r) * (1 - r) : 0);
+    if (c >= 0 && t < Z.tUp + 0.2 * L) { const p = P[c], g = p.g, a = sm52((t - p.a0) / (0.28 * L)), f = sm52((t - (p.t - 0.72 * L)) / (0.12 * L)), r = sm52((t - (p.t - 0.48 * L)) / (0.44 * L)), q = Z.tg[c] || Z.mc, d = Math.sign(q.x - pl.x) || 1;
+      e.si = c; e.back = a * (1 - f); e.fwd = f * (1 - r); e.rz = d * (0.16 * e.back - 0.22 * e.fwd); e.sy = 1 + 0.14 * e.back - 0.12 * e.fwd; e.puff = 0.12 * e.back; e.lag = d * (-0.14 * e.back + 0.22 * e.fwd) + (r > 0 && r < 1 ? -0.08 * d * Math.sin(PI * 2 * r) * (1 - r) : 0);
       e.open = Math.max(0.5 * e.back, e.fwd); e.wide = 0.7 * e.back; e.lid = 0.25 * (1 - e.back); e.flame = 0.6 + 0.2 * e.back; e.glow = 1.5 + 0.8 * e.fwd; e.tx = q.x; e.tz = q.z; }
     if (t >= Z.tUp) { /* the crouch, then drawn up tall on the hit; the fire flares */ const c2 = sm52((t - Z.tUp) / (0.7 * (Z.tHit - Z.tUp))), up = sm52((t - (Z.tHit - 0.2 * L)) / (0.2 * L)), w = Math.max(0, (t - Z.tHit) / L), r = sm52((t - Z.tRel) / (1.2 * L));
       e.ph = t >= Z.tHit ? 'hit' : 'up'; const s0 = 1 - 0.26 * c2, s1 = 1 + 0.3 * Math.exp(-2.6 * w) * Math.cos(7 * w) + 0.06 * (1 - r) * (1 - Math.exp(-3 * w));
       e.sy = lp77(s0, t >= Z.tHit ? s1 : 1.3, up); e.wide = up * (1 - r); e.lid = 0.25 * (1 - up) + 0.2 * r; e.brow = -0.9; e.glow = 1.5 + 1.4 * up * (1 - r); e.flame = 0.6 + 0.1 * c2 + 0.45 * up * Math.exp(-1.2 * w); e.lag = 0; e.open = 0.8 * up * (1 - sm52(w / 1.2)); e.tx = Z.mc.x; e.tz = Z.mc.z; }
     return fin(); }
   const sp = SP92;
-  if (t < Z.tBk) { /* it turns its back: a dip, round, up */ const u = (t - Z.tD) / (Z.tBk - Z.tD); e.ph = 'turn'; e.yaw = PI * sm52((u - 0.3) / 0.36); e.sy = 1 - 0.16 * Math.sin(PI * Math.min(1, u * 1.2)) - 0.28 * sm52((u - 0.8) / 0.2); e.glow = 1.2; e.flame = 0.8; e.lid = 0.2; return fin(); }
-  if (t < Z.tHm) { e.ph = 'back'; hops(Z.tBk, pl, H, kT, 1, true); e.yaw = PI; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null; return fin(); }
+  if (t < Z.tBk) { /* it turns its back: a dip, round, up */ const u = (t - Z.tD) / (Z.tBk - Z.tD); e.ph = 'turn'; e.yaw = u < 0.55 ? 0 : PI; e.sy = u < 0.55 ? 1 - 0.3 * eo92(u / 0.55) : 0.7 + 0.02 * sm52((u - 0.55) / 0.45); e.glow = 1.2; e.flame = 0.8; e.lid = 0.2; return fin(); }
+  if (t < Z.tHm) { e.ph = 'back'; hops(Z.tBk, Z.wayR, kT, 1); e.yaw = PI; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null; return fin(); }
   if (t < Z.tEnd) { /* home: the spring out of the last landing, round to the front, one more small squash, settled and spent */ const T = Z.tEnd - Z.tHm, u = (t - Z.tHm) / T, s = sm52((u - 0.45) / 0.55);
-    e.ph = 'settle'; e.x = H.x; e.z = H.z; e.k = 1; e.yaw = PI * (1 + sm52((u - 0.2) / 0.2)); e.sy = spring(Z.tHm, T, -0.28) - 0.1 * Math.sin(PI * sm52((u - 0.55) / 0.3)); e.lag = -0.3 * dxs * Math.exp(-3 * u) * Math.cos(7 * u); e.flame = lp77(0.7, sp.flame, s); e.glow = lp77(1, sp.glow, s); e.lid = sp.lid * s; e.spent = s; return fin(); }
-  e.ph = 'done'; e.x = H.x; e.z = H.z; e.k = 1; e.done = e.home = true; e.spent = 1; e.flame = sp.flame; e.glow = sp.glow; e.lid = sp.lid; return e; }
+    e.ph = 'settle'; e.x = H.x; e.z = H.z; e.k = 1; e.yaw = 0; e.op = 1 - s; e.sy = spring(Z.tHm, T, -0.28) - 0.1 * Math.sin(PI * sm52((u - 0.55) / 0.3)); e.lag = -0.3 * dxs * Math.exp(-3 * u) * Math.cos(7 * u); e.flame = lp77(0.7, sp.flame, s); e.glow = lp77(1, sp.glow, s); e.lid = sp.lid * s; e.spent = s; return fin(); }
+  e.ph = 'done'; e.op = 0; e.x = H.x; e.z = H.z; e.k = 1; e.done = e.home = true; e.spent = 1; e.flame = sp.flame; e.glow = sp.glow; e.lid = sp.lid; return e; }
 /* spent, at rest: the same whole figure, a little sunk, low fire, dim coals, lids half down */
 const SP92 = { flame: 0.3, glow: 0.45, lid: 0.5, sink: 0.9 };
 KIT.ph92 = ph92;
 /* the face goes over the idle's */
 C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (!S || !S.way69) return; const X = S.x92;
   if (!X) { if (S.sp92 && !S.jar) { q.lidx = Math.max(q.lidx || 0, SP92.lid); q.looky = -0.4; q.lookx = 0; q.wide = 0; } return; } const e = X.e;
-  q.wide = Math.max(q.wide || 0, e.wide); if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); if (e.brow != null) q.brow = e.brow; if (e.ph !== 'wait') q.blink = 0; if (S.lk92) { q.lookx = S.lk92[0]; q.looky = S.lk92[1]; } })(C26.rest);
+  q.wide = Math.max(q.wide || 0, e.wide); if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); if (e.brow != null) q.brow = e.brow; if (e.ph !== 'wait') q.blink = 0; if (S.lk92) { q.lookx = S.lk92[0]; q.looky = S.lk92[1]; } if (X.evo) { q.turn = e.yaw || 0; if (e.show === 'old' && e.fl > 0.1) q.looky = 0.5; } })(C26.rest);
 /* after the idle: the smoke's overlap, the fire, the coals; then where its head is, for the page */
 function post92(S, e, Z) { const F = fig77(S), K = S.k73, B = S.bones, J = S.G.J, R = S.root, T = S.T, cy = Math.cos(e.yaw || 0);
   const lx = (e.lag || 0) * cy * F.H, lz = (e.lagz || 0) * cy * F.H, sink = e.spent ? lp77(1, SP92.sink, e.spent) : 1, wt = y => { const s = Math.max(0, Math.min(1.2, (y - F.P0.y) / F.H)); return s * s * (1.5 - 0.5 * s); };
   if (lx || lz || sink !== 1) { F.sm.forEach(j => { const b = B[j], w = wt(J[j].p[1]); b.position.x += lx * w; b.position.z += lz * w; if (sink !== 1) b.position.y = F.P0.y + (b.position.y - F.P0.y) * sink; });
     [K.mouth && K.mouth.m, K.haze].concat(K.sm.map(p => p.m)).forEach(m => { if (!m) return; const w = wt(m.position.y); m.position.x += lx * w; m.position.z += lz * w; if (sink !== 1) m.position.y = F.P0.y + (m.position.y - F.P0.y) * sink; }); }
+  if (S.u69) S.u69.value.z = e.op || 0;
   K.fl.forEach(f => { if (!f.sp) return; f.sp.scale.y *= e.flame; f.sp.scale.x *= 0.6 + 0.4 * Math.min(1.5, e.flame); }); if (K.light) K.light.m.material.opacity *= Math.max(0.2, Math.min(1.6, e.flame));
+  if (e.ph === 'evo' && K.light) K.light.m.material.opacity *= 0.35;
   if (S.u69) S.u69.value.y *= 0.6 + 0.4 * e.glow; K.eg.forEach(x => { x.g.material.opacity = Math.min(1, x.g.material.opacity * e.glow); x.g.scale.multiplyScalar(1 + 0.08 * (e.glow - 1)); x.e.gl.material.emissive.multiplyScalar(Math.min(1.6, 0.6 + 0.4 * e.glow)); });
   if (e.spent > 0.5) { K.sm.forEach((p, i) => { if (i > 1) p.m.visible = false; }); (K.spit || []).forEach(x => { x.m.visible = false; }); }
   if (e.ph !== 'wait' && e.ph !== 'done') { if (K.mouth) K.mouth.m.visible = false; if (K.haze) K.haze.visible = false; } else if (K.haze) K.haze.visible = true;
   /* no thread: the whole skin is drawn */ if (S.u82) S.u82.value.x = 0; if (S.th82) { S.th82.sp.forEach(m => { m.visible = false; }); S.th82.up.forEach(q => { q.m.visible = false; }); }
-  S.ly92 = Z && e.ph !== 'wait' && e.ph !== 'done' ? { on: Math.max(0, Math.min(1, 1 + Z.floor(e.x, e.z) / 0.25)), y: e.y || 0 } : null;
+  S.ly92 = Z && e.ph !== 'wait' && e.ph !== 'done' ? { on: Math.max(0, Math.min(1, 1 + Z.floor(e.x, e.z) / 0.25)), y: e.y || 0 } : e.ph === 'evo' ? { on: sm52((e.cr || 0) * 4), y: 0 } : null;
   if (!Z) return; R.updateWorldMatrix(true, false); const hp = B[K.hj].position.clone().applyMatrix4(R.matrixWorld), ws = new T.Vector3().setFromMatrixScale(R.matrixWorld).y || 1;
   /* it looks where it spits (the head's own frame: turned away it does not matter) */ const dx = e.tx - hp.x, dz = e.tz - hp.z, hz = Math.hypot(dx, dz) || 1; S.lk92 = e.ph === 'wait' || e.ph === 'done' || e.ph === 'settle' ? null : [Math.max(-1.2, Math.min(1.2, dx / hz * 1.3)), Math.max(-0.9, Math.min(0.3, -0.25 - 0.5 * dz / hz))];
   S.h77 = { head: [hp.x, hp.y, hp.z], hr: (K.hr || 0.5) * ws, ws, base: [e.x, 0, e.z], c: [hp.x, hp.y, hp.z], H: F.H * ws, Wd: (F.x1 - F.x0) * ws, tip: null }; }
 /* its scorch and the flames' light lie on the PAPER while it is on the book, and stay down while it is in the air (builder 69 laid them at the bench's height under the holder: on the book that floated a pale square through the lump) */
 lay69 = (f0 => function (T, S) { const q = S.ly92; if (!q || !S.lay69 || !S.lay69.parent) return f0(T, S); const e = S.lay69, p = e.parent, V = W69.v || (W69.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
   p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); p.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = lp77(V.b.y - q.y + W48.benchY * top.scale.y, 0.14, q.on); p.worldToLocal(V.a); e.position.copy(V.a); })(lay69);
+/* ---- THE CHANGE OF STAGE, REBUILT: "the one flame". One idea, as Water's has one: it hops to the middle of the open book, its own blue fire
+   rises round it as ONE great tongue of flame (a single simple shape the page draws: large, clean, one outline), the flame stands and breathes with
+   nothing else in the picture, gathers itself, and on the beat is drawn up thin and gone: the new stage stands where it burned, springing up out of a
+   squash, held to be read; then it turns its back and hops home. No dark room, no scorch, no pillar, no ring, no embers, no cradle of puffs. The four
+   steps share the idea and grow: a taller flame and a longer hold each time. The swap happens inside the flame. PAR92: beats of go, wrap, hold,
+   reveal, show, home (go + wrap + hold is a whole number: the hit); fl how far up the screen the flame reaches above its foot. */
+const PAR92 = [null, null, { b: [2, 1, 1, 1, 1.5, 3], fl: 0.4 }, { b: [2, 1.5, 1.5, 1, 2, 3], fl: 0.5 }, { b: [2, 1.5, 2.5, 1, 2, 3], fl: 0.6 }, { b: [2, 2, 3, 1.5, 2.5, 3], fl: 0.72 }];
+function ph92e(t, o) { const P = PAR92[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
+  const at = i => Math.max(0, Math.min(1, (u - c[i]) / b[i])), e = o.e92 || (o.e92 = {}), dxs = o.dx92 || -1;
+  Object.assign(e, { u, t, L, P, c, tot: s, hit: c[3], to: o.to, from: o.from, done: u >= s, cr: 0, hy: 0, sy: 1, sx: 1, yaw: 0, lag: 0, lagz: 0, ks: 1, fl: 0, fw: 1, fa: 0, sway: 0, show: 'old', wide: 0, lid: 0, brow: null, flame: 1, glow: 1, op: 1, ph: 'evo', spent: 0, home: 0, land: 0 });
+  const fin = () => { e.sx = e.sy < 1 ? 1 + 0.6 * (1 - e.sy) : 1 - 0.35 * (e.sy - 1); return e; };
+  const hops = (w, n, back) => { const q = Math.min(n - 1e-6, Math.max(0, w) * n), i = Math.floor(q), h = hop92(q - i, {}), d = back ? -1 : 1; e.cr = (i + h.p) / n; if (back) e.cr = 1 - e.cr; e.hy = h.y; e.sy = h.sy; e.land = h.ld;
+    const sw = h.ld > 0 ? 0.3 * Math.exp(-2.2 * h.ld) * Math.cos(5.5 * h.ld) : h.air > 0 ? -0.34 * Math.sin(PI * Math.min(1, h.v * 1.25)) + 0.3 * sm52((h.v - 0.7) / 0.3) : 0; e.lag = 0.6 * sw * dxs * d; e.lagz = 0.7 * sw * d; e.hi = i; };
+  if (u < 0) { e.op = 0; return e; }
+  if (u < c[1]) { hops(at(0), 2, false); e.wide = 0.4; e.brow = -0.4; e.flame = 0.7; e.op = sm52(at(0) * 5); return fin(); }
+  e.cr = 1;
+  if (u < c[2]) { /* its fire rises round it: it crouches and draws in, looking up */ const w = at(1), wb = u - c[1]; e.sy = 1 - 0.28 * Math.exp(-5 * wb) * Math.cos(9 * wb) - 0.18 * sm52((w - 0.25) / 0.75); e.fl = (1 - Math.pow(1 - w, 3)) * (1 + 0.14 * Math.sin(PI * w)); e.fa = sm52(w / 0.1); e.fw = 0.75 + 0.25 * w; e.ks = 1 - 0.5 * sm52((w - 0.25) / 0.75); e.wide = sm52(w / 0.3); e.flame = 0.7 + 0.5 * w; e.glow = 1 + w; e.brow = 0.4; return fin(); }
+  if (u < c[3]) { /* the flame alone: it stands and breathes; at the end it gathers itself (down and wide) */ const h = at(2), bt = u - c[2], an = sm52((h - (1 - 0.5 / b[2])) / (0.5 / b[2])); e.show = 'none'; e.fl = (1 + 0.035 * Math.sin(2 * PI * bt)) * (1 - 0.17 * an); e.fw = (1 + 0.05 * Math.sin(PI * bt + 1)) * (1 + 0.17 * an); e.fa = 1; e.sway = 0.045 * Math.sin(PI * bt) * (1 - an); return e; }
+  e.show = 'new'; const w = u - c[3];
+  /* the new stage: up out of a squash, past its height, settled; coals wide, then stern */ e.sy = 1 - 0.45 * Math.exp(-7 * w) + 0.24 * Math.exp(-2.4 * w) * Math.sin(5.5 * w); e.ks = 1 - 0.22 * Math.exp(-6 * w); e.wide = Math.exp(-0.9 * w); e.glow = 1 + 1.2 * Math.exp(-0.8 * w); e.flame = 0.6 + 0.3 * Math.exp(-1.2 * w); e.brow = -0.9 * sm52(w / 1.2);
+  if (u < c[4]) { /* the flame is drawn up thin and gone */ const r = at(3); e.fl = lp77(0.83, 1.32, eo92(r / 0.25)); e.fw = 1.17 * (1 - sm52(r / 0.55)); e.fa = 1 - sm52((r - 0.25) / 0.3); return fin(); }
+  if (u < c[5]) return fin();
+  const hb = u - c[5]; e.home = hb / b[5]; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null;
+  if (hb < 0.5) { e.yaw = hb < 0.3 ? 0 : PI; e.sy = hb < 0.3 ? 1 - 0.28 * eo92(hb / 0.3) : 0.72; return fin(); }
+  if (hb < 2.5) { hops((hb - 0.5) / 2, 2, true); e.yaw = PI; return fin(); }
+  { const sb = hb - 2.5; e.cr = 0; e.sy = 1 - 0.28 * Math.exp(-5 * sb) * Math.cos(9 * sb); e.op = 1 - sm52(sb / 0.5); return fin(); } }
+KIT.ph92e = ph92e;
+function evo92(f0, grp, S, t, o) { const e = ph92e(t, o), T = S.T; W92.ee = e; let O = S.e82; const X = { e, evo: true };
+  if (e.show !== 'new') { if (!O || O.from !== o.from) { kill82(S); const gg = brim69Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; grp.parent.add(gg); O = S.e82 = { gg, sp, from: o.from, rs: sp.root.scale.x, rp: sp.root.position.clone() }; }
+    const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show82(S, false); S.e92x = X; sp.x92 = X; sp.e92x = X; sp.spent77 = false;
+    f0(O.gg, 'rest', t / e.L, {}); hz77(sp); try { if (sp.k73) post92(sp, e, null); } catch (x) { W92.err = 'old ' + String(x && x.stack); } O.gg.visible = e.show === 'old'; show82(sp, e.show === 'old'); where82(sp, o, e); }
+  else { if (O) kill82(S); show82(S, true); S.x92 = X; S.e92x = X; const sp77 = S.spent77; S.spent77 = false; f0(grp, 'rest', t / e.L, {}); S.spent77 = sp77; hz77(S); try { if (S.k73) post92(S, e, null); } catch (x) { W92.err = 'new ' + String(x && x.stack); } where82(S, o, e); }
+  const c = e.c, u = e.u; let n = -1; if (u >= c[3]) n = 0; if (u >= c[4]) n = 1; if (u >= c[4] + 0.5 * e.P.b[4]) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+function end92(S) { kill82(S); show82(S, true); S.e92x = null; S.x92 = null; }
 play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way69 || !on92(S)) return f0(grp, clip, t, o);
+  if (clip === 'evo' && o && o.from && o.from !== S.st) { try { return evo92(f0, grp, S, t, o); } catch (err) { W92.err = 'evo ' + String(err && err.stack); try { end92(S); } catch (x) { /* as it is */ } const L = o.L || 500, tot = (PAR92[Math.max(2, Math.min(5, o.to | 0))] || PAR92[3]).b.reduce((a, b) => a + b, 0); return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } }
+  if (S.e92x) { try { end92(S); } catch (x) { W92.err = String(x && x.stack); } }
   const inner = (c, tt, oo) => { const sp = S.spent77; S.spent77 = false; try { return f0(grp, c, tt, oo); } finally { S.spent77 = sp; } };
   if (clip === 'act' && o && o.bites && o.bites.s77 && o.bites.s77.v92) { try { const Z = o.bites.s77, e = ph92(t, Z); S.x92 = { t, e, Z }; W92.e = e; S.sp92 = false; inner('rest', 0, {}); hz77(S); if (S.k73) post92(S, e, Z); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; } catch (err) { W92.err = String(err && err.stack); S.x92 = null; return f0(grp, clip, t, o); } }
-  if (S.x92) { S.x92 = null; S.lk92 = null; S.ly92 = null; }
+  if (S.x92) { S.x92 = null; S.lk92 = null; S.ly92 = null; } if (S.u69 && clip !== 'evo') S.u69.value.z = 0;
   if (clip === 'rest') { S.sp92 = !!S.spent77; const r = inner(clip, t, o); if (S.sp92 && S.k73) { try { hz77(S); post92(S, { ph: 'done', spent: 1, flame: SP92.flame, glow: SP92.glow, lag: 0, lagz: 0, yaw: 0 }, null); } catch (err) { W92.err = 'spent ' + String(err && err.stack); } } return r; }
   return f0(grp, clip, t, o); })(play26);
 KIT.spirit26.play = play26;
+/* seen from behind it is one outline: its own pen marks (curls, wisps) are left out while its back is to the eye */
+draw30 = (f0 => function (T, S, ren, cam) { const X = S && S.way69 && (S.x92 || S.e92x); if (!X || !S.a69 || !(Math.cos(X.e.yaw || 0) < 0)) return f0(T, S, ren, cam); const a = S.a69; S.a69 = Object.assign({}, a, { strokes: [] }); try { return f0(T, S, ren, cam); } finally { S.a69 = a; } })(draw30);
 KIT.W92 = W92;
 // ==== W92 END
 // ==== W70 BEGIN
