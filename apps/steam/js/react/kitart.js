@@ -6387,13 +6387,19 @@ function skin95(T, X) { const m0 = X.sph.material, U = m0.uniforms, CT = Math.co
 make31 = (f0 => function (T, S) { const X = f0(T, S); if (on95(S) && X.k32) { try { skin95(T, X); } catch (e) { W95.err = 'skin ' + String(e && e.stack); } } return X; })(make31);
 /* each frame of Water's ball: the fire's clock; an ember is smaller than a drop */
 stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.w95) return; X.sph.material.uniforms.t95.value = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000; X.beads.forEach(b => { if (b.m.visible) b.m.scale.multiplyScalar(0.6); }); })(stage31);
+/* the flames' light on the ground under the lump (W69's flat round, lay69): k of its own strength */
+const dim95 = (sp, k) => { const L = sp && sp.lay69; if (L) L.children.forEach(m => { if (m.userData.b69 === 'light') { if (m.userData.o95 == null) m.userData.o95 = m.material.opacity; m.material.opacity = m.userData.o95 * k; } }); };
 /* the figure that gathers and curls is Brimstone's own old stage: made here and left where play31 looks for it, so Water's code finds it made */
 play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (S && S.d95 && clip !== 'evo') { S.d95 = false; dim95(S, 1); }
   if (S && clip === 'evo' && o && o.from && o.from !== S.st && on95(S) && on31(S) && grp.parent) { try {
       if (!S.e31 || S.e31.from !== o.from || !S.e31.sp.way69) { if (S.e31 && S.e31.gg.parent) S.e31.gg.parent.remove(S.e31.gg); const gg = brim69Fig(S.T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.g28 = 31; sp.o31 = S; gg.visible = false; grp.parent.add(gg); S.e31 = { gg, from: o.from, sp }; }
       /* (as builder 73 for the figure itself) the margin's material must carry a line width */ const hm = S.e31.sp.hull27 && S.e31.sp.hull27.material; if (hm && !hm.userData.w) hm.userData.w = { value: 0 };
     } catch (e) { W95.err = 'old ' + String(e && e.stack); } }
-  return f0(grp, clip, t, o); })(play26);
+  const r = f0(grp, clip, t, o);
+  /* its own blue light on the ground (W73) is a hard round: under the ball and under the rising form it would read as a pool, so it is low while it changes (the page lays the fire's soft glow) */
+  if (S && clip === 'evo' && on95(S)) { const e = S.q0 && S.q0.e31, k = e && e.go != null ? 1 - 0.72 * Math.min(1, e.go * 3) * (1 - (e.home || 0)) : 1; dim95(S, k); if (S.e31) dim95(S.e31.sp, k); S.d95 = true; }
+  return r; })(play26);
 KIT.spirit26.play = play26;
 KIT.W95 = W95;
 // ==== W95 END
