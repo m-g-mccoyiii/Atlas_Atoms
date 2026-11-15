@@ -4181,6 +4181,89 @@ W62.until = (S, what) => { const K = S && S.k62, P = S && P62[S.st]; if (!K) ret
   if (what === 'snap') return P.cyc - since62(tt, P.cyc, 0.72 * P.cyc)[0];
   const X = K.str.find(x => x.drip); if (!X) return null; const [per, off] = drip62(S, X), d = since62(tt, per, off)[0]; return ((0.72 * per - d) % per + per) % per; };
 // ==== W62 END
+// ==== W66 BEGIN
+// (builder 66) SLIME'S OWN ACT (AA.rxKit.act66, on by default; false or ?a66=0 gives the old act, Water's clip on its body). Slime is slow and sticky.
+// Its idle (W62: sag, wobble, lids, bubbles, the arm's strings) keeps running under the act; the act is laid over it. The page (scheme S66) gives the
+// times and the places (o.bites.s66, read with KIT.ph66: one timeline both files read) and draws what is not its skin: the arm it throws (a
+// pseudopod from its body to the bench), the strings it leaves stuck on what it touches, the seals, the slick it smears.
+//  wake:  a jolt (eyes wide, a wobble through the heap), a slow yawn
+//  out:   throw, stick, haul: an arm shoots forward and slaps onto the bench, the heap stretches after it along the string and snaps up to it,
+//         again and again; face riding the front; at the book's edge the hand slaps onto the page and it oozes up and over, growing on the page
+//  work:  beside the molecule it heaves itself up, overshoots and settles; for each thing the rule acts on, in the rule's order and on the beats:
+//         a hand reaches out, presses on (squelch), pulls back leaving a thick string stuck; holding two or three it leans back against them; on
+//         the hit they snap back into it at once and it wobbles hugely, pleased
+//  home:  it turns its smooth faceless back, hauls itself home the same way, seen from behind, slumps into its slick and nods off
+KIT.act66 = KIT.act66 == null ? !(typeof location !== 'undefined' && /[?&]a66=0/.test(String(location.search))) : KIT.act66;
+const W66 = { err: null, e: null };
+const on66 = S => !!(S && S.way61 && !S.jar && KIT.act66 !== false && on62(S));
+const cl66 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* one crawl cycle at u (0 to 1): throw (the arm out), stick (the slap), haul (the heap after it), snap (up to the hand, a knock) */
+function cyc66(u) { const r = { thr: 0, slap: 0, haul: 0, mv: 0, sq: 0 };
+  if (u < 0.34) { r.thr = sm52(u / 0.3); r.sq = -0.05 * sm52(u / 0.3); }
+  else if (u < 0.44) { r.thr = 1; r.slap = pl52(u, 0.33, 0.41, 0.03); r.sq = 0.1 * pl52(u, 0.34, 0.46, 0.04); }
+  else if (u < 0.86) { const v = (u - 0.44) / 0.42; r.thr = 1; r.mv = sm52(v); r.haul = Math.sin(PI * v); r.sq = -0.06 * r.haul; }
+  else { const v = (u - 0.86) / 0.14; r.thr = 1 - sm52(v / 0.7); r.mv = 1; r.sq = 0.08 * Math.sin(PI * v); }
+  return r; }
+/* where along a list of cycles (each {t0, t1, e0, e1}) at t */
+function walk66(t, C) { for (let i = 0; i < C.length; i++) { const c = C[i]; if (t < c.t1 || i === C.length - 1) { const u = cl66((t - c.t0) / Math.max(1, c.t1 - c.t0)), r = cyc66(u); r.i = i; r.u = u; r.e = c.e0 + (c.e1 - c.e0) * r.mv; r.c = c; return r; } } return null; }
+/* the act's numbers at t ms since the tap (Z is S66's plan: absolute times) */
+function ph66(t, Z) { const e = { ph: 'wake', w: 'out', e: 0, cy: null, lean: 0, sq: 0, rise: 0, turn: 0, sink: 0, yawn: 0, jolt: 0, lid: 0, smile: 0, look: null, pr: [], hit: 0, sh: -1, home: false, done: false, t };
+  const P = Z.P || [];
+  P.forEach(() => e.pr.push({ ext: 0, str: 0, thick: 0, snap: 0, slap: 0 }));
+  if (t < Z.tWk) { if (t < Z.tW) { e.lid = 1; return e; } const u = cl66((t - Z.tW) / Math.max(1, Z.tWk - Z.tW));
+    e.jolt = pl52(u, 0.02, 0.3, 0.06); e.yawn = pl52(u, 0.32, 0.86, 0.12); e.lid = (1 - sm52(u / 0.05)) + 0.6 * pl52(u, 0.4, 0.8, 0.1); e.sq = -0.08 * pl52(u, 0.02, 0.2, 0.05) + 0.05 * e.yawn; return e; }
+  if (t < Z.tA) { const r = walk66(t, Z.out); e.ph = 'out'; e.cy = r; e.e = r.e; e.sq = r.sq; return e; }
+  if (t < Z.tD) { const a = t - Z.tA; e.ph = 'work'; e.w = 'perch'; e.e = 1;
+    /* heaved up beside the molecule, an overshoot */ e.rise = sm52(a / Math.max(1, Z.tHv - Z.tA)) + 0.12 * pl52(t, Z.tHv - 120, Z.tHv + 260, 120) - 0.06 * pl52(t, Z.tHv + 260, Z.tHv + 600, 120);
+    let held = 0; P.forEach((p, i) => { const s = e.pr[i]; if (t < p.r0) return; /* reach, press, pull back leaving the string */
+      if (t < p.t) { s.ext = sm52((t - p.r0) / (p.t - p.r0)); s.thick = 1; }
+      else if (t < p.h) { s.ext = 1; s.thick = 1; s.slap = pl52(t, p.t - 40, p.h, 60); }
+      else if (t < p.b) { const v = sm52((t - p.h) / (p.b - p.h)); s.ext = 1; s.thick = 1 - v; s.str = v; }
+      else { s.ext = 1; s.str = 1; }
+      if (t >= p.h) held++;
+      if (t >= Z.tHit) s.snap = cl66((t - Z.tHit) / 260);
+      if (t >= p.r0 - 300 && t < p.b) e.look = i; });
+    /* leaning back against the strings it holds */ const lastH = P.length ? P[P.length - 1].h : Z.tA;
+    e.lean = t < Z.tHit ? (0.25 * Math.min(1, held) + 0.6 * Math.min(1, held / Math.max(2, P.length)) * sm52((t - lastH) / 400)) * (P.length > 1 ? 1 : 0.5) * (1 - sm52((t - Z.tHit + 80) / 80)) : 0;
+    if (t >= Z.tHit) { e.hit = 1; e.sh = t - Z.tHit; e.smile = pl52(e.sh, 0, 1400, 150); e.lid = 0.45 * sm52((e.sh - 800) / 500); }
+    e.sq = 0.06 * pl52(t, Z.tA, Z.tA + 300, 100); return e; }
+  if (t < Z.tEnd) { e.w = 'back'; e.turn = PI * sm52((t - Z.tD) / Math.max(1, Z.tTn - Z.tD)) * (1 - sm52((t - Z.tSl - 150) / 550)); e.lid = 0.5;
+    if (t < Z.tTn) { e.ph = 'turn'; e.e = 0; return e; }
+    if (t < Z.tSl) { const r = walk66(t, Z.back); e.ph = 'back'; e.cy = r; e.e = r.e; e.sq = r.sq; return e; }
+    const u = cl66((t - Z.tSl) / Math.max(1, Z.tEnd - Z.tSl)); e.ph = 'slump'; e.e = 1; e.sink = 0.12 * pl52(u, 0.05, 0.5, 0.15); e.sq = 0.14 * pl52(u, 0, 0.35, 0.1); e.lid = 0.5 + 0.5 * sm52((u - 0.4) / 0.5); return e; }
+  e.ph = 'done'; e.w = 'home'; e.done = true; e.home = true; e.lid = 1; return e; }
+KIT.ph66 = ph66;
+/* the knocks that send a wobble through it: the jolt awake, each snap up to its hand, the heave, each press, the hit (a big one), the slump */
+function kn66(Z) { if (Z.kn) return Z.kn; const k = [[Z.tW + 120, 0.9]]; (Z.out || []).forEach(c => k.push([c.t0 + 0.86 * (c.t1 - c.t0), 0.55])); k.push([Z.tHv, 0.6]); (Z.P || []).forEach(p => k.push([p.t, 0.35])); k.push([Z.tHit, 2.0]); (Z.back || []).forEach(c => k.push([c.t0 + 0.86 * (c.t1 - c.t0), 0.5])); k.push([Z.tSl + 120, 0.8]); return (Z.kn = k); }
+function wob66(Z, t, pw) { let x = 0, y = 0; const ta = 1.5 * pw; kn66(Z).forEach(([t0, a], i) => { const d = (t - t0) / 1000; if (d < 0 || d > 5 * ta) return; const e = a * Math.exp(-d / ta), sg = i % 2 ? 1 : -1; x += sg * e * Math.sin(2 * PI * d / pw); y += 0.5 * e * Math.sin(2 * PI * d / pw + 1.2); }); return { x, y }; }
+/* the act's face numbers go over the rest clip's */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X = S && S.x66; if (!X) return; const e = X.e;
+  q.turn = e.turn; q.sink = e.sink; if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, 0.97 * Math.min(1, e.lid));
+  if (e.jolt > 0) { q.wide += 0.9 * e.jolt; q.brow += 0.7 * e.jolt; q.lidx *= 1 - e.jolt; q.blink = 0; }
+  if (e.yawn > 0.01) { q.open = 0.5 + 0.7 * e.yawn; q.smile = 1 + 0.5 * e.yawn; q.lidx = Math.max(q.lidx, 0.8 * e.yawn); q.brow -= 0.25 * e.yawn; }
+  if (e.ph === 'out' || e.ph === 'work') { q.lidx *= 0.35; q.looky = -0.3; q.lookx = X.lx || 0; q.brow += e.ph === 'work' ? 0.15 : 0; }
+  if (e.smile > 0) { q.smile = 1 + 1.1 * e.smile; q.lidx = Math.max(q.lidx, 0.55 * e.smile); q.brow += 0.3 * e.smile; q.open = 0; }
+  if (e.ph === 'work' && e.look != null) { const p = e.pr[e.look]; if (p && p.slap > 0.2) { q.lidx = Math.max(q.lidx, 0.85); q.brow -= 0.2; } } })(C26.rest);
+/* after the play: the heap squashes, stretches toward where it hauls, rises at the molecule, leans back against its strings, wobbles; its limbs ride along */
+function post66(S, e, X) { const K = S.k62; if (!K) return; const B = S.bones, G = S.G, H = G.H, J = G.J, Z = X.Z, st = S.st, P = P62[st], cx = B[0].position.x, cz = B[0].position.z;
+  const tn = e.turn || 0, wd = X.d || [0, 1], lx = wd[0] * Math.cos(tn) - wd[1] * Math.sin(tn), lz = wd[0] * Math.sin(tn) + wd[1] * Math.cos(tn), bd = X.b || [0, 0], bl = Math.hypot(bd[0], bd[1]), bx = bl ? (bd[0] * Math.cos(tn) - bd[1] * Math.sin(tn)) / bl : 0, bz = bl ? (bd[0] * Math.sin(tn) + bd[1] * Math.cos(tn)) / bl : 0;
+  const cy = e.cy, haul = cy ? cy.haul : 0, thr = cy ? cy.thr * (1 - cy.mv) : 0, w = wob66(Z, X.t, P.pw * (st >= 5 ? 1.1 : 1)), rise = e.rise || 0, hy = 1 + 0.3 * rise - (e.sq || 0) * 1.6 + 0.12 * haul, sp = 1 + (e.sq || 0) * 1.4 - 0.08 * rise - 0.1 * haul, d = K.d66 || (K.d66 = J.map(() => [0, 0, 0]));
+  d.forEach(q => { q[0] = q[1] = q[2] = 0; });
+  K.body.forEach(j => { const h = K.h[j], b = B[j], p = b.position, ox = p.x, oy = p.y, oz = p.z, a = P.wa * H * (st === 1 ? 1.6 : 1.25);
+    const fw = H * (0.38 * haul * Math.pow(h, 1.1) + 0.12 * thr * h - 0.05 * haul * (1 - h)), bk = H * 0.22 * (e.lean || 0) * Math.pow(h, 1.3);
+    p.y = oy * hy + a * w.y * h; p.x = cx + (ox - cx) * sp + lx * fw - bx * bk + a * w.x * Math.pow(h, 1.3); p.z = cz + (oz - cz) * sp + lz * fw - bz * bk;
+    b.scale.x *= sp; b.scale.z *= sp; b.scale.y *= 0.5 + 0.5 * hy; d[j][0] = p.x - ox; d[j][1] = p.y - oy; d[j][2] = p.z - oz; });
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; const par = J[c.jn[0]].par, D = d[par] || d[0], low = !!c.l.slope || !!c.l.flat; c.jn.forEach(jj => { const q = B[jj].position, ww = low ? sm52((q.y - 0.12 * H) / (0.4 * H)) : 1; q.x += D[0] * ww; q.y += D[1] * ww; q.z += D[2] * ww; }); });
+  /* where its middle and its top are in the world (for the page's strings) */ const R = S.root; R.updateWorldMatrix(true, true); const V = S.v62, c0 = V.a.set(cx, H * 0.42 * hy, cz).applyMatrix4(R.matrixWorld), top = V.b.set(cx, H * hy, cz).applyMatrix4(R.matrixWorld);
+  S.h66 = { c: [c0.x, c0.y, c0.z], top: [top.x, top.y, top.z], hy }; }
+function act66(f0, grp, S, t, o) { const Z = o.bites.s66, e = ph66(t, Z); S.x66 = { t, e, Z, d: Z.dirOf ? Z.dirOf(e) : [0, 1], b: Z.backOf ? Z.backOf(e) : [0, 0], lx: Z.lookX ? Z.lookX(e) : 0 }; W66.e = e;
+  f0(grp, 'rest', 0, {}); post66(S, e, S.x66); return { e: e.w === 'out' ? e.e : e.w === 'back' ? 1 - e.e : e.w === 'perch' ? 1 : 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip !== 'act' || !on66(S) || !(o && o.bites && o.bites.s66)) { if (S && S.x66) S.x66 = null; return f0(grp, clip, t, o); }
+  try { return act66(f0, grp, S, t, o); } catch (err) { W66.err = String(err && err.stack); S.x66 = null; return f0(grp, clip, t, o); } })(play26);
+KIT.spirit26.play = play26;
+KIT.W66 = W66;
+// ==== W66 END
 // ==== W63 BEGIN
 // (builders 63, 65) SALT AS A LIVING CRYSTAL CLUSTER, five stages, stills only (AA.rxKit.salt63 = 1, or ?t63=1 on the page; OFF by default: the
 // game shows the old Salt). Builder 63's figure (a box head on a stepped box body with jointed box arms) read as a cardboard robot and is gone.
