@@ -6375,7 +6375,7 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
   if (S && clip === 'evo' && o && o.from && o.from !== S.st && on95(S) && on31(S) && grp.parent) { try {
       if (!S.e31 || S.e31.from !== o.from || !S.e31.sp.way69) { if (S.e31 && S.e31.gg.parent) S.e31.gg.parent.remove(S.e31.gg); const gg = brim69Fig(S.T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.g28 = 31; sp.o31 = S; gg.visible = false; grp.parent.add(gg); S.e31 = { gg, from: o.from, sp }; }
       /* (as builder 73 for the figure itself) the margin's material must carry a line width */ const hm = S.e31.sp.hull27 && S.e31.sp.hull27.material; if (hm && !hm.userData.w) hm.userData.w = { value: 0 };
-      /* its small flames gutter out over the first frames: the old figure's idle places them (its bones are then posed by Water's clip), and they shrink */ { const sp = S.e31.sp, n = now95(); if (!S.d95) S.f95 = n; const k = 1 - RK.sm((n - S.f95) / 450);
+      /* its small flames gutter out over the first frames: the old figure's idle places them (its bones are then posed by Water's clip), and they shrink */ { const sp = S.e31.sp, n = now95(); if (!S.d95) S.f95 = n; const k = 1 - RK.sm((n - S.f95) / (KIT.gut96 || 450));
         if (k > 0.03) { if (!sp.k73) init73(sp); pose73(sp, {}); const vis = sp.k73.fl.map(f => !!(f.sp && f.sp.visible)); hide73(sp); sp.k73.fl.forEach((f, i) => { if (f.sp) f.sp.visible = vis[i]; }); fl95(sp, k); sp.h95 = false; } else if (sp.k73 && !sp.h95) { hide73(sp); sp.h95 = true; } }
     } catch (e) { W95.err = 'old ' + String(e && e.stack); } }
   const r = f0(grp, clip, t, o);
@@ -6400,6 +6400,96 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W95 = W95;
 // ==== W95 END
+// ==== W96 BEGIN
+// (builder 96) THE FIRE OF BRIMSTONE'S CHANGE OF STAGE AS A BODY IN THE ROOM (AA.rxKit.fire96; switch AA.rxKit.f96, ?f96=0 gives builder 95's
+// three sheets back). Built as Water's ball is built: a closed mesh in the scene with a wash-and-pen skin, depth-tested against the room, the
+// figure inside it. It is a TEARDROP: a round bottom that wraps the curled figure and its lump, a swelling body, tongues drawn up to points.
+// All of its shape is worked out in the vertex shader from two numbers a vertex (u round the axis, s from the bottom pole to the tip), so
+// nothing steps: tongues are sectors whose length rises and sinks on slow noise, the surface is pushed by noise that travels upward, the axis
+// leans, the whole turns slowly. Two draws of one geometry: the far wall (back faces, before the figure) and the near wall (front faces, after
+// it; see-through at first, so the figure is read inside, then thick). A few shed flamelets (the same body, small) and three wisps of smoke.
+KIT.f96 = KIT.f96 == null ? !(typeof location !== 'undefined' && /[?&]f96=0/.test(String(location.search))) : KIT.f96;
+if (KIT.f96) KIT.gut96 = 1500;
+const W96 = { err: null };
+const N96 = ['float H96(vec3 p) { p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3)); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }',
+  'float N96(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);',
+  '  return mix(mix(mix(H96(i), H96(i + vec3(1.0, 0.0, 0.0)), f.x), mix(H96(i + vec3(0.0, 1.0, 0.0)), H96(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),',
+  '    mix(mix(H96(i + vec3(0.0, 0.0, 1.0)), H96(i + vec3(1.0, 0.0, 1.0)), f.x), mix(H96(i + vec3(0.0, 1.0, 1.0)), H96(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }'].join('\n');
+const VS96 = ['uniform float uT;\nuniform float uGrow;\nuniform float uDraw;\nuniform float uSpin;\nuniform float uSeed;\nuniform float uBreath;\nuniform float uLobe;\nuniform float uTall;',
+  'varying float vS;\nvarying float vSl;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying vec3 vO;', N96,
+  /* the body: u round the axis, s from the bottom pole (0) to the tip (1); returns the place and (in w) how far along its own tongue the point is */
+  'vec4 surf(float u, float s) { float th = 6.2832 * u + uSpin; vec3 d = vec3(cos(th), 0.0, sin(th));',
+  '  float L = mix(1.0, 0.5 + 0.5 * smoothstep(0.26, 0.74, N96(vec3(d.x * 1.9 + uSeed * 1.7, uT * 0.6, d.z * 1.9))), uLobe), sl = s / L;',
+  '  float n1 = N96(vec3(d.x * 1.3 + uSeed, s * 3.0 - uT * 1.5, d.z * 1.3)), n2 = N96(vec3(d.x * 2.9, s * 6.5 - uT * 2.7, d.z * 2.9 + uSeed));',
+  '  float HN = (mix(2.3, 3.7, uGrow) + uTall) * (1.0 + 0.045 * sin(uBreath)), y = -1.0 + HN * pow(s, 1.15);',
+  '  float r = pow(max(sin(min(3.14159 * pow(s, 0.62), 1.5708)), 0.0), 0.9) * pow(1.0 - smoothstep(0.3, 1.0, sl), 0.62) * (1.0 + 0.03 * sin(uBreath + 1.0));',
+  '  float amp = smoothstep(0.14, 0.7, s); r *= 1.0 + amp * (1.05 * (n1 - 0.5) + 0.42 * (n2 - 0.5)) + 0.16 * (n2 - 0.5);',
+  '  float th2 = smoothstep(0.0, 1.0, (uDraw * 1.75 - s) / 0.75); r *= mix(1.0, 0.06, th2); y += uDraw * uDraw * 2.2 * (0.25 + s);',
+  '  vec2 ax = (vec2(N96(vec3(s * 1.5 - uT * 0.8, uSeed, 0.0)), N96(vec3(uSeed, s * 1.5 - uT * 0.8, 4.0))) - 0.5) * 1.5 * s * s;',
+  '  ax += d.xz * 0.5 * smoothstep(0.3, 1.0, s) * (1.0 - L) * uLobe * 2.0 * (1.0 - th2);',
+  '  return vec4(d.x * r + ax.x, y, d.z * r + ax.y, sl); }',
+  'void main() { float u = position.x, s = position.y; vec4 p = surf(u, s); vec3 pu = surf(u + 0.006, s).xyz - p.xyz, ps = surf(u, min(1.0, s + 0.006)).xyz - surf(u, max(0.0, s - 0.006)).xyz;',
+  '  vec3 n = cross(ps, pu); n = length(n) > 1.0e-7 ? normalize(n) : vec3(0.0, 1.0, 0.0); vS = s; vSl = p.w; vO = p.xyz;',
+  '  vec4 mv = modelViewMatrix * vec4(p.xyz, 1.0); vN = normalMatrix * n; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }'].join('\n');
+const FS96 = ['uniform float uT;\nuniform float uThick;\nuniform float uA;\nuniform float uSeed;\nuniform float uH;\nuniform float uDraw;\nuniform float uPale;',
+  'varying float vS;\nvarying float vSl;\nvarying vec3 vN;\nvarying vec3 vV;\nvarying vec3 vO;', N96,
+  'void main() { float nv = abs(dot(normalize(vN), normalize(vV))), up = vO.y * 0.9 - uT * 1.7;',
+  '  float a1 = N96(vec3(vO.x * 1.5 + uSeed, up, vO.z * 1.5)), a2 = N96(vec3(vO.x * 3.8, up * 2.3, vO.z * 3.8 + uSeed) + 7.0), gr = N96(vec3(gl_FragCoord.xy * (0.9 * 720.0 / uH), 3.0));',
+  '  float tip = clamp(vSl, 0.0, 1.3), low = 1.0 - smoothstep(0.1, 0.5, vS + 0.14 * (a2 - 0.5));',
+  /* the wash, cut at three depths: blue-violet at the rim, lighter blue where the eye looks into it, a pale heart low inside */
+  '  float core = smoothstep(0.42, 0.62, nv + 0.34 * (a1 - 0.5)), heart = smoothstep(0.66, 0.8, nv + 0.3 * (a1 - 0.5) + 0.25 * low - 0.3 * tip) * (1.0 - smoothstep(0.35, 0.7, vS));',
+  '  vec3 col = mix(vec3(0.30, 0.27, 0.85), vec3(0.41, 0.50, 0.97), core); col = mix(col, vec3(0.64, 0.79, 1.0), 0.7 * heart);',
+  '  col *= 0.86 + 0.14 * smoothstep(0.42, 0.56, a2 + 0.3 * (a1 - 0.5)); float rim = smoothstep(0.44, 0.2, nv + 0.1 * (a2 - 0.5)); col = mix(col, vec3(0.21, 0.17, 0.66), 0.6 * rim);',
+  '  col = mix(col, vec3(0.80, 0.88, 1.0), uPale * (0.35 + 0.5 * core)); float al;',
+  '  if (gl_FrontFacing) { al = mix(0.4, 0.95, uThick); al *= 1.0 - (1.0 - uThick) * 0.72 * core * (1.0 - smoothstep(0.2, 0.6, vS)); }',
+  '  else { col = mix(col, mix(vec3(0.40, 0.47, 0.95), vec3(0.80, 0.88, 1.0), low), 0.7); col = mix(col, vec3(0.95, 0.42, 0.24), 0.75 * (1.0 - smoothstep(0.0, 0.12, vS + 0.05 * (a1 - 0.5))) * (1.0 - smoothstep(0.0, 0.3, uDraw))); al = 0.93; }',
+  /* the pen: the rim in loose broken strokes, and a few strokes inside that travel up with the tongues */
+  '  float pen = smoothstep(0.25, 0.17, nv) * smoothstep(0.02, 0.07, nv) * smoothstep(0.3, 0.42, a2 + 0.2 * (a1 - 0.5));',
+  '  float st = (1.0 - smoothstep(0.012, 0.03, abs(a1 - 0.5))) * smoothstep(0.52, 0.66, a2) * smoothstep(0.15, 0.4, vS) * (gl_FrontFacing ? 1.0 : 0.0);',
+  '  float ink = max(pen, 0.75 * st);',
+  /* tips and glancing edges are thin and ragged, the paper shows in them */
+  '  float hi = smoothstep(0.28, 0.6, vS); al *= 1.0 - 0.9 * hi * smoothstep(0.6, 1.0, tip + 0.4 * (a1 - 0.5)); al *= mix(1.0, 0.6 + 0.6 * gr, hi * smoothstep(0.45, 0.9, tip));',
+  '  al *= smoothstep(0.0, 0.09, nv + 0.06 * (a2 - 0.5)); col = mix(col, vec3(0.11, 0.09, 0.34), 0.85 * ink); al = max(al, 0.86 * ink * (1.0 - smoothstep(0.75, 1.05, tip)));',
+  '  gl_FragColor = vec4(col, clamp(al * uA, 0.0, 1.0)); }'].join('\n');
+function make96(T) { const NU = 56, NS = 44, pos = new Float32Array((NU + 1) * (NS + 1) * 3), idx = []; let k = 0;
+  for (let j = 0; j <= NS; j++) for (let i = 0; i <= NU; i++) { pos[k++] = i / NU; pos[k++] = j / NS; pos[k++] = 0; }
+  for (let j = 0; j < NS; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setIndex(idx);
+  const uni = sd => ({ uT: { value: 0 }, uGrow: { value: 1 }, uDraw: { value: 0 }, uSpin: { value: 0 }, uSeed: { value: sd }, uBreath: { value: 0 }, uLobe: { value: 1 }, uThick: { value: 1 }, uA: { value: 1 }, uH: { value: 720 }, uTall: { value: 0 }, uPale: { value: 0 } });
+  const mat = (U, side) => { const m = new T.ShaderMaterial({ uniforms: U, vertexShader: VS96, fragmentShader: FS96, transparent: true, depthWrite: false, depthTest: true, side }); m.toneMapped = false; return m; };
+  const mesh = (m, ro) => { const o = new T.Mesh(g, m); o.frustumCulled = false; o.renderOrder = ro; o.visible = false; o.castShadow = false; o.userData.plain = true; o.userData.nobox = true; return o; };
+  const U = uni(3.7), B = { U, back: mesh(mat(U, T.BackSide), 19.2), front: mesh(mat(U, T.FrontSide), 32), lets: [], smoke: [], all: [], q: new T.Quaternion(), up: new T.Vector3(0, 1, 0), v: new T.Vector3(), x: new T.Vector3(), z: new T.Vector3() };
+  { const u3 = uni(8.9); u3.uPale.value = 1; B.U3 = u3; B.heart = mesh(mat(u3, T.FrontSide), 19.3); }
+  for (let i = 0; i < 4; i++) { const u2 = uni(11.3 + 5.1 * i); u2.uLobe.value = 0; u2.uGrow.value = 0.25; u2.uThick.value = 0.55; B.lets.push({ U: u2, m: mesh(mat(u2, T.DoubleSide), 32.1) }); }
+  const sg = new T.SphereGeometry(1, 14, 10);
+  for (let i = 0; i < 3; i++) { const sm = new T.ShaderMaterial({ uniforms: { uA: { value: 0 } }, transparent: true, depthWrite: false,
+      vertexShader: 'varying vec3 vN;\nvarying vec3 vV;\nvoid main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform float uA;\nvarying vec3 vN;\nvarying vec3 vV;\nvoid main() { float nv = abs(dot(normalize(vN), normalize(vV))); gl_FragColor = vec4(vec3(0.50, 0.49, 0.52), uA * nv * nv * nv); }' });
+    const o = new T.Mesh(sg, sm); o.frustumCulled = false; o.renderOrder = 32.2; o.visible = false; o.castShadow = false; o.userData.plain = true; o.userData.nobox = true; B.smoke.push(o); }
+  B.all = [B.back, B.front, B.heart].concat(B.lets.map(l => l.m), B.smoke); return B; }
+/* each frame. o: t (seconds from its start), pos (the middle of its round bottom, world), axis (unit, its up), R (the bottom's radius, world),
+   grow 0..1, draw 0..1, thick 0..1 (the near wall), a (opacity), spin, breath (radians), H (the picture's height in pixels) */
+function up96(B, o) { const U = B.U, K = RK, hash = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
+  const show = o.a > 0.004 && o.R > 1e-4; B.back.visible = B.front.visible = B.heart.visible = show; if (!show) { B.all.forEach(m => { m.visible = false; }); return; }
+  U.uT.value = o.t; U.uGrow.value = o.grow; U.uDraw.value = o.draw; U.uSpin.value = o.spin; U.uBreath.value = o.breath; U.uThick.value = o.thick; U.uA.value = o.a; U.uH.value = o.H || 720; U.uLobe.value = K.sm((o.grow - 0.3) / 0.5); U.uTall.value = o.tall || 0;
+  /* the pale heart: a smaller body low inside, behind the figure */ { const H = B.U3; H.uT.value = o.t * 1.2 + 9; H.uGrow.value = o.grow; H.uDraw.value = Math.min(1, o.draw * 1.3); H.uSpin.value = -0.8 * o.spin; H.uBreath.value = o.breath * 1.3 + 2; H.uThick.value = 1; H.uA.value = o.a * 0.9; H.uH.value = U.uH.value; H.uLobe.value = U.uLobe.value; H.uTall.value = 0.5 * (o.tall || 0); }
+  B.q.setFromUnitVectors(B.up, o.axis); [B.back, B.front].forEach(m => { m.position.copy(o.pos); m.quaternion.copy(B.q); m.scale.setScalar(o.R); }); B.heart.position.copy(o.pos).addScaledVector(o.axis, -0.36 * o.R); B.heart.quaternion.copy(B.q); B.heart.scale.setScalar(0.6 * o.R);
+  B.x.set(1, 0, 0).applyQuaternion(B.q); B.z.set(0, 0, 1).applyQuaternion(B.q);
+  const HN = 2.3 + 1.4 * o.grow + (o.tall || 0), tipY = (-1 + HN * 0.74) * o.R, live = K.sm((o.grow - 0.75) / 0.25) * (1 - K.sm(o.draw / 0.5));
+  /* shed flamelets: born in the tongues, they rise, shrink and are gone */
+  B.lets.forEach((l, i) => { const ph = o.t / 1.5 + i * 0.27, c = Math.floor(ph), p = ph - c, h1 = hash(c * 7 + i * 13 + 1), h2 = hash(c * 3 + i * 29 + 5), sc = o.R * (0.17 + 0.1 * h1) * K.sm(p / 0.2) * (1 - p) * live; l.m.visible = sc > o.R * 0.004; if (!l.m.visible) return;
+    const sx = (h1 - 0.5) * 1.1 * o.R * (1 + 0.3 * p), sz = (h2 - 0.5) * 1.1 * o.R; l.m.position.copy(o.pos).addScaledVector(o.axis, tipY + o.R * (0.1 + 1.3 * p + 0.5 * h2)).addScaledVector(B.x, sx).addScaledVector(B.z, sz); l.m.quaternion.copy(B.q); l.m.scale.setScalar(sc);
+    l.U.uT.value = o.t + 3 * i; l.U.uSpin.value = o.spin + i; l.U.uA.value = o.a * (1 - 0.6 * p); l.U.uH.value = U.uH.value; });
+  /* thin grey smoke off the tip */
+  B.smoke.forEach((m, i) => { const ph = o.t / 2.6 + i / 3, c = Math.floor(ph), p = ph - c, h1 = hash(c * 5 + i * 17 + 2), a = 0.2 * K.sm(p / 0.25) * (1 - p) * live * o.a; m.visible = a > 0.004; if (!m.visible) return;
+    const s = o.R * (0.1 + 0.26 * p); m.position.copy(o.pos).addScaledVector(o.axis, (-1 + HN) * o.R * 0.92 + o.R * 1.5 * p).addScaledVector(B.x, (h1 - 0.5) * 0.7 * o.R + 0.2 * o.R * Math.sin(o.t * 1.3 + i * 2)); m.quaternion.copy(B.q); m.scale.set(s, 1.9 * s, s); m.material.uniforms.uA.value = a; }); }
+KIT.fire96 = { make: make96, update: up96 };
+/* no pencil arcs on the bench (they are the whirl of Water's ball) */
+ink31 = (f0 => function (T, S, X, ren, cam) { const r = f0(T, S, X, ren, cam); if (KIT.f96 && X && X.w95 && X.pen2 && X.pen2.mesh) X.pen2.mesh.visible = false; return r; })(ink31);
+/* the figure curled in the fire is not shrunk to a core as Water's is in its ball (it was a small dark blob): Water's pull into one round is kept at a third */
+C26.evo = (f0 => function (S, t, o, q) { f0(S, t, o, q); if (KIT.f96 && S && S.way69 && KIT.mirror95 !== false && q && q.e31) q.e31.ball *= 0.3; })(C26.evo);
+KIT.W96 = W96;
+// ==== W96 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)

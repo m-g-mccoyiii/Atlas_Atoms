@@ -6775,6 +6775,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const mk = () => { const fm = F94.make(T), m0 = fm.material, f0 = m0.fragmentShader, a1 = 'gl_FragColor = vec4((col * a', a2 = 'oa * uA);'; let m1 = m0; if (f0.indexOf(a1) >= 0 && f0.indexOf(a2) >= 0) { m0.uniforms.uL95 = { value: new T.Vector2(0.1, 0.08) };
         m1 = new T.ShaderMaterial({ uniforms: m0.uniforms, vertexShader: m0.vertexShader, fragmentShader: f0.replace('varying vec2 vP;', 'varying vec2 vP;\nuniform vec2 uL95;').replace(a1, 'float r95 = uL95.y, k95 = vP.y >= uL95.x ? 1.0 : 1.0 - smoothstep(0.72, 1.0, length(vec2(vP.x / (1.9 * r95), (vP.y - uL95.x) / (1.25 * r95))));\n  ' + a1).replace(a2, 'oa * uA * k95);'), transparent: true, depthWrite: false, depthTest: true, side: T.DoubleSide }); m1.extensions = { derivatives: true }; m1.toneMapped = false; fm.material = m1; } else m0.depthTest = true;
       fm.renderOrder = 32; scene.add(fm); return fm; };
+    if (S95.f96 && E && E.e31 && e && e.go != null && C && sh.visible && S95.f96(now, SP, E, e, C)) { G.w = 0; if (FL) FL.forEach(fm => { fm.visible = false; }); } else
     if (E && E.e31 && e && e.go != null && C && F94 && sh.visible) { if (!FL) FL = S95.fl = [mk(), mk(), mk()];
       const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, v = S95.v; O.root.updateWorldMatrix(true, false); v.setFromMatrixPosition(O.root.matrixWorld);
       const pre = !(e.v >= 0); if (pre && C.ball === 1) E.h95 = 1.3 * (Math.hypot(C.bx - v.x, C.by - v.y, C.bz - v.z) + C.Rw);
@@ -6833,6 +6834,41 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   S95.v = new T.Vector3(); S95.v2 = new T.Vector3();
   a20Spent = (f0 => function (now) { const r = f0(now); try { s95ActFrame(now); } catch (e) { S95.err = 'act ' + String(e && e.stack); } return r; })(a20Spent);
   // ==== S95 END
+  // ==== S96 BEGIN
+  // (builder 96) THE FIRE AS A BODY IN THE ROOM (kitart W96, AA.rxKit.fire96; switch AA.rxKit.f96, ?f96=0 gives builder 95's three sheets).
+  // S95's frame calls S95.f96 where it placed the sheets. The body stands where Water's ball would be (round the curled figure, its axis the
+  // figure's own up), grows from the lump, thickens, and from the hit is drawn up while the new form stands in it. It throws NO shadow and the
+  // figure's own lamp shadow is put out while it burns: the fire is a LIGHT. Water's one pass over the bench (already Brimstone's by S95) gets
+  // a third material: the room dims a little, and a point of blue light at the fire lights what faces it (paper, atoms, cards), falls off with
+  // distance, flickers with flame94.light, and is blocked by what stands between (the same short march through the depths as the lamp's), so the
+  // molecule's shadows lean away from the fire.
+  const S96 = { err: null, mat: null, B: null, on: 0, A: new T.Vector3(), v: new T.Vector3(), v2: new T.Vector3(), c: new T.Vector3(), off: new T.Vector3(), tg: new T.Vector3(), fr: -1 };
+  const s96Sheet = m95 => { if (S96.mat) return S96.mat; let f = m95.fragmentShader; const rep = (a, b) => { if (f.indexOf(a) < 0) throw new Error('s96: not found: ' + a); f = f.split(a).join(b); };
+    rep('uniform float shk;', 'uniform float shk;\nuniform vec4 fp96;\nuniform vec4 fq96;');
+    rep('sh *= 1.0 - bs.w', 'sh *= 1.0 - fq96.x; sh *= 1.0 - bs.w');
+    const end = 'gl_FragColor = vec4(c, 1.0); }', i = f.lastIndexOf(end); if (i < 0) throw new Error('s96: no end');
+    f = f.slice(0, i) + ['if (fq96.x > 0.003) { vec3 Fv = fp96.xyz - P; float Fd = length(Fv); vec3 Fn = Fv / Fd; float q0 = fp96.w * fp96.w / (Fd * Fd), fall = min(1.8, q0 * sqrt(q0)), ff = clamp(dot(N, Fn), 0.0, 1.0), fv = 1.0;',
+      'for (int i = 0; i < 10; i++) { vec3 S = P + N * 0.07 + Fn * (0.4 * (float(i) + 0.5 + 0.3 * jit)); vec4 q = vp * vec4(S, 1.0); vec3 n3 = q.xyz / q.w; vec2 u2 = n3.xy * 0.5 + 0.5; if (u2.x < 0.0 || u2.x > 1.0 || u2.y < 0.0 || u2.y > 1.0) break; float zs = linC(n3.z), zc = linC(texture2D(tD, u2).x * 2.0 - 1.0); if (zs > zc + 0.14 && zs - zc < 3.2) { fv = 0.0; break; } }',
+      'float Lf = fq96.y * fall * (0.28 + 0.72 * ff) * (0.22 + 0.78 * fv); c *= 1.0 - fq96.z * fq96.x; c = c * (vec3(1.0) + Lf * vec3(0.24, 0.34, 0.64)) + Lf * vec3(0.006, 0.016, 0.07); }', ''].join('\n') + f.slice(i);
+    m95.uniforms.fp96 = { value: new T.Vector4(0, 0, 0, 1) }; m95.uniforms.fq96 = { value: new T.Vector4(0, 0, 0.2, 0) };
+    const m = S96.mat = new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, blending: T.NoBlending, uniforms: m95.uniforms, vertexShader: m95.vertexShader, fragmentShader: f }); m.extensions = { derivatives: false }; return m; };
+  S95.f96 = (now, SP, E, e, C) => { const K = AA.rxKit, RK = K.RK; if (!K.f96 || !K.fire96 || !S95.mat) return false; const X = SP.x31, hold = X && X.sph && X.sph.parent; if (!hold) return false;
+    const B = S96.B || (S96.B = K.fire96.make(T)); B.all.forEach(m => { if (m.parent !== scene) scene.add(m); });
+    const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, v = S96.v, A = S96.A; O.root.updateWorldMatrix(true, false); v.setFromMatrixPosition(O.root.matrixWorld); A.setFromMatrixColumn(hold.matrixWorld, 1).normalize();
+    const ws = S96.v2.setFromMatrixScale(O.root.matrixWorld).y, rL = 0.21 * O.G.H * ws, pre = !(e.v >= 0), ballOn = C.ball === 1 && e.R > 0.01, fresh = S96.E !== E; if (fresh) { S96.E = E; S96.t0 = now; S96.R = 0; S96.Rk = 0; }
+    /* its size: the ball's full round in the world (known once the ball is on), eased; before that a guess from the lump */
+    if (pre && ballOn && e.R0 > 0) S96.Rk = C.Rw * e.R0 / Math.max(e.R, 0.3 * e.R0); const Rt = S96.Rk || 2.6 * rL; S96.R = S96.R ? S96.R + (Rt - S96.R) * 0.1 : Rt;
+    const t = (now - S96.t0) / 1000, grow = pre ? 0.3 * RK.sm((e.a - 0.1) / 0.6) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.35) : 0) : 1, draw = pre ? 0 : Math.pow(RK.sm(e.v / 2.0), 1.25), thick = pre ? (e.b >= 0 ? RK.sm((e.b - 0.3) / 0.3) : 0) : 1 - 0.6 * RK.sm((e.v - 0.1) / 0.8), tall = pre ? 0 : 1.3 * RK.sm(e.v / 0.5);
+    const Rb = 1.05 * S96.R * (0.2 + 0.8 * grow) * (pre ? 1 : 1 + 0.12 * RK.sm(e.v / 0.4) - 0.3 * RK.sm((e.v - 0.5) / 1.0)), a = RK.sm(grow / 0.07) * (1 - RK.sm((draw - 0.5) / 0.5)) * (1 - (e.home || 0)), pos = S96.c.copy(v).addScaledVector(A, 0.8 * Rb); /* its round bottom wraps the lump and the curled figure (they sit on the root); it travels with the figure */ if (X.pen2 && X.pen2.mesh) X.pen2.mesh.visible = false;
+    K.fire96.update(B, { t, pos, axis: A, R: Rb, grow, draw, thick, tall, a, spin: 0.55 * t, breath: 2.6 * t, H: ren.getDrawingBufferSize(S33.v2).y });
+    /* its light */ const U = S95.mat.uniforms, on = RK.sm(grow / 0.6) * (1 - RK.sm((draw - 0.35) / 0.6)) * (1 - (e.home || 0)), lw = K.flame94 ? K.flame94.light({ t: now / 1000, rise: 1, draw: 0, breath: 2.6 * t }) : 1;
+    if (U.fp96) { const fx = pos.x + A.x * 0.6 * Rb, fy = pos.y + A.y * 0.6 * Rb, fz = pos.z + A.z * 0.6 * Rb; U.fp96.value.set(fx, fy, fz, Math.max(2.2 * Rb, fy - C.gy)); U.fq96.value.set(on, on * (0.5 + 0.5 * lw), 0.25, 0); }
+    S96.fr = now; S96.dbg = { a: e.a, b: e.b, v: e.v, go: e.go, home: e.home, grow, draw, thick, Rb, R: S96.R, rL, on, lw }; return true; };
+  homEvo19 = (f0 => function (now) { f0(now); try { const live = S96.fr === now, sh = S33.sheet;
+      if (live && sh && S95.mat && sh.material === S95.mat) sh.material = s96Sheet(S95.mat);
+      if (!live) { if (S96.B) S96.B.all.forEach(m => { m.visible = false; }); if (S95.mat && S95.mat.uniforms.fq96) S95.mat.uniforms.fq96.value.set(0, 0, 0.2, 0); S96.dbg = null; } } catch (x) { S96.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s96dbg = () => ({ err: S96.err, kit: AA.rxKit.W96 && AA.rxKit.W96.err, e: S96.dbg });
+  // ==== S96 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
