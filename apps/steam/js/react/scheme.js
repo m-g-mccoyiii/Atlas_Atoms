@@ -6875,15 +6875,24 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // the book that the ball flew to (E.c32.yb, bz) is put down on the page at the place where the new form will stand. So the foot goes
   // from home to the centre in one straight eased move on the ground. Here its height: the bench, up over the book's edge (a heave: a
   // little higher than the step as it tips over), the page. The lamp's own shadow of the figure (S33, layer 5) is then a contact shadow.
-  const S97 = { err: null, dbg: null };
+  const S97 = { err: null, dbg: null, v: new T.Vector3(), A: new T.Vector3(0, 1, 0) };
   const s97On = SP => !!(SP && SP.way69 && AA.rxKit && AA.rxKit.g97 && AA.rxKit.f96 && AA.rxKit.mirror95 !== false);
   homEvo19 = (f0 => function (now) { const E0 = R21.evo, on = !!(E0 && s97On(s26Fig()));
     if (on && E0.c32) { const C3 = E0.c32; C3.bz = C3.zc; C3.yb = 0.26; if (!C3.b97) { C3.b97 = 1; C3.B = Math.max(1, 0.78 * C3.B); /* the lump on the page is farther from the eye than Water's ball in the air, and the fire must hold it */ }
       if (E0.ge97 == null) { let ge = 0.1; for (let i = 0; i <= 400; i++) { const u = i / 400; if (s27K(HOMP.x * (1 - u), HOMP.z + (C3.zc - HOMP.z) * u, 0.01) > 0.5) { ge = u; break; } } E0.ge97 = ge; } }
-    f0(now); if (!on) { S97.dbg = null; return; }
+    f0(now); if (!on || !R21.evo) { S97.dbg = null; if (S97.fb) S97.fb.forEach(B => B.all.forEach(m => { m.visible = false; })); if (S97.sd) S97.sd.visible = false; if (!on) return; }
     try { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, g = e && e.g97, Q = HEVO.pos, fg = r21Fig(); if (!(E && E.e31 && g && Q && homObj && fg)) { S97.dbg = null; return; }
       const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, Rl = 0.21 * O.G.H * (homObj.s || 1) * (fg.scale.x || 1), k = s27K(Q.x, Q.z, Rl), bump = 0.3 * Rl * 4 * k * (1 - k);
       if (g.pre) Q.y = 0.26 * k + bump; else if (g.p > 0) Q.y += bump;
+      /* the lump's flames as small BODIES of fire (kitart fire96: closed, lit, depth-tested, soft tips), standing where its drawn tongues stand; a tight dark shade right under the lump */
+      { const K = AA.rxKit, RK = K.RK, X = SP.x31, hold = X && X.sph && X.sph.parent, old = O !== SP, fl = old && O.k73 ? O.k73.fl.filter(f => f.sp) : [], FB = S97.fb || (S97.fb = []), a = old && hold && K.fire96 ? g.body : 0, t = now / 1000;
+        if (hold) S97.A.setFromMatrixColumn(hold.matrixWorld, 1).normalize();
+        for (let i = 0; i < Math.max(FB.length, a > 0.004 ? Math.min(4, fl.length) : 0); i++) { let B = FB[i]; const f = fl[i]; if (!(a > 0.004 && f && i < 4)) { if (B) B.all.forEach(m => { m.visible = false; }); continue; }
+          if (!B) { B = FB[i] = K.fire96.make(T); B.all.forEach(m => scene.add(m)); B.U.uSeed.value = 21.3 + 7.7 * i; }
+          f.sp.getWorldPosition(S97.v); const R = Rl * (0.34 + 0.07 * (i % 2)) * (0.75 + 0.25 * g.fl), ax = S97.A;
+          K.fire96.update(B, { t: t * (1 + 0.17 * i) + 13 * i, pos: S97.v.addScaledVector(ax, 0.55 * R), axis: ax, R, grow: 0.42 + 0.3 * g.arr + 0.12 * g.sp, draw: 0, thick: 0.45, tall: 0.5 * g.sp, a, spin: 0.7 * t + 2 * i, breath: 3.1 * t + i, H: ren.getDrawingBufferSize(S33.v2).y }); B.lets.forEach(l => { l.m.visible = false; }); B.smoke.forEach(m => { m.visible = false; }); }
+        let sd = S97.sd; if (!sd) { sd = S97.sd = new T.Mesh(new T.CircleGeometry(1, 40), new T.ShaderMaterial({ transparent: true, depthTest: false, depthWrite: false, uniforms: { uA: { value: 0 } }, vertexShader: 'varying vec2 vP;\nvoid main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: 'uniform float uA;\nvarying vec2 vP;\nvoid main() { float d = length(vP); gl_FragColor = vec4(0.10, 0.08, 0.13, uA * (1.0 - smoothstep(0.45, 1.0, d))); }' })); sd.rotation.x = -Math.PI / 2; sd.renderOrder = 17; sd.frustumCulled = false; sd.castShadow = false; sd.userData.plain = true; sd.userData.nobox = true; scene.add(sd); }
+        const sa = 0.62 * (g.pre ? RK.sm(g.ph / 0.12) * (1 - RK.sm((g.ph - 1.3) / 0.3)) : RK.sm((g.p - 0.1) / 0.1) * (1 - RK.sm((g.p - 0.86) / 0.12))); sd.visible = sa > 0.01; if (sd.visible) { sd.material.uniforms.uA.value = sa; sd.position.set(Q.x + 0.12 * Rl, homObj.grp.position.y + 0.05, Q.z + 0.3 * Rl); sd.scale.set(1.25 * Rl, 1.0 * Rl, 1); } }
       S97.dbg = { ph: +g.ph.toFixed(3), go: +g.go.toFixed(3), ge: E.ge97, k: +k.toFixed(2), qy: +Q.y.toFixed(2), gy: +homObj.grp.position.y.toFixed(2), x: +Q.x.toFixed(1), z: +Q.z.toFixed(1), s: +homObj.s.toFixed(2), Rl: +Rl.toFixed(2), zc: E.c32 && +E.c32.zc.toFixed(1), B: E.c32 && +E.c32.B.toFixed(2), F: E.c32 && +E.c32.F.toFixed(2) };
     } catch (x) { S97.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s97dbg = () => ({ err: S97.err, kit: AA.rxKit.W97 && AA.rxKit.W97.err, d: S97.dbg });
