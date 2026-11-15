@@ -7144,7 +7144,7 @@ function ph88(t, Z) { const st = Z.st, L = Z.L, s = Z.s, s1 = Z.s1;
       const toss = t >= p.t + p.hd ? 0.22 * pl52(rec, 0.35, 0.9, 0.12) : 0;
       let ap = Z.As[i]; if (i > 0) { const t0 = P[i - 1].t + P[i - 1].hd + P[i - 1].rc, u = (t - t0) / (0.32 * L); ap = mix88(Z.As[i - 1], Z.As[i], sn88(Math.max(0, Math.min(1, u)))); if (u > 0 && u < 1) { e.move = 1; e.sq += -0.08 * Math.sin(PI * u); } } e.p = ap;
       e.ph = w > 0.02 ? 'lunge' : 'guard'; e.ti = i; e.lw = w; e.aT = Z.tg[i]; e.ag = 1; e.adir = null; e.aext = 1; e.armL = 0.7 - 0.4 * w;
-      e.lean = lp88(0.0, st >= 5 ? -0.12 : -0.3, w); e.sq = e.sq + (st >= 5 ? 0.05 : 0.16) * w; e.tilt = lp88(0.24, -0.04, w) + toss; e.hturn = -0.25 * toss; e.lookx = 1; e.looky = lp88(-0.6, -1, w); e.brow = -0.7; e.blink = 0.22; e.smile = lp88(0.85, 0.7, w) + 0.4 * toss;
+      e.lean = lp88(0.0, st >= 5 ? -0.12 : -0.2, w); e.sq = e.sq + (st >= 5 ? 0.05 : 0.16) * w; e.tilt = lp88(0.24, -0.04, w) + toss; e.hturn = -0.25 * toss; e.lookx = 1; e.looky = lp88(-0.6, -1, w); e.brow = -0.7; e.blink = 0.22; e.smile = lp88(0.85, 0.7, w) + 0.4 * toss;
       return e; }
     /* the flourish on the hit: the needle sweeps up and is held high, chin up */ e.p = Z.A2; const u = ss88(t, Z.tFl, Z.tHit), a = sn88(Math.min(1, (t - Z.tFl) / Math.max(1, Z.tHit - Z.tFl)));
     e.ph = t < Z.tHit ? 'flour' : 'high'; e.aT = null; e.ag = 0; e.adir = a < 0.5 ? [lp88(0.9, 0.75, a * 2), lp88(-0.35, 0.55, a * 2), lp88(0.2, -0.2, a * 2)] : [lp88(0.75, 0.3, a * 2 - 1), lp88(0.55, 1, a * 2 - 1), lp88(-0.2, -0.5, a * 2 - 1)]; e.aext = lp88(1, 1.25, a); e.armL = 0.5;

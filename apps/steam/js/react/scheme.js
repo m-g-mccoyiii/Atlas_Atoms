@@ -6140,11 +6140,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const ms = { x0: 1, x1: 0, y0: 1, y1: 0 }; hv.forEach(q => { [[q.R, 0, 0], [-q.R, 0, 0], [0, q.R, 0], [0, -q.R, 0], [0, 0, q.R], [0, 0, -q.R]].forEach(d => { const s = pr(q.x + d[0], q.y + d[1], q.z + d[2]); ms.x0 = Math.min(ms.x0, s[0]); ms.x1 = Math.max(ms.x1, s[0]); ms.y0 = Math.min(ms.y0, s[1]); ms.y1 = Math.max(ms.y1, s[1]); }); }); const molH = hv.length ? Math.max(0.1, ms.y1 - ms.y0) : 0.16;
     const mb = a20MolBox() || { x0: C0.x - 4, x1: C0.x + 4, z0: C0.z - 3, z1: C0.z + 3 }, Tc = { x: tg.reduce((s, q) => s + q.x, 0) / n, z: tg.reduce((s, q) => s + q.z, 0) / n };
     /* its height on the screen at size k, standing at p */ const hS = (p, k) => pr(p.x, Y(p.x, p.z), p.z)[1] - pr(p.x, Y(p.x, p.z) + F.h * k, p.z)[1];
-    const want = Math.max(0.15, Math.min(0.26, [0.8, 0.9, 1, 1.05, 1.15][stg - 1] * molH)), kh = Math.max(1.25, Math.min(3.4, want / Math.max(0.02, hS(H, 1))));
+    const want = Math.max(0.15, Math.min(0.26, [0.8, 0.9, 1, 1.05, 1.15][stg - 1] * molH)), kh = Math.max(1.25, Math.min(stg <= 1 ? 2.1 : 3.4, want / Math.max(0.02, hS(H, 1))));
     /* where it stands for each mark: a little behind the line-up and to one side of the mark, so each lunge is a long diagonal thrust that reads
        on the screen; it advances from one to the next (the squall stands once, by the middle mark). Every stance on a page, off the crease, and
        its body (on the screen) clear of the molecule, the marks and the other circles of the line-up */
-    const lr = [1, 1.35, 1.35, 1.4, 2.3][stg - 1], amax = [0, 0.9, 0.9, 0.85, 0.15][stg - 1], hW = F.h * kh, gut = SAFE.gut, one = stg >= 5;
+    const lr = [1, 1.6, 1.6, 1.65, 2.3][stg - 1], amax = [0, 0.9, 0.9, 0.85, 0.15][stg - 1], hW = F.h * kh, gut = SAFE.gut, one = stg >= 5;
     const box = (p, sd) => { const xb = p.x - sd * 0.62 * hW, xf = p.x + sd * 0.45 * hW, y0 = Y(p.x, p.z); let x0 = 1, x1 = 0, y0s = 1, y1s = 0; [[xb, y0, p.z + 0.3], [xf, y0, p.z + 0.3], [xb, y0 + hW, p.z - 0.3], [xf, y0 + hW, p.z - 0.3], [p.x, y0 + hW * 1.05, p.z]].forEach(q => { const s = pr(q[0], q[1], q[2]); x0 = Math.min(x0, s[0]); x1 = Math.max(x1, s[0]); y0s = Math.min(y0s, s[1]); y1s = Math.max(y1s, s[1]); }); return { x0, x1, y0: y0s, y1: y1s }; };
     const ov = (a, b) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
     const sbox = (x, y, z, r) => { const c = pr(x, y, z); return { x0: c[0] - r, x1: c[0] + r, y0: c[1] - r, y1: c[1] + r }; }, tgS = tg.map(q => sbox(q.x, q.y, q.z, 0.024)), circ = [];
