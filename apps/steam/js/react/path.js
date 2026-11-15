@@ -342,7 +342,7 @@ const REF_HOM0 = { h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a pag
 const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Double bonds soak up OH; closed rings burst.',
   h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
   co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Leave ' : 'Drive off carbon dioxide and leave ') + K.least + ' reagents untouched to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
-  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') && homK(K.k * f) < HOMCOUNT.cap.acid ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + ' up to x' + HOMCOUNT.cap.acid.toFixed(2) + '.' : ''),      // twentieth (homCount): the count's step and the cap
+  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '.' : ''),      // twenty-first (homCount): the count's step; the cap holds the stage's number only
   wood: (K, f) => (homSimple('wood') ? 'Wood spirit drinks. Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
   salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
   slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle is shut all round.',
@@ -1671,7 +1671,7 @@ function homStage(run, id) {
 // TWENTIETH (owner, ruling BC, 14 November: "these combinations of homunculus, sigil, reagent, and play style should allow for people to massively
 // chain stuff together, it can't always be about averages. things can have synergy if the player uncovers it"; "Try it on three first").
 // RULE.homCount: three creatures' numbers grow with a count (docs/RIG.md, twentieth; sweep_hom20_specs.py):
-//   acid       2 atoms chewed: the stage's number; each atom more: times HOMCOUNT.per.acid; never past x3.20 (ruling BC: "Acid stops at x3.20")
+//   acid       2 atoms chewed: the stage's number (at most x3.20, ruling BC "Acid stops at x3.20"); each atom more: times HOMCOUNT.per.acid, past x3.20 (ruling BI: "cap only the base")
 //   seedling   6 atoms added: the stage's number; each atom more: times HOMCOUNT.per.seedling
 //   brimstone  1 sulfur on the molecule when it burns: the stage's number (its own, kept); each sulfur more: times HOMCOUNT.per.brimstone
 //              (once a run, as before); with Sulphur's Mask held every OH counts as a sulfur (HOMCOUNT.maskOH: the mask passes oxygen off as sulfur)
@@ -1696,9 +1696,9 @@ function homCountN(g, id) {
 }
 // the tap's whole multiplier as the rules count it (the square of what is read), at the stage the run's creature holds
 function homCountK(g, id, n) {
-  const st = RULE.homGrow ? homStage(g.runRef || null, id).stage : 3, b = HOMGROW.read[id][st - 1], per = HOMCOUNT.per[id];
-  let r = b * Math.pow(per, Math.max(0, (n == null ? homCountN(g, id) : n) - HOMCOUNT.n0[id]));
-  if (HOMCOUNT.cap[id]) r = Math.min(HOMCOUNT.cap[id], r);
+  const st = RULE.homGrow ? homStage(g.runRef || null, id).stage : 3, per = HOMCOUNT.per[id];
+  let b = HOMGROW.read[id][st - 1]; if (HOMCOUNT.cap[id]) b = Math.min(HOMCOUNT.cap[id], b);      // twenty-first: the cap holds the stage's number only
+  const r = b * Math.pow(per, Math.max(0, (n == null ? homCountN(g, id) : n) - HOMCOUNT.n0[id]));
   return Math.pow(r, 1 / FLAT.pow);
 }
 const homCountNow = g => { const id = g && g.hom && g.hom.id; if (!id || !homCountOn(id)) return null; const n = homCountN(g, id); return { id, n, x: Math.round(Math.pow(homCountK(g, id, n), FLAT.pow) * 100) / 100 }; };

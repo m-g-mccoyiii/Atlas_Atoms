@@ -16,7 +16,7 @@ CAND[creature] are the three candidates (a, b, c).  FIT[creature][cand] the five
 import sys
 
 CAND = {
-    'acid': {'a': 1.10, 'b': 1.20, 'c': 1.35},
+    'acid': {'a': 1.10, 'b': 1.20, 'c': 1.35, 'd': 1.15},      # d: twenty-first (the cap holds only the stage's number; x1.10, x1.15, x1.20 are the three settings)
     'seedling': {'a': 1.03, 'b': 1.06, 'c': 1.10},
     # Brimstone, first try: the number for each sulfur by stage (B = PER), three ladders (the ladder 'b' is its own numbers).  With Sulphur's
     # Mask and dihydroxylation a fire counted 17 and made rounds of 940 to 378,000 times the number to beat: dropped for the second try
@@ -28,11 +28,11 @@ GRID = {'acid': (1.25, 1.6, 2.0, 2.6, 3.2), 'seedling': (1.1, 1.3, 1.6, 2.0, 2.6
 CAPR = 3.2
 READB = (1.17, 1.30, 1.39, 1.52, 1.59)      # Brimstone's own five numbers (path.js HOMGROW.read.brimstone), kept: "Brimstone ... keeps its number" (ruling BB)
 FIT = {      # B as read at stages 1..5, read off the grid (sweep_hom18.py fit hom20) at worth 1.2, 1.35, 1.5, 1.65, 1.8; Acid stops at x3.20
-    'acid': {'a': (1.92, 2.61, 3.12, 3.2, 3.2), 'b': (1.92, 2.50, 3.11, 3.2, 3.2), 'c': (1.90, 2.50, 3.11, 3.2, 3.2)},
+    'acid': {'a': (1.92, 2.61, 3.12, 3.2, 3.2), 'b': (1.92, 2.50, 3.11, 3.2, 3.2), 'c': (1.90, 2.50, 3.11, 3.2, 3.2), 'd': (1.92, 2.50, 3.11, 3.2, 3.2)},
     'seedling': {'a': (1.34, 1.57, 1.77, 1.99, 2.34), 'b': (1.19, 1.38, 1.54, 1.79, 2.16), 'c': (1.07, 1.23, 1.40, 1.59, 1.94)},
 }
 RULE = {
-    'acid': 'acid@%s~COUNT=1~PER=%s~CAPR=' + str(CAPR) + '~ONCE=1',
+    'acid': 'acid@%s~COUNT=1~PER=%s~ONCE=1',      # twenty-first (ruling BI, "cap only the base"): no CAPR; the stage's number is the base (at most 3.2 in FIT)
     'seedling': 'seedling@%s~GAIN=6~RISE=0~COUNT=1~PER=%s~ONCE=1',
     'brimstone': 'brimstone~MODE=1~LASTP=1~KB=%s~COUNT=1~PER=%s~MASKOH=1~ONCE=1~ONCERUN=1',
 }

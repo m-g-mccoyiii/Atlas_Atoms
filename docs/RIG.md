@@ -1,8 +1,26 @@
 # Overreact: the measuring rig
 
-Built 2026-11-10. The newest measure is the first section below (the twentieth, 2026-11-14). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
+Built 2026-11-10. The newest measure is the first section below (the twenty-first, 2026-11-14). This is the rig `BALANCE.md` asks for: whole runs played with no page by four simulated players, from seeds, with every round logged. Sections 1 and 2 of `PASS.md` are measured with it. The numbers are for a reviewer; nothing here says a section passes.
 
 The rules of a round were changed later the same day (bounds, a budget of uses, forks in the chain, a hand, the redraw, the bank) and everything was measured again. That measure is the section "The measure after the rules of a round were changed". The measure made before it is kept below it, because it is the "before" of every comparison.
+
+## The measure of 2026-11-14, twenty-first: Acid's cap holds only the stage's number (ruling BI, "cap only the base")
+
+Acid's x3.20 cap now holds only its stage number (x1.92, x2.50, x3.11, x3.20, x3.20). Each atom chewed beyond the first 2 still multiplies by x1.20 and may climb past x3.20 (a 3rd atom at stage 5 reads x3.84). Dry ice's cap, Seedling and Brimstone are as they were. `path.js` `homCountK` caps the base before the step; the book's line is "Acid eats. Chew 2 atoms off the molecule. x1.92. Once a round. Each atom more: x1.20." The five numbers were not refitted.
+
+Played as the twentieth (same deals, careful player, 8 workers, below-normal priority; `SWEEP.md`, twenty-first; tables from `sweep_hom21_table.py alone` and `combo`). Alone: 100 runs a cell, both players. Plain kit: 50 runs. Sought line (the three instruments, Tetractys, Clepsydra, Gemini, ozonolysis and Chugaev): 30 runs. Cells: worth; nine-round wins in 100; biggest round in times the number to beat.
+
+| Acid, x1.20 an atom | Alone, stage 1 | Alone, stage 3 | Alone, stage 5 | Plain kit: wins; biggest | Sought line: wins; biggest |
+|---|---|---|---|---|---|
+| Cap on the whole number (the twentieth) | 1.20; 1.1; 16 | 1.54; 3.2; 18 | 1.52; 3.1; 18 | 47; 39 | 48; 80 |
+| **Cap on the base only (built)** | **1.20; 1.1; 20** | **1.54; 3.2; 32** | **1.54; 3.2; 33** | **47; 93** | **50; 263** |
+| No creature | | | | 39; 16 | 39; 27 |
+
+- The casual player alone: worth 1.22, 1.50, 1.56 at stages 1, 3, 5 (no wins, as before).
+- Worth alone did not move (1.54 at stage 5 against 1.52; the careful player chews exactly 2 atoms in most taps). The big rounds are what the count adds: alone 18 to 33, the plain kit 39 to 93 (the nineteenth: 55), the sought line 80 to 263 (10 of 540 rounds past 100 times the number to beat).
+- Neither trigger for the other two steps was met (alone at stage 5 is not past 1.8; the plain kit's biggest round, 93, is not past double 55), so x1.10 and x1.15 were not played. The specs hold them ready (`sweep_hom20_specs.py`: candidate `a` x1.10, `d` x1.15).
+- The bare game: 0.24 nine-round wins in 100 on the first 100 deals played again for this measure (0.32 on the 200 of the twentieth: the same deals, a smaller count); the casual player 0.00 both. No rule of the bare game was touched.
+- The game's own check `hom20.js`: 14 of 16. The two that fail are the twentieth's old wording of the ruling (a 3rd atom at stage 5 "never past x3.20"; the book's line "up to x3.20"); that job was not edited.
 
 ## The measure of 2026-11-14, twentieth: synergy over averages, tried on three (Acid per atom chewed, Seedling per atom added, Brimstone counts sulfur)
 
