@@ -6339,7 +6339,7 @@ void main() {
 //    never inked. In its place the page (scheme S95) stands ONE great flame of its own fire (flame94) on the lump: it rises as the ball would grow,
 //    stands and breathes while the ball would spin, the skin is changed behind it, and it is drawn up to a thread as the new form rises;
 //  - the beads are a few embers and ash (red-orange, blue-white, grey);
-//  - NO JUMPS: Water's pose numbers are read at seven moments 80 ms apart and averaged (smooth95), so a pose that Water snaps in two frames takes
+//  - NO JUMPS: Water's pose numbers are read at seven moments 100 ms apart and averaged (smooth95), so a pose that Water snaps in two frames takes
 //    eight or more here; the lump's small flames go down and come up over several frames.
 // Brimstone's own change of stage (W82 / W92) is off by default from here (?v82=1 gives it back).
 KIT.mirror95 = KIT.mirror95 == null ? !(typeof location !== 'undefined' && /[?&]w95=0/.test(String(location.search))) : KIT.mirror95;
@@ -6353,16 +6353,16 @@ function skin95(T, X) { X.w95 = true;
   X.beads.forEach((b, i) => { b.m.material = E[i % 3]; }); }
 make31 = (f0 => function (T, S) { const X = f0(T, S); if (on95(S) && X.k32) { try { skin95(T, X); } catch (e) { W95.err = 'skin ' + String(e && e.stack); } } return X; })(make31);
 /* each frame of Water's ball: only the lamp sees it (layer 5: scheme S33's shadow pass), it stays shut, and it shrinks away as the flame is drawn up; one bead in two is shown, small */
-stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.w95) return; X.sph.layers.set(5); if (e.v >= 0) X.sph.scale.multiplyScalar(Math.max(0.001, 1 - RK.sm(e.v / 1.0))); X.gw.visible = false;
+stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X.w95) return; X.sph.layers.set(6); /* seen by no camera: a fire throws no solid shadow (the page lays its glow) */ if (e.v >= 0) X.sph.scale.multiplyScalar(Math.max(0.001, 1 - RK.sm(e.v / 1.0))); X.gw.visible = false;
   X.beads.forEach((b, i) => { if (!b.m.visible) return; if (i % 2) b.m.visible = false; else b.m.scale.multiplyScalar(0.6); }); })(stage31);
 shape31 = (f0 => function (X, open, flat) { return X.w95 ? f0(X, 0, 0) : f0(X, open, flat); })(shape31);
 /* the pen: no outline of the ball, no strokes turning on it, no ring of spray, no splash (those are water); the embers keep their line and the pencil on the bench curves in */
 ink31 = (f0 => function (T, S, X, ren, cam) { if (!X.w95) return f0(T, S, X, ren, cam); const v = X.sph.visible, e0 = X.e; X.sph.visible = false; if (e0 && e0.v >= 0) X.e = Object.assign({}, e0, { v: 9 }); try { return f0(T, S, X, ren, cam); } finally { X.sph.visible = v; X.e = e0; } })(ink31);
-/* NO JUMPS: Water's pose for the change of stage, read at seven moments 80 ms apart and averaged with a tent (the timeline e31 that the page stages by is the middle one, untouched but for the two numbers that only pose joints: curl and ball) */
+/* NO JUMPS: Water's pose for the change of stage, read at seven moments 100 ms apart and averaged with a tent (the timeline e31 that the page stages by is the middle one, untouched but for the two numbers that only pose joints: curl and ball) */
 KIT.smooth95 = KIT.smooth95 == null ? !(typeof location !== 'undefined' && /[?&]sm95=0/.test(String(location.search))) : KIT.smooth95;
 C26.evo = (f0 => function (S, t, o, q) { if (!(S && S.way69 && o && o.e31 && KIT.mirror95 !== false && KIT.smooth95 !== false)) return f0(S, t, o, q);
   const q0 = Object.assign({}, q), acc = {}, am = {}, SKIP = { e: 1, n: 1, big: 1 }; let W = 0, cu = 0, ba = 0; f0(S, t, o, q); const e = q.e31, m = q.m; if (!e || t < 0) return;
-  for (let i = -3; i <= 3; i++) { let q2 = q; if (i) { q2 = Object.assign({}, q0); f0(S, Math.max(0, t + i * 80), o, q2); } const w = 4 - Math.abs(i), e2 = q2.e31 || e; W += w; cu += w * e2.curl; ba += w * e2.ball;
+  for (let i = -3; i <= 3; i++) { let q2 = q; if (i) { q2 = Object.assign({}, q0); f0(S, Math.max(0, t + i * 100), o, q2); } const w = 4 - Math.abs(i), e2 = q2.e31 || e; W += w; cu += w * e2.curl; ba += w * e2.ball;
     for (const k in q2) if (typeof q2[k] === 'number' && !SKIP[k]) acc[k] = (acc[k] || 0) + w * q2[k]; if (q2.m) for (const k in q2.m) if (typeof q2.m[k] === 'number' && k !== 'from' && k !== 'body') am[k] = (am[k] || 0) + w * q2.m[k]; }
   for (const k in acc) q[k] = acc[k] / W; if (m) for (const k in am) m[k] = am[k] / W; e.curl = cu / W; e.ball = ba / W; q.e31 = e; q.m = m; })(C26.evo);
 /* the lump's small flames (W73's drawn tongues) at k of their size; gone under 0.03 */

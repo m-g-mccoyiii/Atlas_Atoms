@@ -6770,15 +6770,21 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     /* nothing is laid on the page: no wet, no soot, no patch to stand in */ for (let i = 0; i < S33.NW; i++) { const w = W[i]; if (w && w.r > 0) { w.r = 0; w.hold = false; } U.w33.value[i].z = 0; }
     /* Water's damp ring and its caustic are water: not for Brimstone */ if (E && E.e31) { if (S27.ring) S27.ring.visible = false; if (S27.ca) S27.ca.visible = false; }
     /* THE ONE FLAME (kitart flame94), where Water's ball would be: its foot on the lump, as tall as the ball's top and a third more; it rises as the ball would grow, stands while it would spin, and from the hit is drawn up to a thread while the new form rises in it. Its light on the paper is the flame's own flicker (flame94.light), where Water threw its blue. */
-    const G = U.gl95.value, F94 = AA.rxKit.flame94; let fm = S95.fl;
-    if (E && E.e31 && e && e.go != null && C && F94 && sh.visible) { if (!fm) { fm = S95.fl = F94.make(T); scene.add(fm); }
+    const G = U.gl95.value, F94 = AA.rxKit.flame94; let FL = S95.fl;
+    /* THE FIRE HAS DEPTH (owner: one sheet read as a sticker): three sheets of flame94 at three depths about the lump, depth-tested, so the lump and the figure stand INSIDE the fire: a tall dark one behind, one through the lump's middle, a short see-through one of low licks in front. Each has its own seed and clock. Every sheet's base is a rounded bowl (flame94's shader text with one mask added), not a straight cut. */
+    const mk = () => { const fm = F94.make(T), m0 = fm.material, f0 = m0.fragmentShader, a1 = 'gl_FragColor = vec4((col * a', a2 = 'oa * uA);'; let m1 = m0; if (f0.indexOf(a1) >= 0 && f0.indexOf(a2) >= 0) { m0.uniforms.uL95 = { value: new T.Vector2(0.1, 0.08) };
+        m1 = new T.ShaderMaterial({ uniforms: m0.uniforms, vertexShader: m0.vertexShader, fragmentShader: f0.replace('varying vec2 vP;', 'varying vec2 vP;\nuniform vec2 uL95;').replace(a1, 'float r95 = uL95.y, k95 = vP.y >= uL95.x ? 1.0 : 1.0 - smoothstep(0.72, 1.0, length(vec2(vP.x / (1.9 * r95), (vP.y - uL95.x) / (1.25 * r95))));\n  ' + a1).replace(a2, 'oa * uA * k95);'), transparent: true, depthWrite: false, depthTest: true, side: T.DoubleSide }); m1.extensions = { derivatives: true }; m1.toneMapped = false; fm.material = m1; } else m0.depthTest = true;
+      fm.renderOrder = 32; scene.add(fm); return fm; };
+    if (E && E.e31 && e && e.go != null && C && F94 && sh.visible) { if (!FL) FL = S95.fl = [mk(), mk(), mk()];
       const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, v = S95.v; O.root.updateWorldMatrix(true, false); v.setFromMatrixPosition(O.root.matrixWorld);
       const pre = !(e.v >= 0); if (pre && C.ball === 1) E.h95 = 1.3 * (Math.hypot(C.bx - v.x, C.by - v.y, C.bz - v.z) + C.Rw);
-      const rise = pre ? 0.3 * RK.sm((e.a - 0.7) / 0.3) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.3) : 0) : 1, draw = pre ? 0 : RK.sm(e.v / 1.9), h = (E.h95 || 1) * (1 + 0.12 * draw);
-      const o94 = { t: now / 1000, rise, h, w: 0.62 * h, breath: now / 1000 * 2.4, draw, face: cam, seed: 2 + (E.to || 3), smoke: 0.7, a: 1 - RK.sm((draw - 0.45) / 0.45) };
-      fm.position.set(v.x, v.y, v.z); F94.update(fm, o94); if (!E.h95) fm.visible = false;
-      G.set(v.x, v.z + 0.3 * Math.max(0, v.y - C.gy), 0.8 * h, E.h95 ? 0.95 * F94.light(o94) * (1 - (e.home || 0)) : 0); }
-    else { G.w = 0; if (fm) fm.visible = false; } };
+      const rise = pre ? 0.3 * RK.sm((e.a - 0.7) / 0.3) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.3) : 0) : 1, draw = pre ? 0 : Math.pow(RK.sm(e.v / 2.2), 1.3), h = (E.h95 || 1) * (1 + 0.12 * draw), ws = S95.v2.setFromMatrixScale(O.root.matrixWorld).y, rL = 0.21 * O.G.H * ws;
+      const a0 = (1 - RK.sm((draw - 0.45) / 0.45)) * (pre ? RK.sm((rise - 0.05) / 0.12) : 1), fw = S95.v3 || (S95.v3 = new T.Vector3()); cam.getWorldDirection(fw); fw.y = 0; fw.normalize(); let o94 = null;
+      /* back, middle, front: depth along the eye's line (in lump radii), height, width, opacity, when it comes */ [[1.15, 1.0, 0.66, 0.96, 0], [0.0, 0.84, 0.56, 0.9, 0.12], [-1.2, 0.46, 0.7, 0.55, 0.3]].forEach((q, i) => { const fm = FL[i], hh = h * q[1], rs = RK.cl((rise - q[4]) / (1 - q[4]));
+        const o = { t: now / 1000 * (1 + 0.13 * i) + 31.7 * i, rise: rs, h: hh, w: q[2] * h, breath: now / 1000 * (2.4 - 0.4 * i) + 2 * i, draw: Math.min(1, draw * (1 + 0.25 * i)), face: cam, seed: 2 + (E.to || 3) + 5 * i, smoke: i ? 0 : 0.7, sway: 0.25 * (i - 1), a: a0 * q[3] * (i === 1 && !pre ? 1 - 0.35 * RK.sm(e.v / 0.5) : 1) };
+        fm.position.set(v.x + fw.x * q[0] * rL, v.y + fw.y * q[0] * rL, v.z + fw.z * q[0] * rL); F94.update(fm, o); if (!E.h95 || rs < 0.05) fm.visible = false; if (fm.material.uniforms.uL95) fm.material.uniforms.uL95.value.set(0.9 * rL / hh, rL / hh); if (!i) o94 = o; });
+      G.set(v.x, v.z + 0.3 * Math.max(0, v.y - C.gy), 0.9 * h, E.h95 ? 1.0 * F94.light(o94) * (1 - (e.home || 0)) : 0); }
+    else { G.w = 0; if (FL) FL.forEach(fm => { fm.visible = false; }); } };
   homEvo19 = (f0 => function (now) { f0(now); try { s95Frame(now); } catch (x) { S95.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s95dbg = () => ({ err: S95.err, kit: AA.rxKit.W95 && AA.rxKit.W95.err, w31: AA.rxKit.spirit26.W31 && AA.rxKit.spirit26.W31.err, w32: AA.rxKit.spirit26.W32 && AA.rxKit.spirit26.W32.err, s31: S31.err, s32: S32.err, s33: S33.err, s36: S36.err, sp: AA.rxKit.spiritErr || null, w69: AA.rxKit.BRIM69 && AA.rxKit.BRIM69.err, wet: S33.wet.filter(w => w && w.r > 0).length, old27: S27.wet.filter(w => w.m.visible).length });
 
@@ -6796,12 +6802,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     try { return f0(id, to); } finally { S95.np = false; } })(jumpPlan);
   actPiece = (f0 => function (kind) { if (S95.np && kind === 'puff') return null; return f0.apply(this, arguments); })(actPiece);
   A20ACT.brimstone = (f0 => function (j, c) { if (!s95Act()) return f0(j, c);
-    const v = new T.Vector3(), mb = c.mb, mc = c.mc, F = c.F, kS = Math.max(1.55, F.k * 0.8), HIT = 0.7, HAND = 0.655;
+    const v = new T.Vector3(), mb = c.mb, mc = c.mc, F = c.F, kS = 1.3, HIT = 0.7, HAND = 0.655;
     const at = s77Atoms().map(q => { q.b.mesh.getWorldPosition(v); return { a: q.a, x: v.x, y: v.y, z: v.z, R: s77R(q.b) }; });
     const w26 = { T: [], H: null, hitU: HIT, hand: HAND, bonds: [], n: Math.max(0, at.length - 1), b95: true }; j.r21 = true; j.w95 = { at, tg: [] }; j.bites = Object.assign([0.3], { w26 });
     return { want: { x: mc.x, z: mc.z + 3 }, hitU: HIT, dur: j.D + j.B + 2600, pad: 0.2,
       after(pl) { let A0 = { x: mc.x, z: mc.z }, bd = 1e9; at.forEach(q => { const d = Math.hypot(q.x - HOMP.x, q.z - HOMP.z) + 2 * Math.min(q.x - mb.x0, mb.x1 - q.x); if (d < bd) { bd = d; A0 = { x: q.x, z: q.z - 0.35 * q.y }; } });
-        const s1 = r21Stand(F, kS, A0, A0.x >= mc.x ? -1 : 1, mb); pl.x = j.perch.x = s1.x; pl.z = j.perch.z = s1.z; pl.k = j.k = kS; j.sd = s1.sd; j.spot = { x: A0.x, z: A0.z }; this.tgt = j.spot;
+        /* r21Stand puts this figure at the page's top edge, out of reach of the atoms (seen in the first take): it stands on the page just left of the molecule, level with its lower half, so its hand can be laid on each sulfur */ const s1 = { x: mb.x0 - 1.4, z: mc.z + 1.6, sd: 1 }; pl.x = j.perch.x = s1.x; pl.z = j.perch.z = s1.z; pl.k = j.k = kS; j.sd = s1.sd; j.spot = { x: A0.x, z: A0.z }; this.tgt = j.spot;
         const o = at.slice().sort((p, q) => Math.hypot(q.x - s1.x, q.z - s1.z) - Math.hypot(p.x - s1.x, p.z - s1.z)), pt = q => ({ x: q.x, y: q.y, z: q.z, sx: q.x >= s1.x ? 1 : -1 });
         w26.T = o.slice(0, -1).map(pt); w26.H = o.length ? pt(o[o.length - 1]) : { x: A0.x, y: 0.5, z: A0.z, sx: A0.x >= s1.x ? 1 : -1 }; w26.n = w26.T.length;
         const m = Math.max(1, w26.T.length), gw = (HIT - 0.08 - 0.17) / m; j.w95.tg = o.map((q, i) => Object.assign({}, q, { u: i < o.length - 1 ? 0.17 + (i + 0.45) * gw : HAND })); },
@@ -6824,7 +6830,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       (center.sticks || []).forEach(k => { if (k.a !== q.a && k.b !== q.a) return; (k.parts || []).forEach(pt => { const ms = pt.mesh; if (!ms) return; let f = M.seen.get(ms); if (!f) { f = s95Glow(ms, 1.5, true); M.films.push(f); M.seen.set(ms, f); f.userData.e = 0; } f.userData.e = Math.max(f.userData.n === now ? f.userData.e : 0, 0.5 * e1); f.userData.n = now; f.material.opacity = f.userData.e; f.visible = f.userData.e > 0.01; });
         const o = k.a === q.a ? k.b : k.a, ob = center.balls.get(o); if (ob && ob.mesh && o.el !== 'H') { let f = M.seen.get(ob.mesh); if (!f) { f = s95Glow(ob.mesh, 1.14, false); M.films.push(f); M.seen.set(ob.mesh, f); } f.userData.e = Math.max(f.userData.n === now ? f.userData.e : 0, 0.26 * e2 * (0.85 + 0.15 * Math.sin(now / 90 + i))); f.userData.n = now; f.material.opacity = f.userData.e; f.visible = f.userData.e > 0.01; } }); });
     if (!busy) { (S95.pool || (S95.pool = [])).push.apply(S95.pool, M.fl.filter(Boolean)); s95MolEnd(); } };
-  S95.v = new T.Vector3();
+  S95.v = new T.Vector3(); S95.v2 = new T.Vector3();
   a20Spent = (f0 => function (now) { const r = f0(now); try { s95ActFrame(now); } catch (e) { S95.err = 'act ' + String(e && e.stack); } return r; })(a20Spent);
   // ==== S95 END
   size(); newRun(); requestAnimationFrame(frame);
