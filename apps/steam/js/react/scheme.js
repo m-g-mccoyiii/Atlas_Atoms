@@ -5603,20 +5603,20 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const s71Frame = now => { const E = R21.evo, SP = s26Fig(), Kt = AA.rxKit, e = E && E.e71;
     if (!E || !e || !SP || !SP.way61 || HEVO.done || Kt.evo71 === false) { if (S71.was && !R21.evo) { const L = S71.was.L; S71.was = null; HEVO.num = HEVO.seen && HEVO.seen.mult; HEVO.numT = now; HEVO.numFor = Math.max(1500, L * 3.4); } s71Hide(); s71Lamp(now, null); return; }
     S71.was = E; dirty = true; const c = e.c, u = e.u, P = e.P, sx = sfx, once = (n, f) => { if (!E.f71[n]) { E.f71[n] = 1; try { f(); } catch (x) { /* no sound */ } } };
-    if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; } if (S27.s1 && u >= c[2] + 0.5 * P.b[2] && u < c[5]) { S27.s1.visible = false; S27.s2.visible = false; } if (S27.ring) S27.ring.visible = false;
+    if (S27.wet) { S27.last = null; if (S27.ca) S27.ca.visible = false; } if (S27.ring) S27.ring.visible = false;
     if (!E.c71) { s59Place(E, SP); E.c71 = E.c59; E.f71 = {}; E.k59 = 1; s71Wide(E, SP); }
     const C = E.c71, RK = Kt.RK, Q = HEVO.pos || (HEVO.pos = {}), k = E.k59 || 1, Fk = C.F * k;
     if (!E.d71) { const dx = C.x - HOMP.x, dz = C.z - HOMP.z, l = Math.hypot(dx, dz) || 1; E.d71 = [dx / l, dz / l]; }
     if (E.ko71 == null && SP.e71 && SP.e71.sp) { /* the old stage's width, too, between the screen's edge and the molecule */ const J = SP.e71.sp.G.J, v = S71.v, nx = xx => { v.set(xx, C.y, C.z).project(cam); return v.x; }, pu = Math.max(1e-4, nx(C.x + 1) - nx(C.x)); let hw = 0; J.forEach(q => { hw = Math.max(hw, Math.abs(q.p[0]) + q.r); }); hw *= C.unit * E.s0 * C.F;
       const xL = C.x + (-0.92 - nx(C.x)) / pu, xR = C.mol && C.x < C.mol[0] ? C.mol[0] - 0.3 : C.x + (0.92 - nx(C.x)) / pu; E.ko71 = Math.max(0.5, Math.min(1, (xR - C.x) / Math.max(1e-3, hw), (C.x - xL) / Math.max(1e-3, hw))); }
-    const ko = E.ko71 || 1; let x = C.x, z = C.z, s = (e.old ? E.s0 * ko : E.s1) * Fk;
+    const ko = E.ko71 || 1; let x = C.x, z = C.z, s = (u < c[4] ? E.s0 * ko : u >= c[5] ? E.s1 : E.s0 * ko + (E.s1 - E.s0 * ko) * sm71(e.pu / 0.9)) * Fk * (1 - [0, 0, 0.2, 0.18, 0.3, 0.34][Math.min(5, E.to | 0)] * (e.lift || 0));   /* (84) the old size goes over to the new one through the stretch */
     if (u < c[1]) { const a = e.cr; x = HOMP.x + (C.x - HOMP.x) * a; z = HOMP.z + (C.z - HOMP.z) * a; s = E.s0 * (1 + (Fk * ko - 1) * RK.sm(Math.min(1, e.go * 1.15))); }
     else if (u >= c[6]) { const h = 1 - e.cr; x = C.x + (HOMP.x - C.x) * h; z = C.z + (HOMP.z - C.z) * h; s = E.s1 * (Fk + (1 - Fk) * RK.sm(h)); }
     Q.x = x; Q.z = z; Q.y = 0; Q.sx = 1; Q.sy = 1; homObj.s = s; E.ks31 = s / E.s0;
     if ((u >= c[1] && u < c[2]) || (u >= c[5] && u < c[6])) { try { s59Fit(E, e.old ? (SP.e71 && SP.e71.sp) : SP); } catch (x2) { /* fits next frame */ } }
     const K = s71Make(); S71.shown = true; const G = homObj.grp, H = SP.G.H * G.scale.x, Rf = SP.G.pl.rx * G.scale.x, R = C.R * k, inkW = Math.max(0.03, 0.012 * R), tt = now / 1000;
     const A = E.a71 || [C.x, C.y, C.z], px = u < c[1] || u >= c[6] ? x : A[0], pz = u < c[1] || u >= c[6] ? z : A[2], py = C.y + 0.01;
-    if (!E.Hm71 && u >= c[2]) { /* the column's full height: its head just inside the screen's top */ let lo = 0, hi = 120; for (let i = 0; i < 22; i++) { const h = (lo + hi) / 2; S71.v.set(px + S71.U.x * h, py + S71.U.y * h, pz + S71.U.z * h).project(cam); if (S71.v.y > 0.8) hi = h; else lo = h; } E.Hm71 = lo;
+    if (!E.Hm71 && u >= c[2]) { /* how far up the figure's own up its top may be pulled: just inside the screen's top (84: along its root's up, as W71 pulls) */ const RT = (SP.e71 && SP.e71.sp ? SP.e71.sp : SP).root; RT.updateWorldMatrix(true, false); const me = RT.matrixWorld.elements; S71.U.set(me[4], me[5], me[6]).normalize(); let lo = 0, hi = 120; for (let i = 0; i < 22; i++) { const h = (lo + hi) / 2; S71.v.set(px + S71.U.x * h, py + S71.U.y * h, pz + S71.U.z * h).project(cam); if (S71.v.y > 0.8) hi = h; else lo = h; } E.Hm71 = lo;
       E.sd71 = C.mol && px < C.mol[0] ? -1 : 1; /* it falls away from the molecule */ }
     let ti = 0; const tube = () => K.tubes[ti++] || null;
     /* the arm it throws as it hauls, out and home; the damp it leaves */
@@ -5627,48 +5627,22 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         s66Lay(tb, v => [o[0] + (end[0] - o[0]) * v, o[1] + (end[1] - o[1]) * v + 0.25 * Hh * Math.sin(Math.PI * v) * (stuck ? 0.4 : 0.8), o[2] + (end[2] - o[2]) * v], v => r0 * (1 - 0.35 * v) * (1 - 0.25 * (cy.haul || 0)) + (v > 0.82 ? r0 * (0.4 + 1.1 * sl) * Math.sin(Math.PI * Math.min(1, (v - 0.82) / 0.18 * 0.5 + 0.5)) : 0), inkW);
         if (stuck) once('sl' + (out ? 'o' : 'b') + cy.i, () => { if (out || cy.i % 2 === 0) sx.squish(); s66Mark(ax, az, d[0], d[1], Rr * 0.9, Rr * 0.7, now, out ? 2600 : 900); }); }
       const L0 = S71.last; if (!L0) S71.last = { x, z }; else { const dx = x - L0.x, dz = z - L0.z, dd = Math.hypot(dx, dz); if (dd > 0.55 * Rr) { s66Mark((L0.x + x) / 2, (L0.z + z) / 2 + 0.2 * Rr, dx, dz, dd * 1.2 + Rr * 0.3, Rr * 0.5, now, out ? 2600 : 900); S71.last = { x, z }; } } } else S71.last = null;
-    /* the pool: spreads out of the melting heap, is drawn in to a dome, feeds the column, lies as a splash where it lands and dries away */
-    if (u < c[2] && E.r71) E.rs71 = E.r71; const r0 = E.rs71 || Rf, Rp = P.pool * R, Rd = P.dome * R, Hd = 0.55 * Rd, Rs = Math.max(1.1 * Rd, 1.25 * Rf);
-    let pr = 0, ph = 0, op = 0.6, tr = 0;
-    if (u >= c[2] && u < c[3]) { pr = r0 * 0.9 + (Rp - r0 * 0.9) * e.pool; ph = 0.035 * R + 0.25 * r0 * (1 - e.flat); op = 0.55 + 0.3 * (1 - e.pool); }
-    else if (u >= c[3] && u < c[4]) { const dr = e.draw; pr = Rp + (Rd - Rp) * dr; ph = 0.035 * R + (Hd - 0.035 * R) * Math.pow(dr, 1.4) * (1 + 0.05 * Math.sin(tt * 30) * e.trem); op = 0.6 + 0.33 * dr; tr = e.trem; }
-    else if (u >= c[4] && u < c[5]) { const p = e.pu, f = e.fall; pr = Rd * (1 - 0.35 * sm71(p / 0.3)) + (Rs - Rd * 0.65) * f; ph = Hd * (1 - 0.65 * sm71(p / 0.3)) * (1 - 0.8 * f) + 0.02; op = 0.93 - 0.3 * f; }
-    else if (u >= c[5]) { const g2 = e.wet; pr = Rs * (1 + 0.3 * sm71(e.rip / 0.3)) * (0.6 + 0.4 * g2); ph = 0.012; op = 0.45 * g2; }
-    if (pr > 0.01 && op > 0.01) { const Ed = S71.E || (S71.E = new Array(NA71)); s71Edge(C, px, pz, pr, tt, tr, Ed); s71Lay(K, px, py, pz, Ed, ph, inkW); K.mp.opacity = op; K.rim.material.opacity = 0.85 * Math.min(1, op * 1.6); K.wet.material.opacity = 0.55 * Math.min(1, op * 1.6); K.hull.visible = ph > 0.15 * R; }
-    else [K.pool, K.hull, K.rim, K.wet].forEach(m => { m.visible = false; });
-    const hAt = rh => (pr > 0.01 ? ph * Math.pow(Math.max(0, 1 - rh * rh), 0.75) : 0);
-    /* bubbles: rise in the pool, swell, pop with a dimple; few, then many */
-    const bdt = Math.min(0.1, Math.max(0, tt - (S71.bt || tt))); S71.bt = tt; const rate = e.bub * (P.nc > 1 ? 14 : 8) * (0.7 + 0.3 * P.pool);
-    if (rate > 0 && pr > 0.01 && Math.random() < rate * bdt) { const b = K.bub.find(q => q.t0 < 0); if (b) { const a = Math.random() * 2 * Math.PI, rh = 0.8 * Math.sqrt(Math.random()); b.t0 = tt; b.life = 0.5 + 0.7 * Math.random(); b.a = a; b.rh = rh; b.r = R * (0.05 + 0.1 * Math.random() * Math.random()) * (0.7 + 0.3 * Math.min(2, P.pool)); } }
-    K.bub.forEach(b => { if (b.t0 < 0) { b.g.visible = false; return; } const ag = (tt - b.t0) / b.life; if (ag >= 1 || pr <= 0.01 || u >= c[4]) { b.g.visible = false; b.t0 = -1;
-        if (ag >= 1 && pr > 0.01 && u < c[4]) { const dm = K.dim.find(q => tt - q.t0 > 0.35); if (dm) { dm.t0 = tt; dm.r = b.r; dm.x = px + Math.cos(b.a) * b.rh * pr; dm.z = pz + Math.sin(b.a) * b.rh * pr * 0.86; dm.y = py + hAt(b.rh) + 0.02; } if (b.r > 0.09 * R) once('pop' + Math.floor(tt * 3), () => sx.feed()); } return; }
-      const sc = b.r * Math.min(1, Math.pow(ag / 0.85, 0.7)), rr = b.rh * pr; b.g.visible = true; b.g.position.set(px + Math.cos(b.a) * rr, py + hAt(b.rh) + 0.25 * sc, pz + Math.sin(b.a) * rr * 0.86); b.g.scale.set(sc, sc * 0.8, sc); });
-    K.dim.forEach(d => { const ag = (tt - d.t0) / 0.32; if (ag < 0 || ag >= 1) { d.m.visible = false; return; } d.m.visible = true; d.m.position.set(d.x, d.y, d.z); const s2 = d.r * (0.6 + 1.3 * ag); d.m.scale.set(s2, 1, s2 * 0.86); d.m.material.opacity = 0.8 * (1 - ag); });
-    /* the column(s), the strings peeling off, 2 to 3's hanging arm */
-    const fx = { show: false };
-    if (u >= c[4] && u < c[5] && e.col > 0.005) { const Hc = E.Hm71 * P.pull * e.col, sd = E.sd71, lean = sd * e.over * (P.nc > 1 ? 0.6 : 1), Bp = [px, py + hAt(0) * 0.6, pz], th = e.thin, rb = Rd * 0.75 * (1 - 0.45 * th) + Rs * 0.25 * e.fall, rt = Math.max(0.035 * R, 0.24 * Rd * (1 - 0.78 * th)) * (1 + 1.6 * e.fall), rh = Math.max(0.22 * R, 0.4 * Rd) * (1 - 0.15 * e.fall) * (P.nc > 1 ? 0.8 : 1), tw = 0.03 * Math.sin(tt * 4.1) * (1 - e.fall);
-      const n = P.nc > 1 ? 3 : 1, cols = [];
-      for (let i = 0; i < n; i++) { const off = n > 1 ? (i - 1) : 0, sp2 = e.split, B2 = [Bp[0] + off * sp2 * Rd * 0.55, Bp[1], Bp[2] + Math.abs(off) * sp2 * Rd * 0.15], ln = lean + off * 0.42 * sp2 * (1 - 0.5 * e.fall), h2 = Hc * (1 - 0.12 * Math.abs(off) * sp2), sw = e.sway * (i % 2 ? -1 : 1), tb = tube(); if (!tb) break;
-        s71Col(tb, B2, h2, ln, sw, 1, n > 1 ? rb * (1 - 0.35 * sp2) : rb, rt * (n > 1 ? 1 - 0.2 * sp2 : 1), rh, inkW, tw); cols.push({ B: B2, h: h2, ln, sw }); }
-      /* strings peel off its sides and droop to the pool */
-      if (e.peel > 0.02) for (let i = 0; i < (P.nc > 1 ? 4 : 3); i++) { const cl = cols[i % cols.length], v0 = 0.32 + 0.14 * i, sd2 = i % 2 ? 1 : -1, tb = tube(); if (!tb) break; const a0 = s71ColAt(cl.B, cl.h, cl.ln, cl.sw, 1, tw, v0), dr = (0.18 + 0.07 * i) * cl.h * e.peel, endP = [a0[0] + sd2 * dr, py + 0.04, a0[2] + 0.25 * dr];
-        s66Lay(tb, v => [a0[0] + (endP[0] - a0[0]) * v, a0[1] + (endP[1] - a0[1]) * Math.pow(v, 1.6) + 0.12 * dr * Math.sin(Math.PI * v), a0[2] + (endP[2] - a0[2]) * v], v => rt * 0.45 * (1 - 0.5 * v) + 0.012 * R, inkW * 0.8); }
-      /* the face on the middle head, alarmed */ const m = cols[n > 1 ? 1 : 0]; if (m) { const hp = s71ColAt(m.B, m.h, m.ln, m.sw, 1, tw, 0.88); fx.show = true; fx.p = hp; fx.w = rh * 1.9; fx.tilt = 1; fx.off = rh * 1.1; fx.f = { lid: e.fall > 0.6 ? 0.85 : 0, lx: 0.3 * Math.sin(tt * 3), ly: 0.9, mo: 0.4 + 0.5 * sm71(e.pu / 0.2), al: 1 - 0.6 * e.fall, sm: 0 }; }
-      /* drips flung off it as it teeters and falls */
-      if (e.fling > 0 && e.fall < 0.95) { const want = Math.floor(e.fling * (P.nc > 1 ? ND71 : ND71 * 0.6)); let lv = K.drops.filter(d2 => d2.n71 === E).length; K.drops.forEach(d2 => { if (lv >= want || d2.live) return; const cl = cols[lv % cols.length], v0 = 0.45 + 0.4 * Math.random(), p0 = s71ColAt(cl.B, cl.h, cl.ln, cl.sw, 1, tw, v0), sdd = Math.random() < 0.5 ? -1 : 1;
-          d2.live = true; d2.n71 = E; d2.p = p0.slice(); d2.v = [sdd * (3 + 5 * Math.random()) * R * 0.12, (1 + 3 * Math.random()) * R * 0.12, (Math.random() - 0.3) * 3 * R * 0.12]; d2.r = R * (0.035 + 0.04 * Math.random()); lv++; }); } }
+    /* (84) no pool, dome or bubbles of the page's: the figure's own slick spreads and draws in, its own heap gathers, its own pen bubbles rise */
+    [K.pool, K.hull, K.rim, K.wet].forEach(m => { m.visible = false; }); K.bub.forEach(b => { b.g.visible = false; b.t0 = -1; }); K.dim.forEach(d => { d.m.visible = false; });
+    const bdt = Math.min(0.1, Math.max(0, tt - (S71.bt || tt))); S71.bt = tt; const Rd = P.dome * R, Rs = Math.max(1.1 * Rd, 1.25 * Rf);
+    /* (84) no column, strings or floating face of the page's: the figure itself is pulled up (W71). Drips are flung off its own tops (its face, its
+       raised hands) as it teeters and falls */
+    const tops = E.tops71 || [];
+    if (u >= c[4] && u < c[5] && e.fling > 0 && e.fall < 0.95 && tops.length) { const want = Math.floor(e.fling * (P.nc > 1 ? ND71 : ND71 * 0.6)); let lv = K.drops.filter(d2 => d2.n71 === E).length; K.drops.forEach(d2 => { if (lv >= want || d2.live) return; const p0 = tops[lv % tops.length], sdd = Math.random() < 0.5 ? -1 : 1;
+        d2.live = true; d2.n71 = E; d2.p = [p0[0], p0[1], p0[2]]; d2.v = [sdd * (3 + 5 * Math.random()) * R * 0.12, (1 + 3 * Math.random()) * R * 0.12, (Math.random() - 0.3) * 3 * R * 0.12]; d2.r = R * (0.03 + 0.03 * Math.random()); lv++; }); }
     K.drops.forEach(d2 => { if (!d2.live) { d2.g.visible = false; return; } const dt = Math.min(0.05, bdt || 0.033); d2.v[1] -= 9.8 * R * 0.25 * dt; d2.p[0] += d2.v[0] * dt; d2.p[1] += d2.v[1] * dt; d2.p[2] += d2.v[2] * dt; const fl = s66Floor(d2.p[0], d2.p[2]) + 0.03;
       if (d2.p[1] <= fl) { d2.live = false; d2.g.visible = false; const on = !C.mol || d2.p[0] < C.mol[0] - 0.2 || d2.p[0] > C.mol[1] + 0.2 || d2.p[2] < C.mol[2] - 0.2 || d2.p[2] > C.mol[3] + 0.2; if (on) s66Mark(d2.p[0], d2.p[2], 1, 0, d2.r * 4, d2.r * 3.2, now, 1500); return; }
       d2.g.visible = true; d2.g.position.set(d2.p[0], d2.p[1], d2.p[2]); const sp = Math.hypot(d2.v[0], d2.v[1]); d2.g.scale.set(d2.r, d2.r * (1 + 0.04 * sp / R), d2.r); });
     for (; ti < K.tubes.length; ti++) { K.tubes[ti].m.visible = K.tubes[ti].h.visible = false; }
-    /* the face floating on the pool, sleepy, blinking, then wide at the held instant */
-    if (!fx.show && e.gone && pr > 0.01 && u < c[4]) { const bl = pl71((tt * 0.45) % 1, 0.0, 0.06, 0.02), dr = e.draw, wake = u >= c[3] ? sm71(e.ga / e.rise) : 0; fx.show = true; fx.p = [px, py + ph + 0.02, pz + 0.05 * pr]; fx.w = Math.min(1.1 * pr, 0.9 * R) * (1 + 0.2 * dr); fx.tilt = 0.65 + 0.25 * dr; fx.off = 0.02 + 0.3 * ph;
-      fx.f = { lid: Math.max(bl, (0.72 - 0.72 * wake) * (u < c[3] ? 1 : 1)), lx: 0.15 * Math.sin(tt * 37) * e.trem * wake, ly: -0.2 + 0.3 * wake, mo: 0, al: 0.4 * e.hold, sm: 0.6 * (1 - wake) }; }
-    if (fx.show) { s71Face(K, fx.f); const f = K.face, cp = cam.position; f.visible = true; f.position.set(fx.p[0], fx.p[1], fx.p[2]); S71.v.set(cp.x - fx.p[0], cp.y - fx.p[1], cp.z - fx.p[2]).normalize(); S71.v2.set(0, 1, 0).lerp(S71.v, fx.tilt).normalize(); S71.v2.add(f.position); f.lookAt(S71.v2); f.scale.setScalar(fx.w); f.position.addScaledVector(S71.v.normalize(), fx.off || 0.02); }
-    else K.face.visible = false;
+    K.face.visible = false;
     /* the ring of ripples where it lands */
     K.rings.forEach((m, i) => { const r = cl21(e.rip * 1.4 - i * 0.18); if (u < c[5] || r <= 0 || r >= 1) { m.visible = false; return; } m.visible = true; m.position.set(px, py + 0.02, pz); const s2 = Rs * (0.9 + (P.nc > 1 ? 1.3 : 0.8) * RK.sm(r)); m.scale.set(s2, 1, s2 * 0.86); m.material.opacity = 0.55 * (1 - r) * (i === 0 ? 1 : 0.7); });
-    s71Lamp(now, { dim: e.dim, x: C.x, y: C.y, z: C.z, H: Math.max(C.Hc * k, u >= c[4] && u < c[5] ? E.Hm71 * P.pull * e.col : 0), R: C.R * k * 1.3, flash: e.flash, sh: e.gone ? 0.6 : 1 });
+    s71Lamp(now, { dim: e.dim, x: C.x, y: C.y, z: C.z, H: Math.max(C.Hc * k, u >= c[4] && u < c[5] ? E.lw71 || 0 : 0), R: C.R * k * 1.3, flash: e.flash, sh: e.gone ? 0.6 : 1 });
     /* the sound on the beats, soft and wet; a rising one for the pull, a big soft one for the splat (the base plays stamp there, feeds, good) */
     if (u >= c[1]) once('well', () => sx.feed());
     if (u >= c[1] + 0.5 * P.b[1]) once('yawn', () => sx.drift());
@@ -5676,12 +5650,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (u >= c[3]) once('gath', () => { const ms = (c[4] - c[3]) * e.L; sx.draw(E.to + 1, ms / 1000); });
     if (u >= c[4]) once('hit', () => { const ms = 0.3 * P.b[4] * e.L; if (sx.windup) sx.windup(E.to, ms, true); sx.swish(0.5); sx.flagSoft(); });
     if (u >= c[4] + 0.6 * P.b[4]) once('tip', () => sx.swish(0.35));
-    if (u >= c[5]) once('splat', () => { sx.squish(); if (E.to >= 5 && sx.boom) sx.boom(1); setTimeout(() => { try { sx.squish(); } catch (x) { /* no sound */ } }, 140); });
+    if (u >= c[5]) once('splat', () => { s66Mark(px, pz + 0.1 * Rs, 1, 0, Rs * 1.5, Rs * 1.0, now, 2600); sx.squish(); if (E.to >= 5 && sx.boom) sx.boom(1); setTimeout(() => { try { sx.squish(); } catch (x) { /* no sound */ } }, 140); });
     if (u >= c[6] + 0.05 * P.b[6]) once('turn', () => sx.swish(0.4));
     if (u >= e.tot - 0.25) once('slump', () => sx.squish()); };
   /* the figure tells the page where its foot is, how wide its slick is, and 2 to 3's arm (W71 writes o.a71, o.r71, o.arm71 on R21.evo) */
   homEvo19 = (f0 => function (now) { f0(now); try { s71Frame(now); } catch (x) { S71.err = String(x && x.stack); } })(homEvo19);
-  if (AA.rxKit) AA.rxKit.s71dbg = () => ({ err: S71.err, kit: AA.rxKit.e71dbg && AA.rxKit.e71dbg(), c: R21.evo && R21.evo.c71 && [R21.evo.c71.x, R21.evo.c71.z, R21.evo.c71.R, R21.evo.c71.F].map(v => +(+v).toFixed(2)), mol: R21.evo && R21.evo.c71 && R21.evo.c71.mol, k: R21.evo && R21.evo.k59, box: R21.evo && R21.evo.box59, Hm: R21.evo && R21.evo.Hm71 && +R21.evo.Hm71.toFixed(1), a71: R21.evo && R21.evo.a71 && R21.evo.a71.map(v => +v.toFixed(2)), pj: R21.evo && R21.evo.a71 && [0, 10, 30, 60].map(h => { S71.v.set(R21.evo.a71[0], 0.03 + 0.697 * h, R21.evo.a71[2] - 0.717 * h).project(cam); return +S71.v.y.toFixed(2); }), dim: +S71.dim.toFixed(2), face: S71.K && [S71.K.face.visible, S71.K.face.position.toArray().map(v => +v.toFixed(2)), +S71.K.face.scale.x.toFixed(2), S71.K.fkey],  pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done });
+  if (AA.rxKit) AA.rxKit.s71dbg = () => ({ err: S71.err, kit: AA.rxKit.e71dbg && AA.rxKit.e71dbg(), c: R21.evo && R21.evo.c71 && [R21.evo.c71.x, R21.evo.c71.z, R21.evo.c71.R, R21.evo.c71.F].map(v => +(+v).toFixed(2)), mol: R21.evo && R21.evo.c71 && R21.evo.c71.mol, k: R21.evo && R21.evo.k59, box: R21.evo && R21.evo.box59, Hm: R21.evo && R21.evo.Hm71 && +R21.evo.Hm71.toFixed(1), a71: R21.evo && R21.evo.a71 && R21.evo.a71.map(v => +v.toFixed(2)), pj: R21.evo && R21.evo.a71 && [0, 10, 30, 60].map(h => { S71.v.set(R21.evo.a71[0], 0.03 + 0.697 * h, R21.evo.a71[2] - 0.717 * h).project(cam); return +S71.v.y.toFixed(2); }), dim: +S71.dim.toFixed(2), face: S71.K && [S71.K.face.visible, S71.K.face.position.toArray().map(v => +v.toFixed(2)), +S71.K.face.scale.x.toFixed(2), S71.K.fkey], scr: R21.evo && R21.evo.a71 && [0, 1].map(k2 => { const A2 = R21.evo.a71, h2 = k2 * (R21.evo.lw71 || R21.evo.h71 || 0); S71.v.set(A2[0] + S71.U.x * h2, A2[1] + S71.U.y * h2, A2[2] + S71.U.z * h2).project(cam); return [+S71.v.x.toFixed(3), +S71.v.y.toFixed(3)]; }), pos: HEVO.pos && [HEVO.pos.x, HEVO.pos.y, HEVO.pos.z].map(x => +(+x).toFixed(2)), s: homObj && +(homObj.s || 0).toFixed(2), done: HEVO.done });
   // ==== S71 END
   // ==== S72 BEGIN
   // (builder 72) SALT'S OWN ACT ON THE PAGE (kitart W72 has the body; switch AA.rxKit.act72, ?a72=0 gives the old act). The rules (HOMS2, K.match 1):
