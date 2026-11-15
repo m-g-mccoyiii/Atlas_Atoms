@@ -2693,29 +2693,29 @@ if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, argum
 //  3 the sneak: lean and bent like a flame, one long arm reaching for the page with fingers spread, the other claw raised
 //  4 the fiend: tall and hooked over, head hung toward the page, long arms spread wide with long dripping fingers, a tall curling flame
 //  5 the devourer: tall, lean and regal, a crown of five flames, a wide thin grin with drip teeth, arms raised, sleeves of acid pouring into a wide pit
-KIT.acid48 = KIT.acid48 == null ? ((typeof location !== 'undefined' && (/[?&]a48=(a)/.exec(String(location.search)) || [])[1]) || null) : KIT.acid48;
+KIT.acid48 = KIT.acid48 == null ? ((typeof location !== 'undefined' && /[?&]a48=0/.test(String(location.search))) ? null : 'a') : KIT.acid48;   /* (builder 52) on by default; ?a48=0 gives the old Acid */
 const W48 = { geo: {}, figs: [], err: null, ways: { a: 'the sneak' }, TARGET: [0, 5200, 6200, 7000, 7600, 8400], benchY: 0.03,
   ROLE: [null, { chest: 3, neck: 4, head: 5, hair: 9 }, { chest: 3, neck: 5, head: 6, hair: 10 }, { chest: 5, neck: 6, head: 7, hair: 10 }, { chest: 5, neck: 7, head: 8, hair: 12 }, { chest: 5, neck: 6, head: 7, hair: 11 }],
   C: { lite: [0.68, 0.90, 0.45], edge: [0.35, 0.66, 0.21], shade: [0.27, 0.53, 0.23], margin: [0.62, 0.86, 0.47], lid: 0x9fd07e } };
 /* a long pointed finger leaving the hand along d: three points, thick at the root, a needle at the tip, bent at the end by b */
 const fin48 = (d, L, r0, b) => { const n = Math.hypot(d[0], d[1], d[2]) || 1, u = d.map(v => v / n), bb = b || [0, 0, 0]; return [0.36, 0.7, 1].map((t, i) => [u[0] * L * t + bb[0] * t * t, u[1] * L * t + bb[1] * t * t, u[2] * L * t + bb[2] * t * t, [r0, r0 * 0.6, 0.014][i]]); };
 /* an arm that ends in fingers: one limb a finger, all of them the same down to the hand */
-const arm48 = (k, th, r0, path, rad, fingers, ex) => { const h = path[path.length - 1]; return fingers.map(fg => Object.assign({ k, th, r0, ey: 1.25, path: path.concat(fg.map(q => [h[0] + q[0], h[1] + q[1], h[2] + q[2]])), rad: rad.concat(fg.map(q => q[3])) }, ex || {})); };
+const arm48 = (k, th, r0, path, rad, fingers, ex) => { const h = path[path.length - 1]; return fingers.map((fg, fi) => Object.assign({ k, th, r0, ey: 1.25, arm: path.length, fi, path: path.concat(fg.map(q => [h[0] + q[0], h[1] + q[1], h[2] + q[2]])), rad: rad.concat(fg.map(q => q[3])) }, ex || {})); };
 /* a lick of acid standing up from the pool: it leaves the body low and runs out under the pool to its edge */
-const lick48 = (th, pts, rad) => ({ k: 4.6, th, r0: 0.2, path: pts, rad });
+const lick48 = (th, pts, rad) => ({ k: 4.6, th, r0: 0.2, path: pts, rad, lick: 1 });
 /* a ring of licks standing all round the pool's edge, so the pool is ragged and boiling, not a smooth round puddle: [angle, height] each */
 const licks48 = (R, Rz, rf, sc, list) => list.map(q => { const c = Math.cos(q[0]), s = Math.sin(q[0]), h = q[1], ox = R - rf, oz = Rz - rf * 0.85, P = (t, y) => [c * ox * t, y, s * oz * t];
   return lick48(q[0], [P(0.35, -0.1), P(0.72, -0.1), P(0.84, 0.25 * h), P(0.88, 0.62 * h), P(0.85, h)], [0.15, 0.13, 0.1, 0.055, 0.018].map(r => r * sc)); });
 /* a tongue of flame leaving the head: the fork that makes the head a flame and not a drop */
-const tongue48 = (k, th, path, sc) => ({ k, th, r0: 0.16 * sc, ey: 1.2, path, rad: [0.13, 0.09, 0.05, 0.014].map(r => r * sc) });
+const tongue48 = (k, th, path, sc) => ({ k, th, r0: 0.16 * sc, ey: 1.2, tongue: 1, path, rad: [0.13, 0.09, 0.05, 0.014].map(r => r * sc) });
 /* a thread of fume: it rises and curls over */
 const fume48 = (x, y, z, h, sd) => Array.from({ length: 14 }, (_, i) => { const t = i / 13, a = t * 4.6; return [x + sd * h * (0.2 * Math.sin(a) * (0.4 + t) + 0.12 * t), y + h * (t * 0.9 + 0.1 * (1 - Math.cos(a)) * t), z]; });
 /* fizz: a small ring of a bubble, and a little rising curl */
 const ring48 = (x, y, z, r) => Array.from({ length: 11 }, (_, i) => { const a = i / 10 * 2 * PI + 0.4; return [x + r * Math.cos(a), y + r * Math.sin(a), z]; });
 const curl48 = (x, y, z, r, sd) => Array.from({ length: 10 }, (_, i) => { const t = i / 9, a = t * 2 * PI * 1.1; return [x + sd * r * Math.sin(a) * (1 - 0.5 * t), y + r * (1 - Math.cos(a)) * 0.6 + r * 2.2 * t, z]; });
 /* teeth along a grin (face units times k): a zigzag on the mouth's own curve */
-const teeth48 = (c, d, w, y, dp, n, h, k) => ({ c, d, pts: Array.from({ length: 2 * n + 1 }, (_, i) => { const s = (i - n) / n; return [s * w * k, (y - dp * (1 - s * s)) * k + (i % 2 ? h : 0)]; }), w: 0.75, o: { smooth: 0, wob: 0.3, min: 3, trim: 0 } });
-const fizz48 = (R, Rz, y, list) => list.map(q => { const r = q[3] * 1.7; return { air: q[2] ? curl48(R * Math.cos(q[0]) * q[1], y, Rz * Math.sin(q[0]) * q[1], r, q[2]) : ring48(R * Math.cos(q[0]) * q[1], y + r * 1.2, Rz * Math.sin(q[0]) * q[1], r), w: q[4] || 0.8 }; });
+const teeth48 = (c, d, w, y, dp, n, h, k) => ({ c, d, teeth: 1, pts: Array.from({ length: 2 * n + 1 }, (_, i) => { const s = (i - n) / n; return [s * w * k, (y - dp * (1 - s * s)) * k + (i % 2 ? h : 0)]; }), w: 0.75, o: { smooth: 0, wob: 0.3, min: 3, trim: 0 } });
+const fizz48 = (R, Rz, y, list) => list.map(q => { const r = q[3] * 1.7; return { air: q[2] ? curl48(R * Math.cos(q[0]) * q[1], y, Rz * Math.sin(q[0]) * q[1], r, q[2]) : ring48(R * Math.cos(q[0]) * q[1], y + r * 1.2, Rz * Math.sin(q[0]) * q[1], r), w: q[4] || 0.8, fz: q[2] ? 2 : 1 }; });
 const SPEC48 = [
   // 1 the spark: a small flame standing up out of its pit, leaning, two little claws up by its face
   () => ({ keys: pool(0, 0, 1.0, 0.8, 0.3, 0.26).concat([[0.02, 0.45, 0, 0.26, 0.23], [0.04, 0.75, 0.02, 0.3, 0.26], [0.06, 0.95, 0.04, 0.21, 0.2], [0.1, 1.22, 0.08, 0.36, 0.33], [0.14, 1.48, 0.06, 0.28, 0.26],
@@ -2763,8 +2763,8 @@ const SPEC48 = [
       .concat(fizz48(2.0, 1.5, 0.3, [[0.3, 1.1, 0, 0.09], [1.0, 1.1, 1, 0.1], [2.5, 1.1, 0, 0.08], [3.4, 1.1, -1, 0.1], [4.6, 1.1, 0, 0.07], [5.6, 1.1, 1, 0.09]])),
     drops: [[2.62, 1.0, 0.75, 0.06, 1], [2.62, 0.7, 0.75, 0.042, 1], [2.2, 0.82, 0.92, 0.05, 1], [-2.82, 1.1, 0.65, 0.06, 1], [-2.82, 0.8, 0.65, 0.042, 1], [-2.4, 0.92, 0.82, 0.05, 1], [-2.5, 0, 0.6, 0.06], [2.6, 0, -0.3, 0.05]] }),
   // 5 the devourer
-  () => { const crown = (th, h, o) => ({ k: 12.4, th, r0: 0.2, ey: 1.2, path: [[o * 0.16 * Math.cos(th), 0.22 * h, o * 0.16 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.52 * h, o * 0.3 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.82 * h, o * 0.3 * Math.sin(th)], [o * 0.42 * Math.cos(th), h, o * 0.42 * Math.sin(th)]], rad: [0.15, 0.12, 0.075, 0.016] });
-    const sleeve = s => ({ k: 9, th: s > 0 ? 0 : PI, r0: 0.3, ey: 1.25, path: [[0.42 * s, 0.0, 0.1], [0.88 * s, 0.22, 0.2], [1.15 * s, 0.45, 0.1], [1.5 * s, -0.6, -0.15], [1.9 * s, -1.9, -0.3], [2.3 * s, -3.0, -0.3], [2.5 * s, -3.72, -0.2]], rad: [0.21, 0.19, 0.2, 0.3, 0.45, 0.6, 0.7], flat: [0, 0, 1], fk: t => 1 - 0.75 * sm((t - 0.35) * 3) });
+  () => { const crown = (th, h, o) => ({ k: 12.4, th, r0: 0.2, ey: 1.2, tongue: 1, crown: 1, path: [[o * 0.16 * Math.cos(th), 0.22 * h, o * 0.16 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.52 * h, o * 0.3 * Math.sin(th)], [o * 0.3 * Math.cos(th), 0.82 * h, o * 0.3 * Math.sin(th)], [o * 0.42 * Math.cos(th), h, o * 0.42 * Math.sin(th)]], rad: [0.15, 0.12, 0.075, 0.016] });
+    const sleeve = s => ({ k: 9, th: s > 0 ? 0 : PI, r0: 0.3, ey: 1.25, sleeve: 1, path: [[0.42 * s, 0.0, 0.1], [0.88 * s, 0.22, 0.2], [1.15 * s, 0.45, 0.1], [1.5 * s, -0.6, -0.15], [1.9 * s, -1.9, -0.3], [2.3 * s, -3.0, -0.3], [2.5 * s, -3.72, -0.2]], rad: [0.21, 0.19, 0.2, 0.3, 0.45, 0.6, 0.7], flat: [0, 0, 1], fk: t => 1 - 0.75 * sm((t - 0.35) * 3) });
     return { keys: pool(0, 0, 3.4, 2.3, 0.62, 0.5).concat([[0, 1.2, 0, 0.56, 0.46], [0, 2.2, 0, 0.46, 0.4], [0, 3.1, 0.04, 0.54, 0.4], [0, 3.8, 0.08, 0.8, 0.46], [0, 4.15, 0.1, 0.28, 0.28], [0, 4.66, 0.16, 0.74, 0.68], [0, 5.16, 0.12, 0.6, 0.56],
       [0, 5.38, 0.08, 0.38, 0.36], [0.02, 5.66, 0.04, 0.25, 0.24], [0.08, 5.94, 0, 0.16, 0.16], [0.16, 6.18, 0, 0.1, 0.1], [0.24, 6.38, 0, 0.055, 0.055], [0.28, 6.52, 0, 0, 0]]),
     foot: 0.6, thin: 0.12, hp: 2.6, rings: 4, frho: 0.3, wet: [0, 0, 3.4, 2.3], etch: 1,
@@ -2819,13 +2819,13 @@ function acid48Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)
   const near = p => { let bj = 0, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
   const strokes = (o.pen || []).map(s => { let pts, j; if (s.air) { pts = s.air; j = near(pts[0]); } else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c); j = jh;
         pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); } return null; }).filter(Boolean); }
-    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(s => s.pts.length > 1);
+    return { j, w: s.w || 0.6, air: !!s.air, fz: s.fz || 0, teeth: !!s.teeth, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(s => s.pts.length > 1);
   S.a48 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
   /* the wood it stands on is eaten */ if (o.etch && !(extra && extra.jar)) { try { const e = etch48(T, G.pl.rx, G.pl.rz, 3.7 + stage * 1.3); e.position.set(G.pl.x, 0.012, G.pl.z); S.root.add(e); S.etch48 = e; } catch (e) { W48.err = String(e && e.stack); } }
   tint48(T, S); W48.figs.push(S); if (W48.figs.length > 24) W48.figs.splice(0, W48.figs.length - 24); return g; }
 function ink48(T, S, ren, cam) { if (!S.t48) tint48(T, S); const R = S.pen30, X = S.a48, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
   const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = X.pts; if (lw < 1.2 || (S.q0 && S.q0.sink > 0.45)) return;
-  X.strokes.forEach((s, si) => { const M = S.bones[s.j].matrixWorld, n = Math.min(pool.length, s.pts.length); for (let i = 0; i < n; i++) pool[i].set(s.pts[i][0], s.pts[i][1], s.pts[i][2]).applyMatrix4(M); free30(R, pool.slice(0, n), lw * s.w, s2, Wd, Ht, P10, P11, d, 9700 + si * 41, s.o); });
+  X.strokes.forEach((s, si) => { if (s.off) return; const M = S.bones[s.j].matrixWorld, n = Math.min(pool.length, s.pts.length); for (let i = 0; i < n; i++) pool[i].set(s.pts[i][0], s.pts[i][1], s.pts[i][2]).applyMatrix4(M); free30(R, pool.slice(0, n), lw * s.w, s2, Wd, Ht, P10, P11, d, 9700 + si * 41, s.o); });
   R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
 /* the pit lies flat on the bench itself, not in the figure's own (tilted) floor: turned back flat in the world each frame, set at the bench's height under the pool */
 function lay48(T, S) { const e = S.etch48, p = e.parent, V = W48.v || (W48.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
@@ -2836,6 +2836,150 @@ KIT.acid48Fig = acid48Fig; KIT.ACID48 = W48;
 /* behind the switch: Acid's bench figure is the spirit at its stage (the jar keeps the old Acid) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid48 === 'a' && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = acid48Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W48.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W48 END
+// ==== W52 BEGIN
+// (builder 52) THE SNEAK ALIVE AT REST: its own idle, not Water's (AA.rxKit.idle52, on with the sneak; false or ?i52=0 gives Water's rest back on it).
+// Water's rest clip is not run for it: rest52 fills the clip's numbers with its own (a candle-flame sway with quick shivers, sly side glances
+// toward the page, a grin that widens now and then, each stage's habit), then pose52 bends the joints after the whole play chain has run:
+// the flame tip and its forks lick (lengthen, bend, snap back), the licks round the pool rise and fall out of step, the arms do the stage's
+// business and every finger curls, drums and uncurls about its own hand. The skin is one skin on these joints, so nothing comes apart.
+// Drops: a drip gathers on a fingertip, stretches, falls to the pool's plane and leaves a small etched mark that fades (a flat mark on the
+// pool joint, so it lies on the wood with the pit); fizz rings at its landing, a bubble swells and pops in the pit; the fume threads rise,
+// curl and thin; stage 5's sleeves pour (pen dashes running down them). In the shelf jar the same idle runs slower and smaller.
+//  1 darting and twitchy: ducks into its pit and pops up, jerks side to side, claws wriggling by its face
+//  2 rubs its claws together, hunched, bobbing; now and then peeks over a shoulder
+//  3 leans toward the page with the long arm stretching, fingers flexing, then draws back; the raised claw drums
+//  4 a slow swaying hook, head tilting, long arms swinging, fingers curling, drips trailing from both hands
+//  5 slow and grand: arms rise and fall with the sleeves, the crown flares, the cloak of acid pours
+KIT.idle52 = KIT.idle52 == null ? !(typeof location !== 'undefined' && /[?&]i52=0/.test(String(location.search))) : KIT.idle52;
+const W52 = { err: null, n: 0, ms: 0, jar: 0.6 };
+const PAR52 = [null,
+  { ps: 1.5, sw: 0.12, sh: 0.06, br: 0.035, bw: 0, gp: 4.1, sp: 5.3, fx: 0.07, ff: 2.6, fs: 0.5, dp: 2.3, cyc: 3.3 },
+  { ps: 3.0, sw: 0.06, sh: 0.035, br: 0.03, bw: 0.12, gp: 7.0, sp: 6.1, fx: 0.05, ff: 2.0, fs: 0.45, dp: 3.1, cyc: 7.0 },
+  { ps: 2.8, sw: 0.08, sh: 0.035, br: 0.03, bw: 0.05, gp: 5.6, sp: 6.7, fx: 0.05, ff: 1.9, fs: 0.45, dp: 2.7, cyc: 5.2 },
+  { ps: 4.6, sw: 0.11, sh: 0.02, br: 0.025, bw: 0.06, gp: 6.4, sp: 7.3, fx: 0.045, ff: 1.5, fs: 0.4, dp: 3.0, cyc: 4.6 },
+  { ps: 6.5, sw: 0.045, sh: 0.012, br: 0.025, bw: 0, gp: 8.2, sp: 8.8, fx: 0.035, ff: 1.1, fs: 0.3, dp: 3.4, cyc: 6.5 }];
+const on52 = S => !!(S && S.a48 && KIT.idle52 !== false);
+const h52 = k => { const v = Math.sin(k * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const n52 = (x, s) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f), a = h52(i + s * 57.3) * 2 - 1, b = h52(i + 1 + s * 57.3) * 2 - 1; return a + (b - a) * u; };
+const sm52 = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
+const pl52 = (u, a, b, e) => sm52((u - a) / e) * (1 - sm52((u - b) / e));
+const fr52 = x => x - Math.floor(x);
+const clk52 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W52.jar : 1) + S.st * 3.7;
+/* the clip's numbers, its own (lagMs: outer joints ask a little earlier and so follow late) */
+function rest52(S, t, o, q, lagMs) { const st = S.st, k = S.jar ? 0.6 : 1, P = PAR52[st] || PAR52[3], TAU = 2 * PI, tt = clk52(S) - lagMs / 1000 * (S.jar ? W52.jar : 1), sp = o.spent || 0;
+  const shv = P.sh * n52(tt * 9, st) * (0.35 + 0.65 * pl52(fr52(tt / 3.1), 0.1, 0.35, 0.05));
+  q.lean = k * (P.sw * (Math.sin(TAU * tt / P.ps) + 0.35 * Math.sin(TAU * tt / (P.ps * 0.43) + 1.3)) + shv); q.sq = k * P.br * Math.sin(TAU * tt / (P.ps * 2)); q.bow = P.bw; q.hair = 0;
+  /* the sly glance: eyes slide toward the page and hold, the head half turns with them, the brows come down */
+  const lx = o.look ? o.look[0] : 1, gs = pl52(fr52(tt / P.gp), 0.25, 0.58, 0.05), gl = o.glance || 0; q.lookx = lx * (1.7 * gs + gl); q.looky = -0.55 * gs; q.hturn = lx * 0.32 * gs * k; q.brow = -0.45 * gs + 0.4 * gl;
+  /* the grin widens now and then; a blink */ const sg = pl52(fr52(tt / P.sp + 0.4), 0.3, 0.52, 0.07); q.smile = 1 + 1.1 * sg; if (!lagMs) S.g52 = sg; q.blink = pl52(fr52(tt / 4.3 + 0.2), 0, 0.03, 0.02);
+  if (st === 1) { const du = fr52(tt / P.cyc), dk = pl52(du, 0.52, 0.7, 0.05), pu = du - 0.75; q.sink = 0.5 * dk * k; q.sq += k * (-0.08 * dk + (pu > 0 ? 0.13 * Math.exp(-pu * 14) * Math.sin(pu * 70) : 0)); q.lean += k * 0.12 * Math.tanh(3 * Math.sin(TAU * tt / 1.9 + 0.5)); q.hturn += 0.25 * k * Math.tanh(3 * Math.sin(TAU * tt / 2.3)); q.wide = 0.5 * (pu > 0 ? Math.exp(-pu * 8) : 0); }
+  else if (st === 2) { const u = fr52(tt / P.cyc), pk = pl52(u, 0.5, 0.75, 0.07), sd = Math.floor(tt / P.cyc) % 2 ? 1 : -1; q.bow += 0.05 * Math.sin(TAU * tt / 2.4) + 0.06 * pk; q.hturn += 0.9 * pk * sd * k; q.lookx = q.lookx * (1 - pk) + 1.9 * pk * sd; q.tilt = 0.18 * pk * sd * k; q.lean += -0.12 * pk * sd * k; q.sq += 0.025 * Math.sin(TAU * tt * 1.9) * (1 - pk) * k; S.p52 = pk; }
+  else if (st === 3) { const u = fr52(tt / P.cyc), lp = pl52(u, 0.12, 0.55, 0.16), bk = pl52(u, 0.74, 0.88, 0.06); q.bow += k * (0.3 * lp - 0.1 * bk); q.lean += -0.05 * lp * k; q.wide = 0.3 * lp; q.lookx = q.lookx * (1 - lp) + 0.6 * lp; q.looky = q.looky * (1 - lp) - 0.6 * lp; }
+  else if (st === 4) { q.bow += 0.06 * Math.sin(TAU * tt / P.ps + 0.4) * k; q.tilt = 0.2 * Math.sin(TAU * tt / P.ps - 0.9) * k; }
+  else if (st === 5) { q.tilt = 0.05 * Math.sin(TAU * tt / P.ps - 0.8) * k; q.sq += 0.02 * Math.sin(TAU * tt / P.ps * 2) * k; }
+  if (o.land != null) { const K = RK, ms = o.land - lagMs; if (ms > 0 && ms < 3000) { const r = K.ring(ms, 420, 520); q.sq -= 0.16 * r; q.px += 0.1 * r; q.pz += 0.1 * r; q.lean += 0.06 * K.ring(ms, 650, 900); } }
+  if (sp) { q.sink = (q.sink || 0) + 0.2 * sp; q.bow += 0.2 * sp; q.nod = 0.3 * sp; q.lidx = 0.6 * sp; q.smile = 1 - 0.8 * sp; q.lean += 0.08 * sp; q.brow -= 0.3 * sp; } }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on52(S) && S.k52) return rest52(S, t, o || {}, q, lagMs || 0); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* the parts it moves, found once from the tags the numbers carry (W48: arm, fi, lick, tongue, crown, sleeve) */
+function init52(S) { const G = S.G, J = G.J, R = G.R, bj = G.bj, T = S.T, st = S.st, K = { top: bj.slice(R.head), tongue: [], lick: [], sleeve: [], arm: { 1: [], '-1': [] }, src: [], ev: [], marks: [], op: J.map(() => new T.Vector3()) };
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; const l = c.l; if (l.tongue) K.tongue.push(c); else if (l.lick) K.lick.push(c); else if (l.sleeve) K.sleeve.push(c); else if (l.arm) { (K.arm[c.side] || (K.arm[c.side] = [])).push(c);
+    /* which way this finger curls in the picture plane: toward the body and down */ const h = J[c.jn[l.arm]].p, e = J[c.jn[c.jn.length - 1]].p, dx = e[0] - h[0], dy = e[1] - h[1], cx = -(c.side || 1), cy = -1; c.cs52 = dx * cy - dy * cx >= 0 ? 1 : -1; } });
+  const tipOf = c => c.jn[c.jn.length - 1], pick = (list, f) => { let b = null, bv = 1e9; list.forEach(c => { const v = f(J[tipOf(c)].p); if (v < bv) { bv = v; b = c; } }); return b; }, A = s => K.arm[s] || [];
+  const add = (c, j) => { if (c) K.src.push({ j: j == null ? tipOf(c) : c.jn[j], c }); };
+  if (st === 1) add(pick(A(1), p => -p[0])); else if (st === 2) add(pick(A(1).concat(A(-1)), p => p[1])); else if (st === 3) add(pick(A(1), p => p[1]));
+  else if (st === 4) { add(pick(A(1), p => p[1])); add(pick(A(-1), p => p[1])); } else K.sleeve.forEach(c => add(c, Math.min(c.jn.length - 1, 4)));
+  if (!S.jar) { const m = new T.MeshBasicMaterial({ color: new T.Color(0x2a2412).convertSRGBToLinear(), transparent: true, opacity: 0, depthWrite: false }), g = W52.mg || (W52.mg = new T.CircleGeometry(1, 18).rotateX(-PI / 2));
+    for (let i = 0; i < 3; i++) { const mk = new T.Mesh(g, m.clone()); mk.visible = false; mk.renderOrder = 4; mk.userData.plain = true; mk.userData.nobox = true; S.bones[0].add(mk); K.marks.push({ m: mk, t0: -1e9 }); } }
+  S.v52 = { a: new T.Vector3(), b: new T.Vector3(), c: new T.Vector3(), q: new T.Quaternion(), q2: new T.Quaternion(), z: new T.Vector3(0, 0, 1), y: new T.Vector3(0, 1, 0) }; S.k52 = K; return K; }
+/* a run of joints bends: each one from `from` on is carried out from the joint before `from` (stretch), pushed aside more toward the tip, and turned to lie along its new way */
+function bend52(S, jn, from, lx, ly, lz, str) { const B = S.bones, n = jn.length, V = S.v52, O = S.k52.op; if (n <= from) return; const cnt = n - from; V.c.copy(B[jn[from - 1]].position);
+  for (let k = from - 1; k < n; k++) O[jn[k]].copy(B[jn[k]].position);
+  for (let k = from; k < n; k++) { const s = (k - from + 1) / cnt, e = Math.pow(s, 1.6), p = B[jn[k]].position; p.sub(V.c).multiplyScalar(1 + str * s).add(V.c); p.x += lx * e; p.y += ly * e; p.z += lz * e; }
+  for (let k = from; k < n; k++) { const a = jn[k - 1], b = jn[k]; V.a.copy(O[b]).sub(O[a]); V.b.copy(B[b].position).sub(B[a].position); if (V.a.lengthSq() < 1e-10 || V.b.lengthSq() < 1e-10) continue; V.q.setFromUnitVectors(V.a.normalize(), V.b.normalize()); B[b].quaternion.premultiply(V.q); } }
+/* a run of joints turns about a point (the shoulder) round an axis; w(k) lets the turn fade along it (a sleeve that stays in its pool) */
+function rot52(S, jn, from, px, py, pz, ax, ang, w) { const B = S.bones, V = S.v52; for (let k = from; k < jn.length; k++) { const f = w ? w(k) : 1; if (f <= 0) continue; V.q.setFromAxisAngle(ax, ang * f); const p = B[jn[k]].position; p.x -= px; p.y -= py; p.z -= pz; p.applyQuaternion(V.q); p.x += px; p.y += py; p.z += pz; B[jn[k]].quaternion.premultiply(V.q); } }
+/* the arm moves by a vector: nothing at the shoulder, all of it at the hand and the finger */
+function push52(S, jn, h, dx, dy, dz) { const B = S.bones; for (let k = 1; k < jn.length; k++) { const s = k < h ? sm52(k / h) : 1, p = B[jn[k]].position; p.x += dx * s; p.y += dy * s; p.z += dz * s; } }
+/* the finger after the hand curls: each of its three joints turns a third more, in the picture plane */
+function curl52(S, c, ang) { const B = S.bones, V = S.v52, O = S.k52.op, jn = c.jn, h = c.l.arm; for (let k = h; k < jn.length; k++) O[jn[k]].copy(B[jn[k]].position); let acc = 0;
+  for (let k = h + 1; k < jn.length; k++) { acc += ang / 3; V.q.setFromAxisAngle(V.z, acc); V.a.copy(O[jn[k]]).sub(O[jn[k - 1]]).applyQuaternion(V.q); B[jn[k]].position.copy(B[jn[k - 1]].position).add(V.a); B[jn[k]].quaternion.premultiply(V.q); } }
+/* after the whole play chain: the joints, the drips, the marks */
+function pose52(S, o) { const K = S.k52 || init52(S), st = S.st, G = S.G, H = G.H, k = S.jar ? 0.6 : 1, P = PAR52[st] || PAR52[3], tt = clk52(S), TAU = 2 * PI, B = S.bones, J = G.J, V = S.v52;
+  const fl = (sd, f) => 0.65 * n52(tt * f, sd) + 0.35 * Math.sin(TAU * tt * f * 0.37 + sd * 1.7);
+  const lk = sd => { const x = tt * 1.25 + h52(sd), u = fr52(x), a = 0.45 + 0.55 * h52(Math.floor(x) + sd * 3.1); return a * (u < 0.72 ? sm52(u / 0.72) : 1 - sm52((u - 0.72) / 0.14)); };
+  const sh = (c, fn) => { const p = B[c.jn[0]].position; fn(p.x, p.y, p.z); };
+  const A = s => K.arm[s] || [], cyc = fr52(tt / P.cyc);
+  /* the arms: the stage's business */
+  if (st === 1) [1, -1].forEach(s => { const a = s * k * 0.22 * n52(tt * 2.6, 4 + s); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a))); });
+  else if (st === 2) { const pk = S.p52 || 0, r = (1 - 0.75 * pk) * k; [1, -1].forEach(s => { const ph = TAU * tt * 1.9, dx = -s * r * 0.075 * H * Math.sin(ph), dy = s * r * 0.035 * H * Math.cos(ph); A(s).forEach(c => push52(S, c.jn, c.l.arm, dx, dy, 0)); }); }
+  else if (st === 3) { const lp = pl52(cyc, 0.12, 0.55, 0.16), bk = pl52(cyc, 0.74, 0.88, 0.06); A(1).forEach(c => { const h = J[c.jn[c.l.arm]].p, s0 = J[c.jn[0]].p, dx = h[0] - s0[0], dy = h[1] - s0[1], dz = h[2] - s0[2], L = Math.hypot(dx, dy, dz) || 1, m = k * H * (0.2 * lp - 0.06 * bk) / L; push52(S, c.jn, c.l.arm, dx * m, dy * m + k * 0.03 * H * Math.sin(TAU * tt / 1.3), dz * m); });
+    A(-1).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, -k * (0.1 * Math.sin(TAU * tt / 2.2) + 0.12 * lp)))); }
+  else if (st === 4) [1, -1].forEach(s => { const a = s * k * (0.13 * Math.sin(TAU * tt / P.ps + s * 0.7) + 0.04 * n52(tt * 1.3, s)); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a))); });
+  else if (st === 5) [1, -1].forEach(s => { const a = s * k * (0.24 * Math.sin(TAU * tt / P.ps) + 0.03 * n52(tt * 0.9, s)); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a)));
+    K.sleeve.filter(c => c.side === s).forEach(c => { const n = c.jn.length; sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a, j => (j <= 3 ? 1 : Math.max(0, 1 - (j - 3) / Math.max(1, n - 4))))); }); });
+  /* every finger: curls, drums, uncurls */
+  [1, -1].forEach(s => A(s).forEach(c => { const fi = c.l.fi || 0, cs = c.cs52; let a;
+    if (st === 1) a = 0.35 + 0.4 * n52(tt * 3.4, fi + s * 3) + 0.5 * pl52(fr52(tt / 1.1 - fi * 0.11), 0, 0.06, 0.03);
+    else if (st === 2) a = 0.35 + 0.3 * Math.sin(TAU * tt * 1.9 + fi * 0.9);
+    else if (st === 3) a = s > 0 ? 0.1 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * tt / 1.6 + fi * 0.8)) * (1 - 0.6 * pl52(cyc, 0.12, 0.55, 0.16)) : 0.2 + 0.7 * pl52(fr52(tt / 1.5 - fi * 0.1), 0, 0.05, 0.03);
+    else if (st === 4) a = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(TAU * tt / 2.3 + fi * 0.7 + s));
+    else a = 0.1 + 0.3 * (0.5 + 0.5 * Math.sin(TAU * tt / 3.2 + fi * 0.9 + s));
+    curl52(S, c, cs * k * a); }));
+  /* the flame head licks: the tip and each fork lengthen, bend and snap back; the licks round the pool rise and fall out of step */
+  const fla = st === 5 ? 0.3 * pl52(fr52(tt / P.ps + 0.15), 0.3, 0.6, 0.12) : 0;
+  bend52(S, K.top, 1, k * P.fx * H * fl(1, P.ff), 0, k * 0.4 * P.fx * H * fl(5, P.ff * 0.8), k * (P.fs * lk(2) + fla));
+  K.tongue.forEach((c, i) => bend52(S, c.jn, 1, k * P.fx * 1.15 * H * fl(3 + i, P.ff * 1.15), 0, 0, k * (P.fs * 1.2 * lk(7 + i) + fla)));
+  K.lick.forEach((c, i) => bend52(S, c.jn, 3, k * 0.025 * H * fl(11 + i, 1.3), 0, 0, k * 0.5 * Math.sin(TAU * tt / (1.6 + 0.37 * (i % 3)) + i * 2.1)));
+  /* drops riding a joint follow it where this pass moved it */ S.drops.forEach(dp => { if (!dp.air) return; const b = B[dp.j].position, p = S.P[dp.j]; dp.g.position.x += b.x - p.x; dp.g.position.y += b.y - p.y; dp.g.position.z += b.z - p.z; });
+  /* the drips: gather on the tip, stretch, fall to the pool's plane; the landing leaves a mark */
+  S.drips.forEach((d, i) => { if (i >= K.src.length) d.g.visible = false; });
+  const b0 = B[0], n0 = V.b.set(0, 1, 0).applyQuaternion(b0.quaternion), r0 = 0.03 * H / (G.cell * 0.55);
+  K.src.forEach((sr, i) => { const d = S.drips[i]; if (!d) return; const per = P.dp * (1 + 0.13 * i), x = tt / per + i * 0.47, u = fr52(x), id = Math.floor(x), tip = B[sr.j].position, g = d.g, g0 = 0.02 * H;
+    /* it falls straight down in the world (along the pool's own up), to the wood under the hand */ const hd = Math.max(g0, n0.x * (tip.x - b0.position.x) + n0.y * (tip.y - b0.position.y) + n0.z * (tip.z - b0.position.z) - 0.02), at = s => g.position.set(tip.x - n0.x * s, tip.y - n0.y * s, tip.z - n0.z * s);
+    const tf = (0.16 + 0.32 * Math.sqrt(hd / Math.max(0.5, H))) / per, f0 = 0.62, f1 = f0 + tf; g.quaternion.copy(b0.quaternion);
+    if (u < f0) { const gth = sm52(u / 0.5), str = sm52((u - 0.5) / 0.12); g.visible = !S.q0 || !(S.q0.sink > 0.3); at(g0 + 0.03 * H * (0.4 * gth + 1.2 * str)); const s = r0 * (0.25 + 0.75 * gth); g.scale.set(s * (1 - 0.25 * str), s * (1.2 + 1.3 * str), s * (1 - 0.25 * str)); }
+    else if (u < f1) { const v = (u - f0) / tf, a = g0 + 0.06 * H; g.visible = true; at(a + (Math.max(a, hd) - a) * v * v); g.scale.set(r0 * 0.8, r0 * (2.2 - 0.6 * v), r0 * 0.8); }
+    else { g.visible = false; if (sr.id !== id) { sr.id = id; at(hd); K.ev.push({ x: g.position.x, y: g.position.y, z: g.position.z, t0: tt }); if (K.ev.length > 6) K.ev.shift();
+      const mk = K.marks.length ? K.marks.reduce((a, b) => (a.t0 < b.t0 ? a : b)) : null; if (mk) { mk.t0 = tt; V.c.copy(g.position).sub(b0.position).applyQuaternion(V.q2.copy(b0.quaternion).invert()); mk.m.position.set(V.c.x / (b0.scale.x || 1), 0.035, V.c.z / (b0.scale.z || 1)); mk.r = 0.035 * H * (0.8 + 0.4 * h52(id + i)); } } } });
+  K.marks.forEach(mk => { const a = tt - mk.t0, on = a >= 0 && a < 4; mk.m.visible = on; if (!on) return; const s = mk.r * (0.5 + 0.5 * sm52(a / 0.3)); mk.m.scale.set(s / (B[0].scale.x || 1), 1, s * 0.9 / (B[0].scale.z || 1)); mk.m.material.opacity = 0.6 * (1 - sm52((a - 0.4) / 3.4)); }); }
+/* the pen's own strokes come alive: the fume threads rise and curl and thin, the fizz rings swell and pop, the curls rise, the teeth widen with the grin */
+function pen52(S) { const X = S.a48, tt = clk52(S), TAU = 2 * PI; if (!X || !X.strokes) return;
+  X.strokes.forEach((s, si) => { if (!s.p0) { s.p0 = s.pts.map(p => p.slice()); s.w0 = s.w; } const p0 = s.p0, n = p0.length;
+    if (s.air && !s.fz) { const h = Math.hypot(p0[n - 1][0] - p0[0][0], p0[n - 1][1] - p0[0][1]) || 0.5, u = fr52(tt / 2.6 + si * 0.29), a = Math.floor((n - 2) * sm52((u - 0.4) / 0.6)), b = Math.min(n, 2 + Math.ceil((n - 2) * sm52(u / 0.4)));
+      s.pts = p0.slice(a, b).map((p, i) => { const ti = (a + i) / (n - 1); return [p[0] + 0.22 * h * ti * Math.sin(TAU * tt * 0.55 - 4 * ti + si), p[1] + u * 0.5 * h, p[2]]; }); s.w = s.w0 * (1 - 0.65 * sm52((u - 0.35) / 0.65)); s.off = b - a < 2; }
+    else if (s.fz === 1) { const u = fr52(tt / 1.9 + si * 0.37), c = p0.reduce((m, p) => [m[0] + p[0] / n, m[1] + p[1] / n, m[2] + p[2] / n], [0, 0, 0]), g = 0.3 + 0.9 * sm52(u / 0.75); s.pts = p0.map(p => [c[0] + (p[0] - c[0]) * g, c[1] + (p[1] - c[1]) * g, c[2] + (p[2] - c[2]) * g]); s.off = u > 0.82; s.w = s.w0 * (u > 0.7 ? 1.3 : 1); }
+    else if (s.fz === 2) { const u = fr52(tt / 2.2 + si * 0.41), h = Math.abs(p0[n - 1][1] - p0[0][1]) || 0.1, a = Math.floor((n - 2) * sm52((u - 0.45) / 0.55)), b = Math.min(n, 2 + Math.ceil((n - 2) * sm52(u / 0.45))); s.pts = p0.slice(a, b).map(p => [p[0], p[1] + u * 1.2 * h, p[2]]); s.off = b - a < 2; s.w = s.w0 * (1 - 0.5 * u); }
+    else if (s.teeth) { const g = 1 + 0.3 * (S.g52 || 0), cx = p0.reduce((m, p) => m + p[0] / n, 0); s.pts = p0.map(p => [cx + (p[0] - cx) * g, p[1], p[2]]); } }); }
+/* the pen's strokes in the air that are not on the body: fizz rings where a drip landed, a bubble in the pool, the sleeves pouring */
+function ink52(T, S, ren, cam) { const R = S.pen30, K = S.k52, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
+  const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = W52.pool || (W52.pool = Array.from({ length: 24 }, () => new T.Vector3())); if (lw < 1.2 || (S.q0 && S.q0.sink > 0.45) || S.c52 !== 'rest') return;
+  const tt = clk52(S), H = S.G.H, B = S.bones, b0 = B[0].matrixWorld, rm = S.root.matrixWorld, TAU = 2 * PI, pl = S.G.pl; let sd = 9900;
+  const ringAt = (M, cx, cy, cz, rx, ry, rz, n, w) => { for (let i = 0; i <= n; i++) { const a = i / n * TAU; pool[i].set(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cz + rz * Math.sin(a)).applyMatrix4(M); } free30(R, pool.slice(0, n + 1), lw * w, s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.4, min: 3 }); };
+  /* fizz where a drip landed (in the pool joint's own flat plane) */ const iq = S.v52.q2.copy(B[0].quaternion).invert();
+  K.ev.forEach(e => { const a = tt - e.t0; if (a < 0 || a > 0.7) return; const v = S.v52.c.set(e.x, e.y, e.z).sub(B[0].position).applyQuaternion(iq), r = 0.035 * H * (0.4 + 1.4 * sm52(a / 0.7)); ringAt(b0, v.x, pl.h * 0.9, v.z, r, 0, r * 0.8, 12, 0.7 * (1 - a / 0.7) + 0.1); });
+  /* a bubble swells in the pool and pops */ for (let b = 0; b < (S.st >= 3 ? 2 : 1); b++) { const x = tt / 3.4 + b * 0.5, u = fr52(x), id = Math.floor(x), an = PI * (0.15 + 0.7 * h52(id * 3 + b)), rr = 0.35 + 0.4 * h52(id * 5 + b + 1), bx = pl.x - B[0].position.x + Math.cos(an) * pl.rx * rr, bz = pl.z - B[0].position.z + Math.sin(an) * pl.rz * rr, rb = 0.05 * H * (0.8 + 0.4 * h52(id + 7 * b));
+    if (u < 0.8) { const r = rb * sm52(u / 0.8); if (r > 0.004) ringAt(b0, bx, pl.h * 0.8 + r * 0.9, bz, r, r * 0.9, 0, 12, 0.75); }
+    else if (u < 0.9) { const v = (u - 0.8) / 0.1; for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.6, r1 = rb * (1 + 0.6 * v), r2 = rb * (1.3 + 0.9 * v); pool[0].set(bx + r1 * Math.cos(a), pl.h * 0.8 + rb * 0.9 + r1 * Math.sin(a), bz).applyMatrix4(b0); pool[1].set(bx + r2 * Math.cos(a), pl.h * 0.8 + rb * 0.9 + r2 * Math.sin(a), bz).applyMatrix4(b0); free30(R, pool.slice(0, 2), lw * 0.7 * (1 - v), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 0, wob: 0.3, min: 2 }); } } }
+  /* the sleeves pour: dashes run down the front of each */ if (S.st === 5) K.sleeve.forEach((c, ci) => { const jn = c.jn, n = jn.length - 1, s0 = 3; for (let q = 0; q < 3; q++) { const v = fr52(tt * 0.42 + q / 3 + ci * 0.17); let m = 0;
+      for (let i = 0; i <= 6; i++) { const f = s0 + (n - s0) * Math.min(1, v + 0.16 * i / 6), j0 = Math.min(n - 1, Math.floor(f)), t = f - j0, A = B[jn[j0]].position, Bp = B[jn[j0 + 1]].position, r = (J52r(S, jn[j0]) * (1 - t) + J52r(S, jn[j0 + 1]) * t) * 0.9; pool[m++].set(A.x + (Bp.x - A.x) * t + c.side * r * 0.35 * (q - 1), A.y + (Bp.y - A.y) * t, A.z + (Bp.z - A.z) * t + r).applyMatrix4(rm); }
+      free30(R, pool.slice(0, m), lw * 0.55 * Math.sin(PI * v), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.4, min: 3 }); } });
+  R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
+const J52r = (S, j) => S.G.J[j].r * (S.bones[j].scale.x || 1);
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+    /* in the jar the margin's material (W30's 'none') carries no line width, and play27 would throw on it every frame, so nothing after it ran */ const gw = () => { if (on52(S) && S.hull27 && !S.hull27.material.userData.w) S.hull27.material.userData.w = { value: 0 }; }; gw();
+    const r = f0(grp, clip, t, o); if (on52(S)) { S.c52 = clip;
+    if (clip === 'rest') { const c0 = rn44(); try { if (!S.k52) { init52(S); gw(); f0(grp, clip, t, o); } pose52(S, o || {}); } catch (e) { W52.err = String(e && e.stack); } W52.ms += rn44() - c0; W52.n++; }
+    else if (S.k52) S.k52.marks.forEach(mk => { mk.m.visible = false; }); } return r; })(play26);
+KIT.spirit26.play = play26;
+draw30 = (f0 => function (T, S, ren, cam) { const on = on52(S) && S.k52; if (on) { try { pen52(S); } catch (e) { W52.err = String(e && e.stack); } } f0(T, S, ren, cam); if (on && S.pen30) { try { ink52(T, S, ren, cam); } catch (e) { W52.err = String(e && e.stack); } } })(draw30);
+/* the shelf jar: the half-grown and ready figures and the stage form are the sneak (opaque, fitted to the glass), idling slower */
+function jar52(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; c.children.slice().forEach(o => c.remove(o)); const f = acid48Fig(T, k < 1 ? 2 : 3, { jar: true }), q = fit44(T, f, 0.86, 1.95, 1.3), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = acid48Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 0.88, 1.95, 1.6), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 - q.y0 * q.s, -q.cz * q.s);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'acid' && KIT.acid48 === 'a' && KIT.acid35 !== 'a' && T && T.SkinnedMesh) { try { jar52(T, j); } catch (e) { W52.err = String(e && e.stack); } } return j; })(KIT.jar);
+KIT.W52 = W52;
+// ==== W52 END
 // ==== W49 BEGIN
 // (builder 49, five stages by builder 53) DRY ICE AS A SPIRIT: "the shy one", the owner's pick (AA.rxKit.dry49 = 'c', or ?d49=c on the page; off by default). Stills only.
 // Built and drawn the way Water is, by Water's own code: each stage is a set of numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes
