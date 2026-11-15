@@ -5908,4 +5908,114 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W74 = W74; KIT.e74dbg = () => { const e = W74.e; return { err: W74.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), wind: +e.wind.toFixed(2), sw: +e.sw.toFixed(2), bu: +e.bu.toFixed(2), op: +e.op.toFixed(2), home: +e.home.toFixed(2), g: +e.g.toFixed(2), hit: e.hit, tot: e.tot, old: e.old, gone: e.gone } : null }; };
 // ==== W74 END
+// ==== W78 BEGIN
+// (builder 78) AMMONIA AS A SPIRIT, five stages, stills only (AA.rxKit.amm78 = 1, or ?m78=1 on the page; OFF by default: the game shows the old Ammonia).
+// Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53), Slime (61), Seedling (64), Brimstone (69) and Hydrogen (75) were: each stage is
+// a set of numbers like a stage of S25, put in Water's stage-3 slot for the moment of building; geo26 makes it one closed skin on joints, fig26 the face,
+// set30 pen and wash. What is Ammonia's own: THE WHIFF. A gust reared up off the bench ON A SLANT: a thin thread of tail still on the wood, a lean body
+// that swells out of it, and a head drawn to one sharp point that leads upward and forward (its nose in the air); streaks of vapour swept back from its
+// shoulders and head (limbs flattened toward the eye, a blade's outline, drawn to a needle); thin arms that end in needles. No pool: the thread stands on
+// a THREE-POINTED FOOT (three short toes on the wood, a nod to the molecule) in a small wet patch with a pale rime and a few frost ticks in pen.
+// Half-shut eyes under long flat brows, a thin mouth. One wash: much bare paper, cold pale teal, lilac in the shade. No yellow, no green, no claws.
+//  1 the whiff: a small sharp lick just up off its wet spot, tip tilted up, sniffing
+//  2 the sting: taller, leaning hard along its slant, one arm out like a needle, one brow up
+//  3 the gust (the line-up's figure): reared up and swept back, pointed head leading, two arms, streaks off head and shoulders, haughty
+//  4 the gale: taller and more upright, a mane of streaks fanned behind its head, one arm pointing sharply up, a fist on its hip, chin high
+//  5 the squall: a tall narrow spire, a crest of blades, arms crossed like folded knives, long streamers swept back and upward, a taut thread of tail
+KIT.amm78 = KIT.amm78 == null ? ((typeof location !== 'undefined' && /[?&]m78=1/.test(String(location.search))) ? 1 : null) : KIT.amm78;
+const W78 = { geo: {}, figs: [], err: null, TARGET: [0, 4200, 5000, 6200, 7400, 8600], ROLE: [], pen: 0.9,
+  C: { lite: [0.800, 0.950, 0.940], edge: [0.300, 0.690, 0.720], shade: [0.520, 0.500, 0.800], margin: [0.840, 0.950, 0.940], hl: [0.66, 0.80], lid: 0xb9e2e0, rime: 0xe9f7f6, damp: 0x1c2630 } };
+/*SPEC78*/
+/* the spine: a pad hidden in the foot, then balls along the slant (x, y, radius, z); role says which of them are chest, neck, head and the point.
+   dx moves the whole picture sideways so that the game's shadow lies under the leaning body, next to the foot */
+const mk78 = (x0, pts, role, dx, ym) => ({ K: pad64(x0 + dx, 0, 0.06).concat(pts.map(p => [p[0] + dx, ym ? ym(p[1]) : p[1], p[3] || 0, p[2], p[2] * 0.88])), role, x0: x0 + dx, dx, ym: ym || (y => y) });
+/* the head: a ball (the face) drawn up to one sharp point, a radians off upright, the way it leans */
+const head78 = (c, r, a) => { const s = Math.sin(a), k = Math.cos(a); return [[c[0], c[1], r], [c[0] + s * r * 0.62, c[1] + k * r * 0.62, r * 0.66], [c[0] + s * r * 1.15, c[1] + k * r * 1.15, r * 0.38], [c[0] + s * r * 1.62, c[1] + k * r * 1.62, r * 0.16], [c[0] + s * r * 2.05, c[1] + k * r * 2.05, 0]]; };
+/* a streak: a limb flattened toward the eye, widest a third of the way along, drawn out to a needle; it lies behind the body unless z is given */
+const blade78 = (B, i, th, abs, w, o) => lim64(B.K, 4 + i, th, abs.map(p => [p[0] + B.dx + (o ? o[0] : 0), B.ym(p[1] + (o ? o[1] : 0)), p[2] == null ? -0.22 : p[2]]), abs.map((p, j, a) => j === a.length - 1 ? 0.035 : Math.max(0.075, w * Math.pow(Math.sin(PI * (0.22 + 0.78 * j / (a.length - 1))), 0.8))), { flat: [0, 0, 1], fk: () => 0.3, foam: () => 0, blade: 1 });
+/* an arm: thin, in front of the body, ending in a needle */
+const arm78 = (B, i, th, abs, rad) => lim64(B.K, 4 + i, th, abs.map(p => [p[0] + B.dx, B.ym(p[1]), p[2] == null ? 0.14 : p[2]]), rad, { foam: () => 0, arm: 1 });
+/* the three-pointed foot: three short toes on the wood where the thread of tail stands; and the frost round it, in pen */
+const foot78 = (B, f) => { const x = B.x0, R = [0.075 * f, 0.065 * f, 0.04 * f], toe = (th, dx, dz) => lim64(B.K, 4.3, th, [[x + dx * 0.3, 0.07, dz * 0.3], [x + dx * 0.68, 0.05, dz * 0.68], [x + dx, 0.04, dz]], R, { foam: () => 0, root: 1 });
+  return [toe(0.6, 0.62 * f, 0.4 * f), toe(PI - 0.6, -0.62 * f, 0.4 * f), toe(-PI / 2, 0.03 * f, -0.68 * f)]; };
+const air78 = (pts, w) => ({ air: pts, w: w || 0.4, o: { smooth: 1, wob: 0.2, min: 2, trim: 0 } });
+const rime78 = (B, f) => { const x = B.x0, t = (a, r0, r1) => air78([[x + Math.cos(a) * r0 * f, 0.03, Math.sin(a) * r0 * f * 0.8], [x + Math.cos(a) * r1 * f, 0.03, Math.sin(a) * r1 * f * 0.8]], 0.36);
+  return [t(-0.25, 0.8, 1.05), t(1.57, 0.62, 0.84), t(PI + 0.25, 0.8, 1.05), t(-2.2, 0.72, 0.92), t(-0.95, 0.72, 0.92)]; };
+const face78 = (B, c, r, k, f) => Object.assign({ c: [c[0] + B.dx, B.ym(c[1]), r * 0.9], d: [0.12, 0.06, 1], k, er: 1.1, dx: 0.17 }, f);
+const COM78 = { foot: 0.02, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, foam: () => 0 };
+const SPEC78 = [
+  // 1 the whiff
+  () => { const hc = [0.1, 1.4], hr = 0.62, B = mk78(0, [[0, 0.1, 0.09], [-0.02, 0.4, 0.09], [0, 0.72, 0.14], [0.03, 0.95, 0.3]].concat(head78(hc, hr, 0.42)), { chest: 3, neck: 3, head: 4, hair: 7 }, 0);
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.5, rime: [0.95, 0.6, 0.55], damp: [0.6, 0.4, 0.4],
+      limbs: foot78(B, 0.8),
+      face: face78(B, hc, hr, 1.75, { lid: 0.46, brow: { y: 0.215, len: 0.17, ang: [0.36, 0.36], arch: 0, r: 0.022 }, mouth: { w: 0.06, d: -0.015, y: -0.2, x: 0.05, r: 0.024 } }),
+      pen: rime78(B, 0.8) }, COM78); },
+  // 2 the sting
+  () => { const hc = [0.56, 2.72], hr = 0.62, ho = [0.06, 0.22], B = mk78(-0.85, [[-0.85, 0.1, 0.085], [-0.8, 0.42, 0.085], [-0.66, 0.76, 0.11], [-0.44, 1.1, 0.2], [-0.2, 1.44, 0.34], [0.06, 1.78, 0.48], [0.32, 2.2, 0.28]].concat(head78(hc, hr, 0.6)), { chest: 5, neck: 6, head: 7, hair: 10 }, 0.3);
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.4, rime: [1.0, 0.64, 0.55], damp: [0.64, 0.42, 0.4],
+      limbs: foot78(B, 0.9).concat([arm78(B, 5, 0, [[0.6, 1.8], [1.1, 1.72], [1.65, 1.82], [2.15, 2.02]], [0.12, 0.11, 0.09, 0.045]),
+        blade78(B, 7.3, PI, [[-0.1, 2.75], [-0.75, 2.9], [-1.4, 2.8], [-1.9, 2.55]], 0.19, ho), blade78(B, 5, PI, [[-0.45, 1.95], [-1.0, 2.0], [-1.5, 1.85]], 0.15)]),
+      face: face78(B, hc, hr, 1.85, { lid: 0.42, brow: { y: 0.215, len: 0.18, ang: [0.36, 0.2], lift: [0, 0.07], arch: 0, r: 0.022 }, mouth: { w: 0.085, d: 0.018, y: -0.2, x: 0.05, tilt: 0.03, r: 0.024 } }),
+      pen: rime78(B, 0.9) }, COM78); },
+  // 3 the gust (the line-up's figure)
+  () => { const hc = [0.62, 3.55], hr = 0.68, ho = [0.1, 0.25], B = mk78(-1.25, [[-1.25, 0.1, 0.08], [-1.22, 0.5, 0.08], [-1.1, 0.9, 0.09], [-0.9, 1.3, 0.12], [-0.62, 1.7, 0.2], [-0.3, 2.1, 0.4], [0.02, 2.5, 0.58], [0.34, 2.95, 0.3]].concat(head78(hc, hr, 0.52)), { chest: 6, neck: 7, head: 8, hair: 11 }, 0.55);
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.25, rime: [1.1, 0.7, 0.55], damp: [0.7, 0.46, 0.4],
+      limbs: foot78(B, 1).concat([arm78(B, 6, 0, [[0.62, 2.56], [1.15, 2.5], [1.7, 2.62], [2.25, 2.9]], [0.13, 0.12, 0.1, 0.045]), arm78(B, 6, PI, [[-0.5, 2.5, 0.1], [-1.0, 2.3, 0.1], [-1.05, 1.9, 0.14], [-0.62, 1.72, 0.2]], [0.12, 0.11, 0.105, 0.09]),
+        blade78(B, 8.8, PI, [[-0.15, 3.7], [-0.8, 3.95], [-1.6, 3.95], [-2.4, 3.75]], 0.2, ho), blade78(B, 8.2, PI, [[-0.2, 3.25], [-0.9, 3.35], [-1.6, 3.25], [-2.1, 3.0]], 0.22, ho), blade78(B, 6, PI, [[-0.5, 2.75], [-1.15, 2.85], [-1.85, 2.7], [-2.45, 2.4]], 0.18)]),
+      face: face78(B, hc, hr, 2.0, { lid: 0.46, brow: { y: 0.215, len: 0.19, ang: [0.26, 0.26], arch: 0, r: 0.022 }, mouth: { w: 0.11, d: -0.02, y: -0.21, x: 0.04, tilt: 0.03, r: 0.024 } }),
+      pen: rime78(B, 1) }, COM78); },
+  // 4 the gale
+  () => { const hc = [0.34, 4.4], hr = 0.74, ho = [0.04, 0.24], B = mk78(-0.75, [[-0.75, 0.1, 0.085], [-0.8, 0.5, 0.085], [-0.72, 0.95, 0.09], [-0.58, 1.4, 0.12], [-0.42, 1.9, 0.2], [-0.28, 2.4, 0.34], [-0.12, 2.9, 0.56], [0, 3.25, 0.66], [0.16, 3.78, 0.32]].concat(head78(hc, hr, 0.38)), { chest: 7, neck: 8, head: 9, hair: 12 }, 0.5, y => (y < 1.9 ? y * 0.75 : y - 0.475));
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.12, rime: [1.2, 0.76, 0.55], damp: [0.76, 0.5, 0.4],
+      limbs: foot78(B, 1.08).concat([arm78(B, 7, 0, [[0.7, 3.4], [1.2, 3.62], [1.7, 4.1], [2.1, 4.7]], [0.14, 0.13, 0.11, 0.05]), arm78(B, 7, PI, [[-0.72, 3.2, 0.05], [-1.15, 2.85, 0.05], [-1.5, 2.4, 0.05], [-1.75, 1.95, 0.05]], [0.13, 0.12, 0.1, 0.05]),
+        blade78(B, 9.9, PI, [[0, 4.9], [-0.3, 5.3], [-0.75, 5.58], [-1.3, 5.68]], 0.18, ho), blade78(B, 9.5, PI, [[-0.25, 4.66], [-0.9, 5.05], [-1.7, 5.3], [-2.5, 5.35]], 0.22, ho), blade78(B, 9.1, PI, [[-0.42, 4.3], [-1.1, 4.42], [-1.8, 4.34], [-2.4, 4.1]], 0.22, ho), blade78(B, 8.6, PI, [[-0.4, 3.95], [-0.95, 3.85], [-1.5, 3.62], [-1.9, 3.3]], 0.17, ho)]),
+      face: face78(B, hc, hr, 2.1, { lid: 0.5, brow: { y: 0.215, len: 0.2, ang: [0.2, 0.3], lift: [0.05, 0], arch: 0, r: 0.023 }, mouth: { w: 0.13, d: 0.035, y: -0.21, x: 0.04, tilt: 0.045, tick: 1, r: 0.025 } }),
+      pen: rime78(B, 1.08) }, COM78); },
+  // 5 the squall
+  () => { const hc = [0.22, 5.46], hr = 0.78, ho = [0.02, 0.28], B = mk78(-0.42, [[-0.42, 0.1, 0.085], [-0.4, 0.6, 0.085], [-0.36, 1.1, 0.085], [-0.32, 1.6, 0.09], [-0.26, 2.1, 0.13], [-0.2, 2.6, 0.24], [-0.12, 3.2, 0.42], [-0.04, 3.8, 0.66], [0.02, 4.2, 0.74], [0.1, 4.76, 0.34]].concat(head78(hc, hr, 0.26)), { chest: 8, neck: 9, head: 10, hair: 13 }, 0.6, y => (y < 2 ? y * 0.7 : y - 0.6));
+    return Object.assign({ keys: B.K, role: B.role, fx: B.x0, sz: 1.2, rime: [1.3, 0.82, 0.55], damp: [0.82, 0.54, 0.4],
+      limbs: foot78(B, 1.15).concat([arm78(B, 8, 0, [[0.72, 4.2, 0.25], [0.55, 3.8, 0.6], [0.05, 3.62, 0.74], [-0.5, 3.8, 0.62], [-0.92, 4.12, 0.45]], [0.17, 0.16, 0.15, 0.12, 0.05]), arm78(B, 8, PI, [[-0.68, 4.2, 0.25], [-0.52, 3.74, 0.62], [0, 3.46, 0.8], [0.55, 3.56, 0.66], [0.98, 3.84, 0.48]], [0.17, 0.16, 0.15, 0.12, 0.05]),
+        blade78(B, 11, PI, [[0.1, 6.2], [0, 6.55], [-0.15, 6.85], [-0.35, 7.05]], 0.17), blade78(B, 10.6, PI, [[-0.3, 6.0], [-0.65, 6.4], [-1.1, 6.7], [-1.6, 6.85]], 0.19), blade78(B, 10.6, 0, [[0.85, 5.95], [1.2, 6.3], [1.6, 6.5]], 0.14),
+        blade78(B, 10.2, PI, [[-0.55, 5.6], [-1.3, 5.9], [-2.2, 6.1], [-3.0, 6.05]], 0.24), blade78(B, 10, PI, [[-0.55, 5.15], [-1.3, 5.2], [-2.1, 5.05], [-2.75, 4.7]], 0.24), blade78(B, 9.4, PI, [[-0.4, 4.8], [-1.0, 4.6], [-1.6, 4.3], [-2.0, 3.9]], 0.18)]),
+      face: face78(B, hc, hr, 2.2, { lid: 0.42, brow: { y: 0.22, len: 0.21, ang: [0.34, 0.34], arch: 0, r: 0.025 }, mouth: { w: 0.1, d: 0.004, y: -0.21, x: 0.02, tilt: 0.012, r: 0.025 } }),
+      pen: rime78(B, 1.15) }, COM78); }
+];
+/*SPEC78 END*/
+/* the wash: the same shader as Water's; its four blues become cold pale teal with a lilac shade, more paper is left bare, nothing is a pool,
+   nothing gathers low down, little pencil hatching */
+function tint78(T, S) { if (!S.m30) return; S.t78 = true; S.t48 = true; const C = W78.C, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(3),
+    sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float pl = 0.0,'],
+      ['vec3(0.64, 0.80, 0.945)', g(C.lite)], ['vec3(0.40, 0.59, 0.84)', g(C.edge)], ['vec3(0.36, 0.52, 0.78)', g(C.shade)], ['vec3(0.60, 0.76, 0.92)', g(C.margin)],
+      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.2 *']];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s78) return; m.userData.s78 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's78'; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+/* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage */
+function amm78Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC78[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W78.geo[stage]) W26.geo[3] = W78.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W78.ROLE[stage] || (W78.ROLE[stage] = sp().role); W26.TARGET = W78.TARGET[stage];
+  try { g = fig26(T, 3, extra); W78.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, C = W78.C; S.way78 = 'm' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  const near = p => { let bj = 1, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
+  /* thin as it is, it stands a little taller than the game sizes a spirit (a group of its own between the game's holder and the figure) */
+  if (!(extra && extra.jar)) { const mid = new T.Group(); mid.scale.setScalar(o.sz || 1); mid.add(S.root); g.add(mid); S.mid78 = mid; }
+  if (S.wet) S.wet.visible = false; (S.drips || []).forEach(d => { if (d.g) d.g.visible = false; });
+  /* on the wood round the foot (laid on the bench itself every draw, lay78): a pale bloom of rime, and in it the damp patch it boils off */
+  if (!(extra && extra.jar)) { try { const soft = tex49(T, 'glow'), flat = (hex, q, ro) => { const m = new T.Mesh(new T.PlaneGeometry(q[0] * 2, q[1] * 2), flat49(T, hex, { transparent: true, alphaMap: soft, depthWrite: false, opacity: q[2] })); m.userData.plain = true; m.userData.nobox = true; m.rotation.x = -PI / 2; m.renderOrder = ro; return m; };
+      const lay = new T.Group(); S.root.add(lay); S.lay78 = lay; S.fx78 = o.fx || 0; if (o.rime) { const m = flat(C.rime, o.rime, 15); m.position.y = 0.001; lay.add(m); } if (o.damp) { const m = flat(C.damp, o.damp, 16); m.position.y = 0.002; lay.add(m); }
+    } catch (e) { W78.err = String(e && e.stack); } }
+  /* the pen's own strokes (frost ticks, flung drops): given in the air as they are; each rides the joint nearest to it */
+  const strokes = (o.pen || []).map(s => { const pts = s.air; if (!pts || pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+  S.a78 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  tint78(T, S); W78.figs.push(S); if (W78.figs.length > 24) W78.figs.splice(0, W78.figs.length - 24); return g; }
+/* damp and rime lie on the bench under the foot, whatever way the figure is tipped */
+function lay78(T, S) { const e = S.lay78, p = e.parent, V = W78.v || (W78.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); V.a.set(S.fx78, 0, 0); p.localToWorld(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a); }
+/* no pool ripples and no flow lines down the front; a slightly finer pen; its own strokes are then written by builder 48's ink48 with the figure's
+   own pen, S.a48 lent for that call only, so Acid's idle and act never run on it */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way78) return f0(T, S, ren, cam); if (!S.t78) tint78(T, S); if (S.lay78) { try { lay78(T, S); } catch (e) { W78.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R, lw0 = W30.lw; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W30.lw = lw0 * W78.pen;
+  try { f0(T, S, ren, cam); if (S.a78) { const a0 = S.a48; S.a48 = S.a78; try { ink48(T, S, ren, cam); } catch (e) { W78.err = String(e && e.stack); } finally { S.a48 = a0; } } } finally { S.G.pl = pl; S.G.R = R0; W30.lw = lw0; } })(draw30);
+KIT.amm78Fig = amm78Fig; KIT.AMM78 = W78;
+/* behind the switch: Ammonia's bench figure is the spirit at its stage (the jar keeps the old Ammonia) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homammonia' && KIT.amm78 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = amm78Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W78.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W78 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
