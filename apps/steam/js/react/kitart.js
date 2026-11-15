@@ -4866,6 +4866,117 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W72 = W72; KIT.tex72 = tex63;
 // ==== W72 END
+// ==== W76 BEGIN
+// (builder 76) SALT'S OWN CHANGE OF STAGE, "the geode" (AA.rxKit.evo76, on by default; false or ?v76=0 gives the old one, Water's evo played on the
+// crystal's joints). Crisp, bright and exact where the others are fire, fog, goo and growth. The page (scheme S76) gives the place and the way, and
+// draws all that is not its skin: the cubes that bud over it, the rough block, the cracks, the slabs and the grains they break into, the glow inside,
+// the crust of salt on the paper, the glints. Here, on the music's beats (PAR76: go, crust, still, crack, reveal, home; ph76 is the one timeline both
+// files read), the figure:
+//  1. GO: the OLD stage marches corner over corner to the middle by its act's own step (stp72/walk72/post72 of W72; stage 1 tumbles like a dice).
+//  2. THE CRUSTING: it draws itself up (a small exact hop, chin up) and shuts its eyes with great dignity; the page buds crystal over it till the
+//     rough block hides it whole; then it is hidden.
+//  3. THE STILLNESS / 4. THE CRACKING: wholly the page's (both figures hidden; the old one is removed and the new one put in place while hidden).
+//  5. THE REVEAL: the NEW stage stands there as the slabs fall, its eyes shut; they open, it looks down its nose at the rubble and gives one short
+//     satisfied nod. 1 to 2: the twin tries to straighten its hat; 2 to 3: the shards and crest snap out; 4 to 5: the halo opens in clicks.
+//  6. HOME: two exact quarter turns, the march home seen from behind, two quarter turns more, a click.
+// Every box stays rigid: the body is turned whole about the corner it stands on (post72), shards turn at their roots, buds pop at their corners.
+KIT.evo76 = KIT.evo76 == null ? !(typeof location !== 'undefined' && /[?&]v76=0/.test(String(location.search))) : KIT.evo76;
+const W76 = { err: null, e: null };
+const on76 = S => !!(S && S.way63 && !S.jar && KIT.evo76 !== false && on68(S));
+const cl76 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
+/* each step, by the stage it becomes: beats of go, crust, still, crack, reveal, home (go + crust + still a whole number: the hit, where the cracks
+   shoot); n steps out of tc beats each (the old stage's walk), nB steps home of tcB (the new stage's); pul glow pulses in the stillness */
+const PAR76 = [null, null,
+  { b: [3, 1.5, 1.5, 0.5, 2.0, 6], n: 4, tc: 0.5, nB: 3, tcB: 1, pul: 1 },
+  { b: [4, 2.5, 1.5, 1.0, 2.5, 6], n: 3, tc: 1, nB: 3, tcB: 1, pul: 2 },
+  { b: [4, 3.0, 2.0, 1.0, 3.0, 6], n: 3, tc: 1, nB: 3, tcB: 1, pul: 2 },
+  { b: [4, 4.0, 3.0, 1.5, 4.0, 6], n: 3, tc: 1, nB: 2, tcB: 1.5, pul: 3 }];
+const AT76 = 0.75, Q76 = 0.42, QP76 = 0.2;
+/* the steps (ms from the change's start) out and home; the page may give its own with the book's edge marked (o.z76) */
+function steps76(o, P, L, c) { const Z = o.z76 || (o.z76 = {}), dx = o.dir76 || -1;
+  if (!Z.out) { Z.out = []; for (let i = 0; i < P.n; i++) Z.out.push({ t0: (AT76 + i * P.tc) * L, t1: (AT76 + (i + 1) * P.tc) * L, e0: i / P.n, e1: (i + 1) / P.n, sg: i % 2 ? 1 : -1, dx, n0: i, climb: false }); }
+  if (!Z.back) { const t0 = (c[5] + 2 * Q76 + QP76 + 0.2) * L; Z.back = []; for (let i = 0; i < P.nB; i++) Z.back.push({ t0: t0 + i * P.tcB * L, t1: t0 + (i + 1) * P.tcB * L, e0: i / P.nB, e1: (i + 1) / P.nB, sg: i % 2 ? 1 : -1, dx: -dx, n0: i, climb: false }); }
+  return Z; }
+/* where it is in the change: every number the figure and the page read */
+function ph76(t, o) { const to = Math.max(2, Math.min(5, o.to | 0)), P = PAR76[to], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; }); c.push(s);
+  const at = i => cl76((u - c[i]) / b[i]), e = o.e76 || (o.e76 = {});
+  e.u = u; e.t = t; e.L = L; e.P = P; e.c = c; e.tot = s; e.hit = c[3]; e.to = to; e.from = o.from; e.pre = u < 0;
+  e.go = at(0); e.cr = at(1); e.sti = at(2); e.ck = at(3); e.rv = at(4); e.home = at(5); e.done = u >= s;
+  e.old = u < c[4]; e.gone = u >= c[2] && u < c[4]; e.nr = u >= c[4] && u < c[5];
+  /* the crust's rushes: one each half beat; the last brings the block's slabs */ e.nru = Math.max(2, Math.round(b[1] * 2)); e.ru = u < c[1] ? -1 : u >= c[2] ? e.nru : Math.floor((u - c[1]) * 2);
+  /* the glow inside: wakes in the stillness in slow pulses, full on the hit, flashes as it splits, dies down in the reveal */
+  const pu = P.pul, ps = Math.pow(Math.sin(PI * e.sti * pu), 2);
+  e.glow = u < c[2] - 0.25 ? 0 : u < c[2] ? 0.15 * sm52((u - c[2] + 0.25) / 0.25) : u < c[3] ? 0.15 + (0.35 + 0.5 * e.sti) * (0.35 + 0.65 * ps) : u < c[4] ? 1 : u < c[5] ? Math.exp(-(u - c[4]) / 0.5) : 0;
+  e.flash = u >= c[3] ? Math.exp(-(u - c[3]) / 0.15) + (u >= c[4] ? Math.exp(-(u - c[4]) / 0.18) : 0) : 0;
+  e.dim = e.pre ? 0 : u < c[1] ? 0.3 * sm52(e.go) : u < c[2] ? 0.3 + 0.3 * e.cr : u < c[3] ? 0.6 + 0.4 * sm52(e.sti / 0.6) : u < c[4] ? 1 : u < c[5] ? 1 - 0.35 * sm52(e.rv / 0.8) : 0.65 * (1 - sm52(e.home / 0.45));
+  return e; }
+KIT.ph76 = ph76;
+/* the body: march numbers (for post72), face numbers (for the idle's face), the per-stage moves of the reveal */
+function body76(e, o, isOld) { const L = e.L, t = e.t, c = e.c, P = e.P, u = e.u, Z = steps76(o, P, L, c);
+  const r = { ph: 'evo', w: 'evo', e: 0, roll: 0, yaw: 0, pitch: 0, hop: 0, spin: 0, tuck: 0, chin: 0, turn: 0, nod: 0, pr: [], lsg: 1, we: 0, back: false, z: {} }, z = r.z;
+  const lands = [[AT76 * 0.4 * L, 0.8]]; Z.out.forEach(q => lands.push([q.t1, q.climb ? 1.4 : 1, q.sg]));
+  const h0 = c[5] * L, hq = Q76 * L, hp = QP76 * L, hb = (c[5] + 2 * Q76 + QP76 + 0.2) * L, hs = hb + P.nB * P.tcB * L + 0.1 * L, hz = hs + 2 * hq + hp;
+  lands.push([h0 + hq, 0.5], [h0 + 2 * hq + hp, 0.5]); Z.back.forEach(q => lands.push([q.t1, q.climb ? 1.4 : 1, q.sg])); lands.push([hs + hq, 0.5], [hz, 0.5], [hz + 0.35 * L, 1.1]);
+  let land = -1e9, lk = 0; for (let i = lands.length - 1; i >= 0; i--) if (t >= lands[i][0]) { land = lands[i][0]; lk = lands[i][1]; r.lsg = lands[i][2] || 1; break; }
+  const clk = a => ck72(t - land, a * lk);
+  if (isOld) {
+    if (u < c[1]) { /* attention, the march out, set down */ const ta = AT76 * L;
+      if (t < ta) { const v = cl76(t / ta); r.tuck = sm52(v / 0.6); r.hop = 0.25 * pl52(v, 0.05, 0.32, 0.08); r.chin = -0.08 * sn72(v / 0.3); z.wide = pl52(v, 0.02, 0.8, 0.08); z.brow = 0.3 * pl52(v, 0.02, 0.8, 0.1); z.lookx = 0.8 * (o.dir76 || -1) * sm52((v - 0.6) / 0.2); r.pitch = clk(1); return r; }
+      const tz = Z.out[Z.out.length - 1].t1;
+      if (t < tz) { const q = walk72(t, Z.out, o.from); r.tuck = 1; r.we = q.e; r.roll = q.roll + clk(0.05) * r.lsg; r.yaw = q.yaw; r.pitch = q.pitch + clk(0.4) * 0.1; r.hop = q.hop; r.spin = (q.spin0 || 0) + (q.spin || 0); z.lookx = 0.7 * (q.c.dx || 0); z.looky = -0.1; z.lid = 0.15; return r; }
+      r.we = 1; r.tuck = 1; r.spin = o.from <= 1 ? -(o.dir76 || -1) * (PI / 2) * P.n : 0; r.pitch = clk(0.6) * 0.12; r.roll = clk(0.05) * r.lsg; z.lookx = 0; z.looky = 0.2 * sm52((t - tz) / 200); z.wide = 0.4 * pl52(t - tz, 50, 250, 80); return r; }
+    /* the crusting: it draws itself up (a small exact hop, then chin up), and shuts its eyes with great dignity */
+    const d = (u - c[1]) / Math.max(0.5, P.b[1]); r.we = 1; r.tuck = 1; r.spin = o.from <= 1 ? -(o.dir76 || -1) * (PI / 2) * P.n : 0;
+    r.hop = 0.2 * pl52(d, 0.0, 0.12, 0.05); r.chin = -0.1 * sn72((d - 0.1) / 0.12); r.pitch = ck72((d - 0.17) * P.b[1] * L, 0.08);
+    z.brow = 0.25 * sm52(d / 0.1); z.looky = 0.3 * sm52(d / 0.1); z.lid = sm52((d - 0.12) / 0.3); z.blink = z.lid > 0.98 ? 1 : 0; return r; }
+  /* the new form: revealed, then home */
+  r.we = 1;
+  if (u < c[5]) { const d = (u - c[4]) / P.b[4], db = (u - c[4]) * L, st = e.to;
+    const op = sm52((d - 0.22) / 0.06); z.lid = 1 - op; z.blink = op < 0.02 ? 1 : 0; z.wide = 0.5 * pl52(d, 0.24, 0.34, 0.03);
+    /* it looks down its nose at the rubble: chin up, lids half down; then one short satisfied nod */ const lkd = sm52((d - 0.36) / 0.08), nd = (d - 0.66) * P.b[4] * L;
+    r.chin = -0.12 * lkd; z.looky = -0.55 * lkd; z.lookx = 0.5 * (o.dir76 || -1) * lkd * (1 - sm52((d - 0.62) / 0.06)); z.lid = Math.max(z.lid, 0.48 * lkd); z.brow = 0.2 * lkd + 0.25 * pl52(d, 0.7, 0.95, 0.05);
+    r.nod = nd > 0 ? 0.17 * sm52(nd / 90) * (1 - sm52((nd - 160) / 120)) + ck72(nd - 290, 0.05) : 0;
+    r.pitch = ck72(db, 0.06);
+    if (st === 2) { /* the twin tries to straighten its hat: shard up, hat straight, held, slips back askew with a click */ const tr = (d - 0.42) * P.b[4] * L / 1000; z.sh = [0.85 * mv68(tr, 0.2, 0.55, 0.25)]; z.hat = mv68(tr - 0.12, 0.1, 0.4, 0.06, 1.8); if (tr > 0.95) z.brow = -0.6 * pl52(tr, 0.95, 1.5, 0.08); }
+    if (st === 3) { /* the shards and the crest snap out of their fold */ const sn = (d - 0.06) * P.b[4] * L; r.fold = sn < 0 ? 1 : 1 - sn72(sn / 110) - ck72(sn - 110, 0.1); z.bud = sn < 60 ? 0.02 : Math.min(1.3, 1 + 0.3 * Math.exp(-(sn - 60) / 80) * Math.cos((sn - 60) / 30)) * cl76((sn - 60) / 50); }
+    if (st === 4) { /* its pointing shard comes up as it looks the rubble over */ z.sh = [0.12 * sm52((d - 0.4) / 0.15)]; }
+    if (st === 5) { /* the halo opens in three clicks, like a fan */ const s0 = [0.2, 0.55, 0.9].reduce((a, t0, i) => a + sn72((d - t0 * 0.6) * P.b[4] * 4) / 3, 0); r.fan = -0.55 * (1 - s0); }
+    return r; }
+  /* home: two quarter turns, the march home seen from behind, two quarter turns more, a small exact tip and a last click */
+  const q = (t0, dd) => sn72((t - t0) / dd) + ck72(t - t0 - dd, 0.05); r.tuck = 0; z.lid = 0.3;
+  r.turn = (PI / 2) * (q(h0, hq) + q(h0 + hq + hp, hq));
+  if (t < hb) { r.roll = clk(0.05) * r.lsg; r.we = 0; return r; }
+  if (t < hs) { const w = walk72(t, Z.back, e.to); r.back = true; r.we = w.e; r.roll = w.roll + clk(0.05) * r.lsg; r.yaw = w.yaw; r.pitch = w.pitch; r.hop = w.hop; r.spin = (w.spin0 || 0) + (w.spin || 0); return r; }
+  r.we = 1; r.turn += (PI / 2) * (q(hs, hq) + q(hs + hq + hp, hq)); r.pitch = -0.08 * pl52(t, hz + 60, hz + 260, 50) + clk(0.5) * 0.1; r.roll = clk(0.05) * r.lsg; z.lid = 0.3 * (1 - sm52((t - hz) / 300)); return r; }
+/* the face numbers go over the idle's (no tips, no drumming, no own glances while it changes) */
+ev68 = (f0 => function (S, tt) { const E = f0(S, tt), X = S && S.x76; if (!X) return E; const z = X.z;
+  E.tip = 0; E.chin = 0; E.sh = z.sh ? z.sh.slice() : []; E.lift = []; E.hat = z.hat || 0; E.eye1 = null; E.halo = 1; E.kick = []; E.lookx = z.lookx || 0; E.looky = z.looky != null ? z.looky : -0.1; E.brow = z.brow || 0; E.wide = z.wide || 0; E.blink = z.blink || 0;
+  E.bud = (E.bud || []).map(() => (z.bud != null ? z.bud : 1)); return E; })(ev68);
+C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); const X = S && S.x76; if (!X) return; q.turn = X.turn || 0; if (X.z.lid > 0) q.lidx = Math.max(q.lidx || 0, Math.min(1, X.z.lid)); })(C26.rest);
+/* after the play: post72 turns the whole body about its standing corner; then 2 to 3's fold, 4 to 5's fan */
+function post76(S, r) { const K = S.k68; if (!K) return; post72(S, { e: r, Z: { P: [], tg: [], pl: { x: 0 }, st: S.st } }); const B = S.bones, V = S.v68;
+  if (r.fold > 0.001) K.shards.forEach(s => { const jn = s.jn, r0 = B[jn[0]].position, tp = B[jn[jn.length - 1]].position; V.a.copy(tp).sub(r0).normalize(); V.b.set(s.side * 0.8, 0.55, 0.1).normalize(); if (V.a.dot(V.b) > 0.99999) return; V.q.setFromUnitVectors(V.a, V.b); V.q2.identity().slerp(V.q, Math.min(1.05, r.fold)); V.c.copy(r0); turn68(B, jn, V.c, V.q2); });
+  if (r.fan && K.halo) { V.q.setFromAxisAngle(V.z, r.fan); V.c.copy(K.halo.c); turn68(B, [K.halo.j], V.c, V.q); } }
+/* what is seen: the pen line goes with the figure */
+function show76(S, on) { S.root.visible = on; if (S.pen30 && S.pen30.mesh) S.pen30.mesh.visible = on; if (!on) hide68(S); }
+function kill76(S) { const O = S.e76; if (O) { if (O.gg.parent) O.gg.parent.remove(O.gg); S.e76 = null; } }
+function end76(S) { kill76(S); show76(S, true); S.x76 = null; unpost72(S); }
+function evo76(f0, grp, S, t, o) { const e = ph76(t, o), T = S.T; W76.e = e; let O = S.e76;
+  if (e.old) { if (!O || O.from !== o.from) { kill76(S); const gg = salt63Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; grp.parent.add(gg); O = S.e76 = { gg, sp, from: o.from }; }
+    const sp = O.sp; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); show76(S, false); S.x76 = null;
+    const r = body76(e, o, true); sp.x76 = { z: r.z, turn: r.turn }; f0(O.gg, 'rest', 0, {}); post76(sp, r); e.r = r; O.gg.visible = !e.gone; show76(sp, !e.gone); }
+  else { if (O) kill76(S); const r = body76(e, o, false); S.x76 = { z: r.z, turn: r.turn }; f0(grp, 'rest', 0, {}); post76(S, r); e.r = r; show76(S, true); }
+  const c = e.c, b4 = e.P.b[4], u = e.u; let n = -1; if (u >= c[4]) n = 0; if (u >= c[4] + 0.4 * b4) n = 1; if (u >= c[4] + 0.7 * b4) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+  return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: u >= e.tot - 0.3 }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'evo' && o && o.from && on76(S) && o.from !== S.st)) { if (S && (S.x76 || S.e76) && clip !== 'evo') { try { end76(S); } catch (e) { W76.err = String(e && e.stack); } } return f0(grp, clip, t, o); }
+  try { return evo76(f0, grp, S, t, o); } catch (err) { W76.err = String(err && err.stack); const L = o.L || 500, tot = (PAR76[Math.max(2, Math.min(5, o.to | 0))] || PAR76[3]).b.reduce((a, b) => a + b, 0); try { end76(S); } catch (x) { /* shown as it is */ } return { e: 0, y: 0, n: t / L > tot ? 4.8 : -1, big: 0, done: t / L >= tot, home: t / L >= tot - 0.1 }; } })(play26);
+KIT.spirit26.play = play26;
+/* for the page: a point of a box (in its half sizes) where the body has it now, in the world; a box of the figure at rest, in the figure's own frame */
+KIT.bw76 = (S, b, u, out) => { const B = S.bones[b.j], J = S.G.J[b.j], p = loc63(b, u), v = out || new S.T.Vector3(); v.set(p[0] - J.p[0], p[1] - J.p[1], p[2] - J.p[2]).multiply(B.scale).applyQuaternion(B.quaternion).add(B.position).applyMatrix4(S.root.matrixWorld); return v; };
+KIT.loc76 = loc63;
+KIT.W76 = W76; KIT.e76dbg = () => { const e = W76.e; return { err: W76.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), cr: +e.cr.toFixed(2), sti: +e.sti.toFixed(2), ck: +e.ck.toFixed(2), rv: +e.rv.toFixed(2), home: +e.home.toFixed(2), glow: +e.glow.toFixed(2), hit: e.hit, tot: e.tot, old: e.old, gone: e.gone, we: e.r ? +e.r.we.toFixed(2) : null } : null }; };
+// ==== W76 END
 // ==== W64 BEGIN
 // (builder 64) SEEDLING AS A SPIRIT, five stages, stills only (AA.rxKit.seed64 = 1, or ?g64=1 on the page; OFF by default: the game shows the old Seedling).
 // Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53) and Slime (61) were: each stage is a set of numbers like a stage of S25, put in
