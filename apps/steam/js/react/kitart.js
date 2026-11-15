@@ -6380,7 +6380,7 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
     } catch (e) { W95.err = 'old ' + String(e && e.stack); } }
   const r = f0(grp, clip, t, o);
   /* its own blue light on the ground (W73) is a hard round: under the ball and under the rising form it would read as a pool, so it is low while it changes (the page lays the fire's soft glow) */
-  if (S && clip === 'evo' && on95(S)) { const e = S.q0 && S.q0.e31, k = e && e.go != null ? 1 - 0.72 * Math.min(1, e.go * 3) * (1 - (e.home || 0)) : 1; dim95(S, k); if (S.e31) dim95(S.e31.sp, k); S.d95 = true; }
+  if (S && clip === 'evo' && on95(S)) { const e = S.q0 && S.q0.e31, k = e && e.go != null ? 1 - 0.72 * (KIT.g97 && KIT.f96 /* (builder 97) its light goes with the lump to the centre */ ? (e.b >= 0 ? RK.sm((e.b - 0.15) / 0.3) : 0) : Math.min(1, e.go * 3)) * (1 - (e.home || 0)) : 1; dim95(S, k); if (S.e31) dim95(S.e31.sp, k); S.d95 = true; }
   return r; })(play26);
 KIT.spirit26.play = play26;
 /* THE ACT is Water's clip (C26.act) on Brimstone's joints (scheme S95 feeds it as S26 feeds Water's; AA.rxKit.act95). The one thing changed in the
@@ -6490,6 +6490,58 @@ ink31 = (f0 => function (T, S, X, ren, cam) { const r = f0(T, S, X, ren, cam); i
 C26.evo = (f0 => function (S, t, o, q) { f0(S, t, o, q); if (KIT.f96 && S && S.way69 && KIT.mirror95 !== false && q && q.e31) q.e31.ball *= 0.3; })(C26.evo);
 KIT.W96 = W96;
 // ==== W96 END
+// ==== W97 BEGIN
+// (builder 97) BRIMSTONE'S OWN WAY TO THE CENTRE AND HOME (AA.rxKit.g97, on by default; false or ?g97=0 gives builder 96's back: Water's curl
+// into a round and its float through the air). Water's timing slots, sizes, lamp pass and shadows stand. What is replaced, for Brimstone only:
+//  - NO curl, NO ball, NO float: Water's curl and pull into a round (e.curl, e.ball) are zero, its ball has no size (e.R, e.cy: scheme S32 then
+//    keeps the foot on the ground), the ball mesh, the wash under it and every bead are hidden;
+//  - at home its smoke is drawn DOWN into the lump (post82o, builder 82's: the lower parts first, the head last, lids shut before the eyes go),
+//    the small flames stay lit (they do not gutter), the cracks brighten;
+//  - the lump goes over the bench, the book's edge and the page ON the surface (scheme S97 has the height): it leans back as it starts, rocks
+//    from side to side with the way it has gone, tips back and over at the book's edge, leans forward as it stops; its flames stream taller
+//    with its speed; e.go is its own (eased, arriving early in the second slot so the fire can grow from the settled lump);
+//  - at the centre the cracks flare and the flames swell; the old lump is changed for the new one when the fire's near wall is thick;
+//  - from the hit the new form's smoke boils up out of the lump through the middle of the fire (post82n: lower parts first, head last) where
+//    Water's shoots up out of its pool; it grows to its standing size a little later, inside the fire;
+//  - home: Water's turn (eased) is hidden in a roll of its own smoke at both ends, no sinking into a pool, the same rock and lean, a tip down
+//    off the book's edge.
+KIT.g97 = KIT.g97 == null ? !(typeof location !== 'undefined' && /[?&]g97=0/.test(String(location.search))) : KIT.g97;
+const W97 = { err: null };
+const on97 = S => !!(KIT.g97 && KIT.f96 && S && S.way69 && !S.jar && KIT.mirror95 !== false);
+if (KIT.g97 && KIT.f96) KIT.gut96 = 1e9;
+/* its own times, from Water's three slots (a the gathering, b the standing, v after the hit): ph runs 0..2 before the hit */
+const tl97 = e => { const K = RK, pre = !(e.v >= 0), ph = pre ? (e.b >= 0 ? 1 + e.b : e.a) : 2, u = K.cl((ph - 0.14) / 0.98), v = pre ? 0 : e.v, p = v > 2.15 ? K.cl((v - 2.15) / 0.8) : 0;
+  const g = { pre, ph, u, p, go: K.sm(u), sp: 4 * u * (1 - u), suck: K.sm((ph - 0.02) / 0.38), arr: K.sm((ph - 1.12) / 0.14) };
+  g.fl = 1 + 0.3 * g.sp + 0.9 * g.arr; g.heat = pre ? 0.45 * g.go + 0.9 * K.pulse(ph, 1.1, 1.55, 0.1) : 0.8 * (1 - K.sm(v / 1.2));
+  g.old = pre && ph < 1.72; g.rise = pre ? 0 : K.sm((v - 0.04) / 0.8); g.form = pre ? 0 : K.sm((v - 0.45) / 0.7); g.eyes = pre ? 0 : K.sm((v - 0.55) / 0.25);
+  g.roll = K.pulse(p, 0.01, 0.15, 0.07) + K.pulse(p, 0.8, 0.92, 0.07); return g; };
+C26.evo = (f0 => function (S, t, o, q) { f0(S, t, o, q); if (!(o && o.e31 && on97(S))) return; const e = q.e31; if (!e || t < 0 || e.go == null) return;
+  const K = RK, g = e.g97 = tl97(e), m = q.m; e.curl = 0; e.ball = 0; e.R = 0; e.cy = 0; e.go = g.go;
+  if (g.pre) { e.old = g.old; if (m) m.body = g.old ? 0 : 1;
+    q.bow = 0; q.nod = 0.35 * K.sm(g.ph / 0.2); q.sq = -0.05 * g.suck; q.armR = q.armL = 0; q.hair = 0; q.sink = 0; q.px = q.pz = 1; q.lean = 0; q.open = 0;
+    q.wide = 0.5 * K.pulse(g.ph, 0, 0.12, 0.06); q.brow = 0.3; q.looky = -0.7 * g.suck; q.blink = K.sm((g.suck - 0.68) / 0.2); }
+  else { const c0 = 1 - K.sm(e.v / 0.3); q.bow -= 1.7 * c0; q.nod -= c0; q.sq += 0.42 * c0; q.armL += 1.3 * c0; q.armR += 1.3 * c0; q.hair += 0.8 * c0; q.sink = 0; e.sk = K.sm((e.v - 0.12) / 0.75); }
+  })(C26.evo);
+/* nothing of Water's ball: no mesh, no wash under it, no beads */
+stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); if (!X || !on97(S)) return; X.sph.visible = false; X.gw.visible = false; X.beads.forEach(b => { b.m.visible = false; }); })(stage31);
+play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!(S && clip === 'evo' && o && o.e31 && on97(S))) { if (S && S.rp97) { S.root.position.copy(S.rp97); S.rp97 = null; if (S.F) (S.F.brows || []).forEach(b => { const m = b && b.g; if (m && m.userData.s97) m.scale.copy(m.userData.s97); }); } return r; }
+  try { const q = S.q0, e = q && q.e31, g = e && e.g97; if (!g) return r; const K = RK, O = S.e31 && S.e31.gg.visible ? S.e31.sp : null, F = O || S;
+    /* the face goes small before it goes out, and comes small before it is there (nothing of it switches in one frame) */ const face = (Z, kf) => { const Fc = Z.F; if (!Fc) return; const vis = kf > 0.02; Fc.eyes.forEach(x => { if (x.g) { x.g.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) x.g.visible = false; } });
+      (Fc.brows || []).forEach(b => { const m = b && b.g; if (!m) return; if (!m.userData.s97) m.userData.s97 = m.scale.clone(); m.scale.copy(m.userData.s97).multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; });
+      [Fc.mouth, Fc.om].forEach(m => { if (m && m.isObject3D) { m.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; } });
+      const Kz = Z.k73; if (Kz && Kz.eg) Kz.eg.forEach(x => { x.g.visible = vis && kf > 0.3; x.g.scale.setScalar(x.e.er * 3.0 * kf); x.g.material.opacity = 0.4 * kf; }); };
+    if (O) { post82o(O, { suck: g.suck, bow: 0.7 * K.sm(g.ph / 0.25), lift: 0, flame: g.fl, cflame: 0, heat: g.heat, u: 0, c: [9, 9, 9] }); if (O.st > 1) face(O, 1 - K.sm((g.suck - 0.7) / 0.2)); }
+    else { /* (no idle runs in this clip to set the cracks' glow again: it is set here, not multiplied) */ if (S.u69) S.u69.value.y = 1 + 1.2 * g.heat; post82n(S, { rise: g.rise * (1 - 0.3 * g.roll), form: g.form, fm: g.form, eyes: 0, nflame: 1, heat: 0 }); if (S.st > 1) face(S, K.sm((g.rise - 0.62) / 0.3)); }
+    /* the lump on the ground: it leans against its start and its stop, rocks with the way gone, tips over the book's edge */
+    let px = 0, rz = 0; const ge = o.ge97 == null ? 0.1 : o.ge97, G2 = x => Math.exp(-2 * x * x);
+    if (g.pre) { const x = (g.go - ge) / 0.05; px = -0.2 * Math.sin(2 * PI * g.u) * (g.u < 0.5 ? 1 : 0.7) - 0.3 * G2(x + 0.4) + 0.2 * G2(x - 1.2); rz = 0.13 * Math.sin(2 * PI * 3 * g.go) * Math.sin(PI * g.u); }
+    else if (g.p > 0) { const h = e.home || 0, uh = K.cl((g.p - 0.14) / 0.72), x = (h - (1 - ge)) / 0.05; px = 0.16 * Math.sin(2 * PI * uh) * (uh < 0.5 ? 1 : 0.7) - 0.3 * G2(x) + 0.15 * G2(x - 1.5); rz = 0.1 * Math.sin(2 * PI * 3 * h) * Math.sin(PI * uh); }
+    F.root.rotation.x += px; F.root.rotation.z += rz; W97.g = g;
+    /* the heave at the edge: it comes a little off the ground as it tips over */ { const X = fig82(F), xx = g.pre ? (g.go - ge) / 0.05 : g.p > 0 ? ((e.home || 0) - (1 - ge)) / 0.05 : 9; if (!F.rp97) F.rp97 = F.root.position.clone(); F.root.position.y = F.rp97.y + 0.3 * X.lump * G2(xx + (g.pre ? 0.2 : -0.2)); }
+  } catch (x) { W97.err = String(x && x.stack); } return r; })(play26);
+KIT.spirit26.play = play26;
+KIT.W97 = W97;
+// ==== W97 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)

@@ -6857,9 +6857,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, v = S96.v, A = S96.A; O.root.updateWorldMatrix(true, false); v.setFromMatrixPosition(O.root.matrixWorld); A.setFromMatrixColumn(hold.matrixWorld, 1).normalize();
     const ws = S96.v2.setFromMatrixScale(O.root.matrixWorld).y, rL = 0.21 * O.G.H * ws, pre = !(e.v >= 0), ballOn = C.ball === 1 && e.R > 0.01, fresh = S96.E !== E; if (fresh) { S96.E = E; S96.t0 = now; S96.R = 0; S96.Rk = 0; }
     /* its size: the ball's full round in the world (known once the ball is on), eased; before that a guess from the lump */
-    if (pre && ballOn && e.R0 > 0) S96.Rk = C.Rw * e.R0 / Math.max(e.R, 0.3 * e.R0); const Rt = S96.Rk || 2.6 * rL; S96.R = S96.R ? S96.R + (Rt - S96.R) * 0.1 : Rt;
-    const t = (now - S96.t0) / 1000, grow = pre ? 0.3 * RK.sm((e.a - 0.1) / 0.6) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.35) : 0) : 1, draw = pre ? 0 : Math.pow(RK.sm(e.v / 2.0), 1.25), thick = pre ? (e.b >= 0 ? RK.sm((e.b - 0.3) / 0.3) : 0) : 1 - 0.6 * RK.sm((e.v - 0.1) / 0.8), tall = pre ? 0 : 1.3 * RK.sm(e.v / 0.5);
-    const Rb = 1.05 * S96.R * (0.2 + 0.8 * grow) * (pre ? 1 : 1 + 0.12 * RK.sm(e.v / 0.4) - 0.3 * RK.sm((e.v - 0.5) / 1.0)), a = RK.sm(grow / 0.07) * (1 - RK.sm((draw - 0.5) / 0.5)) * (1 - (e.home || 0)), pos = S96.c.copy(v).addScaledVector(A, 0.8 * Rb); /* its round bottom wraps the lump and the curled figure (they sit on the root); it travels with the figure */ if (X.pen2 && X.pen2.mesh) X.pen2.mesh.visible = false;
+    const g97 = !!(K.g97 && e.g97); /* (builder 97) no ball to take the size from: the old figure's own */ if (g97) { if (pre && O !== SP) S96.Rk = 0.25 * O.G.H * ws; } else if (pre && ballOn && e.R0 > 0) S96.Rk = C.Rw * e.R0 / Math.max(e.R, 0.3 * e.R0); const Rt = S96.Rk || 2.6 * rL; S96.R = S96.R ? S96.R + (Rt - S96.R) * 0.1 : Rt;
+    const t = (now - S96.t0) / 1000, grow = pre ? (g97 ? /* (builder 97) nothing until the lump has come and settled */ (e.b >= 0 ? RK.sm((e.b - 0.2) / 0.4) : 0) : 0.3 * RK.sm((e.a - 0.1) / 0.6) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.35) : 0)) : 1, draw = pre ? 0 : Math.pow(RK.sm(e.v / 2.0), 1.25), thick = pre ? (e.b >= 0 ? RK.sm((e.b - (g97 ? 0.45 : 0.3)) / (g97 ? 0.25 : 0.3)) : 0) : 1 - 0.6 * RK.sm((e.v - 0.1) / 0.8), tall = pre ? 0 : 1.3 * RK.sm(e.v / 0.5);
+    const Rb = 1.05 * S96.R * (0.2 + 0.8 * grow) * (pre ? 1 : 1 + 0.12 * RK.sm(e.v / 0.4) - 0.3 * RK.sm((e.v - 0.5) / 1.0)), a = RK.sm(grow / (g97 ? 0.25 : 0.07)) * (1 - RK.sm((draw - 0.5) / 0.5)) * (1 - (e.home || 0)), pos = S96.c.copy(v).addScaledVector(A, 0.8 * Rb); /* its round bottom wraps the lump and the curled figure (they sit on the root); it travels with the figure */ if (X.pen2 && X.pen2.mesh) X.pen2.mesh.visible = false;
     K.fire96.update(B, { t, pos, axis: A, R: Rb, grow, draw, thick, tall, a, spin: 0.55 * t, breath: 2.6 * t, H: ren.getDrawingBufferSize(S33.v2).y });
     /* its light */ const U = S95.mat.uniforms, on = RK.sm(grow / 0.6) * (1 - RK.sm((draw - 0.35) / 0.6)) * (1 - (e.home || 0)), lw = K.flame94 ? K.flame94.light({ t: now / 1000, rise: 1, draw: 0, breath: 2.6 * t }) : 1;
     if (U.fp96) { const fx = pos.x + A.x * 0.6 * Rb, fy = pos.y + A.y * 0.6 * Rb, fz = pos.z + A.z * 0.6 * Rb; U.fp96.value.set(fx, fy, fz, Math.max(2.2 * Rb, fy - C.gy)); U.fq96.value.set(on, on * (0.5 + 0.5 * lw), 0.25, 0); }
@@ -6869,6 +6869,25 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (!live) { if (S96.B) S96.B.all.forEach(m => { m.visible = false; }); if (S95.mat && S95.mat.uniforms.fq96) S95.mat.uniforms.fq96.value.set(0, 0, 0.2, 0); S96.dbg = null; } } catch (x) { S96.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s96dbg = () => ({ err: S96.err, kit: AA.rxKit.W96 && AA.rxKit.W96.err, e: S96.dbg });
   // ==== S96 END
+  // ==== S97 BEGIN
+  // (builder 97) BRIMSTONE'S LUMP GOES TO THE CENTRE AND HOME ON THE SURFACES (kitart W97; AA.rxKit.g97, ?g97=0 gives builder 96's float).
+  // Water's S32 goes on working out place and size; it is only given other numbers: its ball has no size (kitart), and the high point over
+  // the book that the ball flew to (E.c32.yb, bz) is put down on the page at the place where the new form will stand. So the foot goes
+  // from home to the centre in one straight eased move on the ground. Here its height: the bench, up over the book's edge (a heave: a
+  // little higher than the step as it tips over), the page. The lamp's own shadow of the figure (S33, layer 5) is then a contact shadow.
+  const S97 = { err: null, dbg: null };
+  const s97On = SP => !!(SP && SP.way69 && AA.rxKit && AA.rxKit.g97 && AA.rxKit.f96 && AA.rxKit.mirror95 !== false);
+  homEvo19 = (f0 => function (now) { const E0 = R21.evo, on = !!(E0 && s97On(s26Fig()));
+    if (on && E0.c32) { const C3 = E0.c32; C3.bz = C3.zc; C3.yb = 0.26;
+      if (E0.ge97 == null) { let ge = 0.1; for (let i = 0; i <= 400; i++) { const u = i / 400; if (s27K(HOMP.x * (1 - u), HOMP.z + (C3.zc - HOMP.z) * u, 0.01) > 0.5) { ge = u; break; } } E0.ge97 = ge; } }
+    f0(now); if (!on) { S97.dbg = null; return; }
+    try { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, g = e && e.g97, Q = HEVO.pos, fg = r21Fig(); if (!(E && E.e31 && g && Q && homObj && fg)) { S97.dbg = null; return; }
+      const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, Rl = 0.21 * O.G.H * (homObj.s || 1) * (fg.scale.x || 1), k = s27K(Q.x, Q.z, Rl), bump = 0.3 * Rl * 4 * k * (1 - k);
+      if (g.pre) Q.y = 0.26 * k + bump; else if (g.p > 0) Q.y += bump;
+      S97.dbg = { ph: +g.ph.toFixed(3), go: +g.go.toFixed(3), ge: E.ge97, k: +k.toFixed(2), qy: +Q.y.toFixed(2), gy: +homObj.grp.position.y.toFixed(2), x: +Q.x.toFixed(1), z: +Q.z.toFixed(1), s: +homObj.s.toFixed(2), Rl: +Rl.toFixed(2), zc: E.c32 && +E.c32.zc.toFixed(1), B: E.c32 && +E.c32.B.toFixed(2), F: E.c32 && +E.c32.F.toFixed(2) };
+    } catch (x) { S97.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s97dbg = () => ({ err: S97.err, kit: AA.rxKit.W97 && AA.rxKit.W97.err, d: S97.dbg });
+  // ==== S97 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
