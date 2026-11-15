@@ -5840,7 +5840,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // the smoke of the bank on the bench and the scorch it leaves in the wood and paper (fading), its broad shade, the lamp drawn in (builder 33's one-
   // lamp pass, lightly: this act alone dims the room, as it comes once a run), and the sound. Nothing on the bench moves. No yellow.
   const S77 = { err: null, np: false, v: new T.Vector3(), v2: new T.Vector3(), plan: null, Z: null, A: null, j: null, last: null, dim: 0, n: 0, lit: false, LA: null, pool: null, bank: [], mk: [], lm: null, bt: 0, sm: [], st: 0 };
-  const s77On = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way69 && !SP.jar && K && K.act77 !== false && K.idle73 !== false && K.ph77 && K.fig77); };
+  const s77On = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way69 && !SP.jar && K && K.act77 !== false && K.idle73 !== false && K.ph77 && K.fig77 && !(K.mirror95 !== false && K.act95 !== false) /* (builder 95) off by default: Water's act, reskinned (S95); ?a95=0 gives this one back */); };
   const ss77s = u => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
   /* the atoms the rule counts, left to right: every S on the molecule; with Sulphur's Mask each OH too */
   const s77Atoms = () => { const out = []; if (!center || !center.balls || !g || !g.m) return out; let mask = false; try { mask = !!(P.HOMCOUNT && P.HOMCOUNT.maskOH && P.sigOn && P.sigOn('sulphurs_mask')); } catch (e) { mask = false; }
@@ -6743,10 +6743,11 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // ==== S93 END
   // ==== S95 BEGIN
   // (builder 95) BRIMSTONE'S CHANGE OF STAGE ON THE PAGE IS WATER'S, RESKINNED (kitart W95; AA.rxKit.mirror95, ?w95=0 gives Water's substance).
-  // Nothing of S31 / S32 / S33 / S36 is changed or repeated: place, size, travel, lamp, shadow and the wet marks' places and times are Water's.
-  // Water's one pass over the bench (S33.sheet) gets a second material that shares its uniforms and its shader text, with three colours changed:
-  // what was wet paper is faint soot (no ink run, no blue pigment), the shadow is not blue, and a glow of its fire lies on the paper (gl95) where
-  // Water threw a blue cast. Each mark is given a short life so that nothing is left when it is home; the wet patch it would stand in is not laid.
+  // Nothing of S31 / S32 / S33 / S36 is changed or repeated: place, size, travel, lamp, shadow and timing are Water's (its STAGING ENGINE).
+  // Water's one pass over the bench (S33.sheet) gets a second material that shares its uniforms and its shader text with three things changed:
+  // no ink run under a mark, the shadow is not blue, and the light of its fire lies on the paper (gl95) where Water threw a blue cast.
+  // The CENTREPIECE is Brimstone's own: no ball, no petals (kitart W95 keeps Water's ball for the lamp's shadow only); ONE great flame (flame94)
+  // stands on the lump in its place. Nothing is laid on the page.
   const S95 = { err: null, mat: null, w0: null };
   const s95On = SP => !!(SP && SP.way69 && AA.rxKit && AA.rxKit.mirror95 !== false);
   const s95Sheet = () => { const sh = S33.sheet; if (S95.mat) return S95.mat; const m0 = S95.w0 = sh.material; let f = m0.fragmentShader; const rep = (a, b) => { if (f.indexOf(a) < 0) throw new Error('s95: not found: ' + a); f = f.split(a).join(b); };
@@ -6760,15 +6761,71 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const s95Frame = now => { const SP = s26Fig(), sh = S33.sheet; if (!sh) return; if (!s95On(SP)) { if (S95.w0 && sh.material !== S95.w0) sh.material = S95.w0; return; }
     const m = s95Sheet(); if (sh.material !== m) sh.material = m; const U = m.uniforms, W = S33.wet, E = R21.evo, q = SP.q0, e = q && q.e31, C = S32.C, RK = AA.rxKit.RK;
     /* the first frame of the change: Water's code shows the old figure at the NEW stage's standing size for one frame (a jump in size); it is given the old size */ if (E && SP.e31 && SP.e31.gg.visible && !E.p95) { E.p95 = 1; if (E.s0 > 0 && E.s1 > 0) SP.e31.gg.scale.multiplyScalar(E.s0 / E.s1); }
-    /* soot, not water: short-lived, little pigment; no patch to stand in */
-    for (let i = 0; i < S33.NW; i++) { const w = W[i]; if (!w || !(w.r > 0)) continue; if (w.hold) { w.hold = false; w.r = 0; U.w33.value[i].z = 0; continue; } if (w.b95 !== w.t0) { w.b95 = w.t0; w.life = Math.min(w.life, 1300); w.pig = Math.min(w.pig, 0.3); } }
-    /* Water's round stamps, its damp ring and its caustic are water: not for Brimstone */ if (S27.wet) S27.wet.forEach(w => { if (w.m.visible && !w.s95) w.m.visible = false; }); if (E && E.e31) { if (S27.ring) S27.ring.visible = false; if (S27.ca) S27.ca.visible = false; }
-    /* the fire's glow on the paper, where Water threw its blue */ const G = U.gl95.value;
-    if (E && E.e31 && e && e.go != null && C && sh.visible) { const ball = C.ball === 1, fl = 0.82 + 0.12 * Math.sin(now / 97) * Math.sin(now / 41) + 0.06 * Math.sin(now / 23);
-      G.set(C.bx, C.bz + (ball ? 0.6 * (C.by - C.gy) : 0), (ball ? 3.0 : 2.4) * C.Rw, fl * Math.min(1, e.go * 2) * (1 - (e.home || 0)) * (ball ? 0.8 * (e.b >= 0 ? 1 : RK.sm((e.a - 0.6) / 0.4)) : 0.5)); }
-    else G.w = 0; };
+    /* NO JUMPS: Water's ball comes down on to the page and changes size in six frames at the hit; for Brimstone the place and size the engine gives are followed with an ease from the hit until the form stands (about twelve frames) */
+    { const Q = HEVO.pos, F = S95.q || (S95.q = {}); if (E && E.e31 && e && Q && homObj && R21.evo) { const k = e.v >= 0 && F.on ? 0.2 + 0.8 * RK.sm((e.v - 1.2) / 0.5) : 1; if (k < 1) { F.x += (Q.x - F.x) * k; F.y += (Q.y - F.y) * k; F.z += (Q.z - F.z) * k; F.s += (homObj.s - F.s) * k; Q.x = F.x; Q.y = F.y; Q.z = F.z; homObj.s = F.s; E.ks31 = F.s / E.s0; } else { F.x = Q.x; F.y = Q.y; F.z = Q.z; F.s = homObj.s; } F.on = true; } else F.on = false; }
+    /* NO JUMPS in the lamp: Water's engine moves the lamp's round and shrinks it in one frame when its ball is put away (S32.C changes hands at v 1.25), and its flash at the hit comes on in one frame. For Brimstone the lamp's place and width are held from the hit (they ease only slowly) and the flash comes on over four frames. */
+    { const L = S95.lamp || (S95.lamp = {}), U2 = S32.sm && S32.sm.material.uniforms.lamp.value; if (E && E.e31 && e && e.go != null && C && U2 && sh.visible && S33.live) { const k = e.v >= 0 && L.on ? 0.02 : 1; if (k < 1) { L.x += (U2.x - L.x) * k; L.y += (U2.y - L.y) * k; L.z += (U2.z - L.z) * k; } else { L.x = U2.x; L.y = U2.y; L.z = U2.z; } L.on = true;
+        U.lpos.value.set(L.x - 22, 46, L.y - 15); U.aim.value.set(L.x, C.gy, L.y).sub(U.lpos.value); U.lnf.value.w = U.aim.value.length(); U.aim.value.normalize(); U.lamp.value.z = L.z;
+        const fl = e.v >= 0 ? RK.sm(e.v / 0.27) * Math.exp(-e.v / 0.3) : 0; U.lamp.value.w = 0.7 * S32.dim * (1 - 0.7 * fl); } else L.on = false; }
+    /* nothing is laid on the page: no wet, no soot, no patch to stand in */ for (let i = 0; i < S33.NW; i++) { const w = W[i]; if (w && w.r > 0) { w.r = 0; w.hold = false; } U.w33.value[i].z = 0; }
+    /* Water's damp ring and its caustic are water: not for Brimstone */ if (E && E.e31) { if (S27.ring) S27.ring.visible = false; if (S27.ca) S27.ca.visible = false; }
+    /* THE ONE FLAME (kitart flame94), where Water's ball would be: its foot on the lump, as tall as the ball's top and a third more; it rises as the ball would grow, stands while it would spin, and from the hit is drawn up to a thread while the new form rises in it. Its light on the paper is the flame's own flicker (flame94.light), where Water threw its blue. */
+    const G = U.gl95.value, F94 = AA.rxKit.flame94; let fm = S95.fl;
+    if (E && E.e31 && e && e.go != null && C && F94 && sh.visible) { if (!fm) { fm = S95.fl = F94.make(T); scene.add(fm); }
+      const O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, v = S95.v; O.root.updateWorldMatrix(true, false); v.setFromMatrixPosition(O.root.matrixWorld);
+      const pre = !(e.v >= 0); if (pre && C.ball === 1) E.h95 = 1.3 * (Math.hypot(C.bx - v.x, C.by - v.y, C.bz - v.z) + C.Rw);
+      const rise = pre ? 0.3 * RK.sm((e.a - 0.7) / 0.3) + 0.7 * (e.b >= 0 ? RK.sm(e.b / 0.3) : 0) : 1, draw = pre ? 0 : RK.sm(e.v / 1.9), h = (E.h95 || 1) * (1 + 0.12 * draw);
+      const o94 = { t: now / 1000, rise, h, w: 0.62 * h, breath: now / 1000 * 2.4, draw, face: cam, seed: 2 + (E.to || 3), smoke: 0.7, a: 1 - RK.sm((draw - 0.45) / 0.45) };
+      fm.position.set(v.x, v.y, v.z); F94.update(fm, o94); if (!E.h95) fm.visible = false;
+      G.set(v.x, v.z + 0.3 * Math.max(0, v.y - C.gy), 0.8 * h, E.h95 ? 0.95 * F94.light(o94) * (1 - (e.home || 0)) : 0); }
+    else { G.w = 0; if (fm) fm.visible = false; } };
   homEvo19 = (f0 => function (now) { f0(now); try { s95Frame(now); } catch (x) { S95.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s95dbg = () => ({ err: S95.err, kit: AA.rxKit.W95 && AA.rxKit.W95.err, w31: AA.rxKit.spirit26.W31 && AA.rxKit.spirit26.W31.err, w32: AA.rxKit.spirit26.W32 && AA.rxKit.spirit26.W32.err, s31: S31.err, s32: S32.err, s33: S33.err, s36: S36.err, sp: AA.rxKit.spiritErr || null, w69: AA.rxKit.BRIM69 && AA.rxKit.BRIM69.err, wet: S33.wet.filter(w => w && w.r > 0).length, old27: S27.wet.filter(w => w.m.visible).length });
+
+  // THE ACT, by the same rule (AA.rxKit.act95, on by default; false or ?a95=0 gives Brimstone's own act back: S77 / W77 / W92 / W93). It is WATER'S
+  // act: the clip is C26.act (kitart), fed exactly as S26 feeds it (o.bites.w26: T the things it reaches for, H the atom its hand is laid on, hitU,
+  // hand), the place to stand is r21Stand as S26 uses it, the lengths are S26.T's but for the middle, which is set so that Water's own spacing of the
+  // reaches (0.45 of the middle shared among them) falls on whole beats. What differs is only WHAT it reaches for: each sulfur the rule counts
+  // (s77Atoms), the farthest first and the nearest last (that one is the hand laid on the molecule), and what the touch leaves: no water taken, no
+  // wet film; the sulfur dips and springs (Water's own numbers from S28), catches a small blue flame (kitart flame94) and its bonds and neighbours
+  // glow blue for a moment. All of it is gone after the hit. The trail is Water's own stamps, made faint soot with a short life.
+  const s95Act = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way69 && !SP.jar && K && K.mirror95 !== false && K.act95 !== false); };
+  if (AA.rxKit && AA.rxKit.act95 == null) AA.rxKit.act95 = !/[?&]a95=0/.test(String(root.location && root.location.search));
+  jumpPlan = (f0 => function (id, to) { S95.np = false; if (id !== 'brimstone' || !s95Act()) return f0(id, to);
+    try { const L = Math.max(380, Math.min(700, kinLen(performance.now()))), pf = paceK(), n = s77Atoms().length, m = Math.max(1, n - 1), kb = Math.max(1, Math.ceil(4400 * 0.45 / (L * m))), D = kb * L * m / 0.45; S95.plan = { L, n, m, kb, D }; R21T.brimstone = [S26.T[0], D / pf, S26.T[2]]; S95.np = true; } catch (e) { S95.err = 'plan ' + String(e && e.stack); }
+    try { return f0(id, to); } finally { S95.np = false; } })(jumpPlan);
+  actPiece = (f0 => function (kind) { if (S95.np && kind === 'puff') return null; return f0.apply(this, arguments); })(actPiece);
+  A20ACT.brimstone = (f0 => function (j, c) { if (!s95Act()) return f0(j, c);
+    const v = new T.Vector3(), mb = c.mb, mc = c.mc, F = c.F, kS = Math.max(1.55, F.k * 0.8), HIT = 0.7, HAND = 0.655;
+    const at = s77Atoms().map(q => { q.b.mesh.getWorldPosition(v); return { a: q.a, x: v.x, y: v.y, z: v.z, R: s77R(q.b) }; });
+    const w26 = { T: [], H: null, hitU: HIT, hand: HAND, bonds: [], n: Math.max(0, at.length - 1), b95: true }; j.r21 = true; j.w95 = { at, tg: [] }; j.bites = Object.assign([0.3], { w26 });
+    return { want: { x: mc.x, z: mc.z + 3 }, hitU: HIT, dur: j.D + j.B + 2600, pad: 0.2,
+      after(pl) { let A0 = { x: mc.x, z: mc.z }, bd = 1e9; at.forEach(q => { const d = Math.hypot(q.x - HOMP.x, q.z - HOMP.z) + 2 * Math.min(q.x - mb.x0, mb.x1 - q.x); if (d < bd) { bd = d; A0 = { x: q.x, z: q.z - 0.35 * q.y }; } });
+        const s1 = r21Stand(F, kS, A0, A0.x >= mc.x ? -1 : 1, mb); pl.x = j.perch.x = s1.x; pl.z = j.perch.z = s1.z; pl.k = j.k = kS; j.sd = s1.sd; j.spot = { x: A0.x, z: A0.z }; this.tgt = j.spot;
+        const o = at.slice().sort((p, q) => Math.hypot(q.x - s1.x, q.z - s1.z) - Math.hypot(p.x - s1.x, p.z - s1.z)), pt = q => ({ x: q.x, y: q.y, z: q.z, sx: q.x >= s1.x ? 1 : -1 });
+        w26.T = o.slice(0, -1).map(pt); w26.H = o.length ? pt(o[o.length - 1]) : { x: A0.x, y: 0.5, z: A0.z, sx: A0.x >= s1.x ? 1 : -1 }; w26.n = w26.T.length;
+        const m = Math.max(1, w26.T.length), gw = (HIT - 0.08 - 0.17) / m; j.w95.tg = o.map((q, i) => Object.assign({}, q, { u: i < o.length - 1 ? 0.17 + (i + 0.45) * gw : HAND })); },
+      draw() { /* all of it is in the scene */ } }; })(A20ACT.brimstone);
+  const s95MolEnd = () => { const M = S95.M; if (!M) return; M.films.forEach(f => { if (f.parent) f.parent.remove(f); }); M.fl.forEach(m => { if (m) m.visible = false; }); M.dip.forEach(d => { if (d && d.mesh && !d.set) { d.mesh.position.y = d.y0; d.mesh.scale.setScalar(d.s0); } }); S95.M = null; };
+  const s95Glow = (host, sc, cyl) => { const f = new T.Mesh(cyl ? CYL : SPH, new T.MeshBasicMaterial({ color: 0x5f7dff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending })); if (cyl) f.scale.set(sc, 1, sc); else f.scale.setScalar(sc); f.castShadow = false; f.renderOrder = 6; f.userData.plain = true; host.add(f); return f; };
+  const s95ActFrame = now => { const A = st.homAct, SP = s26Fig(), on = s95On(SP), live = !!(on && A && A.id === 'brimstone' && A.j && A.j.w95);
+    /* the trail: Water's stamps as faint soot, short-lived; none but on the way; no beads of water, no caustic, no damp ring */
+    if (on && S27.wet) { const way = live && now - A.t < A.j.W + A.j.J + A.j.D + 0.7 * A.j.B; S27.wet.forEach(w => { if (!w.m.visible) return; if (w.k95 !== w.t0) { w.k95 = w.t0; w.ok95 = way && !w.bead; w.life = 1000; w.r *= 0.55; } if (!w.ok95) { w.m.visible = false; return; }
+        if (w.ms && w.m.material === w.ms) { const U = w.ms.uniforms; U.tint.value.set(0.945, 0.94, 0.935); U.gl.value = 0; } }); if (S27.ca) S27.ca.visible = false; if (S27.ring) S27.ring.visible = false; }
+    if (live && (!S95.M || S95.M.j !== A.j)) { s95MolEnd(); S95.M = { j: A.j, t0: A.t, fl: [], films: [], dip: [], seen: new Map() }; }
+    const M = S95.M; if (!M) return; const j = M.j, a = now - M.t0 - j.W - j.J, D = j.D, tg = j.w95.tg, K = AA.rxKit, F94 = K.flame94, RK = K.RK, hitT = 0.7 * D; let busy = a < D + 400;
+    if (!center || !center.balls || (!live && a < D * 0.6)) { s95MolEnd(); return; } dirty = true;
+    tg.forEach((q, i) => { const hb = a - q.u * D; if (hb <= 0) return; const b = center.balls.get(q.a); if (!b || !b.mesh) return;
+      /* the touched ball dips and springs (S28's numbers) */ let d = M.dip[i]; if (!d || d.mesh !== b.mesh) d = M.dip[i] = { mesh: b.mesh, y0: b.mesh.position.y, s0: b.mesh.scale.x, set: false }; if (!d.set) { const k = hb < 1100 ? -Math.exp(-hb / 230) * Math.sin(hb / 80) : 0; b.mesh.position.y = d.y0 + 0.8 * k; b.mesh.scale.setScalar(d.s0 * (1 + 0.2 * k)); if (hb >= 1100) d.set = true; }
+      /* it catches a small blue flame, which flares on the hit and is drawn up and gone after it */ const out = RK.cl((a - hitT - 500 - 110 * i) / 700); if (out < 1) busy = true;
+      if (F94) { let m = M.fl[i]; if (!m) { m = M.fl[i] = (S95.pool && S95.pool.pop()) || F94.make(T); if (m.parent !== scene) scene.add(m); } b.mesh.getWorldPosition(S95.v); const fla = a > hitT ? 0.55 * Math.exp(-(a - hitT) / 260) : 0, h = q.R * (2.7 + 1.6 * fla);
+        m.position.set(S95.v.x, S95.v.y + 0.55 * q.R, S95.v.z - 0.3 * q.R); F94.update(m, { t: now / 1000 + 7.3 * i, rise: RK.sm(hb / 280), h, w: 0.62 * h, breath: now / 380 + i, draw: out, face: cam, seed: 3 + i, smoke: 0.5 }); }
+      /* its bonds glow for a moment and its neighbours are lit softly while it burns */ const e1 = Math.min(1, hb / 160) * (1 - RK.sm((hb - 450) / 900)), e2 = Math.min(1, hb / 320) * (1 - out);
+      (center.sticks || []).forEach(k => { if (k.a !== q.a && k.b !== q.a) return; (k.parts || []).forEach(pt => { const ms = pt.mesh; if (!ms) return; let f = M.seen.get(ms); if (!f) { f = s95Glow(ms, 1.5, true); M.films.push(f); M.seen.set(ms, f); f.userData.e = 0; } f.userData.e = Math.max(f.userData.n === now ? f.userData.e : 0, 0.5 * e1); f.userData.n = now; f.material.opacity = f.userData.e; f.visible = f.userData.e > 0.01; });
+        const o = k.a === q.a ? k.b : k.a, ob = center.balls.get(o); if (ob && ob.mesh && o.el !== 'H') { let f = M.seen.get(ob.mesh); if (!f) { f = s95Glow(ob.mesh, 1.14, false); M.films.push(f); M.seen.set(ob.mesh, f); } f.userData.e = Math.max(f.userData.n === now ? f.userData.e : 0, 0.26 * e2 * (0.85 + 0.15 * Math.sin(now / 90 + i))); f.userData.n = now; f.material.opacity = f.userData.e; f.visible = f.userData.e > 0.01; } }); });
+    if (!busy) { (S95.pool || (S95.pool = [])).push.apply(S95.pool, M.fl.filter(Boolean)); s95MolEnd(); } };
+  S95.v = new T.Vector3();
+  a20Spent = (f0 => function (now) { const r = f0(now); try { s95ActFrame(now); } catch (e) { S95.err = 'act ' + String(e && e.stack); } return r; })(a20Spent);
   // ==== S95 END
   size(); newRun(); requestAnimationFrame(frame);
 }
