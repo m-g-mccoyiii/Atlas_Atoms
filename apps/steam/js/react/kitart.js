@@ -5615,4 +5615,137 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W70 = W70;
 // ==== W70 END
+// ==== W75 BEGIN
+// (builder 75) HYDROGEN AS A SPIRIT, five stages, stills only (AA.rxKit.hyd75 = 1, or ?h75=1 on the page; OFF by default: the game shows the old Hydrogen).
+// Built and drawn by Water's own code, as Acid (48/50), Dry ice (49/53), Slime (61), Seedling (64) and Brimstone (69) were: each stage is a set of numbers
+// like a stage of S25, put in Water's stage-3 slot for the moment of building; geo26 makes it one closed skin on joints, fig26 the face, set30 pen and wash.
+// What is Hydrogen's own: it FLOATS. Water's code roots every body on the bench, so the body is built standing on the tip of its tail and the whole
+// figure is then lifted (a group `mid75` between the game's holder and the figure: its lift and its size). What ties it to the bench is a soft shadow
+// and a pool of pale light on the wood under it (laid flat on the bench every draw), and a glow behind it. The body is a MOTE OF TWO LOBES: a small
+// lower lobe and a large head lobe (the face), pinched where they join, a wisp of tail below, a lick of a wisp on top that always drifts up, two thin
+// wisp arms from the lower lobe. It stays light: it grows by NUMBER, glow and reach. From stage 4 smaller two-lobed motes swing round it on THREADS
+// OF LIGHT: each is a limb of the one skin (a thread that swells into two lobes), the thread washed nearly white and kept out of the pen's line.
+// No pool. One wash: bare paper at the core, pale sky, rose-lilac where it gathers at the edge. No yellow.
+//  1 the mote: one squat speck, the lobes hardly apart and not in line, barely off the wood, wide-eyed, wobbling
+//  2 the bubble: higher, the lobes clear, two wisp arms held out like a rope-walker's, delighted
+//  3 the sprite (the line-up's figure): well above the bench, head cocked, both arms thrown up, a curl of tail, a glow, grinning
+//  4 the pair: a second, smaller mote swung round it on a thread of light, one arm up to it, a fist on its hip, one brow up
+//  5 the swarm-star: four small motes on threads flung out round it like a pinwheel, arms wide, a long wavering tail, a wide glow, laughing
+KIT.hyd75 = KIT.hyd75 == null ? ((typeof location !== 'undefined' && /[?&]h75=1/.test(String(location.search))) ? 1 : null) : KIT.hyd75;
+const W75 = { geo: {}, figs: [], err: null, TARGET: [0, 3600, 4200, 5000, 6200, 7600], ROLE: [], pen: 0.82,
+  /* the height the game gives a spirit at each stage (scheme.js sizes it by its tallest joint); `fit` below is how tall lift and figure are to be in all */
+  SIZE: [0, 3.3, 4.5, 6.4, 7.0, 6.9],
+  C: { lite: [0.800, 0.890, 1.000], edge: [0.800, 0.580, 0.860], shade: [0.560, 0.560, 0.920], margin: [0.900, 0.840, 0.960], thread: [1.0, 0.93, 0.98], hl: [0.62, 0.76],
+    lid: 0xd6cdf0, shadow: 0x120a07, light: 0x8890c8, halo: 0x8f97e6, core: 0xd9a6c8 } };
+/* the spine: tail, lower lobe, pinch, head lobe, lick. A key is a BALL on the spine (the skin is the hull of the balls along it), so a lobe is one
+   ball with a slightly smaller one close above and below it, and the pinch a small ball where the two lobes meet. sh the shoulders, kb the lower
+   lobe, kh the head (places on the spine for limbs) */
+const lobe75 = q => [[q[0], q[1] - 0.1 * q[2], 0, 0.92 * q[2], 0.86 * q[2]], [q[0], q[1], 0, q[2], 0.93 * q[2]], [q[0], q[1] + 0.1 * q[2], 0, 0.92 * q[2], 0.86 * q[2]]];
+const tk75 = pts => pts.map(p => [p[0], p[1], 0, p[2], p[2]]);
+const mk75 = (tail, L, Hd, lick, pr) => { const dx = Hd[0] - L[0], dy = Hd[1] - L[1], dl = Math.hypot(dx, dy), t = (L[2] + (dl - L[2] - Hd[2]) / 2) / dl, pin = [L[0] + dx * t, L[1] + dy * t, 0, pr || 0.17, pr || 0.17],
+    K = pad64(tail[0][0], 0, 0.05).concat(tk75(tail), lobe75(L), [pin], lobe75(Hd), tk75(lick)), nt = tail.length;
+  return { K, sh: 4 + nt + 1.5, kb: 4 + nt + 1, kh: 4 + nt + 5, role: { chest: nt + 2, neck: nt + 3, head: nt + 5, hair: nt + 7 } }; };
+const arm75 = (B, th, abs, rad) => lim64(B.K, B.sh, th, abs.map(p => [p[0], p[1], p[2] == null ? 0.05 : p[2]]), rad, { foam: () => 0, arm: 1 });
+/* a companion: a thread of light from the back of the body (so it is not counted as an arm) that swells, at its end, into a mote of two lobes
+   pointing along u; s its size. The thread is washed white and left out of the pen's line (foam 1); the mote is drawn like the body (foam 0) */
+const BEAD75 = [[0.1, 0.1], [0.24, 0.2], [0.3, 0.19], [0.47, 0.1], [0.72, 0.28], [0.8, 0.3], [0.88, 0.28], [1.14, 0.07]];
+const bead75 = (B, k, path, s, u0) => { const ul = Math.hypot(u0[0], u0[1]), u = [u0[0] / ul, u0[1] / ul], e = path[path.length - 1], n0 = path.length,
+    pts = path.map(p => [p[0], p[1], p[2] || 0]).concat(BEAD75.map(d => [e[0] + u[0] * d[0] * s, e[1] + u[1] * d[0] * s, 0])), rad = path.map(() => 0.03).concat(BEAD75.map(d => d[1] * s)), cut = (n0 + 0.45) / pts.length;
+  const L = lim64(B.K, k, -PI / 2, pts, rad, { foam: kp => (kp < cut ? 1 : 0), bead: 1 }); L.eye = { c: [e[0] + u[0] * 0.82 * s, e[1] + u[1] * 0.82 * s], u, s }; return L; };
+/* a thread that swings out round c the way a pinwheel's arm does: from angle a0 it turns `turn` further while its distance grows to R (the picture is
+   squeezed to 0.7 in height); the mote at its end heads on along the swing */
+const swirl75 = (B, c, a0, R, s, turn) => { const n = 6, tr = turn || 1.9, at = t => { const a = a0 + tr * t, r = 0.5 + (R - 0.5) * Math.pow(t, 0.85); return [c[0] + r * Math.cos(a), c[1] + 0.7 * r * Math.sin(a), t < 0.15 ? -0.5 : t < 0.35 ? -0.3 : 0]; },
+    path = Array.from({ length: n }, (_, i) => at(i / (n - 1))), e = at(1), d = at(0.97); return bead75(B, Math.sin(a0) < 0 ? B.kb : B.kh, path, s, [e[0] - d[0], e[1] - d[1]]); };
+/* a companion's face, in pen: two short strokes for eyes, and a smile on the larger ones */
+const eyes75 = L => { const q = L.eye, c = q.c, u = q.u, v = [u[1], -u[0]], s = q.s, P = (a, b) => [c[0] + v[0] * a * s + u[0] * b * s, c[1] + v[1] * a * s + u[1] * b * s], dot = a => pen64([P(a, -0.035), P(a, 0.055)], 0.75, 0);
+  return [dot(-0.105), dot(0.105)].concat(s >= 1.2 ? [pen64([P(-0.085, -0.115), P(0, -0.155), P(0.085, -0.115)], 0.5, 1)] : []); };
+/* pen in the air: short strokes that ride the joint nearest to them (lines of rising under it, a wobble beside it) */
+const air75 = (pts, w) => ({ air: pts.map(p => [p[0], p[1], p[2] == null ? 0.3 : p[2]]), w: w || 0.42, o: { smooth: 2, wob: 0.3, min: 2, trim: 0 } });
+const COM75 = { foot: 0.02, thin: 0.13, hp: 1.5, rings: 2.5, frho: 0.4, wet: [0, 0, 0.02, 0.02], foam: () => 0 };
+const SPEC75 = [
+  // 1 the mote
+  () => { const B = mk75([[0.12, 0.1, 0.2], [0.12, 0.22, 0.32]], [0.12, 0.6, 0.48], [-0.1, 1.62, 0.72], [[-0.1, 2.38, 0.08], [-0.06, 2.52, 0.06], [0.03, 2.6, 0.045], [0.11, 2.55, 0]], 0.3);
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.4, fit: 4.2, limbs: [],
+      face: { c: [-0.1, 1.64, 1.0], d: [0, 0, 1], k: 1.75, er: 1.3, dx: 0.2, lid: 0, brow: { y: 0.3, len: 0.12, ang: [-0.3, -0.3], arch: 0.01, r: 0.02 }, mouth: { o: 0.028, y: -0.2 } },
+      pen: [air75([[-0.98, 1.95], [-1.06, 1.72], [-1.0, 1.48]]), air75([[0.8, 1.85], [0.88, 1.62], [0.82, 1.4]]), air75([[0.76, 0.8], [0.82, 0.62], [0.78, 0.46]], 0.36)],
+      shadow: [1.1, 0.6, 0.6], light: 0, halo: [1.25, 0.21], core: [0.9, 0.22] }, COM75); },
+  // 2 the bubble
+  () => { const B = mk75([[0.24, 0.08, 0.05], [0.3, 0.3, 0.06], [0.18, 0.5, 0.08], [0.07, 0.64, 0.1]], [0, 1.15, 0.46], [0.05, 2.38, 0.8], [[0.05, 3.22, 0.08], [0, 3.36, 0.06], [-0.1, 3.45, 0.045], [-0.2, 3.4, 0]]);
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.8, fit: 5.8,
+      limbs: [arm75(B, 0, [[0.55, 1.3], [0.95, 1.42], [1.3, 1.5], [1.62, 1.68]], [0.12, 0.115, 0.1, 0.06]), arm75(B, PI, [[-0.55, 1.24], [-0.95, 1.18], [-1.3, 1.12], [-1.62, 1.2]], [0.12, 0.115, 0.1, 0.06])],
+      face: { c: [0.05, 2.4, 1.0], d: [0, 0, 1], k: 1.8, er: 1.15, dx: 0.2, lid: 0, brow: { y: 0.29, len: 0.15, ang: [0, 0], arch: 0.04, r: 0.022 }, mouth: { w: 0.12, d: 0.08, y: -0.2, r: 0.025 } },
+      pen: [air75([[-0.5, 0.56], [-0.5, 0.2]]), air75([[0.62, 0.5], [0.62, 0.22]], 0.36)],
+      shadow: [1.1, 0.6, 0.52], light: 0.16, halo: [1.7, 0.30], core: [1.1, 0.25] }, COM75); },
+  // 3 the sprite (the line-up's figure)
+  () => { const B = mk75([[0.5, 0.1, 0.05], [0.62, 0.36, 0.06], [0.5, 0.62, 0.075], [0.26, 0.82, 0.09], [0.08, 0.98, 0.12]], [0, 1.52, 0.55], [-0.14, 2.86, 0.85], [[-0.14, 3.76, 0.09], [-0.08, 3.92, 0.07], [0.06, 4.04, 0.055], [0.2, 3.98, 0.045], [0.22, 3.86, 0]]);
+    return Object.assign({ keys: B.K, role: B.role, lift: 1.2, fit: 7.6,
+      limbs: [arm75(B, 0, [[0.68, 1.85], [1.05, 2.08], [1.25, 2.5], [1.32, 2.9], [1.22, 3.18]], [0.13, 0.12, 0.11, 0.1, 0.06]), arm75(B, PI, [[-0.68, 1.8], [-1.15, 1.92], [-1.5, 2.24], [-1.68, 2.66], [-1.6, 2.98]], [0.13, 0.12, 0.11, 0.1, 0.06])],
+      face: { c: [-0.14, 2.88, 1.0], d: [0, 0, 1], k: 1.85, er: 1.1, dx: 0.2, lid: 0, brow: { y: 0.285, len: 0.16, ang: [0.1, -0.05], lift: [0, 0.03], arch: 0.03, r: 0.023 }, mouth: { w: 0.15, d: 0.095, y: -0.2, tilt: 0.02, r: 0.026 } },
+      pen: [air75([[-0.6, 0.9], [-0.6, 0.4]]), air75([[-0.3, 0.6], [-0.3, 0.2]], 0.36), air75([[0.95, 1.0], [0.95, 0.6]], 0.36)],
+      shadow: [1.1, 0.58, 0.46], light: 0.22, halo: [2.2, 0.39], core: [1.3, 0.29] }, COM75); },
+  // 4 the pair
+  () => { const B = mk75([[-0.4, 0.1, 0.05], [-0.56, 0.4, 0.06], [-0.44, 0.7, 0.07], [-0.2, 0.94, 0.085], [-0.05, 1.1, 0.12]], [0, 1.74, 0.54], [0.1, 3.14, 0.9], [[0.1, 4.09, 0.09], [0.2, 4.26, 0.07], [0.34, 4.36, 0.055], [0.46, 4.28, 0.045], [0.46, 4.14, 0]]);
+    const M = bead75(B, B.kb, [[0.3, 1.5, -0.45], [1.0, 1.1, -0.25], [1.8, 1.1], [2.42, 1.5], [2.74, 2.15], [2.7, 2.8], [2.5, 3.2]], 1.3, [-0.3, 1]);
+    return Object.assign({ keys: B.K, role: B.role, lift: 1.0, fit: 8.0,
+      limbs: [arm75(B, 0, [[0.74, 2.06], [1.2, 2.26], [1.55, 2.66], [1.72, 3.08]], [0.17, 0.16, 0.14, 0.08]), arm75(B, PI, [[-0.68, 1.94], [-1.1, 1.76], [-1.04, 1.42], [-0.6, 1.4]], [0.16, 0.15, 0.14, 0.12]), M],
+      face: { c: [0.1, 3.16, 1.0], d: [0, 0, 1], k: 1.9, er: 1.05, dx: 0.2, lid: 0.3, brow: { y: 0.285, len: 0.17, ang: [0.12, 0.2], lift: [0, 0.05], arch: 0.01, r: 0.024 }, mouth: { w: 0.13, d: 0.06, y: -0.21, x: 0.03, tilt: 0.035, r: 0.026 } },
+      pen: eyes75(M).concat([air75([[0.5, 0.9], [0.5, 0.4]]), air75([[0.2, 0.6], [0.2, 0.2]], 0.36), air75([[-0.9, 1.1], [-0.9, 0.7]], 0.36)]),
+      shadow: [1.3, 0.62, 0.46], light: 0.26, halo: [2.6, 0.45], core: [1.45, 0.32], glows: [[M.eye.c[0], M.eye.c[1], 0.8, 0.2]] }, COM75); },
+  // 5 the swarm-star
+  () => { const B = mk75([[0.3, 0.1, 0.05], [0.46, 0.4, 0.06], [0.3, 0.72, 0.07], [0.04, 0.98, 0.08], [-0.14, 1.26, 0.09], [-0.06, 1.5, 0.11], [0, 1.62, 0.13]], [0, 2.26, 0.58], [0, 3.78, 0.98], [[0, 4.82, 0.1], [-0.08, 5.0, 0.08], [-0.2, 5.14, 0.055], [-0.34, 5.1, 0.045], [-0.36, 4.98, 0]]);
+    const c = [0, 3.05], Ms = [swirl75(B, c, -1.0, 2.75, 1.15), swirl75(B, c, 0.55, 2.45, 1.0), swirl75(B, c, 2.15, 2.5, 1.0), swirl75(B, c, 3.7, 2.9, 1.15)];
+    return Object.assign({ keys: B.K, role: B.role, lift: 0.7, fit: 8.2,
+      limbs: [arm75(B, 0, [[0.8, 2.45], [1.3, 2.58], [1.8, 2.5], [2.2, 2.62], [2.46, 2.9]], [0.18, 0.17, 0.16, 0.14, 0.08]), arm75(B, PI, [[-0.8, 2.45], [-1.3, 2.52], [-1.8, 2.4], [-2.2, 2.5], [-2.44, 2.78]], [0.18, 0.17, 0.16, 0.14, 0.08])].concat(Ms),
+      face: { c: [0, 3.82, 1.1], d: [0, 0, 1], k: 2.05, er: 1.05, dx: 0.2, lid: 0, brow: { y: 0.29, len: 0.17, ang: [-0.06, -0.06], arch: 0.05, r: 0.025 }, mouth: { w: 0.17, d: 0.115, y: -0.19, r: 0.027 } },
+      pen: Ms.reduce((a, m) => a.concat(eyes75(m)), []).concat([air75([[-0.5, 1.2], [-0.5, 0.6]]), air75([[0.8, 0.9], [0.8, 0.4]], 0.36)]),
+      shadow: [1.7, 0.75, 0.44], light: 0.3, halo: [3.6, 0.51], core: [1.7, 0.36], glows: Ms.map(m => [m.eye.c[0], m.eye.c[1], 0.6 * m.eye.s, 0.2]) }, COM75); }
+];
+/* the wash: the same shader as Water's; its four blues become pale sky and rose-lilac, far more paper is left bare (a bright core), nothing is a
+   pool, nothing gathers low down; the threads are left almost white */
+function tint75(T, S) { if (!S.m30) return; S.t75 = true; S.t48 = true; const C = W75.C, g = v => 'vec3(' + v.map(x => x.toFixed(3)).join(', ') + ')', f = x => (+x).toFixed(3), mx = k => 'mix(' + g(C[k]) + ', ' + g(C.thread) + ', f75)',
+    sw = [['float pl = step(0.5, vW29.x) * (1.0 - step(0.5, vW29.w)),', 'float f75 = smoothstep(0.5, 0.8, vW29.w), pl = 0.0,'],
+      ['vec3(0.64, 0.80, 0.945)', mx('lite')], ['vec3(0.40, 0.59, 0.84)', mx('edge')], ['vec3(0.36, 0.52, 0.78)', mx('shade')], ['vec3(0.60, 0.76, 0.92)', mx('margin')],
+      ['float hl = smoothstep(0.80, 0.87,', 'float hl = smoothstep(' + f(C.hl[0]) + ', ' + f(C.hl[1]) + ','], ['float low = smoothstep(0.42, 0.02, bp.y);', 'float low = 0.0;'], ['c9 = mix(c9, PENCIL30, 0.5 *', 'c9 = mix(c9, PENCIL30, 0.12 *']];
+  const one = m => { if (!m || !m.isMeshStandardMaterial || !m.onBeforeCompile || m.userData.s75) return; m.userData.s75 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey; m.onBeforeCompile = sh => { f0(sh); sw.forEach(q => { sh.fragmentShader = sh.fragmentShader.split(q[0]).join(q[1]); }); }; m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 's75'; m.needsUpdate = true; };
+  one(S.m30.body); one(S.m30.hull); (S.o29 || []).forEach(q => one(q.m30)); if (S.m30.lid && S.m30.lid.color) S.m30.lid.color.copy(new T.Color(C.lid).convertSRGBToLinear()); }
+/* one stage: its numbers go in Water's stage-3 slot for the moment of building; the figure then carries its own stage */
+function hyd75Fig(T, stage, extra) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const sp = SPEC75[stage - 1], keep = [S25[2], W26.geo[3], W26.ROLE[3], W26.TARGET]; let g = null;
+  S25[2] = sp; if (W75.geo[stage]) W26.geo[3] = W75.geo[stage]; else delete W26.geo[3]; W26.ROLE[3] = W75.ROLE[stage] || (W75.ROLE[stage] = sp().role); W26.TARGET = W75.TARGET[stage];
+  try { g = fig26(T, 3, extra); W75.geo[stage] = W26.geo[3]; } finally { S25[2] = keep[0]; if (keep[1]) W26.geo[3] = keep[1]; else delete W26.geo[3]; W26.ROLE[3] = keep[2]; W26.TARGET = keep[3]; }
+  const S = g.userData.rig2.sp, G = S.G, o = G.o, V3 = T.Vector3, J = G.J, C = W75.C; S.way75 = 'h' + stage; S.st = stage; g.userData.rig2.stage = stage; if (g.userData.water24) g.userData.water24.stage = stage;
+  const near = p => { let bj = 1, bd = 1e9; J.forEach((q, j) => { const dd = Math.hypot(q.p[0] - p[0], q.p[1] - p[1], q.p[2] - p[2]); if (j && dd < bd) { bd = dd; bj = j; } }); return bj; };
+  if (S.wet) S.wet.visible = false; (S.drips || []).forEach(d => { if (d.g) d.g.visible = false; });
+  /* it floats: the figure hangs in a group of its own, lifted off the bench; sized so that lift and figure together stand `fit` tall in the game */
+  const mid = new T.Group(), k = extra && extra.jar ? 1 : o.fit * G.H / (W75.SIZE[stage] * (G.H + o.lift)); mid.scale.setScalar(k); mid.position.y = (extra && extra.jar ? 0 : o.lift) * k; mid.add(S.root); g.add(mid); S.mid75 = mid;
+  if (!(extra && extra.jar)) { try { const soft = tex49(T, 'glow'), flat = (hex, w, h, op, add) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), flat49(T, hex, { transparent: true, alphaMap: soft, depthWrite: false, opacity: op, blending: add ? T.AdditiveBlending : T.NormalBlending })); m.userData.plain = true; m.userData.nobox = true; return m; };
+      /* on the wood under it: its shadow, small and soft because it hangs high, and the pale light it sheds (lay75 lays them on the bench itself) */
+      const lay = new T.Group(); S.root.add(lay); S.lay75 = lay; const q = o.shadow, sh = flat(C.shadow, q[0] * 2, q[1] * 2, q[2]); sh.rotation.x = -PI / 2; sh.position.y = 0.002; sh.renderOrder = 16; sh.userData.h75 = 'shadow'; lay.add(sh);
+      if (o.light) { const m = flat(C.light, q[0] * 6, q[1] * 7, o.light, 1); m.rotation.x = -PI / 2; m.position.y = 0.001; m.renderOrder = 15; m.userData.h75 = 'light'; lay.add(m); }
+      /* the glow behind it: a wide pale one and a small warm one, riding the head; and a small one behind each companion */
+      const jh = G.bj[G.R.head], hp = J[jh].p, glow = (hex, x, y, r, op, par, pj) => { const m = flat(hex, r * 2, r * 2, op, 1); m.position.set(x - pj[0], y - pj[1], -0.9 - pj[2]); m.renderOrder = 14; m.userData.h75 = 'glow'; par.add(m); return m; };
+      if (o.halo) glow(C.halo, hp[0], hp[1] - 0.25 * o.halo[0], o.halo[0], o.halo[1], S.bones[jh], hp); if (o.core) glow(C.core, hp[0], hp[1], o.core[0], o.core[1], S.bones[jh], hp);
+      (o.glows || []).forEach(q2 => { const j = near([q2[0], q2[1], 0]); glow(C.halo, q2[0], q2[1], q2[2], q2[3], S.bones[j], J[j].p); });
+    } catch (e) { W75.err = String(e && e.stack); } }
+  /* the pen's own strokes: the companions' eyes are laid on the skin by rays from in front, the strokes in the air are given as they are; each rides the joint nearest to it */
+  const strokes = (o.pen || []).map(s => { let pts; if (s.air) pts = s.air; else { const Dv = new V3().fromArray(s.d || [0, 0, 1]).normalize(), Rv = new V3().crossVectors(new V3(0, 1, 0), Dv).normalize(), Uv = new V3().crossVectors(Dv, Rv), Cv = new V3().fromArray(s.c);
+        pts = s.pts.map(q => { const p = Cv.clone().addScaledVector(Rv, q[0]).addScaledVector(Uv, q[1]).addScaledVector(Dv, G.H * 0.45); for (let i = 0; i < 200; i++) { const dd = G.f(p.x, p.y, p.z); if (dd < 0.003) { const gr = G.grad(p.x, p.y, p.z, G.cell * 0.3); return [p.x + gr[0] * 0.02, p.y + gr[1] * 0.02, p.z + gr[2] * 0.02]; } p.addScaledVector(Dv, -Math.max(0.004, dd * 0.4)); if (p.z < -G.H) break; } return null; }).filter(Boolean); }
+    if (pts.length < 2) return null; const j = near(pts[pts.length >> 1]);
+    return { j, w: s.w || 0.6, o: s.o || { smooth: 2, wob: 0.7, min: 3 }, pts: pts.map(p => [p[0] - J[j].p[0], p[1] - J[j].p[1], p[2] - J[j].p[2]]) }; }).filter(Boolean);
+  S.a75 = { strokes, pts: Array.from({ length: 40 }, () => new V3()) };
+  tint75(T, S); W75.figs.push(S); if (W75.figs.length > 24) W75.figs.splice(0, W75.figs.length - 24); return g; }
+/* the threads of light have no pen line: their part of the skin is kept out of the pen's silhouette (as Brimstone's flames are) */
+function cut75(S, s) { const P = s.tp.P, n = s.tp.nv, m = new Uint8Array(n), g = S.body.geometry, gp = g.attributes.position, ga = g.attributes.w25a, M = new Map(), key = (x, y, z) => Math.round(x * 400) + ',' + Math.round(y * 400) + ',' + Math.round(z * 400);
+  for (let i = 0; i < gp.count; i++) M.set(key(gp.getX(i), gp.getY(i), gp.getZ(i)), ga.getW(i)); for (let i = 0; i < n; i++) { const w = M.get(key(P[3 * i], P[3 * i + 1], P[3 * i + 2])); m[i] = w != null && w > 0.7 ? 1 : 0; } return m; }
+sil30 = (f0 => function (R, s) { const S = W75.cur; if (S && R === S.pen30 && s === R.body && s.tp && s.C) { try { const m = S.cut75 || (S.cut75 = cut75(S, s)), C = s.C; for (let i = 0; i < m.length; i++) if (m[i]) C[4 * i + 3] = 0; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(sil30);
+/* shadow and light lie on the bench, straight under where the figure would stand, whatever way the figure is tipped and however high it hangs */
+function lay75(T, S) { const e = S.lay75, p = e.parent, base = S.mid75 && S.mid75.parent, V = W75.v || (W75.v = { q: new T.Quaternion(), a: new T.Vector3(), b: new T.Vector3() }); if (!p || !base) return; let top = p; while (top.parent && !top.parent.isScene) top = top.parent;
+  p.updateWorldMatrix(true, false); p.getWorldQuaternion(V.q); e.quaternion.copy(V.q.invert()); base.getWorldPosition(V.a); top.getWorldPosition(V.b); V.a.y = V.b.y + W48.benchY * top.scale.y; p.worldToLocal(V.a); e.position.copy(V.a); }
+/* no pool ripples and no flow lines down the front; a finer pen; its own strokes are then written by builder 48's ink48 with the figure's own pen,
+   S.a48 lent for that call only, so Acid's idle and act never run on it */
+draw30 = (f0 => function (T, S, ren, cam) { if (!S.way75) return f0(T, S, ren, cam); if (!S.t75) tint75(T, S); if (S.lay75) { try { lay75(T, S); } catch (e) { W75.err = String(e && e.stack); } } const pl = S.G.pl, R0 = S.G.R, lw0 = W30.lw; S.G.pl = null; S.G.R = Object.assign({}, R0, { chest: 0 }); W30.lw = lw0 * W75.pen; W75.cur = S;
+  try { f0(T, S, ren, cam); if (S.a75) { const a0 = S.a48; S.a48 = S.a75; try { ink48(T, S, ren, cam); } catch (e) { W75.err = String(e && e.stack); } finally { S.a48 = a0; } } } finally { S.G.pl = pl; S.G.R = R0; W30.lw = lw0; W75.cur = null; } })(draw30);
+KIT.hyd75Fig = hyd75Fig; KIT.HYD75 = W75;
+/* behind the switch: Hydrogen's bench figure is the spirit at its stage (the jar keeps the old Hydrogen) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homh2' && KIT.hyd75 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = hyd75Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W75.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
+// ==== W75 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
