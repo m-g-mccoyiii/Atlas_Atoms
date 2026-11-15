@@ -526,7 +526,7 @@ scheme.html: bump `scheme.js?v=`, `kitart.js?v=`.
 
 ## Twenty-fourth builder (14 November)
 
-Branch `page-builder-24` (worktree `page24`). File: `kitart.js` (added to only). Stills only. Sheet: `water24-options.jpg` and `.txt` in `C:\Worktlas-atoms\.claude\shots`. The game's Water is not changed and nothing is wired in.
+Branch `page-builder-24` (worktree `page24`). File: `kitart.js` (added to only). Stills only. Sheet: `water24-options.jpg` and `.txt` in `C:\Work\atlas-atoms\.claude\shots`. The game's Water is not changed and nothing is wired in.
 
 - **Water as an elemental, three ways** (`W24`, `AA.rxKit.water24 = 'a' | 'b' | 'c'`, `AA.rxKit.water24Fig(THREE, stage, way)`): a pure water, b water spirit, c water beast, five stages each, front to +z, standing at y = 0. The owner had rejected the old creatures as objects stuck together.
 - **One closed mesh per body** (`sweep`): rings swept along a spine given as keys `[x, y, z, a, b]` (a point, half width to the side, half depth), Catmull-Rom between keys, frames carried along the spine. `pool(...)` gives the first keys: the thin pool and the fillet up into the foot, part of the same surface. Arms, ears, legs are `bumps` (`k` key index, `th` angle round the ring, `amp`, `off` a pull); manes, twists and foam lips are `mod(kp, th)`. Depth (deep foot, mid, pale where thin), `foam`, `lite` and the highlight are vertex colours. `inkHull` is the same geometry pushed out along its normals, back faces, for the ink line. So nothing can come apart when animated: animate by moving the keys and rebuilding, or by bones along the spine.
@@ -549,7 +549,7 @@ Branch `page-builder-24` (worktree `page24`). File: `kitart.js` (the water24 blo
 
 ## Twenty-sixth builder (14 November)
 
-Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W26` at the end, one hook line at the end of the first closure), `scheme.js` (block `S26` before `drawInk`). Clips: `water26.mp4`, `water26-evolve.mp4`, `water26-stages.jpg` with notes, in `C:\Worktlas-atoms\.claude\shots`.
+Branch `page-builder-24` (worktree `page24`). Files: `kitart.js` (block `W26` at the end, one hook line at the end of the first closure), `scheme.js` (block `S26` before `drawInk`). Clips: `water26.mp4`, `water26-evolve.mp4`, `water26-stages.jpg` with notes, in `C:\Work\atlas-atoms\.claude\shots`.
 
 - **The water spirit is the game's Water** (`AA.rxKit.spiritOn`, on by default; `false` gives the old Water back). `build('homwater', ...)` asks `AA.rxKit.spiritBuild`, so bench, jar and shelf all get it (a jar with no stage shows stage 2).
 - **One skin per stage** (`geo26`): the stage's own numbers in `S25` (pool, spine keys, limbs) are read as one implicit body (a flat pool, round sections along the spine, a chain along each limb, joined smoothly) and meshed once by surface nets: 4.9 to 5.5 thousand vertices, one closed surface, built in 0.1 to 0.3 s and kept per stage. Stage 5's crown is seven points and a rim added here.
@@ -808,7 +808,7 @@ scheme.html: bump `kitart.js?v=` (93 to 94).
 
 ## Forty-ninth builder (15 November)
 
-Branch `dryice-builder-49` (worktree `dryice49`, from `steam`). File: `kitart.js` (block `W49` after `W48`). Stills only, stage 3 only. Shots in `C:\Worktlas-atoms\.claude\shots`: `dryice49-options.jpg` (A, B, C and Water's stage 3 at the same scale), `dryice49-game.jpg` (each in the full game view), `dryice49-silhouettes.jpg`, `dryice49-options.txt`. Ruling BL: Dry ice is "a spirit like Water too". The owner's note during the work: "Don't copy the water completely": Water's code and hand, not Water's design (no teardrop head with a curl, no smile, no raised arm, no round pool).
+Branch `dryice-builder-49` (worktree `dryice49`, from `steam`). File: `kitart.js` (block `W49` after `W48`). Stills only, stage 3 only. Shots in `C:\Work\atlas-atoms\.claude\shots`: `dryice49-options.jpg` (A, B, C and Water's stage 3 at the same scale), `dryice49-game.jpg` (each in the full game view), `dryice49-silhouettes.jpg`, `dryice49-options.txt`. Ruling BL: Dry ice is "a spirit like Water too". The owner's note during the work: "Don't copy the water completely": Water's code and hand, not Water's design (no teardrop head with a curl, no smile, no raised arm, no round pool).
 
 - **Switch.** `AA.rxKit.dry49 = 'a' | 'b' | 'c'` (or `?d49=a`): off by default; without it the game shows the old Dry ice.
 - **Built by Water's code** (`dry49Fig`), the way builder 48 built Acid: each version is a set of numbers shaped like a stage of `S25` (`SPEC49.a/b/c`); `S25[2]`, `W26.geo[3]` and `W26.TARGET` are swapped for the moment of building and put back, and `fig26(T, 3)` is called. Skin, joints, face, pen and wash are Water's; the figure carries `rig2.spirit`, so `scheme.js` sizes it, gives it its smudge and plays Water's `rest`. Skins are kept in `W49.geo`. Every stage asked for gives the stage-3 figure.
