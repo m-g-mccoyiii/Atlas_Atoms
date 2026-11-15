@@ -4499,4 +4499,155 @@ KIT.seed64Fig = seed64Fig; KIT.SEED64 = W64;
 /* behind the switch: Seedling's bench figure is the spirit at its stage (the jar keeps the old Seedling) */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homseed' && KIT.seed64 && T && T.SkinnedMesh && grp && grp.add && !(extra && (extra.push || extra.jar))) { try { const g = seed64Fig(T, (extra && extra.stage) || 3, extra); grp.add(g.children[0]); grp.userData.rig2 = g.userData.rig2; grp.userData.rig2.sp.grp = grp; return true; } catch (e) { W64.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W64 END
+// ==== W67 BEGIN
+// (builder 67) SEEDLING ALIVE AT REST: its own idle, not Water's sway, Acid's flicker, Dry ice's pour or Slime's sag (AA.rxKit.idle67; false or ?i67=0
+// gives Water's rest back on it). A plant that cannot keep still: it leans toward the lamp (the bench lamp is up to the left), slowly, then catches
+// itself, springs back past upright and settles; the bud head bobs on the springy stem with an overshoot after every knock; the leaves lift and
+// settle like breathing and turn their faces to the light; one leaf flutters now and then; a tendril coils tight and lets go; a rolled leaf-tip
+// uncurls and rolls back; it sways from root foot to root foot and, after the catch, steps the lamp-side foot out to steady itself (the only time a
+// foot leaves the bench), and later brings it back. It looks about, blinks, and now and then looks straight up at the lamp and squints happily.
+//  1 the seed rocks on its round side; the top of the coat lifts on its hinge, the eyes peep out of the crack and duck back (the lid snaps shut);
+//    the root toe taps
+//  2 the hook teeters on its two feet; it pushes the cap of seed coat up to see the lamp, and the cap drops back over its eyes with a bounce
+//  3 the sprout: the lean and catch, the up leaf reaching across toward the lamp as it leans, the head's nod, the step
+//  4 the sapling stands tall, the leaf at its brow shading its eyes as the head scans side to side; the tendril coils
+//  5 the bloom, serene: petals open and close a little like slow breathing, the great leaves rise and fall, a slow proud turn of the face to the lamp
+// Everything is the one skin on its own joints: the stem bends joint by joint (each joint turns all that is above it, leaves and head with it), so
+// no part can come apart; root tips stay where they stand (each root bends toward its planted tip). A soft shade sits under every root foot.
+KIT.idle67 = KIT.idle67 == null ? !(typeof location !== 'undefined' && /[?&]i67=0/.test(String(location.search))) : KIT.idle67;
+const W67 = { err: null, n: 0, ms: 0, jar: 0.6 };
+/* the new Seedling is ON by default from here (bench and jar both work at all five stages); ?g64=0 on the page gives the old Seedling */
+if (KIT.seed64 == null && !(typeof location !== 'undefined' && /[?&]g64=0/.test(String(location.search)))) KIT.seed64 = 1;
+const on67 = S => !!(S && S.way64 && KIT.idle67 !== false);
+const clk67 = S => (typeof performance !== 'undefined' ? performance.now() : 0) / 1000 * (S.jar ? W67.jar : 1) + S.st * 3.7;
+/* a knock's springy answer: d seconds after it, period p, dying in tau */
+const spr67 = (d, p, tau) => (d < 0 ? 0 : Math.exp(-d / tau) * Math.sin(2 * PI * d / p));
+const since67 = (tt, per, off) => { const x = (tt - off) / per, i = Math.floor(x); return [(x - i) * per, i]; };
+/* per stage: lean cycle (s) and lean (rad), sway, step (share of H), head bob, lamp-squint cycle */
+const P67 = [null,
+  { Pl: 5.6, Lm: 0, sw: 0.075, st: 0, bob: 0.1, sq: 9.5 },
+  { Pl: 7.2, Lm: 0.2, sw: 0.085, st: 0.12, bob: 0.3, sq: 10.5 },
+  { Pl: 7.8, Lm: 0.36, sw: 0.06, st: 0.13, bob: 0.34, sq: 11 },
+  { Pl: 8.6, Lm: 0.2, sw: 0.045, st: 0.06, bob: 0.2, sq: 12 },
+  { Pl: 11, Lm: 0.11, sw: 0.025, st: 0, bob: 0.1, sq: 12 }];
+/* the lean: toward the lamp slowly, a tremble while held, then the catch: back past upright and settle (L 0..1; d = seconds since the catch) */
+function lean67(P, tt) { const u = fr52(tt / P.Pl), c = 0.6; let L; if (u < 0.45) L = sm52(u / 0.45); else if (u < c) L = 1 + 0.06 * Math.sin(2 * PI * tt * 2.7) * (u - 0.45) / (c - 0.45); else { const d = (u - c) * P.Pl; L = Math.exp(-d / 0.5) * Math.cos(2 * PI * d / 1.0); }
+  return { L, u, d: (u >= c ? u - c : u + 1 - c) * P.Pl }; }
+/* the step out after the catch, and back when it starts to lean again: x 0..1 (out), y the lift */
+function step67(P, l) { const u = l.u, d = l.d; if (u >= 0.6 || u < 0.28) { if (d < 0.15) return [0, 0]; if (d < 0.5) { const v = sm52((d - 0.15) / 0.35); return [v, Math.sin(PI * v)]; } return [1, 0]; }
+  if (u < 0.4) { const v = sm52((u - 0.28) / 0.12); return [1 - v, 0.7 * Math.sin(PI * v)]; } return [0, 0]; }
+/* the face: looks about, blinks, peeps, squints up at the lamp (the body is moved in pose67) */
+function rest67(S, t, o, q) { const st = S.st, P = P67[st], tt = clk67(S), TAU = 2 * PI, f = (S.F && S.F.f) || {}, lid0 = f.lid || 0;
+  q.sq = 0; q.lean = 0; q.bow = 0; q.hair = 0; q.armR = q.armL = 0; q.sink = 0; q.tilt = 0; q.nod = 0; q.hturn = 0; q.px = q.pz = 1;
+  q.lookx = 0.75 * n52(tt / 1.7, st) - 0.15; q.looky = 0.25 * n52(tt / 2.3, st + 5); q.blink = pl52(fr52(tt / 3.3 + 0.2), 0, 0.035, 0.012) + pl52(fr52(tt / 7.9 + 0.6), 0, 0.03, 0.01);
+  const l = lean67(P, tt), ca = l.d < 1.2 ? Math.exp(-l.d / 0.4) : 0; q.wide = 0.45 * ca; q.brow = 0.5 * ca + 0.25 * (l.u < 0.6 ? sm52(l.u / 0.45) : 0); q.smile = 1.15;
+  if (l.u < 0.6 && st > 1) { const w = sm52((l.u - 0.1) / 0.3); q.lookx = q.lookx * (1 - w) - 0.8 * w; q.looky = q.looky * (1 - w) + 0.45 * w; }
+  /* up at the lamp, squinting happily */ const s = pl52(fr52(tt / P.sq + 0.35), 0.0, 0.14, 0.03); if (s > 0.001) { q.lookx = q.lookx * (1 - s) - 0.7 * s; q.looky = q.looky * (1 - s) + 0.9 * s; q.lidx = Math.max(q.lidx, (lid0 + 0.45) * s); q.smile = 1.15 + 0.55 * s; q.brow += 0.35 * s; q.blink *= 1 - s; }
+  if (st === 1) { const u = fr52(tt / 5.5), op = pl52(u, 0.12, 0.62, 0.06), sh = u > 0.62 && u < 0.7 ? 1 - sm52((u - 0.66) / 0.04) : 0; q.lidx = Math.max(q.lidx, 0.95 * (1 - op)); q.wide += 0.35 * op; q.lookx = op * 0.9 * Math.sin(TAU * (u - 0.12) / 0.5 * 1.5); q.looky = 0.2 * op; q.blink = Math.max(q.blink * op, sh * 0.6); }
+  if (st === 2) { const c = cap67(tt); q.lidx = Math.max(q.lidx, (0.55 + 0.3 * Math.max(0, -c)) * (1 - Math.min(1, Math.max(0, c)))); q.looky = q.looky * (1 - Math.max(0, c)) + 0.7 * Math.max(0, c); q.lookx -= 0.5 * Math.max(0, c); q.wide += 0.4 * Math.max(0, c); }
+  if (st === 4) { const h = scan67(tt); q.lookx = 1.1 * h; q.looky = 0.15; q.brow += 0.2; }
+  if (st === 5) { const w = turn67(tt); q.lidx = Math.max(q.lidx, lid0 + 0.15 + 0.2 * w); q.smile = 1.2 + 0.4 * w; q.lookx = q.lookx * (1 - w) - 0.6 * w; q.looky = q.looky * (1 - w) + 0.35 * w; } }
+/* stage 2's cap: pushed up (1), held, dropped with a bounce (below 0: it lands hard over the eyes) */
+function cap67(tt) { const P = 6.6, u = fr52(tt / P + 0.1); if (u < 0.22) return 0; if (u < 0.34) return sm52((u - 0.22) / 0.12); if (u < 0.58) return 1 + 0.04 * Math.sin(2 * PI * tt * 3); const d = (u - 0.58) * P; return d < 0.18 ? 1 - Math.pow(d / 0.18, 2) * 1.3 : -0.3 * Math.exp(-(d - 0.18) / 0.3) * Math.cos(2 * PI * (d - 0.18) / 0.5); }
+/* stage 4's scan, -1..1 (to the lamp first); stage 5's proud turn to the lamp, 0..1 */
+function scan67(tt) { const u = fr52(tt / 9.0); return -sm52((u - 0.05) / 0.12) * (1 - sm52((u - 0.4) / 0.14)) + sm52((u - 0.45) / 0.14) * (1 - sm52((u - 0.8) / 0.12)); }
+function turn67(tt) { return pl52(fr52(tt / 13), 0.25, 0.7, 0.14); }
+C26.rest = (f0 => function (S, t, o, q, lagMs) { if (on67(S)) return rest67(S, t, o || {}, q); return f0(S, t, o, q, lagMs); })(C26.rest);
+/* the parts, found once: the spine in order, where the stem starts, the top of the hook, what rides each stem joint, the chains by kind */
+function init67(S) { const G = S.G, J = G.J, T = S.T, V3 = T.Vector3, SP = G.bj, si = J.map(() => -1), hj = G.bj[G.R.head], hi = SP.indexOf(hj), st = S.st;
+  SP.forEach((j, i) => { si[j] = i; });
+  let ap = hi - 2; if (st > 1) { let my = -1e9, mi = 0; for (let i = 0; i < hi; i++) { const y = J[SP[i]].p[1]; if (y > my) { my = y; mi = i; } } if (my > J[hj].p[1] + 0.3) ap = mi; }
+  let sb = SP.findIndex(j => J[j].role === 'neck'); if (sb < 0 || st === 1) sb = -1;
+  const K = { SP, si, hi, ap, sb, roots: [], leaves: [], tends: [], rolls: [], pets: [], seps: [], ride: [], hairs: [], sh: [] };
+  G.chains.forEach(c => { if (c.kind !== 'limb') return; const l = c.l || {}, at = si[J[c.jn[0]].par], b = J[c.jn[0]].p, e = J[c.jn[c.jn.length - 1]].p, X = { c, at, side: e[0] - b[0] >= 0 ? 1 : -1, i: 0 };
+    if (l.root) { X.i = K.roots.length; K.roots.push(X); return; }
+    if (l.leaf) { X.i = K.leaves.length; K.leaves.push(X); }
+    else if (l.petal) { const a = Math.atan2(e[1] - b[1], e[0] - b[0]); X.u = [Math.cos(a), Math.sin(a)]; X.i = K.pets.length; K.pets.push(X); }
+    else if (l.str) { let tw = 0; for (let i = 2; i < c.jn.length; i++) { const p0 = J[c.jn[i - 2]].p, p1 = J[c.jn[i - 1]].p, p2 = J[c.jn[i]].p; tw += (p1[0] - p0[0]) * (p2[1] - p1[1]) - (p1[1] - p0[1]) * (p2[0] - p1[0]); } X.tw = tw >= 0 ? 1 : -1; X.i = K.tends.length; K.tends.push(X); }
+    else if (l.flat) { if (J[J[c.jn[0]].par].p[1] < 1.6) K.hairs.push(X); else K.seps.push(X); }
+    else { X.i = K.rolls.length; K.rolls.push(X); } });
+  /* what turns when the stem bends at spine joint i: every spine joint above it and every limb (not a root) that grows from i or above */
+  for (let i = 0; i < SP.length; i++) { const r = SP.slice(i + 1); G.chains.forEach(c => { if (c.kind === 'limb' && !(c.l && c.l.root) && si[J[c.jn[0]].par] >= i) c.jn.forEach(j => r.push(j)); }); K.ride.push(r); }
+  K.all = SP.slice(); G.chains.forEach(c => { if (c.kind === 'limb' && !(c.l && c.l.root)) c.jn.forEach(j => K.all.push(j)); });
+  /* stage 1: the top of the coat, above the crack, lifts on a hinge at the back of the crack */
+  K.lidJ = st === 1 ? K.all.filter(j => J[j].p[1] > 0.95 && (si[j] >= 0 || J[j].p[1] > 1.0)) : [];
+  /* stage 2: the cap is the top of the bud, two joints past the top of the hook */
+  K.capJ = st === 2 ? [SP[ap + 2], SP[ap + 3]].filter(j => j != null) : [];
+  /* a soft shade under every root foot (scene pieces on the figure's floor) */
+  if (!S.jar) { const g = W67.cg || (W67.cg = new T.CircleGeometry(1, 24).rotateX(-PI / 2)), ink = new T.Color(COL.ink).convertSRGBToLinear(), r0 = Math.max(0.16, 0.05 * G.H);
+    K.roots.forEach(X => { const tip = J[X.c.jn[X.c.jn.length - 1]]; if (tip.p[1] > 0.3) return; const sh = new T.Group(); [[1, 0.09], [0.72, 0.12], [0.45, 0.16]].forEach(([s, a]) => { const m = new T.Mesh(g, new T.MeshBasicMaterial({ color: ink, transparent: true, opacity: a, depthWrite: false })); m.scale.set(s, 1, s * 0.7); m.position.y = 0.006 + 0.002 * s; m.renderOrder = 2; m.userData.plain = true; m.userData.nobox = true; sh.add(m); });
+      sh.scale.setScalar(r0 * (1 + 0.6 * (tip.r || 0.06) / 0.1)); sh.userData.nobox = true; sh.userData.a = sh.children.map(m => m.material.opacity); S.root.add(sh); K.sh.push({ X, g: sh }); }); }
+  if (!S.v52) S.v52 = { a: new V3(), b: new V3(), c: new V3(), q: new T.Quaternion(), q2: new T.Quaternion(), z: new V3(0, 0, 1), y: new V3(0, 1, 0) };
+  S.v67 = { a: new V3(), b: new V3(), x: new V3(1, 0, 0), ax: new V3() }; S.k67 = K; return K; }
+/* turn a set of joints about a point (rot52 on a list) */
+const turn67s = (S, js, p, ax, ang, w) => { if (Math.abs(ang) > 1e-5) rot52(S, js, 0, p.x, p.y, p.z, ax, ang, w); };
+/* bend a chain along its length: each joint from i0 on turns the rest of the chain a share of the angle, about the joint before it */
+function bend67(S, jn, i0, ang, ax) { const n = jn.length; if (Math.abs(ang) < 1e-5 || n - i0 < 1) return; const a = ang / (n - i0), B = S.bones, pv = S.v67.a;
+  for (let k = i0; k < n; k++) { pv.copy(B[jn[k - 1]].position); rot52(S, jn, k, pv.x, pv.y, pv.z, ax, a); } }
+/* after the whole play chain: leaves, tendrils, petals; the head on its springy stem; the stem's lean; the sway on its feet; the step */
+function pose67(S) { const K = S.k67 || init67(S), st = S.st, G = S.G, H = G.H, B = S.bones, J = G.J, k = S.jar ? 0.6 : 1, P = P67[st], tt = clk67(S), TAU = 2 * PI, V = S.v52, Z = V.z, Y = V.y, U = S.v67, SP = K.SP;
+  const l = lean67(P, tt), L = k * P.Lm * l.L, sp = S.jar ? [0, 0] : step67(P, l), knocks = [[l.d, 1], [l.d - 0.5, P.st ? 0.55 : 0]];
+  /* the leaves breathe (lift and settle), turn their faces to the light, and one at a time gives a quick flutter */
+  const nl = K.leaves.length, [fd, fi] = since67(tt, 4.3, 1.1), fl = nl ? ((fi % nl) + nl) % nl : -1;
+  K.leaves.forEach((X, i) => { const jn = X.c.jn, b = B[jn[0]].position, sd = X.side, big = st === 5 && i < 2;
+    let a = sd * k * (big ? 0.2 * Math.sin(TAU * tt / 5.8 + i * 0.9) : 0.14 * Math.sin(TAU * tt / 3.3 + i * 1.9));
+    if (st === 3 && i === 0) a += k * 0.55 * Math.max(0, l.L) + k * 0.25 * spr67(l.d, 0.6, 0.45);   /* the up leaf reaches across toward the lamp as it leans, and flops back at the catch */
+    if (st === 4 && i === 3) a += -sd * k * 0.12 * Math.abs(scan67(tt));                             /* the brow leaf presses to the brow as it scans */
+    U.ax.set(J[jn[jn.length - 1]].p[0] - J[jn[0]].p[0], J[jn[jn.length - 1]].p[1] - J[jn[0]].p[1], 0).normalize(); bend67(S, jn, 2, k * 0.5 * (0.5 + 0.5 * Math.sin(TAU * tt / 5.1 + i * 2.3)) * (i % 2 ? 1 : -1), U.ax);
+    if (i === fl) bend67(S, jn, 2, sd * k * 0.5 * spr67(fd, 0.17, 0.32), Z);
+    turn67s(S, jn, b, Z, a); });
+  /* a rolled leaf-tip uncurls a little and rolls back */
+  K.rolls.forEach((X, i) => { const u = fr52(tt / 6.4 + i * 0.37), un = pl52(u, 0.15, 0.55, 0.14); bend67(S, X.c.jn, 1, -X.side * k * 0.75 * un + X.side * k * 0.15 * spr67((u - 0.55) * 6.4 - 0.4, 0.5, 0.3), Z); });
+  /* a tendril coils tight and lets go (and springs past) */
+  K.tends.forEach((X, i) => { const u = fr52(tt / 5.6 + i * 0.5), c = pl52(u, 0.08, 0.5, 0.12) - 0.35 * spr67((u - 0.56) * 5.6, 0.55, 0.35); bend67(S, X.c.jn, 2, X.tw * k * 1.6 * c, Z); });
+  /* petals open and close like slow breathing; sepals peel a little */
+  const pb = Math.sin(TAU * tt / 4.6);
+  K.pets.forEach(X => { const jn = X.c.jn, b = U.b.copy(B[jn[0]].position); U.ax.set(-X.u[1], X.u[0], 0); turn67s(S, jn, b, U.ax, -k * 0.32 * pb); for (let i = 1; i < jn.length; i++) { const p = B[jn[i]].position; p.sub(b).multiplyScalar(1 + k * 0.09 * pb).add(b); } turn67s(S, jn, b, Z, -X.u[0] * k * 0.07 * pb); });
+  K.seps.forEach(X => { bend67(S, X.c.jn, 1, -X.side * k * 0.2 * (0.5 + 0.5 * Math.sin(TAU * tt / 4.1)), Z); });
+  /* stage 2: the cap pushed up to see the lamp, and dropped */
+  if (st === 2 && K.capJ.length) { const c = cap67(tt); K.capJ.forEach((j, n) => { const p = B[j].position; p.y += k * (0.16 + 0.06 * n) * H * 0.42 * c; p.x += k * 0.12 * c; }); }
+  /* the head: a slow nod, and a springy bob after every knock; at 2 it tips up to look under the cap; at 4 it scans; at 5 the proud turn */
+  if (K.ap >= 0 && st > 1) { const pv = U.b.copy(B[SP[K.ap]].position); let nd = k * 0.07 * Math.sin(TAU * tt / 2.4); knocks.forEach(([d, a]) => { nd += k * P.bob * a * spr67(d, 0.5, 0.38); });
+    if (st === 2) nd += k * 0.3 * Math.max(0, cap67(tt)) + k * 0.12 * spr67((fr52(tt / 6.6 + 0.1) - 0.58) * 6.6 - 0.18, 0.45, 0.3);
+    turn67s(S, K.ride[K.ap], pv, Z, -nd);
+    if (st === 4) turn67s(S, K.ride[K.ap], pv, Y, k * 0.42 * scan67(tt));
+    if (st === 5) { const w = turn67(tt); turn67s(S, K.ride[K.ap], pv, Y, -k * 0.45 * w); turn67s(S, K.ride[K.ap], pv, Z, k * 0.12 * w); } }
+  /* stage 1: the top of the coat lifts on its hinge (the crack opens) and snaps shut */
+  if (st === 1 && K.lidJ.length) { const u = fr52(tt / 5.5), op = pl52(u, 0.12, 0.62, 0.06), sn = u > 0.62 ? -0.25 * spr67((u - 0.66) * 5.5, 0.35, 0.25) : 0; U.b.set(0.62, 0.95, 0); turn67s(S, K.lidJ, U.b, Z, -k * (0.5 * op + sn)); knocks.push([(u - 0.66) * 5.5, 1]); }
+  /* the stem leans toward the lamp, bending joint by joint from the top down (each joint turns all above it) */
+  if (K.sb >= 0 && L) { const n = K.ap - K.sb; for (let i = K.ap - 1; i >= K.sb; i--) { const w = (1.3 - 0.6 * (i - K.sb) / Math.max(1, n)) / n; turn67s(S, K.ride[i], U.b.copy(B[SP[i]].position), Z, L * w); } }
+  /* the sway from root foot to root foot; stage 1 rocks on its round side; a wobble after the catch; the weight goes on the stance foot */
+  let sw = k * P.sw * (Math.sin(TAU * tt / 3.7) * 0.7 + 0.3 * Math.sin(TAU * tt / 1.9 + 1)); knocks.forEach(([d, a]) => { sw += k * 0.06 * a * spr67(d, 0.7, 0.45); }); sw += k * 0.03 * sp[0] - k * 0.04 * sp[1];
+  const pv0 = st === 1 ? U.b.set(0.2 + (sw > 0 ? -0.15 : 0.15), 0, 0) : U.b.set(B[0].position.x, 0, B[0].position.z);
+  turn67s(S, K.all, pv0, Z, sw);
+  K.roots.forEach(X => { const jn = X.c.jn, n = jn.length; rot52(S, jn, 0, pv0.x, pv0.y, pv0.z, Z, sw, kk => Math.max(0, 1 - kk / (n - 1))); });
+  /* the step: the lamp-side front foot lifts, goes out and is planted; later it comes back. Stage 1's toe taps */
+  const foot = K.roots.filter(X => X.side < 0 && J[X.c.jn[X.c.jn.length - 1]].p[2] > 0).sort((a, b) => J[b.c.jn[b.c.jn.length - 1]].p[2] - J[a.c.jn[a.c.jn.length - 1]].p[2])[0];
+  if (foot && P.st && (sp[0] || sp[1])) push52(S, foot.c.jn, foot.c.jn.length, -k * P.st * H * sp[0], k * 0.1 * H * sp[1], k * 0.02 * H * sp[0]);
+  if (st === 1 && K.roots[0]) { const u = fr52(tt / 3.1), tp = u > 0.1 && u < 0.46 ? Math.abs(Math.sin(3 * PI * (u - 0.1) / 0.36)) : 0; const jn = K.roots[0].c.jn, n = jn.length; for (let i = 1; i < n; i++) B[jn[i]].position.y += k * 0.16 * tp * Math.pow(i / (n - 1), 1.6); }
+  if (S.drips) S.drips.forEach(dp => { dp.g.visible = false; }); }
+/* the shades follow the root tips, fainter and smaller as a foot lifts */
+function shade67(S) { const K = S.k67; if (!K || !K.sh.length) return; const B = S.bones; K.sh.forEach(q => { const jn = q.X.c.jn, p = B[jn[jn.length - 1]].position, h = Math.max(0, p.y - 0.05), f = 1 - sm52(h / 0.5); q.g.position.set(p.x, 0, p.z); q.g.visible = f > 0.05 && S.c67 !== 'evo';
+  q.g.children.forEach((m, i) => { m.material.opacity = q.g.userData.a[i] * f; }); }); }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way64) return f0(grp, clip, t, o);
+  /* in the jar the margin's material carries no line width (W52/W56/W62 found this) */
+  const gw = () => { if (S.hull27 && !S.hull27.material.userData.w) { S.hull27.material.userData.w = { value: 0 }; return true; } return false; }, safe = () => { gw(); try { return f0(grp, clip, t, o); } catch (e) { if (gw()) return f0(grp, clip, t, o); throw e; } };
+  const r = safe(); S.c67 = clip; if (!on67(S)) return r;
+  if (clip === 'rest') { const c0 = rn44(); try { if (!S.k67) init67(S); pose67(S); } catch (e) { W67.err = String(e && e.stack); } W67.ms += rn44() - c0; W67.n++; }
+  try { shade67(S); } catch (e) { W67.err = String(e && e.stack); } return r; })(play26);
+KIT.spirit26.play = play26;
+/* the shelf jar: the half-grown and ready figures and the stage form are the new Seedling (fitted to the glass), each playing its rest as it is drawn */
+function drive67(f) { const S = f.userData.rig2.sp, b = S.body, f0 = b.onBeforeRender; b.onBeforeRender = function (ren) { if (f0) f0.apply(this, arguments); const fr = ren.info.render.frame; if (S.jf67 === fr) return; S.jf67 = fr; try { play26(f, 'rest', 0, { jar: true }); } catch (e) { W67.err = String(e && e.stack); } }; }
+function jar67(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; const f = seed64Fig(T, k < 1 ? 2 : 3, { jar: true }); c.children.slice().forEach(o => c.remove(o)); const q = fit44(T, f, 0.95, 1.4, 1.5), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 + 0.3 * k - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); drive67(f); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = seed64Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, sg === 1 ? 1.2 : 1.0, sg >= 4 ? 1.6 : sg === 1 ? 1.35 : 1.4, 1.8), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 + (sg >= 3 ? 0.3 : 0.24) - q.y0 * q.s, -q.cz * q.s + 0.1); drive67(f);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'seedling' && KIT.seed64 && KIT.idle67 !== false && T && T.SkinnedMesh) { try { jar67(T, j); } catch (e) { W67.err = String(e && e.stack); } } return j; })(KIT.jar);
+/* at home the sapling and the bloom stand a little larger (thin figures read small at the game's size) */
+KIT.build = (f0 => function (id, T, grp, tint, extra) { const r = f0.apply(this, arguments); try { const S = r && id === 'homseed' && grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp; if (S && S.way64 && !S.jar && !(extra && (extra.push || extra.jar))) S.root.scale.multiplyScalar(W67.big[S.st] || 1); } catch (e) { W67.err = String(e && e.stack); } return r; })(KIT.build);
+W67.big = [1, 1, 1, 1, 1.12, 1.18];
+KIT.W67 = W67;
+/* for the recorder: seconds until the next catch of the lean */
+W67.until = S => { const P = S && P67[S.st]; if (!P) return null; return ((0.6 - fr52(clk67(S) / P.Pl)) * P.Pl + P.Pl) % P.Pl; };
+// ==== W67 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
