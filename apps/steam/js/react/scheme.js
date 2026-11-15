@@ -5496,7 +5496,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     else { K.sg.visible = false; K.chips.forEach(ch => { ch.g.visible = false; }); K.hb.forEach(m => { m.visible = false; }); }
     /* the halo at the crack, the glow on the page, the shade under the seed */
     const gl = e.glow + 1.2 * e.flash; K.halo.visible = !!(seedOn && gl > 0.03 && u < c[4] + 0.45);
-    if (K.halo.visible) { const w = S74.v.set(0, s74Seam(Math.PI / 2), 0.42).applyMatrix4(K.bd.matrixWorld); K.halo.position.copy(w); K.halo.scale.setScalar(sz * (0.7 + 0.6 * Math.min(1.5, gl)) * (1 + 0.8 * e.flash)); K.halo.material.opacity = Math.min(1, 0.7 * gl); }
+    if (K.halo.visible) { const w = S74.v.set(0, s74Seam(Math.PI / 2), 0.42).applyMatrix4(K.bd.matrixWorld); K.halo.position.copy(w); K.halo.scale.setScalar(sz * (0.8 + 0.8 * Math.min(1.5, gl)) * (1 + 0.8 * e.flash)); K.halo.material.opacity = Math.min(1, 0.7 * gl); }
     K.glow.visible = !!(seedOn && gl > 0.03); if (K.glow.visible) { K.glow.position.set(B0[0], C.y + 0.006, B0[2] + 0.1 * sz); K.glow.scale.setScalar(sz * (1.1 + 0.5 * Math.min(1.5, gl))); K.glow.material.opacity = Math.min(0.9, 0.5 * gl * (0.4 + 0.6 * S74.dim)); }
     K.shade.visible = !!(seedOn && u < c[4] + 0.6); if (K.shade.visible) { K.shade.position.set(B0[0], C.y + 0.004, B0[2] - 0.06 * sz); const r = 0.42 * sz * (1 + 0.12 * e.swell); K.shade.scale.set(r, 1, r * 0.75); K.shade.material.opacity = 0.75 * sm74(e.cl / 0.5) * (u < c[4] ? 1 : 1 - sm74((u - c[4]) / 0.6)); }
     /* the roots in the paper and the damp ring; dried away going home */

@@ -5353,10 +5353,10 @@ const cl74 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
    hd the held part of the swell; seed the seed's height (of the new form's); nst steps out, nbk steps home; nr roots drawn into the page, rl their
    length (in R, the place's radius); ring the damp ring's radius (in R) */
 const PAR74 = [null, null,
-  { b: [2.0, 0.75, 0.75, 1.5, 0.75, 1.5, 2.0], hd: 0.3, seed: 0.36, nst: 4, nbk: 4, nr: 7, rl: 1.3, ring: 0.8 },
-  { b: [2.0, 1.0, 1.5, 2.5, 1.0, 2.0, 2.25], hd: 0.3, seed: 0.4, nst: 5, nbk: 5, nr: 10, rl: 1.9, ring: 0.95 },
-  { b: [2.25, 1.0, 1.75, 3.0, 1.25, 2.75, 2.25], hd: 0.3, seed: 0.44, nst: 5, nbk: 5, nr: 13, rl: 2.5, ring: 1.1 },
-  { b: [2.5, 1.25, 2.25, 5.0, 1.5, 4.0, 2.5], hd: 0.26, seed: 0.52, nst: 6, nbk: 6, nr: 18, rl: 4.0, ring: 1.35 }];
+  { b: [2.0, 0.75, 0.75, 1.5, 0.75, 1.5, 2.0], hd: 0.3, seed: 0.42, nst: 4, nbk: 4, nr: 7, rl: 1.3, ring: 0.8 },
+  { b: [2.0, 1.0, 1.5, 2.5, 1.0, 2.0, 2.25], hd: 0.3, seed: 0.48, nst: 5, nbk: 5, nr: 10, rl: 1.9, ring: 0.95 },
+  { b: [2.25, 1.0, 1.75, 3.0, 1.25, 2.75, 2.25], hd: 0.3, seed: 0.55, nst: 5, nbk: 5, nr: 13, rl: 2.5, ring: 1.1 },
+  { b: [2.5, 1.25, 2.25, 5.0, 1.5, 4.0, 2.5], hd: 0.26, seed: 0.66, nst: 6, nbk: 6, nr: 18, rl: 4.0, ring: 1.35 }];
 /* a leaf, petal or tendril snapping open d beats after its time: 0 shut, 1 open, a springy overshoot */
 const snap74 = d => (d <= 0 ? 0 : 1 - Math.exp(-d / 0.13) * Math.cos(2 * PI * d / 0.5));
 /* where it is in the change: every number the figure and the page read */
