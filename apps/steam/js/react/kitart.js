@@ -2870,9 +2870,9 @@ function rest52(S, t, o, q, lagMs) { const st = S.st, k = S.jar ? 0.6 : 1, P = P
   const shv = P.sh * n52(tt * 9, st) * (0.35 + 0.65 * pl52(fr52(tt / 3.1), 0.1, 0.35, 0.05));
   q.lean = k * (P.sw * (Math.sin(TAU * tt / P.ps) + 0.35 * Math.sin(TAU * tt / (P.ps * 0.43) + 1.3)) + shv); q.sq = k * P.br * Math.sin(TAU * tt / (P.ps * 2)); q.bow = P.bw; q.hair = 0;
   /* the sly glance: eyes slide toward the page and hold, the head half turns with them, the brows come down */
-  const lx = o.look ? o.look[0] : 1, gs = pl52(fr52(tt / P.gp), 0.25, 0.58, 0.05), gl = o.glance || 0; q.lookx = lx * (1.7 * gs + gl); q.looky = -0.55 * gs; q.hturn = lx * 0.32 * gs * k; q.brow = -0.45 * gs + 0.4 * gl;
+  const lx = o.look ? o.look[0] : 1, gs = o.act58 ? 0 : pl52(fr52(tt / P.gp), 0.25, 0.58, 0.05), gl = o.glance || 0; q.lookx = lx * (1.7 * gs + gl); q.looky = -0.55 * gs; q.hturn = lx * 0.32 * gs * k; q.brow = -0.45 * gs + 0.4 * gl;
   /* the grin widens now and then; a blink */ const sg = pl52(fr52(tt / P.sp + 0.4), 0.3, 0.52, 0.07); q.smile = 1 + 1.1 * sg; if (!lagMs) S.g52 = sg; q.blink = pl52(fr52(tt / 4.3 + 0.2), 0, 0.03, 0.02);
-  if (st === 1) { const du = fr52(tt / P.cyc), dk = pl52(du, 0.52, 0.7, 0.05), pu = du - 0.75; q.sink = 0.5 * dk * k; q.sq += k * (-0.08 * dk + (pu > 0 ? 0.13 * Math.exp(-pu * 14) * Math.sin(pu * 70) : 0)); q.lean += k * 0.12 * Math.tanh(3 * Math.sin(TAU * tt / 1.9 + 0.5)); q.hturn += 0.25 * k * Math.tanh(3 * Math.sin(TAU * tt / 2.3)); q.wide = 0.5 * (pu > 0 ? Math.exp(-pu * 8) : 0); }
+  if (o.act58) { /* (builder 58) its act: the stage's idle business waits */ } else if (st === 1) { const du = fr52(tt / P.cyc), dk = pl52(du, 0.52, 0.7, 0.05), pu = du - 0.75; q.sink = 0.5 * dk * k; q.sq += k * (-0.08 * dk + (pu > 0 ? 0.13 * Math.exp(-pu * 14) * Math.sin(pu * 70) : 0)); q.lean += k * 0.12 * Math.tanh(3 * Math.sin(TAU * tt / 1.9 + 0.5)); q.hturn += 0.25 * k * Math.tanh(3 * Math.sin(TAU * tt / 2.3)); q.wide = 0.5 * (pu > 0 ? Math.exp(-pu * 8) : 0); }
   else if (st === 2) { const u = fr52(tt / P.cyc), pk = pl52(u, 0.5, 0.75, 0.07), sd = Math.floor(tt / P.cyc) % 2 ? 1 : -1; q.bow += 0.05 * Math.sin(TAU * tt / 2.4) + 0.06 * pk; q.hturn += 0.9 * pk * sd * k; q.lookx = q.lookx * (1 - pk) + 1.9 * pk * sd; q.tilt = 0.18 * pk * sd * k; q.lean += -0.12 * pk * sd * k; q.sq += 0.025 * Math.sin(TAU * tt * 1.9) * (1 - pk) * k; S.p52 = pk; }
   else if (st === 3) { const u = fr52(tt / P.cyc), lp = pl52(u, 0.12, 0.55, 0.16), bk = pl52(u, 0.74, 0.88, 0.06); q.bow += k * (0.3 * lp - 0.1 * bk); q.lean += -0.05 * lp * k; q.wide = 0.3 * lp; q.lookx = q.lookx * (1 - lp) + 0.6 * lp; q.looky = q.looky * (1 - lp) - 0.6 * lp; }
   else if (st === 4) { q.bow += 0.06 * Math.sin(TAU * tt / P.ps + 0.4) * k; q.tilt = 0.2 * Math.sin(TAU * tt / P.ps - 0.9) * k; }
@@ -2909,8 +2909,9 @@ function pose52(S, o) { const K = S.k52 || init52(S), st = S.st, G = S.G, H = G.
   const lk = sd => { const x = tt * 1.25 + h52(sd), u = fr52(x), a = 0.45 + 0.55 * h52(Math.floor(x) + sd * 3.1); return a * (u < 0.72 ? sm52(u / 0.72) : 1 - sm52((u - 0.72) / 0.14)); };
   const sh = (c, fn) => { const p = B[c.jn[0]].position; fn(p.x, p.y, p.z); };
   const A = s => K.arm[s] || [], cyc = fr52(tt / P.cyc);
-  /* the arms: the stage's business */
-  if (st === 1) [1, -1].forEach(s => { const a = s * k * 0.22 * n52(tt * 2.6, 4 + s); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a))); });
+  /* the arms: the stage's business (builder 58: not while it acts) */
+  const A58 = !!o.act58;
+  if (A58) { /* its act moves the arms */ } else if (st === 1) [1, -1].forEach(s => { const a = s * k * 0.22 * n52(tt * 2.6, 4 + s); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a))); });
   else if (st === 2) { const pk = S.p52 || 0, r = (1 - 0.75 * pk) * k; [1, -1].forEach(s => { const ph = TAU * tt * 1.9, dx = -s * r * 0.075 * H * Math.sin(ph), dy = s * r * 0.035 * H * Math.cos(ph); A(s).forEach(c => push52(S, c.jn, c.l.arm, dx, dy, 0)); }); }
   else if (st === 3) { const lp = pl52(cyc, 0.12, 0.55, 0.16), bk = pl52(cyc, 0.74, 0.88, 0.06); A(1).forEach(c => { const h = J[c.jn[c.l.arm]].p, s0 = J[c.jn[0]].p, dx = h[0] - s0[0], dy = h[1] - s0[1], dz = h[2] - s0[2], L = Math.hypot(dx, dy, dz) || 1, m = k * H * (0.2 * lp - 0.06 * bk) / L; push52(S, c.jn, c.l.arm, dx * m, dy * m + k * 0.03 * H * Math.sin(TAU * tt / 1.3), dz * m); });
     A(-1).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, -k * (0.1 * Math.sin(TAU * tt / 2.2) + 0.12 * lp)))); }
@@ -2918,7 +2919,7 @@ function pose52(S, o) { const K = S.k52 || init52(S), st = S.st, G = S.G, H = G.
   else if (st === 5) [1, -1].forEach(s => { const a = s * k * (0.24 * Math.sin(TAU * tt / P.ps) + 0.03 * n52(tt * 0.9, s)); A(s).forEach(c => sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a)));
     K.sleeve.filter(c => c.side === s).forEach(c => { const n = c.jn.length; sh(c, (x, y, z) => rot52(S, c.jn, 1, x, y, z, V.z, a, j => (j <= 3 ? 1 : Math.max(0, 1 - (j - 3) / Math.max(1, n - 4))))); }); });
   /* every finger: curls, drums, uncurls */
-  [1, -1].forEach(s => A(s).forEach(c => { const fi = c.l.fi || 0, cs = c.cs52; let a;
+  if (!A58) [1, -1].forEach(s => A(s).forEach(c => { const fi = c.l.fi || 0, cs = c.cs52; let a;
     if (st === 1) a = 0.35 + 0.4 * n52(tt * 3.4, fi + s * 3) + 0.5 * pl52(fr52(tt / 1.1 - fi * 0.11), 0, 0.06, 0.03);
     else if (st === 2) a = 0.35 + 0.3 * Math.sin(TAU * tt * 1.9 + fi * 0.9);
     else if (st === 3) a = s > 0 ? 0.1 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * tt / 1.6 + fi * 0.8)) * (1 - 0.6 * pl52(cyc, 0.12, 0.55, 0.16)) : 0.2 + 0.7 * pl52(fr52(tt / 1.5 - fi * 0.1), 0, 0.05, 0.03);
@@ -2932,7 +2933,7 @@ function pose52(S, o) { const K = S.k52 || init52(S), st = S.st, G = S.G, H = G.
   K.lick.forEach((c, i) => bend52(S, c.jn, 3, k * 0.025 * H * fl(11 + i, 1.3), 0, 0, k * 0.5 * Math.sin(TAU * tt / (1.6 + 0.37 * (i % 3)) + i * 2.1)));
   /* drops riding a joint follow it where this pass moved it */ S.drops.forEach(dp => { if (!dp.air) return; const b = B[dp.j].position, p = S.P[dp.j]; dp.g.position.x += b.x - p.x; dp.g.position.y += b.y - p.y; dp.g.position.z += b.z - p.z; });
   /* the drips: gather on the tip, stretch, fall to the pool's plane; the landing leaves a mark */
-  S.drips.forEach((d, i) => { if (i >= K.src.length) d.g.visible = false; });
+  S.drips.forEach((d, i) => { if (i >= K.src.length || A58) d.g.visible = false; }); if (A58) { K.marks.forEach(mk => { mk.m.visible = false; }); return; }
   const b0 = B[0], n0 = V.b.set(0, 1, 0).applyQuaternion(b0.quaternion), r0 = 0.03 * H / (G.cell * 0.55);
   K.src.forEach((sr, i) => { const d = S.drips[i]; if (!d) return; const per = P.dp * (1 + 0.13 * i), x = tt / per + i * 0.47, u = fr52(x), id = Math.floor(x), tip = B[sr.j].position, g = d.g, g0 = 0.02 * H;
     /* it falls straight down in the world (along the pool's own up), to the wood under the hand */ const hd = Math.max(g0, n0.x * (tip.x - b0.position.x) + n0.y * (tip.y - b0.position.y) + n0.z * (tip.z - b0.position.z) - 0.02), at = s => g.position.set(tip.x - n0.x * s, tip.y - n0.y * s, tip.z - n0.z * s);
@@ -2952,12 +2953,12 @@ function pen52(S) { const X = S.a48, tt = clk52(S), TAU = 2 * PI; if (!X || !X.s
     else if (s.teeth) { const g = 1 + 0.3 * (S.g52 || 0), cx = p0.reduce((m, p) => m + p[0] / n, 0); s.pts = p0.map(p => [cx + (p[0] - cx) * g, p[1], p[2]]); } }); }
 /* the pen's strokes in the air that are not on the body: fizz rings where a drip landed, a bubble in the pool, the sleeves pouring */
 function ink52(T, S, ren, cam) { const R = S.pen30, K = S.k52, sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
-  const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = W52.pool || (W52.pool = Array.from({ length: 24 }, () => new T.Vector3())); if (lw < 1.2 || (S.q0 && S.q0.sink > 0.45) || S.c52 !== 'rest') return;
+  const lw = R.lw || 2, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), ws = (S.s27 && S.s27.setFromMatrixScale(S.root.matrixWorld).x) || 1, d = 0.03 * S.G.H * ws, pool = W52.pool || (W52.pool = Array.from({ length: 24 }, () => new T.Vector3())); const A58 = S.c52 === 'act' && S.st === 5; if (lw < 1.2 || (S.q0 && S.q0.sink > 0.45) || (S.c52 !== 'rest' && !A58)) return;
   const tt = clk52(S), H = S.G.H, B = S.bones, b0 = B[0].matrixWorld, rm = S.root.matrixWorld, TAU = 2 * PI, pl = S.G.pl; let sd = 9900;
   const ringAt = (M, cx, cy, cz, rx, ry, rz, n, w) => { for (let i = 0; i <= n; i++) { const a = i / n * TAU; pool[i].set(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cz + rz * Math.sin(a)).applyMatrix4(M); } free30(R, pool.slice(0, n + 1), lw * w, s2, Wd, Ht, P10, P11, d, sd++, { smooth: 1, wob: 0.4, min: 3 }); };
   /* fizz where a drip landed (in the pool joint's own flat plane) */ const iq = S.v52.q2.copy(B[0].quaternion).invert();
-  K.ev.forEach(e => { const a = tt - e.t0; if (a < 0 || a > 0.7) return; const v = S.v52.c.set(e.x, e.y, e.z).sub(B[0].position).applyQuaternion(iq), r = 0.035 * H * (0.4 + 1.4 * sm52(a / 0.7)); ringAt(b0, v.x, pl.h * 0.9, v.z, r, 0, r * 0.8, 12, 0.7 * (1 - a / 0.7) + 0.1); });
-  /* a bubble swells in the pool and pops */ for (let b = 0; b < (S.st >= 3 ? 2 : 1); b++) { const x = tt / 3.4 + b * 0.5, u = fr52(x), id = Math.floor(x), an = PI * (0.15 + 0.7 * h52(id * 3 + b)), rr = 0.35 + 0.4 * h52(id * 5 + b + 1), bx = pl.x - B[0].position.x + Math.cos(an) * pl.rx * rr, bz = pl.z - B[0].position.z + Math.sin(an) * pl.rz * rr, rb = 0.05 * H * (0.8 + 0.4 * h52(id + 7 * b));
+  if (!A58) K.ev.forEach(e => { const a = tt - e.t0; if (a < 0 || a > 0.7) return; const v = S.v52.c.set(e.x, e.y, e.z).sub(B[0].position).applyQuaternion(iq), r = 0.035 * H * (0.4 + 1.4 * sm52(a / 0.7)); ringAt(b0, v.x, pl.h * 0.9, v.z, r, 0, r * 0.8, 12, 0.7 * (1 - a / 0.7) + 0.1); });
+  /* a bubble swells in the pool and pops */ for (let b = 0; b < (A58 ? 0 : S.st >= 3 ? 2 : 1); b++) { const x = tt / 3.4 + b * 0.5, u = fr52(x), id = Math.floor(x), an = PI * (0.15 + 0.7 * h52(id * 3 + b)), rr = 0.35 + 0.4 * h52(id * 5 + b + 1), bx = pl.x - B[0].position.x + Math.cos(an) * pl.rx * rr, bz = pl.z - B[0].position.z + Math.sin(an) * pl.rz * rr, rb = 0.05 * H * (0.8 + 0.4 * h52(id + 7 * b));
     if (u < 0.8) { const r = rb * sm52(u / 0.8); if (r > 0.004) ringAt(b0, bx, pl.h * 0.8 + r * 0.9, bz, r, r * 0.9, 0, 12, 0.75); }
     else if (u < 0.9) { const v = (u - 0.8) / 0.1; for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.6, r1 = rb * (1 + 0.6 * v), r2 = rb * (1.3 + 0.9 * v); pool[0].set(bx + r1 * Math.cos(a), pl.h * 0.8 + rb * 0.9 + r1 * Math.sin(a), bz).applyMatrix4(b0); pool[1].set(bx + r2 * Math.cos(a), pl.h * 0.8 + rb * 0.9 + r2 * Math.sin(a), bz).applyMatrix4(b0); free30(R, pool.slice(0, 2), lw * 0.7 * (1 - v), s2, Wd, Ht, P10, P11, d, sd++, { smooth: 0, wob: 0.3, min: 2 }); } } }
   /* the sleeves pour: dashes run down the front of each */ if (S.st === 5) K.sleeve.forEach((c, ci) => { const jn = c.jn, n = jn.length - 1, s0 = 3; for (let q = 0; q < 3; q++) { const v = fr52(tt * 0.42 + q / 3 + ci * 0.17); let m = 0;
@@ -3167,6 +3168,125 @@ KIT.spirit26.play = play26;
 draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); const M = S.o55 || S, X = M.x55; if (X && X.live) W55.cam = cam; if (!X || !X.live || !X.e || !S.pen30) return; const fr = ren.info && ren.info.render ? ren.info.render.frame : 0; if (X.df === fr) return; X.df = fr; try { ink55(T, S, X, ren, cam); } catch (e) { W55.err = 'ink ' + String(e && e.stack); } })(draw30);
 KIT.W55 = W55; KIT.e55dbg = () => { const e = W55.e; return { err: W55.err, e: e ? { u: +e.u.toFixed(2), go: +e.go.toFixed(2), sink: +e.sink.toFixed(2), boil: +e.boil.toFixed(2), v: +e.v.toFixed(2), look: +e.look.toFixed(2), home: +e.home.toFixed(2), pr: +e.pr.toFixed(2), D: e.D != null ? +e.D.toFixed(2) : null, Dm: e.Dm != null ? +e.Dm.toFixed(2) : null, hit: e.hit, tot: e.tot, old: e.old } : null }; };
 // ==== W55 END
+// ==== W58 BEGIN
+// (builder 58) ACID'S OWN ACT (AA.rxKit.act58, on with the sneak; false or ?a58=0 gives the old act, which is Water's played on it).
+// The page (scheme S58) lays the times out on the music's beats and gives the atoms the rules counted as chewed (their world places);
+// here the sneak plays it with its own body, joint by joint, after its own rest pass (W52 with its idle business held back):
+//  1. LEAVING: a glance left and right, a rub of the claws; then it slides upright and leaning, on a narrow lick of acid (its pool drawn in
+//     under it; the pit stays at home), flame tip streaming back; at the book's edge both claws go over the edge and it hauls itself up;
+//     then it creeps on the page in small tiptoe surges.
+//  2. AT THE MOLECULE: it rears up and looks the molecule over; for each atom: reach, pinch, pluck (the page stretches and parts the bond),
+//     hold it up and admire it, a mouth far too wide, the drop, the gulp (snap shut, a fizz, a wisp of fume); quicker and greedier with each
+//     one (the second hardly admired, the third and later both hands stuffing), the flame taller and the grin wider each time.
+//  3. HOME: it licks its fingers, belches, turns its back and slides home seen from behind, a little fatter, flame tip bobbing, drops into
+//     its pit and settles.
+KIT.act58 = KIT.act58 == null ? !(typeof location !== 'undefined' && /[?&]a58=0/.test(String(location.search))) : KIT.act58;
+const W58 = { err: null, e: null };
+const cl58 = x => (x < 0 ? 0 : x > 1 ? 1 : x), sm58 = x => { x = cl58(x); return x * x * (3 - 2 * x); }, pu58 = (x, a, b, w) => sm58((x - a) / w) * (1 - sm58((x - b) / w));
+/* the sub-beats of one atom by its kind (0 the first, 1 the second, 2 the greedy rest): reach, pinch, pull (parts at its end), lift ends, mouth opens, drop; gulp at 1 */
+const AK58 = [{ re: 0.2, pi: 0.3, pu: 0.48, li: 0.8, op: 0.7, dr: 0.88 }, { re: 0.24, pi: 0.33, pu: 0.52, li: 0.7, op: 0.6, dr: 0.84 }, { re: 0.3, pi: 0.36, pu: 0.5, li: 0.62, op: 0.38, dr: 0.8 }];
+/* where it is in the act at t (ms since the tap): every number the motion, the atoms and the page read. Z is the plan the page made */
+function ph58(t, Z) { const e = { t, ph: 'pre', e: 0, i: -1, u: 0, sh: 1, at: [], ate: 0, pool: 1, y: 0, done: t >= Z.tEnd, home: t >= Z.tP + 200 };
+  const L = Z.L, n = Z.a.length; let ate = 0;
+  Z.a.forEach((a, i) => { const K = AK58[a.kind], s = { k: 0, f: 0 }, w = a.t1 - a.t0, u = (t - a.t0) / w;
+    if (t >= a.t1) { const f = (t - a.t1) / (0.9 * L); s.k = f < 1 ? 4 : 5; s.f = cl58(f); ate += 1 - (1 - sm58(f * 2)) * 0.6; }
+    else if (u >= K.dr) { s.k = 3; s.f = (u - K.dr) / (1 - K.dr); } else if (u >= K.pu) { s.k = 2; s.f = (u - K.pu) / (K.dr - K.pu); } else if (u >= K.pi) { s.k = 1; s.f = (u - K.pi) / (K.pu - K.pi); }
+    e.at.push(s); });
+  e.ate = ate;
+  if (t < Z.tS) { e.ph = 'glance'; e.g = cl58(t / Z.tS); }
+  else if (t < Z.tE) { e.ph = 'slide'; const u = (t - Z.tS) / (Z.tE - Z.tS); e.s = u; e.e = Z.eE * (0.55 * u + 0.45 * sm58(u)); }
+  else if (t < Z.tH) { e.ph = 'haul'; const u = (t - Z.tE) / (Z.tH - Z.tE); e.hl = u; e.e = Z.eE + (Z.eH - Z.eE) * sm58((u - 0.3) / 0.6); e.y = sm58((u - 0.3) / 0.55); }
+  else if (t < Z.tC) { e.ph = 'slide'; const u = (t - Z.tH) / (Z.tC - Z.tH); e.s = 0.15 + 0.85 * u; e.e = Z.eH + (Z.eC - Z.eH) * (1 - (1 - u) * (1 - u)); e.y = 1; }
+  else if (t < Z.tA) { e.ph = 'creep'; const u = (t - Z.tC) / (Z.tA - Z.tC), N = Z.steps, f = u - Math.sin(2 * PI * u * N) / (2 * PI * N); e.c = u; e.cs = u * N; e.e = Z.eC + (1 - Z.eC) * f; e.y = 1; }
+  else if (t < Z.tB) { e.e = 1; e.y = 1; e.ph = n && t >= Z.a[0].t0 ? 'atom' : 'rear'; e.r = cl58((t - Z.tA) / Math.max(1, (n ? Z.a[0].t0 : Z.tB) - Z.tA));
+    for (let i = 0; i < n; i++) if (t >= (Z.a[i].m0 != null ? Z.a[i].m0 : Z.a[i].t0)) e.i = i; if (e.i >= 0) { const a = Z.a[e.i], w = a.t1 - a.t0; if (a.m0 != null && t < a.t0) { e.sh = sm58((t - a.m0) / (a.t0 - a.m0)); e.wk = (t - a.m0) / 300; } e.u = (t - a.t0) / w; e.ag = t - a.t1; } }
+  else if (t < Z.tT) { e.ph = 'lick'; e.e = 1; e.y = 1; e.lk = (t - Z.tB) / (Z.tT - Z.tB); e.i = n - 1; e.ag = t - (n ? Z.a[n - 1].t1 : Z.tB); }
+  else if (t < Z.tP) { e.ph = 'back'; const u = (t - Z.tT) / (Z.tP - Z.tT); e.b = u; const f = 0.5 * u + 0.5 * sm58(u); e.e = 1 - f; e.y = e.e > Z.eE ? 1 : 0; }
+  else { e.ph = 'pit'; e.pt = cl58((t - Z.tP) / Math.max(1, Z.tEnd - Z.tP)); e.e = 0; }
+  /* its pool: drawn in to a narrow lick under it while it is away (the pit stays at home) */ e.pool = 1 - 0.7 * sm58((t - Z.tS + 120) / 260) + 0.7 * sm58((t - Z.tP) / 300);
+  return e; }
+/* the world places the page needs back each frame: each claw's tip, the mouth, the belly */
+function out58(S) { const T = S.T, B = S.bones, par = B[0].parent, K = S.k52, o = S.o58 || (S.o58 = { h: { 1: new T.Vector3(), '-1': new T.Vector3() }, m: new T.Vector3(), b: new T.Vector3(), v: new T.Vector3() });
+  par.updateWorldMatrix(true, false); const M = par.matrixWorld;
+  [1, -1].forEach(sd => { const A = K.arm[sd] || [], h = o.h[sd]; h.set(0, 0, 0); if (!A.length) return; A.forEach(c => { h.add(o.v.copy(B[c.jn[c.jn.length - 1]].position)); }); h.multiplyScalar(1 / A.length); const hb = B[A[0].jn[A[0].l.arm]].position; h.lerp(hb, 0.35).applyMatrix4(M); });
+  const hd = B[S.G.bj[S.G.R.head]].position; if (S.F && S.F.om) { S.F.om.updateWorldMatrix(true, false); S.F.om.getWorldPosition(o.m); } else o.m.copy(hd).applyMatrix4(M);
+  o.b.copy(B[S.G.bj[S.G.R.chest]].position).lerp(B[S.G.bj[Math.max(1, S.G.R.chest - 2)]].position, 0.5).applyMatrix4(M); S.h58 = o; }
+/* a world point in the joints' own space */
+const loc58 = (S, w) => { const v = S.o58v || (S.o58v = new S.T.Vector3()); return S.bones[0].parent.worldToLocal(v.set(w.x, w.y, w.z)).clone(); };
+/* one claw goes to a point (joint space) by w; its fingers open (a < 0) or close (a > 0) */
+function claw58(S, sd, x, y, z, w, a) { const hp = hp55(S, sd); if (!hp || w <= 0) { if (a) (S.k52.arm[sd] || []).forEach(c => curl52(S, c, (c.cs52 || 1) * a)); return; } hand55(S, sd, (x - hp.x) * w, (y - hp.y) * w, (z - hp.z) * w); (S.k52.arm[sd] || []).forEach(c => curl52(S, c, (c.cs52 || 1) * a)); }
+/* its open mouth: the O of the face, made far too wide, with a dark green inside */
+function mouth58(S, k) { const om = S.F && S.F.om; if (!om) return; let d = om.userData.d58; const T = S.T;
+  if (!d) { let bb = null; om.traverse(c => { if (c.isMesh && c.geometry && !bb) { c.geometry.computeBoundingBox(); bb = c.geometry.boundingBox.clone(); } }); if (!bb) return; const c = bb.getCenter(new T.Vector3()), s = bb.getSize(new T.Vector3());
+    d = new T.Mesh(new T.CircleGeometry(1, 22), new T.MeshBasicMaterial({ color: new T.Color(0x1d2a0c).convertSRGBToLinear() })); d.position.set(c.x, c.y, c.z - 0.002); d.scale.set(s.x * 0.48, s.y * 0.48, 1); d.userData.plain = true; d.userData.nobox = true; om.add(d); om.userData.d58 = d;
+    const g2 = new T.Mesh(new T.CircleGeometry(1, 16), new T.MeshBasicMaterial({ color: new T.Color(0x9fc23a).convertSRGBToLinear() })); g2.position.set(0, -0.55, 0.001); g2.scale.set(0.55, 0.3, 1); d.add(g2); }
+  if (k > 0.02) { om.visible = true; if (S.F.mouth) S.F.mouth.visible = false; om.scale.set(0.9 + 1.7 * k, 0.7 + 2.6 * k, 1); } }
+/* the act, joint by joint, after the rest pass */
+function pose58(S, e, Z, z) { const G = S.G, H = G.H, K = S.k52, B = S.bones, st = S.st, n = Z.a.length, ate = e.ate, T = S.T, nw = (typeof performance !== 'undefined' ? performance.now() : 0) / 1000;
+  const hd = B[G.bj[G.R.head]].position, ch = B[G.bj[G.R.chest]].position, P0 = B[0].position, big = st >= 5 ? 1.3 : st <= 1 ? 0.8 : 1;
+  const rest = sd => { const A = K.arm[sd]; return A && A.length ? B[A[0].jn[A[0].l.arm]].position.clone() : ch.clone(); };
+  let flame = 0.12 * ate * big, fx = 0, fz = 0, mo = 0;
+  /* the licks round the pool come in with it */ const pk = e.pool; if (pk < 0.999) K.lick.forEach(c => c.jn.forEach((j, k) => { if (!k) return; const p = B[j].position; p.x = P0.x + (p.x - P0.x) * pk; p.z = P0.z + (p.z - P0.z) * pk; p.y *= 0.4 + 0.6 * pk; B[j].scale.multiplyScalar(0.5 + 0.5 * pk); }));
+  if (e.ph === 'glance') { const g = e.g, rb = pu58(g, 0.5, 1.02, 0.1); /* rub: the claws meet before its chest and slide past each other */
+    [1, -1].forEach(sd => { const ph = nw * 2 * PI * 2.6, x = ch.x + sd * 0.07 * H, y = ch.y + 0.04 * H + sd * 0.025 * H * Math.sin(ph), zz = ch.z + 0.2 * H + sd * 0.02 * H * Math.cos(ph); claw58(S, sd, x, y, zz, 0.85 * rb, 0.5 * rb); }); }
+  else if (e.ph === 'slide') { const s = e.s, w = sm58(s / 0.15) * (1 - sm58((s - 0.9) / 0.1)); fz = -0.28 * H * w; fx = 0.05 * H * Math.sin(nw * 17) * w; /* claws back along its flanks */
+    [1, -1].forEach(sd => { const r = rest(sd); claw58(S, sd, r.x + sd * 0.04 * H, r.y - 0.06 * H, r.z - 0.18 * H, 0.8 * w, 0.4 * w); }); }
+  else if (e.ph === 'haul') { const u = e.hl, gr = sm58(u / 0.3) * (1 - sm58((u - 0.8) / 0.2)); /* both claws over the edge before it, then it pulls itself up and over */
+    [1, -1].forEach(sd => { claw58(S, sd, P0.x + sd * 0.16 * H, P0.y + 0.04 * H + 0.1 * H * (1 - sm58(u / 0.3)), P0.z + 0.42 * H * (1 - 0.6 * sm58((u - 0.3) / 0.5)), gr, 0.9 * gr - 0.3 * (1 - gr)); }); fz = -0.1 * H * gr; }
+  else if (e.ph === 'creep') { const ph = e.cs % 1, lift = Math.sin(PI * ph); /* tiptoe: claws held up by its chest, fingers dangling, a little rise on each surge */
+    [1, -1].forEach(sd => claw58(S, sd, ch.x + sd * 0.13 * H, ch.y + 0.02 * H + 0.02 * H * lift, ch.z + 0.16 * H, 0.75 * sm58(e.c / 0.15), 0.95)); fz = -0.06 * H * lift; }
+  else if (e.ph === 'rear') { const r = e.r; [1, -1].forEach(sd => claw58(S, sd, ch.x + sd * 0.14 * H, ch.y + 0.08 * H, ch.z + 0.15 * H, 0.8 * sm58(r / 0.3), 0.7 - 0.9 * sm58((r - 0.6) / 0.3))); }
+  else if (e.ph === 'atom' || e.ph === 'lick') {
+    const i = e.i, a = Z.a[i], Kd = a ? AK58[a.kind] : AK58[0], u = e.u, at = a && Z.at[i];
+    if (e.ph === 'atom' && a && at && !a.sk) { a.sk = 1; const t0 = loc58(S, at); a.sd = a.kind === 2 && e.i > 0 ? -Z.a[e.i - 1].sd : t0.x >= ch.x ? 1 : -1; }
+    if (e.ph === 'atom' && a && at) { const sd = a.sd, tg = loc58(S, at), up = hd.y + (a.kind ? 0.12 : 0.28) * H, ox = sd * (a.kind ? 0.14 : 0.3) * H, mx = S.h58 ? loc58(S, S.h58.m) : hd;
+      const wR = sm58(u / Kd.re), pull = sm58((u - Kd.pi) / (Kd.pu - Kd.pi)), lift = sm58((u - Kd.pu) / (Kd.li - Kd.pu)), toM = sm58((u - (Kd.li - 0.04)) / (Kd.dr + 0.04 - Kd.li));
+      /* the claw: out to the atom, pinch, pull it back toward itself, up beside its head to admire, over the mouth, let go */
+      let x = tg.x, y = tg.y, zz = tg.z; const bx = (tg.x - ch.x), bz = (tg.z - ch.z), bl = Math.hypot(bx, bz) || 1; x -= bx / bl * 0.12 * H * pull; zz -= bz / bl * 0.12 * H * pull; y += 0.08 * H * pull;
+      x += (hd.x + ox - x) * lift; y += (up - y) * lift; zz += (hd.z + 0.12 * H - zz) * lift; x += (mx.x - x) * toM; y += (mx.y + 0.16 * H - y) * toM; zz += (mx.z + 0.06 * H - zz) * toM;
+      const back = u >= 1 ? sm58(e.ag / (0.35 * Z.L)) : 0, w = wR * (1 - back), cu = -0.6 * (1 - sm58((u - Kd.re + 0.05) / 0.08)) + 1.1 * sm58((u - Kd.re + 0.04) / 0.07) - 1.4 * pu58(u, Kd.dr + 0.02, 1.2, 0.04);
+      claw58(S, sd, x, y, zz, w, cu * (1 - back));
+      /* the greedy ones: the other claw shoves at the mouth too */ if (a.kind === 2) claw58(S, -sd, mx.x - sd * 0.05 * H, mx.y - 0.02 * H, mx.z + 0.1 * H, sm58((u - 0.4) / 0.3) * (1 - back), 0.9);
+      else claw58(S, -sd, ch.x - sd * 0.12 * H, ch.y + 0.05 * H, ch.z + 0.14 * H, 0.6, 0.6 + 0.3 * Math.sin(nw * 9) * (1 - lift));
+      mo = sm58((u - Kd.op) / (Kd.dr - Kd.op + 0.02)) * (1 - sm58((e.ag || -1e9) / 90));
+      /* the gulp: a swallow down the neck, the flame jumps */ if (e.ag > 0) flame += 0.25 * Math.exp(-e.ag / 260) * big; }
+    else { /* lick: a claw to the mouth, the fingers drawn through it; then the belch */ const lk = e.lk, s2 = (n ? Z.a[n - 1].sd : 1), mx = S.h58 ? loc58(S, S.h58.m) : hd, w = pu58(lk, 0.05, 0.6, 0.12);
+      claw58(S, s2, mx.x + s2 * 0.04 * H * Math.sin(lk * 30), mx.y + 0.02 * H, mx.z + 0.08 * H, w, 0.8 + 0.4 * Math.sin(lk * 30)); mo = 0.25 * w * (0.5 + 0.5 * Math.sin(lk * 30)) + 0.75 * pu58(lk, 0.68, 0.86, 0.05); } }
+  else if (e.ph === 'back') { const b = e.b, w = sm58(b / 0.12) * (1 - sm58((b - 0.9) / 0.1)); fz = 0.22 * H * w; fx = 0.06 * H * Math.sin(nw * 11) * w; /* the flame tip bobs as it goes */ flame += 0.08 * Math.sin(nw * 13) * w;
+    [1, -1].forEach(sd => { const r = rest(sd); claw58(S, sd, r.x + sd * 0.05 * H, r.y - 0.05 * H, r.z + 0.12 * H, 0.7 * w, 0.4 * w); }); }
+  if (flame || fx || fz) bend52(S, K.top, 1, fx, flame * 0.15 * H, fz, flame);
+  if (S.F) { mouth58(S, mo); if (S.F.om && S.F.om.userData.d58) S.F.om.userData.d58.visible = mo > 0.02; }
+  S.g52 = Math.min(1.6, 0.35 * ate); }
+/* the face, the lean and the pool for the rest pass to lay over its own numbers (C26.rest's z55 overlay of W55) */
+function face58(e, Z, z, st) { const n = Z.a.length, ate = e.ate, big = st >= 5 ? 1.3 : 1; z.px = z.pz = e.pool; z.smile = 1.25 + 0.3 * ate; z.swell = 0.045 * ate;
+  if (e.ph === 'glance') { const g = e.g, gl = pu58(g, 0.02, 0.55, 0.08); z.hturn = 0.65 * Math.sin(g * 2 * PI * 1.1) * gl; z.lookx = 1.8 * Math.sin(g * 2 * PI * 1.1) * gl; z.brow = -0.4; z.lidx = 0.35; z.sq = -0.05 * pu58(g, 0.5, 1.02, 0.1); z.bow = 0.12 * sm58((g - 0.8) / 0.2); }
+  else if (e.ph === 'slide') { const s = e.s, w = sm58(s / 0.12) * (1 - sm58((s - 0.9) / 0.1)); z.bow = 0.5 * w / big; z.lean = 0.05 * Math.sin(s * 40) * w; z.sq = 0.06 * w; z.lookx = 0; z.looky = -0.3; z.lidx = 0.3; z.brow = -0.5; }
+  else if (e.ph === 'haul') { const u = e.hl; z.bow = 0.55 * sm58(u / 0.3) * (1 - sm58((u - 0.75) / 0.25)); z.sq = -0.14 * pu58(u, 0.2, 0.5, 0.1) + 0.1 * pu58(u, 0.55, 0.85, 0.1); z.looky = -0.6; z.brow = 0.3; z.wide = 0.3 * pu58(u, 0.4, 0.7, 0.1); }
+  else if (e.ph === 'creep') { const lift = Math.sin(PI * (e.cs % 1)); z.bow = 0.2; z.sq = 0.05 * lift; z.lean = 0.05 * Math.sin(PI * e.cs); z.lookx = 0.8 * Math.sin(e.c * 5); z.looky = -0.6; z.lidx = 0.4; z.brow = -0.5; z.smile = 1.5; }
+  else if (e.ph === 'rear') { const r = e.r, sw = Math.sin(r * 2 * PI * 1.2); z.sq = 0.16 * sm58(r / 0.3) * big; z.bow = -0.06; z.lookx = 1.6 * sw; z.hturn = 0.4 * sw; z.looky = -0.8; z.brow = -0.3; z.lidx = 0.3 - 0.3 * sm58((r - 0.7) / 0.3); z.wide = 0.4 * sm58((r - 0.7) / 0.3); z.smile = 1.6; }
+  else if (e.ph === 'atom') { const a = Z.a[e.i], Kd = AK58[a.kind], u = e.u, sd = a.sd, lift = pu58(u, Kd.pu, Kd.dr, 0.05), ad = a.kind ? 0.5 : 1;
+    z.sq = 0.1 * big - 0.06 * pu58(u, Kd.pi, Kd.pu, 0.04) + 0.08 * lift; z.bow = 0.15 * pu58(u, 0, Kd.pu, 0.1); z.lookx = sd * (0.6 + 1.2 * lift) * (u < 1 ? 1 : 0); z.looky = -0.6 + 1.3 * lift * ad; z.hturn = sd * 0.35 * lift * ad; z.tilt = -sd * 0.15 * lift * ad;
+    z.wide = 0.5 * lift * ad + 0.4 * pu58(u, Kd.pi, Kd.pu, 0.04); z.smile = 1.4 + 0.3 * ate + 0.6 * lift * ad; z.brow = 0.4 * lift * ad - 0.3 * (1 - lift);
+    const op = sm58((u - Kd.op) / (Kd.dr - Kd.op + 0.02)); if (op > 0 && u < 1) { z.open = 0.6 + 2 * op; z.nod = -0.45 * op; z.looky = 0.6; z.blink = 0; }
+    if (e.sh < 1) { const w = Math.sin(PI * e.sh); z.bow = 0.3 * w; z.sq += 0.06 * Math.abs(Math.sin(PI * e.wk)) * w; z.lookx = sd * 1.2; z.looky = -0.5; z.lidx = 0.3; z.lean = 0.06 * Math.sin(PI * e.wk) * w; }
+    if (e.ag > 0) { const g = e.ag / Z.L; z.open = 0; z.sq = (z.sq || 0) - 0.12 * Math.exp(-g * 6) + 0.1 * Math.exp(-g * 4) * Math.sin(g * 18); z.nod = 0.25 * Math.exp(-g * 3); z.blink = pu58(g, 0, 0.35, 0.08); z.swell = 0.045 * ate + 0.06 * Math.exp(-g * 3); } }
+  else if (e.ph === 'lick') { const lk = e.lk, be = pu58(lk, 0.68, 0.86, 0.05); z.lidx = 0.5 * (1 - be); z.smile = 1.8 + 0.2 * ate; z.nod = -0.4 * be; z.sq = 0.1 * be; z.open = be > 0.1 ? 0.8 + be : 0; z.lookx = 0; z.looky = 0.2; z.turn = PI * sm58((lk - 0.86) / 0.14); }
+  else if (e.ph === 'back') { const b = e.b, w = sm58(b / 0.1) * (1 - sm58((b - 0.92) / 0.08)); z.turn = PI * (1 - sm58((b - 0.9) / 0.1)); z.bow = 0.45 * w / big; z.lean = 0.06 * Math.sin(b * 34) * w; z.sq = 0.04 * w; z.swell = 0.045 * ate + 0.03; }
+  else if (e.ph === 'pit') { const p = e.pt; z.sink = 0.35 * pu58(p, 0, 0.35, 0.15); z.sq = 0.12 * Math.exp(-p * 5) * Math.sin(p * 20) * (p > 0.3 ? 1 : 0); z.smile = 1.6; z.lidx = 0.5 * sm58((p - 0.5) / 0.4); z.swell = 0.045 * ate * (1 - sm58((p - 0.3) / 0.7)); } }
+function act58(f0, grp, S, t, o) { const Z = o.bites.a58, e = ph58(t, Z), z = S.z58 || (S.z58 = {}); W58.e = e; Z.e = e; for (const k in z) delete z[k];
+  if (!S.k52) init52(S); face58(e, Z, z, S.st); f0(grp, 'rest', t / 500, { look: [1, 0.5], z55: z, act58: true }); S.c52 = 'act'; S.act58 = Z;
+  out58(S); pose58(S, e, Z, z); out58(S);
+  return { e: e.e, y: 0, lunge: 0, n: -1, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(clip === 'act' && S && S.a48 && !S.jar && KIT.act58 !== false && o && o.bites && o.bites.a58)) { if (S && S.act58 && clip !== 'act') S.act58 = null; return f0(grp, clip, t, o); }
+  try { return act58(f0, grp, S, t, o); } catch (err) { W58.err = String(err && err.stack); const Z = o.bites.a58; return { e: t > Z.tA && t < Z.tB ? 1 : 0, y: 0, lunge: 0, n: -1, big: 0, done: t >= Z.tEnd, home: t >= Z.tP }; } })(play26);
+KIT.spirit26.play = play26; KIT.ph58 = ph58; KIT.W58 = W58;
+/* the pit stays at home while it is away: laid at the place and size it had when the act began */
+draw30 = (f0 => function (T, S, ren, cam) { f0(T, S, ren, cam); const E = S.etch48; if (!E || !E.parent) return; try { const Z = S.act58, p = E.parent;
+    if (Z && !(Z.e && Z.e.done)) { const h = S.pit58 || (S.pit58 = { w: new T.Vector3(), s: new T.Vector3(), q: new T.Vector3(), ok: false, Z: null }); if (h.Z !== Z) { h.Z = Z; p.updateWorldMatrix(true, false); E.updateWorldMatrix(false, false); E.getWorldPosition(h.w); E.getWorldScale(h.s); h.ok = true; }
+      p.updateWorldMatrix(true, false); h.q.copy(h.w); p.worldToLocal(h.q); E.position.copy(h.q); const ws = p.getWorldScale(S.o58v2 || (S.o58v2 = new T.Vector3())); E.scale.set(h.s.x / ws.x, 1, h.s.z / ws.z); E.updateMatrixWorld(); }
+    else if (S.pit58) S.pit58.Z = null; } catch (e) { W58.err = 'pit ' + String(e && e.stack); } })(draw30);
+// ==== W58 END
 // ==== W49 BEGIN
 // (builder 49, five stages by builder 53) DRY ICE AS A SPIRIT: "the shy one", the owner's pick (AA.rxKit.dry49 = 'c', or ?d49=c on the page; off by default). Stills only.
 // Built and drawn the way Water is, by Water's own code: each stage is a set of numbers like a stage of S25 (pool, spine keys, limbs, face); geo26 makes
