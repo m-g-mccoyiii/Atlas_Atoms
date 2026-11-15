@@ -6044,42 +6044,40 @@ const on92 = S => !!(S && S.way69 && !S.jar && KIT.v92 !== false && KIT.act77 !=
 const eo92 = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return 1 - (1 - u) * (1 - u); }, ei92 = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return u * u; };
 /* the whole figure's box in its own units (every joint with its radius) */
 KIT.box92 = S => { const J = S.G.J; let x0 = 0, x1 = 0, top = 0; J.forEach(q => { if (!q || !q.p) return; const r = q.r || 0; x0 = Math.min(x0, q.p[0] - r); x1 = Math.max(x1, q.p[0] + r); top = Math.max(top, q.p[1] + r); }); return { x0, x1, H: Math.max(0.5, top) }; };
-/* one hop of u 0..1 between two places: push off (on the ground), the arc, the landing squash (which is the next hop's crouch) */
-function hop92(u, o) { const g0 = 0.14, g1 = 0.78;
-  if (u < g0) { const w = u / g0; o.p = 0; o.y = 0; o.sy = lp77(0.72, 1.2, ei92(w)); o.air = 0; o.v = 0; o.ld = 0; return o; }
-  if (u < g1) { const v = (u - g0) / (g1 - g0); o.p = v; o.y = 4 * v * (1 - v); o.sy = 1 + 0.2 * Math.abs(Math.cos(PI * v)) * (v < 0.5 ? 1 : 0.7); o.air = Math.sin(PI * v); o.v = v; o.ld = 0; return o; }
-  const w = (u - g1) / (1 - g1); o.p = 1; o.y = 0; o.sy = lp77(1.14, 0.72, eo92(w * 1.6)); o.air = 0; o.v = 1; o.ld = w; return o; }
-/* the act's numbers at t ms since the tap (Z: the page's plan, absolute times) */
-function ph92(t, Z) { const L = Z.L, H = Z.H, pl = Z.pl, kT = pl.k, dxs = Math.sign(pl.x - H.x) || 1, HW = Z.Hw || 3;
-  const e = { ph: 'wait', t, x: H.x, z: H.z, y: 0, k: 1, sy: 1, sx: 1, rz: 0, yaw: 0, lag: 0, lagz: 0, wide: 0, lid: 0, brow: null, flame: 1, glow: 1, open: 0, si: -1, fwd: 0, back: 0, done: false, home: false, spent: 0, tx: Z.mc.x, tz: Z.mc.z };
-  const fin = () => { e.sx = 1 + 0.6 * (1 - e.sy); if (e.sy > 1) e.sx = 1 - 0.35 * (e.sy - 1); e.sx += e.puff || 0; return e; };
+/* (builder 93) one BOUND of u 0..1 between two places, made to fill its time (the owner: "it jerks a lot and stutters": builder 92's hop crossed in
+   ten frames at one speed, squashed in one frame and then stood still). It starts in the crouch (0.72): a short sink deeper, the spring (the stretch
+   eased over four frames while it leaves the ground), a long arc eased at both ends, the landing: down past the crouch and back to it, damped. */
+function hop92(u, o) { const a = 0.12, b = 0.2, c = 0.74, s = sm52;
+  if (u < a) { o.p = 0; o.y = 0; o.sy = lp77(0.72, 0.64, s(u / a)); o.air = 0; o.v = 0; o.ld = 0; return o; }
+  if (u < c) { const v = Math.max(0, (u - b) / (c - b)), cs = Math.cos(PI * v), sa = 1 + 0.2 * cs * cs * (v < 0.5 ? 1 : 0.7); o.p = 0.8 * v + 0.2 * s(v); o.y = 4 * v * (1 - v); o.sy = lp77(0.64, sa, s((u - a) / (0.27 - a))); o.air = Math.sin(PI * v); o.v = v; o.ld = 0; return o; }
+  const w = (u - c) / (1 - c); o.p = 1; o.y = 0; o.sy = 0.72 + 0.42 * Math.exp(-6 * w) * Math.cos(11 * w); o.air = 0; o.v = 1; o.ld = w; return o; }
+/* the act's numbers at t ms since the tap (Z: the page's plan, absolute times). Z.bd: the bounds (t0, T, from, to, h, pre: the crouch before it when
+   it starts from standing); Z.sd: where it stands for each counted atom and how far its head must bend to it; Z.P: when each is lit (t), the bend
+   starts (a0). */
+function ph92(t, Z) { const L = Z.L, H = Z.H, s = sm52, sp = SP92;
+  const e = { ph: 'wait', t, x: H.x, z: H.z, y: 0, k: 1, sy: 1, sx: 1, rz: 0, yaw: 0, lag: 0, lagz: 0, wide: 0, lid: 0, brow: null, flame: 1, glow: 1, open: 0, si: -1, bend: 0, kick: 0, done: false, home: false, spent: 0, tx: Z.mc.x, tz: Z.mc.z, land: 0, bi: -1, air: 0 };
+  const fin = () => { e.sx = e.sy < 1 ? 1 + 0.6 * (1 - e.sy) : 1 - 0.35 * (e.sy - 1); return e; };
   if (t < Z.tW) return e;
-  if (t < Z.tPour) { /* ready: down and wide, the coals open */ const c = eo92((t - Z.tW) / (Z.tPour - Z.tW)); e.ph = 'ready'; e.sy = 1 - 0.28 * c; e.wide = c; e.glow = 1 + 0.8 * c; e.brow = -0.6 * c; e.rz = 0.05 * dxs * c; e.lag = -0.25 * dxs * c; e.flame = 1 + 0.3 * c; e.op = c; return fin(); }
-  e.op = 1;
-  const hops = (t0, W, k0, k1) => { const n = Z.nH, TH = Z.TH, i = Math.min(n - 1, Math.floor((t - t0) / TH)), u = (t - t0 - i * TH) / TH, o = hop92(u, {}), from = W[i], to = W[i + 1], dx = to.x - from.x, dz = to.z - from.z, dl = Math.hypot(dx, dz) || 1, sx = dx / dl, sz = dz / dl;
-    e.x = from.x + dx * o.p; e.z = from.z + dz * o.p; const ka = k0 + (k1 - k0) * ((i + sm52(o.p)) / n); e.k = ka; e.y = o.y * Z.hop * HW * ka; e.sy = o.sy;
-    /* the lean goes with the travel; the smoke trails in the first half of the arc, swings past on the landing and rocks back */
-    e.rz = -0.2 * sx * o.air * (o.v < 0.5 ? 1 : 0.5); const sw = o.ld > 0 ? 0.32 * Math.exp(-2.2 * o.ld) * Math.cos(5.5 * o.ld) : o.air > 0 ? -0.36 * Math.sin(PI * Math.min(1, o.v * 1.25)) + 0.32 * sm52((o.v - 0.7) / 0.3) : -0.14 * (1 - u / 0.14);
-    e.lag = sw * sx; e.lagz = sw * sz * 0.7; e.wide = 0.5; e.brow = -0.5; e.glow = 1.4; e.hi = i; e.hu = u; e.land = o.ld; e.flame = 0.7; };
-  if (t < Z.tRise) { e.ph = 'out'; hops(Z.tPour, Z.way, 1, kT); return fin(); }
-  e.x = pl.x; e.z = pl.z; e.k = kT;
-  /* the spring out of a landing squash: up past its height and back */ const spring = (t0, T, a) => { const w = Math.max(0, (t - t0) / T); return 1 + a * Math.exp(-4.2 * w) * Math.cos(9.5 * w); };
-  if (t < Z.tA) { e.ph = 'plant'; const w = (t - Z.tRise) / (Z.tA - Z.tRise); e.sy = spring(Z.tRise, Z.tA - Z.tRise, -0.28); e.lag = 0.2 * dxs * Math.exp(-3 * w) * Math.cos(7 * w); e.wide = 0.5 * (1 - w); e.glow = 1.4; e.brow = -0.5; e.flame = 0.7; return fin(); }
-  if (t < Z.tD) { e.ph = 'count'; e.glow = 1.5; e.brow = -0.7; e.lid = 0.25; e.flame = 0.6;
-    /* the spit: which atom, how far it leans back (back), how far it has snapped forward (fwd) */ const P = Z.P; let c = -1; for (let i = 0; i < P.length; i++) if (t >= P[i].a0) c = i;
-    if (c >= 0 && t < Z.tUp + 0.2 * L) { const p = P[c], g = p.g, a = sm52((t - p.a0) / (0.28 * L)), f = sm52((t - (p.t - 0.72 * L)) / (0.12 * L)), r = sm52((t - (p.t - 0.48 * L)) / (0.44 * L)), q = Z.tg[c] || Z.mc, d = Math.sign(q.x - pl.x) || 1;
-      e.si = c; e.back = a * (1 - f); e.fwd = f * (1 - r); e.rz = d * (0.16 * e.back - 0.22 * e.fwd); e.sy = 1 + 0.14 * e.back - 0.12 * e.fwd; e.puff = 0.12 * e.back; e.lag = d * (-0.14 * e.back + 0.22 * e.fwd) + (r > 0 && r < 1 ? -0.08 * d * Math.sin(PI * 2 * r) * (1 - r) : 0);
-      e.open = Math.max(0.5 * e.back, e.fwd); e.wide = 0.7 * e.back; e.lid = 0.25 * (1 - e.back); e.flame = 0.6 + 0.2 * e.back; e.glow = 1.5 + 0.8 * e.fwd; e.tx = q.x; e.tz = q.z; }
-    if (t >= Z.tUp) { /* the crouch, then drawn up tall on the hit; the fire flares */ const c2 = sm52((t - Z.tUp) / (0.7 * (Z.tHit - Z.tUp))), up = sm52((t - (Z.tHit - 0.2 * L)) / (0.2 * L)), w = Math.max(0, (t - Z.tHit) / L), r = sm52((t - Z.tRel) / (1.2 * L));
-      e.ph = t >= Z.tHit ? 'hit' : 'up'; const s0 = 1 - 0.26 * c2, s1 = 1 + 0.3 * Math.exp(-2.6 * w) * Math.cos(7 * w) + 0.06 * (1 - r) * (1 - Math.exp(-3 * w));
-      e.sy = lp77(s0, t >= Z.tHit ? s1 : 1.3, up); e.wide = up * (1 - r); e.lid = 0.25 * (1 - up) + 0.2 * r; e.brow = -0.9; e.glow = 1.5 + 1.4 * up * (1 - r); e.flame = 0.6 + 0.1 * c2 + 0.45 * up * Math.exp(-1.2 * w); e.lag = 0; e.open = 0.8 * up * (1 - sm52(w / 1.2)); e.tx = Z.mc.x; e.tz = Z.mc.z; }
-    return fin(); }
-  const sp = SP92;
-  if (t < Z.tBk) { /* it turns its back: a dip, round, up */ const u = (t - Z.tD) / (Z.tBk - Z.tD); e.ph = 'turn'; e.yaw = u < 0.55 ? 0 : PI; e.sy = u < 0.55 ? 1 - 0.3 * eo92(u / 0.55) : 0.7 + 0.02 * sm52((u - 0.55) / 0.45); e.glow = 1.2; e.flame = 0.8; e.lid = 0.2; return fin(); }
-  if (t < Z.tHm) { e.ph = 'back'; hops(Z.tBk, Z.wayR, kT, 1); e.yaw = PI; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null; return fin(); }
-  if (t < Z.tEnd) { /* home: the spring out of the last landing, round to the front, one more small squash, settled and spent */ const T = Z.tEnd - Z.tHm, u = (t - Z.tHm) / T, s = sm52((u - 0.45) / 0.55);
-    e.ph = 'settle'; e.x = H.x; e.z = H.z; e.k = 1; e.yaw = 0; e.op = 1 - s; e.sy = spring(Z.tHm, T, -0.28) - 0.1 * Math.sin(PI * sm52((u - 0.55) / 0.3)); e.lag = -0.3 * dxs * Math.exp(-3 * u) * Math.cos(7 * u); e.flame = lp77(0.7, sp.flame, s); e.glow = lp77(1, sp.glow, s); e.lid = sp.lid * s; e.spent = s; return fin(); }
-  e.ph = 'done'; e.op = 0; e.x = H.x; e.z = H.z; e.k = 1; e.done = e.home = true; e.spent = 1; e.flame = sp.flame; e.glow = sp.glow; e.lid = sp.lid; return e; }
+  if (t >= Z.tEnd) { e.ph = 'done'; e.op = 0; e.done = e.home = true; e.spent = 1; e.flame = sp.flame; e.glow = sp.glow; e.lid = sp.lid; return e; }
+  e.op = 1; const B = Z.bd; let bi = -1, sy = 1, stand = true; for (let i = 0; i < B.length; i++) if (t >= B[i].t0) bi = i;
+  if (bi >= 0) { const b = B[bi], u = (t - b.t0) / b.T, dx = b.to.x - b.from.x, dz = b.to.z - b.from.z;
+    if (u < 1) { const o = hop92(u, {}); stand = false; e.x = b.from.x + dx * o.p; e.z = b.from.z + dz * o.p; e.k = b.from.k + (b.to.k - b.from.k) * s(o.p); e.y = o.y * b.h; sy = o.sy; e.rz = -0.15 * (Math.sign(dx) || 1) * Math.min(1, Math.abs(dx) / 4) * o.air * (1 - 0.6 * s((o.v - 0.35) / 0.3)); e.land = o.ld; e.air = o.air; e.bi = bi; }
+    else { const w = (t - b.t0 - b.T) / L; e.x = b.to.x; e.z = b.to.z; e.k = b.to.k; /* up out of the landing's crouch, past its height and back */ sy = 1 - 0.28 * Math.exp(-4.2 * w) * Math.cos(9.5 * w); } }
+  /* the crouch before the next bound, from standing */ { const nb = B[bi + 1]; if (nb && stand && nb.pre > 0) { const c = s((t - (nb.t0 - nb.pre)) / nb.pre); sy = lp77(sy, 0.72, c); e.wide = 0.6 * c; } }
+  e.sy = sy;
+  if (t < Z.tPour) { const c = s((t - Z.tW) / (Z.tPour - Z.tW)); e.ph = 'ready'; e.glow = 1 + 0.8 * c; e.brow = -0.6 * c; e.flame = 1 + 0.3 * c; e.wide = c; e.op = c; return fin(); }
+  e.ph = t < Z.tA ? 'out' : 'count'; e.glow = 1.4; e.brow = -0.5; e.flame = 0.8; if (!stand) e.wide = 0.5;
+  /* it lights a sulfur by touch: the smoke head bends down to the atom, its mouth open, and breathes its fire onto it at no distance */
+  { const P = Z.P; let c = -1; for (let i = 0; i < P.length; i++) if (t >= P[i].a0) c = i;
+    if (c >= 0 && t < Z.tUp) { const p = P[c], q = Z.tg[c] || Z.mc, d = Z.sd[c] || { lx: 0.3 }, a = s((t - p.a0) / Math.max(1, p.t - 0.08 * L - p.a0)), r = s((t - (p.t + 0.14 * L)) / (0.4 * L)), kick = t >= p.t ? Math.exp(-(t - p.t) / (0.14 * L)) : 0, bend = a * (1 - r);
+      e.bend = bend; e.kick = kick; e.si = c; e.tx = q.x; e.tz = q.z; e.lag += d.lx * bend; e.lagz += 0.14 * bend; e.rz += -(Math.sign(d.lx) || 1) * 0.13 * bend; e.sy *= 1 + (0.5 * (d.up || 0) - 0.04) * bend + 0.07 * kick * (1 - r); e.open = bend; e.wide = Math.max(e.wide, 0.7 * bend); e.lid = 0.25 * (1 - bend); e.glow = 1.5 + 0.9 * kick; e.flame = 0.8 + 0.3 * bend; e.brow = -0.7; } }
+  if (t >= Z.tUp && t < Z.tD) { /* the crouch, then drawn up tall on the hit; the fires flare */ const c2 = s((t - Z.tUp) / (0.7 * (Z.tHit - Z.tUp))), up = s((t - (Z.tHit - 0.24 * L)) / (0.24 * L)), w = Math.max(0, (t - Z.tHit) / L), r = s((t - Z.tRel) / (1.2 * L));
+    e.ph = t >= Z.tHit ? 'hit' : 'up'; const s0 = 1 - 0.26 * c2, s1 = 1 + 0.3 * Math.exp(-2.6 * w) * Math.cos(7 * w) + 0.06 * (1 - r) * (1 - Math.exp(-3 * w));
+    e.sy *= lp77(s0, t >= Z.tHit ? s1 : 1.3, up); e.wide = Math.max(e.wide, up * (1 - r)); e.lid = 0.25 * (1 - up) + 0.2 * r; e.brow = -0.9; e.glow = 1.5 + 1.4 * up * (1 - r); e.flame = 0.8 + 0.1 * c2 + 0.5 * up * Math.exp(-1.2 * w); e.open = 0.8 * up * (1 - s(w / 1.2)); }
+  if (t >= Z.tD) { e.ph = 'back'; e.brow = null; e.glow = 1; e.flame = 0.7; e.yaw = t >= Z.tTurn && t < Z.tFront ? PI : 0; }
+  if (t >= Z.tHm) { /* home: up out of the last landing, one more small sink, settled and spent */ const T = Z.tEnd - Z.tHm, u = (t - Z.tHm) / T, ss = s((u - 0.45) / 0.55);
+    e.ph = 'settle'; e.op = 1 - ss; e.sy -= 0.08 * Math.sin(PI * s((u - 0.5) / 0.4)); e.flame = lp77(0.7, sp.flame, ss); e.glow = lp77(1, sp.glow, ss); e.lid = sp.lid * ss; e.spent = ss; }
+  return fin(); }
 /* spent, at rest: the same whole figure, a little sunk, low fire, dim coals, lids half down */
 const SP92 = { flame: 0.3, glow: 0.45, lid: 0.5, sink: 0.9 };
 KIT.ph92 = ph92;
@@ -6089,12 +6087,14 @@ C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); if (!S |
   q.wide = Math.max(q.wide || 0, e.wide); if (e.lid > 0) q.lidx = Math.max(q.lidx || 0, e.lid); if (e.brow != null) q.brow = e.brow; if (e.ph !== 'wait') q.blink = 0; if (S.lk92) { q.lookx = S.lk92[0]; q.looky = S.lk92[1]; } if (X.evo) { q.turn = e.yaw || 0; if (e.show === 'old' && e.fl > 0.1) q.looky = 0.5; } })(C26.rest);
 /* after the idle: the smoke's overlap, the fire, the coals; then where its head is, for the page */
 function post92(S, e, Z) { const F = fig77(S), K = S.k73, B = S.bones, J = S.G.J, R = S.root, T = S.T, cy = Math.cos(e.yaw || 0);
-  const lx = (e.lag || 0) * cy * F.H, lz = (e.lagz || 0) * cy * F.H, sink = e.spent ? lp77(1, SP92.sink, e.spent) : 1, wt = y => { const s = Math.max(0, Math.min(1.2, (y - F.P0.y) / F.H)); return s * s * (1.5 - 0.5 * s); };
+  /* (builder 93) the smoke's overlap is a spring: the column trails the lump when it moves, swings past when it stops and rocks back */ R.updateWorldMatrix(true, false); const wp = W92.wp || (W92.wp = new T.Vector3()), wsc = W92.ws || (W92.ws = new T.Vector3()); wp.setFromMatrixPosition(R.matrixWorld); wsc.setFromMatrixScale(R.matrixWorld); const Hw = Math.max(0.2, F.H * wsc.y), tn = typeof performance !== 'undefined' ? performance.now() : 0; let G = S.g93; if (!G || tn - G.t > 250 || tn < G.t) G = S.g93 = { t: tn, x: wp.x, z: wp.z, a: 0, b: 0, va: 0, vb: 0 };
+  { const dt = Math.min(0.05, (tn - G.t) / 1000); if (dt > 0.001) { const tx = Math.max(-0.42, Math.min(0.42, -(wp.x - G.x) / dt / Hw * 0.085)), tz = Math.max(-0.42, Math.min(0.42, -(wp.z - G.z) / dt / Hw * 0.085)), n = Math.max(1, Math.ceil(dt / 0.012)), h = dt / n; for (let i = 0; i < n; i++) { G.va += (150 * (tx - G.a) - 13 * G.va) * h; G.a += G.va * h; G.vb += (150 * (tz - G.b) - 13 * G.vb) * h; G.b += G.vb * h; } G.t = tn; G.x = wp.x; G.z = wp.z; } }
+  const lx = ((e.lag || 0) + (KIT.v93 !== false ? G.a : 0)) * cy * F.H, lz = ((e.lagz || 0) + (KIT.v93 !== false ? G.b * 0.7 : 0)) * cy * F.H, sink = e.spent ? lp77(1, SP92.sink, e.spent) : 1, wt = y => { const s = Math.max(0, Math.min(1.2, (y - F.P0.y) / F.H)); return s * s * (1.5 - 0.5 * s); };
   if (lx || lz || sink !== 1) { F.sm.forEach(j => { const b = B[j], w = wt(J[j].p[1]); b.position.x += lx * w; b.position.z += lz * w; if (sink !== 1) b.position.y = F.P0.y + (b.position.y - F.P0.y) * sink; });
     [K.mouth && K.mouth.m, K.haze].concat(K.sm.map(p => p.m)).forEach(m => { if (!m) return; const w = wt(m.position.y); m.position.x += lx * w; m.position.z += lz * w; if (sink !== 1) m.position.y = F.P0.y + (m.position.y - F.P0.y) * sink; }); }
   if (S.u69) S.u69.value.z = e.op || 0;
   K.fl.forEach(f => { if (!f.sp) return; f.sp.scale.y *= e.flame; f.sp.scale.x *= 0.6 + 0.4 * Math.min(1.5, e.flame); }); if (K.light) K.light.m.material.opacity *= Math.max(0.2, Math.min(1.6, e.flame));
-  if (e.ph === 'evo' && K.light) K.light.m.material.opacity *= 0.35;
+  /* (builder 93) its own flat light plane showed as a pale square or wedge when it is large: off while it acts or changes (the page draws its light) */ if ((e.ph === 'evo' || (Z && e.ph !== 'wait' && e.ph !== 'done')) && K.light) K.light.m.material.opacity *= 0;
   if (S.u69) S.u69.value.y *= 0.6 + 0.4 * e.glow; K.eg.forEach(x => { x.g.material.opacity = Math.min(1, x.g.material.opacity * e.glow); x.g.scale.multiplyScalar(1 + 0.08 * (e.glow - 1)); x.e.gl.material.emissive.multiplyScalar(Math.min(1.6, 0.6 + 0.4 * e.glow)); });
   if (e.spent > 0.5) { K.sm.forEach((p, i) => { if (i > 1) p.m.visible = false; }); (K.spit || []).forEach(x => { x.m.visible = false; }); }
   if (e.ph !== 'wait' && e.ph !== 'done') { if (K.mouth) K.mouth.m.visible = false; if (K.haze) K.haze.visible = false; } else if (K.haze) K.haze.visible = true;
@@ -6112,26 +6112,27 @@ lay69 = (f0 => function (T, S) { const q = S.ly92; if (!q || !S.lay69 || !S.lay6
    squash, held to be read; then it turns its back and hops home. No dark room, no scorch, no pillar, no ring, no embers, no cradle of puffs. The four
    steps share the idea and grow: a taller flame and a longer hold each time. The swap happens inside the flame. PAR92: beats of go, wrap, hold,
    reveal, show, home (go + wrap + hold is a whole number: the hit); fl how far up the screen the flame reaches above its foot. */
-const PAR92 = [null, null, { b: [2, 1, 1, 1, 1.5, 3], fl: 0.4 }, { b: [2, 1.5, 1.5, 1, 2, 3], fl: 0.5 }, { b: [2, 1.5, 2.5, 1, 2, 3], fl: 0.6 }, { b: [2, 2, 3, 1.5, 2.5, 3], fl: 0.72 }];
+const PAR92 = [null, null, { b: [4, 1.5, 1.5, 1.5, 2, 6], fl: 0.46 }, { b: [4, 1.5, 1.5, 1.5, 2.5, 6], fl: 0.54 }, { b: [4, 1.5, 2.5, 2, 2.5, 6], fl: 0.62 }, { b: [4, 2, 3, 2, 3, 6], fl: 0.72 }];
 function ph92e(t, o) { const P = PAR92[Math.max(2, Math.min(5, o.to | 0))], b = P.b, L = o.L || 500, u = t / L, c = []; let s = 0; b.forEach(x => { c.push(s); s += x; });
   const at = i => Math.max(0, Math.min(1, (u - c[i]) / b[i])), e = o.e92 || (o.e92 = {}), dxs = o.dx92 || -1;
-  Object.assign(e, { u, t, L, P, c, tot: s, hit: c[3], to: o.to, from: o.from, done: u >= s, cr: 0, hy: 0, sy: 1, sx: 1, yaw: 0, lag: 0, lagz: 0, ks: 1, fl: 0, fw: 1, fa: 0, sway: 0, show: 'old', wide: 0, lid: 0, brow: null, flame: 1, glow: 1, op: 1, ph: 'evo', spent: 0, home: 0, land: 0 });
+  Object.assign(e, { u, t, L, P, c, tot: s, hit: c[3], to: o.to, from: o.from, done: u >= s, cr: 0, hy: 0, sy: 1, sx: 1, yaw: 0, lag: 0, lagz: 0, ks: 1, fl: 0, fw: 1, fa: 0, th: 0, sway: 0, show: 'old', wide: 0, lid: 0, brow: null, flame: 1, glow: 1, op: 1, ph: 'evo', spent: 0, home: 0, land: 0 });
   const fin = () => { e.sx = e.sy < 1 ? 1 + 0.6 * (1 - e.sy) : 1 - 0.35 * (e.sy - 1); return e; };
   const hops = (w, n, back) => { const q = Math.min(n - 1e-6, Math.max(0, w) * n), i = Math.floor(q), h = hop92(q - i, {}), d = back ? -1 : 1; e.cr = (i + h.p) / n; if (back) e.cr = 1 - e.cr; e.hy = h.y; e.sy = h.sy; e.land = h.ld;
-    const sw = h.ld > 0 ? 0.3 * Math.exp(-2.2 * h.ld) * Math.cos(5.5 * h.ld) : h.air > 0 ? -0.34 * Math.sin(PI * Math.min(1, h.v * 1.25)) + 0.3 * sm52((h.v - 0.7) / 0.3) : 0; e.lag = 0.6 * sw * dxs * d; e.lagz = 0.7 * sw * d; e.hi = i; };
+    e.hi = i; e.air = h.air; };
   if (u < 0) { e.op = 0; return e; }
-  if (u < c[1]) { hops(at(0), 2, false); e.wide = 0.4; e.brow = -0.4; e.flame = 0.7; e.op = sm52(at(0) * 5); return fin(); }
+  if (u < c[1]) { /* a beat to crouch, then two long bounds */ const g = u / b[0] * 4; if (g < 1) { e.sy = 1 - 0.28 * sm52(g); e.wide = sm52(g); } else hops((g - 1) / 3, 2, false); e.wide = Math.max(e.wide, 0.4); e.brow = -0.4; e.flame = 0.8; e.op = sm52(at(0) * 5); return fin(); }
   e.cr = 1;
-  if (u < c[2]) { /* its fire rises round it: it crouches and draws in, looking up */ const w = at(1), wb = u - c[1]; e.sy = 1 - 0.28 * Math.exp(-5 * wb) * Math.cos(9 * wb) - 0.18 * sm52((w - 0.25) / 0.75); e.fl = (1 - Math.pow(1 - w, 3)) * (1 + 0.14 * Math.sin(PI * w)); e.fa = sm52(w / 0.1); e.fw = 0.75 + 0.25 * w; e.ks = 1 - 0.5 * sm52((w - 0.25) / 0.75); e.wide = sm52(w / 0.3); e.flame = 0.7 + 0.5 * w; e.glow = 1 + w; e.brow = 0.4; return fin(); }
+  if (u < c[2]) { /* its fire rises round it: it crouches and draws in, looking up */ const w = at(1), wb = u - c[1]; e.sy = 1 - 0.28 * Math.exp(-4.2 * wb) * Math.cos(9.5 * wb) - 0.2 * sm52((w - 0.15) / 0.6); e.fl = (1 - Math.pow(1 - w, 2.4)) * (1 + 0.1 * Math.sin(PI * w)); e.fa = sm52(w / 0.12); e.fw = 0.8 + 0.2 * w; e.ks = 1 - 0.62 * sm52((w - 0.12) / 0.6); e.nar = 1 - 0.3 * sm52((w - 0.1) / 0.5); e.wide = sm52(w / 0.3); e.flame = 0.7 + 0.5 * w; e.glow = 1 + w; e.brow = 0.4; fin(); e.sx *= e.nar; return e; }
   if (u < c[3]) { /* the flame alone: it stands and breathes; at the end it gathers itself (down and wide) */ const h = at(2), bt = u - c[2], an = sm52((h - (1 - 0.5 / b[2])) / (0.5 / b[2])); e.show = 'none'; e.fl = (1 + 0.035 * Math.sin(2 * PI * bt)) * (1 - 0.17 * an); e.fw = (1 + 0.05 * Math.sin(PI * bt + 1)) * (1 + 0.17 * an); e.fa = 1; e.sway = 0.045 * Math.sin(PI * bt) * (1 - an); return e; }
   e.show = 'new'; const w = u - c[3];
-  /* the new stage: up out of a squash, past its height, settled; coals wide, then stern */ e.sy = 1 - 0.45 * Math.exp(-7 * w) + 0.24 * Math.exp(-2.4 * w) * Math.sin(5.5 * w); e.ks = 1 - 0.22 * Math.exp(-6 * w); e.wide = Math.exp(-0.9 * w); e.glow = 1 + 1.2 * Math.exp(-0.8 * w); e.flame = 0.6 + 0.3 * Math.exp(-1.2 * w); e.brow = -0.9 * sm52(w / 1.2);
-  if (u < c[4]) { /* the flame is drawn up thin and gone */ const r = at(3); e.fl = lp77(0.83, 1.32, eo92(r / 0.25)); e.fw = 1.17 * (1 - sm52(r / 0.55)); e.fa = 1 - sm52((r - 0.25) / 0.3); return fin(); }
+  /* the new stage: up out of a squash, past its height, settled; coals wide, then stern */ e.sy = 1 - 0.4 * Math.exp(-3.4 * w) + 0.22 * Math.exp(-2.2 * w) * Math.sin(5.2 * w); e.ks = 1 - 0.5 * Math.exp(-3 * w); e.wide = Math.exp(-0.9 * w); e.glow = 1 + 1.2 * Math.exp(-0.8 * w); e.flame = 0.6 + 0.3 * Math.exp(-1.2 * w); e.brow = -0.9 * sm52(w / 1.2);
+  if (u < c[4]) { /* the flame is drawn up thin and gone */ const r = at(3); e.fl = lp77(0.83, 1.3, sm52(r / 0.7)); e.fw = lp77(1.17, 0.8, sm52(r / 0.6)); e.th = sm52((r - 0.08) / 0.8); e.fa = 1 - sm52((r - 0.8) / 0.2); return fin(); }
   if (u < c[5]) return fin();
   const hb = u - c[5]; e.home = hb / b[5]; e.wide = 0; e.glow = 1; e.flame = 0.7; e.brow = null;
-  if (hb < 0.5) { e.yaw = hb < 0.3 ? 0 : PI; e.sy = hb < 0.3 ? 1 - 0.28 * eo92(hb / 0.3) : 0.72; return fin(); }
-  if (hb < 2.5) { hops((hb - 0.5) / 2, 2, true); e.yaw = PI; return fin(); }
-  { const sb = hb - 2.5; e.cr = 0; e.sy = 1 - 0.28 * Math.exp(-5 * sb) * Math.cos(9 * sb); e.op = 1 - sm52(sb / 0.5); return fin(); } }
+  e.yaw = hb >= 0.6 && hb < 5.12 ? PI : 0;
+  if (hb < 1) { e.sy = 1 - 0.28 * sm52(hb); return fin(); }
+  if (hb < 5) { hops((hb - 1) / 4, 2, true); return fin(); }
+  { const sb = hb - 5; e.cr = 0; e.sy = 1 - 0.28 * Math.exp(-4.2 * sb) * Math.cos(9.5 * sb); e.op = 1 - sm52(sb / 0.6); return fin(); } }
 KIT.ph92e = ph92e;
 function evo92(f0, grp, S, t, o) { const e = ph92e(t, o), T = S.T; W92.ee = e; let O = S.e82; const X = { e, evo: true };
   if (e.show !== 'new') { if (!O || O.from !== o.from) { kill82(S); const gg = brim69Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; grp.parent.add(gg); O = S.e82 = { gg, sp, from: o.from, rs: sp.root.scale.x, rp: sp.root.position.clone() }; }
@@ -6154,6 +6155,68 @@ KIT.spirit26.play = play26;
 draw30 = (f0 => function (T, S, ren, cam) { const X = S && S.way69 && (S.x92 || S.e92x); if (!X || !S.a69 || !(Math.cos(X.e.yaw || 0) < 0)) return f0(T, S, ren, cam); const a = S.a69; S.a69 = Object.assign({}, a, { strokes: [] }); try { return f0(T, S, ren, cam); } finally { S.a69 = a; } })(draw30);
 KIT.W92 = W92;
 // ==== W92 END
+// ==== W93 BEGIN
+/* ---- THE LIVING FLAME (builder 93). One drawing hand for all of Brimstone's fire: the great flame of its change of stage, the tongue it spits,
+   the fire that stands on a sulfur, and (one still of it) the small flames of its lump. Drawn afresh every frame on a 2D canvas, pen and wash:
+   - the SILHOUETTE is a union of tongues. Each tongue is a centre line that waves (the waves travel UP, so the fire licks) with a belly that tapers
+     to a point; side tongues grow, lean out, and at the top of their life a lick curls off and rises while the tongue drops back; low round rolls
+     make the base wide;
+   - the WASH is laid in layers, each inside the last and soft at its edge: deep blue-violet, blue, a pale blue-white heart low down, a little
+     red-orange at the root; a darker rim where the pigment pooled; never yellow;
+   - the PEN is loose: only the outer edge of the union is inked, in broken runs, thick on the lower right and thin on the upper left, and it sits a
+     hair off the wash as a pen line does; a few open strokes inside follow the heart;
+   - small grey wisps of its smoke leave the tip.
+   flame93(x, W, H, t, o): x a 2D context W x H, t seconds. o.h height (1 = 0.655 H), o.w width, o.sway lean of the whole, o.thin 0..1 (drawn up
+   thin and gone: the base narrows and lifts, the heart goes, the body turns glassy), o.smoke 0..1, o.root 0..1, o.seed, o.side 0..1 (how much of
+   the side tongues and rolls: 0 is one single tongue, for the small fires), o.back (a flame behind the lump: no pale heart). */
+function flame93(x, W, H, t, o) { o = o || {}; const hs = o.h == null ? 1 : o.h, ws = o.w == null ? 1 : o.w, thin = Math.max(0, Math.min(1, o.thin || 0)), seed = o.seed || 0, smk = o.smoke == null ? 1 : o.smoke, sway = o.sway || 0, side = o.side == null ? 1 : o.side, root = o.root == null ? 1 : o.root, P2 = Math.PI * 2;
+  const F = flame93, sm = u => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u)), hsh = n => { const s = Math.sin(n * 127.1 + seed * 311.7) * 43758.5453; return s - Math.floor(s); }, vn = q => { const i = Math.floor(q), f = q - i, u = f * f * (3 - 2 * f); return hsh(i) * (1 - u) + hsh(i + 1) * u; };
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.filter = 'none'; x.setLineDash([]); x.clearRect(0, 0, W, H); if (hs <= 0.01) return;
+  const U = H * (o.unit || 0.655), HW = U * 0.25, lift = U * hs * 0.55 * sm((thin - 0.45) / 0.55), bx = W / 2, by = H * 0.955 - lift, nar = 1 - 0.72 * sm(thin / 0.8), px = W / 640;
+  /* one tongue's outline: q {cx, hh, ww, ph, lean, blunt, y0} -> points up the left side and down the right */
+  const N = 22, outline = q => { const L = [], R = [], hh = q.hh, y0 = q.y0 == null ? by : q.y0; for (let j = 0; j <= N; j++) { const v = j / N, yv = (by - y0 + hh * v) / U, y = y0 - hh * v;
+      const A = q.ww * (0.05 + 0.5 * Math.pow(v, 1.7)) * (q.amp == null ? 1 : q.amp), c = bx + q.cx * (1 - 0.2 * v) + (q.lean || 0) * hh * v * v + sway * hh * v + A * (Math.sin(P2 * (1.25 * yv - 1.55 * t) + q.ph) + 0.3 * Math.sin(P2 * (2.7 * yv - 2.6 * t) + 1.7 * q.ph));
+      const b = v < 0.16 ? Math.sqrt(1 - (1 - v / 0.16) * (1 - v / 0.16)) : 1, tp = Math.pow(1 - v, q.blunt ? 0.5 : 0.82) * (1 - (q.blunt ? 0.1 : q.main ? 0.2 : 0.32) * Math.sin(Math.PI * v)), p = q.ww * b * tp * (1 + 0.13 * Math.sin(P2 * (2.1 * yv - 2.1 * t) + 2.3 * q.ph));
+      L.push([c - p, y]); R.push([c + p, y]); } return L.concat(R.reverse()); };
+  const trace = (c, pts) => { const n = pts.length; c.moveTo((pts[n - 1][0] + pts[0][0]) / 2, (pts[n - 1][1] + pts[0][1]) / 2); for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n]; c.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); } c.closePath(); };
+  /* the tongues of this frame */ const TG = [], flick = 0.05 * Math.sin(P2 * 1.9 * t + seed) + 0.07 * (vn(t * 3.1 + 7) - 0.5), Hm = U * hs * (1 + flick) * (1 - 0.55 * sm((thin - 0.45) / 0.55)), Wm = HW * ws * nar * (0.8 + 0.2 * Math.min(1, hs));
+  TG.push({ cx: 0, hh: Hm, ww: Wm * 1.3, ph: seed * 1.3, main: 1, in: 1 });
+  const SD = [[-0.55, 0.76, 0.8, 0.93, 0.0, -0.05], [0.6, 0.68, 0.78, 1.17, 0.37, 0.06], [-1.0, 0.5, 0.56, 1.05, 0.7, -0.1], [1.02, 0.45, 0.54, 0.83, 0.21, 0.11], [0.15, 0.88, 0.6, 1.31, 0.55, 0.02]];
+  if (side > 0.01) SD.forEach((d, i) => { const p = ((t / d[3] + d[4] + hsh(i + 3)) % 1 + 1) % 1, cyc = Math.floor(t / d[3] + d[4] + hsh(i + 3)), g = p < 0.78 ? 1 - Math.pow(1 - p / 0.78, 2.2) : 1 - sm((p - 0.78) / 0.22), hv = d[1] * (0.82 + 0.3 * hsh(cyc * 7 + i)), hh = Hm * side * (0.3 + (hv - 0.3) * g), q = { cx: d[0] * Wm * 1.05, hh, ww: Wm * d[2], ph: i * 2.1 + seed, lean: d[5] * (0.6 + 1.2 * g), in: i < 2 || i === 4 ? 1 : 0.6 };
+    TG.push(q);
+    /* the lick that curls off its tip and rises */ if (p >= 0.7) { const w = (p - 0.7) / 0.3, top = Hm * side * hv, lh = top * 0.3 * (1 - w) * (1 - w * 0.4); if (lh > 2 * px) TG.push({ cx: q.cx * 0.8 + q.lean * top * 0.9 + (d[5] > 0 ? 1 : -1) * w * 0.12 * U, y0: by - top * (0.74 + 0.55 * w), hh: lh, ww: Math.min(q.ww * 0.42, lh * 0.2), ph: i * 3.3, lean: d[5] * 2.2, amp: 1.5, lick: 1 }); } });
+  /* the main tongue sheds a lick too */ { const T0 = 0.83, p = ((t / T0 + 0.4 + seed) % 1 + 1) % 1; if (p > 0.55 && side > 0.01) { const w = (p - 0.55) / 0.45, lh = Hm * 0.2 * (1 - w); if (lh > 2 * px) TG.push({ cx: 0, y0: by - Hm * (0.86 + 0.3 * w), hh: lh, ww: Math.min(Wm * 0.3, lh * 0.2), ph: 5 + Math.floor(t / T0), lean: 0.4 * Math.sin(Math.floor(t / T0) * 2.4), amp: 1.5, lick: 1, sw: 1 }); } }
+  /* the rolling base */ const rl = side * (1 - sm(thin / 0.5)); if (rl > 0.01) [[-0.82, 0.25, 0.7, 0.0], [0.05, 0.2, 0.9, 2.1], [0.86, 0.23, 0.66, 4.0]].forEach((d, i) => { TG.push({ cx: d[0] * Wm * 1.12, hh: Hm * d[1] * rl * (1 + 0.22 * Math.sin(P2 * (0.9 * t + 0.31 * i) + d[3])), ww: Wm * d[2], ph: d[3], blunt: 1, amp: 0.5, roll: 1, in: 0.8 }); });
+  TG.forEach(q => { q.pts = outline(q); });
+  const inner = (kw, kh, pick) => TG.filter(pick).map(q => outline(Object.assign({}, q, { ww: q.ww * kw * (q.in || 1), hh: q.hh * kh, y0: (q.y0 == null ? by : q.y0) - (q.lick ? q.hh * 0.1 : 0) }))), fillAll = (c, list) => { c.beginPath(); list.forEach(p => trace(c, p)); c.fill('nonzero'); };
+  const outer = TG.map(q => q.pts), body = 1 - 0.5 * sm((thin - 0.1) / 0.6), lw = 2.7 * px * (o.pen || 1), top = by - Hm;
+  /* 1: the outer wash, a soft bleed under a firm fill */ let g = x.createLinearGradient(0, by, 0, top); g.addColorStop(0, 'rgba(70,74,214,1)'); g.addColorStop(0.5, 'rgba(78,62,206,1)'); g.addColorStop(1, 'rgba(104,60,200,1)');
+  x.fillStyle = g; x.globalAlpha = 0.5 * body; x.filter = 'blur(' + (5 * px).toFixed(1) + 'px)'; fillAll(x, outer); x.filter = 'none'; x.globalAlpha = body; fillAll(x, outer);
+  /* the pigment pooled at the rim: a darker line just inside the edge */ x.globalCompositeOperation = 'source-atop';
+  /* blooms in the wash, drifting up */ for (let i = 0; i < 5; i++) { const p = ((t * 0.5 + hsh(i + 20)) % 1 + 1) % 1, cx2 = bx + (hsh(i + 30) - 0.5) * 2 * Wm, cy = by - Hm * (0.1 + 0.8 * p), r = Wm * (0.5 + 0.5 * hsh(i + 40)), gg = x.createRadialGradient(cx2, cy, 0, cx2, cy, r), c = i % 2 ? '120,84,226' : '52,60,190'; gg.addColorStop(0, 'rgba(' + c + ',' + (0.4 * Math.sin(Math.PI * p)).toFixed(3) + ')'); gg.addColorStop(1, 'rgba(' + c + ',0)'); x.fillStyle = gg; x.filter = 'none'; x.fillRect(cx2 - r, cy - r, 2 * r, 2 * r); }
+  /* 2: the blue inside it, wet into wet */ g = x.createLinearGradient(0, by, 0, top); g.addColorStop(0, 'rgba(96,140,255,1)'); g.addColorStop(0.55, 'rgba(74,108,250,1)'); g.addColorStop(1, 'rgba(88,92,240,0.9)'); x.fillStyle = g; x.filter = 'blur(' + (5 * px).toFixed(1) + 'px)'; x.globalAlpha = 0.95; fillAll(x, inner(0.6, 0.8, q => !q.lick || q.sw));
+  /* 3: the pale heart, low down */ if (!o.back) { const ha = 1 - sm(thin / 0.45); if (ha > 0.01) { g = x.createLinearGradient(0, by, 0, by - Hm * 0.62); g.addColorStop(0, 'rgba(238,246,255,1)'); g.addColorStop(0.6, 'rgba(196,220,255,0.95)'); g.addColorStop(1, 'rgba(150,186,255,0.7)'); x.fillStyle = g; x.globalAlpha = ha; x.filter = 'blur(' + (6 * px).toFixed(1) + 'px)'; x.globalAlpha = 0.85 * ha; const hl = inner(0.3, 0.5, q => !q.lick && (q.in || 0) >= 0.8); fillAll(x, hl); x.globalAlpha = ha; x.filter = 'blur(' + (2 * px).toFixed(1) + 'px)'; x.fillStyle = 'rgba(248,251,255,1)'; fillAll(x, inner(0.15, 0.3, q => q.main || q.roll)); } }
+  /* 4: a little red-orange at the root */ if (root > 0.01 && thin < 0.6) { x.filter = 'none'; x.globalAlpha = root * (1 - thin / 0.6); const r = Wm * 1.5, gg = x.createRadialGradient(bx, by + r * 0.12, 0, bx, by + r * 0.12, r); gg.addColorStop(0, 'rgba(255,96,40,0.85)'); gg.addColorStop(0.25, 'rgba(240,80,60,0.5)'); gg.addColorStop(0.5, 'rgba(200,70,120,0)'); x.fillStyle = gg; x.save(); x.translate(0, by); x.scale(1, 0.42); x.translate(0, -by); x.fillRect(bx - r, by - r, 2 * r, 2 * r); x.restore(); }
+  x.filter = 'none'; x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+  /* the smoke leaving the tip: small grey puffs with a broken pen edge */ if (smk > 0.01) { const tipx = TG[0].pts[N][0], sa = smk * (1 - sm(thin / 0.4)) * Math.min(1, hs * 1.5); for (let i = 0; i < 3; i++) { const p = ((t / 1.7 + i / 3 + seed) % 1 + 1) % 1, a = sa * Math.pow(Math.sin(Math.PI * p), 0.8), r = U * (0.028 + 0.045 * p) * (0.7 + 0.3 * ws), sx2 = tipx + U * (0.07 * Math.sin(P2 * (0.6 * p + hsh(i + 60))) + 0.05 * p * (hsh(i + 61) - 0.3)), sy = top - U * (0.01 + 0.16 * p); if (a < 0.02 || sy - r * 1.4 < 2) continue;
+      [[0, 0, 1], [-0.7, 0.25, 0.7], [0.65, 0.3, 0.75], [0.1, -0.55, 0.7]].forEach(b => { const cx2 = sx2 + b[0] * r, cy = sy + b[1] * r, rr = r * b[2], gg = x.createRadialGradient(cx2, cy, 0, cx2, cy, rr); gg.addColorStop(0, 'rgba(120,112,116,' + (0.62 * a).toFixed(3) + ')'); gg.addColorStop(0.65, 'rgba(132,124,128,' + (0.4 * a).toFixed(3) + ')'); gg.addColorStop(1, 'rgba(140,132,136,0)'); x.fillStyle = gg; x.fillRect(cx2 - rr, cy - rr, 2 * rr, 2 * rr); });
+      x.strokeStyle = 'rgba(40,32,36,' + (0.7 * a).toFixed(3) + ')'; x.lineCap = 'round'; x.lineWidth = lw * 0.62; x.beginPath(); x.arc(sx2 - 0.3 * r, sy, r * 0.8, 3.3, 4.9); x.stroke(); x.beginPath(); x.arc(sx2 + 0.3 * r, sy - 0.2 * r, r * 0.75, 4.9, 6.2); x.stroke(); x.beginPath(); x.arc(sx2, sy + 0.1 * r, r * 0.3, 3.8, 6.9); x.stroke(); } }
+  /* the pen: the outer edge of the union only, in broken runs, heavier to the lower right, a hair off the wash */
+  let ik = F.ik; if (!ik || ik.width !== W || ik.height !== H) { ik = F.ik = document.createElement('canvas'); ik.width = W; ik.height = H; } const k = ik.getContext('2d'); k.setTransform(1, 0, 0, 1, 0, 0); k.globalCompositeOperation = 'source-over'; k.clearRect(0, 0, W, H);
+  k.strokeStyle = 'rgba(22,20,64,1)'; k.lineJoin = 'round'; k.lineCap = 'round'; k.lineWidth = lw * 2;
+  TG.forEach((q, i) => { const run = Math.max(30 * px, q.hh * (0.5 + 0.35 * hsh(i + 80))); k.setLineDash(q.lick ? [] : [run, lw * (3 + 5 * hsh(i + 81)), run * 0.45, lw * (4 + 6 * hsh(i + 82))]); k.lineDashOffset = hsh(i + 83) * run * 2 + 14 * px * Math.floor(t * 6 + i); k.beginPath(); trace(k, q.pts); k.stroke(); });
+  k.setLineDash([]); k.globalCompositeOperation = 'destination-out'; k.fillStyle = '#000'; k.save(); k.translate(-0.42 * lw, -0.5 * lw); fillAll(k, outer); k.restore();
+  x.globalAlpha = 0.9 * (1 - 0.75 * sm((thin - 0.15) / 0.6)); x.drawImage(ik, 0.9 * px, -0.6 * px);
+  /* open strokes inside, along the heart's lee side */ if (!o.back && thin < 0.5) { x.globalAlpha = 0.5 * (1 - thin * 2); x.strokeStyle = 'rgba(30,34,120,1)'; x.lineWidth = lw * 0.7; x.lineCap = 'round'; TG.forEach((q, i) => { if (q.lick || q.roll || i > 2) return; const p = outline(Object.assign({}, q, { ww: q.ww * 0.5, hh: q.hh * 0.7 })), a = N + 1 + Math.round(N * (0.25 + 0.1 * i % 0.2)), b = N + 1 + Math.round(N * 0.72); x.beginPath(); x.moveTo(p[a][0], p[a][1]); for (let j = a + 1; j <= b; j++) x.lineTo(p[j][0], p[j][1]); x.stroke(); }); }
+  x.globalAlpha = 1; }
+KIT.flame93 = flame93;
+
+KIT.v93 = KIT.v93 == null ? !(typeof location !== 'undefined' && /[?&]v93=0/.test(String(location.search))) : KIT.v93;
+const W93 = { err: null };
+/* the small flames of its lump are one still of the living flame (softer than builder 73's tongue, which was spiky when the figure is large) */
+fire73 = (f0 => function (T, back) { if (KIT.v93 === false) return f0(T, back); const key = back ? 'fire93B' : 'fire93'; if (W73[key]) return W73[key]; try { const c = document.createElement('canvas'); c.width = 128; c.height = 256; flame93(c.getContext('2d'), 128, 256, 2.2, { side: 0.5, smoke: 0, unit: 0.86, back: !!back, root: 0, pen: 1.7, seed: back ? 3 : 1 }); const t = new T.CanvasTexture(c); W73[key] = t; return t; } catch (err) { W93.err = String(err && err.stack); return f0(T, back); } })(fire73);
+KIT.W93 = W93;
+// ==== W93 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
