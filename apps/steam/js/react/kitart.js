@@ -2271,7 +2271,7 @@ KIT.fix36 = KIT.fix36 == null ? !(typeof location !== 'undefined' && /[?&]f36=0/
 // 1 a lick off the pool, 2 a low swell curling, 3 the breaker, 4 reared right over with both hands out, 5 a great breaker over a cavern.
 // Under it the eaten wood: bleached grain, pits, a ragged scorched edge, the pool's wet rim, sunk into the bench. Each body is ONE closed skin
 // (field35, nets35), a skinned mesh on five spine bones (bound, not posed). Pen builder 30's; wash Water's kind (mat35, F35).
-KIT.acid35 = KIT.acid35 == null ? ((typeof location !== 'undefined' && (/[?&]a35=(a)/.exec(String(location.search)) || [])[1]) || null) : KIT.acid35;
+KIT.acid35 = KIT.acid35 == null ? ((typeof location !== 'undefined' && /[?&]a35=0/.test(String(location.search))) ? null : 'a') : KIT.acid35;   /* (builder 44) on by default: the living breaker is the game's Acid; ?a35=0 gives the old Acid back */
 const W35 = { figs: [], scenes: typeof WeakSet !== 'undefined' ? new WeakSet() : null, err: null, ways: { a: 'the breaker' }, lw: 0.96, rot: [0.12, 0.05, 0, -0.1, 0.1] };
 /* shapes: each gives its distance, a centre and reach (to skip it when far), and how softly it joins (k) */
 const P35 = {
@@ -2304,21 +2304,21 @@ const hh35 = i => { const s = Math.sin(i * 12.9898 + 4.1) * 43758.5453; return s
 /* THE FIVE FIGURES. Front to +z, standing on y = 0, about one unit to the top of a stage 3. */
 const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P35.cone;
   /* the pool it rises from: a flat lobed spill, never a neat disc */
-  const pool = (o, x, z, rx, rz, sd) => { o.a(e(x, 0, z, rx * 0.78, 0.06, rz * 0.78, 0.07)); for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * PI + hh35(sd + i) * 0.7, d = 0.6 + 0.26 * hh35(sd + i + 20), rr = 0.26 + 0.18 * hh35(sd + i + 40); o.a(e(x + Math.cos(a) * rx * d, 0, z + Math.sin(a) * rz * d, rx * rr, 0.042 + 0.02 * hh35(sd + i + 60), rz * rr, 0.07)); } o.pr = [rx, rz]; };
+  const pool = (o, x, z, rx, rz, sd) => { o.a(e(x, 0, z, rx * 0.78, 0.06, rz * 0.78, 0.07)); for (let i = 0; i < 7; i++) { const a = i / 7 * 2 * PI + hh35(sd + i) * 0.7, d = 0.6 + 0.26 * hh35(sd + i + 20), rr = 0.26 + 0.18 * hh35(sd + i + 40); o.a(e(x + Math.cos(a) * rx * d, 0, z + Math.sin(a) * rz * d, rx * rr, 0.042 + 0.02 * hh35(sd + i + 60), rz * rr, 0.07)); } o.pr = [rx, rz]; o.pc = [x, z]; };
   /* a drip running off it (painted the sharper green toward the bead) */
-  const drip = (o, x, y, z, len, r, lx, lz) => { lx = lx || 0; lz = lz || 0; o.d(t([[x, y, z, r], [x + lx * 0.35, y - len * 0.42, z + lz * 0.35, r * 0.55], [x + lx * 0.78, y - len * 0.8, z + lz * 0.78, r * 0.4]], 0.025), y, y - len); o.d(b(x + lx, y - len, z + lz, r * 0.66, 0.02), y, y - len); };
+  const drip = (o, x, y, z, len, r, lx, lz) => { lx = lx || 0; lz = lz || 0; (o.dps || (o.dps = [])).push([x + lx, y - len, z + lz, r * 0.66]); o.d(t([[x, y, z, r], [x + lx * 0.35, y - len * 0.42, z + lz * 0.35, r * 0.55], [x + lx * 0.78, y - len * 0.8, z + lz * 0.78, r * 0.4]], 0.025), y, y - len); o.d(b(x + lx, y - len, z + lz, r * 0.66, 0.02), y, y - len); };
   /* (builder 39) a tooth: a drip off the crest caught mid-fall, a neck pinched almost through and a bead below it; not a drip in the paint, so it
      stays pale (bare paper inside the mouth) and the pen finds its edge against the dark */
   /* (builder 42) one clean pale drip: broad at the roof, tapering smoothly to a round tip, no pinched neck (the neck drew as pen loops) */
-  const tooth = (o, x, y, z, len, r, lx) => { lx = lx || 0; len *= 1.2; r *= 1.45; o.a(t([[x, y + r, z, r * 1.25], [x + lx * 0.4, y - len * 0.45, z, r * 0.9], [x + lx * 0.85, y - len * 0.85, z, r * 0.66]], 0.05)).th = 1; o.a(b(x + lx, y - len, z, r * 0.7, 0.05)).th = 1; };
+  const tooth = (o, x, y, z, len, r, lx) => { lx = lx || 0; len *= 1.2; r *= 1.45; const q1 = o.a(t([[x, y + r, z, r * 1.25], [x + lx * 0.4, y - len * 0.45, z, r * 0.9], [x + lx * 0.85, y - len * 0.85, z, r * 0.66]], 0.05)), q2 = o.a(b(x + lx, y - len, z, r * 0.7, 0.05)); q1.th = q2.th = 1; q1.ty = q2.ty = y + r; (o.teeth || (o.teeth = [])).push([x + lx, y - len - r * 0.7, z, r * 0.62]); };   /* (builder 44) a tooth keeps its root (ty) and its tip, where drips form */
   /* an arm as a thick run of liquid; its fingers are runs off the end */
-  const arm = (o, pts, fing) => { o.a(t(pts, 0.08)); const L = pts[pts.length - 1]; fing.forEach(v => o.a(t([[L[0], L[1], L[2], L[3] * 0.66], [L[0] + v[0] * 0.6, L[1] + v[1] * 0.6, L[2] + v[2] * 0.6, L[3] * 0.48], [L[0] + v[0], L[1] + v[1], L[2] + v[2], L[3] * (v[3] || 0.36)]], 0.035))); };
+  const arm = (o, pts, fing) => { const ao = [o.a(t(pts, 0.08))]; (o.arms || (o.arms = [])).push({ pts, ops: ao }); const L = pts[pts.length - 1]; fing.forEach(v => ao.push(o.a(t([[L[0], L[1], L[2], L[3] * 0.66], [L[0] + v[0] * 0.6, L[1] + v[1] * 0.6, L[2] + v[2] * 0.6, L[3] * 0.48], [L[0] + v[0], L[1] + v[1], L[2] + v[2], L[3] * (v[3] || 0.36)]], 0.035)))); };
   /* spray off the crest: a neck flung up to a bead */
   const spike = (o, x, y, z, dx, dy, dz, r) => { dx = dx * 1.3 + 0.05; dy *= 0.6; r *= 0.85; o.d(t([[x, y, z, r], [x + dx * 0.4, y + dy * 0.5, z + dz * 0.4, r * 0.55], [x + dx * 0.85, y + dy * 0.88, z + dz * 0.85, r * 0.4]], 0.03), y, y + dy); o.d(b(x + dx, y + dy, z + dz, r * 0.7, 0.02), y, y + dy); };
   /* the wave: the same profile (base at the back, over the crest, down to the tip) laid as ribs across its breadth; the ends of the breadth
      slump lower and thinner, so the crest is not a slab and dips at its sides */
-  const wave = (o, prof, zr, nr, sd, rag, z0) => { rag = rag || 0; z0 = z0 || 0; for (let i = 0; i < nr; i++) { const zn = nr > 1 ? -1 + 2 * i / (nr - 1) : 0, z = zn * zr, en = 1 - 0.5 * zn * zn, dx = 0.025 * zn + 0.025 * (hh35(sd + i) - 0.5), ys = 0.88 + 0.12 * en + 0.5 * rag * (hh35(sd + i * 7 + 3) - 0.5);
-    o.a(t(prof.map((p, j) => { const f = j / (prof.length - 1); return [p[0] + dx * f, p[1] * (1 - f * (1 - ys)), z0 + z * (1 - 0.18 * f), p[2] * (0.8 + 0.2 * en)]; }), 0.16)); } };
+  const wave = (o, prof, zr, nr, sd, rag, z0) => { rag = rag || 0; const w2 = !!z0; z0 = z0 || 0; for (let i = 0; i < nr; i++) { const zn = nr > 1 ? -1 + 2 * i / (nr - 1) : 0, z = zn * zr, en = 1 - 0.5 * zn * zn, dx = 0.025 * zn + 0.025 * (hh35(sd + i) - 0.5), ys = 0.88 + 0.12 * en + 0.5 * rag * (hh35(sd + i * 7 + 3) - 0.5);
+    o.a(t(prof.map((p, j) => { const f = j / (prof.length - 1); return [p[0] + dx * f, p[1] * (1 - f * (1 - ys)), z0 + z * (1 - 0.18 * f), p[2] * (0.8 + 0.2 * en)]; }), 0.16)).w2 = w2; } };   /* (builder 44) w2: the second wave behind */
   /* liquid sagging down its back: a run that thickens as it falls, into the pool */
   const sag = (o, x0, y0, x1, y1, z, r) => o.d(t([[x0, y0, z, r * 0.5], [(x0 + x1) / 2 - 0.04, (y0 + y1) / 2, z, r * 0.85], [x1, y1, z, r * 1.15], [x1 - 0.05, 0.04, z, r * 0.9]], 0.06), y0, 0.04);
   /* the low lip of the trough under the curl: two ribs, rising a little at the front, no jaw line */
@@ -2338,7 +2338,7 @@ const SPEC35 = (() => { const b = P35.ball, e = P35.ell, t = P35.tube, cone = P3
       lip(o, [[-0.05, 0.05, 0.11], [0.25, 0.07, 0.09], [0.5, 0.1, 0.06]], [0.08]);
       mouth(o, [[-0.04, 0.19, 0.01], [0.1, 0.2, 0.034], [0.26, 0.215, 0.05], [0.44, 0.2, 0.046], [0.62, 0.18, 0.034]], 0.1, 0.08, 0.3);
       tooth(o, 0.3, 0.27, 0.22, 0.05, 0.016, 0.0);
-      o.a(b(0.58, 0.035, 0.28, 0.052, 0.04)); o.a(b(0.38, 0.03, 0.42, 0.046, 0.04));
+      [[0.58, 0.035, 0.28, 0.052], [0.38, 0.03, 0.42, 0.046]].forEach(q => (o.arms || (o.arms = [])).push({ pts: [q], ops: [o.a(b(q[0], q[1], q[2], q[3], 0.04))], nub: 1 }));
       drip(o, 0.4, 0.57, 0.06, 0.07, 0.02, 0.02, 0);
       o.eye(0.08, 0.36, 0.014, { kind: 3, gl: -0.2 }); o.spr(0.34, 0.5, 0.04, 0.012);
       o.fume(-0.3, 0.2, -0.1, 0.18, -1); o.etch(0.02, 0.03, 1.0); },
@@ -2421,7 +2421,7 @@ function geo35(T, stage, way) { const key = way + stage; if (G35[key]) return G3
   /* the pen's marks on the eaten wood: bubbles in the scorched ring, thin fume rising off its far side */
   const bub = [], smoke = [], ex = etch[0] || [0, 0, 1]; for (let i = 0; i < 5 + stage * 2; i++) { const a = hh35(stage * 31 + i) * 2 * PI, m = 1.0 + 0.32 * hh35(stage * 17 + i * 3); bub.push([ex[0] + Math.cos(a) * pr[0] * m, ex[1] + Math.sin(a) * pr[1] * m, (0.016 + 0.022 * hh35(stage * 7 + i * 5)) * (0.7 + 0.12 * stage)]); }
   [[-0.72, 1], [0.6, -1], [-0.1, 1]].slice(0, stage > 2 ? 3 : 2).forEach((q, i) => smoke.push([ex[0] + q[0] * pr[0] * 1.12, -Math.abs(pr[1]) * 0.62 + ex[1], (0.18 + 0.05 * stage) * (1 - 0.25 * i), q[1]]));
-  return (G35[key] = { geo: g, H, E: E.slice(0, 8), fumes, etch, pr, bub, smoke, spr, nv, h, my: o.my || [0, 1] }); }
+  return (G35[key] = { geo: g, H, E: E.slice(0, 8), fumes, etch, pr, bub, smoke, spr, nv, h, my: o.my || [0, 1], ops, o, stage }); }   /* (builder 44) ops and o (arms, teeth, drips, pool centre) kept for the rig */
 const N35 = 'float H35(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }\nfloat N35(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(H35(i), H35(i + vec3(1, 0, 0)), f.x), mix(H35(i + vec3(0, 1, 0)), H35(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(H35(i + vec3(0, 0, 1)), H35(i + vec3(1, 0, 1)), f.x), mix(H35(i + vec3(0, 1, 1)), H35(i + vec3(1, 1, 1)), f.x), f.y), f.z); }\n';
 const F35 = ['{ vec3 n9 = normalize(normal); float nv = clamp(dot(n9, normalize(vViewPosition)), 0.0, 1.0); vec3 bp = vB35 * k35;',
   'const vec3 PAPER = vec3(0.949, 0.929, 0.878), INK = vec3(0.169, 0.141, 0.125), PENCIL = vec3(0.353, 0.337, 0.306), ACID = vec3(0.40, 0.68, 0.16);',
@@ -2521,11 +2521,164 @@ function draw35(T, S, ren, cam) { const R = S.pen, sz = ren.getDrawingBufferSize
   S.smoke.forEach((f, i) => fume35([f[0], 0.03, f[1], f[2], f[3]], i).forEach((seg, j) => free30(R, seg.map(W), lw * (j ? 0.34 : 0.42), s2, Wd, Ht, P10, P11, d, 9900 + i * 40 + j * 13, { smooth: 2, wob: 0.7 })));
   S.bub.forEach((q, i) => { const pts = []; for (let k = 0; k <= 10; k++) { const th = k / 10 * 2 * PI + i; pts.push(W([q[0] + q[2] * Math.cos(th), 0.02 + q[2] * 0.9 * (1 + Math.sin(th)), q[1] + q[2] * 0.25 * Math.sin(th)])); } free30(R, pts, lw * 0.36, s2, Wd, Ht, P10, P11, d, 9500 + i * 17, { smooth: 2, wob: 0.5 }); });
   (S.spr || []).forEach((q, i) => { const pts = []; for (let k = 0; k <= 10; k++) { const th = k / 10 * 2 * PI + i; pts.push(W([q[0] + q[3] * Math.cos(th), q[1] + q[3] * Math.sin(th), q[2]])); } free30(R, pts, lw * 0.5, s2, Wd, Ht, P10, P11, d, 9300 + i * 19, { smooth: 2, wob: 0.4 }); });   /* spray in flight, drawn by the pen */
+  if (S.draw44) S.draw44(R, lw, s2, Wd, Ht, P10, P11, d, cam);   /* (builder 44) the moving marks: drips, bubbles, fume */
   R.pa.needsUpdate = R.ua.needsUpdate = R.ia.needsUpdate = true; R.mesh.geometry.setDrawRange(0, R.ni); }
 function hook35(T, scene) { if (!W35.scenes || W35.scenes.has(scene)) return; W35.scenes.add(scene); const f0 = scene.onBeforeRender;
-  scene.onBeforeRender = function (ren, sc, cam) { if (f0) f0.apply(this, arguments); if (KIT.skip33) return; for (let i = W35.figs.length - 1; i >= 0; i--) { const S = W35.figs[i]; let top = S.root; while (top.parent) top = top.parent; if (top !== sc || !shown30(S.root, null)) continue; try { draw35(T, S, ren, cam); } catch (e) { W35.err = String(e && e.stack); } } }; }
+  scene.onBeforeRender = function (ren, sc, cam) { if (f0) f0.apply(this, arguments); for (let i = W35.figs.length - 1; i >= 0; i--) { const S = W35.figs[i]; let top = S.root; while (top.parent) top = top.parent; if (top !== sc || !shown30(S.root, null)) continue; try { if (S.tick) S.tick(ren, cam); if (KIT.skip33) continue; draw35(T, S, ren, cam); } catch (e) { W35.err = String(e && e.stack); } } }; }
 KIT.acid35Fig = acid35Fig; KIT.ACID35 = W35;
 /* behind the switch only: the bench figure of Acid is the breaker, at its stage */
 KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && KIT.acid35 && SPEC35[KIT.acid35]) { try { grp.add(acid35Fig(T, (extra && extra.stage) || 3, KIT.acid35)); return true; } catch (e) { W35.err = String(e && e.stack); } } return f0.apply(this, arguments); })(KIT.build);
 // ==== W35 END
+// ==== W44 BEGIN
+// (builder 44) ACID ALIVE AT REST. The breaker's skin (geo35) gets its own rig: a pool skirt, five spine bones set at the mouth's floor and roof,
+// a bone per hand (planted hands hang from the root, raised ones from the spine), and one for the second wave of stage 5. Weights are worked out
+// once a stage on a copy of the skin (rig44). Each frame (pose44, from the scene hook before the pen) the wave heaves with the crest lagging the
+// base, the roof of the mouth lifts and drops with it, the hands shift their grip or flex, the pool's edge creeps; drips swell at the teeth and
+// the crest, fall and leave a wet mark on the wood; bubbles swell and pop on the rim; now and then one rises, pops and lets a thread of fume go.
+// The pen follows because it reads the same bones. Behind the switch AA.rxKit.acid35 (= 'a').
+const rn44 = typeof performance !== 'undefined' && performance.now ? performance.now.bind(performance) : Date.now;   /* the real clock, for timing only (a recorder may stop the page's clock) */
+const W44 = { err: null, rate: 1, jar: 0.6, rig: {}, sun: [-16, 18, 4], ms: 0, n: 0 };
+const sm44 = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
+const fr44 = x => x - Math.floor(x);
+/* each stage's habit at rest: T heave period (s), A lean per level (rad), lag between levels (rad), M how far the roof of the mouth lifts */
+const P44 = [null,
+  { T: 1.9, A: 0.045, lag: 0.5, M: 0.03, peek: 1 },          // 1 timid and quick, peeks out and ducks
+  { T: 3.4, A: 0.022, lag: 0.45, M: 0.035, rock: 1 },        // 2 low, rocking on its palms
+  { T: 2.7, A: 0.048, lag: 0.6, M: 0.075, fret: 1 },         // 3 restless
+  { T: 3.3, A: 0.03, lag: 0.65, M: 0.07, sway: 1, eager: 1 }, // 4 leaning and swaying, eager
+  { T: 6.2, A: 0.024, lag: 0.8, M: 0.085, vast: 1 }];        // 5 slow and vast, the wave behind out of step
+/* the rig of one stage, on a copy of its skin: bones (rest place, parent) and four weights a point */
+function rig44(T, G) { const key = 'a' + G.stage; if (W44.rig[key]) return W44.rig[key];
+  const o = G.o, ops = G.ops, h = G.h, H = G.H, my = G.my, geo = G.geo.clone(), pa = geo.attributes.position, nv = pa.count, F = field35(ops);
+  const m0 = Math.max(0.05, my[0]), m1 = Math.min(H * 0.92, Math.max(m0 + 0.05, my[1])), L = [0, m0 * 0.5, m0, m1, m1 + 0.5 * (H - m1)];
+  /* the spine runs through the body: each level's x is the middle of the skin at that height */
+  const bx = L.map(y => { let s = 0, n = 0; for (let i = 0; i < nv; i++) { const yy = pa.getY(i); if (Math.abs(yy - y) < 0.06 * H + h) { s += pa.getX(i); n++; } } return n ? s / n : 0; });
+  const pc = o.pc || [0, 0], B = [{ p: [pc[0], 0, pc[1]], par: -1, k: 'skirt' }]; L.forEach((y, i) => B.push({ p: [bx[i], y, 0], par: i ? i : -1, k: 's' + i }));
+  const lev = y => { let k = 0; for (let i = 0; i < 5; i++) if (L[i] <= y) k = i; return k; };
+  const arms = (o.arms || []).map((a, ai) => { const pts = a.pts, E = pts[pts.length - 1], low = E[1] < Math.max(0.12, m0 * 0.7), piv = a.nub || low ? E : pts[0], par = low ? (E[1] < 0.12 ? -1 : 1 + lev(E[1])) : 1 + lev(pts[0][1]);
+    let len = 0; const seg = []; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]); seg.push(l); len += l; }
+    const b = B.length; B.push({ p: [piv[0], piv[1], piv[2]], par, k: 'hand' + ai }); return { b, pts, seg, len: len || 1, ops: a.ops, nub: !!a.nub, low, i: ai }; });
+  const w2ops = ops.filter(p => p.w2 && !p.cut), mainOps = ops.filter(p => !p.w2 && !p.cut); let w2b = -1, H2 = 1; if (w2ops.length) { H2 = Math.max(...w2ops.map(p => p.c[1] + p.R)) * 0.9; let sx = 0, sz = 0; w2ops.forEach(p => { sx += p.c[0]; sz += p.c[2]; }); w2b = B.length; B.push({ p: [sx / w2ops.length, 0, sz / w2ops.length], par: -1, k: 'w2' }); }
+  const teeth = ops.filter(p => p.th), fmin = (list, x, y, z) => { let d = 1e9; for (let k = 0; k < list.length; k++) { const p = list[k], c = p.c; if (Math.hypot(x - c[0], y - c[1], z - c[2]) - p.R > d) continue; d = Math.min(d, p.f(x, y, z)); } return d; };
+  const si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), W = [];
+  for (let i = 0; i < nv; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i); W.length = 0; let ye = y, tooth = false;
+    for (let k = 0; k < teeth.length; k++) { const p = teeth[k]; if (Math.hypot(x - p.c[0], y - p.c[1], z - p.c[2]) > p.R + 2 * h) continue; if (p.f(x, y, z) < 1.5 * h) { ye = Math.max(ye, p.ty); tooth = true; } }
+    /* by height along the spine */ const ks = tooth ? 0 : 1 - sm44((y - 0.025) / 0.1); let k0 = 4, f = 0; for (let k = 0; k < 4; k++) if (ye < L[k + 1]) { k0 = k; f = (ye - L[k]) / (L[k + 1] - L[k]); break; } f = sm44(f);
+    if (k0 === 4) W.push([5, 1 - ks]); else { W.push([1 + k0, (1 - f) * (1 - ks)], [2 + k0, f * (1 - ks)]); } if (ks > 0) W.push([0, ks]);
+    /* the hands */ let wa = 0, ab = -1; for (const a of arms) { const fa = fmin(a.ops, x, y, z); if (fa > 4 * h) continue; const near = 1 - sm44((fa - 1.2 * h) / (2.8 * h)); let wv = near;
+      if (!a.nub) { let best = 1e9, ub = 0, acc = 0; for (let s = 1; s < a.pts.length; s++) { const A = a.pts[s - 1], C = a.pts[s], dx = C[0] - A[0], dy = C[1] - A[1], dz = C[2] - A[2], l2 = dx * dx + dy * dy + dz * dz || 1e-9; let u = ((x - A[0]) * dx + (y - A[1]) * dy + (z - A[2]) * dz) / l2; u = Math.max(0, Math.min(1, u)); const dd = Math.hypot(x - A[0] - u * dx, y - A[1] - u * dy, z - A[2] - u * dz); if (dd < best) { best = dd; ub = (acc + u * a.seg[s - 1]) / a.len; } acc += a.seg[s - 1]; }
+        wv *= a.low ? sm44((ub - 0.3) / 0.6) : sm44((ub - 0.05) / 0.55); }
+      if (wv > wa) { wa = wv; ab = a.b; } }
+    if (wa > 0) { W.forEach(q => { q[1] *= 1 - wa; }); W.push([ab, wa]); }
+    /* the wave behind */ if (w2b >= 0) { const f2 = fmin(w2ops, x, y, z); if (f2 < 6 * h) { const fm = fmin(mainOps, x, y, z), w = Math.max(0, Math.min(1, 0.5 - (f2 - fm) / (5 * h))) * sm44((y - 0.12 * H2) / (0.7 * H2)); if (w > 0) { W.forEach(q => { q[1] *= 1 - w; }); W.push([w2b, w]); } } }
+    W.sort((a, b) => b[1] - a[1]); let tot = 0; for (let k = 0; k < 4 && k < W.length; k++) tot += W[k][1]; tot = tot || 1; for (let k = 0; k < 4; k++) { const q = W[k]; si[4 * i + k] = q ? q[0] : 0; sw[4 * i + k] = q ? q[1] / tot : 0; } }
+  geo.setAttribute('skinIndex', new T.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new T.BufferAttribute(sw, 4));
+  /* the points that ride the skin (drip tips, spray, fume roots): each takes the weights of the skin point nearest to it */
+  const near = (x, y, z) => { let bi = 0, bd = 1e9; for (let i = 0; i < nv; i++) { const d = (pa.getX(i) - x) ** 2 + (pa.getY(i) - y) ** 2 + (pa.getZ(i) - z) ** 2; if (d < bd) { bd = d; bi = i; } } return { s: Array.from(si.slice(4 * bi, 4 * bi + 4)), w: Array.from(sw.slice(4 * bi, 4 * bi + 4)) }; };
+  const land = (x, y, z) => { let yy = y; for (let k = 0; k < 400 && yy > 0; k++) { if (F(x, yy, z) < 0) break; yy -= h * 0.5; } return Math.max(0, yy); };
+  const src = []; (o.teeth || []).forEach((q, i) => src.push(Object.assign({ p: q, r: q[3], land: land(q[0], q[1] - q[3] * 2.2, q[2]), tooth: 1, i }, near(q[0], q[1] + q[3], q[2]))));
+  (o.dps || []).forEach((q, i) => src.push(Object.assign({ p: q, r: q[3] * 1.1, land: land(q[0], q[1] - q[3] * 2.2, q[2]), tooth: 0, i: i + 20 }, near(q[0], q[1], q[2]))));
+  const spr = (G.spr || []).map(q => Object.assign({ p: q }, near(q[0], q[1] - 2 * q[3], q[2]))), fum = (G.fumes || []).map(q => Object.assign({ p: q }, near(q[0], q[1], q[2])));
+  return (W44.rig[key] = { geo, B, L, arms, w2b, src, spr, fum, H, nv }); }
+/* a soft shadow under the body that moves with it, and a wet mark where a drop lands; both lie on the wood, under the body */
+function flat44(T, kind) { const m = new T.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { a: { value: 0 }, sd: { value: Math.random() * 9 } }, vertexShader: 'varying vec2 vU;\nvoid main() { vU = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform float a;\nuniform float sd;\nvarying vec2 vU;\n' + N35 + (kind === 'sh'
+      ? 'void main() { float r = length(vU); gl_FragColor = vec4(0.07, 0.045, 0.025, a * 0.36 * (1.0 - smoothstep(0.15, 1.0, r))); }'
+      : 'void main() { float n = N35(vec3(vU * 3.0, sd)), r = length(vU) / (0.72 + 0.28 * n), m = 1.0 - smoothstep(0.82, 1.0, r), rim = smoothstep(0.55, 0.85, r) * m;\n  vec3 c = mix(vec3(0.24, 0.17, 0.08), vec3(0.88, 0.84, 0.70), 0.55 * (1.0 - smoothstep(0.0, 0.6, r)) * smoothstep(0.35, 1.0, 1.0 - a)); c = mix(c, vec3(0.12, 0.08, 0.04), rim * 0.7);\n  gl_FragColor = vec4(c, a * m * (0.45 + 0.4 * rim)); }') });
+  const g = new T.PlaneGeometry(2, 2); g.rotateX(-PI / 2); g.computeBoundingSphere(); g.boundingBox = new T.Box3(new T.Vector3(-0.01, 0, -0.01), new T.Vector3(0.01, 0.01, 0.01)); const q = new T.Mesh(g, m); q.userData.nobox = true; q.userData.plain = true; q.castShadow = false; q.renderOrder = kind === 'sh' ? 4 : 5; q.position.y = kind === 'sh' ? 0.014 : 0.016; return q; }
+/* the figure: the breaker at its stage, rigged and alive */
+function acid44Fig(T, stage, ex) { stage = Math.max(1, Math.min(5, stage | 0)) || 3; const jar = !!(ex && ex.jar), G = geo35(T, stage, 'a'), R = rig44(T, G), top = new T.Group(), grp = new T.Group(); top.add(grp);
+  grp.scale.setScalar([1.55, 1.12, 1, 1, 1][stage - 1]); grp.rotation.y = W35.rot[stage - 1] || 0;
+  const mat = mat35(T, G), U = { t44: { value: 0 }, lamp44: { value: new T.Vector3(-0.6, 0.62, 0.5) } }; mat.onBeforeCompile = (f0 => sh => { f0(sh); Object.assign(sh.uniforms, U);
+    sh.fragmentShader = sh.fragmentShader.replace('uniform float k35;', 'uniform float k35;\nuniform float t44;\nuniform vec3 lamp44;')
+      .replace('float l9 = dot(n9, normalize(vec3(-0.6, 0.62, 0.5)));', 'float l9 = dot(n9, normalize(mix(vec3(-0.6, 0.62, 0.5), lamp44, 0.5)));')   /* lit from the bench lamp's side */
+      .replace('float bub = step(0.90, H35(ci))', 'float bub = step(0.90, H35(ci + floor(t44 * (0.5 + H35(ci + 3.3)) + 9.0 * H35(ci + 5.1))))')   /* the fizz comes and goes */
+      .replace('gl_FragColor = vec4(c9, al); }', 'c9 *= mix(vec3(0.92, 0.89, 0.84), vec3(1.02, 1.0, 0.95), smoothstep(-0.35, 0.6, l9));\ngl_FragColor = vec4(c9, al); }'); })(mat.onBeforeCompile);
+  mat.customProgramCacheKey = () => 'a44'; if (jar) { mat.transparent = false; }
+  const bones = R.B.map(q => { const b = new T.Bone(); b.position.fromArray(q.p); return b; }); R.B.forEach((q, j) => { if (q.par >= 0) { const P = R.B[q.par].p; bones[j].position.set(q.p[0] - P[0], q.p[1] - P[1], q.p[2] - P[2]); bones[q.par].add(bones[j]); } });
+  const body = new T.SkinnedMesh(R.geo, mat); R.B.forEach((q, j) => { if (q.par < 0) body.add(bones[j]); }); body.bind(new T.Skeleton(bones)); body.frustumCulled = false; body.castShadow = false; body.userData.plain = true; body.renderOrder = 19; grp.add(body);
+  const etch = []; G.etch.forEach(q => { const e = etch35(T, q[0], q[1], q[2], G.pr); if (jar) e.visible = false; etch.push(e); grp.add(e); });
+  const S = { T, root: grp, body, bones, inv: body.skeleton.boneInverses, G: { geo: R.geo }, H: G.H, fumes: [], bub: [], smoke: [], spr: [], way: 'a', stage, jar, R, G35: G, U, rp: bones.map(b => b.position.clone()), t0: null, beads: [], marks: [], d44: {}, M4: Array.from({ length: bones.length }, () => new T.Matrix4()), v: new T.Vector3(), bub0: G.bub, smoke0: G.smoke, a44: true };
+  S.pen = pen30(T, S); S.pen.body.seed = 3500 + stage * 97 + 97 * 13; S.pen.mesh.visible = true;
+  /* drops: a bead for each place a drip forms, and a wet mark for each that lands on the wood */
+  const bm = new T.MeshBasicMaterial({ color: 0x9ecc6b, transparent: !jar, opacity: 0.96 }), sg = new T.SphereGeometry(1, 12, 9); sg.boundingBox = new T.Box3(new T.Vector3(-0.01, 0, -0.01), new T.Vector3(0.01, 0.01, 0.01));
+  R.src.forEach(() => { const m = new T.Mesh(sg, bm); m.visible = false; m.renderOrder = 20; m.userData.plain = true; m.userData.nobox = true; grp.add(m); S.beads.push(m); const k = flat44(T, 'wet'); k.visible = false; grp.add(k); S.marks.push(k); });
+  if (!jar) { S.shadow = flat44(T, 'sh'); S.shadow.scale.set(G.pr[0] * 0.95, 1, G.pr[1] * 0.9); S.shadow.position.x = (G.o.pc || [0])[0]; grp.add(S.shadow); }
+  body.onBeforeRender = (ren, scene) => { if (scene && scene.isScene) hook35(T, scene); };
+  S.tick = (ren, cam) => pose44(S, cam); S.draw44 = (Rp, lw, s2, Wd, Ht, P10, P11, d, cam) => draw44(S, Rp, lw, s2, Wd, Ht, P10, P11, d, cam);
+  grp.userData.a35 = top.userData.a35 = S; W35.figs.push(S); if (W35.figs.length > 24) W35.figs.splice(0, W35.figs.length - 24); return top; }
+/* where a point that rides the skin is now, in the figure's own frame (grp) */
+function at44(S, q, x, y, z, out) { const M = S.M4; let cx = 0, cy = 0, cz = 0; for (let k = 0; k < 4; k++) { const w = q.w[k]; if (!w) continue; const e = M[q.s[k]].elements; cx += w * (e[0] * x + e[4] * y + e[8] * z + e[12]); cy += w * (e[1] * x + e[5] * y + e[9] * z + e[13]); cz += w * (e[2] * x + e[6] * y + e[10] * z + e[14]); } return out.set(cx, cy, cz); }
+const pulse44 = (t, P, off, up, hold, down) => { const u = fr44(t / P + off) * P; return u < up ? sm44(u / up) : u < up + hold ? 1 : u < up + hold + down ? 1 - sm44((u - up - hold) / down) : 0; };
+/* one frame of the idle: a pure function of the clock, so any number of renders a frame agree */
+function pose44(S, cam) { const c0 = rn44(), t0 = performance.now(), t = t0 / 1000 * (S.jar ? W44.jar : W44.rate), st = S.stage, p = P44[st], B = S.bones, rp = S.rp, R = S.R, TAU = 2 * PI;
+  for (let j = 0; j < B.length; j++) { B[j].position.copy(rp[j]); B[j].rotation.set(0, 0, 0); B[j].scale.set(1, 1, 1); }
+  const ph = TAU * t / p.T + 0.5 * Math.sin(TAU * t / (p.T * 2.9) + st), hv = k => Math.sin(ph - p.lag * k) + 0.28 * Math.sin(2 * (ph - p.lag * k) + 0.9), sc = S.jar ? 0.7 : 1;
+  const cw = [0.35, 0.6, 0.85, 1.0, 1.0]; for (let i = 1; i <= 4; i++) B[1 + i].rotation.z = p.A * cw[i] * hv(i) * sc;
+  let open = 0.5 + 0.5 * hv(2.4), lift = 0;
+  if (p.peek) { const e = pulse44(t, 4.6, 0.3, 0.32, 1.1, 0.22), du = pulse44(t, 4.6, 0.3 - 1.64 / 4.6, 0.05, 0.4, 0.3); lift = 0.05 * e; B[3].rotation.z += 0.07 * e; B[4].rotation.z += 0.16 * e; B[5].rotation.z += 0.1 * e; open = Math.max(open * (1 - e), 0.9 * e); B[4].rotation.z += 0.02 * du * Math.sin(t * 38); B[2].rotation.z -= 0.05 * du; }
+  if (p.rock) { const r = Math.sin(ph); B[1].position.x += 0.045 * r * sc; B[1].rotation.z = -0.025 * Math.sin(ph - 0.5) * sc; open = 0.5 + 0.5 * Math.sin(ph + 0.6); }
+  if (p.fret) { const n = 0.5 * Math.sin(1.7 * t) + 0.3 * Math.sin(2.9 * t + 1) + 0.2 * Math.sin(4.3 * t + 2); B[3].rotation.z += 0.025 * n * sc; B[4].rotation.y = 0.05 * Math.sin(1.3 * t + 0.4) * sc; }
+  if (p.sway) { const s = TAU * t / 4.6; B[2].rotation.x = 0.035 * Math.sin(s) * sc; B[3].rotation.x = 0.03 * Math.sin(s - 0.7) * sc; B[4].rotation.x = 0.03 * Math.sin(s - 1.3) * sc; B[2].rotation.z -= 0.02; }
+  let lunge = 0; if (p.eager) { lunge = pulse44(t, 2.5, 0.1, 0.18, 0.12, 0.6); B[3].rotation.z -= 0.06 * lunge * sc; B[4].rotation.z -= 0.05 * lunge * sc; open = Math.max(open, lunge); }
+  if (p.vast && R.w2b >= 0) { const w = TAU * t / 5.1 + 2.1; B[R.w2b].rotation.z = 0.05 * (Math.sin(w) + 0.25 * Math.sin(2 * w + 1)) * sc; B[R.w2b].rotation.x = 0.02 * Math.sin(w * 0.7) * sc; }
+  /* the mouth: the roof of the hollow lifts as it rears and drops as it sags */
+  B[2].position.y += lift; B[4].position.y += p.M * (open - 0.35) * sc; B[5].position.y += 0.35 * p.M * (open - 0.35) * sc;
+  /* the pool's edge creeps */ B[0].scale.x = 1 + (0.03 * Math.sin(TAU * t / 4.3) + 0.015 * Math.sin(TAU * t / 2.1 + 1)) * sc; B[0].scale.z = 1 + (0.025 * Math.sin(TAU * t / 5.2 + 2) + 0.012 * Math.sin(TAU * t / 1.7)) * sc; B[0].rotation.y = 0.025 * Math.sin(TAU * t / 6.1) * sc;
+  /* the hands: planted ones shift their grip now and then and flex; raised ones reach and curl */
+  R.arms.forEach(a => { const b = B[a.b], i = a.i, Pg = 3.6 + 1.3 * i + 0.4 * st;
+    if (a.low || a.nub) { const u = t / Pg + 0.37 * i, n = Math.floor(u), e = sm44((fr44(u) - 0.55) / 0.3), sd = (n % 2 ? 1 : -1), ev = fr44(u) > 0.55 && fr44(u) < 0.85 ? Math.sin(PI * (fr44(u) - 0.55) / 0.3) : 0, k = st === 1 ? 1.4 : 1;
+      b.position.y += 0.03 * k * ev * sc; b.position.x += 0.025 * k * sd * (e - 0.5) * sc; b.position.z += 0.012 * k * sd * (e - 0.5) * sc; const fl = 1 + 0.07 * Math.sin(TAU * t / (st === 1 ? 0.9 : 1.7) + i * 2) * sc; b.scale.set(fl, 1 + 0.5 * (fl - 1), fl); b.rotation.y = 0.12 * sd * (e - 0.5) * sc; }
+    else { const s = TAU * t / (2.3 + 0.6 * i) + i * 1.9, g = pulse44(t, Pg, 0.2 * i, 0.25, 0.2, 0.5); b.rotation.z = (0.09 * Math.sin(s) - 0.08 * g - 0.12 * lunge) * sc; b.rotation.x = 0.07 * Math.sin(s * 0.7 + 1) * sc; b.rotation.y = 0.06 * Math.sin(s * 0.5) * sc; const fl = 1 + 0.06 * g; b.scale.set(fl, fl, fl); } });
+  S.root.updateMatrixWorld(true); S.body.skeleton.update();
+  /* the bone matrices in the figure's own frame, for the points that ride the skin */
+  const gi = S.gi || (S.gi = new S.T.Matrix4()); gi.copy(S.root.matrixWorld).invert(); for (let j = 0; j < B.length; j++) S.M4[j].multiplyMatrices(B[j].matrixWorld, S.inv[j]).premultiply(gi);
+  if (cam) { const L = S.U.lamp44.value.fromArray(W44.sun).normalize().transformDirection(cam.matrixWorldInverse); if (!isFinite(L.x)) L.set(-0.6, 0.62, 0.5); }
+  S.U.t44.value = t; S.t = t;
+  /* the shadow follows the body: it slides under the crest's swing and spreads with the pool */ if (S.shadow) { const q5 = S.q5 || (S.q5 = { s: [5, 0, 0, 0], w: [1, 0, 0, 0] }), r5 = R.B[5].p, dx = at44(S, q5, r5[0], r5[1], r5[2], S.v).x - r5[0]; S.shadow.material.uniforms.a.value = 1; S.shadow.position.x = (S.G35.o.pc || [0])[0] + 0.4 * dx; S.shadow.scale.x = S.G35.pr[0] * 0.95 * B[0].scale.x; S.shadow.scale.z = S.G35.pr[1] * 0.9 * B[0].scale.z; }
+  /* drops: swell at the tip, let go, fall, land (a wet mark on the wood, or into its own liquid) */
+  const v = S.v; R.src.forEach((q, k) => { const bead = S.beads[k], mark = S.marks[k], Pd = (q.tooth ? 3.1 : 4.3) * (st === 5 ? 1.5 : st === 1 ? 0.8 : 1) + 1.7 * hh35(q.i * 7 + st), off = hh35(q.i * 13 + st * 3), cyc = t / Pd + off, n = Math.floor(cyc), u = cyc - n, rel = 0.66;
+    const g = 3.2 * Math.max(1, R.H), D = S.d44[k] || (S.d44[k] = { n: -1e9, x: 0, y: 0, z: 0 });
+    if (u < rel) { const r = q.r * (0.3 + 0.7 * sm44(u / rel)); at44(S, q, q.p[0], q.p[1], q.p[2], v); bead.position.set(v.x, v.y - r * 0.55, v.z); bead.scale.set(r, r * (1 + 0.25 * sm44(u / rel)), r); bead.visible = true; D.live = 0; }
+    else { if (D.n !== n) { at44(S, q, q.p[0], q.p[1], q.p[2], v); D.n = n; D.x = v.x; D.y = v.y - q.r * 0.55; D.z = v.z; } const tau = (u - rel) * Pd, y = D.y - 0.5 * g * tau * tau, ld = q.land;
+      if (y > ld) { bead.position.set(D.x, y, D.z); bead.scale.set(q.r * 0.85, q.r * 1.35, q.r * 0.85); bead.visible = true; D.live = 0; } else { bead.visible = false; D.live = tau - Math.sqrt(Math.max(0, 2 * (D.y - ld) / g)); } }
+    const tL = Math.sqrt(Math.max(0, 2 * (q.p[1] - q.r * 0.55 - q.land) / g)), uL = rel + tL / Pd, age = fr44(u - uL) * Pd, lc = Math.floor(cyc - uL);
+    if (!S.jar && q.land < 0.035 && age < 4.5 && D.n > -1e8) { if (mark.userData.lc !== lc) { mark.userData.lc = lc; mark.position.set(D.x, 0.016, D.z); } const f = sm44(age / 0.15) * (1 - sm44((age - 1.2) / 3.3)); mark.visible = f > 0.01; mark.material.uniforms.a.value = f; const rs = q.r * (2.2 + 1.2 * sm44(age / 0.4)); mark.scale.set(rs, 1, rs * 0.85); } else mark.visible = false;
+    D.u = u; });
+  W44.ms += rn44() - c0; W44.n++; }
+/* the pen's moving marks: beads, bubbles on the rim, one rising and popping, threads of fume lifting off */
+function draw44(S, R, lw, s2, Wd, Ht, P10, P11, d, cam) { const t = S.t || 0, st = S.stage, mw = S.root.matrixWorld, G = S.G35, Rg = S.R, TAU = 2 * PI, V = S.T.Vector3;
+  const ce = cam.matrixWorld.elements, cx = new V(ce[0], ce[1], ce[2]).normalize(), cy = new V(ce[4], ce[5], ce[6]).normalize(), ws = new V().setFromMatrixScale(mw).x || 1;
+  const ring = (p, r, seed, w, sq) => { const pts = []; for (let k = 0; k <= 10; k++) { const th = k / 10 * TAU + seed; pts.push(p.clone().addScaledVector(cx, r * Math.cos(th)).addScaledVector(cy, r * (sq || 1) * Math.sin(th))); } free30(R, pts, w, s2, Wd, Ht, P10, P11, d, 7100 + seed * 31, { smooth: 2, wob: 0.35 }); };
+  const W = (x, y, z) => new V(x, y, z).applyMatrix4(mw);
+  /* the beads */ S.beads.forEach((b, k) => { if (!b.visible) return; const p = b.position.clone().applyMatrix4(mw); ring(p, b.scale.x * ws * 1.04, k + 1, lw * 0.4, b.scale.y / b.scale.x); });
+  /* bubbles in the eaten ring: each swells, pops in three ticks, and comes again a little way round */
+  const pc = G.o.pc || [0, 0], sk = S.bones[0].scale; (S.bub0 || []).forEach((q, i) => { const P = 1.4 + 1.6 * hh35(i * 5 + st), c = t / P + hh35(i + 9), n = Math.floor(c), u = c - n, a0 = Math.atan2(q[1] - pc[1], q[0] - pc[0]) + 0.5 * (hh35(n * 7 + i) - 0.5), rr = Math.hypot(q[0] - pc[0], q[1] - pc[1]), x = pc[0] + Math.cos(a0) * rr * sk.x, z = pc[1] + Math.sin(a0) * rr * sk.z, r = q[2];
+    if (u < 0.72) { const rn = r * (0.2 + 0.8 * sm44(u / 0.72)); const pts = []; for (let k = 0; k <= 10; k++) { const th = k / 10 * TAU + i; pts.push(W(x + rn * Math.cos(th), 0.02 + rn * 0.9 * (1 + Math.sin(th)), z + rn * 0.25 * Math.sin(th))); } free30(R, pts, lw * 0.36, s2, Wd, Ht, P10, P11, d, 9500 + i * 17, { smooth: 2, wob: 0.5 }); }
+    else if (u < 0.84) { const e = (u - 0.72) / 0.12; for (let k = 0; k < 3; k++) { const th = k * 2.1 + i, r0 = r * (1 + 0.8 * e), r1 = r * (1.5 + 1.2 * e); free30(R, [W(x + r0 * Math.cos(th), 0.02 + r + r0 * Math.sin(th), z), W(x + r1 * Math.cos(th), 0.02 + r + r1 * Math.sin(th), z)], lw * 0.3 * (1 - e), s2, Wd, Ht, P10, P11, d, 9600 + i * 7 + k, { smooth: 0, wob: 0.2 }); } } });
+  /* threads of fume: each lifts off, leans, thins and goes, and another starts */
+  const thread = (f, i, base, P, w) => { const c = t / P + 0.37 * i, u = c - Math.floor(c), e = Math.sin(PI * u), hg = f[3] * (0.55 + 0.45 * sm44(u * 1.6)); const segs = fume35([0, 0, 0, hg, f[4] * (Math.floor(c) % 2 ? 1 : -1) * (0.8 + 0.4 * Math.sin(t * 0.7 + i))], i); const up = 0.3 * f[3] * u;
+    segs.forEach((seg, j) => free30(R, seg.map(p => W(base.x + p[0], base.y + p[1] + up, base.z + p[2])), lw * (j ? 0.42 : 0.55) * Math.max(0.15, e), s2, Wd, Ht, P10, P11, d, 9700 + i * 40 + j * 13 + (Math.floor(c) % 3) * 5, { smooth: 2, wob: 0.7 })); };
+  Rg.fum.forEach((q, i) => thread(q.p, i, at44(S, q, q.p[0], q.p[1], q.p[2], new V()), 3.4 + 0.9 * i, 1));
+  (S.smoke0 || []).forEach((f, i) => thread([0, 0, 0, f[2], f[3]], i + 5, new V(f[0], 0.03, f[1]), 4.2 + 0.7 * i, 1));
+  /* spray off the crest: beads flung up a little way and taken back */
+  Rg.spr.forEach((q, i) => { const P = 1.6 + 0.8 * hh35(i + st * 3), u = fr44(t / P + hh35(i * 3 + 1)), b = at44(S, q, q.p[0], q.p[1], q.p[2], new V()), hgt = 0.12 * Rg.H * 4 * u * (1 - u); if (u > 0.92) return; ring(W(b.x + 0.04 * Rg.H * u, b.y + hgt, b.z), q.p[3] * ws * (0.6 + 0.4 * Math.sin(PI * u)), i + 3, lw * 0.5); });
+  /* now and then a bubble rises off the front of the pool, pops, and a thread of fume goes up from where it was */
+  { const P = st === 5 ? 6.5 : 4.8, c = t / P + 0.2, n = Math.floor(c), u = c - n, a = -0.2 + 0.9 * hh35(n * 3 + st), rx = G.pr[0] * 0.8 * sk.x, rz = G.pr[1] * 0.8 * sk.z, x = pc[0] + Math.cos(a) * rx, z = pc[1] + Math.abs(Math.sin(a)) * rz + 0.05, rise = 0.22 * Rg.H + 0.05, r = 0.022 + 0.008 * st;
+    if (u < 0.5) { const e = sm44(u / 0.5), y = 0.03 + rise * e; ring(W(x + 0.02 * Math.sin(u * 20), y + r, z), r * ws * (0.5 + 0.5 * e), 11, lw * 0.42); }
+    else if (u < 0.58) { const e = (u - 0.5) / 0.08, y = 0.03 + rise + r; for (let k = 0; k < 4; k++) { const th = k * 1.57 + 0.4, r0 = r * (1 + e), r1 = r * (1.7 + 1.3 * e); free30(R, [W(x + r0 * Math.cos(th), y + r0 * Math.sin(th), z), W(x + r1 * Math.cos(th), y + r1 * Math.sin(th), z)], lw * 0.34 * (1 - e), s2, Wd, Ht, P10, P11, d, 8800 + k, { smooth: 0, wob: 0.2 }); } }
+    else { const e = (u - 0.58) / 0.42, y = 0.03 + rise + r + 0.12 * Rg.H * e, segs = fume35([0, 0, 0, (0.25 * Rg.H + 0.06) * sm44(e * 1.8), n % 2 ? 1 : -1], 3); segs.forEach((seg, j) => free30(R, seg.map(p => W(x + p[0], y + p[1], z + p[2])), lw * (j ? 0.38 : 0.48) * Math.sin(PI * Math.min(1, e * 1.2)), s2, Wd, Ht, P10, P11, d, 8900 + j * 13 + (n % 3) * 7, { smooth: 2, wob: 0.7 })); } } }
+KIT.acid44Fig = acid44Fig; KIT.ACID44 = W44;
+/* behind the switch: the bench figure and the jar figure of Acid are the living breaker */
+const build44 = (T, grp, extra) => { if (KIT.acid35 === 'a' && KIT.acid44 !== false && T && T.SkinnedMesh && grp && grp.add) { try { grp.add(acid44Fig(T, (extra && extra.stage) || 3, extra)); return true; } catch (e) { W44.err = String(e && e.stack); } } return false; };
+KIT.build = (f0 => function (id, T, grp, tint, extra) { if (id === 'homacid' && build44(T, grp, extra)) return true; return f0.apply(this, arguments); })(KIT.build);
+/* the shelf jar is made by the first half of this file, out of reach of KIT.build: once a jar of Acid is made, its grown figures (half grown,
+   ready, and the form of its stage) are swapped for the living breaker, fitted to the glass as the old ones were (clear of the glass, under the lid) */
+function fit44(T, f, R0, H0, lim) { const h = new T.Group(); h.add(f); h.updateMatrixWorld(true); const b = new T.Box3().setFromObject(f); h.remove(f); const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, r = Math.hypot(b.max.x - cx, (b.max.z - cz) * 0.8) || 1; return { s: Math.min(R0 / r, H0 / Math.max(0.1, b.max.y - b.min.y), lim), cx, cz, y0: b.min.y }; }
+function jar44(T, g) { const U = g.userData;
+  [[U.big, 1], [U.mid, 0.62]].forEach(([c, k]) => { if (!c) return; c.children.slice().forEach(o => c.remove(o)); const f = acid44Fig(T, k < 1 ? 2 : 3, { jar: true }), q = fit44(T, f, 0.86, 1.95, 1.3), s = q.s * k, cs = c.scale.x || 1, inn = new T.Group(); inn.add(f); inn.scale.setScalar(s / cs); inn.position.set((-q.cx * s - c.position.x) / cs, (0.21 - q.y0 * s - c.position.y) / cs, (-q.cz * s - c.position.z) / cs); c.add(inn); });
+  U.form = sg => { if (U.sg === sg) return; U.sg = sg; const f = acid44Fig(T, sg, { jar: true, stage: sg }), q = fit44(T, f, 0.88, 1.95, 1.6), pv = new T.Group(); pv.add(f); pv.scale.setScalar(q.s); pv.position.set(-q.cx * q.s, 0.21 - q.y0 * q.s, -q.cz * q.s);
+    if (U.big2) g.remove(U.big2); pv.visible = (U.big && U.big.visible) || !!(U.big2 && U.big2.visible) || U.stage === 2; if (U.big) U.big.visible = false; g.add(pv); U.big2 = pv; }; }
+if (KIT.jar) KIT.jar = (f0 => function (T, key) { const j = f0.apply(this, arguments); if (j && key === 'acid' && KIT.acid35 === 'a' && KIT.acid44 !== false && T && T.SkinnedMesh) { try { jar44(T, j); } catch (e) { W44.err = String(e && e.stack); } } return j; })(KIT.jar);
+// ==== W44 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
