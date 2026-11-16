@@ -8372,4 +8372,53 @@ rise55 = (f0 => function (S, e, o) { const P = e.P; if (KIT.a121 === false || !P
     hand55(S, sd, (tx - nx) * k, (ty - ny) * k, (tz - nz) * k); (K.arm[sd] || []).forEach(c2 => curl52(S, c2, (c2.cs52 || 1) * (-0.35 * wu * (1 - ws) + 0.75 * ws) * k)); });
   dive55(S, g, D, D > 0 ? 0.3 * cl55(D / Dm * 2) : 0, 0); e.D = D; e.Dm = Dm; })(rise55);
 // ==== W121 END
+// ==== W126 BEGIN
+// (builder 121, second brief: "eats the leavings off the page") ACID'S ACT, ITS BODY (AA.rxKit.a126 with scheme S126; ?a126=0 gives W121's).
+// One clock (ph126) over the page's plan: a crouch and off, the way on the page in soft surges, then at each leaving its own visit: it
+// settles at the stand, looks down at it, a claw reaches (sprung), the fingers close on it, it is lifted (a strand of acid stretches to the
+// paper and parts: the page draws it), carried up to a jaw that opens wide and stretches, snapped shut, a gulp that rings down, a blink,
+// a step of bulk; then the next hop, and home seen from behind, the bulk going down as it goes. The idle layer runs under all of it.
+const W126 = { err: null, d: null, sd: [] };
+function ph126(t, Z) { const e = { t, ph: 'land', f: 0, u: 0, mv: 0, a: -1, i: -1, seg: null, done: t >= Z.tEnd, home: t >= Z.tH - 60, w: 1, l: 0 }, S0 = Z.seg[0], SL = Z.seg[Z.seg.length - 1];
+  if (t < S0.t0) { e.ph = 'wind'; e.w = cl121(t / Math.max(1, S0.t0)); e.seg = S0; e.f = 0; }
+  else if (t >= SL.t1) { e.l = cl121((t - Z.tH) / Math.max(1, Z.tEnd - Z.tH)); e.seg = SL; e.f = 1; }
+  else { const s = Z.seg.find(q => t >= q.t0 && t < q.t1) || SL; e.seg = s; e.u = (t - s.t0) / Math.max(1, s.t1 - s.t0); e.i = s.i == null ? -1 : s.i;
+    if (s.kind === 'work') { e.ph = 'work'; e.a = t - s.t0; e.f = 1; } else { e.ph = s.kind === 'back' ? 'back' : 'go'; e.f = s.first || s.kind === 'back' ? sg121(e.u) : smm121(e.u); e.mv = sm121(e.u / 0.12) * (1 - sm121((e.u - 0.86) / 0.14)) * (s.first || s.kind === 'back' ? 1 : 0.8); } }
+  e.k = e.seg.kind === 'go' && e.seg.first ? 1 + (Z.k - 1) * sm121(e.f) : e.seg.kind === 'back' ? (t >= SL.t1 ? 1 : Z.k + (1 - Z.k) * sm121(e.f)) : e.ph === 'wind' ? 1 : Z.k;
+  e.away = sm121((t - Z.tS + 120) / 260) * (1 - sm121((t - Z.tH + 60) / 320)); e.turn = PI * sm121((t - SL.t0 + 60) / 700) * (1 - sm121((t - (Z.tH - 700)) / 700));
+  let bulk = 0; Z.gulp.forEach(g => { bulk += 0.035 * sm121((t - g) / 260); }); e.bulk = bulk * (1 - sm121((t - SL.t0) / Math.max(1, SL.t1 - SL.t0))); return e; }
+function face126(e, Z, z, st) { const big = st >= 5 ? 1.25 : st <= 1 ? 0.85 : 1, Wv = Z.Wv; z.px = z.pz = 1 - 0.62 * e.away; z.swell = e.bulk; z.smile = 1.35 + 0.3 * Math.min(1, e.bulk * 8);
+  const cr = e.ph === 'wind' ? Math.sin(PI * sm121((e.t - Math.max(0, Z.tS - 260)) / 260)) : 0, go = e.ph === 'go' && e.seg.first ? Math.exp(-e.u * 10) * sm121(e.u / 0.04) : 0; z.sq = 0.13 * cr - 0.08 * go; z.bow = 0.12 * cr;
+  if (e.mv > 0) { const out = e.ph === 'go', ph = e.u * 3, s3 = Math.abs(Math.sin(PI * ph)); z.bow += (out ? 0.36 : 0.2 * (1 - 0.85 * Math.abs(Math.sin(e.turn)))) * e.mv / big; z.sq += 0.05 * s3 * e.mv; z.lean = 0.05 * Math.sin(PI * ph * 2) * e.mv; z.looky = (out ? -0.4 : 0.2) * e.mv; z.lidx = 0.3 * e.mv; z.brow = -0.45 * e.mv; }
+  /* the jaw and the gulps of every visit, smooth over the act's time (a visit's gulp rings on into the next hop) */ let jaw = 0; Z.seg.forEach(s => { if (s.kind !== 'work') return; const a = e.t - s.t0, sd = W126.sd[s.i] || 1, pin = 0.34 * Wv, lift = 0.4 * Wv, tom = 0.66 * Wv, gl = 0.83 * Wv; if (a < -200 || a > Wv + 900) return;
+    const w = sm121((a + 150) / 300) * (1 - sm121((a - Wv) / 300)), look = pu121(a, -150, lift + 60, 120), up = pu121(a, lift, gl, 100);
+    z.looky = (z.looky || 0) - 0.7 * look + 0.5 * up; z.lookx = (z.lookx || 0) + 0.9 * sd * look; z.hturn = (z.hturn || 0) + 0.2 * sd * look; z.bow += 0.1 * look * w; z.nod = (z.nod || 0) + 0.12 * look - 0.2 * up;
+    z.wide = (z.wide || 0) + 0.5 * pu121(a, pin - 60, lift + 80, 60) + 0.4 * up; z.brow = (z.brow || 0) + 0.4 * up;
+    jaw = Math.max(jaw, 0.95 * sm121((a - tom) / (gl - tom)) * (1 - sm121((a - gl) / 80))); z.sq -= 0.12 * pu121(a, tom, gl, 70);
+    const g = a - gl; if (g > 0 && g < 900) { z.sq += 0.15 * Math.exp(-g / 170) * Math.sin(g / 46); z.nod = (z.nod || 0) + 0.24 * pu121(g, 40, 320, 80); z.blink = Math.max(z.blink || 0, pu121(g, 70, 250, 50)); z.swell += 0.04 * Math.exp(-g / 260) * sm121(g / 90); z.smile += 0.3 * pu121(g, 200, 800, 150); } });
+  e.jaw = jaw; z.turn = e.ph === 'back' || e.ph === 'land' ? e.turn : 0;
+  if (e.ph === 'land') { const l = e.l, s = Math.exp(-l * 4) * Math.sin(l * 13) * (1 - sm121((l - 0.7) / 0.3)); z.sq += 0.12 * s; z.sink = 0.12 * pu121(l, 0.02, 0.6, 0.2); } }
+function pose126(S, grp, e, Z, now) { const G = S.G, H = G.H, K = S.k52, B = S.bones, ch = B[G.bj[G.R.chest]].position, P0 = B[0].position, nw = now / 1000, Wv = Z.Wv;
+  const pk = 1 - 0.65 * e.away; if (pk < 0.999) K.lick.forEach(c => c.jn.forEach((j, k) => { if (!k) return; const p = B[j].position; p.x = P0.x + (p.x - P0.x) * pk; p.z = P0.z + (p.z - P0.z) * pk; p.y *= 0.4 + 0.6 * pk; B[j].scale.multiplyScalar(0.5 + 0.5 * pk); }));
+  const back = e.ph === 'back', tuck = Math.max(0.9 * e.away, e.ph === 'wind' ? 0.6 * Math.sin(PI * sm121((e.t - Math.max(0, Z.tS - 260)) / 260)) : 0), fz = (back ? 0.1 * (1 - Math.abs(Math.sin(e.turn))) : -0.26) * H * e.mv, fx = 0.04 * H * Math.sin(nw * 13) * e.mv;
+  const tk = sd => [ch.x + sd * 0.15 * H, ch.y - 0.14 * H + 0.015 * H * Math.sin(nw * 9 + sd), ch.z + (0.08 - 0.2 * e.mv * (back ? 0 : 1)) * H];
+  /* the visit's claw (the one on the leaving's side), sprung: to the leaving, closed on it, up to the jaw, let go, back to its side */ let rsd = 0, rc = 0, tgt = null, curl = 0;
+  if (e.ph === 'work' || (e.ph === 'go' && e.i > 0)) { const i = e.ph === 'work' ? e.i : e.i - 1, s = Z.seg.find(q => q.kind === 'work' && q.i === i), a = e.t - s.t0, L = Z.lv[i];
+    if (L && L.spot) { if (!W126.sd[i]) { const p = loc58(S, { x: L.spot.x, y: 0.05, z: L.spot.z }); W126.sd[i] = p.x >= ch.x ? 1 : -1; } rsd = W126.sd[i]; const pin = 0.34 * Wv, lift = 0.4 * Wv, tom = 0.66 * Wv, gl = 0.83 * Wv;
+      rc = sm121(a / (0.3 * Wv)) * (1 - sm121((a - gl - 40) / (0.32 * Wv))); const sp = loc58(S, { x: L.spot.x, y: (L.yR || 0.3) + 0.04, z: L.spot.z }), mo = S.h58 ? loc58(S, S.h58.m) : B[G.bj[G.R.head]].position.clone(), l1 = sm121((a - lift) / (tom - lift)), l2 = sm121((a - tom) / (gl - tom));
+      const mid = { x: sp.x + (mo.x - sp.x) * 0.6, y: mo.y - 0.12 * H, z: mo.z + 0.12 * H }; let x = sp.x + (mid.x - sp.x) * l1, y = sp.y + 0.03 * H + (mid.y - sp.y) * l1, zz = sp.z + (mid.z - sp.z) * l1; x += (mo.x - x) * l2 * 0.9; y += (mo.y - 0.04 * H - y) * l2 * 0.9; zz += (mo.z + 0.08 * H - zz) * l2 * 0.9;
+      tgt = spring121(S, x, y, zz, now); curl = -0.35 * (1 - sm121((a - pin + 100) / 120)) + 0.95 * sm121((a - pin + 60) / 110) * (1 - sm121((a - gl) / 120)); } }
+  else if (S.sp121) S.sp121.t = -1e9;
+  [1, -1].forEach(sd => { const q = tk(sd); if (sd === rsd && tgt) { const w = rc; claw58(S, sd, q[0] + (tgt.x - q[0]) * w, q[1] + (tgt.y - q[1]) * w, q[2] + (tgt.z - q[2]) * w, Math.max(w, tuck), 0.45 * tuck * (1 - w) + curl * w); } else if (tuck > 0.001) claw58(S, sd, q[0], q[1], q[2], tuck, 0.45 * tuck); });
+  let flame = 0.1 * Math.min(1, e.bulk * 8) + (e.ph === 'work' ? 0.03 * Math.sin(nw * 9) : 0); if (flame || fx || fz) bend52(S, K.top, 1, fx, flame * 0.15 * H, fz, flame); }
+function act126(f0, grp, S, t, o) { const Z = o.bites.a126, e = ph126(t, Z), z = S.z126 || (S.z126 = {}), now = (typeof performance !== 'undefined' ? performance.now() : 0); W126.e = e; Z.e = e; for (const k in z) delete z[k];
+  if (!S.k52) init52(S); S.a121z = null; face126(e, Z, z, S.st); if (KIT.l104) KIT.l104(z, { u: t / 500, L: 500 }); f0(grp, 'rest', t / 500, { look: [1, 0.5], z55: z, act58: true }); S.c52 = 'act'; S.act58 = Z;
+  out58(S); pose126(S, grp, e, Z, now); out58(S); jaw121(S, e.jaw || 0);
+  W126.d = { ph: e.ph, i: e.i, f: +e.f.toFixed(2), k: +e.k.toFixed(2), bulk: +e.bulk.toFixed(3), jaw: +(e.jaw || 0).toFixed(2), sd: W126.sd.slice() };
+  return { e: e.f, y: 0, lunge: 0, n: -1, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip === 'act' && S && S.a48 && !S.jar && KIT.a126 !== false && o && o.bites && o.bites.a126) { if (o.bites.a126 !== W126.Z) { W126.Z = o.bites.a126; W126.sd = []; } try { return act126(f0, grp, S, t, o); } catch (err) { W126.err = 'act ' + String(err && err.stack); const Z = o.bites.a126; return { e: 0, y: 0, lunge: 0, n: -1, big: 0, done: t >= Z.tEnd, home: t >= Z.tH }; } }
+  return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26; KIT.ph126 = ph126; KIT.W126 = W126;
+// ==== W126 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
