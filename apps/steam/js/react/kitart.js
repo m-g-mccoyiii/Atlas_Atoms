@@ -6666,6 +6666,25 @@ W99.shape = S => { const F = fig77(S), X = fig82(S), B = S.bones, T = S.T, a = F
   par.localToWorld(v.copy(F.P0)); const P0 = [v.x - r0.x, v.y - r0.y, v.z - r0.z]; v.set(0, 0, 1).transformDirection(par.matrixWorld); return { D, P0, n: [v.x, v.y, v.z], side: a.side }; };
 KIT.W99 = W99;
 // ==== W99 END
+// ==== W101 BEGIN
+// (builder 101) BRIMSTONE'S SMALL FLAMES ARE FLAMES, NOT DROPS (KIT.g101, ?g101=0 gives builder 98's shape back).
+// W96's fire body is not edited: the shader text of each body made (fire96.make) is given three more lines where uFl is on (the lump's
+// small flames and the shed flamelets; the great fire has uFl 0 and is untouched). A drop is round below and fades out above; a flame
+// stands on a narrow foot, has its belly a third of the way up (a leaf, not a bulb), a pinched waist that wanders, a second lick above it and a long POINTED
+// tongue that is drawn to its very tip, and its whole length wavers from side to side in an S.
+const W101 = { err: null, n: 0 };
+KIT.g101 = KIT.g101 == null ? !(typeof location !== 'undefined' && /[?&]g101=0/.test(String(location.search))) : KIT.g101;
+if (KIT.fire96 && KIT.fire96.make) KIT.fire96.make = (f0 => function (T) { const B = f0(T); if (KIT.g101 === false) return B;
+  try { const seen = new Set(), ed = (s, a, b) => { if (s.indexOf(a) < 0) throw new Error('w101: not found: ' + a.slice(0, 40)); return s.replace(a, b); };
+    B.all.concat([B.back, B.front, B.heart]).concat((B.lets || []).map(l => l.m)).forEach(m => { const mt = m && m.material; if (!mt || seen.has(mt) || !mt.vertexShader || mt.vertexShader.indexOf('uFl') < 0 || mt.vertexShader.indexOf('surf(') < 0) return; seen.add(mt);
+      let v = mt.vertexShader, f = mt.fragmentShader;
+      v = ed(v, '  float amp = smoothstep(0.14, 0.7, s);', '  if (uFl > 0.0) { float wz1 = (s - 0.50 - 0.06 * sin(uT * 2.3 + uSeed)) / 0.08, fl1 = 1.5 * pow(smoothstep(0.0, 0.34, s), 1.1) * pow(1.0 - s, 1.2) * (1.0 - 0.38 * exp(-wz1 * wz1)); r = mix(r, 0.7 * fl1 * pow(1.0 - smoothstep(0.55, 1.0, sl), 0.5), uFl); }\n  float amp = smoothstep(0.14, 0.7, s) * (1.0 - 0.55 * uFl);');
+      v = ed(v, '  ax += uLean * s * s * HN * 0.6;', '  ax += uLean * s * s * HN * 0.6;\n  ax += uFl * 0.17 * HN * s * s * vec2(sin(uT * 5.3 + uSeed + 4.6 * s), cos(uT * 4.1 + 1.7 * uSeed + 3.9 * s));');
+      f = ed(f, '  gl_FragColor = vec4(col, clamp(al * uA, 0.0, 1.0)); }', '  if (uFl > 0.0) { col = mix(col, vec3(0.88, 0.93, 1.0), uFl * 0.6 * (1.0 - ink) * (1.0 - smoothstep(0.04, 0.34, vS + 0.08 * (a1 - 0.5)))); col = mix(col, vec3(0.25, 0.19, 0.78), uFl * 0.5 * (1.0 - ink) * smoothstep(0.42, 0.95, vS)); al = mix(al, max(al, 0.84 * smoothstep(0.0, 0.1, nv + 0.06 * (a2 - 0.5))), uFl); }\n  gl_FragColor = vec4(col, clamp(al * uA, 0.0, 1.0)); }');
+      mt.vertexShader = v; mt.fragmentShader = f; mt.needsUpdate = true; W101.n++; });
+  } catch (x) { W101.err = String(x && x.stack); } return B; })(KIT.fire96.make);
+KIT.W101 = W101;
+// ==== W101 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
