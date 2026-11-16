@@ -7092,6 +7092,72 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   homEvo19 = (f0 => function (now) { const E0 = R21.evo; S101.pend = E0 && s101On(s26Fig()) ? 1 : 0; S101.now = now; S101.dim0 = S32.dim; try { f0(now); } finally { S101.pend = 0; } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s101dbg = () => ({ err: S101.err, kit: AA.rxKit.W101 && AA.rxKit.W101.err, d: S101.dbg, pos: HEVO.pos && [+HEVO.pos.x.toFixed(2), +HEVO.pos.z.toFixed(2)], s36: S36.t ? +S36.t.toFixed(2) : 0, ext: Object.keys(S101.ext).map(k => k + ':' + S101.ext[k].map(x => x.toFixed(2)).join(' ')).join(' | ') });
   // ==== S101 END
+  // ==== S105 BEGIN
+  // (builder 105) THE SCENE'S SIDE OF THE SHARED PARTS (kitart W105, AA.rxKit.stage): AA.rxKit.scene gives any creature's act or change of
+  // stage what the parts need from this page, with no creature's numbers in it: the atoms and bonds as obstacles (as seen in the picture,
+  // raised atoms where the eye sees them; or laid on the page along the eye's line), the foot of a figure in the picture, the screen, the
+  // page's own bounds (gutter, edges, the tray beside the book, the score's ink), the book's cover under a point, home.
+  // PROOF (?k105=1, AA.rxKit.k105): Brimstone's change of stage takes its stand and its way from AA.rxKit.stage.findStand / findPath (with
+  // S101's own body numbers handed in) instead of S101's search; S101's own plan is worked out beside it on the same frame and both are
+  // kept in s105dbg() for the comparison. Off by default; nothing in S101 or any other block is changed (S36.on is wrapped once more, outside
+  // S101's wrap, and lays the plan on R21.evo.p101 before S101 would make its own).
+  const S105 = { err: null, dbg: null, v: new T.Vector3(), v2: new T.Vector3(), up: [0, 0.697, -0.717] };
+  if (AA.rxKit && AA.rxKit.k105 == null) AA.rxKit.k105 = /[?&]k105=1/.test(String(root.location && root.location.search));
+  const s105Pr = (x, y, z) => { const v = S105.v.set(x, y, z).project(cam); return [(v.x + 1) * 360 * cam.aspect, (1 - v.y) * 360]; };
+  const SC105 = {
+    /* the picture is 720 high and 720 * aspect wide */ pr: s105Pr, screen: () => ({ x0: 0, y0: 0, x1: 720 * cam.aspect, y1: 720 }),
+    /* the atoms (each [X, Y, r] in the picture) and three points along each bond (r: bf of the smaller atom; bonds are the pairs nearer than near * the shortest) */
+    obsSeen: (o) => { o = o || {}; const bf = o.bf == null ? 0.3 : o.bf, nr = o.near == null ? 1.3 : o.near, us = o.us || [0.25, 0.5, 0.75], out = [], W = [], v = S105.v2, w = new T.Vector3(); cam.updateMatrixWorld(); if (center && center.balls) center.balls.forEach(b => { if (!b || !b.mesh) return; b.mesh.getWorldPosition(v); b.mesh.getWorldScale(w); W.push([v.x, v.y, v.z, w.x]); });
+      let bl = 1e9; const n = W.length, D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); for (let i = 0; i < n; i++) for (let k = i + 1; k < n; k++) { const d = D(W[i], W[k]); if (d > 0.2) bl = Math.min(bl, d); }
+      W.forEach(a => { const p = s105Pr(a[0], a[1], a[2]), p2 = s105Pr(a[0] + a[3], a[1], a[2]); out.push([p[0], p[1], Math.abs(p2[0] - p[0])]); });
+      for (let i = 0; i < n; i++) for (let k = i + 1; k < n; k++) if (D(W[i], W[k]) < nr * bl) us.forEach(u => out.push([out[i][0] + (out[k][0] - out[i][0]) * u, out[i][1] + (out[k][1] - out[i][1]) * u, bf * Math.min(out[i][2], out[k][2])]));
+      return out; },
+    /* a point laid on the page along the eye's line (where the eye sees it on the paper), t: how much nearer the eye that makes it */
+    gp: (x, y, z) => { const cp = cam.position, t = cp.y / Math.max(0.5, cp.y - y); return { x: cp.x + (x - cp.x) * t, z: cp.z + (z - cp.z) * t, t }; },
+    /* the atoms and bond points as the eye sees them on the page ({ x, z, r, a } / { x, z, r, k }), as S99 lays them */
+    obsPage: (o) => { o = o || {}; const v = S105.v2, out = [], pad = o.pad == null ? 0.15 : o.pad, br = o.br == null ? 0.3 : o.br; cam.updateMatrixWorld(); if (!center || !center.balls) return out;
+      center.balls.forEach((b, key) => { if (!b || !b.mesh) return; b.mesh.getWorldPosition(v); const g = SC105.gp(v.x, v.y, v.z); out.push({ x: g.x, z: g.z, r: s77R(b) * g.t + pad, a: key }); });
+      (center.sticks || []).forEach(k => { const A = center.balls.get(k.a), B = center.balls.get(k.b); if (!A || !A.mesh || !B || !B.mesh) return; A.mesh.getWorldPosition(v); const a = SC105.gp(v.x, v.y, v.z); B.mesh.getWorldPosition(v); const b = SC105.gp(v.x, v.y, v.z); (o.us || [0.33, 0.67]).forEach(u => out.push({ x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u, r: br, k: [k.a, k.b] })); });
+      return out; },
+    /* the foot of a figure at (x, z) on a surface y high, in the picture: { X, Y, pp (pixels a unit across), pu (pixels a unit up the figure, which leans by up) } */
+    foot: (x, z, y, up) => { const yy = y == null ? 0.03 : y, U = up || S105.up, F = s105Pr(x, yy, z), a = s105Pr(x + 1, yy, z), b = s105Pr(x + U[0], yy + U[1], z + U[2]); return { X: F[0], Y: F[1], pp: a[0] - F[0], pu: F[1] - b[1] }; },
+    /* how much of a round of radius r at (x, z) is on the book (0..1, S27) */ onBook: (x, z, r) => s27K(x, z, r),
+    home: () => ({ x: HOMP.x, z: HOMP.z }), safe: () => SAFE,
+    /* the page the molecule is on, as a box on the paper a figure must stay inside (S99 builder 103): off the gutter and the edges, above the
+       score's ink at the foot (zb), and above the small signs (ink [x0, x1, zmax]) on the right page; m = margins { x0, x1, z0 } */
+    page: (obsP, m) => { m = m || {}; let mcx = 0, mcn = 0; (obsP || []).forEach(o => { if (o.a != null) { mcx += o.x; mcn++; } }); const lf = !!(mcn && mcx / mcn < SAFE.gut.x0), PG = lf ? SAFE.L : SAFE.R;
+      return { left: lf, x0: (lf ? PG.x0 : SAFE.gut.x1) + (m.x0 == null ? 0.9 : m.x0), x1: (lf ? SAFE.gut.x0 : PG.x1) - (m.x1 == null ? 0.8 : m.x1), z0: PG.z0 + (m.z0 == null ? 0.3 : m.z0), zb: m.zb == null ? 10.2 : m.zb, ink: lf ? null : (m.ink || [9.6, 20.4, 5.3]) }; },
+    /* how far a box [x0, x1, z0, z1] on the paper is outside that page (0: inside) */
+    offPage: (pg, e) => Math.max(0, pg.x0 - e[0]) + Math.max(0, e[1] - pg.x1) + Math.max(0, pg.z0 - e[2]) + Math.max(0, e[3] - (pg.ink && e[1] > pg.ink[0] && e[0] < pg.ink[1] ? pg.ink[2] : pg.zb)),
+    /* rectangles given in a 1280 by 720 picture, as this picture's (x scaled by the width) */ ink: R => { const s = 720 * cam.aspect / 1280; return R.map(r => [r[0] * s, r[1], r[2] * s, r[3]]); } };
+  if (AA.rxKit) AA.rxKit.scene = SC105;
+  /* ---- the proof: Brimstone's change of stage planned by the shared parts, S101's body numbers handed in */
+  const s105Plan = (E, SP) => { const ST5 = AA.rxKit.stage, C3 = E.c32, O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, h0 = homObj.h0 || 3; cam.updateMatrixWorld(); O.root.updateWorldMatrix(true, false);
+    const ws = S105.v2.setFromMatrixScale(O.root.matrixWorld).y * E.s0 * C3.B / Math.max(1e-6, homObj.s), lump = (O.G.o && O.G.o.lump) || 0, M = { B: Math.max(1, C3.B), F: Math.max(1, C3.F), Rl: Math.max(0.21 * O.G.H, E.from === 1 ? 0.56 * lump : 0) * ws, Rb: 1.18 * Math.max(0.33 * O.G.H, 0.8 * lump) * ws, Hf: h0 * E.s1 * C3.F, to: E.to };
+    const obs = SC105.obsSeen(), zc = C3.zc, c0 = SC105.foot(0, zc), Wd = 720 * cam.aspect, B = S101B[M.to] || S101B[3], sh = ST5.shape;
+    /* Brimstone's body, from S101: the lump, the standing fire at its widest (its outline S101F), the new form's boxes; what must stay inside the screen and what costs over the page's ink */
+    const shapes = [sh.ball({ u: M.Rl, up: 0.6, r: 1.5, sy: 1.15 }), sh.prof({ u: M.Rb, base: 0.2, top: S101TOP, w: S101F, grow: 0.05 }),
+      sh.zone({ ux: M.Rb, uy: M.Rb, l: 1.15, r: 1.15, y0: -0.2, y1: S101TOP - 0.2, keep: { t: 8, l: 12, r: 12 } }), sh.zone({ l: 0, r: 0, y0: 0, y1: 0, keep: { b: 68 } }), sh.zone({ ux: M.Hf, uy: M.Hf, xs: 'pu', l: 0, r: 0, y0: 1.02, y1: 1.02, keep: { t: 66 } }),
+      sh.zone({ ux: M.Rb, uy: M.Rb, l: 1.1, r: 1.1, y0: -0.2, y1: 2.4, ink: 110 }), sh.zone({ ux: M.Rb, uy: M.Rb, l: 0.5, r: 0.5, y0: 2.4, y1: 4.0, ink: 220 })]
+      .concat(B.map(b => sh.box({ ux: M.Hf, uy: M.Hf, xs: 'pu', y0: b[0], y1: b[1], l: b[2], r: b[3], keep: { l: 0.055 * Wd, r: 0.055 * Wd }, ink: 420 })));
+    const st = ST5.findStand({ obs, foot: (x, z) => SC105.foot(x, z), grid: { x0: SAFE.L.x0 + 3, x1: SAFE.R.x1 - 3, dx: 0.5, z0: zc - 3, z1: zc + 3.01, dz: 0.5 }, shapes, pad: 7, screen: SC105.screen(), ink: SC105.ink(S101INK), extra: (x, z, k) => (s27K(x, z, M.Rl * k) < 0.99 ? 50 : 0), prefer: { X: c0.X, Y: c0.Y, wx: 1, wy: 1.3 }, shrink: 0.95, tries: 9 });
+    /* the way: S101's lump (its size on the way) and the new form going home on the same curve, as costs for each point */
+    const k = st.k, sm = AA.rxKit.RK.sm, ball = sh.ball({ u: 1, up: 0.6, r: 1.5, sy: 1.15 });
+    const way = ST5.findPath({ kind: 'curve', from: [HOMP.x, HOMP.z], to: [st.x, st.z], n: 40, ctrl: { x0: -32, x1: 26, dx: 2, z0: Math.min(HOMP.z, st.z) - 2, z1: Math.max(HOMP.z, st.z) + 2, dz: 2 },
+      cost: (x, z, u) => { const f = SC105.foot(x, z), g = (1 + (M.B - 1) * sm(Math.min(1, 1.8 * u))) / M.B * (1 + 0.45 * sm(u / 0.09) * (1 - sm((u - 0.1) / 0.5))), gl = ST5.lay(ball, f, M.Rl * k * Math.max(g, Math.min(1, 3 * u))); let bad = 0; for (let i = 0; i < obs.length; i++) bad += ST5.into(gl, obs[i], 10);
+        if (u < 0.92) { const Hs = M.Hf * k * (1 + (M.F - 1) * u) / M.F, gb = ST5.lay(sh.box({ ux: Hs, uy: Hs, xs: 'pu', y0: 0, y1: 1.05, l: 0.6, r: 0.6 }), f, 1); for (let i = 0; i < obs.length; i++) bad += ST5.into(gb, obs[i], 8); }
+        if (f.X < 30 || f.X > Wd - 30 || f.Y < 14 || f.Y > 700) bad += 40; return bad; } });
+    return { st, way, M, zc, obs: obs.length, c0 }; };
+  const s105Move = () => { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, Q = HEVO.pos, C = S32.C; if (!AA.rxKit.k105 || !AA.rxKit.stage || !E || E.p101 || !E.e31 || !E.c32 || !e || e.go == null || !Q || !C || !homObj || !s101On(SP) || !E.c32.b97) return;
+    const C3 = E.c32, keep = { zc: C3.zc, bz: C3.bz, B: C3.B, F: C3.F, ge: E.ge97 }, d0 = S101.dbg; let ref = null;
+    /* S101's own plan on the same frame, for the comparison only (what it changes is put back) */ try { const P0 = s101Plan(E, SP, e); ref = { x: P0.x, z: P0.z, k: +P0.k.toFixed(3), F: S101.dbg && S101.dbg.F, c: S101.dbg && S101.dbg.c, len: S101.dbg && S101.dbg.len, ge: E.ge97 }; } catch (x) { S105.err = 'ref ' + String(x && x.stack); }
+    C3.zc = keep.zc; C3.bz = keep.bz; C3.B = keep.B; C3.F = keep.F; E.ge97 = keep.ge; S101.dbg = d0;
+    const R = s105Plan(E, SP), st = R.st, w = R.way, P = { x: st.x, z: st.z, k: st.k, way: w, zc0: R.zc, M: R.M, bad: st.bad }; C3.zc = st.z; C3.bz = st.z; C3.B *= st.k; C3.F *= st.k; E.ge97 = Math.max(0.03, AA.rxKit.stage.edgeAt({ at: u => s101At(P, u) }, s27K)); E.p101 = P;
+    S101.dbg = { x: st.x, z: st.z, k: +st.k.toFixed(3), bad: +st.bad.toFixed(1), ink: +st.ink.toFixed(1), F: [Math.round(st.f.X), Math.round(st.f.Y)], c: [w.cx, w.cz], wbad: +w.bad.toFixed(1), len: +w.len.toFixed(1), ge: E.ge97, zc0: +R.zc.toFixed(2), n: R.obs, old: [Math.round(R.c0.X), Math.round(R.c0.Y)], k105: 1 };
+    S105.dbg = { mine: { x: st.x, z: st.z, k: +st.k.toFixed(3), F: S101.dbg.F, c: S101.dbg.c, len: S101.dbg.len, ge: E.ge97, cover: st.cover.length, tries: st.tries }, ref, dF: ref && ref.F ? +Math.hypot(ref.F[0] - S101.dbg.F[0], ref.F[1] - S101.dbg.F[1]).toFixed(1) : null }; };
+  S36.on = (f0 => function () { if (S101.pend) { try { s105Move(); } catch (x) { S105.err = String(x && x.stack); } } return f0.apply(this, arguments); })(S36.on);
+  if (AA.rxKit) AA.rxKit.s105dbg = () => ({ err: S105.err, kit: AA.rxKit.stage && AA.rxKit.stage.dbg().err, on: !!AA.rxKit.k105, d: S105.dbg });
+  // ==== S105 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

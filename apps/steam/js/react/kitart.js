@@ -8108,4 +8108,171 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W88 = W88;
 // ==== W88 END
+// ==== W105 BEGIN
+// (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
+// number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
+// learned over ten rounds (W97, W98, W99, S97, S99, S101) is copied out and made general, so the next creature calls it instead of copying.
+//  - ease: cl, sm (smooth step), smm (smoother step), eo, ei, eio, pulse, G2 (a soft bump), lerp, wrap;
+//  - findStand(opts): a place on the page clear of every atom and bond for a set of body shapes, nearest a preferred point, smaller in steps
+//    if nothing fits (S101's stand, S58 / S99's grid search);
+//  - findPath(opts): a smooth way round the molecule (a curve with its middle point searched, S101; or a grid way pulled tight and rounded,
+//    S99), walked at even speed with eased ends;
+//  - groundTravel(opts): a figure carried along a way ON the surfaces (bench, book's edge, page): height, lean, rock, tip and heave at the
+//    edge, the lean of its flames or hair from its real speed (S97 + W97);
+//  - handOver(opts): the swap between the resting figure and its working copy without a step (W98, W99 builder 100);
+//  - follow(opts): spring follow-through for a chain of joints driven by real velocity; lagged(): Water's lag by time; idle(): the always-on
+//    idle layer (builder 103);
+//  - dbg(): the errors and the last plan of each part.
+const W105 = { err: null, errs: [], last: {} };
+const ST105 = {};
+{ const cl = (v, a, b) => Math.max(a == null ? 0 : a, Math.min(b == null ? 1 : b, v));
+  const sm = u => { u = cl(u); return u * u * (3 - 2 * u); }, smm = u => { u = cl(u); return u * u * u * (u * (6 * u - 15) + 10); };
+  Object.assign(ST105, { cl, sm, smm, eo: u => 1 - Math.pow(1 - cl(u), 3), ei: u => { u = cl(u); return u * u * u; }, eio: u => { u = cl(u); return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; },
+    pulse: (x, a, b, e) => sm((x - a) / e) * (1 - sm((x - b) / e)), G2: x => Math.exp(-2 * x * x), lerp: (a, b, u) => a + (b - a) * u, wrap: a => Math.atan2(Math.sin(a), Math.cos(a)) }); }
+/* a note of the last plan of a part, and of any error (dbg() gives them back) */
+ST105.note = (part, d) => { W105.last[part] = d; return d; };
+ST105.fail = (part, x) => { const s = part + ': ' + String(x && x.stack || x); W105.err = s; W105.errs.push(s); if (W105.errs.length > 12) W105.errs.shift(); return s; };
+ST105.dbg = () => ({ err: W105.err, errs: W105.errs.slice(), last: W105.last });
+
+/* ---- body shapes for findStand. Each is made from the creature's own numbers and is laid at a foot f = { X, Y, pp, pu } (where the foot
+   is, pixels a unit across there, pixels a unit up the standing figure) and a size k. Heights are UP from the foot. Every shape may have
+   keep: { l, t, r, b } (its box must stay that far inside the screen on that side; a side left out is not looked at), ink: n (its box over
+   the page's own ink costs overlap / n), hit: false (it is not tested against atoms: a box for keep or ink only). */
+ST105.shape = {
+  /* a round: its centre up `up` units (y), across `dx` (x), radius r (x units); sy squashes the test up and down (1.15: S101's lump) */
+  ball: (o) => Object.assign({ t: 'ball', up: 0, dx: 0, r: 1, u: 1, sy: 1, hit: true }, o),
+  /* an outline by height: w = [[h, half width], ...] in units of u (x by pp, y by pu), its bottom `base` units BELOW the foot, its tip at
+     `top` units above its bottom; it widens by `grow` per unit of height (S101's standing fire: kitart VS96 measured) */
+  prof: (o) => Object.assign({ t: 'prof', w: [[0, 1]], base: 0, top: 1, grow: 0, u: 1, hit: true }, o),
+  /* a box: from y0 to y1 units up, l units left and r right; x is in units of ux (by pp, or by pu if xs is 'pu'), y in units of uy (by pu) */
+  box: (o) => Object.assign({ t: 'box', y0: 0, y1: 1, l: 0.5, r: 0.5, ux: 1, uy: 1, xs: 'pp', hit: true }, o) };
+ST105.shape.zone = o => ST105.shape.box(Object.assign({ hit: false }, o));
+const pw105 = (w, h) => { if (h <= w[0][0]) return w[0][1]; for (let i = 1; i < w.length; i++) if (h <= w[i][0]) return w[i - 1][1] + (w[i][1] - w[i - 1][1]) * (h - w[i - 1][0]) / (w[i][0] - w[i - 1][0]); return w[w.length - 1][1]; };
+/* a shape laid at a foot and size: its box [x0, y0, x1, y1] in the picture, and what it needs to test atoms */
+ST105.lay = (s, f, k) => { if (s.t === 'ball') { const R = s.r * s.u * k * f.pp, cx = f.X + s.dx * s.u * k * f.pp, cy = f.Y - s.up * s.u * k * f.pu; return { s, cx, cy, R, bx: [cx - R, cy - R / s.sy, cx + R, cy + R / s.sy] }; }
+  if (s.t === 'prof') { const ux = s.u * k * f.pp, uy = s.u * k * f.pu, y0 = f.Y + s.base * uy; let mw = 0; s.w.forEach(p => { mw = Math.max(mw, p[1]); }); mw += s.grow * s.top; return { s, ux, uy, y0, X: f.X, bx: [f.X - mw * ux, y0 - s.top * uy, f.X + mw * ux, y0] }; }
+  const ux = s.ux * k * (s.xs === 'pu' ? f.pu : f.pp), uy = s.uy * k * f.pu; return { s, bx: [f.X - s.l * ux, f.Y - s.y1 * uy, f.X + s.r * ux, f.Y - s.y0 * uy] }; };
+/* how far an obstacle o = [X, Y, r] is inside a laid shape (0: clear), with a clear margin pad */
+ST105.into = (g, o, pad) => { const s = g.s;
+  if (s.t === 'ball') { const p = g.R + o[2] + pad - Math.hypot(o[0] - g.cx, (o[1] - g.cy) * s.sy); return p > 0 ? p : 0; }
+  if (s.t === 'prof') { const h = (g.y0 - o[1]) / g.uy, rr = (o[2] + pad) / g.uy; if (!(h > -rr && h < s.top + rr)) return 0; const p = (pw105(s.w, Math.max(0, Math.min(s.top, h))) + s.grow * Math.max(0, h)) * g.ux + o[2] + pad - Math.abs(o[0] - g.X); return p > 0 ? p : 0; }
+  const b = g.bx, p = Math.min(o[0] + o[2] + pad - b[0], b[2] - (o[0] - o[2] - pad), o[1] + o[2] + pad - b[1], b[3] - (o[1] - o[2] - pad)); return p > 0 ? p : 0; };
+const ov105 = (b, R) => { let a = 0; for (let i = 0; i < R.length; i++) { const r = R[i]; a += Math.max(0, Math.min(b[2], r[2]) - Math.max(b[0], r[0])) * Math.max(0, Math.min(b[3], r[3]) - Math.max(b[1], r[1])); } return a; };
+/* one place tested: hit (atoms and bonds covered, summed depth), out (outside the screen by the shapes' keep), ink (cost), cover (which obstacles) */
+ST105.test = (opts, x, z, k, cov) => { const f = opts.foot(x, z), O = opts.obs, pad = opts.pad == null ? 7 : opts.pad, S = opts.screen, G = opts.shapes.map(s => ST105.lay(s, f, k)); let hit = 0, out = 0, ink = 0;
+  for (let gi = 0; gi < G.length; gi++) { const g = G[gi], s = g.s, b = g.bx;
+    if (s.hit) for (let i = 0; i < O.length; i++) { const p = ST105.into(g, O[i], s.pad == null ? pad : s.pad); if (p > 0) { hit += p; if (cov) cov.add(i); } }
+    if (s.keep && S) { const kp = s.keep, o1 = v => { if (v > 0) out += v; }; if (kp.l != null) o1(S.x0 + kp.l - b[0]); if (kp.t != null) o1(S.y0 + kp.t - b[1]); if (kp.r != null) o1(b[2] - (S.x1 - kp.r)); if (kp.b != null) o1(b[3] - (S.y1 - kp.b)); }
+    if (s.ink && opts.ink) ink += ov105(b, opts.ink) / s.ink; }
+  if (opts.extra) out += opts.extra(x, z, k, f) || 0; return { hit, out, ink, f, G }; };
+/* FIND A STAND. opts: { obs: [[X, Y, r], ...] (atoms and bond points, as seen), foot(x, z) -> { X, Y, pp, pu }, grid: { x0, x1, dx, z0, z1, dz }
+   (the places tried, in the world), shapes: [...] (ST105.shape: at rest AND at the widest), pad (7), screen: { x0, y0, x1, y1 } (for keep),
+   ink: [[x0, y0, x1, y1], ...] (the page's own ink, soft), extra(x, z, k, f) -> how bad (on the book, off the page...), prefer: { X, Y, wx, wy }
+   (the point the stand is drawn to, in the picture), k0 (1), shrink (0.95), tries (9) }. Returns { x, z, k, bad, hit, out, ink, c, f, cover }:
+   the place, the size it had to take, and the obstacles it still covers (none if bad is 0). Every place is tried, the cheapest wins (bad
+   costs 1000 a pixel, then the distance to the preferred point, then the ink); if the best is not clear, all is made smaller and tried again. */
+ST105.findStand = opts => { try { const g = opts.grid, P = opts.prefer || { X: 0, Y: 0 }, wx = P.wx == null ? 1 : P.wx, wy = P.wy == null ? 1 : P.wy, sh = opts.shrink || 0.95, n = opts.tries || 9;
+    let best = null, k = opts.k0 || 1;
+    for (let it = 0; it < n; it++, k *= sh) { best = null;
+      for (let x = g.x0; x <= g.x1; x += g.dx) for (let z = g.z0; z <= g.z1; z += g.dz) { const t = ST105.test(opts, x, z, k), bad = t.hit + t.out, c = bad * 1000 + wx * Math.abs(t.f.X - P.X) + wy * Math.abs(t.f.Y - P.Y) + t.ink; if (!best || c < best.c) best = { x, z, k, c, bad, t }; }
+      if (best && best.bad <= 0) break; }
+    if (!best) return null; const cov = new Set(), t2 = ST105.test(opts, best.x, best.z, best.k, cov);
+    return ST105.note('stand', { x: best.x, z: best.z, k: best.k, c: best.c, bad: best.bad, hit: t2.hit, out: t2.out, ink: best.t.ink, f: best.t.f, G: best.t.G, cover: Array.from(cov), tries: Math.round(Math.log(best.k / (opts.k0 || 1)) / Math.log(sh)) + 1 });
+  } catch (x) { ST105.fail('findStand', x); return null; } };
+
+/* ---- ways. A way is a list of points with their lengths: at(u) is the place at that part of its LENGTH (so a walk by u is at even speed),
+   walk(t, ease) the place at time t (0..1) with eased ends (smoother step by default), dir(u) the way it goes there. */
+ST105.line = pts => { const L = [0]; let len = 0; for (let i = 1; i < pts.length; i++) { len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); L.push(len); }
+  const W = { P: pts, L, len, at(u) { const n = L.length - 1, d = Math.max(0, Math.min(1, u)) * len; if (n < 1) return pts[0].slice(); let i = 1; while (i < n && L[i] < d) i++; const a = L[i] > L[i - 1] ? (d - L[i - 1]) / (L[i] - L[i - 1]) : 0, A = pts[i - 1], B = pts[i]; return [A[0] + (B[0] - A[0]) * a, A[1] + (B[1] - A[1]) * a]; },
+    walk(t, ease) { return W.at((ease || ST105.smm)(t)); }, dir(u) { const e = 0.5 / Math.max(1, len), a = W.at(u - e), b = W.at(u + e), l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; } }; return W; };
+/* a curve from A to B through a middle point C (quadratic), n steps */
+ST105.bez = (A, C, B, n) => { const P = [A.slice()]; for (let i = 1; i <= n; i++) { const u = i / n, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u; P.push([a * A[0] + b * C[0] + c * B[0], a * A[1] + b * C[1] + c * B[1]]); } return P; };
+/* corners rounded (Chaikin), the two ends kept */
+ST105.round = (P, it) => { for (let r = 0; r < (it == null ? 2 : it); r++) { if (P.length < 3) return P; const Q = [P[0]]; for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (i > 0) Q.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1]]); if (i < P.length - 2) Q.push([0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1]]); } Q.push(P[P.length - 1]); P = Q; } return P; };
+/* FIND A WAY. opts: { from: [x, z], to: [x, z], kind: 'curve' | 'grid' }.
+   'curve' (S101): { n (40), cost(x, z, u, i) -> how bad that point is (u: the part of the length), ctrl: { x0, x1, dx, z0, z1, dz } (the middle
+   points tried; by default round the two ends) }: the straight curve if it costs nothing, else of all middle points the one with the least
+   cost * 1000 + length.
+   'grid' (S99): { ok(x, z) -> clear, box: { x0, x1, z0, z1 }, gs (0.5), step (0.3), weight(x, z) -> 1 or more, near (0: how near either end a
+   point need not be clear), round (2) }: straight if clear, else the shortest way on the grid, pulled tight, its corners rounded. Returns
+   the way (ST105.line) with bad (the cost left), cx, cz (the middle point of a curve) and kind. */
+ST105.findPath = opts => { try { const A = opts.from, B = opts.to;
+    if ((opts.kind || 'curve') === 'curve') { const N = opts.n || 40, cost = opts.cost || (() => 0), mk = (cx, cz) => { const W = ST105.line(ST105.bez(A, [cx, cz], B, N)); let bad = 0; for (let i = 1; i <= N; i++) bad += cost(W.P[i][0], W.P[i][1], W.L[i] / Math.max(1e-6, W.len), i) || 0; W.bad = bad; W.cx = cx; W.cz = cz; W.c = bad * 1000 + W.len; W.kind = 'curve'; return W; };
+      let best = mk((A[0] + B[0]) / 2, (A[1] + B[1]) / 2); const d = Math.hypot(B[0] - A[0], B[1] - A[1]), g = opts.ctrl || { x0: Math.min(A[0], B[0]) - d, x1: Math.max(A[0], B[0]) + d, dx: Math.max(0.5, d / 12), z0: Math.min(A[1], B[1]) - d, z1: Math.max(A[1], B[1]) + d, dz: Math.max(0.5, d / 12) };
+      if (best.bad > 0) for (let cx = g.x0; cx <= g.x1; cx += g.dx) for (let cz = g.z0; cz <= g.z1; cz += g.dz) { const w = mk(cx, cz); if (w.c < best.c) best = w; }
+      return ST105.note('path', { kind: 'curve', bad: +best.bad.toFixed(1), len: +best.len.toFixed(2), c: [best.cx, best.cz] }), best; }
+    const ok = opts.ok, gs = opts.gs || 0.5, st = opts.step || 0.3, nr = opts.near || 0, wt = opts.weight || (() => 1), bx = opts.box, P = { x: A[0], z: A[1] }, Q = { x: B[0], z: B[1] };
+    const seg = (a, b) => { const L = Math.hypot(b.x - a.x, b.z - a.z), m = Math.ceil(L / st); for (let i = 1; i < m; i++) { const x = a.x + (b.x - a.x) * i / m, z = a.z + (b.z - a.z) * i / m; if (Math.hypot(x - P.x, z - P.z) < nr || Math.hypot(x - Q.x, z - Q.z) < nr) continue; if (!ok(x, z)) return false; } return true; };
+    let pts; if (Math.hypot(Q.x - P.x, Q.z - P.z) < 2 * gs || seg(P, Q)) pts = [P, Q];
+    else { const nx = Math.ceil((bx.x1 - bx.x0) / gs) + 1, nz = Math.ceil((bx.z1 - bx.z0) / gs) + 1, id = p => Math.max(0, Math.min(nx - 1, Math.round((p.x - bx.x0) / gs))) + nx * Math.max(0, Math.min(nz - 1, Math.round((p.z - bx.z0) / gs))), s0 = id(P), g0 = id(Q), dist = new Float32Array(nx * nz).fill(1e9), prev = new Int32Array(nx * nz).fill(-1), done = new Uint8Array(nx * nz), C = new Int8Array(nx * nz), open = [s0]; dist[s0] = 0; let found = false;
+      while (open.length) { let bi = 0; for (let i = 1; i < open.length; i++) if (dist[open[i]] < dist[open[bi]]) bi = i; const u = open[bi]; open[bi] = open[open.length - 1]; open.pop(); if (done[u]) continue; done[u] = 1; if (u === g0) { found = true; break; } const ux = u % nx, uz = (u - ux) / nx;
+        for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dz) continue; const vx = ux + dx, vz = uz + dz; if (vx < 0 || vz < 0 || vx >= nx || vz >= nz) continue; const w = vx + nx * vz; if (done[w]) continue; const x = bx.x0 + vx * gs, z = bx.z0 + vz * gs;
+          if (w !== g0 && !(Math.hypot(x - P.x, z - P.z) < nr || Math.hypot(x - Q.x, z - Q.z) < nr)) { if (!C[w]) C[w] = ok(x, z) ? 1 : 2; if (C[w] === 2) continue; } const nd = dist[u] + gs * Math.hypot(dx, dz) * wt(x, z); if (nd < dist[w]) { dist[w] = nd; prev[w] = u; open.push(w); } } }
+      if (!found) pts = [P, Q]; else { const raw = [Q]; for (let u = prev[g0]; u >= 0 && u !== s0; u = prev[u]) { const ux = u % nx; raw.push({ x: bx.x0 + ux * gs, z: bx.z0 + (u - ux) / nx * gs }); } raw.push(P); raw.reverse(); pts = [P]; for (let i = 0; i < raw.length - 1;) { let k = raw.length - 1; while (k > i + 1 && !seg(raw[i], raw[k])) k--; pts.push(raw[k]); i = k; } }
+      if (!found) W105.noway = (W105.noway || 0) + 1; }
+    const W = ST105.line(ST105.round(pts.map(p => [p.x, p.z]), opts.round)); W.kind = 'grid'; W.bad = 0; for (let i = 1; i < W.P.length - 1; i++) if (!ok(W.P[i][0], W.P[i][1])) W.bad++; ST105.note('path', { kind: 'grid', n: W.P.length, len: +W.len.toFixed(2), bad: W.bad }); return W;
+  } catch (x) { ST105.fail('findPath', x); return ST105.line([opts.from.slice(), opts.to.slice()]); } };
+/* where on a way the raised surface (the book) is first under it: the first part of the length whose cover K(x, z, r) is over a half (S97, S101) */
+ST105.edgeAt = (W, K, r, n) => { n = n || 400; for (let i = 0; i <= n; i++) { const p = W.at(i / n); if (K(p[0], p[1], r == null ? 0.01 : r) > 0.5) return i / n; } return 0.1; };
+
+/* ---- GROUND TRAVEL (S97 + W97): a figure carried along a way ON the surfaces. opts: { way, u (0..1, the trip's own time), ease (sm), back
+   (false going out, true coming home: the lean is the other way), R (the size of what touches the ground, world), K(x, z, r) -> 0..1 how much
+   of it is on the raised surface, lo (0: the bench), hi (0.26: the book), ge (the part of the way where the edge is; edgeAt by default),
+   lean (0.2: against the start and the stop), rock (0.13), rocks (3: side to side over the trip), tip (0.3: over the edge), heave (0.3: a
+   lift as it tips, in R), bump (0.3: the height of the step's heave in R), st (a state object kept from frame to frame, for the speed lean) }.
+   Returns { x, z, y, go, k, rx (tip forward and back, radians), rz (rock), lift (in R), lx, lz (a lag-smoothed lean from the real speed,
+   -0.7..0.7, for flames, hair or smoke) }. */
+ST105.groundTravel = o => { try { const u = ST105.cl(o.u), go = (o.ease || ST105.sm)(u), W = o.way, p = W.at(go), R = o.R || 1, K = o.K || (() => 0), k = K(p[0], p[1], R), lo = o.lo || 0, hi = o.hi == null ? 0.26 : o.hi, ge = o.ge == null ? ST105.edgeAt(W, K) : o.ge, G2 = ST105.G2, PI2 = 2 * Math.PI;
+    const y = lo + (hi - lo) * k + (o.bump == null ? 0.3 : o.bump) * R * 4 * k * (1 - k), x = (go - ge) / 0.05, sg = o.back ? -1 : 1, ln = o.lean == null ? 0.2 : o.lean, tp = o.tip == null ? 0.3 : o.tip;
+    const rx = -sg * ln * Math.sin(PI2 * u) * (u < 0.5 ? 1 : 0.7) - tp * G2(x + 0.4 * sg) + 0.67 * tp * G2(x - 1.2 * sg), rz = (o.rock == null ? 0.13 : o.rock) * Math.sin(PI2 * (o.rocks || 3) * go) * Math.sin(Math.PI * u), lift = (o.heave == null ? 0.3 : o.heave) * G2(x + 0.2 * sg);
+    const S = o.st || {}; if (S.x == null) { S.x = p[0]; S.z = p[1]; S.lx = 0; S.lz = 0; } const m = 9 / R, c7 = v => Math.max(-0.7, Math.min(0.7, v)); S.lx += (c7((S.x - p[0]) * m) - S.lx) * 0.25; S.lz += (c7((S.z - p[1]) * m) - S.lz) * 0.25; S.x = p[0]; S.z = p[1];
+    return { x: p[0], z: p[1], y, go, k, rx, rz, lift, lx: S.lx, lz: S.lz, ge };
+  } catch (x) { ST105.fail('groundTravel', x); return null; } };
+
+/* ---- poses. A pose is every bone's place, turn and size and the root's; from(S, Z, k) goes from the kept pose Z (k 0) to the figure's own
+   (k 1), the turns the short way round. */
+ST105.pose = {
+  keep(S, Z) { const B = S.bones, T = S.T; Z = Z || { P: [], Q: [], C: [] }; if (!Z.rp) { Z.rp = new T.Vector3(); Z.rq = new T.Quaternion(); Z.rc = new T.Vector3(); Z.q = new T.Quaternion(); }
+    for (let j = 0; j < B.length; j++) { if (!B[j]) { Z.P[j] = null; continue; } (Z.P[j] || (Z.P[j] = new T.Vector3())).copy(B[j].position); (Z.Q[j] || (Z.Q[j] = new T.Quaternion())).copy(B[j].quaternion); (Z.C[j] || (Z.C[j] = new T.Vector3())).copy(B[j].scale); }
+    Z.rp.copy(S.root.position); Z.rq.copy(S.root.quaternion); Z.rc.copy(S.root.scale); Z.n = B.length; Z.st = S.st; return Z; },
+  from(S, Z, k, root) { const B = S.bones, q = Z.q; for (let j = 0; j < B.length; j++) { if (!B[j] || !Z.P[j]) continue; B[j].position.lerpVectors(Z.P[j], B[j].position, k); q.copy(Z.Q[j]).slerp(B[j].quaternion, k); B[j].quaternion.copy(q); B[j].scale.lerpVectors(Z.C[j], B[j].scale, k); }
+    if (root !== false) { const R = S.root; R.position.lerpVectors(Z.rp, R.position, k); q.copy(Z.rq).slerp(R.quaternion, k); R.quaternion.copy(q); R.scale.lerpVectors(Z.rc, R.scale, k); } } };
+/* HAND-OVER (W98 builder 99, W99 builder 100). opts: { ms (300: out of the resting pose), frames (10: into the idle at the end, 8 at least),
+   fade(S, k) (what the idle adds, by k: 1 as at rest, 0 as in the clip; Brimstone's is fade98 + fl95), first(C) (laid on the copy's FIRST
+   frame: its light on the bench, its wash tinted), now() (ms) }. Use:
+     H.rest(S)        each frame the figure rests (its pose is kept);
+     H.begin(C)       each frame of the clip's start, after the clip has posed the copy C: it starts in the resting pose and goes into the
+                      clip's over ms; returns k (0..1); the first time it calls first(C);
+     H.fadeIn(S, ms)  the idle's extras of S go out over ms from the clip's start (call each frame; returns k);
+     H.hold(S)        each frame of the clip (the clip's last pose is kept);
+     H.after(S)       each frame after the clip: from the clip's last pose into the idle over `frames` frames, fade(S, k) on; returns k or null. */
+ST105.handOver = opts => { const o = Object.assign({ ms: 300, frames: 10, now: () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) }, opts || {}), fr = Math.max(8, o.frames);
+  const H = { R: null, Z: null, t0: null, live: false, n: 0, o,
+    rest(S) { H.R = ST105.pose.keep(S, H.R); H.R.at = o.now(); H.t0 = null; },
+    begin(C) { try { const n = o.now(); if (H.t0 == null) { H.t0 = n; if (o.first) o.first(C); } const k = ST105.sm((n - H.t0) / o.ms), R = H.R; if (k < 1 && R && R.st === C.st && R.n === C.bones.length && H.t0 - R.at < 400) ST105.pose.from(C, R, k); return k; } catch (x) { ST105.fail('handOver.begin', x); return 1; } },
+    fadeIn(S, ms) { const n = o.now(); if (H.tf == null) H.tf = n; const k = 1 - ST105.sm((n - H.tf) / (ms || 450)); if (o.fade) o.fade(S, k); return k; },
+    hold(S) { H.Z = ST105.pose.keep(S, H.Z); H.live = true; H.n = 0; H.tf = null; },
+    after(S) { if (!H.live || !H.Z) return null; try { const k = ST105.sm((H.n + 1) / (fr + 1)); H.n++; if (H.n >= fr) H.live = false; ST105.pose.from(S, H.Z, k); if (o.fade) o.fade(S, k); return k; } catch (x) { ST105.fail('handOver.after', x); H.live = false; return null; } } };
+  return H; };
+
+/* ---- FOLLOW-THROUGH. follow(opts): { n (joints), stiff (60 /s²), damp (9 /s), gain: [per joint, 0 root .. 1 the tip] or a number, max (0.6) }.
+   step(vx, vy, vz, dtMs) takes the REAL velocity of what carries the chain (world units a second) and returns each joint's offset [x, y, z]:
+   it lags behind a start, swings past a stop and settles (a damped spring on each joint, driven by the change of speed). */
+ST105.follow = opts => { const o = Object.assign({ n: 4, stiff: 60, damp: 9, max: 0.6, gain: null }, opts || {}), n = o.n, g = j => Array.isArray(o.gain) ? (o.gain[j] || 0) : o.gain == null ? (j + 1) / n : o.gain, F = { off: [], vel: [], pv: null };
+  for (let j = 0; j < n; j++) { F.off.push([0, 0, 0]); F.vel.push([0, 0, 0]); }
+  F.step = (vx, vy, vz, dt) => { const h = Math.max(0.001, Math.min(0.05, (dt || 16.7) / 1000)), v = [vx || 0, vy || 0, vz || 0], a = F.pv ? [(v[0] - F.pv[0]) / h, (v[1] - F.pv[1]) / h, (v[2] - F.pv[2]) / h] : [0, 0, 0]; F.pv = v;
+    for (let j = 0; j < n; j++) { const w = g(j), X = F.off[j], V = F.vel[j]; for (let c = 0; c < 3; c++) { V[c] += (-o.stiff * X[c] - o.damp * V[c] - w * a[c]) * h; X[c] += V[c] * h; X[c] = Math.max(-o.max, Math.min(o.max, X[c])); } } return F.off; };
+  F.reset = () => { F.pv = null; F.off.forEach(x => { x[0] = x[1] = x[2] = 0; }); F.vel.forEach(x => { x[0] = x[1] = x[2] = 0; }); };
+  return F; };
+/* Water's way (play26): every joint reads the same motion a little LATE, its own lag in ms; fn(t) gives a pose number at time t */
+ST105.lagged = (fn, t, lags) => lags.map(l => fn(t - l));
+/* the idle layer that never stops (builder 103): breath, slow sway, arms, brows, glances, a blink every period ms; amp scales it all, ph
+   shifts the clock (two creatures do not breathe together). Every number is a smooth function of the time; ADD them to the clip's. */
+ST105.idle = (t, amp, ph, period) => { const a = amp == null ? 1 : amp, ti = t / 1000 + (ph || 0), S = Math.sin, bl = ((t + 1000 * (ph || 0)) % (period || 3300) + (period || 3300)) % (period || 3300);
+  return { sq: 0.06 * a * S(ti * 2.4), lean: 0.1 * a * S(ti * 1.7 + 1), bow: 0.07 * a * S(ti * 1.2 + 0.4), nod: 0.1 * a * S(ti * 2.1 + 2), tilt: 0.05 * a * S(ti * 1.4 + 0.7), armL: 0.15 * a * S(ti * 2.0 + 0.5), armR: 0.15 * a * S(ti * 1.6 + 2.2), hair: a * (0.1 + 0.1 * S(ti * 2.9)), brow: 0.1 * a * S(ti * 0.9 + 1), lookx: 0.12 * a * S(ti * 1.1 + 1), looky: 0.08 * a * S(ti * 0.8), blink: ST105.pulse(bl, 400, 600, 80) }; };
+/* add an idle (or any set of pose numbers) into q */
+ST105.addInto = (q, d) => { Object.keys(d).forEach(k => { if (k === 'blink') q.blink = Math.max(q.blink || 0, d.blink); else q[k] = (q[k] || 0) + d[k]; }); return q; };
+KIT.stage = ST105;
+KIT.W105 = W105;
+// ==== W105 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
