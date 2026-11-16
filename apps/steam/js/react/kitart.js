@@ -8528,6 +8528,11 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && gr
     if (O && t >= k.k1) O.root.visible = false;
     else if (O) { const X = fig82(O), f97 = 1 - 0.3 * K.sm((g.ph - 1.42) / 0.26); O.root.scale.multiplyScalar(ks / Math.max(0.3, f97)); /* (W97 drew it in for the fire; here it is only a little smaller at the stand) */
       const wo = ws133(O.root, v); W133.ref = { Hw: 0.95 * X.F.H * wo * V.hk };
+      /* (builder 140) the cloud stays in the picture: when the top of its pen line (last frame's, in the screen's own measure) comes over 0.9 of the
+         screen's height, the cloud is let grow less, eased over time (a stand at the page's top edge in real play put its top off the screen) */
+      { const top = F => { const R = F && F.pen30; if (!R || !R.nv || !R.mesh.visible) return -2; const a = R.pa.array; let m = -2; for (let i = 0; i < R.nv; i++) if (a[3 * i + 1] > m) m = a[3 * i + 1]; return m; }, ty = Math.max(top(O), S.root.visible ? top(S) : -2), dt = Math.max(0, Math.min(100, n - (z.tc || n))); z.tc = n;
+        if (z.capT == null) { z.capT = 1; z.cap = 1; } if (ty > 0.9 && c.full > 0.05) z.capT = Math.max(0.45, z.capT - 0.0006 * dt * (1 + 8 * (ty - 0.9))); z.cap += (z.capT - z.cap) * (1 - Math.exp(-dt / 160)); }
+      if (z.cap) W133.ref.Hw *= z.cap;
       idle133(O, O.t99 != null ? K.sm((n - O.t99) / 300) : 1); bil133(O, X.F.P0, X.F.H, W133.ref.Hw / wo, o, t);
       const ao = t < k.k0 ? 1 : B.ao; if (O.u69) { O.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; O.u69.value.z = 0.9 * c.full; } parts133(O, ao, ao * (1 - c.full), ao * ao, V.fl * c.fl); if (O.st > 1) face133(O, kfo); z.wo = ws133(O.root, v); blend133(O, ao, t >= k.k0 && !B.nf, pk * B.pd, 0.9 * c.full, c.kd > 0 && c.kd < 1); }
     const Ov = O && t < k.k1 ? O : null; if (t >= k.k0 && W133.ref) { S.root.visible = true; const X = fig82(S), mk = c.mk, R0 = W133.ref, an = c.kd >= 1 ? 1 : B.an;
@@ -8537,7 +8542,7 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && gr
       if (S.u69) { S.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; S.u69.value.z = 0.9 * c.full; } parts133(S, an, an * (1 - c.full), an * an, V.fl * c.fl); if (S.st > 1) face133(S, kfn); blend133(S, an, B.nf, pk * B.pd, 0.9 * c.full, c.kd > 0 && c.kd < 1);
       /* the size: the old one's at the hand-over, the new one's as it draws in */ const wn = ws133(S.root.parent, v) * S.rs133 * ks; if (Ov && z.wo > 0 && wn > 0) z.rho = z.wo / wn; const rho = z.rho || 1; S.root.scale.setScalar(S.rs133 * ks * (rho + (1 - rho) * mk));
       /* the hand-back to the idle starts from what is shown */ const Z = S.b98; if (Z && Z.live) { S.bones.forEach((b, j) => { if (!b || !Z.P[j]) return; Z.P[j].copy(b.position); Z.Q[j].copy(b.quaternion); Z.C[j].copy(b.scale); }); Z.rs = S.root.scale.x; } }
-    if (z.n % 3 === 0 || (t > k.k0 - 200 && t < k.k1 + 200)) { W133.tr.push([Math.round(t), +c.b.toFixed(3), +c.kd.toFixed(3), +c.mk.toFixed(3), +ks.toFixed(3), +(z.rho || 0).toFixed(3), O ? 1 : 0, S.root.visible ? 1 : 0, +B.an.toFixed(3), +B.ao.toFixed(3), S.k73 && S.k73.light ? +S.k73.light.m.material.opacity.toFixed(3) : -1, O && O.k73 && O.k73.light ? +O.k73.light.m.material.opacity.toFixed(3) : -1]); if (W133.tr.length > 400) W133.tr.shift(); }
+    if (z.n % 3 === 0 || (t > k.k0 - 200 && t < k.k1 + 200)) { W133.tr.push([Math.round(t), +c.b.toFixed(3), +c.kd.toFixed(3), +c.mk.toFixed(3), +ks.toFixed(3), +(z.rho || 0).toFixed(3), O ? 1 : 0, S.root.visible ? 1 : 0, +B.an.toFixed(3), +B.ao.toFixed(3), z.cap == null ? -1 : +z.cap.toFixed(3), S.k73 && S.k73.light ? +S.k73.light.m.material.opacity.toFixed(3) : -1, O && O.k73 && O.k73.light ? +O.k73.light.m.material.opacity.toFixed(3) : -1]); if (W133.tr.length > 400) W133.tr.shift(); }
   } catch (x) { W133.err = 'play ' + String(x && x.stack); } return r; })(play26);
 KIT.spirit26.play = play26;
 W133.dbg = () => ({ err: W133.err, tr: W133.tr.slice(), sl: W133.sl.slice() });
