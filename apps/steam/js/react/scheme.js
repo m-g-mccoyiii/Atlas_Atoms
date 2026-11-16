@@ -7406,6 +7406,41 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           if (ok && other) { X.ha = other; const N = s110Nb(center), ha = R.mp.get(other); R.way = R.P.map(pp => s110Way(N, ha, pp.filter(Boolean)) || pp.filter(Boolean)); S111.dbg.moved = true; } } } } catch (x) { S111.err = 'hand ' + String(x && x.stack); } return r; })(reopenShow);
   if (AA.rxKit) AA.rxKit.s111dbg = () => ({ err: S111.err, kit: AA.rxKit.W111 && AA.rxKit.W111.err, kdbg: AA.rxKit.W111 && AA.rxKit.W111.dbg, d: S111.dbg });
   // ==== S111 END
+  // ==== S112 BEGIN
+  // (builder 112) probe: every frame, where each leaving water is drawn (after feel.js has moved it), for the checks
+  const S112 = { err: null, log: [], v: new T.Vector3(), id: new Map(), n: 0 }; if (AA.rxKit && AA.rxKit.p112 == null) AA.rxKit.p112 = /[?&]p112=1/.test(String(root.location && root.location.search));
+  const s112Probe = now => { { if (S112.log.length < 3000 && st.flyers.length) { const row = [Math.round(now)]; st.flyers.forEach(f => { if (f.kind !== 'water' || !f.grp) return; if (!S112.id.has(f)) S112.id.set(f, S112.n++); f.grp.updateMatrixWorld(); S112.v.setFromMatrixPosition(f.grp.matrixWorld).project(cam); row.push([S112.id.get(f), +((S112.v.x + 1) * 640).toFixed(1), +((1 - S112.v.y) * 360).toFixed(1), +f.grp.scale.x.toFixed(3), f.grp.visible ? 1 : 0, f.real && f.real.lift ? 1 : 0]); }); if (row.length > 1) S112.log.push(row); } } };
+  // THE WATERS' FLIGHT TO WATER (AA.rxKit.w112, ?w112=0 gives feel.js's flight back). Measured first (builder 112, 60 fps take, the probe
+  // above): feel.js (flyReal, its jar branch) moves each water on a straight line in the page's plane with a small rise, inOutSine over
+  // 1500 ms, the three lifting off within 250 ms of each other; it shrinks only to 0.55 and fades over its last 14 %, so for about 400 ms
+  // the three red-and-white waters sit stacked in front of Water's pool, still at half size, and then are gone; no tumble. The motion
+  // itself had no step (speeds rise and fall smoothly, at most 6.2 px a frame at 60 fps). Here, after feel.js has drawn them each frame:
+  // from where each stood when it broke off, a short dip (160 ms) as it gathers, then a raised arc (quadratic, its peak 2.5 + 0.12 of the
+  // way above the line) to Water's chest as it is this frame, eased in and out (smootherstep, 1050 ms), turning gently (two smooth turns,
+  // no noise), the three going 200 ms apart, full size until 0.7 of the way and then sinking into the chest to nothing; Water turns its
+  // face and leans toward them while they fly (kitart.js W112) and takes each with a squash, a blink and a step of bulk.
+  const s112On = () => !!(AA.rxKit && AA.rxKit.w112 !== false && s110On());
+  Object.assign(S112, { base: -1e9, cnt: 0, act: 0, lx: 0, k: 0, last: 0, fl: new Set(), DUR: 1050, GAP: 200, DIP: 160, p0: new T.Vector3(), p1: new T.Vector3() });
+  const s112Fly = now => { const SP = s26Fig(), dt = Math.max(0, Math.min(100, now - (S112.last || now))); S112.last = now; if (!SP) return; let n = 0, sx = 0;
+    /* before it breaks off: its hydrogens grow in over 300 ms from the frame it is first drawn (feel.js may already be past its own grow) */
+    if (s112On()) st.flyers.forEach(f => { const R = f.real; if (!R || !f.to || !f.to.w110 || !R.hs) return; if (f.s112t == null) f.s112t = now; const k = s110Back(Math.min(1, (now - f.s112t) / 300)), kk = Math.min(1, Math.max(0, (now - f.s112t) / 300)); if (kk >= 1) return; R.hs.forEach(h => { h.mesh.scale.multiplyScalar(Math.max(0.0001, k)); h.mesh.position.lerp(h.at, 1 - kk); }); });
+    if (s112On()) st.flyers.forEach(f => { const R = f.real; if (!R || !R.lift || !f.to || !f.to.w110 || !f.grp) return; let F = f.w112;
+      if (!F) { if (!S112.act) { S112.base = R.lift; S112.cnt = 0; } const i = S112.cnt++; F = f.w112 = { i, from: R.last.clone(), sc: R.sc, start: Math.max(R.lift + S112.DIP, S112.base + S112.DIP + i * S112.GAP), r0: f.grp.rotation.y, sd: i % 2 ? 1 : -1 }; S112.fl.add(f); }
+      const tg = SP.bodyW || f.to, P0 = F.from, u = Math.max(0, Math.min(1, (now - F.start) / S112.DUR)), e = u * u * u * (u * (u * 6 - 15) + 10), L = P0.distanceTo(tg), Hh = (2.5 + 0.12 * L) * F.sc / 2.17;
+      S112.p1.copy(P0).add(tg).multiplyScalar(0.5); S112.p1.y += Hh; const a1 = (1 - e) * (1 - e), b1 = 2 * (1 - e) * e, c1 = e * e, pos = f.grp.position;
+      pos.set(a1 * P0.x + b1 * S112.p1.x + c1 * tg.x, a1 * P0.y + b1 * S112.p1.y + c1 * tg.y, a1 * P0.z + b1 * S112.p1.z + c1 * tg.z);
+      /* the dip as it gathers itself, and out of it */ const dIn = s110Sm((now - (F.start - S112.DIP)) / S112.DIP), dOut = s110Sm(u / 0.18), dip = dIn * (1 - dOut); pos.y -= 0.35 * F.sc / 2.17 * dip;
+      const sink = s110Sm((u - 0.7) / 0.3), s = F.sc * (1 - 0.08 * dip) * (1 - sink); f.grp.scale.setScalar(Math.max(0.0001, s)); f.grp.rotation.set(0.3 * F.sd * Math.sin(Math.PI * e), F.r0 + F.sd * 1.3 * e, 0.22 * Math.sin(Math.PI * e)); f.grp.visible = s > 0.01 * F.sc;
+      if (R.mats) R.mats.forEach(m => { m.opacity = 1; }); f.dur = F.start - f.t0 + S112.DUR + 20; if (f.to.copy) f.to.copy(tg); if (u < 1) { n++; sx += pos.x; } });
+    /* arrivals */ S112.fl.forEach(f => { if (st.flyers.indexOf(f) < 0) { S112.fl.delete(f); SP.w112 = SP.w112 || {}; SP.w112.hit = now; } }); S112.act = S112.fl.size;
+    const G = homObj && homObj.grp, want = n ? 1 : 0, lx = n && G ? Math.max(-1, Math.min(1, (sx / n - G.position.x) / 4)) : S112.lx; S112.k += (want - S112.k) * (1 - Math.exp(-dt / (want ? 250 : 450))); S112.lx += (lx - S112.lx) * (1 - Math.exp(-dt / 200));
+    SP.w112 = Object.assign(SP.w112 || {}, { lx: S112.lx, k: st.homAct ? 0 : S112.k }); if (AA.rxKit.p112) { const Lw = S112.swl || (S112.swl = []); if (Lw.length < 400 && (n || S112.fl.size || (SP.w110sw || 0) > 0.001)) Lw.push([Math.round(now), +(SP.w110sw || 0).toFixed(3), S110.fed, +S112.k.toFixed(2), +S112.lx.toFixed(2)]); } };
+  if (FEEL && FEEL.frame) FEEL.frame = (f0 => function (now, dt) { const r = f0.apply(this, arguments); try { s112Fly(now); } catch (x) { S112.err = 'fly ' + String(x && x.stack); } try { if (AA.rxKit.p112) s112Probe(now); } catch (x) { S112.err = 'probe ' + String(x && x.stack); } return r; })(FEEL.frame);
+  /* when the last OH has grown (the kit holds the hand on the chain till then) */
+  A20ACT.water = (f0 => function (j, c) { const act = f0(j, c); try { if (!act || !act.after || !s112On()) return act; const a0 = act.after; act.after = function (pl) { a0.call(this, pl); try { const X = j.w110, w26 = j.bites && j.bites.w26; if (X && X.tR && w26 && w26.w110) { /* four bonds or more: the lumps closer (each still leaves the chest after the one before has reached the hand) so the hand need not hurry off */ const n = X.st.length; if (n >= 4) { const ARM = S110.ARM, lead = 0.3 * ARM, h0 = S110.HIT * j.D + 150 + lead, step = lead + ARM + 10; for (let i = 0; i < n; i++) { X.st[i] = h0 + i * step; X.tR[i] = X.st[i] + ARM + S110.HOP * X.hops[i]; } S112.plan = { st: X.st.map(Math.round), tR: X.tR.map(Math.round) }; }
+          w26.w110.end = X.tR[X.tR.length - 1] + 70 + 170 + 420 + 80; S112.end = Math.round(w26.w110.end); } } catch (x) { S112.err = 'end ' + String(x && x.stack); } }; } catch (x) { S112.err = 'act ' + String(x && x.stack); } return act; })(A20ACT.water);
+  if (AA.rxKit) AA.rxKit.s112dbg = () => ({ err: S112.err, end: S112.end, plan: S112.plan, sw: s26Fig() && s26Fig().w110sw, fed: S110.fed, swl: S112.swl, kit: AA.rxKit.W112 && AA.rxKit.W112.err, kd: AA.rxKit.W112 && AA.rxKit.W112.dbg, log: S112.log });
+  // ==== S112 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
