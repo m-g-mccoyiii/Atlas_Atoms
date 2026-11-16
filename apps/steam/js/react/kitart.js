@@ -8152,6 +8152,32 @@ const W108 = { err: null, rest: null, evo: null, n: 0, HO: 320, HB: 360, dbg: {}
     return r; })(play26);
   KIT.spirit26.play = play26; KIT.W108 = W108; }
 // ==== W108 END
+// ==== W110 BEGIN
+// (builder 110) WATER GIVES THE WATER IT HOLDS (AA.rxKit.w110, on by default; ?w110=0 gives builder 108's act back). The act no longer
+// reaches out for three waters that appear beside the molecule: Water was fed when they were driven off, so it comes already full (its
+// body swollen by the waters it holds, w26.w110.fed), lays its hand on the chain, and for each double bond in turn a bulge of water runs
+// from its body down its arm into the hand (w26.w110.st[i]: when bulge i leaves the shoulder, in ms of the act's time; ARM ms to the hand);
+// its body loses that much bulk as the bulge leaves and settles with a small ring as it arrives. The scheme (scheme.js S110) runs the
+// film from the hand along the chain and grows each OH as the film reaches its bond. At home, S.w110sw (laid by S110 as each driven-off
+// water reaches it) swells the resting body. Water's clips are wrapped from outside; nothing in W26..W108 is edited.
+KIT.w110 = KIT.w110 == null ? !(typeof location !== 'undefined' && /[?&]w110=0/.test(String(location.search))) : KIT.w110;
+const W110 = { err: null, dbg: {}, amp: +((typeof location !== 'undefined' && String(location.search).match(/[?&]w110amp=([\d.]+)/)) || [0, 1.5])[1] };
+{ const K = KIT.RK, X110 = o => { const w = o && o.bites && o.bites.w26; return KIT.w110 !== false && w && w.w110 ? w.w110 : null; };
+  /* the act: full from the start, a little less with each bulge sent, a squeeze as it sends and a ring as it lands */
+  C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); try { const X = X110(o); if (!X || !S || S.jar) return; const a = t - o.W - o.J, D = o.D, n = X.st.length, SW = 0.08 * X.fed;
+      let gone = 0, ring = 0, sq = 0; for (let i = 0; i < n; i++) { const u = (a - X.st[i]) / X.ARM; gone += K.sm(u * 1.15); sq += K.pulse(u, -0.3, 0.3, 0.18); ring += K.ring(a - X.st[i] - X.ARM, 240, 300); }
+      const rest = a < D ? SW * (1 - gone / Math.max(1, n)) : 0, e = a < 0 ? 1 : 1 - K.sm((a - D) / 400); q.swell = rest * e + (a > 0 && a < D ? 0.035 * ring : 0);
+      if (a > 0 && a < D) { q.sq += -0.06 * sq + 0.04 * ring; q.bow += 0.07 * sq; q.blink = Math.max(q.blink, 0.5 * K.pulse(sq, 0.6, 2, 0.2)); } } catch (x) { W110.err = 'act ' + String(x && x.stack); } })(C26.act);
+  /* at home: the waters it was fed swell it */
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { if (KIT.w110 !== false && S && !S.jar && S.w110sw) q.swell += S.w110sw; } catch (x) { W110.err = 'rest ' + String(x && x.stack); } })(C26.rest);
+  /* the bulge: the reaching arm's joints swell where the water is, from the shoulder (0) to the hand (1), and it goes out at the hand */
+  play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o); try { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp, X = clip === 'act' ? X110(o) : null, w = X && o.bites.w26;
+      if (!X || !S || S.jar || !S.rc || !S.q0 || S.q0.rT !== w.H || !(S.q0.rw > 0.05)) return r; const a = t - o.W - o.J, jn = S.rc.jn, nn = jn.length - 1, rw = Math.min(1, S.q0.rw); let mx = 0;
+      for (let i = 0; i < X.st.length; i++) { const u = (a - X.st[i]) / X.ARM; if (u <= -0.15 || u >= 1.4) continue; const s = K.sm(u) * 1.08, A = W110.amp * rw * K.pulse(u, -0.08, 1.12, 0.2); mx = Math.max(mx, A);
+        for (let k = 0; k <= nn; k++) { const d = (k / nn - s) / 0.16, f = 1 + A * Math.exp(-d * d) * (k ? 1 : 0.5); if (f > 1.0005) S.bones[jn[k]].scale.multiplyScalar(f); } }
+      W110.dbg.bulge = +mx.toFixed(3); W110.dbg.mx = Math.max(W110.dbg.mx || 0, W110.dbg.bulge); } catch (x) { W110.err = 'bulge ' + String(x && x.stack); } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W110 = W110; }
+// ==== W110 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
