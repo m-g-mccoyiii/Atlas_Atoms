@@ -8732,7 +8732,7 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
 { const cl = (x, a, b) => (x < a ? a : x > b ? b : x), sm = x => { x = cl(x, 0, 1); return x * x * (3 - 2 * x); }, smm = x => { x = cl(x, 0, 1); return x * x * x * (x * (6 * x - 15) + 10); }, lp = (a, b, u) => a + (b - a) * u;
   const on139 = S => !!(S && S.a48 && !S.jar && KIT.a139 !== false && KIT.g104 !== false && KIT.evo55 !== false);
   /* the beats of each change: go, melt, heave, rise, look, home (the turn from old to new is at the end of the melt) */
-  const BT139 = { 2: [3, 3, 2, 3.5, 1.25, 2], 3: [3, 3, 2, 3.5, 1.25, 2], 4: [3, 3, 2, 3.5, 1.25, 2], 5: [3, 3, 2, 3.5, 1.25, 2] }, AL139 = 0.35, NB139 = 8;
+  const BT139 = { 2: [3, 3, 2, 3.5, 1.25, 2], 3: [3, 3, 2, 3.5, 1.25, 2], 4: [3, 3, 2, 3.5, 1.25, 2], 5: [3, 3, 2, 3.5, 1.25, 2] }, AL139 = 0.55, NB139 = 8;
   /* how each change's body does it (nothing added): bub the bubbles' size, marks the pale ring's marks */
   const VA139 = {
     2: { bub: 0.45, roll: 0, hsH: 0.24, hsM: 0.12, marks: 14 },                         /* 1 to 2: a quiet seep, thin and wide, a low mound, few small bubbles */
@@ -8750,7 +8750,7 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
     '  vec3 q = vec3(n.x * s, hq + n.y * s, n.z * s); float bu = 0.0;',
     '  for (int i = 0; i < 8; i++) { vec4 b = B139[i]; if (b.w <= 0.0) continue; float pb = 1.5 * b.w / C139.w; bu += b.w * exp(-(1.0 - dot(n, b.xyz)) / (0.5 * pb * pb + 1e-4)); }',
     '  vec3 ne = normalize(vec3(q.x / (Rs * Rs), (q.y - hq) / (ht * ht), q.z / (Rs * Rs))); float hh = clamp((q.y - hq) / (0.3 * max(hs - hq, 1e-3)), 0.0, 1.0); return q + ne * bu * hh * hh * (3.0 - 2.0 * hh); }'].join('\n');
-  const MV139 = mg => ['{ float hv139 = clamp(vB30.y, 0.0, 1.0), kb139 = clamp((k139 - ' + AL139.toFixed(3) + ' * mix(hv139, 1.0 - hv139, d139)) / ' + (1 - AL139).toFixed(3) + ', 0.0, 1.0), kv139 = mix(kb139, h139, hd139); vK139 = kv139;',
+  const MV139 = mg => ['{ float hv139 = clamp(vB30.y, 0.0, 1.0), al139 = mix(0.55, 0.3, d139), kb139 = clamp((k139 - al139 * mix(hv139, 1.0 - hv139, d139)) / (1.0 - al139), 0.0, 1.0), kv139 = mix(kb139, h139, smoothstep(0.6, 1.0, hd139)); vK139 = kv139;',
     '  if (kv139 > 0.0005) { vec4 wp139 = modelMatrix * vec4(transformed, 1.0); vec3 hq139 = vec3(0.0, R139.x * U139.w, 0.0), n139 = un139(wp139.xyz - P139); float ln139 = length(n139); n139 = ln139 > 1e-5 ? n139 / ln139 : vec3(0.0, 1.0, 0.0);',
     '    vec3 t1 = normalize(abs(n139.y) < 0.99 ? cross(n139, vec3(0.0, 1.0, 0.0)) : cross(n139, vec3(1.0, 0.0, 0.0))), t2 = cross(n139, t1), p0 = sh139(sf139(n139)), p1 = sh139(sf139(normalize(n139 + 0.03 * t1))), p2 = sh139(sf139(normalize(n139 + 0.03 * t2)));',
     '    vec3 Nw = normalize(cross(p1 - p0, p2 - p0)); if (dot(Nw, p0 - sh139(hq139)) < 0.0) Nw = -Nw; vec3 tw = C139.xyz + p0' + (mg ? '; tw = P139 + (tw - P139) * 0.9' : '') + ';',
@@ -8781,13 +8781,13 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
   /* the numbers of the change at ms (W55's beats as BT139 lays them): K how far the body is on the dome, kh the head, the dome itself */
   function ph139(e, Z, o) { const L = e.L, c = e.c, ms = e.u * L, tM = c[1] * L, tS = c[2] * L, tR = c[3] * L, tE = c[4] * L, Dm = tS - tM, Dh = tR - tS, Dr = tE - tR, q = Z.q || (Z.q = { B: [] });
     const C55 = o.c55 || { R: 3 }, P = e.P, Rm = Math.max(1.2 * Z.rx0, C55.R * P.pit * (o.k55 || 1)); q.ms = ms; q.old = e.old;
-    q.K = ms < tS ? smm((ms - tM) / (0.62 * Dm)) : ms < tR ? 1 : 1 - smm((ms - tR) / Dr);
+    q.K = ms < tS ? smm((ms - tM) / (0.62 * Dm)) : ms < tR ? 1 : 1 - sm((ms - tR) / Dr);
     q.kh = ms < tS ? smm((ms - (tS - 480)) / 400) : 1 - smm((ms - (tS + 0.2 * Dh)) / (0.6 * Dh));
     q.melt = cl((ms - tM) / Dm, 0, 1);
     const spread = sm((ms - tM) / (0.7 * Dm)), gather = sm((ms - (tM + 0.55 * Dm)) / (0.45 * Dm + 0.5 * Dh));
     let Rs = lp(1.1 * Z.rx0, 0.95 * Rm, spread) * (1 - 0.18 * gather), hs = lp(lp(0.55 * Z.H0, (Z.V.hsM || 0.16) * Rs, sm((ms - tM) / (0.6 * Dm))), (Z.V.hsH || 0.38) * Rs, gather);
     const hv = sm((ms - tM - 0.4 * Dm) / 400) * (1 - sm((ms - tR - (Z.V.rollRise ? 0.45 * Dr : 0)) / 400)); hs *= 1 + 0.045 * Math.sin(2 * PI * ms / 1500) * hv;
-    if (ms >= tR && Z.H1) { const g = sm((ms - tR) / (0.85 * Dr)); Rs = lp(Rs, 1.05 * Z.rx1, g); hs = lp(hs, 0.9 * Z.H1, g); }
+    if (ms >= tR && Z.H1) { const g = sm((ms - tR) / (0.85 * Dr)); Rs = lp(Rs, 0.75 * Z.rx1, g); hs = lp(hs, 0.9 * Z.H1, g); }
     q.Rs = Rs; q.hs = hs; q.hqf = 0.35; q.rag = 0.022 * sm((ms - tM) / (0.5 * Dm)) * (1 - sm((ms - tR) / (0.6 * Dr))); q.ragPh = ms / 700; q.roll = (Z.V.roll != null ? Z.V.roll : 0.22) * hv; q.rollPh = 2 * PI * ms / (Z.V.rollT || 2100); q.V = Z.V;
     q.C = Z.C; q.U = Z.U; q.Rref = Z.Rref; q.mw = Z.mw;
     /* bubbles of its own skin: they come up low on the slick, swell as they rise and pop (eased); each its own pace and place */
@@ -8800,11 +8800,11 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
   /* one figure laid on the dome: its bones drawn in, its head carried to the top, the uniforms, its face, drops and strokes */
   const V139 = { a: null };
   function body139(F, q, isNew) { const U = inj139(F), T = F.T; if (!U) return; const B = F.bones, G = F.G, J = G.J, par = B[0].parent, H = head139(F), hj = G.bj[G.R.head], dir = isNew ? 1 : 0, o6 = [0, 0, 0, 0, 0, 0];
-    const v = V139.a || (V139.a = { p: new T.Vector3(), w: new T.Vector3(), m: new T.Matrix4() }), kvOf = hv => cl((q.K - AL139 * (dir ? 1 - hv : hv)) / (1 - AL139), 0, 1);
+    const v = V139.a || (V139.a = { p: new T.Vector3(), w: new T.Vector3(), m: new T.Matrix4() }), al = dir ? 0.3 : AL139, kvOf = hv => cl((q.K - al * (dir ? 1 - hv : hv)) / (1 - al), 0, 1);
     if (q.K > 0.0005 || q.kh > 0.0005) { par.updateWorldMatrix(true, false); v.m.copy(par.matrixWorld).invert(); q.src = null;
       /* the bones of the body drawn into the slick and, as it is wholly slick, together to its middle (the pen's own strokes tied to them,
          its flow lines down the front, shrink to nothing there and go; no tick is left on the slick) */ const hq0 = q.hqf * q.hs, cx = q.C[0] + q.U[0] * hq0, cy = q.C[1] + q.U[1] * hq0, cz = q.C[2] + q.U[2] * hq0;
-      for (let j = 1; j < B.length; j++) { if (H.has(j) || !J[j]) continue; const kv = kvOf(J[j].p[1] / G.H), k = 0.85 * kv; if (k < 1e-4) continue; const p = B[j].position; v.w.copy(p).applyMatrix4(par.matrixWorld); mw139(v.w.x, v.w.y, v.w.z, q, o6); const f = lp(0.8, 0.04, sm((kv - 0.45) / 0.5));
+      for (let j = 1; j < B.length; j++) { if (H.has(j) || !J[j]) continue; const kv = Math.min(1, 1.8 * kvOf(J[j].p[1] / G.H)), k = 0.85 * kv; if (k < 1e-4) continue; const p = B[j].position; v.w.copy(p).applyMatrix4(par.matrixWorld); mw139(v.w.x, v.w.y, v.w.z, q, o6); const f = lp(0.8, 0.04, sm((kv - 0.45) / 0.5));
         v.p.set(cx + (o6[0] - cx) * f, cy + (o6[1] - cy) * f, cz + (o6[2] - cz) * f).applyMatrix4(v.m); p.lerp(v.p, Math.max(k, 0.98 * sm((kv - 0.45) / 0.5))); }
       /* the pool's own ripple strokes (drawn round the root bone) shrink with it */ B[0].scale.multiplyScalar(Math.max(1e-3, 1 - sm(q.K / 0.55)));
 { const js = G.bj[Math.max(1, Math.round(G.R.chest * 0.45))]; v.w.copy(B[js].position).applyMatrix4(par.matrixWorld); q.src = F.src139 = [v.w.x, v.w.y, v.w.z]; }
@@ -8849,7 +8849,7 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
       if (q && (q.K > 0.0005 || q.kh > 0.0005 || e.u < c[4])) body139(S, q, true); else clear139(S); }
     { const g = frame55(S); o.r155 = S.G.pl.rx * 1.32 * g.ws / Math.max(1e-3, (o.c55 ? o.c55.R : 3)); }
     { /* its own eaten plate and wet mark close as it leaves home and open as it comes back: nothing dark under it on the page */ const pf = e.u < c[1] ? 1 - sm(e.go / 0.45) : e.u < c[5] ? 0 : sm((e.home - 0.55) / 0.4), F = e.old ? O.sp : S; F.p139 = pf; if (F.wet) F.wet.scale.multiplyScalar(Math.max(1e-3, pf)); if (pf >= 0.999 && e.home >= 0.96) F.p139 = null; }
-    /* the new form's loose drops stay in it until it is home (they lay as grey dots on the page) */ if (!e.old && e.u >= c[3]) { const f = Math.max(1e-3, e.u < c[5] ? 0 : sm((e.home - 0.4) / 0.5)); (S.drops || []).forEach(dp => { const g = dp.g; g.userData.d139 = 1; if (g.userData.f139) return; if (!dp.air) { if (!g.userData.s139) g.userData.s139 = g.scale.clone(); g.scale.copy(g.userData.s139).multiplyScalar(f); } else g.scale.multiplyScalar(f); }); (S.drips || []).forEach(dp => dp.g.scale.multiplyScalar(f)); S.dr139 = f < 0.999; }
+    /* the new form's loose drops stay in it until it is home (they lay as grey dots on the page) */ if (!e.old && e.u >= c[3]) { const f = Math.max(1e-3, e.u < c[5] ? 0 : sm((e.home - 0.4) / 0.5)); (S.drops || []).forEach(dp => { const g = dp.g; g.userData.d139 = 1; if (!S.q139) g.userData.f139 = 0; if (g.userData.f139) return; if (!dp.air) { if (!g.userData.s139) g.userData.s139 = g.scale.clone(); g.scale.copy(g.userData.s139).multiplyScalar(f); } else g.scale.multiplyScalar(f); }); (S.drips || []).forEach(dp => dp.g.scale.multiplyScalar(f)); S.dr139 = f < 0.999; }
     W139.n++; W139.d = q ? { ms: Math.round(q.ms), old: e.old, K: +q.K.toFixed(3), kh: +q.kh.toFixed(3), Rs: +q.Rs.toFixed(2), hs: +q.hs.toFixed(2), roll: +q.roll.toFixed(2), pops: W139.pops, c: c.map(x => +(x * L).toFixed(0)) } : { u: +e.u.toFixed(2) };
     const u = e.u; let n = -1; if (u >= c[3] + 0.3 * (c[4] - c[3])) n = 0; if (u >= c[4] - 0.1) n = 1; if (u >= c[4]) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
     return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
@@ -8868,7 +8868,7 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
   draw30 = (f0 => function (T, S, ren, cam) { const c0 = W139.cur; W139.cur = S; W139.cam = cam; try { f0.apply(this, arguments); } finally { W139.cur = c0; } try { if (S && S.q139 && S.pen30 && S.root.visible) rim139(T, S, ren, cam); } catch (x) { W139.err = 'rim ' + String(x && x.stack); } })(draw30);
   /* THE SLICK'S OWN LINE: one firm closed stroke round the dome as the eye sees it (the farthest of its points in each direction from its middle,
      smoothed), and a thin ring round each bubble, a ring that widens and goes as it pops; all of the dome's numbers, so the line is steady */
-  function rim139(T, S, ren, cam) { const q = S.q139, R = S.pen30, K = q.K; if (!q || !R || !(R.lw > 1.2)) return; const wR = S.d139 ? sm((K - 0.68) / 0.27) * (1 - sm((q.ms - q.tR) / (0.3 * q.Dr))) : sm((K - 0.62) / 0.3);
+  function rim139(T, S, ren, cam) { const q = S.q139, R = S.pen30, K = q.K; if (!q || !R || !(R.lw > 1.2)) return; const wR = S.d139 ? sm((K - 0.72) / 0.25) : sm((K - 0.3) / 0.35);
     const X = S.r139x || (S.r139x = { v: new T.Vector3(), pts: Array.from({ length: 80 }, () => new T.Vector3()), o: [0, 0, 0, 0, 0, 0], NB: 56, r: new Float32Array(56), w: Array.from({ length: 56 }, () => new T.Vector3()) }), sz = ren.getDrawingBufferSize(W30.v2 || (W30.v2 = new T.Vector2())), Wd = sz.x, Ht = sz.y, sc = Ht / 720, pe = cam.projectionMatrix.elements, P10 = pe[10], P11 = pe[11];
     const lw = R.lw, fs = lw / (W30.lw * sc), s2 = sc * Math.min(1.6, Math.max(0.5, fs)), d = 0.02 * q.Rs, o = X.o, v = X.v, U = q.U, C = q.C, hq = q.hqf * q.hs, at = (nx, ny, nz) => { sf139(nx, ny, nz, q, o); return [C[0] + o[0] + U[0] * o[1], C[1] + U[1] * o[1], C[2] + o[2] + U[2] * o[1]]; };
     if (wR > 0.01) { const NB = X.NB, rr = X.r; rr.fill(-1); v.set(C[0] + U[0] * hq, C[1] + U[1] * hq, C[2] + U[2] * hq).project(cam); const mx = v.x, my = v.y * Ht / Wd;
@@ -8890,8 +8890,8 @@ const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
     const cam = W139.cam ? X.cp.setFromMatrixPosition(W139.cam.matrixWorld) : X.cp.set(0, 40, 20), K = U.k139.value, kh = U.h139.value, dir = S.d139 || 0, iH = 1 / S.G.H, o6 = [0, 0, 0, 0, 0, 0];
     for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2]; let lx = 0, ly = 0, lz = 0, ws = 0;
       for (let k = 0; k < 4; k++) { const w = SW[4 * i + k]; if (!w) continue; const o = SI[4 * i + k] * 16; ws += w; lx += w * (bm[o] * x + bm[o + 4] * y + bm[o + 8] * z + bm[o + 12]); ly += w * (bm[o + 1] * x + bm[o + 5] * y + bm[o + 9] * z + bm[o + 13]); lz += w * (bm[o + 2] * x + bm[o + 6] * y + bm[o + 10] * z + bm[o + 14]); }
-      if (ws > 1e-6 && Math.abs(ws - 1) > 1e-4) { lx /= ws; ly /= ws; lz /= ws; } const hv = cl(y * iH, 0, 1), kb = cl((K - AL139 * (dir ? 1 - hv : hv)) / (1 - AL139), 0, 1), kv = lp(kb, kh, HD[i]); let hide = false;
-      if (kv > 0.0005) { mw139(lx, ly, lz, q, o6, S.src139); lx += (o6[0] - lx) * kv; ly += (o6[1] - ly) * kv; lz += (o6[2] - lz) * kv; const vx = cam.x - o6[0], vy = cam.y - o6[1], vz = cam.z - o6[2], vl = Math.hypot(vx, vy, vz) || 1; if (kv > (dir ? 0.5 : 0.72)) hide = true; } if (HD[i] > 0.5 && kh > 0.5) hide = true;
+      if (ws > 1e-6 && Math.abs(ws - 1) > 1e-4) { lx /= ws; ly /= ws; lz /= ws; } const hv = cl(y * iH, 0, 1), al = dir ? 0.3 : AL139, kb = cl((K - al * (dir ? 1 - hv : hv)) / (1 - al), 0, 1), kv = lp(kb, kh, sm((HD[i] - 0.6) / 0.4)); let hide = false;
+      if (kv > 0.0005) { mw139(lx, ly, lz, q, o6, S.src139); lx += (o6[0] - lx) * kv; ly += (o6[1] - ly) * kv; lz += (o6[2] - lz) * kv; const vx = cam.x - o6[0], vy = cam.y - o6[1], vz = cam.z - o6[2], vl = Math.hypot(vx, vy, vz) || 1; if (kv > (dir ? 0.62 : 0.4)) hide = true; } if (HD[i] > 0.5 && kh > 0.5) hide = true;
       const cx = M[0] * lx + M[4] * ly + M[8] * lz + M[12], cy = M[1] * lx + M[5] * ly + M[9] * lz + M[13], cz = M[2] * lx + M[6] * ly + M[10] * lz + M[14], cw = M[3] * lx + M[7] * ly + M[11] * lz + M[15];
       const iw = cw > 1e-5 ? 1 / cw : 0, w2 = cw + P11 * d; C[4 * i] = (cx * iw * 0.5 + 0.5) * Wd; C[4 * i + 1] = (cy * iw * 0.5 + 0.5) * Ht; C[4 * i + 2] = w2 > 1e-5 ? (cz + P10 * d) / w2 : 2; C[4 * i + 3] = hide ? 0 : cw; } })(proj30);
   KIT.W139 = W139; KIT.e139dbg = () => ({ err: W139.err, d: W139.d, n: W139.n, pops: W139.pops, srcs: W139.srcs, pr: W139.pr }); }
