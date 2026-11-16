@@ -414,10 +414,10 @@ const REF_HEADPIC = { reagent: [{ case: { from: { a: C5, b: '=--=' }, to: { a: C
   across: [{ pills: [['round', '4+']] }, { pills: [['each', '1']], tag: 'a page' }],
   instrument: [{ pills: [['instruments', '2']], tag: 'a round' }] };
 // Motifs, all twelve: [name, verb and act, the least count that pays]. The number is written by thingOf from MOTIFS[id].rate as the player reads it.
-const REF_MOTIF = { sugar: ['Sugar', 'Sugar stacks. Keep a carbon with an OH.', 1], resonance: ['Resonance', 'Resonance ripples. Keep two double bonds one single bond apart.', 2], arene: ['Benzene ring', 'Benzene ring steadies. Keep a benzene ring.', 1],
-  ring: ['Ring', 'Ring holds. Keep a ring outside benzene and cages.', 1], fusion: ['Shared side', 'Shared side braces. Keep two rings sharing a side.', 1], cage: ['Cage', 'Cage encloses. Keep rings tied into a cage.', 1],
-  spiro: ['Spiro centre', 'Spiro centre pivots. Keep two rings meeting at one atom.', 1], acid: ['Acid group', 'Acid group anchors. Keep a COOH.', 1], amine: ['Amine', 'Amine hooks. Keep an amine nitrogen.', 1],
-  sulfur: ['Sulfur bridge', 'Sulfur bridge joins. Keep a sulfur between two atoms.', 1], branch: ['Branch point', 'Branch point forks. Keep a carbon holding three carbons.', 1], chain: ['Long chain', 'Long chain trails. Keep three plain carbons in a row.', 1] };
+const REF_MOTIF = { sugar: ['Sugar', 'Keep a carbon with an OH.', 1], resonance: ['Resonance', 'Keep two double bonds one single bond apart.', 2], arene: ['Benzene ring', 'Keep a benzene ring.', 1],
+  ring: ['Ring', 'Keep a ring outside benzene and cages.', 1], fusion: ['Shared side', 'Keep two rings sharing a side.', 1], cage: ['Cage', 'Keep rings tied into a cage.', 1],
+  spiro: ['Spiro centre', 'Keep two rings meeting at one atom.', 1], acid: ['Acid group', 'Keep a COOH.', 1], amine: ['Amine', 'Keep an amine nitrogen.', 1],
+  sulfur: ['Sulfur bridge', 'Keep a sulfur between two atoms.', 1], branch: ['Branch point', 'Keep a carbon holding three carbons.', 1], chain: ['Long chain', 'Keep three plain carbons in a row.', 1] };
 // the crystal, burner, burette, magnet and mirror lines carry the words scheme.js MANP draws their pictures by
 const REF_GEAR = { crystal: 'Pick a carbon: one hydrogen there becomes an OH.', bunsen: 'Every OH that can lose water does.', burette: 'Every C=C becomes a C=O at its CH.',
   magnet: 'Every four or more plain CH2 in a row shut to two.', mirror: 'Pick a bond: one side goes, the other is copied across it.', carousel: 'One more reagent is dealt on a round\'s first page.', dropper: 'Two more uses of every reagent.',
@@ -464,8 +464,8 @@ const capName = t => String(t || '').replace(/^./, c => c.toUpperCase());
 const refNums = t => { const o = []; String(t || '').replace(/\bx(\d+(?:\.\d+)?)/g, (m, v) => { o.push({ v: +v, sign: +v >= 1 ? '+' : '-' }); return m; }); return o; };
 const homK = k => (HOMS2K.asRead ? k : Math.round(Math.pow(k, FLAT.pow) * 100) / 100);
 const homX = k => homK(k).toFixed(2);      // as the book writes it: always two decimals      // a creature's k multiplies extra; the player reads its square root (FLAT)
-const REF_TERM = { glass: ['Glass', 'Glass shatters. A round ends at the first reagent that does not carry on. x1.73.', 'Beat a round in which six reagents in a row each carry on.'], occult: ['Occult', 'Occult conjures. The run starts with one random instrument. Every number to beat x1.22.', 'Clear 5 rounds in one run.'],
-  lean: ['Lean', 'Lean pares. Three of the starting reagents, one more use of each.', 'Beat a round firing two kinds of reagent or fewer.'], long: ['Long', 'Long stretches. Four reagents a page, two pages a round.', 'Have ten reagents in a row each carry on, in one round.'], hoard: ['Hoard', 'Hoard stockpiles. The run starts with three random instruments and is offered no more.', 'Hold five instruments in one run.'] };
+const REF_TERM = { glass: ['Glass', 'A round ends at the first reagent that does not carry on. x1.73.', 'Beat a round in which six reagents in a row each carry on.'], occult: ['Occult', 'The run starts with one random instrument. Every number to beat x1.22.', 'Clear 5 rounds in one run.'],
+  lean: ['Lean', 'Three of the starting reagents, one more use of each.', 'Beat a round firing two kinds of reagent or fewer.'], long: ['Long', 'Four reagents a page, two pages a round.', 'Have ten reagents in a row each carry on, in one round.'], hoard: ['Hoard', 'The run starts with three random instruments and is offered no more.', 'Hold five instruments in one run.'] };
 const REF_LENGTH = { master: ['Master\'s runs six rounds with instruments. Each needs its task and a pass mark.', 'Win a three-round run.'], doctorate: ['Doctorate runs nine rounds. Instruments and one homunculus allowed.', 'Win a six-round run.'] };
 // thingOf(category, id): the name and the one line of what it does, from the rules' own tables
 function thingOf(cat, id, f) {
@@ -918,14 +918,14 @@ const bareRun = run => !!RULE.bare || !!(run && run.bare);
 // the address ?sigil=id,id holds them for testing. does: what it does, one plain line. how: how it is unlocked for the career (counter and n are
 // the lifetime count of countersUpdate that earns it). where: 'engine' (rules.js reads MODE.sig) or 'round' (read here by sigOn).
 const SIGILS = {
-  phlogiston: { name: 'Phlogiston', where: 'engine', does: 'Phlogiston draws hydrogen. Oxidize also takes two hydrogens beside every C=O and leaves a C=C.', how: 'Oxidize acts 150 times.', counter: 'oxidize_acted', n: 150 },
-  clepsydra: { name: 'Clepsydra', where: 'round', does: 'Clepsydra slows the clock. Four pages a round.', how: 'Play 100 rounds.', counter: 'rounds', n: 100 },
-  via_humida: { name: 'Via Humida', where: 'engine', does: 'Via Humida opens the wet way. Rings close through O, N or S as through carbon.', how: 'Fire hydrate 60 times.', counter: 'hydrate_fired', n: 60 },
-  solve: { name: 'Solve', where: 'engine', does: 'Solve loosens. Dry, weld and ring have no limit. Once each across the fold.', how: 'Set off 600 reflex steps.', counter: 'reflex_steps', n: 600 },
-  aqua_permanens: { name: 'Aqua Permanens', where: 'engine', does: 'Aqua Permanens stills. No water leaves.', how: 'Drive off 5 or more waters on a page, 30 times.', counter: 'water5_pages', n: 30 },
-  tetractys: { name: 'Tetractys', where: 'round', does: 'Tetractys makes four. Four reagents a page. The fourth: x3.', doesPlain: 'Every page takes four reagents, not three. The last reagent of a page pays double, and that is now the fourth.', how: 'Line up one reagent in all three circles, 5 times.', counter: 'one_reagent_lines', n: 5 },
-  respiratio: { name: 'Respiratio', where: 'round', does: 'Respiratio breathes. The limits on dry, weld and ring start again after every reagent.', how: 'Set off dry 100 times.', counter: 'dry_steps', n: 100 },
-  gemini: { name: 'Gemini', where: 'round', does: 'Gemini doubles. Anything done to a C=C or C=O counts again. x2.', how: 'Fire dehydrate 50 times.', counter: 'dehydrate_fired', n: 50 },
+  phlogiston: { name: 'Phlogiston', where: 'engine', does: 'Oxidize also takes two hydrogens beside every C=O and leaves a C=C.', how: 'Oxidize acts 150 times.', counter: 'oxidize_acted', n: 150 },
+  clepsydra: { name: 'Clepsydra', where: 'round', does: 'Four pages a round.', how: 'Play 100 rounds.', counter: 'rounds', n: 100 },
+  via_humida: { name: 'Via Humida', where: 'engine', does: 'Rings close through O, N or S as through carbon.', how: 'Fire hydrate 60 times.', counter: 'hydrate_fired', n: 60 },
+  solve: { name: 'Solve', where: 'engine', does: 'Dry, weld and ring have no limit. Once each across the fold.', how: 'Set off 600 reflex steps.', counter: 'reflex_steps', n: 600 },
+  aqua_permanens: { name: 'Aqua Permanens', where: 'engine', does: 'No water leaves.', how: 'Drive off 5 or more waters on a page, 30 times.', counter: 'water5_pages', n: 30 },
+  tetractys: { name: 'Tetractys', where: 'round', does: 'Four reagents a page. The fourth: x3.', doesPlain: 'Every page takes four reagents, not three. The last reagent of a page pays double, and that is now the fourth.', how: 'Line up one reagent in all three circles, 5 times.', counter: 'one_reagent_lines', n: 5 },
+  respiratio: { name: 'Respiratio', where: 'round', does: 'The limits on dry, weld and ring start again after every reagent.', how: 'Set off dry 100 times.', counter: 'dry_steps', n: 100 },
+  gemini: { name: 'Gemini', where: 'round', does: 'Anything done to a C=C or C=O counts again. x2.', how: 'Fire dehydrate 50 times.', counter: 'dehydrate_fired', n: 50 },
   sulphurs_mask: { name: "Sulphur's Mask", where: 'engine', does: 'Sulphur\'s Mask disguises. Oxygen closes rings as sulfur does. The first two: x2.', doesPlain: 'Oxygen behaves as sulfur: an OH closes its ring before anything else happens and as often as it can on a page, and two OH that face each other across the fold join, oxygen to oxygen.', how: 'Put on 25 SH.', counter: 'sh_made', n: 25 }
 };
 RULE.sigil = {};
