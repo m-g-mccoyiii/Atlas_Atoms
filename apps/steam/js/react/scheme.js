@@ -7387,6 +7387,25 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   a20Spent = (f0 => function (now) { const r = f0(now); try { s110Frame(now); } catch (x) { S110.err = 'frame ' + String(x && x.stack); } return r; })(a20Spent);
   if (AA.rxKit) AA.rxKit.s110dbg = () => ({ err: S110.err, kit: AA.rxKit.W110 && AA.rxKit.W110.err, kdbg: AA.rxKit.W110 && AA.rxKit.W110.dbg, fed: S110.fed, d: S110.dbg, live: !!S110.R });
   // ==== S110 END
+  // ==== S111 BEGIN
+  // (builder 111) ONE LUMP DOWN THE ARM FOR EACH OH (AA.rxKit.w111, ?w111=0 gives S110's timing back; the lump itself is kitart.js W111).
+  // The lumps go one after another, never two on the arm at once: the hand is on the chain sooner (0.20 of the act; the rebuild under it
+  // at 0.22), each lump takes ARM 600 ms from the shoulder to the hand (it leaves the chest 0.3 of that before), the next leaves only after
+  // the last has gone into the hand (a step of at least 1.3 ARM + 60 ms), the film runs on 70 ms an atom. If the hand's own atom is the
+  // one its bond's O grows on (the O would grow under the hand), the hand moves to the other atom of that bond as the molecule settles.
+  const S111 = { err: null, dbg: {} }, s111On = () => !!(AA.rxKit && AA.rxKit.w111 !== false && s110On());
+  const S110K = { HIT: S110.HIT, HAND: S110.HAND, ARM: S110.ARM, HOP: S110.HOP };
+  A20ACT.water = (f0 => function (j, c) { const ON = s111On(); Object.assign(S110, ON ? { HIT: 0.22, HAND: 0.2, ARM: 600, HOP: 70 } : S110K); const act = f0(j, c);
+    try { if (!ON || !act || !act.after || !j.w110) return act; const a0 = act.after; act.after = function (pl) { a0.call(this, pl); try { const X = j.w110, w26 = j.bites && j.bites.w26; if (!X || !X.st || !w26 || !w26.w110) return;
+          const n = X.st.length, D = j.D, ARM = S110.ARM, lead = 0.3 * ARM, h0 = S110.HIT * D + 300 + lead, mh = Math.max.apply(null, X.hops), last = 0.86 * D - 520 - S110.HOP * mh - ARM, step = n > 1 ? Math.max(1.3 * ARM + 60, Math.min(1300, (last - h0) / (n - 1))) : 0;
+          for (let i = 0; i < n; i++) { X.st[i] = h0 + i * step; X.tR[i] = X.st[i] + ARM + S110.HOP * X.hops[i]; } S111.dbg.plan = { st: X.st.map(Math.round), tR: X.tR.map(Math.round), step: Math.round(step) }; } catch (x) { S111.err = 'plan ' + String(x && x.stack); } }; } catch (x) { S111.err = 'act ' + String(x && x.stack); } return act; })(A20ACT.water);
+  /* the hand off the atom its bond's O grows on */
+  reopenShow = (f0 => function () { const r = f0.apply(this, arguments); try { const R = S110.R; if (s111On() && R && R.built && !R.s111 && R.m === center && R.mp) { R.s111 = 1; const X = R.X, hn = R.mp.get(X.ha); let pi = -1;
+        R.grp.forEach(q => { if (!q.o && q.an === hn) pi = q.i; }); if (pi >= 0) { const p = X.pairs[pi], other = p[0] === X.ha ? p[1] : p[0]; let ok = true; R.grp.forEach(q => { if (!q.o && q.an === R.mp.get(other)) ok = false; });
+          /* only to an atom no farther from where it stands (its arm reaches no farther) */ const bo = other && center.balls.get(R.mp.get(other)), bh = center.balls.get(hn), J = R.j.perch; if (ok && bo && bh && J) { bo.mesh.getWorldPosition(S110.v); const d1 = Math.hypot(S110.v.x - J.x, S110.v.z - J.z); bh.mesh.getWorldPosition(S110.v); const d0 = Math.hypot(S110.v.x - J.x, S110.v.z - J.z); S111.dbg.dd = [+d0.toFixed(2), +d1.toFixed(2)]; if (d1 > d0 + 0.3) ok = false; }
+          if (ok && other) { X.ha = other; const N = s110Nb(center), ha = R.mp.get(other); R.way = R.P.map(pp => s110Way(N, ha, pp.filter(Boolean)) || pp.filter(Boolean)); S111.dbg.moved = true; } } } } catch (x) { S111.err = 'hand ' + String(x && x.stack); } return r; })(reopenShow);
+  if (AA.rxKit) AA.rxKit.s111dbg = () => ({ err: S111.err, kit: AA.rxKit.W111 && AA.rxKit.W111.err, kdbg: AA.rxKit.W111 && AA.rxKit.W111.dbg, d: S111.dbg });
+  // ==== S111 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

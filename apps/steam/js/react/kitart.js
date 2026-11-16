@@ -8178,6 +8178,38 @@ const W110 = { err: null, dbg: {}, amp: +((typeof location !== 'undefined' && St
       W110.dbg.bulge = +mx.toFixed(3); W110.dbg.mx = Math.max(W110.dbg.mx || 0, W110.dbg.bulge); } catch (x) { W110.err = 'bulge ' + String(x && x.stack); } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W110 = W110; }
 // ==== W110 END
+// ==== W111 BEGIN
+// (builder 111) ONE LUMP OF WATER DOWN THE ARM FOR EACH OH (AA.rxKit.w111, on by default; ?w111=0 gives W110's swelling arm back).
+// The owner on W110: "a bulge should move down the length of the arm for each oh being added". For bond i (w26.w110.st[i], ARM ms) a
+// lump of Water's own substance (its non-skinned body material of the look in use, S.m29[S.st29].drop, its ink hull on every side, its
+// paper-white glint) rides the reaching arm's centre line: it swells out of the chest, runs the whole arm from the shoulder to the hand
+// on an eased clock (arc length of the arm's joints as they are this frame), keeping its size (about twice the arm's width), and goes
+// into the hand as it arrives; the scheme grows that bond's OH only after. W110's joint swelling is off while this is on. The body's
+// step of bulk per water is made larger (x1.7), at home too. Nothing in W26..W110 is edited.
+KIT.w111 = KIT.w111 == null ? !(typeof location !== 'undefined' && /[?&]w111=0/.test(String(location.search))) : KIT.w111;
+const W111 = { err: null, dbg: {}, amp0: W110.amp, R: +((typeof location !== 'undefined' && String(location.search).match(/[?&]w111r=([\d.]+)/)) || [0, 4])[1], SW: 1.7 };
+{ const K = KIT.RK, on = () => KIT.w111 !== false && KIT.w110 !== false, UP = { x: 0, y: 1, z: 0 };
+  const make = S => { if (S.w111) return S.w111; const T = S.T, geo = new T.SphereGeometry(1, 22, 16), lin = h => new T.Color(h).convertSRGBToLinear(), L = [];
+    for (let i = 0; i < 2; i++) { const g = new T.Group(), a = new T.Mesh(geo, new T.MeshStandardMaterial({ color: lin(C27.lite), roughness: 0.2, metalness: 0.05 })), b = new T.Mesh(geo, new T.MeshBasicMaterial({ color: lin(C27.ink), side: T.BackSide })), c = new T.Mesh(geo, new T.MeshBasicMaterial({ color: lin(C27.hi) }));
+      [a, b, c].forEach(m => { m.castShadow = false; m.userData.plain = true; m.frustumCulled = false; }); c.scale.set(0.26, 0.2, 0.12); c.position.set(-0.32, 0.3, 0.62); g.add(b); g.add(a); g.add(c); g.visible = false; S.root.add(g); L.push({ g, a, b, c }); }
+    S.w111 = { L, q: new T.Quaternion(), v: new T.Vector3(), u: new T.Vector3(), up: new T.Vector3(0, 1, 0) }; return S.w111; };
+  const looks = (S, Lp) => { const M = S.m29 && S.st29 ? S.m29[S.st29] : null; if (!M) return; if (M.drop && M.drop.visible !== false && Lp.a.material !== M.drop) Lp.a.material = M.drop; if (M.ink && M.ink.visible !== false && Lp.b.material !== M.ink) Lp.b.material = M.ink; if (M.glint && M.glint.visible !== false && Lp.c.material !== M.glint) Lp.c.material = M.glint; };
+  /* a larger step of bulk per water, in the act and at home */
+  C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); try { const w = o && o.bites && o.bites.w26; if (on() && w && w.w110 && S && !S.jar) q.swell *= W111.SW; } catch (x) { W111.err = 'act ' + String(x && x.stack); } })(C26.act);
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { if (on() && S && !S.jar && S.w110sw) q.swell += (W111.SW - 1) * S.w110sw; } catch (x) { W111.err = 'rest ' + String(x && x.stack); } })(C26.rest);
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp, ON = on(); W110.amp = ON ? 0 : W111.amp0; /* the hand stays on its atom when the rebuilt molecule settles farther off: the reach may stretch a third more */ const RR = ON && clip === 'act' && S && S.G && S.G.reach && o && o.bites && o.bites.w26 && o.bites.w26.w110 ? S.G.reach : null; if (RR) RR.forEach(q => { if (q.len0 == null) q.len0 = q.len; q.len = q.len0 * 1.35; });
+    let r; try { r = f0(grp, clip, t, o); } finally { if (RR) RR.forEach(q => { q.len = q.len0; }); }
+    try { if (!S || S.jar || !S.root || !S.T) return r; const w = o && o.bites && o.bites.w26, X = clip === 'act' && w && w.w110 ? w.w110 : null; if (S.w111) S.w111.L.forEach(l => { l.g.visible = false; });
+      if (!ON || !X || !S.rc || !S.q0 || S.q0.rT !== w.H) return r; const Z = make(S), G = S.G, P = S.P, jn = S.rc.jn, ch = G.bj && G.R ? P[G.bj[G.R.chest]] : null, rw = K.sm(S.q0.rw / 0.6);
+      const pts = (ch ? [ch] : []).concat(jn.map(j => P[j])), cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1])); const Lt = cum[cum.length - 1]; if (Lt < 1e-4) return r;
+      const a = t - o.W - o.J, R = W111.R * G.cell, ink = (G.ink || 0.04) * 0.8; let li = 0, mx = 0;
+      for (let i = 0; i < X.st.length && li < Z.L.length; i++) { const u = (a - X.st[i]) / X.ARM; if (u <= -0.3 || u >= 1.3) continue; const Lp = Z.L[li++]; looks(S, Lp);
+        /* out of the chest (u -0.3), the whole arm on one eased clock, at the hand at u 1, into it after */ const e = K.sm((u + 0.3) / 1.3), k = K.sm((u + 0.3) / 0.28) * (1 - K.sm((u - 1.02) / 0.26)) * rw; if (k < 0.01) continue;
+        const d = e * Lt; let si = 1; while (si < cum.length - 1 && cum[si] < d) si++; const f = (d - cum[si - 1]) / Math.max(1e-6, cum[si] - cum[si - 1]), A = pts[si - 1], B = pts[si];
+        Lp.g.position.copy(A).lerp(B, f); Z.u.copy(B).sub(A).normalize(); Z.q.setFromUnitVectors(Z.up, Z.u); Lp.g.quaternion.copy(Z.q); const rr = R * k; Lp.g.scale.set(rr, rr * 1.45, rr); Lp.b.scale.setScalar(1 + ink / Math.max(1e-4, rr)); Lp.g.visible = true; mx = Math.max(mx, k); }
+      W111.dbg.k = +mx.toFixed(2); if (mx > 0) W111.dbg.n = (W111.dbg.n || 0) + 1; W111.dbg.R = +R.toFixed(3); } catch (x) { W111.err = 'lump ' + String(x && x.stack); } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W111 = W111; }
+// ==== W111 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
