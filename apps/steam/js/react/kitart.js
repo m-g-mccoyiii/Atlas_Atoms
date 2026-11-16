@@ -8695,6 +8695,25 @@ const W129 = { err: null, dbg: {} };
   /* (builder 135) the act's swollen head drawn the same flat way (no morph: k129 stays 0) */ KIT.flat129 = (S, k) => { if (!(k > 0.0005) && !(S && S.u129)) return; const U = inj129(S); if (!U) return; if (U.k129.value < 0.0005) U.p129.value = 0.28 * Math.max(0, Math.min(1, k)); };
   KIT.spirit26.play = play26; KIT.W129 = W129; }
 // ==== W129 END
+// ==== W137 BEGIN
+// (builder 137) WATER'S CHANGE OF STAGE: NOTHING OF THE NEW FORM BEFORE THE BALL (AA.rxKit.w137, on by default; ?w137=0 gives today's).
+// The owner: "You can see the next stage for water before the bubble forms". The figure shown until the ball closes is the old stage's
+// own copy (W31's E.gg: its stage, its face, no blend toward the new one; checked frame by frame). What read as the new form was W31's
+// "start" beat at the head of the gathering (evo31, a in -0.1..0.2): from the first frame of t >= 0 it stretched the old body 20% taller
+// (sq +0.2 and a jolt), raised its hair 0.6 (on stage 2 the head's tip stands up into the pointed head of stage 3), threw both arms up
+// (armR 0.75, armL 0.6: arms wide) and spread the pool 12%, all in one frame (the pulse is already full at a = 0). Here those body terms
+// are taken back out and the start is a wind-up as the old form: a crouch (squash) and a small gather forward, eased in over 180 ms.
+// The face's start (eyes wide, brows, mouth) is the old form's own face and is kept. Nothing after the gathering is touched.
+KIT.w137 = KIT.w137 == null ? !(typeof location !== 'undefined' && /[?&]w137=0/.test(String(location.search))) : KIT.w137;
+const W137 = { err: null, n: 0 };
+evo31 = (f0 => function (S, t, o, q) { const r = f0(S, t, o, q); try {
+    if (KIT.w137 === false || !S || S.jar || !(t >= 0) || !q || !q.e31) return r; if (S.w137 == null) S.w137 = !Object.keys(S).some(k => /^way\d+$/.test(k)); if (!S.w137) return r;
+    const K = RK, X = tl31(o), u = t / o.L; if (!(u < X.TG)) return r; const a = u / X.TG, st = K.pulse(a, -0.1, 0.2, 0.07); if (st < 1e-4) return r;
+    const jolt = a > 0.02 ? K.ring((a - 0.02) * X.TG * o.L, 160, 150) : 0, w = K.sm(t / 180), cr = st * w;
+    q.sq += -(0.2 * st + 0.06 * jolt * st) - 0.1 * cr; q.armR -= 0.75 * st; q.armL -= 0.6 * st; q.hair -= 0.6 * st; q.bow += 0.12 * st + 0.12 * cr; q.px -= 0.12 * st - 0.05 * cr; q.pz = q.px; W137.n++;
+  } catch (x) { W137.err = String(x && x.stack); } return r; })(evo31);
+KIT.W137 = W137;
+// ==== W137 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
