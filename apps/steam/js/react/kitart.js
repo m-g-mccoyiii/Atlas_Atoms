@@ -8216,6 +8216,44 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W88 = W88;
 // ==== W88 END
+// ==== W118 BEGIN
+// (builder 118) BRIMSTONE'S ACT, THE CHECKER'S FAULTS (switch KIT.b118, ?b118=0 gives builder 109's act back). Scheme side in S118. Here:
+//  - the ember (stage 1) has no arm: its wisp is its arm, so the act's shape code (W99.shape, aim100) has a hand to reach with; the wisp's
+//    end swells into a small fist of smoke as it grips;
+//  - the smoulder (stage 2) gets an arm and hand of its own smoke, hanging small at its right side at rest (an arm tucked inside the body has
+//    no skin of its own and showed nothing): the grip lets the arm out to the atom, so it is a hand on the sulfur, not a billow;
+//  - the hand closes on the NEAR side of the sulfur (beside it, toward the figure, at its middle), never over its face, and the arm is let
+//    out as far as the stand asks (a stand further off reaches with a longer arm);
+//  - the shape the scheme places (W99.shape) has the smoke between the joints as well (a ball half way along every bone), so the smoke body
+//    is in it, not only its joints.
+const W118 = { err: null, n: 0, tuck: 0.5 };
+KIT.b118 = KIT.b118 == null ? !(typeof location !== 'undefined' && /[?&]b118=0/.test(String(location.search))) : KIT.b118;
+/* the smoulder's arm: shoulder, elbow, wrist hanging at its right side; three short fingers */
+if (KIT.b118 && SPEC69 && SPEC69[1]) SPEC69[1] = (f0 => function () { const o = f0(); try { const K = o.keys; o.limbs = (o.limbs || []).concat(hand69(K, 8.7, 0, [[0.5, 1.42, 0.14], [0.78, 1.22, 0.18], [0.92, 0.98, 0.2]], [0.2, 0.15, 0.12], [[0.04, -0.16, 0.05], [0.12, -0.1, 0.05], [0.15, 0.0, 0.045]])); } catch (x) { W118.err = 'spec ' + String(x && x.stack); } return o; })(SPEC69[1]);
+/* the ember's wisp is its arm */
+fig77 = (f0 => function (S) { const had = !!(S && S.f77), F = f0(S); if (had || !KIT.b118 || !F || F.long || !F.wisp || F.wisp.length < 3) return F;
+  try { const J = S.G.J, V3 = S.T.Vector3, jn = F.wisp.slice(), n = jn.length, L = [0]; for (let i = 1; i < n; i++) L.push(L[i - 1] + new V3().fromArray(J[jn[i]].p).distanceTo(new V3().fromArray(J[jn[i - 1]].p)));
+    const e = J[jn[n - 1]].p, a = { jn, fing: [], a: null, len: L[n - 1] || 1, f: L.map(l => l / (L[n - 1] || 1)), side: Math.sign(e[0] - F.P0.x) || 1, fg: [], w118: 1 }; F.arms = [a]; F.long = a; W118.wisp = n; } catch (x) { W118.err = 'wisp ' + String(x && x.stack); } return F; })(fig77);
+/* the hand beside the atom, the arm let out as the stand asks; the ember's wisp end swells into a fist */
+aim100 = (f0 => function (S, Bq, q, Z) { const w9 = q && q.w99; if (!KIT.b118 || !w9 || !w9.g || !Bq || !Bq.b118) return f0(S, Bq, q, Z);
+  const O = o100(), st1 = O.st1, g = w9.g, R = g.R || 0.5, sx = w9.sx || 1, hr = (W99.hand && W99.hand.on && W99.hand.r) || 0.4 * R, gp = w9.grip || 0, ns = g.ns == null ? 1 : g.ns;
+  /* beside the atom on the figure's side, at its middle (aim100 lifts its target by 0.7 - 0.3 grip of R, so the target is set that much lower) */
+  /* the near side: from the atom toward the arm's root, across the eye's line (an atom above the figure is held from below, one beside it from that side) */ let nx = -sx, ny = 0, nz = 0; try { const F = fig77(S), a = F.long, T = S.T, V = W118.v || (W118.v = [new T.Vector3(), new T.Vector3()]); if (a && Bq.cam) { S.bones[a.jn[0]].getWorldPosition(V[0]); V[0].x -= g.x; V[0].y -= g.y; V[0].z -= g.z; V[1].set(g.x - Bq.cam.x, g.y - Bq.cam.y, g.z - Bq.cam.z).normalize(); V[0].addScaledVector(V[1], -V[0].dot(V[1])); const L = V[0].length(); if (L > 1e-4) { nx = V[0].x / L; ny = V[0].y / L; nz = V[0].z / L; } } } catch (x) { W118.err = 'near ' + String(x && x.stack); }
+  const dn = ns * (0.95 * R + 0.6 * hr), g2 = { x: g.x + nx * dn, y: g.y + ny * dn - ns * (0.7 - 0.3 * gp) * R, z: g.z + nz * dn, R };
+  w9.g = g2; if (g.stx > st1) O.st1 = g.stx; try { f0(S, Bq, q, Z); } finally { w9.g = g; O.st1 = st1; }
+  /* an arm let out far is kept fat, smoke not a rod, and its hand larger, so it is seen on the atom */ try { const F = fig77(S), a = F.long, X = fig82(S), B = S.bones, ex = RK.sm(w9.w) * RK.cl(((g.stx || 0) - 0.33) / 1.2); if (a && ex > 0.001) { const ai = F.arms.indexOf(a); for (let j = 1; j < B.length; j++) { const am = X.arm.get(j); if (!B[j] || !am || am.ai !== ai) continue; B[j].scale.multiplyScalar(1 + ex * (0.25 + 0.55 * am.f)); } } } catch (x) { W118.err = 'fat ' + String(x && x.stack); }
+  /* the other arm drawn in to the body while the long one reaches (so the figure is narrow at the stand) */ try { const F = fig77(S), a = F.long, X = fig82(S), B = S.bones, ai = F.arms.indexOf(a), k = Math.max(RK.sm(w9.w), 0.8 * (w9.ant || 0)) * W118.tuck; if (k > 0.001 && F.P0) for (let j = 1; j < B.length; j++) { const am = X.arm.get(j); if (!B[j] || !am || am.ai === ai) continue; B[j].position.lerp(F.P0, k * (0.35 + 0.65 * am.f)); } } catch (x) { W118.err = 'tuck ' + String(x && x.stack); }
+  try { const F = fig77(S), a = F.long; if (a && a.w118 && gp > 0.001) { const B = S.bones, k = RK.sm(w9.w) * gp, n = a.jn.length; for (let i = Math.max(0, n - 3); i < n; i++) if (B[a.jn[i]]) B[a.jn[i]].scale.multiplyScalar(1 + (i === n - 1 ? 1.5 : 0.8) * k); } } catch (x) { W118.err = 'fist ' + String(x && x.stack); } })(aim100);
+/* the shape the scheme places: every joint, and a ball half way along each bone of the smoke and the long arm */
+W99.shape = (f0 => function (S) { const r = f0(S); if (!KIT.b118 || !r) return r; try { const F = fig77(S), X = fig82(S), B = S.bones, T = S.T, v = new T.Vector3(), r0 = new T.Vector3(), a = F.long, ai = F.arms.indexOf(a), ix = new Map(), ws = v.setFromMatrixScale(S.root.matrixWorld).y;
+    S.root.getWorldPosition(r0); for (let j = 1; j < B.length; j++) if (B[j]) ix.set(B[j], j); const inS = j => { const am = X.arm.get(j); return (am && am.ai === ai) || F.set.has(j); };
+    /* the other arm (it is drawn in to the body while the long one reaches: aim100's wrapper below) */ const ofA = j => { const am = X.arm.get(j); return am && am.ai !== ai ? am.f : -1; }; { let k = 0; for (let j = 1; j < B.length; j++) { if (!B[j] || !inS(j)) continue; const of = ofA(j); if (of >= 0 && r.D[k]) r.D[k].of = of; k++; } }
+    for (let j = 1; j < B.length; j++) { if (!B[j] || !inS(j)) continue; const pj = ix.get(B[j].parent); if (pj == null || !inS(pj)) continue; const A = B[j].getWorldPosition(new T.Vector3()), P = B[pj].getWorldPosition(new T.Vector3()), am = X.arm.get(j), ap = X.arm.get(pj), mine = !!(am && am.ai === ai), minp = !!(ap && ap.ai === ai);
+      const rr = 0.5 * (((S.G.J[j] && S.G.J[j].r) || 0.1) + ((S.G.J[pj] && S.G.J[pj].r) || 0.1)) * ws; v.copy(A).add(P).multiplyScalar(0.5); r.D.push({ p: [v.x - r0.x, v.y - r0.y, v.z - r0.z], r: rr, f: mine && minp ? 0.5 * (am.f + ap.f) : mine ? 0.5 * am.f : -1, hn: 0.5 * ((X.hn.get(j) || 0) + (X.hn.get(pj) || 0)), tip: false, mid: 1, of: ofA(j) >= 0 && ofA(pj) >= 0 ? 0.5 * (ofA(j) + ofA(pj)) : undefined }); }
+    /* the lump itself (every joint below the smoke's foot): f -2, it does not bend with the body */ const P0y = (F.P0 && F.P0.y) || 0; for (let j = 1; j < B.length; j++) { if (!B[j] || inS(j) || X.arm.has(j) || !S.G.J[j] || S.G.J[j].p[1] >= P0y) continue; const A = B[j].getWorldPosition(new T.Vector3()); r.D.push({ p: [A.x - r0.x, A.y - r0.y, A.z - r0.z], r: (S.G.J[j].r || 0.1) * ws, f: -2, hn: 0, tip: false, lump: 1 }); }
+    W118.nD = r.D.length; } catch (x) { W118.err = 'shape ' + String(x && x.stack); } return r; })(W99.shape);
+KIT.W118 = W118;
+// ==== W118 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
