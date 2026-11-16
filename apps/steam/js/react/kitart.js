@@ -8116,9 +8116,9 @@ KIT.W88 = W88;
 //    the clip's over HO ms; while the clip waits for its beat (t < 0) the never-stopping idle (AA.rxKit.stage.idle) is laid on its pose
 //    numbers, eased out as the gathering takes over, so it is never frozen;
 //  - THE HAND-BACK at the end of a change and of the act: the new figure's last clip pose goes into the resting idle over HB ms;
-//  - the two big steps of the change: the curled figure into the ball (W31 shows the ball from the curl's end at 0.62 of its round in
-//    one frame) grows out of the curl over the gathering's last part, and the bud's opening and the swap to the new skin are read at
-//    several moments and averaged (as builder 95b did for Brimstone), so a beat never snaps the pose in one frame.
+//  - the change's steps: every number of the clip is read at five moments 40 ms apart and averaged (as builder 95b did for Brimstone), the
+//    bud opens over 280 ms (W31: 160) and soaks away before W31 stops drawing it; the lamp's round, the flash and the light are eased in
+//    S108 (the two one-frame jumps of the change were the lamp's round and the bud's last cup).
 // The scheme's part (where it stands, its way, the light handed in and out) is scheme.js S108.
 KIT.w108 = KIT.w108 == null ? !(typeof location !== 'undefined' && /[?&]w108=0/.test(String(location.search))) : KIT.w108;
 const W108 = { err: null, rest: null, evo: null, n: 0, HO: 320, HB: 360, dbg: {} };
@@ -8147,7 +8147,7 @@ const W108 = { err: null, rest: null, evo: null, n: 0, HO: 320, HB: 360, dbg: {}
         else if (o && o.land != null && grp.parent) { /* the home figure's rest (r21Frame hands it `land`; a figure drawn elsewhere has none) */ W108.rest = KIT.stage.pose.keep(S, W108.rest); W108.rest.at = n; W108.rest.S = S; W108.rest.gs = grp.scale.x; } }
       else if ((clip === 'evo' && o && o.e31) || clip === 'act') { const C = clip === 'evo' && S.e31 && S.e31.gg.visible ? S.e31.sp : S, R = W108.rest;
         let H = W108.ho; if (!H || H.clip !== clip || n - H.last > 250) H = W108.ho = { clip, t0: n }; H.last = n;
-        const k = KIT.stage.sm((n - H.t0) / W108.HO), b0 = C.bones[0]; if (!H.d) { H.d = W108.dbg.first = { clip, rst: R && R.st, cst: C.st, age: R ? Math.round(H.t0 - R.at) : null, copy: C !== S }; } if (k < 1 && R && R.st === C.st && R.n === C.bones.length && H.t0 - R.at < 600) { const q0 = (W108.q0 || (W108.q0 = b0.quaternion.clone())).copy(b0.quaternion); KIT.stage.pose.from(C, R, k); if (KIT.w108pool) b0.quaternion.copy(q0); W108.dbg.ho = +k.toFixed(3); /* and the copy keeps the resting figure's own size (the new stage's figure is fitted to another size) */ if (C !== S && R.gs && grp.scale.x > 0) { const f = R.gs / grp.scale.x; S.e31.gg.scale.multiplyScalar(f + (1 - f) * k); W108.dbg.gsf = +f.toFixed(3); } }
+        const k = KIT.stage.sm((n - H.t0) / W108.HO), b0 = C.bones[0]; if (!H.d) { H.d = W108.dbg.first = { clip, rst: R && R.st, cst: C.st, age: R ? Math.round(H.t0 - R.at) : null, copy: C !== S }; } if (k < 1 && R && R.st === C.st && R.n === C.bones.length && H.t0 - R.at < 600) { const q0 = (W108.q0 || (W108.q0 = b0.quaternion.clone())).copy(b0.quaternion); KIT.stage.pose.from(C, R, k); if (KIT.w108pool) b0.quaternion.copy(q0); W108.dbg.ho = +k.toFixed(3); /* and the copy keeps the resting figure's own size (the new stage's figure is fitted to another size) */ if (C !== S && R.gs && grp.scale.x > 0) { const f = R.gs / grp.scale.x; S.e31.gg.scale.multiplyScalar(f + (1 - f) * k); } }
         W108.evo = { S, Z: KIT.stage.pose.keep(S, W108.evo && W108.evo.S === S ? W108.evo.Z : null), at: n, clip }; } } catch (x) { W108.err = 'pose ' + String(x && x.stack); }
     return r; })(play26);
   KIT.spirit26.play = play26; KIT.W108 = W108; }
