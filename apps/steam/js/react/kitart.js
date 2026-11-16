@@ -6590,6 +6590,57 @@ play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o), S = 
 KIT.spirit26.play = play26;
 KIT.W98 = W98;
 // ==== W98 END
+// ==== W99 BEGIN
+// (builder 99) BRIMSTONE'S ACT, BY TOUCH (AA.rxKit.act99, on by default; false or ?a99=0 gives builder 95's act back: Water's clip, low and
+// small, from one fixed stand). The clip is still C26.act on Water's joints, lag, reach pass and hand; the scheme (S99) gives the way, the
+// stands and the touch times as ONE function of the clip's time (o.bites.w26.b99.at(t)), so every lagged joint reads the same motion:
+//  - it gathers itself at home (a short crouch), then RIDES ITS LUMP upright: the lump leans against its start and its stop, rocks, heaves
+//    over the book's edge (the root is tipped, as W97 does in the change of stage); the smoke is laid back by the speed and the push, and
+//    the lag of the outer joints is its follow-through;
+//  - beside each sulfur it leans over, an arm comes down on Water's arc (reach), the hand closes round the atom (grip), opens and lifts;
+//    at the last one it keeps its hands by the flame and its scowl eases;
+//  - home with its back turned (Water's turn, in a squash of its own smoke), then the front again.
+// The first nine frames come out of the resting pose and the last pose goes into the idle over ten frames (as W98 does for the change).
+KIT.act99 = KIT.act99 == null ? !(typeof location !== 'undefined' && /[?&]a99=0/.test(String(location.search))) : KIT.act99;
+const W99 = { err: null };
+const b99 = (S, o) => { const w = o && o.bites && o.bites.w26; return KIT.act99 && S && S.way69 && !S.jar && w && w.b99 ? w.b99 : null; };
+/* the arm that reaches is one of its SMOKE arms (fig77), given to Water's reach pass as a chain of its own, long enough to get there (it stretches, and is kept fat) */
+const arm99 = (S, sx) => { const G = S.G, A = fig77(S).arms || []; if (!A.length) return null; let a = A[0]; A.forEach(x => { if (x.side * sx > 0) a = x; }); let i = G.reach.findIndex(r => r.s99 && r.jn === a.jn); if (i < 0) { G.reach.push({ jn: a.jn, side: a.side, len: 3 * a.len, s99: 1 }); i = G.reach.length - 1; } return i; };
+C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); const Bq = b99(S, o); if (!Bq) return; q.rs = null;
+  try { const K = RK, m = Bq.at(t), W = o.W, J = o.J, D = o.D, B = o.B, a = t - W - J, tg = Bq.tg, n = tg.length;
+    q.sink = 0; q.flat = 0; q.swell = 0; q.mv = 0; q.px = q.pz = 1; q.rw = 0; q.rT = null; q.grip = 0; q.hf = 0; q.w28 = null; q.turn = 0; q.lunge = 0; q.sq = 0; q.bow = 0; q.lean = 0; q.nod = 0; q.hair = 0; q.armL = 0; q.armR = 0; q.tilt = 0; q.open = 0; q.smile = 0.5; q.brow = -0.6; q.wide = 0; q.lookx = 0; q.looky = 0; q.blink = 0; q.hturn = 0;
+    if (t < W + 0.14 * J) { const u = K.cl(t / (W + 0.14 * J)), cr = K.pulse(u, 0.12, 0.8, 0.14); q.sq -= 0.2 * cr; q.nod += 0.3 * cr; q.wide = 0.6 * K.pulse(u, 0.0, 0.5, 0.12); q.lookx = (o.dir || 1) * K.sm(u / 0.3); q.armL += 0.25 * cr; q.armR += 0.25 * cr; }
+    else if (a < 0) { q.lookx = (o.dir || 1) * 0.6; q.looky = -0.3; }
+    else if (a < D) { const p = a / D; let cur = -1;
+      for (let i = 0; i < n; i++) { const g = tg[i], tau = (p - g.u) * D, f = g.f, last = i === n - 1, Tr = g.tr, w = K.sm((tau + Tr) / Math.max(200, Tr - 110)) * (last ? 1 - K.sm((p - 0.85) / 0.07) : 1 - K.sm((tau - 480 * f) / (460 * f))); if (w <= q.rw) continue; cur = i;
+        const held = last ? K.sm((tau - 420) / 420) : 0, sx = g.sx || 1; q.rw = w; q.rT = { x: g.x - sx * 1.5 * g.R * held, y: g.y + (0.55 + 0.9 * held) * g.R, z: g.z + 0.5 * g.R * held, sx };
+        q.grip = K.sm((tau + 150) / 140) * (last ? 1 - 0.8 * K.sm((tau - 380) / 300) : 1 - K.sm((tau - 330 * f) / 240));
+        q.bow += 0.2 * w; q.lean += sx * 0.16 * w; q.sq += -0.1 * K.pulse(tau, -Tr - 160, -Tr + 200, 130) + (tau > 0 ? -0.1 * K.ring(tau, 240, 300) : 0); q.nod += 0.25 * w;
+        q.lookx = sx * w; q.looky = -0.55 * w; q.wide = 0.5 * K.pulse(tau, -80, 420, 120);
+        if (last) { const pl = K.sm((tau - 380) / 420) * (1 - K.sm((p - 0.9) / 0.08)), up = 0.8 * K.sm((tau - 300) / 420) * (1 - K.sm((p - 0.85) / 0.07)); if (sx > 0) q.armL += up; else q.armR += up; q.brow += 1.0 * pl; q.smile += 1.0 * pl; q.tilt = 0.1 * pl * Math.sin(tau / 330); q.sq += 0.06 * pl; } }
+      if (q.rw > 0 && q.rT) { q.turn = turn28(S, q.rT) * K.sm(q.rw * 1.4); if (KIT.arm99 === true /* off: the smoke arm's skin tears on Water's reach pass (seen in stills); the lump's own limb reaches */) q.rs = arm99(S, q.rT.sx); } }
+    else { const b = K.cl((a - D) / B), roll = K.pulse(b, 0.0, 0.2, 0.08) + K.pulse(b, 0.84, 1.0, 0.07); q.turn = PI * K.sm(b / 0.2) + PI * K.sm((b - 0.84) / 0.16); q.sq -= 0.26 * roll; q.nod += 0.45 * roll; q.armL -= 0.5 * roll; q.armR -= 0.5 * roll; q.smile = 1.2; q.brow = -0.2; }
+    /* laid back by the speed and by the push (in its own frame, whichever way it is turned) */ { const c = Math.cos(q.turn), s = Math.sin(q.turn), wx = -(0.55 * m.vx + 0.4 * m.ax), wz = -(0.55 * m.vz + 0.4 * m.az), lx = c * wx - s * wz, lz = s * wx + c * wz, sp = Math.min(1, Math.hypot(m.vx, m.vz)); q.lean += 0.5 * lx; q.bow += 0.75 * lz; q.hair += 0.5 * sp; q.sq -= 0.07 * sp; q.nod += 0.15 * sp; }
+  } catch (x) { W99.err = 'clip ' + String(x && x.stack); } })(C26.act);
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp, Bq = clip === 'act' ? b99(S, o) : null, r = f0(grp, clip, t, o); if (!S || !S.way69 || S.jar || !KIT.act99) return r;
+  try { const B = S.bones, T = S.T, n0 = now95(), Z = S.z99 || (S.z99 = { P: [], Q: [], C: [], rp: new T.Vector3(), rq: new T.Quaternion(), rs: 1, q: new T.Quaternion(), v: new T.Vector3(), n: 0, live: false });
+    if (Bq) { const m = Bq.at(t), R = S.root, q = S.q0 || {};
+      /* the reaching arm is soft smoke, not a thin limb */ if (S.rc && q.rw > 0.03) { const jn = S.rc.jn; for (let k = 1; k < jn.length; k++) if (B[jn[k]]) B[jn[k]].scale.multiplyScalar(1 + (KIT.fat99 == null ? 0.45 : KIT.fat99) * Math.min(1, q.rw)); }
+      /* the lump on the ground: tipped by its start, its stop, its rocking and the book's edge; a little off the ground as it heaves over */ const th = Math.hypot(m.lx, m.lz); if (th > 1e-4) { Z.v.set(m.lz / th, 0, -m.lx / th); R.quaternion.premultiply(Z.q.setFromAxisAngle(Z.v, th)); }
+      if (S.ry99 == null) S.ry99 = R.position.y; R.position.y = S.ry99 + 0.3 * fig82(S).lump * m.lift;
+      /* out of the resting pose over nine frames */ if (S.c99 !== 'act') S.t99a = n0; const k = RK.sm((n0 - S.t99a) / 300), R0 = W98.R; if (k < 1 && R0 && R0.st === S.st && R0.n === B.length && S.t99a - R0.at < 400) { const qq = R0.q;
+        for (let j = 0; j < B.length; j++) { if (!B[j] || !R0.P[j]) continue; B[j].position.lerpVectors(R0.P[j], B[j].position, k); qq.copy(R0.Q[j]).slerp(B[j].quaternion, k); B[j].quaternion.copy(qq); B[j].scale.lerpVectors(R0.C[j], B[j].scale, k); } }
+      /* the clip's last pose is kept */ Z.n = 0; Z.live = true; for (let j = 0; j < B.length; j++) { if (!B[j]) continue; (Z.P[j] || (Z.P[j] = new T.Vector3())).copy(B[j].position); (Z.Q[j] || (Z.Q[j] = new T.Quaternion())).copy(B[j].quaternion); (Z.C[j] || (Z.C[j] = new T.Vector3())).copy(B[j].scale); } Z.rq.copy(R.quaternion); W99.m = m; }
+    else { if (S.ry99 != null) { S.root.position.y = S.ry99; S.ry99 = null; }
+      if (clip === 'rest' && Z.live) { const k = RK.sm((Z.n + 1) / 11); Z.n++; if (Z.n >= 10) Z.live = false;
+        for (let j = 0; j < B.length; j++) { if (!B[j] || !Z.P[j]) continue; B[j].position.lerpVectors(Z.P[j], B[j].position, k); Z.q.copy(Z.Q[j]).slerp(B[j].quaternion, k); B[j].quaternion.copy(Z.q); B[j].scale.lerpVectors(Z.C[j], B[j].scale, k); }
+        Z.q.copy(Z.rq).slerp(S.root.quaternion, k); S.root.quaternion.copy(Z.q); if (S.k73) fade98(S, k); }
+      else if (clip !== 'rest') Z.live = false; }
+    S.c99 = clip;
+  } catch (x) { W99.err = String(x && x.stack); } return r; })(play26);
+KIT.spirit26.play = play26;
+KIT.W99 = W99;
+// ==== W99 END
 // ==== W70 BEGIN
 // (builder 70) SEEDLING'S OWN ACT (AA.rxKit.act70, on by default; false or ?a70=0 gives the old act). Quick and eager. Its idle (W67) runs under the
 // act, damped; the act is laid over it joint by joint (the stem bends, the roots stay where they stand unless a foot is lifted). The page (scheme S70)
