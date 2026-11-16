@@ -7977,9 +7977,64 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   lossFrame = (f0 => function (now) { let shot = null; try { if (g123() && BENCHV && st.mode === 'done' && !st.pass && st.doneT && LOSS.on && !LOSS.sheet && now - st.doneT >= LOSS.cr) { ren.render(scene, cam); shot = s123Grab(); } } catch (x) { S123.err = 'loss ' + String(x && x.stack); }
     const r = f0.apply(this, arguments); if (shot && LOSS.sheet) { S123.snap = { c: shot, t0: now, ms: 320 }; S123.dbg.loss = (S123.dbg.loss || 0) + 1; } return r; })(lossFrame);
   /* A MARK PAID: its number under the stamp was replaced in one frame; the page's marks as they were fade out over the new ones */
-  kinSync = (f0 => function (now) { const pays = KINV.S ? Object.keys(KINV.S).map(k => KINV.S[k].pay) : null; const r = f0.apply(this, arguments); try { if (g123() && pays && KINV.S && Object.keys(KINV.S).some((k, i) => KINV.S[k].pay !== pays[i])) { s123Kin(); S123.dbg.pay = (S123.dbg.pay || 0) + 1; } } catch (x) { S123.err = 'pay ' + String(x && x.stack); } return r; })(kinSync);
+  kinSync = (f0 => function (now) { const pays = KINV.S ? Object.keys(KINV.S).map(k => KINV.S[k].pay) : null; const r = f0.apply(this, arguments); try { if (g123() && !(AA.rxKit.g131 !== false && KINV.mode === 'c') && pays && KINV.S && Object.keys(KINV.S).some((k, i) => KINV.S[k].pay !== pays[i])) { s123Kin(); S123.dbg.pay = (S123.dbg.pay || 0) + 1; } } catch (x) { S123.err = 'pay ' + String(x && x.stack); } return r; })(kinSync);
   if (AA.rxKit) AA.rxKit.s123dbg = () => ({ err: S123.err, dbg: S123.dbg, B: S123.B.length });
   // ==== S123 END
+  // ==== S131 BEGIN
+  // (builder 131) THE BONUSES ONE AT A TIME (AA.rxKit.g131, on by default; ?g131=0 gives today's). Owner: "all of the bonus effects
+  // (resonance, rings, etc) should happen one at a time instead of all at once". No rule, number or result is changed; this only times
+  // the page's own marks (kinSync's gain / up / lose / pay moments) and what the yield SHOWS while they play:
+  //  - when a step lands, the marks it brings are put in a row: the losses (struck rings) first, then each bonus in the order the rules
+  //    multiply them (the step's motif event, P's own order); one slot each, 450 ms, shorter when there are many (all in about 2.5 s,
+  //    never under 160 ms); in its slot a mark's ring is drawn on (its own drawing, run to fit the slot), its stem, icon and number come,
+  //    a short hold, then it settles (the page's own fade) as the next begins: one bright at a time;
+  //  - the yield shown steps with each bonus that pays: the running value is the step's yield before its motifs plus the motifs' share
+  //    multiplied in one by one (made is linear in the step's heat, so each value is the true running product); it ends on the rule's
+  //    value. The count the page waits on (feel.js) is not held: only the number drawn is, so nothing waits on the row;
+  //  - a pen tap for each, rising; a lower one for a loss;
+  //  - if the player acts (a line fired, a creature tapped, the screen changes) or a reflex brings its own row, what is left of the row
+  //    runs through in 150 ms.
+  if (AA.rxKit && AA.rxKit.g131 == null) AA.rxKit.g131 = !/[?&]g131=0/.test(String(root.location && root.location.search));
+  const S131 = { err: null, seq: null, Qs: [], dbg: { rows: 0, slots: 0, ff: 0, log: [] } }, g131 = () => !!(AA.rxKit && AA.rxKit.g131 !== false && KINV.mode === 'c');
+  const s131Sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+  const s131Snd = (k, loss) => { try { if (AA.sfx && AA.sfx._inst) AA.sfx._inst(loss ? 'drip' : 'clink', loss ? 76 : Math.min(102, 86 + 2 * k), loss ? 0.25 : 0.3); } catch (x) { /* no sound */ } };
+  const s131FF = (Q, now) => { if (!Q || Q.ff) return; Q.ff = true; S131.dbg.ff++; const left = Q.slots.filter(s => s.t + s.D > now); if (!left.length) return; const dd = 150 / left.length; left.forEach((s, i) => { const t = Math.max(now, Math.min(s.t, now)) + i * dd; s.t = t; s.D = dd; s131Set(s); }); Q.end = now + 160; };
+  const s131Set = s => { const k = KINV.S[s.id]; if (!k) return; if (s.lose) k.lose = s.t; if (s.gain) k.gain = s.t; if (s.up) k.up = s.t; if (s.pay) { if (k.payAt) k.payAt = s.t; else k.pay = Math.min(k.pay, s.t); } };
+  kinSync = (f0 => function (now) { const S0 = KINV.S, pre = {}; if (S0) Object.keys(S0).forEach(id => { const s = S0[id]; pre[id] = { gain: s.gain, up: s.up, lose: s.lose, payAt: s.payAt }; }); const n0 = g && g.trail ? g.trail.length : 0, nk = KINV.n;
+    const r = f0.apply(this, arguments); try { if (!g131() || !KINV.S || KINV.S !== S0) return r; const L = [], G = new Map(); Object.keys(KINV.S).forEach(id => { const s = KINV.S[id], p = pre[id]; if (!p) return;
+        if (s.lose !== p.lose && s.lose > now - 50) L.push(id); const e = { id, gain: s.gain !== p.gain && s.gain > now - 50, up: !!s.up && s.up !== p.up && s.up > now - 50, pay: !!s.payAt && s.payAt !== p.payAt }; if (e.gain || e.up || e.pay) G.set(id, e); });
+      if (!L.length && !G.size) return r;
+      /* the rules' order: the step's motif event lists them in the order it multiplies them */ let mo = [], before = null, after = null; try { const rec = g.trail[g.trail.length - 1], ev = (rec && rec.ev) || [], i = ev.findIndex(e => e.src === 'motif' && e.motifs); if (i >= 0) { mo = ev[i].motifs.map(q => q.id); after = ev[i].made; before = i > 0 ? ev[i - 1].made : null; } } catch (x) { mo = []; }
+      const ids = Array.from(G.keys()).sort((a, b) => { const ia = mo.indexOf(a), ib = mo.indexOf(b); return (ia < 0 ? 99 + MIDS.indexOf(a) : ia) - (ib < 0 ? 99 + MIDS.indexOf(b) : ib); });
+      const n = L.length + ids.length; let T0 = 1e18; Object.keys(KINV.S).forEach(id => { const s = KINV.S[id]; if (L.indexOf(id) >= 0) T0 = Math.min(T0, s.lose); const e = G.get(id); if (e) { if (e.gain) T0 = Math.min(T0, s.gain); if (e.up) T0 = Math.min(T0, s.up); if (e.pay) T0 = Math.min(T0, s.payAt); } }); if (!(T0 < 1e17)) T0 = now; /* a row still playing is not cut: this one follows it, within the 2.5 s */ const prev = S131.Qs.filter(q => !q.ff && q.end > T0); if (prev.length) T0 = Math.max(T0, Math.max.apply(null, prev.map(q => q.end))); const D = Math.max(160, Math.min(450, Math.max(2500 - Math.max(0, T0 - now), 0) / n));
+      const slots = []; L.forEach(id => slots.push({ id, lose: true, D })); ids.forEach(id => { const e = G.get(id); slots.push({ id, gain: e.gain, up: e.up, pay: e.pay, D, f: e.pay ? (KINV.S[id].amtNext || 1) : 1 }); });
+      slots.forEach((s, i) => { s.t = T0 + i * D; s131Set(s); });
+      /* the honest running yield: before + (after - before) * (product so far - 1) / (whole product - 1) */ const pays = slots.filter(s => s.pay && s.f > 1), M = pays.reduce((m, s) => m * s.f, 1); let ladder = null;
+      if (pays.length >= 1 && before != null && after != null && M > 1.0001 && after > before) { let m = 1; pays.forEach(s => { m *= s.f; s.v = before + (after - before) * (m - 1) / (M - 1); }); ladder = { before, after, fin: null }; /* the count may already stand past this step's start (it runs ahead of the marks): never shown going down */ const sh = st.shown || 0; if (sh > before + 0.5) { pays.forEach(s => { if (s.v <= sh + 0.5) s.v = null; }); if (!pays.some(s => s.v != null)) ladder = null; else ladder.before = sh; S131.dbg.past = (S131.dbg.past || 0) + 1; } }
+      S131.seq = { slots, ladder, t0: T0, end: T0 + n * D, mode: st.mode, firing: !!st.firing, homA: st.homAct, n: g.trail.length }; S131.Qs.push(S131.seq); S131.dbg.rows++; S131.dbg.slots += slots.length; if (S131.dbg.log.length < 40) S131.dbg.log.push({ t: Math.round(T0), D: Math.round(D), L: L.length, ids, mo, before: before && Math.round(before), after: after && Math.round(after), v: pays.map(s => Math.round(s.v || 0)) });
+    } catch (x) { S131.err = 'sync ' + String(x && x.stack); } return r; })(kinSync);
+  /* each frame: run each slot's own drawing to fit it, settle it when the next begins, fast-forward when the player acts */
+  const s131Frame = now => { if (!KINV.S) return; if (!g131()) { S131.seq = null; S131.Qs = []; return; } S131.Qs = S131.Qs.filter(q => now <= q.end + 1200); S131.Qs.forEach(Q => s131Row(Q, now)); S131.seq = S131.Qs[S131.Qs.length - 1] || null; };
+  const s131Row = (Q, now) => {
+    if (!Q.ff && (st.mode !== Q.mode && !(Q.mode === 'move' && st.mode === 'play') || (st.homAct && st.homAct !== Q.homA) || (st.firing && !Q.firing))) s131FF(Q, now); Q.firing = Q.firing || !!st.firing;
+    Q.slots.forEach((s, i) => { const k = KINV.S[s.id]; if (!k) return; const a = now - s.t, D = s.D, last = i === Q.slots.length - 1, FD = Math.min(150, 0.3 * D), end = last ? Math.max(D, 900) : D - FD; /* its fade is over as the next begins */
+      if (a >= 0 && !s.snd) { s.snd = true; s131Snd(i, s.lose); }
+      if (a < 0) return; const draw = Math.max(1, 0.75 * D);
+      if (s.lose) { if (a < end) { const tl = Math.min(760, a * 760 / draw); k.lose = now - tl; } else if (!s.done) { s.done = true; if (now - k.lose < 1700 - FD) k.lose = now - (1700 - FD); } }
+      if (s.gain || s.up) { const key = s.up && !s.gain ? 'up' : 'gain'; if (a < end) { const tg = Math.min(1120, a * 1120 / draw); k[key] = now - tg; } else if (!s.done) { s.done = true; if (now - k[key] < 3300 - FD) k[key] = now - (3300 - FD); } }
+      if (s.pay && a >= end && !s.pdone && k.pay && now - k.pay < 1800 - FD) { s.pdone = true; k.pay = now - (1800 - FD); } });
+  };
+  a20Spent = (f0 => function (now) { try { s131Frame(now); } catch (x) { S131.err = 'frame ' + String(x && x.stack); } return f0(now); })(a20Spent);
+  /* the number drawn: the running value, stepped with each bonus (the count feel.js keeps is untouched) */
+  if (FEEL && FEEL.frame) FEEL.frame = (f0 => function (now, dt) { const r = f0.apply(this, arguments); try { const Lq = S131.Qs.filter(q => q.ladder && !q.ladderDone); /* a row whose last step is in passes the number to the next row in the same frame */ while (Lq.length > 1) { const q0 = Lq[0], ps = q0.slots.filter(s => s.v != null), lp = ps[ps.length - 1]; if (lp && now > lp.t + Math.min(260, 0.8 * lp.D) + 30) { q0.ladderDone = true; Lq.shift(); } else break; } const Q = Lq[0], Lr = Q && Q.ladder; /* the oldest row not yet stepped: rows step in turn, so every bonus has its own honest step and the number never goes back */ if (Lr && g131()) { const pays = Q.slots.filter(s => s.v != null); let v = Lr.before, from = Lr.before;
+        for (const s of pays) { if (now < s.t) break; const u = s131Sm((now - s.t) / Math.min(260, 0.8 * s.D)); v = from + (s.v - from) * u; from = s.v; }
+        const lastP = pays[pays.length - 1], open = lastP && now > lastP.t + Math.min(260, 0.8 * lastP.D) + 30; if (open) Q.ladderDone = true; S131.hv = { g, v: open ? null : v }; if (!open && st.shown > v + 0.5 && st.shown >= Lr.before - 0.5) { /* never shown going down */ st.shown = Math.round(v); dirty = true; S131.dbg.held = (S131.dbg.held || 0) + 1; } }
+      /* (owner approved, builder 131) the number is held back until the marks catch up: a step whose bonuses are not yet in a row holds it at its own start, and the shown number never goes back */
+      if (g131() && g && g.trail) { let hold = Infinity; for (let i = KINV.n; i < g.trail.length; i++) { const ev = (g.trail[i] && g.trail[i].ev) || [], k = ev.findIndex(e => e.src === 'motif' && e.motifs); if (k > 0 && ev[k - 1].made != null) { hold = Math.min(hold, ev[k - 1].made); break; } }
+        S131.queued = S131.Qs.some(q => q.ladder && !q.ladderDone); if (hold < Infinity && st.shown > hold + 0.5) { st.shown = Math.round(hold); dirty = true; S131.dbg.hold = (S131.dbg.hold || 0) + 1; }
+        const F0 = S131.floor && S131.floor.g === g ? S131.floor : null; if (F0 && st.shown < F0.v && st.mode !== 'done' && (S131.queued || hold < Infinity || now - F0.t < 400)) { st.shown = F0.v; S131.dbg.floor = (S131.dbg.floor || 0) + 1; } S131.floor = { g, v: st.shown, t: F0 && st.shown === F0.v ? F0.t : now }; } } catch (x) { S131.err = 'num ' + String(x && x.stack); } return r; })(FEEL.frame);
+  if (AA.rxKit) AA.rxKit.s131dbg = () => ({ err: S131.err, dbg: S131.dbg, live: !!S131.seq });
+  // ==== S131 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
