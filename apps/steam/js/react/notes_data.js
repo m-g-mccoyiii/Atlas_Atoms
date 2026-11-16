@@ -37,7 +37,7 @@ const AA = root.AA = root.AA || {};
 const NOTES = [];
 // Slots the page cannot fill today: the rules side has to work them out (NOTES_WRITING.md, "What the page must pass"). A note that
 // uses one is marked wait: true and is held back until the page passes it.
-const RULES_SLOTS = ['gap', 'roundbest', 'runbest', 'careerbest', 'molseen', 'molbest', 'loose'];
+const RULES_SLOTS = ['gap', 'roundbest', 'runbest', 'careerbest', 'molseen', 'molbest', 'loose', 'case'];      // case (mantext 124): which of a reagent's cases applied; the page passes ctx.case = a key of REAGENT[..].cases once the rules report the step that acted
 // What the notes know about the bench themselves (docs/tools_chem/FINAL.md), so the page only has to pass a name.
 // From the reagent just fired: {does} what it left, {all} what it did at every place. From a reagent that found nothing: {dudneeds} what it needs. Nothing here says what to do next.
 const REAGENT = {
@@ -60,6 +60,12 @@ const REAGENT = {
   hydroformylation: { all: 'every C=C took a CHO', needs: 'a C=C', does: 'a CHO on the carbon with more hydrogens, or on the near carbon beside a C=O' },
   epoxidation: { all: 'every C=C became an epoxide', needs: 'a C=C', does: 'an epoxide where the C=C was' }
 };
+// (mantext 124, treatment c) the cases a reagent can take, told as it happens: ctx.case names one, {case} is its line
+const CASES = { hydrate: { past: 'OH went past the C=O', fewer: 'OH went to the carbon with fewer H', end: 'OH went toward the chain end' },
+  dehydrate: { fewer: 'The C=C went toward fewer H', conj: 'The C=C lined up with the other C=C' },
+  oxidize: { co2: 'The end carbon burned off as CO2' },
+  ring: { five: 'Three apart: a five-ring', six: 'Four apart: a six-ring' },
+  burette: { ch: 'The O dropped on the CH' } };
 const ALIAS = { pcc: 'oxidize', allyl: 'grow', bh3: 'hydroborate', nabh4: 'reduce', 'thiol-ene': 'thiolene', 'the sulfur reagent': 'thiolene', 'the nitrogen reagent': 'ritter', lactol: 'ring', enone: 'dry', taut: 'flip', snap6: 'snap', ether: 'close' };
 // From the reflex just fired: {why} it fired, {what} happened in it, {after} what it leaves.
 const KIND = {
@@ -82,7 +88,7 @@ const LEFT = { water: 'a dehydrate, a burner, a dry, a seal or a link', hydrogen
 const low = v => { const k = String(v == null ? '' : v).toLowerCase(); return ALIAS[k] || k; };
 function derive(ctx) {
   const c = Object.assign({}, ctx || {}), r = REAGENT[low(c.reagent)], d = REAGENT[low(c.dud)], k = KIND[low(c.kind)], l = LEFT[low(c.left)];
-  if (r) { c.does = r.does; c.all = r.all; } if (d) c.dudneeds = d.needs; if (k) { c.why = k.why; c.after = k.after; c.what = k.what; } if (l) c.leftfrom = l;
+  if (r) { c.does = r.does; c.all = r.all; } { const cs = CASES[low(c.reagent)] || CASES[low(c.kind)]; if (cs && c.case && cs[c.case]) c.case = cs[c.case]; else delete c.case; } if (d) c.dudneeds = d.needs; if (k) { c.why = k.why; c.after = k.after; c.what = k.what; } if (l) c.leftfrom = l;
   return c;
 }
 function push(r, base) {
@@ -138,6 +144,7 @@ lab([0, 3], 'neat', [
   ["This molecule came up {molseen} times before; best yield with it {molbest}.", "start", {"c": {"molseen": [2, 999]}}],
 
   ["{reagent} left {does}.", "fire", {"again": true}],
+  ["{case}.", "fire", {"again": true}],
   ["{reagent} set off {n} reflexes by itself.", "fire", {"c": {"n": [2, 999]}}],
   ["With {reagent}, {all}.", "fire", {"again": true}],
   ["{reagent} landed at {places} places at once: {all}.", "fire", {"again": true, "c": {"places": [2, 99]}}],

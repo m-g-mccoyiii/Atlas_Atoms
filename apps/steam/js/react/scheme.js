@@ -4840,7 +4840,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     c.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); manDown(manPx(e)); }); c.addEventListener('pointermove', e => { manMove(manPx(e)); }); root.addEventListener('pointerup', () => { if (MAN.drag) { MAN.drag = null; MAN.idle = performance.now(); } });
     root.addEventListener('keydown', e => { if (MAN.on && e.key === 'Escape') { e.stopPropagation(); if (MAN.pick) { MAN.pick = null; MAN.dirty = true; } else manShut(); } }, true);
   }
-  function manOpen() { manCanvas(); if (MAN.on) return; MAN.on = true; MAN.rows = P.reference(meta); MAN.th = {}; MAN.pick = null; MAN.dirty = true; MAN.open = performance.now(); MAN.cv.width = 1280; MAN.cv.height = 720; MAN.cv.style.pointerEvents = 'auto'; sfxN('pageTurn'); }
+  function manOpen() { manCanvas(); if (MAN.on) return; MAN.on = true; try { if (P.manTextSet) P.manTextSet(new URLSearchParams(root.location.search).get('mantext')); } catch (e) { /* default */ } MAN.rows = P.reference(meta); MAN.th = {}; MAN.pick = null; MAN.dirty = true; MAN.open = performance.now(); MAN.cv.width = 1280; MAN.cv.height = 720; MAN.cv.style.pointerEvents = 'auto'; sfxN('pageTurn'); }
   function manShut() { if (!MAN.on) return; MAN.on = false; MAN.pick = null; MAN.cv.width = 0; MAN.cv.height = 0; MAN.cv.style.pointerEvents = 'none'; sfxN('pageTurn'); dirty = true; }
   function manDown(p) {
     if (MAN.pick) { if (Math.hypot(p.x - 330, p.y - 370) < 230) { MAN.drag = { x: p.x, y: p.y }; MAN.vy = 0; MAN.vp = 0; return; } MAN.pick = null; MAN.dirty = true; sfxN('click'); return; }
@@ -4900,7 +4900,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     [/oxidize is fired last/, (x, cx, cy) => { manCirc(x, cx, cy, 3, 1); }],
     [/four or more plain CH2/, (x, cx, cy) => { manMol(x, 'C-C-C-C-C-C', cx, cy - 13, 0.7); manMol(x, 'C-C', cx, cy + 15); }],
     [/Every OH that can lose water/, (x, cx, cy) => { manMol(x, 'C-C-O-H', cx, cy - 15, 0.8); manMol(x, 'C=C', cx - 16, cy + 16, 0.8); x.save(); x.translate(cx + 26, cy + 16); x.scale(0.7, 0.7); manWater(x, 0, 0); x.restore(); }],
-    [/Every C=C outside a benzene ring becomes a C=O/, (x, cx, cy) => { manMol(x, 'C-C=C', cx, cy - 15, 0.85); manMol(x, 'C-C=O', cx, cy + 16, 0.85); }],
+    [/Every C=C (outside a benzene ring )?becomes a C=O/, (x, cx, cy) => { manMol(x, 'C-C=C', cx, cy - 15, 0.85); manMol(x, 'C-C=O', cx, cy + 16, 0.85); }],
     [/the other is copied across it/, (x, cx, cy) => { manMol(x, 'O-C-c-c', cx, cy - 15, 0.8); manMol(x, 'O-C-C-O', cx, cy + 16, 0.8); manInk(x, REDINK, 2); x.setLineDash([4, 4]); x.beginPath(); x.moveTo(cx, cy - 32); x.lineTo(cx, cy + 34); x.stroke(); x.setLineDash([]); }],
     [/one hydrogen there becomes an OH/, (x, cx, cy) => { manMol(x, 'C-C-H', cx, cy - 15, 0.85); manMol(x, 'C-C-O-H', cx, cy + 16, 0.85); }],
     [/Oxygen behaves as sulfur/, (x, cx, cy) => { fball(x, cx - 24, cy, 'O', true); manArrow(x, cx - 8, cy, cx + 8); fball(x, cx + 26, cy, 'S', true); }],
@@ -4985,13 +4985,29 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       // the head is cut between sentences so that both pages carry as few lines as they can: the left page reads first
       const sn = sec.head ? sec.head.split(/(?<=\.) /) : []; let hl = [], hr = [];
       for (let k = 1; k <= sn.length; k++) { const a = manWrap(sn.slice(0, k).join(' '), MANH.size, MANH.w), b = k < sn.length ? manWrap(sn.slice(k).join(' '), MANH.size, MANH.w) : []; if (!hl.length || Math.max(a.length, b.length) < Math.max(hl.length, hr.length)) { hl = a; hr = b; } }
-      const hn = Math.max(hl.length, hr.length), top = hn ? 84 + hn * MANH.lh + 20 : 106, n = sec.rows.length, c = n <= 10 ? 1 : 2;
+      const pics = P.MANTEXT && P.MANTEXT.mode === 'a' && P.MANHEADPIC && sec === secs[0] ? P.MANHEADPIC[cat] : null, hn = Math.max(hl.length, hr.length), top = pics ? 84 + 74 : hn ? 84 + hn * MANH.lh + 20 : 106, n = sec.rows.length, c = n <= 10 ? 1 : 2;
       const fit = (foot) => { const avail = (foot ? 652 : 688) - top; let r = Math.ceil(n / (2 * c)); const most = Math.max(1, Math.floor(avail / 96)); if (r > most) r = most; return { r, CH: Math.min(114, avail / r) }; };
       let L = fit(false); if (L.r * 2 * c < n) L = fit(true);
-      const per = L.r * 2 * c; for (let i = 0; i < Math.max(1, n); i += per) leaves.push({ rows: sec.rows.slice(i, i + per), hl, hr, top, r: L.r, c, CH: L.CH });
+      const per = L.r * 2 * c; for (let i = 0; i < Math.max(1, n); i += per) leaves.push({ rows: sec.rows.slice(i, i + per), hl, hr, pics, top, r: L.r, c, CH: L.CH });
     });
     return leaves;
   }
+  // (mantext 124) a fragment of a molecule as the manual draws a case: atoms in a zigzag row (or a ring), one atom off the row where asked, the
+  // hydrogens that decide shown on their carbons, the atom the case is about ringed in red
+  function manFrag(x, f, cx, cy) {
+    const S = f.a ? Math.min(30, 118 / Math.max(1, f.a.length - 1)) : 30, Z = 9, bonds = [], balls = [], add = (el, px, py, on) => balls.push([el, px, py, on !== false]);
+    if (f.ring) { const n = f.ring.n, r = n === 5 ? 24 : 27, P2 = []; for (let i = 0; i < n; i++) P2.push([cx + r * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / n), cy + r * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / n)]); P2.forEach((p, i) => { const q = P2[(i + 1) % n]; bonds.push([p[0], p[1], q[0], q[1], f.ring.arene && i % 2 === 0 ? 2 : 1]); add(i === 0 && f.ring.het ? f.ring.het : 'C', p[0], p[1]); }); }
+    else { const n = f.a.length, X = i => cx - (n - 1) * S / 2 + i * S, Y = i => cy + (i % 2 ? -Z : Z), out = i => (i % 2 ? -1 : 1);
+      f.a.forEach((el, i) => { if (i < n - 1) bonds.push([X(i), Y(i), X(i + 1), Y(i + 1), f.b[i] === '=' ? 2 : 1]); add(el, X(i), Y(i)); });
+      [['up', 1], ['dn', -1]].forEach(([k, sg]) => Object.keys(f[k] || {}).forEach(i => { i = +i; const q = f[k][i], d = out(i) * sg, px = X(i), py = Y(i) + d * 28; bonds.push([X(i), Y(i), px, py, q[1] === '=' ? 2 : 1]); add(q[0], px, py); }));
+      Object.keys(f.h || {}).forEach(i => { i = +i; const d = out(i), taken = f.up && f.up[i], dirs = taken ? [[0, -d], [-0.8, -d * 0.5], [0.8, -d * 0.5]] : [[-0.75, d * 0.66], [0.75, d * 0.66], [0, -d]]; dirs.slice(0, f.h[i]).forEach(v => { const px = X(i) + v[0] * 19, py = Y(i) + v[1] * 19; bonds.push([X(i), Y(i), px, py, 1]); balls.unshift(['H', px, py, true]); }); });
+      if (f.mark != null) f.markAt = [X(f.mark), Y(f.mark)]; if (f.co2) f.co2At = [X(n - 1) + 34, cy - 14]; }
+    bonds.forEach(b => fbond(x, b[0], b[1], b[2], b[3], b[4], true)); balls.forEach(b => fball(x, b[1], b[2], b[0], b[3]));
+    if (f.markAt) { manInk(x, REDINK, 3); x.beginPath(); x.arc(f.markAt[0], f.markAt[1], 17, 0, 6.3); x.stroke(); }
+    if (f.co2At) { manMol(x, 'O=C=O', f.co2At[0] + 22, f.co2At[1] - 4, 0.55); manInk(x, PENCIL, 2.5); x.beginPath(); x.moveTo(f.co2At[0] - 4, f.co2At[1] + 10); x.lineTo(f.co2At[0] + 6, f.co2At[1]); x.stroke(); }
+  }
+  // one case: the fragment before, an arrow, the fragment after (or a red cross: nothing happens), and its tag in the pen
+  function manCaseRow(x, cs, X0, cy) { manFrag(x, cs.from, X0 + 88, cy); manArrow(x, X0 + 178, cy, X0 + 208, PENCIL); if (cs.no) manCross(x, X0 + 262, cy, 14); else manFrag(x, cs.to, X0 + 296, cy); AA.rxPen.write(x, cs.tag, X0 + 392, cy + 10, 27, { weight: 'heavy', color: REDINK, align: 'left' }); }
   function manSpread(x) {
     const LV = manLeaves(), leaf = LV[((MAN.leaf || 0) % LV.length + LV.length) % LV.length], rules = []; for (let k = 0; k < leaf.r; k++) rules.push(Math.round(leaf.top + (k + 1) * leaf.CH - 4));
     manPaper(x, rules); const cats = P.REFERENCE_CATS, rows = MAN.rows || []; MAN.tabs = []; MAN.cells = [];
@@ -5001,7 +5017,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       for (let k = 0; k < Math.min(list.length, 18); k++) { x.fillStyle = k < own ? '#2f6b3a' : 'rgba(74,46,30,0.25)'; x.beginPath(); x.arc(tx + 66 + (k % 3) * 11, ty + 12 + Math.floor(k / 3) * 7.5, 3, 0, 6.3); x.fill(); } MAN.tabs.push({ x: tx, y: ty, w, h, i }); });
     // the head: the left page's lines, then the right page's
     [leaf.hl, leaf.hr].forEach((L, pg) => L.forEach((ln, k) => AA.rxPen.write(x, ln, pg ? 672 : 92, 84 + (k + 1) * MANH.lh, MANH.size, { weight: 'thin', color: INK, align: 'left' })));
-    if (leaf.hl.length) { x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(92, leaf.top - 10); x.lineTo(612, leaf.top - 10); x.moveTo(672, leaf.top - 10); x.lineTo(1192, leaf.top - 10); x.stroke(); }
+    if (leaf.pics) leaf.pics.forEach((cs, i) => manCaseRow(x, cs, i ? 662 : 82, 116));
+    if (leaf.hl.length || leaf.pics) { x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(92, leaf.top - 10); x.lineTo(612, leaf.top - 10); x.moveTo(672, leaf.top - 10); x.lineTo(1192, leaf.top - 10); x.stroke(); }
     // more than one leaf: dots for the leaves (this one filled) and a turning arrow, at the foot of the right page
     MAN.leafBtn = null; if (LV.length > 1) { const li = ((MAN.leaf || 0) % LV.length + LV.length) % LV.length, bx = 1190, by = 672; for (let k = 0; k < LV.length; k++) { x.fillStyle = k === li ? INK : 'rgba(74,46,30,0.3)'; x.beginPath(); x.arc(bx - 70 - (LV.length - 1 - k) * 16, by, 5, 0, 6.3); x.fill(); } manArrow(x, bx - 44, by, bx, INK); MAN.leafBtn = { x: bx - 70 - LV.length * 16, y: by - 18, w: 86 + LV.length * 16, h: 36 }; }
     const big = leaf.c === 1, per = leaf.r * leaf.c, CW = big ? 536 : 268, CH = leaf.CH, sc = CH / 114;
@@ -5018,6 +5035,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     x.fillStyle = 'rgba(60,40,20,0.16)'; x.beginPath(); x.ellipse(330, 560, 150, 22, 0, 0, 6.3); x.fill(); const img = manShot(row, MAN.yaw, MAN.pit); x.drawImage(row.owned ? img : manPencil(img, 400), 110, 150, 440, 440);
     const W = AA.rxPen.write, X0 = 640, WD = 540; let y = 170; W(x, row.name.charAt(0).toUpperCase() + row.name.slice(1), X0, y, 56, { weight: 'heavy', color: INK, align: 'left' }); y += 26; x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, y); x.lineTo(X0 + WD, y); x.stroke(); y += 44;
     if (row.owned) { manWrap(row.does, 33, WD).forEach(l => { W(x, l, X0, y, 33, { weight: 'thin', color: INK, align: 'left' }); y += 44; }); y += 24; }
+    // (mantext 124) b: the card lines, one a line; a: the drawn cases, one a row (before, arrow, after or a cross, the tag)
+    if (row.owned && row.lines && row.lines.length) { y -= 10; row.lines.forEach(l => { W(x, l, X0 + 18, y, 31, { weight: 'heavy', color: INK, align: 'left' }); y += 42; }); y += 18; }
+    if (row.owned && row.cases && row.cases.length) { y -= 20; row.cases.forEach(cs => { manCaseRow(x, cs, X0, y + 22); y += 78; }); y += 20; }
     manWrap(row.how, 29, WD).forEach(l => { W(x, l, X0, y, 29, { weight: 'thin', color: row.owned ? PENCIL : INK, align: 'left' }); y += 39; });
     if (row.target && !(row.owned && row.target === 1)) { y += 14; const f = Math.max(0, Math.min(1, (row.count || 0) / row.target)); x.fillStyle = 'rgba(90,86,78,0.2)'; x.fillRect(X0, y, 300, 12); x.fillStyle = '#2f6b3a'; x.fillRect(X0, y, 300 * f, 12); W(x, fmt(row.count || 0) + ' of ' + fmt(row.target), X0 + 316, y + 14, 30, { weight: 'heavy', color: row.owned ? GREEN : REDINK, align: 'left' }); }
     if (row.category === 'homunculus' && row.owned && row.stages && row.stages.length) { /* (builder 18) five numbers in a row under the creature: passed ones in pencil, the one it holds in ink with a line under it, the ones to come faint; five pips over them */

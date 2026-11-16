@@ -1907,3 +1907,12 @@ Block `W120` (kitart.js, after `W114`), switch `AA.rxKit.w120` (`?w120=0` off); 
 - Pictures for the ten starting reflexes (what it starts from, an arrow, what it leaves) and one for every across reflex (the folded snake and the loop it closes).
 - Dehydrate reworded so it does not end on a lone "Cl.".
 - `docs/REFERENCE.md` (written by `docs/tools_chem/sweep_refdoc.py`) was not written again; it will list the start rows when it is.
+
+## Manual text 124 (2026-11-16): three treatments behind `?mantext=a|b|c`
+
+Owner: the rewritten lines read "like ai slop"; ruling BA stands (the thing and one verb, the act, the number; no rule-sheet clauses). The book is as merged unless the page is opened with `?mantext=`. Six pages (Hydrate, Dehydrate, Oxidize, Ring, Burette, Water) and the tab heads change.
+- a: face line, then up to three cases drawn (fragment before, arrow, after or a red cross; the deciding carbon ringed; a tag of one to three words). Reagent tab head: two drawn cases ("every one", "not benzene").
+- b: face line, then up to three card lines of five words or fewer. One clipped head line a tab.
+- c: face line only. The cases go to the margin notes (`notes_data.js` CASES, the note "{case}."); held back (`case` is a rules slot) until the page passes which step of a reagent acted, which needs rules.js and the play code.
+- Burette's MANP picture word now also matches "Every C=C becomes a C=O".
+- Stills: `.claude/shots/small/mantext124-A.jpg`, `-B.jpg`, `-C.jpg`, `mantext124-hydrate-ABC.jpg`.
