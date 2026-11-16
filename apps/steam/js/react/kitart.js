@@ -8210,7 +8210,10 @@ ST105.findPath = opts => { try { const A = opts.from, B = opts.to;
           if (w !== g0 && !(Math.hypot(x - P.x, z - P.z) < nr || Math.hypot(x - Q.x, z - Q.z) < nr)) { if (!C[w]) C[w] = ok(x, z) ? 1 : 2; if (C[w] === 2) continue; } const nd = dist[u] + gs * Math.hypot(dx, dz) * wt(x, z); if (nd < dist[w]) { dist[w] = nd; prev[w] = u; open.push(w); } } }
       if (!found) pts = [P, Q]; else { const raw = [Q]; for (let u = prev[g0]; u >= 0 && u !== s0; u = prev[u]) { const ux = u % nx; raw.push({ x: bx.x0 + ux * gs, z: bx.z0 + (u - ux) / nx * gs }); } raw.push(P); raw.reverse(); pts = [P]; for (let i = 0; i < raw.length - 1;) { let k = raw.length - 1; while (k > i + 1 && !seg(raw[i], raw[k])) k--; pts.push(raw[k]); i = k; } }
       if (!found) W105.noway = (W105.noway || 0) + 1; }
-    const W = ST105.line(ST105.round(pts.map(p => [p.x, p.z]), opts.round)); W.kind = 'grid'; W.bad = 0; for (let i = 1; i < W.P.length - 1; i++) if (!ok(W.P[i][0], W.P[i][1])) W.bad++; ST105.note('path', { kind: 'grid', n: W.P.length, len: +W.len.toFixed(2), bad: W.bad }); return W;
+    /* corners rounded as much as stays clear (a rounded corner cuts inside; fewer rounds, down to none, if it would cross an atom) */
+    const badOf = W => { let b = 0; const m = Math.max(2, Math.ceil(W.len / st)); for (let i = 1; i < m; i++) { const p = W.at(i / m); if (Math.hypot(p[0] - P.x, p[1] - P.z) < nr || Math.hypot(p[0] - Q.x, p[1] - Q.z) < nr) continue; if (!ok(p[0], p[1])) b++; } return b; };
+    let W = null; for (let r = opts.round == null ? 2 : opts.round; r >= 0; r--) { W = ST105.line(ST105.round(pts.map(p => [p.x, p.z]), r)); W.bad = badOf(W); W.rounds = r; if (!W.bad) break; }
+    W.kind = 'grid'; ST105.note('path', { kind: 'grid', n: W.P.length, len: +W.len.toFixed(2), bad: W.bad, rounds: W.rounds }); return W;
   } catch (x) { ST105.fail('findPath', x); return ST105.line([opts.from.slice(), opts.to.slice()]); } };
 /* where on a way the raised surface (the book) is first under it: the first part of the length whose cover K(x, z, r) is over a half (S97, S101) */
 ST105.edgeAt = (W, K, r, n) => { n = n || 400; for (let i = 0; i <= n; i++) { const p = W.at(i / n); if (K(p[0], p[1], r == null ? 0.01 : r) > 0.5) return i / n; } return 0.1; };
