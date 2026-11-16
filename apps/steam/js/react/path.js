@@ -305,15 +305,15 @@ const rungHow = r => (r.kind === 'depth' ? 'Clear round ' + r.n + '.' : (RUNG_TX
 // just the number. Every choice the rules make is SHOWN, not written: REF_CASES holds, for a page, its drawn cases (a fragment before and after,
 // the deciding atom ringed, a tag of one to three words; a red cross where nothing happens). Ties the code settles by atom order get nothing.
 // Each fragment is turned into SMILES and run through the real rules by the check job .claude/r119/j_cases.js (see docs/PAGE_NOTES.md).
-const REF_REFLEX = { ring: ['Ring', 'Ring curls. An OH and a C=O join in a ring.'], dry: ['Dry', 'Dry parches. An OH near a C=O leaves as water and a C=C forms.'], weld: ['Weld', 'Weld fuses. Two C=O join in a ring.'],
-  shift: ['Shift', 'Shift slides. A C=C slides beside a C=O.'], tuck: ['Tuck', 'Tuck nests. An OH folds onto a C=C beside a C=O.'], flip: ['Flip', 'Flip turns. An OH on a C=C turns to C=O.'],
-  snap: ['Snap', 'Snap springs. Two C=C side by side and a third close a six-ring.'], close: ['Close', 'Close shuts. A Cl and an OH, NH2, SH or COOH join in a ring. Acid fumes leave.'], cap: ['Cap', 'Cap covers. An SH and a C=O join in a ring.'],
-  knit: ['Knit', 'Knit loops. An NH2 and a C=O join in a ring.'], seal: ['Seal', 'Seal locks. A COOH and an OH, NH2 or SH join in a ring. Water leaves.'], open: ['Open', 'Open unlatches. An OH springs an epoxide into a ring.'],
-  fold: ['Fold', 'Fold flattens. An epoxide turns to C=O.'],
-  ring_far: ['Ring across', 'Ring across arcs. An OH and a C=O facing across the fold join.'], cap_far: ['Cap across', 'Cap across vaults. An SH and a C=O facing across the fold join.'], knit_far: ['Knit across', 'Knit across threads. An NH2 and a C=O facing across the fold join as C=N. Water leaves.'],
-  weld_far: ['Weld across', 'Weld across rivets. Two C=O facing across the fold join.'], seal_far: ['Seal across', 'Seal across clasps. A COOH and an OH, NH2 or SH facing across the fold join. Water leaves.'], close_far: ['Close across', 'Close across clamps. A Cl and an OH, NH2, SH or COOH facing across the fold join. Acid fumes leave.'],
-  open_far: ['Open across', 'Open across pries. An epoxide and an OH facing across the fold join.'], tuck_far: ['Tuck across', 'Tuck across slips. An OH folds onto a C=C beside a C=O across the fold.'], snap_far: ['Snap across', 'Snap across leaps. Two C=C side by side and a C=C facing them across the fold close a six-ring.'],
-  bridge: ['Bridge', 'Bridge spans. Two SH facing across the fold join as S-S. Hydrogen leaves.'], stitch: ['Stitch', 'Stitch sews. Two C=C facing across the fold join in a four-ring.'], link: ['Link', 'Link ties. Two OH facing across the fold join as an ether. Water leaves.'] };
+const REF_REFLEX = { ring: ['Ring', 'An OH and a C=O join in a ring.'], dry: ['Dry', 'An OH near a C=O leaves as water and a C=C forms.'], weld: ['Weld', 'Two C=O join in a ring.'],
+  shift: ['Shift', 'A C=C slides beside a C=O.'], tuck: ['Tuck', 'An OH folds onto a C=C beside a C=O.'], flip: ['Flip', 'An OH on a C=C turns to C=O.'],
+  snap: ['Snap', 'Two C=C side by side and a third close a six-ring.'], close: ['Close', 'A Cl and an OH, NH2, SH or COOH join in a ring. Acid fumes leave.'], cap: ['Cap', 'An SH and a C=O join in a ring.'],
+  knit: ['Knit', 'An NH2 and a C=O join in a ring.'], seal: ['Seal', 'A COOH and an OH, NH2 or SH join in a ring. Water leaves.'], open: ['Open', 'An OH springs an epoxide into a ring.'],
+  fold: ['Fold', 'An epoxide turns to C=O.'],
+  ring_far: ['Ring across', 'An OH and a C=O facing across the fold join.'], cap_far: ['Cap across', 'An SH and a C=O facing across the fold join.'], knit_far: ['Knit across', 'An NH2 and a C=O facing across the fold join as C=N. Water leaves.'],
+  weld_far: ['Weld across', 'Two C=O facing across the fold join.'], seal_far: ['Seal across', 'A COOH and an OH, NH2 or SH facing across the fold join. Water leaves.'], close_far: ['Close across', 'A Cl and an OH, NH2, SH or COOH facing across the fold join. Acid fumes leave.'],
+  open_far: ['Open across', 'An epoxide and an OH facing across the fold join.'], tuck_far: ['Tuck across', 'An OH folds onto a C=C beside a C=O across the fold.'], snap_far: ['Snap across', 'Two C=C side by side and a C=C facing them across the fold close a six-ring.'],
+  bridge: ['Bridge', 'Two SH facing across the fold join as S-S. Hydrogen leaves.'], stitch: ['Stitch', 'Two C=C facing across the fold join in a four-ring.'], link: ['Link', 'Two OH facing across the fold join as an ether. Water leaves.'] };
 // THE DRAWN CASES. A fragment: a (atoms in a zigzag row), b (the bonds between them), up/dn ({ index: [el, bond, el, bond ...] }: a short straight
 // arm off the row, on its outer side / the other side), ep ([i, j]: an epoxide over the bond i-j), h ({ index: hydrogens shown }), mark (the atom
 // the case is about), co2 (carbon dioxide leaves beside it); or ring ({ n, het, arene }) with out ({ index: arm }). A case: { from, to, tag } or
@@ -419,19 +419,19 @@ const REF_MOTIF = { sugar: ['Sugar', 'Sugar stacks. Keep a carbon with an OH.', 
   spiro: ['Spiro centre', 'Spiro centre pivots. Keep two rings meeting at one atom.', 1], acid: ['Acid group', 'Acid group anchors. Keep a COOH.', 1], amine: ['Amine', 'Amine hooks. Keep an amine nitrogen.', 1],
   sulfur: ['Sulfur bridge', 'Sulfur bridge joins. Keep a sulfur between two atoms.', 1], branch: ['Branch point', 'Branch point forks. Keep a carbon holding three carbons.', 1], chain: ['Long chain', 'Long chain trails. Keep three plain carbons in a row.', 1] };
 // the crystal, burner, burette, magnet and mirror lines carry the words scheme.js MANP draws their pictures by
-const REF_GEAR = { crystal: 'Seed crystal seeds. Pick a carbon: one hydrogen there becomes an OH.', bunsen: 'Burner heats. Every OH that can lose water does.', burette: 'Burette drips. Every C=C becomes a C=O at its CH.',
-  magnet: 'Magnet pulls. Every four or more plain CH2 in a row shut to two.', mirror: 'Mirror reflects. Pick a bond: one side goes, the other is copied across it.', carousel: 'Carousel deals. One more reagent is dealt on a round\'s first page.', dropper: 'Dropper refills. Two more uses of every reagent.',
-  timer: 'Timer widens. A fourth circle on every page.', counter: 'Tally counter tallies. One page counts twice toward the task.', condenser: 'Condenser returns. One more page is played, for the task only.' };
+const REF_GEAR = { crystal: 'Pick a carbon: one hydrogen there becomes an OH.', bunsen: 'Every OH that can lose water does.', burette: 'Every C=C becomes a C=O at its CH.',
+  magnet: 'Every four or more plain CH2 in a row shut to two.', mirror: 'Pick a bond: one side goes, the other is copied across it.', carousel: 'One more reagent is dealt on a round\'s first page.', dropper: 'Two more uses of every reagent.',
+  timer: 'A fourth circle on every page.', counter: 'One page counts twice toward the task.', condenser: 'One more page is played, for the task only.' };
 // Reagents, every one a run can hold, by the id the book uses: the reagent's name is its verb.
 // "C=O" is a ketone or aldehyde C=O, as everywhere in the book; a COOH is named as such. What decides where a reagent acts is drawn (REF_CASES).
-const REF_REAGENT = { hydrate: 'Hydrate wets. Every C=C takes OH.', pcc: 'Oxidize tarnishes. Every CH-OH turns to C=O. End CH=CH2 sheds CO2. Master\'s.', allyl: 'Grow branches. Every C=O sprouts a three-carbon arm.',
-  thiolene: 'Thiolate taints. Every C=C takes SH.', dehydrate: 'Dehydrate bakes. Every OH sheds water into a C=C.', ritter: 'Aminate studs. Every C=C takes NH2.',
-  epoxidation: 'Epoxidize straddles. Every C=C turns to an epoxide.', hwe: 'Extend lengthens. Every aldehyde or methyl ketone grows a C=C and a new ketone.', permanganate: 'Burn scorches. Chain ends burn to COOH.',
-  hydroborate: 'Hydroborate soaks. Every C=C takes OH.', cyanohydrin: 'Cyanate sours. Every aldehyde or methyl ketone turns to C(OH)-COOH. Ammonia leaves.', reduce: 'Reduce softens. Every aldehyde turns to CH2-OH.',
-  chlorination: 'Chlorinate swaps. Every CH-OH turns to CH-Cl. Acid fumes leave.', hydroformylation: 'Formylate tips. Every C=C takes CHO.', ozonolysis: 'Cleave cuts. Every C=C splits into two C=O. The biggest piece stays.',
-  dihydroxylation: 'Dihydroxylate pairs. Every C=C takes two OH.', hofmann: 'Eliminate N strips. Every NH2 goes and leaves a C=C. Water leaves.', chugaev: 'Eliminate S sheds. Every OH goes and leaves a C=C. Sulfur leaves.',
-  memgbr: 'Add methyl plants. Every C=O takes CH₃ and turns to C-OH.', wittig: 'Methylenate trades. Every C=O turns to C=CH₂.', aibn: 'Polymerize chains. Every C=C starts a chain. Each use doubles every chain.',
-  wacker: 'Oxidize C=C converts. Every C=C turns to C=O.', wolff: 'Strip C=O scrubs. Every C=O turns to CH₂.', h2: 'Hydrogenate fills. Every C=C takes H₂.' };
+const REF_REAGENT = { hydrate: 'Every C=C takes OH.', pcc: 'Every CH-OH turns to C=O. End CH=CH2 sheds CO2. Master\'s.', allyl: 'Every C=O sprouts a three-carbon arm.',
+  thiolene: 'Every C=C takes SH.', dehydrate: 'Every OH sheds water into a C=C.', ritter: 'Every C=C takes NH2.',
+  epoxidation: 'Every C=C turns to an epoxide.', hwe: 'Every aldehyde or methyl ketone grows a C=C and a new ketone.', permanganate: 'Chain ends burn to COOH.',
+  hydroborate: 'Every C=C takes OH.', cyanohydrin: 'Every aldehyde or methyl ketone turns to C(OH)-COOH. Ammonia leaves.', reduce: 'Every aldehyde turns to CH2-OH.',
+  chlorination: 'Every CH-OH turns to CH-Cl. Acid fumes leave.', hydroformylation: 'Every C=C takes CHO.', ozonolysis: 'Every C=C splits into two C=O. The biggest piece stays.',
+  dihydroxylation: 'Every C=C takes two OH.', hofmann: 'Every NH2 goes and leaves a C=C. Water leaves.', chugaev: 'Every OH goes and leaves a C=C. Sulfur leaves.',
+  memgbr: 'Every C=O takes CH₃ and turns to C-OH.', wittig: 'Every C=O turns to C=CH₂.', aibn: 'Every C=C starts a chain. Each use doubles every chain.',
+  wacker: 'Every C=C turns to C=O.', wolff: 'Every C=O turns to CH₂.', h2: 'Every C=C takes H₂.' };
 REF_REAGENT.grow = REF_REAGENT.allyl; REF_REAGENT.oxidize = REF_REAGENT.pcc; REF_REAGENT.bh3 = REF_REAGENT.hydroborate; REF_REAGENT.nabh4 = REF_REAGENT.reduce;
 const REF_TRACK = { gothic: 'Gothic hybrid', metal: 'Chain Lightning', surf: 'Monster-movie lab', baroque: 'Harpsichord unhinged' };
 const REF_CARD = { hydroborate: 'bh3', reduce: 'nabh4' };
@@ -441,20 +441,20 @@ const REF_FEED = { water: 'waters driven off', h2: 'hydrogens driven off', co2: 
 // Every multiplier is written once, as xN.NN: the tap's own number times f, the factor of the creature's stage when RULE.homGrow is on; the
 // book's rows also carry them as nums: [{ v, sign }]. Hydrogen, Wood spirit and Brimstone have one job each (RULE.homSimple; the lines of their
 // older rules are REF_HOM0).
-const REF_HOM0 = { h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a page with oxidize second. x' + homX((K.k || 1) * f) + '. The chain carries into the next page; a shorter chain there: x' + homX(K.pop) + '.',
-  wood: (K, f) => 'Wood spirit drinks. Line up first a reagent that finds nothing. He pours every dealt reagent left out; if one lands: x' + homX(K.k * f) + '. That bottle is empty all round.',
-  brimstone: (K, f) => 'Brimstone burns. Put sulfur on the molecule with the task half done. The round ends; the task counts as met. x' + homX(K.k * f) + ' after page one, x' + homX(K.k2 * f) + ' after page two.' };
+const REF_HOM0 = { h2: (K, f) => 'Put only two reagents on a page with oxidize second. x' + homX((K.k || 1) * f) + '. The chain carries into the next page; a shorter chain there: x' + homX(K.pop) + '.',
+  wood: (K, f) => 'Line up first a reagent that finds nothing. He pours every dealt reagent left out; if one lands: x' + homX(K.k * f) + '. That bottle is empty all round.',
+  brimstone: (K, f) => 'Put sulfur on the molecule with the task half done. The round ends; the task counts as met. x' + homX(K.k * f) + ' after page one, x' + homX(K.k2 * f) + ' after page two.' };
 // what lights each creature and what its tap does are drawn (REF_CASES); the line is the creature, its verb, the job, the number
-const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Loose rings burst. Double bonds drink.',
-  h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
-  co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Keep ' : 'Drive off carbon dioxide and keep ') + K.least + ' reagents idle to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
-  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '.' : ''),      // twenty-first (homCount): the count's step; the cap holds the stage's number only
-  wood: (K, f) => (homSimple('wood') ? 'Wood spirit drinks. Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
-  salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
-  slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle shuts.',
-  ammonia: (K, f) => 'Ammonia revives. Land aminate or a knit. The line fires again.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
-  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
-  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Land thiolate or a cap. The round ends, task met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' + (homCountOn('brimstone') ? ' Each sulfur more: x' + HOMCOUNT.per.brimstone.toFixed(2) + '.' : '') : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): each sulfur more
+const REF_HOM = { water: (K, f) => 'Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Loose rings burst. Double bonds drink.',
+  h2: (K, f) => (homSimple('h2') ? 'Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
+  co2: (K, f) => '' + (K.noCO2 ? 'Keep ' : 'Drive off carbon dioxide and keep ') + K.least + ' reagents idle to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
+  acid: (K, f) => 'Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '.' : ''),      // twenty-first (homCount): the count's step; the cap holds the stage's number only
+  wood: (K, f) => (homSimple('wood') ? 'Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
+  salt: (K, f) => '' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
+  slime: (K, f) => 'Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle shuts.',
+  ammonia: (K, f) => 'Land aminate or a knit. The line fires again.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
+  seedling: (K, f) => 'Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
+  brimstone: (K, f) => (homSimple('brimstone') ? 'Land thiolate or a cap. The round ends, task met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' + (homCountOn('brimstone') ? ' Each sulfur more: x' + HOMCOUNT.per.brimstone.toFixed(2) + '.' : '') : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): each sulfur more
 // how each is got, in the same voice (the count is its jar's size, JAR.full)
 const REF_HOMHOW = { water: n => n + ' waters driven off.', h2: n => n + ' hydrogens driven off.', co2: n => n + ' carbon dioxides driven off.', acid: n => n + ' uses of hydrate or dehydrate.',
   wood: n => n + ' uses of reduce.', salt: n => n + ' chain-end OH oxidized.', slime: n => n + ' uses of hydroborate.', seedling: n => n + ' uses of grow.',
