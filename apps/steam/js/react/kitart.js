@@ -8367,34 +8367,34 @@ const W112 = { err: null, dbg: {} };
 // Nothing of W86's act is used (KIT.act86 is switched off while this is on).
 KIT.h117 = KIT.h117 == null ? !(typeof location !== 'undefined' && /[?&]h117=0/.test(String(location.search))) : KIT.h117;
 if (KIT.h117) KIT.act86 = false;
-const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.1, PHI: 1.25 };
+const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.1, PHI: 1.4, BAL: 6 };
 { const sm = sm52, lp = (a, b, u) => a + (b - a) * u, cl = (x, a, b) => (x < a ? a : x > b ? b : x), e5 = u => { u = cl(u, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); };
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const on117 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
-  /* one heave, tau ms after it begins: ant (the crouch before), up (the lift, 0..1), spent (0..1), ring (the spring after it is let down) */
-  const hv = tau => { const A = W117.AN, U = W117.UP, H = W117.HOLD, D = W117.DN, t2 = tau - A - U - H - 0.8 * D;
-    return { ant: sm(tau / A) * (1 - sm((tau - A) / (0.55 * U))), up: sm((tau - A) / U) * (1 - sm((tau - A - U - H) / D)), spent: sm((tau - A) / U), ring: t2 > 0 ? Math.exp(-t2 / 170) * Math.sin(t2 / 52) : 0 }; };
-  function lift117(t, Z) { let up = 0, ant = 0, spent = 0, ring = 0, y = 0; for (let i = 0; i < Z.Hv.length; i++) { const h = hv(t - Z.Hv[i]), gk = 1 + 0.1 * i; up += h.up; ant += h.ant; spent += h.spent; ring += h.ring; y += gk * h.up - 0.16 * h.ring; } return { y: Z.Lh * y, up, ant, spent, ring }; }
-  /* the act at t ms since the tap. p: where its pinch is in the world; kz: its size over its size at home */
-  function ph117(t, Z) { const e = { ph: 'wait', t, kz: 1, rx: 0, ry: 0, rz: 0, sq: 0, hand: 1, reach: 0, arm: 0, lift: 0, spent: 0, glow: 1, lk: null, smile: 1.15, brow: 0.25, wide: 0.1, lid: 0, blink: 0, nod: 0, done: false, home: false, g: 0 };
-    const g = e5((t - Z.tW) / Z.J) * (1 - e5((t - Z.tD) / Z.Bt)), kz = 1 + (Z.kh - 1) * sm((g - 0.08) / 0.8), s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0; e.g = g; e.kz = kz;
-    let h = lp(Z.H.y - Z.f0, Z.hl * kz, sm(g / 0.3)); h = lp(h, Z.A.y - Z.fA, sm((g - 0.7) / 0.3));
-    const bob = Z.dn * kz * (0.055 * Math.sin(t / 151 + 1) + 0.02 * Math.sin(t / 67)), duck = sm((t - Z.tW + 460) / 380) * (1 - sm((t - Z.tW) / 240)), spring = sm((t - Z.tW) / 160) * (1 - sm((t - Z.tW - 260) / 420)), land = sm((t - Z.tH + 160) / 220) * (1 - sm((t - Z.tH - 60) / 320));
-    const y = fl + h + bob - Z.dn * (0.22 * duck + 0.12 * land), q = (Z.cam.y - y) / Z.cam.y; e.p = { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q };
-    const L = lift117(t, Z), u1 = Math.min(1, L.up); e.lift = L.y; e.spent = L.spent; e.up = L.up; e.ant = L.ant;
-    e.reach = sm((t - Z.tA - 60) / (Z.RE - 60)) * (1 - sm((t - Z.tRel) / 420));
-    e.sq = -0.2 * duck + 0.13 * spring - 0.17 * L.ant + 0.15 * u1 - 0.1 * land + 0.025 * Math.sin(t / 230) - 0.05 * L.ring; e.arm = 0.42 * L.ant - 0.2 * u1;
+  /* one heave, tau ms after it begins: ant (the strain before), up (its step up, 0..1, with a small overshoot that settles) */
+  const hv = tau => { const A = W117.AN, U = W117.UP, t2 = tau - A - U; return { ant: sm(tau / A) * (1 - sm((tau - A) / (0.55 * U))), up: sm((tau - A) / U) + (t2 > 0 ? 0.13 * Math.exp(-t2 / 190) * Math.sin(t2 / 60) : 0), spent: sm((tau - A) / U) }; };
+  function lift117(t, Z) { let up = 0, ant = 0, spent = 0; for (let i = 0; i < Z.Hv.length; i++) { const h = hv(t - Z.Hv[i]); up += h.up; ant += h.ant; spent += h.spent; } return { up, ant, spent }; }
+  /* the act at t ms since the tap. p: where its pinch is in the world; kz: its size over its size at home; under: how far it is in under the molecule; lev: how high it has heaved (in steps) */
+  function ph117(t, Z) { const e = { ph: 'wait', t, kz: 1, rx: 0, ry: 0, rz: 0, sq: 0, hand: 1, reach: 0, arm: 0, glow: 1, lk: null, smile: 1.15, brow: 0.25, wide: 0.1, lid: 0, blink: 0, nod: 0, done: false, home: false, g: 0 };
+    const g = e5((t - Z.tW) / Z.J) * (1 - e5((t - Z.tD) / Z.Bt)), s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0; e.g = g;
+    const L = lift117(t, Z), sink = 1 - e5((t - Z.tRel) / Z.SK), under = sm((t - Z.tA + 350) / 600) * (1 - sm((t - Z.tRel - 0.75 * Z.SK) / 500)), lev = (0.4 * sm((t - Z.tA) / 450) + L.up) * sink + 0.05 * Math.sin(t / 310) * under * sink; e.under = under; e.lev = lev; e.up = L.up; e.ant = L.ant; e.spent = L.spent;
+    const kz = 1 + (Z.kh - 1) * sm((g - 0.08) / 0.8) + (Z.K2 - Z.kh) * under * (0.8 + 0.2 * Math.min(1, lev / Math.max(1, Z.n))); e.kz = kz;
+    const bob = Z.dn * kz * (0.05 * Math.sin(t / 151 + 1) + 0.018 * Math.sin(t / 67)) * (1 - 0.6 * under), duck = sm((t - Z.tW + 460) / 380) * (1 - sm((t - Z.tW) / 240)), spring = sm((t - Z.tW) / 160) * (1 - sm((t - Z.tW - 260) / 420)), land = sm((t - Z.tH + 160) / 220) * (1 - sm((t - Z.tH - 60) / 320));
+    /* never into the paper: its lowest part stays on or over the floor */ let h = lp(Z.H.y - Z.f0, Z.hl * kz, sm(g / 0.3)); h = Math.max(1.02 * Z.lo * kz, h + bob - Z.dn * (0.22 * duck + 0.12 * land)) + Z.Hs * lev * under - 0.1 * Z.lo * kz * L.ant * under;
+    const y = fl + h, q = (Z.cam.y - y) / Z.cam.y; e.p = { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q };
+    e.reach = under; e.sq = -0.2 * duck + 0.13 * spring - 0.2 * L.ant * under - 0.24 * sm((t - Z.tA + 500) / 350) * (1 - sm((t - Z.tA) / 420)) + 0.1 * sm((t - Z.tA) / 300) * under - 0.1 * land + 0.025 * Math.sin(t / 230); e.arm = 0.3 * L.ant;
+    e.bal = under * (1 + 0.18 * Math.min(Z.n, L.up) / Math.max(1, Z.n)) - 0.12 * L.ant * under;
     e.hand = cl(1 - sm((t - Z.tW + 480) / 300) + sm((t - Z.tEnd + 540) / 520), 0, 1);
-    e.smile = 1.25 + 0.55 * u1 - 0.45 * L.ant + 0.3 * land; e.brow = 0.25 - 0.65 * L.ant + 0.45 * u1 + 0.3 * duck; e.wide = 0.15 + 0.55 * duck + 0.6 * u1; e.lid = 0.4 * L.ant; e.glow = 1 + 0.5 * u1;
+    const u1 = Math.min(1, L.up - Math.floor(Math.min(L.up, Z.n - 0.001))); e.smile = 1.25 + 0.4 * under - 0.5 * L.ant + 0.3 * land; e.brow = 0.25 - 0.65 * L.ant + 0.35 * under + 0.3 * duck; e.wide = 0.15 + 0.55 * duck + 0.35 * under * (1 - L.ant); e.lid = 0.55 * L.ant; e.glow = 1 + 0.4 * under;
     if (t >= Z.tW - 480 && t < Z.tD + 200) e.lk = Z.tg;
-    e.ph = t < Z.tW - 480 ? 'wait' : t < Z.tW ? 'wind' : t < Z.tA ? 'go' : t < Z.Hv[0] ? 'reach' : t < Z.tRel ? 'heave' : t < Z.tD ? 'let' : t < Z.tH ? 'back' : t < Z.tEnd ? 'settle' : 'done'; e.done = e.home = t >= Z.tEnd; return e; }
+    e.ph = t < Z.tW - 480 ? 'wait' : t < Z.tW ? 'wind' : t < Z.tA - 350 ? 'go' : t < Z.Hv[0] ? 'under' : t < Z.tRel ? 'heave' : t < Z.tD ? 'sink' : t < Z.tH ? 'back' : t < Z.tEnd ? 'settle' : 'done'; e.done = e.home = t >= Z.tEnd; return e; }
   KIT.ph117 = ph117; KIT.lift117 = lift117;
   /* what the scheme needs of the figure, in the world, at home: the pinch, sizes, each arm's hand as it will be held (from the pinch, for a
      figure of home size), every joint from the pinch with its round */
   function fig117(S) { const K = S.k79 || init79(S), mid = S.mid75, par = mid && mid.parent, T = S.T, V3 = T.Vector3; if (!par) return null; par.updateWorldMatrix(true, false);
     const M = par.matrixWorld, ps = new V3().setFromMatrixScale(M).y || 1, k = K.m0.k, J = S.G.J, o0 = new V3(0, 0, 0).applyMatrix4(M), rel = (x, y, z) => new V3(x * k, (y - K.py) * k, (z || 0) * k).applyMatrix4(M).sub(o0);
     const h = par.localToWorld(new V3(K.m0.x, K.m0.y + K.py * k, 0));
-    const arms = K.arm.map(a => { const r = J[a.jn[0]].p, tp = J[a.jn[a.jn.length - 1]].p, dx = a.side * (tp[0] - r[0]), dy = tp[1] - r[1], a0 = Math.atan2(dy, dx), an = cl(W117.PHI - a0, -0.6, 1.1), c = Math.cos(a0 + an), s2 = Math.sin(a0 + an), ln = Math.hypot(dx, dy);
+    const arms = K.arm.map(a => { const r = J[a.jn[0]].p, tp = J[a.jn[a.jn.length - 1]].p, dx = a.side * (tp[0] - r[0]), dy = tp[1] - r[1], a0 = Math.atan2(dy, dx), an = cl(W117.PHI - a0, -0.6, 1.5), c = Math.cos(a0 + an), s2 = Math.sin(a0 + an), ln = Math.hypot(dx, dy);
       return { side: a.side, an, rel: rel(r[0] + a.side * ln * c, r[1] + ln * s2, 0), root: rel(r[0], r[1], 0) }; });
     const bj = new Set(); K.bead.forEach(b => b.jn.forEach(j => bj.add(j))); /* the companions on their threads are not counted: they trail where there is room */ const joints = []; J.forEach((q, j) => { if (!j || !q || bj.has(j)) return; const v = rel(q.p[0], q.p[1], q.p[2]); joints.push([v.x, v.y, v.z, Math.max(0.06, q.r || 0.1) * k * ps]); });
     let w = 0; J.forEach(q => { if (q) w = Math.max(w, Math.abs(q.p[0]) + (q.r || 0)); });
@@ -8432,7 +8432,7 @@ const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.
     mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); W.eu.set(e.rx + pitch, e.ry, e.rz + bank); mid.rotation.copy(W.eu);
     const Pl = par.worldToLocal(W.a.set(e.p.x, e.p.y, e.p.z)), pr = W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu); mid.position.set(Pl.x - pr.x, Pl.y - pr.y, Pl.z - pr.z);
     /* arms: the one that reaches is held up and out, the other follows a little late; both bend as it crouches */
-    const earm = ph117(e.t - 90, Z); K.arm.forEach(a => { const A = Z.arms && Z.arms[a.i], me = Z.arm === a.i, an = a1 * a.side * ((me ? e.reach : 0.6 * earm.reach) * (A ? A.an : 0) + (me ? e.arm : earm.arm)); if (Math.abs(an) < 1e-4) return; W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, an, (i, n) => 0.7 + 0.3 * i / Math.max(1, n - 1)); });
+    const earm = ph117(e.t - 90, Z); K.arm.forEach(a => { const A = Z.arms && Z.arms[a.i], me = Z.arm === a.i; if (me && Z.al > 1.001 && a1 > 0) { /* the reaching arm drawn out longer (the stand's search asked for it) */ const f = 1 + (Z.al - 1) * e.reach * a1, r0 = B[a.jn[0]].position; for (let i = 1; i < a.jn.length; i++) { const p = B[a.jn[i]].position; p.sub(r0).multiplyScalar(f).add(r0); } } const an = a1 * a.side * ((Z.hoist || me ? e.reach : 0.6 * earm.reach) * (A ? A.an : 0) + (me ? e.arm : earm.arm)); if (Math.abs(an) < 1e-4) return; W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, an, (i, n) => 0.7 + 0.3 * i / Math.max(1, n - 1)); });
     mid.updateWorldMatrix(true, false); mid.getWorldQuaternion(W.q); W.q2.copy(W.q).invert(); const fu = 1 / Math.max(1e-4, ps * k), toL = v => v.clone().applyQuaternion(W.q2).multiplyScalar(fu), vL = toL(vw), vLl = toL(vl);
     if (a1 > 0) { const ax = cl(0.09 * vL.x, -1, 1) * a1, st2 = cl(0.05 * Math.max(0, -vL.y), 0, 0.5) * a1;
       K.lick.forEach(j => { const p = B[j].position, w = cl((J[j].p[1] - K.lick0.y) / K.lickL, 0, 1); p.y += (p.y - K.lick0.y) * st2 * w; });
@@ -8451,24 +8451,25 @@ const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.
       if (e.reach > 0.001 && Z.tg) { const root = W.d.copy(B[arm.jn[0]].position).applyMatrix4(S.root.matrixWorld), ax = Z.tg.x, ay = Z.tg.y + e.lift, az = Z.tg.z + (Z.lz || 0) * e.lift; let dx = root.x - ax, dy = Math.min(root.y - ay, -0.35 * Z.tg.R), dz = root.z - az; const dl = Math.hypot(dx, dy, dz) || 1, R = Z.tg.R * 1.03;
         W.f.set(ax + dx / dl * R - tip.x, ay + dy / dl * R - tip.y, az + dz / dl * R - tip.z).multiplyScalar(e.reach * a1); tip.add(W.f); par.getWorldQuaternion(W.q2).invert(); W.f.applyQuaternion(W.q2).multiplyScalar(1 / ps); mid.position.add(W.f); }
       hw = [tip.x, tip.y, tip.z]; }
+    if (Z.hoist && e.under > 0.001) { /* its head is held under the middle of the molecule (the whole body is moved, on the page's plane) */ mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); const hq = W.c.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld), he = K.hr * k * ps * (1 + W117.SWK * (S.e117sw || 0)); W.f.set(Z.mc.x - hq.x, 0, Z.mc.z + 0.5 * he - hq.z).multiplyScalar(e.under * a1); par.getWorldQuaternion(W.q2).invert(); W.f.applyQuaternion(W.q2).multiplyScalar(1 / ps); mid.position.add(W.f); }
     if (h > 0) { mid.position.lerp(W.pI, h); mid.quaternion.slerp(W.qI, h); mid.scale.lerp(W.sI, h); }
     mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); const hp = W.a.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld); let lk = [0.3, -0.2];
     if (e.lk) { const dx = e.lk.x - hp.x, dy = e.lk.y - hp.y, dz = e.lk.z - hp.z, hz = Math.hypot(dx, dz) || 1; lk = [cl((dx / hz) * 1.4, -1.2, 1.2), cl(Math.atan2(dy, hz) * 1.2, -1, 0.4)]; } S.lk117 = lk;
     /* its shadow: on the floor under its pinch, smaller and darker the lower it hangs (lay75 reads S.x86f and S.h79) */
     const pw = par.localToWorld(W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu).add(mid.position)), fl = Z.floor ? Z.floor(pw.x, pw.z) : 0;
     S.x86f = h < 0.999 ? [pw.x, fl - Z.f0, pw.z] : null; S.h79 = lp(cl((pw.y - fl - Z.dn * e.kz) / Math.max(0.3, 2.4 * Z.dn) - 0.3, -0.6, 0.8), S.h79 || 0, h);
-    S.h117 = { p: [pw.x, pw.y, pw.z], head: [hp.x, hp.y, hp.z], hand: hw, hr: K.hr * k * ps, kz: e.kz, ph: e.ph, w: h, lift: e.lift, reach: e.reach }; }
-  function act117(f0, grp, S, t, o) { const Z = o.bites.s117, e = ph117(t, Z); S.x117 = { t, e, Z }; W117.e = e; /* the idle under the act runs on from the rest before it: the same clock and the same look */ const r = S.r117; f0(grp, 'rest', r ? r.t + (nowMs() - r.at) / 1000 * r.rate : t, r ? r.o : {}); home117(S, (S.h117sw || 0) * Math.max(0, 1 - e.spent / Math.max(1, Z.n))); post117(S, S.x117); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+    S.h117 = { p: [pw.x, pw.y, pw.z], head: [hp.x, hp.y, hp.z], hand: hw, hr: K.hr * k * ps * (1 + W117.SWK * (S.e117sw || 0)) * (1 + sq), kz: e.kz, ph: e.ph, w: h, under: e.under, lev: e.lev, reach: e.reach }; }
+  function act117(f0, grp, S, t, o) { const Z = o.bites.s117, e = ph117(t, Z); S.x117 = { t, e, Z }; W117.e = e; /* the idle under the act runs on from the rest before it: the same clock and the same look */ const r = S.r117; f0(grp, 'rest', r ? r.t + (nowMs() - r.at) / 1000 * r.rate : t, r ? r.o : {}); S.e117sw = (S.h117sw || 0) * Math.max(0, 1 - e.spent / Math.max(1, Z.n)) * (1 - e.under) + (Z.hoist ? W117.BAL * e.bal : 0); home117(S, S.e117sw); post117(S, S.x117); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
   play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75 || !on117(S)) return f0(grp, clip, t, o);
     if (clip === 'act' && o && o.bites && o.bites.s117) { try { return act117(f0, grp, S, t, o); } catch (err) { W117.err = 'act ' + String(err && err.stack); S.x117 = null; S.x86f = null; return f0(grp, clip, t, o); } }
     if (S.x117) { S.x117 = null; S.lk117 = null; S.x86f = null; S.h117 = null; }
     const r = f0(grp, clip, t, o); if (clip === 'rest' && !(o && o.jar)) { const n = nowMs(), p = S.r117; S.r117 = { t, o: Object.assign({}, o || {}), at: n, rate: p && n - p.at > 1 && n - p.at < 200 && t > p.t ? 0.5 * p.rate + 0.5 * (t - p.t) / ((n - p.at) / 1000) : (p ? p.rate : 1) }; } if (clip === 'rest' && !(o && o.jar) && S.k79) { try { home117(S, null); } catch (err) { W117.err = 'home ' + String(err && err.stack); } } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W117 = W117; }
 // ==== W117 END
-// ==== W118 BEGIN
+// ==== W129 BEGIN
 // (builder 117) HYDROGEN'S CHANGE OF STAGE (AA.rxKit.h117; ?h117=0 gives today's: Water's ball on its body). Its own centrepiece from what
 // hydrogen is: the lightest gas, that swells and rises. Nothing of Water's change runs (no curl, no ball, no bud, no wash): for Hydrogen
-// the clip 'evo' is played here. One timeline in ms both files read (KIT.ph118; o.z117 is the scheme's plan, scheme.js S118):
+// the clip 'evo' is played here. One timeline in ms both files read (KIT.ph129; o.z117 is the scheme's plan, scheme.js S129):
 //  - the OLD form (a figure of the old stage, made here; the new stage's figure is hidden) notices, floats low over bench and page to its
 //    stand at the molecule, growing as it comes, its tail on the floor, its shadow under it, its idle running on under everything;
 //  - there its HEAD SWELLS: a round of its own substance (the scheme draws it: a lit body with depth, its face on it) grows out of the head
@@ -8478,56 +8479,59 @@ const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.
 //  - the round sinks back into the NEW form's head as its body, arms, tail and companions grow out of it; it looks about, floats home.
 // The figure in the middle is held by its HEAD (the whole body moved so the head is on the round's place), so the old and the new stand in
 // the same place whatever their sizes.
-const W118 = { err: null, dbg: {} };
+const W129 = { err: null, dbg: {} };
 { const sm = sm52, lp = (a, b, u) => a + (b - a) * u, cl = (x, a, b) => (x < a ? a : x > b ? b : x), e5 = u => { u = cl(u, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); };
-  const on118 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
-  function ph118(t, Z) { const T = Z.T, e = { t, ph: 'wait', n: 0.5, done: false, home: false, old: t < T.tX };
+  const on129 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
+  function ph129(t, Z) { const T = Z.T, e = { t, ph: 'wait', n: 0.5, done: false, home: false, old: t < T.tX };
     const g = e5((t - T.t0) / Z.J) * (1 - e5((t - T.tB) / Z.Bt)); e.g = g; const kk = sm((g - 0.08) / 0.8); e.kzO = 1 + (Z.kbO - 1) * kk; e.kzN = 1 + (Z.kbN - 1) * kk;
     const s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0, P = (H, hl, dn, kz, hA) => { let h = lp(H.y - Z.f0, hl * kz, sm(g / 0.3)); h = lp(h, hA, sm((g - 0.7) / 0.3)); const duck = sm((t + 200) / 320) * (1 - sm((t - T.t0) / 240)), land = sm((t - T.tH + 160) / 220) * (1 - sm((t - T.tH - 60) / 320)); e.duck = duck; e.land = land;
         const y = fl + h + dn * kz * (0.05 * Math.sin(t / 151 + 1) + 0.018 * Math.sin(t / 67)) - dn * (0.2 * duck + 0.12 * land), q = (Z.cam.y - y) / Z.cam.y; return { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q }; };
     e.pO = P(Z.HO, Z.hlO, Z.dnO, e.kzO, Z.AO.y - Z.fA); e.pN = P(Z.HN, Z.hlN, Z.dnN, e.kzN, Z.AN.y - Z.fA);
     /* the round: out of the old head, to its full size, a breath while the change shows, back into the new head */ const R0 = 1.3 * Z.hrO * Z.kbO, R1 = 1.3 * Z.hrN * Z.kbN, gr = sm((t - T.tS - 380) / (T.tC - T.tS - 380)), ou = sm((t - T.tO) / 800), u = cl((t - T.tC) / (T.tO - T.tC), 0, 1);
     e.R = lp(lp(R0, Z.RM, gr + 0.07 * Math.sin(Math.PI * gr) * gr), R1, ou) * (1 + 0.025 * Math.sin(t / 190) * gr * (1 - ou)); e.inn = sm((t - T.tS) / 620); e.out = sm((t - T.tO - 720) / 560); e.env = t > T.tS && t < T.tO + 1290; e.u = u; e.gr = gr; e.ou = ou;
-    e.col = (0.3 * sm((t - T.tS - 200) / 650) + 0.7 * sm((t - T.tX + 330) / 280) * (1 - sm((t - T.tX - 60) / 320))) * (1 - sm((t - T.tO - 80) / 700)); e.an = sm((t - T.t1 + 250) / 450) * (1 - sm((t - T.tO - 550) / 550));
+    e.col = (0.1 * sm((t - T.tS - 200) / 650) + 0.7 * sm((t - T.tX + 330) / 280) * (1 - sm((t - T.tX - 60) / 320))) * (1 - sm((t - T.tO - 80) / 700)); e.an = sm((t - T.t1 + 250) / 450) * (1 - sm((t - T.tO - 550) / 550));
     const Pu = sm(u / 0.3) * (1 - sm((u - 0.7) / 0.3)); e.P = Pu; e.rise = Z.RM * (Z.V === 1 ? 1.0 : 0.35) * Pu + 0.25 * Z.RM * gr * (1 - ou);
     e.sqz = sm((t - T.tS) / 300) * (1 - sm((t - T.tC + 150) / 260)); e.joy = sm((t - T.tC) / 250) * (1 - sm((t - T.tP - 300) / 400));
     e.sq = -0.18 * e.duck + 0.12 * sm((t - T.t0) / 160) * (1 - sm((t - T.t0 - 260) / 420)) + 0.1 * e.sqz - 0.1 * e.land + 0.02 * Math.sin(t / 230) + 0.12 * sm((t - T.tO - 300) / 250) * (1 - sm((t - T.tO - 700) / 400));
     e.hand = cl(1 - sm((t + 200) / 300) + sm((t - T.tE + 520) / 500), 0, 1); e.n = t < T.tX ? 0.5 : 1 + 3.8 * sm((t - T.tX) / 350); e.home = t >= T.tH; e.done = t >= T.tE;
     e.ph = t < T.t0 ? 'notice' : t < T.t1 ? 'go' : t < T.tS ? 'stand' : t < T.tC ? 'swell' : t < T.tO ? 'change' : t < T.tP ? 'out' : t < T.tB ? 'proud' : t < T.tH ? 'back' : t < T.tE ? 'settle' : 'done'; return e; }
-  KIT.ph118 = ph118;
-  const hj118 = S => { const K = S.k79; return K.h117 || (K.h117 = (() => { const body = S.G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && S.G.J[j]) : [], i = sp.indexOf(K.hj); return [sp[i - 1], K.hj, sp[i + 1]].filter(j => j != null); })()); };
+  KIT.ph129 = ph129;
+  const hj129 = S => { const K = S.k79; return K.h117 || (K.h117 = (() => { const body = S.G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && S.G.J[j]) : [], i = sp.indexOf(K.hj); return [sp[i - 1], K.hj, sp[i + 1]].filter(j => j != null); })()); };
   /* one figure placed for the change: by its pinch, its tail pressed on the floor, its body drawn into its head by col, then moved so its head is on the round's place */
-  function place118(S, e, Z, old) { const K = S.k79, B = S.bones, T = S.T, V3 = T.Vector3, mid = S.mid75, par = mid && mid.parent, J = S.G.J; if (!K || !par) return null;
-    const W = S.w118 || (S.w118 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), eu: new T.Euler(), q: new T.Quaternion(), qI: new T.Quaternion(), pI: new V3(), sI: new V3(), z: new V3(0, 0, 1) });
+  function place129(S, e, Z, old) { const K = S.k79, B = S.bones, T = S.T, V3 = T.Vector3, mid = S.mid75, par = mid && mid.parent, J = S.G.J; if (!K || !par) return null;
+    const W = S.w129 || (S.w129 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), eu: new T.Euler(), q: new T.Quaternion(), qI: new T.Quaternion(), pI: new V3(), sI: new V3(), z: new V3(0, 0, 1) });
     par.updateWorldMatrix(true, false); const ps = W.a.setFromMatrixScale(par.matrixWorld).y || 1, h = e.hand, a1 = 1 - h, kz = old ? e.kzO : e.kzN, p = old ? e.pO : e.pN; W.qI.copy(mid.quaternion); W.pI.copy(mid.position); W.sI.copy(mid.scale);
-    const sq = cl(e.sq, -0.4, 0.4), k = K.m0.k * kz, e2 = ph118(e.t - 160, Z), p2 = old ? e2.pO : e2.pN, bank = cl(-0.028 * (p.x - p2.x) / 0.16 / Math.max(0.5, kz), -0.35, 0.35);
-    mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); W.eu.set(0, 0, bank + 0.05 * Math.sin(e.t / 410) * e.an); mid.rotation.copy(W.eu);
+    const sq = cl(e.sq, -0.4, 0.4), k = K.m0.k * kz, e2 = ph129(e.t - 160, Z), p2 = old ? e2.pO : e2.pN, bank = cl(-0.028 * (p.x - p2.x) / 0.16 / Math.max(0.5, kz), -0.35, 0.35);
+    mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); /* under the balloon the body hangs and swings, a slow pendulum (its arms and tail follow late, below) */ const sw = t2 => e.an * (0.19 * Math.sin(t2 / 430) + 0.07 * Math.sin(t2 / 173 + 1)), swN = sw(e.t), swL = sw(e.t - 170); W.eu.set(0, 0, bank + swN); mid.rotation.copy(W.eu);
     const Pl = par.worldToLocal(W.a.set(p.x, p.y, p.z)), pr = W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu); mid.position.set(Pl.x - pr.x, Pl.y - pr.y, Pl.z - pr.z);
     mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); mid.getWorldQuaternion(W.q);
     if (a1 > 0) { /* the tail pressed short where the floor is near, trailing its way */ const t0w = W.c.copy(K.tail0).applyMatrix4(S.root.matrixWorld), upY = Math.max(0.3, W.d.set(0, 1, 0).applyQuaternion(W.q).y), fl = Z.floor ? Z.floor(p.x, p.z) : 0, Lw = K.tailL * k * ps * (1 + sq) * upY, c0 = cl((t0w.y - fl - 0.05) / Math.max(1e-4, Lw), 0.3, 1), kt = 1 - (1 - c0) * a1;
       K.tail.forEach(j => { const q = B[j].position; q.x = K.tail0.x + (q.x - K.tail0.x) * kt; q.y = K.tail0.y + (q.y - K.tail0.y) * kt; }); W.c.copy(K.tail0); rot79(S, K.tail, W.c, W.z, (-2.2 * bank - 0.4 * (1 - c0)) * a1, i => cl((K.tail0.y - J[K.tail[i]].p[1]) / K.tailL, 0, 1));
       W.c.copy(K.lick0); rot79(S, K.lick, W.c, W.z, 2.4 * bank * a1, i => 0.4 + 0.6 * i / Math.max(1, K.lick.length - 1)); }
-    const col = e.col * a1; if (col > 0.001) { /* all but the head drawn up into the head */ const Hj = hj118(S), hc = W.c.copy(B[K.hj].position), f = 1 - 0.97 * col; for (let j = 1; j < B.length; j++) { if (!J[j] || Hj.indexOf(j) >= 0) continue; B[j].position.lerp(hc, col); B[j].scale.multiplyScalar(f); } }
+    if (a1 > 0 && e.an > 0.001) { /* its arms hang and swing late */ K.arm.forEach(a => { W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, a1 * e.an * (-0.5 * a.side + 1.4 * (swL - swN) - 0.5 * swL), (i, n) => 0.6 + 0.4 * i / Math.max(1, n - 1)); }); }
+    const col = e.col * a1; if (col > 0.001) { /* all but the head drawn up into the head */ const Hj = hj129(S), hc = W.c.copy(B[K.hj].position), f = 1 - 0.97 * col; for (let j = 1; j < B.length; j++) { if (!J[j] || Hj.indexOf(j) >= 0) continue; B[j].position.lerp(hc, col); B[j].scale.multiplyScalar(f); } }
     if (K.fx) { K.fx.pop.visible = false; K.fx.sk.visible = false; }
     /* held by its head on the round's place */ const hw = W.d.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld), an = e.an * a1;
     if (an > 0.001) { W.a.set(Z.EA.x - hw.x, Z.EA.y + e.rise * 0.697 - hw.y, Z.EA.z - e.rise * 0.717 - hw.z).multiplyScalar(an); hw.add(W.a); par.getWorldQuaternion(W.q).invert(); W.a.applyQuaternion(W.q).multiplyScalar(1 / ps); mid.position.add(W.a); }
+    if (an > 0.001 && K.tail.length) { /* its tail drawn taut to the page under it: the balloon's string */ mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); let tj = K.tail[0]; K.tail.forEach(j => { if (J[j].p[1] < J[tj].p[1]) tj = j; }); const flr = Z.floor ? Z.floor(hw.x, hw.z) : 0, sdn = Math.max(0, hw.y - flr - 0.04) / 0.697, wt = an * (1 - sm((e.col - 0.5) / 0.4)), L = Math.max(1e-4, K.tail0.y - J[tj].p[1]);
+      W.a.set(Z.AN.x + 0.3 * (hw.x - Z.AN.x), hw.y - 0.697 * sdn, hw.z + 0.717 * sdn); S.root.worldToLocal(W.a); W.b.copy(W.a).sub(B[tj].position); K.tail.forEach(j => { const w = Math.pow(cl((K.tail0.y - J[j].p[1]) / L, 0, 1), 1.25) * wt; B[j].position.addScaledVector(W.b, w); }); }
     if (h > 0) { mid.position.lerp(W.pI, h); mid.quaternion.slerp(W.qI, h); mid.scale.lerp(W.sI, h); }
     const fl = Z.floor ? Z.floor(hw.x, hw.z) : 0; S.x86f = h < 0.999 ? [hw.x, fl - Z.f0, hw.z + 0.6 * K.py * k * ps] : null; S.h79 = lp(cl((hw.y - fl) / Math.max(0.3, 6 * K.py * k * ps) - 0.2, -0.5, 0.8), S.h79 || 0, h);
     return { head: [hw.x, hw.y, hw.z], hr: K.hr * k * ps, kz }; }
-  function end118(S) { const X = S.e118; if (!X) return; if (X.og && X.og.parent) X.og.parent.remove(X.og); if (S.mid75) S.mid75.visible = true; S.e118 = null; S.h118 = null; S.x86f = null; }
-  KIT.old118 = S => { try { return S && S.e118 && S.e118.osp ? KIT.fig117(S.e118.osp) : null; } catch (e) { return null; } };
-  function evo118(f0, grp, S, t, o) { let X = S.e118; const T = S.T;
-    if (!X || X.from !== o.from) { end118(S); const g0 = hyd75Fig(T, o.from, { stage: o.from }), og = new T.Group(); og.add(g0.children[0]); og.userData.rig2 = g0.userData.rig2; og.userData.rig2.sp.grp = og; grp.parent.add(og); X = S.e118 = { og, osp: og.userData.rig2.sp, from: o.from }; }
+  function end129(S) { const X = S.e129; if (!X) return; if (X.og && X.og.parent) X.og.parent.remove(X.og); if (S.mid75) S.mid75.visible = true; S.e129 = null; S.h129 = null; S.x86f = null; }
+  KIT.old129 = S => { try { return S && S.e129 && S.e129.osp ? KIT.fig117(S.e129.osp) : null; } catch (e) { return null; } };
+  function evo129(f0, grp, S, t, o) { let X = S.e129; const T = S.T;
+    if (!X || X.from !== o.from) { end129(S); const g0 = hyd75Fig(T, o.from, { stage: o.from }), og = new T.Group(); og.add(g0.children[0]); og.userData.rig2 = g0.userData.rig2; og.userData.rig2.sp.grp = og; grp.parent.add(og); X = S.e129 = { og, osp: og.userData.rig2.sp, from: o.from }; }
     const og = X.og, O = X.osp, Z = o.z117; og.position.copy(grp.position); og.quaternion.copy(grp.quaternion); og.scale.copy(grp.scale);
-    { const r = S.r117 || X.r0, nw = typeof performance !== 'undefined' ? performance.now() : Date.now(), tr = r ? r.t + (nw - r.at) / 1000 * (r.rate || 1) : t, ro = r ? r.o : { land: 1e9 }; if (r && !X.r0) X.r0 = r; f0(og, 'rest', tr, ro); S.h118in = 1; f0(grp, 'rest', tr, ro); S.h118in = 0; } if (O.k79 && O.k79.fx) { O.k79.fx.pop.visible = false; O.k79.fx.sk.visible = false; } if (S.k79 && S.k79.fx) { S.k79.fx.pop.visible = false; S.k79.fx.sk.visible = false; }
-    if (!Z) { og.visible = true; if (O.mid75) O.mid75.visible = true; S.mid75.visible = false; S.h118 = null; return { e: 0, y: 0, lunge: 0, n: 0.5, big: 0, done: false, home: false }; }
-    const e = ph118(t, Z), old = e.old; og.visible = old; if (O.mid75) O.mid75.visible = old; S.mid75.visible = !old; const F = place118(old ? O : S, e, Z, old);
-    S.h118 = F ? { e, head: F.head, hr: F.hr, old } : null; W118.e = e; return { e: 0, y: 0, lunge: 0, n: e.n, big: 0, done: e.done, home: e.home }; }
+    { const r = S.r117 || X.r0, nw = typeof performance !== 'undefined' ? performance.now() : Date.now(), tr = r ? r.t + (nw - r.at) / 1000 * (r.rate || 1) : t, ro = r ? r.o : { land: 1e9 }; if (r && !X.r0) X.r0 = r; f0(og, 'rest', tr, ro); S.h129in = 1; f0(grp, 'rest', tr, ro); S.h129in = 0; } if (O.k79 && O.k79.fx) { O.k79.fx.pop.visible = false; O.k79.fx.sk.visible = false; } if (S.k79 && S.k79.fx) { S.k79.fx.pop.visible = false; S.k79.fx.sk.visible = false; }
+    if (!Z) { og.visible = true; if (O.mid75) O.mid75.visible = true; S.mid75.visible = false; S.h129 = null; return { e: 0, y: 0, lunge: 0, n: 0.5, big: 0, done: false, home: false }; }
+    const e = ph129(t, Z), old = e.old; og.visible = old; if (O.mid75) O.mid75.visible = old; S.mid75.visible = !old; const F = place129(old ? O : S, e, Z, old);
+    S.h129 = F ? { e, head: F.head, hr: F.hr, old } : null; W129.e = e; return { e: 0, y: 0, lunge: 0, n: e.n, big: 0, done: e.done, home: e.home }; }
   play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75) return f0(grp, clip, t, o);
-    if (clip === 'evo' && o && o.from && o.from !== S.st && on118(S) && grp.parent && !o.e31) { try { o.h118 = 1; return evo118(f0, grp, S, t, o); } catch (err) { W118.err = 'evo ' + String(err && err.stack); try { end118(S); } catch (x) { /* as it is */ } return f0(grp, clip, t, o); } }
-    if (S.e118) { try { end118(S); } catch (err) { W118.err = 'end ' + String(err && err.stack); } } return f0(grp, clip, t, o); })(play26);
-  KIT.spirit26.play = play26; KIT.W118 = W118; }
-// ==== W118 END
+    if (clip === 'evo' && o && o.from && o.from !== S.st && on129(S) && grp.parent && !o.e31) { try { o.h129 = 1; return evo129(f0, grp, S, t, o); } catch (err) { W129.err = 'evo ' + String(err && err.stack); try { end129(S); } catch (x) { /* as it is */ } return f0(grp, clip, t, o); } }
+    if (S.e129) { try { end129(S); } catch (err) { W129.err = 'end ' + String(err && err.stack); } } return f0(grp, clip, t, o); })(play26);
+  KIT.spirit26.play = play26; KIT.W129 = W129; }
+// ==== W129 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
