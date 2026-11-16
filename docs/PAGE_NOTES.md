@@ -1899,3 +1899,11 @@ Block `W120` (kitart.js, after `W114`), switch `AA.rxKit.w120` (`?w120=0` off); 
 - **Pours** start 66 ms early (they swell to their loudest 66 ms in): every beat's loudest frame is now on its beat.
 - **Score** (chain `CC(O)CCC(O)CC(C)O`, yield before 842): stage 1 x1.85 1146, 2 x3.35 1542, 3 x4.8 1845, 4 x6.45 2140, 5 x8.53 2460; the same with `?w114=0&w120=0` and with W110..W120 all off. (Builder 114's 2056 at stage 3 was the four-bond chain, 2521 at stage 5 the ring: other molecules.)
 - **Takes** `y120r5` (ring, stage 5), `y120c1..4` (chain), `v120c5`, `v120ring3`, `v120big3` (seven waters), `v120r60` (60 fps). Clip `shots\small\water120-act-phone.mp4`.
+
+## Rule text 122 (2026-11-16, branch `rule-text-119`)
+
+- `reference()` (path.js): the six starting reagents (`RUNG.start`), the ten starting reflexes (`SELF0`) and the twelve across the fold have rows, `start: true`, as the starting motifs do. Starting ones read "From the start."; across ones "From round 4." (seal and open across: "From round 4, with Seal held." / "with Open held."; they are owned once the twin is). Every count leaves start rows out: checked on a fresh save and an old save against the previous path.js (`.claude/r119/j_refcmp.js`): the other 75 rows, `owned()`, `profileOpts()`, `stageOf()` and the sign's count and share are identical.
+- The manual's spread (scheme.js, manual code only): the tab's `REF_HEAD` is lettered at the head of the reagent, reflex and instrument spreads (pen 23, cut between sentences across the two pages, a rule under it). The rows fill what is left, scaled down when they must (never under 96 of 114). A tab with more rows than a spread holds turns to further leaves: dots and an arrow at the foot of the right page, a tab change starts again at the first leaf. The reflexes are two sections: along the chain in the order they fire (reflex head), then across the fold in theirs (across head). The ruled lines follow the rows. Reagents take two leaves (20 and 3), reflexes two (13 and 12).
+- Pictures for the ten starting reflexes (what it starts from, an arrow, what it leaves) and one for every across reflex (the folded snake and the loop it closes).
+- Dehydrate reworded so it does not end on a lone "Cl.".
+- `docs/REFERENCE.md` (written by `docs/tools_chem/sweep_refdoc.py`) was not written again; it will list the start rows when it is.
