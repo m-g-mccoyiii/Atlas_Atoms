@@ -8418,6 +8418,103 @@ W99.shape = (f0 => function (S) { const r = f0(S); if (!KIT.b118 || !r) return r
     W118.nD = r.D.length; } catch (x) { W118.err = 'shape ' + String(x && x.stack); } return r; })(W99.shape);
 KIT.W118 = W118;
 // ==== W118 END
+// ==== W133 BEGIN
+// (builder 133) BRIMSTONE'S CHANGE OF STAGE IS ITS OWN BODY CHANGING (switch KIT.b133, ?b133=0 gives today's change). No fire teardrop, no
+// lump standing in for the creature, nothing laid over a swap. Scheme side in S133 (the great fire and the small fire bodies are not shown).
+//  - the old form keeps its smoke, its face, its own drawn tongues and its idle (pose73) all the way to the stand: nothing is drawn into the lump;
+//    it is a little smaller there than the lump alone was (W133.KS), so it has room to grow;
+//  - at the stand it crouches, then its own smoke BILLOWS: the whole smoke body above the lump swells up and out from the lump's top as one
+//    (every joint's place and size grown together, so the skin keeps whole), rolled by a slow field, arms and head carried up, the head
+//    stretched to the front; eyes wide, brows up, mouth strained; its tongues flare, the cracks glow hotter; held alive;
+//  - as it billows, both stages' smoke is drawn toward ONE upright cloud (each joint's spread toward the axis cut, the height made the same in
+//    the room, every smoke joint fattened), so at the top of the billow the new stage's figure, standing in the same place at the same size
+//    with the same billow and idle, has nearly the old one's shape; it takes its place smoke by smoke (both washes cut by ONE field of noise
+//    in the eye's space, the old kept where the new is not, an ink edge on the cut; the pen lines cross-faded; the eyes squeezed shut across it);
+//  - then the smoke draws back in and down out of the cloud into the new stage's own form and size: a sag, a small overshoot, steady; the
+//    tongues back to their size. Home as before.
+// Every curve is a function of the clip's time in ms (its key moments from Water's slots: tl31); a joint higher up reads it a little later.
+KIT.b133 = KIT.b133 == null ? !(typeof location !== 'undefined' && /[?&]b133=0/.test(String(location.search))) : KIT.b133;
+const W133 = { err: null, ref: null, tr: [], KS: 0.8, SB: 0.55, LX: 0.5, FAT: 1.4 };
+const on133 = S => !!(KIT.b133 !== false && on97(S));
+/* the key moments of one change, in ms of the clip */
+const tk133 = o => { const X = tl31(o), L = o.L; if (o.tk133 && o.tk133.L === L && o.tk133.X === X) return o.tk133; const ph = p => (p <= 1 ? p * X.TG : X.TG + (p - 1) * X.TS) * L, v = x => (X.H + x * X.TA / 3) * L;
+  return (o.tk133 = { L, X, arr: ph(1.13), sw0: ph(1.2), sw1: ph(1.68), k0: ph(1.74), k1: v(0.34), d0: v(0.38), d1: v(1.5), home: v(2.12) }); };
+/* the curves at t: b the billow (0 .. 1 full, wob its breathing), ant the crouch, st the settle, kd old -> new, mk joints and size old -> new, fl the tongues' flare */
+const cv133 = (o, t) => { const K = RK, k = tk133(o), sm = K.sm, ant = K.pulse(t, k.arr - 60, k.sw0 + 160, 170), sw = sm((t - k.sw0) / (k.sw1 - k.sw0)), dr = sm((t - k.d0) / (k.d1 - k.d0)),
+    ds = t - (k.d1 - 160), st = ds > 0 ? Math.exp(-ds / 260) * Math.sin(2 * PI * ds / 560) : 0, full = sw * (1 - dr), wob = full * (0.035 * Math.sin(2 * PI * t / 760) + 0.02 * Math.sin(2 * PI * t / 470 + 1.3));
+  return { b: full, wob, full, sw, dr, ant, st, mk: dr, kd: sm((t - k.k0) / (k.k1 - k.k0)), fl: sw * (1 - sm((t - k.d0) / (0.85 * (k.d1 - k.d0)))) }; };
+/* a slow field in space (the smoke rolls) */
+const nz133 = (x, y, z) => 0.5 + 0.3 * Math.sin(1.7 * x + 1.1 * y + 0.4) * Math.cos(1.3 * z - 0.7 * y + 1.9) + 0.2 * Math.sin(2.9 * y - 1.3 * x + 2.2 * z + 0.7);
+/* the pose numbers: the old stage's idle (the new one's as the joints go over), the face, arms and crouch of the billow, the settle */
+const RQ133 = ['sq', 'px', 'pz', 'lean', 'bow', 'hair', 'armR', 'armL', 'blink', 'wide', 'brow', 'looky', 'lookx', 'hturn', 'tilt', 'smile', 'open', 'lidx'];
+C26.evo = (f0 => function (S, t, o, q) { f0(S, t, o, q); const e = q && q.e31; if (!(e && e.g97 && o && o.e31 && t >= 0 && on133(S))) return; try { const K = RK, k = tk133(o), c = cv133(o, t), g = e.g97;
+    const rest = st => { const r = Object.assign({}, Q26), P = Object.create(S); P.st = st; C26.rest(P, t / 1000, {}, r, 0); return r; }, mk = S.st !== o.from ? c.mk : 0, r0 = rest(o.from), r1 = mk > 0 ? rest(S.st) : r0;
+    const w0 = K.sm(t / 350); /* (the clip's own numbers at its start, eased into these: they come from its wait for the beat) */ RQ133.forEach(n => { const a = r0[n] || 0, b = r1[n] || 0, m = a + (b - a) * mk, f = typeof q[n] === 'number' ? q[n] : m; q[n] = f + (m - f) * w0; }); q.sink *= 1 - w0; q.nod *= 1 - w0; q.swell *= 1 - w0; q.rw = 0; q.m = null;
+    const up = c.sw * (1 - c.kd), shut = K.pulse(t, k.k0 - 40, k.k1 + 60, 120), wow = K.pulse(t, k.k1 + 40, k.d1 - 100, 180), proud = K.pulse(t, k.d1 - 120, k.home + 300, 220);
+    q.sq += -0.14 * c.ant + 0.16 * c.st; q.px += 0.08 * c.ant - 0.06 * c.st; q.pz = q.px; q.wide += 0.6 * up + 0.5 * wow; q.brow += 0.85 * up + 0.5 * wow; q.looky += 0.45 * up; q.open = Math.max(q.open, 0.42 * up); q.smile = q.smile * (1 - 0.5 * up) + 0.5 * proud; q.lidx = Math.max(q.lidx, 0.3 * proud);
+    q.blink = Math.max(q.blink, shut); q.armR += 0.7 * c.full; q.armL += 0.7 * c.full; q.hair += 0.3 * c.full;
+    e.old = t < k.k1; g.suck = 0; g.rise = 1; g.form = 1; g.eyes = 1; g.heat = 0; g.w133 = c; } catch (x) { W133.err = 'evo ' + String(x && x.stack); } })(C26.evo);
+/* the dissolve: both washes and their margins cut by one field laid on the picture (so at every point of the picture one of the two is kept: no hole, no
+   double), drifting slowly; the old kept where v >= a, the new where v < a; an ink edge on the cut */
+const FR133 = '\nif (d133.y != 0.0) { vec3 s133 = vec3(vViewPosition.xy / max(0.001, vViewPosition.z) * d133.z, d133.w); float n133 = 0.82 * N30(s133 + vec3(0.0, 1.7, 0.0)) + 0.18 * N30(s133 * 2.3 + vec3(4.0, 0.0, 2.0)), e133 = n133 - d133.x;'
+  + ' if (d133.y > 0.0 ? e133 < 0.0 : e133 >= 0.0) discard; gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.16, 0.14, 0.22), 0.5 * (1.0 - smoothstep(0.0, 0.022, abs(e133)))); }\n';
+const dz133 = F => { if (F.d133) return F.d133; const T = F.T, U = F.d133 = { value: new T.Vector4(0, 0, 1, 0) };
+  const one = m => { if (!m || !m.onBeforeCompile || m.userData.d133) return; m.userData.d133 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey;
+    m.onBeforeCompile = sh => { f0(sh); sh.uniforms.d133 = U; sh.fragmentShader = 'uniform vec4 d133;\n' + sh.fragmentShader.replace('#include <dithering_fragment>', '#include <dithering_fragment>' + FR133); };
+    m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'd133'; m.needsUpdate = true; };
+  if (F.m30) { one(F.m30.body); one(F.m30.hull); }
+  const R = F.pen30, pm = R && R.mesh && R.mesh.material; if (pm && pm.uniforms && !pm.uniforms.a133) { pm.uniforms.a133 = { value: 1 }; pm.fragmentShader = pm.fragmentShader.replace('uniform vec3 col;', 'uniform vec3 col;\nuniform float a133;').replace(/ }$/, ' gl_FragColor.a *= a133; }'); pm.needsUpdate = true; }
+  return U; };
+/* (a from -0.06 to 1.06, slow through the middle where the field mostly lies: every part kept at one end, gone at the other; fq the field's scale on the picture, tw the clip's time for its drift) */
+const cut133 = (F, mode, k, fq, tw) => { const U = dz133(F), pm = F.pen30 && F.pen30.mesh && F.pen30.mesh.material; const x = 2 * k - 1; U.value.set(0.5 + 0.56 * Math.sign(x) * Math.pow(Math.abs(x), 1.7), mode, fq || 1, 3.3 + 0.0004 * (tw || 0)); if (pm && pm.uniforms.a133) pm.uniforms.a133.value = mode > 0 ? 1 - RK.sm((k - 0.15) / 0.7) : mode < 0 ? RK.sm((k - 0.15) / 0.7) : 1; };
+/* the face by kf (scale), the idle's extras by ka / kx (opacity), its tongues by kt and flared by fl; nothing compounds frame to frame */
+const face133 = (Z, kf) => { const Fc = Z.F; if (!Fc) return; const vis = kf > 0.02; Fc.eyes.forEach(x => { if (x.g) { x.g.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) x.g.visible = false; } });
+  (Fc.brows || []).forEach(b => { const m = b && b.g; if (!m) return; if (!m.userData.s133) m.userData.s133 = (m.userData.s97 || m.scale).clone(); m.scale.copy(m.userData.s133).multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; });
+  [Fc.mouth, Fc.om].forEach(m => { if (m && m.isObject3D) { m.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; } });
+  const K = Z.k73; if (K && K.eg) K.eg.forEach(x => { x.g.scale.multiplyScalar(Math.max(0.001, kf)); x.g.material.opacity *= kf; if (!vis) x.g.visible = false; }); };
+const parts133 = (Z, ka, kx, kt, fl) => { const K = Z.k73; if (!K) return; K.sm.forEach(p => { p.m.material.opacity *= kx; }); if (K.mouth) K.mouth.m.material.opacity *= kx; K.wisp.forEach(w => { if (w.s.off) return; w.s.w *= kx; if (kx < 0.04) w.s.off = true; });
+  (K.spit || []).forEach(x => { x.m.material.opacity *= kx; x.m.children[0].material.opacity *= kx; }); K.emb.forEach(x => { x.m.material.opacity *= kx; x.m.children.forEach(c => { c.material.opacity *= kx; }); }); if (K.haze) K.haze.material.opacity *= ka;
+  K.fl.forEach(f => { const m = f.sp; if (!m || !m.visible) return; m.material.opacity *= kt; m.scale.x *= 1 + 0.25 * fl; m.scale.y *= 1 + 0.6 * fl; m.position.x *= 1 + 0.12 * fl; if (kt < 0.02) m.visible = false; });
+  if (K.light) K.light.m.material.opacity *= ka * (1 + 0.45 * fl); if (Z.lay69) Z.lay69.children.forEach(m => { if (m.userData.b69 !== 'scorch') return; if (m.userData.o133 == null) m.userData.o133 = m.material.opacity; m.material.opacity = m.userData.o133 * ka; }); };
+/* the billow on one figure's bones: the smoke above the lump's top P0 is drawn toward ONE upright cloud (the same height in the room for both
+   stages, Hc in this figure's units: its spread toward the axis by LX, its height to Hc, every smoke joint as fat by FAT) and grown about P0 as
+   one (place and size together, so the skin keeps whole); rolled by the field; each joint reads it a little later the higher it is */
+const bil133 = (F, P0, Hr, Hc, o, t) => { const X = fig82(F), B = F.bones, J = F.G.J, hj = F.G.bj[F.G.R.head], c0 = cv133(o, t), ta = t * 0.0006, SB = W133.SB, LX = W133.LX, FAT = W133.FAT, hy = Hc / Math.max(0.2, Hr);
+  for (let j = 1; j < B.length; j++) { const bj = B[j]; if (!bj || !J[j]) continue; const p = bj.position;
+    if (!(X.F.set.has(j) || X.arm.has(j))) { bj.scale.multiplyScalar(1 + 0.08 * c0.full); continue; }
+    const h = Math.max(0, Math.min(1, (J[j].p[1] - X.F.P0.y) / X.F.H)), c = cv133(o, t - 150 * h), b = c.b; const am = X.arm.has(j); if (b < 1e-4 && Math.abs(c.wob) < 1e-4) continue; const G = 1 + SB * b + c.wob;
+    const nx = nz133(p.x / Hr * 2.2 + ta, p.y / Hr * 2.2 - 1.6 * ta, p.z / Hr * 2.6), ny = nz133(p.z / Hr * 2.6 + 4.1, p.x / Hr * 2.4 + 1.3, p.y / Hr * 2.2 - ta), amp = 0.08 * Hc * b * (0.4 + 0.6 * h);
+    const rx = p.x - P0.x, ry = p.y - P0.y, rz = p.z - P0.z, hd = j === hj, cx = rx * (1 + ((hd ? 0.12 : am ? 0.28 : LX) - 1) * b), cy = hd ? ry + (0.56 * Hc - ry) * b : ry * (1 + (hy - 1) * b), cz = rz + (hd ? 0.3 * Hc * b : 0);
+    p.x = P0.x + G * cx + amp * 2 * (nx - 0.5); p.y = P0.y + G * cy + amp * (ny - 0.5); p.z = P0.z + G * cz;
+    bj.scale.multiplyScalar(G * (1 + (FAT - 1) * b) * (1 + 0.08 * b * (nx - 0.5))); if (j === hj) { bj.scale.multiplyScalar(1 / (1 + (FAT - 1) * b)); bj.scale.y *= 1 + 0.12 * b; } } };
+/* the idle on a figure, weighed in by w (the copy's first 300 ms, while W98 hands it the resting pose) */
+const idle133 = (F, w) => { if (w >= 0.999) { pose73(F, {}); return; } const B = F.bones, P = [], Q = [], C = []; B.forEach((b, j) => { if (!b) return; P[j] = b.position.clone(); Q[j] = b.quaternion.clone(); C[j] = b.scale.clone(); }); pose73(F, {});
+  B.forEach((b, j) => { if (!b || !P[j]) return; b.position.lerpVectors(P[j], b.position, w); Q[j].slerp(b.quaternion, w); b.quaternion.copy(Q[j]); b.scale.lerpVectors(C[j], b.scale, w); }); };
+const ws133 = (o3, v) => { o3.updateWorldMatrix(true, false); return v.setFromMatrixScale(o3.matrixWorld).x; };
+/* how much smaller than the lump-sized stand it is while it is out (eased with the way there and back) */
+const ks133 = (e, g) => 1 - (1 - W133.KS) * (g.pre ? RK.sm(g.go) : 1 - RK.sm(e.home || 0));
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (!(S && clip === 'evo' && o && o.from && o.from !== S.st && S.g28 !== 31 && on133(S))) { if (S && S.z133 && clip !== 'evo') { if (S.d133) cut133(S, 0, 0); S.z133 = null; S.rs133 = null; W133.ref = null; } return f0(grp, clip, t, o); }
+  const z = S.z133 || (S.z133 = { n: 0 }); if (S.rs133 == null) S.rs133 = S.root.scale.x; if (S.rs97 == null) S.rs97 = S.rs133;
+  const r = f0(grp, clip, t, o);
+  try { const q = S.q0, e = q && q.e31, g = e && e.g97; if (!g || t < 0 || !o.e31) return r; const K = RK, c = g.w133 || cv133(o, t), k = tk133(o), T = S.T, v = W133.v || (W133.v = new T.Vector3()), O = S.e31 && S.e31.gg.visible ? S.e31.sp : null, n = now95(), ks = ks133(e, g); z.n++;
+    if (O) { const X = fig82(O), f97 = 1 - 0.3 * K.sm((g.ph - 1.42) / 0.26); O.root.scale.multiplyScalar(ks / Math.max(0.3, f97)); /* (W97 drew it in for the fire; here it is only a little smaller at the stand) */
+      const wo = ws133(O.root, v); W133.ref = { Hw: 0.95 * X.F.H * wo };
+      idle133(O, O.t99 != null ? K.sm((n - O.t99) / 300) : 1); bil133(O, X.F.P0, X.F.H, W133.ref.Hw / wo, o, t);
+      const kd = c.kd; if (O.u69) O.u69.value.y *= 1 + 1.4 * c.full + 0.5 * c.fl; parts133(O, 1 - kd, (1 - kd) * (1 - c.full), 1 - kd, c.fl); face133(O, 1 - K.sm((kd - 0.3) / 0.3)); z.wo = ws133(O.root, v); z.fq = 3.4; cut133(O, kd > 0 ? 1 : 0, kd, z.fq, t); }
+    if (t >= k.k0 && W133.ref) { S.root.visible = true; const X = fig82(S), kd = c.kd, mk = c.mk, R0 = W133.ref;
+      /* W98 holds the new form narrow after the hit (it stood in the fire): undone */ if (!g.pre && !O && KIT.g98) { const cc = 0.3 + 0.7 * K.sm((e.v - 0.95) / 0.75); if (cc < 0.999) { const J = S.G.J, P0 = X.F.P0; for (let j = 1; j < S.bones.length; j++) { const b = S.bones[j]; if (!b || !J[j] || J[j].p[1] < X.lump) continue; b.position.x = P0.x + (b.position.x - P0.x) / cc; b.position.z = P0.z + (b.position.z - P0.z) / cc; if (X.arm.has(j)) b.scale.multiplyScalar(1 / (0.5 + 0.5 * cc)); } } }
+      /* the old one's lean forward (W97's bow on the copy), on the new one too, let go as it draws in */ { const bw = 0.7 * K.sm(g.ph / 0.25) * (1 - mk); if (bw > 0.001) post82o(S, { suck: 0, bow: bw, lift: 0, flame: 1, cflame: 0, heat: 0, u: 0, c: [9, 9, 9] }); }
+      idle133(S, 1); bil133(S, X.F.P0, X.F.H, R0.Hw / Math.max(1e-6, ws133(S.root.parent, v) * S.rs133 * ks), o, t);
+      if (S.u69) S.u69.value.y *= 1 + 1.4 * c.full + 0.5 * c.fl; parts133(S, kd, kd * (1 - c.full), kd, c.fl); face133(S, K.sm((kd - 0.55) / 0.35)); cut133(S, kd < 1 ? -1 : 0, kd, z.fq, t);
+      /* the size: the old one's at the hand-over, the new one's as it draws in */ const wn = ws133(S.root.parent, v) * S.rs133 * ks; if (O && z.wo > 0 && wn > 0) z.rho = z.wo / wn; const rho = z.rho || 1; S.root.scale.setScalar(S.rs133 * ks * (rho + (1 - rho) * mk));
+      /* the hand-back to the idle starts from what is shown */ const Z = S.b98; if (Z && Z.live) { S.bones.forEach((b, j) => { if (!b || !Z.P[j]) return; Z.P[j].copy(b.position); Z.Q[j].copy(b.quaternion); Z.C[j].copy(b.scale); }); Z.rs = S.root.scale.x; } }
+    if (z.n % 3 === 0 || (t > k.k0 - 200 && t < k.k1 + 200)) { W133.tr.push([Math.round(t), +c.b.toFixed(3), +c.kd.toFixed(3), +c.mk.toFixed(3), +ks.toFixed(3), +(z.rho || 0).toFixed(3), O ? 1 : 0, S.root.visible ? 1 : 0]); if (W133.tr.length > 400) W133.tr.shift(); }
+  } catch (x) { W133.err = 'play ' + String(x && x.stack); } return r; })(play26);
+KIT.spirit26.play = play26;
+W133.dbg = () => ({ err: W133.err, tr: W133.tr.slice() });
+KIT.W133 = W133;
+// ==== W133 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
