@@ -1818,3 +1818,12 @@ The checker's findings on Water's act (takes `frames/w113*`). New blocks `S114` 
 - **Score**: a step rolled (420 ms, `AA.rxFeel.homLand`) after each OH but the last; the game's own tick lands it on the rule's value.
 - **Looked into**: 5 and 7 OH chains: three C=C after dehydrate (two waters' worth make rings), three OH by the rule, as staged. `CC12CCC3C(CCC4CC(O)C(O)CC34C)C1CC(O)C2O` ends the round at the line with every new block off too (the game).
 - **Weak**: the stage-5 figure's body turns in one frame toward its target over the ring (frames 198 and 214 of `q114s5`; also with every new block off); the game's own steps at the line (frames 42, 44, 67 in every take).
+
+## Hundred-and-twentieth builder (16 November)
+
+Block `W120` (kitart.js, after `W114`), switch `AA.rxKit.w120` (`?w120=0` off); small changes in S112 / S114 under the same switch.
+- **Body turn**: the act's clips set the body's turn from the target's side every frame (turn28); at stage 5 over the ring it flipped in one frame (also with W110..W114 off). Now the facing is state per figure: a critically damped spring (settles in about 300 ms, stepped in 8 ms of clip time, the same at 30 and 60 fps) follows the fresh turn the shortest way round; the clip's lagged joint reads use the spring's own history; reset at the act's start, handed back to the clip over 300 ms after the work (going home untouched). Checked on consecutive frames at stage 5 (30 and 60 fps).
+- **Flight end at 60 fps**: S114's flight length was pushed on each frame and at 60 fps never ended (three flyers left hidden in the scene); now a fixed end.
+- **Pours** start 66 ms early (they swell to their loudest 66 ms in): every beat's loudest frame is now on its beat.
+- **Score** (chain `CC(O)CCC(O)CC(C)O`, yield before 842): stage 1 x1.85 1146, 2 x3.35 1542, 3 x4.8 1845, 4 x6.45 2140, 5 x8.53 2460; the same with `?w114=0&w120=0` and with W110..W120 all off. (Builder 114's 2056 at stage 3 was the four-bond chain, 2521 at stage 5 the ring: other molecules.)
+- **Takes** `y120r5` (ring, stage 5), `y120c1..4` (chain), `v120c5`, `v120ring3`, `v120big3` (seven waters), `v120r60` (60 fps). Clip `shots\small\water120-act-phone.mp4`.

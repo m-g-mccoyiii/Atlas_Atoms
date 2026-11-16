@@ -8254,6 +8254,24 @@ const W114 = { err: null, dbg: {} };
       if (clip !== 'act' || !w || !w.w110 || KIT.w114 === false) { S.w114rs = null; S.w114b = null; return r; } if (S.w114b !== o.bites) { S.w114b = o.bites; S.w114rs = null; } if (S.w114rs == null && S.rc && S.G && S.G.reach) { const i = S.G.reach.indexOf(S.rc); if (i >= 0) { S.w114rs = i; W114.dbg.rs = i; } } } catch (x) { W114.err = 'arm ' + String(x && x.stack); } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W114 = W114; }
 // ==== W114 END
+// ==== W120 BEGIN
+// (builder 120) THE BODY'S FACING IS EASED (AA.rxKit.w120, ?w120=0 off). The act's clips set the body's turn (q.turn) each frame
+// straight from the target's side (turn28); over a ring at stage 5 that target crossed behind the figure and the turn went the other
+// way round in one frame. Here the facing is kept as state per figure: each new frame of the act's clip time, a critically damped spring
+// (settles in about 300 ms, stepped in 8 ms of clip time so 30 and 60 fps match) follows the fresh turn the shortest way round; the
+// clip's lagged copies of the same frame (play26 reads each joint a little later) read the spring's own past, so every joint follows
+// the same eased facing. It is reset to the fresh value when an act begins, and after the act's work (a > D) the eased value hands
+// back to the clip's own over 300 ms, so going home is untouched.
+KIT.w120 = KIT.w120 == null ? !(typeof location !== 'undefined' && /[?&]w120=0/.test(String(location.search))) : KIT.w120;
+const W120 = { err: null, dbg: { mx: 0 } };
+{ const W = 4 / 0.3, TWO = 2 * Math.PI, wrap = d => { d = ((d + Math.PI) % TWO + TWO) % TWO - Math.PI; return d; };
+  C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); try { if (KIT.w120 === false || !S || S.jar || !o || !o.bites) return; const raw = q.turn || 0;
+      let Z = S.w120; if (!Z || Z.b !== o.bites || t < Z.t - 2000) Z = S.w120 = { b: o.bites, t, x: raw, v: 0, h: [[t, raw]] };
+      if (t > Z.t) { let tt = Z.t; const tg = Z.x + wrap(raw - Z.x); while (tt < t) { const h = Math.min(8, t - tt) / 1000; const acc = W * W * (tg - Z.x) - 2 * W * Z.v; Z.v += acc * h; Z.x += Z.v * h; tt += h * 1000; } Z.t = t; Z.h.push([t, Z.x]); while (Z.h.length > 2 && Z.h[1][0] < t - 1500) Z.h.shift(); W120.dbg.mx = Math.max(W120.dbg.mx, Math.abs(wrap(raw - Z.x))); }
+      /* this call's own moment of the eased facing */ let x = Z.x; if (t < Z.t) { const H = Z.h; x = H[0][1]; for (let i = H.length - 1; i > 0; i--) if (H[i - 1][0] <= t) { const A = H[i - 1], B = H[i], f = (t - A[0]) / Math.max(1e-6, B[0] - A[0]); x = A[1] + (B[1] - A[1]) * f; break; } }
+      const a = t - o.W - o.J, k = KIT.RK.sm((a - o.D) / 300), xr = x + wrap(raw - x); q.turn = x + (xr - x) * k; } catch (x2) { W120.err = 'turn ' + String(x2 && x2.stack); } })(C26.act);
+  KIT.W120 = W120; }
+// ==== W120 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
