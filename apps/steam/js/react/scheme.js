@@ -6916,6 +6916,70 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       o.ry = fg && [fg.rotation.y, SP.root.rotation.y, homObj.grp.rotation.y, SP.root.rotation.x].map(x => +x.toFixed(2)); const e = SP && SP.q0 && SP.q0.e31; if (e) { o.E = {}; for (const k in e) if (typeof e[k] === 'number') o.E[k] = +e[k].toFixed(3); } if (SP && SP.q0) { o.Q = {}; for (const k in SP.q0) if (typeof SP.q0[k] === 'number') o.Q[k] = +SP.q0[k].toFixed(2); } } catch (x) { o.x = String(x); } return o; };
   const now98 = () => (typeof performance !== 'undefined' ? performance.now() : 0);
   // ==== S98 END
+  // ==== S101 BEGIN
+  // (builder 101) BRIMSTONE'S CHANGE OF STAGE KEEPS CLEAR OF THE MOLECULE ON ANY PAGE (AA.rxKit.g101, ?g101=0 gives the fixed spot back).
+  // Nothing in S32 / S95..S98 is changed. Water's S32 still works out place and size each frame; right after it (at the first thing the
+  // next block asks: S36.on, wrapped here at run time) the foot is put on this block's own way and S32's lamp numbers are laid again there,
+  // so everything that follows in the same frame (S36, S33, S95..S98: light, glow, shade, fire, small flames) reads the new place.
+  // THE STAND is chosen once per change, in the picture (so raised atoms count where they are seen): the lump, the standing fire at its
+  // widest and the new form with its arms must hold no atom and no point of a bond, the fire's tip and the form must be inside the screen;
+  // of the free places the one nearest the fixed spot (the middle of the book) wins, places over the page's own ink cost a little; if no
+  // place is free, lump, fire and form are made smaller in steps of 0.95. THE WAY is one curve (a quadratic Bezier, walked by its length
+  // with the clip's own easing) from home to the stand, the shortest whose lump touches no atom or bond; the way home is the same curve.
+  const S101 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dbg: null, dim0: 0, pend: 0, now: 0, ext: {} };
+  if (AA.rxKit && AA.rxKit.g101 == null) AA.rxKit.g101 = !/[?&]g101=0/.test(String(root.location && root.location.search));
+  const s101On = SP => !!(s97On(SP) && AA.rxKit.g101 !== false);
+  const s101Pr = (x, y, z) => { const v = S101.v.set(x, y, z).project(cam); return [(v.x + 1) * 360 * cam.aspect, (1 - v.y) * 360]; };
+  /* the fire's half width by height, both in its own radius, from its bottom (kitart VS96: bottom pole at -1, tip at about 4.2, lobes and waver) */
+  const S101F = [[0, 0.55], [0.5, 1.0], [1.2, 1.12], [2.0, 1.0], [2.8, 0.8], [3.6, 0.58], [4.4, 0.36], [5.0, 0.2]], S101TOP = 5.0;
+  const s101Fw = h => { const P = S101F; if (h <= 0) return P[0][1]; for (let i = 1; i < P.length; i++) if (h <= P[i][0]) return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * (h - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return P[P.length - 1][1]; };
+  /* the new form as boxes: [from, to] of its height, half width left and right, in its height (trunk; arms and head; the reach of the long arms). Measured off its joints in the clip (s101dbg().ext), by the stage it becomes */
+  const S101B = { 2: [[0, 0.4, 0.5, 0.4], [0.3, 0.7, 0.58, 0.26], [0.6, 1.12, 0.58, 0.26]], 3: [[0, 0.4, 0.52, 0.34], [0.3, 0.7, 0.74, 0.7], [0.6, 1.2, 0.6, 0.26]], 4: [[0, 0.4, 0.34, 0.3], [0.3, 0.7, 0.96, 0.36], [0.6, 1.16, 0.38, 0.44]], 5: [[0, 0.4, 0.86, 0.78], [0.3, 0.7, 0.76, 0.8], [0.6, 1.16, 0.54, 0.66]] };
+  /* the page's own ink, in the picture at 1280 by 720 (soft: only a cost) */
+  const S101INK = [[240, 370, 395, 470], [250, 280, 365, 315], [110, 350, 225, 405], [690, 585, 980, 705], [570, 585, 610, 640], [715, 505, 855, 565]];
+  const s101Obs = () => { const o = [], W = [], v = S101.v, w = S101.v2; if (center && center.balls) center.balls.forEach(b => { b.mesh.getWorldPosition(v); b.mesh.getWorldScale(w); W.push([v.x, v.y, v.z, w.x]); });
+    let bl = 1e9; const n = W.length, D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]); for (let i = 0; i < n; i++) for (let k = i + 1; k < n; k++) { const d = D(W[i], W[k]); if (d > 0.2) bl = Math.min(bl, d); }
+    W.forEach(a => { const p = s101Pr(a[0], a[1], a[2]), p2 = s101Pr(a[0] + a[3], a[1], a[2]); o.push([p[0], p[1], Math.abs(p2[0] - p[0])]); });
+    for (let i = 0; i < n; i++) for (let k = i + 1; k < n; k++) if (D(W[i], W[k]) < 1.3 * bl) [0.25, 0.5, 0.75].forEach(u => o.push([o[i][0] + (o[k][0] - o[i][0]) * u, o[i][1] + (o[k][1] - o[i][1]) * u, 0.3 * Math.min(o[i][2], o[k][2])]));
+    return o; };
+  /* the foot at (x, z) on the surface, in the picture: where, how many pixels a unit across is there, and a unit up the leaning figure */
+  const s101Foot = (x, z) => { const F = s101Pr(x, 0.03, z), a = s101Pr(x + 1, 0.03, z), b = s101Pr(x, 0.03 + 0.697, z - 0.717); return { X: F[0], Y: F[1], pp: a[0] - F[0], pu: F[1] - b[1] }; };
+  const s101Lump = (obs, f, Rl, pad) => { let hit = 0; const cx = f.X, cy = f.Y - 0.6 * Rl * f.pu, r = 1.5 * Rl * f.pp; for (let i = 0; i < obs.length; i++) { const o = obs[i], p = r + o[2] + pad - Math.hypot(o[0] - cx, (o[1] - cy) * 1.15); if (p > 0) hit += p; } return hit; };
+  const s101Test = (obs, M, x, z, k) => { const f = s101Foot(x, z), Wd = 720 * cam.aspect, pad = 7; let hit = s101Lump(obs, f, M.Rl * k, pad), out = 0, ink = 0;
+    const rb = M.Rb * k * f.pp, rbu = M.Rb * k * f.pu, y0 = f.Y + 0.2 * rbu, Hp = M.Hf * k * f.pu, B = S101B[M.to] || S101B[3];
+    for (let i = 0; i < obs.length; i++) { const o = obs[i], h = (y0 - o[1]) / rbu, rr = (o[2] + pad) / rbu; if (h > -rr && h < S101TOP + rr) { const p = (s101Fw(Math.max(0, Math.min(S101TOP, h))) + 0.05 * Math.max(0, h)) * rb + o[2] + pad - Math.abs(o[0] - f.X); if (p > 0) hit += p; }
+      for (let j = 0; j < B.length; j++) { const b = B[j], p = Math.min(o[0] + o[2] + pad - (f.X - b[2] * Hp), f.X + b[3] * Hp - (o[0] - o[2] - pad), o[1] + o[2] + pad - (f.Y - b[1] * Hp), f.Y - b[0] * Hp - (o[1] - o[2] - pad)); if (p > 0) hit += p; } }
+    /* inside the screen: the fire to its tip, the form in the middle part that S36 leaves alone */ const top = y0 - S101TOP * rbu, o1 = v => { if (v > 0) out += v; };
+    o1(8 - top); o1(12 - (f.X - 1.15 * rb)); o1(f.X + 1.15 * rb - (Wd - 12)); o1(f.Y - 652); o1(66 - (f.Y - 1.02 * Hp)); B.forEach(b => { o1(0.055 * Wd - (f.X - b[2] * Hp)); o1(f.X + b[3] * Hp - 0.945 * Wd); });
+    if (s27K(x, z, M.Rl * k) < 0.99) out += 50; /* it stands on the book */
+    const ov = (x0, yy0, x1, y1) => { let a = 0; const s = Wd / 1280; S101INK.forEach(r => { a += Math.max(0, Math.min(x1, r[2] * s) - Math.max(x0, r[0] * s)) * Math.max(0, Math.min(y1, r[3]) - Math.max(yy0, r[1])); }); return a; };
+    ink = ov(f.X - 1.1 * rb, y0 - 2.6 * rbu, f.X + 1.1 * rb, y0) / 110 + ov(f.X - 0.5 * rb, y0 - 4.2 * rbu, f.X + 0.5 * rb, y0 - 2.6 * rbu) / 220; B.forEach(b => { ink += ov(f.X - b[2] * Hp, f.Y - b[1] * Hp, f.X + b[3] * Hp, f.Y - b[0] * Hp) / 420; });
+    return { hit, out, ink, f, top }; };
+  const s101Way = (obs, M, k, sx, sz) => { const hx = HOMP.x, hz = HOMP.z, Wd = 720 * cam.aspect, N = 40, sm = AA.rxKit.RK.sm, mk = (cx, cz) => { const L = [0], P = [[hx, hz]]; let bad = 0, len = 0; for (let i = 1; i <= N; i++) { const u = i / N, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u, x = a * hx + b * cx + c * sx, z = a * hz + b * cz + c * sz; len += Math.hypot(x - P[i - 1][0], z - P[i - 1][1]); L.push(len); P.push([x, z]); }
+      /* the lump's size on the way (S32's growth, S98's swell near home), against its size at the stand */ for (let i = 1; i <= N; i++) { const u = L[i] / Math.max(1e-6, len), f = s101Foot(P[i][0], P[i][1]), g = (0.4 + 0.6 * sm(Math.min(1, 1.8 * u))) * (1 + 0.45 * sm(u / 0.09) * (1 - sm((u - 0.1) / 0.5))); bad += s101Lump(obs, f, M.Rl * k * Math.max(g, Math.min(1, 3 * u)), 10); if (f.X < 30 || f.X > Wd - 30 || f.Y < 14 || f.Y > 700) bad += 40; }
+      return { cx, cz, L, P, len, bad }; };
+    let best = mk((hx + sx) / 2, (hz + sz) / 2); best.c = best.bad * 1000 + best.len; if (best.bad > 0) for (let cx = -32; cx <= 26; cx += 2) for (let cz = Math.min(hz, sz) - 2; cz <= Math.max(hz, sz) + 2; cz += 2) { const w = mk(cx, cz); w.c = w.bad * 1000 + w.len; if (w.c < best.c) best = w; }
+    return best; };
+  const s101At = (P, u) => { const W = P.way, L = W.L, n = L.length - 1, d = Math.max(0, Math.min(1, u)) * W.len; let i = 1; while (i < n && L[i] < d) i++; const a = L[i] > L[i - 1] ? (d - L[i - 1]) / (L[i] - L[i - 1]) : 0, A = W.P[i - 1], B = W.P[i]; return [A[0] + (B[0] - A[0]) * a, A[1] + (B[1] - A[1]) * a]; };
+  const s101Plan = (E, SP, e) => { const C3 = E.c32, fg = r21Fig(), O = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP, cf = (fg && fg.scale.x) || 1, h0 = homObj.h0 || 3; cam.updateMatrixWorld();
+    O.root.updateWorldMatrix(true, false); const ws = S101.v2.setFromMatrixScale(O.root.matrixWorld).y * E.s0 * C3.B / Math.max(1e-6, homObj.s) /* the old figure's size in the world as it will be at the stand */, M = { Rl: 0.21 * O.G.H * ws, Rb: 1.18 * Math.max(0.33 * O.G.H, 0.8 * ((O.G.o && O.G.o.lump) || 0)) * ws, Hf: h0 * E.s1 * C3.F, to: E.to }, obs = s101Obs(), zc = C3.zc, c0 = s101Foot(0, zc);
+    let best = null, k = 1; for (let it = 0; it < 9; it++, k *= 0.95) { best = null; for (let x = SAFE.L.x0 + 3; x <= SAFE.R.x1 - 3; x += 0.5) for (let z = zc - 3; z <= zc + 3.01; z += 0.5) { const t = s101Test(obs, M, x, z, k), bad = t.hit + t.out, c = bad * 1000 + Math.abs(t.f.X - c0.X) + 1.3 * Math.abs(t.f.Y - c0.Y) + t.ink; if (!best || c < best.c) best = { x, z, k, c, bad, t }; } if (best && best.bad <= 0) break; }
+    const way = s101Way(obs, M, best.k, best.x, best.z), P = { x: best.x, z: best.z, k: best.k, way, zc0: zc, M, bad: best.bad };
+    /* S32 is given the stand's depth and the smaller size; the book's edge is found on the curve (W97 tips the lump over it there) */ C3.zc = best.z; C3.bz = best.z; C3.B *= best.k; C3.F *= best.k;
+    { let ge = 0.1; for (let i = 0; i <= 400; i++) { const p = s101At(P, i / 400); if (s27K(p[0], p[1], 0.01) > 0.5) { ge = i / 400; break; } } E.ge97 = Math.max(0.03, ge); }
+    S101.dbg = { x: best.x, z: best.z, k: +best.k.toFixed(3), bad: +best.bad.toFixed(1), ink: +best.t.ink.toFixed(1), F: [Math.round(best.t.f.X), Math.round(best.t.f.Y)], top: Math.round(best.t.top), rb: Math.round(M.Rb * best.k * best.t.f.pp), Hp: Math.round(M.Hf * best.k * best.t.f.pu), Rl: +M.Rl.toFixed(2), c: [way.cx, way.cz], wbad: +way.bad.toFixed(1), len: +way.len.toFixed(1), ge: E.ge97, zc0: +zc.toFixed(2), n: obs.length, old: [Math.round(c0.X), Math.round(c0.Y)] };
+    return P; };
+  /* right after S32, before anything reads the place */
+  const s101Move = now => { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, Q = HEVO.pos, C = S32.C; if (!E || !E.e31 || !E.c32 || !e || e.go == null || !Q || !C || !homObj || !s101On(SP) || !E.c32.b97) return;
+    const P = E.p101 || (E.p101 = s101Plan(E, SP, e)), pre = e.v < 0, p = s101At(P, pre ? e.go : 1 - (e.home || 0)), dx = p[0] - Q.x, dz = p[1] - Q.z; Q.x = p[0]; Q.z = p[1];
+    const onP = s27K(Q.x, Q.z, 1) > 0.5; E.g31 = { y: onP ? 0.03 : -0.232 }; C.bx += dx; C.bz += dz; C.gy = E.g31.y; { const dd = Math.hypot(cam.position.y - C.by, cam.position.z - C.bz); E.rpx32 = C.Rw / (dd * Math.tan(cam.fov * Math.PI / 360)) * ren.domElement.height / 2; }
+    /* the lamp's round, the shade and the blue are laid again at the new place (the dimming is not run twice) */ S32.dim = S101.dim0; s32Scene(now, e, E, C);
+    /* the marks of the burst lie where it stands */ if (E.wet31 && !E.wet31.m101) { E.wet31.m101 = 1; E.wet31.forEach(w => { w.x += P.x; }); }
+    /* (for the tables above) the new form's joints in the picture, by height, in its own height */ if (!pre && e.v > 0.2 && e.v < 2.1 && SP.bones && SP.root.visible) { const f = s101Foot(Q.x, Q.z), Hp = P.M.Hf * P.k * f.pu, X = S101.ext[E.to] || (S101.ext[E.to] = [0, 0, 0, 0, 0, 0, 0]), v = S101.v; SP.bones.forEach(b => { b.getWorldPosition(v); v.project(cam); const bx = ((v.x + 1) * 360 * cam.aspect - f.X) / Hp, by = (f.Y - (1 - v.y) * 360) / Hp, j = by < 0.33 ? 0 : by < 0.66 ? 2 : 4; X[j] = Math.max(X[j], -bx); X[j + 1] = Math.max(X[j + 1], bx); X[6] = Math.max(X[6], by); }); } };
+  S36.on = (f0 => function () { if (S101.pend) { S101.pend = 0; try { s101Move(S101.now); } catch (x) { S101.err = String(x && x.stack); } } return f0.apply(this, arguments); })(S36.on);
+  homEvo19 = (f0 => function (now) { const E0 = R21.evo; S101.pend = E0 && s101On(s26Fig()) ? 1 : 0; S101.now = now; S101.dim0 = S32.dim; try { f0(now); } finally { S101.pend = 0; } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s101dbg = () => ({ err: S101.err, kit: AA.rxKit.W101 && AA.rxKit.W101.err, d: S101.dbg, pos: HEVO.pos && [+HEVO.pos.x.toFixed(2), +HEVO.pos.z.toFixed(2)], s36: S36.t ? +S36.t.toFixed(2) : 0, ext: Object.keys(S101.ext).map(k => k + ':' + S101.ext[k].map(x => x.toFixed(2)).join(' ')).join(' | ') });
+  // ==== S101 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
