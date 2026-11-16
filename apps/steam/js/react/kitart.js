@@ -8714,6 +8714,151 @@ evo31 = (f0 => function (S, t, o, q) { const r = f0(S, t, o, q); try {
   } catch (x) { W137.err = String(x && x.stack); } return r; })(evo31);
 KIT.W137 = W137;
 // ==== W137 END
+// ==== W139 BEGIN
+// (builder 139) ACID'S CHANGE OF STAGE IS ITS OWN BODY (AA.rxKit.a139, on by default; ?a139=0 gives W55/W104/W121's pit and column).
+// No pit, no dark mass, no column: one figure with its own skin, face and ink line from the first frame to the last. The way to the stand
+// and home, the stand, the lamp and the creep's marks are W55/S55, W104/S104 and S121's as before; here the body, on W55's timeline
+// (ph55) with its own beats: go, MELT, HEAVE, RISE, look, home.
+//  - MELT: it slumps and runs into a slick of its own body on the page (the wash's own shader lays every point of its skin on a low dome,
+//    the bottom of the body first, the head last; the bones are drawn in with it so the skin folds little); its head with its face rides
+//    on top, looking about; bubbles of its own skin rise through the slick and pop; the edge eats a ragged ring into the paper (its own
+//    eaten pit plate, W48's, laid round the slick); the slick swells and heaves up into a mound that rolls; at the end its head goes under.
+//  - At the turn of the beat both figures are the same mound (the dome is a function of time in the world: same place, size, paint,
+//    margin; the face, the drops and the pen's own strokes are shut away on both), and the old figure is changed for the new there.
+//  - HEAVE: the new head comes up on top of the mound and opens its eyes; RISE: the body draws up out of the mound, its foot first and its
+//    head last, into the new stage's form and size, and settles with a small bounce. Every number is a smooth function of time in ms.
+KIT.a139 = KIT.a139 == null ? !(typeof location !== 'undefined' && /[?&]a139=0/.test(String(location.search))) : KIT.a139;
+const W139 = { err: null, d: null, pops: 0, cur: null, cam: null, n: 0 };
+{ const cl = (x, a, b) => (x < a ? a : x > b ? b : x), sm = x => { x = cl(x, 0, 1); return x * x * (3 - 2 * x); }, smm = x => { x = cl(x, 0, 1); return x * x * x * (x * (6 * x - 15) + 10); }, lp = (a, b, u) => a + (b - a) * u;
+  const on139 = S => !!(S && S.a48 && !S.jar && KIT.a139 !== false && KIT.g104 !== false && KIT.evo55 !== false);
+  /* the beats of each change: go, melt, heave, rise, look, home (the turn from old to new is at the end of the melt) */
+  const BT139 = { 2: [3, 3, 2, 2.5, 1.25, 2], 3: [3, 3, 2, 2.5, 1.25, 2], 4: [3, 3, 2, 2.5, 1.25, 2], 5: [3, 3, 2, 2.5, 1.25, 2] }, AL139 = 0.35, NB139 = 8;
+  ph55 = (f0 => function (t, o) { if (!(o && o.a139 && KIT.a139 !== false)) return f0(t, o); const P = PAR55[Math.max(2, Math.min(5, o.to | 0))], b0 = P.b104; P.b104 = BT139[Math.max(2, Math.min(5, o.to | 0))]; try { return f0(t, o); } finally { if (b0) P.b104 = b0; else delete P.b104; } })(ph55);
+  /* the dome, in the world: C its middle on the page, U its up (between the world's and the figure's), Rs/hs its radius and height,
+     hqf where the skin is cast from (a fraction of hs), rag/ragPh its ragged edge, roll/rollPh the heave that rolls round it, B the bubbles */
+  const GL139 = ['uniform float k139;\nuniform float h139;\nuniform float d139;\nuniform mat4 iM139;\nuniform vec4 C139;\nuniform vec4 U139;\nuniform vec4 R139;\nuniform vec4 Q139;\nuniform vec3 P139;\nuniform vec4 B139[8];\nattribute float hd139;\nvarying float vK139;',
+    'vec3 un139(vec3 d) { float v = d.y / U139.y; return vec3(d.x - U139.x * v, v, d.z - U139.z * v); }',
+    'vec3 sh139(vec3 q) { return vec3(q.x + U139.x * q.y, U139.y * q.y, q.z + U139.z * q.y); }',
+    'vec3 sf139(vec3 n) { float a = abs(n.x) + abs(n.z) < 1e-5 ? 0.0 : atan(n.z, n.x); float Rs = C139.w * (1.0 + R139.y * (0.6 * sin(3.0 * a + R139.z) + 0.4 * sin(5.0 * a - 1.3 * R139.z + 1.7))), hs = U139.w * (1.0 + R139.w * cos(a - Q139.x)), hq = R139.x * U139.w;',
+    '  vec3 m = vec3(n.x / Rs, n.y / hs, n.z / Rs); float o = hq / hs, A = dot(m, m), B = 2.0 * o * m.y, Cc = o * o - 1.0, s = (-B + sqrt(max(B * B - 4.0 * A * Cc, 0.0))) / (2.0 * A); if (n.y < -1e-4) s = min(s, -hq / n.y);',
+    '  vec3 q = vec3(n.x * s, hq + n.y * s, n.z * s); q.y = max(q.y, 0.0); float bu = 0.0;',
+    '  for (int i = 0; i < 8; i++) { vec4 b = B139[i]; if (b.w <= 0.0) continue; float pb = 1.5 * b.w / C139.w; bu += b.w * exp(-(1.0 - dot(n, b.xyz)) / (0.5 * pb * pb + 1e-4)); }',
+    '  vec3 ne = normalize(vec3(q.x / (Rs * Rs), q.y / (hs * hs), q.z / (Rs * Rs))); float hh = clamp(q.y / (0.25 * hs), 0.0, 1.0); return q + ne * bu * hh * hh * (3.0 - 2.0 * hh); }'].join('\n');
+  const MV139 = mg => ['{ float hv139 = clamp(vB30.y, 0.0, 1.0), kb139 = clamp((k139 - ' + AL139.toFixed(3) + ' * mix(hv139, 1.0 - hv139, d139)) / ' + (1 - AL139).toFixed(3) + ', 0.0, 1.0), kv139 = mix(kb139, h139, hd139); vK139 = kv139;',
+    '  if (kv139 > 0.0005) { vec4 wp139 = modelMatrix * vec4(transformed, 1.0); vec3 hq139 = vec3(0.0, R139.x * U139.w, 0.0), n139 = un139(wp139.xyz - P139); float ln139 = length(n139); n139 = ln139 > 1e-5 ? n139 / ln139 : vec3(0.0, 1.0, 0.0);',
+    '    vec3 t1 = normalize(abs(n139.y) < 0.99 ? cross(n139, vec3(0.0, 1.0, 0.0)) : cross(n139, vec3(1.0, 0.0, 0.0))), t2 = cross(n139, t1), p0 = sh139(sf139(n139)), p1 = sh139(sf139(normalize(n139 + 0.03 * t1))), p2 = sh139(sf139(normalize(n139 + 0.03 * t2)));',
+    '    vec3 Nw = normalize(cross(p1 - p0, p2 - p0)); if (dot(Nw, p0 - sh139(hq139)) < 0.0) Nw = -Nw; vec3 tw = C139.xyz + p0' + (mg ? ' - Nw * Q139.y' : '') + ';',
+    '    transformed = mix(transformed, (iM139 * vec4(tw, 1.0)).xyz, kv139);', '#ifndef FLAT_SHADED', '    vNormal = normalize(mix(vNormal, normalize(mat3(viewMatrix) * Nw), kv139));', '#endif',
+    '    vB30 = mix(vB30, (tw - C139.xyz) / Q139.w, kv139); vW29 = mix(vW29, vec4(0.0, vW29.y, vW29.z, 0.0), kv139); } }'].join('\n');
+  /* the same in the page's script (the bones, the pen): p in the world -> o = [x, y, z, nx, ny, nz] on the dome, in the world */
+  function sf139(nx, ny, nz, P, o) { const a = Math.abs(nx) + Math.abs(nz) < 1e-5 ? 0 : Math.atan2(nz, nx), Rs = P.Rs * (1 + P.rag * (0.6 * Math.sin(3 * a + P.ragPh) + 0.4 * Math.sin(5 * a - 1.3 * P.ragPh + 1.7))), hs = P.hs * (1 + P.roll * Math.cos(a - P.rollPh)), hq = P.hqf * P.hs;
+    const mx = nx / Rs, my = ny / hs, mz = nz / Rs, oo = hq / hs, A = mx * mx + my * my + mz * mz, Bq = 2 * oo * my, Cq = oo * oo - 1; let s = (-Bq + Math.sqrt(Math.max(Bq * Bq - 4 * A * Cq, 0))) / (2 * A); if (ny < -1e-4) s = Math.min(s, -hq / ny);
+    let qx = nx * s, qy = Math.max(0, hq + ny * s), qz = nz * s, bu = 0; for (let i = 0; i < NB139; i++) { const b = P.B[i]; if (!(b[3] > 0)) continue; const pb = 1.5 * b[3] / P.Rs; bu += b[3] * Math.exp(-(1 - (nx * b[0] + ny * b[1] + nz * b[2])) / (0.5 * pb * pb + 1e-4)); }
+    let ex = qx / (Rs * Rs), ey = qy / (hs * hs), ez = qz / (Rs * Rs); const el = Math.hypot(ex, ey, ez) || 1; ex /= el; ey /= el; ez /= el; const f = bu * sm(qy / (0.25 * hs)); qx += ex * f; qy += ey * f; qz += ez * f;
+    o[0] = qx; o[1] = qy; o[2] = qz; o[3] = ex; o[4] = ey; o[5] = ez; return o; }
+  function mw139(px, py, pz, P, o, sp) { sp = sp || P.src || P.C; const U = P.U, v = (py - sp[1]) / U[1]; let qx = px - sp[0] - U[0] * v, qy = v, qz = pz - sp[2] - U[2] * v; const l = Math.hypot(qx, qy, qz); if (l > 1e-5) { qx /= l; qy /= l; qz /= l; } else { qx = 0; qy = 1; qz = 0; }
+    sf139(qx, qy, qz, P, o); const x = o[0], y = o[1], z = o[2], nx = o[3], ny = o[4], nz = o[5], wy = (-U[0] * nx + ny - U[2] * nz) / U[1], wl = Math.hypot(nx, wy, nz) || 1;
+    o[0] = P.C[0] + x + U[0] * y; o[1] = P.C[1] + U[1] * y; o[2] = P.C[2] + z + U[2] * y; o[3] = nx / wl; o[4] = wy / wl; o[5] = nz / wl; return o; }
+  /* which joints are the head (its face rides on them): the head and up (the flame's point), and the tongues */
+  function head139(S) { if (S.hd139s) return S.hd139s; const G = S.G, H = new Set(G.bj.slice(G.R.head)); G.chains.forEach(c => { if (c.kind === 'limb' && c.l && c.l.tongue) c.jn.forEach(j => H.add(j)); }); return (S.hd139s = H); }
+  /* the morph laid into the wash's own shader (body and margin), as builder 135 did for Hydrogen's round */
+  function inj139(S) { if (S.u139) return S.u139; if (!S.m30 || !S.m30.body) return null; if (!S.t48) tint48(S.T, S); const T = S.T, B = []; for (let i = 0; i < NB139; i++) B.push(new T.Vector4(0, 1, 0, 0));
+    const U = S.u139 = { k139: { value: 0 }, h139: { value: 0 }, d139: { value: 0 }, iM139: { value: new T.Matrix4() }, C139: { value: new T.Vector4(0, 0, 0, 1) }, U139: { value: new T.Vector4(0, 1, 0, 1) }, R139: { value: new T.Vector4(0.35, 0, 0, 0) }, Q139: { value: new T.Vector4(0, 0, 0, 1) }, P139: { value: new T.Vector3() }, B139: { value: B } };
+    const one = m => { if (!m || !m.onBeforeCompile || m.userData.h139) return; m.userData.h139 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey;
+      m.onBeforeCompile = function (sh, r) { f0.call(this, sh, r); Object.assign(sh.uniforms, U); const mg = sh.vertexShader.indexOf('uniform float w27') >= 0;
+        sh.vertexShader = sh.vertexShader.replace('void main() {', GL139 + '\nvoid main() {').replace('#include <project_vertex>', MV139(mg) + '\n#include <project_vertex>');
+        sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'varying float vK139;\nvoid main() {').replace('float low = smoothstep(0.42, 0.02, bp.y);', 'hl *= 1.0 - 0.88 * vK139; float low = smoothstep(0.42, 0.02, bp.y);').replace('wash = mix(wash, vec3(1.0), 0.3 * inb);', 'wash = mix(wash, vec3(1.0), 0.3 * inb * (1.0 - vK139));').replace('wash *= 1.0 - 0.16 * ring;', 'wash *= 1.0 - 0.16 * ring * (1.0 - 0.8 * vK139);'); if (!mg) sh.fragmentShader = sh.fragmentShader.replace('vec3 n9 = normalize(normal);', 'vec3 n9 = normalize(vK139 > 0.0005 ? vNormal : normal);'); };
+      m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'h139'; m.needsUpdate = true; };
+    const H = head139(S); [S.body, S.hull27].forEach(m => { const g = m && m.geometry; if (!g || g.attributes.hd139 || !g.attributes.skinIndex) return; const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, a = new Float32Array(si.count);
+      for (let i = 0; i < si.count; i++) a[i] = (H.has(si.getX(i)) ? sw.getX(i) : 0) + (H.has(si.getY(i)) ? sw.getY(i) : 0) + (H.has(si.getZ(i)) ? sw.getZ(i) : 0) + (H.has(si.getW(i)) ? sw.getW(i) : 0); g.setAttribute('hd139', new T.BufferAttribute(a, 1)); });
+    one(S.m30.body); one(S.m30.hull); /* the skin laid on the dome folds over in places: its back faces are drawn too (lit by the dome's normal) */ S.m30.body.side = T.DoubleSide; return U; }
+  /* the numbers of the change at ms (W55's beats as BT139 lays them): K how far the body is on the dome, kh the head, the dome itself */
+  function ph139(e, Z, o) { const L = e.L, c = e.c, ms = e.u * L, tM = c[1] * L, tS = c[2] * L, tR = c[3] * L, tE = c[4] * L, Dm = tS - tM, Dh = tR - tS, Dr = tE - tR, q = Z.q || (Z.q = { B: [] });
+    const C55 = o.c55 || { R: 3 }, P = e.P, Rm = Math.max(1.2 * Z.rx0, C55.R * P.pit * (o.k55 || 1)); q.ms = ms; q.old = e.old;
+    q.K = ms < tS ? smm((ms - tM) / (0.62 * Dm)) : ms < tR ? 1 : 1 - smm((ms - tR) / Dr);
+    q.kh = ms < tS ? smm((ms - (tS - 480)) / 400) : 1 - smm((ms - (tS + 0.2 * Dh)) / (0.6 * Dh));
+    q.melt = cl((ms - tM) / Dm, 0, 1);
+    const spread = sm((ms - tM) / (0.7 * Dm)), gather = sm((ms - (tM + 0.55 * Dm)) / (0.45 * Dm + 0.5 * Dh));
+    let Rs = lp(1.1 * Z.rx0, 0.95 * Rm, spread) * (1 - 0.18 * gather), hs = lp(lp(0.55 * Z.H0, 0.16 * Rs, sm((ms - tM) / (0.6 * Dm))), 0.38 * Rs, gather);
+    const hv = sm((ms - tM - 0.4 * Dm) / 400) * (1 - sm((ms - tR) / 400)); hs *= 1 + 0.07 * Math.sin(2 * PI * ms / 760) * hv;
+    if (ms >= tR && Z.H1) { const g = sm((ms - tR) / (0.85 * Dr)); Rs = lp(Rs, 1.05 * Z.rx1, g); hs = lp(hs, 0.9 * Z.H1, g); }
+    q.Rs = Rs; q.hs = hs; q.hqf = 0.35; q.rag = 0.05 * sm((ms - tM) / (0.5 * Dm)) * (1 - sm((ms - tR) / (0.6 * Dr))); q.ragPh = ms / 700; q.roll = 0.22 * hv; q.rollPh = 2 * PI * ms / 1100;
+    q.C = Z.C; q.U = Z.U; q.Rref = Z.Rref; q.mw = Z.mw;
+    /* bubbles of its own skin: they come up low on the slick, swell as they rise and pop (eased); each its own pace and place */
+    const env = sm((ms - tM - 0.25 * Dm) / 350) * (1 - sm((ms - tR - 0.1 * Dr) / 300)), bs = Z.bs || (Z.bs = []);
+    for (let i = 0; i < NB139; i++) { const per = 650 + 450 * h30(i * 3 + 1), x = ms / per + h30(i * 5 + 2), id = Math.floor(x), ph = x - id, an = 2 * PI * h30(id * 13 + i * 7 + 1), elv = 0.3 + 0.55 * h30(id * 17 + i * 3 + 2) + 0.35 * ph, ce = Math.cos(elv);
+      const sz = (0.06 + 0.05 * h30(id * 5 + i + 9)) * Rs * env, a = sz * (ph < 0.8 ? sm(ph / 0.8) : 1 - sm((ph - 0.8) / 0.1)); q.B[i] = [ce * Math.cos(an), Math.sin(elv), ce * Math.sin(an), a];
+      const b = bs[i] || (bs[i] = { id, ph }); if (b.id === id && b.ph < 0.8 && ph >= 0.8 && sz > 0.04 * Rs) W139.pops++; b.id = id; b.ph = ph; }
+    q.tE = tE; q.tR = tR; q.tS = tS; q.tM = tM; q.Dr = Dr; q.Dh = Dh; return q; }
+  /* one figure laid on the dome: its bones drawn in, its head carried to the top, the uniforms, its face, drops and strokes */
+  const V139 = { a: null };
+  function body139(F, q, isNew) { const U = inj139(F), T = F.T; if (!U) return; const B = F.bones, G = F.G, J = G.J, par = B[0].parent, H = head139(F), hj = G.bj[G.R.head], dir = isNew ? 1 : 0, o6 = [0, 0, 0, 0, 0, 0];
+    const v = V139.a || (V139.a = { p: new T.Vector3(), w: new T.Vector3(), m: new T.Matrix4() }), kvOf = hv => cl((q.K - AL139 * (dir ? 1 - hv : hv)) / (1 - AL139), 0, 1);
+    if (q.K > 0.0005 || q.kh > 0.0005) { par.updateWorldMatrix(true, false); v.m.copy(par.matrixWorld).invert(); q.src = null;
+      for (let j = 1; j < B.length; j++) { if (H.has(j) || !J[j]) continue; const k = 0.85 * kvOf(J[j].p[1] / G.H); if (k < 1e-4) continue; const p = B[j].position; v.w.copy(p).applyMatrix4(par.matrixWorld); mw139(v.w.x, v.w.y, v.w.z, q, o6);
+        v.p.set(q.C[0] + (o6[0] - q.C[0]) * 0.8, q.C[1] + (o6[1] - q.C[1]) * 0.8, q.C[2] + (o6[2] - q.C[2]) * 0.8).applyMatrix4(v.m); p.lerp(v.p, k); }
+{ const js = G.bj[Math.max(1, Math.round(G.R.chest * 0.45))]; v.w.copy(B[js].position).applyMatrix4(par.matrixWorld); q.src = F.src139 = [v.w.x, v.w.y, v.w.z]; }
+      /* the head rides on the top of the dome, half in it, and goes under with kh */ const kb = kvOf(J[hj].p[1] / G.H); if (kb > 1e-4) { const ws = v.p.setFromMatrixScale(par.matrixWorld).y, hr = J[hj].r * ws; v.w.copy(B[hj].position).applyMatrix4(par.matrixWorld); mw139(q.C[0] + q.U[0] * 1e3, q.C[1] + q.U[1] * 1e3, q.C[2] + q.U[2] * 1e3, q, o6, q.C);
+        const tx = o6[0] + q.U[0] * hr * (0.45 - 0.9 * q.kh), ty = o6[1] + q.U[1] * hr * (0.45 - 0.9 * q.kh), tz = o6[2] + q.U[2] * hr * (0.45 - 0.9 * q.kh); v.p.set(v.w.x + (tx - v.w.x) * kb, v.w.y + (ty - v.w.y) * kb, v.w.z + (tz - v.w.z) * kb).applyMatrix4(v.m).sub(B[hj].position);
+        H.forEach(j => { if (B[j]) B[j].position.add(v.p); }); } }
+    F.root.updateMatrixWorld(true); U.k139.value = q.K; U.h139.value = q.kh; U.d139.value = dir; U.iM139.value.copy(F.body.matrixWorld).invert(); U.C139.value.set(q.C[0], q.C[1], q.C[2], q.Rs); U.U139.value.set(q.U[0], q.U[1], q.U[2], q.hs); U.R139.value.set(q.hqf, q.rag, q.ragPh, q.roll); U.Q139.value.set(q.rollPh, q.mw, 0, q.Rref); if (F.src139) U.P139.value.set(F.src139[0], F.src139[1], F.src139[2]); else U.P139.value.set(q.C[0], q.C[1] + q.hqf * q.hs * q.U[1], q.C[2]);
+    for (let i = 0; i < NB139; i++) { const b = q.B[i]; U.B139.value[i].set(b[0], b[1], b[2], b[3]); } F.q139 = q; F.d139 = dir;
+    /* its face shut away as its head goes under (both figures alike at the turn) */ const ef = Math.max(1e-3, 1 - sm(q.kh / 0.55)), Fc = F.F; if (Fc && ef < 0.999) { /* the head bone carries every part of the face (eyes, lids, brows, mouth, its drawn mouth): it is shrunk as the head goes under */ B[hj].scale.multiplyScalar(ef); }
+    /* its loose drops go into the slick and come out with the new form */ const df = Math.max(1e-3, 1 - sm(q.K / 0.4)); (F.drops || []).forEach(dp => { const g = dp.g; if (!dp.air) { if (!g.userData.s139) g.userData.s139 = g.scale.clone(); g.scale.copy(g.userData.s139).multiplyScalar(df); } else g.scale.multiplyScalar(df); }); (F.drips || []).forEach(dp => dp.g.scale.multiplyScalar(df)); if (/[?&]d139=drop/.test(String(location.search))) { (F.drops || []).forEach(dp => { dp.g.visible = false; }); (F.drips || []).forEach(dp => { dp.g.visible = false; }); }
+    F.s139 = { fa: 1 - sm(q.K / 0.45), fh: 1 - sm(q.kh / 0.5) };
+    /* its eaten plate laid round the slick, the old one's grain on both at the turn, the new one's own after */ F.r139 = { Re: 1.02 * q.Rs, k: isNew ? sm((q.K - AL139) / (1 - AL139)) : sm(q.K / (1 - AL139)), sd: q.sd0, pq: q.pq0, g: isNew ? sm((q.ms - q.tR) / q.Dr) : 0 }; }
+  function clear139(F) { if (!F) return; if (F.u139) { F.u139.k139.value = 0; F.u139.h139.value = 0; } F.s139 = null; F.r139 = null; F.q139 = null; if (F.F) (F.F.brows || []).forEach(b => { const g = b && b.g; if (g && g.userData.s139) g.scale.copy(g.userData.s139); }); (F.drops || []).forEach(dp => { if (!dp.air && dp.g.userData.s139) dp.g.scale.copy(dp.g.userData.s139); }); }
+  /* the face for each beat (laid over the rest clip, as W55's) */
+  function face139(z, e, q, old, st) { if (old && e.u < e.c[1]) { face55(z, e, st, true); return; } if (!old && e.u >= e.c[4]) { face55(z, e, st, false); return; } const t = q.ms / 1000;
+    if (old) { const m = q.melt; z.smile = 1.55 + 0.35 * sm(m / 0.3); z.wide = 0.45 * sm(m / 0.15) * (1 - sm((m - 0.5) / 0.3)); z.looky = -0.25 * sm(m / 0.3); z.lookx = 0.9 * Math.sin(t * 2.6) * sm(m / 0.2); z.hturn = 0.18 * Math.sin(t * 2.6 - 0.4) * sm(m / 0.2); z.brow = 0.35 * sm(m / 0.3); z.blink = sm(q.kh / 0.35); z.sq = -0.06 * sm(m / 0.2); return; }
+    const up = cl((q.ms - q.tR) / q.Dr, 0, 1), sf = 1 - q.kh; z.blink = 1 - sm((sf - 0.25) / 0.45); z.smile = 1.45 + 0.4 * sm(up / 0.6); z.wide = 0.35 * sm((sf - 0.4) / 0.4) * (1 - sm((up - 0.7) / 0.3)); z.looky = 0.4 * sm(up / 0.5) * (1 - sm((up - 0.8) / 0.2)); z.lookx = 0.7 * Math.sin(t * 2.2) * sf * (1 - up); z.brow = 0.4 * sf; z.nod = -0.25 * sm(up / 0.6) * (1 - sm((up - 0.85) / 0.15));
+    const l = (q.ms - q.tE + 0.12 * q.Dr) / 650; if (l > 0) z.sq = 0.11 * Math.exp(-l * 4) * Math.sin(l * 13) * (1 - sm((l - 0.7) / 0.3)); }
+  /* the place and sizes, once a change (on W55's copy of the old figure when it begins to melt) */
+  function plan139(o, O, S, e) { const Z = o.z139 || (o.z139 = { C: null }), T = S.T; if (!Z.C && O && e.u >= e.c[1] - 0.05) { const R = O.root; R.updateMatrixWorld(true); const v = new T.Vector3(O.G.pl.x, 0, O.G.pl.z).applyMatrix4(R.matrixWorld), ws = new T.Vector3().setFromMatrixScale(R.matrixWorld), up = new T.Vector3(0, 1, 0).transformDirection(R.matrixWorld);
+      const C55 = o.c55 || { y: 0.03 }; Z.C = [v.x, Math.max(C55.y || 0.03, v.y) + 0.004, v.z]; const U = new T.Vector3(0, 1, 0).lerp(up.y > 0.2 ? up : new T.Vector3(0, 1, 0), 0.55).normalize(); Z.U = [U.x, U.y, U.z]; Z.ws0 = ws.y; Z.H0 = O.G.H * ws.y; Z.rx0 = Math.max(O.G.pl.rx, O.G.pl.rz) * ws.x;
+      Z.Rref = 1.6 * Math.max(Z.rx0 * 1.2, (C55.R || 3) * e.P.pit * (o.k55 || 1)); const hw = O.m30 && O.m30.hull && O.m30.hull.userData.w; Z.mw = (hw && hw.value != null ? hw.value : 0.02) * 1.5 * ws.y;
+      const et = O.etch48; Z.sd0 = et ? et.material.uniforms.sd.value : 5; Z.pq0 = et ? et.material.uniforms.pq.value.clone() : null; }
+    if (Z.C && !Z.H1 && !e.old) { const R = S.root; R.updateMatrixWorld(true); const ws = new T.Vector3().setFromMatrixScale(R.matrixWorld); Z.H1 = S.G.H * ws.y; Z.rx1 = Math.max(S.G.pl.rx, S.G.pl.rz) * ws.x; } return Z; }
+  function evo139(f0, grp, S, t, o) { const T = S.T, X = S.x55 || (S.x55 = make55(T, S)); X.live = true; X.e = null; X.S = S; o.a139 = 1; const e = ph55(t, o); W55.e = e; const L = e.L, c = e.c; let O = S.e55; const ro = z => ({ look: [1, 0.5], z55: z });
+    inj139(S); if (e.old) { if (!O || O.from !== o.from) { kill55(S); const gg = acid48Fig(T, o.from, { stage: o.from }), sp = gg.userData.rig2.sp; sp.o55 = S; grp.parent.add(gg); O = S.e55 = { gg, sp, from: o.from }; } inj139(O.sp); }
+    const Z = plan139(o, O && O.sp, S, e); let q = null; if (Z.C) { q = ph139(e, Z, o); q.sd0 = Z.sd0; q.pq0 = Z.pq0; }
+    if (e.old) { O.gg.visible = true; O.gg.position.copy(grp.position); O.gg.quaternion.copy(grp.quaternion); O.gg.scale.copy(grp.scale); S.root.visible = false;
+      const z = O.sp.z55 || (O.sp.z55 = {}); for (const k in z) delete z[k]; if (q) face139(z, e, q, true, o.from); else face55(z, e, o.from, true); if (KIT.l104) KIT.l104(z, e); f0(O.gg, 'rest', t / L, ro(z));
+      if (q) body139(O.sp, q, false); else clear139(O.sp); const g = frame55(O.sp); o.r055 = O.sp.G.pl.rx * 1.32 * g.ws / Math.max(1e-3, (o.c55 ? o.c55.R : 3)); }
+    else { if (O) kill55(S); S.root.visible = true; const z = S.z55 || (S.z55 = {}); for (const k in z) delete z[k]; if (q) face139(z, e, q, false, S.st); else face55(z, e, S.st, false); if (KIT.l104) KIT.l104(z, e); f0(grp, 'rest', t / L, ro(z));
+      if (q && (q.K > 0.0005 || q.kh > 0.0005 || e.u < c[4])) body139(S, q, true); else clear139(S); }
+    { const g = frame55(S); o.r155 = S.G.pl.rx * 1.32 * g.ws / Math.max(1e-3, (o.c55 ? o.c55.R : 3)); }
+    W139.n++; W139.d = q ? { ms: Math.round(q.ms), old: e.old, K: +q.K.toFixed(3), kh: +q.kh.toFixed(3), Rs: +q.Rs.toFixed(2), hs: +q.hs.toFixed(2), roll: +q.roll.toFixed(2), pops: W139.pops, c: c.map(x => +(x * L).toFixed(0)) } : { u: +e.u.toFixed(2) };
+    const u = e.u; let n = -1; if (u >= c[3] + 0.3 * (c[4] - c[3])) n = 0; if (u >= c[4] - 0.1) n = 1; if (u >= c[4]) n = 2; if (u >= c[5]) n = 3; if (u >= e.tot - 0.08) n = 4.8;
+    return { e: 0, y: 0, lunge: 0, n, big: 0, done: e.done, home: e.home >= 0.96 }; }
+  evo55 = (f0 => function (fp, grp, S, t, o) { if (!on139(S) || !o) return f0(fp, grp, S, t, o); try { return evo139(fp, grp, S, t, o); } catch (err) { W139.err = 'evo ' + String(err && err.stack); o.a139 = 0; return f0(fp, grp, S, t, o); } })(evo55);
+  /* every Acid figure has the morph in its shader from the first time it plays (so nothing is compiled at the turn); after the change, all off */
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (on139(S) && !S.u139) { try { inj139(S); } catch (x) { W139.err = 'inj ' + String(x && x.stack); } }
+    if (S && S.q139 && clip !== 'evo') { try { clear139(S); } catch (x) { W139.err = 'clear ' + String(x && x.stack); } } return f0(grp, clip, t, o); })(play26);
+  KIT.spirit26.play = play26;
+  /* the pen's strokes on it shrink to their joints as the body melts (the head's with the head), and grow back */
+  ink48 = (f0 => function (T, S) { const X = S && S.a48, F = S && S.s139; if (!F || !X || !X.strokes || (F.fa > 0.999 && F.fh > 0.999)) return f0.apply(this, arguments); if (/[?&]d139=ink/.test(String(location.search))) return; const H = head139(S), s0 = X.strokes;
+    X.strokes = s0.map(s => { const f = H.has(s.j) ? F.fh : F.fa; return f < 0.02 ? Object.assign({}, s, { off: 1 }) : f > 0.999 ? s : Object.assign({}, s, { pts: s.pts.map(p => [p[0] * f, p[1] * f, p[2] * f]) }); }); try { return f0.apply(this, arguments); } finally { X.strokes = s0; } })(ink48);
+  /* its eaten plate round the slick: a round of the slick's size (the old one's grain on the new one at the turn, its own after) */
+  lay48 = (f0 => function (T, S) { f0.apply(this, arguments); const e = S && S.etch48, r = S && S.r139; if (!e) return; const u = e.material.uniforms; if (!e.userData.u139) e.userData.u139 = { sd: u.sd.value, pq: u.pq.value.clone() };
+    const o0 = e.userData.u139; if (S.wet) o0.sc = null; else if (!o0.sc) o0.sc = e.scale.clone(); const n0 = o0.sc || e.scale; if (!r) { u.sd.value = o0.sd; u.pq.value.copy(o0.pq); if (o0.sc) e.scale.copy(o0.sc); return; }
+    if (r.pq) { const g = r.g; u.sd.value = lp(r.sd, o0.sd, g); u.pq.value.set(lp(r.pq.x, o0.pq.x, g), lp(r.pq.y, o0.pq.y, g)); }
+    const p = e.parent; if (!p) return; p.updateWorldMatrix(true, false); const ws = (W139.v3 || (W139.v3 = new T.Vector3())).setFromMatrixScale(p.matrixWorld), G = S.G, k = r.k, Rp = 1.8 * Math.max(G.pl.rx, G.pl.rz), pq = u.pq.value;
+    e.scale.set(lp(n0.x, r.Re / Math.max(1e-4, 1.3 * pq.x * Rp * ws.x), k), n0.y, lp(n0.z, r.Re / Math.max(1e-4, 1.3 * pq.y * Rp * ws.z), k)); })(lay48);
+  /* the pen on the dome: the skin's points laid as the shader lays them; an edge on the dome's front is let go, only its rim is inked */
+  draw30 = (f0 => function (T, S, ren, cam) { const c0 = W139.cur; W139.cur = S; W139.cam = cam; try { return f0.apply(this, arguments); } finally { W139.cur = c0; } })(draw30);
+  proj30 = (f0 => function (R, s, VP, Wd, Ht, P10, P11, d, bones, inv) { const S = W139.cur, U = S && S.u139, q = S && S.q139; if (!U || !q || !(U.k139.value > 0.0005 || U.h139.value > 0.0005) || !s.skin || s !== R.body) return f0.apply(this, arguments);
+    const T = S.T, tp = s.tp, n = tp.nv, C = s.C, P = tp.P, nb = bones.length, X = S.x139 || (S.x139 = { bm: null, m: new T.Matrix4(), cp: new T.Vector3() }); if (!X.bm || X.bm.length !== nb * 16) X.bm = new Float32Array(nb * 16);
+    for (let j = 0; j < nb; j++) { X.m.multiplyMatrices(bones[j].matrixWorld, inv[j]); X.bm.set(X.m.elements, j * 16); } const bm = X.bm, M = R.vp.elements, SI = tp.SI, SW = tp.SW, H = head139(S), HD = s.hd139 && s.hd139.length === n ? s.hd139 : (s.hd139 = (() => { const a = new Float32Array(n); for (let i = 0; i < n; i++) for (let k = 0; k < 4; k++) if (H.has(SI[4 * i + k])) a[i] += SW[4 * i + k]; return a; })());
+    const cam = W139.cam ? X.cp.setFromMatrixPosition(W139.cam.matrixWorld) : X.cp.set(0, 40, 20), K = U.k139.value, kh = U.h139.value, dir = S.d139 || 0, iH = 1 / S.G.H, o6 = [0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2]; let lx = 0, ly = 0, lz = 0, ws = 0;
+      for (let k = 0; k < 4; k++) { const w = SW[4 * i + k]; if (!w) continue; const o = SI[4 * i + k] * 16; ws += w; lx += w * (bm[o] * x + bm[o + 4] * y + bm[o + 8] * z + bm[o + 12]); ly += w * (bm[o + 1] * x + bm[o + 5] * y + bm[o + 9] * z + bm[o + 13]); lz += w * (bm[o + 2] * x + bm[o + 6] * y + bm[o + 10] * z + bm[o + 14]); }
+      if (ws > 1e-6 && Math.abs(ws - 1) > 1e-4) { lx /= ws; ly /= ws; lz /= ws; } const hv = cl(y * iH, 0, 1), kb = cl((K - AL139 * (dir ? 1 - hv : hv)) / (1 - AL139), 0, 1), kv = lp(kb, kh, HD[i]); let hide = false;
+      if (kv > 0.0005) { mw139(lx, ly, lz, q, o6, S.src139); lx += (o6[0] - lx) * kv; ly += (o6[1] - ly) * kv; lz += (o6[2] - lz) * kv; const vx = cam.x - o6[0], vy = cam.y - o6[1], vz = cam.z - o6[2], vl = Math.hypot(vx, vy, vz) || 1; if ((o6[3] * vx + o6[4] * vy + o6[5] * vz) / vl > 1 - 0.9 * kv) hide = true; }
+      const cx = M[0] * lx + M[4] * ly + M[8] * lz + M[12], cy = M[1] * lx + M[5] * ly + M[9] * lz + M[13], cz = M[2] * lx + M[6] * ly + M[10] * lz + M[14], cw = M[3] * lx + M[7] * ly + M[11] * lz + M[15];
+      const iw = cw > 1e-5 ? 1 / cw : 0, w2 = cw + P11 * d; C[4 * i] = (cx * iw * 0.5 + 0.5) * Wd; C[4 * i + 1] = (cy * iw * 0.5 + 0.5) * Ht; C[4 * i + 2] = w2 > 1e-5 ? (cz + P10 * d) / w2 : 2; C[4 * i + 3] = hide ? 0 : cw; } })(proj30);
+  KIT.W139 = W139; KIT.e139dbg = () => ({ err: W139.err, d: W139.d, n: W139.n, pops: W139.pops }); }
+// ==== W139 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone

@@ -8585,6 +8585,34 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     try { s129Frame(now); } catch (x) { S129.err = 'frame ' + String(x && x.stack); } return r; })(homEvo19);
   if (AA.rxKit) AA.rxKit.s129dbg = () => ({ err: S129.err, kit: AA.rxKit.W129 && AA.rxKit.W129.err, k117: AA.rxKit.W117 && AA.rxKit.W117.err, st: AA.rxKit.stage && AA.rxKit.stage.dbg().err, d: S129.dbg, w: AA.rxKit.W129 && AA.rxKit.W129.dbg, snd: S129.snd, log: S129.log });
   // ==== S129 END
+  // ==== S139 BEGIN
+  // (builder 139) ACID'S CHANGE OF STAGE IS ITS OWN BODY (kitart W139, switch AA.rxKit.a139, ?a139=0 gives the pit and column). The way,
+  // the stand on the left page, the lamp and the creep's marks stay S55 / S104 / S121's. Here only the sound, on the body's own beats, in
+  // place of the pit's and the column's (S55's and S121's sounds of the change are held back while it plays; S121's settle at home stays):
+  // the creep's steps, a slump as it melts, the slick's hiss, each bubble's pop, a heave as it goes under, its head coming up, the rise,
+  // the stand, a look, the steps home.
+  if (AA.rxKit && AA.rxKit.a139 == null) AA.rxKit.a139 = !/[?&]a139=0/.test(String(root.location && root.location.search));
+  const S139 = { err: null, dbg: { snd: [] }, E: null, f: null, pops: 0, lastPop: -1e9 };
+  const s139On = () => !!(AA.rxKit && AA.rxKit.a139 !== false && AA.rxKit.evo55 !== false && AA.rxKit.g104 !== false && homObj && homObj.id === 'acid');
+  const s139I = (name, m, gn, x, tag) => { try { if (AA.sfx && AA.sfx._inst && !/[?&]s139mute=1/.test(String(root.location && root.location.search))) AA.sfx._inst(name, m, gn, x); if (S139.dbg.snd.length < 200) S139.dbg.snd.push([tag || name, Math.round(performance.now()), root.V && root.V.rec ? root.V.n : null]); } catch (e) { /* sound never breaks play */ } };
+  const s139Snd = now => { const E = R21.evo, e = E && E.e55, K = AA.rxKit; if (!E || !e || !e.c || !E.a139) return; if (S139.E !== E) { S139.E = E; S139.f = {}; S139.pops = K.W139 ? K.W139.pops : 0; }
+    const c = e.c, L = e.L, to = Math.max(2, Math.min(5, E.to | 0)), once = (n, f) => { if (!S139.f[n]) { S139.f[n] = 1; f(); } }, at = (u, n, f) => { if (e.u >= u) once(n, f); };
+    if (e.u >= 0) for (let s = 0; s < 3; s++) if (e.go >= (s * 2 + 1) / 6) once('creep' + s, () => { s139I('grain', null, 0.48, null, 'evo creep ' + (s + 1)); if (s === 0) s139I('sizzle', null, 0.08, { dur: Math.max(0.3, (c[1] - c[0]) * L / 1000 * 0.8), a: 0.1, r: 0.2 }, 'evo creep hiss'); });
+    at(c[1], 'melt', () => { s139I('blub', 47, 0.34, { gl: [0, -500, 0.35, 0] }, 'evo melt'); s139I('sizzle', null, 0.13, { dur: Math.max(0.5, (c[3] - c[1]) * L / 1000), a: 0.3, r: 0.4 }, 'evo slick hiss'); });
+    at(c[1] + 0.35 * (c[2] - c[1]), 'seethe', () => s139I('bubble', null, 0.28, null, 'evo seethe'));
+    at(c[2] - 0.3, 'under', () => s139I('blub', 50, 0.38, { gl: [0, -300, 0.3, 0] }, 'evo heave under'));
+    at(c[2] + 0.3 * (c[3] - c[2]), 'surface', () => s139I('bubble', null, 0.26, null, 'evo head up'));
+    at(c[3], 'rise', () => { s139I('fizz', null, 0.45, null, 'evo rise'); s139I('blub', [0, 0, 64, 58, 54, 50][to], 0.4, { gl: [-600, 500, 0.3, 0] }, 'evo rise glide'); });
+    at(c[3] + 0.85 * (c[4] - c[3]), 'stand', () => s139I('paper', null, 0.3, null, 'evo stands'));
+    at(c[4], 'look', () => s139I('drip', 90, 0.2, null, 'evo look'));
+    at(c[5], 'home', () => s139I('sizzle', null, 0.1, { dur: Math.max(0.4, (e.tot - c[5]) * L / 1000 * 0.85), a: 0.1, r: 0.2 }, 'evo way home'));
+    for (let s = 0; s < 2; s++) if (e.u >= c[5] && e.home >= (s + 0.5) / 2.2) once('hs' + s, () => s139I('grain', null, 0.45, null, 'evo home step ' + (s + 1)));
+    /* each bubble that pops on the slick (W139 counts them), never two closer than 110 ms */ const pc = K.W139 ? K.W139.pops : 0; if (pc > S139.pops) { if (now - S139.lastPop > 110 && e.u >= c[1] && e.u < c[4]) { S139.lastPop = now; s139I('drip', 78 + 4 * (pc % 4), 0.14, null, 'evo pop'); } S139.pops = pc; } };
+  homEvo19 = (f0 => function (now) { const E = R21.evo, on = !!(E && s139On()), m0 = S121.mute; if (on) { E.a139 = 1; S121.mute = true; if (E.f55) ['sink', 'boil', 'hit', 'home'].forEach(k => { E.f55[k] = 1; }); }
+    try { f0(now); } finally { S121.mute = m0; } try { if (on && R21.evo) s139Snd(now); } catch (x) { S139.err = 'snd ' + String(x && x.stack); }
+    /* the lamp's picture of the bench is taken every frame while its body changes shape (S55 takes it every 20th: a stale one left the old head's shade on the slick) */ try { if (on && R21.evo && S55.lit && S33.sheet && S33.sheet.visible) s33Bench(null); } catch (x) { S139.err = 'bench ' + String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s139dbg = () => ({ err: S139.err, kit: AA.rxKit.e139dbg && AA.rxKit.e139dbg(), snd: S139.dbg.snd.slice(0, 120), s121: S121.dbg && S121.dbg.evo, cov: S121.dbg && S121.dbg.evoCov });
+  // ==== S139 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
