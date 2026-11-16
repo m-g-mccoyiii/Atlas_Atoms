@@ -6766,6 +6766,14 @@ W99.shape = S => { const F = fig77(S), X = fig82(S), B = S.bones, T = S.T, a = F
   par.localToWorld(v.copy(F.P0)); const P0 = [v.x - r0.x, v.y - r0.y, v.z - r0.z]; v.set(0, 0, 1).transformDirection(par.matrixWorld); return { D, P0, n: [v.x, v.y, v.z], side: a.side }; };
 KIT.W99 = W99;
 // ==== W99 END
+// ==== W109 BEGIN
+// (builder 109) BRIMSTONE'S ACT SHOWS WHAT ITS RULE DOES: the switch (KIT.f109, ?f109=0 gives builder 106's act back). The work is in scheme.js S109:
+// the burn through the molecule, a lick of fire per sulfur to the yield number (the number steps with each), the task on the left page burned
+// and ticked, the figure sunk into its lump over the act's last 300 ms. Nothing in the clip changes.
+const W109 = { err: null };
+KIT.f109 = KIT.f109 == null ? !(typeof location !== 'undefined' && /[?&]f109=0/.test(String(location.search))) : KIT.f109;
+KIT.W109 = W109;
+// ==== W109 END
 // ==== W101 BEGIN
 // (builder 101) BRIMSTONE'S SMALL FLAMES ARE FLAMES, NOT DROPS (KIT.g101, ?g101=0 gives builder 98's shape back).
 // W96's fire body is not edited: the shader text of each body made (fire96.make) is given three more lines where uFl is on (the lump's
