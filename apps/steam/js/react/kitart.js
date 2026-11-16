@@ -8351,6 +8351,120 @@ const W112 = { err: null, dbg: {} };
     } catch (x) { W112.err = 'lump ' + String(x && x.stack); } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W112 = W112; }
 // ==== W112 END
+// ==== W117 BEGIN
+// (builder 117) HYDROGEN LIFTS (AA.rxKit.h117, on by default; ?h117=0 gives builder 86's act and today's Hydrogen back).
+// The rule (path.js HOM2LIT.h2, HOMSIMPLE.h2): lit when the page has driven off 2 hydrogens; the tap multiplies the yield, nothing else.
+//  - FED AT HOME (S.h117sw, the hydrogens it holds, laid by scheme.js S117 as each one driven off reaches it): its head lobe swells a step
+//    with each, it hangs at the top of its drift and cannot come down, its tail drawn taut down to the bench like a tether; it turns its
+//    face to each hydrogen as it comes (S.f117) and takes it with a squash.
+//  - THE ACT (o.bites.s117, one timeline both files read: KIT.ph117, KIT.lift117; every time in ms): its idle (W79: arms, lick, tail,
+//    companions, face) runs on under the whole act and the act is laid over it, so nothing is ever still. It sinks, floats low over
+//    bench and page on the way the scheme found (its tail trailing on the surface, curled where the floor is nearer than its length, its
+//    shadow under it), never smaller than at home; lays a hand under the atom a hydrogen left (the whole body is moved so the hand is on
+//    the atom: it floats, so its reach is its place); then one HEAVE for each hydrogen it holds: it crouches, swells and rises, the atom
+//    rises on its hand (the scheme lifts the atom by the same KIT.lift117), its head loses one step of swell, the atom is let down and
+//    springs. Then it lets go and floats home the same way.
+// Nothing of W86's act is used (KIT.act86 is switched off while this is on).
+KIT.h117 = KIT.h117 == null ? !(typeof location !== 'undefined' && /[?&]h117=0/.test(String(location.search))) : KIT.h117;
+if (KIT.h117) KIT.act86 = false;
+const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.1, PHI: 0.95 };
+{ const sm = sm52, lp = (a, b, u) => a + (b - a) * u, cl = (x, a, b) => (x < a ? a : x > b ? b : x), e5 = u => { u = cl(u, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); };
+  const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const on117 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
+  /* one heave, tau ms after it begins: ant (the crouch before), up (the lift, 0..1), spent (0..1), ring (the spring after it is let down) */
+  const hv = tau => { const A = W117.AN, U = W117.UP, H = W117.HOLD, D = W117.DN, t2 = tau - A - U - H - 0.8 * D;
+    return { ant: sm(tau / A) * (1 - sm((tau - A) / (0.55 * U))), up: sm((tau - A) / U) * (1 - sm((tau - A - U - H) / D)), spent: sm((tau - A) / U), ring: t2 > 0 ? Math.exp(-t2 / 170) * Math.sin(t2 / 52) : 0 }; };
+  function lift117(t, Z) { let up = 0, ant = 0, spent = 0, ring = 0, y = 0; for (let i = 0; i < Z.Hv.length; i++) { const h = hv(t - Z.Hv[i]), gk = 1 + 0.18 * i; up += h.up; ant += h.ant; spent += h.spent; ring += h.ring; y += gk * h.up - 0.16 * h.ring; } return { y: Z.Lh * y, up, ant, spent, ring }; }
+  /* the act at t ms since the tap. p: where its pinch is in the world; kz: its size over its size at home */
+  function ph117(t, Z) { const e = { ph: 'wait', t, kz: 1, rx: 0, ry: 0, rz: 0, sq: 0, hand: 1, reach: 0, arm: 0, lift: 0, spent: 0, glow: 1, lk: null, smile: 1.15, brow: 0.25, wide: 0.1, lid: 0, blink: 0, nod: 0, done: false, home: false, g: 0 };
+    const g = e5((t - Z.tW) / Z.J) * (1 - e5((t - Z.tD) / Z.Bt)), kz = 1 + (Z.kh - 1) * sm((g - 0.08) / 0.8), s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0; e.g = g; e.kz = kz;
+    let h = lp(Z.H.y - Z.f0, Z.hl * kz, sm(g / 0.3)); h = lp(h, Z.A.y - Z.fA, sm((g - 0.7) / 0.3));
+    const bob = Z.dn * kz * (0.055 * Math.sin(t / 151 + 1) + 0.02 * Math.sin(t / 67)), duck = sm((t - Z.tW + 460) / 380) * (1 - sm((t - Z.tW) / 240)), spring = sm((t - Z.tW) / 160) * (1 - sm((t - Z.tW - 260) / 420)), land = sm((t - Z.tH + 160) / 220) * (1 - sm((t - Z.tH - 60) / 320));
+    const y = fl + h + bob - Z.dn * (0.22 * duck + 0.12 * land), q = (Z.cam.y - y) / Z.cam.y; e.p = { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q };
+    const L = lift117(t, Z), u1 = Math.min(1, L.up); e.lift = L.y; e.spent = L.spent; e.up = L.up; e.ant = L.ant;
+    e.reach = sm((t - Z.tA - 60) / (Z.RE - 60)) * (1 - sm((t - Z.tRel) / 420));
+    e.sq = -0.2 * duck + 0.13 * spring - 0.17 * L.ant + 0.15 * u1 - 0.1 * land + 0.025 * Math.sin(t / 230) - 0.05 * L.ring; e.arm = 0.42 * L.ant - 0.2 * u1;
+    e.hand = cl(1 - sm((t - Z.tW + 480) / 300) + sm((t - Z.tEnd + 540) / 520), 0, 1);
+    e.smile = 1.25 + 0.55 * u1 - 0.45 * L.ant + 0.3 * land; e.brow = 0.25 - 0.65 * L.ant + 0.45 * u1 + 0.3 * duck; e.wide = 0.15 + 0.55 * duck + 0.6 * u1; e.lid = 0.4 * L.ant; e.glow = 1 + 0.5 * u1;
+    if (t >= Z.tW - 480 && t < Z.tD + 200) e.lk = Z.tg;
+    e.ph = t < Z.tW - 480 ? 'wait' : t < Z.tW ? 'wind' : t < Z.tA ? 'go' : t < Z.Hv[0] ? 'reach' : t < Z.tRel ? 'heave' : t < Z.tD ? 'let' : t < Z.tH ? 'back' : t < Z.tEnd ? 'settle' : 'done'; e.done = e.home = t >= Z.tEnd; return e; }
+  KIT.ph117 = ph117; KIT.lift117 = lift117;
+  /* what the scheme needs of the figure, in the world, at home: the pinch, sizes, each arm's hand as it will be held (from the pinch, for a
+     figure of home size), every joint from the pinch with its round */
+  function fig117(S) { const K = S.k79 || init79(S), mid = S.mid75, par = mid && mid.parent, T = S.T, V3 = T.Vector3; if (!par) return null; par.updateWorldMatrix(true, false);
+    const M = par.matrixWorld, ps = new V3().setFromMatrixScale(M).y || 1, k = K.m0.k, J = S.G.J, o0 = new V3(0, 0, 0).applyMatrix4(M), rel = (x, y, z) => new V3(x * k, (y - K.py) * k, (z || 0) * k).applyMatrix4(M).sub(o0);
+    const h = par.localToWorld(new V3(K.m0.x, K.m0.y + K.py * k, 0));
+    const arms = K.arm.map(a => { const r = J[a.jn[0]].p, tp = J[a.jn[a.jn.length - 1]].p, dx = a.side * (tp[0] - r[0]), dy = tp[1] - r[1], a0 = Math.atan2(dy, dx), an = cl(W117.PHI - a0, -0.6, 1.1), c = Math.cos(a0 + an), s2 = Math.sin(a0 + an), ln = Math.hypot(dx, dy);
+      return { side: a.side, an, rel: rel(r[0] + a.side * ln * c, r[1] + ln * s2, 0), root: rel(r[0], r[1], 0) }; });
+    const joints = []; J.forEach((q, j) => { if (!j || !q) return; const v = rel(q.p[0], q.p[1], q.p[2]); joints.push([v.x, v.y, v.z, Math.max(0.06, q.r || 0.1) * k * ps]); });
+    let w = 0; J.forEach(q => { if (q) w = Math.max(w, Math.abs(q.p[0]) + (q.r || 0)); });
+    return { home: { x: h.x, y: h.y, z: h.z }, up: (K.top - K.py) * k * ps, dn: K.py * k * ps, lo: (K.py - (K.ly - K.lr)) * k * ps, hr: K.hr * k * ps, w: w * k * ps, hd: rel(J[K.hj].p[0], J[K.hj].p[1], 0), arms, joints, nb: K.bead.length, st: S.st }; }
+  KIT.fig117 = S => { try { return fig117(S); } catch (e) { W117.err = 'fig ' + String(e && e.stack); return null; } };
+  /* the head lobe a step larger for each hydrogen it holds (its three joints; the lick rides up on it) */
+  function swell117(S, sw) { const K = S.k79, B = S.bones; if (!K || !(sw > 0.002)) return; const Hj = K.h117 || (K.h117 = (() => { const body = S.G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && S.G.J[j]) : [], i = sp.indexOf(K.hj); return [sp[i - 1], K.hj, sp[i + 1]].filter(j => j != null); })());
+    const f = 1 + W117.SWK * sw, up = (f - 1) * K.hr; Hj.forEach(j => { B[j].scale.multiplyScalar(f); B[j].position.y += 0.6 * up; }); K.lick.forEach(j => { B[j].position.y += 1.6 * up; }); }
+  /* at home (and under the act): the swell, the hang at the top of its drift, the taut tail, the squash as it takes a hydrogen; where its
+     head is, for the hydrogens that fly to it */
+  function home117(S, eff) { const K = S.k79, mid = S.mid75, par = mid && mid.parent, B = S.bones, T = S.T; if (!K || !par) return; const V = S.v117 || (S.v117 = { a: new T.Vector3(), b: new T.Vector3(), q: new T.Quaternion(), i: new T.Quaternion() });
+    if (S.a75 && !S.a117) { /* the pen's strokes in the air ride the lower lobe, not the tail or the lick (those swing far) */ S.a117 = 1; const J = S.G.J, cj = S.G.bj[S.G.R.chest]; S.a75.strokes.forEach(s => { if (K.tail.indexOf(s.j) < 0 && K.lick.indexOf(s.j) < 0) return; const d = [J[s.j].p[0] - J[cj].p[0], J[s.j].p[1] - J[cj].p[1], J[s.j].p[2] - J[cj].p[2]]; s.pts = s.pts.map(p => [p[0] + d[0], p[1] + d[1], p[2] + d[2]]); s.j = cj; }); }
+    const sw = eff == null ? (S.h117sw || 0) : eff; swell117(S, sw); const tw = sm(sw / 1.5);
+    if (tw > 0.001) { const tt = clk79(S), M = mo79(S, K, tt), ug = K.ug, top = 0.55 * K.room + 0.05 * Math.sin(tt * 2.9) + 0.03 * Math.sin(tt * 6.7);
+      mid.position.y += (top - M.y) * ug * tw * 0.85; mid.position.x -= M.x * ug * tw * 0.8; mid.quaternion.slerp(V.i, 0.8 * tw); mid.scale.y *= 1 + 0.035 * tw; }
+    const F = S.f117; if (F && F.hit != null) { const ms = nowMs() - F.hit; if (ms > 0 && ms < 1400) { const r = Math.exp(-ms / 240) * Math.sin(ms / 58), s0 = sm(ms / 90); mid.scale.y *= 1 - 0.11 * r * s0; mid.scale.x *= 1 + 0.07 * r * s0; mid.scale.z *= 1 + 0.07 * r * s0; mid.position.y += 0.1 * K.ug * r * s0; } }
+    mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false);
+    if (tw > 0.001 && K.tail.length) { /* the tail's tip held on the bench under its place */ const J = S.G.J; let tj = K.tail[0]; K.tail.forEach(j => { if (J[j].p[1] < J[tj].p[1]) tj = j; });
+      V.a.set(K.m0.x, 0.02, 0); par.localToWorld(V.a); S.root.worldToLocal(V.a); V.b.copy(V.a).sub(B[tj].position); const L = Math.max(1e-4, K.tail0.y - J[tj].p[1]);
+      K.tail.forEach(j => { const w = Math.pow(cl((K.tail0.y - J[j].p[1]) / L, 0, 1), 1.3) * tw; B[j].position.addScaledVector(V.b, w); }); }
+    (S.h117w || (S.h117w = new T.Vector3())).copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld); }
+  /* faces: the act's go over the idle's; at home it watches its hydrogens come */
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { if (!S || !S.way75 || S.jar || KIT.h117 === false) return; const X = S.x117;
+      const F = S.f117, fk = F ? (F.k || 0) * (X ? X.e.hand : 1) : 0; if (fk > 0.001) { const lx = F.lx || 0; q.lookx = q.lookx * (1 - fk) + lx * fk; q.looky = q.looky * (1 - fk) - 0.5 * fk; q.hturn = (q.hturn || 0) + 0.4 * lx * fk; q.wide = Math.max(q.wide || 0, 0.4 * fk); q.brow += 0.3 * fk; }
+      if (F && F.hit != null) { const ms = nowMs() - F.hit; if (ms > 0 && ms < 1200) { q.blink = Math.max(q.blink || 0, pl52(ms, 0, 170, 60)); q.smile += 0.5 * pl52(ms, 80, 900, 200); } }
+      if (X && X.e.hand < 0.999) { const e = X.e, h = e.hand, m = (a, b) => lp(b, a, h); q.smile = m(q.smile, e.smile); q.brow = m(q.brow, e.brow); q.wide = m(q.wide || 0, e.wide); q.lidx = m(q.lidx || 0, e.lid); q.nod = m(q.nod || 0, e.nod); if (S.lk117) { q.lookx = m(q.lookx, S.lk117[0]); q.looky = m(q.looky, S.lk117[1]); } }
+    } catch (x) { W117.err = 'face ' + String(x && x.stack); } })(C26.rest);
+  /* after the idle: the act's place and turn of the whole, its arms, the streaming of lick, tail and companions, the hand on the atom */
+  function post117(S, X) { const K = S.k79, e = X.e, Z = X.Z, B = S.bones, T = S.T, V3 = T.Vector3, mid = S.mid75, par = mid && mid.parent, J = S.G.J; if (!K || !par) return;
+    const W = S.w117 || (S.w117 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), f: new V3(), eu: new T.Euler(), q: new T.Quaternion(), q2: new T.Quaternion(), qI: new T.Quaternion(), pI: new V3(), sI: new V3(), z: new V3(0, 0, 1), x: new V3(1, 0, 0) });
+    par.updateWorldMatrix(true, false); const ps = W.a.setFromMatrixScale(par.matrixWorld).y || 1, h = e.hand, a1 = 1 - h; W.qI.copy(mid.quaternion); W.pI.copy(mid.position); W.sI.copy(mid.scale);
+    const ea = ph117(e.t - 40, Z), eb = ph117(e.t + 40, Z), vw = new V3((eb.p.x - ea.p.x) / 0.08, (eb.p.y - ea.p.y) / 0.08, (eb.p.z - ea.p.z) / 0.08), el = ph117(e.t - 200, Z), em = ph117(e.t - 120, Z), vl = new V3((em.p.x - el.p.x) / 0.08, (em.p.y - el.p.y) / 0.08, (em.p.z - el.p.z) / 0.08);
+    /* the whole: placed by its pinch, squashed and stretched about it; it leans into its way */
+    const sq = cl(e.sq, -0.4, 0.4), k = K.m0.k * e.kz, bank = cl(-0.028 * vl.x / Math.max(0.5, e.kz), -0.38, 0.38), pitch = cl(0.014 * vl.z / Math.max(0.5, e.kz), -0.2, 0.2);
+    mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); W.eu.set(e.rx + pitch, e.ry, e.rz + bank); mid.rotation.copy(W.eu);
+    const Pl = par.worldToLocal(W.a.set(e.p.x, e.p.y, e.p.z)), pr = W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu); mid.position.set(Pl.x - pr.x, Pl.y - pr.y, Pl.z - pr.z);
+    /* arms: the one that reaches is held up and out, the other follows a little late; both bend as it crouches */
+    const earm = ph117(e.t - 90, Z); K.arm.forEach(a => { const A = Z.arms && Z.arms[a.i], me = Z.arm === a.i, an = a1 * a.side * ((me ? e.reach : 0.6 * earm.reach) * (A ? A.an : 0) + (me ? e.arm : earm.arm)); if (Math.abs(an) < 1e-4) return; W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, an, (i, n) => 0.7 + 0.3 * i / Math.max(1, n - 1)); });
+    mid.updateWorldMatrix(true, false); mid.getWorldQuaternion(W.q); W.q2.copy(W.q).invert(); const fu = 1 / Math.max(1e-4, ps * k), toL = v => v.clone().applyQuaternion(W.q2).multiplyScalar(fu), vL = toL(vw), vLl = toL(vl);
+    if (a1 > 0) { const ax = cl(0.09 * vL.x, -1, 1) * a1, st2 = cl(0.05 * Math.max(0, -vL.y), 0, 0.5) * a1;
+      K.lick.forEach(j => { const p = B[j].position, w = cl((J[j].p[1] - K.lick0.y) / K.lickL, 0, 1); p.y += (p.y - K.lick0.y) * st2 * w; });
+      W.c.copy(K.lick0); rot79(S, K.lick, W.c, W.z, ax, i => 0.4 + 0.6 * i / Math.max(1, K.lick.length - 1));
+      /* the tail trails its way; where the floor is nearer than its length it curls to lie on it */
+      S.root.updateWorldMatrix(true, false); const t0w = W.c.copy(K.tail0).applyMatrix4(S.root.matrixWorld), upY = Math.max(0.3, W.d.set(0, 1, 0).applyQuaternion(W.q).y), fl = Z.floor ? Z.floor(e.p.x, e.p.z) : 0, Lw = K.tailL * k * ps * (1 + sq) * upY, c0 = cl((t0w.y - fl - 0.05) / Math.max(1e-4, Lw), 0.3, 1), dir = cl((Z.cd || 1) + 0.7 * vLl.x, -1, 1), kt = 1 - (1 - c0) * a1;
+      /* where the floor is nearer than the tail is long, the tail is pressed short against it (its tip on the floor) and bends a little */ K.tail.forEach(j => { const p = B[j].position; p.x = K.tail0.x + (p.x - K.tail0.x) * kt; p.y = K.tail0.y + (p.y - K.tail0.y) * kt; });
+      W.c.copy(K.tail0); rot79(S, K.tail, W.c, W.z, (-0.6 * ax - 0.45 * (1 - c0) * dir) * a1, i => cl((K.tail0.y - J[K.tail[i]].p[1]) / K.tailL, 0, 1));
+      /* the companions trail on their threads, a little late */
+      K.bead.forEach(b => { const n = b.jn.length, r = W.d.copy(B[b.jn[n - 1]].position).sub(B[b.jn[0]].position), r2 = Math.max(1e-4, r.lengthSq()), c = 0.06 * a1, az = cl(c * (r.y * vLl.x - r.x * vLl.y) / Math.sqrt(r2), -1.1, 1.1), bx = cl(c * (r.z * vLl.y - r.y * vLl.z) / Math.sqrt(r2), -0.9, 0.9);
+        W.c.copy(B[b.jn[0]].position); const wf = (i, m) => Math.pow(i / Math.max(1, m - 1), 1.2); rot79(S, b.jn, W.c, W.z, az, wf); rot79(S, b.jn, W.c, W.x, bx, wf); }); }
+    K.glow.forEach(gq => { gq.m.material.opacity *= lp(e.glow, 1, h); }); if (K.fx && a1 > 0.01) { K.fx.pop.visible = false; K.fx.sk.visible = false; }
+    /* its hand on the atom: the whole body is moved so that the hand lies on the atom's round, on the side toward its shoulder */
+    let hw = null; const arm = Z.arm != null ? K.arm[Z.arm] : null; S.root.updateWorldMatrix(true, false);
+    if (arm) { const tip = W.c.copy(B[arm.jn[arm.jn.length - 1]].position).applyMatrix4(S.root.matrixWorld);
+      if (e.reach > 0.001 && Z.tg) { const root = W.d.copy(B[arm.jn[0]].position).applyMatrix4(S.root.matrixWorld), ax = Z.tg.x, ay = Z.tg.y + e.lift, az = Z.tg.z + (Z.lz || 0) * e.lift; let dx = root.x - ax, dy = Math.min(root.y - ay, -0.35 * Z.tg.R), dz = root.z - az; const dl = Math.hypot(dx, dy, dz) || 1, R = Z.tg.R * 1.03;
+        W.f.set(ax + dx / dl * R - tip.x, ay + dy / dl * R - tip.y, az + dz / dl * R - tip.z).multiplyScalar(e.reach * a1); tip.add(W.f); par.getWorldQuaternion(W.q2).invert(); W.f.applyQuaternion(W.q2).multiplyScalar(1 / ps); mid.position.add(W.f); }
+      hw = [tip.x, tip.y, tip.z]; }
+    if (h > 0) { mid.position.lerp(W.pI, h); mid.quaternion.slerp(W.qI, h); mid.scale.lerp(W.sI, h); }
+    mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); const hp = W.a.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld); let lk = [0.3, -0.2];
+    if (e.lk) { const dx = e.lk.x - hp.x, dy = e.lk.y - hp.y, dz = e.lk.z - hp.z, hz = Math.hypot(dx, dz) || 1; lk = [cl((dx / hz) * 1.4, -1.2, 1.2), cl(Math.atan2(dy, hz) * 1.2, -1, 0.4)]; } S.lk117 = lk;
+    /* its shadow: on the floor under its pinch, smaller and darker the lower it hangs (lay75 reads S.x86f and S.h79) */
+    const pw = par.localToWorld(W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu).add(mid.position)), fl = Z.floor ? Z.floor(pw.x, pw.z) : 0;
+    S.x86f = h < 0.999 ? [pw.x, fl - Z.f0, pw.z] : null; S.h79 = lp(cl((pw.y - fl - Z.dn * e.kz) / Math.max(0.3, 2.4 * Z.dn) - 0.3, -0.6, 0.8), S.h79 || 0, h);
+    S.h117 = { p: [pw.x, pw.y, pw.z], head: [hp.x, hp.y, hp.z], hand: hw, hr: K.hr * k * ps, kz: e.kz, ph: e.ph, w: h, lift: e.lift, reach: e.reach }; }
+  function act117(f0, grp, S, t, o) { const Z = o.bites.s117, e = ph117(t, Z); S.x117 = { t, e, Z }; W117.e = e; f0(grp, 'rest', t, {}); home117(S, (S.h117sw || 0) * Math.max(0, 1 - e.spent / Math.max(1, Z.n))); post117(S, S.x117); return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75 || !on117(S)) return f0(grp, clip, t, o);
+    if (clip === 'act' && o && o.bites && o.bites.s117) { try { return act117(f0, grp, S, t, o); } catch (err) { W117.err = 'act ' + String(err && err.stack); S.x117 = null; S.x86f = null; return f0(grp, clip, t, o); } }
+    if (S.x117) { S.x117 = null; S.lk117 = null; S.x86f = null; S.h117 = null; }
+    const r = f0(grp, clip, t, o); if (clip === 'rest' && !(o && o.jar) && S.k79) { try { home117(S, null); } catch (err) { W117.err = 'home ' + String(err && err.stack); } } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W117 = W117; }
+// ==== W117 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone

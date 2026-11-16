@@ -7624,6 +7624,112 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           w26.w110.end = X.tR[X.tR.length - 1] + 70 + 170 + 420 + 80; S112.end = Math.round(w26.w110.end); } } catch (x) { S112.err = 'end ' + String(x && x.stack); } }; } catch (x) { S112.err = 'act ' + String(x && x.stack); } return act; })(A20ACT.water);
   if (AA.rxKit) AA.rxKit.s112dbg = () => ({ err: S112.err, end: S112.end, plan: S112.plan, sw: s26Fig() && s26Fig().w110sw, fed: S110.fed, swl: S112.swl, kit: AA.rxKit.W112 && AA.rxKit.W112.err, kd: AA.rxKit.W112 && AA.rxKit.W112.dbg, log: S112.log });
   // ==== S112 END
+  // ==== S117 BEGIN
+  // (builder 117) HYDROGEN LIFTS: THE PAGE'S SIDE (kitart.js W117 has the body; AA.rxKit.h117, ?h117=0 gives today's Hydrogen back).
+  // The rule as path.js has it (HOM2LIT.h2 with RULE.homSimple.h2 'a', HOMSIMPLE.h2.need 2; hom2Use): Hydrogen is lit once this page has
+  // driven off 2 hydrogens (g.tally.off_hydrogen over g.hom.h0); its tap multiplies the yield by its stage's number, once a round; no atom
+  // changes. So:
+  //  - FED AT HOME: each hydrogen driven off flies to Hydrogen at home (byTarget; its own flight below: a light, weaving rise on a high
+  //    arc into its head) and it swells a step (S117.fed, SP.h117sw; the kit hangs it high on a taut tail). A new page lets it down.
+  //  - THE ACT: the stand is searched per page (each atom a hydrogen left from, each arm: the pinch placed so that hand lies under that
+  //    atom; every joint of the figure as the eye sees it clear of all other atoms and bonds, inside the screen, on the molecule's page;
+  //    AA.rxKit.stage.findPath's grid way from home to it for its body as seen on the paper, the same way home). One heave for each
+  //    hydrogen held (2 to 4): the atom rises on its hand (KIT.lift117, the same number the kit moves the body by; its bonded neighbours a
+  //    third as far), the yield steps up at the top of each heave (the last step, by the page's own tick, lands on the rule's value), the
+  //    atom is let down and springs. If hydrogens are still in the air when it is tapped, it waits for them before it leaves.
+  if (AA.rxKit && AA.rxKit.h117 == null) AA.rxKit.h117 = !/[?&]h117=0/.test(String(root.location && root.location.search));
+  const S117 = { err: null, np: false, plan: null, Z: null, live: null, v: new T.Vector3(), fed: 0, sw: 0, fl: new Set(), fl2: new Set(), last: 0, lastF: 0, pg: null, cnt: 0, base: -1e9, k: 0, lx: 0, dbg: {}, log: [], snd: [], applied: null, vm: new Map(), ids: new WeakMap(), gid: 0, DUR: 1250, GAP: 230, DIP: 150 };
+  const s117On = () => { const SP = s26Fig(), K = AA.rxKit; return !!(SP && SP.way75 && !SP.jar && K && K.h117 !== false && K.idle79 !== false && K.ph117 && K.fig117 && homObj && homObj.id === 'h2'); };
+  const s117Sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, s117E5 = u => { u = Math.max(0, Math.min(1, u)); return u * u * u * (u * (u * 6 - 15) + 10); }, s117Cl = (x, a, b) => Math.max(a, Math.min(b, x));
+  const s117Pg = () => { if (!g) return ''; const R = g.runRef || g; if (!S117.ids.has(R)) S117.ids.set(R, ++S117.gid); return S117.ids.get(R) + ':' + (g.round || (g.runRef && g.runRef.round) || 0) + ':' + g.page; };
+  const s117Snd = (name, f) => { try { f(); } catch (x) { /* no sound */ } const A = st.homAct; S117.snd.push([name, Math.round(performance.now()), A ? Math.round(performance.now() - A.t) : null]); if (S117.snd.length > 80) S117.snd.shift(); };
+  /* the stand, the way, the times */
+  const s117Plan = (stg, L) => { const SP = s26Fig(), K = AA.rxKit, ST8 = K.stage, SC = K.scene, F = K.fig117(SP); if (!F || !F.arms.length || !center || !center.balls) return null; cam.updateMatrixWorld();
+    const hv = s86Heavy(); if (!hv.length) return null; const gone = s86Atoms(hv), R0 = hv.reduce((s, q) => s + q.R, 0) / hv.length, kh = s117Cl(2.0 * R0 / Math.max(0.05, F.hr), 1.3, 2.6);
+    let n = 2; try { n = s117Cl(((g.tally && g.tally.off_hydrogen) || 0) - ((g.hom && g.hom.h0) || 0), 2, 4); } catch (e) { n = 2; }
+    const oS = SC.obsSeen(), keys = []; center.balls.forEach((b, key) => { if (b && b.mesh) keys.push(key); });
+    const obsP = SC.obsPage({ pad: 0.2, br: 0.32 }), pg = SC.page(obsP, { x0: 1.2, x1: 2.2, z0: 0.6 }), scr = SC.screen(), pr = SC.pr, ppx = (x, y, z) => Math.abs(pr(x + 1, y, z)[0] - pr(x, y, z)[0]);
+    const cands = gone.map((q, i) => ({ q, pri: 0.02 * i })).concat(hv.filter(q => !gone.some(o => o.a === q.a)).map(q => ({ q, pri: 1 }))); let best = null;
+    cands.forEach(cd => F.arms.forEach((arm, ai) => { const q = cd.q, rh = 0.89 * q.R, C = { x: q.x - arm.side * 0.55 * rh, y: q.y - 0.45 * q.R, z: q.z + 0.83 * rh }, A = { x: C.x - arm.rel.x * kh, y: C.y - arm.rel.y * kh, z: C.z - arm.rel.z * kh }, fA = s66Floor(A.x, A.z), minY = fA + 1.05 * F.lo * kh; let up = 0; if (A.y < minY) { up = minY - A.y; A.y = minY; }
+      const ti = keys.indexOf(q.a), tp = oS[ti], skipR = tp ? 1.9 * tp[2] : 0; let cov = 0, out = 0, x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      F.joints.forEach(jr => { const X = A.x + jr[0] * kh, Y = A.y + jr[1] * kh, Zz = A.z + jr[2] * kh, p = pr(X, Y, Zz), r = jr[3] * kh * ppx(X, Y, Zz);
+        for (let m = 0; m < oS.length; m++) { if (m === ti) continue; const o = oS[m]; if (tp && m >= keys.length && Math.hypot(o[0] - tp[0], o[1] - tp[1]) < skipR) continue; const d = r + o[2] + 4 - Math.hypot(o[0] - p[0], o[1] - p[1]); if (d > 0) cov += d; }
+        out += Math.max(0, scr.x0 + 8 - (p[0] - r)) + Math.max(0, p[0] + r - (scr.x1 - 8)) + Math.max(0, scr.y0 + 8 - (p[1] - r)) + Math.max(0, p[1] + r - (scr.y1 - 8));
+        const gq = SC.gp(X, Math.max(0, Y), Zz); x0 = Math.min(x0, gq.x - jr[3] * kh); x1 = Math.max(x1, gq.x + jr[3] * kh); z0 = Math.min(z0, gq.z); z1 = Math.max(z1, gq.z); });
+      const off = SC.offPage(pg, [x0, x1, z0, z1]), c = (cov + out) * 1000 + off * 40000 + cd.pri * 3000 + up * 1500 + 2 * Math.hypot(A.x - F.home.x, A.z - F.home.z);
+      if (!best || c < best.c) best = { c, q, ai, A, fA, cov, out, off, up }; }));
+    if (!best) return null; const q = best.q, A = best.A, H = F.home, cp = cam.position, seen = p => { const s = SC.gp(p.x, p.y, p.z); return [s.x, s.z]; }, sH = seen(H), sA = seen(A), Rp = 0.8 * F.hr * kh, sHd = seen({ x: A.x + F.hd.x * kh, y: A.y + F.hd.y * kh, z: A.z + F.hd.z * kh }), ox = sHd[0] - sA[0], oz = sHd[1] - sA[1], Rh = 1.4 * F.hr * kh;
+    const okP = (x, z) => { for (let m = 0; m < obsP.length; m++) { const o = obsP[m]; if (Math.hypot(o.x - x, o.z - z) < Rp + o.r + 0.1 || Math.hypot(o.x - x - ox, o.z - z - oz) < Rh + o.r + 0.1) return false; } return true; };
+    const box = { x0: Math.min(sH[0], sA[0]) - 14, x1: Math.max(sH[0], sA[0]) + 14, z0: Math.min(sH[1], sA[1]) - 10, z1: Math.max(sH[1], sA[1]) + 10 }, way = ST8.findPath({ kind: 'grid', from: sH, to: sA, ok: okP, box, gs: 0.5, near: 0.6 });
+    const KW = K.W117, HV = KW.AN + KW.UP + KW.HOLD + KW.DN + 60, J = s117Cl(way.len * 64, 1300, 2300), RE = 560, D = RE + n * HV + 420, Bt = s117Cl(0.92 * J, 1200, 2100), B = Bt + 560, hitU = (RE + (n - 1) * HV + KW.AN + 0.85 * KW.UP) / D;
+    S117.dbg.plan = { n, kh: +kh.toFixed(2), arm: best.ai, side: F.arms[best.ai].side, an: +F.arms[best.ai].an.toFixed(2), tg: q.a && q.a.el, kind: q.kind, A: [A.x, A.y, A.z].map(v => +v.toFixed(2)), H: [H.x, H.y, H.z].map(v => +v.toFixed(2)), cov: +best.cov.toFixed(1), out: +best.out.toFixed(1), off: +best.off.toFixed(2), up: +best.up.toFixed(2), wlen: +way.len.toFixed(1), wbad: way.bad || 0, wn: way.P.length, J: Math.round(J), D: Math.round(D), B: Math.round(B), F: { up: +F.up.toFixed(2), dn: +F.dn.toFixed(2), lo: +F.lo.toFixed(2), hr: +F.hr.toFixed(2), w: +F.w.toFixed(2) }, R0: +R0.toFixed(2), cands: cands.length };
+    return { stg, L, n, kh, F, H, A, fA: best.fA, q, ta: q.a, arm: best.ai, way, J, RE, HV, D, Bt, B, hitU, cam: { x: cp.x, y: cp.y, z: cp.z } }; };
+  jumpPlan = (f0 => function (id, to) { S117.np = false; if (id !== 'h2' || !s117On()) return f0(id, to);
+    try { const stg = Math.max(1, Math.min(5, homObj.stage || 3)), L = Math.max(380, Math.min(700, kinLen(performance.now()))), pf = paceK(), p = s117Plan(stg, L); S117.plan = p; if (p) { R21T.h2 = [p.J / pf, p.D / pf, p.B / pf]; S117.np = true; } } catch (e) { S117.err = 'plan ' + String(e && e.stack); S117.plan = null; }
+    let j = null; try { j = f0(id, to); } finally { S117.np = false; }
+    try { if (j && j.h117) { /* it waits for the hydrogens still in the air */ const now = performance.now(); let last = 0; st.flyers.forEach(f => { if (f.to && f.to.h117) last = Math.max(last, f.h117 ? f.h117.start + S117.DUR : now + 1900); });
+        const ex = Math.max(0, Math.min(3000, last + 350 - (now + j.W - 480))); if (ex > 30) { j.W += ex; j.hit += ex; A20.until += ex; if (A20.hold) A20.hold.until += ex; const ink = A20.inks[A20.inks.length - 1]; if (ink && ink.j === j) { ink.t0 += ex; ink.end += ex; } S117.dbg.wait = Math.round(ex); } else S117.dbg.wait = 0; } } catch (e) { S117.err = 'wait ' + String(e && e.stack); }
+    return j; })(jumpPlan);
+  actPiece = (f0 => function (kind) { if (S117.np && kind === 'puff') return null; return f0.apply(this, arguments); })(actPiece);
+  A20ACT.h2 = (f0 => function (j, c) { if (!S117.np || !S117.plan || !s117On()) return f0(j, c); const p = S117.plan; j.r21 = true; j.h117 = true; j.bites = []; j.N = 3; j.f.up = 1; j.f.land = 1;
+    return { want: { x: HOMP.x, z: HOMP.z }, hitU: p.hitU, dur: j.D + j.B + 800, pad: 0.6,
+      after(pl) { pl.x = j.perch.x = HOMP.x; pl.z = j.perch.z = HOMP.z; pl.k = j.k = 1; j.sd = 1; j.spot = { x: p.q.x, z: p.q.z }; this.tgt = j.spot; },
+      draw() { /* all of it is in the scene */ } }; })(A20ACT.h2);
+  /* the plan in times since the tap, once the wind-up is known; the clip gets it as o.bites.s117 */
+  const s117Z = (A, j) => { const p = S117.plan, KW = AA.rxKit.W117, F = p.F, W = j.W, tA = W + j.J, Hv = []; for (let i = 0; i < p.n; i++) Hv.push(tA + p.RE + i * p.HV); const tD = tA + j.D, Bt = Math.max(600, j.B - 560);
+    const Z = { st: p.stg, n: p.n, kh: p.kh, H: p.H, A: p.A, way: p.way, cam: p.cam, floor: s66Floor, f0: s66Floor(p.H.x, p.H.z), fA: p.fA, hl: 1.15 * F.lo, dn: F.dn, hr: F.hr, tW: W, J: j.J, tA, RE: p.RE, Hv, tRel: Hv[p.n - 1] + KW.AN + KW.UP + KW.HOLD + 0.9 * KW.DN, tD, Bt, tH: tD + Bt, tEnd: tD + j.B, Lh: 2.0 * p.q.R, lz: -0.7,
+      tg: { x: p.q.x, y: p.q.y, z: p.q.z, R: p.q.R }, ta: p.ta, arm: p.arm, arms: F.arms, cd: -F.arms[p.arm].side, g };
+    S117.Z = Z; j.bites.s117 = Z; return Z; };
+  /* where its atom is now (without the lift this block gave it) */
+  const s117Tg = Z => { const b = s66Ball(Z.ta); if (!b || !b.mesh) return; b.mesh.getWorldPosition(S117.v); const d = S117.applied ? S117.applied.w : 0; Z.tg.x = S117.v.x; Z.tg.y = S117.v.y - d; Z.tg.z = S117.v.z - Z.lz * d; };
+  homJump = (f0 => function (A, now) { const j = A && A.j; if (!j || !j.h117 || !s117On()) return f0(A, now);
+    let Z = j.bites && j.bites.s117; if (!Z) { try { Z = s117Z(A, j); } catch (e) { S117.err = 'Z ' + String(e && e.stack); } } if (Z && Z.g === g) { try { s117Tg(Z); } catch (e) { S117.err = 'tg ' + String(e && e.stack); } }
+    const o = f0(A, now); if (!o || !Z) return o; o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; o.sx = 1; o.sy = 1; o.rz = 0; o.ry = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; A20.cw.y = 0; } S117.live = { A, Z, j }; return o; })(homJump);
+  /* fed at home: what the line drives off goes to Hydrogen */
+  byTarget = (f0 => function (kind, from) { try { const SP = s26Fig();  if (kind === 'h2' && s117On() && SP && !st.homAct && homObj.grp.visible && SP.h117w) { const v = SP.h117w.clone(); v.h117 = true; v.pg = s117Pg(); return v; } } catch (x) { S117.err = 'to ' + String(x && x.stack); } return f0(kind, from); })(byTarget);
+  /* the hydrogens' flight to it (after feel.js has drawn them): each lifts off quickly, straight up at first (it is light), then drifts over
+     on a high arc, weaving a little like a bubble, turning slowly, 230 ms apart, and sinks into its head; it watches them come */
+  const s117Fly = now => { const SP = s26Fig(), dt = Math.max(0, Math.min(100, now - (S117.lastF || now))); S117.lastF = now; if (!SP) return; let n = 0, sx = 0;
+    if (s117On()) st.flyers.forEach(f => { const R = f.real; if (!f.to || !f.to.h117 || !f.grp) return; f.clinked = true; if (!R || !R.lift) return; let F = f.h117;
+      if (!F) { if (!S117.fl2.size) { S117.base = R.lift; S117.cnt = 0; } const i = S117.cnt++; F = f.h117 = { i, from: R.last.clone(), sc: R.sc, start: Math.max(R.lift + S117.DIP, S117.base + S117.DIP + i * S117.GAP), r0: f.grp.rotation.y, sd: i % 2 ? 1 : -1, c: new T.Vector3() }; S117.fl2.add(f); }
+      const tg = SP.h117w || f.to, P0 = F.from, u = s117Cl((now - F.start) / S117.DUR, 0, 1), e = s117E5(u), L = P0.distanceTo(tg), Hh = (3.4 + 0.16 * L) * F.sc / 2.17, C = F.c.copy(P0).lerp(tg, 0.28); C.y += 2 * Hh;
+      const a1 = (1 - e) * (1 - e), b1 = 2 * (1 - e) * e, c1 = e * e, pos = f.grp.position, wv = 0.38 * F.sc / 2.17 * Math.sin(Math.PI * e) * Math.sin(2 * Math.PI * 1.6 * e + F.i * 2.1);
+      pos.set(a1 * P0.x + b1 * C.x + c1 * tg.x + wv, a1 * P0.y + b1 * C.y + c1 * tg.y, a1 * P0.z + b1 * C.z + c1 * tg.z);
+      const pre = s117Sm((now - (F.start - S117.DIP)) / S117.DIP) * (1 - s117Sm(u / 0.15)), sink = s117Sm((u - 0.72) / 0.28), s = F.sc * (1 + 0.14 * pre) * (1 - sink); pos.y += 0.25 * F.sc / 2.17 * pre;
+      f.grp.scale.setScalar(Math.max(0.0001, s)); f.grp.rotation.set(0.25 * F.sd * Math.sin(Math.PI * e), F.r0 + F.sd * 1.7 * e, 0.3 * Math.sin(2 * Math.PI * e)); f.grp.visible = s > 0.01 * F.sc;
+      if (R.mats) R.mats.forEach(m => { m.opacity = 1; }); f.timed = true; f.t0 = F.start; f.dur = S117.DUR + 20; if (f.to.copy) f.to.copy(tg); if (u < 1) { n++; sx += pos.x; } });
+    S117.fl2.forEach(f => { if (st.flyers.indexOf(f) < 0) S117.fl2.delete(f); });
+    const G = homObj && homObj.grp, want = n ? 1 : 0, lx = n && G ? s117Cl((sx / n - G.position.x) / 4, -1, 1) : S117.lx; S117.k += (want - S117.k) * (1 - Math.exp(-dt / (want ? 250 : 450))); S117.lx += (lx - S117.lx) * (1 - Math.exp(-dt / 200));
+    SP.f117 = Object.assign(SP.f117 || {}, { lx: S117.lx, k: S117.k }); };
+  if (FEEL && FEEL.frame) FEEL.frame = (f0 => function (now, dt) { const r = f0.apply(this, arguments); try { s117Fly(now); } catch (x) { S117.err = 'fly ' + String(x && x.stack); } return r; })(FEEL.frame);
+  const s117Frame = now => { const SP = s26Fig(), dt = Math.max(0, Math.min(100, now - (S117.last || now))); S117.last = now; if (!SP) return; if (!s117On()) { SP.h117sw = 0; return; }
+    /* each hydrogen that reaches it swells it a step; a new page lets it down; the act spends it (the kit) and it is empty after */
+    st.flyers.forEach(f => { if (f.to && f.to.h117) S117.fl.add(f); }); S117.fl.forEach(f => { if (st.flyers.indexOf(f) >= 0) return; S117.fl.delete(f); (S117.dbg.arr = S117.dbg.arr || []).push([f.to.pg, s117Pg(), !!f.real, Math.round(now)]); if (f.to.pg !== s117Pg()) return; S117.fed = Math.min(4, S117.fed + 1); SP.f117 = SP.f117 || {}; SP.f117.hit = now; s117Snd('feed' + S117.fed, () => { sfx.clink(2 + 2 * S117.fed); sfx.drift(); }); });
+    if (S117.pg !== s117Pg()) { S117.pg = s117Pg(); S117.fed = 0; }
+    const Lq = S117.live, acting = !!(Lq && st.homAct === Lq.A);
+    if (Lq && !acting && S117.fed && !S117.cleared) { S117.fed = 0; S117.sw = 0; } S117.cleared = !acting;
+    if (!(acting && Lq.Z && now - Lq.A.t > Lq.Z.tW - 480)) S117.sw += (S117.fed - S117.sw) * (1 - Math.exp(-dt / (S117.fed > S117.sw ? 260 : 700))); SP.h117sw = S117.sw;
+    if (!Lq) return; const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, K = AA.rxKit, KW = K.W117, once = (k, f) => { if (!j.f['s117' + k]) { j.f['s117' + k] = 1; s117Snd(k, f); } };
+    /* the atom rises on its hand, its bonded neighbours a third as far */
+    const Lf = acting && Z.g === g ? K.lift117(t, Z) : { y: 0 }, b = Z.g === g ? s66Ball(Z.ta) : null;
+    if (b && center && center.balls && !(morph && morph.m === center) && (Math.abs(Lf.y) > 1e-4 || S117.applied)) { let key = null; center.balls.forEach((bb, a) => { if (bb === b) key = a; }); const ws = center.group ? center.group.scale.y || 1 : 1, dy = Lf.y / ws, nb = new Set(); (center.sticks || []).forEach(k => { if (k.a === key) nb.add(k.b); if (k.b === key) nb.add(k.a); });
+      layout(center, at => { const p = center.at.get(at), w = at === key ? 1 : nb.has(at) ? 0.3 : 0; if (!w || !p) return p; let q = S117.vm.get(at); if (!q) { q = new T.Vector3(); S117.vm.set(at, q); } return q.copy(p).setY(p.y + dy * w).setZ(p.z + Z.lz * dy * w); }, null);
+      S117.applied = Math.abs(Lf.y) > 1e-4 ? { w: Lf.y } : null; dirty = true; }
+    if (acting) { dirty = true; /* the number goes up to each step by game time */ if (j.f.s117step1 && j.s117roll && st.shown < st.want) { const d = st.want - st.shown; st.shown = d < 2 ? st.want : st.shown + d * (1 - Math.exp(-dt / 130)); A20.roll = 0; st.madeBump = Math.max(st.madeBump || 0, 0.5 * Math.min(1, d / 40)); }
+
+      if (t >= Z.tW - 60) once('go', () => { sfx.drift(); sfx.swish(Math.min(1.5, Z.J / 1000 * 0.75)); });
+      if (t >= Z.tA + 0.8 * Z.RE) once('touch', () => sfx.bond());
+      Z.Hv.forEach((h, i) => { if (t >= h + 0.5 * KW.AN) once('heave' + (i + 1), () => { sfx.draw(3 + 3 * i, (0.5 * KW.AN + KW.UP) / 1000); sfx.drift(); });
+        if (t >= h + KW.AN + 0.85 * KW.UP) once('step' + (i + 1), () => { sfx.clink(4 + 2 * i, 1); if (i < Z.n - 1 && A20.hold) { const fin = P.made(Object.assign({}, g, { frozenAt: null })), w0 = j.want0 || 0, k = (i + 1) / Z.n, wv = w0 > 0 && fin > w0 ? w0 * Math.pow(fin / w0, k) : w0 + (fin - w0) * k; if (wv > A20.hold.want) { A20.hold.want = wv; st.want = Math.max(st.want, wv); st.madeBump = 1; st.tickT = now; /* feel.js holds the number while its count lives: it is told each step (its own eased landing, 250 ms); without it the number is eased here */ let ok = false; try { ok = !!(AA.rxFeel && AA.rxFeel.homLand && AA.rxFeel.homLand(Math.round(wv))); } catch (x) { ok = false; } j.s117roll = !ok; } } });
+        if (t >= h + KW.AN + KW.UP + KW.HOLD + 0.8 * KW.DN) once('down' + (i + 1), () => sfx.tick(3 + i)); });
+      if (t >= Z.tRel + 200) once('letgo', () => sfx.tick(8));
+      if (t >= Z.tD) once('back', () => { sfx.drift(); sfx.swish(Math.min(1.4, Z.Bt / 1000 * 0.75)); });
+      if (t >= Z.tH) once('home', () => sfx.bond());
+      if (S117.log.length < 2400) { const hh = SP.h117; S117.log.push([Math.round(t), hh ? hh.ph : '-', Math.round(st.shown), Math.round(st.want), +(Lf.y || 0).toFixed(2), hh && hh.hand ? hh.hand.map(v => +v.toFixed(2)) : null, +(SP.h117sw || 0).toFixed(2)]); } }
+    else if (t > Z.tEnd + 600 && !S117.applied) S117.live = null; };
+  a20Spent = (f0 => function (now) { const r = f0(now); try { s117Frame(now); } catch (x) { S117.err = 'frame ' + String(x && x.stack); } return r; })(a20Spent);
+  if (AA.rxKit) AA.rxKit.s117dbg = () => { const Z = S117.Z, r = v => Math.round(v); return { err: S117.err, kit: AA.rxKit.W117 && AA.rxKit.W117.err, st: AA.rxKit.stage && AA.rxKit.stage.dbg().err, on: s117On(), fed: S117.fed, sw: +S117.sw.toFixed(2), d: S117.dbg, Z: Z ? { tW: r(Z.tW), tA: r(Z.tA), Hv: Z.Hv.map(r), tRel: r(Z.tRel), tD: r(Z.tD), tH: r(Z.tH), tEnd: r(Z.tEnd), n: Z.n, kh: +Z.kh.toFixed(2) } : null, snd: S117.snd, log: S117.log }; };
+  // ==== S117 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');
