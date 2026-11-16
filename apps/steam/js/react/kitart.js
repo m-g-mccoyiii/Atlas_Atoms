@@ -8515,6 +8515,302 @@ KIT.spirit26.play = play26;
 W133.dbg = () => ({ err: W133.err, tr: W133.tr.slice() });
 KIT.W133 = W133;
 // ==== W133 END
+// ==== W117 BEGIN
+// (builder 117) HYDROGEN LIFTS (AA.rxKit.h117, on by default; ?h117=0 gives builder 86's act and today's Hydrogen back).
+// The rule (path.js HOM2LIT.h2, HOMSIMPLE.h2): lit when the page has driven off 2 hydrogens; the tap multiplies the yield, nothing else.
+//  - FED AT HOME (S.h117sw, the hydrogens it holds, laid by scheme.js S117 as each one driven off reaches it): its head lobe swells a step
+//    with each, it hangs at the top of its drift and cannot come down, its tail drawn taut down to the bench like a tether; it turns its
+//    face to each hydrogen as it comes (S.f117) and takes it with a squash.
+//  - THE ACT (o.bites.s117, one timeline both files read: KIT.ph117, KIT.lift117; every time in ms): its idle (W79: arms, lick, tail,
+//    companions, face) runs on under the whole act and the act is laid over it, so nothing is ever still. It sinks, floats low over
+//    bench and page on the way the scheme found (its tail trailing on the surface, curled where the floor is nearer than its length, its
+//    shadow under it), never smaller than at home; lays a hand under the atom a hydrogen left (the whole body is moved so the hand is on
+//    the atom: it floats, so its reach is its place); then one HEAVE for each hydrogen it holds: it crouches, swells and rises, the atom
+//    rises on its hand (the scheme lifts the atom by the same KIT.lift117), its head loses one step of swell, the atom is let down and
+//    springs. Then it lets go and floats home the same way.
+// Nothing of W86's act is used (KIT.act86 is switched off while this is on).
+KIT.h117 = KIT.h117 == null ? !(typeof location !== 'undefined' && /[?&]h117=0/.test(String(location.search))) : KIT.h117;
+if (KIT.h117) KIT.act86 = false;
+const W117 = { err: null, dbg: {}, AN: 260, UP: 440, HOLD: 160, DN: 320, SWK: 0.1, PHI: 1.4, PHI2: 0.25 /* (builder 135) under the load the arms go out to the sides, a little up, braced */, BAL: 6 };
+{ const sm = sm52, lp = (a, b, u) => a + (b - a) * u, cl = (x, a, b) => (x < a ? a : x > b ? b : x), e5 = u => { u = cl(u, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); };
+  const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const on117 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
+  /* one heave, tau ms after it begins: ant (the strain before), up (its step up, 0..1, with a small overshoot that settles) */
+  const hv = tau => { const A = W117.AN, U = W117.UP, t2 = tau - A - U; return { ant: sm(tau / A) * (1 - sm((tau - A) / (0.55 * U))), up: sm((tau - A) / U) + (t2 > 0 ? 0.13 * Math.exp(-t2 / 190) * Math.sin(t2 / 60) : 0), spent: sm((tau - A) / U) }; };
+  function lift117(t, Z) { let up = 0, ant = 0, spent = 0; for (let i = 0; i < Z.Hv.length; i++) { const h = hv(t - Z.Hv[i]); up += h.up; ant += h.ant; spent += h.spent; } return { up, ant, spent }; }
+  /* the act at t ms since the tap. p: where its pinch is in the world; kz: its size over its size at home; under: how far it is in under the molecule; lev: how high it has heaved (in steps) */
+  function ph117(t, Z) { const e = { ph: 'wait', t, kz: 1, rx: 0, ry: 0, rz: 0, sq: 0, hand: 1, reach: 0, arm: 0, glow: 1, lk: null, smile: 1.15, brow: 0.25, wide: 0.1, lid: 0, blink: 0, nod: 0, done: false, home: false, g: 0 };
+    const g = e5((t - Z.tW) / Z.J) * (1 - e5((t - Z.tD) / Z.Bt)), s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0; e.g = g;
+    const L = lift117(t, Z), sink = 1 - e5((t - Z.tRel) / Z.SK), under = sm((t - Z.tA + 350) / 600) * (1 - sm((t - Z.tRel - 0.75 * Z.SK) / 500)), lev = (0.15 * sm((t - Z.tA) / 450) + L.up) * sink + 0.05 * Math.sin(t / 310) * under * sink; e.under = under; e.lev = lev; e.up = L.up; e.ant = L.ant; e.spent = L.spent;
+    const kz = 1 + (Z.kh - 1) * sm((g - 0.08) / 0.8) + (Z.K2 - Z.kh) * under * (0.2 + 0.8 * Math.min(1, L.up / Math.max(1, Z.n)) * sink); e.kz = kz;
+    const bob = Z.dn * kz * (0.05 * Math.sin(t / 151 + 1) + 0.018 * Math.sin(t / 67)) * (1 - 0.6 * under), duck = sm((t - Z.tW + 460) / 380) * (1 - sm((t - Z.tW) / 240)), spring = sm((t - Z.tW) / 160) * (1 - sm((t - Z.tW - 260) / 420)), land = sm((t - Z.tH + 160) / 220) * (1 - sm((t - Z.tH - 60) / 320));
+    /* never into the paper: its lowest part stays on or over the floor */ let h = lp(Z.H.y - Z.f0, Z.hl * kz, sm(g / 0.3)); h = Math.max(1.02 * Z.lo * kz, h + bob - Z.dn * (0.22 * duck + 0.12 * land)) + Z.Hs * lev * under - 0.1 * Z.lo * kz * L.ant * under;
+    const y = fl + h, q = (Z.cam.y - y) / Z.cam.y; e.p = { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q };
+    e.reach = under; e.sq = -0.2 * duck + 0.13 * spring - 0.2 * L.ant * under - 0.24 * sm((t - Z.tA + 500) / 350) * (1 - sm((t - Z.tA) / 420)) + 0.1 * sm((t - Z.tA) / 300) * under - 0.1 * land + 0.025 * Math.sin(t / 230); e.arm = 0.3 * L.ant;
+    e.bal = under * (0.22 + 0.78 * Math.min(Z.n, L.up) / Math.max(1, Z.n) * sink) - 0.06 * L.ant * under;
+    e.hand = cl(1 - sm((t - Math.max(60, Z.tW - 480)) / 300) + sm((t - Z.tEnd + 540) / 520), 0, 1);
+    const u1 = Math.min(1, L.up - Math.floor(Math.min(L.up, Z.n - 0.001))); e.smile = 1.25 + 0.4 * under - 0.5 * L.ant + 0.3 * land; e.brow = 0.25 - 0.65 * L.ant + 0.35 * under + 0.3 * duck; e.wide = 0.15 + 0.55 * duck + 0.35 * under * (1 - L.ant); e.lid = 0.55 * L.ant; e.glow = 1 + 0.4 * under;
+    if (t >= Z.tW - 480 && t < Z.tD + 200) e.lk = Z.tg;
+    e.ph = t < Z.tW - 480 ? 'wait' : t < Z.tW ? 'wind' : t < Z.tA - 350 ? 'go' : t < Z.Hv[0] ? 'under' : t < Z.tRel ? 'heave' : t < Z.tD ? 'sink' : t < Z.tH ? 'back' : t < Z.tEnd ? 'settle' : 'done'; e.done = e.home = t >= Z.tEnd; return e; }
+  KIT.ph117 = ph117; KIT.lift117 = lift117;
+  /* (builder 135) an eyelid grows in as it closes (it was switched on in one frame high over the eye, where the swollen head no longer hid it) */ const lid135 = S => { const F = S.F; if (!F || !F.eyes) return; F.eyes.forEach(ey => { const l = ey.lid; if (!l) return; const lv = l.visible ? Math.max(0, 1 - l.position.y / Math.max(1e-5, 2.5 * ey.er)) : 0, k = Math.max(0.001, sm(lv / 0.35)); l.scale.set(k, 1.25 * k, 0.42 * k); }); };
+  /* (builder 135) THE TAP'S HAND-OVER: the pose of the last frame at rest is kept; on the act's first frame the difference between it and the
+     act's own pose is taken, and laid on every frame after, fading over 450 ms (eased), so the figure goes on from where it was with no step */
+  const snap117 = S => { const B = S.bones, m = S.mid75, X = S.sn117 || (S.sn117 = { p: B.map(() => new S.T.Vector3()), s: B.map(() => new S.T.Vector3()), mp: new S.T.Vector3(), ms: new S.T.Vector3() }); B.forEach((b, i) => { X.p[i].copy(b.position); X.s[i].copy(b.scale); }); if (m) { X.mp.copy(m.position); X.ms.copy(m.scale); } X.ok = true; };
+  function ho117(S, t) { const X = S.sn117, B = S.bones, m = S.mid75; if (!X || !m) return; if (!X.d || X.t0 > t) { if (!X.ok) return; X.d = { p: B.map((b, i) => X.p[i].clone().sub(b.position)), s: B.map((b, i) => X.s[i].clone().sub(b.scale)), mp: X.mp.clone().sub(m.position), ms: X.ms.clone().sub(m.scale) }; X.t0 = t; }
+    const w = 1 - e5((t - X.t0) / 450); if (w <= 0) return; B.forEach((b, i) => { b.position.addScaledVector(X.d.p[i], w); b.scale.addScaledVector(X.d.s[i], w); }); m.position.addScaledVector(X.d.mp, w); m.scale.addScaledVector(X.d.ms, w); }
+  /* what the scheme needs of the figure, in the world, at home: the pinch, sizes, each arm's hand as it will be held (from the pinch, for a
+     figure of home size), every joint from the pinch with its round */
+  function fig117(S) { const K = S.k79 || init79(S), mid = S.mid75, par = mid && mid.parent, T = S.T, V3 = T.Vector3; if (!par) return null; par.updateWorldMatrix(true, false);
+    const M = par.matrixWorld, ps = new V3().setFromMatrixScale(M).y || 1, k = K.m0.k, J = S.G.J, o0 = new V3(0, 0, 0).applyMatrix4(M), rel = (x, y, z) => new V3(x * k, (y - K.py) * k, (z || 0) * k).applyMatrix4(M).sub(o0);
+    const h = par.localToWorld(new V3(K.m0.x, K.m0.y + K.py * k, 0));
+    const arms = K.arm.map(a => { const r = J[a.jn[0]].p, tp = J[a.jn[a.jn.length - 1]].p, dx = a.side * (tp[0] - r[0]), dy = tp[1] - r[1], a0 = Math.atan2(dy, dx), an = cl(W117.PHI - a0, -0.6, 1.5), c = Math.cos(a0 + an), s2 = Math.sin(a0 + an), ln = Math.hypot(dx, dy);
+      const an2 = cl(W117.PHI2 - a0, -1.2, 1.5); return { side: a.side, an, an2, rel: rel(r[0] + a.side * ln * c, r[1] + ln * s2, 0), root: rel(r[0], r[1], 0) }; });
+    const bj = new Set(); K.bead.forEach(b => b.jn.forEach(j => bj.add(j))); /* the companions on their threads are not counted: they trail where there is room */ const joints = []; J.forEach((q, j) => { if (!j || !q || bj.has(j)) return; const v = rel(q.p[0], q.p[1], q.p[2]); joints.push([v.x, v.y, v.z, Math.max(0.06, q.r || 0.1) * k * ps]); });
+    let w = 0; J.forEach(q => { if (q) w = Math.max(w, Math.abs(q.p[0]) + (q.r || 0)); });
+    return { home: { x: h.x, y: h.y, z: h.z }, up: (K.top - K.py) * k * ps, dn: K.py * k * ps, lo: (K.py - (K.ly - K.lr)) * k * ps, hr: K.hr * k * ps, w: w * k * ps, hd: rel(J[K.hj].p[0], J[K.hj].p[1], 0), arms, joints, nb: K.bead.length, st: S.st }; }
+  KIT.fig117 = S => { try { return fig117(S); } catch (e) { W117.err = 'fig ' + String(e && e.stack); return null; } };
+  /* the head lobe a step larger for each hydrogen it holds (its three joints; the lick rides up on it) */
+  function swell117(S, sw) { const K = S.k79, B = S.bones; if (!K || !(sw > 0.002)) return; const Hj = K.h117 || (K.h117 = (() => { const body = S.G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && S.G.J[j]) : [], i = sp.indexOf(K.hj); return [sp[i - 1], K.hj, sp[i + 1]].filter(j => j != null); })());
+    const f = 1 + W117.SWK * sw, up = (f - 1) * K.hr; Hj.forEach(j => { B[j].scale.multiplyScalar(f); B[j].position.y += 0.6 * up; }); K.lick.forEach(j => { B[j].position.y += 1.6 * up; }); }
+  /* at home (and under the act): the swell, the hang at the top of its drift, the taut tail, the squash as it takes a hydrogen; where its
+     head is, for the hydrogens that fly to it */
+  function home117(S, eff, tk) { const K = S.k79, mid = S.mid75, par = mid && mid.parent, B = S.bones, T = S.T; if (!K || !par) return; const V = S.v117 || (S.v117 = { a: new T.Vector3(), b: new T.Vector3(), q: new T.Quaternion(), i: new T.Quaternion() });
+    if (S.a75 && !S.a117) { /* the pen's strokes in the air ride the lower lobe, not the tail or the lick (those swing far) */ S.a117 = 1; const J = S.G.J, cj = S.G.bj[S.G.R.chest]; S.a75.strokes.forEach(s => { if (K.tail.indexOf(s.j) < 0 && K.lick.indexOf(s.j) < 0) return; const d = [J[s.j].p[0] - J[cj].p[0], J[s.j].p[1] - J[cj].p[1], J[s.j].p[2] - J[cj].p[2]]; s.pts = s.pts.map(p => [p[0] + d[0], p[1] + d[1], p[2] + d[2]]); s.j = cj; }); }
+    const sw = eff == null ? (S.h117sw || 0) : eff; swell117(S, sw); const tw = sm(sw / 1.5);
+    if (tw > 0.001) { const tt = clk79(S), M = mo79(S, K, tt), ug = K.ug, top = 0.55 * K.room + 0.05 * Math.sin(tt * 2.9) + 0.03 * Math.sin(tt * 6.7);
+      mid.position.y += (top - M.y) * ug * tw * 0.85; mid.position.x -= M.x * ug * tw * 0.8; mid.quaternion.slerp(V.i, 0.8 * tw); mid.scale.y *= 1 + 0.035 * tw; }
+    const F = S.f117; if (F && F.hit != null) { const ms = nowMs() - F.hit; if (ms > 0 && ms < 1400) { const r = Math.exp(-ms / 260) * Math.sin(ms / 70), s0 = sm(ms / 170); /* (builder 135) the squash as it takes a hydrogen eased in over 170 ms (was 90: a 3-frame step) */ mid.scale.y *= 1 - 0.11 * r * s0; mid.scale.x *= 1 + 0.07 * r * s0; mid.scale.z *= 1 + 0.07 * r * s0; mid.position.y += 0.1 * K.ug * r * s0; } }
+    mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false);
+    const twT = tw * (tk == null ? 1 : tk); if (twT > 0.001 && K.tail.length) { /* the tail's tip held on the bench under its place (only at home: away it would stretch back across the page; builder 135) */ const J = S.G.J; let tj = K.tail[0]; K.tail.forEach(j => { if (J[j].p[1] < J[tj].p[1]) tj = j; });
+      V.a.set(K.m0.x, 0.02, 0); par.localToWorld(V.a); S.root.worldToLocal(V.a); V.b.copy(V.a).sub(B[tj].position); const L = Math.max(1e-4, K.tail0.y - J[tj].p[1]);
+      K.tail.forEach(j => { const w = Math.pow(cl((K.tail0.y - J[j].p[1]) / L, 0, 1), 1.3) * twT; B[j].position.addScaledVector(V.b, w); }); }
+    (S.h117w || (S.h117w = new T.Vector3())).copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld); }
+  /* faces: the act's go over the idle's; at home it watches its hydrogens come */
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { if (!S || !S.way75 || S.jar || KIT.h117 === false) return; const X = S.x117;
+      const F = S.f117, fk = F ? (F.k || 0) * (X ? X.e.hand : 1) : 0; if (fk > 0.001) { const lx = F.lx || 0; q.lookx = q.lookx * (1 - fk) + lx * fk; q.looky = q.looky * (1 - fk) - 0.5 * fk; q.hturn = (q.hturn || 0) + 0.4 * lx * fk; q.wide = Math.max(q.wide || 0, 0.4 * fk); q.brow += 0.3 * fk; }
+      if (F && F.hit != null) { const ms = nowMs() - F.hit; if (ms > 0 && ms < 1200) { q.blink = Math.max(q.blink || 0, pl52(ms, 0, 170, 60)); q.smile += 0.5 * pl52(ms, 80, 900, 200); } }
+      if (X && X.e.hand < 0.999) { const e = X.e, h = e.hand, m = (a, b) => lp(b, a, h); q.smile = m(q.smile, e.smile); q.brow = m(q.brow, e.brow); q.wide = m(q.wide || 0, e.wide); q.lidx = m(q.lidx || 0, e.lid); q.nod = m(q.nod || 0, e.nod); if (S.lk117) { q.lookx = m(q.lookx, S.lk117[0]); q.looky = m(q.looky, S.lk117[1]); } }
+    } catch (x) { W117.err = 'face ' + String(x && x.stack); } })(C26.rest);
+  /* after the idle: the act's place and turn of the whole, its arms, the streaming of lick, tail and companions, the hand on the atom */
+  function post117(S, X) { const K = S.k79, e = X.e, Z = X.Z, B = S.bones, T = S.T, V3 = T.Vector3, mid = S.mid75, par = mid && mid.parent, J = S.G.J; if (!K || !par) return;
+    const W = S.w117 || (S.w117 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), f: new V3(), eu: new T.Euler(), q: new T.Quaternion(), q2: new T.Quaternion(), qI: new T.Quaternion(), pI: new V3(), sI: new V3(), z: new V3(0, 0, 1), x: new V3(1, 0, 0) });
+    par.updateWorldMatrix(true, false); const ps = W.a.setFromMatrixScale(par.matrixWorld).y || 1, h = e.hand, a1 = 1 - h; W.qI.copy(mid.quaternion); W.pI.copy(mid.position); W.sI.copy(mid.scale);
+    const ea = ph117(e.t - 40, Z), eb = ph117(e.t + 40, Z), vw = new V3((eb.p.x - ea.p.x) / 0.08, (eb.p.y - ea.p.y) / 0.08, (eb.p.z - ea.p.z) / 0.08), el = ph117(e.t - 200, Z), em = ph117(e.t - 120, Z), vl = new V3((em.p.x - el.p.x) / 0.08, (em.p.y - el.p.y) / 0.08, (em.p.z - el.p.z) / 0.08);
+    /* the whole: placed by its pinch, squashed and stretched about it; it leans into its way */
+    const sq = cl(e.sq, -0.4, 0.4), k = K.m0.k * e.kz, bank = cl(-0.028 * vl.x / Math.max(0.5, e.kz), -0.38, 0.38), pitch = cl(0.014 * vl.z / Math.max(0.5, e.kz), -0.2, 0.2);
+    mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); W.eu.set(e.rx + pitch, e.ry, e.rz + bank); mid.rotation.copy(W.eu);
+    const Pl = par.worldToLocal(W.a.set(e.p.x, e.p.y, e.p.z)), pr = W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu); mid.position.set(Pl.x - pr.x, Pl.y - pr.y, Pl.z - pr.z);
+    /* arms: the one that reaches is held up and out, the other follows a little late; both bend as it crouches */
+    const earm = ph117(e.t - 90, Z); K.arm.forEach(a => { const A = Z.arms && Z.arms[a.i], me = Z.arm === a.i; if (me && Z.al > 1.001 && a1 > 0) { /* the reaching arm drawn out longer (the stand's search asked for it) */ const f = 1 + (Z.al - 1) * e.reach * a1, r0 = B[a.jn[0]].position; for (let i = 1; i < a.jn.length; i++) { const p = B[a.jn[i]].position; p.sub(r0).multiplyScalar(f).add(r0); } } const an = a1 * a.side * ((Z.hoist || me ? e.reach : 0.6 * earm.reach) * (A ? (Z.hoist && A.an2 != null ? A.an2 + 0.06 * Math.sin(e.t / 90 + a.side) * (e.ant || 0) : A.an) : 0) + (me ? e.arm : earm.arm)); if (Math.abs(an) < 1e-4) return; W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, an, (i, n) => 0.7 + 0.3 * i / Math.max(1, n - 1)); });
+    mid.updateWorldMatrix(true, false); mid.getWorldQuaternion(W.q); W.q2.copy(W.q).invert(); const fu = 1 / Math.max(1e-4, ps * k), toL = v => v.clone().applyQuaternion(W.q2).multiplyScalar(fu), vL = toL(vw), vLl = toL(vl);
+    if (a1 > 0) { const ax = cl(0.09 * vL.x, -1, 1) * a1, st2 = cl(0.05 * Math.max(0, -vL.y), 0, 0.5) * a1;
+      K.lick.forEach(j => { const p = B[j].position, w = cl((J[j].p[1] - K.lick0.y) / K.lickL, 0, 1); p.y += (p.y - K.lick0.y) * st2 * w; });
+      W.c.copy(K.lick0); rot79(S, K.lick, W.c, W.z, ax, i => 0.4 + 0.6 * i / Math.max(1, K.lick.length - 1));
+      /* the tail trails its way; where the floor is nearer than its length it curls to lie on it */
+      S.root.updateWorldMatrix(true, false); const t0w = W.c.copy(K.tail0).applyMatrix4(S.root.matrixWorld), upY = Math.max(0.3, W.d.set(0, 1, 0).applyQuaternion(W.q).y), fl = Z.floor ? Z.floor(e.p.x, e.p.z) : 0, Lw = K.tailL * k * ps * (1 + sq) * upY, c0 = cl((t0w.y - fl - 0.05) / Math.max(1e-4, Lw), 0.3, 1), dir = cl((Z.cd || 1) + 0.7 * vLl.x, -1, 1), kt = 1 - (1 - c0) * a1;
+      /* where the floor is nearer than the tail is long, the tail is pressed short against it (its tip on the floor) and bends a little */ K.tail.forEach(j => { const p = B[j].position; p.x = K.tail0.x + (p.x - K.tail0.x) * kt; p.y = K.tail0.y + (p.y - K.tail0.y) * kt; });
+      W.c.copy(K.tail0); rot79(S, K.tail, W.c, W.z, (-0.6 * ax - 0.45 * (1 - c0) * dir) * a1, i => cl((K.tail0.y - J[K.tail[i]].p[1]) / K.tailL, 0, 1));
+      /* the companions trail on their threads, a little late */
+      K.bead.forEach(b => { const n = b.jn.length, r = W.d.copy(B[b.jn[n - 1]].position).sub(B[b.jn[0]].position), r2 = Math.max(1e-4, r.lengthSq()), c = 0.06 * a1, az = cl(c * (r.y * vLl.x - r.x * vLl.y) / Math.sqrt(r2), -1.1, 1.1), bx = cl(c * (r.z * vLl.y - r.y * vLl.z) / Math.sqrt(r2), -0.9, 0.9);
+        W.c.copy(B[b.jn[0]].position); const wf = (i, m) => Math.pow(i / Math.max(1, m - 1), 1.2); rot79(S, b.jn, W.c, W.z, az, wf); rot79(S, b.jn, W.c, W.x, bx, wf); }); }
+    K.glow.forEach(gq => { gq.m.material.opacity *= lp(e.glow * (1 - (e.under || 0)), 1, h); }); if (K.fx && a1 > 0.01) { K.fx.pop.visible = false; K.fx.sk.visible = false; }
+    /* its hand on the atom: the whole body is moved so that the hand lies on the atom's round, on the side toward its shoulder */
+    let hw = null; const arm = Z.arm != null ? K.arm[Z.arm] : null; S.root.updateWorldMatrix(true, false);
+    if (arm) { const tip = W.c.copy(B[arm.jn[arm.jn.length - 1]].position).applyMatrix4(S.root.matrixWorld);
+      if (e.reach > 0.001 && Z.tg) { const root = W.d.copy(B[arm.jn[0]].position).applyMatrix4(S.root.matrixWorld), ax = Z.tg.x, ay = Z.tg.y + e.lift, az = Z.tg.z + (Z.lz || 0) * e.lift; let dx = root.x - ax, dy = Math.min(root.y - ay, -0.35 * Z.tg.R), dz = root.z - az; const dl = Math.hypot(dx, dy, dz) || 1, R = Z.tg.R * 1.03;
+        W.f.set(ax + dx / dl * R - tip.x, ay + dy / dl * R - tip.y, az + dz / dl * R - tip.z).multiplyScalar(e.reach * a1); tip.add(W.f); par.getWorldQuaternion(W.q2).invert(); W.f.applyQuaternion(W.q2).multiplyScalar(1 / ps); mid.position.add(W.f); }
+      hw = [tip.x, tip.y, tip.z]; }
+    if (Z.hoist && e.under > 0.001) { /* its head is held under the middle of the molecule (the whole body is moved, on the page's plane) */ mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); const hq = W.c.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld), he = K.hr * k * ps * (1 + W117.SWK * (S.e117sw || 0)); W.f.set(Z.mc.x - hq.x, 0, Z.mc.z + 0.9 * he - hq.z).multiplyScalar(e.under * a1); par.getWorldQuaternion(W.q2).invert(); W.f.applyQuaternion(W.q2).multiplyScalar(1 / ps); mid.position.add(W.f); }
+    if (h > 0) { mid.position.lerp(W.pI, h); mid.quaternion.slerp(W.qI, h); mid.scale.lerp(W.sI, h); }
+    mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); const hp = W.a.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld); let lk = [0.3, -0.2];
+    if (e.lk) { const dx = e.lk.x - hp.x, dy = e.lk.y - hp.y, dz = e.lk.z - hp.z, hz = Math.max(3, Math.hypot(dx, dz)); lk = [cl((dx / hz) * 1.4, -1.2, 1.2), cl(Math.atan2(dy, hz) * 1.2, -1, 0.4)]; } { const u = e.under || 0; lk = [lk[0] * (1 - u), lk[1] * (1 - u) + 0.38 * u]; } S.lk117 = lk;
+    /* its shadow: on the floor under its pinch, smaller and darker the lower it hangs (lay75 reads S.x86f and S.h79) */
+    const pw = par.localToWorld(W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu).add(mid.position)), fl = Z.floor ? Z.floor(pw.x, pw.z) : 0;
+    S.x86f = h < 0.999 ? [pw.x, fl - Z.f0, pw.z] : null; S.h79 = lp(cl((pw.y - fl - Z.dn * e.kz) / Math.max(0.3, 2.4 * Z.dn) - 0.3, -0.6, 0.8), S.h79 || 0, h);
+    S.h117 = { p: [pw.x, pw.y, pw.z], head: [hp.x, hp.y, hp.z], hand: hw, hr: K.hr * k * ps * (1 + W117.SWK * (S.e117sw || 0)) * (1 + sq), kz: e.kz, ph: e.ph, w: h, under: e.under, lev: e.lev, reach: e.reach }; }
+  function act117(f0, grp, S, t, o) { const Z = o.bites.s117, e = ph117(t, Z); S.x117 = { t, e, Z }; W117.e = e; /* the idle under the act runs on from the rest before it: the same clock and the same look */ const r = S.r117, it = r ? r.t + (nowMs() - r.at) / 1000 * r.rate : t; if (t < 200) (W117.dbg.it = W117.dbg.it || []).push(['act', +t.toFixed(1), r && +r.t.toFixed(4), r && +(nowMs() - r.at).toFixed(1), r && +r.rate.toFixed(4), +it.toFixed(4)]); f0(grp, 'rest', it, r ? r.o : {}); if (t > Z.tRel) S.h117sw = 0; S.e117sw = (S.h117sw || 0) * Math.max(0, 1 - e.spent / Math.max(1, Z.n)) * (1 - e.under) + (Z.hoist ? W117.BAL * e.bal : 0); home117(S, S.e117sw, e.hand); post117(S, S.x117); lid135(S); try { /* the swollen head under the load drawn flat, pen and wash, as the puffed body of the change is (W129) */ if (KIT.flat129) KIT.flat129(S, (e.under || 0) * (1 - e.hand)); ho117(S, t); } catch (x) { W117.err = 'ho ' + String(x && x.stack); } return { e: 0, y: 0, lunge: 0, n: 0, big: 0, done: e.done, home: e.home }; }
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75 || !on117(S)) return f0(grp, clip, t, o);
+    if (clip === 'act' && o && o.bites && o.bites.s117) { try { return act117(f0, grp, S, t, o); } catch (err) { W117.err = 'act ' + String(err && err.stack); S.x117 = null; S.x86f = null; return f0(grp, clip, t, o); } }
+    if (S.x117) { S.x117 = null; S.lk117 = null; S.x86f = null; S.h117 = null; }
+    const r = f0(grp, clip, t, o); if (clip === 'rest' && !(o && o.jar)) { const n = nowMs(), p = S.r117; { const L = W117.dbg.rt || (W117.dbg.rt = []); L.push([+t.toFixed(4), +n.toFixed(1)]); if (L.length > 6) L.shift(); } S.r117 = { t, o: Object.assign({}, o || {}), at: n, rate: p && n - p.at > 1 && n - p.at < 200 && t > p.t ? 0.5 * p.rate + 0.5 * (t - p.t) / ((n - p.at) / 1000) : (p ? p.rate : 1) }; } if (clip === 'rest' && !(o && o.jar) && S.k79) { try { home117(S, null); snap117(S); if (S.sn117) S.sn117.d = null; } catch (err) { W117.err = 'home ' + String(err && err.stack); } } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W117 = W117; }
+// ==== W117 END
+// ==== W129 BEGIN
+// (builder 117) HYDROGEN'S CHANGE OF STAGE (AA.rxKit.h117; ?h117=0 gives today's: Water's ball on its body). Its own centrepiece from what
+// hydrogen is: the lightest gas, that swells and rises. Nothing of Water's change runs (no curl, no ball, no bud, no wash): for Hydrogen
+// the clip 'evo' is played here. One timeline in ms both files read (KIT.ph129; o.z117 is the scheme's plan, scheme.js S129):
+//  - the OLD form (a figure of the old stage, made here; the new stage's figure is hidden) notices, floats low over bench and page to its
+//    stand at the molecule, growing as it comes, its tail on the floor, its shadow under it, its idle running on under everything;
+//  - there its HEAD SWELLS: a round of its own substance (the scheme draws it: a lit body with depth, its face on it) grows out of the head
+//    from inside it, and the rest of the body (lower lobe, arms, tail, companions) is drawn up into it;
+//  - the change itself, different for each stage (the scheme: it rises high; it parts in two that wheel; it buds a small one that circles
+//    it; it throws a ring of three). Inside the round the old figure is changed for the new (both are drawn into the head: nothing shows);
+//  - the round sinks back into the NEW form's head as its body, arms, tail and companions grow out of it; it looks about, floats home.
+// The figure in the middle is held by its HEAD (the whole body moved so the head is on the round's place), so the old and the new stand in
+// the same place whatever their sizes.
+const W129 = { err: null, dbg: {} };
+{ const sm = sm52, lp = (a, b, u) => a + (b - a) * u, cl = (x, a, b) => (x < a ? a : x > b ? b : x), e5 = u => { u = cl(u, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); };
+  const on129 = S => !!(S && S.way75 && !S.jar && KIT.h117 !== false && on79(S));
+  function ph129(t, Z) { const T = Z.T, e = { t, ph: 'wait', n: 0.5, done: false, home: false, old: t < T.tX };
+    const g = e5((t - T.t0) / Z.J) * (1 - e5((t - T.tB) / Z.Bt)); e.g = g; const kk = sm((g - 0.08) / 0.8); e.kzO = 1 + (Z.kbO - 1) * kk; e.kzN = 1 + (Z.kbN - 1) * kk;
+    const s = Z.way.at(g), fl = Z.floor ? Z.floor(s[0], s[1]) : 0, P = (H, hl, dn, kz, hA) => { let h = lp(H.y - Z.f0, hl * kz, sm(g / 0.3)); h = lp(h, hA, sm((g - 0.7) / 0.3)); const duck = sm((t + 200) / 320) * (1 - sm((t - T.t0) / 240)), land = sm((t - T.tH + 160) / 220) * (1 - sm((t - T.tH - 60) / 320)); e.duck = duck; e.land = land;
+        const y = fl + h + dn * kz * (0.05 * Math.sin(t / 151 + 1) + 0.018 * Math.sin(t / 67)) - dn * (0.2 * duck + 0.12 * land), q = (Z.cam.y - y) / Z.cam.y; return { x: Z.cam.x + (s[0] - Z.cam.x) * q, y, z: Z.cam.z + (s[1] - Z.cam.z) * q }; };
+    e.pO = P(Z.HO, Z.hlO, Z.dnO, e.kzO, Z.AO.y - Z.fA); e.pN = P(Z.HN, Z.hlN, Z.dnN, e.kzN, Z.AN.y - Z.fA);
+    /* the round: out of the old head, to its full size, a breath while the change shows, back into the new head */ const R0 = 1.3 * Z.hrO * Z.kbO, R1 = 1.3 * Z.hrN * Z.kbN, gr = sm((t - T.tS - 380) / (T.tC - T.tS - 380)), ou = sm((t - T.tO) / 800), u = cl((t - T.tC) / (T.tO - T.tC), 0, 1);
+    e.R = lp(lp(R0, Z.RM, gr + 0.07 * Math.sin(Math.PI * gr) * gr), R1, ou) * (1 + 0.025 * Math.sin(t / 190) * gr * (1 - ou)); e.inn = sm((t - T.tS) / 620); e.out = sm((t - T.tO - 720) / 560); e.env = t > T.tS && t < T.tO + 1290; e.u = u; e.gr = gr; e.ou = ou;
+    e.col = 0; { /* THE PUFF: its whole body swells till it is round as a balloon, holds, and lets the air out (each change its own way) */ const V = Z.V, D0 = T.tC - T.tS, gl = i => { const g = (t - T.tS - i * D0 / 3) / (0.8 * D0 / 3); return sm(g) + (g > 1 ? 0.12 * Math.exp(-(g - 1) * 4) * Math.sin((g - 1) * 14) : 0); }, up = (gl(0) + gl(1) + gl(2)) / 3, q = t - T.tC, ov = q > 0 ? 0.1 * Math.exp(-q / 260) * Math.sin(q / 62) : 0, dl = Z.DL || (V === 1 ? 1500 : V === 2 ? 1250 : V === 3 ? 1150 : 800), d0 = cl((t - T.tO) / dl, 0, 1);
+      let out = sm(d0); if (V === 2) out = cl(sm(d0) + 0.07 * Math.sin(d0 * 31) * Math.sin(Math.PI * d0), 0, 1); e.puff = Math.max(0, (up + ov) * (1 - out) + (0.025 * Math.sin(t / 240) + 0.012 * Math.sin(t / 45)) * up * (1 - out)); { const sp = Math.sin(Math.PI * d0), ph = 9 * d0 + V; /* (builder 135) HOW EACH CHANGE LETS THE AIR OUT, the body's own way, nothing added:
+           1 to 2  a long sigh: it sinks a little as it empties, a slow sway, no darting;
+           2 to 3  a sputter: the air comes out in bursts and each burst jerks it a short way, side to side, up and back;
+           3 to 4  a spin: it turns about once as it empties, in its place;
+           4 to 5  a whoosh: the air jets it off in one fast arc round and back to where it stood, leaning into the way it goes */
+        const s5 = e5(d0); if (V === 1) { e.dx = 0; e.dy = -0.18 * Z.RM * sm(d0) * (1 - sm((d0 - 0.7) / 0.3)); e.tw = 0.12 * sp * Math.sin(5 * d0); }
+        else if (V === 2) { const b = Math.sin(d0 * 31) * Math.sin(d0 * 17 + 1); e.dx = 0.6 * Z.RM * sp * Math.sign(b) * Math.pow(Math.abs(b), 0.6); e.dy = 0.4 * Z.RM * sp * Math.sign(Math.sin(d0 * 23 + 2)) * Math.pow(Math.abs(Math.sin(d0 * 23 + 2)), 0.6); e.tw = 0.5 * sp * Math.sin(d0 * 29); }
+        else if (V === 3) { e.dx = 0; e.dy = 0; e.tw = 0.3 * sp * Math.sin(2 * Math.PI * d0); }
+        else { const ang = 2 * Math.PI * s5; e.dx = 0.75 * Z.RM * Math.sin(ang) * (1 - 0.3 * s5); e.dy = 0.55 * Z.RM * (1 - Math.cos(ang)) * 0.5 * (1 + 0.4 * Math.sin(Math.PI * s5)); e.tw = 0.45 * Math.cos(ang) * Math.sin(Math.PI * s5); } const tq = t - T.tO - dl; e.set = tq > 0 ? -0.14 * Math.exp(-tq / 220) * Math.sin(tq / 60) : 0; e.cr = sm((t - T.tS + 420) / 220) * (1 - sm((t - T.tS) / 220)); }
+      /* (builder 135) the morph onto one round: km how far the skin is on the round (gulps up, 1 for the whole hold, the air out), rw the skin's
+         give on top (the gulps' overshoot, the settle, a slow breath); all of game time, so the old and the new figure are the same round at the peak */
+      { const g3 = i => sm((t - T.tS - i * D0 / 3) / (0.8 * D0 / 3)), uS = (g3(0) + g3(1) + g3(2)) / 3; const c1 = x => (x < 0 ? 0 : x > 1 ? 1 : x); /* up: the body goes round first, then the round grows; out: the round shrinks first, then the body comes out of it, the form it lets the air out into */ e.km = e5((t - T.tS) / 1000) * (1 - sm(c1((out - 0.35) / 0.65))); e.kr = uS * (1 - sm(c1(out / 0.7))); e.rw = ((up - uS) + ov) * 0.7 + 0.018 * Math.sin(t / 260) * uS; }
+      /* the hand-over: for 380 ms at the peak both figures stand in the same pose and place; the old one draws in a little as the new one comes out to its size, so the one skin goes over into the other */ { /* (builder 135) at tX both are the same round (same place, size, face, line): the one is changed for the other in one frame, nothing seen */ e.mO = 1; e.mN = 1; e.both = false; } e.spin = V === 3 ? 2 * Math.PI * e5(d0) : 0; e.jerk = V === 2 ? Math.sin(d0 * 31) * Math.sin(Math.PI * d0) : 0; e.strain = sm((t - T.tS) / 350) * (1 - sm((t - T.tO - 200) / 300)); } e.an = sm((t - T.t1 + 250) / 450) * (1 - sm((t - T.tO - 550) / 550));
+    const Pu = sm(u / 0.3) * (1 - sm((u - 0.7) / 0.3)); e.P = Pu; e.rise = (Z.RISE || 0.65) * Z.RM * Math.min(1.1, e.puff || 0);
+    e.sqz = sm((t - T.tS) / 300) * (1 - sm((t - T.tC + 150) / 260)); e.joy = sm((t - T.tC) / 250) * (1 - sm((t - T.tP - 300) / 400));
+    e.sq = -0.18 * e.duck + 0.12 * sm((t - T.t0) / 160) * (1 - sm((t - T.t0 - 260) / 420)) + 0.1 * e.sqz - 0.1 * e.land + 0.02 * Math.sin(t / 230) + 0.12 * sm((t - T.tO - 300) / 250) * (1 - sm((t - T.tO - 700) / 400));
+    e.sq += -0.2 * (e.cr || 0) + (e.set || 0);
+    e.hand = cl(1 - sm((t + 200) / 300) + sm((t - T.tE + 520) / 500), 0, 1); e.n = t < T.tX ? 0.5 : 1 + 3.8 * sm((t - T.tX) / 350); e.home = t >= T.tH; e.done = t >= T.tE;
+    e.ph = t < T.t0 ? 'notice' : t < T.t1 ? 'go' : t < T.tS ? 'stand' : t < T.tC ? 'swell' : t < T.tO ? 'change' : t < T.tP ? 'out' : t < T.tB ? 'proud' : t < T.tH ? 'back' : t < T.tE ? 'settle' : 'done'; return e; }
+  KIT.ph129 = ph129;
+  const hj129 = S => { const K = S.k79; return K.h117 || (K.h117 = (() => { const body = S.G.chains.find(c => c.kind === 'body'), sp = body ? body.jn.filter(j => j && S.G.J[j]) : [], i = sp.indexOf(K.hj); return [sp[i - 1], K.hj, sp[i + 1]].filter(j => j != null); })()); };
+  /* one figure placed for the change: by its pinch, its tail pressed on the floor, its body drawn into its head by col, then moved so its head is on the round's place */
+  function place129(S, e, Z, old) { const K = S.k79, B = S.bones, T = S.T, V3 = T.Vector3, mid = S.mid75, par = mid && mid.parent, J = S.G.J; if (!K || !par) return null;
+    const W = S.w129 || (S.w129 = { a: new V3(), b: new V3(), c: new V3(), d: new V3(), eu: new T.Euler(), q: new T.Quaternion(), qI: new T.Quaternion(), pI: new V3(), sI: new V3(), z: new V3(0, 0, 1) });
+    par.updateWorldMatrix(true, false); const ps = W.a.setFromMatrixScale(par.matrixWorld).y || 1, h = e.hand, a1 = 1 - h, kz = old ? e.kzO : e.kzN, p = old ? e.pO : e.pN; W.qI.copy(mid.quaternion); W.pI.copy(mid.position); W.sI.copy(mid.scale);
+    const sq = cl(e.sq, -0.4, 0.4), k = K.m0.k * kz * (old ? (e.mO || 1) : (e.mN || 1)), e2 = ph129(e.t - 160, Z), p2 = old ? e2.pO : e2.pN, bank = cl(-0.028 * (p.x - p2.x) / 0.16 / Math.max(0.5, kz), -0.35, 0.35);
+    mid.scale.set(k * (1 - 0.5 * sq), k * (1 + sq), k * (1 - 0.5 * sq)); /* under the balloon the body hangs and swings, a slow pendulum (its arms and tail follow late, below) */ const sw = t2 => e.an * (0.19 * Math.sin(t2 / 430) + 0.07 * Math.sin(t2 / 173 + 1)), swN = sw(e.t), swL = sw(e.t - 170); W.eu.set(0, e.spin || 0, bank + swN * (1 - Math.min(1, e.puff || 0)) + 0.18 * (e.jerk || 0) + (e.tw || 0)); mid.rotation.copy(W.eu);
+    const Pl = par.worldToLocal(W.a.set(p.x, p.y, p.z)), pr = W.b.set(0, K.py * (1 + sq), 0).multiplyScalar(k).applyEuler(W.eu); mid.position.set(Pl.x - pr.x, Pl.y - pr.y, Pl.z - pr.z);
+    mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, false); mid.getWorldQuaternion(W.q);
+    if (a1 > 0) { /* the tail pressed short where the floor is near, trailing its way */ const t0w = W.c.copy(K.tail0).applyMatrix4(S.root.matrixWorld), upY = Math.max(0.3, W.d.set(0, 1, 0).applyQuaternion(W.q).y), fl = Z.floor ? Z.floor(p.x, p.z) : 0, Lw = K.tailL * k * ps * (1 + sq) * upY, c0 = cl((t0w.y - fl - 0.05) / Math.max(1e-4, Lw), 0.3, 1), kt = 1 - (1 - c0) * a1;
+      K.tail.forEach(j => { const q = B[j].position; q.x = K.tail0.x + (q.x - K.tail0.x) * kt; q.y = K.tail0.y + (q.y - K.tail0.y) * kt; }); W.c.copy(K.tail0); rot79(S, K.tail, W.c, W.z, (-2.2 * bank - 0.4 * (1 - c0)) * a1, i => cl((K.tail0.y - J[K.tail[i]].p[1]) / K.tailL, 0, 1));
+      W.c.copy(K.lick0); rot79(S, K.lick, W.c, W.z, 2.4 * bank * a1, i => 0.4 + 0.6 * i / Math.max(1, K.lick.length - 1)); }
+    if (a1 > 0 && e.an > 0.001) { /* its arms hang and swing late */ K.arm.forEach(a => { W.c.copy(B[a.jn[0]].position); rot79(S, a.jn, W.c, W.z, a1 * e.an * (-0.5 * a.side + 1.4 * (swL - swN) - 0.5 * swL), (i, n) => 0.6 + 0.4 * i / Math.max(1, n - 1)); }); }
+    { /* its own skin swells into ONE round: the head grows to a balloon and the belly is drawn up into it; arms and tail are pulled short, stubs on the round; a companion is drawn right in and comes out again as the air goes */ const pf = Math.min(1.25, e.puff || 0) * a1; if (pf > 0.001) { const c0 = W.c.copy(B[K.hj].position), Hj = hj129(S), Q = K.q129 || (K.q129 = (() => { const m = new Map(); K.bead.forEach(b => b.jn.forEach(x => m.set(x, 'b'))); K.arm.forEach(a => a.jn.forEach(x => m.set(x, 'a'))); K.tail.forEach(x => m.set(x, 't')); K.lick.forEach(x => m.set(x, 'l')); return m; })());
+        /* (builder 135) the head is not blown up by its bone any more: the skin is laid on the round by the morph (inj129); the rest of the
+           skeleton is drawn in toward the head first, so the skin folds as little as can be on its way onto the round */ const km = (e.km || 0) * a1;
+        for (let j = 1; j < B.length; j++) { if (!J[j] || Hj.indexOf(j) >= 0) continue; const kind = Q.get(j) || 'y', p = B[j].position;
+          if (kind === 'b') { const kb = sm(km / 0.5); p.lerp(c0, 0.97 * kb); B[j].scale.multiplyScalar(1 - 0.9 * kb); }
+          else if (kind === 'y') { p.lerp(c0, 0.55 * km); B[j].scale.multiplyScalar(1 - 0.4 * km); } }
+        /* its face stays a face on the round: the brows go (they drew as bars) */ const F = S.F; if (F && F.brows) F.brows.forEach(b => { const m = b && b.g; if (!m) return; if (!m.userData.s129) m.userData.s129 = m.scale.clone(); m.scale.copy(m.userData.s129).multiplyScalar(Math.max(0.001, 1 - Math.min(1, km * 2.5))); }); }
+      else if (S.F && S.F.brows) S.F.brows.forEach(b => { const m = b && b.g; if (m && m.userData.s129) m.scale.copy(m.userData.s129); }); }
+    const col = e.col * a1; if (col > 0.001) { /* all but the head drawn up into the head */ const Hj = hj129(S), hc = W.c.copy(B[K.hj].position), f = 1 - 0.97 * col; for (let j = 1; j < B.length; j++) { if (!J[j] || Hj.indexOf(j) >= 0) continue; B[j].position.lerp(hc, col); B[j].scale.multiplyScalar(f); } }
+    if (K.fx) { K.fx.pop.visible = false; K.fx.sk.visible = false; }
+    /* held by its head on the round's place */ const hw = W.d.copy(B[K.hj].position).applyMatrix4(S.root.matrixWorld), an = e.an * a1;
+    if (an > 0.001) { W.a.set(Z.EA.x + (e.dx || 0) - hw.x, Z.EA.y + (e.rise + (e.dy || 0)) * 0.697 - hw.y, Z.EA.z - (e.rise + (e.dy || 0)) * 0.717 - hw.z).multiplyScalar(an); hw.add(W.a); par.getWorldQuaternion(W.q).invert(); W.a.applyQuaternion(W.q).multiplyScalar(1 / ps); mid.position.add(W.a); }
+    { /* (builder 135, after the lead's look) ITS BODY STAYS ON THE ROUND: the arms and the lick are short stubs splayed out from the round
+         (pulled short by the swelling, their idle still wiggling them), the tail a taut string from the round's underside down to the page
+         where it stood; all of it grows back out as the air goes. Their skin is kept off the round (l129 in inj129) */ const km = (e.km || 0) * a1;
+      if (km > 0.0005) { mid.updateWorldMatrix(true, false); S.root.updateWorldMatrix(true, true); const sc = (W.sc2 || (W.sc2 = new T.Vector3())).setFromMatrixScale(S.root.matrixWorld), sA = (sc.x + sc.y + sc.z) / 3, Rw = lp(K.hr * sA, Z.RM, (e.kr || 0) * a1) * (1 + (e.rw || 0) * km), rL = Rw / Math.max(1e-4, sA), c0 = W.c.copy(B[K.hj].position);
+        const ri = W.ri || (W.ri = new T.Matrix4()); ri.copy(S.root.matrixWorld).invert(); const cm = S.pen30 && S.pen30.cam129, upL = (cm ? W.a.setFromMatrixColumn(cm, 1) : W.a.set(0, 0.7, -0.7)).transformDirection(ri), /* the eye's up: the camera looks almost straight down, so the round's top and underside as seen are toward the page's top and bottom */ V3 = T.Vector3, tmp = W.t2 || (W.t2 = [new V3(), new V3(), new V3()]);
+        const stub = (jn, dir, k2) => { const p0 = tmp[0].copy(B[jn[0]].position); for (let i = jn.length - 1; i >= 0; i--) { const p = B[jn[i]].position, tg = tmp[1].copy(c0).addScaledVector(dir, 0.9 * rL).addScaledVector(tmp[2].copy(p).sub(p0), k2); p.lerp(tg, km); } };
+        K.arm.forEach(a => { const tip = B[a.jn[a.jn.length - 1]].position, d = tmp[2].copy(tip).sub(c0); d.addScaledVector(upL, -0.25 * d.dot(upL)); if (cm) { const vz = tmp[1].setFromMatrixColumn(cm, 2).transformDirection(ri); d.addScaledVector(vz, -0.8 * d.dot(vz)); } d.normalize(); const dir = new V3().copy(d); stub(a.jn, dir, 0.42 + 0.03 * Math.sin(e.t / 170 + a.side)); });
+        if (K.lick.length) stub(K.lick, upL.clone(), 0.5); /* (arms: out to the sides as seen) */
+        if (K.tail.length) { const fw = W.b.set(Z.AN.x, (Z.floor ? Z.floor(Z.AN.x, Z.AN.z) : 0) + 0.06, Z.AN.z).applyMatrix4(ri), bot = tmp[1].copy(c0).addScaledVector(upL, -0.9 * rL), Lt = Math.max(1e-4, K.tailL), sw = 0.05 * rL * Math.sin(e.t / 230);
+          K.tail.forEach(j => { const f = cl((K.tail0.y - J[j].p[1]) / Lt, 0, 1), tg = tmp[0].copy(bot).lerp(fw, f); tg.x += sw * Math.sin(Math.PI * f); B[j].position.lerp(tg, km); B[j].scale.multiplyScalar(1 - 0.45 * km * f); }); } } }
+    if (h > 0) { mid.position.lerp(W.pI, h); mid.quaternion.slerp(W.qI, h); mid.scale.lerp(W.sI, h); }
+    try { fin129(S, e, Z, (e.km || 0) * a1); } catch (x) { W129.err = 'fin ' + String(x && x.stack); }
+    const fl = Z.floor ? Z.floor(hw.x, hw.z) : 0; S.x86f = h < 0.999 ? [hw.x, fl - Z.f0, hw.z + 0.6 * K.py * k * ps] : null; S.h79 = lp(cl((hw.y - fl) / Math.max(0.3, 6 * K.py * k * ps) - 0.2, -0.5, 0.8), S.h79 || 0, h);
+    return { head: [hw.x, hw.y, hw.z], hr: K.hr * k * ps, kz }; }
+  /* (builder 135) THE ROUND IS ITS OWN SKIN. The wash's own shader lays every point of the figure's skin on one round (centre c129, radius
+     r129, both in the figure's own space, k129 how far), with the round's normal for the light, and its paint noise read from the round's
+     direction (so any skin that comes to lie on the same place is painted the same and no seam shows); the wash a little thinner (p129) at the
+     peak, as stretched skin. The pen reads the same morph (proj30 below) and inks only the round's rim: every edge on its front is let go. */
+  function inj129(S) { if (S.u129) return S.u129; if (!S.m30 || !S.m30.body) return null; /* the figure's own tint first, so the strings below are the tinted ones on every figure (the old one is made here, before its first draw) */ if (!S.t75) tint75(S.T, S); const T = S.T, U = S.u129 = { c129: { value: new T.Vector3() }, r129: { value: 1 }, k129: { value: 0 }, p129: { value: 0 } };
+    const one = m => { if (!m || !m.onBeforeCompile || m.userData.h129) return; m.userData.h129 = 1; const f0 = m.onBeforeCompile, k0 = m.customProgramCacheKey;
+      m.onBeforeCompile = function (sh, r) { f0.call(this, sh, r); Object.assign(sh.uniforms, U); const mg = sh.vertexShader.indexOf('uniform float w27') >= 0;
+        sh.vertexShader = sh.vertexShader.replace('void main() {', (mg ? 'uniform float p129;\n' : '') + 'attribute float l129;\nuniform vec3 c129;\nuniform float r129;\nuniform float k129;\nvoid main() {').replace('#include <project_vertex>', '{ float kv129 = k129 * (1.0 - smoothstep(0.3, 0.85, l129)); vec3 d129 = transformed - c129; float l129 = length(d129); vec3 n129 = l129 > 1e-5 ? d129 / l129 : vec3(0.0, 1.0, 0.0); transformed = mix(transformed, c129 + n129 * (r129' + (mg ? ' + w27 * 1.5 * (1.0 - k129) * (1.0 - min(1.0, p129 * 3.6)) - 0.02 * r129 * k129' : '') + '), kv129);\n#ifndef FLAT_SHADED\nvNormal = normalize(mix(vNormal, normalize(normalMatrix * n129), kv129));\n#endif\nvB30 = mix(vB30, n129 * 1.3, kv129); vW29 = mix(vW29, vec4(0.0, vW29.y, vW29.z, 0.0), kv129); }\n#include <project_vertex>');
+        if (mg) sh.vertexShader = sh.vertexShader.replace('* w27 * 1.5;', '* w27 * 1.5 * (1.0 - min(1.0, p129 * 3.6));'); sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform float p129;\nvoid main() {').replace('vec3 c9 = base * mix(vec3(1.0), wash, a9);', 'a9 *= 1.0 - p129; ' + (mg ? '' : 'base = mix(base, PAPER29 * 0.95, min(1.0, p129 * 3.6)); ') + 'vec3 c9 = base * mix(vec3(1.0), wash, a9);').replace('float a9 = (1.0 - hl)', 'hl *= 1.0 - min(1.0, p129 * 3.6); float a9 = (1.0 - hl)').replace('0.3 * inb', '0.3 * inb * (1.0 - min(1.0, p129 * 3.6))').replace('wash *= 1.0 - 0.05 * ring;', 'wash *= 1.0 - 0.05 * ring * (1.0 - min(1.0, p129 * 3.6));').replace('wash *= 1.0 - 0.16 * ring;', 'wash *= 1.0 - 0.16 * ring * (1.0 - min(1.0, p129 * 3.6));').replace('a9 *= 1.0 - (1.0 - pl) * smoothstep(0.64, 0.70, nz3)', 'a9 *= 1.0 - (1.0 - min(1.0, p129 * 3.6)) * (1.0 - pl) * smoothstep(0.64, 0.70, nz3)'); };
+      m.customProgramCacheKey = () => (k0 ? k0.call(m) : '') + 'h129'; m.needsUpdate = true; };
+    /* the limbs' skin stays off the round (arms, lick, tail: a vertex's weight on their bones) */ const lim = lim129(S); [S.body, S.hull].forEach(m => { const g = m && m.geometry; if (!g || g.attributes.l129 || !g.attributes.skinIndex) return; const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, a = new Float32Array(si.count); for (let i = 0; i < si.count; i++) a[i] = (lim.has(si.getX(i)) ? sw.getX(i) : 0) + (lim.has(si.getY(i)) ? sw.getY(i) : 0) + (lim.has(si.getZ(i)) ? sw.getZ(i) : 0) + (lim.has(si.getW(i)) ? sw.getW(i) : 0); g.setAttribute('l129', new T.BufferAttribute(a, 1)); });
+    one(S.m30.body); one(S.m30.hull); return U; }
+  function lim129(S) { if (S.lim129) return S.lim129; const K = S.k79, L = new Set(); if (K) { K.arm.forEach(a => a.jn.forEach(j => L.add(j))); K.tail.forEach(j => L.add(j)); K.lick.forEach(j => L.add(j)); } return (S.lim129 = L); }
+  /* the face on the round: two eyes and a small pressed mouth on the side that faces the eye, the cheeks blown out round them; the same size
+     and place on the old and the new figure (the stage's own sizes are undone), turning with the body when it spins */
+  function face129(S, km, e, Z) { const F = S.F, T = S.T; if (!F || !F.eyes) return; const X = S.f135 || (S.f135 = { a: new T.Vector3(), b: new T.Vector3(), c: new T.Vector3(), u: new T.Vector3(), r: new T.Vector3(), n: new T.Vector3(), w: new T.Vector3(), x: new T.Vector3(), y: new T.Vector3(), q: new T.Quaternion(), q2: new T.Quaternion(), m: new T.Matrix4(), s: new T.Vector3(), p: new T.Vector3() });
+    const lk = Math.max(0.001, 1 - Math.min(1, km * 2.5)); F.eyes.forEach(ey => { if (ey.lid) ey.lid.scale.set(lk, 1.25 * lk, 0.42 * lk); }); if (km < 0.0005) return;
+    const U = S.u129, root = S.root, c = U.c129.value, r = U.r129.value, Rw = S.Rw129, t = e.t, TT = Z.T; root.updateMatrixWorld(true); if (!X.ri) X.ri = new T.Matrix4(); X.ri.copy(root.matrixWorld).invert();
+    /* all in the world (the figure's frame is squashed, so no quaternions are read from it): the side facing the eye, turned with the body's spin */ const cw = X.a.copy(c).applyMatrix4(root.matrixWorld), cm = S.pen30 && S.pen30.cam129, cpw = cm ? X.y.setFromMatrixPosition(cm) : X.y.set(Z.cam.x, Z.cam.y, Z.cam.z), dW = X.b.copy(cpw).sub(cw).normalize(); /* the face's right is the eye's right (the camera looks nearly straight down) */ const rW = cm ? X.r.setFromMatrixColumn(cm, 0) : X.r.set(1, 0, 0); rW.addScaledVector(dW, -rW.dot(dW)).normalize(); X.u.set(0, 1, 0); dW.applyAxisAngle(X.u, e.spin || 0); rW.applyAxisAngle(X.u, e.spin || 0); const uW = X.c.crossVectors(dW, rW).normalize();
+    const bl = Math.exp(-Math.pow((t - TT.tC - 820) / 75, 2)) + Math.exp(-Math.pow((t - TT.tO + 300) / 75, 2)), eo = Math.max(0.12, 1 - 0.88 * bl - 0.3 * (e.sqz || 0));
+    /* one feature: its pivot laid on the round at the world direction (dW + a rW + b uW), its own size undone to a world size wS */
+    const kf = Math.min(1, km * 1.2), put = (g, a, b, wS, sz, sy) => { if (!g || !g.parent) return; const pp = g.parent; pp.updateWorldMatrix(true, false);
+      /* where the feature is on the figure now (its rest place), in the figure's space: it rides the skin as the skin goes onto the round, and slides over the round to the side facing the eye */ const pr = X.p.copy(g.position).applyMatrix4(pp.matrixWorld).applyMatrix4(X.ri).sub(c), l0 = Math.max(1e-4, pr.length()); pr.multiplyScalar(1 / l0);
+      const nw = X.n.copy(dW).addScaledVector(rW, a).addScaledVector(uW, b).normalize(), nl = X.w.copy(nw).transformDirection(X.ri); pr.lerp(nl, kf).normalize(); const rr = lp(l0, r * (1 + 0.012), km), pw = pr.multiplyScalar(rr).add(c).applyMatrix4(root.matrixWorld);
+      X.m.copy(pp.matrixWorld).invert(); const lp0 = pw.applyMatrix4(X.m); g.position.copy(lp0);
+      const zl = X.w.copy(nw).transformDirection(X.m), xl = X.x.crossVectors(uW, nw).transformDirection(X.m), yl = X.y.crossVectors(zl, xl).normalize(); xl.crossVectors(yl, zl).normalize(); X.m.makeBasis(xl, yl, zl); X.q.setFromRotationMatrix(X.m); g.quaternion.slerp(X.q, kf);
+      X.s.setFromMatrixScale(pp.matrixWorld); const ps = (X.s.x + X.s.y + X.s.z) / 3, gs = wS / Math.max(1e-5, sz * ps); X.s.set(gs, gs * (sy || 1), gs); g.scale.lerp(X.s, kf); };
+    F.eyes.forEach((ey, i) => { const sd = i ? 1 : -1, a = ey.g.position.x; put(ey.g, sd * 0.26, 0.1, 0.1 * Rw, ey.er, eo); });
+    const fk = (F.f && F.f.k) || 1, mo = F.mo || {}, hw = (mo.o || mo.w || 0.12) * fk; [F.mouth, F.om].forEach(g => put(g, 0, -0.17, 0.085 * Rw, hw, 0.55)); }
+  const a1129 = e => 1 - (e.hand || 0);
+  function fin129(S, e, Z, km) { const U = inj129(S); if (!U) return; U.k129.value = km; U.p129.value = 0.28 * km; const K = S.k79, B = S.bones, T = S.T, X = S.f135s || (S.f135s = { s: new T.Vector3(), gl: null });
+    /* its glows behind it and its shade and light on the bench go as the round comes (the lamp's own shadow is the one under the round) */ if (!X.gl) { X.gl = []; S.root.traverse(m => { if (m.isMesh && m.userData.h75 === 'glow') { m.userData.o129 = m.material.opacity; X.gl.push(m); } }); } X.gl.forEach(m => { m.material.opacity = m.userData.o129 * (1 - km); });
+    S.km129 = km; if (km < 0.0005) { if (S.pw129 != null) { S.pw89 = S.pw129 < 0 ? null : S.pw129; S.pw129 = null; } face129(S, 0, e, Z); return; }
+    S.root.updateMatrixWorld(true); X.s.setFromMatrixScale(S.root.matrixWorld); const sA = (X.s.x + X.s.y + X.s.z) / 3, hrW = K.hr * sA, Rw = lp(hrW, Z.RM, (e.kr || 0) * a1129(e)) * (1 + (e.rw || 0) * km);
+    U.c129.value.copy(B[K.hj].position); U.r129.value = Rw / Math.max(1e-4, sA); S.Rw129 = Rw;
+    /* the pen's weight: the same on the old and the new figure while the round is out (the page's pen for a figure of the round's size) */ const R = S.pen30; if (R && R.lw) { if (S.pw129 == null) S.pw129 = S.pw89 == null ? -1 : S.pw89; const p0 = S.pw129 < 0 ? 1 : S.pw129, cur = S.pw89 == null ? 1 : S.pw89, base = R.lw / Math.max(1e-4, cur), want = (Z.lw129 || 3.2) * (R.lw / Math.max(1e-4, R.lw)) ; S.pw89 = lp(p0, want / Math.max(1e-4, base), km); (W129.dbg.lw || (W129.dbg.lw = {}))[S.st] = +base.toFixed(2); }
+    face129(S, km, e, Z); }
+  function end129(S) { const X = S.e129; S.f129 = null; if (!X) return; if (X.og && X.og.parent) X.og.parent.remove(X.og); if (S.mid75) S.mid75.visible = true; S.e129 = null; S.h129 = null; S.x86f = null; }
+  KIT.old129 = S => { try { return S && S.e129 && S.e129.osp ? KIT.fig117(S.e129.osp) : null; } catch (e) { return null; } };
+  function evo129(f0, grp, S, t, o) { let X = S.e129; const T = S.T;
+    if (!X || X.from !== o.from) { end129(S); const g0 = hyd75Fig(T, o.from, { stage: o.from }), og = new T.Group(); og.add(g0.children[0]); og.userData.rig2 = g0.userData.rig2; og.userData.rig2.sp.grp = og; grp.parent.add(og); X = S.e129 = { og, osp: og.userData.rig2.sp, from: o.from }; }
+    const og = X.og, O = X.osp, Z = o.z117; og.position.copy(grp.position); og.quaternion.copy(grp.quaternion); og.scale.copy(grp.scale);
+    { const r = S.r117 || X.r0, nw = typeof performance !== 'undefined' ? performance.now() : Date.now(), tr = r ? r.t + (nw - r.at) / 1000 * (r.rate || 1) : t, ro = r ? r.o : { land: 1e9 }; if (r && !X.r0) X.r0 = r; f0(og, 'rest', tr, ro); S.h129in = 1; f0(grp, 'rest', tr, ro); S.h129in = 0; } if (O.k79 && O.k79.fx) { O.k79.fx.pop.visible = false; O.k79.fx.sk.visible = false; } if (S.k79 && S.k79.fx) { S.k79.fx.pop.visible = false; S.k79.fx.sk.visible = false; }
+    if (!Z) { og.visible = true; if (O.mid75) O.mid75.visible = true; S.mid75.visible = false; S.h129 = null; return { e: 0, y: 0, lunge: 0, n: 0.5, big: 0, done: false, home: false }; }
+    const e = ph129(t, Z), old = e.old; S.f129 = O.f129 = { strain: e.strain || 0, puff: e.puff || 0 }; const sO = old || e.both, sN = !old || e.both; og.visible = sO; if (O.mid75) O.mid75.visible = sO; S.mid75.visible = sN; let F = null; if (sO) F = place129(O, e, Z, true); if (sN) { const F2 = place129(S, e, Z, false); if (!old || !F) F = F2; }
+    S.h129 = F ? { e, head: F.head, hr: F.hr, old } : null; W129.e = e; return { e: 0, y: 0, lunge: 0, n: e.n, big: 0, done: e.done, home: e.home }; }
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { const F = S && S.f129; if (F && S.way75 && (F.strain > 0.001 || F.puff > 0.001)) { const k = Math.min(1, F.puff / 0.3); q.blink = (q.blink || 0) * (1 - k); q.lidx = (q.lidx || 0) * (1 - k) + 0.3 * F.strain * k; q.wide = (q.wide || 0) * (1 - k) + 0.25 * k; q.smile = (q.smile || 1) * (1 - k) + 0.45 * k; q.lookx = (q.lookx || 0) * (1 - k); q.looky = (q.looky || 0) * (1 - k) + 0.3 * k; q.nod = (q.nod || 0) * (1 - k); q.tilt = (q.tilt || 0) * (1 - k); q.hturn = (q.hturn || 0) * (1 - k); } } catch (x) { W129.err = 'face ' + String(x && x.stack); } })(C26.rest);
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp; if (!S || !S.way75) return f0(grp, clip, t, o);
+    if (clip === 'evo' && o && o.from && o.from !== S.st && on129(S) && grp.parent && !o.e31) { try { o.h129 = 1; return evo129(f0, grp, S, t, o); } catch (err) { W129.err = 'evo ' + String(err && err.stack); try { end129(S); } catch (x) { /* as it is */ } return f0(grp, clip, t, o); } }
+    if (S.e129) { try { end129(S); } catch (err) { W129.err = 'end ' + String(err && err.stack); } } return f0(grp, clip, t, o); })(play26);
+  /* (builder 135) the pen on the round: the skin's points laid on the round as the shader lays them; an edge on the round's front is let go
+     (the front grows from the middle out as the round fills, so no line goes in one frame), only the rim is inked */
+  proj30 = (f0 => function (R, s, VP, Wd, Ht, P10, P11, d, bones, inv) { const S = W75.cur, U = S && S.u129; if (!U || !(U.k129.value > 0.0005) || !s.skin || s !== R.body) return f0.apply(this, arguments);
+    const T = S.T, tp = s.tp, n = tp.nv, C = s.C, P = tp.P, nb = bones.length, X = S.x135 || (S.x135 = { bm: null, m: new T.Matrix4(), ri: new T.Matrix4(), cp: new T.Vector3() }); if (!X.bm || X.bm.length !== nb * 16) X.bm = new Float32Array(nb * 16);
+    X.ri.copy(S.root.matrixWorld).invert(); for (let j = 0; j < nb; j++) { X.m.multiplyMatrices(bones[j].matrixWorld, inv[j]).premultiply(X.ri); X.bm.set(X.m.elements, j * 16); }
+    const bm = X.bm, M = X.m.multiplyMatrices(VP, S.root.matrixWorld).elements, c = U.c129.value, r = U.r129.value, k0 = U.k129.value, SI = tp.SI, SW = tp.SW, lim = lim129(S), LT = S.l129tp && S.l129tp.length === n ? S.l129tp : (S.l129tp = (() => { const o = new Float32Array(n); for (let i = 0; i < n; i++) for (let q = 0; q < 4; q++) if (lim.has(SI[4 * i + q])) o[i] += SW[4 * i + q]; return o; })()), cam = X.cp.setFromMatrixPosition(R.cam129 || S.cam129 || new T.Matrix4()).applyMatrix4(X.ri), sst = (a0, b0, x) => { x = Math.max(0, Math.min(1, (x - a0) / (b0 - a0))); return x * x * (3 - 2 * x); };
+    for (let i = 0; i < n; i++) { const x = P[3 * i], y = P[3 * i + 1], z = P[3 * i + 2]; let lx = 0, ly = 0, lz = 0, ws = 0;
+      for (let q = 0; q < 4; q++) { const w = SW[4 * i + q]; if (!w) continue; const o = SI[4 * i + q] * 16; ws += w; lx += w * (bm[o] * x + bm[o + 4] * y + bm[o + 8] * z + bm[o + 12]); ly += w * (bm[o + 1] * x + bm[o + 5] * y + bm[o + 9] * z + bm[o + 13]); lz += w * (bm[o + 2] * x + bm[o + 6] * y + bm[o + 10] * z + bm[o + 14]); }
+      if (ws > 1e-6 && Math.abs(ws - 1) > 1e-4) { lx /= ws; ly /= ws; lz /= ws; } const k = k0 * (1 - sst(0.3, 0.85, LT[i])), fr = 1 - 0.78 * k, dx = lx - c.x, dy = ly - c.y, dz = lz - c.z, l = Math.hypot(dx, dy, dz) || 1e-6, nx = dx / l, ny = dy / l, nz = dz / l;
+      const px = lx + (c.x + nx * r - lx) * k, py = ly + (c.y + ny * r - ly) * k, pz = lz + (c.z + nz * r - lz) * k, cx = M[0] * px + M[4] * py + M[8] * pz + M[12], cy = M[1] * px + M[5] * py + M[9] * pz + M[13], cz = M[2] * px + M[6] * py + M[10] * pz + M[14], cw = M[3] * px + M[7] * py + M[11] * pz + M[15];
+      const iw = cw > 1e-5 ? 1 / cw : 0, w2 = cw + P11 * d; C[4 * i] = (cx * iw * 0.5 + 0.5) * Wd; C[4 * i + 1] = (cy * iw * 0.5 + 0.5) * Ht; C[4 * i + 2] = w2 > 1e-5 ? (cz + P10 * d) / w2 : 2; C[4 * i + 3] = cw;
+      const vx = cam.x - (c.x + nx * r), vy = cam.y - (c.y + ny * r), vz = cam.z - (c.z + nz * r), vl = Math.hypot(vx, vy, vz) || 1; if ((nx * vx + ny * vy + nz * vz) / vl > fr) C[4 * i + 3] = 0; } })(proj30);
+  draw30 = (f0 => function (T, S, ren, cam) { if (S && S.u129 && S.pen30) S.pen30.cam129 = cam.matrixWorld; const l0 = W30.lift, d0 = W30.D135; if (S && S.way75 && S.x117) W30.lift = 0; try { return f0.apply(this, arguments); } finally { W30.lift = l0; } })(draw30);
+  /* (builder 135) while it acts its body's outline keeps its short runs too (the thin arms' silhouette comes in short pieces, and dropping them
+     broke the line into dashes) */ sil30 = (f0 => function (R, s) { const S = W75.cur; if (S && (S.x117 || S.km129 > 0.0005) && R === S.pen30 && s === R.body && s.o) s.o.min = 3.5; return f0.apply(this, arguments); })(sil30);
+  /* its pen strokes in the air (lines of rising, a companion's eyes) shrink to nothing about their joints as the round comes, and grow back */
+  ink48 = (f0 => function (T, S) { const X = S && S.a48, km = S && S.u129 ? S.u129.k129.value : 0; if (!(km > 0.0005) || !X || !X.strokes) return f0.apply(this, arguments); const f = 1 - sm(km / 0.4), s0 = X.strokes;
+    X.strokes = s0.map(s => (f < 0.02 ? Object.assign({}, s, { off: 1 }) : Object.assign({}, s, { pts: s.pts.map(p => [p[0] * f, p[1] * f, p[2] * f]) }))); try { return f0.apply(this, arguments); } finally { X.strokes = s0; } })(ink48);
+  /* its soft shade and light on the bench go while the round is out */
+  lay75 = (f0 => function (T, S) { f0.apply(this, arguments); const km = S && S.km129; if (km > 0.0005 && S.lay75) S.lay75.children.forEach(m => { if (m.material && m.userData.o0 != null) m.material.opacity *= 1 - km; }); })(lay75);
+  /* (builder 135) the act's swollen head drawn the same flat way (no morph: k129 stays 0) */ KIT.flat129 = (S, k) => { if (!(k > 0.0005) && !(S && S.u129)) return; const U = inj129(S); if (!U) return; if (U.k129.value < 0.0005) U.p129.value = 0.28 * Math.max(0, Math.min(1, k)); };
+  KIT.spirit26.play = play26; KIT.W129 = W129; }
+// ==== W129 END
+// ==== W137 BEGIN
+// (builder 137) WATER'S CHANGE OF STAGE: NOTHING OF THE NEW FORM BEFORE THE BALL (AA.rxKit.w137, on by default; ?w137=0 gives today's).
+// The owner: "You can see the next stage for water before the bubble forms". The figure shown until the ball closes is the old stage's
+// own copy (W31's E.gg: its stage, its face, no blend toward the new one; checked frame by frame). What read as the new form was W31's
+// "start" beat at the head of the gathering (evo31, a in -0.1..0.2): from the first frame of t >= 0 it stretched the old body 20% taller
+// (sq +0.2 and a jolt), raised its hair 0.6 (on stage 2 the head's tip stands up into the pointed head of stage 3), threw both arms up
+// (armR 0.75, armL 0.6: arms wide) and spread the pool 12%, all in one frame (the pulse is already full at a = 0). Here those body terms
+// are taken back out and the start is a wind-up as the old form: a crouch (squash) and a small gather forward, eased in over 180 ms.
+// The face's start (eyes wide, brows, mouth) is the old form's own face and is kept. Nothing after the gathering is touched.
+KIT.w137 = KIT.w137 == null ? !(typeof location !== 'undefined' && /[?&]w137=0/.test(String(location.search))) : KIT.w137;
+const W137 = { err: null, n: 0 };
+evo31 = (f0 => function (S, t, o, q) { const r = f0(S, t, o, q); try {
+    if (KIT.w137 === false || !S || S.jar || !(t >= 0) || !q || !q.e31) return r; if (S.w137 == null) S.w137 = !Object.keys(S).some(k => /^way\d+$/.test(k)); if (!S.w137) return r;
+    const K = RK, X = tl31(o), u = t / o.L; if (!(u < X.TG)) return r; const a = u / X.TG, st = K.pulse(a, -0.1, 0.2, 0.07); if (st < 1e-4) return r;
+    const jolt = a > 0.02 ? K.ring((a - 0.02) * X.TG * o.L, 160, 150) : 0, w = K.sm(t / 180), cr = st * w;
+    q.sq += -(0.2 * st + 0.06 * jolt * st) - 0.1 * cr; q.armR -= 0.75 * st; q.armL -= 0.6 * st; q.hair -= 0.6 * st; q.bow += 0.12 * st + 0.12 * cr; q.px -= 0.12 * st - 0.05 * cr; q.pz = q.px; W137.n++;
+  } catch (x) { W137.err = String(x && x.stack); } return r; })(evo31);
+KIT.W137 = W137;
+// ==== W137 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
@@ -8685,4 +8981,219 @@ ST105.addInto = (q, d) => { Object.keys(d).forEach(k => { if (k === 'blink') q.b
 KIT.stage = ST105;
 KIT.W105 = W105;
 // ==== W105 END
+// ==== W121 BEGIN
+// (builder 121) ACID'S ACT RESTAGED (AA.rxKit.a121, on by default; ?a121=0 gives builder 58's act). The page (scheme S121) feeds it at
+// home and plans the act; here its body plays both, on ONE clock of time (ph121), every number a smooth function of the act's ms:
+//  - AT HOME, FED: it turns its head to what flies at it, stretches up and opens its jaw as it comes, snaps it shut, gulps (a squash
+//    that rings down, a nod, a blink), and is a step bulkier each time (SP.a121 from the page).
+//  - THE ACT: a crouch and it is off (no dead wait), sliding upright on a narrowed pool with its claws back and its flame streaming,
+//    in three soft surges, a heave over the book's edge; it settles at the stand by the number, bows to it and lays a claw on the
+//    paper. For each atom it ate: a lump of its own acid leaves its belly, runs up its chest and down the arm to the claw (its bulk
+//    going down a step), the claw lifts a little and stabs, and the acid bites the paper. Then the claw lifts, it turns and slides
+//    home seen from behind, turning to the front as it arrives, and settles. Its idle layer (W104's) runs under all of it; the claw
+//    follows its target through a spring (lag and a little overshoot); nothing is set in one frame.
+KIT.a121 = KIT.a121 == null ? !(typeof location !== 'undefined' && /[?&]a121=0/.test(String(location.search))) : KIT.a121;
+const W121 = { err: null, d: null, e: null };
+const cl121 = (x, a, b) => Math.max(a == null ? 0 : a, Math.min(b == null ? 1 : b, x)), sm121 = x => { x = cl121(x); return x * x * (3 - 2 * x); }, smm121 = x => { x = cl121(x); return x * x * x * (x * (6 * x - 15) + 10); }, pu121 = (x, a, b, w) => sm121((x - a) / w) * (1 - sm121((x - b) / w));
+/* along the way: eased ends and three soft surges (never going back: the surge is less than the ease's slope) */
+const sg121 = u => { const g = smm121(u); return g - 0.022 * Math.sin(6 * PI * g); };
+/* THE ONE CLOCK: where it is in the act at t (ms since the tap). Z is the page's plan (times in ms since the tap; tl / tb since it arrived) */
+function ph121(t, Z) { const e = { t, ph: 'land', f: 0, u: 0, mv: 0, a: t - Z.tA, done: t >= Z.tEnd, home: t >= Z.tH - 60, w: 1, l: 0 };
+  if (t < Z.tS) { e.ph = 'wind'; e.w = cl121(t / Z.tS); }
+  else if (t < Z.tA) { e.ph = 'out'; e.u = (t - Z.tS) / (Z.tA - Z.tS); e.f = sg121(e.u); }
+  else if (t < Z.tB) { e.ph = 'work'; e.f = 1; }
+  else if (t < Z.tH) { e.ph = 'back'; e.u = (t - Z.tB) / (Z.tH - Z.tB); e.f = 1 - sg121(e.u); }
+  else e.l = cl121((t - Z.tH) / Math.max(1, Z.tEnd - Z.tH));
+  e.k = 1 + (Z.k - 1) * sm121(e.f); /* its pool drawn in to a narrow lick while it is away (the pit stays at home) */ e.away = sm121((t - Z.tS + 120) / 260) * (1 - sm121((t - Z.tH + 60) / 320)); e.mv = e.ph === 'out' || e.ph === 'back' ? sm121(e.u / 0.12) * (1 - sm121((e.u - 0.86) / 0.14)) : 0;
+  /* the book's edge on the way: a heave as it goes over */ const dE = (e.f - Z.eU) * Z.len; e.edge = e.mv > 0 ? Math.exp(-dE * dE / 2.2) : 0;
+  const a = e.a, n = Z.n; let spent = 0, lump = -1, li = -1, bite = 0, lift = 0, hi = 0;
+  for (let i = 0; i < n; i++) { const lu = (a - Z.tl[i]) / Z.LT; if (lu >= -0.05 && lu <= 1.12 && li < 0) { lump = lu; li = i; } spent += sm121((a - Z.tl[i] - 60) / 380) / n;
+    const b = a - Z.tb[i]; bite = Math.max(bite, b < 0 ? 0 : Math.sin(PI * Math.min(1, b / 260)) * (b < 260 ? 1 : 0)); lift = Math.max(lift, sm121((a - (Z.tb[i] - 300)) / 230) * (1 - sm121((a - Z.tb[i] + 70) / 110)));
+    if (i) hi += sm121((a - (Z.tb[i - 1] + 120)) / Math.max(200, Z.tb[i] - Z.tb[i - 1] - 330)); }
+  e.spent = spent; e.lump = lump; e.li = li; e.bite = bite; e.lift = lift; e.hi = hi; e.bulk = Z.bulk0 * (1 - spent);
+  e.rc = e.ph === 'work' || e.ph === 'back' ? sm121((a - Z.tR0) / (Z.tR - Z.tR0)) * (1 - sm121((a - Z.tLift) / 330)) : 0;
+  e.turn = PI * sm121((t - Z.tB + 60) / 700) * (1 - sm121((t - (Z.tH - 700)) / 700));
+  return e; }
+/* the face, the bow, the pool and the bulk for the rest pass to lay over its own numbers (W55's z55 overlay), each smooth in time */
+function face121(e, Z, z, st) { const big = st >= 5 ? 1.25 : st <= 1 ? 0.85 : 1, a = e.a; z.px = z.pz = 1 - 0.62 * e.away; z.swell = e.bulk; z.smile = 1.3 + 0.25 * e.spent;
+  /* the crouch before it goes, the stretch out of it */ const cr = e.ph === 'wind' ? Math.sin(PI * sm121((t0w => (e.t - t0w) / Math.max(1, Z.tS - t0w))(Math.max(0, Z.tS - 260)))) : 0, go = e.ph === 'out' ? Math.exp(-e.u * 10) * sm121(e.u / 0.04) : 0; z.sq = 0.13 * cr - 0.08 * go; z.bow = 0.12 * cr;
+  if (e.mv > 0) { const out = e.ph === 'out', ph = (e.ph === 'out' ? e.u : e.u) * 3, s3 = Math.abs(Math.sin(PI * ph)); z.bow += (out ? 0.42 : 0.2 * (1 - 0.85 * Math.abs(Math.sin(e.turn)))) * e.mv / big; z.sq += 0.05 * s3 * e.mv; z.lean = 0.05 * Math.sin(PI * ph * 2) * e.mv; z.looky = (out ? -0.35 : 0.2) * e.mv; z.lookx = (out ? 0.6 * Z.dir : 0) * e.mv; z.lidx = 0.3 * e.mv; z.brow = -0.45 * e.mv; }
+  z.bow += 0.3 * e.edge; z.sq -= 0.1 * e.edge;
+  /* at the number: it settles, bows to it, looks down at its claw; each bite: eyes wide, brow up, a small squash; then a grin */
+  if (e.ph === 'work' || e.ph === 'back') { const w = sm121(a / 300) * (1 - sm121((a - Z.tLift - 200) / 400)), st0 = a < 450 ? 0.1 * Math.exp(-a / 140) * Math.sin(a / 45) : 0;
+    z.sq += st0 + 0.05 * e.bite - 0.03 * e.lift; z.bow += 0.06 * w + 0.04 * e.bite; z.looky = (z.looky || 0) - 0.75 * w; z.lookx = (z.lookx || 0) + 0.5 * (Z.side || 1) * w; z.nod = 0.1 * w + 0.1 * e.bite; z.wide = 0.5 * e.bite + 0.2 * e.lift; z.brow = (z.brow || 0) + 0.5 * e.bite - 0.2 * w; z.smile += 0.3 * w; z.hturn = 0.15 * (Z.side || 1) * w; }
+  if (e.ph === 'back' || e.ph === 'land') z.turn = e.turn; else z.turn = 0;
+  if (e.ph === 'land') { const l = e.l, s = Math.exp(-l * 4) * Math.sin(l * 13) * (1 - sm121((l - 0.7) / 0.3)); z.sq += 0.12 * s; z.sink = 0.12 * pu121(l, 0.02, 0.6, 0.2); } }
+/* the claw's target, through a spring (time-based: lag and a little overshoot) */
+function spring121(S, tx, ty, tz, now) { const T = S.T, q = S.sp121 || (S.sp121 = { p: new T.Vector3(tx, ty, tz), v: new T.Vector3(), t: now }); let dt = (now - q.t) / 1000; q.t = now; if (!(dt > 0 && dt < 0.2)) { q.p.set(tx, ty, tz); q.v.set(0, 0, 0); return q.p; }
+  const w = 2 * PI * 3.0, d = 2 * 0.72 * w; for (let s = 0; s < 2; s++) { const h = dt / 2; q.v.x += (w * w * (tx - q.p.x) - d * q.v.x) * h; q.v.y += (w * w * (ty - q.p.y) - d * q.v.y) * h; q.v.z += (w * w * (tz - q.p.z) - d * q.v.z) * h; q.p.x += q.v.x * h; q.p.y += q.v.y * h; q.p.z += q.v.z * h; } return q.p; }
+/* the lump of its own acid: a ball with its ink hull and a glint, riding the line belly - chest - shoulder - arm - claw */
+function lump121(S, grp, e, Z, sd) { const T = S.T; let L = S.l121; let top = grp; while (top.parent) top = top.parent;
+  if (!L) { const m = new T.Mesh(new T.SphereGeometry(1, 20, 14), new T.MeshStandardMaterial({ color: new T.Color(0.55, 0.80, 0.34).convertSRGBToLinear(), roughness: 0.42, metalness: 0 })), h = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: new T.Color(0x1d2a12).convertSRGBToLinear(), side: T.BackSide })), gl = new T.Mesh(m.geometry, new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }));
+    h.scale.setScalar(1.13); gl.scale.setScalar(0.26); gl.position.set(-0.35, 0.42, 0.55); [m, h, gl].forEach(q => { q.userData.plain = true; q.userData.nobox = true; q.castShadow = false; }); m.add(h); m.add(gl); m.renderOrder = 22; m.visible = false; L = S.l121 = { m, pts: [], v: new T.Vector3() }; }
+  if (L.m.parent !== top) top.add(L.m); if (e.li < 0 || !S.k52 || e.ph !== 'work') { L.m.visible = false; return; }
+  const B = S.bones, G = S.G, K = S.k52, A = K.arm[sd] || K.arm[1] || [], par = B[0].parent; if (!A.length) { L.m.visible = false; return; } par.updateWorldMatrix(true, false); const M = par.matrixWorld, ws = par.getWorldScale(L.v).x;
+  const P = L.pts, add = (p, i) => { if (!P[i]) P[i] = new T.Vector3(); P[i].copy(p).applyMatrix4(M); }; let k = 0; add(B[G.bj[Math.max(1, G.R.chest - 2)]].position, k++); add(B[G.bj[G.R.chest]].position, k++); const jn = A[0].jn; for (let i = 0; i <= A[0].l.arm && i < jn.length; i++) add(B[jn[i]].position, k++); if (S.h58 && S.h58.h[sd]) { if (!P[k]) P[k] = new T.Vector3(); P[k++].copy(S.h58.h[sd]); }
+  let len = 0; const Ls = [0]; for (let i = 1; i < k; i++) { len += P[i].distanceTo(P[i - 1]); Ls.push(len); } const u = e.lump, d = smm121(u / 1.0) * len; let i = 1; while (i < k - 1 && Ls[i] < d) i++; const f = Ls[i] > Ls[i - 1] ? (d - Ls[i - 1]) / (Ls[i] - Ls[i - 1]) : 0;
+  L.m.position.copy(P[i - 1]).lerp(P[i], cl121(f)); const ar = G.J[jn[Math.min(jn.length - 1, 2)]] ? G.J[jn[Math.min(jn.length - 1, 2)]].r : 0.03 * G.H, r = Math.max(0.035 * G.H, 1.55 * ar) * ws * (Z.stg >= 4 ? 1.1 : 1), grow = sm121((u + 0.05) / 0.16) * (1 - sm121((u - 0.95) / 0.17));
+  L.m.scale.setScalar(Math.max(1e-4, r * grow * (1 + 0.08 * Math.sin(u * 19)))); L.m.visible = grow > 0.01; }
+/* the act, joint by joint, after the rest pass */
+function pose121(S, grp, e, Z, now) { const G = S.G, H = G.H, K = S.k52, B = S.bones, T = S.T, hd = B[G.bj[G.R.head]].position, ch = B[G.bj[G.R.chest]].position, P0 = B[0].position, rest = sd => { const A = K.arm[sd]; return A && A.length ? B[A[0].jn[A[0].l.arm]].position.clone() : ch.clone(); };
+  /* the licks round its pool drawn in while it slides (its pit stays at home) */ const pk = 1 - 0.65 * e.away; if (pk < 0.999) K.lick.forEach(c => c.jn.forEach((j, k) => { if (!k) return; const p = B[j].position; p.x = P0.x + (p.x - P0.x) * pk; p.z = P0.z + (p.z - P0.z) * pk; p.y *= 0.4 + 0.6 * pk; B[j].scale.multiplyScalar(0.5 + 0.5 * pk); }));
+  /* sliding: both claws back along its flanks, the flame streaming back; the crouch rubs them at the chest */ let fz = 0, fx = 0, flame = 0.1 * e.spent; const nw = now / 1000;
+  /* away from home its claws are kept in by its sides (back while it slides), so they never sweep wide over the page; the reaching one goes from there */ const back = e.ph === 'back', tuck = Math.max(0.9 * e.away, e.ph === 'wind' ? 0.6 * Math.sin(PI * sm121((e.t - Math.max(0, Z.tS - 260)) / 260)) : 0); fz = (back ? 0.1 * (1 - Math.abs(Math.sin(e.turn))) : -0.26) * H * e.mv; fx = 0.04 * H * Math.sin(nw * 13) * e.mv;
+  const reach = e.rc > 0.001 && Z.E && Z.E.length, rsd = reach ? (Z.sdK || (Z.sdK = (() => { const m = Z.E[0].clone().add(Z.E[Z.E.length - 1]).multiplyScalar(0.5), p = loc58(S, m); return p.x >= ch.x ? 1 : -1; })())) : 0;
+  [1, -1].forEach(sd => { if (sd === rsd || tuck <= 0.001) return; claw58(S, sd, ch.x + sd * 0.15 * H, ch.y - 0.14 * H + 0.015 * H * Math.sin(nw * 9 + sd), ch.z + (0.08 - 0.2 * e.mv * (back ? 0 : 1)) * H, tuck, 0.45 * tuck + 0.25 * e.rc); });
+  /* at the number: one claw to the paper, sprung; it lifts a little and stabs at each bite; the other rests on its belly */
+  if (reach) { const sd = rsd, n = Z.E.length, hi = Math.min(n - 1, e.hi), i0 = Math.floor(hi), i1 = Math.min(n - 1, i0 + 1), fr = hi - i0;
+    const W = W121.vw || (W121.vw = new T.Vector3()); W.copy(Z.E[i0]).lerp(Z.E[i1], fr); const tg = loc58(S, W), lift = 0.09 * H * e.lift - 0.015 * H * e.bite; const up = 0.05 * H; const p = spring121(S, tg.x, tg.y + up + lift, tg.z, now);
+    const tx = ch.x + sd * 0.15 * H, ty = ch.y - 0.14 * H, tz = ch.z + 0.08 * H, rc = e.rc; claw58(S, sd, tx + (p.x - tx) * rc, ty + (p.y - ty) * rc, tz + (p.z - tz) * rc, Math.max(rc, tuck), -0.3 * (1 - sm121(e.a / Math.max(1, Z.tR))) + 0.95 * sm121((e.a - Z.tR + 120) / 160) * (1 - 0.35 * e.lift) + 0.25 * e.bite);
+    Z.side = sd; W121.sd = sd; }
+  else if (S.sp121) S.sp121.t = -1e9;
+  if (e.ph === 'work') flame += 0.18 * e.bite + 0.04 * Math.sin(nw * 9);
+  if (flame || fx || fz) bend52(S, K.top, 1, fx, flame * 0.15 * H, fz, flame);
+  out58(S); lump121(S, grp, e, Z, Z.side || 1); }
+function act121(f0, grp, S, t, o) { const Z = o.bites.a121, e = ph121(t, Z), z = S.z121 || (S.z121 = {}), now = (typeof performance !== 'undefined' ? performance.now() : 0); W121.e = e; Z.e = e; for (const k in z) delete z[k];
+  if (!S.k52) init52(S); S.a121z = null; face121(e, Z, z, S.st); const jaw = S.a121 ? catch121(S.a121, z, now, false) : 0; if (KIT.l104) KIT.l104(z, { u: t / 500, L: 500 }); f0(grp, 'rest', t / 500, { look: [1, 0.5], z55: z, act58: true }); S.c52 = 'act'; S.act58 = Z;
+  out58(S); pose121(S, grp, e, Z, now); out58(S); jaw121(S, jaw);
+  W121.d = { ph: e.ph, f: +e.f.toFixed(2), rc: +e.rc.toFixed(2), li: e.li, lump: +e.lump.toFixed(2), bite: +e.bite.toFixed(2), bulk: +e.bulk.toFixed(3), sd: Z.side };
+  return { e: e.f, y: 0, lunge: 0, n: -1, big: 0, done: e.done, home: e.home }; }
+/* AT HOME, FED: the catch and the gulp, the bulk (numbers the page gives in SP.a121), laid over the rest clip */
+C26.rest = (f0 => function (S, t, o, q, lagMs) { const r = f0(S, t, o, q, lagMs); try { const z = S && S.a121z; if (z) { ['sq', 'bow', 'lean', 'hturn', 'lookx', 'looky', 'nod', 'swell', 'brow', 'wide'].forEach(k => { if (z[k]) q[k] = (q[k] || 0) + z[k]; }); if (z.blink) q.blink = Math.max(q.blink || 0, z.blink); } } catch (e) { W121.err = 'rest ' + String(e && e.stack); } return r; })(C26.rest);
+/* the catch: head and eyes to what flies at it, a stretch up and the jaw open as it comes, snapped shut, a gulp that rings down, a blink, a bump of bulk */
+function catch121(A, z, now, bulk) { const near = A.near || 0, lx = A.lx || 0; let jaw = 0.85 * near, sq = -0.1 * near, nod = 0, blink = 0, swb = 0;
+  (A.hits || []).forEach(h => { const g = now - h; if (g < 0 || g > 900) return; jaw = Math.max(jaw, 0.85 * (1 - sm121(g / 120))); sq += 0.15 * Math.exp(-g / 170) * Math.sin(g / 46); nod += 0.24 * pu121(g, 40, 320, 80); blink = Math.max(blink, pu121(g, 70, 250, 50)); swb += 0.05 * Math.exp(-g / 260) * sm121(g / 90); });
+  const add = (k, v) => { z[k] = (z[k] || 0) + v; }; add('sq', sq); add('bow', -0.1 * near); add('looky', 0.5 * near); add('lookx', 1.3 * lx * near); add('hturn', 0.3 * lx * near); add('nod', nod); add('wide', 0.4 * near); z.blink = Math.max(z.blink || 0, blink); if (bulk) add('swell', (A.sw || 0) + swb); else add('swell', swb); return jaw; }
+function jaw121(S, jaw) { const F = S.F; if (!F || !F.om) return; if (jaw > 0.004) { mouth58(S, Math.max(0.03, jaw)); F.om.visible = true; F.om.scale.set(0.3 + 2.2 * jaw, 0.25 + 2.9 * jaw, 1); if (F.mouth) F.mouth.visible = jaw < 0.12; } if (F.om.userData.d58) F.om.userData.d58.visible = jaw > 0.03; }
+function rest121(f0, grp, S, t, o) { const A = S.a121, now = (typeof performance !== 'undefined' ? performance.now() : 0), z = S.a121z || (S.a121z = {}); for (const k in z) delete z[k];
+  const jaw = catch121(A, z, now, true); const r = f0(grp, 'rest', t, o); S.jaw121 = jaw; jaw121(S, jaw); return r; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp, mine = S && S.a48 && !S.jar && KIT.a121 !== false;
+  if (clip === 'act' && mine && o && o.bites && o.bites.a121) { try { return act121(f0, grp, S, t, o); } catch (err) { W121.err = 'act ' + String(err && err.stack); const Z = o.bites.a121; return { e: 0, y: 0, lunge: 0, n: -1, big: 0, done: t >= Z.tEnd, home: t >= Z.tH }; } }
+  if (S && S.sp121 && clip !== 'act') S.sp121 = null;
+  if (clip === 'rest' && mine && !(o && o.jar) && !(o && o.z55)) { let r; try { if (S.a121) r = rest121(f0, grp, S, t, o); else { S.a121z = null; r = f0(grp, clip, t, o); } } catch (err) { W121.err = 'rest ' + String(err && err.stack); S.a121z = null; r = f0(grp, clip, t, o); } try { if (S.k52) out58(S); } catch (e) { /* no places */ } return r; }
+  return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26; KIT.ph121 = ph121; KIT.W121 = W121;
+/* ---- (builder 121) THE CHANGE OF STAGE, the checker's faults (same switch, AA.rxKit.a121; ?a121=0 gives builder 104/107's):
+   - each change erupts its own way (EV121: a thin geyser; a twisting corkscrew; a crown that bursts open into ragged petals; a broad
+     surge that boils over), from a column of acid with no bulb head (the old one read as a blunt bud), throwing drops of acid that fly,
+     fall and splash; the column's body thins away (its alpha, over a third of a beat and more) as it falls back, so the new face comes
+     out of it gradually instead of in one or two frames;
+   - the sneak that peers out of the pit (2 to 3) no longer drops back under the page in one frame when its haul begins: it is held at
+     the depth it peers from until the haul is higher. */
+const EV121 = { 2: { rc: 0.2, head: -0.1, flare: 0.15, jag: 0.25, lobes: 3, tw: 0.25, colH: 1.3, nd: 9, sp: 0.35, up: 1.25, rise: 0.75 },
+  3: { rc: 0.34, head: -0.05, flare: 0.35, jag: 0.4, lobes: 4, tw: 3.2, colH: 1.05, nd: 8, sp: 0.6, up: 0.9, rise: 1.0, spin: 1 },
+  4: { rc: 0.4, head: -0.12, flare: 1.15, jag: 0.85, lobes: 7, tw: 0.6, colH: 0.95, nd: 16, sp: 1.25, up: 0.8, rise: 0.85 },
+  5: { rc: 0.62, head: -0.05, flare: 0.55, jag: 0.6, lobes: 9, tw: 0.5, colH: 1.1, nd: 22, sp: 1.0, up: 1.0, rise: 1.35, boil: 1 } };
+/* the column's shape: shape104 with no bulb (head may pinch), a crown that opens (flare) and ragged points (jag) round its top */
+function shape121(B, o) { const NA = W104.NA, NS = W104.NS, P = B.pos, A = B.ab, R = o.R, ux = B.up.x, uy = B.up.y, uz = B.up.z, k = o.k, bl = B.bl;
+  for (let b = 0; b < bl.length; b++) { const q = bl[b], x = o.tm * q.rate + q.off, id = Math.floor(x), p = x - id; if (id !== q.id) { q.id = id; q.an = 6.2832 * h30(id * 13 + b * 7 + 1); q.rr = 0.1 + 0.68 * Math.sqrt(h30(id * 17 + b * 3 + 2)); q.sz = 0.075 + 0.12 * h30(id * 5 + b + 9); }
+    q.g = (p < 0.7 ? sm55(p / 0.7) : 1 - sm55((p - 0.7) / 0.3)) * o.bo * (1 - k); q.x = Math.cos(q.an) * q.rr; q.z = Math.sin(q.an) * q.rr; }
+  let n = 0, m = 0; for (let j = 0; j < NS; j++) { const s = j / (NS - 1), sa = Math.sin(s * PI / 2), ca = Math.cos(s * PI / 2), s3 = s * s * s, head = 1 + o.head * Math.exp(-((s - 0.78) * (s - 0.78)) / 0.02), cap = Math.sqrt(Math.max(0, 1 - Math.pow(s, 16))), foot = Math.pow(1 - s, 5), hp = Math.pow(s, 1.25), fl = 1 + o.flare * sm55((s - 0.62) / 0.33) * cap;
+    for (let i = 0; i < NA; i++) { const a0 = i / NA * 6.2832, a = a0 + o.tw * s * k, cs = Math.cos(a), sn = Math.sin(a);
+      const edge = 0.94 * (1 + 0.05 * Math.sin(3 * a0 + o.seed) + 0.03 * Math.sin(7 * a0 - o.tm * 0.6 + 2 * o.seed));
+      const rc = o.rc * (1 + 0.22 * s * Math.sin(s * 7 - o.tm * 6 + a0 * 2) + 0.14 * s * Math.sin(a0 * 3 + o.tm * 1.7 + s * 13) + 0.12 * Math.sin(s * 19 - o.tm * 8 + a0));
+      const lobe = 0.5 + 0.5 * Math.sin(a0 * o.lobes + o.seed * 3 + o.tm * 1.3), rhoC = (rc + (1 - rc) * foot) * head * cap * fl * (1 + 0.18 * Math.sin(a0 * o.lobes + o.seed * 1.5 + o.tm * 0.6) * s3 + 0.1 * Math.sin(a0 * 2 - o.tm * 1.5 + s * 5) * s), hC = hp * (1 - o.jag * Math.pow(lobe, 1.6) * Math.pow(s, 4));
+      const rho = (ca + (rhoC - ca) * k) * edge, x = cs * rho, z = sn * rho; let h = o.fill * R * sa * (1 - 0.45 * k) * (1 + 0.14 * Math.sin(o.tm * 2.1 + 3 * x + 2 * z) * (1 - k)) + o.fill * R * 1.5 * (x * o.sx + z * o.sz) * sa * (1 - k) + o.ch * hC + 0.018 * R * Math.sin(9 * x + o.tm * 3) * Math.sin(8 * z - o.tm * 2.3) * (1 - k) * o.bo, bb = 0;
+      for (let b = 0; b < bl.length; b++) { const q = bl[b]; if (q.g <= 0.001) continue; const dx = x - q.x, dz = z - q.z, d2 = (dx * dx + dz * dz) / (q.sz * q.sz); if (d2 < 1) { const w = Math.sqrt(1 - d2) * q.g; h += q.sz * R * w * 1.15; if (w > bb) bb = w; } }
+      const wv = o.ch * (0.05 * Math.sin(s * 4.5 - o.tm * 5) + 0.25 * o.sx) * s * k; P[n++] = o.C.x + x * R + ux * h + wv; P[n++] = o.C.y + uy * h; P[n++] = o.C.z + z * R + uz * h; A[m++] = s; A[m++] = bb; } }
+  B.geo.attributes.position.needsUpdate = true; B.geo.attributes.ab.needsUpdate = true; B.geo.computeVertexNormals(); }
+/* the drops it throws: balls of its acid (ink hull), out of the crown on arcs, down onto the page, where they splash flat and go */
+function drops121(T, X, top, C, up, ch, R, e, P, tb, now) { const D = X.d121 || (X.d121 = { list: [], made: false, n: 0 });
+  if (!D.made) { D.made = true; const g = new T.SphereGeometry(1, 12, 9), ma = new T.MeshStandardMaterial({ color: new T.Color(0.52, 0.78, 0.3).convertSRGBToLinear(), roughness: 0.7 }), mh = new T.MeshBasicMaterial({ color: new T.Color(0x1d2a12).convertSRGBToLinear(), side: T.BackSide });
+    for (let i = 0; i < 24; i++) { const m = new T.Mesh(g, ma), h = new T.Mesh(g, mh); h.scale.setScalar(1.18); m.add(h); [m, h].forEach(q => { q.userData.plain = true; q.userData.nobox = true; q.castShadow = false; }); m.renderOrder = 19.5; m.visible = false; /* not in the bench's depth picture (S33 takes it now and then: a drop caught in it stays as a ghost) */ const nb = function (r, s, cam) { const off = !!(KIT.skip33 && cam && cam.layers && cam.layers.mask !== 32); [ma, mh].forEach(q => { q.colorWrite = !off; q.depthWrite = !off; }); }; m.onBeforeRender = nb; h.onBeforeRender = nb; D.list.push({ m, t0: -1e9, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, r: 0 }); } }
+  D.list.forEach(d => { if (d.m.parent !== top) top.add(d.m); });
+  /* launched over the eruption: the stage's own number of them, its own spread */ const want = tb > -0.05 && tb < 0.55 ? Math.floor(P.nd * sm55((tb + 0.05) / 0.6)) : D.n; if (tb < -0.1) D.n = 0;
+  while (D.n < want) { const i = D.n++, d = D.list[i % D.list.length], an = (P.spin ? 2.4 * i : 6.2832 * h30(i * 7 + 3)), sp = R * (1.4 + 1.4 * h30(i * 5 + 1)) * P.sp * 1.2, upv = R * (2.0 + 1.4 * h30(i * 11 + 2)) * P.up;
+    d.t0 = now; d.x = C.x + up.x * ch * 0.92 + Math.cos(an) * R * 0.25 * P.rc * 3; d.y = C.y + up.y * ch * 0.92; d.z = C.z + up.z * ch * 0.92 + Math.sin(an) * R * 0.25 * P.rc * 3; d.vy = upv; d.r = R * (0.06 + 0.04 * h30(i * 3 + 7)); d.land = -1;
+    /* it lands round the pit, a little beyond its rim (the stage's own spread): the flight's time from its height, the way across from that */ const gr = 9.8 * R * 1.6, hy = d.y - C.y - 0.02, Tf = (upv + Math.sqrt(upv * upv + 2 * gr * Math.max(0, hy))) / gr, rr = R * (1.05 + 0.5 * h30(i * 5 + 1)) * (0.75 + 0.35 * P.sp), lx = C.x + Math.cos(an) * rr, lz = C.z + Math.sin(an) * rr * 0.8; d.vx = (lx - d.x) / Tf; d.vz = (lz - d.z) / Tf; }
+  D.list.forEach(d => { const a = now - d.t0; if (a < 0 || a > 3) { d.m.visible = false; return; } let x, y, z, sx = 1, sy = 1;
+    if (d.land < 0) { x = d.x + d.vx * a; y = d.y + d.vy * a - 0.5 * 9.8 * R * 1.6 * a * a; z = d.z + d.vz * a; if (y <= C.y + 0.02 && a > 0.05) { d.land = a; d.lx = x; d.lz = z; } }
+    if (d.land >= 0) { const b = (a - d.land) / 0.3; if (b >= 1) { d.m.visible = false; return; } x = d.lx; z = d.lz; y = C.y + 0.02; sx = sy = 1 - sm55(b); }
+    const g = sm55(a / 0.08); d.m.visible = true; d.m.position.set(x, y, z); d.m.scale.setScalar(Math.max(1e-4, d.r * sx * g)); }); }
+KIT.b104 = (f0 => function (S, X, grp, e, o) { if (KIT.a121 === false || KIT.g104 === false) { if (X && X.d121) X.d121.list.forEach(d => { d.m.visible = false; }); return f0(S, X, grp, e, o); }
+  const T = S.T, B = X.b104 || (X.b104 = make104(T)); let top = grp; while (top.parent) top = top.parent; if (B.mesh.parent !== top) top.add(B.mesh);
+  const P = e.P, Q = EV121[e.to] || EV121[3], C55 = o.c55 || { R: 3, y: 0.03, Hc: 8 }, k55 = o.k55 || 1, tb = e.u - e.hit, fr = 33.4 / (e.L || 500), c = e.c, hf = P.hd / P.b[2], R = X.R;
+  const rise = sm55((tb + 0.45) / Math.max(0.75, 11 * fr) / Q.rise), fall = tb < 0 ? 0 : sm55((e.v - 0.1) / Math.max(0.5, 16 * fr / P.b[3])), Hcol = C55.Hc * k55 * (W104.COL[e.to] || 0) * Q.colH;
+  const pre = e.u < e.hit && e.u >= c[2] ? sm55((e.boil - 0.55) / 0.45) : 0, ch = Hcol * rise * (1 - 0.85 * fall) * (1 + 0.06 * Math.sin((tb + 0.3) * 9) * rise * (1 - fall)) + Hcol * 0.07 * pre * pre * (0.6 + 0.4 * Math.sin(X.tf * 15)) * (1 - rise), k = sm55(ch / Math.max(1e-3, 1.3 * R));
+  const hold = e.hold ? cl55((e.boil - (1 - hf)) / hf) : 0;
+  { const sl = X.sl104 || (X.sl104 = { x: 0, z: 0, vx: 0, vz: 0, last: X.tf }), dt = Math.min(0.05, Math.max(0, X.tf - sl.last)), a = W104.act || [0, 0], w = 6.2832 * 1.25, d = 2 * 0.22 * w; sl.last = X.tf;
+    for (let s = 0; s < 2; s++) { sl.vx += (-w * w * sl.x - d * sl.vx + 26 * a[0]) * dt / 2; sl.vz += (-w * w * sl.z - d * sl.vz + 26 * a[1]) * dt / 2; sl.x += sl.vx * dt / 2; sl.z += sl.vz * dt / 2; } sl.x = Math.max(-0.5, Math.min(0.5, sl.x)); sl.z = Math.max(-0.5, Math.min(0.5, sl.z)); }
+  const fill = e.u < c[2] ? 0.1 * sm55(e.sink) : e.u < c[3] ? 0.1 + 0.22 * sm55(e.bo) + 0.12 * sm55(hold) + (Q.boil ? 0.06 * sm55(e.bo) : 0) : e.u < c[4] ? 0.44 - 0.26 * sm55(e.v / 0.6) : e.u < c[5] ? 0.18 * (1 - sm55(e.look)) : 0;
+  const bo = e.u < c[2] ? 0.6 * sm55(e.sink) : e.u < c[3] ? 0.6 + 0.4 * sm55(e.bo / 0.2) : 1 - sm55(e.v / 0.5);
+  /* the column thins away as it falls back: the new form is seen through it, never uncovered in a frame */ const thin = tb < 0 ? 0 : sm55((e.v - 0.04) / 0.5);
+  B.mesh.visible = fill > 0.002 || ch > 0.01; W104.d = { fill: +fill.toFixed(3), ch: +ch.toFixed(2), k: +k.toFixed(2), R: +R.toFixed(2), bo: +bo.toFixed(2), thin: +thin.toFixed(2) };
+  const now = X.tf; try { drops121(T, X, top, X.c, B.up, Hcol * rise, R, e, Q, tb, now); } catch (err) { W121.err = 'drops ' + String(err && err.stack); }
+  if (!B.mesh.visible) return;
+  B.C.copy(X.c); B.C.y += 0.02; const U = B.mesh.material.uniforms; U.tm.value = X.tf; U.kc.value = k; U.al.value = cl55(e.u < c[2] ? e.sink / 0.25 : e.u < c[4] ? 1 : fill / 0.04) * (1 - 0.92 * thin * k);
+  if (!B.mesh.ob121) { const f1 = B.mesh.onBeforeRender; B.mesh.ob121 = true; B.mesh.onBeforeRender = function (r, s, cam) { if (f1) f1.apply(this, arguments); /* the lamp's own depth picture keeps the whole column (its shadow follows it down, never goes in a frame); the eye's sees through it as it thins */ B.mesh.material.depthWrite = (cam && cam.layers && cam.layers.mask === 32) ? true : !(B.mesh.al121 < 0.97); }; } B.mesh.al121 = U.al.value;
+  shape121(B, { C: B.C, R, fill, ch, k, tm: X.tm + 0.35 * X.tf, bo, lobes: Q.lobes, rc: Q.rc * (1 - 0.25 * fall), head: Q.head * rise * (1 - fall), flare: Q.flare * rise * (1 - 0.5 * fall), jag: Q.jag, tw: Q.tw * (P.tw || 1), seed: (e.to || 3) * 1.7, sx: X.sl104.x, sz: X.sl104.z }); })(KIT.b104);
+KIT.h104 = (f0 => function (X) { f0(X); if (X && X.d121) X.d121.list.forEach(d => { d.m.visible = false; }); })(KIT.h104);
+/* the imp's pop (1 to 2) eased over more of its beat: it no longer comes out of the pit in a few frames */
+const P121 = new Map(); ph55 = (f0 => function (t, o) { const e = f0(t, o); try { if (KIT.a121 !== false && e && e.P && e.to === 2) { let q = P121.get(e.P); if (!q) { q = Object.assign({}, e.P, { hl: [0.2, 0.68], ov: 0.1, rl: [0.45, 0.75], hb: [0.5, 0.85] }); P121.set(e.P, q); } e.P = q; } } catch (x) { W121.err = 'ph55 ' + String(x && x.stack); } return e; })(ph55);
+/* the peering sneak: held at the depth it peers from until the haul brings it higher (W55's rise55 dropped it back in one frame) */
+rise55 = (f0 => function (S, e, o) { const P = e.P; if (KIT.a121 === false || !P.peer) return f0(S, e, o);
+  const H = S.G.H, g = frame55(S), v = e.u < e.hit ? 0 : e.v, K = S.k52; if (e.u >= e.c[4]) return;
+  const R = (o.c55 ? o.c55.R : 3) * e.pr / Math.max(1e-4, g.ws), top = top55(S, g), Dm = top * 1.12 + 0.08 * H, hl = P.hl, h = cl55((v - hl[0]) / (hl[1] - hl[0])), hs = sm55(h);
+  let D = Dm * (1 - hs) - P.ov * H * Math.sin(PI * Math.min(1, hs * 1.15)) * (h < 1 ? 1 : 0);
+  if (v >= P.peer[0] && h < 1) { const hh = ht55(g, S.bones[S.G.bj[S.G.R.head]].position), Dp = hh - 0.06 * H, Dq = Dm + (Dp - Dm) * sm55((v - P.peer[0]) / (P.peer[1] - P.peer[0])); D = Math.min(D, Dq); }
+  if (h >= 1) D = -0.035 * H * Math.exp(-(v - hl[1]) * 9) * Math.sin((v - hl[1]) * 30);
+  const rl = sm55((v - P.rl[0]) / (P.rl[1] - P.rl[0]));
+  [1, -1].forEach(sd => { const hp = hp55(S, sd), q = P.sides[sd]; if (!hp || !q || e.u < e.hit) return; const m104 = KIT.g104 !== false ? 210 / (P.b[3] * (e.L || 500)) : 0.01, wu = sm55((v - q[0]) / Math.max(m104, q[1] - q[0])), ws = sm55((v - q[2]) / Math.max(m104, q[3] - q[2])); if (wu <= 0) return;
+    const nx = hp.x + g.dn.x * D, ny = hp.y + g.dn.y * D, nz = hp.z + g.dn.z * D, c = g.c, sx = (P.wide ? 0.7 : 0.45) * R * sd, shH = P.shH * H * 1.25, rx = (P.wide ? 1.0 : 0.9) * R * sd;
+    const ax = c.x + g.xh.x * sx + g.up.x * shH + g.fz.x * 0.1 * R, ay = c.y + g.xh.y * sx + g.up.y * shH + g.fz.y * 0.1 * R, az = c.z + g.xh.z * sx + g.up.z * shH + g.fz.z * 0.1 * R;
+    const bx = c.x + g.xh.x * rx + g.up.x * 0.03 * H + g.fz.x * 0.2 * R, by = c.y + g.xh.y * rx + g.up.y * 0.03 * H + g.fz.y * 0.2 * R, bz = c.z + g.xh.z * rx + g.up.z * 0.03 * H + g.fz.z * 0.2 * R;
+    let tx = nx + (ax - nx) * wu, ty = ny + (ay - ny) * wu, tz = nz + (az - nz) * wu; tx += (bx - tx) * ws; ty += (by - ty) * ws; tz += (bz - tz) * ws; const k = 1 - rl;
+    hand55(S, sd, (tx - nx) * k, (ty - ny) * k, (tz - nz) * k); (K.arm[sd] || []).forEach(c2 => curl52(S, c2, (c2.cs52 || 1) * (-0.35 * wu * (1 - ws) + 0.75 * ws) * k)); });
+  dive55(S, g, D, D > 0 ? 0.3 * cl55(D / Dm * 2) : 0, 0); e.D = D; e.Dm = Dm; })(rise55);
+// ==== W121 END
+// ==== W126 BEGIN
+// (builder 121, second brief: "eats the leavings off the page") ACID'S ACT, ITS BODY (AA.rxKit.a126 with scheme S126; ?a126=0 gives W121's).
+// One clock (ph126) over the page's plan: a crouch and off, the way on the page in soft surges, then at each leaving its own visit: it
+// settles at the stand, looks down at it, a claw reaches (sprung), the fingers close on it, it is lifted (a strand of acid stretches to the
+// paper and parts: the page draws it), carried up to a jaw that opens wide and stretches, snapped shut, a gulp that rings down, a blink,
+// a step of bulk; then the next hop, and home seen from behind, the bulk going down as it goes. The idle layer runs under all of it.
+const W126 = { err: null, d: null, sd: [] };
+function ph126(t, Z) { const e = { t, ph: 'land', f: 0, u: 0, mv: 0, a: -1, i: -1, seg: null, done: t >= Z.tEnd, home: t >= Z.tH - 60, w: 1, l: 0 }, S0 = Z.seg[0], SL = Z.seg[Z.seg.length - 1];
+  if (t < S0.t0) { e.ph = 'wind'; e.w = cl121(t / Math.max(1, S0.t0)); e.seg = S0; e.f = 0; }
+  else if (t >= SL.t1) { e.l = cl121((t - Z.tH) / Math.max(1, Z.tEnd - Z.tH)); e.seg = SL; e.f = 1; }
+  else { const s = Z.seg.find(q => t >= q.t0 && t < q.t1) || SL; e.seg = s; e.u = (t - s.t0) / Math.max(1, s.t1 - s.t0); e.i = s.i == null ? -1 : s.i;
+    if (s.kind === 'work') { e.ph = 'work'; e.a = t - s.t0; e.f = 1; } else { e.ph = s.kind === 'back' ? 'back' : 'go'; e.f = s.first || s.kind === 'back' ? sg121(e.u) : smm121(e.u); if (s.hop && s.hop.map) { const g = cl121(e.f), q = g * 100, i0 = Math.min(99, Math.floor(q)); e.f = s.hop.map[i0] + (s.hop.map[i0 + 1] - s.hop.map[i0]) * (q - i0); } e.mv = sm121(e.u / 0.12) * (1 - sm121((e.u - 0.86) / 0.14)) * (s.first || s.kind === 'back' ? 1 : 0.8); } }
+  e.k = e.seg.kind === 'go' && e.seg.first ? 1 + (Z.k - 1) * sm121(e.f) : e.seg.kind === 'back' ? (t >= SL.t1 ? 1 : Z.k + (1 - Z.k) * sm121(e.f)) : e.ph === 'wind' ? 1 : Z.k;
+  e.away = sm121((t - Z.tS + 120) / 260) * (1 - sm121((t - Z.tH + 60) / 320)); e.turn = PI * sm121((t - SL.t0 + 60) / 700) * (1 - sm121((t - (Z.tH - 950)) / 1000));
+  let bulk = 0; Z.gulp.forEach(g => { bulk += 0.035 * sm121((t - g) / 260); }); e.bulk = bulk * (1 - sm121((t - SL.t0) / Math.max(1, SL.t1 - SL.t0))); return e; }
+function face126(e, Z, z, st) { const big = st >= 5 ? 1.25 : st <= 1 ? 0.85 : 1, Wv = Z.Wv; z.px = z.pz = 1 - 0.62 * e.away; z.swell = e.bulk; z.smile = 1.35 + 0.3 * Math.min(1, e.bulk * 8);
+  const cr = e.ph === 'wind' ? Math.sin(PI * sm121((e.t - Math.max(0, Z.tS - 260)) / 260)) : 0, go = e.ph === 'go' && e.seg.first ? Math.exp(-e.u * 10) * sm121(e.u / 0.04) : 0; z.sq = 0.13 * cr - 0.08 * go; z.bow = 0.12 * cr;
+  if (e.mv > 0) { const out = e.ph === 'go', ph = e.u * 3, s3 = Math.abs(Math.sin(PI * ph)); z.bow += (out ? 0.36 : 0.2 * (1 - 0.85 * Math.abs(Math.sin(e.turn)))) * e.mv / big; z.sq += 0.05 * s3 * e.mv; z.lean = 0.05 * Math.sin(PI * ph * 2) * e.mv; z.looky = (out ? -0.4 : 0.2) * e.mv; z.lidx = 0.3 * e.mv; z.brow = -0.45 * e.mv; }
+  /* the jaw and the gulps of every visit, smooth over the act's time (a visit's gulp rings on into the next hop) */ let jaw = 0; Z.seg.forEach(s => { if (s.kind !== 'work') return; const a = e.t - s.t0, sd = W126.sd[s.i] || 1, pin = 0.34 * Wv, lift = 0.4 * Wv, tom = 0.66 * Wv, gl = 0.83 * Wv; if (a < -200 || a > Wv + 900) return;
+    const w = sm121((a + 150) / 300) * (1 - sm121((a - Wv) / 300)), look = pu121(a, -150, lift + 60, 120), up = pu121(a, lift, gl, 100);
+    z.looky = (z.looky || 0) - 0.7 * look + 0.5 * up; z.lookx = (z.lookx || 0) + 0.9 * sd * look; z.hturn = (z.hturn || 0) + 0.2 * sd * look; z.bow += 0.1 * look * w; z.nod = (z.nod || 0) + 0.12 * look - 0.2 * up;
+    z.wide = (z.wide || 0) + 0.5 * pu121(a, pin - 60, lift + 80, 60) + 0.4 * up; z.brow = (z.brow || 0) + 0.4 * up;
+    jaw = Math.max(jaw, 0.95 * sm121((a - tom) / (gl - tom)) * (1 - sm121((a - gl) / 80))); z.sq -= 0.12 * pu121(a, tom, gl, 70);
+    const g = a - gl; if (g > 0 && g < 900) { z.sq += 0.15 * Math.exp(-g / 170) * Math.sin(g / 46); z.nod = (z.nod || 0) + 0.24 * pu121(g, 40, 320, 80); z.blink = Math.max(z.blink || 0, pu121(g, 70, 250, 50)); z.swell += 0.04 * Math.exp(-g / 260) * sm121(g / 90); z.smile += 0.3 * pu121(g, 200, 800, 150); } });
+  e.jaw = jaw; z.turn = e.ph === 'back' || e.ph === 'land' ? e.turn : 0;
+  if (e.ph === 'land') { const l = e.l, s = Math.exp(-l * 4) * Math.sin(l * 13) * (1 - sm121((l - 0.7) / 0.3)); z.sq += 0.12 * s; z.sink = 0.12 * pu121(l, 0.02, 0.6, 0.2); } }
+function pose126(S, grp, e, Z, now) { const G = S.G, H = G.H, K = S.k52, B = S.bones, ch = B[G.bj[G.R.chest]].position, P0 = B[0].position, nw = now / 1000, Wv = Z.Wv;
+  const pk = 1 - 0.65 * e.away; if (pk < 0.999) K.lick.forEach(c => c.jn.forEach((j, k) => { if (!k) return; const p = B[j].position; p.x = P0.x + (p.x - P0.x) * pk; p.z = P0.z + (p.z - P0.z) * pk; p.y *= 0.4 + 0.6 * pk; B[j].scale.multiplyScalar(0.5 + 0.5 * pk); }));
+  const back = e.ph === 'back', tuck = Math.max(0.9 * e.away, e.ph === 'wind' ? 0.6 * Math.sin(PI * sm121((e.t - Math.max(0, Z.tS - 260)) / 260)) : 0), fz = (back ? 0.1 * (1 - Math.abs(Math.sin(e.turn))) : -0.26) * H * e.mv, fx = 0.04 * H * Math.sin(nw * 13) * e.mv;
+  const tk = sd => [ch.x + sd * 0.15 * H, ch.y - 0.14 * H + 0.015 * H * Math.sin(nw * 9 + sd), ch.z + (0.08 - 0.2 * e.mv * (back ? 0 : 1)) * H];
+  /* the visit's claw (the one on the leaving's side), sprung: to the leaving, closed on it, up to the jaw, let go, back to its side */ let rsd = 0, rc = 0, tgt = null, curl = 0;
+  if (e.ph === 'work' || (e.ph === 'go' && e.i > 0)) { const i = e.ph === 'work' ? e.i : e.i - 1, s = Z.seg.find(q => q.kind === 'work' && q.i === i), a = e.t - s.t0, L = Z.lv[i];
+    if (L && L.fake) { const a2 = a, rb = pu121(a2, 0, 0.8 * Wv, 120); [1, -1].forEach(sd => { const ph = nw * 2 * PI * 2.6; claw58(S, sd, ch.x + sd * 0.07 * H, ch.y + 0.04 * H + sd * 0.025 * H * Math.sin(ph), ch.z + 0.2 * H + sd * 0.02 * H * Math.cos(ph), 0.85 * rb, 0.5 * rb); }); }
+    else if (L && L.spot) { if (!W126.sd[i]) { const p = loc58(S, { x: L.spot.x, y: 0.05, z: L.spot.z }); W126.sd[i] = p.x >= ch.x ? 1 : -1; } rsd = W126.sd[i]; const pin = 0.34 * Wv, lift = 0.4 * Wv, tom = 0.66 * Wv, gl = 0.83 * Wv;
+      rc = sm121(a / (0.3 * Wv)) * (1 - sm121((a - gl - 40) / (0.32 * Wv))); const sp = loc58(S, { x: L.spot.x, y: (L.yR || 0.3) + 0.04, z: L.spot.z }), mo = S.h58 ? loc58(S, S.h58.m) : B[G.bj[G.R.head]].position.clone(), l1 = sm121((a - lift) / (tom - lift)), l2 = sm121((a - tom) / (gl - tom));
+      const mid = { x: sp.x + (mo.x - sp.x) * 0.6, y: mo.y - 0.12 * H, z: mo.z + 0.12 * H }; let x = sp.x + (mid.x - sp.x) * l1, y = sp.y + 0.03 * H + (mid.y - sp.y) * l1, zz = sp.z + (mid.z - sp.z) * l1; x += (mo.x - x) * l2 * 0.9; y += (mo.y - 0.04 * H - y) * l2 * 0.9; zz += (mo.z + 0.08 * H - zz) * l2 * 0.9;
+      tgt = spring121(S, x, y, zz, now); curl = -0.35 * (1 - sm121((a - pin + 100) / 120)) + 0.95 * sm121((a - pin + 60) / 110) * (1 - sm121((a - gl) / 120)); } }
+  else if (S.sp121) S.sp121.t = -1e9;
+  [1, -1].forEach(sd => { const q = tk(sd); if (sd === rsd && tgt) { const w = rc; claw58(S, sd, q[0] + (tgt.x - q[0]) * w, q[1] + (tgt.y - q[1]) * w, q[2] + (tgt.z - q[2]) * w, Math.max(w, tuck), 0.45 * tuck * (1 - w) + curl * w); } else if (tuck > 0.001) claw58(S, sd, q[0], q[1], q[2], tuck, 0.45 * tuck); });
+  let flame = 0.1 * Math.min(1, e.bulk * 8) + (e.ph === 'work' ? 0.03 * Math.sin(nw * 9) : 0); if (flame || fx || fz) bend52(S, K.top, 1, fx, flame * 0.15 * H, fz, flame); }
+function act126(f0, grp, S, t, o) { const Z = o.bites.a126, e = ph126(t, Z), z = S.z126 || (S.z126 = {}), now = (typeof performance !== 'undefined' ? performance.now() : 0); W126.e = e; Z.e = e; for (const k in z) delete z[k];
+  if (!S.k52) init52(S); S.a121z = null; face126(e, Z, z, S.st); if (KIT.l104) KIT.l104(z, { u: t / 500, L: 500 }); f0(grp, 'rest', t / 500, { look: [1, 0.5], z55: z, act58: true }); S.c52 = 'act'; S.act58 = Z;
+  out58(S); pose126(S, grp, e, Z, now); out58(S); jaw121(S, e.jaw || 0);
+  W126.d = { ph: e.ph, i: e.i, f: +e.f.toFixed(2), k: +e.k.toFixed(2), bulk: +e.bulk.toFixed(3), jaw: +(e.jaw || 0).toFixed(2), sd: W126.sd.slice() };
+  return { e: e.f, y: 0, lunge: 0, n: -1, big: 0, done: e.done, home: e.home }; }
+play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 && grp.userData.rig2.sp;
+  if (clip === 'act' && S && S.a48 && !S.jar && KIT.a126 !== false && o && o.bites && o.bites.a126) { if (o.bites.a126 !== W126.Z) { W126.Z = o.bites.a126; W126.sd = []; } try { return act126(f0, grp, S, t, o); } catch (err) { W126.err = 'act ' + String(err && err.stack); const Z = o.bites.a126; return { e: 0, y: 0, lunge: 0, n: -1, big: 0, done: t >= Z.tEnd, home: t >= Z.tH }; } }
+  return f0(grp, clip, t, o); })(play26);
+KIT.spirit26.play = play26; KIT.ph126 = ph126; KIT.W126 = W126;
+// ==== W126 END
 })(typeof globalThis !== 'undefined' ? globalThis : window);
