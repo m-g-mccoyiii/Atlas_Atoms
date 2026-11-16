@@ -7713,6 +7713,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     const Lq = S117.live, acting = !!(Lq && st.homAct === Lq.A); /* a hydrogen the page counted but did not send over: it draws that breath as it winds up */ if (acting && Lq.Z && S117.fed < Lq.Z.n && !S117.fl.size && now - Lq.A.t > Lq.Z.tW - 900) S117.fed = Lq.Z.n;
     if (Lq && !acting && S117.fed && !S117.cleared) { S117.fed = 0; S117.sw = 0; } S117.cleared = !acting;
     if (!(acting && Lq.Z && now - Lq.A.t > Lq.Z.tW - 480)) S117.sw += (S117.fed - S117.sw) * (1 - Math.exp(-dt / (S117.fed > S117.sw ? 260 : 700))); SP.h117sw = S117.sw;
+    /* the holder's own soft shadow at home goes out as it leaves and comes back as it returns (nothing of it is left behind on the bench) */ { const gk = acting && SP.x117 ? SP.x117.e.g : R21.evo && SP.h118 ? SP.h118.e.g : 0, k = 1 - s117Sm(gk / 0.22); if (homObj && homObj.grp && (k < 1 || S117.shade)) { S117.shade = k < 1; homObj.grp.children.forEach(c => { if (!c.isMesh || !c.material || c.material.opacity == null) return; if (c.userData.o117 == null) { c.userData.o117 = c.material.opacity; c.userData.t117 = c.material.transparent; } c.material.transparent = true; c.material.opacity = c.userData.o117 * k; if (k >= 1) c.material.transparent = c.userData.t117; }); dirty = true; } }
     if (!Lq) return; const A = Lq.A, Z = Lq.Z, j = Lq.j, t = now - A.t, K = AA.rxKit, KW = K.W117, once = (k, f) => { if (!j.f['s117' + k]) { j.f['s117' + k] = 1; s117Snd(k, f); } };
     /* the atom rises on its hand, its bonded neighbours a third as far */
     /* (the page's g is a new object after the yield lands: the act is known by st.homAct, not by g) */ const Lf = acting ? K.lift117(t, Z) : { y: 0 }, b = s66Ball(Z.ta);
@@ -7722,13 +7723,14 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (acting) { dirty = true; /* the number goes up to each step by game time */ if (j.f.s117step1 && j.s117roll && st.shown < st.want) { const d = st.want - st.shown; st.shown = d < 2 ? st.want : st.shown + d * (1 - Math.exp(-dt / 130)); A20.roll = 0; st.madeBump = Math.max(st.madeBump || 0, 0.5 * Math.min(1, d / 40)); }
 
       if (t >= Z.tW - 60) once('go', () => { sfx.drift(); sfx.swish(Math.min(1.5, Z.J / 1000 * 0.75)); });
-      if (t >= Z.tA + 0.8 * Z.RE) once('touch', () => sfx.bond());
-      Z.Hv.forEach((h, i) => { if (t >= h + 0.5 * KW.AN) once('heave' + (i + 1), () => { sfx.draw(3 + 3 * i, (0.5 * KW.AN + KW.UP) / 1000); sfx.drift(); });
+      /* its float over bench and page: a soft breath of air every 380 ms of the way, out and home */ [[Z.tW, Z.tA - 150, 'a'], [Z.tD, Z.tH - 150, 'b']].forEach(q => { if (t < q[0] || t > q[1]) return; const k = Math.floor((t - q[0]) / 380); if (k > 0) once('air' + q[2] + k, () => { sfx.swish(0.34); sfx.drift(); if (sfx.draw) sfx.draw(1 + (k % 3), 0.3); }); });
+      if (t >= Z.tA + 0.8 * Z.RE) once('touch', () => { sfx.bond(); sfx.clink(2); });
+      Z.Hv.forEach((h, i) => { if (t >= h + 0.5 * KW.AN) once('heave' + (i + 1), () => { sfx.draw(3 + 3 * i, (0.5 * KW.AN + KW.UP) / 1000); sfx.swish((0.5 * KW.AN + KW.UP) / 1000); sfx.drift(); });
         if (t >= h + KW.AN + 0.85 * KW.UP) once('step' + (i + 1), () => { sfx.clink(4 + 2 * i, 1); if (i < Z.n - 1 && A20.hold) { const fin = P.made(Object.assign({}, g, { frozenAt: null })), w0 = j.want0 || 0, k = (i + 1) / Z.n, wv = w0 > 0 && fin > w0 ? w0 * Math.pow(fin / w0, k) : w0 + (fin - w0) * k; if (wv > A20.hold.want) { A20.hold.want = wv; st.want = Math.max(st.want, wv); st.tickT = now; /* feel.js holds the number while its count lives: it is told each step (its own eased landing, 250 ms); without it the number is eased here */ let ok = false; try { ok = !!(AA.rxFeel && AA.rxFeel.homLand && AA.rxFeel.homLand(Math.round(wv))); } catch (x) { ok = false; } j.s117roll = !ok; } } });
-        if (t >= h + KW.AN + KW.UP + KW.HOLD + 0.8 * KW.DN) once('down' + (i + 1), () => sfx.tick(3 + i)); });
-      if (t >= Z.tRel + 200) once('letgo', () => sfx.tick(8));
+        if (t >= h + KW.AN + KW.UP + KW.HOLD + 0.8 * KW.DN) once('down' + (i + 1), () => { sfx.tick(3 + i); sfx.bond(); }); });
+      if (t >= Z.tRel + 200) once('letgo', () => { sfx.tick(8); sfx.swish(0.3); });
       if (t >= Z.tD) once('back', () => { sfx.drift(); sfx.swish(Math.min(1.4, Z.Bt / 1000 * 0.75)); });
-      if (t >= Z.tH) once('home', () => sfx.bond());
+      if (t >= Z.tH) once('home', () => { sfx.bond(); sfx.clink(1); });
       if (S117.log.length < 2400) { const hh = SP.h117; S117.log.push([Math.round(t), hh ? hh.ph : '-', Math.round(st.shown), Math.round(st.want), +(Lf.y || 0).toFixed(2), hh && hh.hand ? hh.hand.map(v => +v.toFixed(2)) : null, +(SP.h117sw || 0).toFixed(2)]); } }
     else if (t > Z.tEnd + 600 && !S117.applied) S117.live = null; };
   a20Spent = (f0 => function (now) { const r = f0(now); try { s117Frame(now); } catch (x) { S117.err = 'frame ' + String(x && x.stack); } return r; })(a20Spent);
@@ -7798,11 +7800,12 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       /* its face on the round: there once the round is larger than the head, its eyes shut tight while it swells, wide after */ const fk = sm((R - lift - 0.35 * hr) / (0.55 * hr)); Gq.face.visible = fk > 0.02; Gq.face.scale.setScalar(Math.max(0.001, fk)); const lid = 1 - 0.85 * e.sqz + 0.2 * e.joy, bl = 1 - 0.9 * AA.rxKit.RK.pulse((t % 2700) / 2700, 0.5, 0.53, 0.012); Gq.eyes.forEach(g2 => { g2.scale.set(1 + 0.15 * e.sqz, Math.max(0.12, lid * bl), 1); }); Gq.mouth.scale.set(1 + 0.5 * e.joy - 0.4 * e.sqz, 1 + 0.6 * e.joy - 0.5 * e.sqz, 1);
       /* its shadow on the page: thrown away from the lamp, farther and paler the higher the round is */ const fl = s66Floor(C.x, C.z), hh = Math.max(0, C.y - fl - r0 * 0.5), sr = (r0 + 0.5 * (B[0] ? B[0][3] : 0)) * (2.9 + 0.06 * hh); Gq.sh.visible = true; Gq.sh.position.set(C.x + 0.5 * hh, fl + 0.085, C.z + 0.75 * hh * 0.717 + 0.2 * r0); Gq.sh.scale.set(sr * 1.15, 1, sr * 0.8); Gq.sh.material.opacity = 0.5 * sm((R - 0.6 * hr) / (0.7 * hr)) / (1 + 0.035 * hh); }
     /* the sounds */ if (t >= T2.t0 - 40) s118Snd(E, 'go', () => { sfx.drift(); sfx.swish(Math.min(1.4, Z.J / 1000 * 0.75)); });
+    [[T2.t0, T2.t1 - 150, 'a'], [T2.tB, T2.tH - 150, 'b']].forEach(q => { if (t < q[0] || t > q[1]) return; const k = Math.floor((t - q[0]) / 380); if (k > 0) s118Snd(E, 'air' + q[2] + k, () => { sfx.swish(0.34); sfx.drift(); if (sfx.draw) sfx.draw(1 + (k % 3), 0.3); }); });
     if (t >= T2.tS) s118Snd(E, 'swell', () => { sfx.draw(E.to + 2, (T2.tC - T2.tS) / 1000); if (AA.sfx.windup) AA.sfx.windup(E.to, T2.tC - T2.tS, true); });
     if (t >= T2.tC) s118Snd(E, 'change', () => { if (AA.sfx.flag) AA.sfx.flag(Math.max(1, Math.min(3, E.to - 1))); sfx.clink(4 + E.to, 1); });
     if (Z.V > 1) [0.22, 0.5, 0.78].forEach((uu, i) => { if (t >= T2.tC + uu * (T2.tO - T2.tC)) s118Snd(E, 'turn' + (i + 1), () => { sfx.bond(); sfx.tick(4 + 2 * i); }); }); else [0.3, 0.7].forEach((uu, i) => { if (t >= T2.tC + uu * (T2.tO - T2.tC)) s118Snd(E, i ? 'down' : 'top', () => { sfx.drift(); sfx.tick(6 - 2 * i); }); });
-    if (t >= T2.tO) s118Snd(E, 'out', () => { sfx.draw(3, 0.5); sfx.drift(); }); if (t >= T2.tO + 700) s118Snd(E, 'new', () => sfx.good());
-    if (t >= T2.tB) s118Snd(E, 'back', () => { sfx.drift(); sfx.swish(Math.min(1.3, Z.Bt / 1000 * 0.75)); }); if (t >= T2.tH) s118Snd(E, 'home', () => sfx.bond());
+    if (t >= T2.tO) s118Snd(E, 'out', () => { sfx.draw(3, 0.5); sfx.drift(); }); if (t >= T2.tO + 350) s118Snd(E, 'grow', () => { sfx.bond(); sfx.swish(0.4); }); if (t >= T2.tO + 700) s118Snd(E, 'new', () => { sfx.good(); sfx.clink(6); }); if (t >= T2.tP + 250) s118Snd(E, 'proud', () => { sfx.clink(8); sfx.drift(); });
+    if (t >= T2.tB) s118Snd(E, 'back', () => { sfx.drift(); sfx.swish(Math.min(1.3, Z.Bt / 1000 * 0.75)); }); if (t >= T2.tH) s118Snd(E, 'home', () => { sfx.bond(); sfx.clink(1); });
     if (S118.log.length < 1200) S118.log.push([Math.round(t), e.ph, +e.R.toFixed(2), +e.col.toFixed(2), e.old ? 1 : 0, +homObj.s.toFixed(3), H.head.map(q => +q.toFixed(2))]); };
   homEvo19 = (f0 => function (now) { const r = f0(now); try { s118Frame(now); } catch (x) { S118.err = 'frame ' + String(x && x.stack); } return r; })(homEvo19);
   if (AA.rxKit) AA.rxKit.s118dbg = () => ({ err: S118.err, kit: AA.rxKit.W118 && AA.rxKit.W118.err, k117: AA.rxKit.W117 && AA.rxKit.W117.err, st: AA.rxKit.stage && AA.rxKit.stage.dbg().err, d: S118.dbg, snd: S118.snd, log: S118.log });
