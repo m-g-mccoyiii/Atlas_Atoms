@@ -8318,6 +8318,39 @@ const W111 = { err: null, dbg: {}, amp0: W110.amp, R: +((typeof location !== 'un
       W111.dbg.k = +mx.toFixed(2); if (mx > 0) W111.dbg.n = (W111.dbg.n || 0) + 1; W111.dbg.R = +R.toFixed(3); } catch (x) { W111.err = 'lump ' + String(x && x.stack); } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W111 = W111; }
 // ==== W111 END
+// ==== W112 BEGIN
+// (builder 112) THE LUMP IS THE ARM SWELLING, THE HAND HOLDS TO THE LAST OH, WATER WATCHES ITS WATERS COME (AA.rxKit.w112, ?w112=0 off).
+//  - the lump's ink hull is drawn only outside the arm: Water's body marks its pixels in the stencil (value 112) and the hull is not
+//    drawn there, so where the arm passes through the lump there is no line and the outline is the arm's own line bulging round it; the
+//    arm's line inside the lump is hidden by the lump (depth); the hull is as wide as the pen's line; a glint faces the eye every frame;
+//  - the step of bulk per water is larger again (W111.SW 3.0);
+//  - when the last OH would still be growing as the base clip lifts the hand (four bonds), the clip's last fifth is played on a curve
+//    (slow, then quick), so the hand lifts only after w26.w110.end (ms of the act);
+//  - at home, S.w112 = { lx, k } (laid by scheme.js S112 while waters fly to it) turns its face and leans it toward them, and each arrival
+//    (S.w112.hit, ms) gives a small squash and settle.
+KIT.w112 = KIT.w112 == null ? !(typeof location !== 'undefined' && /[?&]w112=0/.test(String(location.search))) : KIT.w112;
+const W112 = { err: null, dbg: {} };
+{ const K = KIT.RK, on = () => KIT.w112 !== false && KIT.w111 !== false && KIT.w110 !== false, nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  if (KIT.w112 !== false) W111.SW = 3.0;
+  /* the hand holds until the last OH has grown */
+  C26.act = (f0 => function (S, t, o, q) { try { const w = o && o.bites && o.bites.w26, X = w && w.w110; if (on() && X && X.end && S && !S.jar) { const D = o.D, a = t - o.W - o.J, a0 = 0.8 * D, xe = (X.end - a0) / (0.2 * D);
+        if (xe > 0.35 && a > a0 && a < D) { const p = Math.min(3, Math.log(0.35) / Math.log(Math.min(0.97, xe))), x = (a - a0) / (0.2 * D); t = o.W + o.J + a0 + 0.2 * D * Math.pow(x, p); W112.dbg.p = +p.toFixed(2); } } } catch (x) { W112.err = 'warp ' + String(x && x.stack); }
+    return f0(S, t, o, q); })(C26.act);
+  /* at home: it watches the waters come and takes each one */
+  C26.rest = (f0 => function (S, t, o, q, lagMs) { f0(S, t, o, q, lagMs); try { const L = S && S.w112; if (!on() || !L || S.jar) return; const k = L.k || 0, lx = L.lx || 0;
+      if (k > 0.001) { q.lookx = q.lookx * (1 - k) + lx * k; q.looky += -0.35 * k; q.hturn += 0.45 * lx * k; q.lean += 0.13 * lx * k; q.bow += 0.08 * k; q.wide = Math.max(q.wide, 0.35 * k); q.brow += 0.3 * k; }
+      if (L.hit != null) { const ms = nowMs() - L.hit - (lagMs || 0); if (ms > 0 && ms < 1400) { q.sq += -0.12 * K.ring(ms, 260, 360); q.px += 0.08 * K.ring(ms, 260, 360); q.pz += 0.08 * K.ring(ms, 260, 360); q.blink = Math.max(q.blink, K.pulse(ms, 0, 180, 60)); q.smile += 0.4 * K.pulse(ms, 100, 900, 200); } } } catch (x) { W112.err = 'rest ' + String(x && x.stack); } })(C26.rest);
+  /* the lump drawn as the arm swelling */
+  const hullOf = (Z, src) => { if (!Z.h112 || Z.h112s !== src) { const m = src.clone(); m.stencilWrite = true; m.stencilRef = 112; m.stencilFunc = THREE_NE; m.stencilFail = THREE_KEEP; m.stencilZFail = THREE_KEEP; m.stencilZPass = THREE_KEEP; Z.h112 = m; Z.h112s = src; } return Z.h112; };
+  let THREE_NE = 517, THREE_KEEP = 7680, THREE_REP = 7681, THREE_ALW = 519;
+  play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o); try { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp, Z = S && S.w111; if (!Z || !S.body || !on()) return r; const T = S.T;
+      if (T.NotEqualStencilFunc != null) { THREE_NE = T.NotEqualStencilFunc; THREE_KEEP = T.KeepStencilOp; THREE_REP = T.ReplaceStencilOp; THREE_ALW = T.AlwaysStencilFunc; }
+      const any = Z.L.some(l => l.g.visible), bm = S.body.material; if (bm && !Array.isArray(bm) && any) { bm.stencilWrite = true; bm.stencilRef = 112; bm.stencilFunc = THREE_ALW; bm.stencilZPass = THREE_REP; bm.stencilFail = THREE_KEEP; bm.stencilZFail = THREE_KEEP; }
+      Z.L.forEach(l => { if (!l.g.visible) return; const src = l.b.material.h112src || l.b.material, hm = hullOf(Z, src); hm.h112src = src; hm.transparent = !!(bm && bm.transparent); l.b.material = hm; l.b.renderOrder = (S.body.renderOrder || 0) + 1; l.a.renderOrder = S.body.renderOrder || 0; const rr = Math.max(1e-4, l.g.scale.x); l.b.scale.setScalar(1.22);
+        if (!l.c.w112) { l.c.w112 = true; l.c.scale.setScalar(0.2); l.c.renderOrder = (S.body.renderOrder || 0) + 2; l.c.onBeforeRender = function (ren, sc, cam) { try { const g = l.g, v = this.position; v.setFromMatrixPosition(cam.matrixWorld); g.worldToLocal(v); v.normalize(); v.multiplyScalar(0.8); v.x -= 0.22; v.y += 0.3; this.scale.set(0.24, 0.17, 0.24); this.updateMatrixWorld(true); this.modelViewMatrix.multiplyMatrices(cam.matrixWorldInverse, this.matrixWorld); this.normalMatrix.getNormalMatrix(this.modelViewMatrix); } catch (x) { W112.err = 'glint ' + String(x && x.stack); } }; } });
+    } catch (x) { W112.err = 'lump ' + String(x && x.stack); } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W112 = W112; }
+// ==== W112 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
