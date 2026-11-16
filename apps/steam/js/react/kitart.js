@@ -8220,16 +8220,16 @@ KIT.W88 = W88;
 // (builder 118) BRIMSTONE'S ACT, THE CHECKER'S FAULTS (switch KIT.b118, ?b118=0 gives builder 109's act back). Scheme side in S118. Here:
 //  - the ember (stage 1) has no arm: its wisp is its arm, so the act's shape code (W99.shape, aim100) has a hand to reach with; the wisp's
 //    end swells into a small fist of smoke as it grips;
-//  - the smoulder (stage 2) gets an arm and hand of its own smoke, hanging small at its right side at rest (an arm tucked inside the body has
-//    no skin of its own and showed nothing): the grip lets the arm out to the atom, so it is a hand on the sulfur, not a billow;
+//  - the smoulder (stage 2) gets an arm and hand of its own smoke, held a little out at its right side at rest (an arm tucked inside or hanging
+//    against the body gets no skin of its own: it moved its bones and showed nothing): the grip lets the arm out to the atom, so it is a hand on the sulfur, not a billow;
 //  - the hand closes on the NEAR side of the sulfur (beside it, toward the figure, at its middle), never over its face, and the arm is let
 //    out as far as the stand asks (a stand further off reaches with a longer arm);
 //  - the shape the scheme places (W99.shape) has the smoke between the joints as well (a ball half way along every bone), so the smoke body
 //    is in it, not only its joints.
 const W118 = { err: null, n: 0, tuck: 0.5 };
 KIT.b118 = KIT.b118 == null ? !(typeof location !== 'undefined' && /[?&]b118=0/.test(String(location.search))) : KIT.b118;
-/* the smoulder's arm: shoulder, elbow, wrist hanging at its right side; three short fingers */
-if (KIT.b118 && SPEC69 && SPEC69[1]) SPEC69[1] = (f0 => function () { const o = f0(); try { const K = o.keys; o.limbs = (o.limbs || []).concat(hand69(K, 8.7, 0, [[0.5, 1.42, 0.14], [0.78, 1.22, 0.18], [0.92, 0.98, 0.2]], [0.2, 0.15, 0.12], [[0.04, -0.16, 0.05], [0.12, -0.1, 0.05], [0.15, 0.0, 0.045]])); } catch (x) { W118.err = 'spec ' + String(x && x.stack); } return o; })(SPEC69[1]);
+/* the smoulder's arm: shoulder, elbow, wrist held a little out at its right side; three short fingers */
+if (KIT.b118 && SPEC69 && SPEC69[1]) SPEC69[1] = (f0 => function () { const o = f0(); try { const K = o.keys; o.limbs = (o.limbs || []).concat(hand69(K, 8.9, 0, [[0.78, 1.5, 0.12], [1.16, 1.44, 0.16], [1.44, 1.24, 0.18]], [0.21, 0.16, 0.12], [[0.06, -0.18, 0.05], [0.16, -0.1, 0.05], [0.2, 0.02, 0.045]])); } catch (x) { W118.err = 'spec ' + String(x && x.stack); } return o; })(SPEC69[1]);
 /* the ember's wisp is its arm */
 fig77 = (f0 => function (S) { const had = !!(S && S.f77), F = f0(S); if (had || !KIT.b118 || !F || F.long || !F.wisp || F.wisp.length < 3) return F;
   try { const J = S.G.J, V3 = S.T.Vector3, jn = F.wisp.slice(), n = jn.length, L = [0]; for (let i = 1; i < n; i++) L.push(L[i - 1] + new V3().fromArray(J[jn[i]].p).distanceTo(new V3().fromArray(J[jn[i - 1]].p)));
