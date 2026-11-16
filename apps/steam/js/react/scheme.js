@@ -7981,19 +7981,35 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   if (AA.rxKit) AA.rxKit.s123dbg = () => ({ err: S123.err, dbg: S123.dbg, B: S123.B.length });
   // ==== S123 END
   // ==== S133 BEGIN
-  // (builder 133) BRIMSTONE'S CHANGE OF STAGE IS ITS OWN BODY CHANGING (kitart W133; AA.rxKit.b133, ?b133=0 gives today's). Here only what is
-  // NOT shown any more: the great fire body (S96) and the small fire bodies on the lump (S97: the creature's own drawn tongues stand there),
-  // and the lamp's dip at the hit, on the bench and on the room's dimming (it came with the change hidden in the fire). The fire's blue light on the paper stays, from the lump, as
-  // strong as its tongues flare, flickering slowly.
-  const S133 = { err: null, v: new T.Vector3() };
+  // (builder 133, reworked by builder 140) BRIMSTONE'S CHANGE OF STAGE IS ITS OWN BODY CHANGING (kitart W133; AA.rxKit.b133, ?b133=0 gives the
+  // old change). Here only what is NOT shown any more: the great fire body (S96) and the small fire bodies on the lump (S97: the creature's own
+  // drawn tongues stand there), and the lamp's dip at the hit (it came with the change hidden in the fire). The fire's blue light on the paper
+  // stays, from the lump, as strong as its tongues flare, flickering slowly, and goes as its smoke draws in.
+  // (builder 140) NO STEPS IN THE ROOM'S LIGHT: from the first frame of the change until the room is back, every number of the room's light
+  // that the scene sets frame by frame (the lamp's dimming on the shade and on the page, the shade under the creature, the blue it throws, the
+  // blue light from the lump) is FOLLOWED over time by a soft spring (it starts and stops with no jolt, about 100 ms behind), so nothing of it
+  // can change in one frame: the room's dimming started at full speed, and the shade and the blue light under it went out in one frame as the
+  // change handed back (a ring of page one to two greys lighter round the creature). The room's shade and the page are dithered (a fixed
+  // pattern on the pixels), so a slow dimming is not seen as whole steps of one grey.
+  const S133 = { err: null, v: new T.Vector3(), flt: null };
   const RK133 = { sm: x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); } };
-  homEvo19 = (f0 => function (now) { f0(now); try { const K = AA.rxKit; if (!K || K.b133 === false) return; const E = R21.evo, SP = s26Fig(); if (!(E && E.e31 && SP && s97On(SP))) return;
-      const e = SP.q0 && SP.q0.e31, g = e && e.g97, c = g && g.w133; if (!c) return;
-      if (S96.B) S96.B.all.forEach(m => { m.visible = false; }); if (S97.fb) S97.fb.forEach(B => B.all.forEach(m => { m.visible = false; }));
-      if (S32.sm && S32.sm.visible) { const U2 = S32.sm.material.uniforms; if (U2 && U2.lamp) U2.lamp.value.w = 0.56 * S32.dim; } /* (S32's flash at the hit, on the room's dimming) */
-      const U = S95.mat && S95.mat.uniforms; if (!U) return; if (U.lamp && S95.lamp && S95.lamp.on) U.lamp.value.w = 0.7 * S32.dim;
-      if (U.fp96 && U.fq96 && HEVO.pos && homObj && homObj.grp) { const Q = HEVO.pos, Rl = (S97.dbg && S97.dbg.Rl) || 1, on = (0.25 + 0.45 * c.fl) * (1 - (e.home || 0)) * RK133.sm((g.ph - 0.05) / 0.3), tt = now / 1000, lw = 0.82 + 0.1 * Math.sin(tt * 5.3) + 0.08 * Math.sin(tt * 8.9 + 1.3); /* a slow flicker (flame94's own steps frame to frame on the whole page) */
-        U.fp96.value.set(Q.x, homObj.grp.position.y + 1.2 * Rl, Q.z + 0.4 * Rl, 3.2 * Rl * (1 + 0.6 * c.fl)); U.fq96.value.set(on, on * (0.55 + 0.45 * lw), 0.12, 0); }
+  /* a soft spring toward the value the scene asks for, by time (critically damped, 50 ms) */
+  const f133 = (F, k, want, now) => { let s = F[k]; if (!s) s = F[k] = { x: 0, v: 0, t: now }; let dt = Math.max(0, Math.min(100, now - s.t)); s.t = now; const w = 1 / 50;
+    while (dt > 0) { const h = Math.min(8, dt); dt -= h; const a = w * w * (want - s.x) - 2 * w * s.v; s.v += a * h; s.x += s.v * h; } F.gap = Math.max(F.gap || 0, Math.abs(want - s.x) + 30 * Math.abs(s.v)); return want + (s.x - want) * (F.kd == null ? 1 : F.kd); };
+  homEvo19 = (f0 => function (now) { f0(now); try { const K = AA.rxKit; if (!K || K.b133 === false) return; const E = R21.evo, SP = s26Fig(), e = SP && SP.q0 && SP.q0.e31, g = e && e.g97, c = g && g.w133, live = !!(E && E.e31 && SP && s97On(SP) && c);
+      if (!live && !S133.flt) return; const F = S133.flt || (S133.flt = {}); F.gap = 0; /* (as the room comes back the follow lets go, so what is left when the shade is put away is the scene's own) */ F.kd = live ? 1 : RK133.sm(S32.dim / 0.08);
+      if (live) { /* the room's shade and the page dithered */ if (S32.sm && !S32.sm.material.userData.d140) { const M = S32.sm.material; M.userData.d140 = 1; M.fragmentShader = M.fragmentShader.replace('gl_FragColor = vec4(m, 1.0); }', 'float dz140 = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453); m -= (dz140 - 0.5) / 255.0 * smoothstep(0.0, 0.006, 1.0 - min(m.r, min(m.g, m.b))); gl_FragColor = vec4(m, 1.0); }'); M.needsUpdate = true; }
+        [S95.mat, S96.mat, S33.sheet && S33.sheet.material].forEach(M => { if (!M || !M.fragmentShader || M.userData.d140) return; const i = M.fragmentShader.lastIndexOf('gl_FragColor = vec4(c, 1.0);'); if (i < 0) return; M.userData.d140 = 1; M.fragmentShader = M.fragmentShader.slice(0, i) + 'c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0; ' + M.fragmentShader.slice(i); M.needsUpdate = true; });
+        if (S96.B) S96.B.all.forEach(m => { m.visible = false; }); if (S97.fb) S97.fb.forEach(B => B.all.forEach(m => { m.visible = false; })); }
+      /* the shade's numbers: during the change the lamp without its flash at the hit; after it, what the scene sets; all followed */
+      /* (each from nothing as its sheet comes on: the dimming had already begun when the shade and the page's lamp were first shown, a step of one grey) */ if (!(S32.sm && S32.sm.visible)) { F.lamp = F.shd = F.blu = null; } else { const U2 = S32.sm.material.uniforms; if (U2 && U2.lamp) { U2.lamp.value.w = f133(F, 'lamp', 0.56 * S32.dim, now); U2.shd.value.w = f133(F, 'shd', U2.shd.value.w, now); U2.blu.value.w = f133(F, 'blu', U2.blu.value.w, now); } }
+      const U = S95.mat && S95.mat.uniforms;
+      if (U && U.lamp && S33.sheet && S33.sheet.visible && (F.plamp || (S95.lamp && S95.lamp.on))) U.lamp.value.w = f133(F, 'plamp', 0.7 * S32.dim, now); else F.plamp = null;
+      if (U && U.fp96 && U.fq96) { if (live && HEVO.pos && homObj && homObj.grp) { const Q = HEVO.pos, Rl = (S97.dbg && S97.dbg.Rl) || 1, on = (0.25 + 0.45 * c.fl) * (1 - (e.home || 0)) * (1 - (c.dr || 0)) * RK133.sm((g.ph - 0.05) / 0.3), tt = now / 1000, lw = 0.82 + 0.1 * Math.sin(tt * 5.3) + 0.08 * Math.sin(tt * 8.9 + 1.3); /* a slow flicker */
+          U.fp96.value.set(Q.x, homObj.grp.position.y + 1.2 * Rl, Q.z + 0.4 * Rl, 3.2 * Rl * (1 + 0.6 * c.fl)); F.fp = U.fp96.value.clone(); const o = f133(F, 'blue', on, now); U.fq96.value.set(o, o * (0.55 + 0.45 * lw), 0.12, 0); }
+        else if (F.fp) { const o = f133(F, 'blue', 0, now); U.fp96.value.copy(F.fp); U.fq96.value.set(o, o * 0.82, 0.12, 0); } }
+      { const W = AA.rxKit.W133, f = x => +(+x).toFixed(3), U3 = S32.sm && S32.sm.material.uniforms; if (W && W.sl && W.sl.length < 500) W.sl.push([Math.round(now), (typeof window !== 'undefined' && window.V && window.V.n) || 0, homObj ? f(homObj.s) : 0, E && E.ks31 != null ? f(E.ks31) : 0, homObj && homObj.grp ? f(homObj.grp.scale.x) : 0, e && e.old ? 1 : 0,  S33.sheet && S33.sheet.material && S33.sheet.material.uniforms && S33.sheet.material.uniforms.lamp ? +S33.sheet.material.uniforms.lamp.value.w.toFixed(3) : -1, live ? 1 : 0, S32.sm && S32.sm.visible ? 1 : 0, S33.sheet && S33.sheet.visible ? 1 : 0, S95.lamp && S95.lamp.on ? 1 : 0, e ? f(e.v) : -1, f(S32.dim), U3 && S32.sm.visible ? [f(U3.lamp.value.w), f(U3.shd.value.w), f(U3.blu.value.w)] : 0, U && U.lamp ? f(U.lamp.value.w) : 0, U && U.fq96 ? f(U.fq96.value.x) : 0, f(F.gap)]); }
+      if (!live && F.gap < 0.002) S133.flt = null;
     } catch (x) { S133.err = String(x && x.stack); } })(homEvo19);
   if (AA.rxKit) AA.rxKit.s133dbg = () => ({ err: S133.err, kit: AA.rxKit.W133 && AA.rxKit.W133.err });
   // ==== S133 END
