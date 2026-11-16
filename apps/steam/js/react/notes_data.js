@@ -41,23 +41,23 @@ const RULES_SLOTS = ['gap', 'roundbest', 'runbest', 'careerbest', 'molseen', 'mo
 // What the notes know about the bench themselves (docs/tools_chem/FINAL.md), so the page only has to pass a name.
 // From the reagent just fired: {does} what it left, {all} what it did at every place. From a reagent that found nothing: {dudneeds} what it needs. Nothing here says what to do next.
 const REAGENT = {
-  hydrate: { all: 'every C=C took an OH and an H', needs: 'a C=C', does: 'an OH on the carbon with fewer hydrogens' },
-  hydroborate: { all: 'every C=C took an OH on the carbon with more hydrogens', needs: 'a C=C', does: 'an OH on the carbon with more hydrogens' },
-  dehydrate: { all: 'every OH it could take left as water', needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C where the OH was, and water off' },
-  oxidize: { all: 'every OH on a carbon with a hydrogen became C=O', needs: 'an OH on a carbon that still has a hydrogen, or a C=C at a chain end', does: 'a C=O where the OH was, and hydrogen off' },
+  hydrate: { all: 'every C=C took an OH and an H', needs: 'a C=C', does: 'an OH on the carbon with fewer hydrogens, or on the far carbon beside a C=O' },
+  hydroborate: { all: 'every C=C took an OH on the carbon with more hydrogens, or on the near carbon beside a C=O', needs: 'a C=C', does: 'an OH on the carbon with more hydrogens, or on the near carbon beside a C=O' },
+  dehydrate: { all: 'every OH it could take left as water', needs: 'an OH beside a carbon with a hydrogen, and no oxygen on a carbon next to it', does: 'a C=C toward the neighbour with fewer hydrogens, and water off' },
+  oxidize: { all: 'every OH on a carbon with a hydrogen became C=O', needs: 'an OH on a carbon that still has a hydrogen, or, past a three-round run, a CH=CH2 at a chain end', does: 'a C=O where the OH was, and hydrogen off' },
   reduce: { all: 'every chain-end C=O became CH2-OH', needs: 'a C=O at the end of a chain', does: 'a CH2-OH where the end C=O was' },
   grow: { all: 'every C=O became an OH with a three-carbon arm', needs: 'a C=O', does: 'an OH and a three-carbon arm ending in C=C' },
-  thiolene: { all: 'every C=C took an SH', needs: 'a C=C', does: 'an SH on the carbon with more hydrogens' },
-  ritter: { all: 'every C=C took an NH2', needs: 'a C=C', does: 'an NH2 on the carbon with fewer hydrogens' },
+  thiolene: { all: 'every C=C took an SH', needs: 'a C=C', does: 'an SH on the carbon with more hydrogens, or on the near carbon beside a C=O' },
+  ritter: { all: 'every C=C took an NH2', needs: 'a C=C', does: 'an NH2 on the carbon with fewer hydrogens, or on the far carbon beside a C=O' },
   hwe: { all: 'every aldehyde and methyl ketone became a C=C beside a new ketone', needs: 'an aldehyde or a methyl ketone not already beside a C=C', does: 'a C=C beside a new ketone' },
   dihydroxylation: { all: 'every C=C became two OH', needs: 'a C=C', does: 'an OH on each carbon of the C=C' },
-  ozonolysis: { all: 'every C=C was cut into two C=O', needs: 'a C=C with carbon on both sides', does: 'a C=O at each cut carbon' },
+  ozonolysis: { all: 'every C=C was cut into two C=O, and only the biggest piece stayed', needs: 'a C=C', does: 'a C=O at each cut carbon' },
   permanganate: { all: 'every chain end it could take became COOH', needs: 'a chain-end C=C, an aldehyde or a chain-end CH2-OH', does: 'a COOH at the chain end' },
-  chlorination: { all: 'every OH it could take became Cl', needs: 'an OH that is not on a ring and not on a carbon with three carbons', does: 'a Cl where the OH was, and acid fumes off' },
+  chlorination: { all: 'every OH it could take became Cl', needs: 'an OH on a carbon that has a hydrogen and no other O, N, S or Cl', does: 'a Cl where the OH was, and acid fumes off' },
   cyanohydrin: { all: 'every aldehyde and methyl ketone became an OH and a COOH', needs: 'an aldehyde or a methyl ketone', does: 'an OH and a COOH on one carbon' },
-  hofmann: { all: 'every NH2 left and a C=C formed', needs: 'an NH2 on a carbon with no double bond', does: 'a C=C where the NH2 was' },
-  chugaev: { all: 'every OH it could take left and a C=C formed', needs: 'an OH with no other oxygen on its carbon or the next', does: 'a C=C toward the neighbour with more hydrogens, and sulfur off' },
-  hydroformylation: { all: 'every C=C took a CHO', needs: 'a C=C', does: 'a CHO on the carbon with more hydrogens' },
+  hofmann: { all: 'every NH2 left and a C=C formed', needs: 'an NH2 on a carbon with no double bond, beside a carbon with a hydrogen', does: 'a C=C toward the neighbour with more hydrogens, and water off' },
+  chugaev: { all: 'every OH it could take left and a C=C formed', needs: 'an OH beside a carbon with a hydrogen, and no oxygen on a carbon next to it', does: 'a C=C toward the neighbour with more hydrogens, and sulfur off' },
+  hydroformylation: { all: 'every C=C took a CHO', needs: 'a C=C', does: 'a CHO on the carbon with more hydrogens, or on the near carbon beside a C=O' },
   epoxidation: { all: 'every C=C became an epoxide', needs: 'a C=C', does: 'an epoxide where the C=C was' }
 };
 const ALIAS = { pcc: 'oxidize', allyl: 'grow', bh3: 'hydroborate', nabh4: 'reduce', 'thiol-ene': 'thiolene', 'the sulfur reagent': 'thiolene', 'the nitrogen reagent': 'ritter', lactol: 'ring', enone: 'dry', taut: 'flip', snap6: 'snap', ether: 'close' };
@@ -65,20 +65,20 @@ const ALIAS = { pcc: 'oxidize', allyl: 'grow', bh3: 'hydroborate', nabh4: 'reduc
 const KIND = {
   ring: { what: 'the OH oxygen joined the C=O carbon', why: 'an OH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
   dry: { what: 'the OH left as water and a C=C formed beside the C=O', why: 'an OH was two carbons from a C=O', after: 'a C=C beside the C=O' },
-  weld: { what: 'the carbon beside one C=O joined the other C=O carbon', why: 'two C=O were four or five carbons apart', after: 'a ring that stays shut, and a new OH' },
+  weld: { what: 'the carbon beside one C=O joined the other C=O carbon', why: 'the carbon beside one C=O was four or five carbons from another C=O', after: 'a ring that stays shut, and a new OH' },
   shift: { what: 'the C=C slid one carbon toward the C=O', why: 'a C=C was two carbons from a C=O', after: 'a C=C beside the C=O' },
   tuck: { what: 'the OH oxygen joined the far carbon of the C=C', why: 'a C=C sat beside a C=O with an OH three or four carbons past it', after: 'a ring ether that stays shut' },
   flip: { what: 'the C=C went single and its carbon became C=O', why: 'an OH sat on a carbon of a C=C', after: 'a new C=O' },
   snap: { what: 'three C=C closed into a six-ring with one C=C left', why: 'two C=C lay side by side with a third near', after: 'a six-ring that stays shut' },
   knit: { what: 'the nitrogen joined the C=O carbon', why: 'an NH2 was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
   cap: { what: 'the sulfur joined the C=O carbon', why: 'an SH was three or four carbons from a C=O', after: 'a loose ring that opens again at the page turn' },
-  close: { what: 'the Cl left and the other group joined its carbon', why: 'a Cl was three to five carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and acid fumes off' },
+  close: { what: 'the Cl left and the other group joined its carbon', why: 'a Cl was three to five carbons from an OH, NH2, SH or COOH', after: 'a ring that stays shut, and acid fumes off' },
   open: { what: 'the OH oxygen joined the nearer epoxide carbon', why: 'an epoxide and an OH were three or four carbons apart', after: 'a ring ether and a new OH' },
-  fold: { what: 'the epoxide became a C=O', why: 'an epoxide had a carbon on both ends', after: 'a new C=O' },
+  fold: { what: 'the epoxide became a C=O on its carbon with one hydrogen', why: 'an epoxide had a carbon with one hydrogen', after: 'a new C=O' },
   seal: { what: 'the acid OH left and the other group joined the acid carbon', why: 'a COOH was three or four carbons from an OH, NH2 or SH', after: 'a ring that stays shut, and water off' }
 };
 // From what came off: {leftfrom} what gives it off.
-const LEFT = { water: 'a dehydrate or a dry step', hydrogen: 'an oxidize', 'carbon dioxide': 'oxidize cutting a chain-end C=C', 'acid fumes': 'a close', ammonia: 'the cyanohydrin route', sulfur: 'a Chugaev' };
+const LEFT = { water: 'a dehydrate, a burner, a dry, a seal or a link', hydrogen: 'an oxidize, a burn or a bridge', 'carbon dioxide': 'oxidize or burn cutting a chain-end CH=CH2', 'acid fumes': 'a close or a chlorinate', ammonia: 'the cyanohydrin route', sulfur: 'a Chugaev' };
 const low = v => { const k = String(v == null ? '' : v).toLowerCase(); return ALIAS[k] || k; };
 function derive(ctx) {
   const c = Object.assign({}, ctx || {}), r = REAGENT[low(c.reagent)], d = REAGENT[low(c.dud)], k = KIND[low(c.kind)], l = LEFT[low(c.left)];

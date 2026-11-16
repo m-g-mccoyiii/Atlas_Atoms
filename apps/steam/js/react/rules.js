@@ -187,7 +187,7 @@ const LIST = [
     find: m => m.atoms.map(a => oxidisable(m, a)).filter(Boolean).concat(endEnes(m)), ok: (m, s) => (s.kind === 'cleave' ? m.bonds.includes(s.bond) && s.bond.order === 2 : !!oxidisable(m, s.o)),
     apply(m, s) { if (s.kind === 'cleave') { const c = s.c, ce = s.ce; Hs(m, ce).forEach(h => m.removeAtom(h)); m.bonds = m.bonds.filter(k => k !== s.bond); const o = attach(m, 'O', c, 2.8); m.bond(c, o); const o1 = attach(m, 'O', ce, 2.6), o2 = attach(m, 'O', ce, 2.6); m.bond(ce, o1); m.bond(ce, o2); return { focus: [c, o], incoming: [o], leaving: [[ce, o1, o2]], tag: 'loses CO2' }; } const hc = Hs(m, s.c)[0]; cut(m, s.c, hc); cut(m, s.o, s.ho); m.bond(s.c, s.o); m.bond(hc, s.ho); return { focus: [s.c, s.o], incoming: [], leaving: [[hc, s.ho]], tag: 'loses 2 H' }; } },
   { id: 'nabh4', verb: 'Reduce', formula: 'NaBH₄', chem: 'Sodium borohydride', rgb: [214, 40, 40], cls: 'hydride', ghs: ['flame', 'corr', 'skull'],
-    rule: 'Turns C=O into C-OH. Leaves C=C alone.', from: 'one', to: 'ol',
+    rule: 'Turns an aldehyde C=O into CH2-OH. Leaves ketones and C=C alone.', from: 'one', to: 'ol',
     find: m => (MODE.zip ? aldehydes(m) : carbonyls(m)), ok: (m, s) => m.bonds.includes(s.bond) && !!reducible(m, s.bond), apply: reduceCO },
   { id: 'dehydrate', verb: 'Dehydrate', formula: 'H₂SO₄ conc.', chem: 'Sulfuric acid, 98 %, hot', rgb: [24, 24, 24], cls: 'acid', ghs: ['corr'],
     rule: 'Removes water from an alcohol and leaves C=C behind.', from: 'addO', to: 'ene',
@@ -202,7 +202,7 @@ const LIST = [
     find: alkenes, ok: alkeneOk,
     apply(m, s) { const [cx, ch] = markovnikov(m, s.bond.a, s.bond.b); s.bond.order = 1; const hh = attach(m, 'H', ch, 2.4), cl = attach(m, 'Cl', cx, 3.0); return { focus: [cx, ch], incoming: [hh, cl], leaving: [], tag: '+HCl' }; } },
   { id: 'bh3', verb: 'Hydroborate', formula: 'BH₃ in THF', chem: 'Borane, then H₂O₂ and NaOH', rgb: [0, 140, 150], cls: 'hydride', ghs: ['flame', 'corr', 'excl'],
-    rule: 'Adds water across C=C with the OH on the carbon with more H. Also turns C=O into C-OH.', from: 'ene', to: 'addOanti',
+    rule: 'Adds water across C=C with the OH on the carbon with more H. Leaves C=O alone.', from: 'ene', to: 'addOanti',
     find: m => (MODE.zip ? alkenes(m) : alkenes(m).concat(carbonyls(m))),
     ok: (m, s) => s.kind === 'ene' ? alkeneOk(m, s) : m.bonds.includes(s.bond) && !!reducible(m, s.bond),
     apply(m, s) {
@@ -1015,8 +1015,8 @@ const NEWR = {
   thiolene: { verb: 'Thiolate', formula: 'AcSH, hν', chem: 'Thioacetic acid with light, then base', rgb: [200, 180, 40], cls: 'radical', ghs: ['flame', 'skull'], rule: 'Adds SH and H across every C=C. The SH goes on the carbon with more H.', from: 'ene', to: 'thiol' },
   chlorination: { verb: 'Chlorinate', formula: 'SOCl₂', chem: 'Thionyl chloride', rgb: [150, 160, 0], cls: 'chloride', ghs: ['corr', 'skull'], rule: 'Swaps the OH of a primary or secondary alcohol for Cl.', from: 'ol', to: 'cl' },
   cyanohydrin: { verb: 'Cyanate', formula: 'NaCN, H₃O⁺', chem: 'Sodium cyanide, then boiling acid', rgb: [110, 70, 40], cls: 'base', ghs: ['skull', 'corr'], rule: 'Turns an aldehyde or methyl ketone C=O into C(OH)-COOH. Ammonia leaves.', from: 'one', to: 'acid' },
-  hofmann: { verb: 'Eliminate N', formula: 'MeI, Ag₂O', chem: 'Excess methyl iodide, silver oxide, heat', rgb: [70, 110, 90], cls: 'base', ghs: ['health'], rule: 'An NH2 leaves and a C=C forms toward the neighbor with more H.', from: 'amine', to: 'ene' },
-  chugaev: { verb: 'Eliminate S', formula: 'CS₂, MeI', chem: 'Carbon disulfide, base, methyl iodide, heat', rgb: [170, 150, 20], cls: 'base', ghs: ['flame', 'health'], rule: 'An OH leaves and a C=C forms toward the neighbor with more H.', from: 'ol', to: 'ene' },
+  hofmann: { verb: 'Eliminate N', formula: 'MeI, Ag₂O', chem: 'Excess methyl iodide, silver oxide, heat', rgb: [70, 110, 90], cls: 'base', ghs: ['health'], rule: 'An NH2 leaves and a C=C forms toward the neighbour with more H.', from: 'amine', to: 'ene' },
+  chugaev: { verb: 'Eliminate S', formula: 'CS₂, MeI', chem: 'Carbon disulfide, base, methyl iodide, heat', rgb: [170, 150, 20], cls: 'base', ghs: ['flame', 'health'], rule: 'An OH leaves and a C=C forms toward the neighbour with more H.', from: 'ol', to: 'ene' },
   hydroformylation: { verb: 'Formylate', formula: 'CO, H₂, Rh', chem: 'Carbon monoxide and hydrogen over a rhodium catalyst', rgb: [60, 130, 130], cls: 'metal', ghs: ['flame', 'cyl'], rule: 'Adds CHO and H across every C=C. The CHO goes on the carbon with more H.', from: 'ene', to: 'one' },
   epoxidation: { verb: 'Epoxidize', formula: 'mCPBA', chem: 'meta-Chloroperoxybenzoic acid', rgb: [210, 90, 90], cls: 'oxidant', ghs: ['oxid', 'flame'], rule: 'Turns every C=C into an epoxide.', from: 'ene', to: 'epoxide' }
 };

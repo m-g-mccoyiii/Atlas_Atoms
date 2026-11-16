@@ -1877,3 +1877,16 @@ The checker's findings on Water's act (takes `frames/w113*`). New blocks `S114` 
 - **Score**: a step rolled (420 ms, `AA.rxFeel.homLand`) after each OH but the last; the game's own tick lands it on the rule's value.
 - **Looked into**: 5 and 7 OH chains: three C=C after dehydrate (two waters' worth make rings), three OH by the rule, as staged. `CC12CCC3C(CCC4CC(O)C(O)CC34C)C1CC(O)C2O` ends the round at the line with every new block off too (the game).
 - **Weak**: the stage-5 figure's body turns in one frame toward its target over the ring (frames 198 and 214 of `q114s5`; also with every new block off); the game's own steps at the line (frames 42, 44, 67 in every take).
+
+## Rule text 119 (2026-11-16, branch `rule-text-119`)
+
+Owner: "everything should be explained". Every line the player reads about a rule now says what the code does.
+
+- `path.js`: `REF_REAGENT`, `REF_REFLEX`, `REF_GEAR`, `REF_HOM`, `HOM2TOK` (ammonia, brimstone, dry ice), the instrument hovers (`GEARS[..].note`, `FIFTH.burette`). Each line was checked against its code (rules.js `ENG.REAG`, `ENG.R`, `tools`; path.js `HOM2LIT`, `hom2Use`). "A" became "Every" where a reagent acts everywhere. Ties the code settles by atom order read "Else a fixed pick."
+- Wrong before: Reduce (only aldehydes), Hydroborate (never touches C=O), Burette (skips a C=C with no carbon holding one H), Oxidize (the CO2 cut of a chain-end CH=CH2, not in a three-round run), Cleave (only the biggest piece stays), the margin notes for chlorinate, cleave, oxidize, weld, close and `LEFT`.
+- The crystal, burner, burette, mirror, magnet, carousel, timer and condenser lines carry the words scheme.js `MANP` draws their pictures by, so the instrument spread now shows them.
+- The pen has no `;`: no line uses one.
+- `thingOf`: a creature line with no number still ends "Once a round." (Ammonia, Brimstone "Once a run.").
+- `REF_HEAD` (exported, drawn by nothing): the facts of a whole tab (a reagent acts at every place it fits; nothing touches a benzene ring; the 56-atom cap; the reflex order and limits; the ring-sharing rule; loose rings; across the fold; two instruments a round). The manual has no place for them. Proposed: a line under the tab's name at the head of the reagent, reflex and instrument spreads.
+- Not in the manual at all: the starting reagents (hydrate, oxidize, reduce, hydroborate, dehydrate, thiolate, aminate, grow) and starting reflexes (ring, dry, weld, shift, tuck, flip, snap, close, cap, knit). `reference()` lists only what can be got. Their lines are written and fit; a start row like `MOTIF_START`'s would show them (owner's call).
+- Fit (pen widths, scheme.js `manDetail`): the longest lines are 7 and 8 lines of the detail page (Oxidize C=C, Dehydrate); every page ends above y 620 of 694. Stills: `.claude/shots/ruletext119-manual.jpg`.
