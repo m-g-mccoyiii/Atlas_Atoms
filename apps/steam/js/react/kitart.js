@@ -8351,6 +8351,17 @@ const W112 = { err: null, dbg: {} };
     } catch (x) { W112.err = 'lump ' + String(x && x.stack); } return r; })(play26);
   KIT.spirit26.play = play26; KIT.W112 = W112; }
 // ==== W112 END
+// ==== W114 BEGIN
+// (builder 114) THE REACHING ARM STAYS THE SAME ARM (AA.rxKit.w114, ?w114=0 off). play26 picks the arm that reaches by the side of the
+// target each frame; when the target sits near the figure's middle (the big stage-5 figure over a ring) a small move of the hand's atom
+// switched the arm in one frame and the body turned with it. In Water's act the first arm chosen is kept until the act ends.
+KIT.w114 = KIT.w114 == null ? !(typeof location !== 'undefined' && /[?&]w114=0/.test(String(location.search))) : KIT.w114;
+const W114 = { err: null, dbg: {} };
+{ C26.act = (f0 => function (S, t, o, q) { f0(S, t, o, q); try { const w = o && o.bites && o.bites.w26; if (KIT.w114 !== false && w && w.w110 && S && !S.jar && S.w114rs != null && S.w114b === o.bites && q.rT) q.rs = S.w114rs; } catch (x) { W114.err = 'act ' + String(x && x.stack); } })(C26.act);
+  play26 = (f0 => function (grp, clip, t, o) { const r = f0(grp, clip, t, o); try { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp, w = o && o.bites && o.bites.w26; if (!S || S.jar) return r;
+      if (clip !== 'act' || !w || !w.w110 || KIT.w114 === false) { S.w114rs = null; S.w114b = null; return r; } if (S.w114b !== o.bites) { S.w114b = o.bites; S.w114rs = null; } if (S.w114rs == null && S.rc && S.G && S.G.reach) { const i = S.G.reach.indexOf(S.rc); if (i >= 0) { S.w114rs = i; W114.dbg.rs = i; } } } catch (x) { W114.err = 'arm ' + String(x && x.stack); } return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W114 = W114; }
+// ==== W114 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
