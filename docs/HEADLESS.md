@@ -91,3 +91,7 @@ Same seed twice: seed 7, two pages at once, identical in every field but the tim
 - A job that never ends (a loop) is stopped by the timeout, not before; Edge is then stopped by `hl.sh`.
 - Do not pipe `hl.sh` into `head`: when the pipe closes the script is killed before it stops its Edge. Redirect to a file instead. If it happens, `powershell -File .claude/headless/killprof.ps1 <name>` stops that run's Edge.
 - Windows only (Git Bash, PowerShell for the process kill). `killprof.ps1` does the kill.
+
+## Use the graphics card for takes (found 2026-11-15)
+
+The recorder kits' `run.sh` default to software drawing (`--use-angle=swiftshader --enable-unsafe-swiftshader`). This machine has an NVIDIA RTX 5080. Put `EDGEFLAGS="--use-angle=d3d11 --enable-gpu --ignore-gpu-blocklist"` in front of a take or still command (`run.sh` reads `EDGEFLAGS`): a 282-frame take that needed about 4 minutes in software ran in 43 seconds, same picture. Use it for every take unless a job needs software drawing for a stated reason. All other rules stand (headless Edge only, one take at a time per kit, timeouts, kill only by recorded PID).
