@@ -7158,6 +7158,86 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   S36.on = (f0 => function () { if (S101.pend) { try { s105Move(); } catch (x) { S105.err = String(x && x.stack); } } return f0.apply(this, arguments); })(S36.on);
   if (AA.rxKit) AA.rxKit.s105dbg = () => ({ err: S105.err, kit: AA.rxKit.stage && AA.rxKit.stage.dbg().err, on: !!AA.rxKit.k105, d: S105.dbg });
   // ==== S105 END
+  // ==== S108 BEGIN
+  // (builder 108) WATER'S CHANGE OF STAGE STANDS CLEAR OF THE MOLECULE AND HANDS OVER WITH NO STEP (AA.rxKit.w108, ?w108=0 gives today's).
+  // Nothing in S26..S36 is changed; Water's S32 still works out its place and size each frame. Right after it (at S36.on, wrapped here at run
+  // time, as S101 does for Brimstone) the whole of it is carried by this block's offset: home -> its stand on a curve as it goes up (e.go),
+  // the stand -> home as it goes back (e.home). S32's lamp, shade and blue are laid again there, so S36, S33 (lamp pass, its shadow, the wet
+  // paper, the petals' patches) follow; the drops and the burst's damp that S31 / S32 stamp in that frame are carried with it (S33W.f).
+  // THE STAND (once per change, AA.rxKit.stage.findStand with AA.rxKit.scene's obstacles as seen): the ball at its full size up in the air,
+  // the ball as it comes down and opens, the opened petals lying on the page, the new form with its arms; none may cover an atom or a point of
+  // a bond; all inside the screen; nearest the old spot; smaller in steps of 0.95 if nothing is free. THE WAY: findPath's curve from home,
+  // the ball at its size on the way (and the form going home on the same curve) clear of the molecule.
+  // THE HAND-OVER: on the change's first frame the home group keeps the place and size it had the frame before (the engine stands the new
+  // stage up at its raw size there); the lamp pass, Water's shadow and its wash's lamp come in over IN ms and go out before it is home.
+  // All times in ms of game time. Kit side: kitart.js W108.
+  const S108 = { err: null, dbg: null, log: [], v: new T.Vector3(), pend: 0, now: 0, dim0: 0, E: null, n: 0, t0: 0, last: 0, g0: null, sh: null, IN: 420 };
+  if (AA.rxKit && AA.rxKit.w108 == null) AA.rxKit.w108 = !/[?&]w108=0/.test(String(root.location && root.location.search));
+  const s108On = SP => !!(SP && AA.rxKit && AA.rxKit.w108 !== false && homObj && homObj.id === 'water' && !s97On(SP) && s32On());
+  const s108Pr = (x, y, z) => { const v = S108.v.set(x, y, z).project(cam); return [(v.x + 1) * 360 * cam.aspect, (1 - v.y) * 360]; };
+  /* a round of world radius r at (x, y, z) as the eye sees it: [X, Y, R] */
+  const s108Rnd = (x, y, z, r) => { const c = s108Pr(x, y, z), a = s108Pr(x + r, y, z); return [c[0], c[1], Math.abs(a[0] - c[0])]; };
+  /* how deep the obstacles go into a round in the picture (sy squashes it up and down: a disc lying on the page) */
+  const s108In = (obs, c, pad, sy, cov) => { let h = 0; for (let i = 0; i < obs.length; i++) { const o = obs[i], p = c[2] + o[2] + pad - Math.hypot(o[0] - c[0], (o[1] - c[1]) / (sy || 1)); if (p > 0) { h += p; if (cov) cov.add(i); } } return h; };
+  /* the body as the plan sees it, at offset (dx, dz) from S32's own centre and size k: the ball high up, the ball coming down and opening, the
+     petals lying open on the page, (the form's boxes are shapes for findStand). Each [X, Y, R, sy] in the picture. */
+  const s108Body = (M, dx, dz, k) => { const C3 = M.C3, out = [], Rb = M.Rb * k, zf = C3.zc + dz, gy = 0.03;
+    out.push(s108Rnd(dx, C3.yb, C3.bz + dz, Rb).concat([1]));
+    [0.35, 0.7].forEach(d => { const y = C3.yb + (M.yLow - C3.yb) * d, z = C3.bz + dz + (zf - C3.bz - dz) * d; out.push(s108Rnd(dx, y, z, Rb * (1 + 0.15 * d)).concat([1])); });
+    /* the bud open (measured off its points in a take, s108dbg().log sb): about the form's foot, 2.6 of the ball's round each side, 2.45 up, 1.2 down */ { const f = AA.rxKit.scene.foot(dx, zf), u = Rb * f.pp; out.push([f.X - 0.3 * u, f.Y - 0.6 * u, M.pr * u, M.pry / M.pr]); }
+    return out; };
+  const s108Plan = (E, SP, e) => { const ST8 = AA.rxKit.stage, SC = AA.rxKit.scene, C3 = E.c32, fg = r21Fig(), cf = (fg && fg.scale.x) || 1, h0 = homObj.h0 || 3, tanF = Math.tan(cam.fov * Math.PI / 360); cam.updateMatrixWorld();
+    /* Water's own sizes, from S32's numbers: the ball's full round (S32: 0.42 of the screen's half height at its height, and W31's swell at the hit), the form's height */
+    const Rb = 1.2 * 0.42 * C3.dist * tanF, Hf = h0 * E.s1 * C3.F, M = { C3, Rb, Hf, yLow: Rb * 0.9, pr: 2.45, pry: 1.8, to: E.to };
+    const obs = SC.obsSeen(), sh = ST8.shape, Wd = 720 * cam.aspect, c0 = SC.foot(0, C3.zc), BX = AA.rxKit.w108box || [[0, 0.5, 0.75, 0.3], [0.4, 1.0, 0.75, 0.3], [0.9, 1.38, 0.35, 0.3]];
+    const shapes = BX.map(b => sh.box({ ux: Hf, uy: Hf, xs: 'pu', y0: b[0], y1: b[1], l: b[2], r: b[3], keep: { l: 10, r: 10, t: 10 } }));
+    const extra = (x, z, k) => { const B = s108Body(M, x, z - C3.zc, k); let bad = 0; B.forEach((c, i) => { bad += s108In(obs, c, 7, c[3]); const sy = c[3] || 1, o1 = v => { if (v > 0) bad += v; }; const ry = c[2] * sy; o1(6 - (c[1] - ry)); o1(c[1] + ry - 714); o1(6 - (c[0] - c[2])); o1(c[0] + c[2] - (Wd - 6)); }); return bad; };
+    const st = ST8.findStand({ obs, foot: (x, z) => SC.foot(x, z), grid: { x0: SAFE.L.x0 + 2, x1: SAFE.R.x1 - 2, dx: 0.5, z0: C3.zc - 4, z1: C3.zc + 3.01, dz: 0.5 }, shapes, pad: 7, screen: SC.screen(), extra, prefer: { X: c0.X, Y: c0.Y, wx: 1, wy: 1.3 }, shrink: 0.95, tries: 10 });
+    if (!st) return null; const dx = st.x, dz = st.z - C3.zc, k = st.k, cov = new Set(); s108Body(M, dx, dz, k).forEach(c => s108In(obs, c, 0, c[3], cov)); st.G.forEach(g => { obs.forEach((o, i) => { if (ST8.into(g, o, 0) > 0) cov.add(i); }); });
+    /* the way: the offset grows from nothing to (dx, dz) as it goes up, on a curve whose middle is searched; the ball at its size on the way, the form going home */
+    const way = ST8.findPath({ kind: 'curve', from: [0, 0], to: [dx, dz], n: 24, ctrl: { x0: Math.min(0, dx) - 14, x1: Math.max(0, dx) + 14, dx: 1, z0: Math.min(0, dz) - 8, z1: Math.max(0, dz) + 8, dz: 1 },
+      cost: (x, z, u, i) => { const g = i / 24, sm = ST8.sm, ax = HOMP.x * (1 - g), az = HOMP.z + (C3.bz - HOMP.z) * g, y = 0.5 + (C3.yb - 0.5) * g, r = Rb * k * (0.25 + 0.75 * sm(Math.min(1, g * 1.8))) * (0.4 + 0.6 * g); let bad = s108In(obs, s108Rnd(ax + x, y, az + z, r), 6, 1);
+        /* the form on its way home (sunk, turned): a box from its foot */ const fx = HOMP.x + (0 - HOMP.x) * g, fz = HOMP.z + (C3.zc - HOMP.z) * g, Hs = h0 * E.s1 * (1 + (C3.F * k - 1) * g), f = SC.foot(fx + x, fz + z), gb = ST8.lay(sh.box({ ux: Hs, uy: Hs, xs: 'pu', y0: 0, y1: 0.8, l: 0.45, r: 0.45 }), f, 1); obs.forEach(o => { bad += ST8.into(gb, o, 5); }); return bad; } });
+    C3.B *= k; C3.F *= k;
+    S108.dbg = { x: dx, z: +dz.toFixed(2), k: +k.toFixed(3), bad: +st.bad.toFixed(1), cover: cov.size, F: [Math.round(st.f.X), Math.round(st.f.Y)], old: [Math.round(c0.X), Math.round(c0.Y)], c: [way.cx, way.cz], wbad: +(way.bad || 0).toFixed(1), n: obs.length, Rb: +Rb.toFixed(2), Hf: +Hf.toFixed(2), tries: st.tries, pp: +st.f.pp.toFixed(2), pu: +st.f.pu.toFixed(2), bR: Math.round(s108Body(M, dx, dz, k)[0][2]), bC: s108Body(M, dx, dz, k)[0].slice(0, 2).map(Math.round) };
+    return { dx, dz, k, cx: way.cx || dx / 2, cz: way.cz || dz / 2, M }; };
+  /* the offset at this moment: out on the curve as it goes up (e.go), back on it as it goes home (e.home) */
+  const s108Off = (P, e) => { const g = e.v < 0 ? e.go : 1 - (e.home || 0), u = Math.max(0, Math.min(1, g)), a = 2 * u * (1 - u), b = u * u; return [a * P.cx + b * P.dx, a * P.cz + b * P.dz]; };
+  const s108Move = now => { const E = R21.evo, SP = s26Fig(), q = SP && SP.q0, e = q && q.e31, Q = HEVO.pos, C = S32.C; if (!E || !E.e31 || !E.c32 || !e || e.go == null || !Q || !C || !homObj || !s108On(SP)) return;
+    if (E.p108 === undefined) { E.p108 = null; try { E.p108 = s108Plan(E, SP, e); } catch (x) { S108.err = 'plan ' + String(x && x.stack); } }
+    const P = E.p108, o = P ? s108Off(P, e) : [0, 0]; S108.off = o;
+    Q.x += o[0]; Q.z += o[1]; const onP = s27K(Q.x, Q.z, 1) > 0.5; E.g31 = { y: onP ? 0.03 : -0.232 }; C.bx += o[0]; C.bz += o[1]; C.gy = E.g31.y; { const dd = Math.hypot(cam.position.y - C.by, cam.position.z - C.bz); E.rpx32 = C.Rw / (dd * Math.tan(cam.fov * Math.PI / 360)) * ren.domElement.height / 2; }
+    /* and the room's dimming by game time: S32 eases by a share of each frame; it is given the value from which its share lands on the time-based one */ const want = Math.min(1, e.go * 1.6) * (1 - e.home), d = s108Dim(now, e); S32.dim = Math.abs(want - d) < 0.004 ? want : (d - 0.22 * want) / 0.78; s32Scene(now, e, E, C);
+    /* the hit's flash (S32: the lamp out by exp(-v / 0.12), on in one frame) rises over 100 ms of game time and dies over about 110 */ if (S32.sm && e.v >= 0 && E.tl31) { const x = e.v * E.L * E.tl31.TA / 3, fl = AA.rxKit.RK.sm(x / 100) * Math.exp(-Math.max(0, x - 100) / 110); S32.sm.material.uniforms.lamp.value.w = 0.56 * S32.dim * (1 - 0.85 * fl); }
+    /* the lamp's round follows by game time: S32 sizes it from the ball, the pool before the ball shows and after it is gone (it jumped
+       from the pool's size to the new ball's and back in one frame) */ if (S32.sm) { const U2 = S32.sm.material.uniforms, Lv = U2.lamp.value, dt = Math.max(0, Math.min(100, now - (S108.last || now))), a = 1 - Math.exp(-dt / 170); if (!S108.lamp || S108.lampE !== E) { S108.lamp = [Lv.x, Lv.y, Lv.z]; S108.lampE = E; } const Lm = S108.lamp; Lm[0] += (Lv.x - Lm[0]) * a; Lm[1] += (Lv.y - Lm[1]) * a; Lm[2] += (Lv.z - Lm[2]) * a; Lv.x = Lm[0]; Lv.y = Lm[1]; Lv.z = Lm[2]; } };
+  /* the room's light goes down by game time (S32 eases it by a share of each frame): the value S32 will reach is set so that it is the time-based one */
+  const s108Dim = (now, e) => { const want = e ? Math.min(1, e.go * 1.6) * (1 - (e.home || 0)) : 0, dt = Math.max(0, Math.min(100, now - (S108.last || now))), d0 = S108.dim0, d = d0 + (want - d0) * (1 - Math.exp(-dt / 134)); return Math.abs(want - d) < 0.004 ? want : d; };
+  S36.on = (f0 => function () { if (S108.pend) { S108.pend = 0; S108.sh = null; try { s108Move(S108.now); } catch (x) { S108.err = String(x && x.stack); } } return f0.apply(this, arguments); })(S36.on);
+  /* what S31 / S32 stamp before the move (the drops off the turning ball, the burst's damp) lies where the water is: carried by the offset;
+     a bead that fell where it was drawn (already in its place) is not */
+  { const f0 = S33W.f; S33W.f = (x, z, r, k, now, bead) => { const sh = S108.sh, C = S32.C; if (sh && C && (sh[0] || sh[1])) { const d0 = Math.hypot(x - C.bx, z - C.bz), d1 = Math.hypot(x - C.bx - sh[0], z - C.bz - sh[1]); if (d0 <= d1) { x += sh[0]; z += sh[1]; } } return f0 ? f0(x, z, r, k, now, bead) : false; }; }
+  homEvo19 = (f0 => function (now) { const E0 = R21.evo, SP0 = s26Fig(), on = !!(SP0 && s108On(SP0));
+    if (!E0 && homObj && homObj.grp) { const G0 = S108.g0 || (S108.g0 = { p: new T.Vector3(), q: new T.Quaternion(), s: new T.Vector3() }); G0.p.copy(homObj.grp.position); G0.q.copy(homObj.grp.quaternion); G0.s.copy(homObj.grp.scale); G0.t = now; let c = 0, cv = 0; homObj.grp.traverse(o => { if (o.isMesh && o.castShadow) { c++; let v = true; for (let p = o; p; p = p.parent) if (!p.visible) { v = false; break; } if (v) cv++; } }); S108.cs0 = [c, cv, !!(ren.shadowMap && ren.shadowMap.enabled)]; }
+    S108.pend = on && E0 ? 1 : 0; S108.now = now; S108.dim0 = S32.dim; if (S108.pend) { const e = SP0.q0 && SP0.q0.e31; if (E0.p108 && e && e.go != null) S108.sh = s108Off(E0.p108, e); }
+    try { f0(now); } finally { S108.pend = 0; S108.sh = null; }
+    try { const E = R21.evo, SP = s26Fig(); if (!(E && s108On(SP))) { if (S108.E) { S108.E = null; }
+        /* after the change the room comes back by game time too */ if (SP0 && on && S32.sm && S32.sm.visible && S32.dim > 0 && !E) { const d = s108Dim(now, null); S32.dim = d; const U2 = S32.sm.material.uniforms; U2.lamp.value.w = 0.56 * d; if (d <= 0) S32.sm.visible = false; } S108.last = now; return; }
+      if (S108.E !== E) { S108.E = E; S108.n = 0; S108.t0 = now; S108.log = []; } S108.n++;
+      /* the first frame: the engine has stood the new stage up at its raw size; the home group is given the place and size it had the frame before, and the clip is played once more */
+      if (S108.n === 1 && S108.g0 && now - S108.g0.t < 200 && homObj && homObj.grp) { const G0 = S108.g0, gr = homObj.grp; gr.position.copy(G0.p); gr.quaternion.copy(G0.q); gr.scale.copy(G0.s); try { const fg1 = r21Fig(); if (fg1) AA.rxKit.rigPlay(fg1, 'evo', now - HEVO.at, E); } catch (x2) { S108.err = 'first ' + String(x2); } }
+      const q = SP.q0, e = q && q.e31; if (!e || e.go == null) { S108.last = now; return; }
+      /* the light handed in over IN ms and out before it is home; the room's dimming by time */
+      const kin = AA.rxKit.RK.sm((now - S108.t0) / S108.IN), kout = 1 - AA.rxKit.RK.sm(((e.home || 0) - 0.55) / 0.4), kk = kin * kout, U = S33.sheet && S33.sheet.material.uniforms, KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null;
+      if (U) { U.shk.value *= kk; U.lamp.value.w *= kin; } if (l33) l33.w *= kin; if (S32.sm && S32.sm.visible) { const U2 = S32.sm.material.uniforms; U2.shd.value.w *= kk; U2.blu.value.w *= kk; }
+      S108.last = now;
+      /* the log, for the checks */ if (S108.log.length < 900) { const C = S32.C, Q = HEVO.pos || {}, r = v => v == null ? null : +(+v).toFixed(3), X = SP.x31; let sb = null; if (X && X.sph && X.sph.visible) { const A = X.sph.geometry.attributes.position, n = A.count, st = Math.max(1, Math.floor(n / 200)); X.sph.updateMatrixWorld(true); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (let i = 0; i < n; i += st) { S108.v.fromBufferAttribute(A, i).applyMatrix4(X.sph.matrixWorld); const p = s108Pr(S108.v.x, S108.v.y, S108.v.z); x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } sb = [x0, y0, x1, y1].map(Math.round); }
+        let fb = null; { const W = SP.e31 && SP.e31.gg.visible ? SP.e31.sp : SP; if (W && W.bones) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; W.root.updateWorldMatrix(true, true); W.bones.forEach(b => { b.getWorldPosition(S108.v); const p = s108Pr(S108.v.x, S108.v.y, S108.v.z); x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }); fb = [x0, y0, x1, y1].map(Math.round); } }
+        const ft = Q.x != null ? s108Pr(Q.x, C ? C.gy : 0.03, Q.z).map(Math.round) : null;
+        S108.log.push({ t: Math.round(now - HEVO.at), a: r(e.a), b: r(e.b), v: r(e.v), go: r(e.go), hm: r(e.home), R: r(e.R), op: r(e.open), fl: r(e.flat), old: e.old ? 1 : 0, s: r(homObj.s), gs: r(homObj.grp.scale.x), dim: r(S32.dim), shk: U ? r(U.shk.value) : null, lw: U ? r(U.lamp.value.w) : null, l33: l33 ? r(l33.w) : null, Rw: C ? r(C.Rw) : null, sv: S33.sheet && S33.sheet.visible ? 1 : 0, rv: SP.root.visible ? 1 : 0, gg: SP.e31 && SP.e31.gg.visible ? 1 : 0, ft, sb, fb, off: S108.off && S108.off.map(r), s36: r(S36.t), cs: S108.n < 4 ? (() => { let c = 0, cv = 0; homObj.grp.traverse(o => { if (o.isMesh && o.castShadow) { let v = true; for (let p = o; p; p = p.parent) if (!p.visible) { v = false; break; } if (v) { cv++; if (cv < 4) c = (c ? c + ',' : '') + (o.name || o.geometry.type); } } }); return [cv, c, S108.cs0]; })() : undefined }); }
+    } catch (x) { S108.err = String(x && x.stack); } })(homEvo19);
+  if (AA.rxKit) AA.rxKit.s108dbg = () => ({ err: S108.err, kit: AA.rxKit.W108 && AA.rxKit.W108.err, kdbg: AA.rxKit.W108 && AA.rxKit.W108.dbg, st: AA.rxKit.stage && AA.rxKit.stage.dbg().err, d: S108.dbg, log: S108.log });
+  // ==== S108 END
   size(); newRun(); requestAnimationFrame(frame);
 }
 const el = root.document && document.getElementById('schemeapp');

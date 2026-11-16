@@ -8108,6 +8108,50 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData.rig2 
 KIT.spirit26.play = play26;
 KIT.W88 = W88;
 // ==== W88 END
+// ==== W108 BEGIN
+// (builder 108) WATER'S CHANGE OF STAGE AND ACT, STAGED WITH NO STEP (AA.rxKit.w108, on by default; ?w108=0 gives builder 36's / 30's back).
+// Water's idea, look and beats are untouched: nothing in W26..W36 is edited, its functions are wrapped from outside. Every ease, fade and
+// hold here is in milliseconds of game time (never in frames), so it lasts the same at 30 and at 60 frames a second.
+//  - THE HAND-OVER at the start of a change: the copy of the old stage (W31's E.gg) begins in the resting figure's last pose and goes into
+//    the clip's over HO ms; while the clip waits for its beat (t < 0) the never-stopping idle (AA.rxKit.stage.idle) is laid on its pose
+//    numbers, eased out as the gathering takes over, so it is never frozen;
+//  - THE HAND-BACK at the end of a change and of the act: the new figure's last clip pose goes into the resting idle over HB ms;
+//  - the two big steps of the change: the curled figure into the ball (W31 shows the ball from the curl's end at 0.62 of its round in
+//    one frame) grows out of the curl over the gathering's last part, and the bud's opening and the swap to the new skin are read at
+//    several moments and averaged (as builder 95b did for Brimstone), so a beat never snaps the pose in one frame.
+// The scheme's part (where it stands, its way, the light handed in and out) is scheme.js S108.
+KIT.w108 = KIT.w108 == null ? !(typeof location !== 'undefined' && /[?&]w108=0/.test(String(location.search))) : KIT.w108;
+const W108 = { err: null, rest: null, evo: null, n: 0, HO: 320, HB: 360, dbg: {} };
+{ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  /* Water itself (not a creature that rides its rig: they carry a way of their own) */
+  const isW = S => { if (!S || !S.bones || S.jar) return false; if (S.w108 == null) S.w108 = !Object.keys(S).some(k => /^way\d+$/.test(k)); return S.w108; };
+  const on = S => KIT.w108 !== false && isW(S) && on31(S);
+  /* the idle laid on the clip's numbers while it waits for its beat and as the gathering begins (the clip's own numbers run on, only added to) */
+  C26.evo = (f0 => function (S, t, o, q) { const r = f0(S, t, o, q); try { if (o && o.e31 && on(S) && q && q.e31) { const L = o.L || 500, X = tl31(o), a = t / (X.TG * L), amp = 1 - KIT.stage.sm((a + 0.05) / 0.3); if (amp > 0.001) { const d = KIT.stage.idle(t + 7000, amp, 0.37); delete d.blink; KIT.stage.addInto(q, d); } } } catch (x) { W108.err = 'idle ' + String(x && x.stack); } return r; })(C26.evo);
+  /* every number of the clip read at five moments 40 ms apart and averaged (as builder 95b did for Brimstone): a beat's start never snaps a
+     pose, a limb or the bud in one frame; the clock (a, b, v, go, home) and the switches are the middle moment's. The bud opens over 280 ms
+     of game time (W31: 160 ms), held open it is the same. */
+  const KEEP = { a: 1, b: 1, v: 1, go: 1, home: 1, g: 1, R0: 1, old: 1, from: 1 }, AV = [-80, -40, 40, 80];
+  const avg = (A, list, key) => { for (const k in A) { if (KEEP[k] || typeof A[k] !== 'number') continue; let s = A[k], n = 1; for (let i = 0; i < list.length; i++) { const B = key ? list[i][key] : list[i]; if (B && typeof B[k] === 'number') { s += B[k]; n++; } } A[k] = s / n; } };
+  C26.evo = (f0 => function (S, t, o, q) { if (!(o && o.e31 && t >= 0 && KIT.w108 !== false && isW(S))) return f0(S, t, o, q);
+    const base = Object.assign({}, q), r = f0(S, t, o, q); try { const e = q.e31; if (!e || !on(S)) return r; const L = AV.map(d => { const q2 = Object.assign({}, base); f0(S, Math.max(0, t + d), o, q2); return q2; });
+      avg(q, L, null); if (q.m) avg(q.m, L, 'm'); avg(e, L, 'e31'); if (e.v >= 0) e.open = KIT.stage.sm(e.v / 0.56); } catch (x) { W108.err = 'avg ' + String(x && x.stack); } return r; })(C26.evo);
+  /* the bud is gone into the page before W31 stops drawing it (at v 1.25): its soak runs on past 1 from v 0.95 */
+  stage31 = (f0 => function (S, X, grp, e, o, ks) { f0(S, X, grp, e, o, ks); try { if (X && X.k32 && e && e.v >= 0.9 && KIT.w108 !== false && isW(S)) { const U = X.sph.material.uniforms; U.soak.value = Math.max(U.soak.value, (e.flat || 0) + 0.75 * KIT.stage.sm((e.v - 0.93) / 0.3)); } } catch (x) { W108.err = 'soak ' + String(x && x.stack); } })(stage31);
+  /* the pose: kept at rest; the copy starts in it; the new figure goes back into the idle from its last clip pose */
+  play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && grp.userData.rig2 && grp.userData.rig2.sp;
+    if (!S || !isW(S) || KIT.w108 === false || (o && o.jar)) return f0(grp, clip, t, o);
+    const r = f0(grp, clip, t, o); try { const n = now();
+      if (clip === 'rest') { const E = W108.evo;
+        if (E && E.Z && E.S === S && n - E.at < 600) { if (E.t1 == null) E.t1 = n; const k = KIT.stage.sm((n - E.t1) / W108.HB); if (k < 1) KIT.stage.pose.from(S, E.Z, k); else W108.evo = null; W108.dbg.hb = +k.toFixed(3); }
+        else { W108.rest = KIT.stage.pose.keep(S, W108.rest); W108.rest.at = n; W108.rest.S = S; } }
+      else if ((clip === 'evo' && o && o.e31) || clip === 'act') { const C = clip === 'evo' && S.e31 && S.e31.gg.visible ? S.e31.sp : S, R = W108.rest;
+        let H = W108.ho; if (!H || H.clip !== clip || n - H.last > 250) H = W108.ho = { clip, t0: n }; H.last = n;
+        const k = KIT.stage.sm((n - H.t0) / W108.HO), b0 = C.bones[0]; if (!H.d) { H.d = W108.dbg.first = { clip, k, rst: R && R.st, cst: C.st, rn: R && R.n, cn: C.bones.length, age: R ? Math.round(H.t0 - R.at) : null, copy: C !== S, rs0: R && R.C[0] && R.C[0].toArray().map(v => +v.toFixed(3)), cs0: b0.scale.toArray().map(v => +v.toFixed(3)), rr: R && [R.rp.y, R.rq.x, R.rc.x].map(v => +v.toFixed(3)), cr: [C.root.position.y, C.root.quaternion.x, C.root.scale.x].map(v => +v.toFixed(3)), dif: R ? C.bones.map((b, j) => R.P[j] ? +(b.position.distanceTo(R.P[j]) * 100).toFixed(1) + '/' + +(b.quaternion.angleTo(R.Q[j]) * 100).toFixed(0) + '/' + +(b.scale.distanceTo(R.C[j]) * 100).toFixed(0) : '-').join(' ') : null, p0: R && [R.P[0].toArray(), b0.position.toArray()].map(a => a.map(v => +v.toFixed(3))), ru: C.root.userData && Object.keys(C).filter(k => /film|pool|28|27/.test(k)).join(',') }; } if (k < 1 && R && R.st === C.st && R.n === C.bones.length && H.t0 - R.at < 600) { const q0 = (W108.q0 || (W108.q0 = b0.quaternion.clone())).copy(b0.quaternion); KIT.stage.pose.from(C, R, k); /* the pool's own bone keeps the clip's turn: at rest W27 lays the pool flat on the bench by turning it back, which on the copy (drawn without W28's film) reads as a thin flat pool */ b0.quaternion.copy(q0); W108.dbg.ho = +k.toFixed(3); }
+        W108.evo = { S, Z: KIT.stage.pose.keep(S, W108.evo && W108.evo.S === S ? W108.evo.Z : null), at: n, clip }; } } catch (x) { W108.err = 'pose ' + String(x && x.stack); }
+    return r; })(play26);
+  KIT.spirit26.play = play26; KIT.W108 = W108; }
+// ==== W108 END
 // ==== W105 BEGIN
 // (builder 105) SHARED PARTS FOR EVERY CREATURE'S ACT AND CHANGE OF STAGE: AA.rxKit.stage. Nothing here is any one creature's: every
 // number of a body (its sizes, its outline, its times) comes in as an argument. Nothing in W26..W103 is changed or called; what Brimstone
