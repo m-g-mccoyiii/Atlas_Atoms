@@ -8438,8 +8438,10 @@ KIT.b133 = KIT.b133 == null ? !(typeof location !== 'undefined' && /[?&]b133=0/.
 const W133 = { err: null, ref: null, tr: [], sl: [], KS: 0.8 };
 const on133 = S => !!(KIT.b133 !== false && on97(S));
 /* how each change does it: hk the cloud's height (times the old smoke's), wd its girth, tw a twist (radians at the top), ln a lean (share of its
-   height at the top, + away from the page's middle), rl how fast it rolls, fl how hard the tongues and cracks flare, sg the settle's sag */
-const V133 = { 1: { hk: 1.15, wd: 1.25, tw: 1.6, ln: 0.0, rl: 1.6, fl: 0.35, sg: 0.8 }, 2: { hk: 1.4, wd: 0.85, tw: -0.5, ln: 0.12, rl: 1.0, fl: 0.6, sg: 1.0 },
+   height at the top, + away from the page's middle), rl how fast it rolls, fl how hard the tongues and cracks flare, sg the settle's sag,
+   sw how much the lump itself swells; grow: the old form has almost no smoke (the ember), so it swells as a whole, and the new one's smoke
+   is drawn down into its lump at the hand-over and grows up out of it as it settles (no big cloud comes out of nothing) */
+const V133 = { 1: { hk: 1.15, wd: 1.25, tw: 1.6, ln: 0.0, rl: 1.6, fl: 0.35, sg: 0.8, sw: 0.22, grow: 1 }, 2: { hk: 1.4, wd: 0.85, tw: -0.5, ln: 0.12, rl: 1.0, fl: 0.6, sg: 1.0 },
   3: { hk: 1.25, wd: 1.0, tw: 0.0, ln: 0.0, rl: 1.0, fl: 0.8, sg: 1.0 }, 4: { hk: 1.5, wd: 1.15, tw: 0.35, ln: -0.06, rl: 0.7, fl: 1.0, sg: 1.5 } };
 const vv133 = o => V133[o && o.from] || V133[3];
 /* the key moments of one change, in ms of the clip (the hit is v(0)) */
@@ -8479,11 +8481,14 @@ const dz133 = F => { if (F.d133) return F.d133; const T = F.T, U = F.d133 = { va
 const pre133 = F => { if (F.p133 !== undefined) return F.p133; F.p133 = null; const T = F.T, b = F.body; if (!b || !b.isSkinnedMesh || !b.parent) return null;
   const m = new T.MeshBasicMaterial({ colorWrite: false, transparent: true }); m.skinning = true; const h = new T.SkinnedMesh(F.G.geo, m); h.bind(b.skeleton, b.bindMatrix.clone()); h.frustumCulled = false; h.visible = false; h.castShadow = false; h.receiveShadow = false;
   h.userData.plain = true; h.userData.nobox = true; h.userData.p133 = 1; /* (no depth of its own in the lamp's passes: the shadow is the faded body's) */ h.onBeforeRender = () => { m.depthWrite = !KIT.skip33; }; b.parent.add(h); return (F.p133 = h); };
-/* the faded body is drawn after the whole of the other one, its own parts in their own order (renderOrder 23.3 + r / 200: after every figure's pen at 23, before 24) */
-const ro133 = (F, on) => { if (!on && !F.ro133) return; F.ro133 = on; F.root.traverse(m => { if (!(m.isMesh || m.isSprite)) return; if (on) { if (m.userData.r133 == null) m.userData.r133 = m.renderOrder; m.renderOrder = 23.3 + (m.userData.p133 ? 18.5 : m.userData.r133) / 200; } else if (m.userData.r133 != null) { m.renderOrder = m.userData.r133; m.userData.r133 = null; } });
-  const h = pre133(F); if (h) h.visible = on; };
-const blend133 = (F, a, fade, pk, sol) => { const U = dz133(F), pm = F.pen30 && F.pen30.mesh && F.pen30.mesh.material; U.value.set(a, a < 0.999 || sol > 0.001 ? 1 : 0, sol || 0, 0); if (pm && pm.uniforms.a133) pm.uniforms.a133.value = a * pk; ro133(F, !!fade && a < 0.999); };
-const clear133 = F => { if (F.d133) F.d133.value.set(1, 0, 0, 0); const pm = F.pen30 && F.pen30.mesh && F.pen30.mesh.material; if (pm && pm.uniforms && pm.uniforms.a133) pm.uniforms.a133.value = 1; ro133(F, false); };
+/* the order of drawing across the blend (mode 0 off, 1 in the blend, 2 in the blend and this body faded): the faded body (its wash, margin and
+   own depth) after the whole of the other body (renderOrder 23.3 + r / 200); every other part of BOTH figures (tongues, pen, face, embers)
+   after both bodies (23.62 + r / 200, before 24), so when the two bodies change places at the middle nothing of either is covered or bared */
+const ro133 = (F, mode) => { if (!mode && !F.ro133) return; F.ro133 = mode; const bod = new Set(); (F.o29 || []).forEach(q => { if (q.m && (q.k === 'body' || q.k === 'hull')) bod.add(q.m); });
+  F.root.traverse(m => { if (!(m.isMesh || m.isSprite)) return; const b = bod.has(m) || m.userData.p133; if (mode && (!b || mode === 2)) { if (m.userData.r133 == null) m.userData.r133 = m.renderOrder; m.renderOrder = (b ? 23.3 : 23.62) + (m.userData.p133 ? 18.5 : m.userData.r133) / 200; } else if (m.userData.r133 != null) { m.renderOrder = m.userData.r133; m.userData.r133 = null; } });
+  const h = pre133(F); if (h) h.visible = mode === 2; };
+const blend133 = (F, a, fade, pk, sol, inb) => { const U = dz133(F), pm = F.pen30 && F.pen30.mesh && F.pen30.mesh.material; U.value.set(a, a < 0.999 || sol > 0.001 ? 1 : 0, sol || 0, 0); if (pm && pm.uniforms.a133) pm.uniforms.a133.value = a * pk; ro133(F, !inb ? 0 : fade && a < 0.999 ? 2 : 1); };
+const clear133 = F => { if (F.d133) F.d133.value.set(1, 0, 0, 0); const pm = F.pen30 && F.pen30.mesh && F.pen30.mesh.material; if (pm && pm.uniforms && pm.uniforms.a133) pm.uniforms.a133.value = 1; ro133(F, 0); };
 /* the face by kf (scale), the idle's extras by ka / kx (opacity), its tongues by kt and flared by fl; nothing compounds frame to frame */
 const face133 = (Z, kf) => { const Fc = Z.F; if (!Fc) return; const vis = kf > 0.02; Fc.eyes.forEach(x => { if (x.g) { x.g.scale.multiplyScalar(Math.max(0.001, kf)); if (!vis) x.g.visible = false; } });
   (Fc.brows || []).forEach(b => { const m = b && b.g; if (!m) return; if (!m.userData.s133) m.userData.s133 = (m.userData.s97 || m.scale).clone(); m.scale.copy(m.userData.s133).multiplyScalar(Math.max(0.001, kf)); if (!vis) m.visible = false; });
@@ -8498,15 +8503,15 @@ const parts133 = (Z, ka, kx, kt, fl) => { const K = Z.k73; if (!K) return; K.sm.
    stages, Hc in this figure's units; its spread toward the axis cut, the arms most toward their ends, every smoke joint fattened) and grown
    about P0 as one smooth field (place and size together, so the skin keeps whole: no joint is sent anywhere its neighbours are not); rolled
    by a slow field in the cloud's own size (the same for both stages), twisted and leaned by the change; a joint higher up reads it later */
-const bil133 = (F, P0, Hr, Hc, o, t) => { const X = fig82(F), B = F.bones, J = F.G.J, hj = F.G.bj[F.G.R.head], c0 = cv133(o, t), V = vv133(o), ta = t * 0.0006 * V.rl, hy = Hc / Math.max(0.2, Hr), FAT = 1 + 0.4 * V.wd, LX = 0.5 * V.wd, sx = F.root.position.x < 0 ? -1 : 1;
+const bil133 = (F, P0, Hr, Hc, o, t, sk) => { sk = sk == null ? 1 : sk; const X = fig82(F), B = F.bones, J = F.G.J, hj = F.G.bj[F.G.R.head], c0 = cv133(o, t), V = vv133(o), ta = t * 0.0006 * V.rl, hy = Hc / Math.max(0.2, Hr), FAT = 1 + 0.4 * V.wd, LX = 0.5 * V.wd, sx = F.root.position.x < 0 ? -1 : 1;
   for (let j = 1; j < B.length; j++) { const bj = B[j]; if (!bj || !J[j]) continue; const p = bj.position, am = X.arm.get(j);
-    if (!(X.F.set.has(j) || am)) { bj.scale.multiplyScalar(1 + 0.06 * c0.full); continue; }
+    if (!(X.F.set.has(j) || am)) { bj.scale.multiplyScalar(1 + (V.sw || 0.06) * c0.full); continue; }
     const h = Math.max(0, Math.min(1, (J[j].p[1] - X.F.P0.y) / X.F.H)), c = cv133(o, t - 150 * h), b = c.b; if (b < 1e-4 && Math.abs(c.wob) < 1e-4) continue; const G = 1 + 0.5 * b + c.wob, hd = j === hj;
     const rx = p.x - P0.x, ry = p.y - P0.y, rz = p.z - P0.z, lx = hd ? 0.14 : am ? LX + (0.16 - LX) * Math.min(1, 0.3 + am.f) : LX;
     let cx = rx * (1 + (lx - 1) * b), cy = hd ? ry + (0.6 * Hc / G - ry) * b : ry * (1 + (hy / G - 1) * b), cz = rz * (1 + (lx - 1) * b) + (hd ? 0.22 * Hc * b / G : 0); const u = Math.max(0, cy * G / Hc);
     cx += sx * V.ln * Hc * u * u * b / G; if (V.tw) { const a = V.tw * u * b, ca = Math.cos(a), sa = Math.sin(a), x2 = ca * cx - sa * cz; cz = sa * cx + ca * cz; cx = x2; }
     const nx = nz133(rx / Hc * 2.2 + ta, ry / Hc * 2.2 - 1.6 * ta, rz / Hc * 2.6), ny = nz133(rz / Hc * 2.6 + 4.1, rx / Hc * 2.4 + 1.3, ry / Hc * 2.2 - ta), amp = 0.07 * Hc * b * (0.4 + 0.6 * h);
-    p.x = P0.x + G * cx + amp * 2 * (nx - 0.5); p.y = P0.y + G * cy + amp * (ny - 0.5); p.z = P0.z + G * cz;
+    p.x = P0.x + sk * (G * cx + amp * 2 * (nx - 0.5)); p.y = P0.y + sk * (G * cy + amp * (ny - 0.5)); p.z = P0.z + sk * G * cz; if (sk < 1) bj.scale.multiplyScalar(sk);
     const fat = FAT + 0.55 * V.wd * (1 - h) * (1 - h); /* (the lower smoke fattest: its rings run together into one mass on the lump) */ bj.scale.multiplyScalar(G * (1 + (fat - 1) * b) * (1 + 0.08 * b * (nx - 0.5)) * (am ? 1 - 0.15 * b * am.f : 1)); if (hd) { bj.scale.multiplyScalar(1 / (G * (1 + (fat - 1) * b))); bj.scale.multiplyScalar(1 + 0.1 * b); } } };
 /* the idle on a figure, weighed in by w (the copy's first 300 ms, while W98 hands it the resting pose) */
 const idle133 = (F, w) => { if (w >= 0.999) { pose73(F, {}); return; } const B = F.bones, P = [], Q = [], C = []; B.forEach((b, j) => { if (!b) return; P[j] = b.position.clone(); Q[j] = b.quaternion.clone(); C[j] = b.scale.clone(); }); pose73(F, {});
@@ -8524,12 +8529,12 @@ play26 = (f0 => function (grp, clip, t, o) { const S = grp && grp.userData && gr
     else if (O) { const X = fig82(O), f97 = 1 - 0.3 * K.sm((g.ph - 1.42) / 0.26); O.root.scale.multiplyScalar(ks / Math.max(0.3, f97)); /* (W97 drew it in for the fire; here it is only a little smaller at the stand) */
       const wo = ws133(O.root, v); W133.ref = { Hw: 0.95 * X.F.H * wo * V.hk };
       idle133(O, O.t99 != null ? K.sm((n - O.t99) / 300) : 1); bil133(O, X.F.P0, X.F.H, W133.ref.Hw / wo, o, t);
-      const ao = t < k.k0 ? 1 : B.ao; if (O.u69) { O.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; O.u69.value.z = 0.9 * c.full; } parts133(O, ao, ao * (1 - c.full), ao * ao, V.fl * c.fl); if (O.st > 1) face133(O, kfo); z.wo = ws133(O.root, v); blend133(O, ao, t >= k.k0 && !B.nf, pk * B.pd, 0.9 * c.full); }
+      const ao = t < k.k0 ? 1 : B.ao; if (O.u69) { O.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; O.u69.value.z = 0.9 * c.full; } parts133(O, ao, ao * (1 - c.full), ao * ao, V.fl * c.fl); if (O.st > 1) face133(O, kfo); z.wo = ws133(O.root, v); blend133(O, ao, t >= k.k0 && !B.nf, pk * B.pd, 0.9 * c.full, c.kd > 0 && c.kd < 1); }
     const Ov = O && t < k.k1 ? O : null; if (t >= k.k0 && W133.ref) { S.root.visible = true; const X = fig82(S), mk = c.mk, R0 = W133.ref, an = c.kd >= 1 ? 1 : B.an;
       /* W98 holds the new form narrow after the hit (it stood in the fire): undone */ if (!g.pre && !O && KIT.g98) { const cc = 0.3 + 0.7 * K.sm((e.v - 0.95) / 0.75); if (cc < 0.999) { const J = S.G.J, P0 = X.F.P0; for (let j = 1; j < S.bones.length; j++) { const b = S.bones[j]; if (!b || !J[j] || J[j].p[1] < X.lump) continue; b.position.x = P0.x + (b.position.x - P0.x) / cc; b.position.z = P0.z + (b.position.z - P0.z) / cc; if (X.arm.has(j)) b.scale.multiplyScalar(1 / (0.5 + 0.5 * cc)); } } }
       /* the old one's lean forward (W97's bow on the copy), on the new one too, let go as it draws in */ { const bw = 0.7 * K.sm(g.ph / 0.25) * (1 - mk); if (bw > 0.001) post82o(S, { suck: 0, bow: bw, lift: 0, flame: 1, cflame: 0, heat: 0, u: 0, c: [9, 9, 9] }); }
-      idle133(S, 1); bil133(S, X.F.P0, X.F.H, R0.Hw / Math.max(1e-6, ws133(S.root.parent, v) * S.rs133 * ks), o, t);
-      if (S.u69) { S.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; S.u69.value.z = 0.9 * c.full; } parts133(S, an, an * (1 - c.full), an * an, V.fl * c.fl); if (S.st > 1) face133(S, kfn); blend133(S, an, B.nf, pk * B.pd, 0.9 * c.full);
+      idle133(S, 1); bil133(S, X.F.P0, X.F.H, R0.Hw / Math.max(1e-6, ws133(S.root.parent, v) * S.rs133 * ks), o, t, V.grow ? 0.1 + 0.9 * smm133(mk) : 1);
+      if (S.u69) { S.u69.value.y *= 1 + (0.9 + 0.6 * V.fl) * c.full + 0.5 * V.fl * c.fl; S.u69.value.z = 0.9 * c.full; } parts133(S, an, an * (1 - c.full), an * an, V.fl * c.fl); if (S.st > 1) face133(S, kfn); blend133(S, an, B.nf, pk * B.pd, 0.9 * c.full, c.kd > 0 && c.kd < 1);
       /* the size: the old one's at the hand-over, the new one's as it draws in */ const wn = ws133(S.root.parent, v) * S.rs133 * ks; if (Ov && z.wo > 0 && wn > 0) z.rho = z.wo / wn; const rho = z.rho || 1; S.root.scale.setScalar(S.rs133 * ks * (rho + (1 - rho) * mk));
       /* the hand-back to the idle starts from what is shown */ const Z = S.b98; if (Z && Z.live) { S.bones.forEach((b, j) => { if (!b || !Z.P[j]) return; Z.P[j].copy(b.position); Z.Q[j].copy(b.quaternion); Z.C[j].copy(b.scale); }); Z.rs = S.root.scale.x; } }
     if (z.n % 3 === 0 || (t > k.k0 - 200 && t < k.k1 + 200)) { W133.tr.push([Math.round(t), +c.b.toFixed(3), +c.kd.toFixed(3), +c.mk.toFixed(3), +ks.toFixed(3), +(z.rho || 0).toFixed(3), O ? 1 : 0, S.root.visible ? 1 : 0, +B.an.toFixed(3), +B.ao.toFixed(3), S.k73 && S.k73.light ? +S.k73.light.m.material.opacity.toFixed(3) : -1, O && O.k73 && O.k73.light ? +O.k73.light.m.material.opacity.toFixed(3) : -1]); if (W133.tr.length > 400) W133.tr.shift(); }
