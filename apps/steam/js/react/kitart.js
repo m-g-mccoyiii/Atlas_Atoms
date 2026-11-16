@@ -8441,8 +8441,8 @@ const on133 = S => !!(KIT.b133 !== false && on97(S));
    height at the top, + away from the page's middle), rl how fast it rolls, fl how hard the tongues and cracks flare, sg the settle's sag,
    sw how much the lump itself swells; grow: the old form has almost no smoke (the ember), so it swells as a whole, and the new one's smoke
    is drawn down into its lump at the hand-over and grows up out of it as it settles (no big cloud comes out of nothing) */
-const V133 = { 1: { hk: 1.15, wd: 1.25, tw: 1.6, ln: 0.0, rl: 1.6, fl: 0.35, sg: 0.8, sw: 0.22, grow: 1 }, 2: { hk: 1.4, wd: 0.85, tw: -0.5, ln: 0.12, rl: 1.0, fl: 0.6, sg: 1.0 },
-  3: { hk: 1.25, wd: 1.0, tw: 0.0, ln: 0.0, rl: 1.0, fl: 0.8, sg: 1.0 }, 4: { hk: 1.5, wd: 1.15, tw: 0.35, ln: -0.06, rl: 0.7, fl: 1.0, sg: 1.5 } };
+const V133 = { 1: { hk: 1.15, wd: 1.25, tw: 1.6, ln: 0.0, rl: 1.6, fl: 0.35, sg: 0.8, sw: 0.22, grow: 1 }, 2: { hk: 1.5, wd: 0.75, tw: 2.4, ln: 0.18, rl: 1.3, fl: 0.6, sg: 1.0 },
+  3: { hk: 1.25, wd: 1.0, tw: 0.0, ln: 0.0, rl: 1.0, fl: 0.8, sg: 1.0 }, 4: { hk: 1.05, wd: 1.45, tw: -0.6, ln: -0.06, rl: 0.6, fl: 1.0, sg: 1.6 } };
 const vv133 = o => V133[o && o.from] || V133[3];
 /* the key moments of one change, in ms of the clip (the hit is v(0)) */
 const tk133 = o => { const X = tl31(o), L = o.L; if (o.tk133 && o.tk133.L === L && o.tk133.X === X) return o.tk133; const ph = p => (p <= 1 ? p * X.TG : X.TG + (p - 1) * X.TS) * L, v = x => (X.H + x * X.TA / 3) * L;
