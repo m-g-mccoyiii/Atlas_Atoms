@@ -301,84 +301,137 @@ const rungHow = r => (r.kind === 'depth' ? 'Clear round ' + r.n + '.' : (RUNG_TX
 // THE MANUAL'S WORDS (ruling BA): the thing and one verb of its own; the act; then just the number. Everything is per page unless the line says
 // otherwise. A side effect is a bare fact. No line explains itself. Every table below is in that voice; thingOf reads them.
 // Reflexes: all of them, held from the start or earned, near and across the fold: [name, line].
-// (rule text 119, owner: "everything should be explained": every choice the code makes is in the line, ties the code settles by atom order as
-// "Else a fixed pick."; rules.js ENG.R is the code each line was checked against)
-const REF_REFLEX = { ring: ['Ring', 'Ring curls. An OH 3 or 4 carbons from a C=O joins it in a ring. The new ring\'s OH goes next, then the nearest. Twice a page, after the other reflexes. The ring opens at the page turn.'], dry: ['Dry', 'Dry parches. An OH two carbons from a C=O leaves as water. A C=C forms beside the C=O. The carbon between needs an H. Once a page. Of several, a fixed pick.'], weld: ['Weld', 'Weld fuses. The carbon beside one C=O, with an H, joins another C=O 4 or 5 carbons away. A ring closes and that C=O turns to C-OH. Neither is in a ring. Nearest first. Twice a page.'],
-  shift: ['Shift', 'Shift slides. A C=C two carbons from a C=O moves beside it. The carbon between needs an H.'], tuck: ['Tuck', 'Tuck nests. An OH 3 or 4 carbons from the far end of a C=C beside a C=O adds there and closes a ring. Nearest first.'], flip: ['Flip', 'Flip turns. An OH on a C=C turns to C=O.'],
-  snap: ['Snap', 'Snap springs. Two C=C side by side and a third C=C 4 or 5 carbons from their end close a six-ring. One C=C stays in it. Nearest first.'], close: ['Close', 'Close shuts. A Cl and an OH, NH2, SH or COOH 3 to 5 carbons apart join in a ring. Acid fumes leave.'], cap: ['Cap', 'Cap covers. An SH 3 or 4 carbons from a C=O joins it in a ring. The ring opens at the page turn.'],
-  knit: ['Knit', 'Knit loops. An NH2 3 or 4 carbons from a C=O joins it in a ring. The ring opens at the page turn.'], seal: ['Seal', 'Seal locks. A COOH and an OH, NH2 or SH 3 or 4 carbons apart join in a ring. Water leaves.'], open: ['Open', 'Open unlatches. An OH 3 or 4 carbons from an epoxide carbon joins it and closes a ring. The nearer carbon first. The epoxide O stays as OH.'],
-  fold: ['Fold', 'Fold flattens. An epoxide turns to C=O on a carbon with one H. The other carbon holds one H at most. Else a fixed pick.'],
+// (mantext 125, owner's pick A of mantext 124; ruling BA, docs/HARNESS.md) THE MANUAL'S WORDS: the thing and one verb of its own, the act, then
+// just the number. Every choice the rules make is SHOWN, not written: REF_CASES holds, for a page, its drawn cases (a fragment before and after,
+// the deciding atom ringed, a tag of one to three words; a red cross where nothing happens). Ties the code settles by atom order get nothing.
+// Each fragment is turned into SMILES and run through the real rules by the check job .claude/r119/j_cases.js (see docs/PAGE_NOTES.md).
+const REF_REFLEX = { ring: ['Ring', 'Ring curls. An OH and a C=O join in a ring.'], dry: ['Dry', 'Dry parches. An OH near a C=O leaves as water and a C=C forms.'], weld: ['Weld', 'Weld fuses. Two C=O join in a ring.'],
+  shift: ['Shift', 'Shift slides. A C=C slides beside a C=O.'], tuck: ['Tuck', 'Tuck nests. An OH folds onto a C=C beside a C=O.'], flip: ['Flip', 'Flip turns. An OH on a C=C turns to C=O.'],
+  snap: ['Snap', 'Snap springs. Two C=C side by side and a third close a six-ring.'], close: ['Close', 'Close shuts. A Cl and an OH, NH2, SH or COOH join in a ring. Acid fumes leave.'], cap: ['Cap', 'Cap covers. An SH and a C=O join in a ring.'],
+  knit: ['Knit', 'Knit loops. An NH2 and a C=O join in a ring.'], seal: ['Seal', 'Seal locks. A COOH and an OH, NH2 or SH join in a ring. Water leaves.'], open: ['Open', 'Open unlatches. An OH springs an epoxide into a ring.'],
+  fold: ['Fold', 'Fold flattens. An epoxide turns to C=O.'],
   ring_far: ['Ring across', 'Ring across arcs. An OH and a C=O facing across the fold join.'], cap_far: ['Cap across', 'Cap across vaults. An SH and a C=O facing across the fold join.'], knit_far: ['Knit across', 'Knit across threads. An NH2 and a C=O facing across the fold join as C=N. Water leaves.'],
-  weld_far: ['Weld across', 'Weld across rivets. The carbon beside one C=O and another C=O facing across the fold join. Neither is in a ring.'], seal_far: ['Seal across', 'Seal across clasps. A COOH and an OH, NH2 or SH facing across the fold join. Water leaves.'], close_far: ['Close across', 'Close across clamps. A Cl and an OH, NH2, SH or COOH facing across the fold join. Acid fumes leave.'],
-  open_far: ['Open across', 'Open across pries. An epoxide and an OH facing across the fold join. The OH takes the nearer facing carbon.'], tuck_far: ['Tuck across', 'Tuck across slips. An OH adds to the far end of a C=C beside a C=O across the fold.'], snap_far: ['Snap across', 'Snap across leaps. Two C=C side by side and a C=C facing them across the fold close a six-ring.'],
-  bridge: ['Bridge', 'Bridge spans. Two SH facing across the fold join as S-S. Hydrogen leaves.'], stitch: ['Stitch', 'Stitch sews. Two C=C outside rings facing across the fold join in a four-ring.'], link: ['Link', 'Link ties. Two OH facing across the fold join as an ether. The OH on the carbon with more carbons leaves as water. Else a fixed pick.'] };
-// The facts that hold for a whole tab (rule text 119). The manual has no place for them yet: nothing draws REF_HEAD (a line at the head of
-// the reagent, reflex and instrument spreads, or a first row of each, is the place proposed in docs/PAGE_NOTES.md).
-const REF_HEAD0 = { reagent: () => 'A reagent acts at every place it fits. Nothing touches a benzene ring. Nothing grows the molecule past ' + RULE.atoms + ' atoms.',
-  reflex: () => 'Reflexes fire one at a time. Seal, close, knit, cap and open go first, ring last, nearest first. Dry once a page, weld and ring twice. Except weld and snap, a new ring shares one side with an old ring at most. Loose rings open at the page turn.',
-  across: () => 'From round 4, across the fold: only when nothing fits along the chain, 6 or more bonds apart, each once a page. Rare groups first, ring across last.',
-  instrument: () => RULE.bench + ' instruments a round. Each sets the reflexes off.' };
-// THREE TREATMENTS OF THE MANUAL'S WORDS (mantext 124, owner: "it needs to be more like a game"; ruling BA in docs/HARNESS.md): the page's
-// ?mantext=a|b|c (scheme.js manOpen calls manTextSet) puts one of them on six pages (Hydrate, Dehydrate, Oxidize, Ring, Burette, Water) and on
-// the tab heads; with none the book is as merged. Every face line is the accepted pattern: the thing and one verb, the act, the number.
-//   a  the face line, then up to three cases DRAWN: a short fragment before and after, the carbon that wins marked, a tag of one to three words
-//   b  the face line, then up to three clipped card lines of five words or fewer, each on its own line
-//   c  the face line only; the cases are told in the margin notes where they happen (notes_data.js REAGENT[..].cases)
-// A fragment for a drawn case: a (atoms in a zigzag row), b (the bonds between them, '-' or '='), up/dn ({ index: [element, bond] }: one atom
-// off the row, on its outer side / the other side), h ({ index: hydrogens shown }), mark (the atom the case is about), ring ({ n, het }: a ring
-// drawn instead of a row), co2 (carbon dioxide leaving beside it). no: true in place of a 'to' fragment: nothing happens (a red cross).
-const MANTEXT = { mode: null };
-const manTextSet = v => { MANTEXT.mode = v === 'a' || v === 'b' || v === 'c' ? v : null; return MANTEXT.mode; };
-const C3 = ['C', 'C', 'C'], C4 = ['C', 'C', 'C', 'C'];
-const MANCASE = {
-  hydrate: [{ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'fewer H' },
-    { from: { a: C4, b: '=--', dn: { 2: ['O', '='] } }, to: { a: C4, b: '---', dn: { 0: ['O', '-'], 2: ['O', '='] }, mark: 0 }, tag: 'past C=O' },
-    { from: { a: ['C', 'C', 'C', 'C', 'C'], b: '-=--' }, to: { a: ['C', 'C', 'C', 'C', 'C'], b: '----', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'near the end' }],
-  dehydrate: [{ from: { a: C4, b: '---', up: { 1: ['O', '-'] }, h: { 0: 3, 2: 2 } }, to: { a: C4, b: '-=-', mark: 2 }, tag: 'fewer H' },
-    { from: { a: ['C', 'C', 'C', 'C', 'C', 'C'], b: '=----', up: { 3: ['O', '-'] } }, to: { a: ['C', 'C', 'C', 'C', 'C', 'C'], b: '=-=--', mark: 2 }, tag: 'by a C=C' },
-    { from: { a: C3, b: '--', dn: { 0: ['O', '-'] }, up: { 1: ['O', '-'] } }, no: true, tag: 'not by O' }],
-  pcc: [{ from: { a: C3, b: '--', up: { 1: ['O', '-'] }, h: { 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '='] }, mark: 1 }, tag: 'has an H' },
-    { from: { a: C3, b: '--', up: { 1: ['O', '-'] }, dn: { 1: ['C', '-'] } }, no: true, tag: 'no H' },
+  weld_far: ['Weld across', 'Weld across rivets. Two C=O facing across the fold join.'], seal_far: ['Seal across', 'Seal across clasps. A COOH and an OH, NH2 or SH facing across the fold join. Water leaves.'], close_far: ['Close across', 'Close across clamps. A Cl and an OH, NH2, SH or COOH facing across the fold join. Acid fumes leave.'],
+  open_far: ['Open across', 'Open across pries. An epoxide and an OH facing across the fold join.'], tuck_far: ['Tuck across', 'Tuck across slips. An OH folds onto a C=C beside a C=O across the fold.'], snap_far: ['Snap across', 'Snap across leaps. Two C=C side by side and a C=C facing them across the fold close a six-ring.'],
+  bridge: ['Bridge', 'Bridge spans. Two SH facing across the fold join as S-S. Hydrogen leaves.'], stitch: ['Stitch', 'Stitch sews. Two C=C facing across the fold join in a four-ring.'], link: ['Link', 'Link ties. Two OH facing across the fold join as an ether. Water leaves.'] };
+// THE DRAWN CASES. A fragment: a (atoms in a zigzag row), b (the bonds between them), up/dn ({ index: [el, bond, el, bond ...] }: a short straight
+// arm off the row, on its outer side / the other side), ep ([i, j]: an epoxide over the bond i-j), h ({ index: hydrogens shown }), mark (the atom
+// the case is about), co2 (carbon dioxide leaves beside it); or ring ({ n, het, arene }) with out ({ index: arm }). A case: { from, to, tag } or
+// { from, no: true, tag } (nothing happens: a red cross); pick (an instrument used on the marked atom of from: the crystal's carbon, the mirror's
+// bond from mark to mark + 1, mark's side kept). Pictures that are not a molecule: { badge, tag } (a number in a ring), { mp, tag } (a MANP
+// picture, by a word of its source), { pic, tag } (one of scheme.js manPic). For a creature these show what lights it and what its tap does.
+const C3 = ['C', 'C', 'C'], C4 = ['C', 'C', 'C', 'C'], C5 = ['C', 'C', 'C', 'C', 'C'], C6 = ['C', 'C', 'C', 'C', 'C', 'C'];
+const ADD_FEW = { from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'fewer H' };
+const ADD_PAST = { from: { a: C4, b: '=--', dn: { 2: ['O', '='] } }, to: { a: C4, b: '---', dn: { 0: ['O', '-'], 2: ['O', '='] }, mark: 0 }, tag: 'past C=O' };
+const addCase = (base, X) => { const g = JSON.parse(JSON.stringify(base)); ['up', 'dn'].forEach(k => Object.keys(g.to[k] || {}).forEach(i => { if (g.to[k][i][0] === 'O' && g.to[k][i][1] === '-') g.to[k][i] = X; })); return g; };
+const ANTI_MORE = X => ({ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', dn: { 0: X }, mark: 0 }, tag: 'more H' });
+const ANTI_NEAR = X => ({ from: { a: C4, b: '=--', dn: { 2: ['O', '='] } }, to: { a: C4, b: '---', up: { 1: X }, dn: { 2: ['O', '='] }, mark: 1 }, tag: 'by the C=O' });
+const KET = { a: C3, b: '--', up: { 1: ['O', '='] } }, ACID = { a: ['C', 'C', 'O'], b: '--', up: { 1: ['O', '='] } }, TERT = { a: C3, b: '--', up: { 1: ['O', '-'] }, dn: { 1: ['C', '-'] } };
+const DIOL = { a: C3, b: '--', dn: { 0: ['O', '-'] }, up: { 1: ['O', '-'] } };
+const ELIM_FEW = { from: { a: C4, b: '---', up: { 1: ['O', '-'] }, h: { 0: 3, 2: 2 } }, to: { a: C4, b: '-=-', mark: 2 }, tag: 'fewer H' };
+const ELIM_MORE = el => ({ from: { a: C4, b: '---', up: { 1: [el, '-'] }, h: { 0: 3, 2: 2 } }, to: { a: C4, b: '=--', mark: 0 }, tag: 'more H' });
+const PAGETURN = { pic: 'pageturn', tag: 'page turn' };
+const REF_CASES = {
+  'reagent:hydrate': [ADD_FEW, ADD_PAST,
+    { from: { a: ['O', 'C', 'C', 'C', 'C', 'C'], b: '--=--' }, to: { a: ['O', 'C', 'C', 'C', 'C', 'C'], b: '-----', up: { 3: ['O', '-'] }, mark: 3 }, tag: 'away from O' },
+    { from: { a: C5, b: '-=--' }, to: { a: C5, b: '----', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'near the end' }],
+  'reagent:ritter': [addCase(ADD_FEW, ['N', '-']), addCase(ADD_PAST, ['N', '-'])],
+  'reagent:hydroborate': [ANTI_MORE(['O', '-']), ANTI_NEAR(['O', '-']), { from: KET, no: true, tag: 'C=O stays' }],
+  'reagent:thiolene': [ANTI_MORE(['S', '-']), { from: { a: C4, b: '=--', dn: { 2: ['O', '='] } }, to: { a: C4, b: '---', dn: { 0: ['S', '-'], 2: ['O', '='] }, mark: 0 }, tag: 'past C=O' }],
+  'reagent:hydroformylation': [ANTI_MORE(['C', '-', 'O', '=']), ANTI_NEAR(['C', '-', 'O', '='])],
+  'reagent:pcc': [{ from: { a: C3, b: '--', up: { 1: ['O', '-'] }, h: { 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '='] }, mark: 1 }, tag: 'has an H' }, { from: TERT, no: true, tag: 'no H' },
     { from: { a: C3, b: '-=' }, to: { a: ['C', 'C'], b: '-', up: { 1: ['O', '='] }, co2: true, mark: 1 }, tag: 'Master\'s' }],
-  ring: [{ from: { a: ['O', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'O' } }, tag: '3 apart' },
-    { from: { a: ['O', 'C', 'C', 'C', 'C', 'C'], b: '-----', dn: { 5: ['O', '='] } }, to: { ring: { n: 6, het: 'O' } }, tag: '4 apart' },
-    { from: { a: ['O', 'C', 'C', 'C'], b: '---', dn: { 3: ['O', '='] } }, no: true, tag: 'too near' }],
-  burette: [{ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '='] }, mark: 1 }, tag: 'the CH' },
-    { from: { a: C3, b: '=-', h: { 0: 2 }, up: { 1: ['C', '-'] } }, no: true, tag: 'no CH' }],
-  water: [{ from: { a: C3, b: '=-' }, to: { a: C3, b: '--', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'drink' },
-    { from: { ring: { n: 5, het: 'O' } }, to: { a: ['O', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, tag: 'burst' }] };
-// the face lines (the same in a, b and c) and b's card lines; the creature's line keeps its number from REF_HOM's own sums (manHomAlt)
-const MANFACE = { hydrate: 'Hydrate wets. Every C=C takes OH.', dehydrate: 'Dehydrate bakes. Every OH sheds water into a C=C.',
-  pcc: 'Oxidize tarnishes. Every CH-OH turns to C=O.', ring: 'Ring curls. An OH and a C=O join in a ring.', burette: 'Burette drips. Every C=C becomes a C=O at its CH.' };
-const MANCARD = { hydrate: ['Fewer H takes it.', 'Past a C=O: far carbon.'], dehydrate: ['Toward fewer H.', 'Tied: toward a C=C.', 'Skips OH beside C-O.'],
-  pcc: ['End CH=CH2 sheds CO2. Master\'s.'], ring: ['3 or 4 carbons apart.', 'Twice a page.', 'Opens at the page turn.'], burette: ['No CH, no drop.'], water: [] };
-// c keeps what was wrong before put right on the face: Oxidize's carbon dioxide, with the deeds' own mark for a run of six rounds or more
-const MANFACE_C = { pcc: 'Oxidize tarnishes. Every CH-OH turns to C=O. End CH=CH2 sheds CO2. Master\'s.' };
-const manHomAlt = (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Loose rings burst. Double bonds drink.';
-// the tab heads under a treatment: b one clipped line a tab, a and c none (a draws the reagent tab's two pictures itself: MANHEADPIC)
-const MANHEAD_B = { reagent: 'Every place it fits.', reflex: 'One at a time. Ring last.', across: 'From round 4.', instrument: 'Two a round.' };
-const MANHEADPIC = { reagent: [{ from: { a: ['C', 'C', 'C', 'C', 'C'], b: '=--=' }, to: { a: ['C', 'C', 'C', 'C', 'C'], b: '----', up: { 1: ['O', '-'], 3: ['O', '-'] }, mark: 1 }, tag: 'every one' },
-  { from: { ring: { n: 6, arene: true } }, no: true, tag: 'not benzene' }] };
-const REF_HEAD = {}; Object.keys(REF_HEAD0).forEach(k => { REF_HEAD[k] = () => (MANTEXT.mode === 'b' ? MANHEAD_B[k] || '' : MANTEXT.mode ? '' : REF_HEAD0[k]()); });
+  'reagent:reduce': [{ from: { a: C3, b: '--', up: { 2: ['O', '='] } }, to: { a: C3, b: '--', up: { 2: ['O', '-'] }, mark: 2 }, tag: 'aldehyde' }, { from: KET, no: true, tag: 'ketone' }],
+  'reagent:allyl': [{ from: KET, to: { a: C5, b: '---=', up: { 1: ['C', '-'] }, dn: { 1: ['O', '-'] }, mark: 1 }, tag: 'C=O' }, { from: ACID, no: true, tag: 'COOH' }],
+  'reagent:dehydrate': [ELIM_FEW, { from: { a: C6, b: '=----', up: { 3: ['O', '-'] } }, to: { a: C6, b: '=-=--', mark: 2 }, tag: 'by a C=C' }, { from: DIOL, no: true, tag: 'not by O' }],
+  'reagent:chugaev': [ELIM_MORE('O'), { from: DIOL, no: true, tag: 'not by O' }],
+  'reagent:hofmann': [ELIM_MORE('N')],
+  'reagent:chlorination': [{ from: { a: C3, b: '--', up: { 1: ['O', '-'] } }, to: { a: C3, b: '--', up: { 1: ['Cl', '-'] }, mark: 1 }, tag: 'has an H' }, { from: TERT, no: true, tag: 'no H' }],
+  'reagent:ozonolysis': [{ from: { a: C6, b: '---=-' }, to: { a: C4, b: '---', up: { 3: ['O', '='] }, mark: 3 }, tag: 'big piece' }],
+  'reagent:permanganate': [{ from: { a: C4, b: '--=' }, to: { a: C3, b: '--', up: { 2: ['O', '='] }, dn: { 2: ['O', '-'] }, co2: true, mark: 2 }, tag: 'end C=C' },
+    { from: { a: C3, b: '--', up: { 2: ['O', '='] } }, to: { a: C3, b: '--', up: { 2: ['O', '='] }, dn: { 2: ['O', '-'] }, mark: 2 }, tag: 'aldehyde' },
+    { from: { a: C3, b: '--', dn: { 2: ['O', '-'] } }, to: { a: C3, b: '--', up: { 2: ['O', '='] }, dn: { 2: ['O', '-'] }, mark: 2 }, tag: 'end OH' },
+    { from: { a: C3, b: '--', up: { 1: ['O', '-'] } }, no: true, tag: 'inner OH' }],
+  'reagent:hwe': [{ from: { a: C3, b: '--', up: { 2: ['O', '='] } }, to: { a: C6, b: '--=--', dn: { 4: ['O', '='] }, mark: 2 }, tag: 'aldehyde' },
+    { from: { a: C3, b: '=-', up: { 2: ['O', '='] } }, no: true, tag: 'by a C=C' }, { from: { a: C5, b: '----', up: { 2: ['O', '='] } }, no: true, tag: 'no CH3' }],
+  'reagent:cyanohydrin': [{ from: KET, to: { a: C3, b: '--', up: { 1: ['O', '-'], 2: ['O', '='] }, dn: { 1: ['C', '-'], 2: ['O', '-'] }, mark: 1 }, tag: 'methyl ketone' }, { from: { a: C5, b: '----', up: { 2: ['O', '='] } }, no: true, tag: 'no CH3' }],
+  'reagent:memgbr': [{ from: KET, to: { a: C3, b: '--', up: { 1: ['O', '-'] }, dn: { 1: ['C', '-'] }, mark: 1 }, tag: 'C=O' }, { from: ACID, no: true, tag: 'COOH' }],
+  'reagent:wittig': [{ from: KET, to: { a: C3, b: '--', up: { 1: ['C', '='] }, mark: 1 }, tag: 'C=O' }, { from: ACID, no: true, tag: 'COOH' }],
+  'reagent:wolff': [{ from: KET, to: { a: C3, b: '--', mark: 1 }, tag: 'C=O' }, { from: ACID, no: true, tag: 'COOH' }],
+  'reagent:aibn': [{ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['C', '-'] }, mark: 1 }, tag: 'fewer H' }],
+  'reagent:wacker': [{ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '='] }, mark: 1 }, tag: 'fewer H' }, { from: { a: C3, b: '=-', up: { 1: ['C', '-'] }, h: { 0: 2 } }, no: true, tag: 'no H there' }],
+  'reflex:ring': [{ from: { a: ['O', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'O' }, out: { 1: ['O', '-'] }, mark: 1 }, tag: '3 apart' },
+    { from: { a: ['O', 'C', 'C', 'C', 'C', 'C'], b: '-----', dn: { 5: ['O', '='] } }, to: { ring: { n: 6, het: 'O' }, out: { 1: ['O', '-'] }, mark: 1 }, tag: '4 apart' },
+    { from: { a: ['O', 'C', 'C', 'C'], b: '---', dn: { 3: ['O', '='] } }, no: true, tag: 'too near' }, { badge: '2', tag: 'a page' }, PAGETURN],
+  'reflex:dry': [{ from: { a: C5, b: '----', up: { 1: ['O', '='], 3: ['O', '-'] } }, to: { a: C5, b: '--=-', up: { 1: ['O', '='] }, mark: 2 }, tag: 'by the C=O' },
+    { from: { a: C5, b: '----', up: { 1: ['O', '='], 2: ['C', '-'], 3: ['O', '-'] }, dn: { 2: ['C', '-'] } }, no: true, tag: 'no H between' }, { badge: '1', tag: 'a page' }],
+  'reflex:weld': [{ from: { a: C6, b: '-----', dn: { 0: ['O', '='] }, up: { 5: ['O', '='] } }, to: { ring: { n: 5 }, out: { 0: ['C', '-', 'O', '='], 4: ['O', '-'] }, mark: 0 }, tag: '4 apart' },
+    { from: { a: ['C', 'C', 'C', 'C', 'C', 'C', 'C'], b: '------', dn: { 0: ['O', '='], 6: ['O', '='] } }, to: { ring: { n: 6 }, out: { 0: ['C', '-', 'O', '='], 5: ['O', '-'] }, mark: 0 }, tag: '5 apart' }, { badge: '2', tag: 'a page' }],
+  'reflex:shift': [{ from: { a: C5, b: '=---', up: { 3: ['O', '='] } }, to: { a: C5, b: '-=--', up: { 3: ['O', '='] }, mark: 2 }, tag: 'slides in' },
+    { from: { a: C5, b: '=---', up: { 2: ['C', '-'], 3: ['O', '='] }, dn: { 2: ['C', '-'] } }, no: true, tag: 'no H between' }],
+  'reflex:tuck': [{ from: { a: ['C', 'C', 'C', 'C', 'C', 'C', 'O'], b: '-=----', dn: { 0: ['O', '='] } }, to: { ring: { n: 5, het: 'O' }, out: { 1: ['C', '-', 'C', '-', 'O', '='] }, mark: 1 }, tag: '3 apart' },
+    { from: { a: ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'O'], b: '-=-----', dn: { 0: ['O', '='] } }, to: { ring: { n: 6, het: 'O' }, out: { 1: ['C', '-', 'C', '-', 'O', '='] }, mark: 1 }, tag: '4 apart' }],
+  'reflex:close': [{ from: { a: ['Cl', 'C', 'C', 'C', 'C', 'O'], b: '-----' }, to: { ring: { n: 5, het: 'O' } }, tag: '3 apart' },
+    { from: { a: ['Cl', 'C', 'C', 'C', 'C', 'C', 'C', 'O'], b: '-------' }, to: { ring: { n: 7, het: 'O' } }, tag: '5 apart' }, { from: { a: ['Cl', 'C', 'C', 'C', 'O'], b: '----' }, no: true, tag: 'too near' }],
+  'reflex:cap': [{ from: { a: ['S', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'S' }, out: { 1: ['O', '-'] }, mark: 1 }, tag: '3 apart' },
+    { from: { a: ['S', 'C', 'C', 'C'], b: '---', dn: { 3: ['O', '='] } }, no: true, tag: 'too near' }, PAGETURN],
+  'reflex:knit': [{ from: { a: ['N', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'N' }, out: { 1: ['O', '-'] }, mark: 1 }, tag: '3 apart' },
+    { from: { a: ['N', 'C', 'C', 'C'], b: '---', dn: { 3: ['O', '='] } }, no: true, tag: 'too near' }, PAGETURN],
+  'reflex:seal': [{ from: { a: ['O', 'C', 'C', 'C', 'C', 'O'], b: '-----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'O' }, out: { 1: ['O', '='] }, mark: 1 }, tag: 'OH' },
+    { from: { a: ['N', 'C', 'C', 'C', 'C', 'O'], b: '-----', up: { 4: ['O', '='] } }, to: { ring: { n: 5, het: 'N' }, out: { 1: ['O', '='] }, mark: 1 }, tag: 'NH2' },
+    { from: { a: ['O', 'C', 'C', 'C', 'O'], b: '----', dn: { 3: ['O', '='] } }, no: true, tag: 'too near' }],
+  'reflex:open': [{ from: { a: ['O', 'C', 'C', 'C', 'C', 'C'], b: '-----', ep: [4, 5] }, to: { ring: { n: 5, het: 'O' }, out: { 1: ['C', '-', 'O', '-'] }, mark: 1 }, tag: 'nearer end' },
+    { from: { a: ['O', 'C', 'C', 'C'], b: '---', ep: [2, 3] }, no: true, tag: 'too near' }],
+  'reflex:fold': [{ from: { a: C4, b: '---', ep: [1, 2], dn: { 1: ['C', '-'] } }, to: { a: C4, b: '---', dn: { 1: ['C', '-'] }, up: { 2: ['O', '='] }, mark: 2 }, tag: 'the CH' },
+    { from: { a: C4, b: '---', ep: [1, 2], dn: { 1: ['C', '-'], 2: ['C', '-'] } }, no: true, tag: 'no CH' }],
+  'instrument:crystal': [{ from: { a: C4, b: '---', mark: 1 }, to: { a: C4, b: '---', up: { 1: ['O', '-'] }, mark: 1 }, pick: true, tag: 'plain C' },
+    { from: { a: ['O', 'C', 'C', 'C'], b: '---', mark: 1 }, no: true, pick: true, tag: 'by O' }, { from: { a: C3, b: '=-', mark: 1 }, no: true, pick: true, tag: 'on a C=C' }],
+  'instrument:bunsen': [ELIM_FEW, { from: DIOL, no: true, tag: 'not by O' }],
+  'instrument:burette': [{ from: { a: C3, b: '=-', h: { 0: 2, 1: 1 } }, to: { a: C3, b: '--', up: { 1: ['O', '='] }, mark: 1 }, tag: 'the CH' },
+    { from: { a: C4, b: '-=-', dn: { 2: ['C', '-'] }, h: { 1: 1 } }, to: { a: C4, b: '---', up: { 1: ['O', '='] }, dn: { 2: ['C', '-'] }, mark: 1 }, tag: 'the CH' },
+    { from: { a: C3, b: '=-', up: { 1: ['C', '-'] }, h: { 0: 2 } }, no: true, tag: 'no CH' }],
+  'instrument:magnet': [{ from: { a: ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'], b: '-------' }, to: { a: C4, b: '---', mark: 1 }, tag: 'four or more' }, { from: { a: C5, b: '----' }, no: true, tag: 'only three' }],
+  'instrument:mirror': [{ from: { a: ['O', 'C', 'C', 'C', 'C'], b: '----', mark: 2 }, to: { a: ['O', 'C', 'C', 'C', 'C', 'O'], b: '-----', mark: 2 }, pick: true, tag: 'copied' },
+    { from: { a: C4, b: '---', mark: 1 }, no: true, pick: true, tag: 'too short' }],
+  'homunculus:water': [{ pic: 'waters3', tag: '3 waters' }, { from: { ring: { n: 5, het: 'O' }, out: { 1: ['O', '-'] } }, to: { a: ['O', 'C', 'C', 'C', 'C'], b: '----', up: { 4: ['O', '='] } }, tag: 'burst' },
+    { from: { a: C3, b: '=-' }, to: { a: C3, b: '--', up: { 1: ['O', '-'] }, mark: 1 }, tag: 'drink' }],
+  'homunculus:h2': [{ pic: 'h2x2', tag: '2 hydrogens' }],
+  'homunculus:co2': [{ pic: 'idle3', tag: '3 idle' }, { pic: 'lastpage', tag: 'last page' }],
+  'homunculus:acid': [{ mp: 'atoms smaller', tag: '2 atoms off' }],
+  'homunculus:wood': [{ mp: 'finds nothing to act on', tag: 'a dud' }],
+  'homunculus:salt': [{ mp: 'line of the page before again', tag: 'same opener' }, { mp: 'get their use back', tag: 'use back' }],
+  'homunculus:slime': [{ pic: 'twice', tag: 'same twice' }, { mp: 'are shut on the next page', tag: 'shut' }],
+  'homunculus:ammonia': [{ mp: 'nitrogen goes on', tag: 'aminate' }, { pic: 'knit', tag: 'or a knit' }, { mp: 'fire again in the same order', tag: 'again, free' }],
+  'homunculus:seedling': [{ mp: 'atoms bigger', tag: '6 atoms on' }],
+  'homunculus:brimstone': [{ mp: 'sulfur goes on', tag: 'thiolate' }, { pic: 'cap', tag: 'or a cap' }, { mp: 'the round ends now', tag: 'task met' }] };
+// the ids the book uses for the reagents with a card id of their own
+[['pcc', 'oxidize'], ['allyl', 'grow'], ['bh3', 'hydroborate'], ['nabh4', 'reduce']].forEach(([a, b]) => { if (REF_CASES['reagent:' + a]) REF_CASES['reagent:' + b] = REF_CASES['reagent:' + a]; else REF_CASES['reagent:' + a] = REF_CASES['reagent:' + b]; });
+// THE TAB HEADS: pictures and badges only, no words but names. reagent: two cases; reflex: the order the reflexes fire in, numbered, and their
+// limits a page; across: from round 4, once each a page; instrument: two a round.
+const REF_HEADPIC = { reagent: [{ case: { from: { a: C5, b: '=--=' }, to: { a: C5, b: '----', up: { 1: ['O', '-'], 3: ['O', '-'] }, mark: 1 }, tag: 'every one' } },
+    { case: { from: { ring: { n: 6, arene: true } }, no: true, tag: 'not benzene' } }],
+  reflex: [{ order: [['1', 'seal close knit cap open'], ['2', 'the rest'], ['3', 'ring']] }, { pills: [['dry', '1'], ['weld', '2'], ['ring', '2']], tag: 'a page' }],
+  across: [{ pills: [['round', '4+']] }, { pills: [['each', '1']], tag: 'a page' }],
+  instrument: [{ pills: [['instruments', '2']], tag: 'a round' }] };
 // Motifs, all twelve: [name, verb and act, the least count that pays]. The number is written by thingOf from MOTIFS[id].rate as the player reads it.
 const REF_MOTIF = { sugar: ['Sugar', 'Sugar stacks. Keep a carbon with an OH.', 1], resonance: ['Resonance', 'Resonance ripples. Keep two double bonds one single bond apart.', 2], arene: ['Benzene ring', 'Benzene ring steadies. Keep a benzene ring.', 1],
   ring: ['Ring', 'Ring holds. Keep a ring outside benzene and cages.', 1], fusion: ['Shared side', 'Shared side braces. Keep two rings sharing a side.', 1], cage: ['Cage', 'Cage encloses. Keep rings tied into a cage.', 1],
   spiro: ['Spiro centre', 'Spiro centre pivots. Keep two rings meeting at one atom.', 1], acid: ['Acid group', 'Acid group anchors. Keep a COOH.', 1], amine: ['Amine', 'Amine hooks. Keep an amine nitrogen.', 1],
   sulfur: ['Sulfur bridge', 'Sulfur bridge joins. Keep a sulfur between two atoms.', 1], branch: ['Branch point', 'Branch point forks. Keep a carbon holding three carbons.', 1], chain: ['Long chain', 'Long chain trails. Keep three plain carbons in a row.', 1] };
-// (rule text 119) the crystal, burner, burette, magnet and mirror lines carry the words scheme.js MANP draws their pictures by
-const REF_GEAR = { crystal: 'Seed crystal seeds. Pick a carbon: one hydrogen there becomes an OH. Not on a C=C or beside O, N, S or Cl. Reflexes run.', bunsen: 'Burner heats. Every OH that can lose water does, all at once, as dehydrate does. Reflexes run.', burette: 'Burette drips. Every C=C outside a benzene ring becomes a C=O on a carbon with one H. If both have one, a fixed pick. With none, it stays. Reflexes run.',
-  magnet: 'Magnet pulls. Every run of four or more plain CH2 outside rings shuts to two. Reflexes run.', mirror: 'Mirror reflects. Pick a C-C single bond outside rings: one side goes and the other is copied across it. The side kept needs 3 to 25 atoms. Reflexes run.', carousel: 'Carousel deals. One more reagent is dealt on the first page of a round.', dropper: 'Dropper refills. Two more uses of every reagent.',
+// the crystal, burner, burette, magnet and mirror lines carry the words scheme.js MANP draws their pictures by
+const REF_GEAR = { crystal: 'Seed crystal seeds. Pick a carbon: one hydrogen there becomes an OH.', bunsen: 'Burner heats. Every OH that can lose water does.', burette: 'Burette drips. Every C=C becomes a C=O at its CH.',
+  magnet: 'Magnet pulls. Every four or more plain CH2 in a row shut to two.', mirror: 'Mirror reflects. Pick a bond: one side goes, the other is copied across it.', carousel: 'Carousel deals. One more reagent is dealt on a round\'s first page.', dropper: 'Dropper refills. Two more uses of every reagent.',
   timer: 'Timer widens. A fourth circle on every page.', counter: 'Tally counter tallies. One page counts twice toward the task.', condenser: 'Condenser returns. One more page is played, for the task only.' };
 // Reagents, every one a run can hold, by the id the book uses: the reagent's name is its verb.
-// (rule text 119) "C=O" is a ketone or aldehyde C=O, as everywhere in the book; a COOH is named as such. "Beside a C=O" counts a COOH too.
-const REF_REAGENT = { hydrate: 'Hydrate wets. Every C=C takes water, OH on the carbon with fewer H. Beside a C=O or COOH, OH on the far carbon. On a tie, OH away from a carbon holding O, N, S or Cl, then toward the chain\'s end. Else a fixed pick.', pcc: 'Oxidize tarnishes. Every C-OH with an H on its carbon turns to C=O. Not on a carbon with a second O, N, S or Cl. A chain-end CH=CH2 loses its end carbon as CO2 and leaves CHO. Not in a three-round run.', allyl: 'Grow branches. Every C=O takes a three-carbon arm ending in C=C and turns to C-OH.',
-  thiolene: 'Thiolate taints. Every C=C takes SH on the carbon with more H. Beside a C=O or COOH, SH on the far carbon. On a tie, SH beside a carbon holding O, N, S or Cl, then away from the chain\'s end. Else a fixed pick.', dehydrate: 'Dehydrate bakes. Every OH leaves as water. A C=C forms toward the neighbour with fewer H. On a tie, toward one beside a double bond, then away from the chain\'s end. Else a fixed pick. The neighbour needs an H and no O, N, S or Cl. Not beside a carbon holding O.', ritter: 'Aminate studs. Every C=C takes NH2 on the carbon with fewer H. Beside a C=O or COOH, NH2 on the far carbon. On a tie, NH2 away from a carbon holding O, N, S or Cl, then toward the chain\'s end. Else a fixed pick.',
-  epoxidation: 'Epoxidize straddles. Every C=C turns to an epoxide.', hwe: 'Extend lengthens. Every aldehyde or methyl ketone C=O trades its O for =CH-CO-CH3. Not one beside a C=C.', permanganate: 'Burn scorches. Every chain-end CH=CH2 loses its end carbon as CO2 and turns to COOH. Every aldehyde and chain-end CH2-OH turns to COOH.',
-  hydroborate: 'Hydroborate soaks. Every C=C takes water, OH on the carbon with more H. Beside a C=O or COOH, OH on the near carbon. On a tie, OH beside a carbon holding O, N, S or Cl, then away from the chain\'s end. Else a fixed pick.', cyanohydrin: 'Cyanate sours. Every aldehyde or methyl ketone C=O turns to C(OH)-COOH. Ammonia leaves.', reduce: 'Reduce softens. Every aldehyde C=O turns to CH2-OH. Ketones stay.',
-  chlorination: 'Chlorinate swaps. Every OH on a carbon with an H turns to Cl. Not on a carbon with a second O, N, S or Cl. Acid fumes leave.', hydroformylation: 'Formylate tips. Every C=C takes CHO on the carbon with more H. Beside a C=O or COOH, CHO on the near carbon. On a tie, CHO beside a carbon holding O, N, S or Cl, then away from the chain\'s end. Else a fixed pick.', ozonolysis: 'Cleave cuts. Every C=C splits into two C=O. Only the biggest piece stays.',
-  dihydroxylation: 'Dihydroxylate pairs. Every C=C takes an OH on both carbons.', hofmann: 'Eliminate N strips. Every NH2 on a carbon with single bonds leaves. A C=C forms toward the neighbour with more H. The neighbour needs an H. Else a fixed pick. Water leaves.', chugaev: 'Eliminate S sheds. Every OH dehydrate could take leaves. A C=C forms toward the neighbour with more H. Else a fixed pick. Sulfur leaves.',
-  memgbr: 'Add methyl plants. Every C=O takes CH\u2083 and turns to C-OH.', wittig: 'Methylenate trades. The O of every C=O turns to CH\u2082, leaving C=C.', aibn: 'Polymerize chains. Every C=C starts a chain on the carbon with fewer H. Beside a C=O or COOH, on the far carbon. On a tie, away from a carbon holding O, N, S or Cl, then toward the chain\'s end. Else a fixed pick. Each use doubles every chain.',
-  wacker: 'Oxidize C=C converts. Every C=C turns to C=O on the carbon with fewer H. Beside a C=O or COOH, on the far carbon. On a tie, away from a carbon holding O, N, S or Cl, then toward the chain\'s end. Else a fixed pick. That carbon needs an H.', wolff: 'Strip C=O scrubs. Every C=O turns to CH\u2082.', h2: 'Hydrogenate fills. Every C=C takes H\u2082.' };
+// "C=O" is a ketone or aldehyde C=O, as everywhere in the book; a COOH is named as such. What decides where a reagent acts is drawn (REF_CASES).
+const REF_REAGENT = { hydrate: 'Hydrate wets. Every C=C takes OH.', pcc: 'Oxidize tarnishes. Every CH-OH turns to C=O. End CH=CH2 sheds CO2. Master\'s.', allyl: 'Grow branches. Every C=O sprouts a three-carbon arm.',
+  thiolene: 'Thiolate taints. Every C=C takes SH.', dehydrate: 'Dehydrate bakes. Every OH sheds water into a C=C.', ritter: 'Aminate studs. Every C=C takes NH2.',
+  epoxidation: 'Epoxidize straddles. Every C=C turns to an epoxide.', hwe: 'Extend lengthens. Every aldehyde or methyl ketone grows a C=C and a new ketone.', permanganate: 'Burn scorches. Chain ends burn to COOH.',
+  hydroborate: 'Hydroborate soaks. Every C=C takes OH.', cyanohydrin: 'Cyanate sours. Every aldehyde or methyl ketone turns to C(OH)-COOH. Ammonia leaves.', reduce: 'Reduce softens. Every aldehyde turns to CH2-OH.',
+  chlorination: 'Chlorinate swaps. Every CH-OH turns to CH-Cl. Acid fumes leave.', hydroformylation: 'Formylate tips. Every C=C takes CHO.', ozonolysis: 'Cleave cuts. Every C=C splits into two C=O. The biggest piece stays.',
+  dihydroxylation: 'Dihydroxylate pairs. Every C=C takes two OH.', hofmann: 'Eliminate N strips. Every NH2 goes and leaves a C=C. Water leaves.', chugaev: 'Eliminate S sheds. Every OH goes and leaves a C=C. Sulfur leaves.',
+  memgbr: 'Add methyl plants. Every C=O takes CH₃ and turns to C-OH.', wittig: 'Methylenate trades. Every C=O turns to C=CH₂.', aibn: 'Polymerize chains. Every C=C starts a chain. Each use doubles every chain.',
+  wacker: 'Oxidize C=C converts. Every C=C turns to C=O.', wolff: 'Strip C=O scrubs. Every C=O turns to CH₂.', h2: 'Hydrogenate fills. Every C=C takes H₂.' };
 REF_REAGENT.grow = REF_REAGENT.allyl; REF_REAGENT.oxidize = REF_REAGENT.pcc; REF_REAGENT.bh3 = REF_REAGENT.hydroborate; REF_REAGENT.nabh4 = REF_REAGENT.reduce;
 const REF_TRACK = { gothic: 'Gothic hybrid', metal: 'Chain Lightning', surf: 'Monster-movie lab', baroque: 'Harpsichord unhinged' };
 const REF_CARD = { hydroborate: 'bh3', reduce: 'nabh4' };
@@ -391,17 +444,17 @@ const REF_FEED = { water: 'waters driven off', h2: 'hydrogens driven off', co2: 
 const REF_HOM0 = { h2: (K, f) => 'Hydrogen lifts. Put only two reagents on a page with oxidize second. x' + homX((K.k || 1) * f) + '. The chain carries into the next page; a shorter chain there: x' + homX(K.pop) + '.',
   wood: (K, f) => 'Wood spirit drinks. Line up first a reagent that finds nothing. He pours every dealt reagent left out; if one lands: x' + homX(K.k * f) + '. That bottle is empty all round.',
   brimstone: (K, f) => 'Brimstone burns. Put sulfur on the molecule with the task half done. The round ends; the task counts as met. x' + homX(K.k * f) + ' after page one, x' + homX(K.k2 * f) + ' after page two.' };
-// (rule text 119) each line checked against HOM2LIT (what lights it) and hom2Use (what a tap does); a creature's test runs on one page
-const REF_HOM = { water: (K, f) => 'Water floods. Drive off ' + K.need + ' waters on one page. x' + homX(K.k * f) + '. Loose rings open. Every C=C takes water as hydrate does.',
-  h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens on one page. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
-  co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Reach' : 'Drive off carbon dioxide and reach') + ' the last page with ' + K.least + ' reagents that have not landed this round. x' + homX(Math.pow(K.k, K.most) * f) + '.',
-  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule on one page. x' + homX(K.k * f) + '.' + (homCountOn('acid') ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '.' : ''),      // twenty-first (homCount): the count's step; the cap holds the stage's number only
+// what lights each creature and what its tap does are drawn (REF_CASES); the line is the creature, its verb, the job, the number
+const REF_HOM = { water: (K, f) => 'Water floods. Wring out ' + K.need + ' waters. x' + homX(K.k * f) + '. Loose rings burst. Double bonds drink.',
+  h2: (K, f) => (homSimple('h2') ? 'Hydrogen lifts. Drive off ' + HOMSIMPLE.h2.need + ' hydrogens. x' + homX(HOMSIMPLE.h2.k * f) + '.' : REF_HOM0.h2(K, f)),
+  co2: (K, f) => 'Dry ice freezes. ' + (K.noCO2 ? 'Keep ' : 'Drive off carbon dioxide and keep ') + K.least + ' reagents idle to the last page. x' + homX(Math.pow(K.k, K.most) * f) + '.',
+  acid: (K, f) => 'Acid eats. Chew ' + K.loss + ' atoms off the molecule. x' + homX(K.k * f) + '.' + (homCountOn('acid') ? ' Each atom more: x' + HOMCOUNT.per.acid.toFixed(2) + '.' : ''),      // twenty-first (homCount): the count's step; the cap holds the stage's number only
   wood: (K, f) => (homSimple('wood') ? 'Wood spirit drinks. Line up a reagent that finds nothing. x' + homX(HOMSIMPLE.wood.k * f) + '.' : REF_HOM0.wood(K, f)),
-  salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open a full page with the first reagent of the full page before' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
-  slime: (K, f) => 'Slime clings. Land one reagent twice on one page' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle is shut for the round.',
-  ammonia: (K, f) => 'Ammonia revives. Land aminate or set off a knit. The page\'s reagents fire again and spend no use.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
-  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms on one page. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
-  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Land thiolate or set off a cap. The round ends and the task counts as met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' + (homCountOn('brimstone') ? ' Each sulfur more: x' + HOMCOUNT.per.brimstone.toFixed(2) + '.' : '') : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): each sulfur more
+  salt: (K, f) => 'Salt preserves. ' + (K.match === 1 ? 'Open with last page\'s first reagent' : K.any ? 'Play last page\'s three reagents again' : 'Repeat last page\'s line') + '. x' + homX(K.k * f) + (K.match === 1 ? '. Its use returns.' : '. Uses return.'),
+  slime: (K, f) => 'Slime clings. Land one reagent twice' + (K.steps === 0 ? '' : ', a reflex each time') + '. x' + homX(K.k * f) + '. That bottle shuts.',
+  ammonia: (K, f) => 'Ammonia revives. Land aminate or a knit. The line fires again.' + ((K.k || 1) * f !== 1 ? ' x' + homX((K.k || 1) * f) + '.' : ''),
+  seedling: (K, f) => 'Seedling sprouts. Add ' + K.gain + ' atoms. x' + homX(K.k * f) + (K.rise === false ? '.' + (homCountOn('seedling') ? ' Each atom more: x' + HOMCOUNT.per.seedling.toFixed(2) + '.' : '') : ', rising each page. Stall: x' + homX(K.wilt) + '.'),
+  brimstone: (K, f) => (homSimple('brimstone') ? 'Brimstone burns. Land thiolate or a cap. The round ends, task met.' + (HOMSIMPLE.brimstone.k ? ' x' + homX(HOMSIMPLE.brimstone.k * f) + '.' + (homCountOn('brimstone') ? ' Each sulfur more: x' + HOMCOUNT.per.brimstone.toFixed(2) + '.' : '') : '') : REF_HOM0.brimstone(K, f)) };      // twentieth (homCount): each sulfur more
 // how each is got, in the same voice (the count is its jar's size, JAR.full)
 const REF_HOMHOW = { water: n => n + ' waters driven off.', h2: n => n + ' hydrogens driven off.', co2: n => n + ' carbon dioxides driven off.', acid: n => n + ' uses of hydrate or dehydrate.',
   wood: n => n + ' uses of reduce.', salt: n => n + ' chain-end OH oxidized.', slime: n => n + ' uses of hydroborate.', seedling: n => n + ' uses of grow.',
@@ -422,7 +475,7 @@ function thingOf(cat, id, f) {
   if (cat === 'instrument') { const G = GEARS[id] || {}, n = REF_GEAR[id] || G.note || ''; return { name: capName(G.name || id), does: n + (G.task || G.tool ? ' Once a round.' : '') }; }
   if (cat === 'soundtrack') return { name: REF_TRACK[id], does: 'A soundtrack.' };
   if (cat === 'sigil') { const S = SIGILS[id], ar = id === 'aqua_permanens' ? RULE.aquaRounds : 0; return { name: S.name, does: (ar ? S.does.replace(/\.$/, ' for ' + ar + ' rounds.') : RULE.sigilStrong && RULE.sigilStrong[id] ? S.does : S.doesPlain || S.does) + (sigilPays(id) ? ' Gives ' + sigilPays(id) + ' gold.' : '') }; }
-  if (cat === 'homunculus') { const once = RULE.brimOnce && id === 'brimstone' ? ' Once a run.' : RULE.homOnce && id !== 'co2' ? ' Once a round.' : ''; const t = (MANTEXT.mode && id === 'water' ? manHomAlt : REF_HOM[id])(HOMS2K[id] || {}, f || 1); return { name: capName(HOMS[id].name), does: /x\d+\.\d\d\./.test(t) ? t.replace(/(x\d+\.\d\d\.)/, '$1' + once) : t + once }; }      // (rule text 119) a line with no number still says once a round (or a run)      // nineteenth (owner): the "Brings X." lines are gone from the book; the rule itself (HOMS[id].brings) stands
+  if (cat === 'homunculus') { const once = RULE.brimOnce && id === 'brimstone' ? ' Once a run.' : RULE.homOnce && id !== 'co2' ? ' Once a round.' : ''; const t = REF_HOM[id](HOMS2K[id] || {}, f || 1); return { name: capName(HOMS[id].name), does: /x\d+\.\d\d\./.test(t) ? t.replace(/(x\d+\.\d\d\.)/, '$1' + once) : t + once }; }      // (rule text 119) a line with no number still says once a round (or a run)      // nineteenth (owner): the "Brings X." lines are gone from the book; the rule itself (HOMS[id].brings) stands
   if (cat === 'term') return { name: REF_TERM[id][0], does: REF_TERM[id][1] };
   if (cat === 'length') return { name: id === 'master' ? 'Master\'s' : 'Doctorate', does: REF_LENGTH[id][0] };
   return { name: id, does: '' };
@@ -461,10 +514,8 @@ function reference(meta) {
   Object.keys(REF_TERM).forEach(id => add('term', id, REF_TERM[id][0], REF_TERM[id][1], REF_TERM[id][2] + (RULE.termsGate ? ' After two runs that cleared six rounds.' : ''), m.sig && m.sig[id] ? 1 : 0, 1));
   add('length', 'master', 'Master\'s', REF_LENGTH.master[0], REF_LENGTH.master[1], c.won_bachelor || (has('length', 'master') ? 1 : 0), 1);
   add('length', 'doctorate', 'Doctorate', REF_LENGTH.doctorate[0], REF_LENGTH.doctorate[1], c.won_master || (has('length', 'doctorate') ? 1 : 0), 1);
-  // a treatment of the words (MANTEXT): its face line, b's card lines, a's drawn cases on the six pages it covers
-  if (MANTEXT.mode) out.forEach(x => { const id = x.id, key = x.category + ':' + id; if (!['reagent:hydrate', 'reagent:dehydrate', 'reagent:pcc', 'reflex:ring', 'instrument:burette', 'homunculus:water'].includes(key)) return;
-    if (MANFACE[id]) x.does = ((MANTEXT.mode === 'c' && MANFACE_C[id]) || MANFACE[id]) + (x.category === 'instrument' ? ' Once a round.' : '');
-    x.lines = MANTEXT.mode === 'b' ? (MANCARD[id] || []) : null; x.cases = MANTEXT.mode === 'a' ? (MANCASE[id] || null) : null; x.nums = refNums(x.does); });
+  // the drawn cases of a page (REF_CASES), by the row's category and id
+  out.forEach(x => { const cs = REF_CASES[x.category + ':' + x.id]; if (cs) x.cases = cs; });
   const total = out.filter(x => !x.start).length + SIGN.laps;      // the sign counts what can be got: the eight starting motifs' rows are left out, so its nine tenths is as it was
   for (let k = 1; k <= SIGN.laps; k++) add('sign', 'sign' + k, 'The sign, ' + (k === 1 ? 'first' : k === 2 ? 'second' : 'third') + ' time', 'The sign resets. The book keeps only the two found reagents. x' + (1 + SIGN.lift * k).toFixed(2) + '; the number to beat x' + Math.pow(SIGN.bar, k).toFixed(2) + '.', (k > 1 ? 'Take the sign ' + (k > 2 ? 'twice' : 'once') + '. ' : '') + 'Hold nine tenths of this book.', null, null);
   const n = out.filter(x => x.category !== 'sign' && x.owned && !x.start).length, need = Math.ceil(SIGN.share * (total - SIGN.laps));
@@ -663,27 +714,27 @@ const GEAR = [
   { id: 'extinguisher', tok: 'times 1.5', fam: 'rule', rule: true, note: 'a click during a chain stops it and the round counts half again. once a round', name: 'extinguisher', shape: 'column' },
   { id: 'intern', tok: '+1 free', fam: 'rule', rule: true, note: 'does one reaction of its own choosing on every new page. it is not always a good one', name: 'the intern', shape: 'column' },
   { id: 'stopper', tok: '{p} times 4', fam: 'places', note: 'the first reaction of a new row counts four times', name: 'stopper', shape: 'funnel', at: 'step', fx: c => (!c.cont ? M('h', 4) : null) },
-  { id: 'mirror', tok: 'copies one side|across', fam: 'tool', five: true, rule: true, tool: true, note: 'one side of a C-C bond goes; the other is copied across it', name: 'mirror', shape: 'box' },
+  { id: 'mirror', tok: 'copies one side|across', fam: 'tool', five: true, rule: true, tool: true, note: 'one side goes, the other is copied across it', name: 'mirror', shape: 'box' },
   { id: 'mortar', tok: '{p} times 2.5', fam: 'places', note: '3 or more places at once: that reaction counts two and a half times', name: 'mortar', shape: 'round', at: 'step', fx: c => (c.hits >= 3 ? M('h', 2.5) : null) },
   // row
   { id: 'cannula', tok: '{r} +1', fam: 'row', note: 'each reaction in a row: row +1', name: 'cannula', shape: 'column', at: 'step', fx: c => (c.cont ? A('r', 1) : null) },
   { id: 'reflux', tok: '{r} times 1.06', fam: 'row', note: '3 or more in a row: row times 1.06', name: 'reflux', shape: 'column', at: 'step', fx: c => (c.cont && c.len >= 3 ? M('r', 1.06) : null) },
   { id: 'burette', tok: '{r} +1.5', fam: 'row', note: 'first reaction on a page: row +1.5', name: 'burette', shape: 'column', at: 'step', fx: c => (c.pageStep === 0 ? A('r', 1.5) : null) },
   { id: 'clamp', tok: 'nothing changes|this part', fam: 'tool', rule: true, tool: true, note: 'nothing changes this part', name: 'clamp', shape: 'column' },
-  { id: 'magnet', tok: 'pulls every gap|shut', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every run of 4 or more plain CH2 shuts to two', name: 'magnet', shape: 'round' },
+  { id: 'magnet', tok: 'pulls every gap|shut', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'four or more plain CH2 in a row shut to two', name: 'magnet', shape: 'round' },
   { id: 'recycler', tok: '{r} +0.5', fam: 'row', note: 'back to an earlier molecule: row +0.5', name: 'recycler', shape: 'flask', at: 'step', fx: c => (c.loop ? A('r', 0.5) : null) },
   // extra
   { id: 'stirrer', tok: '{e} +0.1', fam: 'extra', note: 'each reaction: extra +0.1', name: 'stir plate', shape: 'box', at: 'step', fx: () => A('e', 0.1) },
   { id: 'cards', tok: '{e} +0.25', fam: 'extra', note: 'a reagent not yet used this round: extra +0.25', name: 'index cards', shape: 'box', at: 'step', fx: c => (c.first ? A('e', 0.25) : null) },
   { id: 'logbook', tok: '{e} +0.02', fam: 'extra', note: 'each reaction: extra +0.02 for every different reagent used', name: 'log book', shape: 'box', at: 'step', fx: c => A('e', 0.02 * c.distinct) },
-  { id: 'crystal', tok: 'adds OH here|and zips', fam: 'tool', five: true, rule: true, tool: true, note: 'one H here becomes an OH, then zips; not on a C=C or beside O, N, S or Cl', name: 'seed crystal', shape: 'round' },
+  { id: 'crystal', tok: 'adds OH here|and zips', fam: 'tool', five: true, rule: true, tool: true, note: 'one hydrogen here becomes an OH', name: 'seed crystal', shape: 'round' },
   { id: 'scalepan', tok: '{e} +0.5', fam: 'extra', note: 'a reaction that is not in a row: extra +0.5', name: 'brass weights', shape: 'round', at: 'step', fx: c => (!c.cont ? A('e', 0.5) : null) },
   { id: 'coldtrap', tok: '{e} +0.12', fam: 'extra', note: 'catches water that leaves: extra +0.12', name: 'cold trap', shape: 'funnel' },
   { id: 'dryer', tok: '{p} +60', fam: 'places', note: 'catches water that leaves: +60 places', name: 'drying tube', shape: 'column' },
   { id: 'sieves', tok: '{r} +0.6', fam: 'row', note: 'catches water that leaves: row +0.6', name: 'sieves', shape: 'round' },
   { id: 'hood', tok: '{e} +0.06', fam: 'extra', note: 'catches anything that leaves: extra +0.06', name: 'fume hood', shape: 'box' },
   { id: 'scrubber', tok: '{p} +50', fam: 'places', note: 'catches hydrogen that leaves: +50 places. an oxygen or a chloride: +80', name: 'scrubber', shape: 'column' },
-  { id: 'bunsen', tok: 'every OH|becomes C=C', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every OH dehydrate could take leaves as water, at once', name: 'burner', shape: 'funnel' },
+  { id: 'bunsen', tok: 'every OH|becomes C=C', fam: 'tool', five: true, rule: true, tool: true, whole: true, note: 'every OH that can lose water does', name: 'burner', shape: 'funnel' },
   { id: 'litmus', tok: '{e} +0.08', fam: 'extra', note: 'an acid: extra +0.08. catches a chloride that leaves: extra +0.4', name: 'litmus paper', shape: 'box', at: 'step', fx: c => (c.cls === 'acid' ? A('e', 0.08) : null) },
   { id: 'stopwatch', tok: '{e} +0.35', fam: 'extra', note: 'last reaction on a page: extra +0.35', name: 'stopwatch', shape: 'box', at: 'step', fx: c => (c.pageStep === c.pageMax - 1 ? A('e', 0.35) : null) },
   { id: 'thermometer', tok: '{e} +0.3', fam: 'extra', note: 'on page 3 and later: extra +0.3', name: 'thermometer', shape: 'column', at: 'step', fx: c => (c.page >= 3 ? A('e', 0.3) : null) },
@@ -735,7 +786,7 @@ const FIVE = { crystal: 0, bunsen: 0, dropper: 0, counter: 0, magnet: 1, carouse
 // fifthSet(null) offers none and puts the old number-adding piece of that name back.
 const FIFTH = { balance: { tok: 'OH and C=O|trade places', note: 'OH and C=O trade places', whole: true },
   mortar: { tok: 'cuts this|ring bond', note: 'cuts this ring bond' },
-  burette: { tok: 'every C=C|becomes C=O', note: 'every C=C becomes C=O on a carbon with one H', whole: true } }, FIFTH0 = {};
+  burette: { tok: 'every C=C|becomes C=O', note: 'every C=C becomes a C=O at its CH', whole: true } }, FIFTH0 = {};
 function fifthSet(id) {
   Object.keys(FIFTH0).forEach(k => { const G = GEARS[k]; Object.keys(G).forEach(f => { delete G[f]; }); Object.assign(G, FIFTH0[k]); delete FIFTH0[k]; delete FIVE[k]; });
   RULE.fifth = id && FIFTH[id] ? id : null; if (!RULE.fifth) return;
@@ -1646,7 +1697,7 @@ const homSpent = g => { const h = g && g.hom; if (!h) return null; if (RULE.brim
 const hom2Open = g => hom2On(g) && !!g.syn && !g.over && !!g.shot && !(g.queue || []).length && !g.hom.tp && !homSpent(g);
 const hom2Lit = g => hom2Open(g) && !!HOM2LIT[g.hom.id] && !!HOM2LIT[g.hom.id](g, hom2Rec(g), HOMS2K[g.hom.id] || {});
 const HOM2TOK = {
-  water: K => K.need + ' waters off|yield x' + homK(K.k), h2: K => (homSimple('h2') ? HOMSIMPLE.h2.need + ' hydrogens off|yield x' + homK(HOMSIMPLE.h2.k) : K.two ? 'two, oxidize last|x' + homK(K.k || 1) + ', chain on' : 'oxidize last|chain ' + K.need + '+ floats'), co2: K => K.least + ' never landed|x' + homK(Math.pow(K.k, K.most)), acid: K => K.loss + ' atoms smaller|yield x' + homK(K.k),
+  water: K => K.need + ' waters off|yield x' + homK(K.k), h2: K => (homSimple('h2') ? HOMSIMPLE.h2.need + ' hydrogens off|yield x' + homK(HOMSIMPLE.h2.k) : K.two ? 'two, oxidize last|x' + homK(K.k || 1) + ', chain on' : 'oxidize last|chain ' + K.need + '+ floats'), co2: K => K.least + ' idle bottles|x' + homK(Math.pow(K.k, K.most)), acid: K => K.loss + ' atoms smaller|yield x' + homK(K.k),
   wood: K => (homSimple('wood') ? 'a dud in line|yield x' + homK(HOMSIMPLE.wood.k) : (K.first ? 'first is a dud|' : 'a dud in line|') + 'pours rest x' + homK(K.k)), salt: K => (K.match === 1 ? 'same first reagent|x' + homK(K.k) + ', use back' : 'same line again|x' + homK(K.k) + ', uses back'), slime: K => (K.same ? 'one bottle twice|' + (K.steps === 0 ? 'yield x' : 'each chains x') + homK(K.k) : 'two chains x' + homK(K.k2) + '|three x' + homK(K.k)), ammonia: K => 'aminate or knit|line fires again' + (K.k ? ' x' + homK(K.k) : ''),
   seedling: K => 'grows ' + K.gain + ' atoms|x' + homK(K.k) + (K.rise === false ? '' : ' and rising'), brimstone: K => (homSimple('brimstone') ? 'thiolate or cap|round ends, task met' + (HOMSIMPLE.brimstone.k ? ' x' + homK(HOMSIMPLE.brimstone.k) : '') : (K.half ? 'S on, task half|ends round x' : 'sulfur goes on|burns spec x') + homK(K.k))
 };      // every multiplier as the player reads it on the yield (homK)
@@ -2672,6 +2723,6 @@ const reachAfter = (reach, run) => { const top = RULE.postdoc ? 4 : 3; return Ma
 // the fold of a molecule for the page: rows, columns, which side each atom points to, who hosts whom, and the pairs that face across it
 function foldOf(m, K) { const ENG = RX.ENG, G = ENG.snapG(m), f = ENG.foldOf(G, K), at = i => G.atoms[i]; const pos = new Map(), down = new Map(), host = new Map(); f.pos.forEach((v, i) => pos.set(at(i), v)); f.down.forEach((v, i) => down.set(at(i), v)); f.host.forEach((h, i) => host.set(at(i), at(h)));
   return { K: f.K, rows: f.rows, anchor: at(f.anchor), path: f.path.map(at), pos, down, host, rungs: f.rung.map(r => [at(r[0]), at(r[1])]), across: ENG.acrossPairs(G, K).map(p => [at(p[0]), at(p[1]), p[2]]), faces: (a, b) => ENG.faces(f, G.idx.get(a), G.idx.get(b)) }; }
-AA.rxPath = { motifAtoms, homSpent, HOMCOUNT, homCountOn, homCountN, homCountK, homCountNow, LONG_MARK, SXm: SX, homBase, homF, homNumbers, HOMS2K_17, JARSTART, jarFull, stageOf, gateOpen, SIGIL_GET, sigilVisit, sigilGet, sigilPrice, sigilPays, sigStrong, refNums, HOMSIMPLE, homSimple, HOMGROW, homStage, sigilRoom, facts, reference, REFERENCE_CATS, REF_HEAD, MANTEXT, manTextSet, MANHEADPIC, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, benchLeft, benchUsed, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
+AA.rxPath = { motifAtoms, homSpent, HOMCOUNT, homCountOn, homCountN, homCountK, homCountNow, LONG_MARK, SXm: SX, homBase, homF, homNumbers, HOMS2K_17, JARSTART, jarFull, stageOf, gateOpen, SIGIL_GET, sigilVisit, sigilGet, sigilPrice, sigilPays, sigStrong, refNums, HOMSIMPLE, homSimple, HOMGROW, homStage, sigilRoom, facts, reference, REFERENCE_CATS, REF_CASES, REF_HEADPIC, owned, profileOpts, thingOf, rungHow, marksOf, redrawInfo, SIGILS, sigilsOf, sigSync, sigOn, FLAT, flat, homPeek, HOMAIM, FEED_CL, LADDER, LADDER_CAP, ladderDue, ladderState, roundNear, SIGN, signOf, signLift, signBar, signHas, signCan, signTake, signState, needYield, needShare, heldFor, FEED_ROUNDS, FEED_BANK, foldOf, FINDING_COUNTS, findingsProgress, countersUpdate, countersRun, countersNew, OFFER_STATS, OFFER_K, unlocked, offerWeight, offerStock, offerVisit, offerPrice, offerBuy, MOTIFS, MOTIF_START, motifsOf, motifOpen, reflexesHeld, selfCounts, LENGTHS, lengthOf, roundEnd, runResult, reachAfter, SPEC_TABLE, SPEC_TARGET, SPEC_REACH, specNumbers, specValue, specMet, specParts, specPick, hetFeed, feedsFor, KIN_OF, bondDiff, specNeed, specLine, specPlay, specRec, specRead, roundWon, spec: { table: SPEC_TABLE, target: SPEC_TARGET, reach: SPEC_REACH, readers: SX, numbers: specNumbers, value: specValue, met: specMet, parts: specParts, pick: specPick, line: specLine, play: specPlay, roundWon }, swapQueue, usesFreeOn, modeSync, SINK, useCost, canBuyUse, buyUse, TIERS, tierRule, runLast, runWon, bareRun, usesBind, LASTX, FILTER, feedShape, queueSwap, queueMove, fitsNow, queueFits, FEEDSIZE, CHOOSE, easeOf, pairCost, runRedraw, JAR, HOMS, HOMSIM, homOn, homEvent, homFed, homLit, frozenPay, HOMS2K, HOMS1, HOMS2, homAfter, homValue, homRest: hom2Rest, homPageRec: g => (hom2On(g) ? hom2Rec(g) : null), homReady, homSpots, homTry, homUse, homGo, runBank, FIVE, FIFTH, fifthSet, TOOLUSES, canTool, toolSpots, toolUse, toolGo, benchLeft, benchUsed, toolTry, toolWorth, toolBest, startDue, startRun, again, cascMode, afterTurn, dealtIn, RULE, CASC, SELF0, selfRun, screenStep, screenLines, screen, screenRound, FEED, feedSize, sizeFor, feedsFor, reopenAll, cascadeNext, cascadeDue, cascade, snap, back, BANKID, queued, usesLeft, queueRoom, queueAdd, queueDrop, queueHead, queueShift, queueStep, queueView, waste, heavy, usesOf, handOf, chainOpts, canBank, bankGain, bank, canRedraw, redrawCost, redraw, seed, rand, MODEL, ASSAYS, runAssays, assayOf, TERMS, CIRCLE, runTerm, deeds, wish, douse, SELFMODE, selfOptions, SELF, KIN, kinOf, kinsOf, charged, fire, chainNext, byKind, CATCH, BY, RARITY, TIER, rarityOf, FAMILIES, FOUND, peek, PAIR, ISO, salt, runKeep, BRIEFS, BRIEF, runBriefs, runChoose, runPay, modelOf, briefBase, PAR, MOLF, MOLD, KINDF, ASSAYF, kindSize, parOf, quotaParts, runMarks, marksHit, COIN, rerollCost, interestOf, runEarn, runReroll, runSkip, runBin, pagesOf, stepsOf, SUPPLY, stock, RUNG, runNew, runBegin, runQuota, runPicks, runTake, pickText, DIAL, FEEDS, GEAR, GEARS, OFFER: 4, begin, options, take, deliver, survey, deal, keeps, safe, kit,
   SYN, RARE, STYLES, kitRound, synRack, synBegin, synTake, synFinish, synEnd, synQuota, synPlay, held, made, mult, breaks, turn, finishOpt };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

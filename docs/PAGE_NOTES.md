@@ -1916,3 +1916,11 @@ Owner: the rewritten lines read "like ai slop"; ruling BA stands (the thing and 
 - c: face line only. The cases go to the margin notes (`notes_data.js` CASES, the note "{case}."); held back (`case` is a rules slot) until the page passes which step of a reagent acted, which needs rules.js and the play code.
 - Burette's MANP picture word now also matches "Every C=C becomes a C=O".
 - Stills: `.claude/shots/small/mantext124-A.jpg`, `-B.jpg`, `-C.jpg`, `mantext124-hydrate-ABC.jpg`.
+
+## Manual text 125 (2026-11-16): treatment A everywhere
+
+Owner picked A: a short game line (ruling BA) and the cases drawn. The `mantext` switch and treatments B and C are gone (their margin-note cases too).
+- path.js: every reagent, reflex, instrument and creature line rewritten in the pattern (the thing and its verb, the act, the number); no rule-sheet clauses. Hovers and creature tokens the same voice. `REF_CASES` holds the drawn cases of every page with a choice or an exclusion (88 molecule cases with the reagent tab's head, plus badges and pictures); `REF_HEADPIC` the tab heads (pictures and badges only).
+- scheme.js (manual code): `manFrag` draws a case's fragment (zigzag row or ring, arms, epoxide, the hydrogens that decide, the deciding atom ringed, benzene with its inner circle), `manCaseRow` a case row, `manPic` the non-molecule pictures, `manHeadItem` the heads (the reflex order numbered, limits as badges), `manReflexPic` every reflex its own picture (the twelve across ones each their groups at the ends of a fold). A case row is as tall as the page has room for, so nothing runs past the foot (`manState().yEnd`).
+- Checked: `.claude/r119/j_cases.js` turns every molecule case into SMILES and runs it through the real rules (reagent cards, `ENG.settle` for reflexes, `tools` for instruments, Water's act): 88 of 88 match. Every leaf of every tab and every detail page stilled (`.claude/shots/mantext125-*.jpg`); none ends past y 684; counts, owned and progress unchanged on a fresh and an old save; a round plays; no console error.
+- Not drawn: Snap's distance (its product is two fused rings), the across reflexes' distances (the fold), the 56-atom cap, Dehydrate's and Oxidize's "no second O, N, S or Cl on that carbon".
