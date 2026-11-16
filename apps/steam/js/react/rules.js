@@ -835,14 +835,16 @@ const ENG = (() => {
     if (X === 'CHO') { const c = newAt(m, 'C', a, 1), o = newAt(m, 'O', c, 2); inc.push(c, o); normH(m, [c, o]); } else { const x = newAt(m, X, a, 1); inc.push(x); normH(m, [x]); }
     normH(m, [a, b]); return { focus: [a, b], incoming: inc, leaving: [] };
   }
-  function addSteps(X, anti, wacker) {
+  // farBeside (thiolate only, rule text 119): beside a C=O the group goes on the far carbon even when anti, as a thiol adds to an enone
+  // (radical or Michael, the sulfur ends up on the beta carbon); its other steps stay anti (more H; the anti ties)
+  function addSteps(X, anti, wacker, farBeside) {
     const mk = (f, pick, key) => ({
       find(G) { const out = allC(G, f).map(([c1, c2]) => ({ t: [c1, c2], cx: pick(c1, c2), key: key ? key(G, c1, c2) : [0] })); return out.sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); },
       edit(G, m, s) { const ch = s.t[0] === s.cx ? s.t[1] : s.t[0]; return putX(G, m, s.cx, ch, X); }
     });
     const stepA = G => allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2));
     const steps = [];
-    steps.push({ find(G) { return allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2)).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c1 : c2 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X, wacker) });
+    steps.push({ find(G) { return allC(G, (c1, c2) => conjC(G, c1) && !conjC(G, c2)).map(([c1, c2]) => ({ t: [c1, c2], cx: anti && !farBeside ? c1 : c2 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X, wacker) });
     [[0, [1, 2]], [1, [2]]].forEach(([lo, his]) => steps.push({ find(G) { return allC(G, (c1, c2) => G.hc[c1] === lo && his.includes(G.hc[c2])).map(([c1, c2]) => ({ t: [c1, c2], cx: anti ? c2 : c1 })).sort((x, y) => lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[0] === s.cx ? s.t[1] : s.t[0], X, wacker) }));
     steps.push({ find(G) { return allC(G).map(([c1, c2]) => { const k = [pull(G, c1, c2) ? 1 : 0, endDist(G, c1)]; return { t: [c1, c2], cx: c1, key: anti ? [-k[0], -k[1]] : k }; }).sort((x, y) => lex(x.key, y.key) || lex(x.t, y.t)); }, edit: (G, m, s) => putX(G, m, s.cx, s.t[1], X, wacker) });
     return steps;
@@ -895,7 +897,7 @@ const ENG = (() => {
         edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]), o2 = newAt(m, 'O', c, 2); normH(m, [c, o, o2]); return { focus: [c, o], incoming: [o2], leaving: [] }; } }
     ],
     ritter: addSteps('N', false),
-    thiolene: addSteps('S', true),
+    thiolene: addSteps('S', true, false, true),
     hydroformylation: addSteps('CHO', true),
     chlorination: [{ off: { acid_fumes: 1 }, find(G) { const out = []; for (let c = 0; c < G.n; c++) { if (!CX4(G, c) || G.hc[c] < 1 || !oneHet(G, c)) continue; const q = G.nb[c].find(w => w.o === 1 && isOH(G, w.j)); if (q) out.push({ t: [c, q.j] }); } return out; },
       edit(G, m, s) { const A = i => G.atoms[i], c = A(s.t[0]), o = A(s.t[1]), g = take(m, o); cut(m, c, o); const cl = newAt(m, 'Cl', c, 1); normH(m, [c, cl]); return { focus: [c, cl], incoming: [cl], leaving: [g] }; } }],

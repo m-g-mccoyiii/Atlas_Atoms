@@ -47,7 +47,7 @@ const REAGENT = {
   oxidize: { all: 'every OH on a carbon with a hydrogen became C=O', needs: 'an OH on a carbon that still has a hydrogen, or, past a three-round run, a CH=CH2 at a chain end', does: 'a C=O where the OH was, and hydrogen off' },
   reduce: { all: 'every chain-end C=O became CH2-OH', needs: 'a C=O at the end of a chain', does: 'a CH2-OH where the end C=O was' },
   grow: { all: 'every C=O became an OH with a three-carbon arm', needs: 'a C=O', does: 'an OH and a three-carbon arm ending in C=C' },
-  thiolene: { all: 'every C=C took an SH', needs: 'a C=C', does: 'an SH on the carbon with more hydrogens, or on the near carbon beside a C=O' },
+  thiolene: { all: 'every C=C took an SH', needs: 'a C=C', does: 'an SH on the carbon with more hydrogens, or on the far carbon beside a C=O' },
   ritter: { all: 'every C=C took an NH2', needs: 'a C=C', does: 'an NH2 on the carbon with fewer hydrogens, or on the far carbon beside a C=O' },
   hwe: { all: 'every aldehyde and methyl ketone became a C=C beside a new ketone', needs: 'an aldehyde or a methyl ketone not already beside a C=C', does: 'a C=C beside a new ketone' },
   dihydroxylation: { all: 'every C=C became two OH', needs: 'a C=C', does: 'an OH on each carbon of the C=C' },
