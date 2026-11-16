@@ -7236,6 +7236,15 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const ft = Q.x != null ? s108Pr(Q.x, C ? C.gy : 0.03, Q.z).map(Math.round) : null;
         S108.log.push({ t: Math.round(now - HEVO.at), a: r(e.a), b: r(e.b), v: r(e.v), go: r(e.go), hm: r(e.home), R: r(e.R), op: r(e.open), fl: r(e.flat), old: e.old ? 1 : 0, s: r(homObj.s), gs: r(homObj.grp.scale.x), dim: r(S32.dim), shk: U ? r(U.shk.value) : null, lw: U ? r(U.lamp.value.w) : null, l33: l33 ? r(l33.w) : null, Rw: C ? r(C.Rw) : null, sv: S33.sheet && S33.sheet.visible ? 1 : 0, rv: SP.root.visible ? 1 : 0, gg: SP.e31 && SP.e31.gg.visible ? 1 : 0, ft, sb, fb, off: S108.off && S108.off.map(r), s36: r(S36.t), cs: S108.n < 4 ? (() => { let c = 0, cv = 0; homObj.grp.traverse(o => { if (o.isMesh && o.castShadow) { let v = true; for (let p = o; p; p = p.parent) if (!p.visible) { v = false; break; } if (v) { cv++; if (cv < 4) c = (c ? c + ',' : '') + (o.name || o.geometry.type); } } }); return [cv, c, S108.cs0]; })() : undefined }); }
     } catch (x) { S108.err = String(x && x.stack); } })(homEvo19);
+  /* the damp ring at home and the shadow under the foot (S27, S30) are sized from the figure's pool: during a change the figure is the NEW
+     stage's while the old one's copy is shown, so both took the new size in one frame. Here they are sized from the copy while it shows,
+     and follow their size by game time (about 200 ms) through the change and a second after it */
+  a20Spent = (f0 => function (now) { const r = f0(now); try { const SP = s26Fig(), E = R21.evo, live = !!(E && SP && s108On(SP)); if (!S27.ring || !S27.s2) return r; const F = S108.f27 || (S108.f27 = { t: -1e9 });
+      if (live) F.t = now; const go = SP && now - F.t < 1500 && AA.rxKit.w108 !== false, dt = Math.max(0, Math.min(100, now - (F.last || now))), a = 1 - Math.exp(-dt / 200); F.last = now;
+      if (go && SP.e31 && SP.e31.gg.visible && SP.e31.sp && SP.e31.sp.G && SP.G) { const f = SP.e31.sp.G.pl.rx / Math.max(1e-6, SP.G.pl.rx); S27.ring.scale.x *= f; S27.ring.scale.z *= f; S27.s2.scale.x *= f; S27.s2.scale.z *= f; }
+      const want = [S27.ring.scale.x, S27.ring.scale.z, S27.s2.scale.x, S27.s2.scale.z];
+      if (!go || !F.v) F.v = want.slice(); else { for (let i = 0; i < 4; i++) F.v[i] += (want[i] - F.v[i]) * a; S27.ring.scale.x = F.v[0]; S27.ring.scale.z = F.v[1]; S27.s2.scale.x = F.v[2]; S27.s2.scale.z = F.v[3]; }
+    } catch (x) { S108.err = 'a20 ' + String(x && x.stack); } return r; })(a20Spent);
   if (AA.rxKit) AA.rxKit.s108dbg = () => ({ err: S108.err, kit: AA.rxKit.W108 && AA.rxKit.W108.err, kdbg: AA.rxKit.W108 && AA.rxKit.W108.dbg, st: AA.rxKit.stage && AA.rxKit.stage.dbg().err, d: S108.dbg, log: S108.log });
   // ==== S108 END
   size(); newRun(); requestAnimationFrame(frame);
