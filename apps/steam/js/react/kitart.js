@@ -8351,7 +8351,7 @@ KIT.b104 = (f0 => function (S, X, grp, e, o) { if (KIT.a121 === false || KIT.g10
   const now = X.tf; try { drops121(T, X, top, X.c, B.up, Hcol * rise, R, e, Q, tb, now); } catch (err) { W121.err = 'drops ' + String(err && err.stack); }
   if (!B.mesh.visible) return;
   B.C.copy(X.c); B.C.y += 0.02; const U = B.mesh.material.uniforms; U.tm.value = X.tf; U.kc.value = k; U.al.value = cl55(e.u < c[2] ? e.sink / 0.25 : e.u < c[4] ? 1 : fill / 0.04) * (1 - 0.92 * thin * k);
-  B.mesh.material.depthWrite = U.al.value > 0.97;
+  if (!B.mesh.ob121) { const f1 = B.mesh.onBeforeRender; B.mesh.ob121 = true; B.mesh.onBeforeRender = function (r, s, cam) { if (f1) f1.apply(this, arguments); /* the lamp's own depth picture keeps the whole column (its shadow follows it down, never goes in a frame); the eye's sees through it as it thins */ B.mesh.material.depthWrite = (cam && cam.layers && cam.layers.mask === 32) ? true : !(B.mesh.al121 < 0.97); }; } B.mesh.al121 = U.al.value;
   shape121(B, { C: B.C, R, fill, ch, k, tm: X.tm + 0.35 * X.tf, bo, lobes: Q.lobes, rc: Q.rc * (1 - 0.25 * fall), head: Q.head * rise * (1 - fall), flare: Q.flare * rise * (1 - 0.5 * fall), jag: Q.jag, tw: Q.tw * (P.tw || 1), seed: (e.to || 3) * 1.7, sx: X.sl104.x, sz: X.sl104.z }); })(KIT.b104);
 KIT.h104 = (f0 => function (X) { f0(X); if (X && X.d121) X.d121.list.forEach(d => { d.m.visible = false; }); })(KIT.h104);
 /* the imp's pop (1 to 2) eased over more of its beat: it no longer comes out of the pit in a few frames */
