@@ -3201,7 +3201,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   const R21 = { tb: 0, last: 0, landT: -1e9, glT: -1e9, sig: '', sit: 0, v: new T.Vector3(), mouth: null, act: null, evo: null, err: null }, R21T = { acid: [620, 900, 560], water: [1000, 2100, 900], co2: [1300, 3000, 1300], salt: [1500, 3200, 1400] };
   const r21Fig = () => { const fg = homObj && homObj.grp.children[0]; return fg && fg.userData && fg.userData.rig2 ? fg : null; };
   const r21N = (wx, wy, wz) => { R21.v.set(wx, wy, wz).project(cam); return [(R21.v.x + 1) / 2, (1 - R21.v.y) / 2]; };
-  function r21Frame(fg, now) { if (AA.rxScheme && !AA.rxScheme.r21) AA.rxScheme.r21 = R21.report; const K = AA.rxKit, dt = Math.max(0, Math.min(100, now - (R21.last || now))); R21.last = now; R21.tb += dt / kinLen(now); { const d = kinBeat(now) - R21.tb; R21.tb += (d - Math.round(d)) * 0.04; }
+  function r21Frame(fg, now) { if (AA.rxScheme && !AA.rxScheme.r21) AA.rxScheme.r21 = R21.report; const K = AA.rxKit, dt = Math.max(0, Math.min(100, now - (R21.last || now))); R21.last = now; R21.tb += dt / kinLen(now); { const d = kinBeat(now) - R21.tb; R21.tb += (d - Math.round(d)) * k60(0.04); }
     if (!homObj.grp.visible) return; dirty = true; const A = st.homAct, sig = (st.firing ? 'f' : '-') + ((st.queue || []).length);
     if (sig !== R21.sig) { R21.sig = sig; R21.glT = now; } const ga = now - R21.glT, gl = ga < 1600 ? K.RK.pulse(ga, 60, 1150, 220) : 0;
     let sp = null; try { sp = g && g.hom && P.homSpent ? P.homSpent(g) : null; } catch (e) { sp = null; } R21.sit += ((sp ? 1 : 0) - R21.sit) * Math.min(1, dt / 240);
@@ -3513,7 +3513,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
           'float db = length(g - blu.xy) / blu.z; m *= mix(vec3(1.0), vec3(0.80, 0.90, 1.0), blu.w * (1.0 - smoothstep(0.25, 1.0, db)));',
           'gl_FragColor = vec4(m, 1.0); }'].join('\n') });
       S32.sm = new T.Mesh(new T.PlaneGeometry(2, 2), m); S32.sm.frustumCulled = false; S32.sm.renderOrder = 4; S32.sm.visible = false; S32.sm.castShadow = false; S32.sm.userData.plain = true; S32.sm.userData.nobox = true; scene.add(S32.sm); }
-    const want = e ? Math.min(1, e.go * 1.6) * (1 - e.home) : 0; S32.dim += (want - S32.dim) * 0.22; if (Math.abs(want - S32.dim) < 0.004) S32.dim = want; const d = S32.dim, fl = e && e.v >= 0 ? Math.exp(-e.v / 0.12) : 0, U = S32.sm.material.uniforms;
+    const want = e ? Math.min(1, e.go * 1.6) * (1 - e.home) : 0; S32.dim += (want - S32.dim) * k60(0.22); if (Math.abs(want - S32.dim) < 0.004) S32.dim = want; const d = S32.dim, fl = e && e.v >= 0 ? Math.exp(-e.v / 0.12) : 0, U = S32.sm.material.uniforms;
     if (!e || !C) { if (S32.C && d > 0) { U.lamp.value.w = 0.56 * d; U.shd.value.w = 0; U.blu.value.w = 0; dirty = true; } else S32.sm.visible = false; return; } S32.C = C; dirty = true; S32.sm.visible = true;
     cam.updateMatrixWorld(); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.ry.value = ren.domElement.height;
     const h = Math.max(0, C.by - C.gy - (C.ball === 1 ? C.Rw : 0));
@@ -3674,7 +3674,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // with Acid's numbers: the lamp's round on the place, the room in shade, the lamp's shadow of the form, the lamp on its wash), the sound on
   // the beats, and the new number beside it when it has settled. Nothing on the bench is moved.
   const S55 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, box: new T.Box3(), was: null };
-  const s55Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S55.dim += (want - S55.dim) * 0.2; if (Math.abs(want - S55.dim) < 0.004) S55.dim = want; const d = S55.dim; if (A) S55.A = A;
+  const s55Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S55.dim += (want - S55.dim) * k60(0.2); if (Math.abs(want - S55.dim) < 0.004) S55.dim = want; const d = S55.dim; if (A) S55.A = A;
     if (d <= 0.002 || !S33.on() || !S55.A) { if (S55.lit) { S55.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S55.A; sh.visible = true; dirty = true; S55.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -4690,7 +4690,45 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // where a yield stands on the track (0..1): with a needed line, the line and the three gold marks stand in order of their numbers, evenly spaced from 0.4
   const trackPos = (v, need, quota, marks) => { if (!(need > 0)) { const n = marks.length, fr = k => (k === 0 ? 0.5 : 0.5 + 0.5 * k / n), vals = [quota].concat(marks); if (v < quota) return 0.5 * v / Math.max(1, quota); for (let k = 0; k + 1 < vals.length; k++) if (v < vals[k + 1]) return fr(k) + (fr(k + 1) - fr(k)) * (v - vals[k]) / (vals[k + 1] - vals[k]); return fr(vals.length - 1); } const A = [need].concat(marks.filter(m => Math.abs(m - need) > 0.02 * need)).sort((a, b) => a - b), p = j => 0.4 + 0.6 * j / Math.max(1, A.length - 1); if (v <= A[0]) return 0.4 * Math.max(0, v) / A[0]; for (let j = 0; j + 1 < A.length; j++) if (v < A[j + 1]) return p(j) + (p(j + 1) - p(j)) * (v - A[j]) / (A[j + 1] - A[j]); return 1; };
   const FEEL = AA.rxFeel ? AA.rxFeel.attach({ madeMax, pourMs: REAG === 'both' && BENCHV ? 720 : 0, pour: bottlePour, lit: siteLight, reag: REAG, T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  // ==== FRAMERATE BEGIN (fix-timing) the length of the frame being drawn, for the few things that were stepped once a frame: a factor tuned at 60 Hz
+  // (an easing share k, or a decay d, per frame) is made the same per second at any refresh rate. FT.dt is set at the top of frame(); kitart reads AA.rxKit.fdt.
+  const FT = { dt: 1 / 60, f: 1 };
+  const k60 = k => 1 - Math.pow(1 - k, FT.f), p60 = d => Math.pow(d, FT.f);
+  // ==== FRAMERATE END
+  // ==== STAGE169 BEGIN (fix-timing) THE 16:9 STAGE: the whole game (its 3D view, every 2D layer, every hit test) is drawn in a 16:9 box, scaled
+  // the same both ways and centred in the window, so nothing is stretched on an ultrawide or a tall window. The rest of the window is bench:
+  // a low canvas behind the stage carries the stage's own outer edge of wood out to the window's edge (stretched along the grain), falling into
+  // the lamp's shade. ?stage=0 gives the old fill-the-window layout.
+  const STG = { on: (() => { try { return new URLSearchParams(root.location.search).get('stage') !== '0'; } catch (e) { return true; } })(), bk: null, bx: null, L: 0, Tp: 0, w: 0, h: 0, W: 0, H: 0, last: -1e9 };
+  function stageFit() {
+    if (!STG.on || !root.document) return; const de = document.documentElement, W = de.clientWidth || root.innerWidth || 1280, H = de.clientHeight || root.innerHeight || 720;
+    let w = W, h = Math.round(W * 9 / 16); if (h > H) { h = H; w = Math.round(H * 16 / 9); }
+    const L = Math.floor((W - w) / 2), Tp = Math.floor((H - h) / 2); Object.assign(STG, { L, Tp, w, h, W, H });
+    Object.assign(app.style, { left: L + 'px', top: Tp + 'px', width: w + 'px', height: h + 'px', right: 'auto', bottom: 'auto' });
+    try { document.body.style.background = '#120d09'; } catch (e) { /* no body */ }
+    if (!STG.bk) { const c = document.createElement('canvas'); Object.assign(c.style, { position: 'fixed', left: '0', top: '0', width: '100%', height: '100%', pointerEvents: 'none' }); c.className = 'stageback'; document.body.insertBefore(c, app); STG.bk = c; STG.bx = c.getContext('2d'); }
+    STG.bk.width = Math.max(1, Math.ceil(W / 4)); STG.bk.height = Math.max(1, Math.ceil(H / 4)); STG.last = -1e9;
+  }
+  function stageBack(now) {
+    if (!STG.bk || (STG.L < 1 && STG.Tp < 1) || now - STG.last < 33) return; STG.last = now;
+    const x = STG.bx, k = 1 / 4, bw = STG.bk.width, bh = STG.bk.height, sx = cv.width / STG.w, sy = cv.height / STG.h, E = 3, sh = 'rgba(12,6,2,';
+    x.imageSmoothingEnabled = true;
+    try {
+      if (STG.L >= 1) { const L = STG.L * k, R0 = (STG.L + STG.w) * k, t0 = STG.Tp * k, hh = STG.h * k;
+        x.drawImage(cv, 0, 0, E * sx, cv.height, 0, t0, L + 1, hh); x.drawImage(cv, cv.width - E * sx, 0, E * sx, cv.height, R0 - 1, t0, bw - R0 + 1, hh);
+        const gl = x.createLinearGradient(0, 0, L, 0); gl.addColorStop(0, sh + '0.78)'); gl.addColorStop(1, sh + '0)'); x.fillStyle = gl; x.fillRect(0, t0, L + 1, hh);
+        const gr = x.createLinearGradient(R0, 0, bw, 0); gr.addColorStop(0, sh + '0)'); gr.addColorStop(1, sh + '0.78)'); x.fillStyle = gr; x.fillRect(R0 - 1, t0, bw - R0 + 1, hh); }
+      if (STG.Tp >= 1) { const Tq = STG.Tp * k, B0 = (STG.Tp + STG.h) * k, l0 = STG.L * k, ww = STG.w * k;
+        x.drawImage(cv, 0, 0, cv.width, E * sy, l0, 0, ww, Tq + 1); x.drawImage(cv, 0, cv.height - E * sy, cv.width, E * sy, l0, B0 - 1, ww, bh - B0 + 1);
+        const gt = x.createLinearGradient(0, 0, 0, Tq); gt.addColorStop(0, sh + '0.78)'); gt.addColorStop(1, sh + '0)'); x.fillStyle = gt; x.fillRect(l0, 0, ww, Tq + 1);
+        const gb = x.createLinearGradient(0, B0, 0, bh); gb.addColorStop(0, sh + '0)'); gb.addColorStop(1, sh + '0.78)'); x.fillStyle = gb; x.fillRect(l0, B0 - 1, ww, bh - B0 + 1); }
+    } catch (e) { /* the bench beyond the stage is only dress */ }
+  }
+  // a drag that began on the stage keeps the pointer when it leaves it for the bars (the manual's turned entry, the twist)
+  app.addEventListener('pointerdown', e => { try { if (e.target && e.target.setPointerCapture && e.pointerId != null) e.target.setPointerCapture(e.pointerId); } catch (q) { /* no capture */ } }, true);
+  // ==== STAGE169 END
   function size() {
+    stageFit(); // (fix-timing) the 16:9 stage, see STAGE169
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
     veil.width = w; veil.height = h; const x = veil.getContext('2d'), gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, PAPERS[PAPERN].veil[0]); gr.addColorStop(1, PAPERS[PAPERN].veil[1]); x.fillStyle = gr; x.fillRect(0, 0, w, h); noise(x, w, h, w * h / 30, 0.05, '80,60,30');
@@ -4813,8 +4851,9 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   function frame(now) {
     requestAnimationFrame(frame);
+    FT.dt = Math.min(0.05, Math.max(0, now - last) / 1000); FT.f = FT.dt * 60; // (fix-timing) FRAMERATE, before the manual is drawn
     try { manFrame(now); } catch (e) { /* the manual is not ready on the first frames */ }
-    const raw = now - last, dt = Math.min(0.05, raw / 1000), ended = []; last = now;
+    const raw = now - last, dt = Math.min(0.05, raw / 1000), ended = []; last = now; FT.dt = dt; FT.f = Math.min(3, Math.max(0, dt * 60)); AA.rxKit.fdt = dt; // (fix-timing) FRAMERATE
     if (PLAIN) { st.shake = Math.min(st.shake, 0.55); st.flash = 0; }
     // a held moment: while it lasts, the molecule and anything flying off it stand still
     if (now < st.hold) { if (morph) morph.t0 += raw; st.flyers.forEach(f => { if (f.t0) f.t0 += raw; }); }
@@ -4920,7 +4959,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (BENCHV && st.mode === 'done') dirty = true;
     if (shopB) { if (st.mode === 'pick') shopFrame(now); else shopClear(); }
     leafFrame(now); lossFrame(now);
-    if (BENCHV) { try { const glass = () => Array.from(app.querySelectorAll('canvas.veil')).filter(c => c !== veil && c !== titleC && c.width), wipe = () => glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); }); if (st.mode === 'pick' || st.mode === 'brief' || st.mode === 'shop' || st.mode === 'terms' || st.mode === 'hom') { if (!st.overClean) { wipe(); st.overClean = true; } } else if (st.mode === 'done') { const el = now - (st.doneT || now); if (el > 900 && el < 2600) glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = 'rgba(0,0,0,0.09)'; x.fillRect(0, 0, c.width, c.height); x.restore(); }); else if (el >= 2600 && !st.overClean) { wipe(); st.overClean = true; } } else st.overClean = false; } catch (e) { /* no overlay */ } }
+    if (BENCHV) { try { const glass = () => Array.from(app.querySelectorAll('canvas.veil')).filter(c => c !== veil && c !== titleC && c.width), wipe = () => glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); }); if (st.mode === 'pick' || st.mode === 'brief' || st.mode === 'shop' || st.mode === 'terms' || st.mode === 'hom') { if (!st.overClean) { wipe(); st.overClean = true; } } else if (st.mode === 'done') { const el = now - (st.doneT || now); if (el > 900 && el < 2600) glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = 'rgba(0,0,0,' + (el > 1500 ? 1 : 1 - p60(0.91)).toFixed(4) + ')'; /* (fix-timing) FRAMERATE: by the second; past 0.6 s (3 pc left at 60 Hz) it is cleared, as 8-bit alpha stalls a small fade */ x.fillRect(0, 0, c.width, c.height); x.restore(); }); else if (el >= 2600 && !st.overClean) { wipe(); st.overClean = true; } } else st.overClean = false; } catch (e) { /* no overlay */ } }
     // the measure of a step (the owner: the molecule's shape must not leap): how far each atom that did not react is carried, as a share of the play area's width
     { const mo = morph && morph.m === center ? morph : null;
       if (mo !== SL.mo && !(mo && mo.cont)) { const snap = center ? snapW(center) : null; if (SL.open && snap) slClose(snap, now); if (mo && snap) SL.open = { before: snap, made: mo.made || new Set(), t: now, slow: !!mo.slow }; SL.idle = 0; }
@@ -4946,6 +4985,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (dirty && now - lastInk > (AA.rxKit.g123 === false ? 24 : 12)) { const i123 = Date.now(); drawInk(now); if (AA.rxKit.g123c) AA.rxKit.g123c(Date.now() - i123); dirty = false; lastInk = now; if (INKW.on) inkWatch(); }
     keepSeen(); fitWatch(); bottleFrame(now, dt); goldFrame(now, dt); cupFrame(now); try { lifeFrame(now, dt); } catch (e) { /* idle life never breaks a frame */ }
     ren.render(scene, cam);
+    stageBack(now); // (fix-timing) STAGE169: the bench beyond the stage, from the frame just drawn
   }
   root.addEventListener('resize', size);
   // (builder 16) THE MANUAL (ruling AX): a second book on the bench, a worn ledger, openable at any time (the title too). One category to a
@@ -4974,13 +5014,13 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function manOpen() { manCanvas(); if (MAN.on) return; MAN.on = true; MAN.rows = P.reference(meta); MAN.th = {}; MAN.pick = null; MAN.dirty = true; MAN.open = performance.now(); MAN.cv.width = 1280; MAN.cv.height = 720; MAN.cv.style.pointerEvents = 'auto'; sfxN('pageTurn'); }
   function manShut() { if (!MAN.on) return; MAN.on = false; MAN.pick = null; MAN.cv.width = 0; MAN.cv.height = 0; MAN.cv.style.pointerEvents = 'none'; sfxN('pageTurn'); dirty = true; }
   function manDown(p) {
-    if (MAN.pick) { if (Math.hypot(p.x - 330, p.y - 370) < 230) { MAN.drag = { x: p.x, y: p.y }; MAN.vy = 0; MAN.vp = 0; return; } MAN.pick = null; MAN.dirty = true; sfxN('click'); return; }
+    if (MAN.pick) { if (Math.hypot(p.x - 330, p.y - 370) < 230) { MAN.mt = 0; /* (fix-timing) */ MAN.drag = { x: p.x, y: p.y }; MAN.vy = 0; MAN.vp = 0; return; } MAN.pick = null; MAN.dirty = true; sfxN('click'); return; }
     for (const t of MAN.tabs) if (p.x >= t.x && p.x <= t.x + t.w && p.y >= t.y && p.y <= t.y + t.h) { if (MAN.cat !== t.i) { MAN.cat = t.i; MAN.leaf = 0; MAN.dirty = true; sfxN('pageTurn'); } return; }
     { const b = MAN.leafBtn; if (b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) { MAN.leaf = (MAN.leaf || 0) + 1; MAN.dirty = true; sfxN('pageTurn'); return; } }
     for (const q of MAN.cells) if (p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h) { manPick(q.row.id, q.row.category); return; }
     if (p.x < 50 || p.x > 1230 || p.y < 30 || p.y > 700) manShut();
   }
-  function manMove(p) { if (!MAN.drag) return; const dx = (p.x - MAN.drag.x) * 0.012, dy = (p.y - MAN.drag.y) * 0.009; MAN.yaw += dx; MAN.pit = Math.max(-1.1, Math.min(1.1, MAN.pit + dy)); MAN.vy = dx; MAN.vp = dy; MAN.drag = { x: p.x, y: p.y }; MAN.idle = performance.now(); }
+  function manMove(p) { if (!MAN.drag) return; const dx = (p.x - MAN.drag.x) * 0.012, dy = (p.y - MAN.drag.y) * 0.009; MAN.yaw += dx; MAN.pit = Math.max(-1.1, Math.min(1.1, MAN.pit + dy)); { const tm = performance.now(), fr = Math.max(0.25, Math.min(3, (tm - (MAN.mt || tm - 16.7)) / 16.7)); MAN.mt = tm; MAN.vy = dx / fr; MAN.vp = dy / fr; } /* (fix-timing) FRAMERATE: the throw is a speed per 60th of a second */ MAN.drag = { x: p.x, y: p.y }; MAN.idle = performance.now(); }
   function manPick(id, cat) { const row = (MAN.rows || []).find(r => r.id === id && (!cat || r.category === cat)); if (!row) return false; MAN.pick = row; MAN.yaw = -0.5; MAN.pit = 0.12; MAN.vy = 0; MAN.vp = 0; MAN.idle = performance.now(); MAN.dirty = true; sfxN('click'); return true; }
   // ---- the 3D things ----
   function man3() { if (MAN.r3) return MAN.r3; const r = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setPixelRatio(1); r.setSize(400, 400, false); r.setClearColor(0x000000, 0); r.outputEncoding = ren.outputEncoding; const sc = new T.Scene(), cm = new T.PerspectiveCamera(28, 1, 0.1, 100); cm.position.set(0, 1.1, 10.5); cm.lookAt(0, 0, 0); sc.add(new T.HemisphereLight(0xffffff, 0x9a8a76, 1.0)); const d = new T.DirectionalLight(0xffffff, 0.85); d.position.set(3, 6, 6); sc.add(d); const hold = new T.Group(); sc.add(hold); return (MAN.r3 = { r, sc, cm, hold, id: null }); }
@@ -5211,7 +5251,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function manDetail(x, now) {
     const row = MAN.pick; manPaper(x); x.fillStyle = 'rgba(239,230,207,0.6)'; x.fillRect(60, 74, 1160, 620);
     // the turn: it coasts after the hand lets go, and after a while comes home (front to the eye)
-    if (!MAN.drag) { MAN.yaw += MAN.vy; MAN.pit = Math.max(-1.1, Math.min(1.1, MAN.pit + MAN.vp)); MAN.vy *= 0.95; MAN.vp *= 0.9; if (now - MAN.idle > 2600 && Math.abs(MAN.vy) < 0.004) { const home = Math.round((MAN.yaw + 0.5) / (2 * Math.PI)) * 2 * Math.PI - 0.5; MAN.yaw += (home - MAN.yaw) * 0.07; MAN.pit += (0.12 - MAN.pit) * 0.07; } }
+    if (!MAN.drag) { MAN.yaw += MAN.vy * FT.f; MAN.pit = Math.max(-1.1, Math.min(1.1, MAN.pit + MAN.vp * FT.f)); MAN.vy *= p60(0.95); MAN.vp *= p60(0.9); if (now - MAN.idle > 2600 && Math.abs(MAN.vy) < 0.004) { const home = Math.round((MAN.yaw + 0.5) / (2 * Math.PI)) * 2 * Math.PI - 0.5; MAN.yaw += (home - MAN.yaw) * k60(0.07); MAN.pit += (0.12 - MAN.pit) * k60(0.07); } } /* (fix-timing) FRAMERATE: per second, not per frame */
     x.fillStyle = 'rgba(60,40,20,0.16)'; x.beginPath(); x.ellipse(330, 560, 150, 22, 0, 0, 6.3); x.fill(); const img = manShot(row, MAN.yaw, MAN.pit); x.drawImage(row.owned ? img : manPencil(img, 400), 110, 150, 440, 440);
     const W = AA.rxPen.write, X0 = 640, WD = 540; let y = 170; W(x, row.name.charAt(0).toUpperCase() + row.name.slice(1), X0, y, 56, { weight: 'heavy', color: INK, align: 'left' }); y += 26; x.strokeStyle = PENCIL; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, y); x.lineTo(X0 + WD, y); x.stroke(); y += 44;
     if (row.owned) { manWrap(row.does, 33, WD).forEach(l => { W(x, l, X0, y, 33, { weight: 'thin', color: INK, align: 'left' }); y += 44; }); y += 24; }
@@ -5352,7 +5392,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // giving way (builder 33's one-lamp pass driven as S55 drives it; the cooling is W59's overlay), the sound on the beats, and the new number beside it
   // when it has settled. Nothing on the bench moves.
   const S59 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, box: new T.Box3(), was: null, last: null };
-  const s59Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S59.dim += (want - S59.dim) * 0.2; if (Math.abs(want - S59.dim) < 0.004) S59.dim = want; const d = S59.dim; if (A) S59.A = A;
+  const s59Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S59.dim += (want - S59.dim) * k60(0.2); if (Math.abs(want - S59.dim) < 0.004) S59.dim = want; const d = S59.dim; if (A) S59.A = A;
     if (d <= 0.002 || !S33.on() || !S59.A) { if (S59.lit) { S59.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S59.A; sh.visible = true; dirty = true; S59.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -5682,7 +5722,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // as it goes home; the glow of the crack on the page; the room giving way (builder 33's one-lamp pass driven as S59 drives it, s74Lamp, a copy with
   // its own state), the sound on the beats, and its new number beside it when it has settled. Nothing on the bench moves.
   const S74 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, was: null, K: null, shown: false, U: new T.Vector3(0, 0.697, -0.717), F: new T.Vector3(0, 0.717, 0.697), X: new T.Vector3(1, 0, 0), NL: new T.Vector3(0, 0.697, 0.717) };
-  const s74Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S74.dim += (want - S74.dim) * 0.2; if (Math.abs(want - S74.dim) < 0.004) S74.dim = want; const d = S74.dim; if (A) S74.A = A;
+  const s74Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S74.dim += (want - S74.dim) * k60(0.2); if (Math.abs(want - S74.dim) < 0.004) S74.dim = want; const d = S74.dim; if (A) S74.A = A;
     if (d <= 0.002 || !S33.on() || !S74.A) { if (S74.lit) { S74.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S74.A; sh.visible = true; dirty = true; S74.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -5854,7 +5894,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // ring of ripples where it lands, the wet mark drying away; the room giving way (builder 33's one-lamp pass driven as S59 drives it), the sound on
   // the beats, and its new number beside it when it has settled. Nothing on the bench moves.
   const S71 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, A: null, was: null, K: null, last: null, shown: false, U: new T.Vector3(0, 0.697, -0.717) };
-  const s71Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S71.dim += (want - S71.dim) * 0.2; if (Math.abs(want - S71.dim) < 0.004) S71.dim = want; const d = S71.dim; if (A) S71.A = A;
+  const s71Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S71.dim += (want - S71.dim) * k60(0.2); if (Math.abs(want - S71.dim) < 0.004) S71.dim = want; const d = S71.dim; if (A) S71.A = A;
     if (d <= 0.002 || !S33.on() || !S71.A) { if (S71.lit) { S71.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S71.A; sh.visible = true; dirty = true; S71.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -6285,7 +6325,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (Z.v92) { const e = AA.rxKit.ph92(now - A.t, Z); o.hx = e.x; o.hz = e.z; o.y = e.y; o.k = e.k; o.sy = e.sy; o.sx = e.sx; o.rz = e.rz; o.ry = e.yaw; o.reach = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = o.k; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; }
     o.hx = HOMP.x; o.hz = HOMP.z; o.k = 1; o.y = 0; if (A20.cw) { A20.cw.x = o.hx; A20.cw.z = o.hz; A20.cw.k = 1; } S77.j = j; S77.A = A; S77.last = { A, Z, j }; return o; })(homJump);
   /* the lamp drawn in (a copy of S71's driving of builder 33's one-lamp pass, with its own state) */
-  const s77Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S77.dim += (want - S77.dim) * 0.2; if (Math.abs(want - S77.dim) < 0.004) S77.dim = want; const d = S77.dim; if (A) S77.LA = A;
+  const s77Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S77.dim += (want - S77.dim) * k60(0.2); if (Math.abs(want - S77.dim) < 0.004) S77.dim = want; const d = S77.dim; if (A) S77.LA = A;
     if (d <= 0.002 || !S33.on() || !S77.LA) { if (S77.lit) { S77.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, Q = S77.LA; sh.visible = true; dirty = true; S77.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -6655,7 +6695,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // and cracks into squares and goes, the contact shade and the cold light on the page, the room giving way (builder 33's one-lamp pass driven as S59
   // drives it, a copy with its own state), the sound on the beats, and its new number beside it when it has settled. Nothing on the bench moves.
   const S76 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), v3: new T.Vector3(), q: new T.Quaternion(), q2: new T.Quaternion(), m: new T.Matrix4(), dim: 0, n: 0, lit: false, A: null, was: null, P: null, M: null, cv: null, live: null };
-  const s76Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S76.dim += (want - S76.dim) * 0.2; if (Math.abs(want - S76.dim) < 0.004) S76.dim = want; const d = S76.dim; if (A) S76.A = A;
+  const s76Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S76.dim += (want - S76.dim) * k60(0.2); if (Math.abs(want - S76.dim) < 0.004) S76.dim = want; const d = S76.dim; if (A) S76.A = A;
     if (d <= 0.002 || !S33.on() || !S76.A) { if (S76.lit) { S76.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, P = S76.A; sh.visible = true; dirty = true; S76.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -6869,7 +6909,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // page is clean afterwards.
   const S82 = { err: null, v: new T.Vector3(), v2: new T.Vector3(), dim: 0, n: 0, lit: false, LA: null, was: null, K: null, shown: false, U: new T.Vector3(0, 0.697, -0.717), pi: 0, ei: 0, mi: 0 };
   const ss82 = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
-  const s82Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S82.dim += (want - S82.dim) * 0.2; if (Math.abs(want - S82.dim) < 0.004) S82.dim = want; const d = S82.dim; if (A) S82.LA = A;
+  const s82Lamp = (now, A) => { const KS = AA.rxKit.spirit26, l33 = KS.u33 ? KS.u33(T).l33.value : null, want = A ? A.dim : 0; S82.dim += (want - S82.dim) * k60(0.2); if (Math.abs(want - S82.dim) < 0.004) S82.dim = want; const d = S82.dim; if (A) S82.LA = A;
     if (d <= 0.002 || !S33.on() || !S82.LA) { if (S82.lit) { S82.lit = false; if (S33.sheet) S33.sheet.visible = false; if (l33) l33.w = 0; } return; }
     if (!S33.sheet) s33Make(); const sh = S33.sheet, U = sh.material.uniforms, Q = S82.LA; sh.visible = true; dirty = true; S82.lit = true;
     cam.updateMatrixWorld(); U.vp.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); U.ivp.value.copy(cam.matrixWorld).multiply(cam.projectionMatrixInverse); U.cp.value.copy(cam.position); U.cnf.value.set(cam.near, cam.far);
@@ -7194,7 +7234,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
       if (g.pre) Q.y = 0.26 * k + bump; else if (g.p > 0) Q.y += bump;
       /* the lump's flames as small BODIES of fire (kitart fire96: closed, lit, depth-tested, soft tips), standing where its drawn tongues stand; a tight dark shade right under the lump */
       { const K = AA.rxKit, RK = K.RK, X = SP.x31, hold = X && X.sph && X.sph.parent, old = O !== SP, g98 = K.g98 !== false, fl = (old || g98) && O.k73 && O.k73.fl ? O.k73.fl.filter(f => f.sp) : [], FB = S97.fb || (S97.fb = []), a = !(hold && K.fire96) ? 0 : old ? g.body : g98 && !g.pre ? /* (builder 98) the new form's lump has its flames once the fire has thinned, and on the way home */ RK.sm((e.v - 1.3) / 0.6) * (1 - RK.sm((g.p - 0.88) / 0.12)) : 0, t = now / 1000, nF = a > 0.004 ? Math.min(4, g98 ? Math.max(3, fl.length) : fl.length) : 0;
-        /* (builder 98) how the lump is moving: its flames lean back from the way it goes */ const V = S97.vel || (S97.vel = { x: Q.x, z: Q.z, lx: 0, lz: 0, l: new T.Vector2() }); { const m = Rl > 0 ? 9 / Rl : 0, cl = x => Math.max(-0.7, Math.min(0.7, x)); V.lx += (cl((V.x - Q.x) * m) - V.lx) * 0.25; V.lz += (cl((V.z - Q.z) * m) - V.lz) * 0.25; V.x = Q.x; V.z = Q.z; V.l.set(V.lx, V.lz); }
+        /* (builder 98) how the lump is moving: its flames lean back from the way it goes */ const V = S97.vel || (S97.vel = { x: Q.x, z: Q.z, lx: 0, lz: 0, l: new T.Vector2() }); { const m = Rl > 0 ? 9 / Rl : 0, cl = x => Math.max(-0.7, Math.min(0.7, x)); V.lx += (cl((V.x - Q.x) * m / Math.max(0.25, FT.f)) - V.lx) * k60(0.25); V.lz += (cl((V.z - Q.z) * m / Math.max(0.25, FT.f)) - V.lz) * k60(0.25); V.x = Q.x; V.z = Q.z; V.l.set(V.lx, V.lz); }
         if (hold) S97.A.setFromMatrixColumn(hold.matrixWorld, 1).normalize();
         for (let i = 0; i < Math.max(FB.length, nF); i++) { let B = FB[i]; const f = fl[i]; if (!(i < nF)) { if (B) B.all.forEach(m => { m.visible = false; }); continue; }
           if (!B) { B = FB[i] = K.fire96.make(T); B.all.forEach(m => scene.add(m)); B.U.uSeed.value = 21.3 + 7.7 * i; }
