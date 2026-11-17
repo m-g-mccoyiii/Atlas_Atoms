@@ -110,12 +110,12 @@ function thr(src, rung, hand, rows) {
 
 // ---- how the bench keeps score, no slots: only when nothing about the present page fits ----
 lab([0, 3], 'neat', [
-  ["A reagent acts at every place on the molecule that fits it.", null, {"fb": true}],
-  ["A reagent that finds nothing still spends its use.", null, {"fb": true}],
-  ["The tenth reflex of a page pays ten times the first.", null, {"fb": true}],
-  ["Chain steps up to the round's longest earlier chain pay a quarter; steps past it pay in full.", null, {"fb": true}],
-  ["Gold is paid for each mark passed, and only when the spec is met.", null, {"fb": true}],
-  ["Some rings open again when the page turns and some stay shut.", null, {"fb": true}]
+  ["Hits every spot that fits.", null, {"fb": true}],
+  ["Finds nothing, still uses up.", null, {"fb": true}],
+  ["Tenth reflex, ten times the first.", null, {"fb": true}],
+  ["Past your best chain, steps pay full. Under it, a quarter.", null, {"fb": true}],
+  ["Marks pay gold. Spec first.", null, {"fb": true}],
+  ["Loose rings open at the page turn.", null, {"fb": true}]
 ]);
 
 // ---- the molecule and the page as they stand (no tag): the first chemist ----
@@ -159,7 +159,7 @@ lab([0, 3], 'neat', [
 
   ["Mark {mark} is worth gold if the round is met.", "mark"],
 
-  ["Spec met; anything past it counts toward the marks at two, four and eight times.", "win"],
+  ["Spec met. Marks at x2, x4, x8.", "win"],
   ["Met with {n} reflexes on the last page; the round's longest before was {roundbest}.", "win", {"c": {"n": [2, 999], "roundbest": [1, 999]}}],
   ["Round met with a longest chain of {roundbest}; the run's longest is {runbest}.", "win", {"c": {"roundbest": [1, 999]}}],
 
@@ -183,8 +183,8 @@ lab([0, 3], 'neat', [
   ["A finding opens the next thing on its shelf.", "unlock"],
   ["Each sigil breaks one rule for the round.", "sigil"],
   ["{sigil} is on for round {round}; a line that worked before may not hold.", "sigil"],
-  ["Gold is paid for the marks passed and as interest on what was kept.", "gold"],
-  ["{gained} gold: for the marks passed, and interest on the tin.", "gold"],
+  ["Gold for marks passed. Interest on what you keep.", "gold"],
+  ["{gained} gold: marks passed, interest on the tin.", "gold"],
   ["A compound in the catalog stays there when everything else on the shelf goes.", "catalog"]
 ]);
 
