@@ -9146,7 +9146,7 @@ ST105.edgeAt = (W, K, r, n) => { n = n || 400; for (let i = 0; i <= n; i++) { co
 ST105.groundTravel = o => { try { const u = ST105.cl(o.u), go = (o.ease || ST105.sm)(u), W = o.way, p = W.at(go), R = o.R || 1, K = o.K || (() => 0), k = K(p[0], p[1], R), lo = o.lo || 0, hi = o.hi == null ? 0.26 : o.hi, ge = o.ge == null ? ST105.edgeAt(W, K) : o.ge, G2 = ST105.G2, PI2 = 2 * Math.PI;
     const y = lo + (hi - lo) * k + (o.bump == null ? 0.3 : o.bump) * R * 4 * k * (1 - k), x = (go - ge) / 0.05, sg = o.back ? -1 : 1, ln = o.lean == null ? 0.2 : o.lean, tp = o.tip == null ? 0.3 : o.tip;
     const rx = -sg * ln * Math.sin(PI2 * u) * (u < 0.5 ? 1 : 0.7) - tp * G2(x + 0.4 * sg) + 0.67 * tp * G2(x - 1.2 * sg), rz = (o.rock == null ? 0.13 : o.rock) * Math.sin(PI2 * (o.rocks || 3) * go) * Math.sin(Math.PI * u), lift = (o.heave == null ? 0.3 : o.heave) * G2(x + 0.2 * sg);
-    const S = o.st || {}; if (S.x == null) { S.x = p[0]; S.z = p[1]; S.lx = 0; S.lz = 0; } const m = 9 / R, c7 = v => Math.max(-0.7, Math.min(0.7, v)); S.lx += (c7((S.x - p[0]) * m) - S.lx) * 0.25; S.lz += (c7((S.z - p[1]) * m) - S.lz) * 0.25; S.x = p[0]; S.z = p[1];
+    const S = o.st || {}; if (S.x == null) { S.x = p[0]; S.z = p[1]; S.lx = 0; S.lz = 0; } const m = 9 / R, c7 = v => Math.max(-0.7, Math.min(0.7, v)); const f7 = Math.min(3, Math.max(0.25, ((AA.rxKit && AA.rxKit.fdt) || 1 / 60) * 60)), k7 = 1 - Math.pow(0.75, f7); /* (fix-timing) the speed per 60th of a second, smoothed by the second */ S.lx += (c7((S.x - p[0]) * m / f7) - S.lx) * k7; S.lz += (c7((S.z - p[1]) * m / f7) - S.lz) * k7; S.x = p[0]; S.z = p[1];
     return { x: p[0], z: p[1], y, go, k, rx, rz, lift, lx: S.lx, lz: S.lz, ge };
   } catch (x) { ST105.fail('groundTravel', x); return null; } };
 
