@@ -1538,7 +1538,7 @@ function start(app) {
       if (door) { door.hide = true; door.x = CX + 20; door.z = CZ - Dp / 2 - 6.5; door.cy = 4.6; moveCoins(door); }
       if (bell) { bell.z = 17.5; moveCoins(bell); } }
     else { // the catalog: the offers are plates on the left page; the bell (deal three others) and the corner (leave) are printed on the right page; the things themselves stay out of sight until one is picked
-      offers.forEach(o => { o.hide = true; o.x = -16.2; o.z = -11.0 + o.i * 10.4; });
+      offers.forEach(o => { o.hide = true; o.x = -16.2; o.z = -1.4 + (o.i - (offers.length - 1) / 2) * 10.6; });   // (fix_ux) evenly spread down the page under its head, two or three alike
       if (bell) { bell.hide = true; bell.x = 6.5; bell.z = 14.6; moveCoins(bell); bell.coins.forEach(c => { c.visible = false; }); } if (door) { door.hide = true; door.x = 27.5; door.z = 16.5; door.coins.forEach(c => { c.visible = false; }); }
       const sh = shopObj('shelf'); if (sh) { sh.hide = true; sh.x = 19; sh.z = 13.6; sh.coins.forEach(c => { c.visible = false; }); } } }
   // ---- the catalog's plates: line engraving drawn here, in sepia: outlines, hatching by element, a lit side left clear ----
@@ -1565,22 +1565,36 @@ function start(app) {
     [0.5, 0.36].forEach((f, k) => { x.fillStyle = 'rgba(58,42,28,0.5)'; x.fillRect(c[0] - w * 0.56, c[1] + h - 44 + k * 15, w * 1.5 * f, 4); }); }
   function catInk(x, now) { if (!shopB) return; const tk = shopB.take, offers = shopB.objs.filter(o => o.kind === 'offer'), bell = shopObj('bell'), door = shopObj('door'), shelf = shopObj('shelf');
     x.save(); [[-31.6, SAFE ? SAFE.gut.x0 - 0.2 : -2.9], [SAFE ? SAFE.gut.x1 + 0.2 : -1.1, SAFE ? SAFE.R.x1 - 0.1 : 31.7]].forEach((pg, n) => { const A = px({ x: pg[0], z: -20.9 }), B = px({ x: pg[1], z: 17.9 }), mid = (A[0] + B[0]) / 2; x.fillStyle = 'rgba(234,224,198,0.95)'; x.fillRect(A[0], A[1], B[0] - A[0], B[1] - A[1]); x.strokeStyle = SEP; x.lineWidth = 6; x.strokeRect(A[0] + 22, A[1] + 22, B[0] - A[0] - 44, B[1] - A[1] - 44); x.lineWidth = 1.8; x.strokeRect(A[0] + 35, A[1] + 35, B[0] - A[0] - 70, B[1] - A[1] - 70);
-      const hy = A[1] + 126; x.lineWidth = 2.6; [[A[0] + 80, mid - 90], [mid + 90, B[0] - 80]].forEach(q => { x.beginPath(); x.moveTo(q[0], hy - 5); x.lineTo(q[1], hy - 5); x.moveTo(q[0], hy + 5); x.lineTo(q[1], hy + 5); x.stroke(); });
-      if (n === 0) { try { AA.rxMarks.yieldMark(x, 3, mid, hy, 34, { pencil: 'rgba(0,0,0,0)', plw: 0.1, ink: SEP, lw: 5, t: 1 }); } catch (e) { /* no marks */ } } else { x.font = 'italic 64px Georgia, "Times New Roman", serif'; x.textAlign = 'center'; x.fillStyle = SEP; x.fillText(String(run.round), mid, hy + 22); } });
-    offers.forEach(o => { const c = px({ x: o.x - 0.2, z: o.z + 1.0 }), w = 345, h = 146; if (o.gear && !o.art) { try { o.art = cutWhite(snapPiece(o.grp)); } catch (e) { o.art = null; } } eplate(x, o, c, w, h);
-      x.font = 'italic 84px Georgia, "Times New Roman", serif'; x.textAlign = 'center'; x.fillStyle = SEP; x.fillText(String(o.i + 1), c[0] - w - 52, c[1] + 26);
-      const sel = tk ? (tk.o === o ? Math.min(1, (now - tk.t0) / 420) : 0) : 0; if (sel > 0) { inkLoop(x, c[0], c[1], w + 46, h + 40, sel, 10, '#1c2f74'); if (sel < 1) dirty = true; } else if (!tk && st.hover === o.i) { x.strokeStyle = 'rgba(70,72,84,0.7)'; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - w + 30, c[1] + h + 22); x.quadraticCurveTo(c[0], c[1] + h + 34, c[0] + w - 30, c[1] + h + 20); x.stroke(); } });
+      // (fix_ux) the left page is headed with what it asks: take one. The right page's head is what is already held: the bottles of the run and its gold
+      const hy = A[1] + 126; x.lineWidth = 2.6; if (n === 0) [[A[0] + 80, mid - 215], [mid + 215, B[0] - 80]].forEach(q => { x.beginPath(); x.moveTo(q[0], hy - 5); x.lineTo(q[1], hy - 5); x.moveTo(q[0], hy + 5); x.lineTo(q[1], hy + 5); x.stroke(); });
+      if (n === 0) { try { AA.rxPen.write(x, 'Take one', mid, hy + 26, 74, { weight: 'heavy', color: SEP, align: 'center' }); } catch (e) { /* no pen */ } } else heldInk(x, A[0] + 70, B[0] - 70, hy); });
+    const anyH = !tk && offers.some(o => st.hover === o.i);
+    offers.forEach(o => { const c = px({ x: o.x - 0.2, z: o.z + 1.0 }), w = 345, h = 146, hk = tk ? 0 : Math.max(0, Math.min(1, o.hk || 0)), K = 1 + 0.08 * hk - (anyH ? 0.05 * (1 - hk) : 0); if (o.gear && !o.art) { try { o.art = cutWhite(snapPiece(o.grp)); } catch (e) { o.art = null; } }
+      x.save(); if (anyH && st.hover !== o.i) x.globalAlpha = 0.62; if (Math.abs(K - 1) > 0.002) { x.translate(c[0], c[1]); x.scale(K, K); x.translate(-c[0], -c[1]); } eplate(x, o, c, w, h);
+      x.font = 'italic 84px Georgia, "Times New Roman", serif'; x.textAlign = 'center'; x.fillStyle = SEP; x.fillText(String(o.i + 1), c[0] - w - 52, c[1] + 26); x.restore();
+      const sel = tk ? (tk.o === o ? Math.min(1, (now - tk.t0) / 420) : 0) : 0; if (sel > 0) { inkLoop(x, c[0], c[1], w + 46, h + 40, sel, 10, '#1c2f74'); if (sel < 1) dirty = true; } else if (!tk && st.hover === o.i) { x.strokeStyle = 'rgba(70,72,84,0.7)'; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(c[0] - w * K + 30, c[1] + h * K + 22); x.quadraticCurveTo(c[0], c[1] + h * K + 34, c[0] + w * K - 30, c[1] + h * K + 20); x.stroke(); } });
     // on the right page, at the foot: the bell that deals three others (its price in engraved coins), a priced extra bottle if the supplier has one, and the corner that leaves
     if (bell) { const c = px({ x: bell.x, z: bell.z }), hov = st.mark === 'reroll', n = Math.min(9, bell.price || 0); x.strokeStyle = SEP; x.fillStyle = '#ece2c8'; x.lineWidth = hov ? 5 : 3.4; x.lineJoin = 'round'; x.beginPath(); x.moveTo(c[0] - 62, c[1] + 26); x.quadraticCurveTo(c[0] - 60, c[1] - 58, c[0], c[1] - 60); x.quadraticCurveTo(c[0] + 60, c[1] - 58, c[0] + 62, c[1] + 26); x.closePath(); x.fill(); x.stroke(); x.fillStyle = SEP; x.fillRect(c[0] - 78, c[1] + 26, 156, 12); x.beginPath(); x.arc(c[0], c[1] - 68, 9, 0, 6.3); x.fill();
       x.save(); x.beginPath(); x.moveTo(c[0] - 60, c[1] + 24); x.quadraticCurveTo(c[0] - 58, c[1] - 56, c[0], c[1] - 58); x.quadraticCurveTo(c[0] + 58, c[1] - 56, c[0] + 60, c[1] + 24); x.closePath(); x.clip(); x.lineWidth = 1.3; for (let k = 0; k < 14; k++) { x.beginPath(); x.moveTo(c[0] + 4 + k * 6, c[1] - 62); x.quadraticCurveTo(c[0] + 26 + k * 6, c[1] - 20, c[0] + 22 + k * 6, c[1] + 28); x.stroke(); } x.restore();
-      for (let k = 0; k < n; k++) ecoin(x, c[0] + 118 + (k % 3) * 44, c[1] + 6 - Math.floor(k / 3) * 30, 19); }
-    if (shelf && !shelf.sold) { const c = px({ x: shelf.x, z: shelf.z }); eplate(x, shelf, c, 190, 78); for (let k = 0; k < Math.min(9, shelf.price || 0); k++) ecoin(x, c[0] - 150 + k * 40, c[1] + 106, 17); }
+      priceInk(x, c[0] + 112, c[1] + 4, n, (run.coins || 0) >= n, false); }
+    if (shelf && !shelf.sold) { const c = px({ x: shelf.x, z: shelf.z }); eplate(x, shelf, c, 190, 78); priceInk(x, c[0] - 40, c[1] + 112, shelf.price || 0, (run.coins || 0) >= (shelf.price || 0), false); }
     { const c = px({ x: SAFE ? SAFE.R.x1 - 0.1 : 31.7, z: 17.9 }), L = 210, hov = st.mark === 'skip' ? 1.12 : 1, Lh = L * hov; x.fillStyle = 'rgba(40,28,14,0.22)'; x.beginPath(); x.moveTo(c[0] - Lh - 18, c[1]); x.lineTo(c[0], c[1] - Lh - 18); x.lineTo(c[0] - Lh * 0.5, c[1] - Lh * 0.5 - 26); x.closePath(); x.fill(); x.fillStyle = '#f1ebd9'; x.strokeStyle = 'rgba(70,56,36,0.75)'; x.lineWidth = 3; x.beginPath(); x.moveTo(c[0] - Lh, c[1]); x.lineTo(c[0], c[1] - Lh); x.lineTo(c[0] - Lh * 0.84, c[1] - Lh * 0.84); x.closePath(); x.fill(); x.stroke(); x.fillStyle = '#f4efe2'; x.beginPath(); x.moveTo(c[0] - Lh, c[1]); x.lineTo(c[0], c[1] - Lh); x.lineTo(c[0] + 4, c[1] + 4); x.closePath(); x.fill();
-      if (door && door.pays) ecoin(x, c[0] - L * 0.62, c[1] - L * 0.62, 19); }
+      if (door && door.pays) priceInk(x, c[0] - L * 0.66, c[1] - L * 0.6, door.pays, true, true);
+      try { AA.rxPen.write(x, 'Skip', c[0] - Lh - 30, c[1] - 62, 62, { weight: 'heavy', color: hov > 1 ? SEP : 'rgba(58,42,28,0.78)', align: 'right' }); } catch (e) { /* no pen */ } }
     x.restore(); }
+  // (fix_ux) a price or a pay as one coin and its number: '2' beside a coin costs two, '+1' is paid; a price that cannot be met is faded
+  function priceInk(x, cx, cy, n, can, plus) { if (!(n > 0)) return; x.save(); x.globalAlpha = can ? 1 : 0.4; ecoin(x, cx, cy, 21); try { AA.rxPen.write(x, (plus ? '+' : '') + n, cx + 30, cy + 20, 54, { weight: 'heavy', color: plus ? '#5b4a12' : SEP, align: 'left' }); } catch (e) { /* no pen */ } x.restore(); }
+  // (fix_ux) what the run already holds, across the head of the right page: its bottles, then its gold
+  const heldCv = {};
+  function heldInk(x, xa, xb, hy) { if (!run) return; const ids = (run.rack || []).filter(id => TILE[id]), coins = run.coins || 0, bh = 96, bw = bh * 0.62, gap = 10, want = ids.length * (bw + gap) + (coins ? 130 : 0), k = Math.min(1, (xb - xa - 120) / Math.max(1, want)), W = want * k; let cx = (xa + xb) / 2 - W / 2 + 60;
+    try { AA.rxPen.write(x, 'Held', cx - 18, hy + 14, 34, { weight: 'thin', color: 'rgba(58,42,28,0.7)', align: 'right' }); } catch (e) { /* no pen */ }
+    ids.forEach(id => { let cv = heldCv[id]; if (cv === undefined) { cv = document.createElement('canvas'); cv.width = 240; cv.height = 388; try { bottleDraw(cv.getContext('2d'), id, true, 240, 388, true); } catch (e) { cv = null; } heldCv[id] = cv; } if (cv) x.drawImage(cv, cx, hy - bh * k * 0.62, bw * k, bh * k); cx += (bw + gap) * k; });
+    if (coins) { cx += 22 * k; ecoin(x, cx + 16, hy, 19); try { AA.rxPen.write(x, String(coins), cx + 44, hy + 18, 50, { weight: 'heavy', color: SEP, align: 'left' }); } catch (e) { /* no pen */ } } }
   function shopInk(x, now) { const CATB = SHOPV === 'b'; if (CATB) { catInk(x, now); ENGR = 0; } try { shopInk0(x, now, CATB); } finally { ENGR = 0; } }
   function shopInk0(x, now, CATB) {
-    const o = shopB && (shopB.take ? shopB.take.o : st.hover >= 0 ? shopB.objs.find(q => q.kind === 'offer' && q.i === st.hover) : st.mark === 'shelf' ? shopObj('shelf') : null), c = px(CATB ? { x: 15.4, z: -6.5 } : { x: 3, z: -1.5 });
+    const o = shopB && (shopB.take ? shopB.take.o : st.hover >= 0 ? shopB.objs.find(q => q.kind === 'offer' && q.i === st.hover) : st.mark === 'shelf' ? shopObj('shelf') : null), c = px(CATB ? { x: 15.4, z: -9.6 } : { x: 3, z: -1.5 });
+    if (CATB && o && (o.kind === 'offer' || o.kind === 'shelf')) { try { pickSketch(x, o, px({ x: 15.4, z: 3.6 }), 24.5 * U, 11.5 * U, now); } catch (e) { HL.err = 'sketch ' + String(e && e.stack); } }
+    if (CATB && !o) { /* nothing pointed at: a faint arrow from the right page to the offers */ const k = 1 + 0.05 * Math.sin(now / 300), a = px({ x: 15.4, z: -1.4 }); x.strokeStyle = FAINT; x.lineWidth = 9; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(a[0] + 230, a[1] + 40); x.quadraticCurveTo(a[0] + 40, a[1] - 70 * k, a[0] - 170 * k, a[1]); x.moveTo(a[0] - 170 * k + 50, a[1] - 44); x.lineTo(a[0] - 170 * k, a[1]); x.lineTo(a[0] - 170 * k + 62, a[1] + 30); x.stroke(); dirty = true; }
     if (!CATB) { const h = px(SHAPE === 'a' ? { x: -30.4, z: -15.2 } : { x: -21.2, z: -12.2 }); marker(x, 104); x.textAlign = 'center'; x.fillStyle = INK; x.fillText(String(run.round), h[0], h[1]); inkLoop(x, h[0], h[1] - 34, 70, 62, 1, 5, PENCIL); }
     const id = o && (o.kind === 'shelf' ? o.id : o.p && !o.gear ? o.p.id : null), tl = id && TILE[id];
     if (tl) { const t = ((now - (shopB.hovT || now)) % 2600) / 2600, sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }, kA = sm((t - 0.22) / 0.18), kB = sm((t - 0.4) / 0.12), pop = t > 0.4 && t < 0.56 ? 1 + 0.25 * Math.sin((t - 0.4) / 0.16 * Math.PI) : 1, out = t > 0.92 ? 1 - (t - 0.92) / 0.08 : 1;
@@ -4681,6 +4695,122 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
     veil.width = w; veil.height = h; const x = veil.getContext('2d'), gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, PAPERS[PAPERN].veil[0]); gr.addColorStop(1, PAPERS[PAPERN].veil[1]); x.fillStyle = gr; x.fillRect(0, 0, w, h); noise(x, w, h, w * h / 30, 0.05, '80,60,30');
   }
+  // ---------- (fix_ux) A CARD UNDER THE POINTER ----------
+  // While a reagent card is pointed at (or a piece of the kit, or the creature), the page dims and what that card would
+  // change on the molecule as it stands glows through: the bonds it makes, breaks or changes, the atoms they join, the atom
+  // a new group goes on, the atoms that leave. A card that finds nothing dims the page and is crossed out. What glows is
+  // worked out by firing the reagent on a copy through the rules' own engine (run.js react, as the page's options do), so it
+  // is what the card does; nothing of the round, the score or the draw is touched. Nothing is drawn, and nothing is worked
+  // out, while nothing is pointed at.
+  const HL = { cv: null, x: null, k: 0, dk: 0, last: 0, key: '', tg: null, d: null, homH: false, err: null, mk: null, frames: 0 };
+  const hlHeavy = a => !!a && a.el !== 'H';
+  function siteDiff(m, id) {
+    const card = RX.CARDS[id]; if (!m || !card || !AA.rxRun || !AA.rxRun.react) return null;
+    const cm = RX.cloneMap(m), inv = new Map(), ix = new Map(); cm.map.forEach((c, o) => inv.set(c, o)); m.atoms.forEach((a, i) => ix.set(a, i));
+    const kk = (a, b) => { const i = ix.get(a), j = ix.get(b); return i < j ? i + ',' + j : j + ',' + i; }, before = new Map(), hb = new Map();
+    m.bonds.forEach(k => { if (!cm.map.has(k.a) || !cm.map.has(k.b)) return; if (hlHeavy(k.a) && hlHeavy(k.b)) before.set(kk(k.a, k.b), { a: k.a, b: k.b, o: k.order }); else { const h = hlHeavy(k.a) ? k.a : hlHeavy(k.b) ? k.b : null; if (h) hb.set(h, (hb.get(h) || 0) + 1); } });
+    let r; try { r = AA.rxRun.react({ cur: { path: [], fresh: new Set() } }, cm.model, id); } catch (e) { return null; }
+    const live = new Set(cm.model.atoms), after = new Map(), ha = new Map(), gain = new Set();
+    cm.model.bonds.forEach(k => { if (!live.has(k.a) || !live.has(k.b)) return; const oa = inv.get(k.a), ob = inv.get(k.b);
+      if (oa && ob) { if (hlHeavy(oa) && hlHeavy(ob)) after.set(kk(oa, ob), { a: oa, b: ob, o: k.order }); else { const h = hlHeavy(oa) ? oa : hlHeavy(ob) ? ob : null; if (h) ha.set(h, (ha.get(h) || 0) + 1); } }
+      else if (oa || ob) { const o = oa || ob, nw = oa ? k.b : k.a; if (hlHeavy(o) && hlHeavy(nw)) gain.add(o); else if (hlHeavy(o)) ha.set(o, (ha.get(o) || 0) + 1); } });
+    const bonds = [], joins = [], atoms = new Set(), lost = new Set();
+    before.forEach((q, k) => { const p = after.get(k); if (!p || p.o !== q.o) { bonds.push(q); atoms.add(q.a); atoms.add(q.b); } });
+    after.forEach((q, k) => { if (!before.has(k)) { joins.push(q); atoms.add(q.a); atoms.add(q.b); } });
+    m.atoms.forEach(a => { if (!hlHeavy(a) || !cm.map.has(a)) return; if (!live.has(cm.map.get(a))) { lost.add(a); atoms.add(a); } else if ((hb.get(a) || 0) !== (ha.get(a) || 0)) atoms.add(a); });
+    gain.forEach(a => atoms.add(a));
+    return { n: r ? (r.hits || 0) + (r.spoiled || 0) : 0, atoms, bonds, joins, gain, lost };
+  }
+  // the places a piece of the kit or the creature could be used: their atoms, and the bond between two of them
+  function spotDiff(m, list) { const atoms = new Set(), bonds = [], seen = new Set(), bondOf = (a, b) => m.bonds.find(k => (k.a === a && k.b === b) || (k.a === b && k.b === a));
+    const walk = (v, d) => { if (!v || d > 4) return; if (v.el) { if (hlHeavy(v) && m.atoms.includes(v)) atoms.add(v); return; } if (Array.isArray(v)) { v.forEach(w => walk(w, d + 1)); if (v.length === 2 && v[0] && v[1] && v[0].el && v[1].el) { const k = bondOf(v[0], v[1]); if (k && !seen.has(k)) { seen.add(k); bonds.push({ a: k.a, b: k.b, o: k.order }); } } } };
+    (list || []).forEach(sp => { if (!sp) return; if (Array.isArray(sp)) return walk(sp, 0); ['a', 'b', 'c', 'o', 'p', 'cl', 'me', 'atoms', 'pairs', 'runs', 'rings'].forEach(f => walk(sp[f], 0)); if (sp.a && sp.b && sp.a.el && sp.b.el) walk([sp.a, sp.b], 0); if (sp.c && sp.o && sp.c.el && sp.o.el) walk([sp.c, sp.o], 0); if (sp.all) m.atoms.forEach(a => { if (hlHeavy(a)) atoms.add(a); }); });
+    return { n: (list || []).length, atoms, bonds, joins: [], gain: new Set(), lost: new Set() }; }
+  const toolDiff = (m, id) => { try { return spotDiff(m, RX.tools.spots(m, id, P.RULE.atoms).map(sp => RX.tools.at(sp))); } catch (e) { return null; } };
+  // a colour that reads lit on a dimmed page: a dark one is carried toward white until it is as light as a mid grey
+  const hlCol = rgb => { let c = rgb || [255, 214, 120]; if (Math.max.apply(null, c) - Math.min.apply(null, c) < 60) c = [255, 206, 110]; const L = (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255, t = L < 0.58 ? (0.58 - L) / (1 - L) : 0; return c.map(v => Math.round(v + (255 - v) * t)); };
+  function hlTarget() {
+    if (st.mode !== 'play' || !g || g.over || !center || center.model !== g.m || st.firing || morph || st.tool || st.homWait || MAN.on || title.on || st.drag) return null;
+    const s = st.hover >= 0 ? slots[st.hover] : null; if (s && RX.CARDS[s.id]) { const b = BT.map.get(s.id); return { kind: 'card', id: s.id, key: 'c:' + s.id, obj: b ? b.grp : null }; }
+    if (st.kitHover >= 0 && kitObjs[st.kitHover] && P.canTool(g, kitObjs[st.kitHover].id)) { const k = kitObjs[st.kitHover]; return { kind: 'tool', id: k.id, key: 't:' + k.id, obj: k.grp }; }
+    if (HL.homH && homObj && g.hom && !st.homAct) return { kind: 'hom', id: g.hom.id, key: 'h:' + g.hom.id, obj: homObj.grp };
+    return null;
+  }
+  function hlData(tg) { let d = null, rgb = null;
+    if (tg.kind === 'card') { d = siteDiff(g.m, tg.id); rgb = RX.CARDS[tg.id].rgb; }
+    else if (tg.kind === 'tool') { try { d = spotDiff(g.m, P.toolSpots(g, tg.id).map(sp => RX.tools.at(sp))); } catch (e) { d = null; } rgb = [255, 206, 110]; }
+    else { try { d = spotDiff(g.m, P.homSpots(g)); } catch (e) { d = null; } rgb = [120, 214, 255]; }
+    d = d || { n: 0, atoms: new Set(), bonds: [], joins: [], gain: new Set(), lost: new Set() }; d.rgb = hlCol(rgb); d.none = !d.atoms.size && !d.bonds.length && !d.joins.length; return d; }
+  const hlSm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+  function hlFrame(now) {
+    let tg = hlTarget(); const dt = HL.last ? Math.max(0, Math.min(100, now - HL.last)) : 16; HL.last = now;
+    // a piece or a creature with no place to act on: nothing dims, nothing is crossed (only a card is crossed out); remembered so it is not worked out again each frame
+    if (tg && tg.kind !== 'card') { const sk = tg.key + '|' + g.m.atoms.length + ':' + g.m.bonds.length; if (HL.skip === sk && HL.skipM === g.m) tg = null; else if (tg.key !== HL.key || HL.m !== g.m) { const d0 = hlData(tg); if (d0.none) { HL.skip = sk; HL.skipM = g.m; tg = null; } } }
+    HL.k = Math.max(0, Math.min(1, HL.k + (tg ? dt / 160 : -dt / 120)));
+    if (!tg && HL.k <= 0) { if (HL.cv && HL.cv.width) { HL.cv.width = 0; HL.cv.height = 0; } HL.d = null; HL.key = ''; HL.tg = null; return; }
+    if (tg && (tg.key !== HL.key || HL.m !== g.m || HL.nb !== g.m.bonds.length || HL.na !== g.m.atoms.length)) { HL.key = tg.key; HL.m = g.m; HL.nb = g.m.bonds.length; HL.na = g.m.atoms.length; HL.tg = tg; HL.dk = 0; HL.d = hlData(tg); }
+    if (tg) HL.tg = tg; HL.dk = Math.min(1, HL.dk + dt / 160);
+    if (!HL.cv) { HL.cv = document.createElement('canvas'); HL.cv.className = 'veil'; app.append(HL.cv); HL.x = HL.cv.getContext('2d'); }
+    const W = overC.width || 1280, H = overC.height || 720; if (HL.cv.width !== W || HL.cv.height !== H) { HL.cv.width = W; HL.cv.height = H; }
+    const x = HL.x, e = hlSm(HL.k), d = HL.d, a = e * hlSm(HL.dk), col = d ? d.rgb : [255, 214, 120], rgba = (al, c) => 'rgba(' + (c || col).join(',') + ',' + al.toFixed(3) + ')';
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H); HL.frames++;
+    // the dim: the page falls to about 40 percent
+    x.globalCompositeOperation = 'source-over'; x.fillStyle = 'rgba(12,9,6,' + (0.6 * e).toFixed(3) + ')'; x.fillRect(0, 0, W, H);
+    // where the atoms stand on the screen, and how big each is there
+    cam.updateMatrixWorld(); if (center) center.group.updateMatrixWorld(); const v = HL.v || (HL.v = new T.Vector3()), w2 = HL.w || (HL.w = new T.Vector3()), rt = HL.rt || (HL.rt = new T.Vector3()); rt.setFromMatrixColumn(cam.matrixWorld, 0); const sc = center ? center.group.scale.x : 1, pos = new Map();
+    const P2 = at => { if (pos.has(at)) return pos.get(at); const b = center && center.balls.get(at); let p = null; if (b && b.mesh.visible) { b.mesh.getWorldPosition(v); w2.copy(v).addScaledVector(rt, Math.max(0.2, b.mesh.scale.x) * sc); v.project(cam); w2.project(cam); const X = (v.x + 1) * W / 2, Y = (1 - v.y) * H / 2; p = { x: X, y: Y, r: Math.max(5, Math.hypot((w2.x + 1) * W / 2 - X, (1 - w2.y) * H / 2 - Y)) }; } pos.set(at, p); return p; };
+    // the card itself stays lit
+    let rc = null; const ob = (HL.tg && HL.tg.obj) || null; if (ob) { const bb = HL.bb || (HL.bb = new T.Box3()); bb.setFromObject(ob); if (!bb.isEmpty()) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (let i = 0; i < 8; i++) { v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z).project(cam); const X = (v.x + 1) * W / 2, Y = (1 - v.y) * H / 2; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); } rc = [x0 - 6, y0 - 6, x1 + 6, y1 + 6]; } }
+    x.globalCompositeOperation = 'destination-out';
+    if (rc) { x.fillStyle = 'rgba(0,0,0,' + e.toFixed(3) + ')'; x.beginPath(); const rr = 14; x.moveTo(rc[0] + rr, rc[1]); x.arcTo(rc[2], rc[1], rc[2], rc[3], rr); x.arcTo(rc[2], rc[3], rc[0], rc[3], rr); x.arcTo(rc[0], rc[3], rc[0], rc[1], rr); x.arcTo(rc[0], rc[1], rc[2], rc[1], rr); x.closePath(); x.fill(); }
+    const hole = (X, Y, R, al) => { const gr = x.createRadialGradient(X, Y, 0, X, Y, R); gr.addColorStop(0, 'rgba(0,0,0,' + al.toFixed(3) + ')'); gr.addColorStop(0.62, 'rgba(0,0,0,' + al.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.beginPath(); x.arc(X, Y, R, 0, 6.2832); x.fill(); };
+    const segs = d && !d.none ? d.bonds.map(q => [q, false]).concat(d.joins.map(q => [q, true])) : [];
+    if (d && !d.none) { d.atoms.forEach(at => { const p = P2(at); if (p) hole(p.x, p.y, p.r * 2.1, a); }); segs.forEach(s => { const A = P2(s[0].a), B = P2(s[0].b); if (!A || !B) return; const r0 = Math.min(A.r, B.r); for (let t = 0.2; t < 0.85; t += 0.2) hole(A.x + (B.x - A.x) * t, A.y + (B.y - A.y) * t, r0 * 1.5, a); }); }
+    x.globalCompositeOperation = 'source-over';
+    if (d && !d.none && a > 0.002) {
+      x.lineCap = 'round'; x.lineJoin = 'round';
+      // the bonds that change: a wide coloured glow with a lit core; a bond still to be made: the same, dashed
+      segs.forEach(s => { const A = P2(s[0].a), B = P2(s[0].b); if (!A || !B) return; const r0 = Math.min(A.r, B.r), ux = B.x - A.x, uy = B.y - A.y, L = Math.hypot(ux, uy) || 1, ka = A.r * 0.9 / L, kb = 1 - B.r * 0.9 / L; if (kb <= ka) return; const ax = A.x + ux * ka, ay = A.y + uy * ka, bx = A.x + ux * kb, by = A.y + uy * kb;
+        x.setLineDash(s[1] ? [r0 * 0.7, r0 * 0.6] : []); x.shadowColor = rgba(0.95 * a); x.shadowBlur = r0 * 1.1; x.strokeStyle = rgba(0.72 * a); x.lineWidth = r0 * 1.15; x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke(); x.shadowBlur = 0; x.strokeStyle = 'rgba(255,252,238,' + (0.8 * a).toFixed(3) + ')'; x.lineWidth = Math.max(2, r0 * 0.24); x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke(); });
+      x.setLineDash([]);
+      // the atoms it acts on: an ink ring in its colour; the atom a new group goes on: a second, wider ring; an atom that leaves: a broken ring (a reagent with no colour of its own, black or grey, glows lamp gold)
+      d.atoms.forEach(at => { const p = P2(at); if (!p) return; const lost = d.lost.has(at); x.shadowColor = rgba(0.9 * a); x.shadowBlur = p.r * 0.8; x.strokeStyle = rgba(0.98 * a); x.lineWidth = Math.max(3, p.r * 0.3); if (lost) x.setLineDash([p.r * 0.5, p.r * 0.38]); x.beginPath(); x.arc(p.x, p.y, p.r * 1.3, 0, 6.2832); x.stroke(); x.setLineDash([]);
+        if (d.gain.has(at)) { x.lineWidth = Math.max(2, p.r * 0.14); x.strokeStyle = rgba(0.75 * a); x.beginPath(); x.arc(p.x, p.y, p.r * 1.72, 0, 6.2832); x.stroke(); } x.shadowBlur = 0; });
+    }
+    // a card that finds nothing here: crossed out at its corner, and nothing glows
+    if (d && d.none && rc && a > 0.002) { const R = Math.max(14, Math.min(26, (rc[3] - rc[1]) * 0.12)), cx = rc[2] - R * 0.6, cy = rc[1] + R * 0.6; x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(246,240,226,0.92)'; x.beginPath(); x.arc(cx, cy, R, 0, 6.2832); x.fill(); x.strokeStyle = REDINK; x.lineWidth = Math.max(3, R * 0.2); x.lineCap = 'round'; x.beginPath(); x.arc(cx, cy, R * 0.78, 0, 6.2832); x.moveTo(cx - R * 0.55, cy + R * 0.55); x.lineTo(cx + R * 0.55, cy - R * 0.55); x.stroke(); x.restore(); }
+    HL.mk = { k: +e.toFixed(3), dk: +HL.dk.toFixed(3), rc, n: d ? d.atoms.size : 0 };
+  }
+  // the take-one page: the offer pointed at, shown on the run's own molecule (or, if it finds nothing there, on a small sample that it
+  // does act on), drawn as the plates are, with what it would change in its colour and the rest faded
+  const SKS = ['CC=CCC(O)CCC(=O)C', 'C=CCCC(=O)C', 'CC(O)CCC=CC', 'CC(=O)CCC(O)CC=C', 'OCCC(Cl)CC=C', 'NCCC=CCC(=O)C', 'CC(Cl)CCC(O)CC', 'C=CCC(=O)CC(N)CC', 'OCC1CCC(=O)CC1'];
+  const sketchCache = new Map();
+  function sketchOf(id, gear) {
+    const base0 = g && g.m, key = id + '|' + (gear ? 1 : 0) + '|' + (base0 ? base0.atoms.length + ':' + base0.bonds.length : '-'); if (sketchCache.has(key) && sketchCache.get(key).m0 === base0) return sketchCache.get(key);
+    const diff = m => (gear ? toolDiff(m, id) : siteDiff(m, id)); let base = base0, d = base ? diff(base) : null, own = true; if (d) d.none = !d.atoms.size && !d.bonds.length && !d.joins.length;
+    if (!d || d.none || base.atoms.filter(hlHeavy).length > 26) { own = false; d = null; for (const s of SKS) { let m2 = null; try { m2 = RX.fromSmiles(s); } catch (e) { m2 = null; } if (!m2) continue; const d2 = diff(m2); if (d2 && (d2.atoms.size || d2.bonds.length || d2.joins.length)) { base = m2; d = d2; break; } } }
+    let out = { m0: base0, none: !d, own };
+    if (d) { const a0 = align; let mm = null; try { setAlign(base); mm = buildMol(base, null, false); const pts = new Map(); mm.at.forEach((p, a) => { if (hlHeavy(a) && mm.balls.has(a)) pts.set(a, { x: p.x, z: p.z }); }); out = Object.assign(out, { pts, bonds: base.bonds.filter(k => pts.has(k.a) && pts.has(k.b)), d, rgb: hlCol(gear ? [255, 206, 110] : (RX.CARDS[id] || {}).rgb) }); } finally { if (mm) freeMol(mm); align = a0; } }
+    if (sketchCache.size > 40) sketchCache.clear(); sketchCache.set(key, out); return out;
+  }
+  function pickSketch(x, o, c, maxW, maxH, now) {
+    const id = o.kind === 'shelf' ? o.id : o.p && o.p.id; if (!id) return; const S = sketchOf(id, !!o.gear); if (!S || S.none || !S.pts) return;
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; S.pts.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); });
+    const k = Math.min(36 / 1.55 * 2.6, (maxW - 60) / Math.max(1, x1 - x0), (maxH - 60) / Math.max(1, z1 - z0)), fs = k / (36 / 1.55), P0 = p => [c[0] + (p.x - (x0 + x1) / 2) * k, c[1] + (p.z - (z0 + z1) / 2) * k], d = S.d, col = S.rgb, isHot = q => d.bonds.some(r => (r.a === q.a && r.b === q.b) || (r.a === q.b && r.b === q.a));
+    const t = ((now - (shopB && shopB.hovT || 0)) % 2400) / 2400, pulse = 0.5 + 0.5 * hlSm(Math.min(1, t * 4)) * (1 - hlSm((t - 0.85) / 0.15));
+    x.save(); x.lineCap = 'round'; x.lineJoin = 'round';
+    // the glow under what changes
+    const glow = (ax, ay, bx, by, dash) => { x.setLineDash(dash ? [16 * fs, 14 * fs] : []); x.strokeStyle = 'rgba(' + col.join(',') + ',' + (0.45 + 0.3 * pulse).toFixed(3) + ')'; x.lineWidth = 22 * fs; x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke(); x.setLineDash([]); };
+    d.bonds.forEach(q => { const A = S.pts.get(q.a), B = S.pts.get(q.b); if (A && B) { const a = P0(A), b = P0(B); glow(a[0], a[1], b[0], b[1], false); } });
+    d.joins.forEach(q => { const A = S.pts.get(q.a), B = S.pts.get(q.b); if (A && B) { const a = P0(A), b = P0(B); glow(a[0], a[1], b[0], b[1], true); } });
+    // the molecule, faded where nothing happens
+    S.bonds.forEach(q => { const a = P0(S.pts.get(q.a)), b = P0(S.pts.get(q.b)), on = isHot(q) || (d.atoms.has(q.a) && d.atoms.has(q.b)); fbond(x, a[0], a[1], b[0], b[1], q.order, on); });
+    S.pts.forEach((p, at) => { const q = P0(p), on = d.atoms.has(at); x.save(); x.translate(q[0], q[1]); x.scale(fs, fs); fball(x, 0, 0, FBALL[at.el] ? at.el : 'C', on); x.restore();
+      if (on) { const r = (FBALL[at.el] ? FBALL[at.el][1] : 12) * fs; x.strokeStyle = 'rgba(' + col.join(',') + ',0.95)'; x.lineWidth = Math.max(3, 4 * fs); if (d.lost.has(at)) x.setLineDash([7 * fs, 6 * fs]); x.beginPath(); x.arc(q[0], q[1], r * 1.55, 0, 6.2832); x.stroke(); x.setLineDash([]); if (d.gain.has(at)) { x.lineWidth = Math.max(2, 2.6 * fs); x.beginPath(); x.arc(q[0], q[1], r * 2.05, 0, 6.2832); x.stroke(); } } });
+    // how many places: the count in its colour
+    const nPl = d.n || Math.max(1, d.gain.size); try { AA.rxPen.write(x, String(nPl), c[0] + (x1 - x0) / 2 * k + 60 * fs, c[1] - (z1 - z0) / 2 * k - 10 * fs, 74, { weight: 'heavy', color: 'rgb(' + col.map(v => Math.round(v * 0.62)).join(',') + ')', align: 'right' }); } catch (e) { /* no pen */ }
+    x.restore(); dirty = true;
+  }
   function frame(now) {
     requestAnimationFrame(frame);
     try { manFrame(now); } catch (e) { /* the manual is not ready on the first frames */ }
@@ -4809,6 +4939,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     stepParts(dt);
     try { sigWatch(now); } catch (e) { /* none */ }
     cardFrame(now);
+    try { hlFrame(now); } catch (e) { HL.err = String(e && e.stack); }
     try { kinFrame(now); } catch (e) { KINV.err = String(e && e.stack); }
     try { homEvo19(now); } catch (e) { HEVO.err = String(e && e.stack); }
     marginBusyE(now);
@@ -5117,6 +5248,14 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     openSupplier, meta, debugGear: ids => { run.gear = ids.slice(); run.noGear = false; }, debugRun: () => run,
     chooseBrief,
     state: () => (!g || st.mode === 'pick' || st.mode === 'shop' || st.mode === 'brief' || st.mode === 'terms' || st.mode === 'hom' ? { mode: st.mode, hom: run.hom || null, briefs: briefs.map(b => b.brief + ':' + b.quota + ':' + (b.pays || '')), pair: briefs.map(b => ({ src: b.src, ease: b.ease, coins: b.coins || 0, quota: b.quota })), pairCost: P.pairCost(run), coined: !!meta.coined, pairAt: PAIR, pairX: briefs.map((b, i) => BX(i)), assay: P.assayOf(run), round: run.round, beaten: run.beaten, picks: picks.map(o => o.kind + ':' + o.id), coins: run.coins || 0, rerollCost: P.rerollCost(run), gear: run.gear.slice(), rack: run.rack.slice(), credit: meta.credit, tier: meta.tier } : { mode: st.mode, queue: (g.queue || []).slice(), lining: lining(), firing: !!st.firing, room: P.stepsOf(g) - g.pageSteps, will: st.view ? st.view.kinds.slice() : [], casc: g.casc || 0, self: (g.self || []).slice(), charged: P.charged(g), fork: !!g.chain && st.mode === 'play', canBank: st.mode === 'play' && P.canBank(g), bankGain: P.canBank(g) ? P.bankGain(g) : 0, canRedraw: st.mode === 'play' && P.canRedraw(g), stuck: stuck(), left: Object.assign({}, g.left), rack: (g.rackIds || []).slice(), heavy: P.heavy(g.m), brief: g.brief, round: run.round, beaten: run.beaten, page: g.page, steps: g.pageSteps, offer: g.kinds.slice(), usable: slots.map((s, i) => (s && s.o ? i : -1)).filter(i => i >= 0), conts: slots.map((s, i) => (s && s.o && s.o.cont && g.cur.path.length > 0 ? i : -1)).filter(i => i >= 0), made: P.made(g), coins: run.coins || 0, marks: P.runMarks(st.quota), gear: st.gear.slice(), rare: Object.assign({}, g.rare), places: g.P, rowNum: g.R, extra: g.E, times: P.mult(g), row: g.cur.path.length, best: g.best, quota: st.quota, pass: st.pass, won: !!st.won, call: st.call && st.call.text }) };
+  // (fix_ux) the creature under the pointer while a page is lined up; and, for checks, what a card would light on the molecule as it stands
+  cv.addEventListener('pointermove', () => { const h = st.mode === 'play' && !!homObj && homAt(); if (h !== HL.homH) { HL.homH = h; dirty = true; } }); cv.addEventListener('pointerleave', () => { HL.homH = false; });
+  const hlOut = (m, d) => d && { n: d.n, none: !d.atoms.size && !d.bonds.length && !d.joins.length, atoms: Array.from(d.atoms).map(a => m.atoms.indexOf(a)).sort((p, q) => p - q), gain: Array.from(d.gain).map(a => m.atoms.indexOf(a)).sort((p, q) => p - q), lost: Array.from(d.lost).map(a => m.atoms.indexOf(a)).sort((p, q) => p - q), bonds: d.bonds.map(q => [m.atoms.indexOf(q.a), m.atoms.indexOf(q.b)].sort((p, q2) => p - q2).join('-')).sort(), joins: d.joins.map(q => [m.atoms.indexOf(q.a), m.atoms.indexOf(q.b)].sort((p, q2) => p - q2).join('-')).sort() };
+  AA.rxScheme.hlSites = (id, m) => { const mm = m || (g && g.m); return hlOut(mm, siteDiff(mm, id)); };
+  AA.rxScheme.hlToolSites = (id, m) => { const mm = m || (g && g.m); return hlOut(mm, toolDiff(mm, id)); };
+  AA.rxScheme.hlState = () => ({ k: HL.k, dk: HL.dk, key: HL.key, mk: HL.mk, err: HL.err, frames: HL.frames, cv: HL.cv ? [HL.cv.width, HL.cv.height] : null, data: HL.d && g ? hlOut(g.m, HL.d) : null });
+  AA.rxScheme.hlHom = v => { HL.homH = !!v; };
+  AA.rxScheme.kitHover = i => { st.kitHover = i; dirty = true; };
   AA.rxScheme.benchBoxes = benchBoxes; AA.rxScheme.profile = () => ({ from: PROF.from, older: PROF.older, noSave: PROF.noSave, stage: P.stageOf(meta), earn: A20.earn ? A20.earn.list.map(q => q.id + ':' + q.gives + ':' + (q.thing || q.credit)) : null, err: A20.err || null }); AA.rxScheme.profileSave = () => saveMeta(); AA.rxScheme.jarBack = v => { JARK.forEach(k => { jars[k].back = v === 1; jars[k].front = v === 2; }); }; AA.rxScheme.slotIds = () => slots.map(q => (q ? q.id : null)); AA.rxScheme.jumpShow = id => { if (!homObj || !center) return false; st.homAct = { t: performance.now(), to: { x: C0.x, z: C0.z }, id }; const jj = jumpPlan(id, { x: C0.x + 1.5, z: C0.z + 1.2 }); if (jj) st.homAct.j = jj; return jj ? Math.round(jj.W + jj.J + jj.D + jj.B + jj.L) : 0; }; AA.rxScheme.actShow = id => { st.homAct = { t: performance.now(), to: actTo(id, { x: C0.x, z: C0.z }), id }; actStart(id); }; AA.rxScheme.jarDrop = k => { if (jars[k]) jars[k].born = performance.now(); }; AA.rxScheme.bz = () => BZ;
   AA.rxScheme.marginE = measureE; AA.rxScheme.pageE = PGE;
   // ==== S57 BEGIN
