@@ -4710,6 +4710,8 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
         const gb = x.createLinearGradient(0, B0, 0, bh); gb.addColorStop(0, sh + '0)'); gb.addColorStop(1, sh + '0.78)'); x.fillStyle = gb; x.fillRect(l0, B0 - 1, ww, bh - B0 + 1); }
     } catch (e) { /* the bench beyond the stage is only dress */ }
   }
+  // a drag that began on the stage keeps the pointer when it leaves it for the bars (the manual's turned entry, the twist)
+  app.addEventListener('pointerdown', e => { try { if (e.target && e.target.setPointerCapture && e.pointerId != null) e.target.setPointerCapture(e.pointerId); } catch (q) { /* no capture */ } }, true);
   // ==== STAGE169 END
   function size() {
     stageFit(); // (fix-timing) the 16:9 stage, see STAGE169
@@ -4719,6 +4721,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   }
   function frame(now) {
     requestAnimationFrame(frame);
+    FT.dt = Math.min(0.05, Math.max(0, now - last) / 1000); FT.f = FT.dt * 60; // (fix-timing) FRAMERATE, before the manual is drawn
     try { manFrame(now); } catch (e) { /* the manual is not ready on the first frames */ }
     const raw = now - last, dt = Math.min(0.05, raw / 1000), ended = []; last = now; FT.dt = dt; FT.f = Math.min(3, Math.max(0, dt * 60)); AA.rxKit.fdt = dt; // (fix-timing) FRAMERATE
     if (PLAIN) { st.shake = Math.min(st.shake, 0.55); st.flash = 0; }
@@ -4826,7 +4829,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (BENCHV && st.mode === 'done') dirty = true;
     if (shopB) { if (st.mode === 'pick') shopFrame(now); else shopClear(); }
     leafFrame(now); lossFrame(now);
-    if (BENCHV) { try { const glass = () => Array.from(app.querySelectorAll('canvas.veil')).filter(c => c !== veil && c !== titleC && c.width), wipe = () => glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); }); if (st.mode === 'pick' || st.mode === 'brief' || st.mode === 'shop' || st.mode === 'terms' || st.mode === 'hom') { if (!st.overClean) { wipe(); st.overClean = true; } } else if (st.mode === 'done') { const el = now - (st.doneT || now); if (el > 900 && el < 2600) glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = 'rgba(0,0,0,' + (1 - p60(0.91)).toFixed(4) + ')'; /* (fix-timing) FRAMERATE */ x.fillRect(0, 0, c.width, c.height); x.restore(); }); else if (el >= 2600 && !st.overClean) { wipe(); st.overClean = true; } } else st.overClean = false; } catch (e) { /* no overlay */ } }
+    if (BENCHV) { try { const glass = () => Array.from(app.querySelectorAll('canvas.veil')).filter(c => c !== veil && c !== titleC && c.width), wipe = () => glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); x.restore(); }); if (st.mode === 'pick' || st.mode === 'brief' || st.mode === 'shop' || st.mode === 'terms' || st.mode === 'hom') { if (!st.overClean) { wipe(); st.overClean = true; } } else if (st.mode === 'done') { const el = now - (st.doneT || now); if (el > 900 && el < 2600) glass().forEach(c => { const x = c.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.fillStyle = 'rgba(0,0,0,' + (el > 1500 ? 1 : 1 - p60(0.91)).toFixed(4) + ')'; /* (fix-timing) FRAMERATE: by the second; past 0.6 s (3 pc left at 60 Hz) it is cleared, as 8-bit alpha stalls a small fade */ x.fillRect(0, 0, c.width, c.height); x.restore(); }); else if (el >= 2600 && !st.overClean) { wipe(); st.overClean = true; } } else st.overClean = false; } catch (e) { /* no overlay */ } }
     // the measure of a step (the owner: the molecule's shape must not leap): how far each atom that did not react is carried, as a share of the play area's width
     { const mo = morph && morph.m === center ? morph : null;
       if (mo !== SL.mo && !(mo && mo.cont)) { const snap = center ? snapW(center) : null; if (SL.open && snap) slClose(snap, now); if (mo && snap) SL.open = { before: snap, made: mo.made || new Set(), t: now, slow: !!mo.slow }; SL.idle = 0; }
@@ -4880,7 +4883,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   function manOpen() { manCanvas(); if (MAN.on) return; MAN.on = true; MAN.rows = P.reference(meta); MAN.th = {}; MAN.pick = null; MAN.dirty = true; MAN.open = performance.now(); MAN.cv.width = 1280; MAN.cv.height = 720; MAN.cv.style.pointerEvents = 'auto'; sfxN('pageTurn'); }
   function manShut() { if (!MAN.on) return; MAN.on = false; MAN.pick = null; MAN.cv.width = 0; MAN.cv.height = 0; MAN.cv.style.pointerEvents = 'none'; sfxN('pageTurn'); dirty = true; }
   function manDown(p) {
-    if (MAN.pick) { if (Math.hypot(p.x - 330, p.y - 370) < 230) { MAN.drag = { x: p.x, y: p.y }; MAN.vy = 0; MAN.vp = 0; return; } MAN.pick = null; MAN.dirty = true; sfxN('click'); return; }
+    if (MAN.pick) { if (Math.hypot(p.x - 330, p.y - 370) < 230) { MAN.mt = 0; /* (fix-timing) */ MAN.drag = { x: p.x, y: p.y }; MAN.vy = 0; MAN.vp = 0; return; } MAN.pick = null; MAN.dirty = true; sfxN('click'); return; }
     for (const t of MAN.tabs) if (p.x >= t.x && p.x <= t.x + t.w && p.y >= t.y && p.y <= t.y + t.h) { if (MAN.cat !== t.i) { MAN.cat = t.i; MAN.leaf = 0; MAN.dirty = true; sfxN('pageTurn'); } return; }
     { const b = MAN.leafBtn; if (b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) { MAN.leaf = (MAN.leaf || 0) + 1; MAN.dirty = true; sfxN('pageTurn'); return; } }
     for (const q of MAN.cells) if (p.x >= q.x && p.x <= q.x + q.w && p.y >= q.y && p.y <= q.y + q.h) { manPick(q.row.id, q.row.category); return; }
