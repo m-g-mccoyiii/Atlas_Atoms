@@ -159,7 +159,7 @@ lab([0, 3], 'neat', [
 
   ["Mark {mark} is worth gold if the round is met.", "mark"],
 
-  ["Spec met. Marks at x2, x4, x8.", "win"],
+  ["Spec met. Marks pay past the number to beat.", "win"],
   ["Met with {n} reflexes on the last page; the round's longest before was {roundbest}.", "win", {"c": {"n": [2, 999], "roundbest": [1, 999]}}],
   ["Round met with a longest chain of {roundbest}; the run's longest is {runbest}.", "win", {"c": {"roundbest": [1, 999]}}],
 
