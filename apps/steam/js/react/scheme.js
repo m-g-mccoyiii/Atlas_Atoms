@@ -4676,7 +4676,38 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
   // where a yield stands on the track (0..1): with a needed line, the line and the three gold marks stand in order of their numbers, evenly spaced from 0.4
   const trackPos = (v, need, quota, marks) => { if (!(need > 0)) { const n = marks.length, fr = k => (k === 0 ? 0.5 : 0.5 + 0.5 * k / n), vals = [quota].concat(marks); if (v < quota) return 0.5 * v / Math.max(1, quota); for (let k = 0; k + 1 < vals.length; k++) if (v < vals[k + 1]) return fr(k) + (fr(k + 1) - fr(k)) * (v - vals[k]) / (vals[k + 1] - vals[k]); return fr(vals.length - 1); } const A = [need].concat(marks.filter(m => Math.abs(m - need) > 0.02 * need)).sort((a, b) => a - b), p = j => 0.4 + 0.6 * j / Math.max(1, A.length - 1); if (v <= A[0]) return 0.4 * Math.max(0, v) / A[0]; for (let j = 0; j + 1 < A.length; j++) if (v < A[j + 1]) return p(j) + (p(j + 1) - p(j)) * (v - A[j]) / (A[j + 1] - A[j]); return 1; };
   const FEEL = AA.rxFeel ? AA.rxFeel.attach({ madeMax, pourMs: REAG === 'both' && BENCHV ? 720 : 0, pour: bottlePour, lit: siteLight, reag: REAG, T, P, st, g: () => g, center: () => center, cam, CAM, LOOKAT, px, U, layout: (m, f, s) => (morph && morph.m === m && morph.stage2 ? layoutSafe(m, a => { const c = morph.cur.get(a), t = m.at.get(a), p = f(a); return c && t ? _ride.copy(p).sub(t).add(c) : p; }, s) : layoutSafe(m, f, s)), STEP, STEPD, MADE, colOf, fmt, C0, home: () => ({ x: C0.x, z: C0.z, s: st.sc }), HOME, over: { cv: overC, x: overX }, marker: (x, n) => marker(x, n), INK, GREEN, REDINK, PENCIL, dirty: () => { dirty = true; } }) : null, fe = () => !!FEEL && FEEL.owns();
+  // ==== STAGE169 BEGIN (fix-timing) THE 16:9 STAGE: the whole game (its 3D view, every 2D layer, every hit test) is drawn in a 16:9 box, scaled
+  // the same both ways and centred in the window, so nothing is stretched on an ultrawide or a tall window. The rest of the window is bench:
+  // a low canvas behind the stage carries the stage's own outer edge of wood out to the window's edge (stretched along the grain), falling into
+  // the lamp's shade. ?stage=0 gives the old fill-the-window layout.
+  const STG = { on: (() => { try { return new URLSearchParams(root.location.search).get('stage') !== '0'; } catch (e) { return true; } })(), bk: null, bx: null, L: 0, Tp: 0, w: 0, h: 0, W: 0, H: 0, last: -1e9 };
+  function stageFit() {
+    if (!STG.on || !root.document) return; const de = document.documentElement, W = de.clientWidth || root.innerWidth || 1280, H = de.clientHeight || root.innerHeight || 720;
+    let w = W, h = Math.round(W * 9 / 16); if (h > H) { h = H; w = Math.round(H * 16 / 9); }
+    const L = Math.floor((W - w) / 2), Tp = Math.floor((H - h) / 2); Object.assign(STG, { L, Tp, w, h, W, H });
+    Object.assign(app.style, { left: L + 'px', top: Tp + 'px', width: w + 'px', height: h + 'px', right: 'auto', bottom: 'auto' });
+    try { document.body.style.background = '#120d09'; } catch (e) { /* no body */ }
+    if (!STG.bk) { const c = document.createElement('canvas'); Object.assign(c.style, { position: 'fixed', left: '0', top: '0', width: '100%', height: '100%', pointerEvents: 'none' }); c.className = 'stageback'; document.body.insertBefore(c, app); STG.bk = c; STG.bx = c.getContext('2d'); }
+    STG.bk.width = Math.max(1, Math.ceil(W / 4)); STG.bk.height = Math.max(1, Math.ceil(H / 4)); STG.last = -1e9;
+  }
+  function stageBack(now) {
+    if (!STG.bk || (STG.L < 1 && STG.Tp < 1) || now - STG.last < 33) return; STG.last = now;
+    const x = STG.bx, k = 1 / 4, bw = STG.bk.width, bh = STG.bk.height, sx = cv.width / STG.w, sy = cv.height / STG.h, E = 3, sh = 'rgba(12,6,2,';
+    x.imageSmoothingEnabled = true;
+    try {
+      if (STG.L >= 1) { const L = STG.L * k, R0 = (STG.L + STG.w) * k, t0 = STG.Tp * k, hh = STG.h * k;
+        x.drawImage(cv, 0, 0, E * sx, cv.height, 0, t0, L + 1, hh); x.drawImage(cv, cv.width - E * sx, 0, E * sx, cv.height, R0 - 1, t0, bw - R0 + 1, hh);
+        const gl = x.createLinearGradient(0, 0, L, 0); gl.addColorStop(0, sh + '0.78)'); gl.addColorStop(1, sh + '0)'); x.fillStyle = gl; x.fillRect(0, t0, L + 1, hh);
+        const gr = x.createLinearGradient(R0, 0, bw, 0); gr.addColorStop(0, sh + '0)'); gr.addColorStop(1, sh + '0.78)'); x.fillStyle = gr; x.fillRect(R0 - 1, t0, bw - R0 + 1, hh); }
+      if (STG.Tp >= 1) { const Tq = STG.Tp * k, B0 = (STG.Tp + STG.h) * k, l0 = STG.L * k, ww = STG.w * k;
+        x.drawImage(cv, 0, 0, cv.width, E * sy, l0, 0, ww, Tq + 1); x.drawImage(cv, 0, cv.height - E * sy, cv.width, E * sy, l0, B0 - 1, ww, bh - B0 + 1);
+        const gt = x.createLinearGradient(0, 0, 0, Tq); gt.addColorStop(0, sh + '0.78)'); gt.addColorStop(1, sh + '0)'); x.fillStyle = gt; x.fillRect(l0, 0, ww, Tq + 1);
+        const gb = x.createLinearGradient(0, B0, 0, bh); gb.addColorStop(0, sh + '0)'); gb.addColorStop(1, sh + '0.78)'); x.fillStyle = gb; x.fillRect(l0, B0 - 1, ww, bh - B0 + 1); }
+    } catch (e) { /* the bench beyond the stage is only dress */ }
+  }
+  // ==== STAGE169 END
   function size() {
+    stageFit(); // (fix-timing) the 16:9 stage, see STAGE169
     const w = app.clientWidth, h = app.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h > 1.6 ? 34 : 34 * 1.6 / (w / h) * 0.86; cam.updateProjectionMatrix();
     overC.width = w; overC.height = h; titleC.width = w; titleC.height = h;
     veil.width = w; veil.height = h; const x = veil.getContext('2d'), gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, PAPERS[PAPERN].veil[0]); gr.addColorStop(1, PAPERS[PAPERN].veil[1]); x.fillStyle = gr; x.fillRect(0, 0, w, h); noise(x, w, h, w * h / 30, 0.05, '80,60,30');
@@ -4815,6 +4846,7 @@ const hand = (x, n) => { x.font = Math.round(n) + 'px ' + (FAM || 'Hand') + ', "
     if (dirty && now - lastInk > (AA.rxKit.g123 === false ? 24 : 12)) { const i123 = Date.now(); drawInk(now); if (AA.rxKit.g123c) AA.rxKit.g123c(Date.now() - i123); dirty = false; lastInk = now; if (INKW.on) inkWatch(); }
     keepSeen(); fitWatch(); bottleFrame(now, dt); goldFrame(now, dt); cupFrame(now); try { lifeFrame(now, dt); } catch (e) { /* idle life never breaks a frame */ }
     ren.render(scene, cam);
+    stageBack(now); // (fix-timing) STAGE169: the bench beyond the stage, from the frame just drawn
   }
   root.addEventListener('resize', size);
   // (builder 16) THE MANUAL (ruling AX): a second book on the bench, a worn ledger, openable at any time (the title too). One category to a
